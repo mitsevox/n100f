@@ -568,6 +568,7 @@ def main():
                 callers[g].add(f)
 
     tstart, tend, tclass, tconf = {order[0]: core[order[0]][0]}, {order[-1]: core[order[-1]][1]}, {}, {}
+    scorer = {}
     for A, B in zip(order, order[1:]):
         # each unit lends its first half to the edge before it and its second half to the edge after
         wlo = max(tstart[A], core[A][1] - 8, (core[A][0] + core[A][1] + 1) // 2)
@@ -590,12 +591,12 @@ def main():
                 cands = sorted(local | ({min(b)} if b else {max(local | a) + 1}))
                 sides.append((sec, a, b, cands, not local))
 
-        def crossings(k):
+        def crossings(k, window=window, sides=sides, A=A, edge_local=edge_local):
             # an anchor moved to the other unit costs as much as three crossing references
             n = 3 * sum(1 for f in window if f in seeded and ((f <= k) != (f <= core[A][1])))
             for sec, a, b, cands, only_local in sides:
                 n += min(sum(1 for f in window for d in func_data[f] if data[d][2] == sec
-                             and (d in edge_local or not only_local) and ((f > k and (d < c or d in a)) or (f <= k and (d >= c or d in b))))
+                             and (not only_local or (d in edge_local and (d in a or d in b))) and ((f > k and (d < c or d in a)) or (f <= k and (d >= c or d in b))))
                          for c in cands)
             return n
 
@@ -641,6 +642,7 @@ def main():
         else:
             tend[A], tstart[B] = cut, cut + 1
         tclass[(A, B)], tconf[(A, B)] = cls, best
+        scorer[(A, B)] = crossings
 
     unit_of = {f: u for u in order for f in range(tstart[u], tend[u] + 1)}
 
@@ -731,7 +733,9 @@ def main():
                     by_literal[(order[k - 1], u)] += 1
                 changed = True
     for key, n in by_literal.items():
+        # rescore the edge at its final cut, so the joined functions' loads stop counting
         tclass[key] += f'; {n} functions joined by .sdata2 literals'
+        tconf[key] = scorer[key](min(tend[key[0]], tstart[key[1]] - 1))
 
     users = {d: {unit_of.get(f) for f in fs} for d, fs in data_users.items()}
 

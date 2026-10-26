@@ -9,7 +9,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	iEnv.cpp	iFile.cpp	0x8000A408	0x8000A408	alignment only (7 cuts tie on data); iFile.cpp left unsplit	0
 .text	iFile.cpp	iFMV.cpp	0x8000A5A4	0x8000AA80	open: 8 unassigned functions; iFile.cpp left unsplit	0
 .text	iFMV.cpp	iFont.cpp	0x8000AB3C	0x8000AB58	open: 2 unassigned functions	0
-.text	iFont.cpp	iFX.cpp	0x8000B9C4	0x8000B9C4	alignment only (2 cuts tie on data); 1 functions joined by .sdata2 literals; iFX.cpp left unsplit	3
+.text	iFont.cpp	iFX.cpp	0x8000B9C4	0x8000B9C4	alignment only (2 cuts tie on data); 1 functions joined by .sdata2 literals; iFX.cpp left unsplit	0
 .text	iFX.cpp	iLight.cpp	0x8000B9C4	0x8000B9C4	single cut by data references; iFX.cpp left unsplit	1
 .text	iLight.cpp	iMath.cpp	0x8000BD14	0x8000BD14	alignment only (5 cuts tie on data)	0
 .text	iMath.cpp	iMath3.cpp	0x8000BDC0	0x8000BDC0	alignment only (3 cuts tie on data)	0
@@ -20,12 +20,12 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	iPad.cpp	iParMgr.cpp	0x8000F600	0x8000FB40	open: 4 unassigned functions; iPad.cpp left unsplit	0
 .text	iParMgr.cpp	isavegame.cpp	0x80011B30	0x80011B74	open: 2 unassigned functions (1 joined by references)	0
 .text	isavegame.cpp	iScrFX.cpp	0x800146C0	0x800146C0	closed by references (2 functions joined; was open: 2 unassigned functions)	0
-.text	iScrFX.cpp	iShadow.cpp	0x80014A3C	0x80014A3C	single cut by data references	0
+.text	iScrFX.cpp	iShadow.cpp	0x80014A3C	0x80014A3C	single cut by call references (2 cuts tie on data)	0
 .text	iShadow.cpp	iSnd.cpp	0x80015168	0x80015168	single cut by call references (10 cuts tie on data); iSnd.cpp left unsplit	0
 .text	iSnd.cpp	iSystem.cpp	0x80015F60	0x80015F60	closed by references (2 functions joined; was open: 2 unassigned functions); iSnd.cpp left unsplit	0
 .text	iSystem.cpp	iTime.cpp	0x80016600	0x80016900	open: 8 unassigned functions	0
 .text	iTime.cpp	ms4sound.cpp	0x80016A30	0x80016A30	single cut by data references; ms4sound.cpp left unsplit	0
-.text	ms4sound.cpp	xAnim.cpp	0x80016A30	0x80016A30	single cut by data references; 1 functions joined by .sdata2 literals; ms4sound.cpp left unsplit	1
+.text	ms4sound.cpp	xAnim.cpp	0x80016A30	0x80016A30	single cut by data references; 1 functions joined by .sdata2 literals; ms4sound.cpp left unsplit	0
 .text	xAnim.cpp	xBase.cpp	0x8001C088	0x8001C088	alignment only (2 cuts tie on data)	0
 .text	xBase.cpp	xbinio.cpp	0x8001C184	0x8001C184	single cut by data references	0
 .text	xbinio.cpp	xBound.cpp	0x8001D1F8	0x8001D1F8	alignment only (3 cuts tie on data)	0
@@ -61,7 +61,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xPartition.cpp	xpkrsvc.cpp	0x8003361C	0x8003361C	alignment only (4 cuts tie on data, 2 on calls)	0
 .text	xpkrsvc.cpp	xQuickCull.cpp	0x80035854	0x80035854	closed by references (1 functions joined; was open: 1 unassigned functions)	2
 .text	xQuickCull.cpp	xsavegame.cpp	0x80036908	0x80036908	single cut by call references (5 cuts tie on data)	0
-.text	xsavegame.cpp	xScene.cpp	0x80038D48	0x80038D48	alignment only (8 cuts tie on data)	0
+.text	xsavegame.cpp	xScene.cpp	0x80038D48	0x80038D48	alignment only (9 cuts tie on data)	0
 .text	xScene.cpp	xScrFx.cpp	0x800394B4	0x800394B4	alignment only (8 cuts tie on data)	0
 .text	xScrFx.cpp	xserializer.cpp	0x80039C90	0x80039C90	single cut by data references	1
 .text	xserializer.cpp	xShadow.cpp	0x8003AD40	0x8003AD40	single cut by data references	0
@@ -92,7 +92,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zEntProjectile.cpp	zEntShaggy.cpp	0x8006D624	0x8006D624	single cut by data references	0
 .text	zEntShaggy.cpp	zEntSimpleObj.cpp	0x8007A8D0	0x8007A8D0	static initialiser ends unit; zEntSimpleObj.cpp left unsplit	0
 .text	zEntSimpleObj.cpp	zEntTrigger.cpp	0x8007ACB8	0x8007ACB8	alignment only (7 cuts tie on data, 6 on calls); zEntSimpleObj.cpp left unsplit	0
-.text	zEntTrigger.cpp	zEntVillain.cpp	0x8007B08C	0x8007B08C	closed by references (1 functions joined; was open: 1 unassigned functions)	1
+.text	zEntTrigger.cpp	zEntVillain.cpp	0x8007B08C	0x8007B08C	closed by references (1 functions joined; was open: 1 unassigned functions)	0
 .text	zEntVillain.cpp	zEnv.cpp	0x800A9F78	0x800A9F78	single cut by call references (2 cuts tie on data)	0
 .text	zEnv.cpp	zFeet.cpp	0x800AA338	0x800AA338	single cut by data references	0
 .text	zFeet.cpp	zFMV.cpp	0x800ABD84	0x800ABD84	alignment only (2 cuts tie on data)	0
@@ -100,7 +100,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zFog.cpp	zFX.cpp	0x800AC010	0x800AC010	alignment only (2 cuts tie on data)	0
 .text	zFX.cpp	zGame.cpp	0x800AC0BC	0x800AC0BC	single cut by data references	1
 .text	zGame.cpp	zGameExtras.cpp	0x800ADC40	0x800ADC40	single cut by data references	2
-.text	zGameExtras.cpp	zGameState.cpp	0x800AF8D8	0x800AF8D8	single cut by data references	0
+.text	zGameExtras.cpp	zGameState.cpp	0x800AF8D8	0x800AF8D8	alignment only (2 cuts tie on data)	0
 .text	zGameState.cpp	zGroup.cpp	0x800AFD6C	0x800AFD6C	alignment only (6 cuts tie on data, 5 on calls)	0
 .text	zGroup.cpp	zGust.cpp	0x800AFF5C	0x800AFF5C	alignment only (5 cuts tie on data)	0
 .text	zGust.cpp	zHologram.cpp	0x800B07B4	0x800B07B4	single cut by data references	0
@@ -115,7 +115,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zMenu.cpp	zMovePoint.cpp	0x800BFD30	0x800BFD30	alignment only (4 cuts tie on data)	0
 .text	zMovePoint.cpp	zMusic.cpp	0x800C0524	0x800C0524	alignment only (9 cuts tie on data)	0
 .text	zMusic.cpp	zParCmd.cpp	0x800C2EB0	0x800C2EB0	single cut by data references	0
-.text	zParCmd.cpp	zParEmitter.cpp	0x800C4BE0	0x800C4BE0	alignment only (4 cuts tie on data)	1
+.text	zParCmd.cpp	zParEmitter.cpp	0x800C4BE0	0x800C4BE0	alignment only (4 cuts tie on data)	0
 .text	zParEmitter.cpp	zParSys.cpp	0x800C6708	0x800C6708	alignment only (4 cuts tie on data)	0
 .text	zParSys.cpp	zPendulum.cpp	0x800C7000	0x800C7000	alignment only (3 cuts tie on data, 2 on calls)	0
 .text	zPendulum.cpp	zPitchChange.cpp	0x800C751C	0x800C751C	alignment confirmed by outgoing calls (5 cuts tie on data)	0
