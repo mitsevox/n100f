@@ -512,11 +512,10 @@ def main():
             return n
 
         def call_crossings(k):
-            # calls in either direction between a window function and the rest of the
-            # span that the cut would separate; each pair counts once
+            # calls in either direction between a window function and a function of
+            # either unit outside the window that the cut would separate
             return sum(1 for f in window for g in ({fidx(t) for t in func_targets[f]} | callers[f])
-                       if g is not None and g != f and g in span and (g not in window or f < g)
-                       and (f <= k) != (g <= k))
+                       if g in span and g not in window and (f <= k) != (g <= k))
 
         ks = range(max(wlo - 1, tstart[A]), min(whi, core[B][1] - 1) + 1)
         forced = [k for k in ks if k in sinit]
