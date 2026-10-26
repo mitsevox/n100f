@@ -133,7 +133,6 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zTimer.cpp	zUI.cpp	0x800D3608	0x800D3608	alignment only (4 cuts tie on data)	0
 .text	zUI.cpp	zUIFont.cpp	0x800D47E8	0x800D47E8	static initialiser ends unit	0
 .text	zUIFont.cpp	zVar.cpp	0x800D527C	0x800D527C	alignment only (10 cuts tie on data)	0
-.text	zVar.cpp	zVolume.cpp	0x800D7E00	0x800D7E00	alignment only (3 cuts tie on data); zVolume.cpp left unsplit	0
 .bss	iCollide.cpp	iDebug.cpp	0x801DF548	0x801DF548	single aligned candidate	0
 .bss	iDebug.cpp	iFont.cpp	0x801DF648	0x801E06D8	open: 2 items loaded by unassigned functions	0
 .bss	iFont.cpp	iParMgr.cpp	0x801E1498	0x801E6B98	open: 3 items loaded by unassigned functions	0
@@ -251,7 +250,6 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .rodata	zSurface.cpp	zUI.cpp	0x801A6E40	0x801A6E40	single aligned candidate	0
 .rodata	zUI.cpp	zUIFont.cpp	0x801A6FC8	0x801A6FC8	single aligned candidate	0
 .rodata	zUIFont.cpp	zVar.cpp	0x801A7010	0x801A7010	single aligned candidate	0
-.rodata	zVar.cpp	zVolume.cpp	0x801A7B10	-	single aligned candidate; a side left unsplit	0
 .sbss	iAnim.cpp	iCollide.cpp	-	0x8025E878	open: 2 items loaded by unassigned functions; a side left unsplit	0
 .sbss	iCollide.cpp	iCollideFast.cpp	0x8025E888	0x8025E888	single aligned candidate	0
 .sbss	iCollideFast.cpp	iDebug.cpp	0x8025E890	0x8025E890	single aligned candidate	0
@@ -416,4 +414,3 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	zTimer.cpp	zUI.cpp	0x80261F68	0x80261F78	open: 3 items between aligned candidates	0
 .sdata2	zUI.cpp	zUIFont.cpp	0x80261FB0	0x80261FB0	single aligned candidate	0
 .sdata2	zUIFont.cpp	zVar.cpp	0x80261FC8	0x80261FE8	open: 5 items between aligned candidates	0
-.sdata2	zVar.cpp	zVolume.cpp	0x80262040	-	single aligned candidate; a side left unsplit	0
