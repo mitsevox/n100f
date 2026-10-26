@@ -94,7 +94,9 @@ class StageArguments(unittest.TestCase):
     def test_live_driver(self):
         for source, flags, cpp, cc1 in DRIVER:
             with self.subTest(flags=flags):
-                driver = driver_arguments(os.environ["PRODG_DIR"], os.environ["WIBO"], source, flags)
+                # The driver runs from a temporary directory, so relative paths are resolved here
+                driver = driver_arguments(str(Path(os.environ["PRODG_DIR"]).resolve()),
+                                          str(Path(os.environ["WIBO"]).resolve()), source, flags)
                 self.assertEqual(driver, (cpp.split(), cc1.split()))
                 self.assertEqual(wrapper_arguments(source, flags), driver)
 
