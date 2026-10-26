@@ -305,8 +305,8 @@ def main():
     ap.add_argument('--dwarf', default='references/Scooby-Doo Night of 100 Frights/SLUS-20349/symbols/dwarf_functions.tsv')
     ap.add_argument('--symbols', default='config/GIHE78/symbols.txt')
     ap.add_argument('--objdir', default='build/GIHE78/obj', help='objects from a dtk split of the DOL')
-    ap.add_argument('--game-end', type=lambda x: int(x, 0), default=0x800D8000,
-                    help='end of the game block; GC-only platform code follows zVolume (strings FMV/cin, Tide)')
+    ap.add_argument('--game-end', type=lambda x: int(x, 0), default=0x800D7E00,
+                    help='end of the game block; GC-only code starts here with iAnimBlend (BfBB gc/iAnim.cpp)')
     ap.add_argument('--prefix', default='flat/')
     ap.add_argument('--splits', required=True, help='write the unit entries here')
     ap.add_argument('--edges', required=True, help='write the edge report (TSV) here')
