@@ -40,6 +40,8 @@ ninja
 
 With no source units, this is the original-object baseline: dtk splits the DOL, mwld relinks it, and `ninja` checks the result against `config/GIHE78/build.sha1`. It is byte-identical. The compiler versions in `configure.py` are template defaults until target evidence establishes them. See [`docs/dtk/`](docs/dtk/getting_started.md) for the upstream tool documentation.
 
+CI runs the same build in the private, digest-pinned build environment from [mitsevox/n100f-build](https://github.com/mitsevox/n100f-build) (`.github/workflows/validate.yml`), which provides the original executable, the patched dtk, compilers and binutils.
+
 ## Contributing
 
 The project owner is **Lucas ([mitsevox](https://github.com/mitsevox))**, the sole merge authority.
