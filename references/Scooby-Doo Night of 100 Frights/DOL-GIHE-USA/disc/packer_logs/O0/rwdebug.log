@@ -1,0 +1,82 @@
+
+RenderWare(TM) V3.1.0 Debugging Session: Thu Aug 15 12:04:35 2002
+-----------------------------------------------------------------
+
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=32 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=32 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=128 height=128 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=128 height=128 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604
+E:/active/rwsdk/src/baimras.c(293): MESSAGE: RwImageFindRasterFormat: Image Conversion:
+Image: width=64 height=64 pixel depth=32 palette depth=8 palettised=Yes
+Raster: width=64 height=64 pixel depth=24 palette depth=0 palettised=No format=0x9604

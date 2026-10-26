@@ -1,0 +1,560 @@
+# Strings from XXXX_999.99
+# Diagnostic, assert, format and path strings: 557 unique
+
+0x00399EC6	b1%XC
+0x0041DC20	Cannot open help file
+0x0041DC38	./readme.txt
+0x0041DC48	./sky.txt
+0x0043DDB8	AtomicEnumerateLights.csl
+0x0043DE90	AtomicInstance.csl
+0x0043DF68	Light.csl
+0x0043E030	MaterialScatter.csl
+0x0043E0E8	PostLight.csl
+0x0043E198	PreLight.csl
+0x0043E218	WorldSectorEnumerateLights.csl
+0x0043E2F8	WorldSectorInstance.csl
+0x0043E350	Lights.csl
+0x0043E370	PS2DMAChain.csl
+0x0043E380	PS2LightsBlock.csl
+0x0043E398	PS2DMASessionRecord.csl
+0x0043E3B0	PS2Mesh.csl
+0x0043E3C0	PS2xyz.csl
+0x0043E3D0	PS2uv.csl
+0x0043E3E0	PS2rgba.csl
+0x0043E3F0	PS2normal.csl
+0x0043E400	PS2user1.csl
+0x0043E410	PS2user2.csl
+0x0043E420	PS2user3.csl
+0x0043E430	PS2user4.csl
+0x0043E500	PS2ManagerIm3D.csl
+0x0043E558	PS2ManagerWorldSector.csl
+0x0043E5B8	PS2ManagerAtomic.csl
+0x0043E628	PS2MatBridge.csl
+0x0043E6B8	PS2MatInstance.csl
+0x0043E758	PS2ObjWorldSectorAllInOne.csl
+0x0043E7E0	PS2ObjAtomicAllInOne.csl
+0x0043E840	PS2Im3DFastTransform.csl
+0x0043FB50	Error decoding zTXt chunk
+0x004443B0	ClipLine.csl
+0x004444B8	ClipTriangle.csl
+0x004445B0	CullTriangle.csl
+0x00444670	ImmInstance.csl
+0x004446F0	ImmRenderSetupInvalidOut
+0x00444728	ImmMangleLineIndices.csl
+0x004447F0	ImmMangleTriangleIndices.csl
+0x004448F0	ImmRenderSetup.csl
+0x004449A0	ImmStash.csl
+0x00444A60	SubmitLine.csl
+0x00444B20	SubmitTriangle.csl
+0x00444C10	Transform.csl
+0x00444CA0	RxObjSpace3DVertices.csl
+0x00444CD0	RxCamSpace3DVertices.csl
+0x00444D00	RxScrSpace2DVertices.csl
+0x00444D30	RxInterpolants.csl
+0x00444D58	RxLines.csl
+0x00444D78	MeshState.csl
+0x00444D98	RenderState.csl
+0x00444DB8	Indices.csl
+0x00444DD8	RxScatter.csl
+0x00444DF8	RxTriangles.csl
+0x00444E18	RxTriPlanes.csl
+0x00444E38	RxUVs.csl
+0x00444E58	RxVSteps.csl
+0x00444E78	RGBAs.csl
+0x00444E98	CamNorms.csl
+0x0044FFA8	PS2MatBlend.csl
+0x00450500	RenderWare V%lx.%lx%lx
+0x00450610	Error creating the RenderWare(tm) camera
+0x00450650	WorldLoad failed
+0x004506A8	skel.cpp
+0x004506C0	Debugging Initialized
+0x004506D8	skyfs.cpp
+0x004507B8	cdrom0:
+0x004507C8	sky.cpp
+0x00450800	cdrom0:\MODULES\SIO2MAN.IRX;1
+0x00450840	cdrom0:\MODULES\MCMAN.IRX;1
+0x00450880	cdrom0:\MODULES\MCSERV.IRX;1
+0x004508C0	cdrom0:\MODULES\PADMAN.IRX;1
+0x00450900	Can't Load Module %s
+0x00450CC8	c:/Dev/rwdev/rwsdk/plugin/logo/rplogo.c
+0x00450DC8	Invalid logo position specified
+0x00450E20	@@(#)$Id: rpdbgerr.c,v 1.9 2000/06/22 14:12:50 johns Exp $
+0x00450E60	Last Error
+0x00450E80	@@(#)$Id: babinwor.c,v 1.128 2000/10/17 12:43:33 johns Exp $
+0x00450EE0	c:/Dev/rwdev/rwsdk/world/babinwor.c
+0x00450FF8	Warning: World sector is in an invalid format for RxPipeline rendering. There may be visible artifacts and/or decreased performance.
+0x004512F8	@@(#)$Id: baclump.c,v 1.336 2000/10/17 12:43:46 johns Exp $
+0x00451350	c:/Dev/rwdev/rwsdk/world/baclump.c
+0x00451CF0	@@(#)$Id: bacollis.c,v 1.185 2000/10/17 12:43:52 johns Exp $
+0x00451D48	c:/Dev/rwdev/rwsdk/world/bacollis.c
+0x004522D8	@@(#)$Id: bageomet.c,v 1.250 2000/10/17 12:44:01 johns Exp $
+0x00452330	c:/Dev/rwdev/rwsdk/world/bageomet.c
+0x00452DC8	@@(#)$Id: balight.c,v 1.220 2000/10/17 12:44:06 johns Exp $
+0x00452E20	c:/Dev/rwdev/rwsdk/world/balight.c
+0x00453198	@@(#)$Id: bamateri.c,v 1.164 2000/10/17 12:44:11 johns Exp $
+0x004531F0	c:/Dev/rwdev/rwsdk/world/bamateri.c
+0x00453568	@@(#)$Id: bamatlst.c,v 1.56 2000/10/17 12:44:13 johns Exp $
+0x004535C8	c:/Dev/rwdev/rwsdk/world/bamatlst.c
+0x00453808	c:/Dev/rwdev/rwsdk/world/bamesh.c
+0x00453998	@@(#)$Id: bameshop.c,v 1.27 2000/10/17 09:26:10 johns Exp $
+0x004539F0	c:/Dev/rwdev/rwsdk/world/bameshop.c
+0x00453BD8	@@(#)$Id: bapick.c,v 1.86 2000/10/16 16:59:26 Callan Exp $
+0x00453C28	c:/Dev/rwdev/rwsdk/world/bapick.c
+0x00453D40	@@(#)$Id: basector.c,v 1.145 2000/10/17 10:42:59 johns Exp $
+0x00453D90	c:/Dev/rwdev/rwsdk/world/basector.c
+0x00453FE0	@@(#)$Id: baworld.c,v 1.355 2000/10/17 12:44:23 johns Exp $
+0x00454030	c:/Dev/rwdev/rwsdk/world/baworld.c
+0x00454738	@@(#)$Id: baworobj.c,v 1.129 2000/10/17 21:38:11 Callan Exp $
+0x00454788	c:/Dev/rwdev/rwsdk/world/baworobj.c
+0x00455120	@@(#)$Id: bapipew.c,v 1.59 2000/10/18 09:46:02 johns Exp $
+0x00455178	c:/Dev/rwdev/rwsdk/world/pipe/p2/bapipew.c
+0x00455500	Warning -- Default Atomic Instance pipeline [%s] ignores materials
+0x00455548	Warning -- Default World Sector Instance pipeline [%s] ignores materials
+0x00455848	Failed to create generic and/or platform-specific default atomic/world-sector/material instance/render pipelines
+0x004558D8	@@(#)$Id: nodeAtomicEnumerateLights.c,v 1.32 2000/10/17 17:14:20 iestynb Exp $
+0x00455940	c:/Dev/rwdev/rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c
+0x00455A50	@@(#)$Id: nodeAtomicInstance.c,v 1.67 2000/10/16 21:20:58 iestynb Exp $
+0x00455AB8	c:/Dev/rwdev/rwsdk/world/pipe/p2/nodeAtomicInstance.c
+0x00455C60	c:/Dev/rwdev/rwsdk/world/pipe/generic/baaplylt.c
+0x00455D20	@@(#)$Id: nodeLight.c,v 1.43 2000/10/13 16:26:22 iestynb Exp $
+0x00455D78	c:/Dev/rwdev/rwsdk/world/pipe/p2/nodeLight.c
+0x00455E48	@@(#)$Id: nodeMaterialScatter.c,v 1.39 2000/10/13 16:26:25 iestynb Exp $
+0x00455EB0	c:/Dev/rwdev/rwsdk/world/pipe/p2/nodeMaterialScatter.c
+0x00455F60	@@(#)$Id: nodePostLight.c,v 1.37 2000/10/13 16:26:29 iestynb Exp $
+0x00455FB8	c:/Dev/rwdev/rwsdk/world/pipe/p2/nodePostLight.c
+0x00456080	@@(#)$Id: nodePreLight.c,v 1.33 2000/10/13 16:26:32 iestynb Exp $
+0x004560D8	c:/Dev/rwdev/rwsdk/world/pipe/p2/nodePreLight.c
+0x00456198	@@(#)$Id: nodeWorldSectorEnumerateLights.c,v 1.30 2000/10/13 16:26:40 iestynb Exp $
+0x00456208	c:/Dev/rwdev/rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c
+0x00456318	@@(#)$Id: nodeWorldSectorInstance.c,v 1.77 2000/10/16 21:21:09 iestynb Exp $
+0x00456378	c:/Dev/rwdev/rwsdk/world/pipe/p2/nodeWorldSectorInstance.c
+0x00456530	@@(#)$Id: matputil.c,v 1.16 2000/10/18 08:59:08 johns Exp $
+0x00456590	c:/Dev/rwdev/rwsdk/world/pipe/p2/sky2/matputil.c
+0x004566A8	c:/Dev/rwdev/rwsdk/world/pipe/p2/sky2/nodePS2Manager.c
+0x00456A08	c:/Dev/rwdev/rwsdk/world/pipe/p2/sky2/nodePS2MatBridge.c
+0x00456C28	c:/Dev/rwdev/rwsdk/world/pipe/p2/sky2/nodePS2MatInstance.c
+0x00456ED0	_rwPS2MatInstancePipelineNodeInit; cluster %s has both CL_ATTRIB_REQUIRED and CL_ATTRIB_PLACEHOLDER set in its attributes - illegal!
+0x00456F70	_rwPS2MatInstancePipelineNodeInit; cluster %s has both (CL_ATTRIB_READ or CL_ATTRIB_WRITE) and CL_ATTRIB_OPAQUE set, these are mutually incompatible
+0x00457008	_rwPS2MatInstancePipelineNodeInit; could not locate cluster %s in node definition clusters of interest
+0x00457070	Cluster %s not present (subsequent nodes don't require it). You should not be requiring this cluster to be visible (CL_ATTRIB_READ or CL_ATTRIB_WRITE) in its creation attributes [read during the call to RxPS2MatInstanceNodeGenerateCluster()]
+0x00457210	_rwPS2MatInstancePipelineNodeInit; %s cluster has unrecognised attributes
+0x00457490	RxPipelineNodePS2MatInstanceGenerateCluster; RxPipelineNodeCloneDefinition failed
+0x004575D8	@@(#)$Id: nodePS2ObjAllInOne.c,v 1.58 2000/10/18 08:59:09 johns Exp $
+0x00457648	c:/Dev/rwdev/rwsdk/world/pipe/p2/sky2/nodePS2ObjAllInOne.c
+0x00457720	Needs to be converted to minusCosAngle form as per rwsdk/world/pipe/generic/baaplylt.c
+0x00457B98	c:/Dev/rwdev/rwsdk/world/pipe/p2/sky2/wrldpipe.c
+0x00457FC8	c:/Dev/rwdev/rwsdk/world/pipe/p2/sky2/fastim3d.c
+0x00458288	Invalid Intersection type
+0x004582A8	The sphere is invalid
+0x00458398	@@(#)$Id: rtcharse.c,v 1.28 2000/10/16 15:10:29 Johni Exp $
+0x004588F0	c:/Dev/rwdev/rwsdk/tool/charse/rtcharse.c
+0x00458AD0	buffer error
+0x00458AF8	data error
+0x00458B08	stream error
+0x00458B18	file error
+0x00458B70	invalid window size
+0x00458C60	invalid block type
+0x00458C78	invalid stored block lengths
+0x00458CC0	invalid bit length repeat
+0x00459030	invalid literal/length code
+0x00459050	invalid distance code
+0x00459A50	Overflow in png_memcpy_check.
+0x00459A70	Overflow in png_memset_check.
+0x00459AC8	zlib memory error
+0x00459AE0	zlib version error
+0x00459AF8	Unknown zlib error
+0x00459BA8	Invalid attempt to read row data
+0x00459C00	Decompression error
+0x00459C78	It's an error to set both read_data_fn and write_data_fn in the 
+0x00459D00	Can't discard critical data on CRC error.
+0x00459F50	CRC error
+0x00459F78	Invalid IHDR chunk
+0x00459F90	Invalid image size in IHDR
+0x00459FB0	Invalid bit depth in IHDR
+0x00459FD0	Invalid color type in IHDR
+0x00459FF0	Invalid color type/bit depth combination in IHDR
+0x0045A0E0	Invalid PLTE after IDAT
+0x0045A110	Invalid palette chunk
+0x0045A1A8	Invalid gAMA after IDAT
+0x0045A278	Invalid sBIT after IDAT
+0x0045A2E0	Invalid cHRM after IDAT
+0x0045A350	Invalid cHRM white point
+0x0045A370	Invalid cHRM red point
+0x0045A388	Invalid cHRM green point
+0x0045A3A8	Invalid cHRM blue point
+0x0045A438	Invalid sRGB after IDAT
+0x0045A4F0	Invalid tRNS after IDAT
+0x0045A5C8	Invalid bKGD after IDAT
+0x0045A680	Invalid hIST after IDAT
+0x0045A710	Invalid pHYS after IDAT
+0x0045A780	Invalid oFFs after IDAT
+0x0045A7F0	Invalid pCAL after IDAT
+0x0045A820	Invalid pCAL data
+0x0045A838	Invalid pCAL parameters for equation type
+0x0045A978	invalid chunk type
+0x0045AA08	Decompression Error
+0x0045AA38	Rowbytes overflow in png_read_start_row
+0x0045AA60	Width too large to process image data; rowbytes will overflow.
+0x0045AAB0	c:/Dev/rwdev/rwsdk/tool/png/rtpng.c
+0x0045ABE0	c:/Dev/rwdev/rwsdk/src/babbox.c
+0x0045AC60	@@(#)$Id: babinary.c,v 1.112 2000/10/17 11:52:52 williame Exp $
+0x0045ACB0	c:/Dev/rwdev/rwsdk/src/babinary.c
+0x0045ADB0	readVersion 0x%0x < rwLIBRARYCURRENTVERSION 0x%x; content may be sub-optimal
+0x0045AF30	c:/Dev/rwdev/rwsdk/src/babinfrm.c
+0x0045B0D8	@@(#)$Id: babintex.c,v 1.63 2000/10/17 13:14:39 Markj Exp $
+0x0045B128	c:/Dev/rwdev/rwsdk/src/babintex.c
+0x0045B1D0	version 0x%0x < rwLIBRARYCURRENTVERSION 0x%x; content may be sub-optimal
+0x0045B408	@@(#)$Id: bacamera.c,v 1.322 2000/10/17 17:00:00 johns Exp $
+0x0045B458	c:/Dev/rwdev/rwsdk/src/bacamera.c
+0x0045B9D8	Invalid projection type specified
+0x0045BBD0	@@(#)$Id: bacolor.c,v 1.29 2000/10/17 13:14:42 Markj Exp $
+0x0045BC20	c:/Dev/rwdev/rwsdk/src/bacolor.c
+0x0045BCE8	@@(#)$Id: badebug.c,v 1.56 2000/10/17 17:00:06 johns Exp $
+0x0045BD28	strlen(%s) >= %d; truncating at character #%d  == %c
+0x0045BE03	    [stream %p type %s]
+0x0045BE20	Write error on stream
+0x0045BE88	Read error on stream
+0x0045BFB0	Unable to allocate %d bytes of memory
+0x0045BFD8	Unable to find Frame
+0x0045BFF0	Invalid Raster unlock request
+0x0045C010	Invalid Raster size
+0x0045C028	Invalid Raster mipmap level
+0x0045C048	Invalid Raster lock request
+0x0045C088	Invalid Raster depth
+0x0045C130	Invalid Image Depth
+0x0045C178	Creation of a default pipeline failed
+0x0045C1A0	Debug Library has Stack Depth mismatch
+0x0045C210	Invalid Parameter passed. %s
+0x0045C230	Error opening the file %s
+0x0045C280	No Error
+0x0045C4C8	E_RW_DEBUGSTACK
+0x0045C520	E_RW_NOERROR
+0x0045C530	rwdebug.log
+0x0045C540	RwDebugSetTraceState
+0x0045C558	c:/Dev/rwdev/rwsdk/src/badebug.c
+0x0045C580	RwDebugSetHandler
+0x0045C598	Invalid Type
+0x0045C5C0	RenderWare(TM) V%d.%d.%d Debugging Session: %s
+0x0045C5F0	@@(#)$Id: badevice.c,v 1.173 2000/10/18 10:40:08 johns Exp $
+0x0045C648	c:/Dev/rwdev/rwsdk/src/badevice.c
+0x0045CAD8	_rwErrorOpen
+0x0045CAE8	c:/Dev/rwdev/rwsdk/src/baerr.c
+0x0045CB08	_rwErrorClose
+0x0045CB18	RwErrorSet
+0x0045CB28	RwErrorGet
+0x0045CB38	@@(#)$Id: baframe.c,v 1.157 2000/10/18 10:40:10 johns Exp $
+0x0045CB88	c:/Dev/rwdev/rwsdk/src/baframe.c
+0x0045D170	@@(#)$Id: bafsys.c,v 1.35 2000/10/17 11:52:55 williame Exp $
+0x0045D1C8	c:/Dev/rwdev/rwsdk/src/bafsys.c
+0x0045D238	c:/Dev/rwdev/rwsdk/src/baimage.c
+0x0045D900	@@(#)$Id: baimform.c,v 1.25 2000/10/17 13:14:49 Markj Exp $
+0x0045D950	c:/Dev/rwdev/rwsdk/src/baimform.c
+0x0045DB08	error - BMPlenfileheader
+0x0045DB40	error - BMPleninfoheader
+0x0045DB80	error - BMPlenline
+0x0045DBF8	error - BMPwriteinfoheader
+0x0045DC58	error - couldn't write row %d
+0x0045DC98	error - BMPEncode
+0x0045DCC0	@@(#)$Id: baimmedi.c,v 1.112 2000/10/18 10:40:14 johns Exp $
+0x0045DD18	c:/Dev/rwdev/rwsdk/src/baimmedi.c
+0x0045DF50	@@(#)$Id: baimras.c,v 1.26 2000/10/17 13:14:51 Markj Exp $
+0x0045DFA8	c:/Dev/rwdev/rwsdk/src/baimras.c
+0x0045E218	c:/Dev/rwdev/rwsdk/src/balist.c
+0x0045E3B8	@@(#)$Id: bamatrix.c,v 1.155 2000/10/17 17:00:23 johns Exp $
+0x0045E408	c:/Dev/rwdev/rwsdk/src/bamatrix.c
+0x0045E660	rwMatrixOrthogonalError
+0x0045E678	rwMatrixNormalError
+0x0045E690	rwMatrixIdentityError
+0x0045E830	Invalid combination type
+0x0045EA78	@@(#)$Id: bamemory.c,v 1.104 2000/10/17 17:24:40 johns Exp $
+0x0045EAC8	c:/Dev/rwdev/rwsdk/src/bamemory.c
+0x0045ECF0	c:/Dev/rwdev/rwsdk/src/baraster.c
+0x0045F2E0	@@(#)$Id: baresamp.c,v 1.47 2000/10/17 13:14:54 Markj Exp $
+0x0045F338	c:/Dev/rwdev/rwsdk/src/baresamp.c
+0x0045F430	@@(#)$Id: baresour.c,v 1.47 2000/10/17 13:14:55 Markj Exp $
+0x0045F480	c:/Dev/rwdev/rwsdk/src/baresour.c
+0x0045F620	@@(#)$Id: bastream.c,v 1.69 2000/10/17 17:00:31 johns Exp $
+0x0045F678	c:/Dev/rwdev/rwsdk/src/bastream.c
+0x0045F808	@@(#)$Id: basync.c,v 1.49 2000/09/19 10:38:46 johns Exp Colinh $
+0x0045F860	c:/Dev/rwdev/rwsdk/src/basync.c
+0x0045F940	@@(#)$Id: batextur.c,v 1.191 2000/10/18 10:40:17 johns Exp $
+0x0045F980	c:/Dev/rwdev/rwsdk/src/batextur.c
+0x00460368	c:/Dev/rwdev/rwsdk/src/batkbin.c
+0x00460588	@@(#)$Id: batkreg.c,v 1.47 2000/10/10 15:32:58 johns Exp $
+0x004605E0	c:/Dev/rwdev/rwsdk/src/batkreg.c
+0x00460980	@@(#)$Id: batypehf.c,v 1.13 2000/10/17 11:52:58 williame Exp $
+0x004609E0	c:/Dev/rwdev/rwsdk/src/batypehf.c
+0x00460A28	@@(#)$Id: bavector.c,v 1.118 2000/10/17 11:52:59 williame Exp $
+0x00460A80	c:/Dev/rwdev/rwsdk/src/bavector.c
+0x00460D98	@@(#)$Id: rwdbgerr.c,v 1.21 2000/06/22 14:12:51 johns Exp $
+0x00460DD8	Cannot send packet between pipelines, requirements not satisfied. Cluster '%s' is missing
+0x00460F60	RwPipeline2Execute cannot accept both RunTo *and* RunFrom
+0x00460FD8	Failed to make copies of packets input to RxPipelineExecute()
+0x00461060	Cannot render Im3D primitive - not enough vertices transformed
+0x004610A0	Node execution failed - %s
+0x00461180	RwPipeline2Execute cannot resume a different pipeline to the one previously interrupted
+0x004611D8	Unknown primitive type %d
+0x004611F8	Pipeline has an invalid entry point
+0x00461220	Cannot render Im3D primitives outside of a RwIm3dTransform()/RwIm3dEnd() pair
+0x004612A8	RwPipeline2Execute cannot execute a pipeline with no nodes :)
+0x004612E8	Dependency chasing; memory alloc failed
+0x004614ED	*** blocked at node %s, output #%ld ("%s").
+0x00461548	Node %s cannot output to specified pipeline
+0x00461578	Node %s cannot output to node %s
+0x004615D8	A system request call has failed, request code : 0x%x
+0x00461610	Unable to open stream : %s
+0x00461630	Unable to read Texture %s / Mask %s
+0x00461718	Cannot render until a Camera has been created
+0x00461748	Negative positioned clip planes are invalid
+0x00461778	Invalid stream type.
+0x00461790	Invalid stream access type.
+0x004617B0	Insufficient resources to satisfy the allocation of %d bytes.
+0x00461820	Invalid Free List memory boundary
+0x00461848	Invalid Free List memory address
+0x00461910	Attempt to start Device failed
+0x00461958	Device specific error: %s
+0x00461978	Unable to get a chunk of the given type
+0x004619A0	Invalid view window dimensions supplied
+0x00461A98	E_RX_PACKETSCOPYFAILED
+0x00461AB0	E_RX_PACKETPTRINVALID
+0x00461AD8	E_RX_NODE_EXECUTION_FAILED
+0x00461B48	E_RX_INVALIDRESUMEPIPELINE
+0x00461B68	E_RX_INVALIDPRIMTYPE
+0x00461B80	E_RX_INVALIDENTRYPOINT
+0x00461C68	E_RX_CANNOT_TRANSFER_FROM_NODE_TO_PIPELINE
+0x00461C98	E_RX_CANNOT_TRANSFER_BETWEEN_NODES
+0x00461EC0	E_RW_DEVICEERROR
+0x00461F00	@@(#)$Id: rwstring.c,v 1.18 2000/10/03 16:34:30 johns Exp $
+0x00461F40	c:/Dev/rwdev/rwsdk/src/rwstring.c
+0x00461FF8	c:/Dev/rwdev/rwsdk/src/pipe/p2/baim3d.c
+0x004620D0	Pipeline execution failed
+0x00462838	Failed to create generic and/or platform-specific default Im3D transform/render pipelines
+0x004628F0	c:/Dev/rwdev/rwsdk/src/pipe/p2/bapipe.c
+0x00462958	@@(#)$Id: nodeClipLine.c,v 1.42 2000/10/13 16:28:03 iestynb Exp $
+0x004629D8	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeClipLine.c
+0x00462B88	@@(#)$Id: nodeClipTriangle.c,v 1.68 2000/10/13 16:28:09 iestynb Exp $
+0x00462C08	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeClipTriangle.c
+0x00462DC0	@@(#)$Id: nodeCullTriangle.c,v 1.43 2000/10/13 16:28:23 iestynb Exp $
+0x00462E28	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeCullTriangle.c
+0x00462FB0	@@(#)$Id: nodeImmInstance.c,v 1.43 2000/10/16 21:28:47 iestynb Exp $
+0x00463008	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeImmInstance.c
+0x004630C8	@@(#)$Id: nodeImmMangleLineIndices.c,v 1.40 2000/10/13 16:28:31 iestynb Exp $
+0x00463138	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c
+0x00463298	@@(#)$Id: nodeImmMangleTriangleIndices.c,v 1.44 2000/10/13 16:28:34 iestynb Exp $
+0x00463310	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c
+0x00463480	@@(#)$Id: nodeImmRenderSetup.c,v 1.55 2000/10/16 21:29:12 iestynb Exp $
+0x004634E0	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeImmRenderSetup.c
+0x004636D0	@@(#)$Id: nodeImmStash.c,v 1.12 2000/10/13 16:28:42 iestynb Exp $
+0x00463730	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeImmStash.c
+0x00463828	@@(#)$Id: nodeSubmitLine.c,v 1.45 2000/10/13 16:28:51 iestynb Exp $
+0x00463880	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeSubmitLine.c
+0x004639F0	@@(#)$Id: nodeSubmitTriangle.c,v 1.58 2000/10/17 11:43:45 iestynb Exp $
+0x00463A50	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeSubmitTriangle.c
+0x00463BA0	@@(#)$Id: nodeTransform.c,v 1.55 2000/10/13 16:28:59 iestynb Exp $
+0x00463C00	c:/Dev/rwdev/rwsdk/src/pipe/p2/nodeTransform.c
+0x00463D28	c:/Dev/rwdev/rwsdk/src/pipe/p2/p2altmdl.c
+0x00463ED8	@@(#)$Id: p2clpcom.c,v 1.12 2000/06/22 15:25:00 johns Exp $
+0x00463F38	c:/Dev/rwdev/rwsdk/src/pipe/p2/p2clpcom.c
+0x004641E0	c:/Dev/rwdev/rwsdk/src/pipe/p2/p2core.c
+0x00464A40	c:/Dev/rwdev/rwsdk/src/pipe/p2/p2define.c
+0x00465058	Failed to create and link all nodes in new fragment
+0x00465228	RxPipelineInsertDebugNode
+0x00465268	debugNodeDef
+0x00465278	Debug node insert
+0x004653B8	debug node definition pointer NULL
+0x00465460	c:/Dev/rwdev/rwsdk/src/pipe/p2/p2dep.c
+0x00465730	sizeof(RxPipelineCluster) % sizeof(RwUInt32) == 0
+0x004657C0	@@(#)$Id: p2heap.c,v 1.62 2000/10/17 22:32:18 iestynb Exp $
+0x00465820	c:/Dev/rwdev/rwsdk/src/pipe/p2/p2heap.c
+0x00465910	Heap resized from %d to %d bytes
+0x00465AA8	@@(#)$Id: p2renderstate.c,v 1.25 2000/10/10 17:37:37 Markj Exp $
+0x00465B20	c:/Dev/rwdev/rwsdk/src/pipe/p2/p2renderstate.c
+0x00465BF8	@@(#)$Id: p2resort.c,v 1.16 2000/06/22 15:25:07 johns Exp $
+0x00465C48	c:/Dev/rwdev/rwsdk/src/pipe/p2/p2resort.c
+0x00465CC0	@@(#)$Id: im3dpipe.c,v 1.31 2000/10/12 08:50:27 johns Exp $
+0x00465D28	c:/Dev/rwdev/rwsdk/src/pipe/p2/sky2/im3dpipe.c
+0x00465E50	c:/Dev/rwdev/rwsdk/driver/sky2/badma.c
+0x004660F0	c:/Dev/rwdev/rwsdk/driver/sky2/basky.c
+0x00466440	error - rwRASTERTYPECAMERATEXTURE must be locked in cache
+0x00466C08	@@(#)$Id: baskytran.c,v 1.6 2000/10/10 11:49:15 johns Exp $
+0x00466C58	c:/Dev/rwdev/rwsdk/driver/sky2/baskytran.c
+0x00466D48	@@(#)$Id: dmaalloc.c,v 1.9 2000/10/10 11:49:16 johns Exp $
+0x00466D98	c:/Dev/rwdev/rwsdk/driver/sky2/dmaalloc.c
+0x00466E50	@@(#)$Id: skyblit.c,v 1.12 2000/10/17 22:40:02 rabin Exp $
+0x00466EB0	c:/Dev/rwdev/rwsdk/driver/sky2/skyblit.c
+0x00467088	c:/Dev/rwdev/rwsdk/driver/sky2/skyconv.c
+0x00467350	@@(#)$Id: skyinst.c,v 1.23 2000/10/17 11:41:10 iestynb Exp $
+0x004673E0	c:/Dev/rwdev/rwsdk/driver/sky2/skyinst.c
+0x00467670	@@(#)$Id: texcache.c,v 1.43 2000/10/17 15:23:09 johns Exp $
+0x004676C8	c:/Dev/rwdev/rwsdk/driver/sky2/texcache.c
+0x004679F8	Unable to initialiase memory for Cache
+0x00467C60	@@(#)$Id: imrascnv.c,v 1.8 2000/06/22 16:02:39 johns Exp $
+0x00467CB8	c:/Dev/rwdev/rwsdk/driver/common/imrascnv.c
+0x00467F08	@@(#)$Id: palquant.c,v 1.18 2000/08/08 16:35:40 Blakem Exp $
+0x00467F58	c:/Dev/rwdev/rwsdk/driver/common/palquant.c
+0x00468050	256 < %d == maxcols
+0x00468F88	\t<D1_CHCR=%08x:
+0x00468F98	D1_TADR=%08x:
+0x00468FA8	D1_MADR=%08x:
+0x00468FC8	\t<D2_CHCR=%08x:
+0x00468FD8	D2_TADR=%08x:
+0x00468FE8	D2_MADR=%08x:
+0x00469008	\t<VIF1_STAT=%08x:
+0x004693B8	ERROR
+0x00469400	FAILED
+0x004694A8	TTY: receive error
+0x004696D8	xTrigger.cpp
+0x0046A028	xText.cpp
+0x0046A0A8	xTex.cpp
+0x0046A100	debugPrintInt
+0x0046A110	debugPrintString
+0x0046A130	debugPrintStringInt
+0x0046A228	xSystem.cpp
+0x0046A2C0	xStream.cpp
+0x0046AA58	xState.cpp
+0x0046AD60	xSndMgr.cpp
+0x0046BE68	xScene.cpp
+0x0046E678	xRule.cpp
+0x0046EC20	xRouteDB.cpp
+0x00471478	xRoute.cpp
+0x00471788	xPlayer.cpp
+0x00471858	xPathfdr.cpp
+0x00472890	xPAS.cpp
+0x004728F8	xParMgr.cpp
+0x00472E68	xParExe.cpp
+0x00473DE8	xParCmd.cpp
+0x00474358	xPar.cpp
+0x004748D0	xPad.cpp
+0x00474F30	xObjDB.cpp
+0x00479058	xObj.cpp
+0x00479118	xNavPnt.cpp
+0x00479340	xMessMgr.cpp
+0x00479490	xMemMgr.cpp
+0x00479AC0	ED.INI
+0x00479AC8	debugOpFlag
+0x00479AE8	debugCallFlag
+0x00479B08	debugThread
+0x00479B88	xMain.cpp
+0x00479C38	xList.cpp
+0x0047A368	xLight.cpp
+0x0047A428	xGui.cpp
+0x0047B220	%csys %d, item %d
+0x0047B238	 sysoff= %d,%d
+0x0047B250	 itemoff= %d,%d
+0x0047B260	 item dataid= %d
+0x0047B280	 item gggid= 0x%x
+0x0047B2A0	 item texid= 0x%x
+0x0047B2C0	 item partid= %d
+0x0047B2E0	 item rgba= %d,%d,%d,%d
+0x0047B300	 item text offset= %d
+0x0047B3C8	xGState.cpp
+0x0047B4D8	xFont.cpp
+0x0047BFA8	xFMV.cpp
+0x0047C0B8	%c%c%c%c
+0x0047C1E8	xDebug.cpp
+0x0047C578	xCond.cpp
+0x0047CAD0	%c%c%02d%02d%02d
+0x0047CC00	xCart.cpp
+0x0047D108	xAsset.cpp
+0x0047D700	---------UNIMPLEMENTED FUNCTION (%s) CALLED---------
+0x0047D788	xAnim.cpp
+0x0047DB90	xActorDB.cpp
+0x0047E9A8	xActor.cpp
+0x0047EF68	xAction.cpp
+0x0047F170	iTex.cpp
+0x0047F5B8	iStream.cpp
+0x0047FA30	/DISK/%sv.p2
+0x0047FA40	/DISK/%s.p2
+0x0047FB58	iSndMgr.cpp
+0x00480010	iSndMgrTransferToSRAM::failed gSndMgr.m_bankIdxAddr[bank] == p2SndMgrGetSRAMAddr()
+0x00480BE8	iPlate.cpp
+0x00480DA8	iPhyObj.cpp
+0x00480FB8	iParMgr.cpp
+0x00485530	iPad.cpp
+0x004857D8	iObj.cpp
+0x00485998	iModel.cpp
+0x00485A10	imesh.cpp
+0x00485A78	/disk/env.bsp
+0x00485AE0	ed.ini
+0x00485B38	iMain.cpp
+0x00485DA8	iGui.cpp
+0x00486208	iGeom.cpp
+0x00486C78	iFont.cpp
+0x00486D98	ifloor.cpp
+0x00487058	iFile.cpp
+0x00487140	cdrom0:\DISK\%s
+0x004873C0	iCart.cpp
+0x004874B8	iAsset.cpp
+0x004882D8	iActor.cpp
+0x00488430	i_prim.cpp
+0x004885A0	i_mat.cpp
+0x00489678	xLook.cpp
+0x00489C80	%d:  AT OBJ ID:%d TYPE:%d 
+0x00489CA0	%d:  AT %s 
+0x00489CB0	%d:  AT marker %d 
+0x00489CC8	%d:  AT PNT 
+0x0048A1B0	iEnvironment.cpp
+0x0048A5F0	xEnvironment.cpp
+0x0048A860	WARNING: attempting to Sleep in thread 0
+0x0048A920	WARNING: attempting to Exit thread 0
+0x0048A950	WARNING: attempting to Suspend thread 0
+0x0048A980	WARNING: attempting to Awake thread 0
+0x0048C0C0	JInterpr.cpp
+0x0048C180	xModuleFactory.cpp
+0x0048C2B0	cdrom0:\IOPRP213.IMG;1
+0x0048C320	zMain.cpp
+0x0048C400	xGuiScript.cpp
+0x0048F9C8	@@(#)$Id: rtslerp.c,v 1.21 2000/09/12 14:45:03 johns Exp $
+0x0048FA18	c:/Dev/rwdev/rwsdk/tool/slerp/rtslerp.c
+0x0048FC08	c:/Dev/rwdev/rwsdk/plugin/bones/rpbone.c
+0x004901D0	@@(#)$Id: rpskin.c,v 1.56 2000/10/13 17:33:45 smyszko Exp $
+0x00490220	c:/Dev/rwdev/rwsdk/plugin/skinp2/rpskin.c
+0x00490928	@@(#)$Id: matblend.c,v 1.33 2000/10/13 16:31:52 iestynb Exp $
+0x00490980	c:/Dev/rwdev/rwsdk/plugin/skinp2/matblend.c
+0x00490B70	result %p
+0x00490BE0	c:/Dev/rwdev/rwsdk/tool/quat/rtquat.c
+0x00490FE0	@@(#)$Id: rpanim.c,v 1.136 2000/10/17 15:15:09 Damians Exp $
+0x00491030	c:/Dev/rwdev/rwsdk/plugin/anim/rpanim.c
+0x004921D8	Anim Sequence "%s" not found
+0x004921F8	Anim Database already contains entry "%s"
+0x00492228	Anim Database doesn't contain entry "%s"
+0x00492258	Anim error
+0x00492340	xActorDBScript.cpp
+0x0049E2E0	xSndMgrScript.cpp
+0x0049F2D0	zModuleFactory.cpp
+0x0049F490	zDemo.cpp
+0x0049F610	/DISK/PPSD0002.SKA
+0x0049F630	/DISK/PPSD0004.SKA
+0x0049F650	/DISK/PPSD0005.SKA
+0x0049F670	/DISK/PPSD0006.SKA
+0x0049F690	/DISK/PPSD0007.SKA
+0x0049F6B0	/DISK/PPSD0001.SKA
+0x0049F6D0	/DISK/PPSD0003.SKA
+0x0049F6F0	/DISK/PPSD0008.SKA
+0x0049F710	/DISK/PPSD0001.dff
+0x0049F730	/DISK/PNHSWALK.SKA
+0x0049F750	/DISK/PNHSIDLE.SKA
+0x0049F770	/DISK/PNHSWALK.DFF
+0x0049F790	/DISK/GRASS.SKA
+0x0049F7A0	/DISK/GRASS.DFF
+0x0049F7B0	/DISK/SNACK.SKA
+0x0049F7C0	/DISK/SNACK.DFF
+0x0049F8D0	zCharacter.cpp
+0x0049FFE0	xParMgrScript.cpp
+0x004A0BD8	@@(#)$Id: rppvs.c,v 1.122 2000/10/17 15:14:54 Damians Exp $
+0x004A0C28	c:/Dev/rwdev/rwsdk/plugin/pvs/rppvs.c
+0x004A0F50	c:/Dev/rwdev/rwsdk/plugin/collis/ctbuild.c
+0x004A11F0	c:/Dev/rwdev/rwsdk/plugin/collis/ctcollis.c
+0x004A14B0	c:/Dev/rwdev/rwsdk/plugin/collis/ctbsp.c
+0x004A1588	c:/Dev/rwdev/rwsdk/plugin/collis/rpcollis.c
+0x004A19B0	cartError
+0x004A1A58	xAnimMgr.cpp
+0x004A1BB0	Memory allocation failure
+0x004A1BF0	c:/Dev/rwdev/rwsdk/tool/intsec/rtintsec.c
+0x004A1D58	iAnimMgr.cpp
+0x004A1DC0	xGameObjMgr.cpp
+0x004A1E40	xGameObjFactory.cpp
+0x004A1EB0	zGameObjFactory.cpp
+0x004A1F28	zGameObj.cpp
+0x004A2000	zGameObjVillain.cpp
+0x004A33E0	ASSERT

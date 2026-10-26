@@ -1,0 +1,257 @@
+# Strings from SLUS_203.49
+# Diagnostic, assert, format and path strings: 254 unique
+
+0x002C9FD0	ClipLine.csl
+0x002CA0D8	ClipTriangle.csl
+0x002CA1D0	CullTriangle.csl
+0x002CA290	ImmInstance.csl
+0x002CA320	ImmMangleLineIndices.csl
+0x002CA3C0	ImmMangleTriangleIndices.csl
+0x002CA500	ImmRenderSetup.csl
+0x002CA5B0	ImmStash.csl
+0x002CA670	SubmitLine.csl
+0x002CA730	SubmitTriangle.csl
+0x002CA820	Transform.csl
+0x002CA8B0	RxObjSpace3DVertices.csl
+0x002CA8E0	RxCamSpace3DVertices.csl
+0x002CA910	RxScrSpace2DVertices.csl
+0x002CA940	RxInterpolants.csl
+0x002CA968	MeshState.csl
+0x002CA988	RenderState.csl
+0x002CA9A8	Indices.csl
+0x002CA9C8	RxScatter.csl
+0x002CA9E8	RxUVs.csl
+0x002CAA08	RxVSteps.csl
+0x002CAA28	RGBAs.csl
+0x002CAA48	CamNorms.csl
+0x002CAA68	RxTriPlanes.csl
+0x002FB4F0	AtomicEnumerateLights.csl
+0x002FB5C8	AtomicInstance.csl
+0x002FB6A0	Light.csl
+0x002FB748	MaterialScatter.csl
+0x002FB800	PostLight.csl
+0x002FB880	WorldSectorEnumerateLights.csl
+0x002FB940	WorldSectorInstance.csl
+0x002FB998	Lights.csl
+0x002FB9B8	PS2Im3DFastTransform.csl
+0x002FBA18	PS2All.csl
+0x002FBA68	PS2ManagerIm3D.csl
+0x002FBAC0	PS2ManagerWorldSector.csl
+0x002FBB20	PS2ManagerAtomic.csl
+0x002FBB90	PS2MatBridge.csl
+0x002FBC20	PS2MatInstance.csl
+0x002FBCC8	PS2ObjWorldSectorAllInOne.csl
+0x002FBD50	PS2ObjAtomicAllInOne.csl
+0x002FC640	PS2AllMat.csl
+0x002FC690	PS2DMAChain.csl
+0x002FC6A0	PS2LightsBlock.csl
+0x002FC6B8	PS2DMASessionRecord.csl
+0x002FC6D0	PS2Mesh.csl
+0x002FC6E0	PS2xyz.csl
+0x002FC6F0	PS2uv.csl
+0x002FC700	PS2uv2.csl
+0x002FC710	PS2rgba.csl
+0x002FC720	PS2normal.csl
+0x002FC730	PS2user1.csl
+0x002FC740	PS2user2.csl
+0x002FC750	PS2user3.csl
+0x002FC760	PS2user4.csl
+0x002FD344	HILogo.pss
+0x002FD36C	Intro.pss
+0x002FD394	demo/demo1.pss
+0x002FD3BC	demo/demo2.pss
+0x002FD3E4	demo/demo3.pss
+0x002FD40C	demo/demo4.pss
+0x002FD434	demo/demo5.pss
+0x002FD45C	demo/demo6.pss
+0x002FD484	demo/demo7.pss
+0x002FD4AC	demo/demo8.pss
+0x002FD4D4	demo/demo9.pss
+0x002FD4FC	demo/demo10.pss
+0x002FD524	demo/demo11.pss
+0x002FD54C	demo/demo12.pss
+0x002FD574	demo/demo13.pss
+0x002FD59C	demo/demo14.pss
+0x002FD5C4	demo/demo15.pss
+0x002FD5EC	THQLogo.pss
+0x002FD614	WBLogo.pss
+0x002FD63C	SDTrailr.pss
+0x002FD664	HWTrailr.pss
+0x002FD704	Credits1.pss
+0x002FD72C	Credits2.pss
+0x002FD754	RW4.pss
+0x002FD77C	cin1.pss
+0x002FD7A4	cin2.pss
+0x002FD7CC	cin3.pss
+0x002FD7F4	cin4.pss
+0x002FD81C	cin5.pss
+0x002FD844	cin6.pss
+0x002FD86C	cin7.pss
+0x002FD894	cin8.pss
+0x002FD8BC	cin9.pss
+0x002FD8E4	cin10.pss
+0x002FD90C	cin11.pss
+0x002FD934	cin_mmpd.pss
+0x002FD95C	cin_mmsc.pss
+0x002FD984	cin_shbr.pss
+0x00342108	\t<D1_CHCR=%08x:
+0x00342118	D1_TADR=%08x:
+0x00342128	D1_MADR=%08x:
+0x00342148	\t<D2_CHCR=%08x:
+0x00342158	D2_TADR=%08x:
+0x00342168	D2_MADR=%08x:
+0x00342188	\t<VIF1_STAT=%08x:
+0x00342490	TTY: receive error
+0x00342868	ERROR
+0x003428B0	FAILED
+0x00342950	cdrom0:\%s;1
+0x0034295D	cdrom0:%s;1
+0x00342DE0	%s%s%s
+0x00342DE7	cdrom0:\MODULES\
+0x00342DF8	SIO2MAN.IRX
+0x00342E07	PADMAN.IRX
+0x00342FD3	SD2.INI
+0x003433BE	Scooby2master.elf.xMAP
+0x003435B0	%c%c%s%s%s
+0x00343611	%02x:%02x:%02x AM
+0x00343623	%02d:%02x:%02x PM
+0x00343659	%s.rw3
+0x0034368D	cdrom0:\MODULES\IOPRP243.IMG;1
+0x003437D0	p2skyfs.c
+0x003437ED	cdrom0:\%s
+0x00343800	host:%sdump%04d.bmp
+0x00343814	dump%04d.bmp
+0x00343909	name:         %s
+0x00343AF6	bound: %s
+0x00343B5F	hits:       stat:%d
+0x00343B73	   dyn:%d
+0x00343B7D	   npc:%d
+0x00343B92	%s-hit
+0x00343B99	no %s
+0x00343BBA	%s-oid:  %u
+0x00343BE2	%s-optr: %d
+0x00343C4A	%s.SKA
+0x00343C5B	%s.DFF
+0x00343CF3	Loading%s
+0x00343CFD	Entering%s
+0x00343D0F	Part %d
+0x003445FB	pause_timer%d
+0x00344710	loop%d
+0x00344717	stop%d
+0x0034A038	sndfx_pu_error
+0x0034A1FA	scooby_excite_%02d
+0x0034D92A	Debug%02d
+0x0034DFA0	cdrom0:\MODULES\MCMAN.IRX;1
+0x0034DFBC	cdrom0:\MODULES\MCSERV.IRX;1
+0x0034E123	icon.sys
+0x0034E137	No current error
+0x0034E18D	Init Failed
+0x0034E199	Unable to access Save Game Directory
+0x0034E1BE	Save Error - during initalization (async queue)
+0x0034E1EE	Save Error - during write
+0x0034E208	Save Error - opening file
+0x0034E222	Load Error - during initalization (async queue)
+0x0034E252	Load Error - during read
+0x0034E26B	Load Error - opening file
+0x0034E285	Target problem (general error)
+0x0034E2A4	Target Error - media removed or changed
+0x0034E2CC	Target Error - Not ready for I/O (unformatted?)
+0x0034E304	Operation encountered unknown error
+0x0034E34A	MEMORY CARD slot %d
+0x0034E36E	%s%06s%02d
+0x0034E5D0	KEY OFF %d UI
+0x0034E5DE	KEY ON %d UI
+0x0034E6B7	snackgate_error1
+0x0034EAEB	returns:          %s
+0x0034EB00	   ret_delay: %.3f
+0x0034EB15	continuous:       %s
+0x0034EB2A	   end_delay: %.3f
+0x0034EBF7	slide_axis:   %s
+0x0034EC23	slide_tm:     %.3f
+0x0034EC4D	slide_acc_tm: %.3f
+0x0034EC77	slide_bd_tm:  %.3f
+0x0034ECFB	rot_axis:   %s
+0x0034ED23	rot_tm:     %.3f
+0x0034ED49	rot_acc_tm: %.3f
+0x0034ED6F	rot_bd_tm:  %.3f
+0x0034EF50	sphere.dff
+0x0034F16D	cdrom0:\MODULES\LIBSD.IRX;1
+0x0034F189	cdrom0:\MODULES\SDRDRV.IRX;1
+0x0034F1A6	cdrom0:\MODULES\STREAM.IRX;1
+0x0034F6E7	%c %02d SELECTED
+0x0035008A	%d,%d,%d
+0x00350093	%s/%c%c
+0x003500A6	%d:%c%c %s
+0x003517C5	x %d%/%d
+0x003517CE	Time - %dh %dm %ds
+0x003517E1	rhsd0001.anm
+0x003517F4	rhsa0001.anm
+0x00351804	bat_fly.anm
+0x00351C00	PARTICLE_CLIP_%d
+0x00351C6F	van_skel.dff
+0x00351C7C	rb_skel_c6.dff
+0x00351C8B	da_skel_c4.dff
+0x00351C9A	ve_skel_c3.dff
+0x00351CA9	sd_skel_c3.dff
+0x00351CB8	sd_skel_c5.dff
+0x00351CC7	mm_skel.dff
+0x00351CD3	sd_skel_c11.dff
+0x00351CE3	cwc_skel_c5.dff
+0x00351CF3	ve_skel_c7.dff
+0x00351D02	sd_skel_c7.dff
+0x00351D11	sh_skel_c7.dff
+0x00351D33	bk_skel_c2.dff
+0x00352010	@@(#)$Id: babinary.c,v 1.137 2001/10/02 13:44:50 mattt Exp mattt $
+0x003520C8	@@(#)$Id: bamatrix.c,v 1.180 2001/11/05 12:19:42 johns Exp rburg $
+0x00352120	Invalid combination type
+0x00352140	@@(#)$Id: bacamera.c,v 1.364 2001/11/28 10:55:41 rburg Exp rburg $
+0x00352188	Invalid projection type specified
+0x003521B0	@@(#)$Id: badevice.c,v 1.197 2001/11/26 16:58:54 rburg Exp rburg $
+0x00352258	@@(#)$Id: batextur.c,v 1.235 2001/11/09 16:41:08 mattt Exp $
+0x003522B0	@@(#)$Id: badma.c,v 1.136 2001/10/31 16:36:47 rabin Exp rabin $
+0x00352460	@@(#)$Id: basky.c,v 1.210 2001/11/09 11:44:04 Rabin Exp iestynb $
+0x00352DE8	@@(#)$Id: dmaalloc.c,v 1.19 2001/02/01 12:51:47 johns Exp rabin $
+0x00352EE0	@@(#)$Id: skyblit.c,v 1.20 2001/05/17 16:14:52 johns Exp Rabin $
+0x00353050	@@(#)$Id: skyconv.c,v 1.34 2001/01/31 14:01:23 johns Exp Rabin $
+0x00353288	@@(#)$Id: skyinst.c,v 1.53 2001/10/31 16:49:57 johns Exp $
+0x003533C0	@@(#)$Id: baim3d.c,v 1.123 2001/11/01 10:46:17 katherinet Exp $
+0x00353528	@@(#)$Id: nodeClipLine.c,v 1.59 2001/10/11 08:40:37 johns Exp rburg $
+0x003535A0	@@(#)$Id: nodeClipTriangle.c,v 1.87 2001/10/26 16:12:00 antonk Exp rburg $
+0x00353620	@@(#)$Id: nodeImmRenderSetup.c,v 1.69 2001/02/13 16:00:35 Roba Exp iestynb $
+0x00353688	@@(#)$Id: p2heap.c,v 1.81 2001/10/15 16:09:24 iestynb Exp markf $
+0x003536D0	Heap resized from %d to %d bytes
+0x00353700	@@@@(#)$Id: rpmatfx.c,v 1.100 2001/10/23 12:23:26 mattt Exp mattt $
+0x00353770	@@@@(#)$Id: effectpipesdriver.c,v 1.1 2001/11/06 10:03:15 jamesa Exp jamesa $
+0x00353800	@@(#)$Id: nodeAtomicInstance.c,v 1.85 2001/07/10 11:45:04 johns Exp Markj $
+0x00353860	@@@@(#)$Id: fastim3d.c,v 1.50 2001/10/15 17:35:06 iestynb Exp iestynb $
+0x00353900	@@@@(#)$Id: matinstance.c,v 1.32 2001/11/16 18:27:44 iestynb Exp $
+0x00353A40	@@@@(#)$Id: native.c,v 1.14 2001/10/15 17:22:01 iestynb Exp Markj $
+0x00353B50	@@@@(#)$Id: nodeps2matinstance.c,v 1.196 2001/10/12 11:36:23 Markj Exp $
+0x00353D90	_rwPS2MatInstancePipelineNodeInit; cluster %s has both CL_ATTRIB_REQUIRED and CL_ATTRIB_PLACEHOLDER set in its attributes - illegal!
+0x00353E18	_rwPS2MatInstancePipelineNodeInit; cluster %s has both (CL_ATTRIB_READ or CL_ATTRIB_WRITE) and CL_ATTRIB_OPAQUE set, these are mutually incompatible
+0x00353EB0	_rwPS2MatInstancePipelineNodeInit; could not locate cluster %s in node definition clusters of interest
+0x00353F18	Cluster %s not present (subsequent nodes don't require it). You should not be requiring this cluster to be visible (CL_ATTRIB_READ or CL_ATTRIB_WRITE) in its creation attributes [read during the call to RxPS2MatInstanceGenerateCluster()]
+0x00354188	_rwPS2MatInstancePipelineNodeInit; %s cluster has unrecognised attributes
+0x00354228	@@@@(#)$Id: ps2allatomic.c,v 1.51 2001/11/07 19:39:22 iestynb Exp $
+0x00354288	@@@@(#)$Id: ps2allim3d.c,v 1.49 2001/11/10 17:26:24 iestynb Exp $
+0x00354300	@@@@(#)$Id: ps2allmat.c,v 1.24 2001/11/20 18:07:43 iestynb Exp $
+0x00354348	PS2AllMatProcessInitData; cluster %s has both CL_ATTRIB_REQUIRED and CL_ATTRIB_PLACEHOLDER set in its attributes - illegal!
+0x003543C8	PS2AllMatProcessInitData; cluster %s has both (CL_ATTRIB_READ or CL_ATTRIB_WRITE) and CL_ATTRIB_OPAQUE set, these are mutually incompatible
+0x003545C0	PS2AllMatProcessInitData; %s cluster has unrecognised attributes
+0x00354680	@@@@(#)$Id: ps2allsector.c,v 1.47 2001/11/14 16:48:29 iestynb Exp iestynb $
+0x003546E8	@@@@(#)$Id: wrldpipe.c,v 1.132 2001/10/25 15:21:15 iestynb Exp iestynb $
+0x0035618C	sceMpegGetPicture() decode error
+0x003561D0	cdrom0
+0x003563B8	Invalid modion type -- ignored(%d)
+0x003563E0	(a) invalid motion_type(%d)-0
+0x00356400	(b) invalid motion_type(%d)-1
+0x00356420	(c) invalid motion_type(%d)-2
+0x00356458	Error code detected(BDEC)
+0x00356478	Invalid macroblock_address_increment code(0x%08x)
+0x003564D0	slice_start_code(0x%08x) out of range
+0x003564F8	_sliceA0(): error happens
+0x00356568	Invalid macroblock_type code: 0
+0x00356728	image buffer needs to be aligned to 64byte boundary(0x%08x)
+0x00356AA0	laugh_track%02d
+0x0035719C	BAT HANG %d
+0x003571A8	CHIMNEY EMITTER %d

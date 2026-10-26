@@ -1,0 +1,6517 @@
+
+Packer Library Information
+---------------------------
+Library Version        : 1
+
+General Package Information
+---------------------------
+Package File    : C:\SD2\Game\GC\data\O0\o002.HIP
+Created         : Tue Aug 06 13:07:30 2002
+Modified        : Tue Aug 06 13:07:30 2002
+Package Version : HIPA
+Sub-Version     : 2
+Compatible      : 1
+Client Version  : 4.6 (262150)
+# of Layers     : 8
+# of Assets     : 382
+Package Settings:
+                   GameTime               Disabled
+                   Statistics Tracking    Enabled
+                   Extra Info             Available
+                   Layered Sorting        Enabled
+
+Type Totals
+-----------
+Following types are defined using indicated byte totals
+
+processing
+...........
+++++++++
+  Type:  Count #DataBytes  #Pad(Raw)    #Loaded    #Dumped   #Ignored
+  ----:  ----- ----------  ---------    -------    -------   --------
+  CSN :      0          0          0          0          0          0
+  CSNM:      0          0          0          0          0          0
+  CTOC:      0          0          0          0          0          0
+  BSP :      3    1004404          8    1004412    1004412          0
+  TXD :      0          0          0          0          0          0
+  ANIM:     24     326504        104     326608          0          0
+  ATBL:      3       3384         24       3408          0          0
+  MINF:      4        880         32        912          0          0
+  MODL:     37     888964        232     889196     889196          0
+  RWTX:     52     652128        408     652536     652536          0
+  TEX :      0          0          0          0          0          0
+  PNG :      0          0          0          0          0          0
+  BMP :      0          0          0          0          0          0
+  TXT :      0          0          0          0          0          0
+  ENV :      1         64          0         64          0          0
+  GRUP:      1         24          8         32          0          0
+  SDF :      0          0          0          0          0          0
+  PORT:      2         48         16         64          0          0
+  TRIG:     24       4928          0       4928          0          0
+  DPAT:      1        104          8        112          0          0
+  NPC :      5        980         60       1040          0          0
+  PKUP:     64       5632        512       6144          0          0
+  PLYR:      1         80          0         80          0          0
+  CAM :     22       2992        176       3168          0          0
+  DOOR:      0          0          0          0          0          0
+  TIMR:      1         76          4         80          0          0
+  TEXT:      0          0          0          0          0          0
+  PICK:      0          0          0          0          0          0
+  PLAT:      3        760         24        784          0          0
+  PEND:      0          0          0          0          0          0
+  MVPT:     16        584        184        768          0          0
+  MRKR:     28        336        112        448          0          0
+  SFX :      3        144          0        144          0          0
+  SND :     31     454624          0          0          0     454624
+  SNDS:      0          0          0          0          0          0
+  MPHT:      0          0          0          0          0          0
+  SPLN:      0          0          0          0          0          0
+  SIMP:     37       3404        148       3552          0          0
+  SNDI:      1       3112          0       3112          0          0
+  CNTR:      0          0          0          0          0          0
+  HANG:      0          0          0          0          0          0
+  BUTN:      0          0          0          0          0          0
+  SURF:      1        208          0        208          0          0
+  DSTR:      3        432          0        432          0          0
+  MAPR:      3         32          8         40          0          0
+  GUST:      0          0          0          0          0          0
+  VOLU:      0          0          0          0          0          0
+  COND:      1         84         12         96          0          0
+  UI  :      0          0          0          0          0          0
+  UIFT:      1        156          4        160          0          0
+  PRJT:      3        204         36        240          0          0
+  LOBM:      2        256          0        256          0          0
+  FOG :      1         68         12         80          0          0
+  LITE:      0          0          0          0          0          0
+  PARS:      1         72          8         80          0          0
+  PARE:      2        240         16        256          0          0
+  EGEN:      0          0          0          0          0          0
+  ALST:      0          0          0          0          0          0
+  SCRP:      0          0          0          0          0          0
+
+  Sums:    382    3355908       2156    2903440    2546144     454624
+
+
+Supported Package Types:
+------------------------
+	CSN ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	CSNM::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	CTOC::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	BSP ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	TXD ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	ANIM::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: yes;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	ATBL::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	MINF::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	MODL::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	RWTX::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	TEX ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PNG ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	BMP ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TXT ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	ENV ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	GRUP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SDF ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PORT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TRIG::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	DPAT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	NPC ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PKUP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PLYR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	CAM ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	DOOR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TIMR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TEXT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PICK::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PLAT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PEND::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	MVPT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	MRKR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SFX ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SND ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	SNDS::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	MPHT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: yes;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SPLN::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SIMP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SNDI::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	CNTR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	HANG::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	BUTN::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SURF::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	DSTR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	MAPR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	GUST::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	VOLU::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	COND::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	UI  ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	UIFT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PRJT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	LOBM::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	FOG ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	LITE::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PARS::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PARE::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	EGEN::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	ALST::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SCRP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+
+Layer Information
+-----------------
+Following layers are defined (ordering is load order)
+
+
+Layer #1 is Type 1   
+Referenced Assets:
+	0x502D994D  (RWTX)  owa00002.RW3                      (        8376)
+	0xDC7F7199  (RWTX)  ofl00006.RW3                      (        8376)
+	0xEB356D6A  (RWTX)  owao2101.RW3                      (        8376)
+	0x5273B8CF  (RWTX)  orao2301.RW3                      (        2232)
+	0xFA9C376E  (RWTX)  orao2102.RW3                      (        1208)
+	0xD38C5805  (RWTX)  stmrtrnk.RW3                      (        8376)
+	0x63CEF178  (RWTX)  ofeg0201.RW3                      (        2232)
+	0xBCDC91F5  (RWTX)  orar1101.RW3                      (        2232)
+	0x8DD25083  (RWTX)  oflo0001.RW3                      (        8376)
+	0x3AD5F596  (RWTX)  stairs_darkwood2.RW3              (        8376)
+	0x481087E2  (RWTX)  owao2002.RW3                      (        2232)
+	0xFCC323BB  (RWTX)  owao2102.RW3                      (        8376)
+	0x9A46094E  (RWTX)  wall hole.RW3                     (        8376)
+	0x00E29B7D  (RWTX)  och00001.RW3                      (        2232)
+	0x40009BA3  (RWTX)  owat0202.RW3                      (        8376)
+	0x599E3E33  (RWTX)  owao2003.RW3                      (        8376)
+	0x7CD1EEBA  (RWTX)  otai0001.RW3                      (        2232)
+	0x00519F37  (RWTX)  ocro2206.RW3                      (        2232)
+	0x536D1F29  (RWTX)  obai0002.RW3                      (        2232)
+	0xA88D0FA2  (RWTX)  ocro2201.RW3                      (        8376)
+	0xDD363295  (RWTX)  ocro2204.RW3                      (        2232)
+	0xBA1AC5F3  (RWTX)  ocro2202.RW3                      (        2232)
+	0x42E08A3A  (RWTX)  mannequin.RW3                     (        2232)
+	0xCBA87C44  (RWTX)  ocro2203.RW3                      (        8376)
+	0x988F22EA  (RWTX)  blocks.RW3                        (        2232)
+	0x8ED9C2E8  (RWTX)  celngfan.RW3                      (        2232)
+	0x1F128CC6  (RWTX)  opi00002.RW3                      (        8376)
+	0x7B49EE50  (RWTX)  olio0001.RW3                      (        2232)
+	0x5CF030DB  (RWTX)  tin_roof_4.RW3                    (        2232)
+	0x025C4C38  (RWTX)  odto2101.RW3                      (        8376)
+	0x4BF67D07  (RWTX)  gc_shadow.RW3                     (       16568)
+	0xC023E514  (RWTX)  web.RW3                           (      262328)
+	0x9995927C  (RWTX)  obo00004.RW3                      (        8376)
+	0xBF037E42  (RWTX)  owar1101.RW3                      (        8376)
+	0x41DF68D8  (RWTX)  obai0001.RW3                      (        2232)
+	0x64BEA5BF  (RWTX)  rss00001.RW3                      (        8376)
+	0x2A8E52E1  (RWTX)  rlii0007.RW3                      (        2232)
+	0xE597248B  (RWTX)  wd_skull.RW3                      (        2232)
+	0xBCB0FF1E  (RWTX)  obo00006.RW3                      (        2232)
+	0x10B6BD6C  (RWTX)  rspf0001.RW3                      (      131256)
+	0xA29124E2  (RWTX)  rbg00001.RW3                      (        8376)
+	0x51FB3FF7  (RWTX)  odfr1102.RW3                      (        2232)
+	0x5FC9F422  (RWTX)  rbuf0001.RW3                      (        2232)
+	0x2A37ED55  (RWTX)  gc_lightbeam_yellow.RW3           (        4792)
+	0xBB584A4F  (RWTX)  smoke                             (       16568)
+	0x48BCC561  (RWTX)  cwd00001.RW3                      (        2232)
+	0x83FFEF44  (RWTX)  crt00001.RW3                      (        2232)
+	0x5DC89A5B  (RWTX)  cba00001.RW3                      (        2232)
+	0x9C946B82  (RWTX)  creeper.RW3                       (        2232)
+	0x686435F9  (RWTX)  metal_diag02.RW3                  (        2232)
+	0x7FA74CC9  (RWTX)  rsa00001.RW3                      (        2232)
+	0xA9F2D249  (RWTX)  scooby_snacks.RW3                 (        8376)
+	------------------------------------
+	Size (base/forLoad)...:       652536 / 652544
+	Size Expected (TOC)...:       652544
+	Amt Asset Data........:       652128
+	Amt Pad (total).......:          408
+	Amt Pad (used)........:          408
+	Amt Read Filler.......:            8
+	====================================
+
+Layer #2 is Type 2   
+Referenced Assets:
+	0x0014C98E  (BSP )  o21                               (      801424)
+	0xE5D68FE8  (BSP )  o21_noCollide                     (      194872)
+	0x03C23F08  (BSP )  o21_notVisible                    (        8108)
+	------------------------------------
+	Size (base/forLoad)...:      1004412 / 1004416
+	Size Expected (TOC)...:      1004416
+	Amt Asset Data........:      1004404
+	Amt Pad (total).......:            8
+	Amt Pad (used)........:            8
+	Amt Read Filler.......:            4
+	====================================
+
+Layer #3 is Type 3   
+Referenced Assets:
+	0x2603D415  (MODL)  wd_bind.dff                       (      181524)
+	0x6146FDF8  (MODL)  rt_bind.dff                       (       52264)
+	0x7CDF9775  (MODL)  bat_bind.dff                      (       67744)
+	0x53102122  (MODL)  token_creeper.dff                 (        5932)
+	0x64BAF2A1  (MODL)  rss00001.DFF                      (        3336)
+	0x7FA399AB  (MODL)  rsa00001.DFF                      (       13504)
+	0xA9EF1F2B  (MODL)  scooby_snacks.DFF                 (        4532)
+	0x7A5B2E95  (MODL)  rboi0007                          (        3988)
+	0x7A5B2F11  (MODL)  rboi0010                          (        3488)
+	0xC42FDFBF  (MODL)  rflo2101                          (       55236)
+	0xFA6E8AAE  (MODL)  o21_wall1                         (        5560)
+	0xFA6E8AAF  (MODL)  o21_wall2                         (        3124)
+	0xFA6E8AB0  (MODL)  o21_wall3                         (        6572)
+	0xFA6E8AB1  (MODL)  o21_wall4                         (        4456)
+	0xFA6E8AB2  (MODL)  o21_wall5                         (        9304)
+	0xFA6E8AB3  (MODL)  o21_wall6                         (        5656)
+	0x42FDC9D8  (MODL)  o21_wallhangning1                 (      132848)
+	0x42FDC9D9  (MODL)  o21_wallhangning2                 (      115296)
+	0x42FDC9DA  (MODL)  o21_wallhangning3                 (       51180)
+	0x42FDC9DB  (MODL)  o21_wallhangning4                 (       21748)
+	0x42FDC9DC  (MODL)  o21_wallhangning5                 (       29396)
+	0x42FDC9DD  (MODL)  o21_wallhangning6                 (        8088)
+	0xFA6E8AB4  (MODL)  o21_wall7                         (        3272)
+	0xFA6E8AB5  (MODL)  o21_wall8                         (        9768)
+	0xFA6E8AB6  (MODL)  o21_wall9                         (        4596)
+	0xB171E7DB  (MODL)  rss00001                          (        3336)
+	0x2690F73A  (MODL)  o21_wall10                        (        8384)
+	0xA43B805D  (MODL)  rlii0007                          (       35904)
+	0xA432EAE7  (MODL)  wd_skull                          (        8244)
+	0x9A5FBEEE  (MODL)  r_book04                          (        4348)
+	0x9A5FBEEB  (MODL)  r_book01                          (        5032)
+	0x4112B078  (MODL)  rspf0001                          (         772)
+	0xE762050E  (MODL)  rbg00001                          (        1692)
+	0xCAD68823  (MODL)  o002_door1                        (        7792)
+	0xCAD68824  (MODL)  o002_door2                        (        7792)
+	0x686C5C5C  (MODL)  rbsi0002                          (        1692)
+	0x7B8CFAE1  (MODL)  o_lightbeam                       (        1564)
+	------------------------------------
+	Size (base/forLoad)...:       889196 / 889216
+	Size Expected (TOC)...:       889216
+	Amt Asset Data........:       888964
+	Amt Pad (total).......:          232
+	Amt Pad (used)........:          232
+	Amt Read Filler.......:           20
+	====================================
+
+Layer #4 is Type 4   
+Referenced Assets:
+	------------------------------------
+	Size (base/forLoad)...:            0 / 0
+	Size Expected (TOC)...:            0
+	Amt Asset Data........:            0
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:            0
+	====================================
+
+Layer #5 is Type 0   
+Referenced Assets:
+	0x2EA5F237  (PLYR)  SCOOBY                            (          80)
+	0xA84C121D  (NPC )  WITCH DOCTOR1                     (         196)
+	0x300B60D4  (NPC )  WITCHDOCTOR2                      (         196)
+	0x0B0E0C1C  (NPC )  RAT1                              (         196)
+	0x8F54CCF2  (NPC )  BAT01                             (         196)
+	0x8F54CCF3  (NPC )  BAT02                             (         196)
+	0xDFA0C15E  (PKUP)  MT_CREEPER                        (          88)
+	0x0015E695  (PKUP)  SS1                               (          88)
+	0x0015E696  (PKUP)  SS2                               (          88)
+	0x0015E697  (PKUP)  SS3                               (          88)
+	0x0015E698  (PKUP)  SS4                               (          88)
+	0x0015E699  (PKUP)  SS5                               (          88)
+	0x0015E69A  (PKUP)  SS6                               (          88)
+	0x0015E69B  (PKUP)  SS7                               (          88)
+	0x0015E69C  (PKUP)  SS8                               (          88)
+	0x0015E69D  (PKUP)  SS9                               (          88)
+	0x0B34FE6F  (PKUP)  SS10                              (          88)
+	0x0B34FE70  (PKUP)  SS11                              (          88)
+	0x0B34FE71  (PKUP)  SS12                              (          88)
+	0x0B34FE72  (PKUP)  SS13                              (          88)
+	0x0B34FE73  (PKUP)  SS14                              (          88)
+	0x0B34FE74  (PKUP)  SS15                              (          88)
+	0x0B34FE75  (PKUP)  SS16                              (          88)
+	0x0B34FE76  (PKUP)  SS17                              (          88)
+	0x0B34FE77  (PKUP)  SS18                              (          88)
+	0x0B34FE78  (PKUP)  SS19                              (          88)
+	0x0B34FEF2  (PKUP)  SS20                              (          88)
+	0x0B34FEF3  (PKUP)  SS21                              (          88)
+	0x0B34FEF4  (PKUP)  SS22                              (          88)
+	0x0B34FEF5  (PKUP)  SS23                              (          88)
+	0x0B34FEF6  (PKUP)  SS24                              (          88)
+	0x0B34FEF7  (PKUP)  SS25                              (          88)
+	0x0B34FEF8  (PKUP)  SS26                              (          88)
+	0x0B34FEF9  (PKUP)  SS27                              (          88)
+	0x0B34FEFA  (PKUP)  SS28                              (          88)
+	0x0B34FEFB  (PKUP)  SS29                              (          88)
+	0x0B34FF75  (PKUP)  SS30                              (          88)
+	0x0B34FF76  (PKUP)  SS31                              (          88)
+	0x0B34FF77  (PKUP)  SS32                              (          88)
+	0x3B8FBE6D  (PKUP)  FOOD03                            (          88)
+	0x0B34FF79  (PKUP)  SS34                              (          88)
+	0x0B34FF7A  (PKUP)  SS35                              (          88)
+	0x0B34FF7B  (PKUP)  SS36                              (          88)
+	0x0B34FF7E  (PKUP)  SS39                              (          88)
+	0x0B34FFF8  (PKUP)  SS40                              (          88)
+	0x0B34FFF9  (PKUP)  SS41                              (          88)
+	0x0B34FFFA  (PKUP)  SS42                              (          88)
+	0x0B34FFFB  (PKUP)  SS43                              (          88)
+	0x0B34FFFC  (PKUP)  SS44                              (          88)
+	0x0B34FFFD  (PKUP)  SS45                              (          88)
+	0x0B34FFFE  (PKUP)  SS46                              (          88)
+	0x0B34FFFF  (PKUP)  SS47                              (          88)
+	0x0B350000  (PKUP)  SS48                              (          88)
+	0xB3031535  (PKUP)  SSBOX02                           (          88)
+	0x0B35007B  (PKUP)  SS50                              (          88)
+	0x0B35007C  (PKUP)  SS51                              (          88)
+	0x0B35007D  (PKUP)  SS52                              (          88)
+	0x0B35007E  (PKUP)  SS53                              (          88)
+	0x0B35007F  (PKUP)  SS54                              (          88)
+	0x0B350080  (PKUP)  SS55                              (          88)
+	0x0B350081  (PKUP)  SS56                              (          88)
+	0x0B350082  (PKUP)  SS57                              (          88)
+	0x0B350083  (PKUP)  SS58                              (          88)
+	0x0B350084  (PKUP)  SS59                              (          88)
+	0x0B3500FE  (PKUP)  SS60                              (          88)
+	0x0B3500FF  (PKUP)  SS61                              (          88)
+	0xB3031534  (PKUP)  SSBOX01                           (          88)
+	0x0B350101  (PKUP)  SS63                              (          88)
+	0x3B8FBE6B  (PKUP)  FOOD01                            (          88)
+	0xB3031536  (PKUP)  SSBOX03                           (          88)
+	0x708176D8  (TRIG)  1STCORNER_TRIG                    (         208)
+	0x5ACA1676  (TRIG)  LONGSLIDE_TRIG                    (         176)
+	0x3D7DCD2F  (TRIG)  HALLWAY TO O003                   (         176)
+	0xD1AE4936  (TRIG)  EXITO003                          (         272)
+	0x7798F554  (TRIG)  1STSTAIR_TRIG                     (         176)
+	0xD1AE4934  (TRIG)  EXITO001                          (         272)
+	0x8CE483CD  (TRIG)  SECRET_SLIDE_TRIG                 (         176)
+	0x2C9CA686  (TRIG)  TURNFORJUMP                       (         208)
+	0x065800B6  (TRIG)  4THSTAIR_TRIG                     (         176)
+	0x31092D4E  (TRIG)  2NDSTAIR_TRIG                     (         176)
+	0xECD0012B  (TRIG)  3RDSTAIR_TRIG                     (         176)
+	0xB0E8BDF5  (TRIG)  1STFLOOR_TRIG                     (         208)
+	0x77950091  (TRIG)  CAM ENTRANCE TRIG                 (         176)
+	0x6AE190F1  (TRIG)  CT (FIRST TURN LOCKED)            (         208)
+	0xA11D69A0  (TRIG)  FIRST LANDING UP                  (         176)
+	0x938AD694  (TRIG)  SECOND LANDING UP                 (         208)
+	0x7E652B2F  (TRIG)  3RD LANDING UP                    (         208)
+	0x77F4673A  (TRIG)  FALL2DEATH01                      (         240)
+	0x77F4673B  (TRIG)  FALL2DEATH02                      (         208)
+	0x238B0109  (TRIG)  BOOKCASE_CLOSE_TRIG               (         240)
+	0xB3E59477  (TRIG)  BOOKCASE_OPEN_TRIG                (         240)
+	0xC914E3ED  (TRIG)  VIS_WALLHANG1_TRIG                (         208)
+	0xBBA1C646  (TRIG)  VIS_WALLHANG4_TRIG                (         208)
+	0xC9034BFE  (TRIG)  VIS_SECRET_SLIDE_TRIG             (         208)
+	0xBC44C2B2  (CAM )  START                             (         136)
+	0x090B7C73  (CAM )  CAM2                              (         136)
+	0xDCE4FA93  (CAM )  CAM_1STCORNER                     (         136)
+	0x090B7C75  (CAM )  CAM4                              (         136)
+	0x090B7C76  (CAM )  CAM5                              (         136)
+	0x006B441B  (CAM )  CAM6(STEPS)                       (         136)
+	0x61FEBB91  (CAM )  STEP_PULLIN_CAM                   (         136)
+	0xB4309C7D  (CAM )  CAM_4THSTAIR                      (         136)
+	0x090B7C77  (CAM )  CAM6                              (         136)
+	0x7E3F4882  (CAM )  CAM_1STFLOOR                      (         136)
+	0xF0A0086B  (CAM )  CAM ENTRANCE                      (         136)
+	0xED2D0B31  (CAM )  FIRST TURN LOCKED                 (         136)
+	0x5AAABC9D  (CAM )  CAM_1STLANDING                    (         136)
+	0x3ACF012B  (CAM )  CAM_2NDLANDING                    (         136)
+	0x72EAB912  (CAM )  CAM_3RDLANDING                    (         136)
+	0x0BDC7914  (CAM )  CAM_FALL01                        (         136)
+	0x0BDC7915  (CAM )  CAM_FALL02                        (         136)
+	0x9B6990FD  (CAM )  CAM_LONGSLIDE                     (         136)
+	0x59B1ED25  (CAM )  CAM_SECRETSLIDE                   (         136)
+	0xE55476F4  (CAM )  CAM_3RDSTAIR                      (         136)
+	0x9B244785  (CAM )  CAM_2NDSTAIR                      (         136)
+	0x638049E7  (CAM )  CAM_1STSTAIR                      (         136)
+	0x0AA29D47  (ENV )  O002                              (          64)
+	0x81AFF59E  (TIMR)  DISABLE_BOOKCASE_TIMER            (          76)
+	0xFCC6A203  (PORT)  TOO003                            (          24)
+	0xFCC6A201  (PORT)  TOO001                            (          24)
+	0x00002798  (MVPT)  M1                                (          36)
+	0x00002799  (MVPT)  M2                                (          36)
+	0x0000279A  (MVPT)  M3                                (          36)
+	0x0000279B  (MVPT)  M4                                (          36)
+	0x0000279C  (MVPT)  M5                                (          36)
+	0x0000279D  (MVPT)  M6                                (          36)
+	0x0B0E0C1D  (MVPT)  RAT2                              (          36)
+	0x0B0E0C1E  (MVPT)  RAT3                              (          44)
+	0x3B9EBB60  (MVPT)  BAT01_A                           (          36)
+	0x3B9EBB61  (MVPT)  BAT01_B                           (          36)
+	0x3B9EBB62  (MVPT)  BAT01_C                           (          36)
+	0x3B9EBB63  (MVPT)  BAT01_D                           (          36)
+	0x3B9EFE69  (MVPT)  BAT02_A                           (          36)
+	0x3B9EFE6A  (MVPT)  BAT02_B                           (          36)
+	0x3B9EFE6B  (MVPT)  BAT02_C                           (          36)
+	0x3B9EFE6C  (MVPT)  BAT02_D                           (          36)
+	0x771E2AA6  (MRKR)  FROMO003                          (          12)
+	0x771E2AA4  (MRKR)  FROMO001                          (          12)
+	0xDFFA98E6  (MRKR)  ENTRANCE M1                       (          12)
+	0xDFFA98E7  (MRKR)  ENTRANCE M2                       (          12)
+	0x30A6F1AF  (MRKR)  FIRST TURN M1                     (          12)
+	0x3A992118  (MRKR)  BOTTOM SLIDE M1                   (          12)
+	0xD16EA9D1  (MRKR)  1STLANDING_A_MARK                 (          12)
+	0xCCF2F544  (MRKR)  1STLANDING_B_MARK                 (          12)
+	0xB46E1BEB  (MRKR)  2NDLANDING_A_MARK                 (          12)
+	0xAFF2675E  (MRKR)  2NDLANDING_B_MARK                 (          12)
+	0xD6AF42D8  (MRKR)  3RDLANDING_A_MARK                 (          12)
+	0xD2338E4B  (MRKR)  3RDLANDING_B_MARK                 (          12)
+	0x9FF61C4F  (MRKR)  LS_A_MARK                         (          12)
+	0x9B7A67C2  (MRKR)  LS_B_MARK                         (          12)
+	0x4F6F03B6  (MRKR)  SS_A_MARK                         (          12)
+	0x4AF34F29  (MRKR)  SS_B_MARK                         (          12)
+	0x10902CA3  (MRKR)  1STCORNER_A_MARK                  (          12)
+	0x0C147816  (MRKR)  1STCORNER_B_MARK                  (          12)
+	0x7B301F71  (MRKR)  4THSTAIR_A_MARK                   (          12)
+	0x76B46AE4  (MRKR)  4THSTAIR_B_MARK                   (          12)
+	0xFD86C28E  (MRKR)  3RDSTAIR_A_MARK                   (          12)
+	0xF90B0E01  (MRKR)  3RDSTAIR_B_MARK                   (          12)
+	0x5A1678C9  (MRKR)  2NDSTAIR_A_MARK                   (          12)
+	0x559AC43C  (MRKR)  2NDSTAIR_B_MARK                   (          12)
+	0x767E12FF  (MRKR)  1STSTAIR_A_MARK                   (          12)
+	0x72025E72  (MRKR)  1STSTAIR_B_MARK                   (          12)
+	0x5BCE43A8  (MRKR)  1STFLOOR_A_MARK                   (          12)
+	0x57528F1B  (MRKR)  1STFLOOR_B_MARK                   (          12)
+	0x94245638  (GRUP)  WEB_BLOCK_GRP                     (          24)
+	0x49FC966E  (SFX )  CASE_SLIDE                        (          48)
+	0x3107A9D0  (SFX )  WEB_BREAK                         (          48)
+	0xCEA2BE16  (SFX )  DOOR CREAK                        (          48)
+	0x2DE074B3  (PLAT)  1WAYBOOKCASE                      (         232)
+	0xB7BA2BE3  (PLAT)  DOORTOO001                        (         264)
+	0xB7BA2BE5  (PLAT)  DOORTOO003                        (         264)
+	0xC484EE81  (SIMP)  WALL_ENTRANCE_HALL                (          92)
+	0x77FB6C1A  (SIMP)  1STSTAIR_WALL                     (          92)
+	0x316BA414  (SIMP)  2NDSTAIR_WALL                     (          92)
+	0xED3277F1  (SIMP)  3RDSTAIR_WALL                     (          92)
+	0x06BA777C  (SIMP)  4THSTAIR_WALL                     (          92)
+	0x1EA6A379  (SIMP)  WALLHANG1                         (          92)
+	0x1EA6A37A  (SIMP)  WALLHANG2                         (          92)
+	0x1EA6A37B  (SIMP)  WALLHANG3                         (          92)
+	0x1EA6A37C  (SIMP)  WALLHANG4                         (          92)
+	0x1EA6A37D  (SIMP)  WALLHANG5                         (          92)
+	0x3D11B0C2  (SIMP)  WALL_SLIDE_TOP                    (          92)
+	0x16F66F7A  (SIMP)  WALL_SLIDE_BOTTOM                 (          92)
+	0xF17C5FFF  (SIMP)  WALL_SLIDE_SECRET_SIDE            (          92)
+	0x6B5F0665  (SIMP)  WALL_SLIDE_SECRET_TOP             (          92)
+	0x856A76BF  (SIMP)  WEB_BLOCK01                       (          92)
+	0x856A76C0  (SIMP)  WEB_BLOCK02                       (          92)
+	0x856A76C1  (SIMP)  WEB_BLOCK03                       (          92)
+	0x510A8847  (SIMP)  LIGHTBEAM_01                      (          92)
+	0x510A8848  (SIMP)  LIGHTBEAM_02                      (          92)
+	0x510A8849  (SIMP)  LIGHTBEAM_03                      (          92)
+	0x510A884A  (SIMP)  LIGHTBEAM_04                      (          92)
+	0x510A884B  (SIMP)  LIGHTBEAM_05                      (          92)
+	0x510A884C  (SIMP)  LIGHTBEAM_06                      (          92)
+	0x510A884D  (SIMP)  LIGHTBEAM_07                      (          92)
+	0x510A884E  (SIMP)  LIGHTBEAM_08                      (          92)
+	0x510A884F  (SIMP)  LIGHTBEAM_09                      (          92)
+	0x510A88C9  (SIMP)  LIGHTBEAM_10                      (          92)
+	0x510A88CA  (SIMP)  LIGHTBEAM_11                      (          92)
+	0x510A88CB  (SIMP)  LIGHTBEAM_12                      (          92)
+	0x510A88CC  (SIMP)  LIGHTBEAM_13                      (          92)
+	0x510A88CD  (SIMP)  LIGHTBEAM_14                      (          92)
+	0x510A88CE  (SIMP)  LIGHTBEAM_15                      (          92)
+	0x510A88CF  (SIMP)  LIGHTBEAM_16                      (          92)
+	0x510A88D0  (SIMP)  LIGHTBEAM_17                      (          92)
+	0x510A88D1  (SIMP)  LIGHTBEAM_18                      (          92)
+	0x510A88D2  (SIMP)  LIGHTBEAM_19                      (          92)
+	0x510A894C  (SIMP)  LIGHTBEAM_20                      (          92)
+	0xBB35FF43  (SURF)  SLOPE                             (         208)
+	0x1C1545A7  (DSTR)  WEB_SLIDE01                       (         144)
+	0x1C1545A8  (DSTR)  WEB_SLIDE02                       (         144)
+	0x1C1545A9  (DSTR)  WEB_SLIDE03                       (         144)
+	0x9C560B5E  (DPAT)  SCENE SET UPS                     (         104)
+	0x6C4D0930  (COND)  WEB_PROTECTION_OFF                (          84)
+	0xD081BC55  (UIFT)  EXITFONT                          (         156)
+	0x58F0289F  (PRJT)  SNACKSPRAY                        (          68)
+	0x8A1FB193  (PRJT)  SKULL_PROJ                        (          68)
+	0x0999EF81  (PRJT)  GUM                               (          68)
+	0xEC269EFA  (LOBM)  SNACKSHOOTER                      (         128)
+	0xC562BC55  (LOBM)  GUMSHOOTER                        (         128)
+	0xD7688928  (FOG )  FOGGY                             (          68)
+	0xC620874D  (PARE)  EMIT_SMOKEPIT1                    (         120)
+	0xC620874E  (PARE)  EMIT_SMOKEPIT2                    (         120)
+	0x2EFC035A  (PARS)  PARSYS_SMOKEPIT1                  (          72)
+	0xFCD36394  (ANIM)  wd_idle.anm                       (       15328)
+	0xCF9E5689  (ANIM)  wd_walk.anm                       (       32592)
+	0xA1242B01  (ANIM)  wd_turn.anm                       (       15312)
+	0x3616F93A  (ANIM)  wd_chase.anm                      (       12892)
+	0x766E6460  (ANIM)  wd_seereact.anm                   (       10120)
+	0xB1B7F671  (ANIM)  wd_gloat.anm                      (       19484)
+	0x4FA3438E  (ANIM)  wd_hear.anm                       (       15312)
+	0x1747BC07  (ANIM)  wd_see.anm                        (       28740)
+	0x43700067  (ANIM)  wd_investigate.anm                (       33500)
+	0x875E1978  (ANIM)  wd_attack_touch.anm               (        3968)
+	0x5E57BC24  (ANIM)  wd_attack.anm                     (       17544)
+	0x1F3072A5  (ANIM)  wd_gummed.anm                     (       15664)
+	0x683B0593  (ANIM)  wd_gumbounce.anm                  (       19152)
+	0x2A8B8FF0  (ANIM)  wd_bubbled.anm                    (       11472)
+	0x094541EF  (ANIM)  wd_stunned.anm                    (       23392)
+	0x81E58942  (ANIM)  wd_hitbackward.anm                (       23424)
+	0x38168D77  (ANIM)  rt_idle.anm                       (        4732)
+	0x70938117  (ANIM)  rt_patrol.anm                     (        5024)
+	0x07442438  (ANIM)  rt_smashed.anm                    (        4244)
+	0xCDE4B817  (ANIM)  bat_flying.anm                    (        1812)
+	0xD85596E6  (ANIM)  bat_hang.anm                      (        3588)
+	0xB10C7105  (ANIM)  bat_gummed.anm                    (        3144)
+	0xACB0E9B3  (ANIM)  bat_gumbounce.anm                 (        2476)
+	0x8B996740  (ANIM)  bat_death.anm                     (        3588)
+	0x6819993A  (ATBL)  wd.ATBL                           (        2344)
+	0x98E1452D  (ATBL)  rt.ATBL                           (         412)
+	0xA2E5EE14  (ATBL)  ba.ATBL                           (         628)
+	0x69B26139  (MINF)  wd.MINF                           (         280)
+	0x9A7A0D2C  (MINF)  rt.MINF                           (         212)
+	0xA47EB613  (MINF)  ba.MINF                           (         376)
+	0x94E25463  (MINF)  pickups.MINF                      (          12)
+	0x18673D41  (MAPR)  o21 Material Map                  (          16)
+	0x0006A06F  (MAPR)  o21_noCollide Material Map        (           8)
+	0x40ECA7CF  (MAPR)  o21_notVisible Material Map       (           8)
+	------------------------------------
+	Size (base/forLoad)...:       354184 / 354208
+	Size Expected (TOC)...:       354208
+	Amt Asset Data........:       352676
+	Amt Pad (total).......:         1508
+	Amt Pad (used)........:         1508
+	Amt Read Filler.......:           24
+	====================================
+
+Layer #6 is Type 8   
+Referenced Assets:
+	------------------------------------
+	Size (base/forLoad)...:            0 / 0
+	Size Expected (TOC)...:            0
+	Amt Asset Data........:            0
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:            0
+	====================================
+
+Layer #7 is Type 6   
+Referenced Assets:
+	0x49622AD5  (SND )  wd_staff_shake                    (       11456)
+	0xCC7AAE4A  (SND )  wd_surprise1                      (        8704)
+	0x16741BD1  (SND )  wd_chase1                         (       25280)
+	0xC69F0788  (SND )  wd_see1                           (       14528)
+	0x4C97B266  (SND )  wd_gloat1                         (       16128)
+	0x0F4F305C  (SND )  wd_listen1                        (       13472)
+	0x29DA9248  (SND )  wd_look1                          (       22464)
+	0x2953282F  (SND )  wd_attack1                        (        9696)
+	0xBE472FDC  (SND )  gen_gumstretch1                   (        5952)
+	0xD74A0199  (SND )  gen_gumbounce05                   (       10688)
+	0x2F321A42  (SND )  gen_bubble_form2                  (        8608)
+	0x6BE36BC0  (SND )  wd_stunned1                       (       35200)
+	0xDD4F88E3  (SND )  wd_death1                         (       31360)
+	0x3FEE2901  (SND )  gen_bodyfall1                     (        4960)
+	0xF4E604CD  (SND )  gum_pop                           (        3296)
+	0x2F321A41  (SND )  gen_bubble_form1                  (       12576)
+	0xB22A8421  (SND )  soapbubble_pop                    (        3264)
+	0xDE777092  (SND )  life_essence_fade                 (       38304)
+	0x21EDD1AA  (SND )  fireball3                         (       17216)
+	0x21EDD1AC  (SND )  fireball5                         (       28096)
+	0xA28F6B3E  (SND )  fireball_loop                     (       26880)
+	0xA341D14B  (SND )  rat_scury1                        (       13088)
+	0xF178E187  (SND )  rat_squeak01                      (       12224)
+	0x501D1AAF  (SND )  rat_smash1                        (        5728)
+	0x0176E5AA  (SND )  scooby_one_32b                    (       14688)
+	0x6902812C  (SND )  bat_wing1                         (        2560)
+	0x6902812D  (SND )  bat_wing2                         (        2944)
+	0xBDA474E9  (SND )  bat_cry1                          (       12448)
+	0xE29C09B3  (SND )  bookcase_slide2                   (       16064)
+	0xAC58CFAF  (SND )  web_bust                          (        9056)
+	0xCAEB0455  (SND )  wood_door_creak2                  (       17696)
+	------------------------------------
+	Size (base/forLoad)...:       454624 / 454624
+	Size Expected (TOC)...:       454624
+	Amt Asset Data........:       454624
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:            0
+	====================================
+
+Layer #8 is Type 7   
+Referenced Assets:
+	0x7AB6743A  (SNDI)  sound_info                        (        3112)
+	------------------------------------
+	Size (base/forLoad)...:         3112 / 3136
+	Size Expected (TOC)...:         3136
+	Amt Asset Data........:         3112
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:           24
+	====================================
+
+Asset Details
+-------------
+AID: 0x00002798  (M1)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2591856
+	    Plus:          12
+	   Check:  0x7B1ABD30
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x00002799  (M2)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2591904
+	    Plus:          12
+	   Check:  0xFEC7EA2C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0000279A  (M3)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2591952
+	    Plus:          12
+	   Check:  0xD2FE98E0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0000279B  (M4)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592000
+	    Plus:          12
+	   Check:  0x302FF428
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0000279C  (M5)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592048
+	    Plus:          12
+	   Check:  0x46E9F59E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0000279D  (M6)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592096
+	    Plus:          12
+	   Check:  0xE609EDA2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0006A06F  (o21_noCollide Material Map)
+{
+	    Type:        MAPR
+	    Size:           8
+	  Offset:     2930448
+	    Plus:           8
+	   Check:  0xBC1A4B61
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0014C98E  (o21)
+{
+	    Type:        BSP 
+	    Size:      801424
+	  Offset:      682656
+	    Plus:           0
+	   Check:  0x9ABD9A03
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\gc\o21.bsp
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x0015E695  (SS1)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2577504
+	    Plus:           8
+	   Check:  0x2F45E4FB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0015E696  (SS2)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2577600
+	    Plus:           8
+	   Check:  0xFD979D08
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0015E697  (SS3)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2577696
+	    Plus:           8
+	   Check:  0x4F994134
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0015E698  (SS4)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2577792
+	    Plus:           8
+	   Check:  0x54E1CB44
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0015E699  (SS5)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2577888
+	    Plus:           8
+	   Check:  0xE6EF1778
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0015E69A  (SS6)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2577984
+	    Plus:           8
+	   Check:  0x343D6E8B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0015E69B  (SS7)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2578080
+	    Plus:           8
+	   Check:  0x8633B2B7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0015E69C  (SS8)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2578176
+	    Plus:           8
+	   Check:  0xB0FA1C08
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0015E69D  (SS9)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2578272
+	    Plus:           8
+	   Check:  0x65D08AE1
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x00519F37  (ocro2206.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      128608
+	    Plus:           8
+	   Check:  0xC295E6A3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x006B441B  (CAM6(STEPS))
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2589200
+	    Plus:           8
+	   Check:  0x4B55BC15
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x00E29B7D  (och00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      107360
+	    Plus:           8
+	   Check:  0xBA05947F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x0176E5AA  (scooby_one_32b)
+{
+	    Type:        SND 
+	    Size:       14688
+	  Offset:     3309664
+	    Plus:           0
+	   Check:  0x7D8CA920
+	Filename:  \\job\sd2\snd\latest\p2\sd\scooby_one_32b.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x025C4C38  (odto2101.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      173920
+	    Plus:           8
+	   Check:  0x9C259F4C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x03C23F08  (o21_notVisible)
+{
+	    Type:        BSP 
+	    Size:        8108
+	  Offset:     1678960
+	    Plus:           0
+	   Check:  0x2FCA075F
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\gc\o21_notVisible.bsp
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x065800B6  (4THSTAIR_TRIG)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     2585216
+	    Plus:           0
+	   Check:  0x04BC6B27
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x06BA777C  (4THSTAIR_WALL)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594416
+	    Plus:           4
+	   Check:  0xF79D9F85
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x07442438  (rt_smashed.anm)
+{
+	    Type:        ANIM
+	    Size:        4244
+	  Offset:     2907200
+	    Plus:          12
+	   Check:  0x2190481B
+	Filename:  \\job\sd2\\cg\chr\p2\rt\latest\rt_smashed.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x090B7C73  (CAM2)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2588624
+	    Plus:           8
+	   Check:  0x194F3E8A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x090B7C75  (CAM4)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2588912
+	    Plus:           8
+	   Check:  0xBCFF358F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x090B7C76  (CAM5)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2589056
+	    Plus:           8
+	   Check:  0x9A2748E8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x090B7C77  (CAM6)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2589632
+	    Plus:           8
+	   Check:  0x680EC7E8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x094541EF  (wd_stunned.anm)
+{
+	    Type:        ANIM
+	    Size:       23392
+	  Offset:     2850624
+	    Plus:           0
+	   Check:  0xF9FFDD0D
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_stunned.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x0999EF81  (GUM )
+{
+	    Type:        PRJT
+	    Size:          68
+	  Offset:     2598752
+	    Plus:          12
+	   Check:  0xB327AA0E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0AA29D47  (O002)
+{
+	    Type:        ENV 
+	    Size:          64
+	  Offset:     2591648
+	    Plus:           0
+	   Check:  0x7C7A60A8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B0E0C1C  (RAT1)
+{
+	    Type:        NPC 
+	    Size:         196
+	  Offset:     2576784
+	    Plus:          12
+	   Check:  0xF9E0569F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B0E0C1D  (RAT2)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592144
+	    Plus:          12
+	   Check:  0x7F6A8EA4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B0E0C1E  (RAT3)
+{
+	    Type:        MVPT
+	    Size:          44
+	  Offset:     2592192
+	    Plus:           4
+	   Check:  0xCF45A966
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FE6F  (SS10)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2578368
+	    Plus:           8
+	   Check:  0xD15FA8FB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FE70  (SS11)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2578464
+	    Plus:           8
+	   Check:  0x5B7C8351
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FE71  (SS12)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2578560
+	    Plus:           8
+	   Check:  0xE196026C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FE72  (SS13)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2578656
+	    Plus:           8
+	   Check:  0xF5E8B334
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FE73  (SS14)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2578752
+	    Plus:           8
+	   Check:  0x99321320
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FE74  (SS15)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2578848
+	    Plus:           8
+	   Check:  0x008737A0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FE75  (SS16)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2578944
+	    Plus:           8
+	   Check:  0x243E6A04
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FE76  (SS17)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2579040
+	    Plus:           8
+	   Check:  0xE120372A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FE77  (SS18)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2579136
+	    Plus:           8
+	   Check:  0x350227DE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FE78  (SS19)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2579232
+	    Plus:           8
+	   Check:  0xC6A3E709
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FEF2  (SS20)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2579328
+	    Plus:           8
+	   Check:  0xEA20827C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FEF3  (SS21)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2579424
+	    Plus:           8
+	   Check:  0x5D3AC221
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FEF4  (SS22)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2579520
+	    Plus:           8
+	   Check:  0x8BC860C2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FEF5  (SS23)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2579616
+	    Plus:           8
+	   Check:  0x67C43A82
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FEF6  (SS24)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2579712
+	    Plus:           8
+	   Check:  0x8D05572B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FEF7  (SS25)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2579808
+	    Plus:           8
+	   Check:  0x61D7AC8E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FEF8  (SS26)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2579904
+	    Plus:           8
+	   Check:  0xF58FC9E4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FEF9  (SS27)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580000
+	    Plus:           8
+	   Check:  0x382D3FDE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FEFA  (SS28)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580096
+	    Plus:           8
+	   Check:  0xB6FFEB3E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FEFB  (SS29)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580192
+	    Plus:           8
+	   Check:  0x3D07ABDE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FF75  (SS30)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580288
+	    Plus:           8
+	   Check:  0x672358F3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FF76  (SS31)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580384
+	    Plus:           8
+	   Check:  0x698D3277
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FF77  (SS32)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580480
+	    Plus:           8
+	   Check:  0xC0CB1542
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FF79  (SS34)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580672
+	    Plus:           8
+	   Check:  0x576724C0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FF7A  (SS35)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580768
+	    Plus:           8
+	   Check:  0x5325B78D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FF7B  (SS36)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580864
+	    Plus:           8
+	   Check:  0x3378A39E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FF7E  (SS39)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580960
+	    Plus:           8
+	   Check:  0xF2F0CBD3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FFF8  (SS40)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2581056
+	    Plus:           8
+	   Check:  0x9D427974
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FFF9  (SS41)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2581152
+	    Plus:           8
+	   Check:  0x0517C4EA
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FFFA  (SS42)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2581248
+	    Plus:           8
+	   Check:  0x86CCA1B8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FFFB  (SS43)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2581344
+	    Plus:           8
+	   Check:  0x85DFECF4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FFFC  (SS44)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2581440
+	    Plus:           8
+	   Check:  0xF3A8E038
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FFFD  (SS45)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2581536
+	    Plus:           8
+	   Check:  0x2D49D18D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FFFE  (SS46)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2581632
+	    Plus:           8
+	   Check:  0xFBE39832
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B34FFFF  (SS47)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2581728
+	    Plus:           8
+	   Check:  0xEDF62F89
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B350000  (SS48)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2581824
+	    Plus:           8
+	   Check:  0x632F0C4C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B35007B  (SS50)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582016
+	    Plus:           8
+	   Check:  0x3B65FFD0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B35007C  (SS51)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582112
+	    Plus:           8
+	   Check:  0xE139E54E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B35007D  (SS52)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582208
+	    Plus:           8
+	   Check:  0x3D1A66ED
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B35007E  (SS53)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582304
+	    Plus:           8
+	   Check:  0xAFAA63A3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B35007F  (SS54)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582400
+	    Plus:           8
+	   Check:  0x3FF72094
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B350080  (SS55)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582496
+	    Plus:           8
+	   Check:  0xEC9D87A7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B350081  (SS56)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582592
+	    Plus:           8
+	   Check:  0x1D80354E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B350082  (SS57)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582688
+	    Plus:           8
+	   Check:  0x517107A3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B350083  (SS58)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582784
+	    Plus:           8
+	   Check:  0xA197CB85
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B350084  (SS59)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582880
+	    Plus:           8
+	   Check:  0x578D8BFA
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B3500FE  (SS60)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2582976
+	    Plus:           8
+	   Check:  0x322F4664
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B3500FF  (SS61)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2583072
+	    Plus:           8
+	   Check:  0x747C2353
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0B350101  (SS63)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2583264
+	    Plus:           8
+	   Check:  0x11A7A725
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0BDC7914  (CAM_FALL01)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2590640
+	    Plus:           8
+	   Check:  0x081645AE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0BDC7915  (CAM_FALL02)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2590784
+	    Plus:           8
+	   Check:  0xA06EAF38
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0C147816  (1STCORNER_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592896
+	    Plus:           4
+	   Check:  0x1974AEC5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0F4F305C  (wd_listen1)
+{
+	    Type:        SND 
+	    Size:       13472
+	  Offset:     3006592
+	    Plus:           0
+	   Check:  0xEC1E5AB8
+	Filename:  \\Job\sd2\snd\latest\p2\villain\wd_listen1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x10902CA3  (1STCORNER_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592880
+	    Plus:           4
+	   Check:  0x460953F7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x10B6BD6C  (rspf0001.RW3)
+{
+	    Type:        RWTX
+	    Size:      131256
+	  Offset:      495328
+	    Plus:           8
+	   Check:  0x88EA6B2A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x16741BD1  (wd_chase1)
+{
+	    Type:        SND 
+	    Size:       25280
+	  Offset:     2950656
+	    Plus:           0
+	   Check:  0x7E971BC1
+	Filename:  \\Job\sd2\snd\latest\p2\villain\wd_chase1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x16F66F7A  (WALL_SLIDE_BOTTOM)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2595088
+	    Plus:           4
+	   Check:  0xF1FCAC73
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1747BC07  (wd_see.anm)
+{
+	    Type:        ANIM
+	    Size:       28740
+	  Offset:     2720560
+	    Plus:          12
+	   Check:  0x5E8C7B3D
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_see.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x18673D41  (o21 Material Map)
+{
+	    Type:        MAPR
+	    Size:          16
+	  Offset:     2930432
+	    Plus:           0
+	   Check:  0xEC7626AB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1C1545A7  (WEB_SLIDE01)
+{
+	    Type:        DSTR
+	    Size:         144
+	  Offset:     2597792
+	    Plus:           0
+	   Check:  0x40F5D0C9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1C1545A8  (WEB_SLIDE02)
+{
+	    Type:        DSTR
+	    Size:         144
+	  Offset:     2597936
+	    Plus:           0
+	   Check:  0x3CB99D28
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1C1545A9  (WEB_SLIDE03)
+{
+	    Type:        DSTR
+	    Size:         144
+	  Offset:     2598080
+	    Plus:           0
+	   Check:  0x4E0B606B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1EA6A379  (WALLHANG1)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594512
+	    Plus:           4
+	   Check:  0x15909578
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1EA6A37A  (WALLHANG2)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594608
+	    Plus:           4
+	   Check:  0x5F6F4A80
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1EA6A37B  (WALLHANG3)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594704
+	    Plus:           4
+	   Check:  0x53FE4304
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1EA6A37C  (WALLHANG4)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594800
+	    Plus:           4
+	   Check:  0xCA90F570
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1EA6A37D  (WALLHANG5)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594896
+	    Plus:           4
+	   Check:  0x8E9E08DD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1F128CC6  (opi00002.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      161056
+	    Plus:           8
+	   Check:  0x1087F5F9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x1F3072A5  (wd_gummed.anm)
+{
+	    Type:        ANIM
+	    Size:       15664
+	  Offset:     2804336
+	    Plus:           0
+	   Check:  0x72808960
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_gummed.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x21EDD1AA  (fireball3)
+{
+	    Type:        SND 
+	    Size:       17216
+	  Offset:     3206432
+	    Plus:           0
+	   Check:  0x8163912C
+	Filename:  \\Job\sd2\snd\latest\p2\projectiles\fireball3.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x21EDD1AC  (fireball5)
+{
+	    Type:        SND 
+	    Size:       28096
+	  Offset:     3223648
+	    Plus:           0
+	   Check:  0xF1E73845
+	Filename:  \\Job\sd2\snd\latest\p2\projectiles\fireball5.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x238B0109  (BOOKCASE_CLOSE_TRIG)
+{
+	    Type:        TRIG
+	    Size:         240
+	  Offset:     2587376
+	    Plus:           0
+	   Check:  0x897C4A64
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2603D415  (wd_bind.dff)
+{
+	    Type:        MODL
+	    Size:      181524
+	  Offset:     1687072
+	    Plus:          12
+	   Check:  0x50CD6FE3
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_bind.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x2690F73A  (o21_wall10)
+{
+	    Type:        MODL
+	    Size:        8384
+	  Offset:     2493008
+	    Plus:           0
+	   Check:  0x11ABA724
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wall10.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x2953282F  (wd_attack1)
+{
+	    Type:        SND 
+	    Size:        9696
+	  Offset:     3042528
+	    Plus:           0
+	   Check:  0x1E14A93F
+	Filename:  \\Job\sd2\snd\latest\p2\villain\wd_attack1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x29DA9248  (wd_look1)
+{
+	    Type:        SND 
+	    Size:       22464
+	  Offset:     3020064
+	    Plus:           0
+	   Check:  0x50CBDCA9
+	Filename:  \\Job\sd2\snd\latest\p2\villain\wd_look1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x2A37ED55  (gc_lightbeam_yellow.RW3)
+{
+	    Type:        RWTX
+	    Size:        4792
+	  Offset:      639456
+	    Plus:           8
+	   Check:  0xB7A0B3CE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x2A8B8FF0  (wd_bubbled.anm)
+{
+	    Type:        ANIM
+	    Size:       11472
+	  Offset:     2839152
+	    Plus:           0
+	   Check:  0x16C2C72B
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_bubbled.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x2A8E52E1  (rlii0007.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      488608
+	    Plus:           8
+	   Check:  0x26BFC95E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x2C9CA686  (TURNFORJUMP)
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     2585008
+	    Plus:           0
+	   Check:  0x9ACEE56A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2DE074B3  (1WAYBOOKCASE)
+{
+	    Type:        PLAT
+	    Size:         232
+	  Offset:     2593248
+	    Plus:           8
+	   Check:  0x09AF03EE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2EA5F237  (SCOOBY)
+{
+	    Type:        PLYR
+	    Size:          80
+	  Offset:     2576288
+	    Plus:           0
+	   Check:  0xB553821C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2EFC035A  (PARSYS_SMOKEPIT1)
+{
+	    Type:        PARS
+	    Size:          72
+	  Offset:     2599424
+	    Plus:           8
+	   Check:  0x7B1B118C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2F321A41  (gen_bubble_form1)
+{
+	    Type:        SND 
+	    Size:       12576
+	  Offset:     3152288
+	    Plus:           0
+	   Check:  0x6182698C
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_bubble_form1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x2F321A42  (gen_bubble_form2)
+{
+	    Type:        SND 
+	    Size:        8608
+	  Offset:     3068864
+	    Plus:           0
+	   Check:  0x5A095541
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_bubble_form2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x300B60D4  (WITCHDOCTOR2)
+{
+	    Type:        NPC 
+	    Size:         196
+	  Offset:     2576576
+	    Plus:          12
+	   Check:  0x50651135
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x30A6F1AF  (FIRST TURN M1)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592688
+	    Plus:           4
+	   Check:  0x82F2BD31
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3107A9D0  (WEB_BREAK)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     2593152
+	    Plus:           0
+	   Check:  0x727EB9D6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x31092D4E  (2NDSTAIR_TRIG)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     2585392
+	    Plus:           0
+	   Check:  0x8CB3444C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x316BA414  (2NDSTAIR_WALL)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594224
+	    Plus:           4
+	   Check:  0x2E2BC951
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3616F93A  (wd_chase.anm)
+{
+	    Type:        ANIM
+	    Size:       12892
+	  Offset:     2662736
+	    Plus:           4
+	   Check:  0xA399F155
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_chase.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x38168D77  (rt_idle.anm)
+{
+	    Type:        ANIM
+	    Size:        4732
+	  Offset:     2897440
+	    Plus:           4
+	   Check:  0x4FF214CA
+	Filename:  \\job\sd2\\cg\chr\p2\rt\latest\rt_idle.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x3A992118  (BOTTOM SLIDE M1)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592704
+	    Plus:           4
+	   Check:  0xC8243420
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3ACF012B  (CAM_2NDLANDING)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2590352
+	    Plus:           8
+	   Check:  0xB5C330B0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3AD5F596  (stairs_darkwood2.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       79968
+	    Plus:           8
+	   Check:  0x75925E96
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x3B8FBE6B  (FOOD01)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2583360
+	    Plus:           8
+	   Check:  0xE907F70A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3B8FBE6D  (FOOD03)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2580576
+	    Plus:           8
+	   Check:  0x77CB5CCD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3B9EBB60  (BAT01_A)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592240
+	    Plus:          12
+	   Check:  0x5271DBA0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3B9EBB61  (BAT01_B)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592288
+	    Plus:          12
+	   Check:  0x56A4C8E1
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3B9EBB62  (BAT01_C)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592336
+	    Plus:          12
+	   Check:  0x8A2F705A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3B9EBB63  (BAT01_D)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592384
+	    Plus:          12
+	   Check:  0x11DC8A9B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3B9EFE69  (BAT02_A)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592432
+	    Plus:          12
+	   Check:  0x1DFFDAF9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3B9EFE6A  (BAT02_B)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592480
+	    Plus:          12
+	   Check:  0xD4315D3C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3B9EFE6B  (BAT02_C)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592528
+	    Plus:          12
+	   Check:  0xE312D595
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3B9EFE6C  (BAT02_D)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     2592576
+	    Plus:          12
+	   Check:  0xDA876B34
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3D11B0C2  (WALL_SLIDE_TOP)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594992
+	    Plus:           4
+	   Check:  0xA070DFC1
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3D7DCD2F  (HALLWAY TO O003)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     2583936
+	    Plus:           0
+	   Check:  0x674EF452
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3FEE2901  (gen_bodyfall1)
+{
+	    Type:        SND 
+	    Size:        4960
+	  Offset:     3144032
+	    Plus:           0
+	   Check:  0x1748AE20
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_bodyfall1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x40009BA3  (owat0202.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      109600
+	    Plus:           8
+	   Check:  0xDAC7F9EB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x40ECA7CF  (o21_notVisible Material Map)
+{
+	    Type:        MAPR
+	    Size:           8
+	  Offset:     2930464
+	    Plus:           0
+	   Check:  0xD138843F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x4112B078  (rspf0001)
+{
+	    Type:        MODL
+	    Size:         772
+	  Offset:     2554944
+	    Plus:          12
+	   Check:  0xEFFAA30C
+	Filename:  \\Job\sd2\cg\env\p2\f00\latest\rspf0001.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x41DF68D8  (obai0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      477984
+	    Plus:           8
+	   Check:  0xFC57ACC1
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x42E08A3A  (mannequin.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      145952
+	    Plus:           8
+	   Check:  0x85BCCD85
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x42FDC9D8  (o21_wallhangning1)
+{
+	    Type:        MODL
+	    Size:      132848
+	  Offset:     2113408
+	    Plus:           0
+	   Check:  0x7FDFC08B
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wallhangning1.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x42FDC9D9  (o21_wallhangning2)
+{
+	    Type:        MODL
+	    Size:      115296
+	  Offset:     2246256
+	    Plus:           0
+	   Check:  0x3E012DA8
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wallhangning2.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x42FDC9DA  (o21_wallhangning3)
+{
+	    Type:        MODL
+	    Size:       51180
+	  Offset:     2361552
+	    Plus:           4
+	   Check:  0xD1EB4B84
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wallhangning3.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x42FDC9DB  (o21_wallhangning4)
+{
+	    Type:        MODL
+	    Size:       21748
+	  Offset:     2412736
+	    Plus:          12
+	   Check:  0x23A31232
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wallhangning4.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x42FDC9DC  (o21_wallhangning5)
+{
+	    Type:        MODL
+	    Size:       29396
+	  Offset:     2434496
+	    Plus:          12
+	   Check:  0x31A13B27
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wallhangning5.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x42FDC9DD  (o21_wallhangning6)
+{
+	    Type:        MODL
+	    Size:        8088
+	  Offset:     2463904
+	    Plus:           8
+	   Check:  0x28777F13
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wallhangning6.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x43700067  (wd_investigate.anm)
+{
+	    Type:        ANIM
+	    Size:       33500
+	  Offset:     2749312
+	    Plus:           4
+	   Check:  0xCA437F26
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_investigate.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x481087E2  (owao2002.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:       88352
+	    Plus:           8
+	   Check:  0x571332E7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x48BCC561  (cwd00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      660832
+	    Plus:           8
+	   Check:  0xA31EF1F4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x49622AD5  (wd_staff_shake)
+{
+	    Type:        SND 
+	    Size:       11456
+	  Offset:     2930496
+	    Plus:           0
+	   Check:  0x0C4709D9
+	Filename:  \\Job\sd2\snd\latest\p2\villain\wd_staff_shake.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x49FC966E  (CASE_SLIDE)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     2593104
+	    Plus:           0
+	   Check:  0x8F4CFBC2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x4AF34F29  (SS_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592864
+	    Plus:           4
+	   Check:  0xB87B3323
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x4BF67D07  (gc_shadow.RW3)
+{
+	    Type:        RWTX
+	    Size:       16568
+	  Offset:      182304
+	    Plus:           8
+	   Check:  0x4A6B74FB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x4C97B266  (wd_gloat1)
+{
+	    Type:        SND 
+	    Size:       16128
+	  Offset:     2990464
+	    Plus:           0
+	   Check:  0x29827FA2
+	Filename:  \\Job\sd2\snd\latest\p2\villain\wd_gloat1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x4F6F03B6  (SS_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592848
+	    Plus:           4
+	   Check:  0xB5584E0D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x4FA3438E  (wd_hear.anm)
+{
+	    Type:        ANIM
+	    Size:       15312
+	  Offset:     2705248
+	    Plus:           0
+	   Check:  0x4D42679A
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_hear.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x501D1AAF  (rat_smash1)
+{
+	    Type:        SND 
+	    Size:        5728
+	  Offset:     3303936
+	    Plus:           0
+	   Check:  0xE6B8C3A2
+	Filename:  \\Job\sd2\snd\latest\p2\villain\rat_smash1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x502D994D  (owa00002.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       30112
+	    Plus:           8
+	   Check:  0x98B6D002
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x510A8847  (LIGHTBEAM_01)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2595664
+	    Plus:           4
+	   Check:  0x70206994
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A8848  (LIGHTBEAM_02)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2595760
+	    Plus:           4
+	   Check:  0xC3EEE45C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A8849  (LIGHTBEAM_03)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2595856
+	    Plus:           4
+	   Check:  0x9502C946
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A884A  (LIGHTBEAM_04)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2595952
+	    Plus:           4
+	   Check:  0x4E801D11
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A884B  (LIGHTBEAM_05)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2596048
+	    Plus:           4
+	   Check:  0xBE666C2E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A884C  (LIGHTBEAM_06)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2596144
+	    Plus:           4
+	   Check:  0xC2F9CB3B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A884D  (LIGHTBEAM_07)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2596240
+	    Plus:           4
+	   Check:  0xF286A44D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A884E  (LIGHTBEAM_08)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2596336
+	    Plus:           4
+	   Check:  0xEC6099DE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A884F  (LIGHTBEAM_09)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2596432
+	    Plus:           4
+	   Check:  0x17961EC5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A88C9  (LIGHTBEAM_10)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2596528
+	    Plus:           4
+	   Check:  0x0F3E6F57
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A88CA  (LIGHTBEAM_11)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2596624
+	    Plus:           4
+	   Check:  0x8AF9D227
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A88CB  (LIGHTBEAM_12)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2596720
+	    Plus:           4
+	   Check:  0xAB9F59E0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A88CC  (LIGHTBEAM_13)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2596816
+	    Plus:           4
+	   Check:  0xDA29D941
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A88CD  (LIGHTBEAM_14)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2596912
+	    Plus:           4
+	   Check:  0x7AD8693D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A88CE  (LIGHTBEAM_15)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2597008
+	    Plus:           4
+	   Check:  0xE996E2B7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A88CF  (LIGHTBEAM_16)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2597104
+	    Plus:           4
+	   Check:  0x6658EEC9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A88D0  (LIGHTBEAM_17)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2597200
+	    Plus:           4
+	   Check:  0xE65896E1
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A88D1  (LIGHTBEAM_18)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2597296
+	    Plus:           4
+	   Check:  0x82496C26
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A88D2  (LIGHTBEAM_19)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2597392
+	    Plus:           4
+	   Check:  0x75CA740F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x510A894C  (LIGHTBEAM_20)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2597488
+	    Plus:           4
+	   Check:  0xC13A0BE2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x51FB3FF7  (odfr1102.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      634976
+	    Plus:           8
+	   Check:  0xE5B69523
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x5273B8CF  (orao2301.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:       55264
+	    Plus:           8
+	   Check:  0xC051C28F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x53102122  (token_creeper.dff)
+{
+	    Type:        MODL
+	    Size:        5932
+	  Offset:     1988624
+	    Plus:           4
+	   Check:  0xCBA836C3
+	Filename:  \\job\sd2\cg\rtobj\p2\latest\token_creeper\token_creeper.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x536D1F29  (obai0002.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      130848
+	    Plus:           8
+	   Check:  0xAF11B89F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x559AC43C  (2NDSTAIR_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592992
+	    Plus:           4
+	   Check:  0x5AE380DC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x57528F1B  (1STFLOOR_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2593056
+	    Plus:           4
+	   Check:  0x86191C22
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x58F0289F  (SNACKSPRAY)
+{
+	    Type:        PRJT
+	    Size:          68
+	  Offset:     2598592
+	    Plus:          12
+	   Check:  0xEE860C54
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x599E3E33  (owao2003.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      117984
+	    Plus:           8
+	   Check:  0x191B6BCE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x59B1ED25  (CAM_SECRETSLIDE)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2591072
+	    Plus:           8
+	   Check:  0x6722E304
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5A1678C9  (2NDSTAIR_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592976
+	    Plus:           4
+	   Check:  0x584594F0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5AAABC9D  (CAM_1STLANDING)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2590208
+	    Plus:           8
+	   Check:  0x6EBC6136
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5ACA1676  (LONGSLIDE_TRIG)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     2583760
+	    Plus:           0
+	   Check:  0xC376D86B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5BCE43A8  (1STFLOOR_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2593040
+	    Plus:           4
+	   Check:  0x973F45E3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5CF030DB  (tin_roof_4.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      171680
+	    Plus:           8
+	   Check:  0x353F0AFC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x5DC89A5B  (cba00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      665312
+	    Plus:           8
+	   Check:  0x1F58AD17
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x5E57BC24  (wd_attack.anm)
+{
+	    Type:        ANIM
+	    Size:       17544
+	  Offset:     2786784
+	    Plus:           8
+	   Check:  0x47275075
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_attack.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x5FC9F422  (rbuf0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      637216
+	    Plus:           8
+	   Check:  0x25DA2A86
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x6146FDF8  (rt_bind.dff)
+{
+	    Type:        MODL
+	    Size:       52264
+	  Offset:     1868608
+	    Plus:           8
+	   Check:  0x548D0236
+	Filename:  \\job\sd2\\cg\chr\p2\rt\latest\rt_bind.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x61FEBB91  (STEP_PULLIN_CAM)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2589344
+	    Plus:           8
+	   Check:  0x536BB039
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x638049E7  (CAM_1STSTAIR)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2591504
+	    Plus:           8
+	   Check:  0xF4888903
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x63CEF178  (ofeg0201.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:       67104
+	    Plus:           8
+	   Check:  0x752D8C09
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x64BAF2A1  (rss00001.DFF)
+{
+	    Type:        MODL
+	    Size:        3336
+	  Offset:     1994560
+	    Plus:           8
+	   Check:  0x865CC6FD
+	Filename:  \\job\sd2\cg\rtobj\p2\latest\rss00001\rss00001.DFF
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x64BEA5BF  (rss00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      480224
+	    Plus:           8
+	   Check:  0x7250EF1C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x6819993A  (wd.ATBL)
+{
+	    Type:        ATBL
+	    Size:        2344
+	  Offset:     2926112
+	    Plus:           8
+	   Check:  0x7CA7756B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x683B0593  (wd_gumbounce.anm)
+{
+	    Type:        ANIM
+	    Size:       19152
+	  Offset:     2820000
+	    Plus:           0
+	   Check:  0x8C0AE9A5
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_gumbounce.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x686435F9  (metal_diag02.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      669792
+	    Plus:           8
+	   Check:  0xFF366F38
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x686C5C5C  (rbsi0002)
+{
+	    Type:        MODL
+	    Size:        1692
+	  Offset:     2573008
+	    Plus:           4
+	   Check:  0xE85C1F97
+	Filename:  \\Job\sd2\cg\env\p2\i00\latest\rbsi0002.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x6902812C  (bat_wing1)
+{
+	    Type:        SND 
+	    Size:        2560
+	  Offset:     3324352
+	    Plus:           0
+	   Check:  0x458642D5
+	Filename:  \\Job\sd2\snd\latest\p2\villain\bat_wing1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x6902812D  (bat_wing2)
+{
+	    Type:        SND 
+	    Size:        2944
+	  Offset:     3326912
+	    Plus:           0
+	   Check:  0xE2C74F58
+	Filename:  \\Job\sd2\snd\latest\p2\villain\bat_wing2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x69B26139  (wd.MINF)
+{
+	    Type:        MINF
+	    Size:         280
+	  Offset:     2929520
+	    Plus:           8
+	   Check:  0x9CD39375
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x6AE190F1  (CT (FIRST TURN LOCKED))
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     2586128
+	    Plus:           0
+	   Check:  0x5E213F5A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x6B5F0665  (WALL_SLIDE_SECRET_TOP)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2595280
+	    Plus:           4
+	   Check:  0x0F4B9640
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x6BE36BC0  (wd_stunned1)
+{
+	    Type:        SND 
+	    Size:       35200
+	  Offset:     3077472
+	    Plus:           0
+	   Check:  0x889BF6A9
+	Filename:  \\Job\sd2\snd\latest\p2\villain\wd_stunned1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x6C4D0930  (WEB_PROTECTION_OFF)
+{
+	    Type:        COND
+	    Size:          84
+	  Offset:     2598336
+	    Plus:          12
+	   Check:  0xC0B88DB9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x708176D8  (1STCORNER_TRIG)
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     2583552
+	    Plus:           0
+	   Check:  0x4B944C2B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x70938117  (rt_patrol.anm)
+{
+	    Type:        ANIM
+	    Size:        5024
+	  Offset:     2902176
+	    Plus:           0
+	   Check:  0x525A6E9E
+	Filename:  \\job\sd2\\cg\chr\p2\rt\latest\rt_patrol.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x72025E72  (1STSTAIR_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2593024
+	    Plus:           4
+	   Check:  0x8EE2D2F9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x72EAB912  (CAM_3RDLANDING)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2590496
+	    Plus:           8
+	   Check:  0x48ACB71D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x766E6460  (wd_seereact.anm)
+{
+	    Type:        ANIM
+	    Size:       10120
+	  Offset:     2675632
+	    Plus:           8
+	   Check:  0xF5729520
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_seereact.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x767E12FF  (1STSTAIR_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2593008
+	    Plus:           4
+	   Check:  0x5F2FDCDB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x76B46AE4  (4THSTAIR_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592928
+	    Plus:           4
+	   Check:  0xDC2F1648
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x771E2AA4  (FROMO001)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592640
+	    Plus:           4
+	   Check:  0x801614FC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x771E2AA6  (FROMO003)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592624
+	    Plus:           4
+	   Check:  0x3B2756B0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x77950091  (CAM ENTRANCE TRIG)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     2585952
+	    Plus:           0
+	   Check:  0x22948572
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x7798F554  (1STSTAIR_TRIG)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     2584384
+	    Plus:           0
+	   Check:  0xE2047D54
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x77F4673A  (FALL2DEATH01)
+{
+	    Type:        TRIG
+	    Size:         240
+	  Offset:     2586928
+	    Plus:           0
+	   Check:  0xFF578FEF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x77F4673B  (FALL2DEATH02)
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     2587168
+	    Plus:           0
+	   Check:  0xAAAF60BA
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x77FB6C1A  (1STSTAIR_WALL)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594128
+	    Plus:           4
+	   Check:  0x2EC17CA6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x7A5B2E95  (rboi0007)
+{
+	    Type:        MODL
+	    Size:        3988
+	  Offset:     2015952
+	    Plus:          12
+	   Check:  0xE6F3A50A
+	Filename:  \\Job\sd2\cg\env\p2\i00\latest\rboi0007.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x7A5B2F11  (rboi0010)
+{
+	    Type:        MODL
+	    Size:        3488
+	  Offset:     2019952
+	    Plus:           0
+	   Check:  0xE248C45D
+	Filename:  \\Job\sd2\cg\env\p2\i00\latest\rboi0010.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x7AB6743A  (sound_info)
+{
+	    Type:        SNDI
+	    Size:        3112
+	  Offset:     3385120
+	    Plus:           0
+	   Check:  0x88E198C2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7B301F71  (4THSTAIR_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592912
+	    Plus:           4
+	   Check:  0x0FB22B1A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x7B49EE50  (olio0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      169440
+	    Plus:           8
+	   Check:  0xB7A5E0C6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7B8CFAE1  (o_lightbeam)
+{
+	    Type:        MODL
+	    Size:        1564
+	  Offset:     2574704
+	    Plus:           0
+	   Check:  0xBE28A8C0
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\gc\o_lightbeam.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x7CD1EEBA  (otai0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      126368
+	    Plus:           8
+	   Check:  0x55507279
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7CDF9775  (bat_bind.dff)
+{
+	    Type:        MODL
+	    Size:       67744
+	  Offset:     1920880
+	    Plus:           0
+	   Check:  0xB9EE5467
+	Filename:  \\job\sd2\\cg\chr\p2\ba\latest\bat_bind.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x7E3F4882  (CAM_1STFLOOR)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2589776
+	    Plus:           8
+	   Check:  0xB963D808
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x7E652B2F  (3RD LANDING UP)
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     2586720
+	    Plus:           0
+	   Check:  0x64FA4FE5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x7FA399AB  (rsa00001.DFF)
+{
+	    Type:        MODL
+	    Size:       13504
+	  Offset:     1997904
+	    Plus:           0
+	   Check:  0xECA773DE
+	Filename:  \\job\sd2\cg\rtobj\p2\latest\rsa00001\rsa00001.DFF
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x7FA74CC9  (rsa00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      672032
+	    Plus:           8
+	   Check:  0xFD5FBFF6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x81AFF59E  (DISABLE_BOOKCASE_TIMER)
+{
+	    Type:        TIMR
+	    Size:          76
+	  Offset:     2591712
+	    Plus:           4
+	   Check:  0x7BF8D390
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x81E58942  (wd_hitbackward.anm)
+{
+	    Type:        ANIM
+	    Size:       23424
+	  Offset:     2874016
+	    Plus:           0
+	   Check:  0x7A3EC77D
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_hitbackward.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x83FFEF44  (crt00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      663072
+	    Plus:           8
+	   Check:  0xAADD31BD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x856A76BF  (WEB_BLOCK01)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2595376
+	    Plus:           4
+	   Check:  0xCB03DB09
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x856A76C0  (WEB_BLOCK02)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2595472
+	    Plus:           4
+	   Check:  0xB1E46C0B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x856A76C1  (WEB_BLOCK03)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2595568
+	    Plus:           4
+	   Check:  0x33ABA267
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x875E1978  (wd_attack_touch.anm)
+{
+	    Type:        ANIM
+	    Size:        3968
+	  Offset:     2782816
+	    Plus:           0
+	   Check:  0xDAFDBD07
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_attack_touch.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x8A1FB193  (SKULL_PROJ)
+{
+	    Type:        PRJT
+	    Size:          68
+	  Offset:     2598672
+	    Plus:          12
+	   Check:  0x8E3BBA04
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x8B996740  (bat_death.anm)
+{
+	    Type:        ANIM
+	    Size:        3588
+	  Offset:     2922512
+	    Plus:          12
+	   Check:  0x713B5F5D
+	Filename:  \\job\sd2\\cg\chr\p2\ba\latest\bat_death.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x8CE483CD  (SECRET_SLIDE_TRIG)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     2584832
+	    Plus:           0
+	   Check:  0xAC508B87
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x8DD25083  (oflo0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       71584
+	    Plus:           8
+	   Check:  0xC808495C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x8ED9C2E8  (celngfan.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      158816
+	    Plus:           8
+	   Check:  0x6C53194E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x8F54CCF2  (BAT01)
+{
+	    Type:        NPC 
+	    Size:         196
+	  Offset:     2576992
+	    Plus:          12
+	   Check:  0x5A206532
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x8F54CCF3  (BAT02)
+{
+	    Type:        NPC 
+	    Size:         196
+	  Offset:     2577200
+	    Plus:          12
+	   Check:  0xDB9622B7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x938AD694  (SECOND LANDING UP)
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     2586512
+	    Plus:           0
+	   Check:  0x2A8EFC3C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x94245638  (WEB_BLOCK_GRP)
+{
+	    Type:        GRUP
+	    Size:          24
+	  Offset:     2593072
+	    Plus:           8
+	   Check:  0xF0D6648C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x94E25463  (pickups.MINF)
+{
+	    Type:        MINF
+	    Size:          12
+	  Offset:     2930416
+	    Plus:           4
+	   Check:  0x5F0983A2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x988F22EA  (blocks.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      156576
+	    Plus:           8
+	   Check:  0xA0F96738
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x98E1452D  (rt.ATBL)
+{
+	    Type:        ATBL
+	    Size:         412
+	  Offset:     2928464
+	    Plus:           4
+	   Check:  0x711F8577
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x9995927C  (obo00004.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      461216
+	    Plus:           8
+	   Check:  0x55CB3062
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x9A46094E  (wall hole.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       98976
+	    Plus:           8
+	   Check:  0x4473DA4C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x9A5FBEEB  (r_book01)
+{
+	    Type:        MODL
+	    Size:        5032
+	  Offset:     2549904
+	    Plus:           8
+	   Check:  0x3AAC0534
+	Filename:  \\Job\sd2\cg\env\p2\r00\latest\r_book01.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x9A5FBEEE  (r_book04)
+{
+	    Type:        MODL
+	    Size:        4348
+	  Offset:     2545552
+	    Plus:           4
+	   Check:  0x1F923BF5
+	Filename:  \\Job\sd2\cg\env\p2\r00\latest\r_book04.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x9A7A0D2C  (rt.MINF)
+{
+	    Type:        MINF
+	    Size:         212
+	  Offset:     2929808
+	    Plus:          12
+	   Check:  0xDC83ABD1
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x9B244785  (CAM_2NDSTAIR)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2591360
+	    Plus:           8
+	   Check:  0xCBE1ABD1
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x9B6990FD  (CAM_LONGSLIDE)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2590928
+	    Plus:           8
+	   Check:  0xF2ADF1B7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x9B7A67C2  (LS_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592832
+	    Plus:           4
+	   Check:  0x6371D33B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x9C560B5E  (SCENE SET UPS)
+{
+	    Type:        DPAT
+	    Size:         104
+	  Offset:     2598224
+	    Plus:           8
+	   Check:  0x58511316
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x9C946B82  (creeper.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      667552
+	    Plus:           8
+	   Check:  0xEA6A836C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x9FF61C4F  (LS_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592816
+	    Plus:           4
+	   Check:  0x4BE268CA
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xA11D69A0  (FIRST LANDING UP)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     2586336
+	    Plus:           0
+	   Check:  0x40380886
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xA1242B01  (wd_turn.anm)
+{
+	    Type:        ANIM
+	    Size:       15312
+	  Offset:     2647424
+	    Plus:           0
+	   Check:  0xE7A80571
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_turn.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xA28F6B3E  (fireball_loop)
+{
+	    Type:        SND 
+	    Size:       26880
+	  Offset:     3251744
+	    Plus:           0
+	   Check:  0x619FE46F
+	Filename:  \\Job\sd2\snd\latest\p2\projectiles\fireball_loop.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xA29124E2  (rbg00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      626592
+	    Plus:           8
+	   Check:  0xC9EE1A30
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xA2E5EE14  (ba.ATBL)
+{
+	    Type:        ATBL
+	    Size:         628
+	  Offset:     2928880
+	    Plus:          12
+	   Check:  0x98F96172
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xA341D14B  (rat_scury1)
+{
+	    Type:        SND 
+	    Size:       13088
+	  Offset:     3278624
+	    Plus:           0
+	   Check:  0x14DFA219
+	Filename:  \\Job\sd2\snd\latest\p2\villain\rat_scury1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xA432EAE7  (wd_skull)
+{
+	    Type:        MODL
+	    Size:        8244
+	  Offset:     2537296
+	    Plus:          12
+	   Check:  0x59A10D5F
+	Filename:  \\Job\sd2\cg\rtobj\p2\projectiles\wd_skull\wd_skull.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xA43B805D  (rlii0007)
+{
+	    Type:        MODL
+	    Size:       35904
+	  Offset:     2501392
+	    Plus:           0
+	   Check:  0xE081FEF1
+	Filename:  \\Job\sd2\cg\env\p2\i00\latest\rlii0007.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xA47EB613  (ba.MINF)
+{
+	    Type:        MINF
+	    Size:         376
+	  Offset:     2930032
+	    Plus:           8
+	   Check:  0xBC08FB8D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xA84C121D  (WITCH DOCTOR1)
+{
+	    Type:        NPC 
+	    Size:         196
+	  Offset:     2576368
+	    Plus:          12
+	   Check:  0x582653A9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xA88D0FA2  (ocro2201.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      133088
+	    Plus:           8
+	   Check:  0x8168B481
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xA9EF1F2B  (scooby_snacks.DFF)
+{
+	    Type:        MODL
+	    Size:        4532
+	  Offset:     2011408
+	    Plus:          12
+	   Check:  0x9EB6A03D
+	Filename:  \\job\sd2\cg\rtobj\p2\latest\scooby_snacks\scooby_snacks.DFF
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xA9F2D249  (scooby_snacks.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      674272
+	    Plus:           0
+	   Check:  0x4EB31D8F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xAC58CFAF  (web_bust)
+{
+	    Type:        SND 
+	    Size:        9056
+	  Offset:     3358368
+	    Plus:           0
+	   Check:  0x6CBC3830
+	Filename:  \\Job\sd2\snd\latest\p2\level\web_bust.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xACB0E9B3  (bat_gumbounce.anm)
+{
+	    Type:        ANIM
+	    Size:        2476
+	  Offset:     2920032
+	    Plus:           4
+	   Check:  0x71E7EACA
+	Filename:  \\job\sd2\\cg\chr\p2\ba\latest\bat_gumbounce.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xAFF2675E  (2NDLANDING_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592768
+	    Plus:           4
+	   Check:  0x50CAD1BC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB0E8BDF5  (1STFLOOR_TRIG)
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     2585744
+	    Plus:           0
+	   Check:  0x4AE67EE2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB10C7105  (bat_gummed.anm)
+{
+	    Type:        ANIM
+	    Size:        3144
+	  Offset:     2916880
+	    Plus:           8
+	   Check:  0x29A82D63
+	Filename:  \\job\sd2\\cg\chr\p2\ba\latest\bat_gummed.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xB171E7DB  (rss00001)
+{
+	    Type:        MODL
+	    Size:        3336
+	  Offset:     2489664
+	    Plus:           8
+	   Check:  0x865CC6FD
+	Filename:  \\Job\sd2\cg\rtobj\p2\latest\rss00001\rss00001.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xB1B7F671  (wd_gloat.anm)
+{
+	    Type:        ANIM
+	    Size:       19484
+	  Offset:     2685760
+	    Plus:           4
+	   Check:  0xC2864EF0
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_gloat.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xB22A8421  (soapbubble_pop)
+{
+	    Type:        SND 
+	    Size:        3264
+	  Offset:     3164864
+	    Plus:           0
+	   Check:  0x1AC74647
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\soapbubble_pop.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xB3031534  (SSBOX01)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2583168
+	    Plus:           8
+	   Check:  0x348DA76C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB3031535  (SSBOX02)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2581920
+	    Plus:           8
+	   Check:  0xD2282644
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB3031536  (SSBOX03)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2583456
+	    Plus:           8
+	   Check:  0x8B4D3DB1
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB3E59477  (BOOKCASE_OPEN_TRIG)
+{
+	    Type:        TRIG
+	    Size:         240
+	  Offset:     2587616
+	    Plus:           0
+	   Check:  0x7ED69370
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB4309C7D  (CAM_4THSTAIR)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2589488
+	    Plus:           8
+	   Check:  0xA0FF6211
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB46E1BEB  (2NDLANDING_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592752
+	    Plus:           4
+	   Check:  0x5E0FB584
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB7BA2BE3  (DOORTOO001)
+{
+	    Type:        PLAT
+	    Size:         264
+	  Offset:     2593488
+	    Plus:           8
+	   Check:  0x3433B205
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB7BA2BE5  (DOORTOO003)
+{
+	    Type:        PLAT
+	    Size:         264
+	  Offset:     2593760
+	    Plus:           8
+	   Check:  0x59E0F209
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xBA1AC5F3  (ocro2202.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      143712
+	    Plus:           8
+	   Check:  0x4A66DEDB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xBB35FF43  (SLOPE)
+{
+	    Type:        SURF
+	    Size:         208
+	  Offset:     2597584
+	    Plus:           0
+	   Check:  0xAD36B569
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xBB584A4F  (smoke)
+{
+	    Type:        RWTX
+	    Size:       16568
+	  Offset:      644256
+	    Plus:           8
+	   Check:  0xCE8E6CEC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xBBA1C646  (VIS_WALLHANG4_TRIG)
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     2588064
+	    Plus:           0
+	   Check:  0x9371D230
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xBC44C2B2  (START)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2588480
+	    Plus:           8
+	   Check:  0x97209E84
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xBCB0FF1E  (obo00006.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      493088
+	    Plus:           8
+	   Check:  0xA1910294
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xBCDC91F5  (orar1101.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:       69344
+	    Plus:           8
+	   Check:  0xD4611E44
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xBDA474E9  (bat_cry1)
+{
+	    Type:        SND 
+	    Size:       12448
+	  Offset:     3329856
+	    Plus:           0
+	   Check:  0x4B28486F
+	Filename:  \\Job\sd2\snd\latest\p2\villain\bat_cry1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xBE472FDC  (gen_gumstretch1)
+{
+	    Type:        SND 
+	    Size:        5952
+	  Offset:     3052224
+	    Plus:           0
+	   Check:  0x86C2AE43
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_gumstretch1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xBF037E42  (owar1101.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      469600
+	    Plus:           8
+	   Check:  0xC4E9F782
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xC023E514  (web.RW3)
+{
+	    Type:        RWTX
+	    Size:      262328
+	  Offset:      198880
+	    Plus:           8
+	   Check:  0x9B06B0CA
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xC42FDFBF  (rflo2101)
+{
+	    Type:        MODL
+	    Size:       55236
+	  Offset:     2023440
+	    Plus:          12
+	   Check:  0xD49B8A4E
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\rflo2101.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xC484EE81  (WALL_ENTRANCE_HALL)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594032
+	    Plus:           4
+	   Check:  0x831593DD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC562BC55  (GUMSHOOTER)
+{
+	    Type:        LOBM
+	    Size:         128
+	  Offset:     2598960
+	    Plus:           0
+	   Check:  0xAA3CCD8C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC620874D  (EMIT_SMOKEPIT1)
+{
+	    Type:        PARE
+	    Size:         120
+	  Offset:     2599168
+	    Plus:           8
+	   Check:  0xAF6A08FE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC620874E  (EMIT_SMOKEPIT2)
+{
+	    Type:        PARE
+	    Size:         120
+	  Offset:     2599296
+	    Plus:           8
+	   Check:  0xF4EAC8B9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC69F0788  (wd_see1)
+{
+	    Type:        SND 
+	    Size:       14528
+	  Offset:     2975936
+	    Plus:           0
+	   Check:  0x6039BBBC
+	Filename:  \\Job\sd2\snd\latest\p2\villain\wd_see1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xC9034BFE  (VIS_SECRET_SLIDE_TRIG)
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     2588272
+	    Plus:           0
+	   Check:  0x9FE7BCFE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC914E3ED  (VIS_WALLHANG1_TRIG)
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     2587856
+	    Plus:           0
+	   Check:  0xE8358A72
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xCAD68823  (o002_door1)
+{
+	    Type:        MODL
+	    Size:        7792
+	  Offset:     2557424
+	    Plus:           0
+	   Check:  0x82BC3FEA
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o002_door1.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xCAD68824  (o002_door2)
+{
+	    Type:        MODL
+	    Size:        7792
+	  Offset:     2565216
+	    Plus:           0
+	   Check:  0x20E9F795
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o002_door2.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xCAEB0455  (wood_door_creak2)
+{
+	    Type:        SND 
+	    Size:       17696
+	  Offset:     3367424
+	    Plus:           0
+	   Check:  0xF729E1B9
+	Filename:  \\Job\sd2\snd\latest\p2\level\wood_door_creak2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xCBA87C44  (ocro2203.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      148192
+	    Plus:           8
+	   Check:  0x42486365
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xCC7AAE4A  (wd_surprise1)
+{
+	    Type:        SND 
+	    Size:        8704
+	  Offset:     2941952
+	    Plus:           0
+	   Check:  0x4BC1984D
+	Filename:  \\Job\sd2\snd\latest\p2\villain\wd_surprise1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xCCF2F544  (1STLANDING_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592736
+	    Plus:           4
+	   Check:  0xCBBF2DAA
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xCDE4B817  (bat_flying.anm)
+{
+	    Type:        ANIM
+	    Size:        1812
+	  Offset:     2911456
+	    Plus:          12
+	   Check:  0x01C44505
+	Filename:  \\job\sd2\\cg\chr\p2\ba\latest\bat_flying.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xCEA2BE16  (DOOR CREAK)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     2593200
+	    Plus:           0
+	   Check:  0xC7EE0617
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xCF9E5689  (wd_walk.anm)
+{
+	    Type:        ANIM
+	    Size:       32592
+	  Offset:     2614832
+	    Plus:           0
+	   Check:  0xD94E269E
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_walk.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xD081BC55  (EXITFONT)
+{
+	    Type:        UIFT
+	    Size:         156
+	  Offset:     2598432
+	    Plus:           4
+	   Check:  0x060707E9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD16EA9D1  (1STLANDING_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592720
+	    Plus:           4
+	   Check:  0xC57A4992
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD1AE4934  (EXITO001)
+{
+	    Type:        TRIG
+	    Size:         272
+	  Offset:     2584560
+	    Plus:           0
+	   Check:  0xAED008AD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD1AE4936  (EXITO003)
+{
+	    Type:        TRIG
+	    Size:         272
+	  Offset:     2584112
+	    Plus:           0
+	   Check:  0xD40FBF7C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD2338E4B  (3RDLANDING_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592800
+	    Plus:           4
+	   Check:  0x961C064E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD38C5805  (stmrtrnk.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       58720
+	    Plus:           8
+	   Check:  0xFC0DCDDF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xD6AF42D8  (3RDLANDING_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592784
+	    Plus:           4
+	   Check:  0x98D96276
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD74A0199  (gen_gumbounce05)
+{
+	    Type:        SND 
+	    Size:       10688
+	  Offset:     3058176
+	    Plus:           0
+	   Check:  0xB9B10EBC
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_gumbounce05.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xD7688928  (FOGGY)
+{
+	    Type:        FOG 
+	    Size:          68
+	  Offset:     2599088
+	    Plus:          12
+	   Check:  0x6355AB4A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD85596E6  (bat_hang.anm)
+{
+	    Type:        ANIM
+	    Size:        3588
+	  Offset:     2913280
+	    Plus:          12
+	   Check:  0x5D91AE04
+	Filename:  \\job\sd2\\cg\chr\p2\ba\latest\bat_hang.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xDC7F7199  (ofl00006.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       38496
+	    Plus:           8
+	   Check:  0xE23DCF2D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xDCE4FA93  (CAM_1STCORNER)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2588768
+	    Plus:           8
+	   Check:  0x4A74F9E0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xDD363295  (ocro2204.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      141472
+	    Plus:           8
+	   Check:  0x96B2D048
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xDD4F88E3  (wd_death1)
+{
+	    Type:        SND 
+	    Size:       31360
+	  Offset:     3112672
+	    Plus:           0
+	   Check:  0x0A36547E
+	Filename:  \\Job\sd2\snd\latest\p2\villain\wd_death1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xDE777092  (life_essence_fade)
+{
+	    Type:        SND 
+	    Size:       38304
+	  Offset:     3168128
+	    Plus:           0
+	   Check:  0x7CCF270F
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\life_essence_fade.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xDFA0C15E  (MT_CREEPER)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     2577408
+	    Plus:           8
+	   Check:  0x6DE9A9B3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xDFFA98E6  (ENTRANCE M1)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592656
+	    Plus:           4
+	   Check:  0xC27F5ADD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xDFFA98E7  (ENTRANCE M2)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592672
+	    Plus:           4
+	   Check:  0x02D23327
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xE29C09B3  (bookcase_slide2)
+{
+	    Type:        SND 
+	    Size:       16064
+	  Offset:     3342304
+	    Plus:           0
+	   Check:  0xB315B6F5
+	Filename:  \\Job\sd2\snd\latest\p2\level\bookcase_slide2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xE55476F4  (CAM_3RDSTAIR)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2591216
+	    Plus:           8
+	   Check:  0xC8190B55
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xE597248B  (wd_skull.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      490848
+	    Plus:           8
+	   Check:  0x423C69A4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xE5D68FE8  (o21_noCollide)
+{
+	    Type:        BSP 
+	    Size:      194872
+	  Offset:     1484080
+	    Plus:           8
+	   Check:  0x5A858CC4
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\gc\o21_noCollide.bsp
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xE762050E  (rbg00001)
+{
+	    Type:        MODL
+	    Size:        1692
+	  Offset:     2555728
+	    Plus:           4
+	   Check:  0xD74699FB
+	Filename:  \\Job\sd2\cg\rtobj\p2\power_ups\bubblegum_piece\rbg00001.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xEB356D6A  (owao2101.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       46880
+	    Plus:           8
+	   Check:  0x015E5430
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xEC269EFA  (SNACKSHOOTER)
+{
+	    Type:        LOBM
+	    Size:         128
+	  Offset:     2598832
+	    Plus:           0
+	   Check:  0x3F7094F0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xECD0012B  (3RDSTAIR_TRIG)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     2585568
+	    Plus:           0
+	   Check:  0xBB941FC7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xED2D0B31  (FIRST TURN LOCKED)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2590064
+	    Plus:           8
+	   Check:  0x9B484FB8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xED3277F1  (3RDSTAIR_WALL)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2594320
+	    Plus:           4
+	   Check:  0x8934AC98
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF0A0086B  (CAM ENTRANCE)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2589920
+	    Plus:           8
+	   Check:  0x3215BAB8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF178E187  (rat_squeak01)
+{
+	    Type:        SND 
+	    Size:       12224
+	  Offset:     3291712
+	    Plus:           0
+	   Check:  0xB60CDA13
+	Filename:  \\Job\sd2\snd\latest\p2\villain\rat_squeak01.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xF17C5FFF  (WALL_SLIDE_SECRET_SIDE)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     2595184
+	    Plus:           4
+	   Check:  0x93255217
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF4E604CD  (gum_pop)
+{
+	    Type:        SND 
+	    Size:        3296
+	  Offset:     3148992
+	    Plus:           0
+	   Check:  0x3F8FBA69
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gum_pop.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xF90B0E01  (3RDSTAIR_B_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592960
+	    Plus:           4
+	   Check:  0xD8272D12
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xFA6E8AAE  (o21_wall1)
+{
+	    Type:        MODL
+	    Size:        5560
+	  Offset:     2078688
+	    Plus:           8
+	   Check:  0xFD43269E
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wall1.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xFA6E8AAF  (o21_wall2)
+{
+	    Type:        MODL
+	    Size:        3124
+	  Offset:     2084256
+	    Plus:          12
+	   Check:  0xA95B8EA8
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wall2.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xFA6E8AB0  (o21_wall3)
+{
+	    Type:        MODL
+	    Size:        6572
+	  Offset:     2087392
+	    Plus:           4
+	   Check:  0xE4E4F44B
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wall3.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xFA6E8AB1  (o21_wall4)
+{
+	    Type:        MODL
+	    Size:        4456
+	  Offset:     2093968
+	    Plus:           8
+	   Check:  0xF9A004C2
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wall4.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xFA6E8AB2  (o21_wall5)
+{
+	    Type:        MODL
+	    Size:        9304
+	  Offset:     2098432
+	    Plus:           8
+	   Check:  0xD3D4322A
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wall5.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xFA6E8AB3  (o21_wall6)
+{
+	    Type:        MODL
+	    Size:        5656
+	  Offset:     2107744
+	    Plus:           8
+	   Check:  0x96DDC825
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wall6.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xFA6E8AB4  (o21_wall7)
+{
+	    Type:        MODL
+	    Size:        3272
+	  Offset:     2472000
+	    Plus:           8
+	   Check:  0x2894DA41
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wall7.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xFA6E8AB5  (o21_wall8)
+{
+	    Type:        MODL
+	    Size:        9768
+	  Offset:     2475280
+	    Plus:           8
+	   Check:  0x911C44EA
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wall8.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xFA6E8AB6  (o21_wall9)
+{
+	    Type:        MODL
+	    Size:        4596
+	  Offset:     2485056
+	    Plus:          12
+	   Check:  0x14AFF816
+	Filename:  \\Job\sd2\cg\env\p2\o00\latest\o21_wall9.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xFA9C376E  (orao2102.RW3)
+{
+	    Type:        RWTX
+	    Size:        1208
+	  Offset:       57504
+	    Plus:           8
+	   Check:  0x85526B8E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xFCC323BB  (owao2102.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       90592
+	    Plus:           8
+	   Check:  0x32C9654F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xFCC6A201  (TOO001)
+{
+	    Type:        PORT
+	    Size:          24
+	  Offset:     2591824
+	    Plus:           8
+	   Check:  0xBD808DC4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xFCC6A203  (TOO003)
+{
+	    Type:        PORT
+	    Size:          24
+	  Offset:     2591792
+	    Plus:           8
+	   Check:  0xC10D15C8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xFCD36394  (wd_idle.anm)
+{
+	    Type:        ANIM
+	    Size:       15328
+	  Offset:     2599504
+	    Plus:           0
+	   Check:  0xAC3DFBCC
+	Filename:  \\job\sd2\\cg\chr\p2\wd\latest\wd_idle.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xFD86C28E  (3RDSTAIR_A_MARK)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     2592944
+	    Plus:           4
+	   Check:  0x50D236DA
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+
+Layer Alignment
+---------------
+Index   Type   SectorSize   Aligned?  HIPPosition
+-----   ----   ----------   --------  -----------
+0          1           32        Yes        30112
+1          2           32        Yes       682656
+2          3           32        Yes      1687072
+3          4           32        N/A          N/A
+4          0           32        Yes      2576288
+5          8           32        N/A          N/A
+6          6           32        Yes      2930496
+7          7           32        Yes      3385120
+
+Asset Alignment
+---------------
+AssetID    Name                                Requested   Aligned?
+-------    ----                                ---------   --------
+0x00002798 M1                                         16        Yes
+0x00002799 M2                                         16        Yes
+0x0000279A M3                                         16        Yes
+0x0000279B M4                                         16        Yes
+0x0000279C M5                                         16        Yes
+0x0000279D M6                                         16        Yes
+0x0006A06F o21_noCollide Material Map                 16        Yes
+0x0014C98E o21                                        16        Yes
+0x0015E695 SS1                                        16        Yes
+0x0015E696 SS2                                        16        Yes
+0x0015E697 SS3                                        16        Yes
+0x0015E698 SS4                                        16        Yes
+0x0015E699 SS5                                        16        Yes
+0x0015E69A SS6                                        16        Yes
+0x0015E69B SS7                                        16        Yes
+0x0015E69C SS8                                        16        Yes
+0x0015E69D SS9                                        16        Yes
+0x00519F37 ocro2206.RW3                               16        Yes
+0x006B441B CAM6(STEPS)                                16        Yes
+0x00E29B7D och00001.RW3                               16        Yes
+0x0176E5AA scooby_one_32b                             32        Yes
+0x025C4C38 odto2101.RW3                               16        Yes
+0x03C23F08 o21_notVisible                             16        Yes
+0x065800B6 4THSTAIR_TRIG                              16        Yes
+0x06BA777C 4THSTAIR_WALL                              16        Yes
+0x07442438 rt_smashed.anm                             16        Yes
+0x090B7C73 CAM2                                       16        Yes
+0x090B7C75 CAM4                                       16        Yes
+0x090B7C76 CAM5                                       16        Yes
+0x090B7C77 CAM6                                       16        Yes
+0x094541EF wd_stunned.anm                             16        Yes
+0x0999EF81 GUM                                        16        Yes
+0x0AA29D47 O002                                       16        Yes
+0x0B0E0C1C RAT1                                       16        Yes
+0x0B0E0C1D RAT2                                       16        Yes
+0x0B0E0C1E RAT3                                       16        Yes
+0x0B34FE6F SS10                                       16        Yes
+0x0B34FE70 SS11                                       16        Yes
+0x0B34FE71 SS12                                       16        Yes
+0x0B34FE72 SS13                                       16        Yes
+0x0B34FE73 SS14                                       16        Yes
+0x0B34FE74 SS15                                       16        Yes
+0x0B34FE75 SS16                                       16        Yes
+0x0B34FE76 SS17                                       16        Yes
+0x0B34FE77 SS18                                       16        Yes
+0x0B34FE78 SS19                                       16        Yes
+0x0B34FEF2 SS20                                       16        Yes
+0x0B34FEF3 SS21                                       16        Yes
+0x0B34FEF4 SS22                                       16        Yes
+0x0B34FEF5 SS23                                       16        Yes
+0x0B34FEF6 SS24                                       16        Yes
+0x0B34FEF7 SS25                                       16        Yes
+0x0B34FEF8 SS26                                       16        Yes
+0x0B34FEF9 SS27                                       16        Yes
+0x0B34FEFA SS28                                       16        Yes
+0x0B34FEFB SS29                                       16        Yes
+0x0B34FF75 SS30                                       16        Yes
+0x0B34FF76 SS31                                       16        Yes
+0x0B34FF77 SS32                                       16        Yes
+0x0B34FF79 SS34                                       16        Yes
+0x0B34FF7A SS35                                       16        Yes
+0x0B34FF7B SS36                                       16        Yes
+0x0B34FF7E SS39                                       16        Yes
+0x0B34FFF8 SS40                                       16        Yes
+0x0B34FFF9 SS41                                       16        Yes
+0x0B34FFFA SS42                                       16        Yes
+0x0B34FFFB SS43                                       16        Yes
+0x0B34FFFC SS44                                       16        Yes
+0x0B34FFFD SS45                                       16        Yes
+0x0B34FFFE SS46                                       16        Yes
+0x0B34FFFF SS47                                       16        Yes
+0x0B350000 SS48                                       16        Yes
+0x0B35007B SS50                                       16        Yes
+0x0B35007C SS51                                       16        Yes
+0x0B35007D SS52                                       16        Yes
+0x0B35007E SS53                                       16        Yes
+0x0B35007F SS54                                       16        Yes
+0x0B350080 SS55                                       16        Yes
+0x0B350081 SS56                                       16        Yes
+0x0B350082 SS57                                       16        Yes
+0x0B350083 SS58                                       16        Yes
+0x0B350084 SS59                                       16        Yes
+0x0B3500FE SS60                                       16        Yes
+0x0B3500FF SS61                                       16        Yes
+0x0B350101 SS63                                       16        Yes
+0x0BDC7914 CAM_FALL01                                 16        Yes
+0x0BDC7915 CAM_FALL02                                 16        Yes
+0x0C147816 1STCORNER_B_MARK                           16        Yes
+0x0F4F305C wd_listen1                                 32        Yes
+0x10902CA3 1STCORNER_A_MARK                           16        Yes
+0x10B6BD6C rspf0001.RW3                               16        Yes
+0x16741BD1 wd_chase1                                  32        Yes
+0x16F66F7A WALL_SLIDE_BOTTOM                          16        Yes
+0x1747BC07 wd_see.anm                                 16        Yes
+0x18673D41 o21 Material Map                           16        Yes
+0x1C1545A7 WEB_SLIDE01                                16        Yes
+0x1C1545A8 WEB_SLIDE02                                16        Yes
+0x1C1545A9 WEB_SLIDE03                                16        Yes
+0x1EA6A379 WALLHANG1                                  16        Yes
+0x1EA6A37A WALLHANG2                                  16        Yes
+0x1EA6A37B WALLHANG3                                  16        Yes
+0x1EA6A37C WALLHANG4                                  16        Yes
+0x1EA6A37D WALLHANG5                                  16        Yes
+0x1F128CC6 opi00002.RW3                               16        Yes
+0x1F3072A5 wd_gummed.anm                              16        Yes
+0x21EDD1AA fireball3                                  32        Yes
+0x21EDD1AC fireball5                                  32        Yes
+0x238B0109 BOOKCASE_CLOSE_TRIG                        16        Yes
+0x2603D415 wd_bind.dff                                16        Yes
+0x2690F73A o21_wall10                                 16        Yes
+0x2953282F wd_attack1                                 32        Yes
+0x29DA9248 wd_look1                                   32        Yes
+0x2A37ED55 gc_lightbeam_yellow.RW3                    16        Yes
+0x2A8B8FF0 wd_bubbled.anm                             16        Yes
+0x2A8E52E1 rlii0007.RW3                               16        Yes
+0x2C9CA686 TURNFORJUMP                                16        Yes
+0x2DE074B3 1WAYBOOKCASE                               16        Yes
+0x2EA5F237 SCOOBY                                     16        Yes
+0x2EFC035A PARSYS_SMOKEPIT1                           16        Yes
+0x2F321A41 gen_bubble_form1                           32        Yes
+0x2F321A42 gen_bubble_form2                           32        Yes
+0x300B60D4 WITCHDOCTOR2                               16        Yes
+0x30A6F1AF FIRST TURN M1                              16        Yes
+0x3107A9D0 WEB_BREAK                                  16        Yes
+0x31092D4E 2NDSTAIR_TRIG                              16        Yes
+0x316BA414 2NDSTAIR_WALL                              16        Yes
+0x3616F93A wd_chase.anm                               16        Yes
+0x38168D77 rt_idle.anm                                16        Yes
+0x3A992118 BOTTOM SLIDE M1                            16        Yes
+0x3ACF012B CAM_2NDLANDING                             16        Yes
+0x3AD5F596 stairs_darkwood2.RW3                       16        Yes
+0x3B8FBE6B FOOD01                                     16        Yes
+0x3B8FBE6D FOOD03                                     16        Yes
+0x3B9EBB60 BAT01_A                                    16        Yes
+0x3B9EBB61 BAT01_B                                    16        Yes
+0x3B9EBB62 BAT01_C                                    16        Yes
+0x3B9EBB63 BAT01_D                                    16        Yes
+0x3B9EFE69 BAT02_A                                    16        Yes
+0x3B9EFE6A BAT02_B                                    16        Yes
+0x3B9EFE6B BAT02_C                                    16        Yes
+0x3B9EFE6C BAT02_D                                    16        Yes
+0x3D11B0C2 WALL_SLIDE_TOP                             16        Yes
+0x3D7DCD2F HALLWAY TO O003                            16        Yes
+0x3FEE2901 gen_bodyfall1                              32        Yes
+0x40009BA3 owat0202.RW3                               16        Yes
+0x40ECA7CF o21_notVisible Material Map                16        Yes
+0x4112B078 rspf0001                                   16        Yes
+0x41DF68D8 obai0001.RW3                               16        Yes
+0x42E08A3A mannequin.RW3                              16        Yes
+0x42FDC9D8 o21_wallhangning1                          16        Yes
+0x42FDC9D9 o21_wallhangning2                          16        Yes
+0x42FDC9DA o21_wallhangning3                          16        Yes
+0x42FDC9DB o21_wallhangning4                          16        Yes
+0x42FDC9DC o21_wallhangning5                          16        Yes
+0x42FDC9DD o21_wallhangning6                          16        Yes
+0x43700067 wd_investigate.anm                         16        Yes
+0x481087E2 owao2002.RW3                               16        Yes
+0x48BCC561 cwd00001.RW3                               16        Yes
+0x49622AD5 wd_staff_shake                             32        Yes
+0x49FC966E CASE_SLIDE                                 16        Yes
+0x4AF34F29 SS_B_MARK                                  16        Yes
+0x4BF67D07 gc_shadow.RW3                              16        Yes
+0x4C97B266 wd_gloat1                                  32        Yes
+0x4F6F03B6 SS_A_MARK                                  16        Yes
+0x4FA3438E wd_hear.anm                                16        Yes
+0x501D1AAF rat_smash1                                 32        Yes
+0x502D994D owa00002.RW3                               16        Yes
+0x510A8847 LIGHTBEAM_01                               16        Yes
+0x510A8848 LIGHTBEAM_02                               16        Yes
+0x510A8849 LIGHTBEAM_03                               16        Yes
+0x510A884A LIGHTBEAM_04                               16        Yes
+0x510A884B LIGHTBEAM_05                               16        Yes
+0x510A884C LIGHTBEAM_06                               16        Yes
+0x510A884D LIGHTBEAM_07                               16        Yes
+0x510A884E LIGHTBEAM_08                               16        Yes
+0x510A884F LIGHTBEAM_09                               16        Yes
+0x510A88C9 LIGHTBEAM_10                               16        Yes
+0x510A88CA LIGHTBEAM_11                               16        Yes
+0x510A88CB LIGHTBEAM_12                               16        Yes
+0x510A88CC LIGHTBEAM_13                               16        Yes
+0x510A88CD LIGHTBEAM_14                               16        Yes
+0x510A88CE LIGHTBEAM_15                               16        Yes
+0x510A88CF LIGHTBEAM_16                               16        Yes
+0x510A88D0 LIGHTBEAM_17                               16        Yes
+0x510A88D1 LIGHTBEAM_18                               16        Yes
+0x510A88D2 LIGHTBEAM_19                               16        Yes
+0x510A894C LIGHTBEAM_20                               16        Yes
+0x51FB3FF7 odfr1102.RW3                               16        Yes
+0x5273B8CF orao2301.RW3                               16        Yes
+0x53102122 token_creeper.dff                          16        Yes
+0x536D1F29 obai0002.RW3                               16        Yes
+0x559AC43C 2NDSTAIR_B_MARK                            16        Yes
+0x57528F1B 1STFLOOR_B_MARK                            16        Yes
+0x58F0289F SNACKSPRAY                                 16        Yes
+0x599E3E33 owao2003.RW3                               16        Yes
+0x59B1ED25 CAM_SECRETSLIDE                            16        Yes
+0x5A1678C9 2NDSTAIR_A_MARK                            16        Yes
+0x5AAABC9D CAM_1STLANDING                             16        Yes
+0x5ACA1676 LONGSLIDE_TRIG                             16        Yes
+0x5BCE43A8 1STFLOOR_A_MARK                            16        Yes
+0x5CF030DB tin_roof_4.RW3                             16        Yes
+0x5DC89A5B cba00001.RW3                               16        Yes
+0x5E57BC24 wd_attack.anm                              16        Yes
+0x5FC9F422 rbuf0001.RW3                               16        Yes
+0x6146FDF8 rt_bind.dff                                16        Yes
+0x61FEBB91 STEP_PULLIN_CAM                            16        Yes
+0x638049E7 CAM_1STSTAIR                               16        Yes
+0x63CEF178 ofeg0201.RW3                               16        Yes
+0x64BAF2A1 rss00001.DFF                               16        Yes
+0x64BEA5BF rss00001.RW3                               16        Yes
+0x6819993A wd.ATBL                                    16        Yes
+0x683B0593 wd_gumbounce.anm                           16        Yes
+0x686435F9 metal_diag02.RW3                           16        Yes
+0x686C5C5C rbsi0002                                   16        Yes
+0x6902812C bat_wing1                                  32        Yes
+0x6902812D bat_wing2                                  32        Yes
+0x69B26139 wd.MINF                                    16        Yes
+0x6AE190F1 CT (FIRST TURN LOCKED)                     16        Yes
+0x6B5F0665 WALL_SLIDE_SECRET_TOP                      16        Yes
+0x6BE36BC0 wd_stunned1                                32        Yes
+0x6C4D0930 WEB_PROTECTION_OFF                         16        Yes
+0x708176D8 1STCORNER_TRIG                             16        Yes
+0x70938117 rt_patrol.anm                              16        Yes
+0x72025E72 1STSTAIR_B_MARK                            16        Yes
+0x72EAB912 CAM_3RDLANDING                             16        Yes
+0x766E6460 wd_seereact.anm                            16        Yes
+0x767E12FF 1STSTAIR_A_MARK                            16        Yes
+0x76B46AE4 4THSTAIR_B_MARK                            16        Yes
+0x771E2AA4 FROMO001                                   16        Yes
+0x771E2AA6 FROMO003                                   16        Yes
+0x77950091 CAM ENTRANCE TRIG                          16        Yes
+0x7798F554 1STSTAIR_TRIG                              16        Yes
+0x77F4673A FALL2DEATH01                               16        Yes
+0x77F4673B FALL2DEATH02                               16        Yes
+0x77FB6C1A 1STSTAIR_WALL                              16        Yes
+0x7A5B2E95 rboi0007                                   16        Yes
+0x7A5B2F11 rboi0010                                   16        Yes
+0x7AB6743A sound_info                                 16        Yes
+0x7B301F71 4THSTAIR_A_MARK                            16        Yes
+0x7B49EE50 olio0001.RW3                               16        Yes
+0x7B8CFAE1 o_lightbeam                                16        Yes
+0x7CD1EEBA otai0001.RW3                               16        Yes
+0x7CDF9775 bat_bind.dff                               16        Yes
+0x7E3F4882 CAM_1STFLOOR                               16        Yes
+0x7E652B2F 3RD LANDING UP                             16        Yes
+0x7FA399AB rsa00001.DFF                               16        Yes
+0x7FA74CC9 rsa00001.RW3                               16        Yes
+0x81AFF59E DISABLE_BOOKCASE_TIMER                     16        Yes
+0x81E58942 wd_hitbackward.anm                         16        Yes
+0x83FFEF44 crt00001.RW3                               16        Yes
+0x856A76BF WEB_BLOCK01                                16        Yes
+0x856A76C0 WEB_BLOCK02                                16        Yes
+0x856A76C1 WEB_BLOCK03                                16        Yes
+0x875E1978 wd_attack_touch.anm                        16        Yes
+0x8A1FB193 SKULL_PROJ                                 16        Yes
+0x8B996740 bat_death.anm                              16        Yes
+0x8CE483CD SECRET_SLIDE_TRIG                          16        Yes
+0x8DD25083 oflo0001.RW3                               16        Yes
+0x8ED9C2E8 celngfan.RW3                               16        Yes
+0x8F54CCF2 BAT01                                      16        Yes
+0x8F54CCF3 BAT02                                      16        Yes
+0x938AD694 SECOND LANDING UP                          16        Yes
+0x94245638 WEB_BLOCK_GRP                              16        Yes
+0x94E25463 pickups.MINF                               16        Yes
+0x988F22EA blocks.RW3                                 16        Yes
+0x98E1452D rt.ATBL                                    16        Yes
+0x9995927C obo00004.RW3                               16        Yes
+0x9A46094E wall hole.RW3                              16        Yes
+0x9A5FBEEB r_book01                                   16        Yes
+0x9A5FBEEE r_book04                                   16        Yes
+0x9A7A0D2C rt.MINF                                    16        Yes
+0x9B244785 CAM_2NDSTAIR                               16        Yes
+0x9B6990FD CAM_LONGSLIDE                              16        Yes
+0x9B7A67C2 LS_B_MARK                                  16        Yes
+0x9C560B5E SCENE SET UPS                              16        Yes
+0x9C946B82 creeper.RW3                                16        Yes
+0x9FF61C4F LS_A_MARK                                  16        Yes
+0xA11D69A0 FIRST LANDING UP                           16        Yes
+0xA1242B01 wd_turn.anm                                16        Yes
+0xA28F6B3E fireball_loop                              32        Yes
+0xA29124E2 rbg00001.RW3                               16        Yes
+0xA2E5EE14 ba.ATBL                                    16        Yes
+0xA341D14B rat_scury1                                 32        Yes
+0xA432EAE7 wd_skull                                   16        Yes
+0xA43B805D rlii0007                                   16        Yes
+0xA47EB613 ba.MINF                                    16        Yes
+0xA84C121D WITCH DOCTOR1                              16        Yes
+0xA88D0FA2 ocro2201.RW3                               16        Yes
+0xA9EF1F2B scooby_snacks.DFF                          16        Yes
+0xA9F2D249 scooby_snacks.RW3                          16        Yes
+0xAC58CFAF web_bust                                   32        Yes
+0xACB0E9B3 bat_gumbounce.anm                          16        Yes
+0xAFF2675E 2NDLANDING_B_MARK                          16        Yes
+0xB0E8BDF5 1STFLOOR_TRIG                              16        Yes
+0xB10C7105 bat_gummed.anm                             16        Yes
+0xB171E7DB rss00001                                   16        Yes
+0xB1B7F671 wd_gloat.anm                               16        Yes
+0xB22A8421 soapbubble_pop                             32        Yes
+0xB3031534 SSBOX01                                    16        Yes
+0xB3031535 SSBOX02                                    16        Yes
+0xB3031536 SSBOX03                                    16        Yes
+0xB3E59477 BOOKCASE_OPEN_TRIG                         16        Yes
+0xB4309C7D CAM_4THSTAIR                               16        Yes
+0xB46E1BEB 2NDLANDING_A_MARK                          16        Yes
+0xB7BA2BE3 DOORTOO001                                 16        Yes
+0xB7BA2BE5 DOORTOO003                                 16        Yes
+0xBA1AC5F3 ocro2202.RW3                               16        Yes
+0xBB35FF43 SLOPE                                      16        Yes
+0xBB584A4F smoke                                      16        Yes
+0xBBA1C646 VIS_WALLHANG4_TRIG                         16        Yes
+0xBC44C2B2 START                                      16        Yes
+0xBCB0FF1E obo00006.RW3                               16        Yes
+0xBCDC91F5 orar1101.RW3                               16        Yes
+0xBDA474E9 bat_cry1                                   32        Yes
+0xBE472FDC gen_gumstretch1                            32        Yes
+0xBF037E42 owar1101.RW3                               16        Yes
+0xC023E514 web.RW3                                    16        Yes
+0xC42FDFBF rflo2101                                   16        Yes
+0xC484EE81 WALL_ENTRANCE_HALL                         16        Yes
+0xC562BC55 GUMSHOOTER                                 16        Yes
+0xC620874D EMIT_SMOKEPIT1                             16        Yes
+0xC620874E EMIT_SMOKEPIT2                             16        Yes
+0xC69F0788 wd_see1                                    32        Yes
+0xC9034BFE VIS_SECRET_SLIDE_TRIG                      16        Yes
+0xC914E3ED VIS_WALLHANG1_TRIG                         16        Yes
+0xCAD68823 o002_door1                                 16        Yes
+0xCAD68824 o002_door2                                 16        Yes
+0xCAEB0455 wood_door_creak2                           32        Yes
+0xCBA87C44 ocro2203.RW3                               16        Yes
+0xCC7AAE4A wd_surprise1                               32        Yes
+0xCCF2F544 1STLANDING_B_MARK                          16        Yes
+0xCDE4B817 bat_flying.anm                             16        Yes
+0xCEA2BE16 DOOR CREAK                                 16        Yes
+0xCF9E5689 wd_walk.anm                                16        Yes
+0xD081BC55 EXITFONT                                   16        Yes
+0xD16EA9D1 1STLANDING_A_MARK                          16        Yes
+0xD1AE4934 EXITO001                                   16        Yes
+0xD1AE4936 EXITO003                                   16        Yes
+0xD2338E4B 3RDLANDING_B_MARK                          16        Yes
+0xD38C5805 stmrtrnk.RW3                               16        Yes
+0xD6AF42D8 3RDLANDING_A_MARK                          16        Yes
+0xD74A0199 gen_gumbounce05                            32        Yes
+0xD7688928 FOGGY                                      16        Yes
+0xD85596E6 bat_hang.anm                               16        Yes
+0xDC7F7199 ofl00006.RW3                               16        Yes
+0xDCE4FA93 CAM_1STCORNER                              16        Yes
+0xDD363295 ocro2204.RW3                               16        Yes
+0xDD4F88E3 wd_death1                                  32        Yes
+0xDE777092 life_essence_fade                          32        Yes
+0xDFA0C15E MT_CREEPER                                 16        Yes
+0xDFFA98E6 ENTRANCE M1                                16        Yes
+0xDFFA98E7 ENTRANCE M2                                16        Yes
+0xE29C09B3 bookcase_slide2                            32        Yes
+0xE55476F4 CAM_3RDSTAIR                               16        Yes
+0xE597248B wd_skull.RW3                               16        Yes
+0xE5D68FE8 o21_noCollide                              16        Yes
+0xE762050E rbg00001                                   16        Yes
+0xEB356D6A owao2101.RW3                               16        Yes
+0xEC269EFA SNACKSHOOTER                               16        Yes
+0xECD0012B 3RDSTAIR_TRIG                              16        Yes
+0xED2D0B31 FIRST TURN LOCKED                          16        Yes
+0xED3277F1 3RDSTAIR_WALL                              16        Yes
+0xF0A0086B CAM ENTRANCE                               16        Yes
+0xF178E187 rat_squeak01                               32        Yes
+0xF17C5FFF WALL_SLIDE_SECRET_SIDE                     16        Yes
+0xF4E604CD gum_pop                                    32        Yes
+0xF90B0E01 3RDSTAIR_B_MARK                            16        Yes
+0xFA6E8AAE o21_wall1                                  16        Yes
+0xFA6E8AAF o21_wall2                                  16        Yes
+0xFA6E8AB0 o21_wall3                                  16        Yes
+0xFA6E8AB1 o21_wall4                                  16        Yes
+0xFA6E8AB2 o21_wall5                                  16        Yes
+0xFA6E8AB3 o21_wall6                                  16        Yes
+0xFA6E8AB4 o21_wall7                                  16        Yes
+0xFA6E8AB5 o21_wall8                                  16        Yes
+0xFA6E8AB6 o21_wall9                                  16        Yes
+0xFA9C376E orao2102.RW3                               16        Yes
+0xFCC323BB owao2102.RW3                               16        Yes
+0xFCC6A201 TOO001                                     16        Yes
+0xFCC6A203 TOO003                                     16        Yes
+0xFCD36394 wd_idle.anm                                16        Yes
+0xFD86C28E 3RDSTAIR_A_MARK                            16        Yes
+
+Checksum Validation
+-------------------
+AssetID     Name                             Packed      UnPacked    Status  
+-------     ----                             ------      --------    ------  
+0x00002798  M1                               0x7B1ABD30  0x7B1ABD30  ok      
+0x00002799  M2                               0xFEC7EA2C  0xFEC7EA2C  ok      
+0x0000279A  M3                               0xD2FE98E0  0xD2FE98E0  ok      
+0x0000279B  M4                               0x302FF428  0x302FF428  ok      
+0x0000279C  M5                               0x46E9F59E  0x46E9F59E  ok      
+0x0000279D  M6                               0xE609EDA2  0xE609EDA2  ok      
+0x0006A06F  o21_noCollide Material Map       0xBC1A4B61  0xBC1A4B61  ok      
+0x0014C98E  o21                              0x9ABD9A03  0x9ABD9A03  ok      
+0x0015E695  SS1                              0x2F45E4FB  0x2F45E4FB  ok      
+0x0015E696  SS2                              0xFD979D08  0xFD979D08  ok      
+0x0015E697  SS3                              0x4F994134  0x4F994134  ok      
+0x0015E698  SS4                              0x54E1CB44  0x54E1CB44  ok      
+0x0015E699  SS5                              0xE6EF1778  0xE6EF1778  ok      
+0x0015E69A  SS6                              0x343D6E8B  0x343D6E8B  ok      
+0x0015E69B  SS7                              0x8633B2B7  0x8633B2B7  ok      
+0x0015E69C  SS8                              0xB0FA1C08  0xB0FA1C08  ok      
+0x0015E69D  SS9                              0x65D08AE1  0x65D08AE1  ok      
+0x00519F37  ocro2206.RW3                     0xC295E6A3  0xC295E6A3  ok      
+0x006B441B  CAM6(STEPS)                      0x4B55BC15  0x4B55BC15  ok      
+0x00E29B7D  och00001.RW3                     0xBA05947F  0xBA05947F  ok      
+0x0176E5AA  scooby_one_32b                   0x7D8CA920  0x7D8CA920  ok      
+0x025C4C38  odto2101.RW3                     0x9C259F4C  0x9C259F4C  ok      
+0x03C23F08  o21_notVisible                   0x2FCA075F  0x2FCA075F  ok      
+0x065800B6  4THSTAIR_TRIG                    0x04BC6B27  0x04BC6B27  ok      
+0x06BA777C  4THSTAIR_WALL                    0xF79D9F85  0xF79D9F85  ok      
+0x07442438  rt_smashed.anm                   0x2190481B  0x2190481B  ok      
+0x090B7C73  CAM2                             0x194F3E8A  0x194F3E8A  ok      
+0x090B7C75  CAM4                             0xBCFF358F  0xBCFF358F  ok      
+0x090B7C76  CAM5                             0x9A2748E8  0x9A2748E8  ok      
+0x090B7C77  CAM6                             0x680EC7E8  0x680EC7E8  ok      
+0x094541EF  wd_stunned.anm                   0xF9FFDD0D  0xF9FFDD0D  ok      
+0x0999EF81  GUM                              0xB327AA0E  0xB327AA0E  ok      
+0x0AA29D47  O002                             0x7C7A60A8  0x7C7A60A8  ok      
+0x0B0E0C1C  RAT1                             0xF9E0569F  0xF9E0569F  ok      
+0x0B0E0C1D  RAT2                             0x7F6A8EA4  0x7F6A8EA4  ok      
+0x0B0E0C1E  RAT3                             0xCF45A966  0xCF45A966  ok      
+0x0B34FE6F  SS10                             0xD15FA8FB  0xD15FA8FB  ok      
+0x0B34FE70  SS11                             0x5B7C8351  0x5B7C8351  ok      
+0x0B34FE71  SS12                             0xE196026C  0xE196026C  ok      
+0x0B34FE72  SS13                             0xF5E8B334  0xF5E8B334  ok      
+0x0B34FE73  SS14                             0x99321320  0x99321320  ok      
+0x0B34FE74  SS15                             0x008737A0  0x008737A0  ok      
+0x0B34FE75  SS16                             0x243E6A04  0x243E6A04  ok      
+0x0B34FE76  SS17                             0xE120372A  0xE120372A  ok      
+0x0B34FE77  SS18                             0x350227DE  0x350227DE  ok      
+0x0B34FE78  SS19                             0xC6A3E709  0xC6A3E709  ok      
+0x0B34FEF2  SS20                             0xEA20827C  0xEA20827C  ok      
+0x0B34FEF3  SS21                             0x5D3AC221  0x5D3AC221  ok      
+0x0B34FEF4  SS22                             0x8BC860C2  0x8BC860C2  ok      
+0x0B34FEF5  SS23                             0x67C43A82  0x67C43A82  ok      
+0x0B34FEF6  SS24                             0x8D05572B  0x8D05572B  ok      
+0x0B34FEF7  SS25                             0x61D7AC8E  0x61D7AC8E  ok      
+0x0B34FEF8  SS26                             0xF58FC9E4  0xF58FC9E4  ok      
+0x0B34FEF9  SS27                             0x382D3FDE  0x382D3FDE  ok      
+0x0B34FEFA  SS28                             0xB6FFEB3E  0xB6FFEB3E  ok      
+0x0B34FEFB  SS29                             0x3D07ABDE  0x3D07ABDE  ok      
+0x0B34FF75  SS30                             0x672358F3  0x672358F3  ok      
+0x0B34FF76  SS31                             0x698D3277  0x698D3277  ok      
+0x0B34FF77  SS32                             0xC0CB1542  0xC0CB1542  ok      
+0x0B34FF79  SS34                             0x576724C0  0x576724C0  ok      
+0x0B34FF7A  SS35                             0x5325B78D  0x5325B78D  ok      
+0x0B34FF7B  SS36                             0x3378A39E  0x3378A39E  ok      
+0x0B34FF7E  SS39                             0xF2F0CBD3  0xF2F0CBD3  ok      
+0x0B34FFF8  SS40                             0x9D427974  0x9D427974  ok      
+0x0B34FFF9  SS41                             0x0517C4EA  0x0517C4EA  ok      
+0x0B34FFFA  SS42                             0x86CCA1B8  0x86CCA1B8  ok      
+0x0B34FFFB  SS43                             0x85DFECF4  0x85DFECF4  ok      
+0x0B34FFFC  SS44                             0xF3A8E038  0xF3A8E038  ok      
+0x0B34FFFD  SS45                             0x2D49D18D  0x2D49D18D  ok      
+0x0B34FFFE  SS46                             0xFBE39832  0xFBE39832  ok      
+0x0B34FFFF  SS47                             0xEDF62F89  0xEDF62F89  ok      
+0x0B350000  SS48                             0x632F0C4C  0x632F0C4C  ok      
+0x0B35007B  SS50                             0x3B65FFD0  0x3B65FFD0  ok      
+0x0B35007C  SS51                             0xE139E54E  0xE139E54E  ok      
+0x0B35007D  SS52                             0x3D1A66ED  0x3D1A66ED  ok      
+0x0B35007E  SS53                             0xAFAA63A3  0xAFAA63A3  ok      
+0x0B35007F  SS54                             0x3FF72094  0x3FF72094  ok      
+0x0B350080  SS55                             0xEC9D87A7  0xEC9D87A7  ok      
+0x0B350081  SS56                             0x1D80354E  0x1D80354E  ok      
+0x0B350082  SS57                             0x517107A3  0x517107A3  ok      
+0x0B350083  SS58                             0xA197CB85  0xA197CB85  ok      
+0x0B350084  SS59                             0x578D8BFA  0x578D8BFA  ok      
+0x0B3500FE  SS60                             0x322F4664  0x322F4664  ok      
+0x0B3500FF  SS61                             0x747C2353  0x747C2353  ok      
+0x0B350101  SS63                             0x11A7A725  0x11A7A725  ok      
+0x0BDC7914  CAM_FALL01                       0x081645AE  0x081645AE  ok      
+0x0BDC7915  CAM_FALL02                       0xA06EAF38  0xA06EAF38  ok      
+0x0C147816  1STCORNER_B_MARK                 0x1974AEC5  0x1974AEC5  ok      
+0x0F4F305C  wd_listen1                       0xEC1E5AB8  0xEC1E5AB8  ok      
+0x10902CA3  1STCORNER_A_MARK                 0x460953F7  0x460953F7  ok      
+0x10B6BD6C  rspf0001.RW3                     0x88EA6B2A  0x88EA6B2A  ok      
+0x16741BD1  wd_chase1                        0x7E971BC1  0x7E971BC1  ok      
+0x16F66F7A  WALL_SLIDE_BOTTOM                0xF1FCAC73  0xF1FCAC73  ok      
+0x1747BC07  wd_see.anm                       0x5E8C7B3D  0x5E8C7B3D  ok      
+0x18673D41  o21 Material Map                 0xEC7626AB  0xEC7626AB  ok      
+0x1C1545A7  WEB_SLIDE01                      0x40F5D0C9  0x40F5D0C9  ok      
+0x1C1545A8  WEB_SLIDE02                      0x3CB99D28  0x3CB99D28  ok      
+0x1C1545A9  WEB_SLIDE03                      0x4E0B606B  0x4E0B606B  ok      
+0x1EA6A379  WALLHANG1                        0x15909578  0x15909578  ok      
+0x1EA6A37A  WALLHANG2                        0x5F6F4A80  0x5F6F4A80  ok      
+0x1EA6A37B  WALLHANG3                        0x53FE4304  0x53FE4304  ok      
+0x1EA6A37C  WALLHANG4                        0xCA90F570  0xCA90F570  ok      
+0x1EA6A37D  WALLHANG5                        0x8E9E08DD  0x8E9E08DD  ok      
+0x1F128CC6  opi00002.RW3                     0x1087F5F9  0x1087F5F9  ok      
+0x1F3072A5  wd_gummed.anm                    0x72808960  0x72808960  ok      
+0x21EDD1AA  fireball3                        0x8163912C  0x8163912C  ok      
+0x21EDD1AC  fireball5                        0xF1E73845  0xF1E73845  ok      
+0x238B0109  BOOKCASE_CLOSE_TRIG              0x897C4A64  0x897C4A64  ok      
+0x2603D415  wd_bind.dff                      0x50CD6FE3  0x50CD6FE3  ok      
+0x2690F73A  o21_wall10                       0x11ABA724  0x11ABA724  ok      
+0x2953282F  wd_attack1                       0x1E14A93F  0x1E14A93F  ok      
+0x29DA9248  wd_look1                         0x50CBDCA9  0x50CBDCA9  ok      
+0x2A37ED55  gc_lightbeam_yellow.RW3          0xB7A0B3CE  0xB7A0B3CE  ok      
+0x2A8B8FF0  wd_bubbled.anm                   0x16C2C72B  0x16C2C72B  ok      
+0x2A8E52E1  rlii0007.RW3                     0x26BFC95E  0x26BFC95E  ok      
+0x2C9CA686  TURNFORJUMP                      0x9ACEE56A  0x9ACEE56A  ok      
+0x2DE074B3  1WAYBOOKCASE                     0x09AF03EE  0x09AF03EE  ok      
+0x2EA5F237  SCOOBY                           0xB553821C  0xB553821C  ok      
+0x2EFC035A  PARSYS_SMOKEPIT1                 0x7B1B118C  0x7B1B118C  ok      
+0x2F321A41  gen_bubble_form1                 0x6182698C  0x6182698C  ok      
+0x2F321A42  gen_bubble_form2                 0x5A095541  0x5A095541  ok      
+0x300B60D4  WITCHDOCTOR2                     0x50651135  0x50651135  ok      
+0x30A6F1AF  FIRST TURN M1                    0x82F2BD31  0x82F2BD31  ok      
+0x3107A9D0  WEB_BREAK                        0x727EB9D6  0x727EB9D6  ok      
+0x31092D4E  2NDSTAIR_TRIG                    0x8CB3444C  0x8CB3444C  ok      
+0x316BA414  2NDSTAIR_WALL                    0x2E2BC951  0x2E2BC951  ok      
+0x3616F93A  wd_chase.anm                     0xA399F155  0xA399F155  ok      
+0x38168D77  rt_idle.anm                      0x4FF214CA  0x4FF214CA  ok      
+0x3A992118  BOTTOM SLIDE M1                  0xC8243420  0xC8243420  ok      
+0x3ACF012B  CAM_2NDLANDING                   0xB5C330B0  0xB5C330B0  ok      
+0x3AD5F596  stairs_darkwood2.RW3             0x75925E96  0x75925E96  ok      
+0x3B8FBE6B  FOOD01                           0xE907F70A  0xE907F70A  ok      
+0x3B8FBE6D  FOOD03                           0x77CB5CCD  0x77CB5CCD  ok      
+0x3B9EBB60  BAT01_A                          0x5271DBA0  0x5271DBA0  ok      
+0x3B9EBB61  BAT01_B                          0x56A4C8E1  0x56A4C8E1  ok      
+0x3B9EBB62  BAT01_C                          0x8A2F705A  0x8A2F705A  ok      
+0x3B9EBB63  BAT01_D                          0x11DC8A9B  0x11DC8A9B  ok      
+0x3B9EFE69  BAT02_A                          0x1DFFDAF9  0x1DFFDAF9  ok      
+0x3B9EFE6A  BAT02_B                          0xD4315D3C  0xD4315D3C  ok      
+0x3B9EFE6B  BAT02_C                          0xE312D595  0xE312D595  ok      
+0x3B9EFE6C  BAT02_D                          0xDA876B34  0xDA876B34  ok      
+0x3D11B0C2  WALL_SLIDE_TOP                   0xA070DFC1  0xA070DFC1  ok      
+0x3D7DCD2F  HALLWAY TO O003                  0x674EF452  0x674EF452  ok      
+0x3FEE2901  gen_bodyfall1                    0x1748AE20  0x1748AE20  ok      
+0x40009BA3  owat0202.RW3                     0xDAC7F9EB  0xDAC7F9EB  ok      
+0x40ECA7CF  o21_notVisible Material Map      0xD138843F  0xD138843F  ok      
+0x4112B078  rspf0001                         0xEFFAA30C  0xEFFAA30C  ok      
+0x41DF68D8  obai0001.RW3                     0xFC57ACC1  0xFC57ACC1  ok      
+0x42E08A3A  mannequin.RW3                    0x85BCCD85  0x85BCCD85  ok      
+0x42FDC9D8  o21_wallhangning1                0x7FDFC08B  0x7FDFC08B  ok      
+0x42FDC9D9  o21_wallhangning2                0x3E012DA8  0x3E012DA8  ok      
+0x42FDC9DA  o21_wallhangning3                0xD1EB4B84  0xD1EB4B84  ok      
+0x42FDC9DB  o21_wallhangning4                0x23A31232  0x23A31232  ok      
+0x42FDC9DC  o21_wallhangning5                0x31A13B27  0x31A13B27  ok      
+0x42FDC9DD  o21_wallhangning6                0x28777F13  0x28777F13  ok      
+0x43700067  wd_investigate.anm               0xCA437F26  0xCA437F26  ok      
+0x481087E2  owao2002.RW3                     0x571332E7  0x571332E7  ok      
+0x48BCC561  cwd00001.RW3                     0xA31EF1F4  0xA31EF1F4  ok      
+0x49622AD5  wd_staff_shake                   0x0C4709D9  0x0C4709D9  ok      
+0x49FC966E  CASE_SLIDE                       0x8F4CFBC2  0x8F4CFBC2  ok      
+0x4AF34F29  SS_B_MARK                        0xB87B3323  0xB87B3323  ok      
+0x4BF67D07  gc_shadow.RW3                    0x4A6B74FB  0x4A6B74FB  ok      
+0x4C97B266  wd_gloat1                        0x29827FA2  0x29827FA2  ok      
+0x4F6F03B6  SS_A_MARK                        0xB5584E0D  0xB5584E0D  ok      
+0x4FA3438E  wd_hear.anm                      0x4D42679A  0x4D42679A  ok      
+0x501D1AAF  rat_smash1                       0xE6B8C3A2  0xE6B8C3A2  ok      
+0x502D994D  owa00002.RW3                     0x98B6D002  0x98B6D002  ok      
+0x510A8847  LIGHTBEAM_01                     0x70206994  0x70206994  ok      
+0x510A8848  LIGHTBEAM_02                     0xC3EEE45C  0xC3EEE45C  ok      
+0x510A8849  LIGHTBEAM_03                     0x9502C946  0x9502C946  ok      
+0x510A884A  LIGHTBEAM_04                     0x4E801D11  0x4E801D11  ok      
+0x510A884B  LIGHTBEAM_05                     0xBE666C2E  0xBE666C2E  ok      
+0x510A884C  LIGHTBEAM_06                     0xC2F9CB3B  0xC2F9CB3B  ok      
+0x510A884D  LIGHTBEAM_07                     0xF286A44D  0xF286A44D  ok      
+0x510A884E  LIGHTBEAM_08                     0xEC6099DE  0xEC6099DE  ok      
+0x510A884F  LIGHTBEAM_09                     0x17961EC5  0x17961EC5  ok      
+0x510A88C9  LIGHTBEAM_10                     0x0F3E6F57  0x0F3E6F57  ok      
+0x510A88CA  LIGHTBEAM_11                     0x8AF9D227  0x8AF9D227  ok      
+0x510A88CB  LIGHTBEAM_12                     0xAB9F59E0  0xAB9F59E0  ok      
+0x510A88CC  LIGHTBEAM_13                     0xDA29D941  0xDA29D941  ok      
+0x510A88CD  LIGHTBEAM_14                     0x7AD8693D  0x7AD8693D  ok      
+0x510A88CE  LIGHTBEAM_15                     0xE996E2B7  0xE996E2B7  ok      
+0x510A88CF  LIGHTBEAM_16                     0x6658EEC9  0x6658EEC9  ok      
+0x510A88D0  LIGHTBEAM_17                     0xE65896E1  0xE65896E1  ok      
+0x510A88D1  LIGHTBEAM_18                     0x82496C26  0x82496C26  ok      
+0x510A88D2  LIGHTBEAM_19                     0x75CA740F  0x75CA740F  ok      
+0x510A894C  LIGHTBEAM_20                     0xC13A0BE2  0xC13A0BE2  ok      
+0x51FB3FF7  odfr1102.RW3                     0xE5B69523  0xE5B69523  ok      
+0x5273B8CF  orao2301.RW3                     0xC051C28F  0xC051C28F  ok      
+0x53102122  token_creeper.dff                0xCBA836C3  0xCBA836C3  ok      
+0x536D1F29  obai0002.RW3                     0xAF11B89F  0xAF11B89F  ok      
+0x559AC43C  2NDSTAIR_B_MARK                  0x5AE380DC  0x5AE380DC  ok      
+0x57528F1B  1STFLOOR_B_MARK                  0x86191C22  0x86191C22  ok      
+0x58F0289F  SNACKSPRAY                       0xEE860C54  0xEE860C54  ok      
+0x599E3E33  owao2003.RW3                     0x191B6BCE  0x191B6BCE  ok      
+0x59B1ED25  CAM_SECRETSLIDE                  0x6722E304  0x6722E304  ok      
+0x5A1678C9  2NDSTAIR_A_MARK                  0x584594F0  0x584594F0  ok      
+0x5AAABC9D  CAM_1STLANDING                   0x6EBC6136  0x6EBC6136  ok      
+0x5ACA1676  LONGSLIDE_TRIG                   0xC376D86B  0xC376D86B  ok      
+0x5BCE43A8  1STFLOOR_A_MARK                  0x973F45E3  0x973F45E3  ok      
+0x5CF030DB  tin_roof_4.RW3                   0x353F0AFC  0x353F0AFC  ok      
+0x5DC89A5B  cba00001.RW3                     0x1F58AD17  0x1F58AD17  ok      
+0x5E57BC24  wd_attack.anm                    0x47275075  0x47275075  ok      
+0x5FC9F422  rbuf0001.RW3                     0x25DA2A86  0x25DA2A86  ok      
+0x6146FDF8  rt_bind.dff                      0x548D0236  0x548D0236  ok      
+0x61FEBB91  STEP_PULLIN_CAM                  0x536BB039  0x536BB039  ok      
+0x638049E7  CAM_1STSTAIR                     0xF4888903  0xF4888903  ok      
+0x63CEF178  ofeg0201.RW3                     0x752D8C09  0x752D8C09  ok      
+0x64BAF2A1  rss00001.DFF                     0x865CC6FD  0x865CC6FD  ok      
+0x64BEA5BF  rss00001.RW3                     0x7250EF1C  0x7250EF1C  ok      
+0x6819993A  wd.ATBL                          0x7CA7756B  0x7CA7756B  ok      
+0x683B0593  wd_gumbounce.anm                 0x8C0AE9A5  0x8C0AE9A5  ok      
+0x686435F9  metal_diag02.RW3                 0xFF366F38  0xFF366F38  ok      
+0x686C5C5C  rbsi0002                         0xE85C1F97  0xE85C1F97  ok      
+0x6902812C  bat_wing1                        0x458642D5  0x458642D5  ok      
+0x6902812D  bat_wing2                        0xE2C74F58  0xE2C74F58  ok      
+0x69B26139  wd.MINF                          0x9CD39375  0x9CD39375  ok      
+0x6AE190F1  CT (FIRST TURN LOCKED)           0x5E213F5A  0x5E213F5A  ok      
+0x6B5F0665  WALL_SLIDE_SECRET_TOP            0x0F4B9640  0x0F4B9640  ok      
+0x6BE36BC0  wd_stunned1                      0x889BF6A9  0x889BF6A9  ok      
+0x6C4D0930  WEB_PROTECTION_OFF               0xC0B88DB9  0xC0B88DB9  ok      
+0x708176D8  1STCORNER_TRIG                   0x4B944C2B  0x4B944C2B  ok      
+0x70938117  rt_patrol.anm                    0x525A6E9E  0x525A6E9E  ok      
+0x72025E72  1STSTAIR_B_MARK                  0x8EE2D2F9  0x8EE2D2F9  ok      
+0x72EAB912  CAM_3RDLANDING                   0x48ACB71D  0x48ACB71D  ok      
+0x766E6460  wd_seereact.anm                  0xF5729520  0xF5729520  ok      
+0x767E12FF  1STSTAIR_A_MARK                  0x5F2FDCDB  0x5F2FDCDB  ok      
+0x76B46AE4  4THSTAIR_B_MARK                  0xDC2F1648  0xDC2F1648  ok      
+0x771E2AA4  FROMO001                         0x801614FC  0x801614FC  ok      
+0x771E2AA6  FROMO003                         0x3B2756B0  0x3B2756B0  ok      
+0x77950091  CAM ENTRANCE TRIG                0x22948572  0x22948572  ok      
+0x7798F554  1STSTAIR_TRIG                    0xE2047D54  0xE2047D54  ok      
+0x77F4673A  FALL2DEATH01                     0xFF578FEF  0xFF578FEF  ok      
+0x77F4673B  FALL2DEATH02                     0xAAAF60BA  0xAAAF60BA  ok      
+0x77FB6C1A  1STSTAIR_WALL                    0x2EC17CA6  0x2EC17CA6  ok      
+0x7A5B2E95  rboi0007                         0xE6F3A50A  0xE6F3A50A  ok      
+0x7A5B2F11  rboi0010                         0xE248C45D  0xE248C45D  ok      
+0x7AB6743A  sound_info                       0x88E198C2  0x88E198C2  ok      
+0x7B301F71  4THSTAIR_A_MARK                  0x0FB22B1A  0x0FB22B1A  ok      
+0x7B49EE50  olio0001.RW3                     0xB7A5E0C6  0xB7A5E0C6  ok      
+0x7B8CFAE1  o_lightbeam                      0xBE28A8C0  0xBE28A8C0  ok      
+0x7CD1EEBA  otai0001.RW3                     0x55507279  0x55507279  ok      
+0x7CDF9775  bat_bind.dff                     0xB9EE5467  0xB9EE5467  ok      
+0x7E3F4882  CAM_1STFLOOR                     0xB963D808  0xB963D808  ok      
+0x7E652B2F  3RD LANDING UP                   0x64FA4FE5  0x64FA4FE5  ok      
+0x7FA399AB  rsa00001.DFF                     0xECA773DE  0xECA773DE  ok      
+0x7FA74CC9  rsa00001.RW3                     0xFD5FBFF6  0xFD5FBFF6  ok      
+0x81AFF59E  DISABLE_BOOKCASE_TIMER           0x7BF8D390  0x7BF8D390  ok      
+0x81E58942  wd_hitbackward.anm               0x7A3EC77D  0x7A3EC77D  ok      
+0x83FFEF44  crt00001.RW3                     0xAADD31BD  0xAADD31BD  ok      
+0x856A76BF  WEB_BLOCK01                      0xCB03DB09  0xCB03DB09  ok      
+0x856A76C0  WEB_BLOCK02                      0xB1E46C0B  0xB1E46C0B  ok      
+0x856A76C1  WEB_BLOCK03                      0x33ABA267  0x33ABA267  ok      
+0x875E1978  wd_attack_touch.anm              0xDAFDBD07  0xDAFDBD07  ok      
+0x8A1FB193  SKULL_PROJ                       0x8E3BBA04  0x8E3BBA04  ok      
+0x8B996740  bat_death.anm                    0x713B5F5D  0x713B5F5D  ok      
+0x8CE483CD  SECRET_SLIDE_TRIG                0xAC508B87  0xAC508B87  ok      
+0x8DD25083  oflo0001.RW3                     0xC808495C  0xC808495C  ok      
+0x8ED9C2E8  celngfan.RW3                     0x6C53194E  0x6C53194E  ok      
+0x8F54CCF2  BAT01                            0x5A206532  0x5A206532  ok      
+0x8F54CCF3  BAT02                            0xDB9622B7  0xDB9622B7  ok      
+0x938AD694  SECOND LANDING UP                0x2A8EFC3C  0x2A8EFC3C  ok      
+0x94245638  WEB_BLOCK_GRP                    0xF0D6648C  0xF0D6648C  ok      
+0x94E25463  pickups.MINF                     0x5F0983A2  0x5F0983A2  ok      
+0x988F22EA  blocks.RW3                       0xA0F96738  0xA0F96738  ok      
+0x98E1452D  rt.ATBL                          0x711F8577  0x711F8577  ok      
+0x9995927C  obo00004.RW3                     0x55CB3062  0x55CB3062  ok      
+0x9A46094E  wall hole.RW3                    0x4473DA4C  0x4473DA4C  ok      
+0x9A5FBEEB  r_book01                         0x3AAC0534  0x3AAC0534  ok      
+0x9A5FBEEE  r_book04                         0x1F923BF5  0x1F923BF5  ok      
+0x9A7A0D2C  rt.MINF                          0xDC83ABD1  0xDC83ABD1  ok      
+0x9B244785  CAM_2NDSTAIR                     0xCBE1ABD1  0xCBE1ABD1  ok      
+0x9B6990FD  CAM_LONGSLIDE                    0xF2ADF1B7  0xF2ADF1B7  ok      
+0x9B7A67C2  LS_B_MARK                        0x6371D33B  0x6371D33B  ok      
+0x9C560B5E  SCENE SET UPS                    0x58511316  0x58511316  ok      
+0x9C946B82  creeper.RW3                      0xEA6A836C  0xEA6A836C  ok      
+0x9FF61C4F  LS_A_MARK                        0x4BE268CA  0x4BE268CA  ok      
+0xA11D69A0  FIRST LANDING UP                 0x40380886  0x40380886  ok      
+0xA1242B01  wd_turn.anm                      0xE7A80571  0xE7A80571  ok      
+0xA28F6B3E  fireball_loop                    0x619FE46F  0x619FE46F  ok      
+0xA29124E2  rbg00001.RW3                     0xC9EE1A30  0xC9EE1A30  ok      
+0xA2E5EE14  ba.ATBL                          0x98F96172  0x98F96172  ok      
+0xA341D14B  rat_scury1                       0x14DFA219  0x14DFA219  ok      
+0xA432EAE7  wd_skull                         0x59A10D5F  0x59A10D5F  ok      
+0xA43B805D  rlii0007                         0xE081FEF1  0xE081FEF1  ok      
+0xA47EB613  ba.MINF                          0xBC08FB8D  0xBC08FB8D  ok      
+0xA84C121D  WITCH DOCTOR1                    0x582653A9  0x582653A9  ok      
+0xA88D0FA2  ocro2201.RW3                     0x8168B481  0x8168B481  ok      
+0xA9EF1F2B  scooby_snacks.DFF                0x9EB6A03D  0x9EB6A03D  ok      
+0xA9F2D249  scooby_snacks.RW3                0x4EB31D8F  0x4EB31D8F  ok      
+0xAC58CFAF  web_bust                         0x6CBC3830  0x6CBC3830  ok      
+0xACB0E9B3  bat_gumbounce.anm                0x71E7EACA  0x71E7EACA  ok      
+0xAFF2675E  2NDLANDING_B_MARK                0x50CAD1BC  0x50CAD1BC  ok      
+0xB0E8BDF5  1STFLOOR_TRIG                    0x4AE67EE2  0x4AE67EE2  ok      
+0xB10C7105  bat_gummed.anm                   0x29A82D63  0x29A82D63  ok      
+0xB171E7DB  rss00001                         0x865CC6FD  0x865CC6FD  ok      
+0xB1B7F671  wd_gloat.anm                     0xC2864EF0  0xC2864EF0  ok      
+0xB22A8421  soapbubble_pop                   0x1AC74647  0x1AC74647  ok      
+0xB3031534  SSBOX01                          0x348DA76C  0x348DA76C  ok      
+0xB3031535  SSBOX02                          0xD2282644  0xD2282644  ok      
+0xB3031536  SSBOX03                          0x8B4D3DB1  0x8B4D3DB1  ok      
+0xB3E59477  BOOKCASE_OPEN_TRIG               0x7ED69370  0x7ED69370  ok      
+0xB4309C7D  CAM_4THSTAIR                     0xA0FF6211  0xA0FF6211  ok      
+0xB46E1BEB  2NDLANDING_A_MARK                0x5E0FB584  0x5E0FB584  ok      
+0xB7BA2BE3  DOORTOO001                       0x3433B205  0x3433B205  ok      
+0xB7BA2BE5  DOORTOO003                       0x59E0F209  0x59E0F209  ok      
+0xBA1AC5F3  ocro2202.RW3                     0x4A66DEDB  0x4A66DEDB  ok      
+0xBB35FF43  SLOPE                            0xAD36B569  0xAD36B569  ok      
+0xBB584A4F  smoke                            0xCE8E6CEC  0xCE8E6CEC  ok      
+0xBBA1C646  VIS_WALLHANG4_TRIG               0x9371D230  0x9371D230  ok      
+0xBC44C2B2  START                            0x97209E84  0x97209E84  ok      
+0xBCB0FF1E  obo00006.RW3                     0xA1910294  0xA1910294  ok      
+0xBCDC91F5  orar1101.RW3                     0xD4611E44  0xD4611E44  ok      
+0xBDA474E9  bat_cry1                         0x4B28486F  0x4B28486F  ok      
+0xBE472FDC  gen_gumstretch1                  0x86C2AE43  0x86C2AE43  ok      
+0xBF037E42  owar1101.RW3                     0xC4E9F782  0xC4E9F782  ok      
+0xC023E514  web.RW3                          0x9B06B0CA  0x9B06B0CA  ok      
+0xC42FDFBF  rflo2101                         0xD49B8A4E  0xD49B8A4E  ok      
+0xC484EE81  WALL_ENTRANCE_HALL               0x831593DD  0x831593DD  ok      
+0xC562BC55  GUMSHOOTER                       0xAA3CCD8C  0xAA3CCD8C  ok      
+0xC620874D  EMIT_SMOKEPIT1                   0xAF6A08FE  0xAF6A08FE  ok      
+0xC620874E  EMIT_SMOKEPIT2                   0xF4EAC8B9  0xF4EAC8B9  ok      
+0xC69F0788  wd_see1                          0x6039BBBC  0x6039BBBC  ok      
+0xC9034BFE  VIS_SECRET_SLIDE_TRIG            0x9FE7BCFE  0x9FE7BCFE  ok      
+0xC914E3ED  VIS_WALLHANG1_TRIG               0xE8358A72  0xE8358A72  ok      
+0xCAD68823  o002_door1                       0x82BC3FEA  0x82BC3FEA  ok      
+0xCAD68824  o002_door2                       0x20E9F795  0x20E9F795  ok      
+0xCAEB0455  wood_door_creak2                 0xF729E1B9  0xF729E1B9  ok      
+0xCBA87C44  ocro2203.RW3                     0x42486365  0x42486365  ok      
+0xCC7AAE4A  wd_surprise1                     0x4BC1984D  0x4BC1984D  ok      
+0xCCF2F544  1STLANDING_B_MARK                0xCBBF2DAA  0xCBBF2DAA  ok      
+0xCDE4B817  bat_flying.anm                   0x01C44505  0x01C44505  ok      
+0xCEA2BE16  DOOR CREAK                       0xC7EE0617  0xC7EE0617  ok      
+0xCF9E5689  wd_walk.anm                      0xD94E269E  0xD94E269E  ok      
+0xD081BC55  EXITFONT                         0x060707E9  0x060707E9  ok      
+0xD16EA9D1  1STLANDING_A_MARK                0xC57A4992  0xC57A4992  ok      
+0xD1AE4934  EXITO001                         0xAED008AD  0xAED008AD  ok      
+0xD1AE4936  EXITO003                         0xD40FBF7C  0xD40FBF7C  ok      
+0xD2338E4B  3RDLANDING_B_MARK                0x961C064E  0x961C064E  ok      
+0xD38C5805  stmrtrnk.RW3                     0xFC0DCDDF  0xFC0DCDDF  ok      
+0xD6AF42D8  3RDLANDING_A_MARK                0x98D96276  0x98D96276  ok      
+0xD74A0199  gen_gumbounce05                  0xB9B10EBC  0xB9B10EBC  ok      
+0xD7688928  FOGGY                            0x6355AB4A  0x6355AB4A  ok      
+0xD85596E6  bat_hang.anm                     0x5D91AE04  0x5D91AE04  ok      
+0xDC7F7199  ofl00006.RW3                     0xE23DCF2D  0xE23DCF2D  ok      
+0xDCE4FA93  CAM_1STCORNER                    0x4A74F9E0  0x4A74F9E0  ok      
+0xDD363295  ocro2204.RW3                     0x96B2D048  0x96B2D048  ok      
+0xDD4F88E3  wd_death1                        0x0A36547E  0x0A36547E  ok      
+0xDE777092  life_essence_fade                0x7CCF270F  0x7CCF270F  ok      
+0xDFA0C15E  MT_CREEPER                       0x6DE9A9B3  0x6DE9A9B3  ok      
+0xDFFA98E6  ENTRANCE M1                      0xC27F5ADD  0xC27F5ADD  ok      
+0xDFFA98E7  ENTRANCE M2                      0x02D23327  0x02D23327  ok      
+0xE29C09B3  bookcase_slide2                  0xB315B6F5  0xB315B6F5  ok      
+0xE55476F4  CAM_3RDSTAIR                     0xC8190B55  0xC8190B55  ok      
+0xE597248B  wd_skull.RW3                     0x423C69A4  0x423C69A4  ok      
+0xE5D68FE8  o21_noCollide                    0x5A858CC4  0x5A858CC4  ok      
+0xE762050E  rbg00001                         0xD74699FB  0xD74699FB  ok      
+0xEB356D6A  owao2101.RW3                     0x015E5430  0x015E5430  ok      
+0xEC269EFA  SNACKSHOOTER                     0x3F7094F0  0x3F7094F0  ok      
+0xECD0012B  3RDSTAIR_TRIG                    0xBB941FC7  0xBB941FC7  ok      
+0xED2D0B31  FIRST TURN LOCKED                0x9B484FB8  0x9B484FB8  ok      
+0xED3277F1  3RDSTAIR_WALL                    0x8934AC98  0x8934AC98  ok      
+0xF0A0086B  CAM ENTRANCE                     0x3215BAB8  0x3215BAB8  ok      
+0xF178E187  rat_squeak01                     0xB60CDA13  0xB60CDA13  ok      
+0xF17C5FFF  WALL_SLIDE_SECRET_SIDE           0x93255217  0x93255217  ok      
+0xF4E604CD  gum_pop                          0x3F8FBA69  0x3F8FBA69  ok      
+0xF90B0E01  3RDSTAIR_B_MARK                  0xD8272D12  0xD8272D12  ok      
+0xFA6E8AAE  o21_wall1                        0xFD43269E  0xFD43269E  ok      
+0xFA6E8AAF  o21_wall2                        0xA95B8EA8  0xA95B8EA8  ok      
+0xFA6E8AB0  o21_wall3                        0xE4E4F44B  0xE4E4F44B  ok      
+0xFA6E8AB1  o21_wall4                        0xF9A004C2  0xF9A004C2  ok      
+0xFA6E8AB2  o21_wall5                        0xD3D4322A  0xD3D4322A  ok      
+0xFA6E8AB3  o21_wall6                        0x96DDC825  0x96DDC825  ok      
+0xFA6E8AB4  o21_wall7                        0x2894DA41  0x2894DA41  ok      
+0xFA6E8AB5  o21_wall8                        0x911C44EA  0x911C44EA  ok      
+0xFA6E8AB6  o21_wall9                        0x14AFF816  0x14AFF816  ok      
+0xFA9C376E  orao2102.RW3                     0x85526B8E  0x85526B8E  ok      
+0xFCC323BB  owao2102.RW3                     0x32C9654F  0x32C9654F  ok      
+0xFCC6A201  TOO001                           0xBD808DC4  0xBD808DC4  ok      
+0xFCC6A203  TOO003                           0xC10D15C8  0xC10D15C8  ok      
+0xFCD36394  wd_idle.anm                      0xAC3DFBCC  0xAC3DFBCC  ok      
+0xFD86C28E  3RDSTAIR_A_MARK                  0x50D236DA  0x50D236DA  ok      
+
+
+Pickup Stats:
+       1    Mtoken.Creeper
+      58    Item.ScoobySnack
+       2    Item.Food
+       3    Item.SnackBox
+
+
+#### End of HIP Log Report ####
