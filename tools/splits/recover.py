@@ -97,14 +97,16 @@ def load_symbols(path):
     return out
 
 
-def load_relocations(objdir, named):
+def load_relocations(objdir, named, extents):
     """(source address, target address) for every relocation in dtk's split objects.
 
     Symbols are looked up in `named` (symbols.txt, name -> addresses) first.  dtk
     names its own labels <prefix>_<ADDR> and padding gap_<NN>_<ADDR>_<section>, so
     each section's load address follows from any such symbol's value.  A name
-    symbols.txt gives more than one symbol (file-local statics) is resolved where
-    the object defines it; a reference to it from another object is ambiguous."""
+    symbols.txt gives more than one symbol (file-local statics) is resolved in the
+    object that defines it, to the one address inside that object's range for the
+    section (`extents`, from splits.txt); a reference to it from another object
+    is ambiguous."""
 
     def addr_of(nm):
         a = named.get(nm, ())
@@ -151,11 +153,13 @@ def load_relocations(objdir, named):
                     if not 0 < shndx < 0xFF00:
                         raise SystemExit(f'{path}: {nm} is named more than once in symbols.txt '
                                          'and not defined in this object')
-                    local = base.get(shndx)
-                    if not local or len(local) != 1:
+                    unit = os.path.splitext(os.path.relpath(path, objdir))[0].replace(os.sep, '/')
+                    lo, hi = extents.get((unit, name(shstrndx, shdrs[shndx][0])), (0, 0))
+                    inside = [x for x in named[nm] if lo <= x < hi]
+                    if len(inside) != 1:
                         raise SystemExit(f'{path}: {nm} is named more than once in symbols.txt '
-                                         'and the base of its section is unknown')
-                    a = next(iter(local)) + value
+                                         f'and {len(inside)} of those addresses lie in this object')
+                    a = inside[0]
                 if a is not None:
                     out.append((b + off, a + addend))
     return out, skipped
@@ -377,7 +381,17 @@ def main():
     named = collections.defaultdict(list)
     for s in syms:
         named[s[3]].append(s[0])
-    relocs, skipped = load_relocations(args.objdir, named)
+    extents = {}
+    unit = None
+    for line in open(os.path.join(os.path.dirname(args.symbols), 'splits.txt')):
+        m = re.match(r'(\S+)\.\w+:$', line)
+        if m:
+            unit = m[1]
+            continue
+        m = re.match(r'\s+(\.\w+)\s+start:0x([0-9A-F]+) end:0x([0-9A-F]+)', line)
+        if m and unit:
+            extents[(unit, m[1])] = (int(m[2], 16), int(m[3], 16))
+    relocs, skipped = load_relocations(args.objdir, named, extents)
     if not relocs:
         raise SystemExit('no relocations: run the dtk split first')
     func_targets = collections.defaultdict(list)
@@ -654,7 +668,7 @@ def main():
 
     # Data cuts between consecutive units that own unit-local items in a section.
     # Items that unassigned functions load stay out of every unit.
-    ranges, dclass, stray, placed = {}, {}, {}, collections.Counter()
+    ranges, dclass, stray, placed, shared_items = {}, {}, {}, {}, set()
     for sec in DATA_SECTIONS:
         # Unit-local items must appear in link order.  Keep the largest set of them
         # whose owners never go backwards (longest non-decreasing run); an item out
@@ -662,10 +676,9 @@ def main():
         items = sorted((d, k) for k, u in enumerate(order)
                        for d in owned(tstart[u], tend[u], sec) if users[d] == {u})
         kept = longest_run(items)
-        stray[sec] = len(items) - len(kept)
-        # An item several units load is defined by one of them.  Where link order
-        # leaves room for only one of its users (between the units of the kept items
-        # around it), it belongs to that user.
+        # Heuristic: an item several units load is usually defined by one of them.
+        # Where link order leaves room for only one of its users (between the units
+        # of the kept items around it), it is placed with that user.
         index = {u: k for k, u in enumerate(order)}
         at = [d for d, _ in kept]
         for d in sorted(d for d, us in users.items() if data[d][2] == sec and None not in us and len(us) > 1):
@@ -675,10 +688,11 @@ def main():
             fits = [index[u] for u in users[d] if lo <= index[u] <= hi]
             if len(fits) == 1:
                 items.append((d, fits[0]))
-                placed[sec] += 1
-        if placed[sec]:
-            items.sort()
-            kept = longest_run(items)
+                shared_items.add(d)
+        items.sort()
+        kept = longest_run(items)
+        stray[sec] = len(items) - len(kept)
+        placed[sec] = sum(1 for d, _ in kept if d in shared_items)
         seq = []
         for d, k in kept:
             if seq and seq[-1][0] == order[k]:
