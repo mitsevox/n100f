@@ -48,15 +48,15 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 
 ## Library unit map
 
-`tools/splits/libmap.py` compiles source from the decompilations below, at the revisions pinned in `config/GIHE78/libmap.json`, only to locate and name library code in the target; none of that source is in this repository. Function names come only from the symbol lists of ac-decomp, tww and FFCC-Decomp, which derive from those games' map or debug files.
+`tools/splits/libmap.py` compiles source from the decompilations below, at the revisions pinned in `config/GIHE78/libmap.json`, only to locate and name library code in the target; none of that source is in this repository. The names libmap applies come only from the symbol lists of ac-decomp, tww and FFCC-Decomp, which derive from those games' map or debug files. The other library names in `symbols.txt` come from decomp-toolkit's built-in signatures, as rows in `evidence.tsv` record.
 
-- [ACreTeam/ac-decomp](https://github.com/ACreTeam/ac-decomp), [zeldaret/tww](https://github.com/zeldaret/tww), [zcanann/FFCC-Decomp](https://github.com/zcanann/FFCC-Decomp), [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4), [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb), [bfbbdecomp/tssm](https://github.com/bfbbdecomp/tssm), [projectPiki/pikmin](https://github.com/projectPiki/pikmin), [mitsevox/tw2004](https://github.com/mitsevox/tw2004), [mitsevox/mvp2005](https://github.com/mitsevox/mvp2005) and [mitsevox/nflstreet2](https://github.com/mitsevox/nflstreet2): CC0 1.0.
+- [ACreTeam/ac-decomp](https://github.com/ACreTeam/ac-decomp), [zeldaret/tww](https://github.com/zeldaret/tww), [zcanann/FFCC-Decomp](https://github.com/zcanann/FFCC-Decomp), [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4), [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb), [bfbbdecomp/tssm](https://github.com/bfbbdecomp/tssm), [projectPiki/pikmin](https://github.com/projectPiki/pikmin), [mitsevox/tw2004](https://github.com/mitsevox/tw2004) and [mitsevox/mvp2005](https://github.com/mitsevox/mvp2005): CC0 1.0.
 - [Jovinull/sonicheroes](https://github.com/Jovinull/sonicheroes): MIT. Its notice must accompany any source imported from it.
 
 ## Build tooling
 
 `configure.py`, `tools/*.py` (except project-specific additions), `.vscode/`, `.flake8`, `.gitattributes` and `docs/dtk/` come from [encounter/dtk-template](https://github.com/encounter/dtk-template/tree/d366876408b754891a0392badbc63bff3490469f), revision `d366876408b754891a0392badbc63bff3490469f`, published under CC0 1.0 (`tools/LICENSE.dtk-template`). Local changes: project configuration in `configure.py`, removed example libraries and REL helper, and merged ignore rules.
 
-`config/GIHE78/ldscript.tpl` is decomp-toolkit v1.8.3's `assets/ldscript.lcf` (MIT/Apache-2.0) with `_db_stack_addr` at `_stack_addr + 0x1000`.
+`config/GIHE78/ldscript.tpl` is decomp-toolkit v1.8.3's `assets/ldscript.lcf` with `_db_stack_addr` at `_stack_addr + 0x1000`, used under decomp-toolkit's MIT licence (`tools/LICENSE.decomp-toolkit`).
 
 `tools/patches/dtk-v1.8.3-rom-copy-info.patch` modifies [encounter/decomp-toolkit](https://github.com/encounter/decomp-toolkit/tree/v1.8.3) v1.8.3 (MIT/Apache-2.0) so that `_rom_copy_info` is also searched for in the first text section. `tools/project.py` additionally passes a non-default DOL entry symbol to mwld.

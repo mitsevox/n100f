@@ -243,7 +243,7 @@ def main():
             if not funcs:
                 continue
             start, end = funcs[0][3], funcs[-1][3] + funcs[-1][1]
-            if not lo <= start < hi:
+            if not lo <= start < end <= hi:
                 continue
             rank = args.manifest['candidates'].index(cand)
             placements.append({'cand': cand, 'version': version, 'source': source, 'whole': whole,
