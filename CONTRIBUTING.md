@@ -33,7 +33,7 @@ The owner has delegated, on a standing basis until the owner revokes it, review 
 - checks for matching-integrity violations and published game binaries;
 - posts owner clearance and squash-merges only when required CI passes on the final revision, the PR is conflict-free, and both review records pass for that revision.
 
-The merge gate does not author contribution work, push or force-push to `main`, enable auto-merge, or change approval controls. When a check or condition fails, the merge gate reports on the PR rather than fixing the contribution. No other contributor or agent holds this delegation. The owner may merge, clear or withdraw clearance directly at any time.
+The merge gate does not author contribution work, push to `main`, force-push any branch, enable auto-merge, or change approval controls. When a check or condition fails, the merge gate reports on the PR rather than fixing the contribution. No other contributor or agent holds this delegation. The owner may merge, clear or withdraw clearance directly at any time.
 
 ## Work coordination
 
