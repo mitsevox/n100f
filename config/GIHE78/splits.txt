@@ -74,7 +74,9 @@ flat/iMemMgr.cpp:
 	.sbss       start:0x8025E8E8 end:0x8025E900
 
 flat/iModel.cpp:
-	.text       start:0x8000DBA4 end:0x8000E994
+	.text       start:0x8000DBA4 end:0x8000EBC0
+	.bss        start:0x801E1498 end:0x801E1898
+	.sbss       start:0x8025E900 end:0x8025E908
 	.sdata2     start:0x8025FA18 end:0x8025FA38
 	.sbss2      start:0x80262C60 end:0x80262C68
 
@@ -160,7 +162,7 @@ flat/xCollide.cpp:
 	.sdata2     start:0x8025FCB8 end:0x8025FCD8
 
 flat/xCollideFast.cpp:
-	.text       start:0x80021620 end:0x80021AF0
+	.text       start:0x80021620 end:0x80021B10
 	.sdata2     start:0x8025FCD8 end:0x8025FCF0
 
 flat/xEnt.cpp:
@@ -227,7 +229,7 @@ flat/xMath.cpp:
 	.sdata2     start:0x8025FFA0 end:0x80260008
 
 flat/xMath3.cpp:
-	.text       start:0x8002CF48 end:0x8002F8E0
+	.text       start:0x8002CF48 end:0x8002F920
 	.rodata     start:0x801936B0 end:0x80193730
 	.data       start:0x801AEE28 end:0x801AEE38
 	.sdata2     start:0x80260008 end:0x80260048
@@ -263,10 +265,14 @@ flat/xPar.cpp:
 	.sdata2     start:0x80260110 end:0x80260118
 
 flat/xParGroup.cpp:
-	.text       start:0x80032540 end:0x80032CD8
+	.text       start:0x80032540 end:0x80032D28
 	.bss        start:0x802272A8 end:0x802276A8
 	.sbss       start:0x8025EAE0 end:0x8025EAE8
 	.sdata2     start:0x80260118 end:0x80260120
+
+flat/xParMgr.cpp:
+	.text       start:0x80032D28 end:0x80032DEC
+	.sbss       start:0x8025EAE8 end:0x8025EAF0
 
 flat/xPartition.cpp:
 	.text       start:0x80032DEC end:0x8003361C
@@ -457,7 +463,7 @@ flat/zEntShaggy.cpp:
 	.sdata2     start:0x80260A38 end:0x80260C48
 
 flat/zEntTrigger.cpp:
-	.text       start:0x8007ACF8 end:0x8007B08C
+	.text       start:0x8007ACB8 end:0x8007B08C
 	.sdata2     start:0x80260C50 end:0x80260C58
 
 flat/zEntVillain.cpp:
@@ -644,6 +650,14 @@ flat/zPlatform.cpp:
 	.rodata     start:0x801A5F28 end:0x801A5F58
 	.sbss       start:0x8025F060 end:0x8025F068
 	.sdata2     start:0x80261BB0 end:0x80261BE8
+
+flat/zPortal.cpp:
+	.text       start:0x800C8AE4 end:0x800C8BDC
+
+flat/zRenderState.cpp:
+	.text       start:0x800C8BDC end:0x800C90D4
+	.data       start:0x801C7650 end:0x801C76B0
+	.sbss       start:0x8025F068 end:0x8025F070
 
 flat/zRumble.cpp:
 	.text       start:0x800C90D4 end:0x800C9368

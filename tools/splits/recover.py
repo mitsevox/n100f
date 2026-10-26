@@ -302,8 +302,11 @@ def longest_run(items):
     return out[::-1]
 
 
-def align(ps_sizes, gc_sizes, pins):
-    """Global alignment of two size sequences; pins maps ps index -> gc index."""
+def align(ps_sizes, gc_sizes, pins, ps_tail={}, gc_wrap={}):
+    """Global alignment of two size sequences; pins maps ps index -> gc index.
+
+    A PS2 tail call (ps_tail) and a GC call wrapper (gc_wrap), each mapped to its
+    callee's name or None, score as equal sizes unless the callee names differ."""
     n, m = len(ps_sizes), len(gc_sizes)
     gap = -0.8
     pinned_g = set(pins.values())
@@ -313,6 +316,7 @@ def align(ps_sizes, gc_sizes, pins):
     for i in range(1, n + 1):
         lp = math.log2(max(ps_sizes[i - 1], 4))
         pin = pins.get(i - 1)
+        tail = ps_tail.get(i - 1, False)
         row = [i * gap] + [0.0] * m
         bk = back[i]
         for j in range(1, m + 1):
@@ -320,6 +324,9 @@ def align(ps_sizes, gc_sizes, pins):
                 sub = 20.0 if pin == j - 1 else -50.0
             elif j - 1 in pinned_g:
                 sub = -50.0
+            elif tail is not False and (w := gc_wrap.get(j - 1, False)) is not False \
+                    and (tail is None or w is None or tail == w):
+                sub = 1.5
             else:
                 sub = max(1.5 - 3 * abs(lg[j - 1] - lp), -2.0)
             d, u, l = prev[j - 1] + sub, prev[j] + gap, row[j - 1] + gap
@@ -469,7 +476,27 @@ def main():
     fingerprint = len(seeds)
     seeds.update(named)
     pins = {spos[i]: gpos[g] for i, g in seeds.items() if i in spos and g in gpos}
-    pairs = align([ps2.funcs[i][1] for i in shared], [funcs[j][1] for j in game], pins)
+    # PS2 code turns a one-call wrapper into a tail call: a `j` among at most four
+    # instructions.  GC code builds a stack frame around a single `bl` instead, which
+    # takes 0x20 bytes or a little more.  Each maps to its callee's name where known
+    # (DWARF on PS2, an exact body on GC); the two pair only if those do not differ.
+    def ps2_tail(i):
+        addr, size = ps2.funcs[i][:2]
+        js = [p for p in range(addr, addr + size, 4) if ps2.u32(p) >> 26 == 2]
+        if size <= 16 and len(js) == 1:
+            return ps2_at.get((js[0] & 0xF0000000) | ((ps2.u32(js[0]) & 0x3FFFFFF) << 2))
+        return False
+
+    def gc_wrapper(j):
+        addr, size = funcs[j][:2]
+        bls = [p for p in range(addr, addr + size, 4) if dol.u32(p) >> 26 == 18 and dol.u32(p) & 3 == 1]
+        if 0x20 <= size <= 0x30 and len(bls) == 1:
+            return exact.get(bls[0] + (((dol.u32(bls[0]) & 0x3FFFFFC) ^ 0x2000000) - 0x2000000))
+        return False
+
+    ps_tail = {k: t for k, i in enumerate(shared) if (t := ps2_tail(i)) is not False}
+    gc_wrap = {k: t for k, j in enumerate(game) if (t := gc_wrapper(j)) is not False}
+    pairs = align([ps2.funcs[i][1] for i in shared], [funcs[j][1] for j in game], pins, ps_tail, gc_wrap)
 
     core, anchored, name_anchored, first_anchor = {}, collections.Counter(), collections.Counter(), {}
     seeded = set(seeds.values())
@@ -539,10 +566,12 @@ def main():
                          for c in cands)
             return n
 
-        def call_crossings(k):
-            # calls in either direction between a window function and a function of
-            # either unit outside the window that the cut would separate
-            return sum(1 for f in window for g in ({fidx(t) for t in func_targets[f]} | callers[f])
+        def call_crossings(k, incoming):
+            # calls between a window function and a function of either unit outside
+            # the window that the cut would separate: calls to the window function
+            # (incoming) or calls it makes
+            return sum(1 for f in window
+                       for g in (callers[f] if incoming else {fidx(t) for t in func_targets[f]})
                        if g in span and g not in window and (f <= k) != (g <= k))
 
         ks = range(max(wlo - 1, tstart[A]), min(whi, core[B][1] - 1) + 1)
@@ -551,12 +580,16 @@ def main():
         best = min(scores.values())
         ties = sorted(k for k, v in scores.items() if v == best)
         tied = len(ties)
-        # Cuts that tie on data are told apart by the calls they would separate.
-        if tied > 1:
-            calls = {k: call_crossings(k) for k in ties}
-            ties = [k for k in ties if calls[k] == min(calls.values())]
-        by_calls = f'{tied} cuts tie on data, {len(ties)} on calls' if len(ties) < tied else f'{tied} cuts tie on data'
+        # Cuts that tie on data are told apart by the calls they would separate:
+        # first calls into the window functions, then, unless the alignment's cut
+        # is still among the ties, calls they make.  A function's own calls are the
+        # weaker sign, since an init function calls the init of the next unit, say.
         aligned_cut = core[A][1] if core[B][0] - core[A][1] == 1 else None
+        for incoming in (True, False):
+            if len(ties) > 1 and (incoming or aligned_cut not in ties):
+                calls = {k: call_crossings(k, incoming) for k in ties}
+                ties = [k for k in ties if calls[k] == min(calls.values())]
+        by_calls = f'{tied} cuts tie on data, {len(ties)} on calls' if len(ties) < tied else f'{tied} cuts tie on data'
         if forced and len(ties) == 1:
             cut, cls = ties[0], 'static initialiser ends unit'
         elif tied == 1:
