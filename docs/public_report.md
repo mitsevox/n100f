@@ -44,7 +44,7 @@ artifact against its copy of the producer policy, and never runs anything from t
 | `files.named` | units that are not auto-generated ranges |
 | `files.exact` | named units whose code and data bytes all match |
 
-The file counts are provisional. 99 game units are named from recovered splits (see
+The file counts are provisional. 101 game units are named from recovered splits (see
 [splits.md](splits.md)); the rest are dtk's auto-generated address ranges. The names come from the
 PS2 v1.01 DWARF and the boundaries are inferred, so no unit boundary has been checked against
 Heavy Iron's objects. The basis string says so. Naming those units did not change what
