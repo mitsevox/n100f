@@ -317,6 +317,10 @@ def file_is_c_cpp(path: Path) -> bool:
     return file_is_c(path) or file_is_cpp(path)
 
 
+def is_prodg(mw_version: str) -> bool:
+    return mw_version.split("/")[0] == "ProDG"
+
+
 _listdir_cache = {}
 
 
@@ -689,6 +693,16 @@ def generate_build_ninja(
     mwcc_sjis_extab_cmd = f'{CHAIN}{mwcc_sjis_cmd} && {dtk} extab clean --padding "$extab_padding" $out $out'
     mwcc_sjis_extab_implicit: List[Optional[Path]] = [*mwcc_sjis_implicit, dtk]
 
+    # ProDG (SN Systems GCC), run stage by stage (see tools/prodg_cc.py)
+    prodg_cc = config.tools_dir / "prodg_cc.py"
+    prodg_wrapper = f"--wrapper {wrapper} " if wrapper else ""
+    prodg_cmd = f"$python {prodg_cc} {prodg_wrapper}--dir {compiler_path} --depfile $basefile.d $cflags -c $in -o $out"
+    prodg_implicit: List[Optional[Path]] = [
+        compilers_implicit or compiler_path / "cc1.exe",
+        wrapper_implicit,
+        prodg_cc,
+    ]
+
     # MWLD
     mwld = compiler_path / "mwldeppc.exe"
     mwld_cmd = f"{wrapper_cmd}{mwld} $ldflags -o $out @$out.rsp"
@@ -742,6 +756,16 @@ def generate_build_ninja(
         name="mwcc",
         command=mwcc_cmd,
         description="MWCC $out",
+        depfile="$basefile.d",
+        deps="gcc",
+    )
+    n.newline()
+
+    n.comment("ProDG build")
+    n.rule(
+        name="prodg",
+        command=prodg_cmd,
+        description="ProDG $out",
         depfile="$basefile.d",
         deps="gcc",
     )
@@ -1009,10 +1033,12 @@ def generate_build_ninja(
 
             cflags = obj.options["cflags"]
             extra_cflags = obj.options["extra_cflags"]
+            prodg = is_prodg(obj.options["mw_version"])
 
             # Add appropriate language flag if it doesn't exist already
             # Added directly to the source so it flows to other generation tasks
-            if not any(flag.startswith("-lang") for flag in cflags) and not any(
+            # (ProDG picks the language from the file extension)
+            if not prodg and not any(flag.startswith("-lang") for flag in cflags) and not any(
                 flag.startswith("-lang") for flag in extra_cflags
             ):
                 # Ensure extra_cflags is a unique instance,
@@ -1038,7 +1064,10 @@ def generate_build_ninja(
                 "basefile": obj.src_obj_path.with_suffix(""),
             }
 
-            if obj.options["shift_jis"] and obj.options["extab_padding"] is not None:
+            if prodg:
+                build_rule = "prodg"
+                build_implcit = prodg_implicit
+            elif obj.options["shift_jis"] and obj.options["extab_padding"] is not None:
                 build_rule = "mwcc_sjis_extab"
                 build_implcit = mwcc_sjis_extab_implicit
                 variables["extab_padding"] = "".join(
@@ -1201,7 +1230,8 @@ def generate_build_ninja(
 
         # Check if all compiler versions exist
         for mw_version in used_compiler_versions:
-            mw_path = compilers / mw_version / "mwcceppc.exe"
+            executable = "cc1.exe" if is_prodg(mw_version) else "mwcceppc.exe"
+            mw_path = compilers / mw_version / executable
             if config.compilers_path and not os.path.exists(mw_path):
                 sys.exit(f"Compiler {mw_path} does not exist")
 
@@ -1696,7 +1726,9 @@ def generate_objdiff_config(
 
         compiler_version = COMPILER_MAP.get(obj.options["mw_version"])
         if compiler_version is None:
-            print(f"Missing scratch compiler mapping for {obj.options['mw_version']}")
+            # No scratch preset is mapped for ProDG
+            if not is_prodg(obj.options["mw_version"]):
+                print(f"Missing scratch compiler mapping for {obj.options['mw_version']}")
         else:
             cflags_str = make_flags_str(all_cflags)
             unit_config["scratch"] = {
