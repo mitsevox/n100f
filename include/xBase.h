@@ -27,5 +27,6 @@ struct xBase
 void xBaseInit(xBase* xb, p2BaseAsset* asset);
 void xBaseSave(xBase* ent, xSerial* s);
 void xBaseLoad(xBase* ent, xSerial* s);
+void xBaseReset(xBase* xb, p2BaseAsset* asset);
 
 #endif
