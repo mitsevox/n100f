@@ -102,11 +102,16 @@ def load_relocations(objdir, named):
 
     dtk names local labels <prefix>_<ADDR>, so each section's load address follows
     from any such symbol's value.  Symbols named in symbols.txt carry no address
-    suffix and are looked up in `named` (name -> address) instead."""
+    suffix and are looked up in `named` (name -> addresses) instead.  A name
+    symbols.txt gives more than one symbol (file-local statics) is resolved where
+    the object defines it; a reference to it from another object is ambiguous."""
 
     def addr_of(nm):
         m = re.search(r'_([0-9A-F]{8})$', nm)
-        return int(m[1], 16) if m else named.get(nm)
+        if m:
+            return int(m[1], 16)
+        a = named.get(nm, ())
+        return a[0] if len(a) == 1 else None
 
     out, skipped = [], 0
     for path in sorted(glob.glob(os.path.join(objdir, '**', '*.o'), recursive=True)):
@@ -140,7 +145,14 @@ def load_relocations(objdir, named):
             b, = bases
             for k in range(s[5] // 12):
                 off, info, addend = struct.unpack_from('>IIi', raw, s[4] + k * 12)
-                a = addr_of(syms[info >> 8][0])
+                nm, value, shndx = syms[info >> 8]
+                a = addr_of(nm)
+                if a is None and len(named.get(nm, ())) > 1:
+                    local = base.get(shndx) if 0 < shndx < 0xFF00 else None
+                    if not local or len(local) != 1:
+                        raise SystemExit(f'{path}: {nm} is named more than once in symbols.txt '
+                                         'and not defined in this object')
+                    a = next(iter(local)) + value
                 if a is not None:
                     out.append((b + off, a + addend))
     return out, skipped
@@ -359,11 +371,10 @@ def main():
         i = bisect.bisect_right(daddr, a) - 1
         return i if i >= 0 else None
 
-    names = collections.Counter(s[3] for s in syms)
-    repeated = sorted(n for n, k in names.items() if k > 1)
-    if repeated:
-        raise SystemExit('symbols.txt names more than one symbol ' + ', '.join(repeated[:10]))
-    relocs, skipped = load_relocations(args.objdir, {s[3]: s[0] for s in syms})
+    named = collections.defaultdict(list)
+    for s in syms:
+        named[s[3]].append(s[0])
+    relocs, skipped = load_relocations(args.objdir, named)
     if not relocs:
         raise SystemExit('no relocations: run the dtk split first')
     func_targets = collections.defaultdict(list)
@@ -640,7 +651,7 @@ def main():
 
     # Data cuts between consecutive units that own unit-local items in a section.
     # Items that unassigned functions load stay out of every unit.
-    ranges, dclass, stray = {}, {}, {}
+    ranges, dclass, stray, placed = {}, {}, {}, collections.Counter()
     for sec in DATA_SECTIONS:
         # Unit-local items must appear in link order.  Keep the largest set of them
         # whose owners never go backwards (longest non-decreasing run); an item out
@@ -649,6 +660,22 @@ def main():
                        for d in owned(tstart[u], tend[u], sec) if users[d] == {u})
         kept = longest_run(items)
         stray[sec] = len(items) - len(kept)
+        # An item several units load is defined by one of them.  Where link order
+        # leaves room for only one of its users (between the units of the kept items
+        # around it), it belongs to that user.
+        index = {u: k for k, u in enumerate(order)}
+        at = [d for d, _ in kept]
+        for d in sorted(d for d, us in users.items() if data[d][2] == sec and None not in us and len(us) > 1):
+            i = bisect.bisect_left(at, d)
+            lo = kept[i - 1][1] if i else 0
+            hi = kept[i][1] if i < len(kept) else len(order) - 1
+            fits = [index[u] for u in users[d] if lo <= index[u] <= hi]
+            if len(fits) == 1:
+                items.append((d, fits[0]))
+                placed[sec] += 1
+        if placed[sec]:
+            items.sort()
+            kept = longest_run(items)
         seq = []
         for d, k in kept:
             if seq and seq[-1][0] == order[k]:
@@ -800,7 +827,8 @@ def main():
     print(f'relocations {len(relocs)} ({skipped} relocation sections skipped), anchors {fingerprint} by literals and calls + '
           f'{len(named)} by name, '
           f'aligned {len(pairs)}, units {len(order)} ({sum(status(u) != "weak" for u in order)} emitted), '
-          f'data edges {len(dclass)}, out-of-order unit-local items {sum(stray.values())}; .sdata2 locality violations {len(locality)}, '
+          f'data edges {len(dclass)}, out-of-order unit-local items {sum(stray.values())}, '
+          f'shared items placed by link order {sum(placed.values())}; .sdata2 locality violations {len(locality)}, '
           f'repeated floats {len(duplicates)} (advice)', file=sys.stderr)
     if locality:
         sys.exit(1)

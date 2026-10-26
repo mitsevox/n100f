@@ -19,6 +19,7 @@ flat/iAnimSKB.cpp:
 flat/iCamera.cpp:
 	.text       start:0x80006CC4 end:0x80007738
 	.sdata      start:0x8025E3E0 end:0x8025E3E8
+	.sbss       start:0x8025E870 end:0x8025E878
 	.sdata2     start:0x8025F900 end:0x8025F938
 
 flat/iCollide.cpp:
@@ -56,6 +57,7 @@ flat/iFont.cpp:
 
 flat/iLight.cpp:
 	.text       start:0x8000B9C4 end:0x8000BD14
+	.sbss       start:0x8025E8D8 end:0x8025E8E0
 	.sdata2     start:0x8025F9D0 end:0x8025F9D8
 
 flat/iMath.cpp:
@@ -121,6 +123,7 @@ flat/xAnim.cpp:
 	.text       start:0x80016A30 end:0x8001C088
 	.rodata     start:0x80192CE0 end:0x80192D20
 	.bss        start:0x801FE3E8 end:0x801FE408
+	.sbss       start:0x8025E9A8 end:0x8025E9B0
 	.sdata2     start:0x8025FB90 end:0x8025FBE0
 
 flat/xBase.cpp:
@@ -183,6 +186,7 @@ flat/xEntMotion.cpp:
 
 flat/xEnv.cpp:
 	.text       start:0x80028D18 end:0x80028DFC
+	.sbss       start:0x8025EA48 end:0x8025EA50
 
 flat/xFFX.cpp:
 	.text       start:0x80028DFC end:0x80029458
@@ -195,6 +199,7 @@ flat/xFilter.cpp:
 
 flat/xFont.cpp:
 	.text       start:0x800294E8 end:0x8002A460
+	.data       start:0x801AE8A0 end:0x801AE8B0
 	.bss        start:0x801FF270 end:0x801FFA40
 	.sdata      start:0x8025E430 end:0x8025E438
 	.sdata2     start:0x8025FF20 end:0x8025FF58
@@ -479,6 +484,7 @@ flat/zFMV.cpp:
 	.text       start:0x800ABD84 end:0x800ABE88
 	.rodata     start:0x801A4268 end:0x801A4278
 	.data       start:0x801C5590 end:0x801C5BF8
+	.sbss       start:0x8025EEC8 end:0x8025EED0
 	.sdata2     start:0x80261200 end:0x80261220
 
 flat/zFog.cpp:
@@ -648,6 +654,7 @@ flat/zSaveLoad.cpp:
 	.text       start:0x800C9368 end:0x800CD170
 	.rodata     start:0x801A5F58 end:0x801A63F0
 	.data       start:0x801C76F0 end:0x801C7A68
+	.bss        start:0x80238048 end:0x80238178
 	.sdata      start:0x8025E598 end:0x8025E5A8
 	.sbss       start:0x8025F070 end:0x8025F0A0
 	.sdata2     start:0x80261C20 end:0x80261C50
