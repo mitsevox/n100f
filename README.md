@@ -23,14 +23,22 @@ You will need your own copy of the game. Keep the disc image and extracted files
 The build uses [decomp-toolkit](https://github.com/encounter/decomp-toolkit) through the [dtk-template](https://github.com/encounter/dtk-template) structure, with Python 3 and [ninja](https://ninja-build.org/). Pinned tool versions are in `configure.py`.
 
 1. Extract the disc and place its `sys/main.dol` at `orig/GIHE78/sys/main.dol`.
-2. Configure and build:
+2. Build decomp-toolkit 1.8.3 with [`tools/patches/dtk-v1.8.3-rom-copy-info.patch`](tools/patches/dtk-v1.8.3-rom-copy-info.patch). Stock dtk looks for `_rom_copy_info` only in the section containing the entry point, and this game enters through a routine in `.text`:
 
 ```sh
-python3 configure.py
+git clone --branch v1.8.3 https://github.com/encounter/decomp-toolkit
+git -C decomp-toolkit apply "$PWD/tools/patches/dtk-v1.8.3-rom-copy-info.patch"
+cargo build --release --manifest-path decomp-toolkit/Cargo.toml
+```
+
+3. Configure and build:
+
+```sh
+python3 configure.py --dtk decomp-toolkit/target/release/dtk
 ninja
 ```
 
-`TO_IMPLEMENT`: the first split configuration (`symbols.txt`, `splits.txt`) has not been generated, so the baseline relink is not yet verified. The compiler and linker versions in `configure.py` are template defaults until target evidence establishes them. See [`docs/dtk/`](docs/dtk/getting_started.md) for the upstream tool documentation.
+With no source units, this is the original-object baseline: dtk splits the DOL, mwld relinks it, and `ninja` checks the result against `config/GIHE78/build.sha1`. It is byte-identical. The compiler versions in `configure.py` are template defaults until target evidence establishes them. See [`docs/dtk/`](docs/dtk/getting_started.md) for the upstream tool documentation.
 
 ## Contributing
 

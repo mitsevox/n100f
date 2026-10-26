@@ -903,6 +903,9 @@ def generate_build_ninja(
             if self.module_id == 0:
                 elf_path = build_path / f"{self.name}.elf"
                 elf_ldflags = f"$ldflags -lcf {serialize_path(self.ldscript)}"
+                if self.entry and self.entry != "__start":
+                    # The target's entry point is not the linker's default __start
+                    elf_ldflags += f" -m {self.entry}"
                 if config.generate_map:
                     elf_map = map_path(elf_path)
                     elf_ldflags += f" -map {serialize_path(elf_map)}"
