@@ -5,7 +5,7 @@ object: sys/main.dol
 hash: c77fb29d39b5898933e8ef4d1ccd2ddac404554e
 symbols: config/GIHE78/symbols.txt
 splits: config/GIHE78/splits.txt
-# GC/1.3.2 writes .comment version 10 (game code). The GC/1.2.5n SDK units write 8 and
-# need per-unit `comment:` overrides once they are split.
+# GC/1.3 and GC/1.3.2 write .comment version 10 (game code, MetroTRK, runtime, MSL). The
+# GC/1.2.5n SDK units write 8 and carry `comment:8` in splits.txt.
 mw_comment_version: 10
 ldscript_template: config/GIHE78/ldscript.tpl

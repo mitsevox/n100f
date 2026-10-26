@@ -1,8 +1,7 @@
 #ifndef STRING_H
 #define STRING_H
 
-// Project stub declaring only what reconstructed units call. Replace it when MSL's own
-// headers are reconstructed.
+// MSL C library declarations, limited to what reconstructed units use (docs/libraries.md).
 
 typedef unsigned long size_t;
 

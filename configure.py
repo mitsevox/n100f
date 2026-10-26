@@ -212,6 +212,7 @@ cflags_base = [
     "-str reuse",
     "-multibyte",  # For Wii compilers, replace with `-enc SJIS`
     "-i include",
+    "-i include/libc",
     f"-i build/{config.version}/include",
     f"-DBUILD_VERSION={version_num}",
     f"-DVERSION_{config.version}",
@@ -232,14 +233,39 @@ elif args.warn == "off":
 elif args.warn == "error":
     cflags_base.append("-W error")
 
-# Metrowerks library flags
+# Library profiles: the flags tools/splits/libmap.py places the library units with
+# (config/GIHE78/libmap.json "profiles"). They are shown compatible, not established.
+_lib_drop = ("-fp_contract on",)
+
+# Runtime and MSL profile ("runtime").
 cflags_runtime = [
-    *cflags_base,
+    *[f for f in cflags_base if f not in _lib_drop],
     "-use_lmw_stmw on",
     "-str reuse,pool,readonly",
     "-gccinc",
     "-common off",
-    "-inline auto",
+]
+
+# Dolphin SDK profile ("sdk").
+cflags_sdk = [
+    *[f for f in cflags_base if f not in _lib_drop],
+    "-fp_contract off",
+    "-char signed",
+    "-common off",
+]
+
+# MetroTRK profile ("trk").
+cflags_trk = [
+    *[f for f in cflags_base if f not in (*_lib_drop, "-inline auto", '-pragma "cats off"',
+                                          '-pragma "warn_notinlined off"', "-maxerrors 1",
+                                          "-DNDEBUG=1")],
+    "-use_lmw_stmw on",
+    "-common off",
+    "-inline auto,deferred",
+    "-sdata 0",
+    "-sdata2 0",
+    "-rostr",
+    "-char signed",
 ]
 
 # REL flags
@@ -280,15 +306,38 @@ def GameLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     }
 
 
-# Helper function for Dolphin libraries. GC/1.2.5n is supported by SDK units (evidence.tsv).
-# TO_VERIFY: cflags_base is the template default; the SDK evidence was gathered with bfbb's
-# SDK flags (docs/compiler_profile/sdk.flags), which are compatible but not established.
+# Helper function for Dolphin SDK libraries: GC/1.2.5n, which writes .comment version 8
+# (the units carry `comment:8` in splits.txt). Evidence: SDK compiler rows in evidence.tsv.
 def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
         "mw_version": "GC/1.2.5n",
-        "cflags": cflags_base,
+        "cflags": cflags_sdk,
         "progress_category": "sdk",
+        "objects": objects,
+    }
+
+
+# Helper function for the Metrowerks runtime and MSL C library. MSL mixes GC/1.3 and GC/1.3.2
+# per object (compiler rows in evidence.tsv); objects that place under only one version set
+# it, and the rest take the library default, which their import must confirm.
+def RuntimeLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
+    return {
+        "lib": lib_name,
+        "mw_version": "GC/1.3.2",
+        "cflags": cflags_runtime,
+        "progress_category": "runtime",
+        "objects": objects,
+    }
+
+
+# Helper function for MetroTRK: GC/1.3 (compiler row in evidence.tsv).
+def TRKLib(objects: List[Object]) -> Dict[str, Any]:
+    return {
+        "lib": "TRK_MINNOW_DOLPHIN",
+        "mw_version": "GC/1.3",
+        "cflags": cflags_trk,
+        "progress_category": "trk",
         "objects": objects,
     }
 
@@ -338,6 +387,214 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zSurface.cpp"),
         ],
     ),
+    # Library units: config/GIHE78/lib_units.tsv and docs/splits.md "Library units".
+    TRKLib(
+        [
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/mainloop.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/nubevent.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/nubinit.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/msg.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/msgbuf.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/serpoll.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/usr_put.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/dispatch.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/msghndlr.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/support.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/notify.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/flush_cache.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/mem_TRK.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/targimpl.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/dolphin_trk.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/mpc_7xx_603e.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/main_TRK.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/dolphin_trk_glue.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/targcont.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/target_options.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/mslsupp.c"),
+        ],
+    ),
+    RuntimeLib(
+        "Runtime.PPCEABI.H",
+        [
+            Object(NonMatching, "Runtime.PPCEABI.H/__va_arg.c"),
+            Object(NonMatching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
+            Object(NonMatching, "Runtime.PPCEABI.H/runtime.c"),
+        ],
+    ),
+    RuntimeLib(
+        "MSL_C.PPCEABI.bare.H",
+        [
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/abort_exit.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/alloc.c", mw_version="GC/1.3"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/ansi_files.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/ansi_fp.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/arith.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/buffer_io.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/char_io.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/ctype.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/direct_io.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/file_io.c", mw_version="GC/1.3"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/FILE_POS.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/mbstring.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/mem.c", mw_version="GC/1.3"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/misc_io.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/printf.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/rand.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/scanf.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/string.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/strtold.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/strtoul.c", mw_version="GC/1.3"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/uart_console_io.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/wchar_io.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/e_atan2.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/e_fmod.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/s_copysign.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/s_cos.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/s_floor.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/s_frexp.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/s_ldexp.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/s_modf.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/s_nextafter.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/s_sin.c"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/s_tan.c"),
+        ],
+    ),
+    DolphinLib(
+        "OdemuExi2",
+        [
+            Object(NonMatching, "dolphin/OdemuExi2/DebuggerDriver.c"),
+        ],
+    ),
+    DolphinLib(
+        "ai",
+        [
+            Object(NonMatching, "dolphin/ai/ai.c"),
+        ],
+    ),
+    DolphinLib(
+        "ar",
+        [
+            Object(NonMatching, "dolphin/ar/ar.c"),
+            Object(NonMatching, "dolphin/ar/arq.c"),
+        ],
+    ),
+    DolphinLib(
+        "ax",
+        [
+            Object(NonMatching, "dolphin/ax/AXAlloc.c"),
+            Object(NonMatching, "dolphin/ax/AXCL.c"),
+            Object(NonMatching, "dolphin/ax/AXOut.c"),
+            Object(NonMatching, "dolphin/ax/AXSPB.c"),
+            Object(NonMatching, "dolphin/ax/AXVPB.c"),
+            Object(NonMatching, "dolphin/ax/AXProf.c"),
+        ],
+    ),
+    DolphinLib(
+        "base",
+        [
+            Object(NonMatching, "dolphin/base/PPCArch.c"),
+        ],
+    ),
+    DolphinLib(
+        "db",
+        [
+            Object(NonMatching, "dolphin/db/db.c"),
+        ],
+    ),
+    DolphinLib(
+        "dsp",
+        [
+            Object(NonMatching, "dolphin/dsp/dsp.c"),
+            Object(NonMatching, "dolphin/dsp/dsp_task.c"),
+        ],
+    ),
+    DolphinLib(
+        "exi",
+        [
+            Object(NonMatching, "dolphin/exi/EXIBios.c"),
+            Object(NonMatching, "dolphin/exi/EXIUart.c"),
+        ],
+    ),
+    DolphinLib(
+        "gx",
+        [
+            Object(NonMatching, "dolphin/gx/GXInit.c"),
+            Object(NonMatching, "dolphin/gx/GXFifo.c"),
+            Object(NonMatching, "dolphin/gx/GXAttr.c"),
+            Object(NonMatching, "dolphin/gx/GXMisc.c"),
+            Object(NonMatching, "dolphin/gx/GXGeometry.c"),
+            Object(NonMatching, "dolphin/gx/GXFrameBuf.c"),
+            Object(NonMatching, "dolphin/gx/GXLight.c"),
+            Object(NonMatching, "dolphin/gx/GXTexture.c"),
+            Object(NonMatching, "dolphin/gx/GXBump.c"),
+            Object(NonMatching, "dolphin/gx/GXTev.c"),
+            Object(NonMatching, "dolphin/gx/GXPixel.c"),
+            Object(NonMatching, "dolphin/gx/GXDisplayList.c"),
+            Object(NonMatching, "dolphin/gx/GXTransform.c"),
+            Object(NonMatching, "dolphin/gx/GXPerf.c"),
+        ],
+    ),
+    DolphinLib(
+        "mtx",
+        [
+            Object(NonMatching, "dolphin/mtx/mtx.c"),
+            Object(NonMatching, "dolphin/mtx/mtx44.c"),
+        ],
+    ),
+    DolphinLib(
+        "os",
+        [
+            Object(NonMatching, "dolphin/os/OS.c"),
+            Object(NonMatching, "dolphin/os/OSAlarm.c"),
+            Object(NonMatching, "dolphin/os/OSAlloc.c"),
+            Object(NonMatching, "dolphin/os/OSAudioSystem.c"),
+            Object(NonMatching, "dolphin/os/OSCache.c"),
+            Object(NonMatching, "dolphin/os/OSContext.c"),
+            Object(NonMatching, "dolphin/os/OSError.c"),
+            Object(NonMatching, "dolphin/os/OSInterrupt.c"),
+            Object(NonMatching, "dolphin/os/OSLink.c"),
+            Object(NonMatching, "dolphin/os/OSMemory.c"),
+            Object(NonMatching, "dolphin/os/OSReboot.c"),
+            Object(NonMatching, "dolphin/os/OSReset.c"),
+            Object(NonMatching, "dolphin/os/OSResetSW.c"),
+            Object(NonMatching, "dolphin/os/OSRtc.c"),
+            Object(NonMatching, "dolphin/os/OSSync.c"),
+            Object(NonMatching, "dolphin/os/OSThread.c"),
+            Object(NonMatching, "dolphin/os/OSTime.c"),
+            Object(NonMatching, "dolphin/os/__ppc_eabi_init.c"),
+        ],
+    ),
+    DolphinLib(
+        "si",
+        [
+            Object(NonMatching, "dolphin/si/SIBios.c"),
+            Object(NonMatching, "dolphin/si/SISamplingRate.c"),
+        ],
+    ),
+    DolphinLib(
+        "vi",
+        [
+            Object(NonMatching, "dolphin/vi/vi.c"),
+        ],
+    ),
+    DolphinLib(
+        "pad",
+        [
+            Object(NonMatching, "dolphin/pad/Padclamp.c"),
+            Object(NonMatching, "dolphin/pad/Pad.c"),
+        ],
+    ),
+    DolphinLib(
+        "dvd",
+        [
+            Object(NonMatching, "dolphin/dvd/dvdlow.c"),
+            Object(NonMatching, "dolphin/dvd/dvdfs.c"),
+            Object(NonMatching, "dolphin/dvd/dvd.c"),
+            Object(NonMatching, "dolphin/dvd/dvdqueue.c"),
+            Object(NonMatching, "dolphin/dvd/dvderror.c"),
+            Object(NonMatching, "dolphin/dvd/fstload.c"),
+        ],
+    ),
 ]
 
 
@@ -364,6 +621,8 @@ def link_order_callback(module_id: int, objects: List[str]) -> List[str]:
 config.progress_categories = [
     ProgressCategory("game", "Game Code"),
     ProgressCategory("sdk", "SDK Code"),
+    ProgressCategory("runtime", "Runtime and MSL Code"),
+    ProgressCategory("trk", "MetroTRK Code"),
 ]
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`

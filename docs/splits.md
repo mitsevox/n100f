@@ -116,4 +116,4 @@ On the committed files it writes no rows. From the baseline, the sequence is: ru
 - An `open` edge only bounds what matched. The real object can extend past it, and 55 of the 118 units are partial placements.
 - Library units count as named files in the public report. Function bytes are unchanged; named functions rose from 461 to 1,148.
 - Upstream source is evidence that the code exists, not that its source meets this project's standards. Every function copied in a later PR is reviewed like any other.
-- The SDK objects will need `comment: 8` overrides in `configure.py` when they are linked from source.
+- The SDK units carry `comment:8` in `splits.txt`, as GC/1.2.5n writes; see [libraries.md](libraries.md).
