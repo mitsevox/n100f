@@ -5,7 +5,7 @@ iCamera.cpp	0x80006CC4	0x80007738	13	13	3	3	0x800072D4=iCameraSetNearFarClip (na
 iCollide.cpp	0x80007738	0x80009424	18	19	2	1	0x8000885C=sphereHitsModel3CB (name)	anchored
 iCollideFast.cpp	0x80009424	0x80009A20	6	6	0	0	-	count-match
 iDebug.cpp	0x80009A20	0x80009CC0	1	1	1	0	0x80009A20=iDebugScreenDump (strings+calls)	anchored
-iDraw.cpp	0x80009CC0	0x80009CC8	2	4	0	0	-	weak
+iDraw.cpp	0x80009CC0	0x80009CCC	3	4	0	0	-	count-match
 iEnv.cpp	0x80009CCC	0x8000A408	10	9	2	2	0x8000A0D4=iEnvEndRenderFX (name)	anchored
 iFile.cpp	0x8000A408	0x8000A5A4	5	16	0	0	-	weak
 iFMV.cpp	0x8000AA80	0x8000AB3C	1	1	0	0	-	count-match
@@ -18,7 +18,7 @@ iMemMgr.cpp	0x8000DA6C	0x8000DBA4	2	2	1	1	0x8000DA6C=iMemExit (name)	anchored
 iModel.cpp	0x8000DBA4	0x8000EBC0	17	17	4	3	0x8000DE10=iModelTagInternal (floats)	anchored
 iMorph.cpp	0x8000EBC0	0x8000F5AC	3	6	2	0	0x8000EBFC=iMorphOptimize (strings)	anchored
 iPad.cpp	0x8000F5AC	0x8000F600	3	9	2	2	0x8000F5B0=iPadStartRumble (name)	weak
-iParMgr.cpp	0x8000FB40	0x80011B2C	9	13	1	0	0x80010E80=iRenderPushFlat (floats)	anchored
+iParMgr.cpp	0x8000FB40	0x80011B30	10	13	1	0	0x80010E80=iRenderPushFlat (floats)	anchored
 isavegame.cpp	0x80011B74	0x800146C0	39	44	5	4	0x80012A20=iSGOpError (name)	anchored
 iScrFX.cpp	0x800146C0	0x80014A3C	6	4	2	2	0x80014904=iScrFxEnd (name)	anchored
 iShadow.cpp	0x80014A3C	0x80015168	4	4	2	0	0x80014B64=iShadowAdd (floats)	anchored
@@ -43,13 +43,13 @@ xEnv.cpp	0x80028D18	0x80028DFC	4	4	2	2	0x80028D44=xEnvFree (name)	anchored
 xFFX.cpp	0x80028DFC	0x80029458	14	14	4	4	0x80028DFC=xFFXRotMatchAlloc (name)	anchored
 xFilter.cpp	0x80029458	0x800294E8	4	4	4	0	0x80029458=xFilterCurvedInterp4 (floats)	anchored
 xFont.cpp	0x800294E8	0x8002A460	15	15	2	0	0x80029810=JustifyLine (floats)	anchored
-xFX.cpp	0x8002A73C	0x8002B4D8	17	30	3	1	0x8002AAF4=MaterialSetEnvMap2 (strings)	anchored
+xFX.cpp	0x8002A460	0x8002B4D8	25	30	3	1	0x8002AAF4=MaterialSetEnvMap2 (strings)	anchored
 xhipio.cpp	0x8002B4D8	0x8002C100	15	16	11	11	0x8002B4D8=HIPLReadString (name)	anchored
 xIni.cpp	0x8002C100	0x8002C774	5	5	3	3	0x8002C100=xIniGetString (name)	anchored
 xLinkList.cpp	0x8002C774	0x8002C86C	5	5	0	0	-	count-match
 xMath.cpp	0x8002C86C	0x8002CF48	6	6	2	0	0x8002C900=xMathSolveCubic (floats)	anchored
 xMath3.cpp	0x8002CF48	0x8002F920	32	33	9	4	0x8002CFBC=xQuatSlerp (floats)	anchored
-xMemMgr.cpp	0x8002F920	0x8002FC58	7	16	2	2	0x8002F920=xMemPoolFree (name)	weak
+xMemMgr.cpp	0x8002F920	0x800300A8	14	16	2	2	0x8002F920=xMemPoolFree (name)	anchored
 xModel.cpp	0x800301A4	0x80030F28	12	19	2	0	0x800301A4=xModelRender2D (floats)	anchored
 xMorph.cpp	0x80030F28	0x80031310	3	3	3	3	0x80030F28=xMorphSeqDuration (name)	anchored
 xMovePoint.cpp	0x80031310	0x800317D4	9	9	3	2	0x80031478=xMovePointSplineDestroy (name)	anchored
@@ -70,8 +70,8 @@ xSnd.cpp	0x8003CD24	0x8003D5C0	18	23	0	0	-	weak
 xSpline.cpp	0x8003D680	0x8003F904	11	13	2	1	0x8003DB84=xSpline3_EvalArcApprox (name)	anchored
 xstransvc.cpp	0x8003F904	0x80040978	14	17	2	1	0x800402D8=xSTLoadStep (name)	anchored
 xString.cpp	0x80040978	0x80040EE4	6	6	1	1	0x80040B38=xStrupr (name)	anchored
-xSurface.cpp	0x80040EE4	0x80044714	36	7	0	0	-	weak
-xTRC.cpp	0x80044714	0x80044780	1	2	1	0	0x80044478=xTRCPad (floats)	anchored
+xSurface.cpp	0x80040EE4	0x80040FCC	7	7	0	0	-	count-match
+xTRC.cpp	0x80040FCC	0x80044780	30	2	1	0	0x80044478=xTRCPad (floats)	weak
 xutil.cpp	0x80044780	0x80044C44	7	11	4	4	0x80044780=xUtil_yesno (name)	anchored
 zActionLine.cpp	0x80044C44	0x80044E20	3	4	2	1	0x80044D50=zActionLineUpdate (name)	anchored
 zAnimList.cpp	0x80044E20	0x80045174	5	5	1	0	0x80044EB8=zAnimListInit (strings+floats)	anchored

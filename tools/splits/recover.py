@@ -302,11 +302,15 @@ def longest_run(items):
     return out[::-1]
 
 
-def align(ps_sizes, gc_sizes, pins, ps_tail={}, gc_wrap={}):
+def align(ps_sizes, gc_sizes, pins, ps_tail={}, gc_wrap={}, units=None):
     """Global alignment of two size sequences; pins maps ps index -> gc index.
 
     A PS2 tail call (ps_tail) and a GC call wrapper (gc_wrap), each mapped to its
-    callee's name or None, score as equal sizes unless the callee names differ."""
+    callee's (name, unit), either of which may be None, score as equal sizes unless
+    the callees' names or units differ.
+    With units (the PS2 unit of each function), a GC function skipped between two
+    PS2 functions of one unit costs more than one skipped at a unit edge, so
+    GC-only code gathers between units."""
     n, m = len(ps_sizes), len(gc_sizes)
     gap = -0.8
     pinned_g = set(pins.values())
@@ -317,6 +321,7 @@ def align(ps_sizes, gc_sizes, pins, ps_tail={}, gc_wrap={}):
         lp = math.log2(max(ps_sizes[i - 1], 4))
         pin = pins.get(i - 1)
         tail = ps_tail.get(i - 1, False)
+        gc_gap = gap - 0.2 if units and i < n and units[i - 1] == units[i] else gap
         row = [i * gap] + [0.0] * m
         bk = back[i]
         for j in range(1, m + 1):
@@ -325,11 +330,11 @@ def align(ps_sizes, gc_sizes, pins, ps_tail={}, gc_wrap={}):
             elif j - 1 in pinned_g:
                 sub = -50.0
             elif tail is not False and (w := gc_wrap.get(j - 1, False)) is not False \
-                    and (tail is None or w is None or tail == w):
+                    and all(x is None or y is None or x == y for x, y in zip(tail, w)):
                 sub = 1.5
             else:
                 sub = max(1.5 - 3 * abs(lg[j - 1] - lp), -2.0)
-            d, u, l = prev[j - 1] + sub, prev[j] + gap, row[j - 1] + gap
+            d, u, l = prev[j - 1] + sub, prev[j] + gap, row[j - 1] + gc_gap
             if d >= u and d >= l:
                 row[j] = d
             elif u >= l:
@@ -480,23 +485,49 @@ def main():
     # instructions.  GC code builds a stack frame around a single `bl` instead, which
     # takes 0x20 bytes or a little more.  Each maps to its callee's name where known
     # (DWARF on PS2, an exact body on GC); the two pair only if those do not differ.
+    ps2_unit_at = {f[0]: f[3].lower() for f in ps2.funcs}
+
     def ps2_tail(i):
         addr, size = ps2.funcs[i][:2]
         js = [p for p in range(addr, addr + size, 4) if ps2.u32(p) >> 26 == 2]
         if size <= 16 and len(js) == 1:
-            return ps2_at.get((js[0] & 0xF0000000) | ((ps2.u32(js[0]) & 0x3FFFFFF) << 2))
+            t = (js[0] & 0xF0000000) | ((ps2.u32(js[0]) & 0x3FFFFFF) << 2)
+            return ps2_at.get(t), ps2_unit_at.get(t)
         return False
 
-    def gc_wrapper(j):
+    def gc_wrapper(j, aligned):
         addr, size = funcs[j][:2]
         bls = [p for p in range(addr, addr + size, 4) if dol.u32(p) >> 26 == 18 and dol.u32(p) & 3 == 1]
         if 0x20 <= size <= 0x30 and len(bls) == 1:
-            return exact.get(bls[0] + (((dol.u32(bls[0]) & 0x3FFFFFC) ^ 0x2000000) - 0x2000000))
+            t = bls[0] + (((dol.u32(bls[0]) & 0x3FFFFFC) ^ 0x2000000) - 0x2000000)
+            name, unit = aligned.get(t, (None, None))
+            return exact.get(t) or name, unit
         return False
 
+    # Two passes.  The first pairs a PS2 tail call with a GC wrapper unless both
+    # callees are named and differ.  The second names each GC callee by its exact
+    # body or else by the PS2 function the first pass aligned it to, and refuses a
+    # pair whose callees differ in name or unit: an unnamed GC callee would
+    # otherwise match any tail call, often one function off.
+    sizes = [ps2.funcs[i][1] for i in shared], [funcs[j][1] for j in game]
+    units = [ps2.funcs[i][3].lower() for i in shared]
+    ps_tail = {k: (t[0], None) for k, i in enumerate(shared) if (t := ps2_tail(i)) is not False}
+    gc_wrap = {k: t for k, j in enumerate(game) if (t := gc_wrapper(j, {})) is not False}
+    pairs = align(*sizes, pins, ps_tail, gc_wrap, units)
+    aligned = {funcs[game[g]][0]: (ps2.funcs[shared[p]][4], units[p]) for p, g in pairs}
     ps_tail = {k: t for k, i in enumerate(shared) if (t := ps2_tail(i)) is not False}
-    gc_wrap = {k: t for k, j in enumerate(game) if (t := gc_wrapper(j)) is not False}
-    pairs = align([ps2.funcs[i][1] for i in shared], [funcs[j][1] for j in game], pins, ps_tail, gc_wrap)
+    gc_wrap = {k: t for k, j in enumerate(game) if (t := gc_wrapper(j, aligned)) is not False}
+    pairs = align(*sizes, pins, ps_tail, gc_wrap, units)
+    ps2_file_at = {f[0]: f[3] for f in ps2.funcs}
+    tail_callee = {}
+    for p, g in pairs:
+        if p in ps_tail and g in gc_wrap:
+            i, j = shared[p], game[g]
+            js = [q for q in range(ps2.funcs[i][0], ps2.funcs[i][0] + ps2.funcs[i][1], 4) if ps2.u32(q) >> 26 == 2][0]
+            bl = [q for q in range(funcs[j][0], funcs[j][0] + funcs[j][1], 4) if dol.u32(q) >> 26 == 18 and dol.u32(q) & 3 == 1][0]
+            unit = ps2_file_at.get((js & 0xF0000000) | ((ps2.u32(js) & 0x3FFFFFF) << 2))
+            if unit:
+                tail_callee[fidx(bl + (((dol.u32(bl) & 0x3FFFFFC) ^ 0x2000000) - 0x2000000))] = unit
 
     core, anchored, name_anchored, first_anchor = {}, collections.Counter(), collections.Counter(), {}
     seeded = set(seeds.values())
@@ -544,25 +575,27 @@ def main():
         window = set(range(wlo, whi + 1))
         span = set(range(core[A][0], core[B][1] + 1))
         sides = []
+        edge_local = {d for f in span for d in func_data[f] if data_users[d] <= span}
         for sec in DATA_SECTIONS:
             a = owned(core[A][0], core[A][1], sec, window)
             b = owned(core[B][0], core[B][1], sec, window)
             if a and b and max(a) >= min(b):
                 continue
             # items only this edge's functions load; a single cut must separate A's from B's
-            local = {d for f in window for d in func_data[f]
-                     if data[d][2] == sec and data_users[d] <= span}
-            local = {d for d in local if (not a or d > max(a)) and (not b or d < min(b))}
-            if local:
-                cands = sorted(local | ({min(b)} if b else {max(local) + 1}))
-                sides.append((sec, a, b, cands))
+            # (or items a side already owns, which tie a window function to that side)
+            near = {d for f in window for d in func_data[f]
+                    if data[d][2] == sec and data_users[d] <= span}
+            local = {d for d in near if (not a or d > max(a)) and (not b or d < min(b))}
+            if local or near & (a | b) & edge_local:
+                cands = sorted(local | ({min(b)} if b else {max(local | a) + 1}))
+                sides.append((sec, a, b, cands, not local))
 
         def crossings(k):
             # an anchor moved to the other unit costs as much as three crossing references
             n = 3 * sum(1 for f in window if f in seeded and ((f <= k) != (f <= core[A][1])))
-            for sec, a, b, cands in sides:
+            for sec, a, b, cands, only_local in sides:
                 n += min(sum(1 for f in window for d in func_data[f] if data[d][2] == sec
-                             and ((f > k and (d < c or d in a)) or (f <= k and (d >= c or d in b))))
+                             and (d in edge_local or not only_local) and ((f > k and (d < c or d in a)) or (f <= k and (d >= c or d in b))))
                          for c in cands)
             return n
 
@@ -597,7 +630,10 @@ def main():
         elif len(ties) == 1:
             cut, cls = ties[0], f'single cut by call references ({tied} cuts tie on data)'
         elif aligned_cut in ties:
-            cut, cls = aligned_cut, f'alignment only ({by_calls})'
+            # outgoing calls did not break the tie, but they may single out this cut
+            out = {k: call_crossings(k, False) for k in ties}
+            confirmed = [k for k in ties if out[k] == min(out.values())] == [aligned_cut]
+            cut, cls = aligned_cut, f"{'alignment confirmed by outgoing calls' if confirmed else 'alignment only'} ({by_calls})"
         else:
             cut, cls = None, f'open: {ties[-1] - ties[0]} unassigned functions'
         if cut is None:
@@ -611,9 +647,12 @@ def main():
     # Functions an open edge leaves between A and B join a neighbour, working inwards
     # from each side, when every reference they make into assigned code lands in that
     # neighbour and none in the other: calls to or from its functions, or loads of
-    # data only its functions load.  References to other units decide nothing.
+    # data only its functions load.  References to other units decide nothing.  The
+    # callee of a GC wrapper aligned to a PS2 tail call also reaches the unit of the
+    # PS2 callee.
     def reached(f):
         out = {unit_of.get(fidx(t)) for t in func_targets[f] if fidx(t) != f}
+        out.add(tail_callee.get(f))
         out |= {unit_of.get(g) for g in callers[f]}
         for d in func_data[f]:
             us = {unit_of[g] for g in data_users[d] if g in unit_of}
