@@ -1,0 +1,9 @@
+# See config.example.yml for documentation.
+# Hash measured from the owner's copy; the comment version still needs target evidence.
+object_base: orig/GIHE78
+object: sys/main.dol
+hash: c77fb29d39b5898933e8ef4d1ccd2ddac404554e
+symbols: config/GIHE78/symbols.txt
+splits: config/GIHE78/splits.txt
+# TO_VERIFY: read from the target's own objects; this is the template default.
+mw_comment_version: 11

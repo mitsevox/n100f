@@ -1,0 +1,60 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build:
+    name: Build GIHE78
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    container:
+      # Private build environment from mitsevox/n100f-build; holds the original executable.
+      image: ghcr.io/mitsevox/n100f-build@sha256:8b3d46328be5e3bc9e92eb256709edd039beed5f4269149727295bef17819e4d
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Require a repository contribution branch
+        env:
+          SOURCE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+        run: test "$SOURCE_REPOSITORY" = "$GITHUB_REPOSITORY"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Provide original executable
+        run: cp -a /orig .
+      - name: Configure
+        run: python3 configure.py --dtk /usr/local/bin/dtk --binutils /binutils --compilers /compilers
+      - name: Build, verify complete executable and measure progress
+        run: ninja progress build/GIHE78/report.json
+      - name: Upload progress report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: GIHE78_report
+          path: build/GIHE78/report.json
+          if-no-files-found: error
+
+  tests:
+    name: Tool tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify review clearance logic
+        run: node --test tests/review_gate.mjs

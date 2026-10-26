@@ -1,0 +1,87 @@
+diff --git a/src/util/dol.rs b/src/util/dol.rs
+index 3ad425a..bc4fc9e 100644
+--- a/src/util/dol.rs
++++ b/src/util/dol.rs
+@@ -225,7 +225,7 @@ pub fn process_dol(buf: &[u8], name: &str) -> Result<ObjInfo> {
+         .iter()
+         .find(|section| section.kind != DolSectionKind::Bss)
+         .ok_or_else(|| anyhow!("Failed to locate first rom section"))?;
+-    let init_section = dol
++    let entry_section = dol
+         .section_by_address(entry_point)
+         .ok_or_else(|| anyhow!("Failed to locate .init section"))?;
+     let first_data_section = dol
+@@ -233,36 +233,61 @@ pub fn process_dol(buf: &[u8], name: &str) -> Result<ObjInfo> {
+         .iter()
+         .find(|s| s.kind == DolSectionKind::Data)
+         .ok_or_else(|| anyhow!("Failed to locate .data section"))?;
+-    let rom_copy_section = if is_bootstage { first_data_section } else { init_section };
+ 
+     if is_bootstage {
+         // Real entry point is stored at the end of the bootstage init section, always(?) 0x81330000
+-        entry_point = read_u32(buf, dol.as_ref(), init_section.address + init_section.size - 4)?;
++        entry_point = read_u32(buf, dol.as_ref(), entry_section.address + entry_section.size - 4)?;
+     }
+ 
+-    let rom_copy_info_addr = {
++    let find_rom_copy_info = |section: &DolSection| -> Result<Option<u32>> {
++        let end = section.address + section.size;
+         let mut addr = if is_bootstage {
+             // Start searching from the beginning of the BootStage "data" section
+-            rom_copy_section.address
++            section.address
+         } else {
+             // Start searching from the end of the .init section
+-            rom_copy_section.address + rom_copy_section.size
+-                - MAX_ROM_COPY_INFO_SIZE as u32
+-                - MAX_BSS_INIT_INFO_SIZE as u32
++            end.saturating_sub(MAX_ROM_COPY_INFO_SIZE as u32 + MAX_BSS_INIT_INFO_SIZE as u32)
++                .max(section.address)
+         };
+-        loop {
++        while addr < end {
+             let value = read_u32(buf, dol.as_ref(), addr)?;
+             if value == first_rom_section.address || value == entry_point {
+                 log::debug!("Found _rom_copy_info @ {addr:#010X}");
+-                break Some(addr);
++                return Ok(Some(addr));
+             }
+             addr += 4;
+-            if addr >= rom_copy_section.address + rom_copy_section.size {
+-                log::warn!("Failed to locate _rom_copy_info");
+-                break None;
++        }
++        Ok(None)
++    };
++
++    let (init_section, rom_copy_section, rom_copy_info_addr) = if is_bootstage {
++        (entry_section, first_data_section, find_rom_copy_info(first_data_section)?)
++    } else {
++        match find_rom_copy_info(entry_section)? {
++            Some(addr) => (entry_section, entry_section, Some(addr)),
++            // Some games enter through a routine outside .init that later branches to __start.
++            // The linker still places _rom_copy_info at the end of .init, the first text section.
++            None if first_rom_section.index != entry_section.index
++                && first_rom_section.kind == DolSectionKind::Text =>
++            {
++                match find_rom_copy_info(first_rom_section)? {
++                    Some(addr) => {
++                        log::info!(
++                            "Entry point {:#010X} is outside .init; using first text section {:#010X}",
++                            entry_point,
++                            first_rom_section.address
++                        );
++                        (first_rom_section, first_rom_section, Some(addr))
++                    }
++                    None => (entry_section, entry_section, None),
++                }
+             }
++            None => (entry_section, entry_section, None),
+         }
+     };
++    if rom_copy_info_addr.is_none() {
++        log::warn!("Failed to locate _rom_copy_info");
++    }
+ 
+     // Process _rom_copy_info
+     let mut rom_sections = BTreeMap::<u32, u32>::new();
