@@ -13,6 +13,9 @@ source itself is only a stimulus and establishes nothing about names.
         --flags-file probe_flags.txt src/SB/Core/x/xsavegame.cpp ...
 
 Output is JSON: {source: {version: {function: [words, [hit addresses]]}}}.
+With --summary N it is a text table instead: per version, the units that
+failed to compile and the bodies of at least N words found exactly once, then
+every such body that is found under some versions and not others.
 Nothing is written into the repository.
 """
 
@@ -126,7 +129,9 @@ def main():
     parser.add_argument("--versions", required=True, help="comma-separated, e.g. 1.3,1.3.2,2.0")
     parser.add_argument("--flags-file", required=True, help="compiler flags, shell-quoted")
     parser.add_argument("--jobs", type=int, default=os.cpu_count())
-    parser.add_argument("sources", nargs="+")
+    parser.add_argument("--sources-file", help="file listing sources, one per line")
+    parser.add_argument("--summary", type=int, metavar="N", help="print the text summary for bodies of N+ words")
+    parser.add_argument("sources", nargs="*")
     args = parser.parse_args()
     args.compilers = os.path.abspath(args.compilers)
     if args.wrapper and os.sep in args.wrapper:
@@ -134,15 +139,48 @@ def main():
 
     with open(args.flags_file, encoding="utf-8") as f:
         flags = shlex.split(f.read(), comments=True)
+    if args.sources_file:
+        with open(args.sources_file, encoding="utf-8") as f:
+            args.sources += [line.strip() for line in f if line.strip() and not line.startswith("#")]
+    if not args.sources:
+        parser.error("no sources given")
+    versions = args.versions.split(",")
     sections = dol_text(args.dol)
-    jobs = [(v, s) for s in args.sources for v in args.versions.split(",")]
+    jobs = [(v, s) for s in args.sources for v in versions]
     with ThreadPoolExecutor(args.jobs) as pool:
         results = list(pool.map(lambda j: probe(args, sections, flags, *j), jobs))
     out = {}
     for (version, source), result in zip(jobs, results):
         out.setdefault(source, {})[version] = result
-    json.dump(out, sys.stdout, indent=1, sort_keys=True)
-    print()
+    if args.summary is None:
+        json.dump(out, sys.stdout, indent=1, sort_keys=True)
+        print()
+    else:
+        summarize(out, versions, args.summary)
+
+
+def summarize(out, versions, min_words):
+    """Print unique-body counts per version and the bodies that separate versions."""
+    def unique(result, name):
+        entry = result.get(name)
+        return entry[1][0] if entry and len(entry[1]) == 1 and entry[0] >= min_words else None
+
+    print("version\tfailed_units\tunique_bodies")
+    for v in versions:
+        results = [units[v] for units in out.values()]
+        failed = sum(1 for r in results if "error" in r)
+        found = sum(1 for r in results if "error" not in r for n in r if unique(r, n))
+        print(f"{v}\t{failed}\t{found}")
+    print("\nsource\tfunction\twords\taddress\t" + "\t".join(versions))
+    for source, units in sorted(out.items()):
+        ok = [v for v in versions if "error" not in units[v]]
+        for name in sorted({n for v in ok for n in units[v]}):
+            hits = {v: unique(units[v], name) for v in ok}
+            addrs = {a for a in hits.values() if a}
+            if len(addrs) == 1 and None in hits.values():
+                words = next(units[v][name][0] for v in ok if hits[v])
+                marks = ["x" if hits.get(v) else ("-" if v in ok else "err") for v in versions]
+                print(f"{source}\t{name}\t{words}\t{addrs.pop()}\t" + "\t".join(marks))
 
 
 if __name__ == "__main__":

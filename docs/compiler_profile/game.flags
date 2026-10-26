@@ -1,6 +1,5 @@
-# Probe flags for bfbbdecomp/bfbb sources (run from that checkout's root).
-# BfBB's game flags, with the three settings this profile changes:
-# -O4,s (BfBB: -O4,p), -inline auto,deferred (BfBB: -inline off), -char signed (BfBB: unsigned).
+# Probe flags for bfbbdecomp/bfbb game sources (run from that checkout's root): the cflags_game profile.
+# BfBB's own game flags differ in three settings: -O4,p, -inline off, -char unsigned.
 -nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off
 -O4,s -inline auto,deferred -pragma "cats off" -pragma "warn_notinlined off"
 -maxerrors 1 -nosyspath -RTTI off -fp_contract on -str reuse -multibyte

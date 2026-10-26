@@ -249,10 +249,10 @@ cflags_rel = [
     "-sdata2 0",
 ]
 
-# Game code profile: CodeWarrior for GameCube 1.3.2 (mwcceppc 2.4.1 build 32).
+# Game code profile: CodeWarrior for GameCube 1.3.2 (mwcceppc 2.4.2 build 81).
 # Evidence: compiler rows in config/GIHE78/evidence.tsv and docs/compiler_profile/.
 cflags_game = [
-    *[f for f in cflags_base if f not in ("-O4,p", "-inline auto")],
+    *[f for f in cflags_base if f not in ("-O4,p", "-inline auto", "-str reuse")],
     "-O4,s",
     "-inline auto,deferred",
     "-lang=c++",
@@ -280,8 +280,9 @@ def GameLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     }
 
 
-# Helper function for Dolphin libraries. GC/1.2.5n is supported by SDK units (evidence.tsv);
-# cflags_base here is still the template default and needs the same unit-level evidence.
+# Helper function for Dolphin libraries. GC/1.2.5n is supported by SDK units (evidence.tsv).
+# TO_VERIFY: cflags_base is the template default; the SDK evidence was gathered with bfbb's
+# SDK flags (docs/compiler_profile/sdk.flags), which are compatible but not established.
 def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
