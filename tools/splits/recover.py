@@ -100,18 +100,18 @@ def load_symbols(path):
 def load_relocations(objdir, named):
     """(source address, target address) for every relocation in dtk's split objects.
 
-    dtk names local labels <prefix>_<ADDR>, so each section's load address follows
-    from any such symbol's value.  Symbols named in symbols.txt carry no address
-    suffix and are looked up in `named` (name -> addresses) instead.  A name
+    Symbols are looked up in `named` (symbols.txt, name -> addresses) first.  dtk
+    names its own labels <prefix>_<ADDR> and padding gap_<NN>_<ADDR>_<section>, so
+    each section's load address follows from any such symbol's value.  A name
     symbols.txt gives more than one symbol (file-local statics) is resolved where
     the object defines it; a reference to it from another object is ambiguous."""
 
     def addr_of(nm):
-        m = re.search(r'_([0-9A-F]{8})$', nm)
-        if m:
-            return int(m[1], 16)
         a = named.get(nm, ())
-        return a[0] if len(a) == 1 else None
+        if a:
+            return a[0] if len(a) == 1 else None
+        m = re.search(r'_([0-9A-F]{8})$', nm) or re.fullmatch(r'gap_\d+_([0-9A-F]{8})_\w+', nm)
+        return int(m[1], 16) if m else None
 
     out, skipped = [], 0
     for path in sorted(glob.glob(os.path.join(objdir, '**', '*.o'), recursive=True)):
@@ -148,10 +148,13 @@ def load_relocations(objdir, named):
                 nm, value, shndx = syms[info >> 8]
                 a = addr_of(nm)
                 if a is None and len(named.get(nm, ())) > 1:
-                    local = base.get(shndx) if 0 < shndx < 0xFF00 else None
-                    if not local or len(local) != 1:
+                    if not 0 < shndx < 0xFF00:
                         raise SystemExit(f'{path}: {nm} is named more than once in symbols.txt '
                                          'and not defined in this object')
+                    local = base.get(shndx)
+                    if not local or len(local) != 1:
+                        raise SystemExit(f'{path}: {nm} is named more than once in symbols.txt '
+                                         'and the base of its section is unknown')
                     a = next(iter(local)) + value
                 if a is not None:
                     out.append((b + off, a + addend))
