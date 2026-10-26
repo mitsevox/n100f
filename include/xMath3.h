@@ -32,9 +32,16 @@ struct _xQuat
     F32 s;
 };
 
+struct _xSphere
+{
+    xVec3 center;
+    F32 r;
+};
+
 typedef struct _xMat3x3 xMat3x3;
 typedef struct _xMat4x3 xMat4x3;
 typedef struct _xQuat xQuat;
+typedef struct _xSphere xSphere;
 
 extern const xMat4x3 g_I3;
 

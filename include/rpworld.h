@@ -3,10 +3,56 @@
 
 #include <rwcore.h>
 
-// RenderWare types are opaque until code that accesses their members is reconstructed.
+// RenderWare types get members once reconstructed code accesses them or a declared type
+// embeds them; the others stay opaque.
 struct RpAtomic;
-struct RpWorld;
-struct RpLight;
+struct RpMaterial;
+struct RpSector;
+
+enum RpWorldRenderOrder
+{
+    rpWORLDRENDERNARENDERORDER = 0,
+    rpWORLDRENDERFRONT2BACK = 1,
+    rpWORLDRENDERBACK2FRONT = 2,
+    rpWORLDRENDERORDERFORCEENUMSIZEINT = 0x7FFFFFFF
+};
+
+struct RpMaterialList
+{
+    RpMaterial** materials;
+    S32 numMaterials;
+    S32 space;
+};
+
+// Partial: members from +0x68 on are not declared, so sizeof(RpWorld) is not its size.
+struct RpWorld
+{
+    RwObject object;
+    U32 flags;
+    RpWorldRenderOrder renderOrder;
+    RpMaterialList matList;
+    RpSector* rootSector;
+    S32 numTexCoordSets;
+    S32 numClumpsInWorld;
+    RwLLLink* currentClumpLink;
+    RwLinkList clumpList;
+    RwLinkList lightList;
+    RwLinkList directionalLightList;
+    RwV3d worldOrigin;
+    RwBBox boundingBox;
+};
+
+struct RpLight
+{
+    RwObjectHasFrame object;
+    F32 radius;
+    RwRGBAReal color;
+    F32 minusCosAngle;
+    RwLinkList WorldSectorsInLight;
+    RwLLLink inWorld;
+    U16 lightFrame;
+    U16 pad;
+};
 
 #ifdef __cplusplus
 extern "C" {
