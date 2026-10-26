@@ -474,6 +474,13 @@ def main():
     # of the best data cut in each section: a function on B's side loading A's
     # data, or the reverse.  .sdata2 literals are unit-local, so they decide most
     # edges.  Moving an anchor across the cut costs three references.
+    callers = collections.defaultdict(set)
+    for f, ts in func_targets.items():
+        for t in ts:
+            g = fidx(t)
+            if g is not None and g != f:
+                callers[g].add(f)
+
     tstart, tend, tclass, tconf = {order[0]: core[order[0]][0]}, {order[-1]: core[order[-1]][1]}, {}, {}
     for A, B in zip(order, order[1:]):
         # each unit lends its first half to the edge before it and its second half to the edge after
@@ -504,18 +511,33 @@ def main():
                          for c in cands)
             return n
 
+        def call_crossings(k):
+            # calls in either direction between a window function and the rest of the
+            # span that the cut would separate; each pair counts once
+            return sum(1 for f in window for g in ({fidx(t) for t in func_targets[f]} | callers[f])
+                       if g is not None and g != f and g in span and (g not in window or f < g)
+                       and (f <= k) != (g <= k))
+
         ks = range(max(wlo - 1, tstart[A]), min(whi, core[B][1] - 1) + 1)
         forced = [k for k in ks if k in sinit]
         scores = {k: crossings(k) for k in (forced or ks)}
         best = min(scores.values())
         ties = sorted(k for k, v in scores.items() if v == best)
+        tied = len(ties)
+        # Cuts that tie on data are told apart by the calls they would separate.
+        if tied > 1:
+            calls = {k: call_crossings(k) for k in ties}
+            ties = [k for k in ties if calls[k] == min(calls.values())]
+        by_calls = f'{tied} cuts tie on data, {len(ties)} on calls' if len(ties) < tied else f'{tied} cuts tie on data'
         aligned_cut = core[A][1] if core[B][0] - core[A][1] == 1 else None
         if forced and len(ties) == 1:
             cut, cls = ties[0], 'static initialiser ends unit'
-        elif len(ties) == 1:
+        elif tied == 1:
             cut, cls = ties[0], 'single cut by data references'
+        elif len(ties) == 1:
+            cut, cls = ties[0], f'single cut by call references ({tied} cuts tie on data)'
         elif aligned_cut in ties:
-            cut, cls = aligned_cut, f'alignment only ({len(ties)} cuts tie on data)'
+            cut, cls = aligned_cut, f'alignment only ({by_calls})'
         else:
             cut, cls = None, f'open: {ties[-1] - ties[0]} unassigned functions'
         if cut is None:
@@ -530,13 +552,6 @@ def main():
     # from each side, when every reference they make into assigned code lands in that
     # neighbour and none in the other: calls to or from its functions, or loads of
     # data only its functions load.  References to other units decide nothing.
-    callers = collections.defaultdict(set)
-    for f, ts in func_targets.items():
-        for t in ts:
-            g = fidx(t)
-            if g is not None and g != f:
-                callers[g].add(f)
-
     def reached(f):
         out = {unit_of.get(fidx(t)) for t in func_targets[f] if fidx(t) != f}
         out |= {unit_of.get(g) for g in callers[f]}
@@ -765,12 +780,20 @@ def main():
             b = final.get((v, sec)) if status(v) != 'weak' else None
             out.write(f'{sec}\t{u}\t{v}\t{"0x%08X" % a[1] if a else "-"}\t{"0x%08X" % b[0] if b else "-"}\t'
                       f'{cls if a and b else cls + "; a side left unsplit"}\t{conflicts}\n')
+    def anchor_kind(g, i):
+        if i in named:
+            return 'name'
+        shared_feats = ps2_feats[i] & gc_feats[g]
+        kinds = [k for k, tag in (('strings', 'S:'), ('floats', 'F:'), ('calls', 'C:'))
+                 if any(x.startswith(tag) for x in shared_feats)]
+        return '+'.join(kinds)
+
     if args.units:
         with open(args.units, 'w') as out:
             out.write('unit\ttext_start\ttext_end\tgc_functions\tps2_functions\tanchors\tname_anchors\tfirst_anchor\tstatus\n')
             for u in order:
                 fa = first_anchor.get(u)
-                fa = f'0x{funcs[fa[0]][0]:08X}={ps2.funcs[fa[1]][2]}{" (name)" if fa[1] in named else ""}' if fa else '-'
+                fa = f'0x{funcs[fa[0]][0]:08X}={ps2.funcs[fa[1]][2]} ({anchor_kind(*fa)})' if fa else '-'
                 out.write(f'{u}\t0x{funcs[tstart[u]][0]:08X}\t0x{funcs[tend[u]][0] + funcs[tend[u]][1]:08X}\t'
                           f'{tend[u] - tstart[u] + 1}\t{ps2_count[u]}\t{anchored[u]}\t{name_anchored[u]}\t{fa}\t{status(u)}\n')
     for nm in dropped_named:

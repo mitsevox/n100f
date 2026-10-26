@@ -1,136 +1,136 @@
 unit	text_start	text_end	gc_functions	ps2_functions	anchors	name_anchors	first_anchor	status
 iAnim.cpp	0x80005AFC	0x80005C34	3	5	0	0	-	weak
-iAnimSKB.cpp	0x80005C74	0x80006CC4	6	6	2	1	0x80005C74=_iAnimSKBFlip180	anchored
+iAnimSKB.cpp	0x80005C74	0x80006CC4	6	6	2	1	0x80005C74=_iAnimSKBFlip180 (floats)	anchored
 iCamera.cpp	0x80006CC4	0x80007738	13	13	3	3	0x800072D4=iCameraSetNearFarClip (name)	anchored
 iCollide.cpp	0x80007738	0x80009424	18	19	2	1	0x8000885C=sphereHitsModel3CB (name)	anchored
 iCollideFast.cpp	0x80009424	0x80009A20	6	6	0	0	-	count-match
-iDebug.cpp	0x80009A20	0x80009CC0	1	1	1	0	0x80009A20=iDebugScreenDump	anchored
+iDebug.cpp	0x80009A20	0x80009CC0	1	1	1	0	0x80009A20=iDebugScreenDump (strings+calls)	anchored
 iDraw.cpp	0x80009CC0	0x80009CC8	2	4	0	0	-	weak
 iEnv.cpp	0x80009CCC	0x8000A408	10	9	2	2	0x8000A0D4=iEnvEndRenderFX (name)	anchored
 iFile.cpp	0x8000A408	0x8000A5A4	5	16	0	0	-	weak
 iFMV.cpp	0x8000AA80	0x8000AB3C	1	1	0	0	-	count-match
-iFont.cpp	0x8000AB58	0x8000B9C4	9	8	2	0	0x8000AB58=iFontInit	anchored
+iFont.cpp	0x8000AB58	0x8000B9C4	9	8	2	0	0x8000AB58=iFontInit (strings)	anchored
 iFX.cpp	0x8000B9C4	0x8000B9C4	0	7	0	0	-	weak
 iLight.cpp	0x8000B9C4	0x8000BD14	9	9	2	2	0x8000B9C4=iLightEnv (name)	anchored
-iMath.cpp	0x8000BD14	0x8000BDC0	5	6	1	0	0x8000BD14=iurand	anchored
+iMath.cpp	0x8000BD14	0x8000BDC0	5	6	1	0	0x8000BD14=iurand (floats)	anchored
 iMath3.cpp	0x8000BDC0	0x8000DA6C	15	15	2	2	0x8000C1FC=iBoxIsectRay (name)	anchored
 iMemMgr.cpp	0x8000DA6C	0x8000DBA4	2	2	1	1	0x8000DA6C=iMemExit (name)	anchored
-iModel.cpp	0x8000DBA4	0x8000E994	13	17	4	3	0x8000DE10=iModelTagInternal	anchored
-iMorph.cpp	0x8000EBC0	0x8000F5AC	3	6	2	0	0x8000EBFC=iMorphOptimize	anchored
+iModel.cpp	0x8000DBA4	0x8000EBC0	17	17	4	3	0x8000DE10=iModelTagInternal (floats)	anchored
+iMorph.cpp	0x8000EBC0	0x8000F5AC	3	6	2	0	0x8000EBFC=iMorphOptimize (strings)	anchored
 iPad.cpp	0x8000F5AC	0x8000F600	3	9	2	2	0x8000F5B0=iPadStartRumble (name)	weak
-iParMgr.cpp	0x8000FB40	0x80011C98	13	13	1	0	0x80010E80=iRenderPushFlat	anchored
-isavegame.cpp	0x80011C98	0x800146C0	38	44	5	4	0x80012A20=iSGOpError (name)	anchored
-iScrFX.cpp	0x80014904	0x800149F0	2	4	2	2	0x80014904=iScrFxEnd (name)	anchored
-iShadow.cpp	0x80014A3C	0x80015168	4	4	2	0	0x80014B64=iShadowAdd	anchored
-iSnd.cpp	0x80015168	0x80015EAC	24	20	0	0	-	weak
+iParMgr.cpp	0x8000FB40	0x80011B2C	9	13	1	0	0x80010E80=iRenderPushFlat (floats)	anchored
+isavegame.cpp	0x80011B74	0x800146C0	39	44	5	4	0x80012A20=iSGOpError (name)	anchored
+iScrFX.cpp	0x800146C0	0x80014A3C	6	4	2	2	0x80014904=iScrFxEnd (name)	anchored
+iShadow.cpp	0x80014A3C	0x80015168	4	4	2	0	0x80014B64=iShadowAdd (floats)	anchored
+iSnd.cpp	0x80015168	0x80015F60	27	20	0	0	-	weak
 iSystem.cpp	0x80015F60	0x80016600	14	11	4	4	0x800162DC=iGetCurrFormattedTime (name)	anchored
-iTime.cpp	0x80016900	0x80016A30	10	13	2	2	0x800169D4=iTimeGet (name)	anchored
+iTime.cpp	0x80016600	0x80016A30	18	13	2	2	0x800169D4=iTimeGet (name)	anchored
 ms4sound.cpp	0x80016A30	0x80016A30	0	25	0	0	-	weak
 xAnim.cpp	0x80016A30	0x8001C088	38	39	9	4	0x80016CA8=xAnimPoolAlloc (name)	anchored
 xBase.cpp	0x8001C088	0x8001C184	5	5	3	3	0x8001C0A0=xBaseLoad (name)	anchored
 xbinio.cpp	0x8001C184	0x8001D1F8	22	26	9	9	0x8001C25C=BFD_read (name)	anchored
 xBound.cpp	0x8001D1F8	0x8001D9A0	7	7	0	0	-	count-match
-xCamera.cpp	0x8001D9A0	0x8002086C	29	32	4	0	0x8001DB00=xCameraNext	anchored
-xClimate.cpp	0x8002086C	0x80020F08	7	7	5	3	0x800208B8=UpdateRain	anchored
+xCamera.cpp	0x8001D9A0	0x8002086C	29	32	4	0	0x8001DB00=xCameraNext (floats+calls)	anchored
+xClimate.cpp	0x8002086C	0x80020F08	7	7	5	3	0x800208B8=UpdateRain (strings+floats)	anchored
 xCollide.cpp	0x80020F08	0x80021620	5	5	0	0	-	count-match
-xCollideFast.cpp	0x80021620	0x80021AF0	3	4	1	0	0x80021800=xRayHitsBoundFast	anchored
+xCollideFast.cpp	0x80021620	0x80021AF0	3	4	1	0	0x80021800=xRayHitsBoundFast (floats+calls)	anchored
 xCutscene.cpp	0x80021C60	0x80021CB0	1	13	0	0	-	weak
 xDebug.cpp	0x80021E30	0x80021E50	1	8	0	0	-	weak
 xDraw.cpp	0x80021E50	0x80021E70	1	5	0	0	-	weak
-xEnt.cpp	0x80021E70	0x800258F4	41	47	7	0	0x80021EB8=xEntDebugIPad	anchored
+xEnt.cpp	0x80021E70	0x800258F4	41	47	7	0	0x80021EB8=xEntDebugIPad (floats+calls)	anchored
 xEntDrive.cpp	0x800258F4	0x80026158	5	4	0	0	-	count-match
-xEntMotion.cpp	0x80026158	0x80028D18	14	21	7	3	0x80026158=xEntMotionDebugWrite	anchored
+xEntMotion.cpp	0x80026158	0x80028D18	14	21	7	3	0x80026158=xEntMotionDebugWrite (strings+floats)	anchored
 xEnv.cpp	0x80028D18	0x80028DFC	4	4	2	2	0x80028D44=xEnvFree (name)	anchored
 xFFX.cpp	0x80028DFC	0x80029458	14	14	4	4	0x80028DFC=xFFXRotMatchAlloc (name)	anchored
-xFilter.cpp	0x80029458	0x800294E8	4	4	4	0	0x80029458=xFilterCurvedInterp4	anchored
-xFont.cpp	0x800294E8	0x8002A460	15	15	2	0	0x80029810=JustifyLine	anchored
-xFX.cpp	0x8002A73C	0x8002B4D8	17	30	3	1	0x8002AAF4=MaterialSetEnvMap2	anchored
+xFilter.cpp	0x80029458	0x800294E8	4	4	4	0	0x80029458=xFilterCurvedInterp4 (floats)	anchored
+xFont.cpp	0x800294E8	0x8002A460	15	15	2	0	0x80029810=JustifyLine (floats)	anchored
+xFX.cpp	0x8002A73C	0x8002B4D8	17	30	3	1	0x8002AAF4=MaterialSetEnvMap2 (strings)	anchored
 xhipio.cpp	0x8002B4D8	0x8002C100	15	16	11	11	0x8002B4D8=HIPLReadString (name)	anchored
 xIni.cpp	0x8002C100	0x8002C774	5	5	3	3	0x8002C100=xIniGetString (name)	anchored
 xLinkList.cpp	0x8002C774	0x8002C86C	5	5	0	0	-	count-match
-xMath.cpp	0x8002C86C	0x8002CF48	6	6	2	0	0x8002C900=xMathSolveCubic	anchored
-xMath3.cpp	0x8002CF48	0x8002F8E0	30	33	9	4	0x8002CFBC=xQuatSlerp	anchored
+xMath.cpp	0x8002C86C	0x8002CF48	6	6	2	0	0x8002C900=xMathSolveCubic (floats)	anchored
+xMath3.cpp	0x8002CF48	0x8002F8E0	30	33	9	4	0x8002CFBC=xQuatSlerp (floats)	anchored
 xMemMgr.cpp	0x8002F920	0x8002FC58	7	16	2	2	0x8002F920=xMemPoolFree (name)	weak
-xModel.cpp	0x800301A4	0x80030F28	12	19	2	0	0x800301A4=xModelRender2D	anchored
+xModel.cpp	0x800301A4	0x80030F28	12	19	2	0	0x800301A4=xModelRender2D (floats)	anchored
 xMorph.cpp	0x80030F28	0x80031310	3	3	3	3	0x80030F28=xMorphSeqDuration (name)	anchored
 xMovePoint.cpp	0x80031310	0x800317D4	9	9	3	2	0x80031478=xMovePointSplineDestroy (name)	anchored
 xordarray.cpp	0x800317D4	0x80031AC8	6	6	4	3	0x8003189C=XOrdLookup (name)	anchored
-xPad.cpp	0x80031AC8	0x800323D4	7	8	1	0	0x80031AC8=xPadAddRumble	anchored
+xPad.cpp	0x80031AC8	0x800323D4	7	8	1	0	0x80031AC8=xPadAddRumble (calls)	anchored
 xPar.cpp	0x800323D4	0x80032540	4	4	2	2	0x80032460=xParFree (name)	anchored
 xParGroup.cpp	0x80032540	0x80032CD8	12	13	7	7	0x80032540=xParGroupKillPar (name)	anchored
 xParMgr.cpp	0x80032DAC	0x80032DEC	1	3	1	1	0x80032DAC=xParMgrInit (name)	weak
 xPartition.cpp	0x80032DEC	0x8003361C	10	11	1	1	0x800335F8=xPartitionGetTrueIdx (name)	anchored
-xpkrsvc.cpp	0x8003361C	0x80035854	31	40	6	5	0x80033894=LOD_r_LHDR	anchored
-xQuickCull.cpp	0x80035854	0x80036908	7	7	1	0	0x80036810=xQuickCullInit	anchored
+xpkrsvc.cpp	0x8003361C	0x80035854	31	40	6	5	0x80033894=LOD_r_LHDR (calls)	anchored
+xQuickCull.cpp	0x80035854	0x80036908	7	7	1	0	0x80036810=xQuickCullInit (floats)	anchored
 xsavegame.cpp	0x80036908	0x80038D48	44	50	14	10	0x80036F4C=xSG_sv_flipinfo (name)	anchored
 xScene.cpp	0x80038D48	0x800394B4	13	13	0	0	-	count-match
 xScrFx.cpp	0x800394B4	0x80039C90	7	7	3	2	0x800394C4=xScrFxIsLetterbox (name)	anchored
 xserializer.cpp	0x80039C90	0x8003AD40	39	41	8	7	0x80039CFC=xSER_xsgclt_svproc_fill (name)	anchored
-xShadow.cpp	0x8003AD40	0x8003CD24	11	16	3	0	0x8003AD40=ShadowRender	anchored
+xShadow.cpp	0x8003AD40	0x8003CD24	11	16	3	0	0x8003AD40=ShadowRender (floats)	anchored
 xSnd.cpp	0x8003CD24	0x8003D5C0	18	23	0	0	-	weak
 xSpline.cpp	0x8003D680	0x8003F904	11	13	2	1	0x8003DB84=xSpline3_EvalArcApprox (name)	anchored
 xstransvc.cpp	0x8003F904	0x80040978	14	17	2	1	0x800402D8=xSTLoadStep (name)	anchored
 xString.cpp	0x80040978	0x80040EE4	6	6	1	1	0x80040B38=xStrupr (name)	anchored
 xSurface.cpp	0x80040EE4	0x80044714	36	7	0	0	-	weak
-xTRC.cpp	0x80044714	0x80044780	1	2	1	0	0x80044478=xTRCPad	anchored
+xTRC.cpp	0x80044714	0x80044780	1	2	1	0	0x80044478=xTRCPad (floats)	anchored
 xutil.cpp	0x80044780	0x80044C44	7	11	4	4	0x80044780=xUtil_yesno (name)	anchored
 zActionLine.cpp	0x80044C44	0x80044E20	3	4	2	1	0x80044D50=zActionLineUpdate (name)	anchored
-zAnimList.cpp	0x80044E20	0x80045174	5	5	1	0	0x80044EB8=zAnimListInit	anchored
-zAssetTypes.cpp	0x800451F8	0x80045B50	13	15	2	1	0x800451F8=ATBL_Read	anchored
+zAnimList.cpp	0x80044E20	0x80045174	5	5	1	0	0x80044EB8=zAnimListInit (strings+floats)	anchored
+zAssetTypes.cpp	0x800451F8	0x80045B50	13	15	2	1	0x800451F8=ATBL_Read (strings+floats+calls)	anchored
 zCamera.cpp	0x80045B50	0x80045C34	4	4	0	0	-	count-match
 zConditional.cpp	0x80045C34	0x80045EA8	5	5	0	0	-	count-match
 zCounter.cpp	0x80045EA8	0x800460E0	5	5	0	0	-	count-match
-zCutsceneMgr.cpp	0x800460E0	0x8004651C	8	10	1	0	0x80046100=zCutsceneMgrUpdate	anchored
-zDispatcher.cpp	0x8004651C	0x80047670	12	14	2	1	0x8004651C=ZDSP_elcb_event	anchored
-zEGenerator.cpp	0x80047670	0x80048094	9	11	1	0	0x80047F74=zEGenerator_Init	anchored
-zEnt.cpp	0x80048094	0x80049488	25	21	7	3	0x80048094=zEntGetShadowParams	anchored
-zEntBubble.cpp	0x800495BC	0x8004A508	8	12	3	0	0x800495DC=zEntBubble_Update	anchored
+zCutsceneMgr.cpp	0x800460E0	0x8004651C	8	10	1	0	0x80046100=zCutsceneMgrUpdate (strings+calls)	anchored
+zDispatcher.cpp	0x8004651C	0x80047670	12	14	2	1	0x8004651C=ZDSP_elcb_event (floats)	anchored
+zEGenerator.cpp	0x80047670	0x80048094	9	11	1	0	0x80047F74=zEGenerator_Init (floats+calls)	anchored
+zEnt.cpp	0x80048094	0x80049488	25	21	7	3	0x80048094=zEntGetShadowParams (floats)	anchored
+zEntBubble.cpp	0x80049488	0x8004A508	11	12	3	0	0x800495DC=zEntBubble_Update (floats)	anchored
 zEntButton.cpp	0x8004A508	0x8004AAD4	12	13	0	0	-	count-match
-zEntDestructObj.cpp	0x8004AAD4	0x8004B0BC	10	12	1	0	0x8004B06C=zEntDestructObj_FindFX	anchored
-zEntHangable.cpp	0x8004B0BC	0x8004C83C	10	12	4	0	0x8004B21C=zEntHangable_SetShaggy	anchored
-zEntPickup.cpp	0x8004C83C	0x8004FD58	25	28	10	0	0x8004C9F8=zEntPickup_UpdateFlyToInterface	anchored
-zEntPlayer.cpp	0x8004FD58	0x800691A8	189	197	34	0	0x8004FF68=zEntPlayer_FXSpringCB	anchored
-zEntProjectile.cpp	0x800691A8	0x8006D624	46	56	5	0	0x800692F4=ZPRJ_solv_velvec	anchored
-zEntShaggy.cpp	0x8006D624	0x8007A8D0	133	136	33	0	0x8006D624=zEntShaggy_SceneReset	anchored
-zEntSimpleObj.cpp	0x8007A8D0	0x8007AB1C	2	7	0	0	-	weak
-zEntTrigger.cpp	0x8007ACF8	0x8007B08C	3	5	1	0	0x8007AD2C=zEntTriggerUpdate	anchored
-zEntVillain.cpp	0x8007B08C	0x800A9F78	235	277	50	0	0x8007B5A0=VBON_choose_bonusItem	anchored
-zEnv.cpp	0x800A9F78	0x800AA338	7	8	3	1	0x800A9F78=zEnvEventCB	anchored
-zFeet.cpp	0x800AA338	0x800ABD84	11	11	4	0	0x800AA3B4=DrawSkidMarkStrip	anchored
+zEntDestructObj.cpp	0x8004AAD4	0x8004B0BC	10	12	1	0	0x8004B06C=zEntDestructObj_FindFX (strings)	anchored
+zEntHangable.cpp	0x8004B0BC	0x8004C83C	10	12	4	0	0x8004B21C=zEntHangable_SetShaggy (floats)	anchored
+zEntPickup.cpp	0x8004C83C	0x8004FD58	25	28	10	0	0x8004C9F8=zEntPickup_UpdateFlyToInterface (floats)	anchored
+zEntPlayer.cpp	0x8004FD58	0x800691A8	189	197	34	0	0x8004FF68=zEntPlayer_FXSpringCB (floats)	anchored
+zEntProjectile.cpp	0x800691A8	0x8006D624	46	56	5	0	0x800692F4=ZPRJ_solv_velvec (floats)	anchored
+zEntShaggy.cpp	0x8006D624	0x8007A8D0	133	136	33	0	0x8006D624=zEntShaggy_SceneReset (strings+calls)	anchored
+zEntSimpleObj.cpp	0x8007A8D0	0x8007ACB8	5	7	0	0	-	weak
+zEntTrigger.cpp	0x8007ACF8	0x8007B08C	3	5	1	0	0x8007AD2C=zEntTriggerUpdate (calls)	anchored
+zEntVillain.cpp	0x8007B08C	0x800A9F78	235	277	50	0	0x8007B5A0=VBON_choose_bonusItem (floats+calls)	anchored
+zEnv.cpp	0x800A9F78	0x800AA338	7	8	3	1	0x800A9F78=zEnvEventCB (calls)	anchored
+zFeet.cpp	0x800AA338	0x800ABD84	11	11	4	0	0x800AA3B4=DrawSkidMarkStrip (floats)	anchored
 zFMV.cpp	0x800ABD84	0x800ABE88	2	2	0	0	-	count-match
 zFog.cpp	0x800ABE88	0x800AC010	5	5	0	0	-	count-match
-zFX.cpp	0x800AC010	0x800AC0BC	2	2	1	0	0x800AC03C=zFX_SceneEnter	anchored
-zGame.cpp	0x800AC0BC	0x800ADC40	15	15	5	1	0x800AC8E8=zGameScreenTransition_UIRender	anchored
-zGameExtras.cpp	0x800ADC40	0x800AF8D8	11	11	4	0	0x800ADCB8=UpdateFireworks	anchored
+zFX.cpp	0x800AC010	0x800AC0BC	2	2	1	0	0x800AC03C=zFX_SceneEnter (strings+calls)	anchored
+zGame.cpp	0x800AC0BC	0x800ADC40	15	15	5	1	0x800AC8E8=zGameScreenTransition_UIRender (strings+floats)	anchored
+zGameExtras.cpp	0x800ADC40	0x800AF8D8	11	11	4	0	0x800ADCB8=UpdateFireworks (strings+floats)	anchored
 zGameState.cpp	0x800AF8D8	0x800AFD6C	7	7	0	0	-	count-match
 zGroup.cpp	0x800AFD6C	0x800AFF5C	7	7	0	0	-	count-match
 zGust.cpp	0x800AFF5C	0x800B07B4	9	9	5	3	0x800AFF5C=zGustUpdateFX (name)	anchored
 zHologram.cpp	0x800B07B4	0x800B09F0	3	4	0	0	-	count-match
-zHud.cpp	0x800B09F0	0x800B9808	57	58	16	0	0x800B0F3C=zHud_DrawText	anchored
-zLaugh.cpp	0x800B9808	0x800B9AB0	3	4	1	0	0x800B9A14=zLaughInit	anchored
+zHud.cpp	0x800B09F0	0x800B9808	57	58	16	0	0x800B0F3C=zHud_DrawText (floats)	anchored
+zLaugh.cpp	0x800B9808	0x800B9AB0	3	4	1	0	0x800B9A14=zLaughInit (strings)	anchored
 zLight.cpp	0x800B9AB0	0x800BA800	15	15	10	7	0x800B9AB0=zLightOn (name)	anchored
-zLightEffect.cpp	0x800BA800	0x800BAE00	22	23	2	0	0x800BA800=zLightEffectCauldron	anchored
-zLightning.cpp	0x800BAE00	0x800BBB1C	8	8	4	0	0x800BAE00=zLightningModifyEndpoints	anchored
-zLobMaster.cpp	0x800BBB1C	0x800BE608	19	24	4	0	0x800BBC20=LPRJ_debris_logix	anchored
-zMain.cpp	0x800BE608	0x800BF644	4	8	2	0	0x800BE608=zMainLoop	anchored
-zMenu.cpp	0x800BF644	0x800BFD30	8	9	1	0	0x800BF698=zMenuLoop	anchored
-zMovePoint.cpp	0x800BFD30	0x800C0524	15	15	2	0	0x800BFED4=zMovePointFindNearest	anchored
-zMusic.cpp	0x800C0524	0x800C2EB0	8	8	2	0	0x800C05F8=zMusicPause	anchored
+zLightEffect.cpp	0x800BA800	0x800BAE00	22	23	2	0	0x800BA800=zLightEffectCauldron (floats)	anchored
+zLightning.cpp	0x800BAE00	0x800BBB1C	8	8	4	0	0x800BAE00=zLightningModifyEndpoints (floats)	anchored
+zLobMaster.cpp	0x800BBB1C	0x800BE608	19	24	4	0	0x800BBC20=LPRJ_debris_logix (floats)	anchored
+zMain.cpp	0x800BE608	0x800BF644	4	8	2	0	0x800BE608=zMainLoop (floats+calls)	anchored
+zMenu.cpp	0x800BF644	0x800BFD30	8	9	1	0	0x800BF698=zMenuLoop (strings+floats+calls)	anchored
+zMovePoint.cpp	0x800BFD30	0x800C0524	15	15	2	0	0x800BFED4=zMovePointFindNearest (floats)	anchored
+zMusic.cpp	0x800C0524	0x800C2EB0	8	8	2	0	0x800C05F8=zMusicPause (strings)	anchored
 zParCmd.cpp	0x800C2EB0	0x800C4BE0	32	32	8	4	0x800C30D8=xParCmdTexAnim_Update (name)	anchored
-zParEmitter.cpp	0x800C4BE0	0x800C6708	9	13	4	0	0x800C4D04=zParEmitterEmit	anchored
-zParSys.cpp	0x800C6708	0x800C7000	8	8	3	0	0x800C6BD0=zParSysEventCB	anchored
-zPendulum.cpp	0x800C73FC	0x800C751C	4	9	0	0	-	weak
-zPitchChange.cpp	0x800C751C	0x800C7680	1	1	1	0	0x800C751C=zPitchChange	anchored
-zPlatform.cpp	0x800C7680	0x800C8AE4	14	15	5	1	0x800C7680=zPlatformEventCB	anchored
-zPortal.cpp	0x800C8AE4	0x800C8B44	1	4	0	0	-	weak
-zRenderState.cpp	0x800C8B44	0x800C90D4	8	5	0	0	-	weak
-zRumble.cpp	0x800C90D4	0x800C9368	2	2	2	0	0x800C90D4=zRumbleStartDistance	anchored
-zSaveLoad.cpp	0x800C9368	0x800CD170	35	34	10	2	0x800C9738=zSaveLoad_slotIsEmpty	anchored
-zScene.cpp	0x800CD170	0x800D1B20	51	51	10	1	0x800CD330=zSceneCalcProgress	anchored
+zParEmitter.cpp	0x800C4BE0	0x800C6708	9	13	4	0	0x800C4D04=zParEmitterEmit (floats+calls)	anchored
+zParSys.cpp	0x800C6708	0x800C7000	8	8	3	0	0x800C6BD0=zParSysEventCB (calls)	anchored
+zPendulum.cpp	0x800C7000	0x800C751C	9	9	0	0	-	count-match
+zPitchChange.cpp	0x800C751C	0x800C7680	1	1	1	0	0x800C751C=zPitchChange (floats)	anchored
+zPlatform.cpp	0x800C7680	0x800C8AE4	14	15	5	1	0x800C7680=zPlatformEventCB (calls)	anchored
+zPortal.cpp	0x800C8AE4	0x800C8BDC	4	4	0	0	-	count-match
+zRenderState.cpp	0x800C8BDC	0x800C90D4	5	5	0	0	-	count-match
+zRumble.cpp	0x800C90D4	0x800C9368	2	2	2	0	0x800C90D4=zRumbleStartDistance (floats)	anchored
+zSaveLoad.cpp	0x800C9368	0x800CD170	35	34	10	2	0x800C9738=zSaveLoad_slotIsEmpty (strings)	anchored
+zScene.cpp	0x800CD170	0x800D1B20	51	51	10	1	0x800CD330=zSceneCalcProgress (floats)	anchored
 zScript.cpp	0x800D1B20	0x800D1E50	5	6	1	1	0x800D1C94=zScriptEventCB (name)	anchored
-zSFX.cpp	0x800D1E50	0x800D229C	4	4	1	0	0x800D1E50=zSFXEventCB	anchored
-zSurface.cpp	0x800D229C	0x800D340C	23	23	14	12	0x800D229C=zSurfaceGetName	anchored
+zSFX.cpp	0x800D1E50	0x800D229C	4	4	1	0	0x800D1E50=zSFXEventCB (floats+calls)	anchored
+zSurface.cpp	0x800D229C	0x800D340C	23	23	14	12	0x800D229C=zSurfaceGetName (strings)	anchored
 zTimer.cpp	0x800D340C	0x800D3608	5	5	0	0	-	count-match
-zUI.cpp	0x800D3608	0x800D47E8	13	12	4	1	0x800D3608=zUIEventCB	anchored
-zUIFont.cpp	0x800D47E8	0x800D527C	7	8	3	0	0x800D4B0C=zUIFontEventCB	anchored
-zVar.cpp	0x800D527C	0x800D7E00	161	155	2	1	0x800D6244=zVMCB_CurrentPosition	anchored
+zUI.cpp	0x800D3608	0x800D47E8	13	12	4	1	0x800D3608=zUIEventCB (strings+calls)	anchored
+zUIFont.cpp	0x800D47E8	0x800D527C	7	8	3	0	0x800D4B0C=zUIFontEventCB (strings+calls)	anchored
+zVar.cpp	0x800D527C	0x800D7E00	161	155	2	1	0x800D6244=zVMCB_CurrentPosition (strings)	anchored

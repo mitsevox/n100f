@@ -69,10 +69,12 @@ flat/iMath3.cpp:
 
 flat/iMemMgr.cpp:
 	.text       start:0x8000DA6C end:0x8000DBA4
-	.sbss       start:0x8025E8F0 end:0x8025E900
+	.sbss       start:0x8025E8E8 end:0x8025E900
 
 flat/iModel.cpp:
-	.text       start:0x8000DBA4 end:0x8000E994
+	.text       start:0x8000DBA4 end:0x8000EBC0
+	.bss        start:0x801E1498 end:0x801E1898
+	.sbss       start:0x8025E900 end:0x8025E908
 	.sdata2     start:0x8025FA18 end:0x8025FA38
 	.sbss2      start:0x80262C60 end:0x80262C68
 
@@ -83,13 +85,13 @@ flat/iMorph.cpp:
 	.sdata2     start:0x8025FA38 end:0x8025FA48
 
 flat/iParMgr.cpp:
-	.text       start:0x8000FB40 end:0x80011C98
+	.text       start:0x8000FB40 end:0x80011B2C
 	.data       start:0x801AD470 end:0x801AD498
-	.bss        start:0x801E1898 end:0x801E6D60
+	.bss        start:0x801E6B98 end:0x801E6D60
 	.sdata2     start:0x8025FA68 end:0x8025FA98
 
 flat/isavegame.cpp:
-	.text       start:0x80011C98 end:0x800146C0
+	.text       start:0x80011B74 end:0x800146C0
 	.rodata     start:0x8018E740 end:0x80192BE8
 	.data       start:0x801AD498 end:0x801AD940
 	.bss        start:0x801E6D60 end:0x801FAD60
@@ -98,7 +100,9 @@ flat/isavegame.cpp:
 	.sbss2      start:0x80262C68 end:0x80262C70
 
 flat/iScrFX.cpp:
-	.text       start:0x80014904 end:0x800149F0
+	.text       start:0x800146C0 end:0x80014A3C
+	.sbss       start:0x8025E950 end:0x8025E958
+	.sdata2     start:0x8025FAC0 end:0x8025FAE8
 
 flat/iShadow.cpp:
 	.text       start:0x80014A3C end:0x80015168
@@ -109,9 +113,10 @@ flat/iShadow.cpp:
 flat/iSystem.cpp:
 	.text       start:0x80015F60 end:0x80016600
 	.rodata     start:0x80192C60 end:0x80192CE0
+	.bss        start:0x801FE3B8 end:0x801FE3E8
 
 flat/iTime.cpp:
-	.text       start:0x80016900 end:0x80016A30
+	.text       start:0x80016600 end:0x80016A30
 	.sbss       start:0x8025E998 end:0x8025E9A8
 	.sdata2     start:0x8025FB88 end:0x8025FB90
 
@@ -390,9 +395,10 @@ flat/zEnt.cpp:
 	.sdata2     start:0x80260530 end:0x80260560
 
 flat/zEntBubble.cpp:
-	.text       start:0x800495BC end:0x8004A508
+	.text       start:0x80049488 end:0x8004A508
 	.rodata     start:0x801961B8 end:0x801961E8
 	.sbss       start:0x8025EC30 end:0x8025EC40
+	.sdata2     start:0x80260560 end:0x802605A8
 
 flat/zEntButton.cpp:
 	.text       start:0x8004A508 end:0x8004AAD4
@@ -622,6 +628,10 @@ flat/zParSys.cpp:
 	.data       start:0x801C7618 end:0x801C7650
 	.sdata2     start:0x80261B88 end:0x80261B90
 
+flat/zPendulum.cpp:
+	.text       start:0x800C7000 end:0x800C751C
+	.sdata2     start:0x80261B90 end:0x80261BA0
+
 flat/zPitchChange.cpp:
 	.text       start:0x800C751C end:0x800C7680
 	.sdata2     start:0x80261BA0 end:0x80261BB0
@@ -631,6 +641,14 @@ flat/zPlatform.cpp:
 	.rodata     start:0x801A5F28 end:0x801A5F58
 	.sbss       start:0x8025F060 end:0x8025F068
 	.sdata2     start:0x80261BB0 end:0x80261BE8
+
+flat/zPortal.cpp:
+	.text       start:0x800C8AE4 end:0x800C8BDC
+
+flat/zRenderState.cpp:
+	.text       start:0x800C8BDC end:0x800C90D4
+	.data       start:0x801C7650 end:0x801C76B0
+	.sbss       start:0x8025F068 end:0x8025F070
 
 flat/zRumble.cpp:
 	.text       start:0x800C90D4 end:0x800C9368
