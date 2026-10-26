@@ -44,6 +44,6 @@ CI runs the same build in the private, digest-pinned build environment from [mit
 
 ## Contributing
 
-The project owner is **Lucas ([mitsevox](https://github.com/mitsevox))**, the sole merge authority.
+The project owner is **Lucas ([mitsevox](https://github.com/mitsevox))**, the sole merge authority. The owner has delegated review clearance and merging to a designated merge gate that acts under the owner's account; see [owner delegation](CONTRIBUTING.md#owner-delegation-merge-gate).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the work and review process. AI agents start with [AGENTS.md](AGENTS.md). Imported and reused source is credited in [CREDITS.md](CREDITS.md).

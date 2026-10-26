@@ -22,7 +22,18 @@ The supported hosts and target hash are in the README. Missing reference access 
 
 Contribution branches, PRs, reviews, and required CI checks belong in this repository. Use the owner-approved build environment at its pinned version. Supporting build dependencies are maintained by the owner; contributors and agents must not change them to accommodate a patch. Report missing inputs or tooling problems in an issue here for the owner's decision.
 
-**Only the project owner authorizes and performs merges into `main`.** Contributors and agents may prepare branches, submit PRs, and review changes. A reviewer verdict or passing CI never grants merge authority. Contributors must not push directly to `main` or enable automatic merging.
+**Only the project owner, directly or through the [merge gate](#owner-delegation-merge-gate), authorizes and performs merges into `main`.** Contributors and agents may prepare branches, submit PRs, and review changes. A reviewer verdict or passing CI never grants merge authority. Contributors must not push directly to `main` or enable automatic merging.
+
+### Owner delegation: merge gate
+
+The owner has delegated, on a standing basis until the owner revokes it, review clearance and merging to a single designated merge gate (an agent acting under the owner's account). Its clearance comments and merges carry the owner's authority. Decisions the rules reserve to the owner's explicit approval stay outside the delegation: matching-integrity and compiler exceptions, workflow, approval-control or site-policy changes, dependency changes, and changes to this delegation. The gate escalates such PRs to the owner and does not clear them. The merge gate:
+
+- tracks open PRs, checks for merge conflicts and overlapping edits to shared files, and coordinates authors when PRs collide;
+- confirms that the blind accuracy and hostile reviews were done by reviewers independent of the author, and when they are missing, commissions fresh reviewers independent of the author and of the gate's own clearance reasoning, whose records are posted separately;
+- checks for matching-integrity violations and published game binaries;
+- posts owner clearance and squash-merges only when required CI passes on the final revision, the PR is conflict-free, and both review records pass for that revision.
+
+The merge gate does not author contribution work, push to `main`, force-push any branch, enable auto-merge, or change approval controls. When a check or condition fails, the merge gate reports on the PR rather than fixing the contribution. No other contributor or agent holds this delegation. The owner may merge, clear or withdraw clearance directly at any time.
 
 ## Work coordination
 
@@ -43,7 +54,7 @@ Coordinate shared source files, headers, types, tables and compilation-group cha
 5. **Self-check.** Verify the complete target binary, unit code and data, and regressions against the base revision. List unresolved functions and shared-file changes. Verify supported compiled-function names appear in both public progress exports; a source name alone is not an export check. Confirm that neutral identifiers receive no named-function credit merely because their bytes match. Record individually verified exact functions, whether linked or measured in a partial unit, in the contributor ledger in the same PR (ledger format `TO_IMPLEMENT`; attribution tracking is pending the owner's decision). Attribute the original source contributor and preserve that credit through integration or batching; review and merge work do not transfer it. Exact comparison-only functions receive contributor credit before whole-unit promotion. Fuzzy functions retain their source provenance without exact-function credit. Check that every exact function has attribution and that the unique credited inventory agrees with the public exact count. Do not claim a function score proves a complete unit.
 6. **Blind accuracy review.** An independent reviewer examines the scoped functions with proposed names and comments withheld, then reconciles its interpretation against the evidence. Record disagreements and their resolution in the PR.
 7. **Hostile review.** A fresh reviewer applies the checklist below. Resolve every finding by fixing it or providing evidence. Use the same reviewer for a delta recheck where available; follow the focused recheck rules below. Substantive reconstruction changes return through the relevant passes for the affected scope.
-8. **Submit for the owner's decision.** Required CI must pass on the final PR revision, with no unexplained regression. Attach the reviewed revision, validation results, accuracy review, and hostile-review verdict. Only the project owner may accept and merge it.
+8. **Submit for the owner's decision.** Required CI must pass on the final PR revision, with no unexplained regression. Attach the reviewed revision, validation results, accuracy review, and hostile-review verdict. Only the project owner or the owner's merge gate may accept and merge it.
 
 **Partial reconstructed functions may be committed, submitted and merged before reaching 100% byte equality.** A measured mismatch alone is not a review failure or a reason to withhold useful source. Review source fidelity, evidence and comparison integrity separately from matching completeness; document mismatches and unresolved reconstruction questions. Do not require every function in a contribution to match, or require whole-unit promotion, merely to accept reviewed partial source. Unsupported matching tricks and invalid evidence remain review failures.
 
@@ -132,7 +143,7 @@ After fixes, apply the delta recheck rules above. In the final record, cite the 
 
 Post each pass as a separate PR discussion comment. Start with `Revision: FULL_COMMIT_SHA`, followed immediately by `Accuracy: PASS` or `Accuracy: N/A - scope-based explanation` for accuracy; use `Hostile: SHIP`, `Hostile: FIX`, `Hostile: REDO`, or `Hostile: BLOCKED` for hostile review. Each header field occurs once, outside quotes or code fences. Then include reviewer identity, scope, evidence, findings, checklist results where applicable, and recheck results. Link any longer review evidence from that record. Do not write a successful record before the review happens.
 
-After checking reviewer independence, coverage, and resolution of findings, only the owner posts clearance in this form:
+After checking reviewer independence, coverage, and resolution of findings, only the owner or the owner's merge gate posts clearance in this form:
 
 ```text
 <!-- owner-review-clearance -->
@@ -143,7 +154,7 @@ Hostile: https://github.com/mitsevox/n100f/pull/NUMBER#issuecomment-ID
 
 `Owner review clearance` checks that the latest owner clearance identifies the current head, points to two distinct records on that PR, and that those records contain the same revision and passing verdicts. It remains pending for drafts, absent clearance, stale revisions, or invalid records. New commits require reviews covering the resulting revision and new owner clearance. Edit the latest clearance to remove its revision or evidence links to withdraw it; changes to linked discussion records also trigger revalidation.
 
-The check authenticates the owner's clearance and record references; it cannot prove reviewer independence or reasoning quality. Those judgments remain the owner's responsibility. Agents must not post clearance on the owner's behalf without explicit authorization. Clearance never authorizes a contributor or agent to merge.
+The check authenticates the owner's clearance and record references; it cannot prove reviewer independence or reasoning quality. Those judgments remain the owner's responsibility, exercised directly or through the merge gate. Agents other than the merge gate must not post clearance on the owner's behalf. Clearance never authorizes a contributor or another agent to merge.
 
 The workflow evaluates trusted base-branch code with read access to PR records and permission to publish the status. It does not check out or execute a contribution branch or use build/reference credentials. Its comment triggers become available after the owner merges the bootstrap workflow into the default branch.
 
