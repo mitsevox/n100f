@@ -311,7 +311,14 @@ config.libs: List[Dict[str, Any]] = [
     GameLib(
         "game",
         [
+            Object(NonMatching, "flat/xBase.cpp"),
+            Object(NonMatching, "flat/xClimate.cpp"),
+            Object(NonMatching, "flat/xIni.cpp"),
             Object(Matching, "flat/xMorph.cpp"),
+            Object(NonMatching, "flat/xordarray.cpp"),
+            Object(NonMatching, "flat/xPar.cpp"),
+            Object(NonMatching, "flat/xScrFx.cpp"),
+            Object(NonMatching, "flat/xString.cpp"),
         ],
     ),
 ]
