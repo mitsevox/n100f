@@ -2,8 +2,10 @@
 """Propose GIHE78 game-unit splits from the PS2 SLUS-20349 v1.01 DWARF.
 
 Method (docs/splits.md has the reasoning and limits):
-  1. Fingerprint every GC and PS2 function by the string literals and float
-     constants it loads.  Unique mutual-best matches become anchors.
+  1. Pin each function evidence.tsv gives an exact body to the PS2 function of
+     the same mangled name.  Fingerprint every other GC and PS2 function by the
+     string literals and float constants it loads and the functions it calls.
+     Unique mutual-best matches become anchors too.
   2. Order the PS2 functions by case-insensitive source file name (the GC link
      order) and align them to the GC game block by size, with anchors pinned.
   3. Cut .text between neighbouring units, then cut each data section between
@@ -11,7 +13,7 @@ Method (docs/splits.md has the reasoning and limits):
      with the fewest references that would cross them.
 
 Inputs are the target DOL, the PS2 ELF, the DWARF function export in
-references/, symbols.txt and the objects of a dtk split (for relocations).
+references/, symbols.txt, evidence.tsv and the objects of a dtk split (for relocations).
 Output is the unit part of splits.txt plus a TSV describing every edge.
 Nothing here establishes original names; see config/README.md.
 """
@@ -157,7 +159,7 @@ class Ps2:
         self.funcs = []
         for r in csv.DictReader(open(dwarf_tsv, encoding='utf-8'), delimiter='\t'):
             self.funcs.append((int(r['Address'], 16), int(r['Size']), r['Name'],
-                               r['Source_File'].split('\\')[-1]))
+                               r['Source_File'].split('\\')[-1], r['Mangled'] or r['Name']))
         self.funcs.sort()
         self.gp = self.find_gp()
 
@@ -328,6 +330,7 @@ def main():
     ap.add_argument('--ps2-elf', required=True)
     ap.add_argument('--dwarf', default='references/Scooby-Doo Night of 100 Frights/SLUS-20349/symbols/dwarf_functions.tsv')
     ap.add_argument('--symbols', default='config/GIHE78/symbols.txt')
+    ap.add_argument('--evidence', default='config/GIHE78/evidence.tsv', help='function rows with exact bodies pin by name')
     ap.add_argument('--objdir', default='build/GIHE78/obj', help='objects from a dtk split of the DOL')
     ap.add_argument('--game-end', type=lambda x: int(x, 0), default=0x800D7E00,
                     help='end of the game block; GC-only code starts here with iAnimBlend (BfBB gc/iAnim.cpp)')
@@ -377,11 +380,30 @@ def main():
             data_users[d].add(f)
 
     ps2 = Ps2(args.ps2_elf, args.dwarf)
+    # Functions whose bodies evidence.tsv establishes exactly (an exact BfBB body, say).
+    # Positional names are left out: they were read off an earlier alignment.
+    exact = {int(r[1], 16): r[3] for r in csv.reader(open(args.evidence, encoding='utf-8'), delimiter='\t')
+             if r[0] == 'function' and r[4:7] == ['target', 'exact', 'exact']}
     gc_feats = {j: gc_features(dol, r2, f[0], f[1], func_targets[j]) for j, f in enumerate(funcs)}
-    gc_feats = {j: f for j, f in gc_feats.items() if f}
     ps2_feats = {i: ps2.features(f[0], f[1]) for i, f in enumerate(ps2.funcs)}
+    # Calls are features too: a GC call to an exact-body function, and a PS2 jal to
+    # the function the DWARF gives that mangled name.
+    for j in range(len(funcs)):
+        gc_feats[j] |= {'C:' + exact[t] for t in func_targets[j] if t in exact and fidx(t) != j}
+    ps2_at = {f[0]: f[4] for f in ps2.funcs}
+    for i, (addr, size, *_) in enumerate(ps2.funcs):
+        for p in range(addr, addr + size, 4):
+            w = ps2.u32(p)
+            t = (p & 0xF0000000) | ((w & 0x3FFFFFF) << 2)
+            if w >> 26 == 3 and t in ps2_at:  # jal
+                ps2_feats[i].add('C:' + ps2_at[t])
+    gc_feats = {j: f for j, f in gc_feats.items() if f}
     ps2_feats = {i: f for i, f in ps2_feats.items() if f}
     seeds = anchors(ps2_feats, gc_feats)
+    # A match on calls alone needs two shared callees: one fits any wrapper.
+    seeds = {i: g for i, g in seeds.items()
+             if any(not x.startswith('C:') for x in ps2_feats[i] & gc_feats[g])
+             or len(ps2_feats[i] & gc_feats[g]) >= 2}
 
     shared = [i for i, f in enumerate(ps2.funcs)
               if not f[3].startswith(PS2_ONLY) and not f[3].endswith('.h')]
@@ -389,10 +411,39 @@ def main():
     game = [j for j, f in enumerate(funcs) if f[0] < args.game_end]
     gpos = {j: k for k, j in enumerate(game)}
     spos = {i: k for k, i in enumerate(shared)}
+    # An exact-body function pins to the PS2 function of the same mangled name when
+    # exactly one shared PS2 function has it, overriding any fingerprint anchor on either side.
+    ps2_by_name = collections.defaultdict(list)
+    for i, f in enumerate(ps2.funcs):
+        ps2_by_name[f[4]].append(i)
+    named = {}
+    for a, nm in exact.items():
+        g, cand = fidx(a), ps2_by_name.get(nm, ())
+        if g in gpos and funcs[g][0] == a and len(cand) == 1 and cand[0] in spos:
+            named[cand[0]] = g
+    named_g = set(named.values())
+    seeds = {i: g for i, g in seeds.items() if i not in named and g not in named_g}
+    # Name pins must keep link order: keep the largest order-consistent set.  A
+    # fingerprint anchor that crosses a kept name pin is dropped.
+    run = longest_run(sorted((gpos[g], spos[i]) for i, g in named.items()))
+    dropped_named = sorted(funcs[game[g]][3] for g, _ in set(
+        (gpos[g], spos[i]) for i, g in named.items()) - set(run))
+    named = {shared[a]: game[g] for g, a in run}
+    nsp = [spos[i] for i in sorted(named, key=spos.get)]
+    ngp = [gpos[named[i]] for i in sorted(named, key=spos.get)]
+
+    def crosses(a, b):
+        k = bisect.bisect_left(nsp, a)
+        return (k > 0 and ngp[k - 1] >= b) or (k < len(nsp) and ngp[k] <= b)
+
+    seeds = {i: g for i, g in seeds.items()
+             if not (i in spos and g in gpos and crosses(spos[i], gpos[g]))}
+    fingerprint = len(seeds)
+    seeds.update(named)
     pins = {spos[i]: gpos[g] for i, g in seeds.items() if i in spos and g in gpos}
     pairs = align([ps2.funcs[i][1] for i in shared], [funcs[j][1] for j in game], pins)
 
-    core, anchored, first_anchor = {}, collections.Counter(), {}
+    core, anchored, name_anchored, first_anchor = {}, collections.Counter(), collections.Counter(), {}
     seeded = set(seeds.values())
     for a, b in pairs:
         unit, g = ps2.funcs[shared[a]][3], game[b]
@@ -400,6 +451,7 @@ def main():
         core[unit] = (min(lo, g), max(hi, g))
         if g in seeded and seeds.get(shared[a]) == g:
             anchored[unit] += 1
+            name_anchored[unit] += shared[a] in named
             first_anchor.setdefault(unit, (g, shared[a]))
     order = sorted(core, key=lambda u: core[u][0])
     for u, v in zip(order, order[1:]):
@@ -422,6 +474,13 @@ def main():
     # of the best data cut in each section: a function on B's side loading A's
     # data, or the reverse.  .sdata2 literals are unit-local, so they decide most
     # edges.  Moving an anchor across the cut costs three references.
+    callers = collections.defaultdict(set)
+    for f, ts in func_targets.items():
+        for t in ts:
+            g = fidx(t)
+            if g is not None and g != f:
+                callers[g].add(f)
+
     tstart, tend, tclass, tconf = {order[0]: core[order[0]][0]}, {order[-1]: core[order[-1]][1]}, {}, {}
     for A, B in zip(order, order[1:]):
         # each unit lends its first half to the edge before it and its second half to the edge after
@@ -452,18 +511,32 @@ def main():
                          for c in cands)
             return n
 
+        def call_crossings(k):
+            # calls in either direction between a window function and a function of
+            # either unit outside the window that the cut would separate
+            return sum(1 for f in window for g in ({fidx(t) for t in func_targets[f]} | callers[f])
+                       if g in span and g not in window and (f <= k) != (g <= k))
+
         ks = range(max(wlo - 1, tstart[A]), min(whi, core[B][1] - 1) + 1)
         forced = [k for k in ks if k in sinit]
         scores = {k: crossings(k) for k in (forced or ks)}
         best = min(scores.values())
         ties = sorted(k for k, v in scores.items() if v == best)
+        tied = len(ties)
+        # Cuts that tie on data are told apart by the calls they would separate.
+        if tied > 1:
+            calls = {k: call_crossings(k) for k in ties}
+            ties = [k for k in ties if calls[k] == min(calls.values())]
+        by_calls = f'{tied} cuts tie on data, {len(ties)} on calls' if len(ties) < tied else f'{tied} cuts tie on data'
         aligned_cut = core[A][1] if core[B][0] - core[A][1] == 1 else None
         if forced and len(ties) == 1:
             cut, cls = ties[0], 'static initialiser ends unit'
-        elif len(ties) == 1:
+        elif tied == 1:
             cut, cls = ties[0], 'single cut by data references'
+        elif len(ties) == 1:
+            cut, cls = ties[0], f'single cut by call references ({tied} cuts tie on data)'
         elif aligned_cut in ties:
-            cut, cls = aligned_cut, f'alignment only ({len(ties)} cuts tie on data)'
+            cut, cls = aligned_cut, f'alignment only ({by_calls})'
         else:
             cut, cls = None, f'open: {ties[-1] - ties[0]} unassigned functions'
         if cut is None:
@@ -478,13 +551,6 @@ def main():
     # from each side, when every reference they make into assigned code lands in that
     # neighbour and none in the other: calls to or from its functions, or loads of
     # data only its functions load.  References to other units decide nothing.
-    callers = collections.defaultdict(set)
-    for f, ts in func_targets.items():
-        for t in ts:
-            g = fidx(t)
-            if g is not None and g != f:
-                callers[g].add(f)
-
     def reached(f):
         out = {unit_of.get(fidx(t)) for t in func_targets[f] if fidx(t) != f}
         out |= {unit_of.get(g) for g in callers[f]}
@@ -514,6 +580,58 @@ def main():
             tclass[key] = f'closed by references ({n} functions joined; was {tclass[key]})'
         else:
             tclass[key] = f'open: {tstart[key[1]] - tend[key[0]] - 1} unassigned functions ({n} joined by references)'
+
+    ps2_count = collections.Counter(ps2.funcs[i][3] for i in shared)
+
+    def status(u):
+        n, ref = tend[u] - tstart[u] + 1, ps2_count[u]
+        if n <= 0:
+            return 'weak'
+        if anchored[u] and 0.5 <= n / ref <= 2:
+            return 'anchored'
+        if not anchored[u] and abs(n - ref) <= 1:
+            return 'count-match'
+        return 'weak'
+
+    # MW pools .sdata2 literals per unit, so a function that no emitted unit holds
+    # (unassigned, or in a weak unit) and that loads a literal which, among the
+    # emitted units, only u's functions load belongs to u.  It joins u when it
+    # borders u; a weak neighbour gives it up.
+    def outside(f):
+        return unit_of.get(f) is None or status(unit_of[f]) == 'weak'
+
+    by_literal = collections.Counter()
+    changed = True
+    while changed:
+        changed = False
+        for k, u in enumerate(order):
+            if status(u) == 'weak':
+                continue
+            for f, after in ((tend[u] + 1, True), (tstart[u] - 1, False)):
+                if not 0 <= f < len(game) or not outside(f) or (after and tend[u] in sinit):
+                    continue
+                lits = {d for d in func_data[f] if data[d][2] == '.sdata2'}
+                if not lits or {unit_of.get(g) for d in lits for g in data_users[d]
+                                if g != f and not outside(g)} != {u}:
+                    continue
+                w = unit_of.get(f)
+                if w is not None:
+                    if after and tstart[w] == f:
+                        tstart[w] += 1
+                    elif not after and tend[w] == f:
+                        tend[w] -= 1
+                    else:
+                        continue
+                unit_of[f] = u
+                if after:
+                    tend[u] = f
+                    by_literal[(u, order[k + 1])] += 1
+                else:
+                    tstart[u] = f
+                    by_literal[(order[k - 1], u)] += 1
+                changed = True
+    for key, n in by_literal.items():
+        tclass[key] += f'; {n} functions joined by .sdata2 literals'
 
     users = {d: {unit_of.get(f) for f in fs} for d, fs in data_users.items()}
 
@@ -579,16 +697,6 @@ def main():
             mn = back[0]
         if data[mn][0] < end:
             final[(u, sec)] = (data[mn][0], end)
-
-    ps2_count = collections.Counter(ps2.funcs[i][3] for i in shared)
-
-    def status(u):
-        n, ref = tend[u] - tstart[u] + 1, ps2_count[u]
-        if anchored[u] and 0.5 <= n / ref <= 2:
-            return 'anchored'
-        if not anchored[u] and abs(n - ref) <= 1:
-            return 'count-match'
-        return 'weak'
 
     # An item inside a written range that an unassigned function loads is a reference
     # from outside every unit.  It counts as a crossing on the edge facing that function:
@@ -671,15 +779,26 @@ def main():
             b = final.get((v, sec)) if status(v) != 'weak' else None
             out.write(f'{sec}\t{u}\t{v}\t{"0x%08X" % a[1] if a else "-"}\t{"0x%08X" % b[0] if b else "-"}\t'
                       f'{cls if a and b else cls + "; a side left unsplit"}\t{conflicts}\n')
+    def anchor_kind(g, i):
+        if i in named:
+            return 'name'
+        shared_feats = ps2_feats[i] & gc_feats[g]
+        kinds = [k for k, tag in (('strings', 'S:'), ('floats', 'F:'), ('calls', 'C:'))
+                 if any(x.startswith(tag) for x in shared_feats)]
+        return '+'.join(kinds)
+
     if args.units:
         with open(args.units, 'w') as out:
-            out.write('unit\ttext_start\ttext_end\tgc_functions\tps2_functions\tanchors\tfirst_anchor\tstatus\n')
+            out.write('unit\ttext_start\ttext_end\tgc_functions\tps2_functions\tanchors\tname_anchors\tfirst_anchor\tstatus\n')
             for u in order:
                 fa = first_anchor.get(u)
-                fa = f'0x{funcs[fa[0]][0]:08X}={ps2.funcs[fa[1]][2]}' if fa else '-'
+                fa = f'0x{funcs[fa[0]][0]:08X}={ps2.funcs[fa[1]][2]} ({anchor_kind(*fa)})' if fa else '-'
                 out.write(f'{u}\t0x{funcs[tstart[u]][0]:08X}\t0x{funcs[tend[u]][0] + funcs[tend[u]][1]:08X}\t'
-                          f'{tend[u] - tstart[u] + 1}\t{ps2_count[u]}\t{anchored[u]}\t{fa}\t{status(u)}\n')
-    print(f'relocations {len(relocs)} ({skipped} relocation sections skipped), anchors {len(seeds)}, '
+                          f'{tend[u] - tstart[u] + 1}\t{ps2_count[u]}\t{anchored[u]}\t{name_anchored[u]}\t{fa}\t{status(u)}\n')
+    for nm in dropped_named:
+        print(f'check: name pin {nm} is out of link order and was not used', file=sys.stderr)
+    print(f'relocations {len(relocs)} ({skipped} relocation sections skipped), anchors {fingerprint} by literals and calls + '
+          f'{len(named)} by name, '
           f'aligned {len(pairs)}, units {len(order)} ({sum(status(u) != "weak" for u in order)} emitted), '
           f'data edges {len(dclass)}, out-of-order unit-local items {sum(stray.values())}; .sdata2 locality violations {len(locality)}, '
           f'repeated floats {len(duplicates)} (advice)', file=sys.stderr)
