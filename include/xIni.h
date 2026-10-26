@@ -1,0 +1,29 @@
+#ifndef XINI_H
+#define XINI_H
+
+#include "types.h"
+
+struct xIniValue
+{
+    char* tok;
+    char* val;
+};
+
+struct xIniSection;
+
+struct xIniFile
+{
+    S32 NumValues;
+    S32 NumSections;
+    xIniValue* Values;
+    xIniSection* Sections;
+    void* mem;
+    char name[256];
+    char pathname[256];
+};
+
+char* xIniGetString(xIniFile* ini, char* tok, char* def);
+F32 xIniGetFloat(xIniFile* ini, char* tok, F32 def);
+S32 xIniGetInt(xIniFile* ini, char* tok, S32 def);
+
+#endif
