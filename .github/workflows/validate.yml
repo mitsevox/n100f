@@ -18,6 +18,8 @@ jobs:
     name: Build GIHE78
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    outputs:
+      measured-at: ${{ steps.measure.outputs.measured-at }}
     permissions:
       contents: read
       packages: read
@@ -40,13 +42,72 @@ jobs:
       - name: Configure
         run: python3 configure.py --dtk /usr/local/bin/dtk --binutils /binutils --compilers /compilers
       - name: Build, verify complete executable and measure progress
-        run: ninja progress build/GIHE78/report.json
+        id: measure
+        run: |
+          ninja progress build/GIHE78/report.json
+          echo "measured-at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
       - name: Upload progress report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: GIHE78_report
           path: build/GIHE78/report.json
           if-no-files-found: error
+
+  # The shared site's report-v1 package (docs/public_report.md). The site imports it from
+  # successful main runs only, authenticating this job, its steps and this file's Git blob against
+  # its copy of config/GIHE78/producer.json: renaming the job or a step, or any change to this
+  # file, is a policy change that needs the new blob approved there.
+  site-report:
+    name: Site report
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read # the previous main run's public-report (the timeline)
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Download verified progress report
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: GIHE78_report
+          path: build/GIHE78
+      - name: Export public report inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MEASURED_AT: ${{ needs.build.outputs.measured-at }}
+        run: |
+          python3 tools/public_report.py inputs --report build/GIHE78/report.json \
+            --measured-at "$MEASURED_AT" --output build/public-input
+          python3 tools/public_report.py metadata --version GIHE78 \
+            --measured-at "$MEASURED_AT" --output build/public-metadata.json
+      - name: Check out pinned site packager
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: mitsevox/mitsevox.github.io
+          ref: 8e52d0078e041718437f101af9a47f4734c38355
+          path: build/site-tools
+          persist-credentials: false
+      - name: Set up site packager runtime
+        uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: '0.12.9'
+      - name: Package and validate public report
+        run: |
+          uv run --locked --project build/site-tools python build/site-tools/tools/package_report.py \
+            --input build/public-input --metadata build/public-metadata.json \
+            --policy config/GIHE78/producer.json --output build/public-report
+      - name: Upload public report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: public-report
+          path: build/public-report/*.json
+          if-no-files-found: error
+          retention-days: 90
+          # The site requires this exact name, so a re-run replaces the earlier attempt's package.
+          overwrite: true
 
   tests:
     name: Tool tests
