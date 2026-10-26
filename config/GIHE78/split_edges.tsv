@@ -22,7 +22,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	isavegame.cpp	iScrFX.cpp	0x800146C0	0x80014904	open: 2 unassigned functions (2 joined by references); iScrFX.cpp left unsplit	0
 .text	iScrFX.cpp	iShadow.cpp	0x80014974	0x80014A3C	open: 3 unassigned functions; iScrFX.cpp left unsplit	0
 .text	iShadow.cpp	iSnd.cpp	0x80015168	0x80015168	alignment only (10 cuts tie on data); iSnd.cpp left unsplit	0
-.text	iSnd.cpp	iSystem.cpp	0x80015658	0x80015F60	open: 16 unassigned functions; iSnd.cpp left unsplit; iSystem.cpp left unsplit	0
+.text	iSnd.cpp	iSystem.cpp	0x80015BFC	0x80015F60	open: 11 unassigned functions (5 joined by references); iSnd.cpp left unsplit; iSystem.cpp left unsplit	0
 .text	iSystem.cpp	iTime.cpp	0x80016044	0x80016044	single cut by data references; iSystem.cpp left unsplit; iTime.cpp left unsplit	0
 .text	iTime.cpp	ms4sound.cpp	0x800165E0	0x800165E0	alignment only (9 cuts tie on data); iTime.cpp left unsplit; ms4sound.cpp left unsplit	0
 .text	ms4sound.cpp	xAnim.cpp	0x80016924	0x80016A30	open: 7 unassigned functions; ms4sound.cpp left unsplit	0
@@ -32,8 +32,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xBound.cpp	xCamera.cpp	0x8001D9A0	0x8001D9A0	alignment only (7 cuts tie on data)	0
 .text	xCamera.cpp	xClimate.cpp	0x8002086C	0x8002086C	alignment only (4 cuts tie on data)	0
 .text	xClimate.cpp	xCollide.cpp	0x80020F08	0x80020F08	single cut by data references	1
-.text	xCollide.cpp	xCollideFast.cpp	0x80021620	0x80021620	alignment only (4 cuts tie on data); xCollideFast.cpp left unsplit	0
-.text	xCollideFast.cpp	xCutscene.cpp	0x80021800	0x80021C60	open: 9 unassigned functions; xCollideFast.cpp left unsplit; xCutscene.cpp left unsplit	0
+.text	xCollide.cpp	xCollideFast.cpp	0x80021620	0x80021620	alignment only (4 cuts tie on data)	0
+.text	xCollideFast.cpp	xCutscene.cpp	0x80021AF0	0x80021C60	open: 8 unassigned functions (1 joined by references); xCutscene.cpp left unsplit	0
 .text	xCutscene.cpp	xDebug.cpp	0x80021CB0	0x80021E30	open: 4 unassigned functions; xCutscene.cpp left unsplit; xDebug.cpp left unsplit	0
 .text	xDebug.cpp	xDraw.cpp	0x80021E50	0x80021E50	single cut by data references; xDebug.cpp left unsplit; xDraw.cpp left unsplit	0
 .text	xDraw.cpp	xEnt.cpp	0x80021E70	0x80021E70	alignment only (3 cuts tie on data); xDraw.cpp left unsplit	0
@@ -75,7 +75,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xTRC.cpp	xutil.cpp	0x80044780	0x80044780	alignment only (4 cuts tie on data); xutil.cpp left unsplit	0
 .text	xutil.cpp	zActionLine.cpp	0x8004492C	0x80044C44	open: 3 unassigned functions; xutil.cpp left unsplit	1
 .text	zActionLine.cpp	zAnimList.cpp	0x80044E20	0x80044E20	alignment only (4 cuts tie on data)	0
-.text	zAnimList.cpp	zAssetTypes.cpp	0x8004516C	0x800451F8	open: 4 unassigned functions (2 joined by references)	0
+.text	zAnimList.cpp	zAssetTypes.cpp	0x80045174	0x800451F8	open: 3 unassigned functions (3 joined by references)	0
 .text	zAssetTypes.cpp	zCamera.cpp	0x80045B50	0x80045B50	alignment only (10 cuts tie on data)	0
 .text	zCamera.cpp	zConditional.cpp	0x80045C34	0x80045C34	alignment only (6 cuts tie on data)	0
 .text	zConditional.cpp	zCounter.cpp	0x80045EA8	0x80045EA8	alignment only (7 cuts tie on data)	0
@@ -92,9 +92,9 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zEntPlayer.cpp	zEntProjectile.cpp	0x800691A8	0x800691A8	static initialiser ends unit	0
 .text	zEntProjectile.cpp	zEntShaggy.cpp	0x8006D624	0x8006D624	single cut by data references	0
 .text	zEntShaggy.cpp	zEntSimpleObj.cpp	0x8007A8D0	0x8007A8D0	static initialiser ends unit; zEntSimpleObj.cpp left unsplit	0
-.text	zEntSimpleObj.cpp	zEntTrigger.cpp	0x8007AB1C	0x8007B018	open: 7 unassigned functions; zEntSimpleObj.cpp left unsplit; zEntTrigger.cpp left unsplit	0
+.text	zEntSimpleObj.cpp	zEntTrigger.cpp	0x8007AB1C	0x8007ACF8	open: 5 unassigned functions (2 joined by references); zEntSimpleObj.cpp left unsplit; zEntTrigger.cpp left unsplit	0
 .text	zEntTrigger.cpp	zEntVillain.cpp	0x8007B08C	0x8007B08C	single cut by data references; zEntTrigger.cpp left unsplit	0
-.text	zEntVillain.cpp	zEnv.cpp	0x800A9F68	0x800AA118	open: 5 unassigned functions (8 joined by references); zEnv.cpp left unsplit	0
+.text	zEntVillain.cpp	zEnv.cpp	0x800A9F78	0x800AA118	open: 4 unassigned functions (9 joined by references); zEnv.cpp left unsplit	0
 .text	zEnv.cpp	zFeet.cpp	0x800AA338	0x800AA338	alignment only (4 cuts tie on data); zEnv.cpp left unsplit	0
 .text	zFeet.cpp	zFMV.cpp	0x800ABD84	0x800ABD84	alignment only (2 cuts tie on data)	0
 .text	zFMV.cpp	zFog.cpp	0x800ABE88	0x800ABE88	alignment only (5 cuts tie on data)	0
@@ -283,7 +283,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	iMorph.cpp	isavegame.cpp	0x8025E920	0x8025E920	single aligned candidate	0
 .sbss	isavegame.cpp	iShadow.cpp	0x8025E950	0x8025E958	open: 1 items loaded by unassigned functions	0
 .sbss	iShadow.cpp	ms4sound.cpp	0x8025E968	-	single aligned candidate; a side left unsplit	0
-.sbss	ms4sound.cpp	xbinio.cpp	-	-	open: 8 items loaded by unassigned functions; a side left unsplit	0
+.sbss	ms4sound.cpp	xbinio.cpp	-	-	open: 6 items loaded by unassigned functions; a side left unsplit	0
 .sbss	xbinio.cpp	xCamera.cpp	-	0x8025E9B8	single aligned candidate; a side left unsplit	0
 .sbss	xCamera.cpp	xClimate.cpp	0x8025E9F0	0x8025E9F0	single aligned candidate	0
 .sbss	xClimate.cpp	xEnt.cpp	0x8025E9F8	0x8025EA00	open: 2 items between aligned candidates	0
@@ -388,14 +388,16 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	iMorph.cpp	iParMgr.cpp	0x8025FA48	0x8025FA68	open: 6 items loaded by unassigned functions	0
 .sdata2	iParMgr.cpp	isavegame.cpp	0x8025FA98	0x8025FA98	single aligned candidate	0
 .sdata2	isavegame.cpp	iShadow.cpp	0x8025FAC0	0x8025FAE8	open: 9 items loaded by unassigned functions	0
-.sdata2	iShadow.cpp	iSystem.cpp	0x8025FB30	-	open: 1 items loaded by unassigned functions; a side left unsplit	0
+.sdata2	iShadow.cpp	iSnd.cpp	0x8025FB30	-	open: 10 items between aligned candidates; a side left unsplit	0
+.sdata2	iSnd.cpp	iSystem.cpp	-	-	open: 0 items between aligned candidates; a side left unsplit	0
 .sdata2	iSystem.cpp	xAnim.cpp	-	0x8025FB90	open: 1 items loaded by unassigned functions; a side left unsplit	0
 .sdata2	xAnim.cpp	xbinio.cpp	0x8025FBE0	-	single aligned candidate; a side left unsplit	0
 .sdata2	xbinio.cpp	xBound.cpp	-	0x8025FBE8	single aligned candidate; a side left unsplit	0
 .sdata2	xBound.cpp	xCamera.cpp	0x8025FC10	0x8025FC10	single aligned candidate	0
 .sdata2	xCamera.cpp	xClimate.cpp	0x8025FC70	0x8025FC70	single aligned candidate	0
 .sdata2	xClimate.cpp	xCollide.cpp	0x8025FCB8	0x8025FCB8	single aligned candidate	0
-.sdata2	xCollide.cpp	xEnt.cpp	0x8025FCD8	0x8025FD08	open: 4 items loaded by unassigned functions	0
+.sdata2	xCollide.cpp	xCollideFast.cpp	0x8025FCD8	0x8025FCD8	single aligned candidate	0
+.sdata2	xCollideFast.cpp	xEnt.cpp	0x8025FCF0	0x8025FD08	open: 6 items between aligned candidates	0
 .sdata2	xEnt.cpp	xEntDrive.cpp	0x8025FE50	0x8025FE50	single aligned candidate	0
 .sdata2	xEntDrive.cpp	xEntMotion.cpp	0x8025FE58	0x8025FE58	single aligned candidate	0
 .sdata2	xEntMotion.cpp	xFFX.cpp	0x8025FEE8	0x8025FEE8	single aligned candidate	0
@@ -438,7 +440,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	zEntPlayer.cpp	zEntProjectile.cpp	0x802609D8	0x802609D8	single aligned candidate	0
 .sdata2	zEntProjectile.cpp	zEntShaggy.cpp	0x80260A38	0x80260A38	single aligned candidate	0
 .sdata2	zEntShaggy.cpp	zEntSimpleObj.cpp	0x80260C48	-	single aligned candidate; a side left unsplit	0
-.sdata2	zEntSimpleObj.cpp	zEntVillain.cpp	-	0x80260E70	open: 1 items loaded by unassigned functions; a side left unsplit	0
+.sdata2	zEntSimpleObj.cpp	zEntTrigger.cpp	-	-	single aligned candidate; a side left unsplit	0
+.sdata2	zEntTrigger.cpp	zEntVillain.cpp	-	0x80260E70	open: 68 items between aligned candidates; a side left unsplit	0
 .sdata2	zEntVillain.cpp	zFeet.cpp	0x802610E8	0x802610E8	single aligned candidate	0
 .sdata2	zFeet.cpp	zFMV.cpp	0x80261200	0x80261200	single aligned candidate	0
 .sdata2	zFMV.cpp	zFog.cpp	0x80261220	0x80261220	single aligned candidate	0

@@ -120,6 +120,10 @@ flat/xCollide.cpp:
 	.text       start:0x80020F08 end:0x80021620
 	.sdata2     start:0x8025FCB8 end:0x8025FCD8
 
+flat/xCollideFast.cpp:
+	.text       start:0x80021620 end:0x80021AF0
+	.sdata2     start:0x8025FCD8 end:0x8025FCF0
+
 flat/xEnt.cpp:
 	.text       start:0x80021E70 end:0x800258F4
 	.rodata     start:0x80192E40 end:0x80193118
@@ -277,7 +281,7 @@ flat/zActionLine.cpp:
 	.sdata2     start:0x802603B8 end:0x802603C0
 
 flat/zAnimList.cpp:
-	.text       start:0x80044E20 end:0x8004516C
+	.text       start:0x80044E20 end:0x80045174
 	.data       start:0x801B6BD8 end:0x801B6C28
 	.sbss       start:0x8025EC08 end:0x8025EC18
 	.sdata2     start:0x80260460 end:0x80260478
@@ -381,7 +385,7 @@ flat/zEntShaggy.cpp:
 	.sdata2     start:0x80260A38 end:0x80260C48
 
 flat/zEntVillain.cpp:
-	.text       start:0x8007B08C end:0x800A9F68
+	.text       start:0x8007B08C end:0x800A9F78
 	.rodata     start:0x8019BCB0 end:0x801A4140
 	.data       start:0x801B8E88 end:0x801C54A0
 	.bss        start:0x8022A528 end:0x8022C678
