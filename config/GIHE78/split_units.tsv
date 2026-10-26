@@ -72,7 +72,7 @@ xstransvc.cpp	0x8003F904	0x80040978	14	17	2	1	0x800402D8=xSTLoadStep (name)	anch
 xString.cpp	0x80040978	0x80040EE4	6	6	1	1	0x80040B38=xStrupr (name)	anchored
 xSurface.cpp	0x80040EE4	0x80044714	36	7	0	0	-	weak
 xTRC.cpp	0x80044714	0x80044780	1	2	1	0	0x80044478=xTRCPad (floats)	anchored
-xutil.cpp	0x80044780	0x80044C44	7	11	6	6	0x80044780=xUtil_yesno (name)	anchored
+xutil.cpp	0x80044780	0x80044C44	7	11	4	4	0x80044780=xUtil_yesno (name)	anchored
 zActionLine.cpp	0x80044C44	0x80044E20	3	4	2	1	0x80044D50=zActionLineUpdate (name)	anchored
 zAnimList.cpp	0x80044E20	0x80045174	5	5	1	0	0x80044EB8=zAnimListInit (strings+floats)	anchored
 zAssetTypes.cpp	0x800451F8	0x80045B50	13	15	2	1	0x800451F8=ATBL_Read (strings+floats+calls)	anchored
