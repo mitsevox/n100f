@@ -15,7 +15,7 @@ iLight.cpp	0x8000B9C4	0x8000BD14	9	9	2	2	0x8000B9C4=iLightEnv (name)	anchored
 iMath.cpp	0x8000BD14	0x8000BDC0	5	6	1	0	0x8000BD14=iurand (floats)	anchored
 iMath3.cpp	0x8000BDC0	0x8000DA6C	15	15	2	2	0x8000C1FC=iBoxIsectRay (name)	anchored
 iMemMgr.cpp	0x8000DA6C	0x8000DBA4	2	2	1	1	0x8000DA6C=iMemExit (name)	anchored
-iModel.cpp	0x8000DBA4	0x8000E994	13	17	4	3	0x8000DE10=iModelTagInternal (floats)	anchored
+iModel.cpp	0x8000DBA4	0x8000EBC0	17	17	4	3	0x8000DE10=iModelTagInternal (floats)	anchored
 iMorph.cpp	0x8000EBC0	0x8000F5AC	3	6	2	0	0x8000EBFC=iMorphOptimize (strings)	anchored
 iPad.cpp	0x8000F5AC	0x8000F600	3	9	2	2	0x8000F5B0=iPadStartRumble (name)	weak
 iParMgr.cpp	0x8000FB40	0x80011B2C	9	13	1	0	0x80010E80=iRenderPushFlat (floats)	anchored
@@ -33,10 +33,9 @@ xBound.cpp	0x8001D1F8	0x8001D9A0	7	7	0	0	-	count-match
 xCamera.cpp	0x8001D9A0	0x8002086C	29	32	4	0	0x8001DB00=xCameraNext (floats+calls)	anchored
 xClimate.cpp	0x8002086C	0x80020F08	7	7	5	3	0x800208B8=UpdateRain (strings+floats)	anchored
 xCollide.cpp	0x80020F08	0x80021620	5	5	0	0	-	count-match
-xCollideFast.cpp	0x80021620	0x80021AF0	3	4	1	0	0x80021800=xRayHitsBoundFast (floats+calls)	anchored
-xCutscene.cpp	0x80021C60	0x80021CB0	1	13	0	0	-	weak
-xDebug.cpp	0x80021E30	0x80021E50	1	8	0	0	-	weak
-xDraw.cpp	0x80021E50	0x80021E70	1	5	0	0	-	weak
+xCollideFast.cpp	0x80021620	0x80021B10	4	4	1	0	0x80021800=xRayHitsBoundFast (floats+calls)	anchored
+xDebug.cpp	0x80021B10	0x80021B24	4	8	0	0	-	weak
+xDraw.cpp	0x80021E30	0x80021E70	2	5	0	0	-	weak
 xEnt.cpp	0x80021E70	0x800258F4	41	47	7	0	0x80021EB8=xEntDebugIPad (floats+calls)	anchored
 xEntDrive.cpp	0x800258F4	0x80026158	5	4	0	0	-	count-match
 xEntMotion.cpp	0x80026158	0x80028D18	14	21	7	3	0x80026158=xEntMotionDebugWrite (strings+floats)	anchored
@@ -49,7 +48,7 @@ xhipio.cpp	0x8002B4D8	0x8002C100	15	16	11	11	0x8002B4D8=HIPLReadString (name)	an
 xIni.cpp	0x8002C100	0x8002C774	5	5	3	3	0x8002C100=xIniGetString (name)	anchored
 xLinkList.cpp	0x8002C774	0x8002C86C	5	5	0	0	-	count-match
 xMath.cpp	0x8002C86C	0x8002CF48	6	6	2	0	0x8002C900=xMathSolveCubic (floats)	anchored
-xMath3.cpp	0x8002CF48	0x8002F8E0	30	33	9	4	0x8002CFBC=xQuatSlerp (floats)	anchored
+xMath3.cpp	0x8002CF48	0x8002F920	32	33	9	4	0x8002CFBC=xQuatSlerp (floats)	anchored
 xMemMgr.cpp	0x8002F920	0x8002FC58	7	16	2	2	0x8002F920=xMemPoolFree (name)	weak
 xModel.cpp	0x800301A4	0x80030F28	12	19	2	0	0x800301A4=xModelRender2D (floats)	anchored
 xMorph.cpp	0x80030F28	0x80031310	3	3	3	3	0x80030F28=xMorphSeqDuration (name)	anchored
@@ -57,8 +56,8 @@ xMovePoint.cpp	0x80031310	0x800317D4	9	9	3	2	0x80031478=xMovePointSplineDestroy 
 xordarray.cpp	0x800317D4	0x80031AC8	6	6	4	3	0x8003189C=XOrdLookup (name)	anchored
 xPad.cpp	0x80031AC8	0x800323D4	7	8	1	0	0x80031AC8=xPadAddRumble (calls)	anchored
 xPar.cpp	0x800323D4	0x80032540	4	4	2	2	0x80032460=xParFree (name)	anchored
-xParGroup.cpp	0x80032540	0x80032CD8	12	13	7	7	0x80032540=xParGroupKillPar (name)	anchored
-xParMgr.cpp	0x80032DAC	0x80032DEC	1	3	1	1	0x80032DAC=xParMgrInit (name)	weak
+xParGroup.cpp	0x80032540	0x80032D28	13	13	7	7	0x80032540=xParGroupKillPar (name)	anchored
+xParMgr.cpp	0x80032D28	0x80032DEC	3	3	1	1	0x80032DAC=xParMgrInit (name)	anchored
 xPartition.cpp	0x80032DEC	0x8003361C	10	11	1	1	0x800335F8=xPartitionGetTrueIdx (name)	anchored
 xpkrsvc.cpp	0x8003361C	0x80035854	31	40	6	5	0x80033894=LOD_r_LHDR (calls)	anchored
 xQuickCull.cpp	0x80035854	0x80036908	7	7	1	0	0x80036810=xQuickCullInit (floats)	anchored
@@ -93,7 +92,7 @@ zEntPlayer.cpp	0x8004FD58	0x800691A8	189	197	34	0	0x8004FF68=zEntPlayer_FXSpring
 zEntProjectile.cpp	0x800691A8	0x8006D624	46	56	5	0	0x800692F4=ZPRJ_solv_velvec (floats)	anchored
 zEntShaggy.cpp	0x8006D624	0x8007A8D0	133	136	33	0	0x8006D624=zEntShaggy_SceneReset (strings+calls)	anchored
 zEntSimpleObj.cpp	0x8007A8D0	0x8007ACB8	5	7	0	0	-	weak
-zEntTrigger.cpp	0x8007ACF8	0x8007B08C	3	5	1	0	0x8007AD2C=zEntTriggerUpdate (calls)	anchored
+zEntTrigger.cpp	0x8007ACB8	0x8007B08C	5	5	1	0	0x8007AD2C=zEntTriggerUpdate (calls)	anchored
 zEntVillain.cpp	0x8007B08C	0x800A9F78	235	277	50	0	0x8007B5A0=VBON_choose_bonusItem (floats+calls)	anchored
 zEnv.cpp	0x800A9F78	0x800AA338	7	8	3	1	0x800A9F78=zEnvEventCB (calls)	anchored
 zFeet.cpp	0x800AA338	0x800ABD84	11	11	4	0	0x800AA3B4=DrawSkidMarkStrip (floats)	anchored
@@ -122,8 +121,8 @@ zParSys.cpp	0x800C6708	0x800C7000	8	8	3	0	0x800C6BD0=zParSysEventCB (calls)	anch
 zPendulum.cpp	0x800C7000	0x800C751C	9	9	0	0	-	count-match
 zPitchChange.cpp	0x800C751C	0x800C7680	1	1	1	0	0x800C751C=zPitchChange (floats)	anchored
 zPlatform.cpp	0x800C7680	0x800C8AE4	14	15	5	1	0x800C7680=zPlatformEventCB (calls)	anchored
-zPortal.cpp	0x800C8AE4	0x800C8B44	1	4	0	0	-	weak
-zRenderState.cpp	0x800C8B44	0x800C90D4	8	5	0	0	-	weak
+zPortal.cpp	0x800C8AE4	0x800C8BDC	4	4	0	0	-	count-match
+zRenderState.cpp	0x800C8BDC	0x800C90D4	5	5	0	0	-	count-match
 zRumble.cpp	0x800C90D4	0x800C9368	2	2	2	0	0x800C90D4=zRumbleStartDistance (floats)	anchored
 zSaveLoad.cpp	0x800C9368	0x800CD170	35	34	10	2	0x800C9738=zSaveLoad_slotIsEmpty (strings)	anchored
 zScene.cpp	0x800CD170	0x800D1B20	51	51	10	1	0x800CD330=zSceneCalcProgress (floats)	anchored
