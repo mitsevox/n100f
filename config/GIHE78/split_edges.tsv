@@ -78,8 +78,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zAnimList.cpp	zAssetTypes.cpp	0x80045174	0x800451F8	open: 3 unassigned functions (1 joined by references)	0
 .text	zAssetTypes.cpp	zCamera.cpp	0x80045B50	0x80045B50	alignment only (10 cuts tie on data, 7 on calls)	0
 .text	zCamera.cpp	zConditional.cpp	0x80045C34	0x80045C34	single cut by call references (6 cuts tie on data)	0
-.text	zConditional.cpp	zCounter.cpp	0x80045EA8	0x80045EA8	single cut by call references (7 cuts tie on data)	0
-.text	zCounter.cpp	zCutsceneMgr.cpp	0x800460E0	0x800460E0	alignment only (5 cuts tie on data, 2 on calls)	0
+.text	zConditional.cpp	zCounter.cpp	0x80045EA8	0x80045EA8	single cut by call references (5 cuts tie on data)	0
+.text	zCounter.cpp	zCutsceneMgr.cpp	0x800460E0	0x800460E0	alignment only (3 cuts tie on data, 2 on calls)	0
 .text	zCutsceneMgr.cpp	zDispatcher.cpp	0x8004651C	0x8004651C	single cut by call references (2 cuts tie on data)	0
 .text	zDispatcher.cpp	zEGenerator.cpp	0x80047670	0x80047670	alignment only (8 cuts tie on data, 3 on calls)	0
 .text	zEGenerator.cpp	zEnt.cpp	0x80048094	0x80048094	single cut by data references	0
@@ -97,8 +97,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zEntVillain.cpp	zEnv.cpp	0x800A9F78	0x800A9F78	single cut by call references (10 cuts tie on data)	0
 .text	zEnv.cpp	zFeet.cpp	0x800AA338	0x800AA338	alignment only (2 cuts tie on data)	0
 .text	zFeet.cpp	zFMV.cpp	0x800ABD84	0x800ABD84	alignment only (2 cuts tie on data)	0
-.text	zFMV.cpp	zFog.cpp	0x800ABE88	0x800ABE88	alignment only (5 cuts tie on data, 3 on calls)	0
-.text	zFog.cpp	zFX.cpp	0x800AC010	0x800AC010	alignment only (5 cuts tie on data, 2 on calls)	0
+.text	zFMV.cpp	zFog.cpp	0x800ABE88	0x800ABE88	alignment only (3 cuts tie on data)	0
+.text	zFog.cpp	zFX.cpp	0x800AC010	0x800AC010	alignment only (2 cuts tie on data)	0
 .text	zFX.cpp	zGame.cpp	0x800AC0BC	0x800AC0BC	single cut by data references	1
 .text	zGame.cpp	zGameExtras.cpp	0x800ADC40	0x800ADC40	alignment only (4 cuts tie on data)	2
 .text	zGameExtras.cpp	zGameState.cpp	0x800AF8D8	0x800AF8D8	alignment only (3 cuts tie on data)	0

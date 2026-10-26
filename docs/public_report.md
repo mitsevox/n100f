@@ -49,12 +49,15 @@ The file counts are provisional. 118 game units are named from recovered splits 
 PS2 v1.01 DWARF and the boundaries are inferred, so no unit boundary has been checked against
 Heavy Iron's objects. The basis string says so. Naming those units did not change what
 `files.named` means, so the methodology and generation stay the same.
-Today's 382 named functions are the names dtk's analysis assigned in `symbols.txt` (MW runtime
+Today's 420 named functions are the names dtk's analysis assigned in `symbols.txt` (MW runtime
 and some GX SDK functions, plus `__fill_mem`, which dtk names once `memset` is named), `__start`,
 the seven names the xMorph unit added (its three functions and their four callees), 334
-SLUS-20349 DWARF names applied from related-build evidence (168 exact bfbb bodies and 166
-positions in units whose function count and pins agree with the DWARF), and 20 callees of the
-partial units (see `config/GIHE78/evidence.tsv`). A named function is not a matched one.
+SLUS-20349 DWARF names applied from related-build evidence (168 by an exact bfbb body match and 166 by
+positions in units whose function count and pins agree with the DWARF), and 58 names added with
+the partial units: their callees, the zCounter and zFog functions (by bfbb body and DWARF
+position), and the xSerial Read/Write and xSGReadData/xSGWriteData overload groups (by matched
+caller, body shape and DWARF order); see `config/GIHE78/evidence.tsv`. A named function is not a
+matched one.
 
 The methodology is `objdiff-report-v1`, generation 1. Change either in `tools/public_report.py`
 when what a number means changes, so old rows keep their meaning.
