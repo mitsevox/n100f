@@ -49,8 +49,9 @@ The file counts are provisional. 99 game units are named from recovered splits (
 PS2 v1.01 DWARF and the boundaries are inferred, so no unit boundary has been checked against
 Heavy Iron's objects. The basis string says so. Naming those units did not change what
 `files.named` means, so the methodology and generation stay the same.
-Today's 20 named functions are the names dtk's analysis assigned in `symbols.txt` (MW runtime
-and some GX SDK functions) plus `__start` (see `config/GIHE78/evidence.tsv`).
+Today's 27 named functions are the names dtk's analysis assigned in `symbols.txt` (MW runtime
+and some GX SDK functions), `__start`, and the seven names the xMorph unit added: its three
+functions and their four callees (see `config/GIHE78/evidence.tsv`).
 
 The methodology is `objdiff-report-v1`, generation 1. Change either in `tools/public_report.py`
 when what a number means changes, so old rows keep their meaning.

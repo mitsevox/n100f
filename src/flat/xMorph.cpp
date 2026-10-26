@@ -44,7 +44,7 @@ xMorphSeqFile* xMorphSeqSetup(void* data, xMorphFindAssetCallback FindAssetCB)
         }
         if (namelist)
         {
-            namelist = strlen(namelist) + 1 + namelist;
+            namelist += strlen(namelist) + 1;
         }
     }
 
@@ -65,7 +65,7 @@ xMorphSeqFile* xMorphSeqSetup(void* data, xMorphFindAssetCallback FindAssetCB)
         framelist[i].Model = model;
         for (j = 0; j < 4; j++)
         {
-            if ((U32)framelist[i].Targets[j] + 0x10000 == 0xFFFF)
+            if (framelist[i].Targets[j] == (S16*)-1)
             {
                 framelist[i].Targets[j] = NULL;
             }
@@ -131,11 +131,11 @@ void xMorphRender(xMorphSeqFile* seq, RwMatrix* mat, F32 time)
         else
         {
             weight[0] =
-                (S32)(lerp * (frame->WeightEnd[0] - frame->WeightStart[0])) + frame->WeightStart[0],
+                (S32)(lerp * (frame->WeightEnd[0] - frame->WeightStart[0])) + frame->WeightStart[0];
             weight[1] =
-                (S32)(lerp * (frame->WeightEnd[1] - frame->WeightStart[1])) + frame->WeightStart[1],
+                (S32)(lerp * (frame->WeightEnd[1] - frame->WeightStart[1])) + frame->WeightStart[1];
             weight[2] =
-                (S32)(lerp * (frame->WeightEnd[2] - frame->WeightStart[2])) + frame->WeightStart[2],
+                (S32)(lerp * (frame->WeightEnd[2] - frame->WeightStart[2])) + frame->WeightStart[2];
             weight[3] =
                 (S32)(lerp * (frame->WeightEnd[3] - frame->WeightStart[3])) + frame->WeightStart[3];
             wptr = weight;
