@@ -1,0 +1,41 @@
+# Local inputs and the private build environment are outside public Git.
+/orig/
+/private/
+/reference/
+/build/
+/scratch/
+
+# Original executables, debug databases, object files, and library archives.
+*.[dD][oO][lL]
+*.[rR][eE][lL]
+*.[eE][lL][fF]
+*.[mM][aA][pP]
+*.[oO]
+*.[aA]
+*.[bB][iI][nN]
+
+# Disc images.
+*.[iI][sS][oO]
+*.[gG][cC][mM]
+*.[rR][vV][zZ]
+*.[wW][iI][aA]
+*.[wW][bB][fF][sS]
+*.[nN][fF][sS]
+*.[gG][cC][zZ]
+*.[tT][gG][cC]
+
+# Heavy Iron game archives and other asset containers.
+*.[hH][iI][pP]
+*.[hH][oO][pP]
+*.[dD][aA][tT]
+*.[bB][nN][rR]
+
+# Local filesystem metadata and Python caches.
+.DS_Store
+__pycache__/
+.mypy_cache/
+.cache/
+
+# Local IDE state. Shared .vscode configuration remains eligible for review.
+.idea/
+.vs/
