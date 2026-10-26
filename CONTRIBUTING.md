@@ -26,14 +26,14 @@ Contribution branches, PRs, reviews, and required CI checks belong in this repos
 
 ### Owner delegation: merge gate
 
-The owner has delegated, on a standing basis, review clearance and merging to a single designated merge gate (an agent acting under the owner's account). Its clearance comments and merges carry the owner's authority. The merge gate:
+The owner has delegated, on a standing basis until the owner revokes it, review clearance and merging to a single designated merge gate (an agent acting under the owner's account). Its clearance comments and merges carry the owner's authority. Decisions the rules reserve to the owner's explicit approval stay outside the delegation: matching-integrity and compiler exceptions, workflow, approval-control or site-policy changes, dependency changes, and changes to this delegation. The gate escalates such PRs to the owner and does not clear them. The merge gate:
 
 - tracks open PRs, checks for merge conflicts and overlapping edits to shared files, and coordinates authors when PRs collide;
-- confirms that the blind accuracy and hostile reviews were done by reviewers independent of the author, and runs fresh independent reviews itself when they are missing;
+- confirms that the blind accuracy and hostile reviews were done by reviewers independent of the author, and when they are missing, commissions fresh reviewers independent of the author and of the gate's own clearance reasoning, whose records are posted separately;
 - checks for matching-integrity violations and published game binaries;
 - posts owner clearance and squash-merges only when required CI passes on the final revision, the PR is conflict-free, and both review records pass for that revision.
 
-The merge gate does not author contribution work, push to `main`, force-push, or enable auto-merge. When a gate fails, it reports on the PR rather than fixing the contribution. No other contributor or agent holds this delegation. The owner may merge, clear or withdraw clearance directly at any time.
+The merge gate does not author contribution work, push or force-push to `main`, enable auto-merge, or change approval controls. When a check or condition fails, the merge gate reports on the PR rather than fixing the contribution. No other contributor or agent holds this delegation. The owner may merge, clear or withdraw clearance directly at any time.
 
 ## Work coordination
 
