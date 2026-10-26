@@ -909,185 +909,185 @@ MSL_C.PPCEABI.bare.H/s_sin.c:
 MSL_C.PPCEABI.bare.H/s_tan.c:
 	.text       start:0x800F3754 end:0x800F37CC
 
-dolphin/OdemuExi2/DebuggerDriver.c:
+dolphin/OdemuExi2/DebuggerDriver.c: comment:8
 	.text       start:0x800F391C end:0x800F439C
 
-dolphin/ai/ai.c:
+dolphin/ai/ai.c: comment:8
 	.text       start:0x800F43E0 end:0x800F4C5C
 
-dolphin/ar/ar.c:
+dolphin/ar/ar.c: comment:8
 	.text       start:0x800F4CD0 end:0x800F58E4
 
-dolphin/ar/arq.c:
+dolphin/ar/arq.c: comment:8
 	.text       start:0x800F58E4 end:0x800F5C78
 
-dolphin/ax/AXAlloc.c:
+dolphin/ax/AXAlloc.c: comment:8
 	.text       start:0x800F5E38 end:0x800F630C
 
-dolphin/ax/AXCL.c:
+dolphin/ax/AXCL.c: comment:8
 	.text       start:0x800F6630 end:0x800F666C
 
-dolphin/ax/AXOut.c:
+dolphin/ax/AXOut.c: comment:8
 	.text       start:0x800F6C98 end:0x800F6CF0
 
-dolphin/ax/AXSPB.c:
+dolphin/ax/AXSPB.c: comment:8
 	.text       start:0x800F715C end:0x800F7624
 
-dolphin/ax/AXVPB.c:
+dolphin/ax/AXVPB.c: comment:8
 	.text       start:0x800F819C end:0x800F8734
 
-dolphin/ax/AXProf.c:
+dolphin/ax/AXProf.c: comment:8
 	.text       start:0x800F8734 end:0x800F877C
 
-dolphin/base/PPCArch.c:
+dolphin/base/PPCArch.c: comment:8
 	.text       start:0x800F87BC end:0x800F881C
 
-dolphin/db/db.c:
+dolphin/db/db.c: comment:8
 	.text       start:0x800F8824 end:0x800F8910
 
-dolphin/dsp/dsp.c:
+dolphin/dsp/dsp.c: comment:8
 	.text       start:0x800F8910 end:0x800F895C
 
-dolphin/dsp/dsp_task.c:
+dolphin/dsp/dsp_task.c: comment:8
 	.text       start:0x800F8C3C end:0x800F94C0
 
-dolphin/exi/EXIBios.c:
+dolphin/exi/EXIBios.c: comment:8
 	.text       start:0x800F94C0 end:0x800FAA10
 
-dolphin/exi/EXIUart.c:
+dolphin/exi/EXIUart.c: comment:8
 	.text       start:0x800FAD8C end:0x800FAFFC
 
-dolphin/gx/GXInit.c:
+dolphin/gx/GXInit.c: comment:8
 	.text       start:0x800FAFFC end:0x800FC0E8
 
-dolphin/gx/GXFifo.c:
+dolphin/gx/GXFifo.c: comment:8
 	.text       start:0x800FC0E8 end:0x800FCB24
 
-dolphin/gx/GXAttr.c:
+dolphin/gx/GXAttr.c: comment:8
 	.text       start:0x800FCB34 end:0x800FD94C
 
-dolphin/gx/GXMisc.c:
+dolphin/gx/GXMisc.c: comment:8
 	.text       start:0x800FD94C end:0x800FDF54
 
-dolphin/gx/GXGeometry.c:
+dolphin/gx/GXGeometry.c: comment:8
 	.text       start:0x800FE0BC end:0x800FE30C
 
-dolphin/gx/GXFrameBuf.c:
+dolphin/gx/GXFrameBuf.c: comment:8
 	.text       start:0x800FE30C end:0x800FEDA0
 
-dolphin/gx/GXLight.c:
+dolphin/gx/GXLight.c: comment:8
 	.text       start:0x800FEDA0 end:0x800FF69C
 
-dolphin/gx/GXTexture.c:
+dolphin/gx/GXTexture.c: comment:8
 	.text       start:0x800FF69C end:0x80100888
 
-dolphin/gx/GXBump.c:
+dolphin/gx/GXBump.c: comment:8
 	.text       start:0x80100888 end:0x80100EF4
 
-dolphin/gx/GXTev.c:
+dolphin/gx/GXTev.c: comment:8
 	.text       start:0x80100EF4 end:0x801018B8
 
-dolphin/gx/GXPixel.c:
+dolphin/gx/GXPixel.c: comment:8
 	.text       start:0x801018B8 end:0x80102000
 
-dolphin/gx/GXDisplayList.c:
+dolphin/gx/GXDisplayList.c: comment:8
 	.text       start:0x801021A0 end:0x80102210
 
-dolphin/gx/GXTransform.c:
+dolphin/gx/GXTransform.c: comment:8
 	.text       start:0x80102210 end:0x801028E0
 
-dolphin/gx/GXPerf.c:
+dolphin/gx/GXPerf.c: comment:8
 	.text       start:0x801028E0 end:0x80103188
 
-dolphin/mtx/mtx.c:
+dolphin/mtx/mtx.c: comment:8
 	.text       start:0x801031B4 end:0x80103280
 
-dolphin/mtx/mtx44.c:
+dolphin/mtx/mtx44.c: comment:8
 	.text       start:0x80103280 end:0x80103318
 
-dolphin/os/OS.c:
+dolphin/os/OS.c: comment:8
 	.text       start:0x80103320 end:0x80103C58
 
-dolphin/os/OSAlarm.c:
+dolphin/os/OSAlarm.c: comment:8
 	.text       start:0x80103C68 end:0x80104340
 
-dolphin/os/OSAlloc.c:
+dolphin/os/OSAlloc.c: comment:8
 	.text       start:0x8010438C end:0x8010469C
 
-dolphin/os/OSAudioSystem.c:
+dolphin/os/OSAudioSystem.c: comment:8
 	.text       start:0x801046BC end:0x80104950
 
-dolphin/os/OSCache.c:
+dolphin/os/OSCache.c: comment:8
 	.text       start:0x80104950 end:0x80104D9C
 
-dolphin/os/OSContext.c:
+dolphin/os/OSContext.c: comment:8
 	.text       start:0x80104D9C end:0x80105548
 
-dolphin/os/OSError.c:
+dolphin/os/OSError.c: comment:8
 	.text       start:0x80105548 end:0x80105890
 
-dolphin/os/OSInterrupt.c:
+dolphin/os/OSInterrupt.c: comment:8
 	.text       start:0x80105890 end:0x80106104
 
-dolphin/os/OSLink.c:
+dolphin/os/OSLink.c: comment:8
 	.text       start:0x80106150 end:0x80106168
 
-dolphin/os/OSMemory.c:
+dolphin/os/OSMemory.c: comment:8
 	.text       start:0x80106168 end:0x80106448
 
-dolphin/os/OSReboot.c:
+dolphin/os/OSReboot.c: comment:8
 	.text       start:0x801064B4 end:0x801066C4
 
-dolphin/os/OSReset.c:
+dolphin/os/OSReset.c: comment:8
 	.text       start:0x801066C4 end:0x80106AA8
 
-dolphin/os/OSResetSW.c:
+dolphin/os/OSResetSW.c: comment:8
 	.text       start:0x80106AA8 end:0x80106E34
 
-dolphin/os/OSRtc.c:
+dolphin/os/OSRtc.c: comment:8
 	.text       start:0x80106E34 end:0x8010774C
 
-dolphin/os/OSSync.c:
+dolphin/os/OSSync.c: comment:8
 	.text       start:0x8010774C end:0x801077D0
 
-dolphin/os/OSThread.c:
+dolphin/os/OSThread.c: comment:8
 	.text       start:0x801077D0 end:0x80108608
 
-dolphin/os/OSTime.c:
+dolphin/os/OSTime.c: comment:8
 	.text       start:0x80108608 end:0x80108A84
 
-dolphin/os/__ppc_eabi_init.c:
+dolphin/os/__ppc_eabi_init.c: comment:8
 	.text       start:0x80108A84 end:0x80108B18
 
-dolphin/si/SIBios.c:
+dolphin/si/SIBios.c: comment:8
 	.text       start:0x80108B18 end:0x8010A1F8
 
-dolphin/si/SISamplingRate.c:
+dolphin/si/SISamplingRate.c: comment:8
 	.text       start:0x8010A1F8 end:0x8010A300
 
-dolphin/vi/vi.c:
+dolphin/vi/vi.c: comment:8
 	.text       start:0x8010A300 end:0x8010BD44
 
-dolphin/pad/Padclamp.c:
+dolphin/pad/Padclamp.c: comment:8
 	.text       start:0x8010BD44 end:0x8010BF7C
 
-dolphin/pad/Pad.c:
+dolphin/pad/Pad.c: comment:8
 	.text       start:0x8010BF7C end:0x8010DA44
 
-dolphin/dvd/dvdlow.c:
+dolphin/dvd/dvdlow.c: comment:8
 	.text       start:0x8010DA44 end:0x8010E898
 
-dolphin/dvd/dvdfs.c:
+dolphin/dvd/dvdfs.c: comment:8
 	.text       start:0x8010E898 end:0x8010F20C
 
-dolphin/dvd/dvd.c:
+dolphin/dvd/dvd.c: comment:8
 	.text       start:0x8010F23C end:0x801118F0
 
-dolphin/dvd/dvdqueue.c:
+dolphin/dvd/dvdqueue.c: comment:8
 	.text       start:0x801118F0 end:0x80111AE8
 
-dolphin/dvd/dvderror.c:
+dolphin/dvd/dvderror.c: comment:8
 	.text       start:0x80111AE8 end:0x80111C80
 
-dolphin/dvd/fstload.c:
+dolphin/dvd/fstload.c: comment:8
 	.text       start:0x80111C80 end:0x80111EC0

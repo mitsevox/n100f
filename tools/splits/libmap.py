@@ -10,7 +10,8 @@ matched bytes, then manifest order) and placements may not overlap.
 
 Outputs:
   --splits    library unit entries for splits.txt (.text only; data ownership
-              is added when a unit's source is imported and its sections compile)
+              is added when a unit's source is imported and its sections compile),
+              with the profile's .comment version where it differs from the default
   --units     a TSV report of every chosen unit
   --evidence  unit, function, name and compiler rows for evidence.tsv
   --symbols-out  symbols.txt with the supported names applied
@@ -338,7 +339,9 @@ def main():
 
     with open(args.splits, 'w') as out:
         for u in units:
-            out.write(f"\n{u['path']}:\n\t.text       start:0x{u['start']:08X} end:0x{u['end']:08X}\n")
+            comment = args.manifest['profiles'][u['cand']['profile']].get('comment')
+            attrs = f' comment:{comment}' if comment is not None else ''
+            out.write(f"\n{u['path']}:{attrs}\n\t.text       start:0x{u['start']:08X} end:0x{u['end']:08X}\n")
     with open(args.units, 'w') as out:
         out.write('unit\ttext_start\ttext_end\tmatch\tfunctions\tsource_functions\tsource\tversions\n')
         for u in units:
