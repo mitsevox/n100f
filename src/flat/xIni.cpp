@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-static S32 xIniGetIndex(xIniFile* ini, char* tok)
+static inline S32 xIniGetIndex(xIniFile* ini, char* tok)
 {
     for (S32 i = 0; i < ini->NumValues; i++)
     {

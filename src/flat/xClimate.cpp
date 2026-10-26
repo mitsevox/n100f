@@ -5,15 +5,13 @@
 
 static _tagClimate* sClimate;
 
-static void xClimateVecFromAngle(F32 angleDegrees, xVec3* vec)
+static inline void xClimateVecFromAngle(F32 angleDegrees, xVec3* vec)
 {
     xMat3x3 Mat;
 
     memcpy(&Mat, &g_I3, sizeof(xMat3x3));
     xMat3x3Euler(&Mat, (3.1415927f * angleDegrees) / 180.0f, 0.0f, 0.0f);
-    vec->x = 0.0f;
-    vec->y = 0.0f;
-    vec->z = 1.0f;
+    xVec3Init(vec, 0.0f, 0.0f, 1.0f);
     xMat3x3LMulVec(vec, &Mat, vec);
 }
 
