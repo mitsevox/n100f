@@ -61,4 +61,50 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 - xMath3.cpp is a partial unit in `configure.py`. The tail-call rule gave it the wrappers `xMath3Exit` and `xMath3Init` (`0x8002F8E0`, `0x8002F900`), which count as unmatched, so the game total went from 267 to 269 functions with 77 still exact.
 - iModel.cpp runs to `0x8000EBC0` on call references, not on PS2 sizes alone: `0x8000E994` passes `0x8000EA5C` to `RpClumpForAllAtomics`, `0x8000EA5C` passes the GC-only static `0x8000EB64`, and `0x8000EB60` is the empty `iModelInit`, which xModel calls.
 - Header inline copies (`xMath3.h`, `xEnt.h`, `xModel.h`) are left to whichever unit holds them.
-- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), MetroTRK, the runtime, the Dolphin SDK or RenderWare.
+- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), Bink, the CARD library or RenderWare. MetroTRK, the runtime, MSL and the first part of the Dolphin SDK are mapped separately, under [Library units](#library-units).
+
+# Library units
+
+`splits.txt` also names 118 library units from `0x800DE530` to `0x80111EC0`, after the game units. They come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target.
+
+| Library | Units | Whole-object matches | Functions placed |
+| --- | --- | --- | --- |
+| `TRK_MINNOW_DOLPHIN` (MetroTRK v0.10) | 21 | 14 | 119 |
+| `Runtime.PPCEABI.H` | 3 | 3 | 16 |
+| `MSL_C.PPCEABI.bare.H` | 33 | 24 | 75 |
+| `dolphin/<library>` (SDK, OS built Apr 16 2002) | 61 | 22 | 515 |
+
+No source is imported yet; every unit stays in the original bytes until its source lands and passes review. `config/GIHE78/lib_units.tsv` lists each unit with its match kind, function counts, chosen source and the compiler versions that produced it.
+
+## Method
+
+1. **Candidates.** `config/GIHE78/libmap.json` lists each upstream with its URL, pinned commit and licence, the compiler profiles (`sdk`: GC/1.2.5n; `runtime` and `trk`: GC/1.3 and GC/1.3.2), and the source globs to try. The tool checks that every checkout is at its pinned commit.
+2. **Probe.** Each source file is compiled under its profile with every listed version. In each function, the fields a relocation fills are masked. A function places the object when its masked body occurs exactly once in `main.dol`, at a function start, at full size.
+3. **Placement.** The whole object `.text` is first compared in place. If it matches, the unit's extent and every function in it are exact. Otherwise the unit keeps the longest run of unique hits that is in order both in the object and in the target, with gaps no wider than twice the object distance plus `0x400`. For each object path, the best placement wins: a whole-object match first, then the most matched bytes, then manifest order. Placements may not overlap.
+4. **Extents.** A whole-object match fixes dtk's function boundaries: inner functions dtk invented are removed, an overlapping predecessor is cut short, functions dtk missed are added, and sizes are corrected. The tool prints a `note:` for each change.
+5. **Names.** A matched function takes its upstream name only when that name labels a function of the same size in a symbol list the manifest marks as map-backed. Those lists are Animal Crossing (GAFE01, from its `static.map`), The Wind Waker (GZLE01, from the debug maps) and Final Fantasy Crystal Chronicles (GCCE01, from its debug symbols). Names that only one decompilation's authors chose stay `fn_` labels; 39 matched functions are in that state. A function that is static in the compiled object gets `scope:local`.
+6. **Paths.** Runtime files go under `Runtime.PPCEABI.H/`, MSL under `MSL_C.PPCEABI.bare.H/`, MetroTRK under `TRK_MINNOW_DOLPHIN/`, and SDK files under `dolphin/<library>/`, with the library taken from ac-decomp's directory layout.
+
+In `evidence.tsv`, each unit has a `target` `unit` row whose edges are `exact` where the next unit abuts it and `open` otherwise. Each placed function has a `target` `function` row, and each applied name has a `related` `name` row that cites the symbol lists. Three `compiler` rows record the per-object versions: MetroTRK is GC/1.3, MSL mixes GC/1.3 and GC/1.3.2 by object, and `__va_arg.c` is GC/1.3.2. The `linker` row records the one linker-script change: `config/GIHE78/ldscript.tpl` is dtk's default template with `_db_stack_addr` at `_stack_addr + 0x1000`, which the relink needs once `InitMetroTRK` and `OSInit` are named.
+
+## Reproducing
+
+The tool needs local checkouts of the upstreams at their pinned commits and the compilers from `configure.py`. Run it against the committed `symbols.txt`:
+
+```sh
+python3 tools/splits/libmap.py --dol orig/GIHE78/sys/main.dol \
+  --compilers build/compilers --wrapper build/tools/wibo \
+  --checkout ac-decomp=../ac-decomp --checkout tww=../tww ...one per upstream... \
+  --splits libunits.txt --units config/GIHE78/lib_units.tsv \
+  --evidence librows.tsv --symbols-out config/GIHE78/symbols.txt
+```
+
+On the committed files this is a fixed point: `libunits.txt` equals the library part of `splits.txt`, `librows.tsv` equals the tool's rows in `evidence.tsv`, and `symbols.txt` comes back unchanged. The first run also needed three manual changes, which are now in `symbols.txt`. `fn_800E2E1C` was split at `0x800E2FB0`, because dtk's `TRKInterruptHandler` signature relocates to `TRKExceptionHandler` there. And five data labels (`lbl_801CA2B8`, `lbl_801CA308`, `lbl_801CA358`, `lbl_8025F484`, `lbl_8025F574`) were removed, because they overlapped the `__files`, `__OSLastInterruptTime` and `LastResetEnd` objects that dtk's signatures create.
+
+## Limits
+
+- Data sections are not split. Each import PR maps its unit's data when the source compiles.
+- An `open` edge only bounds what matched. The real object can extend past it, and 55 of the 118 units are partial placements.
+- Library units count as named files in the public report. Function bytes are unchanged; named functions rose from 461 to 1,148.
+- Upstream source is evidence that the code exists, not that its source meets this project's standards. Every function copied in a later PR is reviewed like any other.
+- The SDK objects will need `comment: 8` overrides in `configure.py` when they are linked from source.

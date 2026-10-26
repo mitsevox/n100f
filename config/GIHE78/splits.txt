@@ -737,3 +737,357 @@ flat/zVar.cpp:
 	.bss        start:0x80238FE8 end:0x80239028
 	.sbss       start:0x8025F140 end:0x8025F170
 	.sdata2     start:0x80261FE8 end:0x80262040
+
+TRK_MINNOW_DOLPHIN/mainloop.c:
+	.text       start:0x800DE530 end:0x800DE628
+
+TRK_MINNOW_DOLPHIN/nubevent.c:
+	.text       start:0x800DE628 end:0x800DE850
+
+TRK_MINNOW_DOLPHIN/nubinit.c:
+	.text       start:0x800DE850 end:0x800DE9D0
+
+TRK_MINNOW_DOLPHIN/msg.c:
+	.text       start:0x800DE9D0 end:0x800DEBAC
+
+TRK_MINNOW_DOLPHIN/msgbuf.c:
+	.text       start:0x800DEBAC end:0x800DF5D8
+
+TRK_MINNOW_DOLPHIN/serpoll.c:
+	.text       start:0x800DF5D8 end:0x800DF9A4
+
+TRK_MINNOW_DOLPHIN/usr_put.c:
+	.text       start:0x800DF9A4 end:0x800DFA30
+
+TRK_MINNOW_DOLPHIN/dispatch.c:
+	.text       start:0x800DFA30 end:0x800DFACC
+
+TRK_MINNOW_DOLPHIN/msghndlr.c:
+	.text       start:0x800DFACC end:0x800E2310
+
+TRK_MINNOW_DOLPHIN/support.c:
+	.text       start:0x800E232C end:0x800E2BEC
+
+TRK_MINNOW_DOLPHIN/notify.c:
+	.text       start:0x800E2C04 end:0x800E2CDC
+
+TRK_MINNOW_DOLPHIN/flush_cache.c:
+	.text       start:0x800E2CDC end:0x800E2D14
+
+TRK_MINNOW_DOLPHIN/mem_TRK.c:
+	.text       start:0x800E2D14 end:0x800E2DD0
+
+TRK_MINNOW_DOLPHIN/targimpl.c:
+	.text       start:0x800E2DE0 end:0x800E4660
+
+TRK_MINNOW_DOLPHIN/dolphin_trk.c:
+	.text       start:0x800E4680 end:0x800E47A0
+
+TRK_MINNOW_DOLPHIN/mpc_7xx_603e.c:
+	.text       start:0x800E47C0 end:0x800E4B38
+
+TRK_MINNOW_DOLPHIN/main_TRK.c:
+	.text       start:0x800E4B38 end:0x800E4B7C
+
+TRK_MINNOW_DOLPHIN/dolphin_trk_glue.c:
+	.text       start:0x800E4B7C end:0x800E5028
+
+TRK_MINNOW_DOLPHIN/targcont.c:
+	.text       start:0x800E5028 end:0x800E505C
+
+TRK_MINNOW_DOLPHIN/target_options.c:
+	.text       start:0x800E505C end:0x800E5078
+
+TRK_MINNOW_DOLPHIN/mslsupp.c:
+	.text       start:0x800E5078 end:0x800E56AC
+
+Runtime.PPCEABI.H/__va_arg.c:
+	.text       start:0x800E56AC end:0x800E5774
+
+Runtime.PPCEABI.H/global_destructor_chain.c:
+	.text       start:0x800E5774 end:0x800E57BC
+
+Runtime.PPCEABI.H/runtime.c:
+	.text       start:0x800E57BC end:0x800E5F4C
+
+MSL_C.PPCEABI.bare.H/abort_exit.c:
+	.text       start:0x800E60BC end:0x800E6188
+
+MSL_C.PPCEABI.bare.H/alloc.c:
+	.text       start:0x800E6F3C end:0x800E7174
+
+MSL_C.PPCEABI.bare.H/ansi_files.c:
+	.text       start:0x800E744C end:0x800E74E4
+
+MSL_C.PPCEABI.bare.H/ansi_fp.c:
+	.text       start:0x800E924C end:0x800E92BC
+
+MSL_C.PPCEABI.bare.H/arith.c:
+	.text       start:0x800E92BC end:0x800E92CC
+
+MSL_C.PPCEABI.bare.H/buffer_io.c:
+	.text       start:0x800E92CC end:0x800E95D8
+
+MSL_C.PPCEABI.bare.H/char_io.c:
+	.text       start:0x800E95D8 end:0x800E9A7C
+
+MSL_C.PPCEABI.bare.H/ctype.c:
+	.text       start:0x800E9A7C end:0x800E9AA0
+
+MSL_C.PPCEABI.bare.H/direct_io.c:
+	.text       start:0x800E9AA0 end:0x800EA13C
+
+MSL_C.PPCEABI.bare.H/file_io.c:
+	.text       start:0x800EA13C end:0x800EA644
+
+MSL_C.PPCEABI.bare.H/FILE_POS.c:
+	.text       start:0x800EA644 end:0x800EA910
+
+MSL_C.PPCEABI.bare.H/mbstring.c:
+	.text       start:0x800EA910 end:0x800EAC80
+
+MSL_C.PPCEABI.bare.H/mem.c:
+	.text       start:0x800EAC80 end:0x800EB0D0
+
+MSL_C.PPCEABI.bare.H/misc_io.c:
+	.text       start:0x800EB0D0 end:0x800EB0F8
+
+MSL_C.PPCEABI.bare.H/printf.c:
+	.text       start:0x800EB0F8 end:0x800ED118
+
+MSL_C.PPCEABI.bare.H/rand.c:
+	.text       start:0x800ED288 end:0x800ED2A8
+
+MSL_C.PPCEABI.bare.H/scanf.c:
+	.text       start:0x800ED36C end:0x800ED3FC
+
+MSL_C.PPCEABI.bare.H/string.c:
+	.text       start:0x800EE6E8 end:0x800EE7A0
+
+MSL_C.PPCEABI.bare.H/strtold.c:
+	.text       start:0x800EE7BC end:0x800EE848
+
+MSL_C.PPCEABI.bare.H/strtoul.c:
+	.text       start:0x800EF854 end:0x800F0098
+
+MSL_C.PPCEABI.bare.H/uart_console_io.c:
+	.text       start:0x800F0098 end:0x800F015C
+
+MSL_C.PPCEABI.bare.H/wchar_io.c:
+	.text       start:0x800F015C end:0x800F01E4
+
+MSL_C.PPCEABI.bare.H/e_atan2.c:
+	.text       start:0x800F0758 end:0x800F09E8
+
+MSL_C.PPCEABI.bare.H/e_fmod.c:
+	.text       start:0x800F0C04 end:0x800F0F40
+
+MSL_C.PPCEABI.bare.H/s_copysign.c:
+	.text       start:0x800F2F68 end:0x800F2F90
+
+MSL_C.PPCEABI.bare.H/s_cos.c:
+	.text       start:0x800F2F90 end:0x800F3064
+
+MSL_C.PPCEABI.bare.H/s_floor.c:
+	.text       start:0x800F3064 end:0x800F31AC
+
+MSL_C.PPCEABI.bare.H/s_frexp.c:
+	.text       start:0x800F31AC end:0x800F3238
+
+MSL_C.PPCEABI.bare.H/s_ldexp.c:
+	.text       start:0x800F3238 end:0x800F33FC
+
+MSL_C.PPCEABI.bare.H/s_modf.c:
+	.text       start:0x800F33FC end:0x800F34F8
+
+MSL_C.PPCEABI.bare.H/s_nextafter.c:
+	.text       start:0x800F34F8 end:0x800F367C
+
+MSL_C.PPCEABI.bare.H/s_sin.c:
+	.text       start:0x800F367C end:0x800F3754
+
+MSL_C.PPCEABI.bare.H/s_tan.c:
+	.text       start:0x800F3754 end:0x800F37CC
+
+dolphin/OdemuExi2/DebuggerDriver.c:
+	.text       start:0x800F391C end:0x800F439C
+
+dolphin/ai/ai.c:
+	.text       start:0x800F43E0 end:0x800F4C5C
+
+dolphin/ar/ar.c:
+	.text       start:0x800F4CD0 end:0x800F58E4
+
+dolphin/ar/arq.c:
+	.text       start:0x800F58E4 end:0x800F5C78
+
+dolphin/ax/AXAlloc.c:
+	.text       start:0x800F5E38 end:0x800F630C
+
+dolphin/ax/AXCL.c:
+	.text       start:0x800F6630 end:0x800F666C
+
+dolphin/ax/AXOut.c:
+	.text       start:0x800F6C98 end:0x800F6CF0
+
+dolphin/ax/AXSPB.c:
+	.text       start:0x800F715C end:0x800F7624
+
+dolphin/ax/AXVPB.c:
+	.text       start:0x800F819C end:0x800F8734
+
+dolphin/ax/AXProf.c:
+	.text       start:0x800F8734 end:0x800F877C
+
+dolphin/base/PPCArch.c:
+	.text       start:0x800F87BC end:0x800F881C
+
+dolphin/db/db.c:
+	.text       start:0x800F8824 end:0x800F8910
+
+dolphin/dsp/dsp.c:
+	.text       start:0x800F8910 end:0x800F895C
+
+dolphin/dsp/dsp_task.c:
+	.text       start:0x800F8C3C end:0x800F94C0
+
+dolphin/exi/EXIBios.c:
+	.text       start:0x800F94C0 end:0x800FAA10
+
+dolphin/exi/EXIUart.c:
+	.text       start:0x800FAD8C end:0x800FAFFC
+
+dolphin/gx/GXInit.c:
+	.text       start:0x800FAFFC end:0x800FC0E8
+
+dolphin/gx/GXFifo.c:
+	.text       start:0x800FC0E8 end:0x800FCB24
+
+dolphin/gx/GXAttr.c:
+	.text       start:0x800FCB34 end:0x800FD94C
+
+dolphin/gx/GXMisc.c:
+	.text       start:0x800FD94C end:0x800FDF54
+
+dolphin/gx/GXGeometry.c:
+	.text       start:0x800FE0BC end:0x800FE30C
+
+dolphin/gx/GXFrameBuf.c:
+	.text       start:0x800FE30C end:0x800FEDA0
+
+dolphin/gx/GXLight.c:
+	.text       start:0x800FEDA0 end:0x800FF69C
+
+dolphin/gx/GXTexture.c:
+	.text       start:0x800FF69C end:0x80100888
+
+dolphin/gx/GXBump.c:
+	.text       start:0x80100888 end:0x80100EF4
+
+dolphin/gx/GXTev.c:
+	.text       start:0x80100EF4 end:0x801018B8
+
+dolphin/gx/GXPixel.c:
+	.text       start:0x801018B8 end:0x80102000
+
+dolphin/gx/GXDisplayList.c:
+	.text       start:0x801021A0 end:0x80102210
+
+dolphin/gx/GXTransform.c:
+	.text       start:0x80102210 end:0x801028E0
+
+dolphin/gx/GXPerf.c:
+	.text       start:0x801028E0 end:0x80103188
+
+dolphin/mtx/mtx.c:
+	.text       start:0x801031B4 end:0x80103280
+
+dolphin/mtx/mtx44.c:
+	.text       start:0x80103280 end:0x80103318
+
+dolphin/os/OS.c:
+	.text       start:0x80103320 end:0x80103C58
+
+dolphin/os/OSAlarm.c:
+	.text       start:0x80103C68 end:0x80104340
+
+dolphin/os/OSAlloc.c:
+	.text       start:0x8010438C end:0x8010469C
+
+dolphin/os/OSAudioSystem.c:
+	.text       start:0x801046BC end:0x80104950
+
+dolphin/os/OSCache.c:
+	.text       start:0x80104950 end:0x80104D9C
+
+dolphin/os/OSContext.c:
+	.text       start:0x80104D9C end:0x80105548
+
+dolphin/os/OSError.c:
+	.text       start:0x80105548 end:0x80105890
+
+dolphin/os/OSInterrupt.c:
+	.text       start:0x80105890 end:0x80106104
+
+dolphin/os/OSLink.c:
+	.text       start:0x80106150 end:0x80106168
+
+dolphin/os/OSMemory.c:
+	.text       start:0x80106168 end:0x80106448
+
+dolphin/os/OSReboot.c:
+	.text       start:0x801064B4 end:0x801066C4
+
+dolphin/os/OSReset.c:
+	.text       start:0x801066C4 end:0x80106AA8
+
+dolphin/os/OSResetSW.c:
+	.text       start:0x80106AA8 end:0x80106E34
+
+dolphin/os/OSRtc.c:
+	.text       start:0x80106E34 end:0x8010774C
+
+dolphin/os/OSSync.c:
+	.text       start:0x8010774C end:0x801077D0
+
+dolphin/os/OSThread.c:
+	.text       start:0x801077D0 end:0x80108608
+
+dolphin/os/OSTime.c:
+	.text       start:0x80108608 end:0x80108A84
+
+dolphin/os/__ppc_eabi_init.c:
+	.text       start:0x80108A84 end:0x80108B18
+
+dolphin/si/SIBios.c:
+	.text       start:0x80108B18 end:0x8010A1F8
+
+dolphin/si/SISamplingRate.c:
+	.text       start:0x8010A1F8 end:0x8010A300
+
+dolphin/vi/vi.c:
+	.text       start:0x8010A300 end:0x8010BD44
+
+dolphin/pad/Padclamp.c:
+	.text       start:0x8010BD44 end:0x8010BF7C
+
+dolphin/pad/Pad.c:
+	.text       start:0x8010BF7C end:0x8010DA44
+
+dolphin/dvd/dvdlow.c:
+	.text       start:0x8010DA44 end:0x8010E898
+
+dolphin/dvd/dvdfs.c:
+	.text       start:0x8010E898 end:0x8010F20C
+
+dolphin/dvd/dvd.c:
+	.text       start:0x8010F23C end:0x801118F0
+
+dolphin/dvd/dvdqueue.c:
+	.text       start:0x801118F0 end:0x80111AE8
+
+dolphin/dvd/dvderror.c:
+	.text       start:0x80111AE8 end:0x80111C80
+
+dolphin/dvd/fstload.c:
+	.text       start:0x80111C80 end:0x80111EC0
