@@ -321,6 +321,10 @@ def is_prodg(mw_version: str) -> bool:
     return mw_version.split("/")[0] == "ProDG"
 
 
+# ProDG versions whose driver tools/prodg_cc.py reproduces (preprocessor defines, file names)
+PRODG_VERSIONS = {"ProDG/3.5"}
+
+
 _listdir_cache = {}
 
 
@@ -1230,6 +1234,8 @@ def generate_build_ninja(
 
         # Check if all compiler versions exist
         for mw_version in used_compiler_versions:
+            if is_prodg(mw_version) and mw_version not in PRODG_VERSIONS:
+                sys.exit(f"{mw_version} is not supported by tools/prodg_cc.py")
             executable = "cc1.exe" if is_prodg(mw_version) else "mwcceppc.exe"
             mw_path = compilers / mw_version / executable
             if config.compilers_path and not os.path.exists(mw_path):

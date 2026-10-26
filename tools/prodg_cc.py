@@ -5,8 +5,11 @@ The ngccc.exe driver spawns cpp, cc1 and ngcas as child processes. Under wibo th
 occasionally hangs when several compiles run at once, and the driver's fixed temporary
 file names collide between parallel jobs. This wrapper runs the same three stages
 directly, each in its own process with a timeout, and writes the intermediates to a
-private directory. The stage command lines are the ones the 3.5 driver prints with -v,
-so the object is byte-identical to ngccc's.
+private directory. The stage command lines are the ones the 3.5 driver prints with -v.
+Compiler flags are limited to the ones checked against that output: the driver turns
+others (-Os, -ansi, -traditional, ...) into extra preprocessor arguments this wrapper
+does not reproduce, so they are rejected. With the accepted flags the object is
+byte-identical to ngccc's.
 
     prodg_cc.py [--wrapper wibo] --dir <compiler dir> [--depfile out.d] [-x c|c++]
         <flags> -c <source> -o <object>
@@ -39,6 +42,14 @@ COMPILER_WITH_ARG = {"-G"}
 STAGE_TIMEOUT = 60
 
 
+def accepted_compiler_flag(flag):
+    # Flags whose ngccc -v output shows no change to the preprocessor arguments, other
+    # than -D__OPTIMIZE__ for -O/-O1/-O2/-O3, which compile_unit adds the same way.
+    return flag in {"-O", "-O0", "-O1", "-O2", "-O3", "-g", "-w"} \
+        or flag.startswith(("-f", "-m", "-W")) and not flag.startswith("-Wp,") \
+        or flag[:2] == "-G" and flag[2:].isdigit()
+
+
 def parse(args):
     options, cpp_flags, compiler_flags = {}, [], []
     i = 0
@@ -62,8 +73,10 @@ def parse(args):
             cpp_flags.append(flag)
         elif flag.startswith("-Wp,"):
             cpp_flags.extend(flag[4:].split(","))
-        elif flag.startswith("-"):
+        elif accepted_compiler_flag(flag):
             compiler_flags.append(flag)
+        elif flag.startswith("-"):
+            raise ValueError(f"Unsupported flag (not modelled from the ngccc driver): {flag}")
         else:
             raise ValueError(f"Unexpected argument: {flag}")
         i += 1
@@ -141,7 +154,8 @@ def compile_unit(options, cpp_flags, compiler_flags, language):
             cpp.append("-D__OPTIMIZE__")
         cpp += ["-D__NOASMPP__"] + CPP_LANG[language][0] + CPP_TARGET + CPP_LANG[language][1]
         if depfile:
-            cpp += ["-MMD", str(dependencies)]
+            # -MD, not -MMD: this cpp leaves <...> includes out of -MMD output.
+            cpp += ["-MD", str(dependencies)]
         stage(cpp + cpp_flags + [str(source), "-o", str(preprocessed)], preprocessed, environment)
         compiler = "cc1plus.exe" if language == "c++" else "cc1.exe"
         stage(wrapper + [str(directory / compiler)] + compiler_flags
@@ -156,9 +170,9 @@ def compile_unit(options, cpp_flags, compiler_flags, language):
             if not dependencies.is_file():
                 raise RuntimeError("Preprocessor did not produce dependency information")
             depfile.parent.mkdir(parents=True, exist_ok=True)
-            with tempfile.NamedTemporaryFile(dir=depfile.parent, delete=False) as pending:
-                pending.write(make_depfile(dependencies.read_text(), options["-o"]).encode())
-            os.replace(pending.name, depfile)
+            pending = depfile.with_name(depfile.name + ".tmp")
+            pending.write_text(make_depfile(dependencies.read_text(), options["-o"]))
+            os.replace(pending, depfile)
         os.replace(compiled, output)
 
 
