@@ -1,5 +1,6 @@
 # Local inputs and the private build environment are outside public Git.
-/orig/
+/orig/*/*
+!/orig/*/.gitkeep
 /private/
 /reference/
 /build/
@@ -39,3 +40,12 @@ __pycache__/
 # Local IDE state. Shared .vscode configuration remains eligible for review.
 .idea/
 .vs/
+
+# dtk-template generated files.
+.ninja_*
+build.ninja
+objdiff.json
+compile_commands.json
+ctx.*
+*.ctx
+*.[eE][xX][eE]
