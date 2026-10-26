@@ -311,14 +311,20 @@ config.libs: List[Dict[str, Any]] = [
     GameLib(
         "game",
         [
+            Object(NonMatching, "flat/iCamera.cpp"),
+            Object(NonMatching, "flat/iEnv.cpp"),
+            Object(NonMatching, "flat/xAnim.cpp"),
             Object(NonMatching, "flat/xBase.cpp"),
             Object(NonMatching, "flat/xClimate.cpp"),
             Object(NonMatching, "flat/xIni.cpp"),
+            Object(NonMatching, "flat/xMath3.cpp"),
             Object(Matching, "flat/xMorph.cpp"),
+            Object(NonMatching, "flat/xMovePoint.cpp"),
             Object(NonMatching, "flat/xordarray.cpp"),
             Object(NonMatching, "flat/xPar.cpp"),
             Object(NonMatching, "flat/xScrFx.cpp"),
             Object(NonMatching, "flat/xString.cpp"),
+            Object(NonMatching, "flat/zSurface.cpp"),
         ],
     ),
 ]
