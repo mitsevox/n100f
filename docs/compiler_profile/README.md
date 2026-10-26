@@ -22,7 +22,7 @@ No single body identifies 1.3.2. Each excludes part of the candidate range, and 
 | 0x8002BBF4 (HIPLBlockEnter), 0x80032610 (xParGroupAddPar) | 128, 124 | 1.3.2 to 2.7 | `game.flags` |
 | 0x80038130, 0x80038258 (xSGAdd{Load,Save}Client) | 74, 53 | 1.3.2 to 2.7 | `game.flags` |
 
-`GC/1.3.2r` in the decomp.dev compiler pack is a community-patched 1.3.2 made for another game's rodata pooling, not a Metrowerks release. It produces the same results as 1.3.2 here. The 1.3.2 executable's `-version` banner reads 2.4.1 build 32; its object `.comment` and the pack's `info.txt` give 2.4.2 (build 81).
+`GC/1.3.2r` in the decomp.dev compiler pack is a community-patched 1.3.2 made for another game's rodata pooling, not a Metrowerks release. It produces the same results as 1.3.2 here. Its objects' `.comment` and the pack's `info.txt` give 2.4.2 build 81.
 
 ## Reproducing
 
