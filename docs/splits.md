@@ -44,5 +44,6 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 - A byte-identical relink only shows that dtk and mwld accept the cuts. It says nothing about where Heavy Iron's objects began and ended.
 - 51 of the 74 text edges between emitted units are "alignment only": they have no data evidence beyond the size alignment.
 - PS2 v1.01 is a sibling build, not the target. Platform `i*` units differ on GC and are mostly unsplit.
+- The weak `iAnim.cpp` candidate at `0x80005AFC` is contradicted: BfBB's `iAnim.cpp` is GC platform code, and its `iAnimBlend` sits in the GC-only block at `0x800D7E00`.
 - Header inline copies (`xMath3.h`, `xEnt.h`, `xModel.h`) are left to whichever unit holds them.
-- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`, a byte-identical match to BfBB's `gc/iAnim.cpp`), MetroTRK, the runtime, the Dolphin SDK or RenderWare.
+- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), MetroTRK, the runtime, the Dolphin SDK or RenderWare.
