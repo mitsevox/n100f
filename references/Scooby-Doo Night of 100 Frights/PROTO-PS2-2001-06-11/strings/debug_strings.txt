@@ -1,0 +1,106 @@
+# Strings from XXXX_999.99
+# Diagnostic, assert, format and path strings: 103 unique
+
+0x002A3A1E	b1%XC
+0x002F5F60	ClipLine.csl
+0x002F6068	ClipTriangle.csl
+0x002F6160	CullTriangle.csl
+0x002F6220	ImmInstance.csl
+0x002F62A0	ImmRenderSetupInvalidOut
+0x002F62D8	ImmMangleLineIndices.csl
+0x002F63A0	ImmMangleTriangleIndices.csl
+0x002F64E0	ImmRenderSetup.csl
+0x002F6590	ImmStash.csl
+0x002F6650	SubmitLine.csl
+0x002F6710	SubmitTriangle.csl
+0x002F6800	Transform.csl
+0x002F6890	RxObjSpace3DVertices.csl
+0x002F68C0	RxCamSpace3DVertices.csl
+0x002F68F0	RxScrSpace2DVertices.csl
+0x002F6920	RxInterpolants.csl
+0x002F6948	MeshState.csl
+0x002F6968	RenderState.csl
+0x002F6988	Indices.csl
+0x002F69A8	RxScatter.csl
+0x002F69C8	RxTriPlanes.csl
+0x002F69E8	RxUVs.csl
+0x002F6A08	RxVSteps.csl
+0x002F6A28	RGBAs.csl
+0x002F6A48	CamNorms.csl
+0x002F7A60	AtomicEnumerateLights.csl
+0x002F7B38	AtomicInstance.csl
+0x002F7C10	Light.csl
+0x002F7CC0	MaterialScatter.csl
+0x002F7D78	PostLight.csl
+0x002F7E28	PreLight.csl
+0x002F7EA8	WorldSectorEnumerateLights.csl
+0x002F7F88	WorldSectorInstance.csl
+0x002F7FE0	Lights.csl
+0x002F8000	PS2DMAChain.csl
+0x002F8010	PS2LightsBlock.csl
+0x002F8028	PS2DMASessionRecord.csl
+0x002F8040	PS2Mesh.csl
+0x002F8050	PS2xyz.csl
+0x002F8060	PS2uv.csl
+0x002F8070	PS2uv2.csl
+0x002F8080	PS2rgba.csl
+0x002F8090	PS2normal.csl
+0x002F80A0	PS2user1.csl
+0x002F80B0	PS2user2.csl
+0x002F80C0	PS2user3.csl
+0x002F80D0	PS2user4.csl
+0x002F81B0	PS2ManagerIm3D.csl
+0x002F8208	PS2ManagerWorldSector.csl
+0x002F8268	PS2ManagerAtomic.csl
+0x002F82D8	PS2MatBridge.csl
+0x002F8368	PS2MatInstance.csl
+0x002F8408	PS2ObjWorldSectorAllInOne.csl
+0x002F8490	PS2ObjAtomicAllInOne.csl
+0x002F84F0	PS2Im3DFastTransform.csl
+0x0039C7A8	\t<D1_CHCR=%08x:
+0x0039C7B8	D1_TADR=%08x:
+0x0039C7C8	D1_MADR=%08x:
+0x0039C7E8	\t<D2_CHCR=%08x:
+0x0039C7F8	D2_TADR=%08x:
+0x0039C808	D2_MADR=%08x:
+0x0039C828	\t<VIF1_STAT=%08x:
+0x0039CB30	TTY: receive error
+0x0039CE18	ERROR
+0x0039CE60	FAILED
+0x0039CE80	@@(#)$Id: babinary.c,v 1.132 2001/04/05 16:38:53 katherinet Exp $
+0x0039CF38	@@(#)$Id: bacamera.c,v 1.353 2001/04/05 12:24:04 katherinet Exp $
+0x0039CF80	Invalid projection type specified
+0x0039CFB0	@@(#)$Id: badevice.c,v 1.191 2001/04/05 13:42:59 katherinet Exp $
+0x0039D058	@@(#)$Id: bamatrix.c,v 1.176 2001/03/15 16:28:31 katherinet Exp $
+0x0039D0A0	Invalid combination type
+0x0039D0C0	@@(#)$Id: batextur.c,v 1.217 2001/03/30 18:55:35 Williame Exp $
+0x0039D120	@@(#)$Id: baim3d.c,v 1.114 2001/04/05 15:57:12 katherinet Exp $
+0x0039D2D8	@@(#)$Id: nodeClipLine.c,v 1.56 2001/02/13 16:49:37 Roba Exp $
+0x0039D348	@@(#)$Id: nodeClipTriangle.c,v 1.82 2001/02/13 12:16:25 Roba Exp $
+0x0039D3C0	@@(#)$Id: nodeImmRenderSetup.c,v 1.69 2001/02/13 16:00:35 Roba Exp $
+0x0039D428	@@(#)$Id: p2heap.c,v 1.78 2001/04/05 17:22:09 katherinet Exp $
+0x0039D468	Heap resized from %d to %d bytes
+0x0039DFC0	@@(#)$Id: dmaalloc.c,v 1.19 2001/02/01 12:51:47 johns Exp $
+0x0039E0B0	@@(#)$Id: skyconv.c,v 1.35 2001/02/13 12:59:32 Rabin Exp $
+0x0039E2D8	@@(#)$Id: skyinst.c,v 1.45 2001/04/02 16:54:58 iestynb Exp $
+0x0039E360	@@(#)$Id: texcache.c,v 1.92 2001/04/04 12:09:28 rabin Exp $
+0x0039E400	Unable to initialiase memory for Cache
+0x0039E468	@@(#)$Id: bageomet.c,v 1.288 2001/03/22 15:30:19 katherinet Exp $
+0x0039E4F8	@@(#)$Id: nodeAtomicInstance.c,v 1.84 2001/02/14 12:38:19 Markj Exp $
+0x0039E740	_rwPS2MatInstancePipelineNodeInit; cluster %s has both CL_ATTRIB_REQUIRED and CL_ATTRIB_PLACEHOLDER set in its attributes - illegal!
+0x0039E7C8	_rwPS2MatInstancePipelineNodeInit; cluster %s has both (CL_ATTRIB_READ or CL_ATTRIB_WRITE) and CL_ATTRIB_OPAQUE set, these are mutually incompatible
+0x0039E860	_rwPS2MatInstancePipelineNodeInit; could not locate cluster %s in node definition clusters of interest
+0x0039E8C8	Cluster %s not present (subsequent nodes don't require it). You should not be requiring this cluster to be visible (CL_ATTRIB_READ or CL_ATTRIB_WRITE) in its creation attributes [read during the call to RxPS2MatInstanceGenerateCluster()]
+0x0039EB38	_rwPS2MatInstancePipelineNodeInit; %s cluster has unrecognised attributes
+0x0039EC40	@@(#)$Id: matblend.c,v 1.57 2001/03/07 17:08:12 johns Exp $
+0x0039ED60	cdrom0:\%s;1
+0x0039ED6D	cdrom0:%s;1
+0x0039EDA0	%s%s%s
+0x0039EDA7	cdrom0:\MODULES\
+0x0039EDB8	SIO2MAN.IRX
+0x0039EDC7	PADMAN.IRX
+0x0039EE6F	?SD2.INI
+0x0039EEC0	%s.rw3
+0x0039EEEF	cdrom0:\IOPRP205.IMG;1
+0x003A01A0	p2skyfs.c
+0x003A01BD	cdrom0:\%s

@@ -1,0 +1,206 @@
+# Strings from main.dol
+# Diagnostic, assert, format and path strings: 203 unique
+
+0x8018E628	host:%sdump%04d.bmp
+0x8018E63C	dump%04d.bmp
+0x8018E74C	is damaged and cannot be used
+0x8018E8E4	No current error
+0x8018E940	Init Failed
+0x8018E94C	Unable to access Save Game Directory
+0x8018E974	Access Error - no card ?!? (eg yanked out)
+0x8018E9A0	Access Error - no room on card (file handles free bytes, etc)
+0x8018E9E0	Access Error - card is damaged or something bad
+0x8018EA10	Access Error - file being loaded appears to be corrupt (I-Level)
+0x8018EA54	Access Error - general problem
+0x8018EA74	Save Error - Not enough free space to save file
+0x8018EAA4	Save Error - during initalization (async queue)
+0x8018EAD4	Save Error - during write
+0x8018EAF0	Save Error - opening file
+0x8018EB0C	Load Error - during initalization (async queue)
+0x8018EB3C	Load Error - during read
+0x8018EB58	Load Error - opening file
+0x8018EB74	Target problem (general error)
+0x8018EB94	Target Error - media removed or changed
+0x8018EBBC	Target Error - Not ready for I/O (unformatted?)
+0x8018EBEC	Operation encountered unknown error
+0x80192AD0	/SD2GCIcon.tpl
+0x80192AE0	/SD2GCBanner.tpl
+0x80192B38	encountered unexpected error (%d)
+0x80192B5C	Memory Card Slot %c
+0x80192B70	Nintendo GameCube Memory Card in Slot %c
+0x80192B9C	Nintendo GameCube%s Memory Card in Slot %c
+0x80192BC8	Nintendo GameCube%s Memory Card
+0x80192C60	iSystem.cpp
+0x80192E40	name:         %s
+0x80192FF0	bound: %s
+0x80193058	hits:       stat:%d
+0x8019306C	   dyn:%d
+0x80193078	   npc:%d
+0x801930A4	%s-oid:  %u
+0x801930CC	%s-optr: %d
+0x8019331C	returns:          %s
+0x80193334	   ret_delay: %.3f
+0x80193348	continuous:       %s
+0x80193360	   end_delay: %.3f
+0x8019342C	slide_axis:   %s
+0x8019345C	slide_tm:     %.3f
+0x80193488	slide_acc_tm: %.3f
+0x801934B4	slide_bd_tm:  %.3f
+0x80193540	rot_axis:   %s
+0x8019356C	rot_tm:     %.3f
+0x80193598	rot_acc_tm: %.3f
+0x801935C4	rot_bd_tm:  %.3f
+0x80193F30	%c%c%s%s%s
+0x80195477	Check the %s and try again.
+0x801956F0	Corrupted %s file deleted.
+0x80195788	The %s contains corrupted data and needs to be formatted. Do you wish to format this Memory Card?
+0x80195815	To save a %s file, this Memory Card needs to be formatted. Do you wish to format this Memory Card?
+0x80195ADC	The %s is not compatible with the %s save file.
+0x80195D50	$A255050080<<internal error>>$C
+0x80195D70	--error--
+0x80195D7C	%s %s\t%s %s
+0x8019605C	An error has occurred. Turn the power off and refer to the Nintendo GameCube^ Instruction Booklet for further instructions.
+0x80196124	Debug%02d
+0x801961B8	sphere.dff
+0x801962E0	KEY OFF %d UI
+0x801962F0	KEY ON %d UI
+0x801963DC	snackgate_error1
+0x80196740	sndfx_pu_error
+0x80196940	scooby_excite_%02d
+0x801A43FC	Loading%s
+0x801A4408	Entering%s
+0x801A4418	Part %d
+0x801A456C	BAT HANG %d
+0x801A4578	CHIMNEY EMITTER %d
+0x801A50A0	x %d%/%d
+0x801A50AC	Time - %dh %dm %ds
+0x801A50C0	rhsd0001.anm
+0x801A50D0	rhsa0001.anm
+0x801A50E0	bat_fly.anm
+0x801A5118	laugh_track%02d
+0x801A5958	scooby.elf
+0x801A5E24	PARTICLE_CLIP_%d
+0x801A6D04	%s-Yes\t\t%s-No    
+0x801A6D18	pause_timer%d
+0x801A6EFC	%c %02d SELECTED
+0x801A794C	MCACtionFailMessage
+0x801A7AF8	%d,%d,%d
+0x801A7B04	%d:%c%c %s
+0x801A8070	File Position Error
+0x801A8084	Wide character encoding error
+0x801A80BA	Invalid argument
+0x801A80CB	Input/output error
+0x801A817D	No error detected
+0x801A818F	Exec format error
+0x801A81B4	Cannot allocate memory
+0x801A82A0	Signal error
+0x801A82CA	Unknown error
+0x801A82EA	Unknown Error (%d)
+0x801A86B0	Error opening file.
+0x801C5B5B	%cin11
+0x801C81FF	%LITE
+0x801CD424	Non-recoverable Exception %d
+0x801CD444	Unhandled Exception %d
+0x801DC3D0	CARDBios.c
+0x801DC3DC	Failed assertion 0 <= chan && chan < 2
+0x801DC404	Failed assertion card->txCallback == 0
+0x801DC42C	Failed assertion card->addr % CARD_SEG_SIZE == 0
+0x801DC460	Failed assertion card->addr < (u32) card->size * 1024 * 1024 / 8
+0x801DC4A4	Failed assertion card->addr % CARD_PAGE_SIZE == 0
+0x801DC4D8	Failed assertion addr % card->sectorSize == 0
+0x801DC508	Failed assertion addr < (u32) card->size * 1024 * 1024 / 8
+0x801DC544	Failed assertion result != CARD_RESULT_BUSY
+0x801DC6E0	CARDUnlock.c
+0x801DC718	CARDRdwr.c
+0x801DC724	Failed assertion 0 < length && length % CARD_SEG_SIZE == 0
+0x801DC788	Failed assertion 0 < length && length % CARD_PAGE_SIZE == 0
+0x801DC7C8	CARDBlock.c
+0x801DC7D4	Failed assertion card->currentFat
+0x801DC7F8	Failed assertion card->currentFat == fat1
+0x801DC824	Failed assertion 0 < cBlock
+0x801DC868	CARDDir.c
+0x801DC874	Failed assertion card->currentDir
+0x801DC898	Failed assertion card->currentDir == dir1
+0x801DC8F0	CARDCheck.c
+0x801DC8FC	Failed assertion length % sizeof(u16) == 0
+0x801DC998	Failed assertion errors == 0 || errors == 1
+0x801DC9C4	Failed assertion !card->currentFat
+0x801DCA28	CARDMount.c
+0x801DCA5C	Failed assertion card->size
+0x801DCA78	Failed assertion card->sectorSize
+0x801DCA9C	Failed assertion 8 <= card->cBlock
+0x801DCAC0	Failed assertion callback
+0x801DCADC	Failed assertion workArea && ((u32) workArea % 32 == 0)
+0x801DCB18	CARDFormat.c
+0x801DCB44	Failed assertion encode == CARD_ENCODE_ANSI || encode == CARD_ENCODE_SJIS
+0x801DCBB8	CARDOpen.c
+0x801DCBC4	Failed assertion 0 <= fileNo && fileNo < CARD_MAX_FILE
+0x801DCC24	Failed assertion 0 <= fileInfo->chan && fileInfo->chan < 2
+0x801DCC60	Failed assertion 0 <= fileInfo->fileNo && fileInfo->fileNo < CARD_MAX_FILE
+0x801DCCB0	CARDCreate.c
+0x801DCCC0	Failed assertion CARDIsValidBlockNo(card, card->startBlock)
+0x801DCD24	Failed assertion strlen(fileName) <= CARD_FILENAME_MAX
+0x801DCD5C	Failed assertion 0 < size && (size % card->sectorSize) == 0
+0x801DCD98	CARDRead.c
+0x801DCE2C	Failed assertion CARDIsValidBlockNo(card, fileInfo->iBlock)
+0x801DCE68	Failed assertion fileInfo->offset < card->cBlock * card->sectorSize
+0x801DCEAC	Failed assertion ent->gameName[0] != 0xff
+0x801DCED8	Failed assertion OFFSET(fileInfo->length, CARD_SEG_SIZE) == 0
+0x801DCF18	Failed assertion OFFSET(fileInfo->offset, card->sectorSize) == 0
+0x801DCF78	Failed assertion buf && OFFSET(buf, 32) == 0
+0x801DCFA8	Failed assertion OFFSET(offset, CARD_SEG_SIZE) == 0
+0x801DCFDC	Failed assertion 0 < length && OFFSET(length, CARD_SEG_SIZE) == 0
+0x801DD020	CARDWrite.c
+0x801DD08C	Failed assertion buf && ((u32) buf % 32) == 0
+0x801DD0BC	Failed assertion 0 < length
+0x801DD0D8	Failed assertion OFFSET(offset, card->sectorSize) == 0
+0x801DD110	Failed assertion OFFSET(length, card->sectorSize) == 0
+0x801DD148	CARDStat.c
+0x801DD278	CARDStatEx.c
+0x801DD2E8	Failed assertion *dirent->fileName != 0xff && *dirent->fileName != 0x00
+0x801DD590	AtomicEnumerateLights.csl
+0x801DD67C	AtomicInstance.csl
+0x801DD740	Light.csl
+0x801DD7E0	MaterialScatter.csl
+0x801DD894	PostLight.csl
+0x801DD910	WorldSectorEnumerateLights.csl
+0x801DD9CC	WorldSectorInstance.csl
+0x801DDA28	Lights.csl
+0x801DDA78	GameCubeAtomicAllInOne.csl
+0x801DDAD8	GamerCubeWorldSectorAllInOne.csl
+0x801DDBD0	Invalid combination type
+0x801DDC08	Invalid projection type specified
+0x801DDFD0	Invalid pixel format
+0x801DDFE8	Invalid TV format
+0x801DE367	@Failed to create surface for texture
+0x801DE628	ImmRenderSetup.csl
+0x801DE63C	ImmMangleTriangleIndices.csl
+0x801DE678	ImmMangleLineIndices.csl
+0x801DE738	ClipLine.csl
+0x801DE840	ClipTriangle.csl
+0x801DE938	CullTriangle.csl
+0x801DE9E8	ImmInstance.csl
+0x801DECE8	ImmStash.csl
+0x801DEDA0	SubmitLine.csl
+0x801DEE58	SubmitTriangle.csl
+0x801DEF48	Transform.csl
+0x801DEF98	Heap resized from %d to %d bytes
+0x801DEFC0	RxObjSpace3DVertices.csl
+0x801DEFEC	RxCamSpace3DVertices.csl
+0x801DF018	RxScrSpace2DVertices.csl
+0x801DF044	RxInterpolants.csl
+0x801DF068	MeshState.csl
+0x801DF088	RenderState.csl
+0x801DF0A8	Indices.csl
+0x801DF0C4	RxVSteps.csl
+0x801DF154	SubmitNoLight.csl
+0x8025E6D8	dvdfs.c
+0x8025FAB4	Slot %c
+0x8025FB7C	%s.rw3
+0x8025FDC4	%s-hit
+0x8025FDCC	no %s
+0x8026053C	loop%d
+0x80260544	stop%d
+0x80261200	%s/%s%s
+0x802616E0	SD2.INI
+0x80261C30	%s/%c%c

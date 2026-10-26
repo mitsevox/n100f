@@ -1,0 +1,328 @@
+# Strings from default.xbe
+# Diagnostic, assert, format and path strings: 325 unique
+
+0x00110C28	Invalid SOS parameters for sequential JPEG
+0x00110C54	Corrupt JPEG data: found marker 0x%02x instead of RST%d
+0x00110CA8	Warning: unknown JFIF revision number %d.%02d
+0x00110D30	Corrupt JPEG data: %u extraneous bytes before marker 0x%02x
+0x00110D70	Inconsistent progression sequence for component %d coefficient %d
+0x00110DB4	Unknown Adobe color transform code %d
+0x00110DDC	Obtained XMS handle %u
+0x00110DF4	Freed XMS handle %u
+0x00110E08	Unrecognized component IDs %d %d %d, assuming YCbCr
+0x00110E3C	Opened temporary file %s
+0x00110E58	Closed temporary file %s
+0x00110E74	  Ss=%d, Se=%d, Ah=%d, Al=%d
+0x00110E94	    Component %d: dc=%d ac=%d
+0x00110EB4	Start Of Scan: %d components
+0x00110EE4	    Component %d: %dhx%dv q=%d
+0x00110F04	Start Of Frame 0x%02x: width=%u, height=%u, components=%d
+0x00110F7C	RST%d
+0x00110F84	At marker 0x%02x, recovery action %d
+0x00110FAC	Selected %d colors for quantization
+0x00110FD0	Quantizing to %d colors
+0x00110FE8	Quantizing to %d = %d*%d*%d colors
+0x00111034	Unexpected marker 0x%02x
+0x00111050	Skipping marker 0x%02x, length %u
+0x00111074	    with %d x %d thumbnail image
+0x00111098	Unknown JFIF minor revision number %d.%02d
+0x001110C4	Warning: thumbnail image size does not match data length %u
+0x00111100	JFIF APP0 marker, density %dx%d  %d
+0x0011115C	Obtained EMS handle %u
+0x00111174	Freed EMS handle %u
+0x00111188	Define Restart Interval %u
+0x001111A4	Define Quantization Table %d  precision %d
+0x001111D0	Define Huffman Table 0x%02x
+0x001111EC	Define Arithmetic Table 0x%02x: 0x%02x
+0x00111214	Unknown APP14 marker (not Adobe), length %u
+0x00111240	Unknown APP0 marker (not JFIF), length %u
+0x00111270	Adobe APP14 marker: version %d, flags 0x%04x 0x%04x, transform %d
+0x00111328	Write to XMS failed
+0x0011133C	Read from XMS failed
+0x001113A0	Unsupported marker type 0x%02x
+0x001113EC	Write failed on temporary file --- out of disk space?
+0x00111424	Seek failed on temporary file
+0x00111444	Read failed on temporary file
+0x00111464	Failed to create temporary file %s
+0x00111488	Invalid JPEG file structure: SOS before SOF
+0x001114B4	Invalid JPEG file structure: two SOI markers
+0x001114E4	Unsupported JPEG process: SOF type 0x%02x
+0x00111510	Invalid JPEG file structure: missing SOS marker
+0x00111540	Invalid JPEG file structure: two SOF markers
+0x00111570	Cannot quantize to more than %d colors
+0x00111598	Cannot quantize to fewer than %d colors
+0x001115C0	Cannot quantize more than %d color components
+0x001115F0	Insufficient memory (case %d)
+0x00111610	Not a JPEG file: starts with 0x%02x 0x%02x
+0x0011163C	Quantization table 0x%02x was not defined
+0x0011168C	Huffman table 0x%02x was not defined
+0x00111714	Invalid color quantization mode change
+0x00111764	Cannot transcode due to multiple use of quantization table %d
+0x001117D4	Maximum supported image dimension is %u pixels
+0x00111828	Huffman code size table overflow
+0x00111874	Output file write error --- out of disk space?
+0x001118A4	Input file read error
+0x001118E0	Write to EMS failed
+0x001118F4	Read from EMS failed
+0x00111934	Bogus DQT index %d
+0x00111948	Bogus DHT index %d
+0x00111970	Bogus DAC value 0x%x
+0x00111988	Bogus DAC index %d
+0x001119C4	Too many color components: %d, max %d
+0x00111A78	JPEG parameter struct mismatch: library thinks size is %u, caller expects %u
+0x00111AC8	Improper call to JPEG library in state %d
+0x00111AF4	Invalid scan script at entry %d
+0x00111B2C	Invalid progressive parameters at scan script entry %d
+0x00111B64	Invalid progressive parameters Ss=%d Se=%d Ah=%d Al=%d
+0x00111B9C	Unsupported JPEG data precision %d
+0x00111BC0	Invalid memory pool code %d
+0x00111C0C	Wrong JPEG library version: library is %d, caller expects %d
+0x00111C90	IDCT output block size %d not supported
+0x00111CB8	Invalid component ID %d in SOS
+0x00111D78	Bogus message code %d
+0x001127BC	buffer error
+0x001127E0	data error
+0x001127EC	stream error
+0x001127FC	file error
+0x00130878	error
+0x00130928	Invalid input microcode shader type.
+0x00130950	Invalid input microcode size.
+0x00130A04	Invalid instruction combination.
+0x00130A28	Invalid instruction combination. Outputs can't be combined.
+0x00130A68	Invalid instruction combination. Input swizzles can't be combined.
+0x00130AAC	Invalid instruction combination. Inputs can't be combined.
+0x00130AE8	Invalid instruction combination. Opcodes can't be combined.
+0x00130B24	Can't pair first instruction.
+0x00130CE0	c%d%s
+0x00130CF0	r%d%s
+0x00130CF8	.%c%c%c%c
+0x00130D04	.%c%c%c
+0x00130D64	warning
+0x00130E04	%s// end
+0x00130E58	Internal vertex shader optimizer error. Disable optimizations and try again.
+0x00130EA8	Too many microcode instructions: %d. Max is 136.
+0x00131574	INVALID
+0x00132768	invalid mask '%s'
+0x0013277C	invalid swizzle '%s'
+0x00132794	invalid register '%s[%d]'
+0x001327B0	invalid register '%s[a0.x + %d]'
+0x001327D4	invalid register '%s'
+0x0013287C	invalid destination register
+0x0013289C	Can't use A0.x within a destination register.
+0x001328CC	invalid write mask
+0x0013291C	invalid source register
+0x00132934	invalid swizzle
+0x00132944	invalid constant
+0x001329E0	Internal assembler error! %d
+0x00132A50	a0.x can't be negated
+0x00132AC4	syntax error
+0x00132AD4	%s%d_%s
+0x00132ADC	complement cannot be used with other modifiers
+0x00132B38	invalid version
+0x00132B94	yacc stack overflow
+0x00132E2C	Syntax error in enum.
+0x00133078	Can't process #include because no resolver object was supplied to preprocessor function
+0x001330D0	Too many levels of include directives. Maximum of %d levels allowed.
+0x0015E1E9	C%C5CECT
+0x00180A44	Debug%02d
+0x00180A90	sh_skel_c7.dff
+0x00180AA0	sd_skel_c7.dff
+0x00180AB0	ve_skel_c7.dff
+0x00180AC0	cwc_skel_c5.dff
+0x00180AD0	sd_skel_c11.dff
+0x00180AE0	mm_skel.dff
+0x00180AEC	sd_skel_c5.dff
+0x00180AFC	sd_skel_c3.dff
+0x00180B0C	ve_skel_c3.dff
+0x00180B1C	da_skel_c4.dff
+0x00180B2C	rb_skel_c6.dff
+0x00180B3C	van_skel.dff
+0x00180BBA	#<stop%d
+0x00180BC4	loop%d
+0x00180C10	sphere.dff
+0x00180D44	KEY ON %d UI
+0x00180E34	KEY OFF %d UI
+0x00180FC8	snackgate_error1
+0x00181D00	scooby_excite_%02d
+0x00181F04	sndfx_pu_error
+0x0018B9B0	SituationPlayerFailure
+0x0018CB5C	Invalidate
+0x0018CC78	%s\%s%s
+0x0018CE38	Part %d
+0x0018CE44	Exiting%s
+0x0018CE50	Get Ready%s
+0x0018CE5C	Entering%s
+0x0018CE68	Loading%s
+0x0018CE9B	ACHIMNEY EMITTER %d
+0x0018CF08	BAT HANG %d
+0x0018D4BB	BTime - %dh %dm %ds
+0x0018D4D3	9x %d%/%d
+0x0018D4E0	rhsd0001.anm
+0x0018D4F0	bat_fly.anm
+0x0018D4FC	rhsa0001.anm
+0x0018D50E	pBlaugh_track%02d
+0x0018D9E8	SD2.INI
+0x0018E094	PARTICLE_CLIP_%d
+0x0018E438	%s/%c%c
+0x0018E948	pause_timer%d
+0x0018EECC	%c %02d SELECTED
+0x0018F8C0	%d:%c%c %s
+0x0018F8DC	%d,%d,%d
+0x0018F9D2	\tixtra[%s]
+0x0018FB7C	%s-optr: %d
+0x0018FBA4	%s-oid:  %u
+0x0018FBCC	no %s
+0x0018FBD4	%s-hit
+0x0018FBE8	   npc:%d
+0x0018FBF4	   dyn:%d
+0x0018FC00	hits:       stat:%d
+0x0018FC3C	bound: %s
+0x0018FDDC	name:         %s
+0x0018FEAC	rot_bd_tm:  %.3f
+0x0018FED8	rot_acc_tm: %.3f
+0x0018FF04	rot_tm:     %.3f
+0x0018FF34	rot_axis:   %s
+0x0018FFBC	slide_bd_tm:  %.3f
+0x0018FFE8	slide_acc_tm: %.3f
+0x00190014	slide_tm:     %.3f
+0x00190044	slide_axis:   %s
+0x0019012C	   end_delay: %.3f
+0x00190140	continuous:       %s
+0x00190158	   ret_delay: %.3f
+0x0019016C	returns:          %s
+0x0019042F	Ax=%f y=%f w=%f h=%f
+0x00190444	center=<%f %f> radius=%f
+0x00190460	origin=<%f %f> dir=<%f %f>
+0x0019047C	m=%f b=%f
+0x00190724	%c%c%s%s%s
+0x0019077C	SaveImage.xbx
+0x00190A4C	%s.rw3
+0x00190B8C	GameData.xsv
+0x00190BB0	icon.sys
+0x00190BBC	%s%06s%02d
+0x00190C28	\Device\Cdrom0
+0x00190CA4	\SaveMeta.xbx
+0x00190CB8	\TitleMeta.xbx
+0x00190CCC	\TitleImage.xbx
+0x00190CE0	\SaveImage.xbx
+0x00190CF4	\ContentMeta.xbx
+0x00190EBC	\Device\Harddisk0\Partition%d\
+0x00190F2C	t:\$u\%s
+0x00190F48	contentmeta.xbx
+0x00190FD8	\Device\CdRom0
+0x001911F4	T:\$C\%08X%08X
+0x001929D8	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/pipe/p2/baim3d.c#2 $
+0x00192A20	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/baimmedi.c#2 $
+0x00192A68	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/bastream.c#2 $
+0x00192AB0	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/babinary.c#1 $
+0x00192AF4	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/batextur.c#4 $
+0x00192B4C	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/babintex.c#1 $
+0x00192B88	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/baerr.c#2 $
+0x00192BC8	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/bamatrix.c#7 $
+0x00192C0C	Invalid combination type
+0x00192C28	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/batypehf.c#2 $
+0x00192C64	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/baframe.c#3 $
+0x00192CA0	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/basync.c#1 $
+0x00192CDC	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/bacamera.c#3 $
+0x00192D18	Invalid projection type specified
+0x00192D3C	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/badevice.c#4 $
+0x00192DA0	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/driver/xbox/xbcache.c#1 $
+0x00192DE8	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/pipe/p2/p2core.c#1 $
+0x00192E2C	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/baraster.c#2 $
+0x00192E70	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/bavector.c#2 $
+0x00192EB8	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/driver/xbox/xbdevice.c#3 $
+0x00192F28	Invalid subsystem number
+0x00192F48	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/pipe/p2/p2renderstate.c#1 $
+0x00192F90	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/driver/xbox/xbrendst.c#2 $
+0x00192FD8	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/baimage.c#2 $
+0x00193014	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/baimras.c#2 $
+0x00193050	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/driver/xbox/xbraster.c#4 $
+0x00193098	Failed to create surface.
+0x001930B4	Failed to create palette.
+0x001930D0	Failed to create depth stencil surface.
+0x00193150	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/baresour.c#2 $
+0x00193198	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/pipe/p2/p2heap.c#1 $
+0x001931E0	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/pipe/p2/xbox/im3dpipe.c#1 $
+0x00193230	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/bamemory.c#4 $
+0x00193278	@@(#)$Id: //RenderWare/RW34Active/rwsdk/driver/common/palquant.c#1 $
+0x001932C3	C@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/baresamp.c#1 $
+0x00193307	G@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/batkreg.c#1 $
+0x00193350	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/batkbin.c#1 $
+0x00193394	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/babbox.c#2 $
+0x001933D0	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/pipe/p2/bapipe.c#1 $
+0x00193418	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/bafsys.c#2 $
+0x00193458	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/bacolor.c#2 $
+0x001934A0	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/rwstring.c#1 $
+0x001934E8	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/driver/xbox/xb2drend.c#1 $
+0x00193550	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/driver/xbox/xbmemory.c#4 $
+0x00193598	Failed to create a vertex buffer.
+0x001935C0	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/driver/xbox/xbtexdic.c#2 $
+0x00193660	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/driver/xbox/xbsprite.c#3 $
+0x00193708	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/driver/xbox/xbconvrt.c#1 $
+0x001937D0	@@(#)$Id: //RenderWare/RW34Active/rwsdk/os/xbox/osintf.c#1 $
+0x00193810	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/plcore/resmem.c#1 $
+0x00193858	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/pipe/p2/xbox/nodeXBoxSubmitNoLight.c#1 $
+0x001938B0	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/pipe/p2/p2dep.c#1 $
+0x001938F0	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/pipe/p2/p2resort.c#2 $
+0x00193934	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/babinwor.c#1 $
+0x00193974	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/baclump.c#4 $
+0x001939B0	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/bamateri.c#3 $
+0x001939F0	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/baworobj.c#3 $
+0x00193A30	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/baworld.c#2 $
+0x00193A6C	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/balight.c#3 $
+0x00193AD7	8@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/bageomet.c#5 $
+0x00193B18	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/basector.c#1 $
+0x00193B58	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/bamatlst.c#1 $
+0x00193B98	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/bamesh.c#2 $
+0x00193BD8	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/pipe/p2/xbox/native.c#1 $
+0x00193C28	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/pipe/p2/bapipew.c#2 $
+0x00193C6C	@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/bameshop.c#2 $
+0x00193CB0	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/pipe/p2/xbox/wrldpipe.c#1 $
+0x00193D00	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/pipe/p2/xbox/xbpipe.c#1 $
+0x00193D68	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/pipe/p2/xbox/xbvtxfmt.c#1 $
+0x00193DF0	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/pipe/p2/xbox/xbpixelshader.c#1 $
+0x00193F38	XboxWorldSectorAllInOne.csl
+0x00193F58	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/pipe/p2/xbox/nodeXBoxWorldSectorAllInOne.c#1 $
+0x00193FF7	?@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/pipe/p2/xbox/xblights.c#1 $
+0x00194044	XboxAtomicAllInOne.csl
+0x00194060	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/world/pipe/p2/xbox/nodeXBoxAtomicAllInOne.c#1 $
+0x001940BF	?@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/collis/ctworld.c#1 $
+0x00194110	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/collis/ctgeom.c#1 $
+0x00194158	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/collis/rpcollis.c#1 $
+0x001941A0	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/collis/ctbsp.c#1 $
+0x001941E8	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/collis/ctbuild.c#1 $
+0x00194230	@@(#)$Id: //RenderWare/RW34Active/rwsdk/tool/slerp/rtslerp.c#1 $
+0x00194277	?@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/tool/intsec/rtintsec.c#1 $
+0x001942C0	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/hanim/rphanim.c#2 $
+0x00194308	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/hanim/stdkey.c#1 $
+0x00194350	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/matfx/rpmatfx.c#2 $
+0x001943A0	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/matfx/xbox/effectPipesXbox.c#2 $
+0x00194520	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/matfx/xbox/multitexxbox.c#1 $
+0x00194570	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/matfx/multiTex.c#1 $
+0x001945B8	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/matfx/multiTexEffect.c#1 $
+0x00194608	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/skin2/rpskin.c#1 $
+0x00194650	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/skin2/xbox/skinxboxmatfx.c#1 $
+0x001946A0	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/skin2/xbox/skinxboxrender.c#3 $
+0x00194B50	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/skin2/xbox/skinxboxinstance.c#1 $
+0x00194BA8	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/skin2/xbox/skinxboxmatfxshared.c#1 $
+0x00194C00	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/skin2/xbox/skinxboxplain.c#1 $
+0x00194C50	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/skin2/xbox/skinxboxformat.c#1 $
+0x00194CDC	XboxSkinAtomicAllInOne.csl
+0x00194CF8	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/skin2/xbox/skinplatform.c#1 $
+0x00194D48	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/skin2/xbox/skinxboxconstantmode.c#1 $
+0x00194DA0	@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/spline/rpspline.c#3 $
+0x00194DE8	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/userdata/rpusrdat.c#1 $
+0x00194E38	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/ptank/rpptank.c#2 $
+0x00194EA8	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/ptank/xbox/ptankxbox.c#1 $
+0x00194F37	?@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/ptank/xbox/ptankxboxopt.c#1 $
+0x00194FC7	?@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/plugin/ptank/ptank.c#1 $
+0x00195010	@@@@(#)$Id: //RenderWare/RW34Active/rwsdk/tool/anim/rtanim.c#2 $
+0x00195054	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/babinfrm.c#1 $
+0x00195090	@@(#)$Id: //RenderWare/RW34Active/rwsdk/src/babincam.c#1 $
+0x00195414	Unknown security failure detected!
+0x00195B54	runtime error 
+0x00196144	c:\SD2XB\ScoobyXB\Master\ScoobyXB.pdb
+0x001A7258	\Device\Harddisk0\Partition1\TDATA\%08x\$u\%s
+0x001A7820	\Device\Harddisk0\Partition1\devkit\xbmovie.dat
+0x001A9320	ImmInstance.csl
+0x001A9370	XboxSubmitNoLight.csl

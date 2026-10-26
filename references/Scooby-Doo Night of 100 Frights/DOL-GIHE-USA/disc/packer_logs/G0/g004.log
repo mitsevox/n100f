@@ -1,0 +1,5270 @@
+
+Packer Library Information
+---------------------------
+Library Version        : 1
+
+General Package Information
+---------------------------
+Package File    : C:\SD2\Game\GC\data\G0\g004.HIP
+Created         : Tue Aug 06 12:51:18 2002
+Modified        : Tue Aug 06 12:51:18 2002
+Package Version : HIPA
+Sub-Version     : 2
+Compatible      : 1
+Client Version  : 4.6 (262150)
+# of Layers     : 8
+# of Assets     : 293
+Package Settings:
+                   GameTime               Disabled
+                   Statistics Tracking    Enabled
+                   Extra Info             Available
+                   Layered Sorting        Enabled
+
+Type Totals
+-----------
+Following types are defined using indicated byte totals
+
+processing
+.........
+++++++++
+  Type:  Count #DataBytes  #Pad(Raw)    #Loaded    #Dumped   #Ignored
+  ----:  ----- ----------  ---------    -------    -------   --------
+  CSN :      0          0          0          0          0          0
+  CSNM:      0          0          0          0          0          0
+  CTOC:      0          0          0          0          0          0
+  BSP :      3    2059152          8    2059160    2059160          0
+  TXD :      0          0          0          0          0          0
+  ANIM:     20     203984         96     204080          0          0
+  ATBL:      2       2660         12       2672          0          0
+  MINF:      3        772         28        800          0          0
+  MODL:     10     312256         52     312308     312308          0
+  RWTX:     49    1041208        384    1041592    1041592          0
+  TEX :      0          0          0          0          0          0
+  PNG :      0          0          0          0          0          0
+  BMP :      0          0          0          0          0          0
+  TXT :      0          0          0          0          0          0
+  ENV :      1         64          0         64          0          0
+  GRUP:      3        124         20        144          0          0
+  SDF :      0          0          0          0          0          0
+  PORT:      1         24          8         32          0          0
+  TRIG:      6       1216          0       1216          0          0
+  DPAT:      1        104          8        112          0          0
+  NPC :      2        392         24        416          0          0
+  PKUP:     46       4112        368       4480          0          0
+  PLYR:      1         80          0         80          0          0
+  CAM :      3        408         24        432          0          0
+  DOOR:      0          0          0          0          0          0
+  TIMR:      5        540         20        560          0          0
+  TEXT:      1         96          0         96          0          0
+  PICK:      0          0          0          0          0          0
+  PLAT:      6       1552         48       1600          0          0
+  PEND:      0          0          0          0          0          0
+  MVPT:      5        184         56        240          0          0
+  MRKR:     19        228         76        304          0          0
+  SFX :     12        576          0        576          0          0
+  SND :     47     946624          0          0          0     946624
+  SNDS:      0          0          0          0          0          0
+  MPHT:      0          0          0          0          0          0
+  SPLN:      0          0          0          0          0          0
+  SIMP:      4        368         16        384          0          0
+  SNDI:      1       4712          0       4712          0          0
+  CNTR:      0          0          0          0          0          0
+  HANG:      0          0          0          0          0          0
+  BUTN:      0          0          0          0          0          0
+  SURF:      5       1040          0       1040          0          0
+  DSTR:      0          0          0          0          0          0
+  MAPR:      3         56         16         72          0          0
+  GUST:      3        120         24        144          0          0
+  VOLU:      4        320          0        320          0          0
+  COND:      0          0          0          0          0          0
+  UI  :      0          0          0          0          0          0
+  UIFT:      2        376          8        384          0          0
+  PRJT:      1         68         12         80          0          0
+  LOBM:      0          0          0          0          0          0
+  FOG :      1         68         12         80          0          0
+  LITE:     15       1020        180       1200          0          0
+  PARS:      4        280         24        304          0          0
+  PARE:      4        480         32        512          0          0
+  EGEN:      0          0          0          0          0          0
+  ALST:      0          0          0          0          0          0
+  SCRP:      0          0          0          0          0          0
+
+  Sums:    293    4585264       1556    3640196    3413060     946624
+
+
+Supported Package Types:
+------------------------
+	CSN ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	CSNM::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	CTOC::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	BSP ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	TXD ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	ANIM::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: yes;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	ATBL::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	MINF::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	MODL::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	RWTX::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	TEX ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PNG ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	BMP ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TXT ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	ENV ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	GRUP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SDF ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PORT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TRIG::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	DPAT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	NPC ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PKUP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PLYR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	CAM ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	DOOR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TIMR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TEXT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PICK::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PLAT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PEND::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	MVPT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	MRKR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SFX ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SND ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	SNDS::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	MPHT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: yes;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SPLN::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SIMP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SNDI::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	CNTR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	HANG::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	BUTN::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SURF::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	DSTR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	MAPR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	GUST::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	VOLU::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	COND::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	UI  ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	UIFT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PRJT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	LOBM::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	FOG ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	LITE::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PARS::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PARE::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	EGEN::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	ALST::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SCRP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+
+Layer Information
+-----------------
+Following layers are defined (ordering is load order)
+
+
+Layer #1 is Type 1   
+Referenced Assets:
+	0xDF96BA67  (RWTX)  ocrg0006.RW3                      (        4792)
+	0x02C518D5  (RWTX)  ocrg0202.RW3                      (       17080)
+	0xD6D5D9CC  (RWTX)  oflg0002.RW3                      (       17080)
+	0xE863901D  (RWTX)  oflg0003.RW3                      (        8376)
+	0x1452CF26  (RWTX)  ocrg0203.RW3                      (        2232)
+	0x90BADAC4  (RWTX)  owag0002.RW3                      (        4792)
+	0x7111FFCB  (RWTX)  urn_A.RW3                         (        2232)
+	0x6D7DD15C  (RWTX)  otrg0002.RW3                      (        8376)
+	0x5BF01B0B  (RWTX)  otrg0001.RW3                      (        2232)
+	0xE8925C25  (RWTX)  owag0201.RW3                      (       17080)
+	0xAB13CEB4  (RWTX)  oflg0003_dark.RW3                 (        2232)
+	0x79505263  (RWTX)  obpg0001.RW3                      (       32952)
+	0x995FE123  (RWTX)  ocrg0002.RW3                      (        4792)
+	0x415472BF  (RWTX)  otsg0002.RW3                      (        4792)
+	0x2FC6BC6E  (RWTX)  otsg0001.RW3                      (        2232)
+	0x646FDF61  (RWTX)  otsg0004.RW3                      (        2232)
+	0xAAED9774  (RWTX)  ocrg0003.RW3                      (        2232)
+	0xB086C613  (RWTX)  ostr0001.RW3                      (        2232)
+	0x5E94D404  (RWTX)  g_leaves.RW3                      (        8376)
+	0xA78B30F6  (RWTX)  g_leaves2.RW3                     (        8376)
+	0xC023E514  (RWTX)  web.RW3                           (      262328)
+	0xB5E02182  (RWTX)  cobweb.RW3                        (      131256)
+	0x0387A384  (RWTX)  otog0003.RW3                      (       32952)
+	0xE7AE66CC  (RWTX)  candle_B.RW3                      (        2232)
+	0x8E3DD95E  (RWTX)  owae0303.RW3                      (       32952)
+	0x2A23C4E4  (RWTX)  coffins_E.RW3                     (        2232)
+	0xF93C1D1D  (RWTX)  candle_C.RW3                      (        2232)
+	0x7E34BA49  (RWTX)  candle_A_01.RW3                   (        2232)
+	0xD620B07B  (RWTX)  candle_A.RW3                      (        2232)
+	0x0AC9D36E  (RWTX)  candle_D.RW3                      (        2232)
+	0x6C6BF0DB  (RWTX)  ohpo2401.RW3                      (        2232)
+	0x52E22910  (RWTX)  otsg0003.RW3                      (        2232)
+	0x098AE995  (RWTX)  eyes3.RW3                         (        8376)
+	0x3EC9E9ED  (RWTX)  ironfence.RW3                     (      262328)
+	0xF7FD3344  (RWTX)  eyes2.RW3                         (        8376)
+	0x6A312446  (RWTX)  rsye0001.RW3                      (        2232)
+	0xBD9C60C6  (RWTX)  door.RW3                          (        8376)
+	0xEA0A27BC  (RWTX)  cliff_bump1                       (       17080)
+	0x40D35D0F  (RWTX)  noise_bump                        (        4792)
+	0x2AE70E4E  (RWTX)  ground_bump                       (        4792)
+	0xF5A438C8  (RWTX)  foliage_bump                      (        4792)
+	0xBB584A4F  (RWTX)  smoke                             (       16568)
+	0x1C6EAAB1  (RWTX)  arrowline                         (         696)
+	0xF883C6B6  (RWTX)  ground_fog                        (       16568)
+	0x66F76429  (RWTX)  orange flame ramp                 (        8376)
+	0x5FEF86A8  (RWTX)  cga00001.RW3                      (        2232)
+	0x64BEA5BF  (RWTX)  rss00001.RW3                      (        8376)
+	0x7FA74CC9  (RWTX)  rsa00001.RW3                      (        2232)
+	0x16ABCAD3  (RWTX)  rma00001.RW3                      (       32952)
+	------------------------------------
+	Size (base/forLoad)...:      1041592 / 1041600
+	Size Expected (TOC)...:      1041600
+	Amt Asset Data........:      1041208
+	Amt Pad (total).......:          384
+	Amt Pad (used)........:          384
+	Amt Read Filler.......:            8
+	====================================
+
+Layer #2 is Type 2   
+Referenced Assets:
+	0xE4C90B04  (BSP )  g0104                             (      731192)
+	0x04A774CE  (BSP )  g0104_noCollide                   (     1322592)
+	0xC8A760BA  (BSP )  g0104_notVisible                  (        5368)
+	------------------------------------
+	Size (base/forLoad)...:      2059160 / 2059168
+	Size Expected (TOC)...:      2059168
+	Amt Asset Data........:      2059152
+	Amt Pad (total).......:            8
+	Amt Pad (used)........:            8
+	Amt Read Filler.......:            8
+	====================================
+
+Layer #3 is Type 3   
+Referenced Assets:
+	0x3D36955C  (MODL)  ga_bind.dff                       (      140976)
+	0xED2C5807  (MODL)  gz_bind.dff                       (       81668)
+	0x64BAF2A1  (MODL)  rss00001.DFF                      (        3336)
+	0x7FA399AB  (MODL)  rsa00001.DFF                      (       13504)
+	0x16A817B5  (MODL)  rma00001.DFF                      (       12068)
+	0x11E57ED9  (MODL)  sphere                            (       20956)
+	0x2A470DD4  (MODL)  rsyg0001                          (       29788)
+	0x800DC7DD  (MODL)  arrow                             (        4240)
+	0xC0A5C2BA  (MODL)  rdog0301                          (        2340)
+	0x813C70FD  (MODL)  fireball                          (        3380)
+	------------------------------------
+	Size (base/forLoad)...:       312308 / 312320
+	Size Expected (TOC)...:       312320
+	Amt Asset Data........:       312256
+	Amt Pad (total).......:           52
+	Amt Pad (used)........:           52
+	Amt Read Filler.......:           12
+	====================================
+
+Layer #4 is Type 4   
+Referenced Assets:
+	------------------------------------
+	Size (base/forLoad)...:            0 / 0
+	Size Expected (TOC)...:            0
+	Amt Asset Data........:            0
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:            0
+	====================================
+
+Layer #5 is Type 0   
+Referenced Assets:
+	0x2EA5F237  (PLYR)  SCOOBY                            (          80)
+	0xE6AAE447  (NPC )  GARGOYLE 01                       (         196)
+	0x50AEED4C  (NPC )  GHOST 1                           (         196)
+	0x432BD55F  (PKUP)  SNACK 01                          (          88)
+	0x432BD560  (PKUP)  SNACK 02                          (          88)
+	0x432BD561  (PKUP)  SNACK 03                          (          88)
+	0x432BD562  (PKUP)  SNACK 04                          (          88)
+	0x432BD564  (PKUP)  SNACK 06                          (          88)
+	0x097610DA  (PKUP)  FOOD                              (          88)
+	0x3B8FB63C  (PKUP)  FOOD 2                            (          88)
+	0x5F6E2FCD  (PKUP)  SNACK 010                         (          88)
+	0x5F6E2FCE  (PKUP)  SNACK 011                         (          88)
+	0x5F6E2FCF  (PKUP)  SNACK 012                         (          88)
+	0x5F6E2FD0  (PKUP)  SNACK 013                         (          88)
+	0x5F6E2FD1  (PKUP)  SNACK 014                         (          88)
+	0x5F6E2FD2  (PKUP)  SNACK 015                         (          88)
+	0x5F6E3050  (PKUP)  SNACK 020                         (          88)
+	0x5F6E3051  (PKUP)  SNACK 021                         (          88)
+	0x5F6E3052  (PKUP)  SNACK 022                         (          88)
+	0x5F6E3053  (PKUP)  SNACK 023                         (          88)
+	0x5F6E3054  (PKUP)  SNACK 024                         (          88)
+	0x5F6E3055  (PKUP)  SNACK 025                         (          88)
+	0x5F6E30D3  (PKUP)  SNACK 030                         (          88)
+	0x5F6E30D4  (PKUP)  SNACK 031                         (          88)
+	0x5F6E30D5  (PKUP)  SNACK 032                         (          88)
+	0x5F6E30D6  (PKUP)  SNACK 033                         (          88)
+	0x5F6E30D7  (PKUP)  SNACK 034                         (          88)
+	0x5F6E30D8  (PKUP)  SNACK 035                         (          88)
+	0x5F6E30D9  (PKUP)  SNACK 036                         (          88)
+	0x5F6E30DA  (PKUP)  SNACK 037                         (          88)
+	0x5F6E30DB  (PKUP)  SNACK 038                         (          88)
+	0x5F6E30DC  (PKUP)  SNACK 039                         (          88)
+	0x5F6E3156  (PKUP)  SNACK 040                         (          88)
+	0x5F6E3157  (PKUP)  SNACK 041                         (          88)
+	0x5F6E3158  (PKUP)  SNACK 042                         (          88)
+	0x5F6E3159  (PKUP)  SNACK 043                         (          88)
+	0x5F6E315A  (PKUP)  SNACK 044                         (          88)
+	0x5F6E315B  (PKUP)  SNACK 045                         (          88)
+	0x5F6E315C  (PKUP)  SNACK 046                         (          88)
+	0x5F6E315D  (PKUP)  SNACK 047                         (          88)
+	0x5F6E315E  (PKUP)  SNACK 048                         (          88)
+	0x5F6E315F  (PKUP)  SNACK 049                         (          88)
+	0x5F6E325C  (PKUP)  SNACK 060                         (          88)
+	0x5F6E325D  (PKUP)  SNACK 061                         (          88)
+	0x5F6E325E  (PKUP)  SNACK 062                         (          88)
+	0x5F6E325F  (PKUP)  SNACK 063                         (          88)
+	0x5F6E3260  (PKUP)  SNACK 064                         (          88)
+	0x5F6E3261  (PKUP)  SNACK 065                         (          88)
+	0x1527C59A  (PKUP)  CLUE 1                            (         152)
+	0xD77001EF  (TRIG)  EXIT TO G003                      (         304)
+	0x9EE4829C  (TRIG)  FALL TO DEATH                     (         176)
+	0x9A2A8BC9  (TRIG)  GOTO START                        (         176)
+	0x7EC66EEB  (TRIG)  GOTO CAM 1                        (         176)
+	0x15DCBF8A  (TRIG)  GOTO STATIC CAM                   (         208)
+	0x8E14B5EF  (TRIG)  GOTO START_A                      (         176)
+	0xBC44C2B2  (CAM )  START                             (         136)
+	0x090B7C72  (CAM )  CAM1                              (         136)
+	0x16242986  (CAM )  STACTIC CAM                       (         136)
+	0xBA9D361D  (ENV )  GRAVEYARD4                        (          64)
+	0x5448F196  (TIMR)  TIMER 1                           (         108)
+	0x2AD3B08B  (TIMR)  TWANGTIMER1                       (         108)
+	0x2AD3B08C  (TIMR)  TWANGTIMER2                       (         108)
+	0x2AD3B08D  (TIMR)  TWANGTIMER3                       (         108)
+	0x2AD3B08E  (TIMR)  TWANGTIMER4                       (         108)
+	0xFBB4352B  (PORT)  TOG003                            (          24)
+	0x463461F3  (TEXT)  CLUE 1 TEXT                       (          96)
+	0x61A88B15  (MVPT)  GARGOYLE 01_01                    (          36)
+	0x61A88B16  (MVPT)  GARGOYLE 01_02                    (          40)
+	0x61A88B17  (MVPT)  GARGOYLE 01_03                    (          36)
+	0x9E416C7A  (MVPT)  GHOST 1_1                         (          36)
+	0x9E416C7B  (MVPT)  GHOST 1_2                         (          36)
+	0x760BBDCE  (MRKR)  FROMG003                          (          12)
+	0x924FE391  (MRKR)  FOG MARKER 1                      (          12)
+	0x924FE392  (MRKR)  FOG MARKER 2                      (          12)
+	0x924FE393  (MRKR)  FOG MARKER 3                      (          12)
+	0xF1D6BB06  (MRKR)  CANDLE MARKER 1                   (          12)
+	0xF1D6BB07  (MRKR)  CANDLE MARKER 2                   (          12)
+	0xF1D6BB08  (MRKR)  CANDLE MARKER 3                   (          12)
+	0xF1D6BB09  (MRKR)  CANDLE MARKER 4                   (          12)
+	0xF1D6BB0A  (MRKR)  CANDLE MARKER 5                   (          12)
+	0xF1D6BB0B  (MRKR)  CANDLE MARKER 6                   (          12)
+	0xF1D6BB0C  (MRKR)  CANDLE MARKER 7                   (          12)
+	0xF1D6BB0D  (MRKR)  CANDLE MARKER 8                   (          12)
+	0xF1D6BB0E  (MRKR)  CANDLE MARKER 9                   (          12)
+	0xC0E1B442  (MRKR)  CANDLE MARKER 10                  (          12)
+	0xC0E1B443  (MRKR)  CANDLE MARKER 11                  (          12)
+	0xC0E1B444  (MRKR)  CANDLE MARKER 12                  (          12)
+	0xC0E1B445  (MRKR)  CANDLE MARKER 13                  (          12)
+	0xC0E1B446  (MRKR)  CANDLE MARKER 14                  (          12)
+	0xC0E1B447  (MRKR)  CANDLE MARKER 15                  (          12)
+	0x506E9460  (GRUP)  ARROW FIRE GROUP                  (          28)
+	0x9C2C7913  (GRUP)  FOG MARKER GROUP                  (          24)
+	0x2374D318  (GRUP)  CANDLE MARKER GROUP               (          72)
+	0x875BFCE2  (SFX )  TWANG1                            (          48)
+	0x875BFCE3  (SFX )  TWANG2                            (          48)
+	0x875BFCE4  (SFX )  TWANG3                            (          48)
+	0x875BFCE5  (SFX )  TWANG4                            (          48)
+	0xDBDF6A6B  (SFX )  WIND_BLOWS1                       (          48)
+	0xDBDF6A6C  (SFX )  WIND_BLOWS2                       (          48)
+	0xDBDF6A6D  (SFX )  WIND_BLOWS3                       (          48)
+	0x46DDA5A8  (SFX )  EXIT DOOR 1 SOUND                 (          48)
+	0x106420AB  (SFX )  ARROW 1 SFX                       (          48)
+	0x21F1D6FC  (SFX )  ARROW 2 SFX                       (          48)
+	0x337F8D4D  (SFX )  ARROW 3 SFX                       (          48)
+	0x450D439E  (SFX )  ARROW 4 SFX                       (          48)
+	0x1BCAEE56  (PLAT)  ARROW 1                           (         296)
+	0x1BCAEE57  (PLAT)  ARROW 2                           (         264)
+	0x1BCAEE58  (PLAT)  ARROW 3                           (         264)
+	0x1BCAEE59  (PLAT)  ARROW 4                           (         232)
+	0xB741F40D  (PLAT)  EXIT DOOR 1                       (         264)
+	0xC6BFE2D7  (PLAT)  EXIT DOOR 10                      (         232)
+	0xAB254801  (SIMP)  STATUE 1                          (          92)
+	0xAB254802  (SIMP)  STATUE 2                          (          92)
+	0xAB254803  (SIMP)  STATUE 3                          (          92)
+	0xAB254804  (SIMP)  STATUE 4                          (          92)
+	0xB9FD9B58  (SURF)  SCARE                             (         208)
+	0xEEF37F20  (SURF)  NOISE BUMP                        (         208)
+	0x1514AB3D  (SURF)  ROCK BUMP                         (         208)
+	0xA3C45AD9  (SURF)  FOLIAGE BUMP                      (         208)
+	0xD907305F  (SURF)  GROUND BUMP                       (         208)
+	0xD9CF4B99  (GUST)  UP GUST 5                         (          40)
+	0xD9CF4B9A  (GUST)  UP GUST 6                         (          40)
+	0xD9CF4B9B  (GUST)  UP GUST 7                         (          40)
+	0x64891BF0  (VOLU)  UP GUST VOL 5                     (          80)
+	0x64891BF1  (VOLU)  UP GUST VOL 6                     (          80)
+	0x64891BF2  (VOLU)  UP GUST VOL 7                     (          80)
+	0xDD42A1D1  (VOLU)  LIGHT_PARTITION                   (          80)
+	0xE37F7AD5  (DPAT)  DISPATCHER_G004                   (         104)
+	0xD081BC55  (UIFT)  EXITFONT                          (         156)
+	0x4456BCB5  (UIFT)  CLUE 1 FONT                       (         220)
+	0x51C498F9  (PRJT)  FIREBALL TYPE                     (          68)
+	0xD7688928  (FOG )  FOGGY                             (          68)
+	0x835DD73D  (LITE)  HALL CANDLE 1                     (          68)
+	0x835DD73E  (LITE)  HALL CANDLE 2                     (          68)
+	0x835DD73F  (LITE)  HALL CANDLE 3                     (          68)
+	0x835DD740  (LITE)  HALL CANDLE 4                     (          68)
+	0x835DD741  (LITE)  HALL CANDLE 5                     (          68)
+	0x835DD742  (LITE)  HALL CANDLE 6                     (          68)
+	0xC11751BF  (LITE)  ROOM CANDLE 1                     (          68)
+	0xC11751C0  (LITE)  ROOM CANDLE 2                     (          68)
+	0xC11751C1  (LITE)  ROOM CANDLE 3                     (          68)
+	0xC11751C2  (LITE)  ROOM CANDLE 4                     (          68)
+	0x0E510923  (LITE)  CANDLEBOX 1                       (          68)
+	0xCDF6B87D  (LITE)  LEDGE CANDLE 1                    (          68)
+	0xCDF6B87E  (LITE)  LEDGE CANDLE 2                    (          68)
+	0xCDF6B87F  (LITE)  LEDGE CANDLE 3                    (          68)
+	0xCDF6B880  (LITE)  LEDGE CANDLE 4                    (          68)
+	0x2A209EA0  (PARE)  PIT FOG EMITTER 1                 (         120)
+	0x084A42B3  (PARE)  ARROW FIRE EMITTER                (         120)
+	0x6C220856  (PARE)  MULTI GROUND FOG EMITTER          (         120)
+	0xAC223A96  (PARE)  RED CANDLE EMITTER                (         120)
+	0xBF1DE556  (PARS)  PIT FOG SYSTEM                    (          72)
+	0x6E3260CA  (PARS)  ARROW FIRE SYSTEM                 (          52)
+	0x82803D2B  (PARS)  MULTI GROUND FOG SYSTEM           (          44)
+	0xBD02703E  (PARS)  CANDLE SYSTEM                     (         112)
+	0xCBCB67A1  (ANIM)  ga_hover.anm                      (       12320)
+	0xE200EBCC  (ANIM)  ga_fidget.anm                     (        7240)
+	0x2BE059B5  (ANIM)  ga_rising.anm                     (        8692)
+	0x6CD95E09  (ANIM)  ga_bored.anm                      (        1432)
+	0xA1483968  (ANIM)  ga_fly.anm                        (        8692)
+	0x90B0DDC6  (ANIM)  ga_gloat.anm                      (       13092)
+	0x66D604D5  (ANIM)  ga_hear.anm                       (       14500)
+	0x8EA9D4F4  (ANIM)  ga_see.anm                        (       16272)
+	0x95968E74  (ANIM)  ga_investigate.anm                (       17756)
+	0x77B61CA3  (ANIM)  ga_attack.anm                     (       12320)
+	0x388ED324  (ANIM)  ga_gummed.anm                     (       11596)
+	0xF843A578  (ANIM)  ga_gumbounce.anm                  (        6512)
+	0x25D6F0ED  (ANIM)  ga_bubbled.anm                    (       11152)
+	0x01BFD7EF  (ANIM)  ga_hitsmashed.anm                 (       27056)
+	0xC3FBE786  (ANIM)  gz_idle.anm                       (        6732)
+	0x6235989E  (ANIM)  gz_patrol.anm                     (        6732)
+	0xF94CB5A6  (ANIM)  gz_attack.anm                     (        6732)
+	0xBA256C27  (ANIM)  gz_gummed.anm                     (        6732)
+	0x0CDE3149  (ANIM)  gz_gumbounce.anm                  (        4632)
+	0x75E73D76  (ANIM)  gz_bubbled.anm                    (        3792)
+	0x2A62F951  (ATBL)  ga.ATBL                           (        1808)
+	0xBA4E578C  (ATBL)  gz.ATBL                           (         852)
+	0x2BFBC150  (MINF)  ga.MINF                           (         404)
+	0xBBE71F8B  (MINF)  gz.MINF                           (         356)
+	0x94E25463  (MINF)  pickups.MINF                      (          12)
+	0xFC470283  (MAPR)  g0104 Material Map                (          40)
+	0x53374301  (MAPR)  g0104_noCollide Material Map      (           8)
+	0xD2CFD885  (MAPR)  g0104_notVisible Material Map     (           8)
+	------------------------------------
+	Size (base/forLoad)...:       222424 / 222432
+	Size Expected (TOC)...:       222432
+	Amt Asset Data........:       221312
+	Amt Pad (total).......:         1112
+	Amt Pad (used)........:         1112
+	Amt Read Filler.......:            8
+	====================================
+
+Layer #6 is Type 8   
+Referenced Assets:
+	------------------------------------
+	Size (base/forLoad)...:            0 / 0
+	Size Expected (TOC)...:            0
+	Amt Asset Data........:            0
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:            0
+	====================================
+
+Layer #7 is Type 6   
+Referenced Assets:
+	0x9B73205A  (SND )  gg_idle1                          (       24416)
+	0x633BC32A  (SND )  gg_wingflap1                      (        3328)
+	0x6E022C51  (SND )  gg_see1                           (       14912)
+	0xEB9101E2  (SND )  gg_chase1                         (       10688)
+	0x21B49878  (SND )  gg_gloat2                         (       27488)
+	0x8A04DCE9  (SND )  gg_hear2                          (        3808)
+	0x946C9AFD  (SND )  gg_looking1                       (       19072)
+	0x1D18EB12  (SND )  gg_listen4                        (        8704)
+	0x371CE2E3  (SND )  gg_attack2                        (        8288)
+	0xBE472FDC  (SND )  gen_gumstretch1                   (        5952)
+	0xF58CFEF5  (SND )  gg_gummed1                        (       29376)
+	0xD74A0199  (SND )  gen_gumbounce05                   (       10688)
+	0x2F73E44D  (SND )  gg_gumbounce1                     (        5600)
+	0x2F321A42  (SND )  gen_bubble_form2                  (        8608)
+	0xAB819E5A  (SND )  gg_bubble5                        (       26336)
+	0xB26C6EF5  (SND )  gg_death2                         (       24960)
+	0x9DFAB3CD  (SND )  gen_gumbounce1                    (        3968)
+	0xF4E604CD  (SND )  gum_pop                           (        3296)
+	0x2F321A41  (SND )  gen_bubble_form1                  (       12576)
+	0xB22A8421  (SND )  soapbubble_pop                    (        3264)
+	0x3FEE2901  (SND )  gen_bodyfall1                     (        4960)
+	0xDE777092  (SND )  life_essence_fade                 (       38304)
+	0xA61E38FA  (SND )  scooby_one_41                     (       26048)
+	0xAB819E56  (SND )  gg_bubble1                        (       22176)
+	0xAB819E58  (SND )  gg_bubble3                        (       31968)
+	0xEB9101E3  (SND )  gg_chase2                         (       21216)
+	0xEB9101E4  (SND )  gg_chase3                         (       16064)
+	0x21B49877  (SND )  gg_gloat1                         (       18528)
+	0x21B49879  (SND )  gg_gloat3                         (       22112)
+	0xF58CFEF6  (SND )  gg_gummed2                        (       16448)
+	0xF58CFEF7  (SND )  gg_gummed3                        (        7168)
+	0x8A04DCE8  (SND )  gg_hear1                          (        5152)
+	0x6C89EA79  (SND )  gg_hit1                           (        6144)
+	0x9B73205E  (SND )  gg_idle5                          (       13792)
+	0xB0599A12  (SND )  gg_investigate2                   (       32384)
+	0x7A1DF559  (SND )  gg_stunned1                       (       28544)
+	0x21EDD1AA  (SND )  fireball3                         (       17216)
+	0x21EDD1AC  (SND )  fireball5                         (       28096)
+	0xA28F6B3E  (SND )  fireball_loop                     (       26880)
+	0x4C62039A  (SND )  gz_moan1                          (       37824)
+	0x4C62039B  (SND )  gz_moan2                          (       50080)
+	0x4C62039C  (SND )  gz_moan3                          (       50336)
+	0x4C62039D  (SND )  gz_moan4                          (       71232)
+	0x82E22E5B  (SND )  bow_twang1                        (        3648)
+	0xC42ED83F  (SND )  wind_gust1                        (       64992)
+	0xCAEB0455  (SND )  wood_door_creak2                  (       17696)
+	0x6301122C  (SND )  arrow_trail                       (       12288)
+	------------------------------------
+	Size (base/forLoad)...:       946624 / 946624
+	Size Expected (TOC)...:       946624
+	Amt Asset Data........:       946624
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:            0
+	====================================
+
+Layer #8 is Type 7   
+Referenced Assets:
+	0x7AB6743A  (SNDI)  sound_info                        (        4712)
+	------------------------------------
+	Size (base/forLoad)...:         4712 / 4736
+	Size Expected (TOC)...:         4736
+	Amt Asset Data........:         4712
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:           24
+	====================================
+
+Asset Details
+-------------
+AID: 0x01BFD7EF  (ga_hitsmashed.anm)
+{
+	    Type:        ANIM
+	    Size:       27056
+	  Offset:     3593184
+	    Plus:           0
+	   Check:  0xE930723E
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_hitsmashed.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x02C518D5  (ocrg0202.RW3)
+{
+	    Type:        RWTX
+	    Size:       17080
+	  Offset:       28448
+	    Plus:           8
+	   Check:  0xEACB4944
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x0387A384  (otog0003.RW3)
+{
+	    Type:        RWTX
+	    Size:       32952
+	  Offset:      572128
+	    Plus:           8
+	   Check:  0x816DAEA3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x04A774CE  (g0104_noCollide)
+{
+	    Type:        BSP 
+	    Size:     1322592
+	  Offset:     1796448
+	    Plus:           0
+	   Check:  0xAC7534F3
+	Filename:  \\Job\sd2\cg\env\p2\g00\latest\g0104_noCollide.bsp
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x084A42B3  (ARROW FIRE EMITTER)
+{
+	    Type:        PARE
+	    Size:         120
+	  Offset:     3450848
+	    Plus:           8
+	   Check:  0x031DC6A7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x090B7C72  (CAM1)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     3443072
+	    Plus:           8
+	   Check:  0xC09FE218
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x097610DA  (FOOD)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3437712
+	    Plus:           8
+	   Check:  0x7A1CAC49
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x098AE995  (eyes3.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      655968
+	    Plus:           8
+	   Check:  0x60166987
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x0AC9D36E  (candle_D.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      649248
+	    Plus:           8
+	   Check:  0x74E6DDC5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x0CDE3149  (gz_gumbounce.anm)
+{
+	    Type:        ANIM
+	    Size:        4632
+	  Offset:     3647184
+	    Plus:           8
+	   Check:  0x3173EFF0
+	Filename:  \\job\sd2\\cg\chr\p2\gz\latest\gz_gumbounce.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x0E510923  (CANDLEBOX 1)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3450320
+	    Plus:          12
+	   Check:  0x4F3839A5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x106420AB  (ARROW 1 SFX)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3445184
+	    Plus:           0
+	   Check:  0x07A29140
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x11E57ED9  (sphere)
+{
+	    Type:        MODL
+	    Size:       20956
+	  Offset:     3376000
+	    Plus:           4
+	   Check:  0x9EBA07FB
+	Filename:  \\Job\sd2\cg\rtobj\p2\projectiles\sphere.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x1452CF26  (ocrg0203.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:       71008
+	    Plus:           8
+	   Check:  0x8254BF89
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x1514AB3D  (ROCK BUMP)
+{
+	    Type:        SURF
+	    Size:         208
+	  Offset:     3447776
+	    Plus:           0
+	   Check:  0xD1F78FEB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1527C59A  (CLUE 1)
+{
+	    Type:        PKUP
+	    Size:         152
+	  Offset:     3441552
+	    Plus:           8
+	   Check:  0x3A3ACC0F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x15DCBF8A  (GOTO STATIC CAM)
+{
+	    Type:        TRIG
+	    Size:         208
+	  Offset:     3442544
+	    Plus:           0
+	   Check:  0x8AC0210F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x16242986  (STACTIC CAM)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     3443216
+	    Plus:           8
+	   Check:  0x82D29D7F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x16A817B5  (rma00001.DFF)
+{
+	    Type:        MODL
+	    Size:       12068
+	  Offset:     3363920
+	    Plus:          12
+	   Check:  0xC117C39C
+	Filename:  \\job\sd2\cg\rtobj\p2\latest\rma00001\rma00001.DFF
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x16ABCAD3  (rma00001.RW3)
+{
+	    Type:        RWTX
+	    Size:       32952
+	  Offset:     1032288
+	    Plus:           0
+	   Check:  0x759DE99B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x1BCAEE56  (ARROW 1)
+{
+	    Type:        PLAT
+	    Size:         296
+	  Offset:     3445376
+	    Plus:           8
+	   Check:  0x007A4C10
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1BCAEE57  (ARROW 2)
+{
+	    Type:        PLAT
+	    Size:         264
+	  Offset:     3445680
+	    Plus:           8
+	   Check:  0x582F99E0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1BCAEE58  (ARROW 3)
+{
+	    Type:        PLAT
+	    Size:         264
+	  Offset:     3445952
+	    Plus:           8
+	   Check:  0x61A90AC2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1BCAEE59  (ARROW 4)
+{
+	    Type:        PLAT
+	    Size:         232
+	  Offset:     3446224
+	    Plus:           8
+	   Check:  0x730917AF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x1C6EAAB1  (arrowline)
+{
+	    Type:        RWTX
+	    Size:         696
+	  Offset:      993760
+	    Plus:           8
+	   Check:  0x345A9249
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x1D18EB12  (gg_listen4)
+{
+	    Type:        SND 
+	    Size:        8704
+	  Offset:     3762880
+	    Plus:           0
+	   Check:  0xB6FFD12B
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_listen4.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x21B49877  (gg_gloat1)
+{
+	    Type:        SND 
+	    Size:       18528
+	  Offset:     4075232
+	    Plus:           0
+	   Check:  0x02A866B4
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_gloat1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x21B49878  (gg_gloat2)
+{
+	    Type:        SND 
+	    Size:       27488
+	  Offset:     3712512
+	    Plus:           0
+	   Check:  0xA4D5404B
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_gloat2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x21B49879  (gg_gloat3)
+{
+	    Type:        SND 
+	    Size:       22112
+	  Offset:     4093760
+	    Plus:           0
+	   Check:  0xA7EC5A08
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_gloat3.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x21EDD1AA  (fireball3)
+{
+	    Type:        SND 
+	    Size:       17216
+	  Offset:     4225504
+	    Plus:           0
+	   Check:  0x8163912C
+	Filename:  \\Job\sd2\snd\latest\p2\projectiles\fireball3.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x21EDD1AC  (fireball5)
+{
+	    Type:        SND 
+	    Size:       28096
+	  Offset:     4242720
+	    Plus:           0
+	   Check:  0xF1E73845
+	Filename:  \\Job\sd2\snd\latest\p2\projectiles\fireball5.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x21F1D6FC  (ARROW 2 SFX)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3445232
+	    Plus:           0
+	   Check:  0x6AAB9C2D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2374D318  (CANDLE MARKER GROUP)
+{
+	    Type:        GRUP
+	    Size:          72
+	  Offset:     3444720
+	    Plus:           8
+	   Check:  0xB712FBFB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x25D6F0ED  (ga_bubbled.anm)
+{
+	    Type:        ANIM
+	    Size:       11152
+	  Offset:     3582032
+	    Plus:           0
+	   Check:  0x85096742
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_bubbled.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x2A209EA0  (PIT FOG EMITTER 1)
+{
+	    Type:        PARE
+	    Size:         120
+	  Offset:     3450720
+	    Plus:           8
+	   Check:  0x7B4B422C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2A23C4E4  (coffins_E.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      640288
+	    Plus:           8
+	   Check:  0xFB322F6E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x2A470DD4  (rsyg0001)
+{
+	    Type:        MODL
+	    Size:       29788
+	  Offset:     3396960
+	    Plus:           4
+	   Check:  0xFB0998B3
+	Filename:  \\Job\sd2\cg\env\p2\g00\latest\rsyg0001.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x2A62F951  (ga.ATBL)
+{
+	    Type:        ATBL
+	    Size:        1808
+	  Offset:     3655616
+	    Plus:           0
+	   Check:  0x19104545
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x2AD3B08B  (TWANGTIMER1)
+{
+	    Type:        TIMR
+	    Size:         108
+	  Offset:     3443536
+	    Plus:           4
+	   Check:  0x789DB632
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2AD3B08C  (TWANGTIMER2)
+{
+	    Type:        TIMR
+	    Size:         108
+	  Offset:     3443648
+	    Plus:           4
+	   Check:  0x2B4DFA39
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2AD3B08D  (TWANGTIMER3)
+{
+	    Type:        TIMR
+	    Size:         108
+	  Offset:     3443760
+	    Plus:           4
+	   Check:  0xA2770EB7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2AD3B08E  (TWANGTIMER4)
+{
+	    Type:        TIMR
+	    Size:         108
+	  Offset:     3443872
+	    Plus:           4
+	   Check:  0x1DD9B09A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2AE70E4E  (ground_bump)
+{
+	    Type:        RWTX
+	    Size:        4792
+	  Offset:      967584
+	    Plus:           8
+	   Check:  0xEFE1BDB1
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x2BE059B5  (ga_rising.anm)
+{
+	    Type:        ANIM
+	    Size:        8692
+	  Offset:     3471104
+	    Plus:          12
+	   Check:  0x90D868B9
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_rising.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x2BFBC150  (ga.MINF)
+{
+	    Type:        MINF
+	    Size:         404
+	  Offset:     3658288
+	    Plus:          12
+	   Check:  0x39A549D0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2EA5F237  (SCOOBY)
+{
+	    Type:        PLYR
+	    Size:          80
+	  Offset:     3436736
+	    Plus:           0
+	   Check:  0x259525AF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x2F321A41  (gen_bubble_form1)
+{
+	    Type:        SND 
+	    Size:       12576
+	  Offset:     3898656
+	    Plus:           0
+	   Check:  0x6182698C
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_bubble_form1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x2F321A42  (gen_bubble_form2)
+{
+	    Type:        SND 
+	    Size:        8608
+	  Offset:     3831488
+	    Plus:           0
+	   Check:  0x5A095541
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_bubble_form2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x2F73E44D  (gg_gumbounce1)
+{
+	    Type:        SND 
+	    Size:        5600
+	  Offset:     3825888
+	    Plus:           0
+	   Check:  0x7038CF61
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_gumbounce1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x2FC6BC6E  (otsg0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      152800
+	    Plus:           8
+	   Check:  0xB971D81C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x337F8D4D  (ARROW 3 SFX)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3445280
+	    Plus:           0
+	   Check:  0x7E878A6B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x371CE2E3  (gg_attack2)
+{
+	    Type:        SND 
+	    Size:        8288
+	  Offset:     3771584
+	    Plus:           0
+	   Check:  0x1040EE85
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_attack2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x388ED324  (ga_gummed.anm)
+{
+	    Type:        ANIM
+	    Size:       11596
+	  Offset:     3563920
+	    Plus:           4
+	   Check:  0xD90A0898
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_gummed.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x3B8FB63C  (FOOD 2)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3437808
+	    Plus:           8
+	   Check:  0xB97DC685
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x3D36955C  (ga_bind.dff)
+{
+	    Type:        MODL
+	    Size:      140976
+	  Offset:     3124416
+	    Plus:           0
+	   Check:  0x4440CE3D
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_bind.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x3EC9E9ED  (ironfence.RW3)
+{
+	    Type:        RWTX
+	    Size:      262328
+	  Offset:      664352
+	    Plus:           8
+	   Check:  0x41C5AD50
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x3FEE2901  (gen_bodyfall1)
+{
+	    Type:        SND 
+	    Size:        4960
+	  Offset:     3914496
+	    Plus:           0
+	   Check:  0x1748AE20
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_bodyfall1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x40D35D0F  (noise_bump)
+{
+	    Type:        RWTX
+	    Size:        4792
+	  Offset:      962784
+	    Plus:           8
+	   Check:  0xCA505D83
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x415472BF  (otsg0002.RW3)
+{
+	    Type:        RWTX
+	    Size:        4792
+	  Offset:      148000
+	    Plus:           8
+	   Check:  0x238371A2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x432BD55F  (SNACK 01)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3437232
+	    Plus:           8
+	   Check:  0xCEC7B36D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x432BD560  (SNACK 02)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3437328
+	    Plus:           8
+	   Check:  0x9074D993
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x432BD561  (SNACK 03)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3437424
+	    Plus:           8
+	   Check:  0xE971BE36
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x432BD562  (SNACK 04)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3437520
+	    Plus:           8
+	   Check:  0x7C773FF4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x432BD564  (SNACK 06)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3437616
+	    Plus:           8
+	   Check:  0xC66896CC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x4456BCB5  (CLUE 1 FONT)
+{
+	    Type:        UIFT
+	    Size:         220
+	  Offset:     3449136
+	    Plus:           4
+	   Check:  0x0E70641E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x450D439E  (ARROW 4 SFX)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3445328
+	    Plus:           0
+	   Check:  0xDDEAB343
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x463461F3  (CLUE 1 TEXT)
+{
+	    Type:        TEXT
+	    Size:          96
+	  Offset:     3444016
+	    Plus:           0
+	   Check:  0x54C3AE29
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x46DDA5A8  (EXIT DOOR 1 SOUND)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3445136
+	    Plus:           0
+	   Check:  0xC5218001
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x4C62039A  (gz_moan1)
+{
+	    Type:        SND 
+	    Size:       37824
+	  Offset:     4297696
+	    Plus:           0
+	   Check:  0xAC404F20
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gz_moan1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x4C62039B  (gz_moan2)
+{
+	    Type:        SND 
+	    Size:       50080
+	  Offset:     4335520
+	    Plus:           0
+	   Check:  0xC509A17F
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gz_moan2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x4C62039C  (gz_moan3)
+{
+	    Type:        SND 
+	    Size:       50336
+	  Offset:     4385600
+	    Plus:           0
+	   Check:  0xF7F9C32B
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gz_moan3.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x4C62039D  (gz_moan4)
+{
+	    Type:        SND 
+	    Size:       71232
+	  Offset:     4435936
+	    Plus:           0
+	   Check:  0xF47881C3
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gz_moan4.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x506E9460  (ARROW FIRE GROUP)
+{
+	    Type:        GRUP
+	    Size:          28
+	  Offset:     3444656
+	    Plus:           4
+	   Check:  0xC879DE36
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x50AEED4C  (GHOST 1)
+{
+	    Type:        NPC 
+	    Size:         196
+	  Offset:     3437024
+	    Plus:          12
+	   Check:  0x53BCD88C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x51C498F9  (FIREBALL TYPE)
+{
+	    Type:        PRJT
+	    Size:          68
+	  Offset:     3449360
+	    Plus:          12
+	   Check:  0x4E9ADD56
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x52E22910  (otsg0003.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      653728
+	    Plus:           8
+	   Check:  0x23A24CCC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x53374301  (g0104_noCollide Material Map)
+{
+	    Type:        MAPR
+	    Size:           8
+	  Offset:     3659136
+	    Plus:           8
+	   Check:  0xE41DBE1A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5448F196  (TIMER 1)
+{
+	    Type:        TIMR
+	    Size:         108
+	  Offset:     3443424
+	    Plus:           4
+	   Check:  0xC43F5EBE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5BF01B0B  (otrg0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:       88672
+	    Plus:           8
+	   Check:  0x5D961F65
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x5E94D404  (g_leaves.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      161760
+	    Plus:           8
+	   Check:  0x3C39FA9B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x5F6E2FCD  (SNACK 010)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3437904
+	    Plus:           8
+	   Check:  0xF0A15492
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E2FCE  (SNACK 011)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438000
+	    Plus:           8
+	   Check:  0x265415CB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E2FCF  (SNACK 012)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438096
+	    Plus:           8
+	   Check:  0xEEADB2CF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E2FD0  (SNACK 013)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438192
+	    Plus:           8
+	   Check:  0x146287C7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E2FD1  (SNACK 014)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438288
+	    Plus:           8
+	   Check:  0x6183CF58
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E2FD2  (SNACK 015)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438384
+	    Plus:           8
+	   Check:  0x148AD503
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3050  (SNACK 020)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438480
+	    Plus:           8
+	   Check:  0xB26C8E93
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3051  (SNACK 021)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438576
+	    Plus:           8
+	   Check:  0xD85E5FD8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3052  (SNACK 022)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438672
+	    Plus:           8
+	   Check:  0x76EDAF05
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3053  (SNACK 023)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438768
+	    Plus:           8
+	   Check:  0xC4B927D0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3054  (SNACK 024)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438864
+	    Plus:           8
+	   Check:  0x6FCD303E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3055  (SNACK 025)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3438960
+	    Plus:           8
+	   Check:  0x11710F3C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E30D3  (SNACK 030)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3439056
+	    Plus:           8
+	   Check:  0x73E68390
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E30D4  (SNACK 031)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3439152
+	    Plus:           8
+	   Check:  0x331C1A1E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E30D5  (SNACK 032)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3439248
+	    Plus:           8
+	   Check:  0x7A1C6A4E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E30D6  (SNACK 033)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3439344
+	    Plus:           8
+	   Check:  0xA57A1A9C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E30D7  (SNACK 034)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3439440
+	    Plus:           8
+	   Check:  0x3CEA7E94
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E30D8  (SNACK 035)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3439536
+	    Plus:           8
+	   Check:  0x46BE0C08
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E30D9  (SNACK 036)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3439632
+	    Plus:           8
+	   Check:  0x88A1AAA9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E30DA  (SNACK 037)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3439728
+	    Plus:           8
+	   Check:  0xD68D9CB9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E30DB  (SNACK 038)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3439824
+	    Plus:           8
+	   Check:  0x069963EA
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E30DC  (SNACK 039)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3439920
+	    Plus:           8
+	   Check:  0x224F7867
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3156  (SNACK 040)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440016
+	    Plus:           8
+	   Check:  0x03ED6BDF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3157  (SNACK 041)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440112
+	    Plus:           8
+	   Check:  0xCC70B6EB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3158  (SNACK 042)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440208
+	    Plus:           8
+	   Check:  0x17439E2E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3159  (SNACK 043)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440304
+	    Plus:           8
+	   Check:  0x353FF31F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E315A  (SNACK 044)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440400
+	    Plus:           8
+	   Check:  0x48B529C8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E315B  (SNACK 045)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440496
+	    Plus:           8
+	   Check:  0x2DED74CC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E315C  (SNACK 046)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440592
+	    Plus:           8
+	   Check:  0x4DDF87DF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E315D  (SNACK 047)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440688
+	    Plus:           8
+	   Check:  0xE2EE5079
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E315E  (SNACK 048)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440784
+	    Plus:           8
+	   Check:  0xB4C3E4B5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E315F  (SNACK 049)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440880
+	    Plus:           8
+	   Check:  0x428E2A50
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E325C  (SNACK 060)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3440976
+	    Plus:           8
+	   Check:  0x410F8923
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E325D  (SNACK 061)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3441072
+	    Plus:           8
+	   Check:  0xFA3F73D0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E325E  (SNACK 062)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3441168
+	    Plus:           8
+	   Check:  0x8EBDC717
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E325F  (SNACK 063)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3441264
+	    Plus:           8
+	   Check:  0xABECBCC5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3260  (SNACK 064)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3441360
+	    Plus:           8
+	   Check:  0xCC32E2A6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5F6E3261  (SNACK 065)
+{
+	    Type:        PKUP
+	    Size:          88
+	  Offset:     3441456
+	    Plus:           8
+	   Check:  0xCE9B4C51
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x5FEF86A8  (cga00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:     1019424
+	    Plus:           8
+	   Check:  0x117DDD01
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x61A88B15  (GARGOYLE 01_01)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     3444112
+	    Plus:          12
+	   Check:  0xA54FB980
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x61A88B16  (GARGOYLE 01_02)
+{
+	    Type:        MVPT
+	    Size:          40
+	  Offset:     3444160
+	    Plus:           8
+	   Check:  0x699FD565
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x61A88B17  (GARGOYLE 01_03)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     3444208
+	    Plus:          12
+	   Check:  0x4B773CE7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x6235989E  (gz_patrol.anm)
+{
+	    Type:        ANIM
+	    Size:        6732
+	  Offset:     3626976
+	    Plus:           4
+	   Check:  0x15576D4B
+	Filename:  \\job\sd2\\cg\chr\p2\gz\latest\gz_patrol.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x6301122C  (arrow_trail)
+{
+	    Type:        SND 
+	    Size:       12288
+	  Offset:     4593504
+	    Plus:           0
+	   Check:  0xC370478E
+	Filename:  \\Job\sd2\snd\latest\p2\level\arrow_trail.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x633BC32A  (gg_wingflap1)
+{
+	    Type:        SND 
+	    Size:        3328
+	  Offset:     3683584
+	    Plus:           0
+	   Check:  0xB2319383
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_wingflap1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x646FDF61  (otsg0004.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      155040
+	    Plus:           8
+	   Check:  0xDB68B242
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x64891BF0  (UP GUST VOL 5)
+{
+	    Type:        VOLU
+	    Size:          80
+	  Offset:     3448544
+	    Plus:           0
+	   Check:  0x69228785
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x64891BF1  (UP GUST VOL 6)
+{
+	    Type:        VOLU
+	    Size:          80
+	  Offset:     3448624
+	    Plus:           0
+	   Check:  0x25BDA2BE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x64891BF2  (UP GUST VOL 7)
+{
+	    Type:        VOLU
+	    Size:          80
+	  Offset:     3448704
+	    Plus:           0
+	   Check:  0x8671FE3C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x64BAF2A1  (rss00001.DFF)
+{
+	    Type:        MODL
+	    Size:        3336
+	  Offset:     3347072
+	    Plus:           8
+	   Check:  0x865CC6FD
+	Filename:  \\job\sd2\cg\rtobj\p2\latest\rss00001\rss00001.DFF
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x64BEA5BF  (rss00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:     1021664
+	    Plus:           8
+	   Check:  0x7250EF1C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x66D604D5  (ga_hear.anm)
+{
+	    Type:        ANIM
+	    Size:       14500
+	  Offset:     3503056
+	    Plus:          12
+	   Check:  0x403FFDE5
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_hear.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x66F76429  (orange flame ramp)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:     1011040
+	    Plus:           8
+	   Check:  0xECE149BE
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x6A312446  (rsye0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      935072
+	    Plus:           8
+	   Check:  0xA60539CD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x6C220856  (MULTI GROUND FOG EMITTER)
+{
+	    Type:        PARE
+	    Size:         120
+	  Offset:     3450976
+	    Plus:           8
+	   Check:  0x0538E080
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x6C6BF0DB  (ohpo2401.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      651488
+	    Plus:           8
+	   Check:  0x3826F336
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x6C89EA79  (gg_hit1)
+{
+	    Type:        SND 
+	    Size:        6144
+	  Offset:     4144640
+	    Plus:           0
+	   Check:  0x7BB94FFE
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_hit1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x6CD95E09  (ga_bored.anm)
+{
+	    Type:        ANIM
+	    Size:        1432
+	  Offset:     3479808
+	    Plus:           8
+	   Check:  0x147933AD
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_bored.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x6D7DD15C  (otrg0002.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       80288
+	    Plus:           8
+	   Check:  0xF846A6D6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x6E022C51  (gg_see1)
+{
+	    Type:        SND 
+	    Size:       14912
+	  Offset:     3686912
+	    Plus:           0
+	   Check:  0xC9332D8B
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_see1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x6E3260CA  (ARROW FIRE SYSTEM)
+{
+	    Type:        PARS
+	    Size:          52
+	  Offset:     3451312
+	    Plus:          12
+	   Check:  0xE40F623C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x7111FFCB  (urn_A.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:       78048
+	    Plus:           8
+	   Check:  0x6727CDA4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x75E73D76  (gz_bubbled.anm)
+{
+	    Type:        ANIM
+	    Size:        3792
+	  Offset:     3651824
+	    Plus:           0
+	   Check:  0x8D044B84
+	Filename:  \\job\sd2\\cg\chr\p2\gz\latest\gz_bubbled.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x760BBDCE  (FROMG003)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444352
+	    Plus:           4
+	   Check:  0x9CEDD4CA
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x77B61CA3  (ga_attack.anm)
+{
+	    Type:        ANIM
+	    Size:       12320
+	  Offset:     3551600
+	    Plus:           0
+	   Check:  0x9E5A8988
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_attack.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x79505263  (obpg0001.RW3)
+{
+	    Type:        RWTX
+	    Size:       32952
+	  Offset:      110240
+	    Plus:           8
+	   Check:  0x409662FF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7A1DF559  (gg_stunned1)
+{
+	    Type:        SND 
+	    Size:       28544
+	  Offset:     4196960
+	    Plus:           0
+	   Check:  0xAF698DE8
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_stunned1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x7AB6743A  (sound_info)
+{
+	    Type:        SNDI
+	    Size:        4712
+	  Offset:     4605792
+	    Plus:           0
+	   Check:  0x35ED4ED0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7E34BA49  (candle_A_01.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      644768
+	    Plus:           8
+	   Check:  0x1005FB66
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7EC66EEB  (GOTO CAM 1)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     3442368
+	    Plus:           0
+	   Check:  0x2C0372C6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x7FA399AB  (rsa00001.DFF)
+{
+	    Type:        MODL
+	    Size:       13504
+	  Offset:     3350416
+	    Plus:           0
+	   Check:  0xECA773DE
+	Filename:  \\job\sd2\cg\rtobj\p2\latest\rsa00001\rsa00001.DFF
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x7FA74CC9  (rsa00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:     1030048
+	    Plus:           8
+	   Check:  0xFD5FBFF6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x800DC7DD  (arrow)
+{
+	    Type:        MODL
+	    Size:        4240
+	  Offset:     3426752
+	    Plus:           0
+	   Check:  0x9BD45E99
+	Filename:  \\Job\sd2\cg\env\p2\g00\latest\arrow.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x813C70FD  (fireball)
+{
+	    Type:        MODL
+	    Size:        3380
+	  Offset:     3433344
+	    Plus:           0
+	   Check:  0xDD292F88
+	Filename:  \\Job\sd2\cg\rtobj\p2\projectiles\fireball.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x82803D2B  (MULTI GROUND FOG SYSTEM)
+{
+	    Type:        PARS
+	    Size:          44
+	  Offset:     3451376
+	    Plus:           4
+	   Check:  0xCDFF7AC9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x82E22E5B  (bow_twang1)
+{
+	    Type:        SND 
+	    Size:        3648
+	  Offset:     4507168
+	    Plus:           0
+	   Check:  0x026C168D
+	Filename:  \\job\sd2\snd\latest\p2\level\bow_twang1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x835DD73D  (HALL CANDLE 1)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3449520
+	    Plus:          12
+	   Check:  0x50B3E9C5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x835DD73E  (HALL CANDLE 2)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3449600
+	    Plus:          12
+	   Check:  0x861A766D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x835DD73F  (HALL CANDLE 3)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3449680
+	    Plus:          12
+	   Check:  0xA94CAE9D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x835DD740  (HALL CANDLE 4)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3449760
+	    Plus:          12
+	   Check:  0x859E2BC7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x835DD741  (HALL CANDLE 5)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3449840
+	    Plus:          12
+	   Check:  0x27E6790A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x835DD742  (HALL CANDLE 6)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3449920
+	    Plus:          12
+	   Check:  0xD822CD92
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x875BFCE2  (TWANG1)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3444800
+	    Plus:           0
+	   Check:  0x32FB103F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x875BFCE3  (TWANG2)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3444848
+	    Plus:           0
+	   Check:  0x4FE8E18F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x875BFCE4  (TWANG3)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3444896
+	    Plus:           0
+	   Check:  0x2B8F48BB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x875BFCE5  (TWANG4)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3444944
+	    Plus:           0
+	   Check:  0xCE90F476
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x8A04DCE8  (gg_hear1)
+{
+	    Type:        SND 
+	    Size:        5152
+	  Offset:     4139488
+	    Plus:           0
+	   Check:  0x18E282BD
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_hear1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x8A04DCE9  (gg_hear2)
+{
+	    Type:        SND 
+	    Size:        3808
+	  Offset:     3740000
+	    Plus:           0
+	   Check:  0xA00BA0B9
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_hear2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x8E14B5EF  (GOTO START_A)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     3442752
+	    Plus:           0
+	   Check:  0x4857040F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x8E3DD95E  (owae0303.RW3)
+{
+	    Type:        RWTX
+	    Size:       32952
+	  Offset:      607328
+	    Plus:           8
+	   Check:  0x28DCD4B7
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x8EA9D4F4  (ga_see.anm)
+{
+	    Type:        ANIM
+	    Size:       16272
+	  Offset:     3517568
+	    Plus:           0
+	   Check:  0x45217B70
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_see.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x90B0DDC6  (ga_gloat.anm)
+{
+	    Type:        ANIM
+	    Size:       13092
+	  Offset:     3489952
+	    Plus:          12
+	   Check:  0xC9634F81
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_gloat.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x90BADAC4  (owag0002.RW3)
+{
+	    Type:        RWTX
+	    Size:        4792
+	  Offset:       73248
+	    Plus:           8
+	   Check:  0xC35D719F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x924FE391  (FOG MARKER 1)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444368
+	    Plus:           4
+	   Check:  0xFA28BBCC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x924FE392  (FOG MARKER 2)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444384
+	    Plus:           4
+	   Check:  0x81AF041D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x924FE393  (FOG MARKER 3)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444400
+	    Plus:           4
+	   Check:  0xEF615743
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x946C9AFD  (gg_looking1)
+{
+	    Type:        SND 
+	    Size:       19072
+	  Offset:     3743808
+	    Plus:           0
+	   Check:  0xD71E6609
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_looking1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x94E25463  (pickups.MINF)
+{
+	    Type:        MINF
+	    Size:          12
+	  Offset:     3659072
+	    Plus:           4
+	   Check:  0x5F0983A2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x95968E74  (ga_investigate.anm)
+{
+	    Type:        ANIM
+	    Size:       17756
+	  Offset:     3533840
+	    Plus:           4
+	   Check:  0xC8F3F100
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_investigate.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0x995FE123  (ocrg0002.RW3)
+{
+	    Type:        RWTX
+	    Size:        4792
+	  Offset:      143200
+	    Plus:           8
+	   Check:  0x6D93B675
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x9A2A8BC9  (GOTO START)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     3442192
+	    Plus:           0
+	   Check:  0xB3E2A7DB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x9B73205A  (gg_idle1)
+{
+	    Type:        SND 
+	    Size:       24416
+	  Offset:     3659168
+	    Plus:           0
+	   Check:  0x04DD48A3
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_idle1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x9B73205E  (gg_idle5)
+{
+	    Type:        SND 
+	    Size:       13792
+	  Offset:     4150784
+	    Plus:           0
+	   Check:  0xE5B00973
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_idle5.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x9C2C7913  (FOG MARKER GROUP)
+{
+	    Type:        GRUP
+	    Size:          24
+	  Offset:     3444688
+	    Plus:           8
+	   Check:  0xCAE3434B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x9DFAB3CD  (gen_gumbounce1)
+{
+	    Type:        SND 
+	    Size:        3968
+	  Offset:     3891392
+	    Plus:           0
+	   Check:  0x4E6ED920
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_gumbounce1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0x9E416C7A  (GHOST 1_1)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     3444256
+	    Plus:          12
+	   Check:  0x1D30DB1B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x9E416C7B  (GHOST 1_2)
+{
+	    Type:        MVPT
+	    Size:          36
+	  Offset:     3444304
+	    Plus:          12
+	   Check:  0xE9C8ED63
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x9EE4829C  (FALL TO DEATH)
+{
+	    Type:        TRIG
+	    Size:         176
+	  Offset:     3442016
+	    Plus:           0
+	   Check:  0x7954174D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xA1483968  (ga_fly.anm)
+{
+	    Type:        ANIM
+	    Size:        8692
+	  Offset:     3481248
+	    Plus:          12
+	   Check:  0xB5659594
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_fly.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xA28F6B3E  (fireball_loop)
+{
+	    Type:        SND 
+	    Size:       26880
+	  Offset:     4270816
+	    Plus:           0
+	   Check:  0x619FE46F
+	Filename:  \\Job\sd2\snd\latest\p2\projectiles\fireball_loop.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xA3C45AD9  (FOLIAGE BUMP)
+{
+	    Type:        SURF
+	    Size:         208
+	  Offset:     3447984
+	    Plus:           0
+	   Check:  0x6126B5A8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xA61E38FA  (scooby_one_41)
+{
+	    Type:        SND 
+	    Size:       26048
+	  Offset:     3957760
+	    Plus:           0
+	   Check:  0x3E21504B
+	Filename:  \\job\sd2\snd\latest\p2\sd\scooby_one_41.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xA78B30F6  (g_leaves2.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      170144
+	    Plus:           8
+	   Check:  0xD84550F6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xAAED9774  (ocrg0003.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      157280
+	    Plus:           8
+	   Check:  0x62EB1722
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xAB13CEB4  (oflg0003_dark.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      108000
+	    Plus:           8
+	   Check:  0x1865EFB0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xAB254801  (STATUE 1)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     3446976
+	    Plus:           4
+	   Check:  0xA6F8FADC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xAB254802  (STATUE 2)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     3447072
+	    Plus:           4
+	   Check:  0x9F3E782D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xAB254803  (STATUE 3)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     3447168
+	    Plus:           4
+	   Check:  0xB43302F8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xAB254804  (STATUE 4)
+{
+	    Type:        SIMP
+	    Size:          92
+	  Offset:     3447264
+	    Plus:           4
+	   Check:  0xA10CFED6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xAB819E56  (gg_bubble1)
+{
+	    Type:        SND 
+	    Size:       22176
+	  Offset:     3983808
+	    Plus:           0
+	   Check:  0xC268145F
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_bubble1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xAB819E58  (gg_bubble3)
+{
+	    Type:        SND 
+	    Size:       31968
+	  Offset:     4005984
+	    Plus:           0
+	   Check:  0x4AB77CF5
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_bubble3.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xAB819E5A  (gg_bubble5)
+{
+	    Type:        SND 
+	    Size:       26336
+	  Offset:     3840096
+	    Plus:           0
+	   Check:  0xD387CF5C
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_bubble5.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xAC223A96  (RED CANDLE EMITTER)
+{
+	    Type:        PARE
+	    Size:         120
+	  Offset:     3451104
+	    Plus:           8
+	   Check:  0xB615D48D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB0599A12  (gg_investigate2)
+{
+	    Type:        SND 
+	    Size:       32384
+	  Offset:     4164576
+	    Plus:           0
+	   Check:  0xE2E347BC
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_investigate2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xB086C613  (ostr0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      159520
+	    Plus:           8
+	   Check:  0x5004BBDB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xB22A8421  (soapbubble_pop)
+{
+	    Type:        SND 
+	    Size:        3264
+	  Offset:     3911232
+	    Plus:           0
+	   Check:  0x1AC74647
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\soapbubble_pop.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xB26C6EF5  (gg_death2)
+{
+	    Type:        SND 
+	    Size:       24960
+	  Offset:     3866432
+	    Plus:           0
+	   Check:  0xE0684D8D
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_death2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xB5E02182  (cobweb.RW3)
+{
+	    Type:        RWTX
+	    Size:      131256
+	  Offset:      440864
+	    Plus:           8
+	   Check:  0x48CBC4E4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xB741F40D  (EXIT DOOR 1)
+{
+	    Type:        PLAT
+	    Size:         264
+	  Offset:     3446464
+	    Plus:           8
+	   Check:  0x896CB0A1
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB9FD9B58  (SCARE)
+{
+	    Type:        SURF
+	    Size:         208
+	  Offset:     3447360
+	    Plus:           0
+	   Check:  0x24DC6553
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xBA256C27  (gz_gummed.anm)
+{
+	    Type:        ANIM
+	    Size:        6732
+	  Offset:     3640448
+	    Plus:           4
+	   Check:  0xA3E365A4
+	Filename:  \\job\sd2\\cg\chr\p2\gz\latest\gz_gummed.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xBA4E578C  (gz.ATBL)
+{
+	    Type:        ATBL
+	    Size:         852
+	  Offset:     3657424
+	    Plus:          12
+	   Check:  0xAC2DF420
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xBA9D361D  (GRAVEYARD4)
+{
+	    Type:        ENV 
+	    Size:          64
+	  Offset:     3443360
+	    Plus:           0
+	   Check:  0x7970A30B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xBB584A4F  (smoke)
+{
+	    Type:        RWTX
+	    Size:       16568
+	  Offset:      977184
+	    Plus:           8
+	   Check:  0xCE8E6CEC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xBBE71F8B  (gz.MINF)
+{
+	    Type:        MINF
+	    Size:         356
+	  Offset:     3658704
+	    Plus:          12
+	   Check:  0xD7BAAE3D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xBC44C2B2  (START)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     3442928
+	    Plus:           8
+	   Check:  0xB5BCBF94
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xBD02703E  (CANDLE SYSTEM)
+{
+	    Type:        PARS
+	    Size:         112
+	  Offset:     3451424
+	    Plus:           0
+	   Check:  0x58129EEF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xBD9C60C6  (door.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      937312
+	    Plus:           8
+	   Check:  0xAE5F0520
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xBE472FDC  (gen_gumstretch1)
+{
+	    Type:        SND 
+	    Size:        5952
+	  Offset:     3779872
+	    Plus:           0
+	   Check:  0x86C2AE43
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_gumstretch1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xBF1DE556  (PIT FOG SYSTEM)
+{
+	    Type:        PARS
+	    Size:          72
+	  Offset:     3451232
+	    Plus:           8
+	   Check:  0xD10DF09C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC023E514  (web.RW3)
+{
+	    Type:        RWTX
+	    Size:      262328
+	  Offset:      178528
+	    Plus:           8
+	   Check:  0x59A9FE02
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xC0A5C2BA  (rdog0301)
+{
+	    Type:        MODL
+	    Size:        2340
+	  Offset:     3430992
+	    Plus:          12
+	   Check:  0x03276F16
+	Filename:  \\Job\sd2\cg\env\p2\g00\latest\rdog0301.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xC0E1B442  (CANDLE MARKER 10)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444560
+	    Plus:           4
+	   Check:  0x50007205
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC0E1B443  (CANDLE MARKER 11)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444576
+	    Plus:           4
+	   Check:  0x16E80FED
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC0E1B444  (CANDLE MARKER 12)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444592
+	    Plus:           4
+	   Check:  0xB66E3064
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC0E1B445  (CANDLE MARKER 13)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444608
+	    Plus:           4
+	   Check:  0xBE110094
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC0E1B446  (CANDLE MARKER 14)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444624
+	    Plus:           4
+	   Check:  0xA3775B7D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC0E1B447  (CANDLE MARKER 15)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444640
+	    Plus:           4
+	   Check:  0x6506E83C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC11751BF  (ROOM CANDLE 1)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3450000
+	    Plus:          12
+	   Check:  0x2426C045
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC11751C0  (ROOM CANDLE 2)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3450080
+	    Plus:          12
+	   Check:  0xE165FDDD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC11751C1  (ROOM CANDLE 3)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3450160
+	    Plus:          12
+	   Check:  0x54C2A115
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC11751C2  (ROOM CANDLE 4)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3450240
+	    Plus:          12
+	   Check:  0xEFE5AA96
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC3FBE786  (gz_idle.anm)
+{
+	    Type:        ANIM
+	    Size:        6732
+	  Offset:     3620240
+	    Plus:           4
+	   Check:  0x74CA38CF
+	Filename:  \\job\sd2\\cg\chr\p2\gz\latest\gz_idle.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xC42ED83F  (wind_gust1)
+{
+	    Type:        SND 
+	    Size:       64992
+	  Offset:     4510816
+	    Plus:           0
+	   Check:  0x2B6F3FF1
+	Filename:  \\Job\sd2\snd\latest\p2\level\wind_gust1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xC6BFE2D7  (EXIT DOOR 10)
+{
+	    Type:        PLAT
+	    Size:         232
+	  Offset:     3446736
+	    Plus:           8
+	   Check:  0x0798CD73
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xC8A760BA  (g0104_notVisible)
+{
+	    Type:        BSP 
+	    Size:        5368
+	  Offset:     3119040
+	    Plus:           0
+	   Check:  0xE28F3EC7
+	Filename:  \\Job\sd2\cg\env\p2\g00\latest\g0104_notVisible.bsp
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xCAEB0455  (wood_door_creak2)
+{
+	    Type:        SND 
+	    Size:       17696
+	  Offset:     4575808
+	    Plus:           0
+	   Check:  0xF729E1B9
+	Filename:  \\Job\sd2\snd\latest\p2\level\wood_door_creak2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xCBCB67A1  (ga_hover.anm)
+{
+	    Type:        ANIM
+	    Size:       12320
+	  Offset:     3451536
+	    Plus:           0
+	   Check:  0xB42EE7A0
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_hover.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xCDF6B87D  (LEDGE CANDLE 1)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3450400
+	    Plus:          12
+	   Check:  0xEB148128
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xCDF6B87E  (LEDGE CANDLE 2)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3450480
+	    Plus:          12
+	   Check:  0x27D80617
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xCDF6B87F  (LEDGE CANDLE 3)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3450560
+	    Plus:          12
+	   Check:  0x32BD5DC9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xCDF6B880  (LEDGE CANDLE 4)
+{
+	    Type:        LITE
+	    Size:          68
+	  Offset:     3450640
+	    Plus:          12
+	   Check:  0xD98D7187
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD081BC55  (EXITFONT)
+{
+	    Type:        UIFT
+	    Size:         156
+	  Offset:     3448976
+	    Plus:           4
+	   Check:  0x060707E9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD2CFD885  (g0104_notVisible Material Map)
+{
+	    Type:        MAPR
+	    Size:           8
+	  Offset:     3659152
+	    Plus:           0
+	   Check:  0xE85957F9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD620B07B  (candle_A.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      647008
+	    Plus:           8
+	   Check:  0x1CC03B4D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xD6D5D9CC  (oflg0002.RW3)
+{
+	    Type:        RWTX
+	    Size:       17080
+	  Offset:       45536
+	    Plus:           8
+	   Check:  0xC3A24AA8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xD74A0199  (gen_gumbounce05)
+{
+	    Type:        SND 
+	    Size:       10688
+	  Offset:     3815200
+	    Plus:           0
+	   Check:  0xB9B10EBC
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gen_gumbounce05.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xD7688928  (FOGGY)
+{
+	    Type:        FOG 
+	    Size:          68
+	  Offset:     3449440
+	    Plus:          12
+	   Check:  0x6597C06E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD77001EF  (EXIT TO G003)
+{
+	    Type:        TRIG
+	    Size:         304
+	  Offset:     3441712
+	    Plus:           0
+	   Check:  0xCFCEAEF9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD907305F  (GROUND BUMP)
+{
+	    Type:        SURF
+	    Size:         208
+	  Offset:     3448192
+	    Plus:           0
+	   Check:  0x5CA36361
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD9CF4B99  (UP GUST 5)
+{
+	    Type:        GUST
+	    Size:          40
+	  Offset:     3448400
+	    Plus:           8
+	   Check:  0x3321F135
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD9CF4B9A  (UP GUST 6)
+{
+	    Type:        GUST
+	    Size:          40
+	  Offset:     3448448
+	    Plus:           8
+	   Check:  0x0514A4AF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD9CF4B9B  (UP GUST 7)
+{
+	    Type:        GUST
+	    Size:          40
+	  Offset:     3448496
+	    Plus:           8
+	   Check:  0x01D64422
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xDBDF6A6B  (WIND_BLOWS1)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3444992
+	    Plus:           0
+	   Check:  0x009AD11C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xDBDF6A6C  (WIND_BLOWS2)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3445040
+	    Plus:           0
+	   Check:  0x60D92A73
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xDBDF6A6D  (WIND_BLOWS3)
+{
+	    Type:        SFX 
+	    Size:          48
+	  Offset:     3445088
+	    Plus:           0
+	   Check:  0xAAD6CEA3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xDD42A1D1  (LIGHT_PARTITION)
+{
+	    Type:        VOLU
+	    Size:          80
+	  Offset:     3448784
+	    Plus:           0
+	   Check:  0xF1CF6056
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xDE777092  (life_essence_fade)
+{
+	    Type:        SND 
+	    Size:       38304
+	  Offset:     3919456
+	    Plus:           0
+	   Check:  0x7CCF270F
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\life_essence_fade.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xDF96BA67  (ocrg0006.RW3)
+{
+	    Type:        RWTX
+	    Size:        4792
+	  Offset:       23648
+	    Plus:           8
+	   Check:  0xF0FF6458
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xE200EBCC  (ga_fidget.anm)
+{
+	    Type:        ANIM
+	    Size:        7240
+	  Offset:     3463856
+	    Plus:           8
+	   Check:  0xD83EA10E
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_fidget.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xE37F7AD5  (DISPATCHER_G004)
+{
+	    Type:        DPAT
+	    Size:         104
+	  Offset:     3448864
+	    Plus:           8
+	   Check:  0x108E8EE4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xE4C90B04  (g0104)
+{
+	    Type:        BSP 
+	    Size:      731192
+	  Offset:     1065248
+	    Plus:           8
+	   Check:  0x1C9963A3
+	Filename:  \\Job\sd2\cg\env\p2\g00\latest\g0104.bsp
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xE6AAE447  (GARGOYLE 01)
+{
+	    Type:        NPC 
+	    Size:         196
+	  Offset:     3436816
+	    Plus:          12
+	   Check:  0xAC60842E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xE7AE66CC  (candle_B.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      605088
+	    Plus:           8
+	   Check:  0xBF553430
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xE863901D  (oflg0003.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       62624
+	    Plus:           8
+	   Check:  0x8C96EAF9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xE8925C25  (owag0201.RW3)
+{
+	    Type:        RWTX
+	    Size:       17080
+	  Offset:       90912
+	    Plus:           8
+	   Check:  0x34338E2D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xEA0A27BC  (cliff_bump1)
+{
+	    Type:        RWTX
+	    Size:       17080
+	  Offset:      945696
+	    Plus:           8
+	   Check:  0xE7A6EFF3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xEB9101E2  (gg_chase1)
+{
+	    Type:        SND 
+	    Size:       10688
+	  Offset:     3701824
+	    Plus:           0
+	   Check:  0xBF115D33
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_chase1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xEB9101E3  (gg_chase2)
+{
+	    Type:        SND 
+	    Size:       21216
+	  Offset:     4037952
+	    Plus:           0
+	   Check:  0x86496396
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_chase2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xEB9101E4  (gg_chase3)
+{
+	    Type:        SND 
+	    Size:       16064
+	  Offset:     4059168
+	    Plus:           0
+	   Check:  0xE7D772F6
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_chase3.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xED2C5807  (gz_bind.dff)
+{
+	    Type:        MODL
+	    Size:       81668
+	  Offset:     3265392
+	    Plus:          12
+	   Check:  0xE9A05CA7
+	Filename:  \\job\sd2\\cg\chr\p2\gz\latest\gz_bind.dff
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0xEEF37F20  (NOISE BUMP)
+{
+	    Type:        SURF
+	    Size:         208
+	  Offset:     3447568
+	    Plus:           0
+	   Check:  0xF952475E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF1D6BB06  (CANDLE MARKER 1)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444416
+	    Plus:           4
+	   Check:  0xD85273E8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF1D6BB07  (CANDLE MARKER 2)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444432
+	    Plus:           4
+	   Check:  0x68722D78
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF1D6BB08  (CANDLE MARKER 3)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444448
+	    Plus:           4
+	   Check:  0x9B0316FB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF1D6BB09  (CANDLE MARKER 4)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444464
+	    Plus:           4
+	   Check:  0xD5CE325A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF1D6BB0A  (CANDLE MARKER 5)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444480
+	    Plus:           4
+	   Check:  0xC1586E05
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF1D6BB0B  (CANDLE MARKER 6)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444496
+	    Plus:           4
+	   Check:  0x7B4B75C3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF1D6BB0C  (CANDLE MARKER 7)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444512
+	    Plus:           4
+	   Check:  0x229A1071
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF1D6BB0D  (CANDLE MARKER 8)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444528
+	    Plus:           4
+	   Check:  0x0F37E072
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF1D6BB0E  (CANDLE MARKER 9)
+{
+	    Type:        MRKR
+	    Size:          12
+	  Offset:     3444544
+	    Plus:           4
+	   Check:  0x33776F85
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xF4E604CD  (gum_pop)
+{
+	    Type:        SND 
+	    Size:        3296
+	  Offset:     3895360
+	    Plus:           0
+	   Check:  0x3F8FBA69
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gen\gum_pop.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xF58CFEF5  (gg_gummed1)
+{
+	    Type:        SND 
+	    Size:       29376
+	  Offset:     3785824
+	    Plus:           0
+	   Check:  0xBB8FB305
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_gummed1.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xF58CFEF6  (gg_gummed2)
+{
+	    Type:        SND 
+	    Size:       16448
+	  Offset:     4115872
+	    Plus:           0
+	   Check:  0xD1BD6B10
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_gummed2.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xF58CFEF7  (gg_gummed3)
+{
+	    Type:        SND 
+	    Size:        7168
+	  Offset:     4132320
+	    Plus:           0
+	   Check:  0xBBAACDCC
+	Filename:  \\Job\sd2\snd\latest\p2\villain\gg_gummed3.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xF5A438C8  (foliage_bump)
+{
+	    Type:        RWTX
+	    Size:        4792
+	  Offset:      972384
+	    Plus:           8
+	   Check:  0xE9E7DC88
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xF7FD3344  (eyes2.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      926688
+	    Plus:           8
+	   Check:  0xA28F7C44
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xF843A578  (ga_gumbounce.anm)
+{
+	    Type:        ANIM
+	    Size:        6512
+	  Offset:     3575520
+	    Plus:           0
+	   Check:  0xC1CCF660
+	Filename:  \\job\sd2\\cg\chr\p2\ga\latest\ga_gumbounce.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xF883C6B6  (ground_fog)
+{
+	    Type:        RWTX
+	    Size:       16568
+	  Offset:      994464
+	    Plus:           8
+	   Check:  0x7CDDFC6F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xF93C1D1D  (candle_C.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      642528
+	    Plus:           8
+	   Check:  0x163A90E9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xF94CB5A6  (gz_attack.anm)
+{
+	    Type:        ANIM
+	    Size:        6732
+	  Offset:     3633712
+	    Plus:           4
+	   Check:  0xA1A1931A
+	Filename:  \\job\sd2\\cg\chr\p2\gz\latest\gz_attack.anm
+	   Flags:  SOURCE_FILE; WRITE_TRANSFORM; 
+}
+
+AID: 0xFBB4352B  (TOG003)
+{
+	    Type:        PORT
+	    Size:          24
+	  Offset:     3443984
+	    Plus:           8
+	   Check:  0x1D52C4CF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xFC470283  (g0104 Material Map)
+{
+	    Type:        MAPR
+	    Size:          40
+	  Offset:     3659088
+	    Plus:           8
+	   Check:  0xC29F0E90
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+
+Layer Alignment
+---------------
+Index   Type   SectorSize   Aligned?  HIPPosition
+-----   ----   ----------   --------  -----------
+0          1           32        Yes        23648
+1          2           32        Yes      1065248
+2          3           32        Yes      3124416
+3          4           32        N/A          N/A
+4          0           32        Yes      3436736
+5          8           32        N/A          N/A
+6          6           32        Yes      3659168
+7          7           32        Yes      4605792
+
+Asset Alignment
+---------------
+AssetID    Name                                Requested   Aligned?
+-------    ----                                ---------   --------
+0x01BFD7EF ga_hitsmashed.anm                          16        Yes
+0x02C518D5 ocrg0202.RW3                               16        Yes
+0x0387A384 otog0003.RW3                               16        Yes
+0x04A774CE g0104_noCollide                            16        Yes
+0x084A42B3 ARROW FIRE EMITTER                         16        Yes
+0x090B7C72 CAM1                                       16        Yes
+0x097610DA FOOD                                       16        Yes
+0x098AE995 eyes3.RW3                                  16        Yes
+0x0AC9D36E candle_D.RW3                               16        Yes
+0x0CDE3149 gz_gumbounce.anm                           16        Yes
+0x0E510923 CANDLEBOX 1                                16        Yes
+0x106420AB ARROW 1 SFX                                16        Yes
+0x11E57ED9 sphere                                     16        Yes
+0x1452CF26 ocrg0203.RW3                               16        Yes
+0x1514AB3D ROCK BUMP                                  16        Yes
+0x1527C59A CLUE 1                                     16        Yes
+0x15DCBF8A GOTO STATIC CAM                            16        Yes
+0x16242986 STACTIC CAM                                16        Yes
+0x16A817B5 rma00001.DFF                               16        Yes
+0x16ABCAD3 rma00001.RW3                               16        Yes
+0x1BCAEE56 ARROW 1                                    16        Yes
+0x1BCAEE57 ARROW 2                                    16        Yes
+0x1BCAEE58 ARROW 3                                    16        Yes
+0x1BCAEE59 ARROW 4                                    16        Yes
+0x1C6EAAB1 arrowline                                  16        Yes
+0x1D18EB12 gg_listen4                                 32        Yes
+0x21B49877 gg_gloat1                                  32        Yes
+0x21B49878 gg_gloat2                                  32        Yes
+0x21B49879 gg_gloat3                                  32        Yes
+0x21EDD1AA fireball3                                  32        Yes
+0x21EDD1AC fireball5                                  32        Yes
+0x21F1D6FC ARROW 2 SFX                                16        Yes
+0x2374D318 CANDLE MARKER GROUP                        16        Yes
+0x25D6F0ED ga_bubbled.anm                             16        Yes
+0x2A209EA0 PIT FOG EMITTER 1                          16        Yes
+0x2A23C4E4 coffins_E.RW3                              16        Yes
+0x2A470DD4 rsyg0001                                   16        Yes
+0x2A62F951 ga.ATBL                                    16        Yes
+0x2AD3B08B TWANGTIMER1                                16        Yes
+0x2AD3B08C TWANGTIMER2                                16        Yes
+0x2AD3B08D TWANGTIMER3                                16        Yes
+0x2AD3B08E TWANGTIMER4                                16        Yes
+0x2AE70E4E ground_bump                                16        Yes
+0x2BE059B5 ga_rising.anm                              16        Yes
+0x2BFBC150 ga.MINF                                    16        Yes
+0x2EA5F237 SCOOBY                                     16        Yes
+0x2F321A41 gen_bubble_form1                           32        Yes
+0x2F321A42 gen_bubble_form2                           32        Yes
+0x2F73E44D gg_gumbounce1                              32        Yes
+0x2FC6BC6E otsg0001.RW3                               16        Yes
+0x337F8D4D ARROW 3 SFX                                16        Yes
+0x371CE2E3 gg_attack2                                 32        Yes
+0x388ED324 ga_gummed.anm                              16        Yes
+0x3B8FB63C FOOD 2                                     16        Yes
+0x3D36955C ga_bind.dff                                16        Yes
+0x3EC9E9ED ironfence.RW3                              16        Yes
+0x3FEE2901 gen_bodyfall1                              32        Yes
+0x40D35D0F noise_bump                                 16        Yes
+0x415472BF otsg0002.RW3                               16        Yes
+0x432BD55F SNACK 01                                   16        Yes
+0x432BD560 SNACK 02                                   16        Yes
+0x432BD561 SNACK 03                                   16        Yes
+0x432BD562 SNACK 04                                   16        Yes
+0x432BD564 SNACK 06                                   16        Yes
+0x4456BCB5 CLUE 1 FONT                                16        Yes
+0x450D439E ARROW 4 SFX                                16        Yes
+0x463461F3 CLUE 1 TEXT                                16        Yes
+0x46DDA5A8 EXIT DOOR 1 SOUND                          16        Yes
+0x4C62039A gz_moan1                                   32        Yes
+0x4C62039B gz_moan2                                   32        Yes
+0x4C62039C gz_moan3                                   32        Yes
+0x4C62039D gz_moan4                                   32        Yes
+0x506E9460 ARROW FIRE GROUP                           16        Yes
+0x50AEED4C GHOST 1                                    16        Yes
+0x51C498F9 FIREBALL TYPE                              16        Yes
+0x52E22910 otsg0003.RW3                               16        Yes
+0x53374301 g0104_noCollide Material Map               16        Yes
+0x5448F196 TIMER 1                                    16        Yes
+0x5BF01B0B otrg0001.RW3                               16        Yes
+0x5E94D404 g_leaves.RW3                               16        Yes
+0x5F6E2FCD SNACK 010                                  16        Yes
+0x5F6E2FCE SNACK 011                                  16        Yes
+0x5F6E2FCF SNACK 012                                  16        Yes
+0x5F6E2FD0 SNACK 013                                  16        Yes
+0x5F6E2FD1 SNACK 014                                  16        Yes
+0x5F6E2FD2 SNACK 015                                  16        Yes
+0x5F6E3050 SNACK 020                                  16        Yes
+0x5F6E3051 SNACK 021                                  16        Yes
+0x5F6E3052 SNACK 022                                  16        Yes
+0x5F6E3053 SNACK 023                                  16        Yes
+0x5F6E3054 SNACK 024                                  16        Yes
+0x5F6E3055 SNACK 025                                  16        Yes
+0x5F6E30D3 SNACK 030                                  16        Yes
+0x5F6E30D4 SNACK 031                                  16        Yes
+0x5F6E30D5 SNACK 032                                  16        Yes
+0x5F6E30D6 SNACK 033                                  16        Yes
+0x5F6E30D7 SNACK 034                                  16        Yes
+0x5F6E30D8 SNACK 035                                  16        Yes
+0x5F6E30D9 SNACK 036                                  16        Yes
+0x5F6E30DA SNACK 037                                  16        Yes
+0x5F6E30DB SNACK 038                                  16        Yes
+0x5F6E30DC SNACK 039                                  16        Yes
+0x5F6E3156 SNACK 040                                  16        Yes
+0x5F6E3157 SNACK 041                                  16        Yes
+0x5F6E3158 SNACK 042                                  16        Yes
+0x5F6E3159 SNACK 043                                  16        Yes
+0x5F6E315A SNACK 044                                  16        Yes
+0x5F6E315B SNACK 045                                  16        Yes
+0x5F6E315C SNACK 046                                  16        Yes
+0x5F6E315D SNACK 047                                  16        Yes
+0x5F6E315E SNACK 048                                  16        Yes
+0x5F6E315F SNACK 049                                  16        Yes
+0x5F6E325C SNACK 060                                  16        Yes
+0x5F6E325D SNACK 061                                  16        Yes
+0x5F6E325E SNACK 062                                  16        Yes
+0x5F6E325F SNACK 063                                  16        Yes
+0x5F6E3260 SNACK 064                                  16        Yes
+0x5F6E3261 SNACK 065                                  16        Yes
+0x5FEF86A8 cga00001.RW3                               16        Yes
+0x61A88B15 GARGOYLE 01_01                             16        Yes
+0x61A88B16 GARGOYLE 01_02                             16        Yes
+0x61A88B17 GARGOYLE 01_03                             16        Yes
+0x6235989E gz_patrol.anm                              16        Yes
+0x6301122C arrow_trail                                32        Yes
+0x633BC32A gg_wingflap1                               32        Yes
+0x646FDF61 otsg0004.RW3                               16        Yes
+0x64891BF0 UP GUST VOL 5                              16        Yes
+0x64891BF1 UP GUST VOL 6                              16        Yes
+0x64891BF2 UP GUST VOL 7                              16        Yes
+0x64BAF2A1 rss00001.DFF                               16        Yes
+0x64BEA5BF rss00001.RW3                               16        Yes
+0x66D604D5 ga_hear.anm                                16        Yes
+0x66F76429 orange flame ramp                          16        Yes
+0x6A312446 rsye0001.RW3                               16        Yes
+0x6C220856 MULTI GROUND FOG EMITTER                   16        Yes
+0x6C6BF0DB ohpo2401.RW3                               16        Yes
+0x6C89EA79 gg_hit1                                    32        Yes
+0x6CD95E09 ga_bored.anm                               16        Yes
+0x6D7DD15C otrg0002.RW3                               16        Yes
+0x6E022C51 gg_see1                                    32        Yes
+0x6E3260CA ARROW FIRE SYSTEM                          16        Yes
+0x7111FFCB urn_A.RW3                                  16        Yes
+0x75E73D76 gz_bubbled.anm                             16        Yes
+0x760BBDCE FROMG003                                   16        Yes
+0x77B61CA3 ga_attack.anm                              16        Yes
+0x79505263 obpg0001.RW3                               16        Yes
+0x7A1DF559 gg_stunned1                                32        Yes
+0x7AB6743A sound_info                                 16        Yes
+0x7E34BA49 candle_A_01.RW3                            16        Yes
+0x7EC66EEB GOTO CAM 1                                 16        Yes
+0x7FA399AB rsa00001.DFF                               16        Yes
+0x7FA74CC9 rsa00001.RW3                               16        Yes
+0x800DC7DD arrow                                      16        Yes
+0x813C70FD fireball                                   16        Yes
+0x82803D2B MULTI GROUND FOG SYSTEM                    16        Yes
+0x82E22E5B bow_twang1                                 32        Yes
+0x835DD73D HALL CANDLE 1                              16        Yes
+0x835DD73E HALL CANDLE 2                              16        Yes
+0x835DD73F HALL CANDLE 3                              16        Yes
+0x835DD740 HALL CANDLE 4                              16        Yes
+0x835DD741 HALL CANDLE 5                              16        Yes
+0x835DD742 HALL CANDLE 6                              16        Yes
+0x875BFCE2 TWANG1                                     16        Yes
+0x875BFCE3 TWANG2                                     16        Yes
+0x875BFCE4 TWANG3                                     16        Yes
+0x875BFCE5 TWANG4                                     16        Yes
+0x8A04DCE8 gg_hear1                                   32        Yes
+0x8A04DCE9 gg_hear2                                   32        Yes
+0x8E14B5EF GOTO START_A                               16        Yes
+0x8E3DD95E owae0303.RW3                               16        Yes
+0x8EA9D4F4 ga_see.anm                                 16        Yes
+0x90B0DDC6 ga_gloat.anm                               16        Yes
+0x90BADAC4 owag0002.RW3                               16        Yes
+0x924FE391 FOG MARKER 1                               16        Yes
+0x924FE392 FOG MARKER 2                               16        Yes
+0x924FE393 FOG MARKER 3                               16        Yes
+0x946C9AFD gg_looking1                                32        Yes
+0x94E25463 pickups.MINF                               16        Yes
+0x95968E74 ga_investigate.anm                         16        Yes
+0x995FE123 ocrg0002.RW3                               16        Yes
+0x9A2A8BC9 GOTO START                                 16        Yes
+0x9B73205A gg_idle1                                   32        Yes
+0x9B73205E gg_idle5                                   32        Yes
+0x9C2C7913 FOG MARKER GROUP                           16        Yes
+0x9DFAB3CD gen_gumbounce1                             32        Yes
+0x9E416C7A GHOST 1_1                                  16        Yes
+0x9E416C7B GHOST 1_2                                  16        Yes
+0x9EE4829C FALL TO DEATH                              16        Yes
+0xA1483968 ga_fly.anm                                 16        Yes
+0xA28F6B3E fireball_loop                              32        Yes
+0xA3C45AD9 FOLIAGE BUMP                               16        Yes
+0xA61E38FA scooby_one_41                              32        Yes
+0xA78B30F6 g_leaves2.RW3                              16        Yes
+0xAAED9774 ocrg0003.RW3                               16        Yes
+0xAB13CEB4 oflg0003_dark.RW3                          16        Yes
+0xAB254801 STATUE 1                                   16        Yes
+0xAB254802 STATUE 2                                   16        Yes
+0xAB254803 STATUE 3                                   16        Yes
+0xAB254804 STATUE 4                                   16        Yes
+0xAB819E56 gg_bubble1                                 32        Yes
+0xAB819E58 gg_bubble3                                 32        Yes
+0xAB819E5A gg_bubble5                                 32        Yes
+0xAC223A96 RED CANDLE EMITTER                         16        Yes
+0xB0599A12 gg_investigate2                            32        Yes
+0xB086C613 ostr0001.RW3                               16        Yes
+0xB22A8421 soapbubble_pop                             32        Yes
+0xB26C6EF5 gg_death2                                  32        Yes
+0xB5E02182 cobweb.RW3                                 16        Yes
+0xB741F40D EXIT DOOR 1                                16        Yes
+0xB9FD9B58 SCARE                                      16        Yes
+0xBA256C27 gz_gummed.anm                              16        Yes
+0xBA4E578C gz.ATBL                                    16        Yes
+0xBA9D361D GRAVEYARD4                                 16        Yes
+0xBB584A4F smoke                                      16        Yes
+0xBBE71F8B gz.MINF                                    16        Yes
+0xBC44C2B2 START                                      16        Yes
+0xBD02703E CANDLE SYSTEM                              16        Yes
+0xBD9C60C6 door.RW3                                   16        Yes
+0xBE472FDC gen_gumstretch1                            32        Yes
+0xBF1DE556 PIT FOG SYSTEM                             16        Yes
+0xC023E514 web.RW3                                    16        Yes
+0xC0A5C2BA rdog0301                                   16        Yes
+0xC0E1B442 CANDLE MARKER 10                           16        Yes
+0xC0E1B443 CANDLE MARKER 11                           16        Yes
+0xC0E1B444 CANDLE MARKER 12                           16        Yes
+0xC0E1B445 CANDLE MARKER 13                           16        Yes
+0xC0E1B446 CANDLE MARKER 14                           16        Yes
+0xC0E1B447 CANDLE MARKER 15                           16        Yes
+0xC11751BF ROOM CANDLE 1                              16        Yes
+0xC11751C0 ROOM CANDLE 2                              16        Yes
+0xC11751C1 ROOM CANDLE 3                              16        Yes
+0xC11751C2 ROOM CANDLE 4                              16        Yes
+0xC3FBE786 gz_idle.anm                                16        Yes
+0xC42ED83F wind_gust1                                 32        Yes
+0xC6BFE2D7 EXIT DOOR 10                               16        Yes
+0xC8A760BA g0104_notVisible                           16        Yes
+0xCAEB0455 wood_door_creak2                           32        Yes
+0xCBCB67A1 ga_hover.anm                               16        Yes
+0xCDF6B87D LEDGE CANDLE 1                             16        Yes
+0xCDF6B87E LEDGE CANDLE 2                             16        Yes
+0xCDF6B87F LEDGE CANDLE 3                             16        Yes
+0xCDF6B880 LEDGE CANDLE 4                             16        Yes
+0xD081BC55 EXITFONT                                   16        Yes
+0xD2CFD885 g0104_notVisible Material Map              16        Yes
+0xD620B07B candle_A.RW3                               16        Yes
+0xD6D5D9CC oflg0002.RW3                               16        Yes
+0xD74A0199 gen_gumbounce05                            32        Yes
+0xD7688928 FOGGY                                      16        Yes
+0xD77001EF EXIT TO G003                               16        Yes
+0xD907305F GROUND BUMP                                16        Yes
+0xD9CF4B99 UP GUST 5                                  16        Yes
+0xD9CF4B9A UP GUST 6                                  16        Yes
+0xD9CF4B9B UP GUST 7                                  16        Yes
+0xDBDF6A6B WIND_BLOWS1                                16        Yes
+0xDBDF6A6C WIND_BLOWS2                                16        Yes
+0xDBDF6A6D WIND_BLOWS3                                16        Yes
+0xDD42A1D1 LIGHT_PARTITION                            16        Yes
+0xDE777092 life_essence_fade                          32        Yes
+0xDF96BA67 ocrg0006.RW3                               16        Yes
+0xE200EBCC ga_fidget.anm                              16        Yes
+0xE37F7AD5 DISPATCHER_G004                            16        Yes
+0xE4C90B04 g0104                                      16        Yes
+0xE6AAE447 GARGOYLE 01                                16        Yes
+0xE7AE66CC candle_B.RW3                               16        Yes
+0xE863901D oflg0003.RW3                               16        Yes
+0xE8925C25 owag0201.RW3                               16        Yes
+0xEA0A27BC cliff_bump1                                16        Yes
+0xEB9101E2 gg_chase1                                  32        Yes
+0xEB9101E3 gg_chase2                                  32        Yes
+0xEB9101E4 gg_chase3                                  32        Yes
+0xED2C5807 gz_bind.dff                                16        Yes
+0xEEF37F20 NOISE BUMP                                 16        Yes
+0xF1D6BB06 CANDLE MARKER 1                            16        Yes
+0xF1D6BB07 CANDLE MARKER 2                            16        Yes
+0xF1D6BB08 CANDLE MARKER 3                            16        Yes
+0xF1D6BB09 CANDLE MARKER 4                            16        Yes
+0xF1D6BB0A CANDLE MARKER 5                            16        Yes
+0xF1D6BB0B CANDLE MARKER 6                            16        Yes
+0xF1D6BB0C CANDLE MARKER 7                            16        Yes
+0xF1D6BB0D CANDLE MARKER 8                            16        Yes
+0xF1D6BB0E CANDLE MARKER 9                            16        Yes
+0xF4E604CD gum_pop                                    32        Yes
+0xF58CFEF5 gg_gummed1                                 32        Yes
+0xF58CFEF6 gg_gummed2                                 32        Yes
+0xF58CFEF7 gg_gummed3                                 32        Yes
+0xF5A438C8 foliage_bump                               16        Yes
+0xF7FD3344 eyes2.RW3                                  16        Yes
+0xF843A578 ga_gumbounce.anm                           16        Yes
+0xF883C6B6 ground_fog                                 16        Yes
+0xF93C1D1D candle_C.RW3                               16        Yes
+0xF94CB5A6 gz_attack.anm                              16        Yes
+0xFBB4352B TOG003                                     16        Yes
+0xFC470283 g0104 Material Map                         16        Yes
+
+Checksum Validation
+-------------------
+AssetID     Name                             Packed      UnPacked    Status  
+-------     ----                             ------      --------    ------  
+0x01BFD7EF  ga_hitsmashed.anm                0xE930723E  0xE930723E  ok      
+0x02C518D5  ocrg0202.RW3                     0xEACB4944  0xEACB4944  ok      
+0x0387A384  otog0003.RW3                     0x816DAEA3  0x816DAEA3  ok      
+0x04A774CE  g0104_noCollide                  0xAC7534F3  0xAC7534F3  ok      
+0x084A42B3  ARROW FIRE EMITTER               0x031DC6A7  0x031DC6A7  ok      
+0x090B7C72  CAM1                             0xC09FE218  0xC09FE218  ok      
+0x097610DA  FOOD                             0x7A1CAC49  0x7A1CAC49  ok      
+0x098AE995  eyes3.RW3                        0x60166987  0x60166987  ok      
+0x0AC9D36E  candle_D.RW3                     0x74E6DDC5  0x74E6DDC5  ok      
+0x0CDE3149  gz_gumbounce.anm                 0x3173EFF0  0x3173EFF0  ok      
+0x0E510923  CANDLEBOX 1                      0x4F3839A5  0x4F3839A5  ok      
+0x106420AB  ARROW 1 SFX                      0x07A29140  0x07A29140  ok      
+0x11E57ED9  sphere                           0x9EBA07FB  0x9EBA07FB  ok      
+0x1452CF26  ocrg0203.RW3                     0x8254BF89  0x8254BF89  ok      
+0x1514AB3D  ROCK BUMP                        0xD1F78FEB  0xD1F78FEB  ok      
+0x1527C59A  CLUE 1                           0x3A3ACC0F  0x3A3ACC0F  ok      
+0x15DCBF8A  GOTO STATIC CAM                  0x8AC0210F  0x8AC0210F  ok      
+0x16242986  STACTIC CAM                      0x82D29D7F  0x82D29D7F  ok      
+0x16A817B5  rma00001.DFF                     0xC117C39C  0xC117C39C  ok      
+0x16ABCAD3  rma00001.RW3                     0x759DE99B  0x759DE99B  ok      
+0x1BCAEE56  ARROW 1                          0x007A4C10  0x007A4C10  ok      
+0x1BCAEE57  ARROW 2                          0x582F99E0  0x582F99E0  ok      
+0x1BCAEE58  ARROW 3                          0x61A90AC2  0x61A90AC2  ok      
+0x1BCAEE59  ARROW 4                          0x730917AF  0x730917AF  ok      
+0x1C6EAAB1  arrowline                        0x345A9249  0x345A9249  ok      
+0x1D18EB12  gg_listen4                       0xB6FFD12B  0xB6FFD12B  ok      
+0x21B49877  gg_gloat1                        0x02A866B4  0x02A866B4  ok      
+0x21B49878  gg_gloat2                        0xA4D5404B  0xA4D5404B  ok      
+0x21B49879  gg_gloat3                        0xA7EC5A08  0xA7EC5A08  ok      
+0x21EDD1AA  fireball3                        0x8163912C  0x8163912C  ok      
+0x21EDD1AC  fireball5                        0xF1E73845  0xF1E73845  ok      
+0x21F1D6FC  ARROW 2 SFX                      0x6AAB9C2D  0x6AAB9C2D  ok      
+0x2374D318  CANDLE MARKER GROUP              0xB712FBFB  0xB712FBFB  ok      
+0x25D6F0ED  ga_bubbled.anm                   0x85096742  0x85096742  ok      
+0x2A209EA0  PIT FOG EMITTER 1                0x7B4B422C  0x7B4B422C  ok      
+0x2A23C4E4  coffins_E.RW3                    0xFB322F6E  0xFB322F6E  ok      
+0x2A470DD4  rsyg0001                         0xFB0998B3  0xFB0998B3  ok      
+0x2A62F951  ga.ATBL                          0x19104545  0x19104545  ok      
+0x2AD3B08B  TWANGTIMER1                      0x789DB632  0x789DB632  ok      
+0x2AD3B08C  TWANGTIMER2                      0x2B4DFA39  0x2B4DFA39  ok      
+0x2AD3B08D  TWANGTIMER3                      0xA2770EB7  0xA2770EB7  ok      
+0x2AD3B08E  TWANGTIMER4                      0x1DD9B09A  0x1DD9B09A  ok      
+0x2AE70E4E  ground_bump                      0xEFE1BDB1  0xEFE1BDB1  ok      
+0x2BE059B5  ga_rising.anm                    0x90D868B9  0x90D868B9  ok      
+0x2BFBC150  ga.MINF                          0x39A549D0  0x39A549D0  ok      
+0x2EA5F237  SCOOBY                           0x259525AF  0x259525AF  ok      
+0x2F321A41  gen_bubble_form1                 0x6182698C  0x6182698C  ok      
+0x2F321A42  gen_bubble_form2                 0x5A095541  0x5A095541  ok      
+0x2F73E44D  gg_gumbounce1                    0x7038CF61  0x7038CF61  ok      
+0x2FC6BC6E  otsg0001.RW3                     0xB971D81C  0xB971D81C  ok      
+0x337F8D4D  ARROW 3 SFX                      0x7E878A6B  0x7E878A6B  ok      
+0x371CE2E3  gg_attack2                       0x1040EE85  0x1040EE85  ok      
+0x388ED324  ga_gummed.anm                    0xD90A0898  0xD90A0898  ok      
+0x3B8FB63C  FOOD 2                           0xB97DC685  0xB97DC685  ok      
+0x3D36955C  ga_bind.dff                      0x4440CE3D  0x4440CE3D  ok      
+0x3EC9E9ED  ironfence.RW3                    0x41C5AD50  0x41C5AD50  ok      
+0x3FEE2901  gen_bodyfall1                    0x1748AE20  0x1748AE20  ok      
+0x40D35D0F  noise_bump                       0xCA505D83  0xCA505D83  ok      
+0x415472BF  otsg0002.RW3                     0x238371A2  0x238371A2  ok      
+0x432BD55F  SNACK 01                         0xCEC7B36D  0xCEC7B36D  ok      
+0x432BD560  SNACK 02                         0x9074D993  0x9074D993  ok      
+0x432BD561  SNACK 03                         0xE971BE36  0xE971BE36  ok      
+0x432BD562  SNACK 04                         0x7C773FF4  0x7C773FF4  ok      
+0x432BD564  SNACK 06                         0xC66896CC  0xC66896CC  ok      
+0x4456BCB5  CLUE 1 FONT                      0x0E70641E  0x0E70641E  ok      
+0x450D439E  ARROW 4 SFX                      0xDDEAB343  0xDDEAB343  ok      
+0x463461F3  CLUE 1 TEXT                      0x54C3AE29  0x54C3AE29  ok      
+0x46DDA5A8  EXIT DOOR 1 SOUND                0xC5218001  0xC5218001  ok      
+0x4C62039A  gz_moan1                         0xAC404F20  0xAC404F20  ok      
+0x4C62039B  gz_moan2                         0xC509A17F  0xC509A17F  ok      
+0x4C62039C  gz_moan3                         0xF7F9C32B  0xF7F9C32B  ok      
+0x4C62039D  gz_moan4                         0xF47881C3  0xF47881C3  ok      
+0x506E9460  ARROW FIRE GROUP                 0xC879DE36  0xC879DE36  ok      
+0x50AEED4C  GHOST 1                          0x53BCD88C  0x53BCD88C  ok      
+0x51C498F9  FIREBALL TYPE                    0x4E9ADD56  0x4E9ADD56  ok      
+0x52E22910  otsg0003.RW3                     0x23A24CCC  0x23A24CCC  ok      
+0x53374301  g0104_noCollide Material Map     0xE41DBE1A  0xE41DBE1A  ok      
+0x5448F196  TIMER 1                          0xC43F5EBE  0xC43F5EBE  ok      
+0x5BF01B0B  otrg0001.RW3                     0x5D961F65  0x5D961F65  ok      
+0x5E94D404  g_leaves.RW3                     0x3C39FA9B  0x3C39FA9B  ok      
+0x5F6E2FCD  SNACK 010                        0xF0A15492  0xF0A15492  ok      
+0x5F6E2FCE  SNACK 011                        0x265415CB  0x265415CB  ok      
+0x5F6E2FCF  SNACK 012                        0xEEADB2CF  0xEEADB2CF  ok      
+0x5F6E2FD0  SNACK 013                        0x146287C7  0x146287C7  ok      
+0x5F6E2FD1  SNACK 014                        0x6183CF58  0x6183CF58  ok      
+0x5F6E2FD2  SNACK 015                        0x148AD503  0x148AD503  ok      
+0x5F6E3050  SNACK 020                        0xB26C8E93  0xB26C8E93  ok      
+0x5F6E3051  SNACK 021                        0xD85E5FD8  0xD85E5FD8  ok      
+0x5F6E3052  SNACK 022                        0x76EDAF05  0x76EDAF05  ok      
+0x5F6E3053  SNACK 023                        0xC4B927D0  0xC4B927D0  ok      
+0x5F6E3054  SNACK 024                        0x6FCD303E  0x6FCD303E  ok      
+0x5F6E3055  SNACK 025                        0x11710F3C  0x11710F3C  ok      
+0x5F6E30D3  SNACK 030                        0x73E68390  0x73E68390  ok      
+0x5F6E30D4  SNACK 031                        0x331C1A1E  0x331C1A1E  ok      
+0x5F6E30D5  SNACK 032                        0x7A1C6A4E  0x7A1C6A4E  ok      
+0x5F6E30D6  SNACK 033                        0xA57A1A9C  0xA57A1A9C  ok      
+0x5F6E30D7  SNACK 034                        0x3CEA7E94  0x3CEA7E94  ok      
+0x5F6E30D8  SNACK 035                        0x46BE0C08  0x46BE0C08  ok      
+0x5F6E30D9  SNACK 036                        0x88A1AAA9  0x88A1AAA9  ok      
+0x5F6E30DA  SNACK 037                        0xD68D9CB9  0xD68D9CB9  ok      
+0x5F6E30DB  SNACK 038                        0x069963EA  0x069963EA  ok      
+0x5F6E30DC  SNACK 039                        0x224F7867  0x224F7867  ok      
+0x5F6E3156  SNACK 040                        0x03ED6BDF  0x03ED6BDF  ok      
+0x5F6E3157  SNACK 041                        0xCC70B6EB  0xCC70B6EB  ok      
+0x5F6E3158  SNACK 042                        0x17439E2E  0x17439E2E  ok      
+0x5F6E3159  SNACK 043                        0x353FF31F  0x353FF31F  ok      
+0x5F6E315A  SNACK 044                        0x48B529C8  0x48B529C8  ok      
+0x5F6E315B  SNACK 045                        0x2DED74CC  0x2DED74CC  ok      
+0x5F6E315C  SNACK 046                        0x4DDF87DF  0x4DDF87DF  ok      
+0x5F6E315D  SNACK 047                        0xE2EE5079  0xE2EE5079  ok      
+0x5F6E315E  SNACK 048                        0xB4C3E4B5  0xB4C3E4B5  ok      
+0x5F6E315F  SNACK 049                        0x428E2A50  0x428E2A50  ok      
+0x5F6E325C  SNACK 060                        0x410F8923  0x410F8923  ok      
+0x5F6E325D  SNACK 061                        0xFA3F73D0  0xFA3F73D0  ok      
+0x5F6E325E  SNACK 062                        0x8EBDC717  0x8EBDC717  ok      
+0x5F6E325F  SNACK 063                        0xABECBCC5  0xABECBCC5  ok      
+0x5F6E3260  SNACK 064                        0xCC32E2A6  0xCC32E2A6  ok      
+0x5F6E3261  SNACK 065                        0xCE9B4C51  0xCE9B4C51  ok      
+0x5FEF86A8  cga00001.RW3                     0x117DDD01  0x117DDD01  ok      
+0x61A88B15  GARGOYLE 01_01                   0xA54FB980  0xA54FB980  ok      
+0x61A88B16  GARGOYLE 01_02                   0x699FD565  0x699FD565  ok      
+0x61A88B17  GARGOYLE 01_03                   0x4B773CE7  0x4B773CE7  ok      
+0x6235989E  gz_patrol.anm                    0x15576D4B  0x15576D4B  ok      
+0x6301122C  arrow_trail                      0xC370478E  0xC370478E  ok      
+0x633BC32A  gg_wingflap1                     0xB2319383  0xB2319383  ok      
+0x646FDF61  otsg0004.RW3                     0xDB68B242  0xDB68B242  ok      
+0x64891BF0  UP GUST VOL 5                    0x69228785  0x69228785  ok      
+0x64891BF1  UP GUST VOL 6                    0x25BDA2BE  0x25BDA2BE  ok      
+0x64891BF2  UP GUST VOL 7                    0x8671FE3C  0x8671FE3C  ok      
+0x64BAF2A1  rss00001.DFF                     0x865CC6FD  0x865CC6FD  ok      
+0x64BEA5BF  rss00001.RW3                     0x7250EF1C  0x7250EF1C  ok      
+0x66D604D5  ga_hear.anm                      0x403FFDE5  0x403FFDE5  ok      
+0x66F76429  orange flame ramp                0xECE149BE  0xECE149BE  ok      
+0x6A312446  rsye0001.RW3                     0xA60539CD  0xA60539CD  ok      
+0x6C220856  MULTI GROUND FOG EMITTER         0x0538E080  0x0538E080  ok      
+0x6C6BF0DB  ohpo2401.RW3                     0x3826F336  0x3826F336  ok      
+0x6C89EA79  gg_hit1                          0x7BB94FFE  0x7BB94FFE  ok      
+0x6CD95E09  ga_bored.anm                     0x147933AD  0x147933AD  ok      
+0x6D7DD15C  otrg0002.RW3                     0xF846A6D6  0xF846A6D6  ok      
+0x6E022C51  gg_see1                          0xC9332D8B  0xC9332D8B  ok      
+0x6E3260CA  ARROW FIRE SYSTEM                0xE40F623C  0xE40F623C  ok      
+0x7111FFCB  urn_A.RW3                        0x6727CDA4  0x6727CDA4  ok      
+0x75E73D76  gz_bubbled.anm                   0x8D044B84  0x8D044B84  ok      
+0x760BBDCE  FROMG003                         0x9CEDD4CA  0x9CEDD4CA  ok      
+0x77B61CA3  ga_attack.anm                    0x9E5A8988  0x9E5A8988  ok      
+0x79505263  obpg0001.RW3                     0x409662FF  0x409662FF  ok      
+0x7A1DF559  gg_stunned1                      0xAF698DE8  0xAF698DE8  ok      
+0x7AB6743A  sound_info                       0x35ED4ED0  0x35ED4ED0  ok      
+0x7E34BA49  candle_A_01.RW3                  0x1005FB66  0x1005FB66  ok      
+0x7EC66EEB  GOTO CAM 1                       0x2C0372C6  0x2C0372C6  ok      
+0x7FA399AB  rsa00001.DFF                     0xECA773DE  0xECA773DE  ok      
+0x7FA74CC9  rsa00001.RW3                     0xFD5FBFF6  0xFD5FBFF6  ok      
+0x800DC7DD  arrow                            0x9BD45E99  0x9BD45E99  ok      
+0x813C70FD  fireball                         0xDD292F88  0xDD292F88  ok      
+0x82803D2B  MULTI GROUND FOG SYSTEM          0xCDFF7AC9  0xCDFF7AC9  ok      
+0x82E22E5B  bow_twang1                       0x026C168D  0x026C168D  ok      
+0x835DD73D  HALL CANDLE 1                    0x50B3E9C5  0x50B3E9C5  ok      
+0x835DD73E  HALL CANDLE 2                    0x861A766D  0x861A766D  ok      
+0x835DD73F  HALL CANDLE 3                    0xA94CAE9D  0xA94CAE9D  ok      
+0x835DD740  HALL CANDLE 4                    0x859E2BC7  0x859E2BC7  ok      
+0x835DD741  HALL CANDLE 5                    0x27E6790A  0x27E6790A  ok      
+0x835DD742  HALL CANDLE 6                    0xD822CD92  0xD822CD92  ok      
+0x875BFCE2  TWANG1                           0x32FB103F  0x32FB103F  ok      
+0x875BFCE3  TWANG2                           0x4FE8E18F  0x4FE8E18F  ok      
+0x875BFCE4  TWANG3                           0x2B8F48BB  0x2B8F48BB  ok      
+0x875BFCE5  TWANG4                           0xCE90F476  0xCE90F476  ok      
+0x8A04DCE8  gg_hear1                         0x18E282BD  0x18E282BD  ok      
+0x8A04DCE9  gg_hear2                         0xA00BA0B9  0xA00BA0B9  ok      
+0x8E14B5EF  GOTO START_A                     0x4857040F  0x4857040F  ok      
+0x8E3DD95E  owae0303.RW3                     0x28DCD4B7  0x28DCD4B7  ok      
+0x8EA9D4F4  ga_see.anm                       0x45217B70  0x45217B70  ok      
+0x90B0DDC6  ga_gloat.anm                     0xC9634F81  0xC9634F81  ok      
+0x90BADAC4  owag0002.RW3                     0xC35D719F  0xC35D719F  ok      
+0x924FE391  FOG MARKER 1                     0xFA28BBCC  0xFA28BBCC  ok      
+0x924FE392  FOG MARKER 2                     0x81AF041D  0x81AF041D  ok      
+0x924FE393  FOG MARKER 3                     0xEF615743  0xEF615743  ok      
+0x946C9AFD  gg_looking1                      0xD71E6609  0xD71E6609  ok      
+0x94E25463  pickups.MINF                     0x5F0983A2  0x5F0983A2  ok      
+0x95968E74  ga_investigate.anm               0xC8F3F100  0xC8F3F100  ok      
+0x995FE123  ocrg0002.RW3                     0x6D93B675  0x6D93B675  ok      
+0x9A2A8BC9  GOTO START                       0xB3E2A7DB  0xB3E2A7DB  ok      
+0x9B73205A  gg_idle1                         0x04DD48A3  0x04DD48A3  ok      
+0x9B73205E  gg_idle5                         0xE5B00973  0xE5B00973  ok      
+0x9C2C7913  FOG MARKER GROUP                 0xCAE3434B  0xCAE3434B  ok      
+0x9DFAB3CD  gen_gumbounce1                   0x4E6ED920  0x4E6ED920  ok      
+0x9E416C7A  GHOST 1_1                        0x1D30DB1B  0x1D30DB1B  ok      
+0x9E416C7B  GHOST 1_2                        0xE9C8ED63  0xE9C8ED63  ok      
+0x9EE4829C  FALL TO DEATH                    0x7954174D  0x7954174D  ok      
+0xA1483968  ga_fly.anm                       0xB5659594  0xB5659594  ok      
+0xA28F6B3E  fireball_loop                    0x619FE46F  0x619FE46F  ok      
+0xA3C45AD9  FOLIAGE BUMP                     0x6126B5A8  0x6126B5A8  ok      
+0xA61E38FA  scooby_one_41                    0x3E21504B  0x3E21504B  ok      
+0xA78B30F6  g_leaves2.RW3                    0xD84550F6  0xD84550F6  ok      
+0xAAED9774  ocrg0003.RW3                     0x62EB1722  0x62EB1722  ok      
+0xAB13CEB4  oflg0003_dark.RW3                0x1865EFB0  0x1865EFB0  ok      
+0xAB254801  STATUE 1                         0xA6F8FADC  0xA6F8FADC  ok      
+0xAB254802  STATUE 2                         0x9F3E782D  0x9F3E782D  ok      
+0xAB254803  STATUE 3                         0xB43302F8  0xB43302F8  ok      
+0xAB254804  STATUE 4                         0xA10CFED6  0xA10CFED6  ok      
+0xAB819E56  gg_bubble1                       0xC268145F  0xC268145F  ok      
+0xAB819E58  gg_bubble3                       0x4AB77CF5  0x4AB77CF5  ok      
+0xAB819E5A  gg_bubble5                       0xD387CF5C  0xD387CF5C  ok      
+0xAC223A96  RED CANDLE EMITTER               0xB615D48D  0xB615D48D  ok      
+0xB0599A12  gg_investigate2                  0xE2E347BC  0xE2E347BC  ok      
+0xB086C613  ostr0001.RW3                     0x5004BBDB  0x5004BBDB  ok      
+0xB22A8421  soapbubble_pop                   0x1AC74647  0x1AC74647  ok      
+0xB26C6EF5  gg_death2                        0xE0684D8D  0xE0684D8D  ok      
+0xB5E02182  cobweb.RW3                       0x48CBC4E4  0x48CBC4E4  ok      
+0xB741F40D  EXIT DOOR 1                      0x896CB0A1  0x896CB0A1  ok      
+0xB9FD9B58  SCARE                            0x24DC6553  0x24DC6553  ok      
+0xBA256C27  gz_gummed.anm                    0xA3E365A4  0xA3E365A4  ok      
+0xBA4E578C  gz.ATBL                          0xAC2DF420  0xAC2DF420  ok      
+0xBA9D361D  GRAVEYARD4                       0x7970A30B  0x7970A30B  ok      
+0xBB584A4F  smoke                            0xCE8E6CEC  0xCE8E6CEC  ok      
+0xBBE71F8B  gz.MINF                          0xD7BAAE3D  0xD7BAAE3D  ok      
+0xBC44C2B2  START                            0xB5BCBF94  0xB5BCBF94  ok      
+0xBD02703E  CANDLE SYSTEM                    0x58129EEF  0x58129EEF  ok      
+0xBD9C60C6  door.RW3                         0xAE5F0520  0xAE5F0520  ok      
+0xBE472FDC  gen_gumstretch1                  0x86C2AE43  0x86C2AE43  ok      
+0xBF1DE556  PIT FOG SYSTEM                   0xD10DF09C  0xD10DF09C  ok      
+0xC023E514  web.RW3                          0x59A9FE02  0x59A9FE02  ok      
+0xC0A5C2BA  rdog0301                         0x03276F16  0x03276F16  ok      
+0xC0E1B442  CANDLE MARKER 10                 0x50007205  0x50007205  ok      
+0xC0E1B443  CANDLE MARKER 11                 0x16E80FED  0x16E80FED  ok      
+0xC0E1B444  CANDLE MARKER 12                 0xB66E3064  0xB66E3064  ok      
+0xC0E1B445  CANDLE MARKER 13                 0xBE110094  0xBE110094  ok      
+0xC0E1B446  CANDLE MARKER 14                 0xA3775B7D  0xA3775B7D  ok      
+0xC0E1B447  CANDLE MARKER 15                 0x6506E83C  0x6506E83C  ok      
+0xC11751BF  ROOM CANDLE 1                    0x2426C045  0x2426C045  ok      
+0xC11751C0  ROOM CANDLE 2                    0xE165FDDD  0xE165FDDD  ok      
+0xC11751C1  ROOM CANDLE 3                    0x54C2A115  0x54C2A115  ok      
+0xC11751C2  ROOM CANDLE 4                    0xEFE5AA96  0xEFE5AA96  ok      
+0xC3FBE786  gz_idle.anm                      0x74CA38CF  0x74CA38CF  ok      
+0xC42ED83F  wind_gust1                       0x2B6F3FF1  0x2B6F3FF1  ok      
+0xC6BFE2D7  EXIT DOOR 10                     0x0798CD73  0x0798CD73  ok      
+0xC8A760BA  g0104_notVisible                 0xE28F3EC7  0xE28F3EC7  ok      
+0xCAEB0455  wood_door_creak2                 0xF729E1B9  0xF729E1B9  ok      
+0xCBCB67A1  ga_hover.anm                     0xB42EE7A0  0xB42EE7A0  ok      
+0xCDF6B87D  LEDGE CANDLE 1                   0xEB148128  0xEB148128  ok      
+0xCDF6B87E  LEDGE CANDLE 2                   0x27D80617  0x27D80617  ok      
+0xCDF6B87F  LEDGE CANDLE 3                   0x32BD5DC9  0x32BD5DC9  ok      
+0xCDF6B880  LEDGE CANDLE 4                   0xD98D7187  0xD98D7187  ok      
+0xD081BC55  EXITFONT                         0x060707E9  0x060707E9  ok      
+0xD2CFD885  g0104_notVisible Material Map    0xE85957F9  0xE85957F9  ok      
+0xD620B07B  candle_A.RW3                     0x1CC03B4D  0x1CC03B4D  ok      
+0xD6D5D9CC  oflg0002.RW3                     0xC3A24AA8  0xC3A24AA8  ok      
+0xD74A0199  gen_gumbounce05                  0xB9B10EBC  0xB9B10EBC  ok      
+0xD7688928  FOGGY                            0x6597C06E  0x6597C06E  ok      
+0xD77001EF  EXIT TO G003                     0xCFCEAEF9  0xCFCEAEF9  ok      
+0xD907305F  GROUND BUMP                      0x5CA36361  0x5CA36361  ok      
+0xD9CF4B99  UP GUST 5                        0x3321F135  0x3321F135  ok      
+0xD9CF4B9A  UP GUST 6                        0x0514A4AF  0x0514A4AF  ok      
+0xD9CF4B9B  UP GUST 7                        0x01D64422  0x01D64422  ok      
+0xDBDF6A6B  WIND_BLOWS1                      0x009AD11C  0x009AD11C  ok      
+0xDBDF6A6C  WIND_BLOWS2                      0x60D92A73  0x60D92A73  ok      
+0xDBDF6A6D  WIND_BLOWS3                      0xAAD6CEA3  0xAAD6CEA3  ok      
+0xDD42A1D1  LIGHT_PARTITION                  0xF1CF6056  0xF1CF6056  ok      
+0xDE777092  life_essence_fade                0x7CCF270F  0x7CCF270F  ok      
+0xDF96BA67  ocrg0006.RW3                     0xF0FF6458  0xF0FF6458  ok      
+0xE200EBCC  ga_fidget.anm                    0xD83EA10E  0xD83EA10E  ok      
+0xE37F7AD5  DISPATCHER_G004                  0x108E8EE4  0x108E8EE4  ok      
+0xE4C90B04  g0104                            0x1C9963A3  0x1C9963A3  ok      
+0xE6AAE447  GARGOYLE 01                      0xAC60842E  0xAC60842E  ok      
+0xE7AE66CC  candle_B.RW3                     0xBF553430  0xBF553430  ok      
+0xE863901D  oflg0003.RW3                     0x8C96EAF9  0x8C96EAF9  ok      
+0xE8925C25  owag0201.RW3                     0x34338E2D  0x34338E2D  ok      
+0xEA0A27BC  cliff_bump1                      0xE7A6EFF3  0xE7A6EFF3  ok      
+0xEB9101E2  gg_chase1                        0xBF115D33  0xBF115D33  ok      
+0xEB9101E3  gg_chase2                        0x86496396  0x86496396  ok      
+0xEB9101E4  gg_chase3                        0xE7D772F6  0xE7D772F6  ok      
+0xED2C5807  gz_bind.dff                      0xE9A05CA7  0xE9A05CA7  ok      
+0xEEF37F20  NOISE BUMP                       0xF952475E  0xF952475E  ok      
+0xF1D6BB06  CANDLE MARKER 1                  0xD85273E8  0xD85273E8  ok      
+0xF1D6BB07  CANDLE MARKER 2                  0x68722D78  0x68722D78  ok      
+0xF1D6BB08  CANDLE MARKER 3                  0x9B0316FB  0x9B0316FB  ok      
+0xF1D6BB09  CANDLE MARKER 4                  0xD5CE325A  0xD5CE325A  ok      
+0xF1D6BB0A  CANDLE MARKER 5                  0xC1586E05  0xC1586E05  ok      
+0xF1D6BB0B  CANDLE MARKER 6                  0x7B4B75C3  0x7B4B75C3  ok      
+0xF1D6BB0C  CANDLE MARKER 7                  0x229A1071  0x229A1071  ok      
+0xF1D6BB0D  CANDLE MARKER 8                  0x0F37E072  0x0F37E072  ok      
+0xF1D6BB0E  CANDLE MARKER 9                  0x33776F85  0x33776F85  ok      
+0xF4E604CD  gum_pop                          0x3F8FBA69  0x3F8FBA69  ok      
+0xF58CFEF5  gg_gummed1                       0xBB8FB305  0xBB8FB305  ok      
+0xF58CFEF6  gg_gummed2                       0xD1BD6B10  0xD1BD6B10  ok      
+0xF58CFEF7  gg_gummed3                       0xBBAACDCC  0xBBAACDCC  ok      
+0xF5A438C8  foliage_bump                     0xE9E7DC88  0xE9E7DC88  ok      
+0xF7FD3344  eyes2.RW3                        0xA28F7C44  0xA28F7C44  ok      
+0xF843A578  ga_gumbounce.anm                 0xC1CCF660  0xC1CCF660  ok      
+0xF883C6B6  ground_fog                       0x7CDDFC6F  0x7CDDFC6F  ok      
+0xF93C1D1D  candle_C.RW3                     0x163A90E9  0x163A90E9  ok      
+0xF94CB5A6  gz_attack.anm                    0xA1A1931A  0xA1A1931A  ok      
+0xFBB4352B  TOG003                           0x1D52C4CF  0x1D52C4CF  ok      
+0xFC470283  g0104 Material Map               0xC29F0E90  0xC29F0E90  ok      
+
+
+Pickup Stats:
+      43    Item.ScoobySnack
+       2    Item.Food
+       1    Item.Clue
+
+
+#### End of HIP Log Report ####

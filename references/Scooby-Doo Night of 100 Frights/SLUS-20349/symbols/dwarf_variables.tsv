@@ -1,0 +1,1739 @@
+Address	Binding	Name	Mangled	Type	Source_File
+0x00000000	GLOBAL	g_X3		class _xVec3	E:\SD2\Game\flat\xMath3.cpp
+0x00000000	GLOBAL	g_NX3		class _xVec3	E:\SD2\Game\flat\xMath3.cpp
+0x00000000	GLOBAL	g_NZ3		class _xVec3	E:\SD2\Game\flat\xMath3.cpp
+0x00000000	LOCAL	sHipDependTable		class _zHipDepend [1]	E:\SD2\Game\flat\zMain.cpp
+0x00000000	GLOBAL	gBuildNumber		signed int	E:\SD2\Game\flat\zMain.cpp
+0x00000000	GLOBAL	gEE2BuildNumber		unsigned int	E:\SD2\Game\flat\zMain.cpp
+0x00000000	GLOBAL	CmpBoneTime	CmpBoneTime__FPCvPCv	signed int (*)(void *, void *)	E:\SD2\Game\flat\iAnimSKB.cpp
+0x00000000	GLOBAL	CmpTime	CmpTime__FPCvPCv	signed int (*)(void *, void *)	E:\SD2\Game\flat\iAnimSKB.cpp
+0x00000000	LOCAL	g_memalloc_pair		signed int	E:\SD2\Game\flat\xpkrsvc.cpp
+0x00000000	LOCAL	g_memalloc_runtot		signed int	E:\SD2\Game\flat\xpkrsvc.cpp
+0x00000000	LOCAL	g_RWarena_bufsize		signed int	E:\SD2\Game\flat\xpkrsvc.cpp
+0x00000000	GLOBAL	ShadowRenderRaster		class RwRaster *	E:\SD2\Game\flat\xModel.cpp
+0x00000000	GLOBAL	hackResourceArenaPointer		void *	E:\SD2\Game\flat\iSystem.cpp
+0x00000000	GLOBAL	gMemReporting		signed int	E:\SD2\Game\flat\xMemMgr.cpp
+0x00000000	GLOBAL	gMemReportingThreshold		unsigned int	E:\SD2\Game\flat\xMemMgr.cpp
+0x00000000	GLOBAL	gPiggyBankSize		unsigned int	E:\SD2\Game\flat\iMemMgr.cpp
+0x00000000	LOCAL	sMemPiggyBank		void *	E:\SD2\Game\flat\iMemMgr.cpp
+0x00000000	LOCAL	sProfLevel		signed int	E:\SD2\Game\flat\iTime.cpp
+0x00000000	LOCAL	sProfMap		char *	E:\SD2\Game\flat\iTime.cpp
+0x00000000	LOCAL	sProfFunc		char **	E:\SD2\Game\flat\iTime.cpp
+0x00000000	LOCAL	sProfFile		char **	E:\SD2\Game\flat\iTime.cpp
+0x00000000	LOCAL	sProfBin		unsigned int *	E:\SD2\Game\flat\iTime.cpp
+0x00000000	LOCAL	sProfCount		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x00000000	GLOBAL	pvsyncaddr		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x00000000	GLOBAL	app_top		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x00000000	GLOBAL	app_end		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x00000000	GLOBAL	initted		signed int	E:\SD2\Game\flat\iTime.cpp
+0x00000000	LOCAL	mCharset		class RwRaster *	E:\SD2\Game\flat\iDebug.cpp
+0x00000000	LOCAL	mForegroundColor		class RwRGBA	E:\SD2\Game\flat\iDebug.cpp
+0x00000000	LOCAL	mBackgroundColor		class RwRGBA	E:\SD2\Game\flat\iDebug.cpp
+0x00000000	GLOBAL	g_xEnt_FMT		char *	E:\SD2\Game\flat\xEnt.cpp
+0x00000000	GLOBAL	sphereHitsModelCB	sphereHitsModelCB__FP14RpIntersectionP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollide.cpp
+0x00000000	GLOBAL	sphereHitsEnvCB	sphereHitsEnvCB__FP14RpIntersectionP13RpWorldSectorP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpWorldSector *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollide.cpp
+0x00000000	GLOBAL	g_xCollis_FMT		char *	E:\SD2\Game\flat\xCollide.cpp
+0x00000000	GLOBAL	g_xScene_FMT		char *	E:\SD2\Game\flat\xScene.cpp
+0x00000000	LOCAL	sFadeColor		class iColor_tag	E:\SD2\Game\flat\zGame.cpp
+0x00000000	LOCAL	loadCDMeter		unsigned int	E:\SD2\Game\flat\zGame.cpp
+0x00000000	LOCAL	logoTmr		signed int	E:\SD2\Game\flat\zMenu.cpp
+0x00000000	LOCAL	sPlayerMarkerStartID		unsigned int	E:\SD2\Game\flat\zMenu.cpp
+0x00000000	LOCAL	sPlayerMarkerStartCamID		unsigned int	E:\SD2\Game\flat\zMenu.cpp
+0x00000000	LOCAL	s_dbloop_elaptick		unsigned int	E:\SD2\Game\flat\zMenu.cpp
+0x00000000	LOCAL	s_dbloop_elapsec		float	E:\SD2\Game\flat\zMenu.cpp
+0x00000000	LOCAL	s_dbloop_fps		float	E:\SD2\Game\flat\zMenu.cpp
+0x00000000	LOCAL	promptSel		signed int	E:\SD2\Game\flat\zMenu.cpp
+0x00000000	LOCAL	var		signed int	E:\SD2\Game\flat\zMenu.cpp
+0x00000000	LOCAL	fullCard		signed int	E:\SD2\Game\flat\zMenu.cpp
+0x00000000	LOCAL	t1		signed long	E:\SD2\Game\flat\zMenu.cpp
+0x00000000	GLOBAL	xCameraLastFov		float	E:\SD2\Game\flat\iCamera.cpp
+0x00000000	LOCAL	sCamDebugInfoLevel		signed int	E:\SD2\Game\flat\xCamera.cpp
+0x00000000	LOCAL	sph2_yaw		float	E:\SD2\Game\flat\xDraw.cpp
+0x00000000	LOCAL	g_sndTrax_Shaggy		class st_NPC_SOUND_RECORDS [1]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00000000	LOCAL	g_sndTrax_TimConway		class st_NPC_SOUND_RECORDS [44]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00000000	LOCAL	g_npcTypeTable		class st_NPCTYPE_CONFIG [50]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00000000	LOCAL	g_stat_tymr		signed long	E:\SD2\Game\flat\zEntVillain.cpp
+0x00000000	LOCAL	g_stz_mmftyp_name		char *[3]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00000000	GLOBAL	g_ORANGE		class iColor_tag	E:\SD2\Game\flat\zEntVillain.cpp
+0x00000000	GLOBAL	g_YELLOW		class iColor_tag	E:\SD2\Game\flat\zEntVillain.cpp
+0x00000000	GLOBAL	g_NEON_BLUE		class iColor_tag	E:\SD2\Game\flat\zEntVillain.cpp
+0x00000000	GLOBAL	g_MIDNIGHTBLUE		class iColor_tag	E:\SD2\Game\flat\zEntVillain.cpp
+0x00000000	GLOBAL	g_LAVENDER		class iColor_tag	E:\SD2\Game\flat\zEntVillain.cpp
+0x00000000	GLOBAL	sDebugPlayerPtr		class _xEnt *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00000000	LOCAL	g_map_HIPS_funcmap		class st_HIPSAVEFUNCS	E:\SD2\Game\flat\xhipio.cpp
+0x00000000	LOCAL	ascii_special_table		unsigned short [33]	E:\SD2\Game\flat\xutil.cpp
+0x00000000	GLOBAL	g_RED		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_GREEN		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_BLUE		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_CYAN		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_MAGENTA		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_YELLOW		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_WHITE		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_GRAY10		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_GRAY20		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_GRAY30		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_GRAY40		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_GRAY50		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_GRAY60		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_GRAY70		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_GRAY80		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_GRAY90		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_CLEAR		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_NEON_BLUE		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_PEACH		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_FUSCHIA		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_MIDNIGHTBLUE		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_SEAGREEN		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_FORESTGREEN		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_ORANGE		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_KHAKI		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_LAVENDER		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_COLOR_TRYME		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_COLOR_TRYME2		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_COLOR_TRYME3		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x00000000	GLOBAL	g_xColor_FMT		char *	E:\SD2\Game\flat\xColor.cpp
+0x00000000	LOCAL	zHudShowSnackGateInfo		signed int	E:\SD2\Game\flat\zEntPickup.cpp
+0x00000000	GLOBAL	SOUND_SFX_TRANSFER_STATUS		signed int	E:\SD2\Game\flat\ms4sound.cpp
+0x00000000	GLOBAL	jptest		signed int	E:\SD2\Game\flat\ms4sound.cpp
+0x00000000	GLOBAL	ADPCM_FileNames		class ADPCM_FILENAME_INFO [351]	E:\SD2\Game\flat\iSnd.cpp
+0x00000000	GLOBAL	FILE_SIZE		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x00000000	GLOBAL	EXTERNAL_TotalFiles		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x00000000	LOCAL	LastLoaded		class SIPLoadInfo [8]	E:\SD2\Game\flat\iSnd.cpp
+0x00000000	GLOBAL	zCounterDebugModeIteratorCB	zCounterDebugModeIteratorCB__FP5xBaseP6zScenePv	class xBase * (*)(class xBase *, class zScene *, void *)	E:\SD2\Game\flat\zCounter.cpp
+0x00000000	GLOBAL	occludeAlwaysFalse		signed int	E:\SD2\Game\flat\zVolume.cpp
+0x00000000	LOCAL	g_zdsp_dblog_init		signed int	E:\SD2\Game\flat\zDispatcher.cpp
+0x00000000	LOCAL	sBasisUniformBspline		float [4][4]	E:\SD2\Game\flat\xSpline.cpp
+0x00000000	LOCAL	sCounter		signed int	E:\SD2\Game\flat\xParMgr.cpp
+0x00000000	LOCAL	sParMgrIgnoreFXCounter		unsigned int	E:\SD2\Game\flat\xParMgr.cpp
+0x00000000	GLOBAL	sParAtomic		class RpAtomic *	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParClump		class RpClump *	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParMaterial		class RpMaterial *	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParClumpFrame		class RwFrame *	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParAtomicFrame		class RwFrame *	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParTexture		class RwTexture *	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParEmitterWidth		float	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParEmitterLength		float	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParEmitterAngle		float	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParSize		float	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParGrowth		float	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParAspectRatio		float	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParFlightTime		float	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParMinSpeed		float	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParMaxSpeed		float	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParDamping		float	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParForce		class RwV3d	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParStartColor		signed int	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParStartAlpha		signed int	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParEndColor		signed int	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	GLOBAL	sParEndAlpha		signed int	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	LOCAL	sParColors		class RwRGBA [8]	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	LOCAL	sParAdded		signed int	E:\SD2\Game\flat\iParMgr.cpp
+0x00000000	LOCAL	sPlatMoveFunc		void (*)(class _xEnt *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x00000000	LOCAL	ChimneyTagPoint		class _xVec3	E:\SD2\Game\flat\zEntShaggy.cpp
+0x00000000	LOCAL	ShaggyTagPoint		class _xVec3	E:\SD2\Game\flat\zEntShaggy.cpp
+0x00000000	GLOBAL	ShadowSubdArea		float	E:\SD2\Game\flat\xShadow.cpp
+0x00000000	LOCAL	ShadowPreviewVerts		class RwV2d [2]	E:\SD2\Game\flat\xShadow.cpp
+0x00000000	LOCAL	ShadowEnabled		signed int	E:\SD2\Game\flat\xShadow.cpp
+0x00000000	LOCAL	ShadowResolutionIndex		unsigned int	E:\SD2\Game\flat\xShadow.cpp
+0x00000000	GLOBAL	ShadowBlur		unsigned int	E:\SD2\Game\flat\xShadow.cpp
+0x00000000	GLOBAL	ShadowAA		signed int	E:\SD2\Game\flat\xShadow.cpp
+0x00000000	GLOBAL	zlim		float	E:\SD2\Game\flat\xShadow.cpp
+0x00000000	GLOBAL	zamt		float	E:\SD2\Game\flat\xShadow.cpp
+0x00000000	LOCAL	sHudStatusAngX		float	E:\SD2\Game\flat\zHud.cpp
+0x00000000	LOCAL	sHudStatusAngY		float	E:\SD2\Game\flat\zHud.cpp
+0x00000000	LOCAL	sHudStatusAngZ		float	E:\SD2\Game\flat\zHud.cpp
+0x00000000	LOCAL	oldSnackCnt		unsigned int	E:\SD2\Game\flat\zHud.cpp
+0x00000000	GLOBAL	EnvMapActiveMaterials		unsigned int	E:\SD2\Game\flat\xFX.cpp
+0x00000000	GLOBAL	BumpMapBumpiness		float	E:\SD2\Game\flat\xFX.cpp
+0x00000000	GLOBAL	BumpMapActiveMaterials		unsigned int	E:\SD2\Game\flat\xFX.cpp
+0x00000000	GLOBAL	follow		float	E:\SD2\Game\flat\xFX.cpp
+0x00000000	GLOBAL	AtomicResetMaterialEffects	AtomicResetMaterialEffects__FP8RpAtomicPv	class RpAtomic * (*)(class RpAtomic *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x00000000	GLOBAL	MaterialResetEffects	MaterialResetEffects__FP10RpMaterialPv	class RpMaterial * (*)(class RpMaterial *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x00000000	GLOBAL	MaterialSetBumpMap	MaterialSetBumpMap__FP10RpMaterialPv	class RpMaterial * (*)(class RpMaterial *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x00000000	GLOBAL	MaterialSetBumpiness	MaterialSetBumpiness__FP10RpMaterialPv	class RpMaterial * (*)(class RpMaterial *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x00000000	GLOBAL	controller_val		unsigned int	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x00000000	GLOBAL	ZPRJ_newt_dzfunc_tdy	ZPRJ_newt_dzfunc_tdy__FfPv	float (*)(float, void *)	E:\SD2\Game\flat\zEntProjectile.cpp
+0x00000000	GLOBAL	ZPRJ_newt_zfunc_ty	ZPRJ_newt_zfunc_ty__FfPv	float (*)(float, void *)	E:\SD2\Game\flat\zEntProjectile.cpp
+0x00000000	LOCAL	rcsid		char [12]	E:\SD2\Game\flat\p2rwcoll\ctbsp_.c
+0x00000000	LOCAL	rcsid		char [66]	E:\SD2\Game\flat\p2rwcoll\ctgeom_.c
+0x00000000	GLOBAL	GeomLeafNodeForAllBBoxIntersections	GeomLeafNodeForAllBBoxIntersections__FiiPv	signed int (*)(signed int, signed int, void *)	E:\SD2\Game\flat\p2rwcoll\ctgeom_.c
+0x00000000	LOCAL	rcsid		char [67]	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00000000	GLOBAL	WorldSectorQueryDataCallBack	WorldSectorQueryDataCallBack__FP13RpWorldSectorPv	class RpWorldSector * (*)(class RpWorldSector *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00000000	GLOBAL	WorldSectorDestroyDataCallBack	WorldSectorDestroyDataCallBack__FP13RpWorldSectorPv	class RpWorldSector * (*)(class RpWorldSector *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00000000	GLOBAL	WorldSectorBuildDataCallBack	WorldSectorBuildDataCallBack__FP13RpWorldSectorPv	class RpWorldSector * (*)(class RpWorldSector *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00000000	GLOBAL	WorldSectorForAllPrimitiveAtomicIntersections	WorldSectorForAllPrimitiveAtomicIntersections__FP13RpWorldSectorPv	class RpWorldSector * (*)(class RpWorldSector *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00000000	GLOBAL	AtomicSphereTest	AtomicSphereTest__FP8RpAtomicPv	class RpAtomic * (*)(class RpAtomic *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00000000	GLOBAL	AtomicBoxTest	AtomicBoxTest__FP8RpAtomicPv	class RpAtomic * (*)(class RpAtomic *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00000000	GLOBAL	AtomicLineTest	AtomicLineTest__FP8RpAtomicPv	class RpAtomic * (*)(class RpAtomic *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00000000	GLOBAL	WorldSectorIntersectionCallBack	WorldSectorIntersectionCallBack__FP13RpWorldSectorPv	class RpWorldSector * (*)(class RpWorldSector *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00000000	GLOBAL	CollisionWorldSectorTranslate	CollisionWorldSectorTranslate__FP13RpWorldSectorPv	class RpWorldSector * (*)(class RpWorldSector *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00000000	LOCAL	rcsid		char [68]	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x00000000	LOCAL	rcsid		char [62]	E:\SD2\Game\flat\p2rwcoll\rtintsec_.c
+0x00000000	GLOBAL	gRWPS2FastPath		signed int	E:\SD2\Game\flat\p2im3dhack.cpp
+0x00010000	GLOBAL	_stack_size		char	E:\SD2\Game\flat\iMemMgr.cpp
+0x00111490	GLOBAL	iFileCallbackHandler	iFileCallbackHandler__Fi	void (*)(signed int)	E:\SD2\Game\flat\iFile.cpp
+0x00116440	GLOBAL	zMainMemLvlChkCB	zMainMemLvlChkCB__Fv	void (*)()	E:\SD2\Game\flat\zMain.cpp
+0x001172D0	GLOBAL	xAnimPoolCB	xAnimPoolCB__FP8xMemPoolPv	void (*)(class xMemPool *, void *)	E:\SD2\Game\flat\xAnim.cpp
+0x0011D8D0	GLOBAL	PKR_special_loadbuf_killed	PKR_special_loadbuf_killed__FP10RwResEntry	void (*)(class RwResEntry *)	E:\SD2\Game\flat\xpkrsvc.cpp
+0x0011E790	GLOBAL	OrdTest_R_AssetID	OrdTest_R_AssetID__FPCvPv	signed int (*)(void *, void *)	E:\SD2\Game\flat\xpkrsvc.cpp
+0x0011E7C0	GLOBAL	OrdTest_R_Asset	OrdTest_R_Asset__FPCvPv	signed int (*)(void *, void *)	E:\SD2\Game\flat\xpkrsvc.cpp
+0x001221A0	GLOBAL	NextAtomicCallback	NextAtomicCallback__FP8RpAtomicPv	class RpAtomic * (*)(class RpAtomic *, void *)	E:\SD2\Game\flat\iModel.cpp
+0x00122310	GLOBAL	FindAtomicCallback	FindAtomicCallback__FP8RpAtomicPv	class RpAtomic * (*)(class RpAtomic *, void *)	E:\SD2\Game\flat\iModel.cpp
+0x001237A0	GLOBAL	TextureRead	TextureRead__FPCcPCc	class RwTexture * (*)(char *, char *)	E:\SD2\Game\flat\iSystem.cpp
+0x001239F0	GLOBAL	vsyncCounterHandler	vsyncCounterHandler__Fi	signed int (*)(signed int)	E:\SD2\Game\flat\iSystem.cpp
+0x00126510	GLOBAL	TimerHandler	TimerHandler__Fi	signed int (*)(signed int)	E:\SD2\Game\flat\iTime.cpp
+0x001276F0	GLOBAL	_rwSkyFSClose	_rwSkyFSClose__FPvii	void * (*)(void *, signed int, signed int)	E:\SD2\Game\flat\p2skyfs.c
+0x001277B0	GLOBAL	_rwSkyFSOpen	_rwSkyFSOpen__FPvii	void * (*)(void *, signed int, signed int)	E:\SD2\Game\flat\p2skyfs.c
+0x00127930	GLOBAL	skyFflush	skyFflush__FPv	signed int (*)(void *)	E:\SD2\Game\flat\p2skyfs.c
+0x00127940	GLOBAL	skyFeof	skyFeof__FPv	signed int (*)(void *)	E:\SD2\Game\flat\p2skyfs.c
+0x00127990	GLOBAL	skyFputs	skyFputs__FPCcPv	signed int (*)(char *, void *)	E:\SD2\Game\flat\p2skyfs.c
+0x00127A60	GLOBAL	skyFgets	skyFgets__FPciPv	char * (*)(char *, signed int, void *)	E:\SD2\Game\flat\p2skyfs.c
+0x00127BB0	GLOBAL	skyFtell	skyFtell__FPv	signed int (*)(void *)	E:\SD2\Game\flat\p2skyfs.c
+0x00127C00	GLOBAL	skyFseek	skyFseek__FPvli	signed int (*)(void *, signed long, signed int)	E:\SD2\Game\flat\p2skyfs.c
+0x00127D70	GLOBAL	skyFwrite	skyFwrite__FPCvUiUiPv	unsigned int (*)(void *, unsigned int, unsigned int, void *)	E:\SD2\Game\flat\p2skyfs.c
+0x00127E50	GLOBAL	skyFread	skyFread__FPvUiUiPv	unsigned int (*)(void *, unsigned int, unsigned int, void *)	E:\SD2\Game\flat\p2skyfs.c
+0x00127F90	GLOBAL	skyFexist	skyFexist__FPCc	signed int (*)(char *)	E:\SD2\Game\flat\p2skyfs.c
+0x00127FF0	GLOBAL	skyFclose	skyFclose__FPv	signed int (*)(void *)	E:\SD2\Game\flat\p2skyfs.c
+0x00128090	GLOBAL	skyFopen	skyFopen__FPCcPCc	void * (*)(char *, char *)	E:\SD2\Game\flat\p2skyfs.c
+0x001287F0	GLOBAL	xModCollCB	xModCollCB__Fv	void (*)()	E:\SD2\Game\flat\xEnt.cpp
+0x00128AB0	GLOBAL	CmpModCollLtime	CmpModCollLtime__FPCvPCv	signed int (*)(void *, void *)	E:\SD2\Game\flat\xEnt.cpp
+0x00128B10	GLOBAL	CmpModCollCtime	CmpModCollCtime__FPCvPCv	signed int (*)(void *, void *)	E:\SD2\Game\flat\xEnt.cpp
+0x00129B40	GLOBAL	xEntDebugCB	xEntDebugCB__Fv	void (*)()	E:\SD2\Game\flat\xEnt.cpp
+0x00129BE0	GLOBAL	xEntRender	xEntRender__FP5_xEnt	void (*)(class _xEnt *)	E:\SD2\Game\flat\xEnt.cpp
+0x0012ADA0	GLOBAL	xEntCollCheckOneTrigNoDepen	xEntCollCheckOneTrigNoDepen__FP5_xEntP7_xScenePv	class _xEnt * (*)(class _xEnt *, class _xScene *, void *)	E:\SD2\Game\flat\xEnt.cpp
+0x0012AE00	GLOBAL	xEntCollCheckOneEntNoDepen	xEntCollCheckOneEntNoDepen__FP5_xEntP7_xScenePv	class _xEnt * (*)(class _xEnt *, class _xScene *, void *)	E:\SD2\Game\flat\xEnt.cpp
+0x0012C180	GLOBAL	xEntDefaultTranslate	xEntDefaultTranslate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\xEnt.cpp
+0x0012C260	GLOBAL	xEntDefaultBoundUpdate	xEntDefaultBoundUpdate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\xEnt.cpp
+0x0012C260	GLOBAL	xEntDefaultBoundUpdate	xEntDefaultBoundUpdate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\zEntBubble.cpp
+0x0012C470	GLOBAL	xEntUpdate	xEntUpdate__FP5_xEntP7_xScenef	void (*)(class _xEnt *, class _xScene *, float)	E:\SD2\Game\flat\xEnt.cpp
+0x0012D140	GLOBAL	xEntUpdateTimer	xEntUpdateTimer__FP5_xEnt	void (*)(class _xEnt *)	E:\SD2\Game\flat\xEnt.cpp
+0x0012E2D0	GLOBAL	rayHitsModelBackwardCB	rayHitsModelBackwardCB__FP14RpIntersectionP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollide.cpp
+0x0012E330	GLOBAL	rayHitsModelCB	rayHitsModelCB__FP14RpIntersectionP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollide.cpp
+0x0012E3B0	GLOBAL	rayHitsEnvBackwardCB	rayHitsEnvBackwardCB__FP14RpIntersectionP13RpWorldSectorP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpWorldSector *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollide.cpp
+0x0012E430	GLOBAL	rayHitsEnvCB	rayHitsEnvCB__FP14RpIntersectionP13RpWorldSectorP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpWorldSector *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollide.cpp
+0x0012E4D0	GLOBAL	sphereHitsModel3CB	sphereHitsModel3CB__FP14RpIntersectionP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollide.cpp
+0x0012E4F0	GLOBAL	sphereHitsEnv4CB	sphereHitsEnv4CB__FP14RpIntersectionP13RpWorldSectorP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpWorldSector *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollide.cpp
+0x0012E680	GLOBAL	sphereHitsEnv3CB	sphereHitsEnv3CB__FP14RpIntersectionP13RpWorldSectorP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpWorldSector *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollide.cpp
+0x00132B70	GLOBAL	zSceneCalcProgress_serialTraverseCB	zSceneCalcProgress_serialTraverseCB__FUiP7xSerial	signed int (*)(unsigned int, class xSerial *)	E:\SD2\Game\flat\zScene.cpp
+0x001336B0	GLOBAL	zSceneGetName	zSceneGetName__FP5xBase	char * (*)(class xBase *)	E:\SD2\Game\flat\zScene.cpp
+0x001336F0	GLOBAL	zSceneGetName	zSceneGetName__FUi	char * (*)(unsigned int)	E:\SD2\Game\flat\zScene.cpp
+0x001337D0	GLOBAL	zSceneFindObject	zSceneFindObject__FUi	class xBase * (*)(unsigned int)	E:\SD2\Game\flat\zScene.cpp
+0x00134760	GLOBAL	zSceneSetup_serialTraverseCB	zSceneSetup_serialTraverseCB__FUiP7xSerial	signed int (*)(unsigned int, class xSerial *)	E:\SD2\Game\flat\zScene.cpp
+0x0013AF90	GLOBAL	xCameraSeeThruCallback	xCameraSeeThruCallback__FP5_xEnt	void (*)(class _xEnt *)	E:\SD2\Game\flat\xCamera.cpp
+0x0013FA50	GLOBAL	VANM_diddflt	VANM_diddflt__FP15xAnimTransitionP11xAnimSingleP14st_zEntVillain	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class st_zEntVillain *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x0013FB30	GLOBAL	VANM_dodflt	VANM_dodflt__FP15xAnimTransitionP11xAnimSingleP14st_zEntVillain	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class st_zEntVillain *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x0013FB40	GLOBAL	VANM_didtran	VANM_didtran__FP15xAnimTransitionP11xAnimSingleP14st_zEntVillain	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class st_zEntVillain *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x0013FC20	GLOBAL	VANM_dotran	VANM_dotran__FP15xAnimTransitionP11xAnimSingleP14st_zEntVillain	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class st_zEntVillain *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00149020	GLOBAL	VWEP_rbs_bupdate	VWEP_rbs_bupdate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00149F10	GLOBAL	VPRJ_BMM_bupdate	VPRJ_BMM_bupdate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x0014BA60	GLOBAL	VPRJ_BBK_bupdate	VPRJ_BBK_bupdate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x0014C8F0	GLOBAL	VWEP_prjOwnerNotify	VWEP_prjOwnerNotify__FP14zEntProjectile19en_PROJECTILE_EVENTPv	signed int (*)(class zEntProjectile *, enum en_PROJECTILE_EVENT, void *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00151A90	GLOBAL	VNAV_chklos_timz	VNAV_chklos_timz__FPvP6_xVec3PC11_zMovePoint	signed int (*)(void *, class _xVec3 *, class _zMovePoint *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00153310	GLOBAL	zVIL_elcb_move	zVIL_elcb_move__FP5_xEntP7_xScenefP10_xEntFrame	void (*)(class _xEnt *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00153380	GLOBAL	zVIL_elcb_bupdate	zVIL_elcb_bupdate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00153530	GLOBAL	zVIL_elcb_update	zVIL_elcb_update__FP5_xEntP7_xScenef	void (*)(class _xEnt *, class _xScene *, float)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00153830	GLOBAL	zVIL_elcb_event	zVIL_elcb_event__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00160CF0	GLOBAL	VILN_KookRender	VILN_KookRender__FP5_xEnt	void (*)(class _xEnt *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00160D30	GLOBAL	VILN_std_xtrarend	VILN_std_xtrarend__FP14st_zEntVillain	signed int (*)(class st_zEntVillain *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00160D60	GLOBAL	VILN_std_pickanim	VILN_std_pickanim__FP14st_zEntVillain17en_BEHAVIOUR_GOAL17en_ZVIL_GOAL_SPOT	signed int (*)(class st_zEntVillain *, enum en_BEHAVIOUR_GOAL, enum en_ZVIL_GOAL_SPOT)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00161790	GLOBAL	VILN_std_respond	VILN_std_respond__FP14st_zEntVillainP24st_STIMULUS_CONTEXT_DATA	signed int (*)(class st_zEntVillain *, class st_STIMULUS_CONTEXT_DATA *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00161810	GLOBAL	VILN_std_calcmove	VILN_std_calcmove__FP14st_zEntVillainP7_xScenefPC10_xEntFrame	signed int (*)(class st_zEntVillain *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x001621B0	GLOBAL	VILN_std_trangoal	VILN_std_trangoal__FP14st_zEntVillainP24st_STIMULUS_CONTEXT_DATAf	signed int (*)(class st_zEntVillain *, class st_STIMULUS_CONTEXT_DATA *, float)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00163F90	GLOBAL	VILN_std_stimulus	VILN_std_stimulus__FP14st_zEntVillainP24st_STIMULUS_CONTEXT_DATAP24st_STIMULUS_CONTEXT_DATA	signed int (*)(class st_zEntVillain *, class st_STIMULUS_CONTEXT_DATA *, class st_STIMULUS_CONTEXT_DATA *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x001656E0	GLOBAL	VILN_std_aware	VILN_std_aware__FP14st_zEntVillainP7_xScenefP24st_STIMULUS_CONTEXT_DATA	signed int (*)(class st_zEntVillain *, class _xScene *, float, class st_STIMULUS_CONTEXT_DATA *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00168350	GLOBAL	VILN_std_notice	VILN_std_notice__FP14st_zEntVillain14en_ZVIL_NOTICEP24st_STIMULUS_CONTEXT_DATA	signed int (*)(class st_zEntVillain *, enum en_ZVIL_NOTICE, class st_STIMULUS_CONTEXT_DATA *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00168470	GLOBAL	VILN_std_sysevent	VILN_std_sysevent__FP14st_zEntVillainP5xBaseUiPfP5xBaseP24st_STIMULUS_CONTEXT_DATA	signed int (*)(class st_zEntVillain *, class xBase *, unsigned int, float *, class xBase *, class st_STIMULUS_CONTEXT_DATA *)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00168C60	GLOBAL	VILN_std_query	VILN_std_query__FP14st_zEntVillain13en_ZVIL_QUERY	signed int (*)(class st_zEntVillain *, enum en_ZVIL_QUERY)	E:\SD2\Game\flat\zEntVillain.cpp
+0x00169670	GLOBAL	VILN_std_flag	VILN_std_flag__FP14st_zEntVillain19en_ZVIL_FLAG_GROUPS17en_BEHAVIOUR_GOAL	signed int (*)(class st_zEntVillain *, enum en_ZVIL_FLAG_GROUPS, enum en_BEHAVIOUR_GOAL)	E:\SD2\Game\flat\zEntVillain.cpp
+0x0016BBC0	GLOBAL	zEntPlayer_SNDSkidCB	zEntPlayer_SNDSkidCB__FUiP17xAnimActiveEffectP11xAnimSinglePv	unsigned int (*)(unsigned int, class xAnimActiveEffect *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0016BD20	GLOBAL	zEntPlayer_FXOpenBrollyCB	zEntPlayer_FXOpenBrollyCB__FUiP17xAnimActiveEffectP11xAnimSinglePv	unsigned int (*)(unsigned int, class xAnimActiveEffect *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0016BD30	GLOBAL	zEntPlayer_FXSpringCB	zEntPlayer_FXSpringCB__FUiP17xAnimActiveEffectP11xAnimSinglePv	unsigned int (*)(unsigned int, class xAnimActiveEffect *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0016BE20	GLOBAL	zEntPlayer_FXDigupCB	zEntPlayer_FXDigupCB__FUiP17xAnimActiveEffectP11xAnimSinglePv	unsigned int (*)(unsigned int, class xAnimActiveEffect *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0016BE60	GLOBAL	zEntPlayer_FXScratchCB	zEntPlayer_FXScratchCB__FUiP17xAnimActiveEffectP11xAnimSinglePv	unsigned int (*)(unsigned int, class xAnimActiveEffect *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0016DF80	GLOBAL	PlayerRotMatchUpdateEnt	PlayerRotMatchUpdateEnt__FP5_xEntP7_xScenefPv	void (*)(class _xEnt *, class _xScene *, float, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0016EEB0	GLOBAL	zEntPlayerEventCB	zEntPlayerEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0016F540	GLOBAL	zEntPlayerCollTriggerCB	zEntPlayerCollTriggerCB__FP5_xEntP7_xScenePv	class _xEnt * (*)(class _xEnt *, class _xScene *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001710C0	GLOBAL	PlayerCollCheckOneVillain	PlayerCollCheckOneVillain__FP5_xEntP7_xScenePv	class _xEnt * (*)(class _xEnt *, class _xScene *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00171680	GLOBAL	PlayerCollCheckOneEnt	PlayerCollCheckOneEnt__FP5_xEntP7_xScenePv	class _xEnt * (*)(class _xEnt *, class _xScene *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00172C90	GLOBAL	PlayerBoundUpdate	PlayerBoundUpdate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00172EC0	GLOBAL	PlayerDepenQuery	PlayerDepenQuery__FP5_xEntP5_xEntP7_xScenefP8_xCollis	unsigned int (*)(class _xEnt *, class _xEnt *, class _xScene *, float, class _xCollis *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00174F30	GLOBAL	zEntPlayer_Move	zEntPlayer_Move__FP5_xEntP7_xScenefP10_xEntFrame	void (*)(class _xEnt *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00175040	GLOBAL	zEntPlayer_Render	zEntPlayer_Render__FP5_zEnt	void (*)(class _zEnt *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00176150	GLOBAL	zEntPlayer_Update	zEntPlayer_Update__FP5_xEntP7_xScenef	void (*)(class _xEnt *, class _xScene *, float)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00179030	GLOBAL	LampFixbugCheck	LampFixbugCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00179080	GLOBAL	LampbackCheck	LampbackCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001790D0	GLOBAL	LampoffCheck	LampoffCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00179120	GLOBAL	LamponCheck	LamponCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00179180	GLOBAL	LampDrawCheck	LampDrawCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A1D0	GLOBAL	FaceIdle	FaceIdle__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A270	GLOBAL	FaceSwing	FaceSwing__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A310	GLOBAL	FaceSneak	FaceSneak__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A3B0	GLOBAL	FaceTeeter	FaceTeeter__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A450	GLOBAL	FacePant	FacePant__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A4F0	GLOBAL	FaceRun	FaceRun__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A560	GLOBAL	FaceEvent	FaceEvent__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A600	GLOBAL	FaceScare	FaceScare__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A650	GLOBAL	FaceClearScareCB	FaceClearScareCB__FP15xAnimTransitionP11xAnimSingle	unsigned int (*)(class xAnimTransition *, class xAnimSingle *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A660	GLOBAL	FaceMad	FaceMad__FP15xAnimTransitionP11xAnimSingle	unsigned int (*)(class xAnimTransition *, class xAnimSingle *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0017A680	GLOBAL	FaceBlow	FaceBlow__FP15xAnimTransitionP11xAnimSingle	unsigned int (*)(class xAnimTransition *, class xAnimSingle *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00180990	GLOBAL	DestructObjHBCallback	DestructObjHBCallback__FP5_zEntP8_xCollis	signed int (*)(class _zEnt *, class _xCollis *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00180EE0	GLOBAL	ButtonHBCallback	ButtonHBCallback__FP5_zEntP8_xCollis	signed int (*)(class _zEnt *, class _xCollis *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001810F0	GLOBAL	SD0_TossCB	SD0_TossCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001811E0	GLOBAL	ClearHelmetCB	ClearHelmetCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001811F0	GLOBAL	FallToDeathDropCB	FallToDeathDropCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181270	GLOBAL	FallToDeathDrop	FallToDeathDrop__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001812A0	GLOBAL	FallToDeathStart	FallToDeathStart__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001812D0	GLOBAL	DeathCB	DeathCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001813A0	GLOBAL	HangNoSwingCheck	HangNoSwingCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181400	GLOBAL	HangSwingCheck	HangSwingCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181460	GLOBAL	HangCB	HangCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181700	GLOBAL	PowerupCB	PowerupCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181710	GLOBAL	PowerupCheck	PowerupCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181730	GLOBAL	NoHangCheck	NoHangCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181750	GLOBAL	HangCheck	HangCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181760	GLOBAL	NotFloatCheck	NotFloatCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181780	GLOBAL	FloatCheck	FloatCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181860	GLOBAL	SlideCheck	SlideCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001818E0	GLOBAL	ButtSmashStateCB	ButtSmashStateCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181900	GLOBAL	ButtSmashCB	ButtSmashCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181940	GLOBAL	ButtSmashCheck	ButtSmashCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001819D0	GLOBAL	HeadHitCB	HeadHitCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001819E0	GLOBAL	HeadHitCheck	HeadHitCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001819F0	GLOBAL	AttackFinishedHotsauce	AttackFinishedHotsauce__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181A40	GLOBAL	AttackFinishedRun	AttackFinishedRun__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181AC0	GLOBAL	AttackFinished	AttackFinished__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181B20	GLOBAL	AttackCB	AttackCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181B50	GLOBAL	AttackCheck	AttackCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181BD0	GLOBAL	ProjectileCB	ProjectileCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181C00	GLOBAL	ProjectileRepeat	ProjectileRepeat__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181CE0	GLOBAL	ProjectileRepeatSync	ProjectileRepeatSync__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181DD0	GLOBAL	ProjectileCheck	ProjectileCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181E80	GLOBAL	StopDigCheck	StopDigCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181EF0	GLOBAL	DigCB	DigCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181F30	GLOBAL	DigCheck	DigCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181FC0	GLOBAL	NospringCheck	NospringCheck__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00181FF0	GLOBAL	SpringCheck	SpringCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182010	GLOBAL	ButtSmashLandCB	ButtSmashLandCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001821D0	GLOBAL	BounceCB	BounceCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001821F0	GLOBAL	BounceCheck	BounceCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182210	GLOBAL	DblJumpCB	DblJumpCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001822D0	GLOBAL	DblJumpCheckTime	DblJumpCheckTime__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182380	GLOBAL	DblJumpCheck	DblJumpCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001823F0	GLOBAL	JumpHangCB	JumpHangCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182480	GLOBAL	JumpCB	JumpCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182540	GLOBAL	JumpCheck	JumpCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182680	GLOBAL	ActiveCheck	ActiveCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001826E0	GLOBAL	IdleGetupCB	IdleGetupCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182710	GLOBAL	IdleSitCB	IdleSitCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182740	GLOBAL	IdleMajorCB	IdleMajorCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182790	GLOBAL	IdleMinorCB	IdleMinorCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001827D0	GLOBAL	IdleGetupCheck	IdleGetupCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182820	GLOBAL	IdleSitCheck	IdleSitCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182850	GLOBAL	IdleMajorCheck	IdleMajorCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001828C0	GLOBAL	IdleMinorCheck	IdleMinorCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182930	GLOBAL	FallingCheck	FallingCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182950	GLOBAL	LandHealthCheck	LandHealthCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001829A0	GLOBAL	LandFastCheck	LandFastCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001829E0	GLOBAL	LandWalkCheck	LandWalkCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182A20	GLOBAL	LandSlowCheck	LandSlowCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182A60	GLOBAL	ScareLandCheck	ScareLandCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182AB0	GLOBAL	LandCheck	LandCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182AD0	GLOBAL	ScareKnockbackCB	ScareKnockbackCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182BD0	GLOBAL	ScareCB	ScareCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182C40	GLOBAL	ScareCheckCritter	ScareCheckCritter__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182CF0	GLOBAL	ScareCheckNoHealth	ScareCheckNoHealth__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182D20	GLOBAL	UncowerCheck	UncowerCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182D80	GLOBAL	CowerCheck	CowerCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182DB0	GLOBAL	ScareCheck	ScareCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182E10	GLOBAL	NosneakPlunger	NosneakPlunger__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182E70	GLOBAL	NosneakSlippery	NosneakSlippery__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182EF0	GLOBAL	NosneakTeeter	NosneakTeeter__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00182FE0	GLOBAL	NosneakCheck	NosneakCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00183040	GLOBAL	SneakIdleCheck	SneakIdleCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00183080	GLOBAL	SneakMoveCheck	SneakMoveCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001830E0	GLOBAL	SkidStopCheck	SkidStopCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00183120	GLOBAL	IdleCheck	IdleCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001831F0	GLOBAL	WalkPlungeCheck	WalkPlungeCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00183240	GLOBAL	StickNoBootsWalk	StickNoBootsWalk__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001832E0	GLOBAL	StickNoBootsIdle	StickNoBootsIdle__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00183380	GLOBAL	StickySurfWalk	StickySurfWalk__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001833B0	GLOBAL	StickySurfIdle	StickySurfIdle__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001833E0	GLOBAL	WalkCheck	WalkCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001834D0	GLOBAL	NotRunCB	NotRunCB__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001834F0	GLOBAL	NotRunCheck	NotRunCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001835D0	GLOBAL	RunCheck	RunCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001836D0	GLOBAL	HotsauceCheck	HotsauceCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001836F0	GLOBAL	SlipperyCheck	SlipperyCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00183750	GLOBAL	TeeterCheck	TeeterCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00183820	GLOBAL	PlungerCheck	PlungerCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00183860	GLOBAL	HealthCheck	HealthCheck__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00183890	GLOBAL	VillHBCallback	VillHBCallback__FP5_zEntP8_xCollis	signed int (*)(class _zEnt *, class _xCollis *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001863D0	GLOBAL	BFD_cb_asyncread	BFD_cb_asyncread__Fi	void (*)(signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x001867D0	GLOBAL	AsyncReadStatus	AsyncReadStatus__FP15st_FILELOADINFO	enum en_BIO_ASYNC_ERRCODES (*)(class st_FILELOADINFO *)	E:\SD2\Game\flat\xbinio.cpp
+0x001867E0	GLOBAL	AsyncIRead	AsyncIRead__FP15st_FILELOADINFOiPcii	signed int (*)(class st_FILELOADINFO *, signed int, char *, signed int, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x001867F0	GLOBAL	AsyncMRead	AsyncMRead__FP15st_FILELOADINFOiPcii	signed int (*)(class st_FILELOADINFO *, signed int, char *, signed int, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186800	GLOBAL	ReadIDoubles	ReadIDoubles__FP15st_FILELOADINFOPdi	signed int (*)(class st_FILELOADINFO *, double *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186810	GLOBAL	ReadIFloats	ReadIFloats__FP15st_FILELOADINFOPfi	signed int (*)(class st_FILELOADINFO *, float *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186820	GLOBAL	ReadILongs	ReadILongs__FP15st_FILELOADINFOPii	signed int (*)(class st_FILELOADINFO *, signed int *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186830	GLOBAL	ReadIShorts	ReadIShorts__FP15st_FILELOADINFOPsi	signed int (*)(class st_FILELOADINFO *, signed short *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186840	GLOBAL	ReadMDoubles	ReadMDoubles__FP15st_FILELOADINFOPdi	signed int (*)(class st_FILELOADINFO *, double *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186880	GLOBAL	ReadMFloats	ReadMFloats__FP15st_FILELOADINFOPfi	signed int (*)(class st_FILELOADINFO *, float *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x001868F0	GLOBAL	ReadMLongs	ReadMLongs__FP15st_FILELOADINFOPii	signed int (*)(class st_FILELOADINFO *, signed int *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186960	GLOBAL	ReadMShorts	ReadMShorts__FP15st_FILELOADINFOPsi	signed int (*)(class st_FILELOADINFO *, signed short *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x001869C0	GLOBAL	ReadBytes	ReadBytes__FP15st_FILELOADINFOPci	signed int (*)(class st_FILELOADINFO *, char *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186A90	GLOBAL	DiscardBuffer	DiscardBuffer__FP15st_FILELOADINFO	void (*)(class st_FILELOADINFO *)	E:\SD2\Game\flat\xbinio.cpp
+0x00186AC0	GLOBAL	SetBuffer	SetBuffer__FP15st_FILELOADINFOPci	void (*)(class st_FILELOADINFO *, char *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186AF0	GLOBAL	ReadSeek	ReadSeek__FP15st_FILELOADINFOi	signed int (*)(class st_FILELOADINFO *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186BB0	GLOBAL	SkipBytes	SkipBytes__FP15st_FILELOADINFOi	signed int (*)(class st_FILELOADINFO *, signed int)	E:\SD2\Game\flat\xbinio.cpp
+0x00186C80	GLOBAL	LoadDestroy	LoadDestroy__FP15st_FILELOADINFO	void (*)(class st_FILELOADINFO *)	E:\SD2\Game\flat\xbinio.cpp
+0x00188780	GLOBAL	FindAssetCB	FindAssetCB__FUiPc	void * (*)(unsigned int, char *)	E:\SD2\Game\flat\zAssetTypes.cpp
+0x001889F0	GLOBAL	TexCB	TexCB__FP9RwTexturePv	class RwTexture * (*)(class RwTexture *, void *)	E:\SD2\Game\flat\zAssetTypes.cpp
+0x0018C2C0	GLOBAL	xSG_cb_ISGChange	xSG_cb_ISGChange__FPv10en_CHGCODE	void (*)(void *, enum en_CHGCODE)	E:\SD2\Game\flat\xsavegame.cpp
+0x0018CDB0	GLOBAL	xSG_cb_leader_load	xSG_cb_leader_load__FPvP17st_XSAVEGAME_DATAP24st_XSAVEGAME_READCONTEXTUii	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_READCONTEXT *, unsigned int, signed int)	E:\SD2\Game\flat\xsavegame.cpp
+0x0018CE60	GLOBAL	xSG_cb_leader_svproc	xSG_cb_leader_svproc__FPvP17st_XSAVEGAME_DATAP25st_XSAVEGAME_WRITECONTEXT	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_WRITECONTEXT *)	E:\SD2\Game\flat\xsavegame.cpp
+0x0018CF50	GLOBAL	xSG_cb_leader_svinfo	xSG_cb_leader_svinfo__FPvP17st_XSAVEGAME_DATAPiPi	signed int (*)(void *, class st_XSAVEGAME_DATA *, signed int *, signed int *)	E:\SD2\Game\flat\xsavegame.cpp
+0x0018E860	GLOBAL	zEntTriggerEventCB	zEntTriggerEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntTrigger.cpp
+0x0018E890	GLOBAL	zEntTriggerUpdate	zEntTriggerUpdate__FP11zEntTriggerP7_xScenef	void (*)(class zEntTrigger *, class _xScene *, float)	E:\SD2\Game\flat\zEntTrigger.cpp
+0x0018EC40	GLOBAL	zCameraEventCB	zCameraEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zCamera.cpp
+0x00190380	GLOBAL	zEntPickup_Update	zEntPickup_Update__FP11_zEntPickupP7_xScenef	void (*)(class _zEntPickup *, class _xScene *, float)	E:\SD2\Game\flat\zEntPickup.cpp
+0x00191CA0	GLOBAL	zEntPickupEventCB	zEntPickupEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntPickup.cpp
+0x001926B0	GLOBAL	zEnvEventCB	zEnvEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEnv.cpp
+0x001938D0	GLOBAL	xEntMotionDebugCB	xEntMotionDebugCB__Fv	void (*)()	E:\SD2\Game\flat\xEntMotion.cpp
+0x00195AA0	GLOBAL	zTimerEventCB	zTimerEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zTimer.cpp
+0x001962D0	GLOBAL	zPlatformEventCB	zPlatformEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zPlatform.cpp
+0x00196620	GLOBAL	zPlatformTranslate	zPlatformTranslate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\zPlatform.cpp
+0x00196910	GLOBAL	zPlatform_Move	zPlatform_Move__FP5_xEntP7_xScenefP10_xEntFrame	void (*)(class _xEnt *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zPlatform.cpp
+0x00196920	GLOBAL	zPlatform_Update	zPlatform_Update__FP5_xEntP7_xScenef	void (*)(class _xEnt *, class _xScene *, float)	E:\SD2\Game\flat\zPlatform.cpp
+0x001975A0	GLOBAL	xSER_xsgclt_ldproc_fill	xSER_xsgclt_ldproc_fill__FPvP17st_XSAVEGAME_DATAP24st_XSAVEGAME_READCONTEXTUii	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_READCONTEXT *, unsigned int, signed int)	E:\SD2\Game\flat\xserializer.cpp
+0x00197600	GLOBAL	xSER_xsgclt_svproc_fill	xSER_xsgclt_svproc_fill__FPvP17st_XSAVEGAME_DATAP25st_XSAVEGAME_WRITECONTEXT	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_WRITECONTEXT *)	E:\SD2\Game\flat\xserializer.cpp
+0x00197650	GLOBAL	xSER_xsgclt_svinfo_fill	xSER_xsgclt_svinfo_fill__FPvP17st_XSAVEGAME_DATAPiPi	signed int (*)(void *, class st_XSAVEGAME_DATA *, signed int *, signed int *)	E:\SD2\Game\flat\xserializer.cpp
+0x00197750	GLOBAL	xSER_xsgclt_ldproc_clt	xSER_xsgclt_ldproc_clt__FPvP17st_XSAVEGAME_DATAP24st_XSAVEGAME_READCONTEXTUii	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_READCONTEXT *, unsigned int, signed int)	E:\SD2\Game\flat\xserializer.cpp
+0x001977C0	GLOBAL	xSER_xsgclt_svproc_clt	xSER_xsgclt_svproc_clt__FPvP17st_XSAVEGAME_DATAP25st_XSAVEGAME_WRITECONTEXT	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_WRITECONTEXT *)	E:\SD2\Game\flat\xserializer.cpp
+0x00197810	GLOBAL	xSER_xsgclt_svinfo_clt	xSER_xsgclt_svinfo_clt__FPvP17st_XSAVEGAME_DATAPiPi	signed int (*)(void *, class st_XSAVEGAME_DATA *, signed int *, signed int *)	E:\SD2\Game\flat\xserializer.cpp
+0x00197830	GLOBAL	xSER_xsgclt_ldproc_ver	xSER_xsgclt_ldproc_ver__FPvP17st_XSAVEGAME_DATAP24st_XSAVEGAME_READCONTEXTUii	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_READCONTEXT *, unsigned int, signed int)	E:\SD2\Game\flat\xserializer.cpp
+0x00197890	GLOBAL	xSER_xsgclt_svproc_ver	xSER_xsgclt_svproc_ver__FPvP17st_XSAVEGAME_DATAP25st_XSAVEGAME_WRITECONTEXT	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_WRITECONTEXT *)	E:\SD2\Game\flat\xserializer.cpp
+0x001978C0	GLOBAL	xSER_xsgclt_svinfo_ver	xSER_xsgclt_svinfo_ver__FPvP17st_XSAVEGAME_DATAPiPi	signed int (*)(void *, class st_XSAVEGAME_DATA *, signed int *, signed int *)	E:\SD2\Game\flat\xserializer.cpp
+0x00197AD0	GLOBAL	xSER_ord_test	xSER_ord_test__FPCvPv	signed int (*)(void *, void *)	E:\SD2\Game\flat\xserializer.cpp
+0x00197B00	GLOBAL	xSER_ord_compare	xSER_ord_compare__FPvPv	signed int (*)(void *, void *)	E:\SD2\Game\flat\xserializer.cpp
+0x0019AEE0	GLOBAL	zEntBubbleEventCB	zEntBubbleEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntBubble.cpp
+0x0019B090	GLOBAL	zEntBubble_Move	zEntBubble_Move__FP11_zEntBubbleP7_xScenefP10_xEntFrame	void (*)(class _zEntBubble *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zEntBubble.cpp
+0x0019B0A0	GLOBAL	zEntBubble_Update	zEntBubble_Update__FP11_zEntBubbleP7_xScenef	void (*)(class _zEntBubble *, class _xScene *, float)	E:\SD2\Game\flat\zEntBubble.cpp
+0x0019C9F0	GLOBAL	JP	JP__FPv	void (*)(void *)	E:\SD2\Game\flat\ms4sound.cpp
+0x0019CA90	GLOBAL	MVPT_dflt_chklos	MVPT_dflt_chklos__FPvP6_xVec3PC11_zMovePoint	signed int (*)(void *, class _xVec3 *, class _zMovePoint *)	E:\SD2\Game\flat\zMovePoint.cpp
+0x0019D150	GLOBAL	zMovePointEventCB	zMovePointEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zMovePoint.cpp
+0x001A0360	GLOBAL	zPortalEventCB	zPortalEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zPortal.cpp
+0x001A0A10	GLOBAL	zGroupEventCB	zGroupEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zGroup.cpp
+0x001A0BE0	GLOBAL	zPendulumEventCB	zPendulumEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zPendulum.cpp
+0x001A0D30	GLOBAL	zPendulumTranslate	zPendulumTranslate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\zPendulum.cpp
+0x001A0D70	GLOBAL	zPendulum_Move	zPendulum_Move__FP10_zPendulumP7_xScenefP10_xEntFrame	void (*)(class _zPendulum *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zPendulum.cpp
+0x001A0D80	GLOBAL	zPendulum_Update	zPendulum_Update__FP10_zPendulumP7_xScenef	void (*)(class _zPendulum *, class _xScene *, float)	E:\SD2\Game\flat\zPendulum.cpp
+0x001A1070	GLOBAL	zSFXEventCB	zSFXEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zSFX.cpp
+0x001A1E10	GLOBAL	zCounterEventCB	zCounterEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zCounter.cpp
+0x001A2A80	GLOBAL	zEntHangableEventCB	zEntHangableEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntHangable.cpp
+0x001A2DF0	GLOBAL	zEntHangable_Update	zEntHangable_Update__FP13_zEntHangableP7_xScenef	void (*)(class _zEntHangable *, class _xScene *, float)	E:\SD2\Game\flat\zEntHangable.cpp
+0x001A34D0	GLOBAL	zEntSimpleObjEventCB	zEntSimpleObjEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntSimpleObj.cpp
+0x001A38A0	GLOBAL	zEntButtonEventCB	zEntButtonEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntButton.cpp
+0x001A3B10	GLOBAL	zEntButton_Update	zEntButton_Update__FP11_zEntButtonP7_xScenef	void (*)(class _zEntButton *, class _xScene *, float)	E:\SD2\Game\flat\zEntButton.cpp
+0x001A3D40	GLOBAL	zEntButton_Move	zEntButton_Move__FP11_zEntButtonP7_xScenefP10_xEntFrame	void (*)(class _zEntButton *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zEntButton.cpp
+0x001A41C0	GLOBAL	zSurfaceEventCB	zSurfaceEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zSurface.cpp
+0x001A5750	GLOBAL	zEntDestructObjEventCB	zEntDestructObjEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntDestructObj.cpp
+0x001A5BB0	GLOBAL	zEntDestructObj_Update	zEntDestructObj_Update__FP16_zEntDestructObjP7_xScenef	void (*)(class _zEntDestructObj *, class _xScene *, float)	E:\SD2\Game\flat\zEntDestructObj.cpp
+0x001A5C60	GLOBAL	zEntDextructObj_Move	zEntDextructObj_Move__FP16_zEntDestructObjP7_xScenefP10_xEntFrame	void (*)(class _zEntDestructObj *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zEntDestructObj.cpp
+0x001A6170	GLOBAL	zGustEventCB	zGustEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zGust.cpp
+0x001A6250	GLOBAL	zGustUpdateEnt	zGustUpdateEnt__FP5_xEntP7_xScenefPv	void (*)(class _xEnt *, class _xScene *, float, void *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001A6250	GLOBAL	zGustUpdateEnt	zGustUpdateEnt__FP5_xEntP7_xScenefPv	void (*)(class _xEnt *, class _xScene *, float, void *)	E:\SD2\Game\flat\zEntProjectile.cpp
+0x001A67B0	GLOBAL	zVolumeEventCB	zVolumeEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zVolume.cpp
+0x001A7A40	GLOBAL	xFFXShakeUpdateEnt	xFFXShakeUpdateEnt__FP5_xEntP7_xScenefPv	void (*)(class _xEnt *, class _xScene *, float, void *)	E:\SD2\Game\flat\zPlatform.cpp
+0x001A8080	GLOBAL	ZDSP_elcb_event	ZDSP_elcb_event__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zDispatcher.cpp
+0x001AB140	GLOBAL	zUIEventCB	zUIEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zUI.cpp
+0x001ABFC0	GLOBAL	iRenderQSort_Face	iRenderQSort_Face__FPCvPCv	signed int (*)(void *, void *)	E:\SD2\Game\flat\zUI.cpp
+0x001AC010	GLOBAL	zUIRenderIteratorInsert	zUIRenderIteratorInsert__FP5xBaseP6zScenePv	class xBase * (*)(class xBase *, class zScene *, void *)	E:\SD2\Game\flat\zUI.cpp
+0x001AC040	GLOBAL	zUI_Update	zUI_Update__FP4_zUIP7_xScenef	void (*)(class _zUI *, class _xScene *, float)	E:\SD2\Game\flat\zUI.cpp
+0x001AC630	GLOBAL	zUIFont_Render	zUIFont_Render__FP5_xEnt	void (*)(class _xEnt *)	E:\SD2\Game\flat\zUIFont.cpp
+0x001ACA90	GLOBAL	zUIFontEventCB	zUIFontEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zUIFont.cpp
+0x001ACC00	GLOBAL	zUIFont_Update	zUIFont_Update__FP8_zUIFontP7_xScenef	void (*)(class _zUIFont *, class _xScene *, float)	E:\SD2\Game\flat\zUIFont.cpp
+0x001B16D0	GLOBAL	zConditionalEventCB	zConditionalEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zConditional.cpp
+0x001B3890	GLOBAL	ZLOB_legacy_notify	ZLOB_legacy_notify__FP14zEntProjectile19en_PROJECTILE_EVENTPv	signed int (*)(class zEntProjectile *, enum en_PROJECTILE_EVENT, void *)	E:\SD2\Game\flat\zLobMaster.cpp
+0x001B3B50	GLOBAL	ZLOB_elcb_event	ZLOB_elcb_event__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zLobMaster.cpp
+0x001B5E60	GLOBAL	Shaggy8_EventCB	Shaggy8_EventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B61D0	GLOBAL	Shaggy8_Update	Shaggy8_Update__FP5_zEntP7_xScenef	void (*)(class _zEnt *, class _xScene *, float)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B7030	GLOBAL	Shaggy8_BarrelDestroy	Shaggy8_BarrelDestroy__FUiP17xAnimActiveEffectP11xAnimSinglePv	unsigned int (*)(unsigned int, class xAnimActiveEffect *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B70A0	GLOBAL	Shaggy8_Getup	Shaggy8_Getup__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B7120	GLOBAL	Shaggy8_BounceCB	Shaggy8_BounceCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B7180	GLOBAL	Shaggy8_Bounce	Shaggy8_Bounce__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B71E0	GLOBAL	Shaggy8_Crash	Shaggy8_Crash__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B7240	GLOBAL	Shaggy8_Stopped	Shaggy8_Stopped__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B7270	GLOBAL	Shaggy8_FlipBackCB	Shaggy8_FlipBackCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B72D0	GLOBAL	Shaggy8_FlipBack	Shaggy8_FlipBack__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B7350	GLOBAL	Shaggy8_FlipOverCB	Shaggy8_FlipOverCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B73B0	GLOBAL	Shaggy8_FlipOver	Shaggy8_FlipOver__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B7430	GLOBAL	Shaggy5_EventCB	Shaggy5_EventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B7B10	GLOBAL	Shaggy5_Update	Shaggy5_Update__FP5_zEntP7_xScenef	void (*)(class _zEnt *, class _xScene *, float)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B7FB0	GLOBAL	Shaggy5_Move	Shaggy5_Move__FP5_xEntP7_xScenefP10_xEntFrame	void (*)(class _xEnt *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B97B0	GLOBAL	Witch_DropShaggyCB	Witch_DropShaggyCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B97D0	GLOBAL	Witch_GrabShaggyCB	Witch_GrabShaggyCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B97F0	GLOBAL	Witch_DropShaggyIdle	Witch_DropShaggyIdle__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9870	GLOBAL	Witch_DropShaggyMove	Witch_DropShaggyMove__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B98F0	GLOBAL	Witch_HasShaggy	Witch_HasShaggy__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9940	GLOBAL	Shaggy5_GargRunPick	Shaggy5_GargRunPick__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9AA0	GLOBAL	Shaggy5_EatTimeUp	Shaggy5_EatTimeUp__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9B20	GLOBAL	Shaggy5_EatStopCB	Shaggy5_EatStopCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9B90	GLOBAL	Shaggy5_EatStop	Shaggy5_EatStop__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9C40	GLOBAL	Shaggy5_EatMoveCB	Shaggy5_EatMoveCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9CB0	GLOBAL	Shaggy5_ActionCB	Shaggy5_ActionCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9D10	GLOBAL	Shaggy5_Action	Shaggy5_Action__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9D80	GLOBAL	Shaggy5_WitchDropped	Shaggy5_WitchDropped__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9DE0	GLOBAL	Shaggy5_WitchAttached	Shaggy5_WitchAttached__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9E40	GLOBAL	Shaggy5_IdleTran	Shaggy5_IdleTran__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9EE0	GLOBAL	Shaggy5_MoveTran	Shaggy5_MoveTran__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001B9F80	GLOBAL	Shaggy3_EventCB	Shaggy3_EventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BA220	GLOBAL	Shaggy3_Update	Shaggy3_Update__FP5_zEntP7_xScenef	void (*)(class _zEnt *, class _xScene *, float)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BAAD0	GLOBAL	Shaggy3_MowerStopCB	Shaggy3_MowerStopCB__FUiP17xAnimActiveEffectP11xAnimSinglePv	unsigned int (*)(unsigned int, class xAnimActiveEffect *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BAB00	GLOBAL	Shaggy3_Center	Shaggy3_Center__FP15xAnimTransitionP11xAnimSingleP10_zPlatform	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zPlatform *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BAB70	GLOBAL	Shaggy3_Right	Shaggy3_Right__FP15xAnimTransitionP11xAnimSingleP10_zPlatform	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zPlatform *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BABE0	GLOBAL	Shaggy3_Left	Shaggy3_Left__FP15xAnimTransitionP11xAnimSingleP10_zPlatform	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zPlatform *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BAC50	GLOBAL	Shaggy3_StopScare	Shaggy3_StopScare__FP15xAnimTransitionP11xAnimSingleP10_zPlatform	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zPlatform *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BACB0	GLOBAL	Shaggy3_Stop	Shaggy3_Stop__FP15xAnimTransitionP11xAnimSingleP10_zPlatform	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zPlatform *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BAD60	GLOBAL	Shaggy3_MoveDead	Shaggy3_MoveDead__FP15xAnimTransitionP11xAnimSingleP10_zPlatform	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zPlatform *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BADF0	GLOBAL	Shaggy3_Move	Shaggy3_Move__FP15xAnimTransitionP11xAnimSingleP10_zPlatform	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zPlatform *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BAE60	GLOBAL	Shaggy2_Render	Shaggy2_Render__FP5_xEnt	void (*)(class _xEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BAEA0	GLOBAL	Shaggy2Plat_EventCB	Shaggy2Plat_EventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001BAEA0	GLOBAL	Shaggy2Plat_EventCB	Shaggy2Plat_EventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BAF60	GLOBAL	Shaggy2_EventCB	Shaggy2_EventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001BAF60	GLOBAL	Shaggy2_EventCB	Shaggy2_EventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BB050	GLOBAL	Shaggy2_Update	Shaggy2_Update__FP5_zEntP7_xScenef	void (*)(class _zEnt *, class _xScene *, float)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BBA10	GLOBAL	Shaggy2_RandCheck	Shaggy2_RandCheck__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BBA30	GLOBAL	Shaggy2_Apex	Shaggy2_Apex__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BBAD0	GLOBAL	Shaggy2_StateChange	Shaggy2_StateChange__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BBB80	GLOBAL	Shaggy0_EventCB	Shaggy0_EventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BBC40	GLOBAL	Shaggy1_EventCB	Shaggy1_EventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BD1A0	GLOBAL	Shaggy1_Move	Shaggy1_Move__FP5_xEntP7_xScenefP10_xEntFrame	void (*)(class _xEnt *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001BDC50	GLOBAL	Shaggy1_Update	Shaggy1_Update__FP5_zEntP7_xScenef	void (*)(class _zEnt *, class _xScene *, float)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C18C0	GLOBAL	Shaggy0_CarryHitCB	Shaggy0_CarryHitCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C1940	GLOBAL	Shaggy0_PlayerCaught	Shaggy0_PlayerCaught__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C19A0	GLOBAL	Shaggy0_FlipCB	Shaggy0_FlipCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntPlayer.cpp
+0x001C19A0	GLOBAL	Shaggy0_FlipCB	Shaggy0_FlipCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C1A30	GLOBAL	Shaggy0_PlayerLanded	Shaggy0_PlayerLanded__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C1BB0	GLOBAL	Shaggy0_CatchCB	Shaggy0_CatchCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C1BC0	GLOBAL	Shaggy0_Catch	Shaggy0_Catch__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C1BD0	GLOBAL	Shaggy0_Throw	Shaggy0_Throw__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C1C80	GLOBAL	Shaggy1_NotalkCB	Shaggy1_NotalkCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C1D40	GLOBAL	Shaggy1_Notalk	Shaggy1_Notalk__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C1DC0	GLOBAL	Shaggy1_TalkChooseCB	Shaggy1_TalkChooseCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C1EE0	GLOBAL	Shaggy1_TalkChoose	Shaggy1_TalkChoose__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C1FC0	GLOBAL	Shaggy1_TalkFlag	Shaggy1_TalkFlag__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C20C0	GLOBAL	Shaggy1_Talk	Shaggy1_Talk__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2140	GLOBAL	Shaggy1_FallDeathCB	Shaggy1_FallDeathCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2160	GLOBAL	Shaggy1_FallDeath	Shaggy1_FallDeath__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2190	GLOBAL	Shaggy1_DeathReact	Shaggy1_DeathReact__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C21B0	GLOBAL	Shaggy1_ScareReact	Shaggy1_ScareReact__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C21E0	GLOBAL	Shaggy1_Noturn	Shaggy1_Noturn__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2260	GLOBAL	Shaggy1_TurnCB	Shaggy1_TurnCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C23C0	GLOBAL	Shaggy1_Turn	Shaggy1_Turn__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2440	GLOBAL	Shaggy1_EndSetDownCB	Shaggy1_EndSetDownCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C24F0	GLOBAL	Shaggy1_PlyrSet	Shaggy1_PlyrSet__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2540	GLOBAL	Shaggy1_SetDown	Shaggy1_SetDown__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2580	GLOBAL	Shaggy1_EventCB	Shaggy1_EventCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C25B0	GLOBAL	Shaggy1_IdleLeave	Shaggy1_IdleLeave__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2610	GLOBAL	Shaggy1_IdlePick	Shaggy1_IdlePick__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2730	GLOBAL	Shaggy1_IdleResetCB	Shaggy1_IdleResetCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2790	GLOBAL	Shaggy1_ScareCB	Shaggy1_ScareCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2800	GLOBAL	Shaggy1_Scare	Shaggy1_Scare__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2870	GLOBAL	Shaggy1_LetGoCB	Shaggy1_LetGoCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2900	GLOBAL	Shaggy1_LetGoShark	Shaggy1_LetGoShark__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2980	GLOBAL	Shaggy1_LetGo	Shaggy1_LetGo__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2A50	GLOBAL	Shaggy1_HangNoSwing	Shaggy1_HangNoSwing__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2AC0	GLOBAL	Shaggy1_HangSwing	Shaggy1_HangSwing__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2B30	GLOBAL	Shaggy1_Hang	Shaggy1_Hang__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2B50	GLOBAL	Shaggy1_FallCB	Shaggy1_FallCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2BE0	GLOBAL	Shaggy1_Fall	Shaggy1_Fall__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2C10	GLOBAL	Shaggy1_CatchCB	Shaggy1_CatchCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2C90	GLOBAL	Shaggy1_Catch	Shaggy1_Catch__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2CE0	GLOBAL	Shaggy1_LandCB	Shaggy1_LandCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2D00	GLOBAL	Shaggy1_Land2	Shaggy1_Land2__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2D80	GLOBAL	Shaggy1_Land	Shaggy1_Land__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2E20	GLOBAL	Shaggy1_ThrowEndCB	Shaggy1_ThrowEndCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2E40	GLOBAL	Shaggy1_ThrowCB	Shaggy1_ThrowCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2E90	GLOBAL	Shaggy1_Throw	Shaggy1_Throw__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2EB0	GLOBAL	Shaggy1_Stop	Shaggy1_Stop__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2F00	GLOBAL	Shaggy1_Walk	Shaggy1_Walk__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2F50	GLOBAL	Shaggy1_GrabCB	Shaggy1_GrabCB__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C2F90	GLOBAL	Shaggy1_Grab	Shaggy1_Grab__FP15xAnimTransitionP11xAnimSingleP5_zEnt	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, class _zEnt *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x001C3460	GLOBAL	ShadowRenderTriangleCB	ShadowRenderTriangleCB__FP14RpIntersectionP13RpWorldSectorP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpWorldSector *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\xShadow.cpp
+0x001C4720	GLOBAL	modelRenderCB	modelRenderCB__FPv	void (*)(void *)	E:\SD2\Game\flat\xShadow.cpp
+0x001CC5B0	GLOBAL	zFogEventCB	zFogEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zFog.cpp
+0x001CD220	GLOBAL	zLightEventCB	zLightEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zLight.cpp
+0x001CD700	GLOBAL	xSGT_LoadPrefsCB	xSGT_LoadPrefsCB__FPvP17st_XSAVEGAME_DATAP24st_XSAVEGAME_READCONTEXTUii	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_READCONTEXT *, unsigned int, signed int)	E:\SD2\Game\flat\zSaveLoad.cpp
+0x001CD7F0	GLOBAL	xSGT_LoadLoadCB	xSGT_LoadLoadCB__FPvP17st_XSAVEGAME_DATAP24st_XSAVEGAME_READCONTEXTUii	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_READCONTEXT *, unsigned int, signed int)	E:\SD2\Game\flat\zSaveLoad.cpp
+0x001CD8C0	GLOBAL	xSGT_SaveProcPrefsCB	xSGT_SaveProcPrefsCB__FPvP17st_XSAVEGAME_DATAP25st_XSAVEGAME_WRITECONTEXT	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_WRITECONTEXT *)	E:\SD2\Game\flat\zSaveLoad.cpp
+0x001CD9A0	GLOBAL	xSGT_SaveInfoPrefsCB	xSGT_SaveInfoPrefsCB__FPvP17st_XSAVEGAME_DATAPiPi	signed int (*)(void *, class st_XSAVEGAME_DATA *, signed int *, signed int *)	E:\SD2\Game\flat\zSaveLoad.cpp
+0x001CD9C0	GLOBAL	xSGT_SaveProcCB	xSGT_SaveProcCB__FPvP17st_XSAVEGAME_DATAP25st_XSAVEGAME_WRITECONTEXT	signed int (*)(void *, class st_XSAVEGAME_DATA *, class st_XSAVEGAME_WRITECONTEXT *)	E:\SD2\Game\flat\zSaveLoad.cpp
+0x001CDA50	GLOBAL	xSGT_SaveInfoCB	xSGT_SaveInfoCB__FPvP17st_XSAVEGAME_DATAPiPi	signed int (*)(void *, class st_XSAVEGAME_DATA *, signed int *, signed int *)	E:\SD2\Game\flat\zSaveLoad.cpp
+0x001D04B0	GLOBAL	csAsyncReadCB	csAsyncReadCB__Fi	void (*)(signed int)	E:\SD2\Game\flat\xCutscene.cpp
+0x001D04C0	GLOBAL	SoundCutsceneCB	SoundCutsceneCB__FP24iSndCutsceneCallbackInfo	void (*)(class iSndCutsceneCallbackInfo *)	E:\SD2\Game\flat\xCutscene.cpp
+0x001D10D0	GLOBAL	csDrawFakeEntity	csDrawFakeEntity__FP5_xEnt	void (*)(class _xEnt *)	E:\SD2\Game\flat\xCutscene.cpp
+0x001D2C40	GLOBAL	zParSysEventCB	zParSysEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zParSys.cpp
+0x001D74F0	GLOBAL	zParEmitterEventCB	zParEmitterEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zParEmitter.cpp
+0x001D7BD0	GLOBAL	zCutsceneMgrEventCB	zCutsceneMgrEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zCutsceneMgr.cpp
+0x001D7F50	GLOBAL	HackBoundCB	HackBoundCB__FP8RpAtomicPv	class RpAtomic * (*)(class RpAtomic *, void *)	E:\SD2\Game\flat\zCutsceneMgr.cpp
+0x001D8A30	GLOBAL	zEGeneratorEventCB	zEGeneratorEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEGenerator.cpp
+0x001D90B0	GLOBAL	zEGenerator_Render	zEGenerator_Render__FP11zEGenerator	void (*)(class zEGenerator *)	E:\SD2\Game\flat\zEGenerator.cpp
+0x001D90C0	GLOBAL	zEGenerator_Update	zEGenerator_Update__FP11zEGeneratorP7_xScenef	void (*)(class zEGenerator *, class _xScene *, float)	E:\SD2\Game\flat\zEGenerator.cpp
+0x001D9E40	GLOBAL	iModelMatMultiplyResetCallBack	iModelMatMultiplyResetCallBack__FP10RpMaterialPv	class RpMaterial * (*)(class RpMaterial *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x001D9E90	GLOBAL	iModelMatMultiplyCallBack	iModelMatMultiplyCallBack__FP10RpMaterialPv	class RpMaterial * (*)(class RpMaterial *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x001DA120	GLOBAL	iModelMaterialCallBack	iModelMaterialCallBack__FP10RpMaterialPv	class RpMaterial * (*)(class RpMaterial *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x001DA1C0	GLOBAL	iModelSetMaterialTextureRestoreCallBack	iModelSetMaterialTextureRestoreCallBack__FP10RpMaterialPv	class RpMaterial * (*)(class RpMaterial *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x001DA210	GLOBAL	iModelSetMaterialTextureCallBack	iModelSetMaterialTextureCallBack__FP10RpMaterialPv	class RpMaterial * (*)(class RpMaterial *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x001DA330	GLOBAL	MaterialSetEnvMap2	MaterialSetEnvMap2__FP10RpMaterialPv	class RpMaterial * (*)(class RpMaterial *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x001DA4A0	GLOBAL	MaterialSetShininess	MaterialSetShininess__FP10RpMaterialPv	class RpMaterial * (*)(class RpMaterial *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x001DA4F0	GLOBAL	SectorMatFXEnableCB	SectorMatFXEnableCB__FP13RpWorldSectorPv	class RpWorldSector * (*)(class RpWorldSector *, void *)	E:\SD2\Game\flat\xFX.cpp
+0x001DB4E0	GLOBAL	zFeetDebugCB	zFeetDebugCB__Fv	void (*)()	E:\SD2\Game\flat\zFeet.cpp
+0x001DB4F0	GLOBAL	zFeetStepVillainCB	zFeetStepVillainCB__FUiP17xAnimActiveEffectP11xAnimSinglePv	unsigned int (*)(unsigned int, class xAnimActiveEffect *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zFeet.cpp
+0x001DB760	GLOBAL	zFeetStepCB	zFeetStepCB__FUiP17xAnimActiveEffectP11xAnimSinglePv	unsigned int (*)(unsigned int, class xAnimActiveEffect *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zFeet.cpp
+0x001DD070	GLOBAL	AlwaysConditional	AlwaysConditional__FP15xAnimTransitionP11xAnimSinglePv	unsigned int (*)(class xAnimTransition *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zAnimList.cpp
+0x0024C170	GLOBAL	rayHitsEnvFastCB	rayHitsEnvFastCB__FP14RpIntersectionP13RpWorldSectorP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpWorldSector *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollideFast.cpp
+0x0024C180	GLOBAL	rayHitsModelFastCB	rayHitsModelFastCB__FP14RpIntersectionP19RpCollisionTrianglefPv	class RpCollisionTriangle * (*)(class RpIntersection *, class RpCollisionTriangle *, float, void *)	E:\SD2\Game\flat\iCollideFast.cpp
+0x0024D110	GLOBAL	iFXanimUVInstanceCallBack	iFXanimUVInstanceCallBack__FPPvUi	signed int (*)(void **, unsigned int)	E:\SD2\Game\flat\iFX.cpp
+0x00260300	GLOBAL	mpegTS	mpegTS__FP7sceMpegP22sceMpegCbDataTimeStampPv	signed int (*)(class sceMpeg *, class sceMpegCbDataTimeStamp *, void *)	E:\SD2\Game\flat\ps2_mpeg\videodec.c
+0x00260350	GLOBAL	mpegRestartDMA	mpegRestartDMA__FP7sceMpegP13sceMpegCbDataPv	signed int (*)(class sceMpeg *, class sceMpegCbData *, void *)	E:\SD2\Game\flat\ps2_mpeg\videodec.c
+0x00260380	GLOBAL	mpegStopDMA	mpegStopDMA__FP7sceMpegP13sceMpegCbDataPv	signed int (*)(class sceMpeg *, class sceMpegCbData *, void *)	E:\SD2\Game\flat\ps2_mpeg\videodec.c
+0x002603B0	GLOBAL	mpegNodata	mpegNodata__FP7sceMpegP13sceMpegCbDataPv	signed int (*)(class sceMpeg *, class sceMpegCbData *, void *)	E:\SD2\Game\flat\ps2_mpeg\videodec.c
+0x002603E0	GLOBAL	mpegError	mpegError__FP7sceMpegP18sceMpegCbDataErrorPv	signed int (*)(class sceMpeg *, class sceMpegCbDataError *, void *)	E:\SD2\Game\flat\ps2_mpeg\videodec.c
+0x002605D0	GLOBAL	videoDecMain	videoDecMain__FP8VideoDec	void (*)(class VideoDec *)	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x00262080	GLOBAL	pcmCallback	pcmCallback__FP7sceMpegP16sceMpegCbDataStrPv	signed int (*)(class sceMpeg *, class sceMpegCbDataStr *, void *)	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x00262230	GLOBAL	videoCallback	videoCallback__FP7sceMpegP16sceMpegCbDataStrPv	signed int (*)(class sceMpeg *, class sceMpegCbDataStr *, void *)	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x00262440	GLOBAL	defMain	defMain__Fv	void (*)()	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x00262E60	GLOBAL	handler_endimage	handler_endimage__Fi	signed int (*)(signed int)	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x00262EA0	GLOBAL	vblankHandler	vblankHandler__Fi	signed int (*)(signed int)	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x0026DDE0	GLOBAL	zEntProjectile_gen_render	zEntProjectile_gen_render__FP14zEntProjectile	signed int (*)(class zEntProjectile *)	E:\SD2\Game\flat\zEntProjectile.cpp
+0x0026E460	GLOBAL	ZPRJ_wrap_bupdate	ZPRJ_wrap_bupdate__FP5_xEntP6_xVec3	void (*)(class _xEnt *, class _xVec3 *)	E:\SD2\Game\flat\zEntProjectile.cpp
+0x00272960	GLOBAL	GeomLeafNodeForAllSphereIntersections	GeomLeafNodeForAllSphereIntersections__FiiPv	signed int (*)(signed int, signed int, void *)	E:\SD2\Game\flat\p2rwcoll\ctgeom_.c
+0x00272AF0	GLOBAL	GeomLeafNodeForAllLineIntersections	GeomLeafNodeForAllLineIntersections__FiiPv	signed int (*)(signed int, signed int, void *)	E:\SD2\Game\flat\p2rwcoll\ctgeom_.c
+0x00273400	GLOBAL	WorldSectorForAllBoxedPrimitivePolyIntersections	WorldSectorForAllBoxedPrimitivePolyIntersections__FP13RpWorldSectorPv	class RpWorldSector * (*)(class RpWorldSector *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00273460	GLOBAL	WorldSectorForAllLinePolyIntersections	WorldSectorForAllLinePolyIntersections__FP13RpWorldSectorPv	class RpWorldSector * (*)(class RpWorldSector *, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x002734D0	GLOBAL	LeafNodeForAllBoxPolyIntersections	LeafNodeForAllBoxPolyIntersections__FiiPv	signed int (*)(signed int, signed int, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00273730	GLOBAL	LeafNodeForAllSpherePolyIntersections	LeafNodeForAllSpherePolyIntersections__FiiPv	signed int (*)(signed int, signed int, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x002738C0	GLOBAL	LeafNodeForAllLinePolyIntersections	LeafNodeForAllLinePolyIntersections__FiiPv	signed int (*)(signed int, signed int, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00273EF0	GLOBAL	OldLeafNodeForAllSpherePolyIntersections	OldLeafNodeForAllSpherePolyIntersections__FiiPv	signed int (*)(signed int, signed int, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00274070	GLOBAL	OldLeafNodeForAllBoxPolyIntersections	OldLeafNodeForAllBoxPolyIntersections__FiiPv	signed int (*)(signed int, signed int, void *)	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x002755A0	GLOBAL	CollisionDataStreamGetSize	CollisionDataStreamGetSize__FPCvii	signed int (*)(void *, signed int, signed int)	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x00275600	GLOBAL	CollisionDataStreamRead	CollisionDataStreamRead__FP8RwStreamiPvii	class RwStream * (*)(class RwStream *, signed int, void *, signed int, signed int)	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x00275790	GLOBAL	CollisionDataStreamWrite	CollisionDataStreamWrite__FP8RwStreamiPCvii	class RwStream * (*)(class RwStream *, signed int, void *, signed int, signed int)	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x00275880	GLOBAL	CollisionAtomicInit	CollisionAtomicInit__FPvii	void * (*)(void *, signed int, signed int)	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x002758A0	GLOBAL	CollisionDataCreate	CollisionDataCreate__FPvii	void * (*)(void *, signed int, signed int)	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x002758B0	GLOBAL	CollisionDataDestroy	CollisionDataDestroy__FPvii	void * (*)(void *, signed int, signed int)	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x00275930	GLOBAL	CollisionClose	CollisionClose__FPvii	void * (*)(void *, signed int, signed int)	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x00275950	GLOBAL	CollisionOpen	CollisionOpen__FPvii	void * (*)(void *, signed int, signed int)	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x0027E160	GLOBAL	zScriptEventCB	zScriptEventCB__FP5xBaseP5xBaseUiPfP5xBase	signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zScript.cpp
+0x0027E2F0	GLOBAL	NewIm3DPS2AllInstance	NewIm3DPS2AllInstance__FP16RxPS2AllPipeDataPPvUi	signed int (*)(class RxPS2AllPipeData *, void **, unsigned int)	E:\SD2\Game\flat\p2im3dhack.cpp
+0x002839A0	GLOBAL	FXanimUVPRS		signed long	E:\SD2\Game\flat\iFX.cpp
+0x00286EB0	GLOBAL	__data_start		char	E:\SD2\Game\flat\iMemMgr.cpp
+0x0028A180	GLOBAL	cosSinPolynomial		float [16]	E:\SD2\Game\flat\iMath.cpp
+0x0028A180	GLOBAL	cosSinPolynomial		float [0]	E:\SD2\Game\flat\iParMgr.cpp
+0x0028A180	GLOBAL	cosSinPolynomial		float [0]	E:\SD2\Game\flat\zParCmd.cpp
+0x0028A1D0	LOCAL	g_xser_sizeinfo		class st_SERIAL_PERCID_SIZE [2]	E:\SD2\Game\flat\zMain.cpp
+0x0028A5E0	GLOBAL	slerpPolynomial		float [24]	E:\SD2\Game\flat\iAnimSKB.cpp
+0x0028A660	LOCAL	g_pkr_read_funcmap		class st_PACKER_READ_FUNCS	E:\SD2\Game\flat\xpkrsvc.cpp
+0x0028A6A0	LOCAL	g_readdatainst		class st_PACKER_READ_DATA [8]	E:\SD2\Game\flat\xpkrsvc.cpp
+0x0028EE60	LOCAL	dm_names		char [13][16]	E:\SD2\Game\flat\xDebug.cpp
+0x0028EF30	LOCAL	g_xstdata		class st_STRAN_DATA	E:\SD2\Game\flat\xstransvc.cpp
+0x0028F840	LOCAL	scoll_name		char [6][6]	E:\SD2\Game\flat\xEnt.cpp
+0x0028F868	LOCAL	Idx		unsigned short [6]	E:\SD2\Game\flat\zGame.cpp
+0x0028F980	GLOBAL	sCheatUnlockCredits		unsigned int [14]	E:\SD2\Game\flat\zGame.cpp
+0x0028F9C0	GLOBAL	sCheatUnlockAllMovies		unsigned int [14]	E:\SD2\Game\flat\zGame.cpp
+0x0028FA00	GLOBAL	sCheatWarpGate		unsigned int [14]	E:\SD2\Game\flat\zGame.cpp
+0x0028FA40	GLOBAL	sCheatAllPowerups		unsigned int [14]	E:\SD2\Game\flat\zGame.cpp
+0x0028FA80	GLOBAL	sCheatPressed		unsigned int [14]	E:\SD2\Game\flat\zGame.cpp
+0x0028FAC0	LOCAL	sLevelTable		class zSceneLevel [13]	E:\SD2\Game\flat\zScene.cpp
+0x0028FB90	LOCAL	sAreaTable		class zSceneArea [30]	E:\SD2\Game\flat\zScene.cpp
+0x0028FFD0	LOCAL	sInitTable		class zSceneObjectInstanceDesc [34]	E:\SD2\Game\flat\zScene.cpp
+0x00290300	LOCAL	sGameMode_DispatchTable		unsigned int [12]	E:\SD2\Game\flat\zGameState.cpp
+0x00290330	LOCAL	sGameState_DispatchTable		unsigned int [8]	E:\SD2\Game\flat\zGameState.cpp
+0x00290350	LOCAL	sSaveState_DispatchTable		unsigned int [3]	E:\SD2\Game\flat\zGameState.cpp
+0x00290360	LOCAL	sLoadState_DispatchTable		unsigned int [3]	E:\SD2\Game\flat\zGameState.cpp
+0x00290370	LOCAL	sIntroState_DispatchTable		unsigned int [4]	E:\SD2\Game\flat\zGameState.cpp
+0x00290380	LOCAL	sGameState_DoDispatchTable		unsigned int [8]	E:\SD2\Game\flat\zGameState.cpp
+0x002903A0	LOCAL	sSaveState_DoDispatchTable		unsigned int [3]	E:\SD2\Game\flat\zGameState.cpp
+0x002903B0	LOCAL	sLoadState_DoDispatchTable		unsigned int [3]	E:\SD2\Game\flat\zGameState.cpp
+0x002903C0	LOCAL	sIntroState_DoDispatchTable		unsigned int [4]	E:\SD2\Game\flat\zGameState.cpp
+0x002903D0	GLOBAL	gShadowParams		class _ShadowParams [26]	E:\SD2\Game\flat\zEnt.cpp
+0x00290508	LOCAL	sTargetPos		class _xVec3	E:\SD2\Game\flat\xCamera.cpp
+0x00290518	LOCAL	sLastTargetPos		class _xVec3	E:\SD2\Game\flat\xCamera.cpp
+0x00290528	LOCAL	sLastCamPos		class _xVec3	E:\SD2\Game\flat\xCamera.cpp
+0x00290538	GLOBAL	sDummyTargetPos		class _xVec3	E:\SD2\Game\flat\xCamera.cpp
+0x00290590	LOCAL	g_sndProps		class st_NPC_SOUND_PROPERTIES [36]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00290740	LOCAL	g_sndTrax_General		class st_NPC_SOUND_RECORDS [65]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00290A50	LOCAL	g_sndTrax_BlackKnight		class st_NPC_SOUND_RECORDS [49]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00290CA0	LOCAL	g_sndTrax_GreenGhost		class st_NPC_SOUND_RECORDS [35]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00290E50	LOCAL	g_sndTrax_RedBeard		class st_NPC_SOUND_RECORDS [23]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00290F70	LOCAL	g_sndTrax_MasterMind		class st_NPC_SOUND_RECORDS [77]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291310	LOCAL	g_sndTrax_Fred		class st_NPC_SOUND_RECORDS [1]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291320	LOCAL	g_sndTrax_Daphne		class st_NPC_SOUND_RECORDS [3]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291348	LOCAL	g_sndTrax_Velma		class st_NPC_SOUND_RECORDS [1]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291360	LOCAL	g_sndTrax_Holly		class st_NPC_SOUND_RECORDS [41]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291550	LOCAL	g_sndTrax_GroundsKeeper		class st_NPC_SOUND_RECORDS [67]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291878	LOCAL	g_sndTrax_Professor		class st_NPC_SOUND_RECORDS [1]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291890	LOCAL	g_sndTrax_Bat		class st_NPC_SOUND_RECORDS [9]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291900	LOCAL	g_sndTrax_BuckMaster		class st_NPC_SOUND_RECORDS [54]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291B90	LOCAL	g_sndTrax_CaptainMoody		class st_NPC_SOUND_RECORDS [27]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291CE0	LOCAL	g_sndTrax_Caveman		class st_NPC_SOUND_RECORDS [43]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00291EF0	LOCAL	g_sndTrax_Creeper		class st_NPC_SOUND_RECORDS [45]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00292110	LOCAL	g_sndTrax_GhostDiver		class st_NPC_SOUND_RECORDS [73]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00292480	LOCAL	g_sndTrax_Gargoyle		class st_NPC_SOUND_RECORDS [61]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00292760	LOCAL	g_sndTrax_Ghost		class st_NPC_SOUND_RECORDS [5]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002927A0	LOCAL	g_sndTrax_HeadlessSpecter		class st_NPC_SOUND_RECORDS [35]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00292950	LOCAL	g_sndTrax_KillerPlant		class st_NPC_SOUND_RECORDS [7]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002929B0	LOCAL	g_sndTrax_SeaCreature		class st_NPC_SOUND_RECORDS [66]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00292CD0	LOCAL	g_sndTrax_ScareCrow		class st_NPC_SOUND_RECORDS [78]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00293080	LOCAL	g_sndTrax_Shark		class st_NPC_SOUND_RECORDS [17]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00293150	LOCAL	g_sndTrax_Rat		class st_NPC_SOUND_RECORDS [6]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002931A0	LOCAL	g_sndTrax_Robot		class st_NPC_SOUND_RECORDS [65]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002934B0	LOCAL	g_sndTrax_SpaceKook		class st_NPC_SOUND_RECORDS [25]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002935E0	LOCAL	g_sndTrax_TarMonster		class st_NPC_SOUND_RECORDS [88]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00293A00	LOCAL	g_sndTrax_Witch		class st_NPC_SOUND_RECORDS [74]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00293D80	LOCAL	g_sndTrax_WitchDoctor		class st_NPC_SOUND_RECORDS [53]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00294000	LOCAL	g_sndTrax_Wolfman		class st_NPC_SOUND_RECORDS [39]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002941E0	LOCAL	g_sndTrax_Zombie		class st_NPC_SOUND_RECORDS [32]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00294360	LOCAL	g_npcJukeBox		class st_NPC_SOUND_ENTRY [33]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00294470	LOCAL	g_npcTable		class st_ZVIL_NPCTYPE_LOOKUP [51]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00295790	LOCAL	g_npcFuncs		class st_ZVIL_NPC_HANDLERFUNCS [51]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002961F0	LOCAL	g_npcBonus		class st_NPC_BONUS [11]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00296250	LOCAL	g_strz_npcBonus		char *[11]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00296280	LOCAL	g_stattally		class st_NPC_TALLY_RECORD [51]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002965B0	LOCAL	g_emitlist		class st_XORDEREDARRAY	E:\SD2\Game\flat\zEntVillain.cpp
+0x002965C0	LOCAL	g_emitinfo		class st_zEntVillain_ParEmitInfo [32]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00296840	LOCAL	g_pecust		class _zParEmitterCustomSettings	E:\SD2\Game\flat\zEntVillain.cpp
+0x002968A0	LOCAL	g_anamhash		unsigned int [147]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00296AF0	LOCAL	g_animname		char *[148]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00296D40	LOCAL	g_parmname		char *[49]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00296E10	LOCAL	g_axfxpool		class st_BKAXE_DATA [10]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00297070	LOCAL	g_quakepool		class st_BGG_QUAKEBALL [4]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00297120	LOCAL	g_strz_rbtgt		char *[5]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00297140	LOCAL	g_strz_mmtp		char *[12]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00297170	LOCAL	g_mmtp		class _zMovePoint *[12]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002971A0	LOCAL	g_mmflask		class st_ZVMM_FLASK_DATA [10]	E:\SD2\Game\flat\zEntVillain.cpp
+0x00297780	LOCAL	headcoll_oses		class _xVec3 [12]	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00297810	LOCAL	headcoll_bltimes		float [12]	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00297840	GLOBAL	headcoll_fromos		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00297850	GLOBAL	headcoll_os		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00297890	LOCAL	sPlayerInfo		class zPlayerSituation [37]	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00297CA0	LOCAL	g_loadinst		class st_FILELOADINFO [8]	E:\SD2\Game\flat\xbinio.cpp
+0x00297FE0	LOCAL	g_xfload		class tag_xFile [8]	E:\SD2\Game\flat\xbinio.cpp
+0x002985E0	LOCAL	g_xtraload		class st_BINIO_XTRADATA [8]	E:\SD2\Game\flat\xbinio.cpp
+0x002987A0	LOCAL	g_hiploadinst		class st_HIPLOADDATA [8]	E:\SD2\Game\flat\xhipio.cpp
+0x00298CE0	LOCAL	g_map_HIPL_funcmap		class st_HIPLOADFUNCS	E:\SD2\Game\flat\xhipio.cpp
+0x00298D20	LOCAL	assetTypeHandlers		class st_PACKER_ASSETTYPE [56]	E:\SD2\Game\flat\zAssetTypes.cpp
+0x002995E0	LOCAL	tableFuncList		class xAnimTable * (*[22])()	E:\SD2\Game\flat\zAssetTypes.cpp
+0x00299640	LOCAL	g_scoobydoo_icon_list		char [93814]	E:\SD2\Game\flat\isavegame.cpp
+0x002B04C0	LOCAL	g_mcdata		class st_ISG_MEMCARD_DATA	E:\SD2\Game\flat\isavegame.cpp
+0x002B05C0	LOCAL	g_isgdata		class st_ISGSESSION	E:\SD2\Game\flat\isavegame.cpp
+0x002B0658	LOCAL	g_isg_scemodule		char *[3]	E:\SD2\Game\flat\isavegame.cpp
+0x002B07B0	LOCAL	g_strz_egotrip		char *[8]	E:\SD2\Game\flat\isavegame.cpp
+0x002B0880	LOCAL	g_xsgdata		class st_XSAVEGAME_DATA	E:\SD2\Game\flat\xsavegame.cpp
+0x002B2970	LOCAL	g_leaders		class st_XSAVEGAME_LEADER [8]	E:\SD2\Game\flat\xsavegame.cpp
+0x002B2C50	LOCAL	g_crc32_table		unsigned int [256]	E:\SD2\Game\flat\xutil.cpp
+0x002B3050	LOCAL	ascii_table		unsigned short [3][2]	E:\SD2\Game\flat\xutil.cpp
+0x002B3060	LOCAL	ascii_k_table		unsigned short [33]	E:\SD2\Game\flat\xutil.cpp
+0x002B30F0	LOCAL	sKeyShake		class _tagKeyShake [4]	E:\SD2\Game\flat\zEntPickup.cpp
+0x002B3150	LOCAL	zWarpPointTable		class zEntPickupWarpPoint [27]	E:\SD2\Game\flat\zEntPickup.cpp
+0x002B32A0	LOCAL	g_xserdata		class st_XSERIAL_DATA_PRIV	E:\SD2\Game\flat\xserializer.cpp
+0x002B32D0	LOCAL	g_tbl_onbit		signed int [32]	E:\SD2\Game\flat\xserializer.cpp
+0x002B3350	LOCAL	g_tbl_clear		signed int [32]	E:\SD2\Game\flat\xserializer.cpp
+0x002B33E0	GLOBAL	gFontGlobals		class xFontGlobals_t	E:\SD2\Game\flat\xFont.cpp
+0x002B33E0	GLOBAL	gFontGlobals		class xFontGlobals_t	E:\SD2\Game\flat\iFont.cpp
+0x002B33F0	GLOBAL	SOUND_SPUKeyStatus		unsigned char [48]	E:\SD2\Game\flat\ms4sound.cpp
+0x002B33F0	GLOBAL	SOUND_SPUKeyStatus		unsigned char [48]	E:\SD2\Game\flat\iSnd.cpp
+0x002B3490	LOCAL	sBasisBezier		float [4][4]	E:\SD2\Game\flat\xSpline.cpp
+0x002B34D0	LOCAL	sBasisHermite		float [4][4]	E:\SD2\Game\flat\xSpline.cpp
+0x002B3510	LOCAL	Index		unsigned short [6]	E:\SD2\Game\flat\zUI.cpp
+0x002B3520	LOCAL	sLevelTable2		class zSceneLevel [14]	E:\SD2\Game\flat\zUI.cpp
+0x002B3610	GLOBAL	zVarEntryTable		class zVarEntry [108]	E:\SD2\Game\flat\zVar.cpp
+0x002B3610	GLOBAL	zVarEntryTable		class zVarEntry [0]	E:\SD2\Game\flat\zConditional.cpp
+0x002B3CD0	GLOBAL	sVarMagicEntryTrable		class zVarMagicEntry [32]	E:\SD2\Game\flat\zVar.cpp
+0x002B3E80	GLOBAL	g_zlob_queue		class st_LOBMASTER_QUEUE [5]	E:\SD2\Game\flat\zLobMaster.cpp
+0x002B4088	LOCAL	Idx		unsigned short [6]	E:\SD2\Game\flat\zHud.cpp
+0x002B40A0	LOCAL	zHudModelTable		class zHudModel [42]	E:\SD2\Game\flat\zHud.cpp
+0x002B42A0	LOCAL	sHudElements		class _zHudElement [10]	E:\SD2\Game\flat\zHud.cpp
+0x002B4E20	GLOBAL	sEffectFuncs		void (*[18])(class _zLight *, float)	E:\SD2\Game\flat\zLight.cpp
+0x002B4E70	GLOBAL	sEffectInitFuncs		void (*[18])(class _zLight *)	E:\SD2\Game\flat\zLight.cpp
+0x002B4EB8	LOCAL	sDefaultShadowVec		class _xVec3	E:\SD2\Game\flat\zLight.cpp
+0x002B4EE0	LOCAL	currSceneStr		char [32]	E:\SD2\Game\flat\zSaveLoad.cpp
+0x002B4F00	LOCAL	sceneRead		char [32]	E:\SD2\Game\flat\zSaveLoad.cpp
+0x002B4F20	GLOBAL	zSaveLoadUITable		class zSaveLoadUI [49]	E:\SD2\Game\flat\zSaveLoad.cpp
+0x002B5170	LOCAL	sBlendTable		signed int [11]	E:\SD2\Game\flat\zRenderState.cpp
+0x002B51A0	LOCAL	sParSysInfo		class zParSysInfo [7]	E:\SD2\Game\flat\zParSys.cpp
+0x002B51E0	LOCAL	sCmdInfo		class zCmdInfo [29]	E:\SD2\Game\flat\zParCmd.cpp
+0x002B5380	LOCAL	zhacktable		class zCutsceneZbufferHack [5]	E:\SD2\Game\flat\zCutsceneMgr.cpp
+0x002B54E0	LOCAL	boundHackTable		class zCutsceneBoundHack [12]	E:\SD2\Game\flat\zCutsceneMgr.cpp
+0x002B5540	LOCAL	zCutSceneNamesTable		class zCutSceneNames [14]	E:\SD2\Game\flat\zCutsceneMgr.cpp
+0x002B5950	LOCAL	astnames		char *[20]	E:\SD2\Game\flat\zAnimList.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\iModel.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\xModel.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\p2skyfs.c
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\iDebug.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\xDraw.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\iFont.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\iParMgr.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\xShadow.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\zHud.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\xCutscene.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\xFX.cpp
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\p2rwcoll\ctbsp_.c
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x002B5AD0	GLOBAL	ourGlobals		unsigned int [4096]	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x002CAA88	GLOBAL	RpHAnimAtomicGlobals		class RpHAnimAtomicGlobalVars	E:\SD2\Game\flat\iModel.cpp
+0x002FC7B0	GLOBAL	RxClPS2xyz		class RxClusterDefinition	E:\SD2\Game\flat\iFX.cpp
+0x002FC7C0	GLOBAL	RxClPS2uv		class RxClusterDefinition	E:\SD2\Game\flat\iFX.cpp
+0x002FC7E0	GLOBAL	RxClPS2rgba		class RxClusterDefinition	E:\SD2\Game\flat\iFX.cpp
+0x002FC7F0	GLOBAL	RxClPS2normal		class RxClusterDefinition	E:\SD2\Game\flat\iFX.cpp
+0x002FC850	LOCAL	sinRangePoint5		float [8]	E:\SD2\Game\flat\iFX.cpp
+0x002FC870	LOCAL	warbc		float [4]	E:\SD2\Game\flat\iFX.cpp
+0x002FCC00	GLOBAL	_impure_ptr		class _reent *	E:\SD2\Game\flat\xAnim.cpp
+0x002FD340	LOCAL	zFMVFileTable		class zFMVFile [41]	E:\SD2\Game\flat\zFMV.cpp
+0x002FD9B0	LOCAL	g_prjdepot		class st_PROJECTILE_DEPOT	E:\SD2\Game\flat\zEntProjectile.cpp
+0x002FD9E0	LOCAL	g_catFuncs		class st_ZPRJ_CATEGORY_FUNCS [13]	E:\SD2\Game\flat\zEntProjectile.cpp
+0x002FDBF0	LOCAL	g_iniProps		class st_ZPRJ_CATEGORY_PROPS [13]	E:\SD2\Game\flat\zEntProjectile.cpp
+0x002FDC90	LOCAL	g_paremit		class _zParEmitter *[32]	E:\SD2\Game\flat\zEntProjectile.cpp
+0x002FDD10	LOCAL	g_parname		char *[32]	E:\SD2\Game\flat\zEntProjectile.cpp
+0x002FDE90	LOCAL	sLaughInfo		class zLaughSituation [15]	E:\SD2\Game\flat\zLaugh.cpp
+0x002FDFC0	LOCAL	sMusicInfo		class zMusicSituation [7]	E:\SD2\Game\flat\zMusic.cpp
+0x002FE100	GLOBAL	gVillainPoofColorBirth		unsigned char [50][4]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002FE100	GLOBAL	gVillainPoofColorBirth		unsigned char [50][4]	E:\SD2\Game\flat\zEntVillainCol.cpp
+0x002FE1D0	GLOBAL	gVillainPoofColorDeath		unsigned char [50][4]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002FE1D0	GLOBAL	gVillainPoofColorDeath		unsigned char [50][4]	E:\SD2\Game\flat\zEntVillainCol.cpp
+0x002FE2A0	GLOBAL	gVillainDotsColorBirth		unsigned char [50][4]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002FE2A0	GLOBAL	gVillainDotsColorBirth		unsigned char [50][4]	E:\SD2\Game\flat\zEntVillainCol.cpp
+0x002FE370	GLOBAL	gVillainDotsColorDeath		unsigned char [50][4]	E:\SD2\Game\flat\zEntVillain.cpp
+0x002FE370	GLOBAL	gVillainDotsColorDeath		unsigned char [50][4]	E:\SD2\Game\flat\zEntVillainCol.cpp
+0x00342E28	GLOBAL	g_O3		class _xVec3	E:\SD2\Game\flat\xMath3.cpp
+0x00342E28	GLOBAL	g_O3		class _xVec3	E:\SD2\Game\flat\xEnt.cpp
+0x00342E28	GLOBAL	g_O3		class _xVec3	E:\SD2\Game\flat\xCollide.cpp
+0x00342E28	GLOBAL	g_O3		class _xVec3	E:\SD2\Game\flat\xDraw.cpp
+0x00342E28	GLOBAL	g_O3		class _xVec3	E:\SD2\Game\flat\zEntVillain.cpp
+0x00342E28	GLOBAL	g_O3		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00342E28	GLOBAL	g_O3		class _xVec3	E:\SD2\Game\flat\zPlatform.cpp
+0x00342E28	GLOBAL	g_O3		class _xVec3	E:\SD2\Game\flat\iLight.cpp
+0x00342E38	GLOBAL	g_Y3		class _xVec3	E:\SD2\Game\flat\xMath3.cpp
+0x00342E38	GLOBAL	g_Y3		class _xVec3	E:\SD2\Game\flat\zEntVillain.cpp
+0x00342E38	GLOBAL	g_Y3		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00342E38	GLOBAL	g_Y3		class _xVec3	E:\SD2\Game\flat\zLobMaster.cpp
+0x00342E38	GLOBAL	g_Y3		class _xVec3	E:\SD2\Game\flat\zEntProjectile.cpp
+0x00342E48	GLOBAL	g_Z3		class _xVec3	E:\SD2\Game\flat\xMath3.cpp
+0x00342E48	GLOBAL	g_Z3		class _xVec3	E:\SD2\Game\flat\zEntVillain.cpp
+0x00342E58	GLOBAL	g_NY3		class _xVec3	E:\SD2\Game\flat\xMath3.cpp
+0x00342E58	GLOBAL	g_NY3		class _xVec3	E:\SD2\Game\flat\xEnt.cpp
+0x00342E58	GLOBAL	g_NY3		class _xVec3	E:\SD2\Game\flat\zEntVillain.cpp
+0x00342E58	GLOBAL	g_NY3		class _xVec3	E:\SD2\Game\flat\zEntProjectile.cpp
+0x00342E70	GLOBAL	g_I3		class _xMat4x3	E:\SD2\Game\flat\xScrFx.cpp
+0x00342E70	GLOBAL	g_I3		class _xMat4x3	E:\SD2\Game\flat\xMath3.cpp
+0x00342E70	GLOBAL	g_I3		class _xMat4x3	E:\SD2\Game\flat\xModel.cpp
+0x00342E70	GLOBAL	g_I3		class _xMat4x3	E:\SD2\Game\flat\xCamera.cpp
+0x00342E70	GLOBAL	g_I3		class _xMat4x3	E:\SD2\Game\flat\zEntBubble.cpp
+0x00342E70	GLOBAL	g_I3		class _xMat4x3	E:\SD2\Game\flat\xCutscene.cpp
+0x00342E70	GLOBAL	g_I3		class _xMat4x3	E:\SD2\Game\flat\xClimate.cpp
+0x00342EB0	GLOBAL	g_IQ		class _xQuat	E:\SD2\Game\flat\xMath3.cpp
+0x0034E420	GLOBAL	g_BLACK		class iColor_tag	E:\SD2\Game\flat\xScrFx.cpp
+0x0034E420	GLOBAL	g_BLACK		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x0034E428	GLOBAL	g_NEON_RED		class iColor_tag	E:\SD2\Game\flat\zEntVillain.cpp
+0x0034E428	GLOBAL	g_NEON_RED		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x0034E428	GLOBAL	g_NEON_RED		class iColor_tag	E:\SD2\Game\flat\xEntMotion.cpp
+0x0034E430	GLOBAL	g_NEON_GREEN		class iColor_tag	E:\SD2\Game\flat\zEntVillain.cpp
+0x0034E430	GLOBAL	g_NEON_GREEN		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x0034E430	GLOBAL	g_NEON_GREEN		class iColor_tag	E:\SD2\Game\flat\xEntMotion.cpp
+0x0034E438	GLOBAL	g_MAROON		class iColor_tag	E:\SD2\Game\flat\zEntVillain.cpp
+0x0034E438	GLOBAL	g_MAROON		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x0034E440	GLOBAL	g_PIMP_GOLD		class iColor_tag	E:\SD2\Game\flat\xColor.cpp
+0x0034E440	GLOBAL	g_PIMP_GOLD		class iColor_tag	E:\SD2\Game\flat\xEntMotion.cpp
+0x00351D70	LOCAL	cPlayerSkidWidth		float [4]	E:\SD2\Game\flat\zFeet.cpp
+0x00354850	LOCAL	cHologramColBurst		class _HoloBurst [23]	E:\SD2\Game\flat\zHologram.cpp
+0x003549E0	LOCAL	cSparkColors		unsigned char [24]	E:\SD2\Game\flat\zLightning.cpp
+0x003554F0	GLOBAL	_ctype_		char [0]	E:\SD2\Game\flat\xutil.cpp
+0x00357480	LOCAL	sb		char *	E:\SD2\Game\flat\fakeprintf.c
+0x00357484	LOCAL	sbend		char *	E:\SD2\Game\flat\fakeprintf.c
+0x00357488	GLOBAL	sCDReadMode		class sceCdRMode	E:\SD2\Game\flat\iFile.cpp
+0x00357498	LOCAL	sShowMenuOnBoot		signed int	E:\SD2\Game\flat\zMain.cpp
+0x003574A0	GLOBAL	giAnimScratch		unsigned char *	E:\SD2\Game\flat\xAnim.cpp
+0x003574A0	GLOBAL	giAnimScratch		unsigned char *	E:\SD2\Game\flat\iAnimSKB.cpp
+0x003574A0	GLOBAL	giAnimScratch		unsigned char *	E:\SD2\Game\flat\iAnim.cpp
+0x003574A0	GLOBAL	giAnimScratch		unsigned char *	E:\SD2\Game\flat\iModel.cpp
+0x003574A0	GLOBAL	giAnimScratch		unsigned char *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003574A0	GLOBAL	giAnimScratch		unsigned char *	E:\SD2\Game\flat\xCutscene.cpp
+0x003574A8	GLOBAL	gFB_Flags		signed int	E:\SD2\Game\flat\iSystem.cpp
+0x003574AC	GLOBAL	scene_id		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x003574B0	LOCAL	nsn_angle		float	E:\SD2\Game\flat\xEnt.cpp
+0x003574B4	LOCAL	dbg_idx		signed short	E:\SD2\Game\flat\xEnt.cpp
+0x003574B8	LOCAL	mcmode		signed int	E:\SD2\Game\flat\xEnt.cpp
+0x003574BC	GLOBAL	startPressed		unsigned int	E:\SD2\Game\flat\zGame.cpp
+0x003574BC	GLOBAL	startPressed		unsigned int	E:\SD2\Game\flat\zGameState.cpp
+0x003574C0	GLOBAL	black		class iColor_tag	E:\SD2\Game\flat\zGame.cpp
+0x003574C4	GLOBAL	clear		class iColor_tag	E:\SD2\Game\flat\zGame.cpp
+0x003574C8	GLOBAL	snd_radius		float	E:\SD2\Game\flat\zGame.cpp
+0x003574D0	LOCAL	sFirstBoot		signed int	E:\SD2\Game\flat\zMenu.cpp
+0x003574D4	LOCAL	time_elapsed		float	E:\SD2\Game\flat\zMenu.cpp
+0x003574D8	LOCAL	holdTmr		float	E:\SD2\Game\flat\zMenu.cpp
+0x003574E0	LOCAL	sMemDepthSceneStart		signed int	E:\SD2\Game\flat\zScene.cpp
+0x003574EC	LOCAL	scobj_size		signed int	E:\SD2\Game\flat\zScene.cpp
+0x003574F0	LOCAL	nidbps		signed int	E:\SD2\Game\flat\zScene.cpp
+0x003574F4	GLOBAL	gGameState		signed int	E:\SD2\Game\flat\xScrFx.cpp
+0x003574F4	GLOBAL	gGameState		signed int	E:\SD2\Game\flat\zGame.cpp
+0x003574F4	GLOBAL	gGameState		signed int	E:\SD2\Game\flat\zGameState.cpp
+0x003574F8	LOCAL	sPauseState_DispatchTable		unsigned int [2]	E:\SD2\Game\flat\zGameState.cpp
+0x00357500	LOCAL	sOptionsState_DispatchTable		unsigned int [1]	E:\SD2\Game\flat\zGameState.cpp
+0x00357508	LOCAL	sTitleState_DispatchTable		unsigned int [2]	E:\SD2\Game\flat\zGameState.cpp
+0x00357510	LOCAL	sPauseState_DoDispatchTable		unsigned int [2]	E:\SD2\Game\flat\zGameState.cpp
+0x00357518	LOCAL	sOptionsState_DoDispatchTable		unsigned int [1]	E:\SD2\Game\flat\zGameState.cpp
+0x00357520	LOCAL	sTitleState_DoDispatchTable		unsigned int [2]	E:\SD2\Game\flat\zGameState.cpp
+0x00357528	GLOBAL	sCameraNearClip		float	E:\SD2\Game\flat\iCamera.cpp
+0x0035752C	GLOBAL	sCameraFarClip		float	E:\SD2\Game\flat\iCamera.cpp
+0x00357530	LOCAL	sCamDebugFixInterp		unsigned int	E:\SD2\Game\flat\xCamera.cpp
+0x00357534	LOCAL	sgDrawColor		class iColor_tag	E:\SD2\Game\flat\xDraw.cpp
+0x00357540	GLOBAL	umbrellaFudgeX		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357544	GLOBAL	umbrellaFudgeY		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357548	GLOBAL	umbrellaFudgeRot		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0035754C	LOCAL	minVelmag		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357550	LOCAL	maxVelmag		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357554	LOCAL	surfSlickness		signed int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357558	LOCAL	surfFriction		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0035755C	LOCAL	lastSlickness		signed int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357560	LOCAL	surfSlideStart		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357564	LOCAL	surfSlideStop		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357568	LOCAL	surfPeakRatio		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0035756C	LOCAL	surfAccelWalk		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357570	LOCAL	surfAccelRun		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357574	LOCAL	surfDecelIdle		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357578	LOCAL	surfDecelSkid		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357584	LOCAL	g_loadlock		unsigned int	E:\SD2\Game\flat\xbinio.cpp
+0x00357588	LOCAL	effectFuncList		unsigned int (*[2])(unsigned int, class xAnimActiveEffect *, class xAnimSingle *, void *)	E:\SD2\Game\flat\zAssetTypes.cpp
+0x00357590	LOCAL	g_scoobydoo_icon_copy		char *	E:\SD2\Game\flat\isavegame.cpp
+0x00357594	LOCAL	g_scoobydoo_icon_delete		char *	E:\SD2\Game\flat\isavegame.cpp
+0x00357598	LOCAL	g_crc_needinit		signed int	E:\SD2\Game\flat\xutil.cpp
+0x0035759C	LOCAL	sKeysOffTimer		float	E:\SD2\Game\flat\zEntPickup.cpp
+0x003575A0	GLOBAL	zHudShowWarpGateInfo		signed int	E:\SD2\Game\flat\zEntPickup.cpp
+0x003575A4	LOCAL	dbg_idx		signed short	E:\SD2\Game\flat\xEntMotion.cpp
+0x003575A8	LOCAL	blankText		char *	E:\SD2\Game\flat\xFont.cpp
+0x003575B0	GLOBAL	SOUND_IOP_REQUEST_LOAD		signed int	E:\SD2\Game\flat\ms4sound.cpp
+0x003575B0	GLOBAL	SOUND_IOP_REQUEST_LOAD		signed int	E:\SD2\Game\flat\iSnd.cpp
+0x003575C8	LOCAL	first_time		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x003575D0	LOCAL	sMapper		class zMaterialMapAsset *[1]	E:\SD2\Game\flat\zSurface.cpp
+0x003575D8	LOCAL	g_zdsp_depot		class st_ZDISPATCH_DEPOT	E:\SD2\Game\flat\zDispatcher.cpp
+0x003575E8	LOCAL	g_zlob_depot		class st_LOBMASTER_DEPOT	E:\SD2\Game\flat\zLobMaster.cpp
+0x003575F0	GLOBAL	THROW_MINHEIGHT		float	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003575F4	GLOBAL	THROW_DEFHEIGHT		float	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003575F8	LOCAL	ChimneyTagIndex		unsigned int	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003575FC	LOCAL	ShaggyTagIndex		unsigned int	E:\SD2\Game\flat\zEntShaggy.cpp
+0x00357600	GLOBAL	ShadowThreshold		float	E:\SD2\Game\flat\xEnt.cpp
+0x00357600	GLOBAL	ShadowThreshold		float	E:\SD2\Game\flat\xShadow.cpp
+0x00357604	GLOBAL	ShadowZoneRadius		float	E:\SD2\Game\flat\xShadow.cpp
+0x00357608	GLOBAL	ShadowStrength		float	E:\SD2\Game\flat\xShadow.cpp
+0x00357610	GLOBAL	watch_tri		signed int	E:\SD2\Game\flat\xShadow.cpp
+0x00357614	GLOBAL	shit		float	E:\SD2\Game\flat\xShadow.cpp
+0x00357618	LOCAL	sHudDisplayTimer_allSnacksArea		float	E:\SD2\Game\flat\zHud.cpp
+0x0035761C	LOCAL	sHudDisplayTimer_saveDone		float	E:\SD2\Game\flat\zHud.cpp
+0x00357620	LOCAL	clr		class iColor_tag	E:\SD2\Game\flat\zHud.cpp
+0x00357624	LOCAL	clrDropShadow		class iColor_tag	E:\SD2\Game\flat\zHud.cpp
+0x00357634	LOCAL	time_elapsed		float	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00357638	LOCAL	currentCard		signed int	E:\SD2\Game\flat\zSaveLoad.cpp
+0x0035763C	LOCAL	currentGame		signed int	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00357640	LOCAL	dontPoll		float	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00357658	GLOBAL	EnvMapShininess		float	E:\SD2\Game\flat\xFX.cpp
+0x00357660	GLOBAL	xFXanimUVRotMat0		float [2]	E:\SD2\Game\flat\xFX.cpp
+0x00357660	GLOBAL	xFXanimUVRotMat0		float [2]	E:\SD2\Game\flat\iFX.cpp
+0x00357668	GLOBAL	xFXanimUVRotMat1		float [2]	E:\SD2\Game\flat\xFX.cpp
+0x00357668	GLOBAL	xFXanimUVRotMat1		float [2]	E:\SD2\Game\flat\iFX.cpp
+0x00357670	GLOBAL	xFXanimUVTrans		float [2]	E:\SD2\Game\flat\xFX.cpp
+0x00357670	GLOBAL	xFXanimUVTrans		float [2]	E:\SD2\Game\flat\iFX.cpp
+0x00357678	GLOBAL	xFXanimUVScale		float [2]	E:\SD2\Game\flat\xFX.cpp
+0x00357678	GLOBAL	xFXanimUVScale		float [2]	E:\SD2\Game\flat\iFX.cpp
+0x00357680	GLOBAL	xFXanimUV2PRotMat0		float [2]	E:\SD2\Game\flat\xFX.cpp
+0x00357680	GLOBAL	xFXanimUV2PRotMat0		float [2]	E:\SD2\Game\flat\iFX.cpp
+0x00357688	GLOBAL	xFXanimUV2PRotMat1		float [2]	E:\SD2\Game\flat\xFX.cpp
+0x00357688	GLOBAL	xFXanimUV2PRotMat1		float [2]	E:\SD2\Game\flat\iFX.cpp
+0x00357690	GLOBAL	xFXanimUV2PTrans		float [2]	E:\SD2\Game\flat\xFX.cpp
+0x00357690	GLOBAL	xFXanimUV2PTrans		float [2]	E:\SD2\Game\flat\iFX.cpp
+0x00357698	GLOBAL	xFXanimUV2PScale		float [2]	E:\SD2\Game\flat\xFX.cpp
+0x00357698	GLOBAL	xFXanimUV2PScale		float [2]	E:\SD2\Game\flat\iFX.cpp
+0x003576E0	GLOBAL	sweMaxFlips		signed int	E:\SD2\Game\flat\iSystem.cpp
+0x00357744	GLOBAL	sweLocalPacketState		signed int	E:\SD2\Game\flat\zFMV.cpp
+0x00357754	GLOBAL	sweLocalPacket		u_long128 *	E:\SD2\Game\flat\iDraw.cpp
+0x00357754	GLOBAL	sweLocalPacket		u_long128 *	E:\SD2\Game\flat\iFX.cpp
+0x003577C0	GLOBAL	skyFrame_1		signed long	E:\SD2\Game\flat\iDraw.cpp
+0x00357B84	GLOBAL	isWithAudio		signed int	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x00357B88	LOCAL	g_sounds		class zSFX *[1]	E:\SD2\Game\flat\zEntProjectile.cpp
+0x00357B8C	LOCAL	g_sfxnames		char *[1]	E:\SD2\Game\flat\zEntProjectile.cpp
+0x00357B90	LOCAL	sMusicLastEnum		signed int [2]	E:\SD2\Game\flat\zMusic.cpp
+0x00357B98	LOCAL	sMusicTimer		float [2]	E:\SD2\Game\flat\zMusic.cpp
+0x00357BA0	LOCAL	sFogPrevIntensity		float	E:\SD2\Game\flat\zGameExtras.cpp
+0x00357C08	LOCAL	rndseed		unsigned int	E:\SD2\Game\flat\iMath.cpp
+0x00357C0C	GLOBAL	sCallback		void (*)(signed int)	E:\SD2\Game\flat\iFile.cpp
+0x00357C10	LOCAL	num_open_files		signed int	E:\SD2\Game\flat\iFile.cpp
+0x00357C18	LOCAL	mActDirect		unsigned char [6]	E:\SD2\Game\flat\iPad.cpp
+0x00357C20	LOCAL	mActAlign		unsigned char [6]	E:\SD2\Game\flat\iPad.cpp
+0x00357C28	LOCAL	mLetterboxO		float	E:\SD2\Game\flat\xScrFx.cpp
+0x00357C2C	LOCAL	mLetterboxTO		float	E:\SD2\Game\flat\xScrFx.cpp
+0x00357C30	GLOBAL	gDebugPad		class _tagxPad *	E:\SD2\Game\flat\xPad.cpp
+0x00357C30	GLOBAL	gDebugPad		class _tagxPad *	E:\SD2\Game\flat\zMain.cpp
+0x00357C30	GLOBAL	gDebugPad		class _tagxPad *	E:\SD2\Game\flat\xEnt.cpp
+0x00357C30	GLOBAL	gDebugPad		class _tagxPad *	E:\SD2\Game\flat\xEntMotion.cpp
+0x00357C30	GLOBAL	gDebugPad		class _tagxPad *	E:\SD2\Game\flat\zHologram.cpp
+0x00357C30	GLOBAL	gDebugPad		class _tagxPad *	E:\SD2\Game\flat\zLightning.cpp
+0x00357C34	GLOBAL	gPlayerPad		class _tagxPad *	E:\SD2\Game\flat\xPad.cpp
+0x00357C50	GLOBAL	gxAnimUseGrowAlloc		unsigned int	E:\SD2\Game\flat\xAnim.cpp
+0x00357C50	GLOBAL	gxAnimUseGrowAlloc		unsigned int	E:\SD2\Game\flat\zAssetTypes.cpp
+0x00357C54	LOCAL	g_hiprf		class st_HIPLOADFUNCS *	E:\SD2\Game\flat\xpkrsvc.cpp
+0x00357C58	LOCAL	g_loadlock		unsigned int	E:\SD2\Game\flat\xpkrsvc.cpp
+0x00357C5C	LOCAL	g_packinit		signed int	E:\SD2\Game\flat\xpkrsvc.cpp
+0x00357C70	LOCAL	g_RWarena_resEntry		class RwResEntry *	E:\SD2\Game\flat\xpkrsvc.cpp
+0x00357C74	LOCAL	g_RWarena_resOwner		class RwResEntry *	E:\SD2\Game\flat\xpkrsvc.cpp
+0x00357C78	GLOBAL	gFrameCount		unsigned int	E:\SD2\Game\flat\xDebug.cpp
+0x00357C78	GLOBAL	gFrameCount		unsigned int	E:\SD2\Game\flat\zGame.cpp
+0x00357C78	GLOBAL	gFrameCount		unsigned int	E:\SD2\Game\flat\zMenu.cpp
+0x00357C78	GLOBAL	gFrameCount		unsigned int	E:\SD2\Game\flat\zSurface.cpp
+0x00357C78	GLOBAL	gFrameCount		unsigned int	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00357C7C	LOCAL	g_straninit		signed int	E:\SD2\Game\flat\xstransvc.cpp
+0x00357C80	LOCAL	g_pkrf		class st_PACKER_READ_FUNCS *	E:\SD2\Game\flat\xstransvc.cpp
+0x00357C84	LOCAL	g_typeHandlers		class st_PACKER_ASSETTYPE *	E:\SD2\Game\flat\xstransvc.cpp
+0x00357C88	LOCAL	gLastAtomicCount		unsigned int	E:\SD2\Game\flat\iModel.cpp
+0x00357C98	LOCAL	sxModelPoolList		class xModelPool *	E:\SD2\Game\flat\xModel.cpp
+0x00357CA0	LOCAL	subcamera		class RwCamera *	E:\SD2\Game\flat\xModel.cpp
+0x00357CA4	GLOBAL	DVD		signed int	E:\SD2\Game\flat\iSystem.cpp
+0x00357CA4	GLOBAL	DVD		signed int	E:\SD2\Game\flat\iSnd.cpp
+0x00357CA8	GLOBAL	gVsyncCount		unsigned int	E:\SD2\Game\flat\iSystem.cpp
+0x00357CA8	GLOBAL	gVsyncCount		unsigned int	E:\SD2\Game\flat\zGame.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xAnim.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\iAnimSKB.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xpkrsvc.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xModel.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xMemMgr.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xEnt.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xScene.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zScene.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xCamera.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xordarray.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xEntMotion.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zPlatform.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xserializer.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zEntBubble.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zMovePoint.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xMovePoint.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xSurface.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zSurface.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zGust.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zVolume.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xFFX.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zDispatcher.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zLobMaster.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zLight.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zParSys.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\xPartition.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zFeet.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zAnimList.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zHologram.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zLightning.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\iFX.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zEntProjectile.cpp
+0x00357CAC	GLOBAL	gActiveHeap		unsigned int	E:\SD2\Game\flat\zActionLine.cpp
+0x00357CB0	GLOBAL	sMemBaseNotifyFunc		void (*)()	E:\SD2\Game\flat\xMemMgr.cpp
+0x00357CB4	LOCAL	StackBase		unsigned int	E:\SD2\Game\flat\iMemMgr.cpp
+0x00357CB8	LOCAL	StackSize		unsigned int	E:\SD2\Game\flat\iMemMgr.cpp
+0x00357CBC	LOCAL	tim0_handler_id		signed int	E:\SD2\Game\flat\iTime.cpp
+0x00357CC0	GLOBAL	tim0_high		signed long	E:\SD2\Game\flat\iTime.cpp
+0x00357CC8	GLOBAL	pip		class prof_info *	E:\SD2\Game\flat\iTime.cpp
+0x00357CCC	GLOBAL	pil		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x00357CD0	GLOBAL	app_hits		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x00357CD4	GLOBAL	kernel_hits		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x00357CD8	GLOBAL	vsync_hits		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x00357CDC	GLOBAL	prof_enable		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x00357CE0	LOCAL	profSampleBuffer		unsigned int *	E:\SD2\Game\flat\iTime.cpp
+0x00357CE4	LOCAL	profSampleStatic		unsigned int *	E:\SD2\Game\flat\iTime.cpp
+0x00357CE8	LOCAL	profSampleSize		unsigned int	E:\SD2\Game\flat\iTime.cpp
+0x00357CEC	LOCAL	sGameTime		float	E:\SD2\Game\flat\iTime.cpp
+0x00357CF0	LOCAL	s_geom		class RpGeometry *	E:\SD2\Game\flat\iMorph.cpp
+0x00357CF4	LOCAL	s_tgt		class RpMorphTarget *	E:\SD2\Game\flat\iMorph.cpp
+0x00357CF8	LOCAL	s_alloc		float *	E:\SD2\Game\flat\iMorph.cpp
+0x00357CFC	LOCAL	s_vTemp		float *	E:\SD2\Game\flat\iMorph.cpp
+0x00357D00	LOCAL	s_nTemp		float *	E:\SD2\Game\flat\iMorph.cpp
+0x00357D04	LOCAL	s_numV		signed int	E:\SD2\Game\flat\iMorph.cpp
+0x00357D08	GLOBAL	gScreenDump		unsigned int	E:\SD2\Game\flat\iDebug.cpp
+0x00357D08	GLOBAL	gScreenDump		unsigned int	E:\SD2\Game\flat\zGame.cpp
+0x00357D08	GLOBAL	gScreenDump		unsigned int	E:\SD2\Game\flat\zMenu.cpp
+0x00357D08	GLOBAL	gScreenDump		unsigned int	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00357D0C	LOCAL	sDumpFileNumber		signed int	E:\SD2\Game\flat\iDebug.cpp
+0x00357D10	LOCAL	sEntityTimePassed		float	E:\SD2\Game\flat\xEnt.cpp
+0x00357D14	LOCAL	all_ents_box_init		signed int	E:\SD2\Game\flat\xEnt.cpp
+0x00357D18	LOCAL	dbg_xents		class _xEnt **	E:\SD2\Game\flat\xEnt.cpp
+0x00357D1C	LOCAL	dbg_num		unsigned short	E:\SD2\Game\flat\xEnt.cpp
+0x00357D20	LOCAL	dbg_mode		signed int	E:\SD2\Game\flat\xEnt.cpp
+0x00357D24	LOCAL	dbg_holding_inc		signed int	E:\SD2\Game\flat\xEnt.cpp
+0x00357D28	LOCAL	dbg_holding_dec		signed int	E:\SD2\Game\flat\xEnt.cpp
+0x00357D2C	LOCAL	dbg_tmr		float	E:\SD2\Game\flat\xEnt.cpp
+0x00357D30	LOCAL	dbg_ltm		float	E:\SD2\Game\flat\xEnt.cpp
+0x00357D34	LOCAL	mcrecs		class xModCollRec *	E:\SD2\Game\flat\xEnt.cpp
+0x00357D38	LOCAL	num_mcrecs		signed int	E:\SD2\Game\flat\xEnt.cpp
+0x00357D40	LOCAL	mctime		signed long	E:\SD2\Game\flat\xEnt.cpp
+0x00357D50	LOCAL	cbath		float	E:\SD2\Game\flat\iCollide.cpp
+0x00357D54	LOCAL	cbmat		class _xMat3x3 *	E:\SD2\Game\flat\iCollide.cpp
+0x00357D58	LOCAL	cbnumcs		unsigned char	E:\SD2\Game\flat\iCollide.cpp
+0x00357D5C	LOCAL	cbmaxcs		unsigned char	E:\SD2\Game\flat\iCollide.cpp
+0x00357D60	LOCAL	FLOOR		unsigned char	E:\SD2\Game\flat\iCollide.cpp
+0x00357D64	LOCAL	NEXT2		unsigned char	E:\SD2\Game\flat\iCollide.cpp
+0x00357D68	LOCAL	OTHER		unsigned char	E:\SD2\Game\flat\iCollide.cpp
+0x00357D6C	GLOBAL	g_xSceneCur		class _xScene *	E:\SD2\Game\flat\xEnt.cpp
+0x00357D6C	GLOBAL	g_xSceneCur		class _xScene *	E:\SD2\Game\flat\xScene.cpp
+0x00357D6C	GLOBAL	g_xSceneCur		class _xScene *	E:\SD2\Game\flat\zScene.cpp
+0x00357D6C	GLOBAL	g_xSceneCur		class _xScene *	E:\SD2\Game\flat\xCamera.cpp
+0x00357D6C	GLOBAL	g_xSceneCur		class _xScene *	E:\SD2\Game\flat\xEntMotion.cpp
+0x00357D70	LOCAL	sPlayerMarkerStartID		unsigned int	E:\SD2\Game\flat\zGame.cpp
+0x00357D74	LOCAL	sPlayerMarkerStartCamID		unsigned int	E:\SD2\Game\flat\zGame.cpp
+0x00357D78	LOCAL	sPlayerStartAngle		float	E:\SD2\Game\flat\zGame.cpp
+0x00357D7C	LOCAL	sPortalling		signed int	E:\SD2\Game\flat\zGame.cpp
+0x00357D80	LOCAL	sGameOverTimer		float	E:\SD2\Game\flat\zGame.cpp
+0x00357D84	GLOBAL	sTimeElapsed		float	E:\SD2\Game\flat\zGame.cpp
+0x00357D84	GLOBAL	sTimeElapsed		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357D88	LOCAL	sTimeLast		signed long	E:\SD2\Game\flat\zGame.cpp
+0x00357D90	LOCAL	sTimeCurrent		signed long	E:\SD2\Game\flat\zGame.cpp
+0x00357D98	GLOBAL	t0		signed long	E:\SD2\Game\flat\zGame.cpp
+0x00357DA0	GLOBAL	t1		signed long	E:\SD2\Game\flat\zGame.cpp
+0x00357DA8	GLOBAL	gLastVsyncFlip		unsigned int	E:\SD2\Game\flat\zGame.cpp
+0x00357DC0	LOCAL	sGameScreenTransCam		class RwCamera *	E:\SD2\Game\flat\zGame.cpp
+0x00357DC4	LOCAL	World		class RpWorld *	E:\SD2\Game\flat\zGame.cpp
+0x00357DC8	LOCAL	DirectionalLight		class RpLight *	E:\SD2\Game\flat\zGame.cpp
+0x00357DCC	LOCAL	loadMeter		unsigned int	E:\SD2\Game\flat\zGame.cpp
+0x00357DD0	LOCAL	sCheatTimer		float	E:\SD2\Game\flat\zGame.cpp
+0x00357DD4	LOCAL	time_last		float	E:\SD2\Game\flat\zMenu.cpp
+0x00357DD8	LOCAL	time_current		float	E:\SD2\Game\flat\zMenu.cpp
+0x00357DDC	LOCAL	sAttractMode_timer		float	E:\SD2\Game\flat\zMenu.cpp
+0x00357DE0	LOCAL	card		signed int	E:\SD2\Game\flat\zMenu.cpp
+0x00357DE4	LOCAL	sInMenu		signed int	E:\SD2\Game\flat\zMenu.cpp
+0x00357DEC	LOCAL	roomCnt		signed int	E:\SD2\Game\flat\zScene.cpp
+0x00357DF0	LOCAL	bytesNeeded		signed int	E:\SD2\Game\flat\zScene.cpp
+0x00357DF4	LOCAL	availOnDisk		signed int	E:\SD2\Game\flat\zScene.cpp
+0x00357DF8	GLOBAL	gCurEnv		class _zEnv *	E:\SD2\Game\flat\zGame.cpp
+0x00357DF8	GLOBAL	gCurEnv		class _zEnv *	E:\SD2\Game\flat\zMenu.cpp
+0x00357DF8	GLOBAL	gCurEnv		class _zEnv *	E:\SD2\Game\flat\zScene.cpp
+0x00357DF8	GLOBAL	gCurEnv		class _zEnv *	E:\SD2\Game\flat\zGameExtras.cpp
+0x00357DFC	GLOBAL	gTransitionSceneID		unsigned int	E:\SD2\Game\flat\zScene.cpp
+0x00357E0C	GLOBAL	gSceneUpdateTime		float	E:\SD2\Game\flat\zScene.cpp
+0x00357E18	LOCAL	scobj_idbps		class IDBasePair *	E:\SD2\Game\flat\zScene.cpp
+0x00357E20	GLOBAL	gGameMode		enum eGameMode	E:\SD2\Game\flat\zGame.cpp
+0x00357E20	GLOBAL	gGameMode		enum eGameMode	E:\SD2\Game\flat\zMenu.cpp
+0x00357E20	GLOBAL	gGameMode		enum eGameMode	E:\SD2\Game\flat\zGameState.cpp
+0x00357E20	GLOBAL	gGameMode		enum eGameMode	E:\SD2\Game\flat\zMusic.cpp
+0x00357E24	GLOBAL	gGameOstrich		enum _GameOstrich	E:\SD2\Game\flat\zGameState.cpp
+0x00357E30	GLOBAL	globalCamera		class RwCamera *	E:\SD2\Game\flat\iCamera.cpp
+0x00357E30	GLOBAL	globalCamera		class RwCamera *	E:\SD2\Game\flat\iEnv.cpp
+0x00357E34	LOCAL	sOnGround		signed int	E:\SD2\Game\flat\xCamera.cpp
+0x00357E38	LOCAL	sGroundHeight		float	E:\SD2\Game\flat\xCamera.cpp
+0x00357E3C	LOCAL	sCurXOffset		float	E:\SD2\Game\flat\xCamera.cpp
+0x00357E40	LOCAL	sCurYOffset		float	E:\SD2\Game\flat\xCamera.cpp
+0x00357E44	LOCAL	sControllerStill		signed int	E:\SD2\Game\flat\xCamera.cpp
+0x00357E48	GLOBAL	gCameraLastFov		float	E:\SD2\Game\flat\xCamera.cpp
+0x00357E48	GLOBAL	gCameraLastFov		float	E:\SD2\Game\flat\xCutscene.cpp
+0x00357E54	GLOBAL	sDXLeft		signed int	E:\SD2\Game\flat\xCamera.cpp
+0x00357E58	GLOBAL	sDXRight		signed int	E:\SD2\Game\flat\xCamera.cpp
+0x00357E5C	GLOBAL	sDYUp		signed int	E:\SD2\Game\flat\xCamera.cpp
+0x00357E60	GLOBAL	sDYDown		signed int	E:\SD2\Game\flat\xCamera.cpp
+0x00357E64	LOCAL	sShoulderTimer		float	E:\SD2\Game\flat\xCamera.cpp
+0x00357E68	LOCAL	sBeginDrawFX		signed int	E:\SD2\Game\flat\iEnv.cpp
+0x00357E6C	LOCAL	lastEnv		class iEnv *	E:\SD2\Game\flat\iEnv.cpp
+0x00357E70	GLOBAL	gCurXEnv		class _xEnv *	E:\SD2\Game\flat\xEnv.cpp
+0x00357E70	GLOBAL	gCurXEnv		class _xEnv *	E:\SD2\Game\flat\zFeet.cpp
+0x00357E74	LOCAL	sEmitHoloPoof		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357E78	LOCAL	sEmitHoloDots		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357E7C	LOCAL	sEmitRBFlames		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357E80	LOCAL	sEmitGGVortex1		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357E84	LOCAL	sEmitGGVortex2		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357E88	LOCAL	sEmitGGVortex3		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357E8C	LOCAL	sEmitGGVortexHurt		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357E90	LOCAL	sEmitGreenBall		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357E94	LOCAL	sEmitGreenBallSmack		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357E98	LOCAL	sEmitGreenBallShockwave		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357E9C	LOCAL	sEmitWitchDying		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EA0	LOCAL	sEmitKillerPlant		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EA4	LOCAL	sEmitMMRedFlask		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EA8	LOCAL	sEmitMMGreenFlask		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EAC	LOCAL	sEmitMMBlackFlask		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EB0	LOCAL	sEmitMMTeleportHide		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EB4	LOCAL	sEmitMMTeleportShow		class _zParEmitter *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EB8	LOCAL	g_NPCSoundStreamLock		signed int	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EBC	LOCAL	g_npcinit		signed int	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EC0	LOCAL	g_npccnt		signed int	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EC4	LOCAL	g_npcpool		class st_zEntVillain *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EC8	LOCAL	g_pgol		enum en_BEHAVIOUR_GOAL	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357ECC	LOCAL	g_pstm		enum en_NPC_STIMULUS	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357ED0	LOCAL	g_gumModelAsset		class RpAtomic *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357ED4	LOCAL	g_bonusTableReady		signed int	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357ED8	LOCAL	g_stattotvil		signed int	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EDC	LOCAL	g_emitpool		class st_zEntVillain_ParEmitRecord *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EE0	LOCAL	g_emitnext		signed int	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EE4	LOCAL	g_emitready		signed int	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EE8	LOCAL	g_scene_is_a_boss_battle		signed int	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357EEC	LOCAL	g_datablock		char *	E:\SD2\Game\flat\zEntVillain.cpp
+0x00357F20	GLOBAL	sPlayerSurfaceType		signed int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F24	LOCAL	sPlayerWaterOffset		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F28	GLOBAL	gPlayerHitWater		signed int	E:\SD2\Game\flat\xCamera.cpp
+0x00357F28	GLOBAL	gPlayerHitWater		signed int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F2C	GLOBAL	gDeadScooby		signed int	E:\SD2\Game\flat\xCamera.cpp
+0x00357F2C	GLOBAL	gDeadScooby		signed int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F30	LOCAL	sEmitterStars		class _zParEmitter *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F34	LOCAL	sEmitterShockLeft		class _zParEmitter *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F38	LOCAL	sEmitterShockRight		class _zParEmitter *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F3C	LOCAL	sEmitterWaterSplash		class _zParEmitter *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F40	LOCAL	sEmitterBounceMiss		class _zParEmitter *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F44	LOCAL	sEmitterSprings		class _zParEmitter *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F48	LOCAL	sEmitterSpringBoard		class _zParEmitter *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F4C	LOCAL	sEmitterBounceOnVillain		class _zParEmitter *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F50	LOCAL	sEmitterHeadButt		class _zParEmitter *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F54	LOCAL	sEmitterHeadButt2		class _zParEmitter *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F58	LOCAL	sSoundWaterSplash		unsigned int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F5C	GLOBAL	sPlayerCurSkidMark		class _tagFeetSkidMark *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F60	GLOBAL	sSnackDecrement		unsigned int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F64	GLOBAL	sDecrementSnackGateEnt		class _zEntPickup *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F64	GLOBAL	sDecrementSnackGateEnt		class _xEnt *	E:\SD2\Game\flat\zEntPickup.cpp
+0x00357F68	GLOBAL	sDecrementDelay		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F6C	GLOBAL	sDecrementAmount		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F70	GLOBAL	startJump		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F74	GLOBAL	startDouble		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F78	GLOBAL	startBounce		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F7C	LOCAL	curVelmag		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F80	LOCAL	curVelangle		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F84	LOCAL	surfDamping		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F88	LOCAL	lastFloorEnt		class _xEnt *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F8C	LOCAL	surfSticky		unsigned int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F90	LOCAL	surfSlickRatio		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F94	LOCAL	surfSlickTimer		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F98	LOCAL	surfMaxSpeed		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357F9C	LOCAL	surfSlipTimer		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357FA0	LOCAL	update_dt		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357FA4	GLOBAL	headcoll_anim		signed int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357FA8	GLOBAL	headcoll_tmr		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357FAC	GLOBAL	headcoll_bltime		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357FF8	LOCAL	cchkButtbounce		unsigned int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00357FFC	LOCAL	cchkSquish		unsigned int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00358000	LOCAL	sVO		unsigned int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00358004	LOCAL	sVOAssetID		unsigned int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00358008	LOCAL	sVOPriority		unsigned int	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0035800C	LOCAL	sVONextSituation		class zPlayerSituation *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00358010	LOCAL	sVOTimer		float	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00358024	LOCAL	sPlayerBodyAtomic		class RpAtomic *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00358028	LOCAL	sPlayerHeadAtomic		class RpAtomic *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0035802C	LOCAL	sPlayerBodyClump		class RpClump *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00358030	LOCAL	sPlayerHeadClump		class RpClump *	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00358034	LOCAL	g_async_context		class st_BINIO_XTRADATA *	E:\SD2\Game\flat\xbinio.cpp
+0x00358038	LOCAL	g_loadlock		unsigned int	E:\SD2\Game\flat\xhipio.cpp
+0x00358048	LOCAL	g_isginit		signed int	E:\SD2\Game\flat\isavegame.cpp
+0x00358068	LOCAL	g_xsginit		signed int	E:\SD2\Game\flat\xsavegame.cpp
+0x0035806C	LOCAL	g_xutilinit		signed int	E:\SD2\Game\flat\xutil.cpp
+0x00358070	LOCAL	sKeyCounterEnabledBeforeGive		signed int	E:\SD2\Game\flat\zEntPickup.cpp
+0x00358074	LOCAL	sEmitGlow		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x00358078	LOCAL	sEmitMmm		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x0035807C	LOCAL	sEmitQMark		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x00358080	LOCAL	sEmitBubble		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x00358084	LOCAL	sEmitGum		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x00358088	LOCAL	sEmitOdour		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x0035808C	LOCAL	sEmitGrabPowerup		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x00358090	LOCAL	sEmitGrabCrumb		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x00358094	LOCAL	sEmitGrabSnackBox		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x00358098	LOCAL	sEmitGrabMmm		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x0035809C	LOCAL	sEmitGrabQMark		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003580A0	LOCAL	sEmitGrabGum		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003580A4	LOCAL	sEmitGrabBubbles		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003580A8	LOCAL	sEmitLoveHart		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003580AC	LOCAL	sEmitAkmalDaisy		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003580B0	LOCAL	sEmitGrabGhost		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003580B4	LOCAL	sEmitGrabSDLogo		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003580B8	LOCAL	sEmitWarpGate		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003580BC	LOCAL	sEmitMiniVanPuff		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003580C0	LOCAL	keyCounter		class _zCounter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003580C4	LOCAL	dbg_xems		class _xEntMotion **	E:\SD2\Game\flat\xEntMotion.cpp
+0x003580C8	LOCAL	dbg_num		unsigned short	E:\SD2\Game\flat\xEntMotion.cpp
+0x003580CC	LOCAL	dbg_num_allocd		unsigned short	E:\SD2\Game\flat\xEntMotion.cpp
+0x003580D0	LOCAL	sEmitTremble		class _zParEmitter *	E:\SD2\Game\flat\zPlatform.cpp
+0x003580D4	LOCAL	sEmitBreakaway		class _zParEmitter *	E:\SD2\Game\flat\zPlatform.cpp
+0x003580D8	LOCAL	g_serinit		signed int	E:\SD2\Game\flat\xserializer.cpp
+0x003580DC	GLOBAL	gDBfont		unsigned int	E:\SD2\Game\flat\xDebug.cpp
+0x003580DC	GLOBAL	gDBfont		unsigned int	E:\SD2\Game\flat\xFont.cpp
+0x003580DC	GLOBAL	gDBfont		unsigned int	E:\SD2\Game\flat\iFont.cpp
+0x003580E0	LOCAL	im2d_vert		class RwSky2DVertex *	E:\SD2\Game\flat\iFont.cpp
+0x003580E4	LOCAL	im2d_vert_ct		signed int	E:\SD2\Game\flat\iFont.cpp
+0x003580E8	GLOBAL	gFontWiggle		float	E:\SD2\Game\flat\iFont.cpp
+0x003580E8	GLOBAL	gFontWiggle		float	E:\SD2\Game\flat\zUIFont.cpp
+0x003580EC	GLOBAL	gFontWiggleTime		float	E:\SD2\Game\flat\zScene.cpp
+0x003580EC	GLOBAL	gFontWiggleTime		float	E:\SD2\Game\flat\iFont.cpp
+0x003580EC	GLOBAL	gFontWiggleTime		float	E:\SD2\Game\flat\zUI.cpp
+0x003580F0	LOCAL	rcz		float	E:\SD2\Game\flat\iFont.cpp
+0x003580F4	LOCAL	nsz		float	E:\SD2\Game\flat\iFont.cpp
+0x003580F8	LOCAL	sRaster		class RwRaster *	E:\SD2\Game\flat\iFont.cpp
+0x003580FC	LOCAL	sButtonRaster		class RwRaster *	E:\SD2\Game\flat\iFont.cpp
+0x00358100	LOCAL	gBubbleModel		class RpAtomic *	E:\SD2\Game\flat\zEntBubble.cpp
+0x00358104	LOCAL	sEmitGumWad		class _zParEmitter *	E:\SD2\Game\flat\zEntBubble.cpp
+0x00358108	LOCAL	sEmitSoapFlight		class _zParEmitter *	E:\SD2\Game\flat\zEntBubble.cpp
+0x0035810C	LOCAL	StreamIRXVersion		unsigned int	E:\SD2\Game\flat\ms4sound.cpp
+0x00358110	GLOBAL	IOP_Cnt		signed int	E:\SD2\Game\flat\ms4sound.cpp
+0x00358114	GLOBAL	sbuff2		unsigned int *	E:\SD2\Game\flat\ms4sound.cpp
+0x00358118	GLOBAL	SOUND_STEREO_READY_FLAG		signed int	E:\SD2\Game\flat\ms4sound.cpp
+0x0035811C	GLOBAL	SOUND_CD_STATUS		signed int	E:\SD2\Game\flat\ms4sound.cpp
+0x0035811C	GLOBAL	SOUND_CD_STATUS		signed int	E:\SD2\Game\flat\iSnd.cpp
+0x00358120	GLOBAL	SOUND_SPU_ADDR		signed int	E:\SD2\Game\flat\ms4sound.cpp
+0x00358124	GLOBAL	SOUND_STREAM_CD_ACCESS		signed int	E:\SD2\Game\flat\ms4sound.cpp
+0x00358124	GLOBAL	SOUND_STREAM_CD_ACCESS		signed int	E:\SD2\Game\flat\iSnd.cpp
+0x00358128	GLOBAL	SOUND_STREAM_CD_ACCESS_CHAN		signed int	E:\SD2\Game\flat\ms4sound.cpp
+0x00358128	GLOBAL	SOUND_STREAM_CD_ACCESS_CHAN		signed int	E:\SD2\Game\flat\iSnd.cpp
+0x0035812C	GLOBAL	SOUND_SFX_TRANSFER_END		signed int	E:\SD2\Game\flat\ms4sound.cpp
+0x0035812C	GLOBAL	SOUND_SFX_TRANSFER_END		signed int	E:\SD2\Game\flat\iSnd.cpp
+0x00358130	GLOBAL	SOUND_IOP_DATA_ADDRESS		unsigned int	E:\SD2\Game\flat\ms4sound.cpp
+0x00358130	GLOBAL	SOUND_IOP_DATA_ADDRESS		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x00358134	GLOBAL	SOUND_IOP_DATA_SIZE		unsigned int	E:\SD2\Game\flat\ms4sound.cpp
+0x00358134	GLOBAL	SOUND_IOP_DATA_SIZE		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x00358138	GLOBAL	SOUND_IOP_DATA_SEEK		unsigned int	E:\SD2\Game\flat\ms4sound.cpp
+0x00358138	GLOBAL	SOUND_IOP_DATA_SEEK		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x0035813C	GLOBAL	SOUND_IOP_DATA_CHECK		unsigned int	E:\SD2\Game\flat\ms4sound.cpp
+0x0035813C	GLOBAL	SOUND_IOP_DATA_CHECK		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x00358140	GLOBAL	SOUND_IOP_DATA_ID		unsigned int	E:\SD2\Game\flat\ms4sound.cpp
+0x00358140	GLOBAL	SOUND_IOP_DATA_ID		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x00358144	GLOBAL	iopFrameCount		unsigned int	E:\SD2\Game\flat\ms4sound.cpp
+0x00358148	LOCAL	g_mvpt_list		class _zMovePoint *	E:\SD2\Game\flat\zMovePoint.cpp
+0x0035814C	LOCAL	g_mvpt_cnt		signed int	E:\SD2\Game\flat\zMovePoint.cpp
+0x00358150	LOCAL	HIPct		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x00358154	LOCAL	EEinfo_max		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x00358158	LOCAL	SPUaddr		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x0035815C	LOCAL	sfx_total		unsigned int	E:\SD2\Game\flat\iSnd.cpp
+0x00358160	GLOBAL	EXTERNAL_NewRequestCheck		signed int	E:\SD2\Game\flat\iSnd.cpp
+0x00358164	GLOBAL	EXTERNAL_LOAD_FLAG		signed int	E:\SD2\Game\flat\iSnd.cpp
+0x00358168	GLOBAL	did		signed int	E:\SD2\Game\flat\iSnd.cpp
+0x0035816C	GLOBAL	previous		signed int	E:\SD2\Game\flat\iSnd.cpp
+0x00358170	LOCAL	sCutsceneCallback		void (*)(class iSndCutsceneCallbackInfo *)	E:\SD2\Game\flat\iSnd.cpp
+0x00358174	LOCAL	sShadowRaster		class RwRaster *	E:\SD2\Game\flat\iShadow.cpp
+0x00358178	LOCAL	sShadowVertCount		unsigned int	E:\SD2\Game\flat\iShadow.cpp
+0x0035817C	LOCAL	sCandleEmitter		class _zParEmitter *	E:\SD2\Game\flat\zEntHangable.cpp
+0x00358180	LOCAL	sCandleSmokeEmitter		class _zParEmitter *	E:\SD2\Game\flat\zEntHangable.cpp
+0x00358184	LOCAL	sChandelierHash		unsigned int	E:\SD2\Game\flat\zEntHangable.cpp
+0x00358188	LOCAL	sMountEmitter		class _zParEmitter *	E:\SD2\Game\flat\zEntHangable.cpp
+0x0035818C	LOCAL	surfs		class xSurface *	E:\SD2\Game\flat\xSurface.cpp
+0x00358190	LOCAL	nsurfs		unsigned short	E:\SD2\Game\flat\xSurface.cpp
+0x00358194	LOCAL	zsps		class zSurfaceProps *	E:\SD2\Game\flat\zSurface.cpp
+0x00358198	LOCAL	sMapperCount		signed int	E:\SD2\Game\flat\zSurface.cpp
+0x0035819C	GLOBAL	gLightWorld		class RpWorld *	E:\SD2\Game\flat\iLight.cpp
+0x0035819C	GLOBAL	gLightWorld		class RpWorld *	E:\SD2\Game\flat\zLight.cpp
+0x003581A0	GLOBAL	sEmitDust		class _zParEmitter *	E:\SD2\Game\flat\zEntPickup.cpp
+0x003581A0	GLOBAL	sEmitDust		class _zParEmitter *	E:\SD2\Game\flat\zEntDestructObj.cpp
+0x003581A4	GLOBAL	sEmitXplo		class _zParEmitter *	E:\SD2\Game\flat\zEntDestructObj.cpp
+0x003581A8	GLOBAL	sEmitWeb		class _zParEmitter *	E:\SD2\Game\flat\zEntDestructObj.cpp
+0x003581AC	LOCAL	gusts		class _zGust *	E:\SD2\Game\flat\zGust.cpp
+0x003581B0	LOCAL	ngusts		unsigned short	E:\SD2\Game\flat\zGust.cpp
+0x003581B4	LOCAL	sGustDustEmitter		class _zParEmitter *	E:\SD2\Game\flat\zGust.cpp
+0x003581B8	LOCAL	sGustDebrisEmitter		class _zParEmitter *	E:\SD2\Game\flat\zGust.cpp
+0x003581BC	LOCAL	vols		class _zVolume *	E:\SD2\Game\flat\zVolume.cpp
+0x003581C0	LOCAL	nvols		unsigned short	E:\SD2\Game\flat\zVolume.cpp
+0x003581C4	GLOBAL	gOccludeCount		signed int	E:\SD2\Game\flat\zScene.cpp
+0x003581C4	GLOBAL	gOccludeCount		signed int	E:\SD2\Game\flat\zVolume.cpp
+0x003581C8	GLOBAL	gOccludeCalcCount		signed int	E:\SD2\Game\flat\zVolume.cpp
+0x003581CC	LOCAL	psize		unsigned int	E:\SD2\Game\flat\xFFX.cpp
+0x003581D0	LOCAL	pool		class xFFX *	E:\SD2\Game\flat\xFFX.cpp
+0x003581D4	LOCAL	alist		class xFFX *	E:\SD2\Game\flat\xFFX.cpp
+0x003581D8	LOCAL	shake_psize		unsigned int	E:\SD2\Game\flat\xFFX.cpp
+0x003581DC	LOCAL	shake_pool		class xFFXShakeState *	E:\SD2\Game\flat\xFFX.cpp
+0x003581E0	LOCAL	shake_alist		class xFFXShakeState *	E:\SD2\Game\flat\xFFX.cpp
+0x003581E4	LOCAL	rot_match_psize		unsigned int	E:\SD2\Game\flat\xFFX.cpp
+0x003581E8	LOCAL	rot_match_pool		class xFFXRotMatchState *	E:\SD2\Game\flat\xFFX.cpp
+0x003581EC	LOCAL	rot_match_alist		class xFFXRotMatchState *	E:\SD2\Game\flat\xFFX.cpp
+0x003581F0	LOCAL	g_zdsp_init		signed int	E:\SD2\Game\flat\zDispatcher.cpp
+0x00358200	LOCAL	sSortedCount		unsigned int	E:\SD2\Game\flat\zUI.cpp
+0x00358204	LOCAL	cKeyUIid1off		unsigned int	E:\SD2\Game\flat\zUI.cpp
+0x00358208	LOCAL	cKeyUIid2off		unsigned int	E:\SD2\Game\flat\zUI.cpp
+0x0035820C	LOCAL	cKeyUIid3off		unsigned int	E:\SD2\Game\flat\zUI.cpp
+0x00358210	LOCAL	cKeyUIid4off		unsigned int	E:\SD2\Game\flat\zUI.cpp
+0x00358214	LOCAL	cKeyUIid1on		unsigned int	E:\SD2\Game\flat\zUI.cpp
+0x00358218	LOCAL	cKeyUIid2on		unsigned int	E:\SD2\Game\flat\zUI.cpp
+0x0035821C	LOCAL	cKeyUIid3on		unsigned int	E:\SD2\Game\flat\zUI.cpp
+0x00358220	LOCAL	cKeyUIid4on		unsigned int	E:\SD2\Game\flat\zUI.cpp
+0x00358224	LOCAL	ushift		float	E:\SD2\Game\flat\zUI.cpp
+0x00358258	LOCAL	hasMap		unsigned int	E:\SD2\Game\flat\zVar.cpp
+0x0035825C	LOCAL	R001Unlocked		unsigned int	E:\SD2\Game\flat\zVar.cpp
+0x00358260	LOCAL	S001Unlocked		unsigned int	E:\SD2\Game\flat\zVar.cpp
+0x00358264	LOCAL	E001Unlocked		unsigned int	E:\SD2\Game\flat\zVar.cpp
+0x00358268	LOCAL	F001Unlocked		unsigned int	E:\SD2\Game\flat\zVar.cpp
+0x0035826C	LOCAL	MMDefeated		unsigned int	E:\SD2\Game\flat\zVar.cpp
+0x00358270	LOCAL	endgame		unsigned int	E:\SD2\Game\flat\zVar.cpp
+0x00358274	LOCAL	allmovies		unsigned int	E:\SD2\Game\flat\zVar.cpp
+0x00358278	LOCAL	selSceneID		unsigned int	E:\SD2\Game\flat\zVar.cpp
+0x0035827C	LOCAL	sSnackGateValue		unsigned int	E:\SD2\Game\flat\zVar.cpp
+0x00358280	GLOBAL	sVarMagicInit		signed int	E:\SD2\Game\flat\zVar.cpp
+0x00358284	LOCAL	sFrameCount		unsigned int	E:\SD2\Game\flat\xParMgr.cpp
+0x00358288	LOCAL	sParMgrInit		signed int	E:\SD2\Game\flat\xParMgr.cpp
+0x00358290	GLOBAL	gParDead		class xPar *	E:\SD2\Game\flat\xPar.cpp
+0x00358294	LOCAL	gColorTableInit		signed int	E:\SD2\Game\flat\iParMgr.cpp
+0x00358298	LOCAL	g_zlob_init		signed int	E:\SD2\Game\flat\zLobMaster.cpp
+0x0035829C	GLOBAL	gNumShaggy		unsigned int	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582A0	LOCAL	gShaggy3TurnAngle		float	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582A4	LOCAL	gTractorEmitter		class _zParEmitter *	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582A8	LOCAL	gBurningManEmitter		class _zParEmitter *	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582AC	LOCAL	sVilEventFunc		signed int (*)(class xBase *, class xBase *, unsigned int, float *, class xBase *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582B0	LOCAL	sVilUpdateFunc		void (*)(class _xEnt *, class _xScene *, float)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582B4	LOCAL	sVilMoveFunc		void (*)(class _xEnt *, class _xScene *, float, class _xEntFrame *)	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582B8	GLOBAL	gACCEL_START		float	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582BC	GLOBAL	gACCEL_END		float	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582C0	GLOBAL	sHangVirtualPeak		float	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582C4	GLOBAL	sDefHangTime		float	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582C8	LOCAL	sMagnetCount		signed int	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582CC	LOCAL	sSndCallPitch		signed short	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003582D0	LOCAL	SHADOW_BF_DOT		float	E:\SD2\Game\flat\xShadow.cpp
+0x003582D4	LOCAL	SHADOW_BOTH		float	E:\SD2\Game\flat\xShadow.cpp
+0x003582D8	LOCAL	Im3DBuffer		class RxObjSpace3DVertex *	E:\SD2\Game\flat\xShadow.cpp
+0x003582DC	LOCAL	Im3DBufferPos		unsigned int	E:\SD2\Game\flat\xShadow.cpp
+0x003582E0	LOCAL	ShadowNumTriangles		unsigned int	E:\SD2\Game\flat\xShadow.cpp
+0x003582F0	LOCAL	ShadowCamera		class RwCamera *	E:\SD2\Game\flat\xShadow.cpp
+0x003582F4	LOCAL	ShadowCameraRaster		class RwRaster *	E:\SD2\Game\flat\xShadow.cpp
+0x003582F8	LOCAL	ShadowRenderRaster		class RwRaster *	E:\SD2\Game\flat\xShadow.cpp
+0x003582FC	GLOBAL	ShadowFade		signed int	E:\SD2\Game\flat\xShadow.cpp
+0x00358300	LOCAL	sShadowFlags		unsigned int	E:\SD2\Game\flat\xShadow.cpp
+0x00358304	GLOBAL	tri_no		unsigned int	E:\SD2\Game\flat\xShadow.cpp
+0x00358308	LOCAL	sShakeSnackCounter		signed int	E:\SD2\Game\flat\zHud.cpp
+0x0035830C	LOCAL	widthAspect		float	E:\SD2\Game\flat\zHud.cpp
+0x00358310	LOCAL	heightAspect		float	E:\SD2\Game\flat\zHud.cpp
+0x00358314	LOCAL	sHudGameStatsTimer		signed int	E:\SD2\Game\flat\zHud.cpp
+0x00358318	LOCAL	tmpRoomTime		float	E:\SD2\Game\flat\zHud.cpp
+0x0035831C	LOCAL	sHudDisplayTimer_plrStatus		float	E:\SD2\Game\flat\zHud.cpp
+0x00358320	LOCAL	sHudDisplayTimer_snacks		float	E:\SD2\Game\flat\zHud.cpp
+0x00358324	LOCAL	sHudDisplayTimer_gum		float	E:\SD2\Game\flat\zHud.cpp
+0x00358328	LOCAL	sHudDisplayTimer_soap		float	E:\SD2\Game\flat\zHud.cpp
+0x0035832C	LOCAL	sHudDisplayTimer_healthBar		float	E:\SD2\Game\flat\zHud.cpp
+0x00358330	LOCAL	oldHealthCnt		unsigned int	E:\SD2\Game\flat\zHud.cpp
+0x00358334	LOCAL	oldHealthCnt2		unsigned int	E:\SD2\Game\flat\zHud.cpp
+0x00358338	LOCAL	oldGumCnt		signed int	E:\SD2\Game\flat\zHud.cpp
+0x0035833C	LOCAL	oldGumCnt2		signed int	E:\SD2\Game\flat\zHud.cpp
+0x00358340	LOCAL	oldSoapCnt		signed int	E:\SD2\Game\flat\zHud.cpp
+0x00358344	LOCAL	oldSoapCnt2		signed int	E:\SD2\Game\flat\zHud.cpp
+0x00358348	LOCAL	fontBox		class xFontBox *	E:\SD2\Game\flat\zHud.cpp
+0x0035834C	LOCAL	dynOffset		float	E:\SD2\Game\flat\zHud.cpp
+0x00358350	LOCAL	sStatInit		signed int	E:\SD2\Game\flat\zHud.cpp
+0x00358368	LOCAL	sLightTotal		signed int	E:\SD2\Game\flat\zLight.cpp
+0x0035836C	LOCAL	sPartitionVolume		class _zVolume *	E:\SD2\Game\flat\zLight.cpp
+0x00358370	LOCAL	gNumTemporaryLights		signed int	E:\SD2\Game\flat\zLight.cpp
+0x00358374	LOCAL	saveSuccess		unsigned int	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00358378	LOCAL	time_last		float	E:\SD2\Game\flat\zSaveLoad.cpp
+0x0035837C	LOCAL	time_current		float	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00358380	LOCAL	t0		signed long	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00358388	LOCAL	t1		signed long	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00358390	LOCAL	promptSel		signed int	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00358394	LOCAL	badCard		signed int	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00358398	LOCAL	sAvailable		signed int	E:\SD2\Game\flat\zSaveLoad.cpp
+0x0035839C	LOCAL	sNeeded		signed int	E:\SD2\Game\flat\zSaveLoad.cpp
+0x003583A0	LOCAL	sCutTocCount		unsigned int	E:\SD2\Game\flat\xCutscene.cpp
+0x003583A4	LOCAL	sCutTocInfo		class xCutsceneInfo *	E:\SD2\Game\flat\xCutscene.cpp
+0x003583B0	LOCAL	sRS		enum _SDRenderState	E:\SD2\Game\flat\zRenderState.cpp
+0x003583B4	LOCAL	world_xmin		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583B8	LOCAL	world_ymin		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583BC	LOCAL	world_zmin		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583C0	LOCAL	world_xmax		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583C4	LOCAL	world_ymax		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583C8	LOCAL	world_zmax		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583CC	LOCAL	world_xsz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583D0	LOCAL	world_ysz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583D4	LOCAL	world_zsz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583D8	LOCAL	block_xsz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583DC	LOCAL	block_ysz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583E0	LOCAL	block_zsz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583E4	LOCAL	one_block_xsz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583E8	LOCAL	one_block_ysz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583EC	LOCAL	one_block_zsz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583F0	LOCAL	lcl_world_xsz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583F4	LOCAL	lcl_world_ysz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583F8	LOCAL	lcl_world_zsz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x003583FC	LOCAL	ucl_world_xsz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x00358400	LOCAL	ucl_world_ysz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x00358404	LOCAL	ucl_world_zsz		float	E:\SD2\Game\flat\xQuickCull.cpp
+0x00358408	LOCAL	sClipVolumeTotal		signed int	E:\SD2\Game\flat\zParCmd.cpp
+0x00358414	LOCAL	sParGroupRegTableInit		signed int	E:\SD2\Game\flat\xParGroup.cpp
+0x00358418	LOCAL	sParGroupRegTableCount		signed int	E:\SD2\Game\flat\xParGroup.cpp
+0x0035841C	LOCAL	gCutsceneSkipOK		signed int	E:\SD2\Game\flat\zCutsceneMgr.cpp
+0x00358420	GLOBAL	MainLight		class RpLight *	E:\SD2\Game\flat\xFX.cpp
+0x00358424	GLOBAL	xfx_initted		unsigned int	E:\SD2\Game\flat\xFX.cpp
+0x00358428	LOCAL	sSetMaterialTextureBufferCount		signed int	E:\SD2\Game\flat\xFX.cpp
+0x0035842C	LOCAL	sMaterialTotal		signed int	E:\SD2\Game\flat\xFX.cpp
+0x00358430	LOCAL	xFXanimUVPipeline		class RxPipeline *	E:\SD2\Game\flat\xFX.cpp
+0x00358434	GLOBAL	xFXanimUV2PTexture		class RwTexture *	E:\SD2\Game\flat\xFX.cpp
+0x00358434	GLOBAL	xFXanimUV2PTexture		class RwTexture *	E:\SD2\Game\flat\iFX.cpp
+0x00358438	LOCAL	paremit_sd_pawprint		class xBase *	E:\SD2\Game\flat\zFeet.cpp
+0x0035843C	LOCAL	paremit_vil_footprint		class xBase *	E:\SD2\Game\flat\zFeet.cpp
+0x00358440	LOCAL	sSkidMarkRaster		class RwRaster *	E:\SD2\Game\flat\zFeet.cpp
+0x00358444	LOCAL	nals		signed int	E:\SD2\Game\flat\zAnimList.cpp
+0x00358448	LOCAL	aids		unsigned int *	E:\SD2\Game\flat\zAnimList.cpp
+0x0035844C	LOCAL	atbls		class xAnimTable **	E:\SD2\Game\flat\zAnimList.cpp
+0x00358450	LOCAL	anused		signed int *	E:\SD2\Game\flat\zAnimList.cpp
+0x00358588	LOCAL	sClimate		class _tagClimate *	E:\SD2\Game\flat\xClimate.cpp
+0x0035858C	LOCAL	hitzhit		unsigned int	E:\SD2\Game\flat\iCollideFast.cpp
+0x00358590	GLOBAL	warbEnt		class _xEnt *	E:\SD2\Game\flat\iFX.cpp
+0x00358594	LOCAL	vbuf		class _xVec3 *	E:\SD2\Game\flat\iFX.cpp
+0x00358598	LOCAL	nbuf		class _xVec3 *	E:\SD2\Game\flat\iFX.cpp
+0x0035859C	LOCAL	warbMode		unsigned int	E:\SD2\Game\flat\iFX.cpp
+0x003585A0	LOCAL	warbTime		float	E:\SD2\Game\flat\iFX.cpp
+0x003585A4	GLOBAL	gTrcDisk		class _tagTRCDiskInfo	E:\SD2\Game\flat\xTRC.cpp
+0x003585A8	LOCAL	sTrcFontBox		class xFontBox *	E:\SD2\Game\flat\xTRC.cpp
+0x003585AC	LOCAL	voBufData		class VoData *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585B0	LOCAL	voBufTag		class VoTag *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585B4	LOCAL	viBufTag		u_long128 *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585B8	LOCAL	mpegWork		unsigned char *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585BC	LOCAL	mpegWorkSz		signed int	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585C0	LOCAL	defStack		char *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585C4	GLOBAL	readBufp		class ReadBuf *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585C8	LOCAL	audioBuff		unsigned char *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585CC	LOCAL	viBufData		u_long128 *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585D0	LOCAL	videoDecStack		char *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585D4	LOCAL	timeStamp		class TimeStamp *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585D8	GLOBAL	videoDecTh		signed int	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585DC	GLOBAL	defaultTh		signed int	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585E0	GLOBAL	frd		signed int	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585E0	GLOBAL	frd		signed int	E:\SD2\Game\flat\ps2_mpeg\disp.c
+0x003585E4	LOCAL	skip_buttons		unsigned int	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585E8	LOCAL	skip_time		unsigned int	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003585F4	GLOBAL	isCountVblank		signed int	E:\SD2\Game\flat\ps2_mpeg\disp.c
+0x003585F8	GLOBAL	vblankCount		signed int	E:\SD2\Game\flat\ps2_mpeg\disp.c
+0x003585FC	GLOBAL	isFrameEnd		signed int	E:\SD2\Game\flat\ps2_mpeg\disp.c
+0x00358600	GLOBAL	oddeven		signed int	E:\SD2\Game\flat\ps2_mpeg\disp.c
+0x00358604	GLOBAL	handler_error		signed int	E:\SD2\Game\flat\ps2_mpeg\disp.c
+0x00358608	LOCAL	g_prj_init		signed int	E:\SD2\Game\flat\zEntProjectile.cpp
+0x00358630	GLOBAL	_rpCollisionNumInstances		signed int	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x00358634	GLOBAL	_rpCollisionGlobalsOffset		signed int	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00358634	GLOBAL	_rpCollisionGlobalsOffset		signed int	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x00358638	GLOBAL	_rpCollisionAtomicDataOffset		signed int	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00358638	GLOBAL	_rpCollisionAtomicDataOffset		signed int	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x0035863C	GLOBAL	_rpCollisionGeometryDataOffset		signed int	E:\SD2\Game\flat\p2rwcoll\ctgeom_.c
+0x0035863C	GLOBAL	_rpCollisionGeometryDataOffset		signed int	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x00358640	GLOBAL	_rpCollisionWorldSectorDataOffset		signed int	E:\SD2\Game\flat\p2rwcoll\ctworld_.c
+0x00358640	GLOBAL	_rpCollisionWorldSectorDataOffset		signed int	E:\SD2\Game\flat\p2rwcoll\rpcollis_.c
+0x00358644	GLOBAL	gFXSurfaceFlags		unsigned int	E:\SD2\Game\flat\xFX.cpp
+0x00358644	GLOBAL	gFXSurfaceFlags		unsigned int	E:\SD2\Game\flat\zFX.cpp
+0x00358648	LOCAL	sLastLaughEnum		signed int	E:\SD2\Game\flat\zLaugh.cpp
+0x0035864C	LOCAL	sLaughTimer		float	E:\SD2\Game\flat\zLaugh.cpp
+0x00358650	LOCAL	sLaughQueueData		class zLaughSituation *	E:\SD2\Game\flat\zLaugh.cpp
+0x00358654	LOCAL	sLastRefLaugh		signed int	E:\SD2\Game\flat\zLaugh.cpp
+0x00358658	LOCAL	sMusicPaused		unsigned int	E:\SD2\Game\flat\zMusic.cpp
+0x00358660	LOCAL	sMusicQueueData		class zMusicSituation *[2]	E:\SD2\Game\flat\zMusic.cpp
+0x00358668	LOCAL	sActionLineRaster		class RwRaster *	E:\SD2\Game\flat\zActionLine.cpp
+0x0035866C	GLOBAL	oldTriInstanceCB		signed int (*)(class RxPS2AllPipeData *, void **, unsigned int)	E:\SD2\Game\flat\p2im3dhack.cpp
+0x00358670	LOCAL	sGameExtrasOn		signed int	E:\SD2\Game\flat\zGameExtras.cpp
+0x00358674	LOCAL	sDay		signed int	E:\SD2\Game\flat\zGameExtras.cpp
+0x00358678	LOCAL	sMonth		signed int	E:\SD2\Game\flat\zGameExtras.cpp
+0x0035867C	LOCAL	sFireworksOn		signed int	E:\SD2\Game\flat\zGameExtras.cpp
+0x00358680	LOCAL	sColoredFountain		signed int	E:\SD2\Game\flat\zGameExtras.cpp
+0x00358684	LOCAL	sFireworkTrailEmit		class _zParEmitter *	E:\SD2\Game\flat\zGameExtras.cpp
+0x00358688	LOCAL	sFirework1Emit		class _zParEmitter *	E:\SD2\Game\flat\zGameExtras.cpp
+0x0035868C	LOCAL	sFirework2Emit		class _zParEmitter *	E:\SD2\Game\flat\zGameExtras.cpp
+0x00358690	LOCAL	sFog		class _zFog *	E:\SD2\Game\flat\zGameExtras.cpp
+0x00358694	LOCAL	sFogIntensity		float	E:\SD2\Game\flat\zGameExtras.cpp
+0x00358698	LOCAL	sThunderOn		signed int	E:\SD2\Game\flat\zGameExtras.cpp
+0x0035869C	LOCAL	sThunderFar1		unsigned int	E:\SD2\Game\flat\zGameExtras.cpp
+0x003586A0	LOCAL	sThunderFar2		unsigned int	E:\SD2\Game\flat\zGameExtras.cpp
+0x003586A4	LOCAL	sThunderNear1		unsigned int	E:\SD2\Game\flat\zGameExtras.cpp
+0x003586A8	LOCAL	sThunderNear2		unsigned int	E:\SD2\Game\flat\zGameExtras.cpp
+0x003586AC	LOCAL	sThunderNear3		unsigned int	E:\SD2\Game\flat\zGameExtras.cpp
+0x003586B0	LOCAL	sThunderNear4		unsigned int	E:\SD2\Game\flat\zGameExtras.cpp
+0x00358700	LOCAL	sneaky_buf		char [12288]	E:\SD2\Game\flat\fakeprintf.c
+0x0035F370	GLOBAL	_gp		void *	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003626C0	LOCAL	mReadData		unsigned char [32]	E:\SD2\Game\flat\iPad.cpp
+0x00362700	LOCAL	mPadDmaBuffer		u_long128 [4][16]	E:\SD2\Game\flat\iPad.cpp
+0x00362B00	LOCAL	mLargeMotor		float [4]	E:\SD2\Game\flat\iPad.cpp
+0x00362B10	LOCAL	mFade		class _xFadeData	E:\SD2\Game\flat\xScrFx.cpp
+0x00362C30	LOCAL	mRumbleList		class _tagxRumble [32]	E:\SD2\Game\flat\xPad.cpp
+0x00362E30	GLOBAL	mPad		class _tagxPad [4]	E:\SD2\Game\flat\xPad.cpp
+0x00362E30	GLOBAL	mPad		class _tagxPad [4]	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\xScrFx.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zMain.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\iModel.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\xEnt.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zGame.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zMenu.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zScene.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEnt.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\iCamera.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\xCamera.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEntVillain.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEntPlayer.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zAssetTypes.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zCamera.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEntPickup.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEnv.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zPlatform.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEntBubble.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zMovePoint.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\xSnd.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zPortal.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zPendulum.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\iShadow.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEntHangable.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEntButton.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEntDestructObj.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zVolume.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zDispatcher.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zUI.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zUIFont.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zVar.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\iParMgr.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zLobMaster.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEntShaggy.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\xShadow.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zHud.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\xCutscene.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zParSys.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zParCmd.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zParEmitter.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zCutsceneMgr.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEGenerator.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\xFX.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zFeet.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zHologram.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\xClimate.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zLightning.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\xTRC.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zEntProjectile.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zMusic.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zScript.cpp
+0x00362FD0	GLOBAL	globals		class zGlobals	E:\SD2\Game\flat\zGameExtras.cpp
+0x00366500	LOCAL	sxAnimTempTranPool		class xMemPool	E:\SD2\Game\flat\xAnim.cpp
+0x00366540	LOCAL	scratchBuffer		unsigned char [9120]	E:\SD2\Game\flat\iAnim.cpp
+0x00368CF0	GLOBAL	sDebugModeCallbackFunc		void (*[45])()	E:\SD2\Game\flat\xDebug.cpp
+0x00368DB0	GLOBAL	sDebugModeName		char *[45]	E:\SD2\Game\flat\xDebug.cpp
+0x00368EB0	LOCAL	gLastAtomicList		class RpAtomic *[256]	E:\SD2\Game\flat\iModel.cpp
+0x003692B0	GLOBAL	sVideoMode		class RwVideoMode	E:\SD2\Game\flat\iSystem.cpp
+0x003692C0	GLOBAL	gMemInfo		class xMemInfo_tag	E:\SD2\Game\flat\xMemMgr.cpp
+0x003692C0	GLOBAL	gMemInfo		class xMemInfo_tag	E:\SD2\Game\flat\iMemMgr.cpp
+0x003692F0	GLOBAL	gxHeap		class xMemHeap_tag [3]	E:\SD2\Game\flat\xMemMgr.cpp
+0x003694D0	LOCAL	SkyFSState		class RwSkyFSState	E:\SD2\Game\flat\p2skyfs.c
+0x003695E0	GLOBAL	gScreenDumpPath		char [256]	E:\SD2\Game\flat\iDebug.cpp
+0x003696E0	LOCAL	all_ents_box		class _xBox	E:\SD2\Game\flat\xEnt.cpp
+0x00369700	LOCAL	smcrecs		class xModCollRec [101]	E:\SD2\Game\flat\xEnt.cpp
+0x0036A3A0	LOCAL	cbray		class _xRay3	E:\SD2\Game\flat\iCollide.cpp
+0x0036A3D0	LOCAL	cbisx_local		class RpIntersection	E:\SD2\Game\flat\iCollide.cpp
+0x0036A3F0	LOCAL	Vert		class RwSky2DVertex [4]	E:\SD2\Game\flat\zGame.cpp
+0x0036A4F0	GLOBAL	gClimate		class _tagClimate	E:\SD2\Game\flat\zScene.cpp
+0x0036A4F0	GLOBAL	gClimate		class _tagClimate	E:\SD2\Game\flat\zParCmd.cpp
+0x0036A4F0	GLOBAL	gClimate		class _tagClimate	E:\SD2\Game\flat\zGameExtras.cpp
+0x0036A760	GLOBAL	sDummyTargetFrame		class _xMat4x3	E:\SD2\Game\flat\xCamera.cpp
+0x0036A7A0	LOCAL	sMMPreTeleportPos		class _xVec3	E:\SD2\Game\flat\zEntVillain.cpp
+0x0036A7B0	LOCAL	g_bk_lytstrk		class _tagLightning *[5]	E:\SD2\Game\flat\zEntVillain.cpp
+0x0036A7D0	LOCAL	g_rbsword		class st_REDBEARD_SWORD [4]	E:\SD2\Game\flat\zEntVillain.cpp
+0x0036C490	LOCAL	g_mm_lytstrk		class _tagLightning *[5]	E:\SD2\Game\flat\zEntVillain.cpp
+0x0036E280	GLOBAL	gPlayerWaterPos		class _xVec3	E:\SD2\Game\flat\xCamera.cpp
+0x0036E280	GLOBAL	gPlayerWaterPos		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E290	GLOBAL	gDeadScoobyPos		class _xVec3	E:\SD2\Game\flat\xCamera.cpp
+0x0036E290	GLOBAL	gDeadScoobyPos		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E2A0	GLOBAL	gPlayerfx		class _tagPlayerFX	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E2A0	GLOBAL	gPlayerfx		class _tagPlayerFX	E:\SD2\Game\flat\zFeet.cpp
+0x0036E370	GLOBAL	sPlayerFeet		class tagzFeet [10]	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E3F0	GLOBAL	sPlayerSkidMark		class _tagFeetSkidMark [5]	E:\SD2\Game\flat\zScene.cpp
+0x0036E3F0	GLOBAL	sPlayerSkidMark		class _tagFeetSkidMark [5]	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E4B0	LOCAL	sPlayerSndfx		class _tagPlayerSndFX	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E6E0	LOCAL	lastDeltaPos		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E6F0	LOCAL	lastFloorNorm		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E700	LOCAL	update_motion		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E710	LOCAL	req_motion		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E720	GLOBAL	vHangBefore		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E730	GLOBAL	vHangFirst		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E740	GLOBAL	vHangLast		class _xVec3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E750	GLOBAL	gust_data		class zGustData	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E780	GLOBAL	gPlayerAbsMat		class _xMat4x3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E7C0	GLOBAL	rendermat		class _xMat4x3	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E800	GLOBAL	floor_supp		class _xVec3 [4]	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E830	GLOBAL	floor_dist		float [4]	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E840	GLOBAL	floor_tmr		float [4]	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036E850	GLOBAL	g_info		class _zParEmitterCustomSettings	E:\SD2\Game\flat\zEntPlayer.cpp
+0x0036F0B0	LOCAL	gPickupFrame		class _xEntFrame	E:\SD2\Game\flat\zEntPickup.cpp
+0x0036F1A0	LOCAL	gPickupCollis		class _xEntCollis	E:\SD2\Game\flat\zEntPickup.cpp
+0x0036F6B0	GLOBAL	gFontList		class xFontInfo [4]	E:\SD2\Game\flat\xFont.cpp
+0x0036F6B0	GLOBAL	gFontList		class xFontInfo [4]	E:\SD2\Game\flat\iFont.cpp
+0x0036FD50	GLOBAL	gBoxList		class xFontBox [4]	E:\SD2\Game\flat\xFont.cpp
+0x0036FE80	LOCAL	rsv		class RxRenderStateVector	E:\SD2\Game\flat\iFont.cpp
+0x0036FEC0	GLOBAL	senddata		unsigned short [1024]	E:\SD2\Game\flat\ms4sound.cpp
+0x003706C0	GLOBAL	IOPCommandData		unsigned short [1024]	E:\SD2\Game\flat\ms4sound.cpp
+0x00370EC0	GLOBAL	cached_sbuff2		unsigned int [128]	E:\SD2\Game\flat\ms4sound.cpp
+0x003710C0	GLOBAL	SOUND_STREAM_STATUS		signed int [48]	E:\SD2\Game\flat\ms4sound.cpp
+0x003710C0	GLOBAL	SOUND_STREAM_STATUS		signed int [48]	E:\SD2\Game\flat\iSnd.cpp
+0x00371180	GLOBAL	SOUND_STREAM_SPU_CHAN		signed int [48]	E:\SD2\Game\flat\ms4sound.cpp
+0x00371240	GLOBAL	SOUND_STREAM_ID		signed int [48]	E:\SD2\Game\flat\ms4sound.cpp
+0x00371300	GLOBAL	SOUND_STREAM_SPU_ADDR		signed int [48]	E:\SD2\Game\flat\ms4sound.cpp
+0x003713C0	GLOBAL	SOUND_STREAM_PLAY_HALF		signed int [48]	E:\SD2\Game\flat\ms4sound.cpp
+0x00371480	GLOBAL	SOUND_STREAM_ENV		signed int [48]	E:\SD2\Game\flat\ms4sound.cpp
+0x00371540	GLOBAL	gCd		class _sif_client_data	E:\SD2\Game\flat\ms4sound.cpp
+0x00371570	GLOBAL	SOUND_SPUVol		unsigned long [48]	E:\SD2\Game\flat\ms4sound.cpp
+0x00371990	LOCAL	HIP		char [8][32]	E:\SD2\Game\flat\iSnd.cpp
+0x00371A90	LOCAL	EEinfo		class iSndFileInfo [351]	E:\SD2\Game\flat\iSnd.cpp
+0x00373B80	GLOBAL	gSnd		class xSndGlobals	E:\SD2\Game\flat\iSnd.cpp
+0x00373B80	GLOBAL	gSnd		class xSndGlobals	E:\SD2\Game\flat\xSnd.cpp
+0x00373B80	GLOBAL	gSnd		class xSndGlobals	E:\SD2\Game\flat\zDispatcher.cpp
+0x00373B80	GLOBAL	gSnd		class xSndGlobals	E:\SD2\Game\flat\zVar.cpp
+0x00373B80	GLOBAL	gSnd		class xSndGlobals	E:\SD2\Game\flat\zSaveLoad.cpp
+0x00373B80	GLOBAL	gSnd		class xSndGlobals	E:\SD2\Game\flat\ps2_mpeg\audiodec.c
+0x003748C0	LOCAL	rsv		class RxRenderStateVector	E:\SD2\Game\flat\iShadow.cpp
+0x003748F0	LOCAL	sShadowRay		class _xRay3	E:\SD2\Game\flat\iShadow.cpp
+0x00374920	LOCAL	sShadowVert		class RxObjSpace3DVertex [384]	E:\SD2\Game\flat\iShadow.cpp
+0x00377F20	LOCAL	sDef_surf		class xSurface	E:\SD2\Game\flat\zSurface.cpp
+0x00377F50	LOCAL	sDef_surf_props		class zSurfaceProps	E:\SD2\Game\flat\zSurface.cpp
+0x00378010	LOCAL	sDef_surf_asset		class zSurfAsset	E:\SD2\Game\flat\zSurface.cpp
+0x003780E0	GLOBAL	gOccludeList		class _zVolume *[10]	E:\SD2\Game\flat\zVolume.cpp
+0x00378110	GLOBAL	gOccludeCalc		class PreCalcOcclude [10]	E:\SD2\Game\flat\zVolume.cpp
+0x00378440	GLOBAL	sSorted		class _zUI *[768]	E:\SD2\Game\flat\zUI.cpp
+0x00379040	LOCAL	Vertex		class RwSky2DVertex [4]	E:\SD2\Game\flat\zUI.cpp
+0x00379160	GLOBAL	txt		char [64]	E:\SD2\Game\flat\zVar.cpp
+0x00379200	GLOBAL	gParPool		class xPar [2000]	E:\SD2\Game\flat\xPar.cpp
+0x003A0300	LOCAL	gColorTable		float [256]	E:\SD2\Game\flat\iParMgr.cpp
+0x003A0700	GLOBAL	gRenderArr		class tagiRenderArrays	E:\SD2\Game\flat\iParMgr.cpp
+0x003A5980	GLOBAL	gRenderBuffer		class tagiRenderInput	E:\SD2\Game\flat\iParMgr.cpp
+0x003A5980	GLOBAL	gRenderBuffer		class tagiRenderInput	E:\SD2\Game\flat\xShadow.cpp
+0x003A5D80	GLOBAL	gShaggy		class ShaggyGuts [16]	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003A6900	LOCAL	ChimneyTag		class iModelTag	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003A6920	LOCAL	ShaggyTag		class iModelTag	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003A6950	LOCAL	sMagnetList		class ShaggyMagnet [64]	E:\SD2\Game\flat\zEntShaggy.cpp
+0x003A6C60	LOCAL	sSphere		class _xSphere	E:\SD2\Game\flat\xShadow.cpp
+0x003A6C70	LOCAL	Vert		class RwSky2DVertex [4]	E:\SD2\Game\flat\zHud.cpp
+0x003A6D70	LOCAL	sHudSnackArray		class zHudItem [1]	E:\SD2\Game\flat\zHud.cpp
+0x003A6FB0	LOCAL	sHudChancesArray		class zHudItem [1]	E:\SD2\Game\flat\zHud.cpp
+0x003A71F0	LOCAL	sHudGumArray		class zHudItem [5]	E:\SD2\Game\flat\zHud.cpp
+0x003A7D00	LOCAL	sHudSoapArray		class zHudItem [6]	E:\SD2\Game\flat\zHud.cpp
+0x003A8A40	LOCAL	sHudSoapboxArray		class zHudItem [1]	E:\SD2\Game\flat\zHud.cpp
+0x003A8C80	LOCAL	sHudGumpackArray		class zHudItem [1]	E:\SD2\Game\flat\zHud.cpp
+0x003A8EC0	LOCAL	sHudPlayerStatusArray		class zHudItem [6]	E:\SD2\Game\flat\zHud.cpp
+0x003A9C00	LOCAL	sHudHealthbarArray		class zHudItem [5]	E:\SD2\Game\flat\zHud.cpp
+0x003AA710	LOCAL	sHudGameStatsArray		class zHudItem [7]	E:\SD2\Game\flat\zHud.cpp
+0x003ABAA0	LOCAL	sLight		class _zLight *[32]	E:\SD2\Game\flat\zLight.cpp
+0x003ABB20	LOCAL	sLightPart		class _tagPartition	E:\SD2\Game\flat\zLight.cpp
+0x003ABB60	LOCAL	gTemporaryLights		class _zLight *[32]	E:\SD2\Game\flat\zLight.cpp
+0x003ABBF0	GLOBAL	zSaveLoadGameTable		class zSaveLoadGame [0]	E:\SD2\Game\flat\zVar.cpp
+0x003ABBF0	GLOBAL	zSaveLoadGameTable		class zSaveLoadGame [3]	E:\SD2\Game\flat\zSaveLoad.cpp
+0x003ABD40	LOCAL	sActiveCutscene		class xCutscene	E:\SD2\Game\flat\xCutscene.cpp
+0x003ABE80	LOCAL	sCutsceneFakeEntity		class _xEnt [8]	E:\SD2\Game\flat\xCutscene.cpp
+0x003AC5D0	LOCAL	sClipVolume		class _zVolume *[32]	E:\SD2\Game\flat\zParCmd.cpp
+0x003AC6A0	GLOBAL	sParGroupRegTable		class xParGroup *[255]	E:\SD2\Game\flat\xParGroup.cpp
+0x003ACAA0	LOCAL	sSaveEmmiterSettings		class _zParEmitterCustomSettings	E:\SD2\Game\flat\zParEmitter.cpp
+0x003ACBC0	LOCAL	sSetMaterialTextureBuffer		class RwTexture *[32]	E:\SD2\Game\flat\xFX.cpp
+0x003ACC40	LOCAL	sMaterialColor		class RwRGBA [16]	E:\SD2\Game\flat\xFX.cpp
+0x003ACC80	LOCAL	sSurfaceSoundIDStep		unsigned int [23]	E:\SD2\Game\flat\zFeet.cpp
+0x003B06F0	LOCAL	sHologram		class _tagHologram *[16]	E:\SD2\Game\flat\zHologram.cpp
+0x003B0730	LOCAL	sLightning		class _tagLightning *[48]	E:\SD2\Game\flat\zLightning.cpp
+0x003B19F0	GLOBAL	xFXWarbleParam		float [8]	E:\SD2\Game\flat\iFX.cpp
+0x003B1A10	GLOBAL	gTrcPad		class _tagTRCPadInfo [4]	E:\SD2\Game\flat\iPad.cpp
+0x003B1A10	GLOBAL	gTrcPad		class _tagTRCPadInfo [4]	E:\SD2\Game\flat\zGame.cpp
+0x003B1A10	GLOBAL	gTrcPad		class _tagTRCPadInfo [4]	E:\SD2\Game\flat\zEntPlayer.cpp
+0x003B1A10	GLOBAL	gTrcPad		class _tagTRCPadInfo [4]	E:\SD2\Game\flat\xTRC.cpp
+0x003B1A40	GLOBAL	infile		class StrFile	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003B1A80	GLOBAL	videoDec		class VideoDec	E:\SD2\Game\flat\ps2_mpeg\videodec.c
+0x003B1A80	GLOBAL	videoDec		class VideoDec	E:\SD2\Game\flat\ps2_mpeg\read.c
+0x003B1A80	GLOBAL	videoDec		class VideoDec	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003B1B40	GLOBAL	audioDec		class AudioDec	E:\SD2\Game\flat\ps2_mpeg\read.c
+0x003B1B40	GLOBAL	audioDec		class AudioDec	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003B1BA0	GLOBAL	voBuf		class VoBuf	E:\SD2\Game\flat\ps2_mpeg\videodec.c
+0x003B1BA0	GLOBAL	voBuf		class VoBuf	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003B1BA0	GLOBAL	voBuf		class VoBuf	E:\SD2\Game\flat\ps2_mpeg\disp.c
+0x003B1BC0	GLOBAL	sony_db		class sceGsDBuff	E:\SD2\Game\flat\ps2_mpeg\ps2_mpeg.c
+0x003B1BC0	GLOBAL	sony_db		class sceGsDBuff	E:\SD2\Game\flat\ps2_mpeg\disp.c
+0x003B1E00	LOCAL	_0_buf		char [2048]	E:\SD2\Game\flat\ps2_mpeg\audiodec.c
+0x003B30E0	LOCAL	sLaughSoundID		unsigned int [17]	E:\SD2\Game\flat\zLaugh.cpp
+0x003B3130	LOCAL	sMusicSoundID		unsigned int [45][2]	E:\SD2\Game\flat\zMusic.cpp
+0x003B32A0	LOCAL	sMusicTrack		class zMusicTrackInfo [2]	E:\SD2\Game\flat\zMusic.cpp
+0x003B32D0	LOCAL	sActionLine		class _tagActionLine *[8]	E:\SD2\Game\flat\zActionLine.cpp
+0x003B3380	LOCAL	sFirework		class _tagFirework [10]	E:\SD2\Game\flat\zGameExtras.cpp
+0x003B3500	GLOBAL	_end		char	E:\SD2\Game\flat\iMemMgr.cpp
+0x01C3CB00	GLOBAL	_heap_size		char	E:\SD2\Game\flat\iMemMgr.cpp
+0x01FF0000	GLOBAL	_stack		char	E:\SD2\Game\flat\iMemMgr.cpp
+0x02000000	GLOBAL	_memtop		char	E:\SD2\Game\flat\iMemMgr.cpp

@@ -1,0 +1,49 @@
+# Strings from PSX.EXE
+# Diagnostic, assert, format and path strings: 46 unique
+
+0x80065564	\%s.STR;1
+0x80065570	MOV\MISSING.STR
+0x800655F4	\ACT%d.XA;1
+0x80066380	cartError
+0x800663DC	%c%c%02d%02d%02d
+0x8006647C	%c%c%c%c
+0x80066488	font5.raw
+0x800664F0	dbfont24.raw
+0x80067338	SNDMGR_BAD_ID %d
+0x8006734C	ID %08x 
+0x80067A94	data/sound/left44.vag
+0x80067AAC	data/sound/right44.vag
+0x80067AC4	data/sound/squeak1.vag
+0x80067ADC	data/sound/squeak2.vag
+0x80067AF4	data/sound/squeak3.vag
+0x80067B0C	data/sound/winds.vag
+0x80067B24	data/sound/wow.vag
+0x80067B38	data/sound/soul.vag
+0x80067B4C	data/sound/join_us.vag
+0x80067B64	data/sound/fireloop.vag
+0x80067B7C	data/sound/groovy.vag
+0x80067BA4	DATA\MAP0004.TIM
+0x80067BB8	DATA\MAP0003.TIM
+0x80067BCC	DATA\MAP0002.TIM
+0x80067BE0	DATA\MAP0001.TIM
+0x80067C44	DATA\cursor_5.tim
+0x80067C58	DATA\cursor_4.tim
+0x80067C6C	DATA\cursor_3.tim
+0x80067C80	DATA\cursor_2.tim
+0x80067C94	DATA\cursor_1.tim
+0x80067D7C	data\camchain.gp1
+0x80067D9C	levels.ini
+0x80068364	SC%2dx%d
+0x80068598	error
+0x80068930	$Id: sys.c,v 1.140 1998/01/12 07:52:27 noda Exp yos $
+0x80068A20	%s:bad RECT
+0x80068DF0	$Id: intr.c,v 1.75 1997/02/07 09:00:36 makoto Exp $
+0x8006908C	DiskError
+0x800690F8	DiskError: 
+0x80069120	CDROM: unknown intr
+0x80069188	$Id: bios.c,v 1.86 1997/03/28 07:42:42 makoto Exp yos $
+0x800694E8	%s.flr
+0x80069750	OUT.JP1
+0x800698BC	com.txt
+0x80069930	ED.INI
+0x800699A0	SC%2d

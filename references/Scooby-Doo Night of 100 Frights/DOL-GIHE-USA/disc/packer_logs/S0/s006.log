@@ -1,0 +1,2449 @@
+
+Packer Library Information
+---------------------------
+Library Version        : 1
+
+General Package Information
+---------------------------
+Package File    : C:\SD2\Game\GC\data\S0\s006.HIP
+Created         : Tue Aug 06 13:19:58 2002
+Modified        : Tue Aug 06 13:19:58 2002
+Package Version : HIPA
+Sub-Version     : 2
+Compatible      : 1
+Client Version  : 4.6 (262150)
+# of Layers     : 8
+# of Assets     : 92
+Package Settings:
+                   GameTime               Disabled
+                   Statistics Tracking    Enabled
+                   Extra Info             Available
+                   Layered Sorting        Enabled
+
+Type Totals
+-----------
+Following types are defined using indicated byte totals
+
+processing
+..
+++++++++
+  Type:  Count #DataBytes  #Pad(Raw)    #Loaded    #Dumped   #Ignored
+  ----:  ----- ----------  ---------    -------    -------   --------
+  CSN :      0          0          0          0          0          0
+  CSNM:      1        296          8        304          0          0
+  CTOC:      1      48196         12      48208          0          0
+  BSP :      3    1428780         16    1428796    1428796          0
+  TXD :      0          0          0          0          0          0
+  ANIM:      0          0          0          0          0          0
+  ATBL:      0          0          0          0          0          0
+  MINF:      0          0          0          0          0          0
+  MODL:      0          0          0          0          0          0
+  RWTX:     75    1041584        584    1042168    1042168          0
+  TEX :      0          0          0          0          0          0
+  PNG :      0          0          0          0          0          0
+  BMP :      0          0          0          0          0          0
+  TXT :      0          0          0          0          0          0
+  ENV :      1         64          0         64          0          0
+  GRUP:      0          0          0          0          0          0
+  SDF :      0          0          0          0          0          0
+  PORT:      1         24          8         32          0          0
+  TRIG:      0          0          0          0          0          0
+  DPAT:      1         40          8         48          0          0
+  NPC :      0          0          0          0          0          0
+  PKUP:      0          0          0          0          0          0
+  PLYR:      1         80          0         80          0          0
+  CAM :      2        272         16        288          0          0
+  DOOR:      0          0          0          0          0          0
+  TIMR:      0          0          0          0          0          0
+  TEXT:      0          0          0          0          0          0
+  PICK:      0          0          0          0          0          0
+  PLAT:      0          0          0          0          0          0
+  PEND:      0          0          0          0          0          0
+  MVPT:      0          0          0          0          0          0
+  MRKR:      0          0          0          0          0          0
+  SFX :      0          0          0          0          0          0
+  SND :      0          0          0          0          0          0
+  SNDS:      1    6800512          0          0          0    6800512
+  MPHT:      0          0          0          0          0          0
+  SPLN:      0          0          0          0          0          0
+  SIMP:      0          0          0          0          0          0
+  SNDI:      1        112          0        112          0          0
+  CNTR:      0          0          0          0          0          0
+  HANG:      0          0          0          0          0          0
+  BUTN:      0          0          0          0          0          0
+  SURF:      0          0          0          0          0          0
+  DSTR:      0          0          0          0          0          0
+  MAPR:      3         24         16         40          0          0
+  GUST:      0          0          0          0          0          0
+  VOLU:      0          0          0          0          0          0
+  COND:      0          0          0          0          0          0
+  UI  :      0          0          0          0          0          0
+  UIFT:      0          0          0          0          0          0
+  PRJT:      0          0          0          0          0          0
+  LOBM:      0          0          0          0          0          0
+  FOG :      1         36         12         48          0          0
+  LITE:      0          0          0          0          0          0
+  PARS:      0          0          0          0          0          0
+  PARE:      0          0          0          0          0          0
+  EGEN:      0          0          0          0          0          0
+  ALST:      0          0          0          0          0          0
+  SCRP:      0          0          0          0          0          0
+
+  Sums:     92    9320020        680    2520188    2470964    6800512
+
+
+Supported Package Types:
+------------------------
+	CSN ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	CSNM::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	CTOC::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	BSP ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	TXD ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	ANIM::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: yes;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	ATBL::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	MINF::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	MODL::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	RWTX::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	TEX ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PNG ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	BMP ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TXT ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	ENV ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	GRUP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SDF ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PORT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TRIG::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	DPAT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	NPC ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PKUP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PLYR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	CAM ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	DOOR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TIMR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	TEXT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PICK::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PLAT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PEND::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	MVPT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	MRKR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SFX ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SND ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	SNDS::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: yes;
+	}
+
+	MPHT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: yes;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SPLN::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: no;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SIMP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SNDI::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	CNTR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	HANG::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	BUTN::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SURF::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	DSTR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	MAPR::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	GUST::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	VOLU::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	COND::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	UI  ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	UIFT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PRJT::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	LOBM::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	FOG ::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	LITE::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PARS::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	PARE::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	EGEN::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	ALST::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+	SCRP::Flags00000000
+	{
+		Default Align: 16
+		Callbacks:
+		(Reading)
+			    ReadXForm: no;
+			  AssetLoaded: no;
+			AssetUnLoaded: no;
+
+		(Writing)
+			   WriteXForm: no;
+			     MakeData: yes;
+			 WriteCleanup: no;
+			    WritePeek: no;
+	}
+
+
+Layer Information
+-----------------
+Following layers are defined (ordering is load order)
+
+
+Layer #1 is Type 1   
+Referenced Assets:
+	0xFEC60FD1  (RWTX)  olvo2401.RW3                      (       32952)
+	0x53BBAFB9  (RWTX)  opi00005.RW3                      (        8376)
+	0xC009EE60  (RWTX)  odf00001.RW3                      (        8376)
+	0x84BAE204  (RWTX)  ofl00001.RW3                      (        8376)
+	0x502D994D  (RWTX)  owa00002.RW3                      (        8376)
+	0x855EB754  (RWTX)  oce00001.RW3                      (        2232)
+	0x3E9FE2FC  (RWTX)  owa00001.RW3                      (       32952)
+	0x96489855  (RWTX)  ofl00002.RW3                      (        2232)
+	0x96EC6DA5  (RWTX)  oce00002.RW3                      (        8376)
+	0x7DC353B5  (RWTX)  spdrweb2.RW3                      (      262328)
+	0x8ED58F2E  (RWTX)  light_glow.RW3                    (        8376)
+	0x2C0FD530  (RWTX)  leaves.RW3                        (        8376)
+	0x7B49EE50  (RWTX)  olio0001.RW3                      (        2232)
+	0x6E7DE72C  (RWTX)  tin_roof_5.RW3                    (        2232)
+	0x63CEF178  (RWTX)  ofeg0201.RW3                      (        2232)
+	0xDB84C5B7  (RWTX)  oli00007.RW3                      (        2232)
+	0x72327FD1  (RWTX)  oli00001.RW3                      (        2232)
+	0x954DEC73  (RWTX)  oli00003.RW3                      (         696)
+	0xC93D926B  (RWTX)  oru00001.RW3                      (        8376)
+	0xFAE6B9F5  (RWTX)  ova00003.RW3                      (         312)
+	0x83C03622  (RWTX)  oli00002.RW3                      (        2232)
+	0x1E022697  (RWTX)  ova00005.RW3                      (         312)
+	0x30A04317  (RWTX)  opi00003.RW3                      (        8376)
+	0x2D3D8EA3  (RWTX)  ota00003.RW3                      (        2232)
+	0xDD54EE14  (RWTX)  owi00001.RW3                      (        8376)
+	0xBD9C60C6  (RWTX)  door.RW3                          (        8376)
+	0x8864D2AC  (RWTX)  opi00008.RW3                      (        8376)
+	0xD7CB4D53  (RWTX)  ova00001.RW3                      (         696)
+	0x0C747046  (RWTX)  ova00004.RW3                      (         312)
+	0x1BAFD852  (RWTX)  ota00002.RW3                      (        2232)
+	0x11F7DE76  (RWTX)  oco00005.RW3                      (        8376)
+	0x00E29B7D  (RWTX)  och00001.RW3                      (        2232)
+	0xEAD9309F  (RWTX)  och00010.RW3                      (        2232)
+	0x7BC2AA56  (RWTX)  ofr00001.RW3                      (        2232)
+	0x920B2D7A  (RWTX)  floor_window_light.RW3            (       32952)
+	0xA7D64EA6  (RWTX)  ofl00003.RW3                      (        2232)
+	0xF99C377C  (RWTX)  rhs00001.RW3                      (        8376)
+	0x469937E8  (RWTX)  pop_bottle.RW3                    (        2232)
+	0xFDF7CF91  (RWTX)  chicken.RW3                       (         696)
+	0xADEEC837  (RWTX)  cheese.RW3                        (        2232)
+	0xC6A0815C  (RWTX)  cake_newname.RW3                  (        2232)
+	0x422DF968  (RWTX)  opi00004.RW3                      (        8376)
+	0x9AB30066  (RWTX)  tree.RW3                          (        2232)
+	0xD197A4B1  (RWTX)  odf00002.RW3                      (        2232)
+	0x51B2295E  (RWTX)  ofli0901.RW3                      (        8376)
+	0x358BBE70  (RWTX)  och00004.RW3                      (        2232)
+	0x23FE081F  (RWTX)  och00003.RW3                      (        2232)
+	0x0E7D5EE8  (RWTX)  oras2306.RW3                      (        2232)
+	0x7FA74CC9  (RWTX)  rsa00001.RW3                      (           0)
+	0x1F128CC6  (RWTX)  opi00002.RW3                      (        8376)
+	0xF77B6B97  (RWTX)  opi00010.RW3                      (        8376)
+	0x734905EF  (RWTX)  owa00004.RW3                      (        8376)
+	0x7CF9217D  (RWTX)  oras2402.RW3                      (        2232)
+	0xC9F70F66  (RWTX)  oli00006.RW3                      (       32952)
+	0x053EE0CC  (RWTX)  clue_2.RW3                        (       65720)
+	0x16CC971D  (RWTX)  clue_3.RW3                        (       65720)
+	0x7EA9F65B  (RWTX)  groundskeeper0001.RW3             (        2232)
+	0x1BA7A6D4  (RWTX)  cgang002.RW3                      (        2232)
+	0xAD2BE0CF  (RWTX)  graham0001.RW3                    (        2232)
+	0xF3B12A7B  (RWTX)  clue_1.RW3                        (       65720)
+	0x1FBDF68B  (RWTX)  holly0001.RW3                     (        2232)
+	0xB6FA9942  (RWTX)  cmm00001.RW3                      (        2232)
+	0xCBB9982E  (RWTX)  wtrhter.RW3                       (        2232)
+	0xEC725875  (RWTX)  olis2301.RW3                      (        8376)
+	0x90ADC41B  (RWTX)  owas2403.RW3                      (        8376)
+	0xFA69B9C6  (RWTX)  ofeg0001.RW3                      (        8376)
+	0xAFC59FAC  (RWTX)  olac0001.RW3                      (        8376)
+	0xC8472E84  (RWTX)  ofee0001.RW3                      (        8376)
+	0xA23B7A6C  (RWTX)  owas2404.RW3                      (        8376)
+	0xA124F44E  (RWTX)  olis2401.RW3                      (        8376)
+	0xE26187C3  (RWTX)  dome.RW3                          (        8376)
+	0x11E44CD3  (RWTX)  metal_3.RW3                       (        8376)
+	0xA1BB2365  (RWTX)  fishsky.RW3                       (      131256)
+	0xCA6D71F1  (RWTX)  owas2302.RW3                      (        8376)
+	0xDF2671FC  (RWTX)  opiw0001.RW3                      (        8376)
+	------------------------------------
+	Size (base/forLoad)...:      1042168 / 1042176
+	Size Expected (TOC)...:      1042176
+	Amt Asset Data........:      1041584
+	Amt Pad (total).......:          584
+	Amt Pad (used)........:          584
+	Amt Read Filler.......:            8
+	====================================
+
+Layer #2 is Type 2   
+Referenced Assets:
+	0x0015D52F  (BSP )  s11                               (     1428308)
+	0x499FF231  (BSP )  s11_noCollide                     (         236)
+	0x13CF8A63  (BSP )  s11_notVisible                    (         236)
+	------------------------------------
+	Size (base/forLoad)...:      1428796 / 1428800
+	Size Expected (TOC)...:      1428800
+	Amt Asset Data........:      1428780
+	Amt Pad (total).......:           16
+	Amt Pad (used)........:           16
+	Amt Read Filler.......:            4
+	====================================
+
+Layer #3 is Type 3   
+Referenced Assets:
+	------------------------------------
+	Size (base/forLoad)...:            0 / 0
+	Size Expected (TOC)...:            0
+	Amt Asset Data........:            0
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:            0
+	====================================
+
+Layer #4 is Type 4   
+Referenced Assets:
+	------------------------------------
+	Size (base/forLoad)...:            0 / 0
+	Size Expected (TOC)...:            0
+	Amt Asset Data........:            0
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:            0
+	====================================
+
+Layer #5 is Type 0   
+Referenced Assets:
+	0xD836DA19  (PLYR)  PLAYER                            (          80)
+	0x87E718B1  (CAM )  STARTCAM                          (         136)
+	0x8B41A2C3  (CAM )  STARTCAM0                         (         136)
+	0x001239AD  (ENV )  ENV                               (          64)
+	0x63764595  (PORT)  BACK TO HUB                       (          24)
+	0xB491A3C0  (DPAT)  DISP_OUTTRO                       (          40)
+	0xD7688928  (FOG )  FOGGY                             (          36)
+	0x7D387177  (CSNM)  OUTTRO                            (         296)
+	0x2397B474  (MAPR)  s11 Material Map                  (           8)
+	0xA0A2001A  (MAPR)  s11_noCollide Material Map        (           8)
+	0x706E9C50  (MAPR)  s11_notVisible Material Map       (           8)
+	------------------------------------
+	Size (base/forLoad)...:          904 / 928
+	Size Expected (TOC)...:          928
+	Amt Asset Data........:          836
+	Amt Pad (total).......:           68
+	Amt Pad (used)........:           68
+	Amt Read Filler.......:           24
+	====================================
+
+Layer #6 is Type 8   
+Referenced Assets:
+	------------------------------------
+	Size (base/forLoad)...:            0 / 0
+	Size Expected (TOC)...:            0
+	Amt Asset Data........:            0
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:            0
+	====================================
+
+Layer #7 is Type 6   
+Referenced Assets:
+	0xF3133929  (SNDS)  cin_11_m                          (     6800512)
+	------------------------------------
+	Size (base/forLoad)...:      6800512 / 6800512
+	Size Expected (TOC)...:      6800512
+	Amt Asset Data........:      6800512
+	Amt Pad (total).......:            0
+	Amt Pad (used)........:            0
+	Amt Read Filler.......:            0
+	====================================
+
+Layer #8 is Type 7   
+Referenced Assets:
+	0xB432B163  (CTOC)  cutscene_toc                      (       48196)
+	0x7AB6743A  (SNDI)  sound_info                        (         112)
+	------------------------------------
+	Size (base/forLoad)...:        48320 / 48320
+	Size Expected (TOC)...:        48320
+	Amt Asset Data........:        48308
+	Amt Pad (total).......:           12
+	Amt Pad (used)........:           12
+	Amt Read Filler.......:            0
+	====================================
+
+Asset Details
+-------------
+AID: 0x001239AD  (ENV)
+{
+	    Type:        ENV 
+	    Size:          64
+	  Offset:     2478192
+	    Plus:           0
+	   Check:  0xDFC6CA76
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x0015D52F  (s11)
+{
+	    Type:        BSP 
+	    Size:     1428308
+	  Offset:     1049024
+	    Plus:          12
+	   Check:  0xDB97691D
+	Filename:  \\job\sd2\cg\env\p2\i00\latest\s11.bsp
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x00E29B7D  (och00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      468864
+	    Plus:           8
+	   Check:  0x374F985C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x053EE0CC  (clue_2.RW3)
+{
+	    Type:        RWTX
+	    Size:       65720
+	  Offset:      614912
+	    Plus:           8
+	   Check:  0xF73C249A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x0C747046  (ova00004.RW3)
+{
+	    Type:        RWTX
+	    Size:         312
+	  Offset:      457920
+	    Plus:           8
+	   Check:  0xBF1F3CF2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x0E7D5EE8  (oras2306.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      552320
+	    Plus:           8
+	   Check:  0x31A25E77
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x11E44CD3  (metal_3.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      892608
+	    Plus:           8
+	   Check:  0x4796C283
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x11F7DE76  (oco00005.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      460480
+	    Plus:           8
+	   Check:  0x15139EFC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x13CF8A63  (s11_notVisible)
+{
+	    Type:        BSP 
+	    Size:         236
+	  Offset:     2477584
+	    Plus:           0
+	   Check:  0x13203024
+	Filename:  \\job\sd2\cg\env\p2\i00\latest\s11_notVisible.bsp
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x16CC971D  (clue_3.RW3)
+{
+	    Type:        RWTX
+	    Size:       65720
+	  Offset:      680640
+	    Plus:           8
+	   Check:  0x58E26CF2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x1BA7A6D4  (cgang002.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      748608
+	    Plus:           8
+	   Check:  0x76104DFD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x1BAFD852  (ota00002.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      458240
+	    Plus:           8
+	   Check:  0x86CDD6E5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x1E022697  (ova00005.RW3)
+{
+	    Type:        RWTX
+	    Size:         312
+	  Offset:      421120
+	    Plus:           8
+	   Check:  0x40375227
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x1F128CC6  (opi00002.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      554560
+	    Plus:           8
+	   Check:  0x1087F5F9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x1FBDF68B  (holly0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      818816
+	    Plus:           8
+	   Check:  0xF2604B40
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x2397B474  (s11 Material Map)
+{
+	    Type:        MAPR
+	    Size:           8
+	  Offset:     2478688
+	    Plus:           8
+	   Check:  0x48B053EC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x23FE081F  (och00003.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      550080
+	    Plus:           8
+	   Check:  0xCAD7E43B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x2C0FD530  (leaves.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      389888
+	    Plus:           8
+	   Check:  0x8610D586
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x2D3D8EA3  (ota00003.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      429824
+	    Plus:           8
+	   Check:  0x523A3A5C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x30A04317  (opi00003.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      421440
+	    Plus:           8
+	   Check:  0x46D6F525
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x358BBE70  (och00004.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      547840
+	    Plus:           8
+	   Check:  0x7BD1BBEB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x3E9FE2FC  (owa00001.RW3)
+{
+	    Type:        RWTX
+	    Size:       32952
+	  Offset:       75584
+	    Plus:           8
+	   Check:  0x569DB29A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x422DF968  (opi00004.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      526592
+	    Plus:           8
+	   Check:  0xFAC23EF9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x469937E8  (pop_bottle.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      519168
+	    Plus:           8
+	   Check:  0x7445DF96
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x499FF231  (s11_noCollide)
+{
+	    Type:        BSP 
+	    Size:         236
+	  Offset:     2477344
+	    Plus:           4
+	   Check:  0x8F31469E
+	Filename:  \\job\sd2\cg\env\p2\i00\latest\s11_noCollide.bsp
+	   Flags:  SOURCE_FILE; READ_TRANSFORM; 
+}
+
+AID: 0x502D994D  (owa00002.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       64960
+	    Plus:           8
+	   Check:  0xCBD776CD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x51B2295E  (ofli0901.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      539456
+	    Plus:           8
+	   Check:  0xD790EF19
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x53BBAFB9  (opi00005.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       39808
+	    Plus:           8
+	   Check:  0x16DEDBFD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x63764595  (BACK TO HUB)
+{
+	    Type:        PORT
+	    Size:          24
+	  Offset:     2478256
+	    Plus:           8
+	   Check:  0x7DD65329
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x63CEF178  (ofeg0201.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      402752
+	    Plus:           8
+	   Check:  0xC423CCC3
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x6E7DE72C  (tin_roof_5.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      400512
+	    Plus:           8
+	   Check:  0x14A3C6BB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x706E9C50  (s11_notVisible Material Map)
+{
+	    Type:        MAPR
+	    Size:           8
+	  Offset:     2478720
+	    Plus:           0
+	   Check:  0x8E995496
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x72327FD1  (oli00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      407232
+	    Plus:           8
+	   Check:  0x5C336DD2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x734905EF  (owa00004.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      571328
+	    Plus:           8
+	   Check:  0xAC3CE580
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7AB6743A  (sound_info)
+{
+	    Type:        SNDI
+	    Size:         112
+	  Offset:     9327472
+	    Plus:           0
+	   Check:  0x3CE2E393
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7B49EE50  (olio0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      398272
+	    Plus:           8
+	   Check:  0xB7A5E0C6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7BC2AA56  (ofr00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      473344
+	    Plus:           8
+	   Check:  0x0A715B0B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7CF9217D  (oras2402.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      579712
+	    Plus:           8
+	   Check:  0x22FDBC24
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7D387177  (OUTTRO)
+{
+	    Type:        CSNM
+	    Size:         296
+	  Offset:     2478384
+	    Plus:           8
+	   Check:  0x204AF656
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x7DC353B5  (spdrweb2.RW3)
+{
+	    Type:        RWTX
+	    Size:      262328
+	  Offset:      119168
+	    Plus:           8
+	   Check:  0x43EC4528
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7EA9F65B  (groundskeeper0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      746368
+	    Plus:           8
+	   Check:  0x6D2A8918
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x7FA74CC9  (rsa00001.RW3)
+{
+	    Type:        RWTX
+	    Size:           0
+	  Offset:      554560
+	    Plus:           0
+	   Check:  0xFFFFFFFF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x83C03622  (oli00002.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      418880
+	    Plus:           8
+	   Check:  0x74DD98A2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x84BAE204  (ofl00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       56576
+	    Plus:           8
+	   Check:  0xE70C5994
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x855EB754  (oce00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:       73344
+	    Plus:           8
+	   Check:  0x513054F8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x87E718B1  (STARTCAM)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2477904
+	    Plus:           8
+	   Check:  0x6C103E0E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x8864D2AC  (opi00008.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      448832
+	    Plus:           8
+	   Check:  0x3DAA7A51
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x8B41A2C3  (STARTCAM0)
+{
+	    Type:        CAM 
+	    Size:         136
+	  Offset:     2478048
+	    Plus:           8
+	   Check:  0xB4475282
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0x8ED58F2E  (light_glow.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      381504
+	    Plus:           8
+	   Check:  0x557F36E4
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x90ADC41B  (owas2403.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      833920
+	    Plus:           8
+	   Check:  0xC176ECB9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x920B2D7A  (floor_window_light.RW3)
+{
+	    Type:        RWTX
+	    Size:       32952
+	  Offset:      475584
+	    Plus:           8
+	   Check:  0xB7CA0DCC
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x954DEC73  (oli00003.RW3)
+{
+	    Type:        RWTX
+	    Size:         696
+	  Offset:      409472
+	    Plus:           8
+	   Check:  0x599ADA1C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x96489855  (ofl00002.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      108544
+	    Plus:           8
+	   Check:  0x946C8DFB
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x96EC6DA5  (oce00002.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      110784
+	    Plus:           8
+	   Check:  0x2D43DA7B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0x9AB30066  (tree.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      534976
+	    Plus:           8
+	   Check:  0xD658830C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xA0A2001A  (s11_noCollide Material Map)
+{
+	    Type:        MAPR
+	    Size:           8
+	  Offset:     2478704
+	    Plus:           8
+	   Check:  0x640FB633
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xA124F44E  (olis2401.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      875840
+	    Plus:           8
+	   Check:  0xBEC16955
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xA1BB2365  (fishsky.RW3)
+{
+	    Type:        RWTX
+	    Size:      131256
+	  Offset:      900992
+	    Plus:           8
+	   Check:  0x450A5E1E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xA23B7A6C  (owas2404.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      867456
+	    Plus:           8
+	   Check:  0x01421324
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xA7D64EA6  (ofl00003.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      508544
+	    Plus:           8
+	   Check:  0x1947D75C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xAD2BE0CF  (graham0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      750848
+	    Plus:           8
+	   Check:  0x89B94640
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xADEEC837  (cheese.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      522112
+	    Plus:           8
+	   Check:  0xFE4937D5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xAFC59FAC  (olac0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      850688
+	    Plus:           8
+	   Check:  0xEDD67B63
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xB432B163  (cutscene_toc)
+{
+	    Type:        CTOC
+	    Size:       48196
+	  Offset:     9279264
+	    Plus:          12
+	   Check:  0x46F1C31D
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB491A3C0  (DISP_OUTTRO)
+{
+	    Type:        DPAT
+	    Size:          40
+	  Offset:     2478288
+	    Plus:           8
+	   Check:  0xB5032BBD
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xB6FA9942  (cmm00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      821056
+	    Plus:           8
+	   Check:  0x2AF9FC47
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xBD9C60C6  (door.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      440448
+	    Plus:           8
+	   Check:  0x75151CB8
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xC009EE60  (odf00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:       48192
+	    Plus:           8
+	   Check:  0x3128A85E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xC6A0815C  (cake_newname.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      524352
+	    Plus:           8
+	   Check:  0x0BF2AB80
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xC8472E84  (ofee0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      859072
+	    Plus:           8
+	   Check:  0xBC91D02F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xC93D926B  (oru00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      410176
+	    Plus:           8
+	   Check:  0x13407C5F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xC9F70F66  (oli00006.RW3)
+{
+	    Type:        RWTX
+	    Size:       32952
+	  Offset:      581952
+	    Plus:           8
+	   Check:  0xFE284236
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xCA6D71F1  (owas2302.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:     1032256
+	    Plus:           8
+	   Check:  0x5A118482
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xCBB9982E  (wtrhter.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      823296
+	    Plus:           8
+	   Check:  0x6A34D68F
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xD197A4B1  (odf00002.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      537216
+	    Plus:           8
+	   Check:  0x52884B96
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xD7688928  (FOGGY)
+{
+	    Type:        FOG 
+	    Size:          36
+	  Offset:     2478336
+	    Plus:          12
+	   Check:  0x9B033481
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xD7CB4D53  (ova00001.RW3)
+{
+	    Type:        RWTX
+	    Size:         696
+	  Offset:      457216
+	    Plus:           8
+	   Check:  0x51C0B07A
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xD836DA19  (PLAYER)
+{
+	    Type:        PLYR
+	    Size:          80
+	  Offset:     2477824
+	    Plus:           0
+	   Check:  0x53246E65
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; 
+}
+
+AID: 0xDB84C5B7  (oli00007.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      404992
+	    Plus:           8
+	   Check:  0x1AC4C0C2
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xDD54EE14  (owi00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      432064
+	    Plus:           8
+	   Check:  0x3B75D6B5
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xDF2671FC  (opiw0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:     1040640
+	    Plus:           0
+	   Check:  0x6276728E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xE26187C3  (dome.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      884224
+	    Plus:           8
+	   Check:  0xAFC20BCF
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xEAD9309F  (och00010.RW3)
+{
+	    Type:        RWTX
+	    Size:        2232
+	  Offset:      471104
+	    Plus:           8
+	   Check:  0x6671427C
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xEC725875  (olis2301.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      825536
+	    Plus:           8
+	   Check:  0x52C783D0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xF3133929  (cin_11_m)
+{
+	    Type:        SNDS
+	    Size:     6800512
+	  Offset:     2478752
+	    Plus:           0
+	   Check:  0x4ADC3FA6
+	Filename:  \\Job\sd2\cg\cinimatic\cin_11\latest\cin_11_m.vag
+	   Flags:  SOURCE_FILE; 
+}
+
+AID: 0xF3B12A7B  (clue_1.RW3)
+{
+	    Type:        RWTX
+	    Size:       65720
+	  Offset:      753088
+	    Plus:           8
+	   Check:  0xE83B221E
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xF77B6B97  (opi00010.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      562944
+	    Plus:           8
+	   Check:  0x20BE1B71
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xF99C377C  (rhs00001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      510784
+	    Plus:           8
+	   Check:  0xD582BDA6
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xFA69B9C6  (ofeg0001.RW3)
+{
+	    Type:        RWTX
+	    Size:        8376
+	  Offset:      842304
+	    Plus:           8
+	   Check:  0x14856E0B
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xFAE6B9F5  (ova00003.RW3)
+{
+	    Type:        RWTX
+	    Size:         312
+	  Offset:      418560
+	    Plus:           8
+	   Check:  0x99F99DD9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xFDF7CF91  (chicken.RW3)
+{
+	    Type:        RWTX
+	    Size:         696
+	  Offset:      521408
+	    Plus:           8
+	   Check:  0x6084D0A9
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+AID: 0xFEC60FD1  (olvo2401.RW3)
+{
+	    Type:        RWTX
+	    Size:       32952
+	  Offset:        6848
+	    Plus:           8
+	   Check:  0xDA0B34C0
+	Filename:  N/A
+	   Flags:  SOURCE_VIRTUAL; READ_TRANSFORM; 
+}
+
+
+Layer Alignment
+---------------
+Index   Type   SectorSize   Aligned?  HIPPosition
+-----   ----   ----------   --------  -----------
+0          1           32        Yes         6848
+1          2           32        Yes      1049024
+2          3           32        N/A          N/A
+3          4           32        N/A          N/A
+4          0           32        Yes      2477824
+5          8           32        N/A          N/A
+6          6           32        Yes      2478752
+7          7           32        Yes      9279264
+
+Asset Alignment
+---------------
+AssetID    Name                                Requested   Aligned?
+-------    ----                                ---------   --------
+0x001239AD ENV                                        16        Yes
+0x0015D52F s11                                        16        Yes
+0x00E29B7D och00001.RW3                               16        Yes
+0x053EE0CC clue_2.RW3                                 16        Yes
+0x0C747046 ova00004.RW3                               16        Yes
+0x0E7D5EE8 oras2306.RW3                               16        Yes
+0x11E44CD3 metal_3.RW3                                16        Yes
+0x11F7DE76 oco00005.RW3                               16        Yes
+0x13CF8A63 s11_notVisible                             16        Yes
+0x16CC971D clue_3.RW3                                 16        Yes
+0x1BA7A6D4 cgang002.RW3                               16        Yes
+0x1BAFD852 ota00002.RW3                               16        Yes
+0x1E022697 ova00005.RW3                               16        Yes
+0x1F128CC6 opi00002.RW3                               16        Yes
+0x1FBDF68B holly0001.RW3                              16        Yes
+0x2397B474 s11 Material Map                           16        Yes
+0x23FE081F och00003.RW3                               16        Yes
+0x2C0FD530 leaves.RW3                                 16        Yes
+0x2D3D8EA3 ota00003.RW3                               16        Yes
+0x30A04317 opi00003.RW3                               16        Yes
+0x358BBE70 och00004.RW3                               16        Yes
+0x3E9FE2FC owa00001.RW3                               16        Yes
+0x422DF968 opi00004.RW3                               16        Yes
+0x469937E8 pop_bottle.RW3                             16        Yes
+0x499FF231 s11_noCollide                              16        Yes
+0x502D994D owa00002.RW3                               16        Yes
+0x51B2295E ofli0901.RW3                               16        Yes
+0x53BBAFB9 opi00005.RW3                               16        Yes
+0x63764595 BACK TO HUB                                16        Yes
+0x63CEF178 ofeg0201.RW3                               16        Yes
+0x6E7DE72C tin_roof_5.RW3                             16        Yes
+0x706E9C50 s11_notVisible Material Map                16        Yes
+0x72327FD1 oli00001.RW3                               16        Yes
+0x734905EF owa00004.RW3                               16        Yes
+0x7AB6743A sound_info                                 16        Yes
+0x7B49EE50 olio0001.RW3                               16        Yes
+0x7BC2AA56 ofr00001.RW3                               16        Yes
+0x7CF9217D oras2402.RW3                               16        Yes
+0x7D387177 OUTTRO                                     16        Yes
+0x7DC353B5 spdrweb2.RW3                               16        Yes
+0x7EA9F65B groundskeeper0001.RW3                      16        Yes
+0x7FA74CC9 rsa00001.RW3                               16        Yes
+0x83C03622 oli00002.RW3                               16        Yes
+0x84BAE204 ofl00001.RW3                               16        Yes
+0x855EB754 oce00001.RW3                               16        Yes
+0x87E718B1 STARTCAM                                   16        Yes
+0x8864D2AC opi00008.RW3                               16        Yes
+0x8B41A2C3 STARTCAM0                                  16        Yes
+0x8ED58F2E light_glow.RW3                             16        Yes
+0x90ADC41B owas2403.RW3                               16        Yes
+0x920B2D7A floor_window_light.RW3                     16        Yes
+0x954DEC73 oli00003.RW3                               16        Yes
+0x96489855 ofl00002.RW3                               16        Yes
+0x96EC6DA5 oce00002.RW3                               16        Yes
+0x9AB30066 tree.RW3                                   16        Yes
+0xA0A2001A s11_noCollide Material Map                 16        Yes
+0xA124F44E olis2401.RW3                               16        Yes
+0xA1BB2365 fishsky.RW3                                16        Yes
+0xA23B7A6C owas2404.RW3                               16        Yes
+0xA7D64EA6 ofl00003.RW3                               16        Yes
+0xAD2BE0CF graham0001.RW3                             16        Yes
+0xADEEC837 cheese.RW3                                 16        Yes
+0xAFC59FAC olac0001.RW3                               16        Yes
+0xB432B163 cutscene_toc                               16        Yes
+0xB491A3C0 DISP_OUTTRO                                16        Yes
+0xB6FA9942 cmm00001.RW3                               16        Yes
+0xBD9C60C6 door.RW3                                   16        Yes
+0xC009EE60 odf00001.RW3                               16        Yes
+0xC6A0815C cake_newname.RW3                           16        Yes
+0xC8472E84 ofee0001.RW3                               16        Yes
+0xC93D926B oru00001.RW3                               16        Yes
+0xC9F70F66 oli00006.RW3                               16        Yes
+0xCA6D71F1 owas2302.RW3                               16        Yes
+0xCBB9982E wtrhter.RW3                                16        Yes
+0xD197A4B1 odf00002.RW3                               16        Yes
+0xD7688928 FOGGY                                      16        Yes
+0xD7CB4D53 ova00001.RW3                               16        Yes
+0xD836DA19 PLAYER                                     16        Yes
+0xDB84C5B7 oli00007.RW3                               16        Yes
+0xDD54EE14 owi00001.RW3                               16        Yes
+0xDF2671FC opiw0001.RW3                               16        Yes
+0xE26187C3 dome.RW3                                   16        Yes
+0xEAD9309F och00010.RW3                               16        Yes
+0xEC725875 olis2301.RW3                               16        Yes
+0xF3133929 cin_11_m                                   32        Yes
+0xF3B12A7B clue_1.RW3                                 16        Yes
+0xF77B6B97 opi00010.RW3                               16        Yes
+0xF99C377C rhs00001.RW3                               16        Yes
+0xFA69B9C6 ofeg0001.RW3                               16        Yes
+0xFAE6B9F5 ova00003.RW3                               16        Yes
+0xFDF7CF91 chicken.RW3                                16        Yes
+0xFEC60FD1 olvo2401.RW3                               16        Yes
+
+Checksum Validation
+-------------------
+AssetID     Name                             Packed      UnPacked    Status  
+-------     ----                             ------      --------    ------  
+0x001239AD  ENV                              0xDFC6CA76  0xDFC6CA76  ok      
+0x0015D52F  s11                              0xDB97691D  0xDB97691D  ok      
+0x00E29B7D  och00001.RW3                     0x374F985C  0x374F985C  ok      
+0x053EE0CC  clue_2.RW3                       0xF73C249A  0xF73C249A  ok      
+0x0C747046  ova00004.RW3                     0xBF1F3CF2  0xBF1F3CF2  ok      
+0x0E7D5EE8  oras2306.RW3                     0x31A25E77  0x31A25E77  ok      
+0x11E44CD3  metal_3.RW3                      0x4796C283  0x4796C283  ok      
+0x11F7DE76  oco00005.RW3                     0x15139EFC  0x15139EFC  ok      
+0x13CF8A63  s11_notVisible                   0x13203024  0x13203024  ok      
+0x16CC971D  clue_3.RW3                       0x58E26CF2  0x58E26CF2  ok      
+0x1BA7A6D4  cgang002.RW3                     0x76104DFD  0x76104DFD  ok      
+0x1BAFD852  ota00002.RW3                     0x86CDD6E5  0x86CDD6E5  ok      
+0x1E022697  ova00005.RW3                     0x40375227  0x40375227  ok      
+0x1F128CC6  opi00002.RW3                     0x1087F5F9  0x1087F5F9  ok      
+0x1FBDF68B  holly0001.RW3                    0xF2604B40  0xF2604B40  ok      
+0x2397B474  s11 Material Map                 0x48B053EC  0x48B053EC  ok      
+0x23FE081F  och00003.RW3                     0xCAD7E43B  0xCAD7E43B  ok      
+0x2C0FD530  leaves.RW3                       0x8610D586  0x8610D586  ok      
+0x2D3D8EA3  ota00003.RW3                     0x523A3A5C  0x523A3A5C  ok      
+0x30A04317  opi00003.RW3                     0x46D6F525  0x46D6F525  ok      
+0x358BBE70  och00004.RW3                     0x7BD1BBEB  0x7BD1BBEB  ok      
+0x3E9FE2FC  owa00001.RW3                     0x569DB29A  0x569DB29A  ok      
+0x422DF968  opi00004.RW3                     0xFAC23EF9  0xFAC23EF9  ok      
+0x469937E8  pop_bottle.RW3                   0x7445DF96  0x7445DF96  ok      
+0x499FF231  s11_noCollide                    0x8F31469E  0x8F31469E  ok      
+0x502D994D  owa00002.RW3                     0xCBD776CD  0xCBD776CD  ok      
+0x51B2295E  ofli0901.RW3                     0xD790EF19  0xD790EF19  ok      
+0x53BBAFB9  opi00005.RW3                     0x16DEDBFD  0x16DEDBFD  ok      
+0x63764595  BACK TO HUB                      0x7DD65329  0x7DD65329  ok      
+0x63CEF178  ofeg0201.RW3                     0xC423CCC3  0xC423CCC3  ok      
+0x6E7DE72C  tin_roof_5.RW3                   0x14A3C6BB  0x14A3C6BB  ok      
+0x706E9C50  s11_notVisible Material Map      0x8E995496  0x8E995496  ok      
+0x72327FD1  oli00001.RW3                     0x5C336DD2  0x5C336DD2  ok      
+0x734905EF  owa00004.RW3                     0xAC3CE580  0xAC3CE580  ok      
+0x7AB6743A  sound_info                       0x3CE2E393  0x3CE2E393  ok      
+0x7B49EE50  olio0001.RW3                     0xB7A5E0C6  0xB7A5E0C6  ok      
+0x7BC2AA56  ofr00001.RW3                     0x0A715B0B  0x0A715B0B  ok      
+0x7CF9217D  oras2402.RW3                     0x22FDBC24  0x22FDBC24  ok      
+0x7D387177  OUTTRO                           0x204AF656  0x204AF656  ok      
+0x7DC353B5  spdrweb2.RW3                     0x43EC4528  0x43EC4528  ok      
+0x7EA9F65B  groundskeeper0001.RW3            0x6D2A8918  0x6D2A8918  ok      
+0x83C03622  oli00002.RW3                     0x74DD98A2  0x74DD98A2  ok      
+0x84BAE204  ofl00001.RW3                     0xE70C5994  0xE70C5994  ok      
+0x855EB754  oce00001.RW3                     0x513054F8  0x513054F8  ok      
+0x87E718B1  STARTCAM                         0x6C103E0E  0x6C103E0E  ok      
+0x8864D2AC  opi00008.RW3                     0x3DAA7A51  0x3DAA7A51  ok      
+0x8B41A2C3  STARTCAM0                        0xB4475282  0xB4475282  ok      
+0x8ED58F2E  light_glow.RW3                   0x557F36E4  0x557F36E4  ok      
+0x90ADC41B  owas2403.RW3                     0xC176ECB9  0xC176ECB9  ok      
+0x920B2D7A  floor_window_light.RW3           0xB7CA0DCC  0xB7CA0DCC  ok      
+0x954DEC73  oli00003.RW3                     0x599ADA1C  0x599ADA1C  ok      
+0x96489855  ofl00002.RW3                     0x946C8DFB  0x946C8DFB  ok      
+0x96EC6DA5  oce00002.RW3                     0x2D43DA7B  0x2D43DA7B  ok      
+0x9AB30066  tree.RW3                         0xD658830C  0xD658830C  ok      
+0xA0A2001A  s11_noCollide Material Map       0x640FB633  0x640FB633  ok      
+0xA124F44E  olis2401.RW3                     0xBEC16955  0xBEC16955  ok      
+0xA1BB2365  fishsky.RW3                      0x450A5E1E  0x450A5E1E  ok      
+0xA23B7A6C  owas2404.RW3                     0x01421324  0x01421324  ok      
+0xA7D64EA6  ofl00003.RW3                     0x1947D75C  0x1947D75C  ok      
+0xAD2BE0CF  graham0001.RW3                   0x89B94640  0x89B94640  ok      
+0xADEEC837  cheese.RW3                       0xFE4937D5  0xFE4937D5  ok      
+0xAFC59FAC  olac0001.RW3                     0xEDD67B63  0xEDD67B63  ok      
+0xB432B163  cutscene_toc                     0x46F1C31D  0x46F1C31D  ok      
+0xB491A3C0  DISP_OUTTRO                      0xB5032BBD  0xB5032BBD  ok      
+0xB6FA9942  cmm00001.RW3                     0x2AF9FC47  0x2AF9FC47  ok      
+0xBD9C60C6  door.RW3                         0x75151CB8  0x75151CB8  ok      
+0xC009EE60  odf00001.RW3                     0x3128A85E  0x3128A85E  ok      
+0xC6A0815C  cake_newname.RW3                 0x0BF2AB80  0x0BF2AB80  ok      
+0xC8472E84  ofee0001.RW3                     0xBC91D02F  0xBC91D02F  ok      
+0xC93D926B  oru00001.RW3                     0x13407C5F  0x13407C5F  ok      
+0xC9F70F66  oli00006.RW3                     0xFE284236  0xFE284236  ok      
+0xCA6D71F1  owas2302.RW3                     0x5A118482  0x5A118482  ok      
+0xCBB9982E  wtrhter.RW3                      0x6A34D68F  0x6A34D68F  ok      
+0xD197A4B1  odf00002.RW3                     0x52884B96  0x52884B96  ok      
+0xD7688928  FOGGY                            0x9B033481  0x9B033481  ok      
+0xD7CB4D53  ova00001.RW3                     0x51C0B07A  0x51C0B07A  ok      
+0xD836DA19  PLAYER                           0x53246E65  0x53246E65  ok      
+0xDB84C5B7  oli00007.RW3                     0x1AC4C0C2  0x1AC4C0C2  ok      
+0xDD54EE14  owi00001.RW3                     0x3B75D6B5  0x3B75D6B5  ok      
+0xDF2671FC  opiw0001.RW3                     0x6276728E  0x6276728E  ok      
+0xE26187C3  dome.RW3                         0xAFC20BCF  0xAFC20BCF  ok      
+0xEAD9309F  och00010.RW3                     0x6671427C  0x6671427C  ok      
+0xEC725875  olis2301.RW3                     0x52C783D0  0x52C783D0  ok      
+0xF3133929  cin_11_m                         0x4ADC3FA6  0x4ADC3FA6  ok      
+0xF3B12A7B  clue_1.RW3                       0xE83B221E  0xE83B221E  ok      
+0xF77B6B97  opi00010.RW3                     0x20BE1B71  0x20BE1B71  ok      
+0xF99C377C  rhs00001.RW3                     0xD582BDA6  0xD582BDA6  ok      
+0xFA69B9C6  ofeg0001.RW3                     0x14856E0B  0x14856E0B  ok      
+0xFAE6B9F5  ova00003.RW3                     0x99F99DD9  0x99F99DD9  ok      
+0xFDF7CF91  chicken.RW3                      0x6084D0A9  0x6084D0A9  ok      
+0xFEC60FD1  olvo2401.RW3                     0xDA0B34C0  0xDA0B34C0  ok      
+
+
+#### End of HIP Log Report ####
