@@ -1,6 +1,6 @@
 # Game-unit splits
 
-`config/GIHE78/splits.txt` names 101 game units (`flat/<file>`). They come from `tools/splits/recover.py`, which compares the target with the PS2 USA retail v1.01 executable SLUS-20349 (SHA-1 `ebe640193e0ceb38deca343a0b576cfcba2d5920`). That executable keeps its DWARF.
+`config/GIHE78/splits.txt` names 117 game units (`flat/<file>`). They come from `tools/splits/recover.py`, which compares the target with the PS2 USA retail v1.01 executable SLUS-20349 (SHA-1 `ebe640193e0ceb38deca343a0b576cfcba2d5920`). That executable keeps its DWARF.
 
 The names and extents are claims, not established facts. In `evidence.tsv`:
 - each unit's extent is an `inferred` `unit` row with `provisional` or `open` edges;
@@ -10,8 +10,10 @@ The names and extents are claims, not established facts. In `evidence.tsv`:
 
 ## Method
 
-1. **Anchors.** Every function on both platforms is fingerprinted by the string literals and float constants it loads. GC references come from dtk's relocations. PS2 references come from `lui`/`addiu`, `$gp` and `lui`+`mtc1` patterns. Unique, mutual-best matches become anchors; the current run finds 300.
-2. **Link order.** The GC game block, from `0x800055E0` to the start of GC-only code at `0x800D7E00`, is linked in case-insensitive alphabetical order of the DWARF compile-unit names under `E:\SD2\Game\flat\`. 280 of the 300 anchors lie in one increasing run under that order. The PS2 ELF links in a different order, so its addresses are not a template.
+1. **Anchors.** Anchors come in two kinds.
+    - **Name anchors.** A function whose body `evidence.tsv` establishes exactly (a `function` row with `target`, `exact`, `exact`, such as an exact BfBB body) is pinned to the PS2 function of the same mangled name, when exactly one shared PS2 function has that name. The current run pins 169. Positional names are not used, because they were read off an earlier alignment and would only repeat it. A name anchor replaces any fingerprint anchor that shares either of its functions or crosses it in link order, and name anchors that break link order would be dropped (none do).
+    - **Fingerprint anchors.** Every function on both platforms is fingerprinted by the string literals and float constants it loads and by the functions it calls. GC references come from dtk's relocations. PS2 references come from `lui`/`addiu`, `$gp` and `lui`+`mtc1` patterns, and calls from `jal`. A GC call counts only when its target is an exact-body function, named as above; the PS2 call is named by the DWARF. Unique, mutual-best matches become anchors. A match on calls alone needs two shared callees, since one shared callee fits any wrapper. The current run keeps 333 after the name anchors take precedence.
+2. **Link order.** The GC game block, from `0x800055E0` to the start of GC-only code at `0x800D7E00`, is linked in case-insensitive alphabetical order of the DWARF compile-unit names under `E:\SD2\Game\flat\`. Most anchors lie in one increasing run under that order (280 of the 300 literal anchors of the first run). The PS2 ELF links in a different order, so its addresses are not a template.
 3. **Alignment.** The PS2 functions, sorted by file name and then address, are aligned to the GC game functions by size, with the anchors pinned.
 4. **Text edges.** Up to eight functions on either side of an edge may move, but each unit lends only half its aligned functions to each of its edges. Each candidate cut is scored by how many references land on the wrong side of the best data cut in every section. Moving an anchor counts as three such references. A static initialiser named in `.ctors` must end its unit, because MW emits `__sinit` last.
     - One best cut: it is used, and its crossing count is recorded.
@@ -19,12 +21,13 @@ The names and extents are claims, not established facts. In `evidence.tsv`:
     - Several cuts tie, and the alignment's cut is not among them: the tied functions stay in dtk's automatic objects, and both edges are `open`.
 
     An open edge then shrinks from both ends. The next unassigned function joins a neighbour when its references reach that neighbour and not the other one: calls to or from its functions, or loads of data that only its functions load. Calls into other units, such as library code, do not count either way. A function that ends its unit with `__sinit` takes nothing after it. The edge class records how many functions joined, and an edge with none left reads "closed by references".
+    A unit that is written (step 6) then takes any bordering function that no written unit holds, either unassigned or in a `weak` unit, when that function loads a `.sdata2` literal that, among the written units, only its functions load. MW pools literals per unit, so such a function cannot belong elsewhere. The edge class records "joined by .sdata2 literals". Two functions join this way: `0x8000B97C` (iFont.cpp, taken from weak iFX.cpp) and `0x80016A30` (xAnim.cpp, taken from weak ms4sound.cpp).
 5. **Data edges.** Every data section follows the same unit order. Each unit's unit-local items (loaded only by that unit's functions) must therefore appear in link order. The tool keeps the largest set of them whose owners never go backwards, and an item outside that set marks no range. Such an item is usually a global that another unit defines and only one unit loads, like an `xMath3.cpp` vector constant. Between consecutive units that load unit-local items in a section, the cut falls on an 8-byte-aligned symbol boundary, at the candidate with the fewest crossing references. Items between two units that unassigned functions load belong to no unit, and the edge is `open`. An item inside a written range that an unassigned function loads stays in the range, but it counts as a crossing reference on the edge facing that function. This is the data edge in the same section if one exists, and the text edge otherwise. A range that cannot start on an aligned symbol is left to dtk.
 6. **Emission.** A unit is written in either of two cases:
     - it has an anchor, and its GC function count is 0.5x to 2x its PS2 count;
     - it has no anchor, and the counts differ by at most one.
 
-    The other 34 candidates, mostly platform `i*` files, are listed in `split_units.tsv` as `weak` and stay in dtk's automatic objects.
+    The other 18 candidates, mostly platform `i*` files, are listed in `split_units.tsv` as `weak` and stay in dtk's automatic objects.
 7. **Checks.** The tool exits non-zero if any function loads a `.sdata2` item inside another unit's `.sdata2` range. MW pools literals per unit, so a cross-unit load means a wrong edge. A global `const` placed in `.sdata2` would also trip this check; none does today. As advice only, it also reports a unit range that holds the same float twice. Pooled literals are merged, but a named static `const` is not merged with a literal.
 
 All five `.ctors` initialisers end up inside emitted units: zEntPlayer, zEntShaggy, zHud, zScene and zUI.
@@ -39,15 +42,15 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
   --splits units.txt --edges config/GIHE78/split_edges.tsv --units config/GIHE78/split_units.tsv
 ```
 
-`units.txt` is the unit part of `splits.txt`. The relocations, and so the output, are the same whichever split produced the objects. Relocations to symbols that `symbols.txt` names are resolved through `symbols.txt`, so naming functions does not change the output. The tool stops if `symbols.txt` gives the same name to two symbols, since the name would then resolve to the wrong one.
+`units.txt` is the unit part of `splits.txt`. The relocations, and so the output, are the same whichever split produced the objects. Relocations to symbols that `symbols.txt` names are resolved through `symbols.txt`, so renaming functions does not change the output. Adding an exact-body `function` row to `evidence.tsv` can: it adds a name anchor and call features. Re-run the tool when one lands and commit what changes. The tool stops if `symbols.txt` gives the same name to two symbols, since the name would then resolve to the wrong one.
 
 ## Limits
 
 - A byte-identical relink only shows that dtk and mwld accept the cuts. It says nothing about where Heavy Iron's objects began and ended.
-- 53 of the 77 text edges between emitted units are "alignment only": they have no data evidence beyond the size alignment.
+- 62 of the 102 text edges between emitted units are "alignment only": they have no data evidence beyond the size alignment.
 - PS2 v1.01 is a sibling build, not the target. Platform `i*` units differ on GC and are mostly unsplit.
 - The weak `iAnim.cpp` candidate at `0x80005AFC` is contradicted: BfBB's `iAnim.cpp` is GC platform code, and its `iAnimBlend` sits in the GC-only block at `0x800D7E00`.
-- Anchors are literal matches, and a short function can be paired with the wrong PS2 function in the same unit. The iCamera anchor at `0x800072D4` is one: it is `iCameraSetNearFarClip`, not `iCameraCreate`, and its end edge rests on that pairing (see `evidence.tsv`).
-- `zEnv.cpp` is misaligned. `zEnvRender` (an exact BfBB body, see `evidence.tsv`) is at `0x800AA058`, but the size alignment puts the unit at `0x800AA118`, so it stays `weak`, and the four functions from `0x800A9F78` stay unassigned. The functions before them, back to `0x800A9B8C`, have joined zEntVillain: each calls or is called by zEntVillain code, or loads data only zEntVillain loads, and none references zEnv (some also call library units, which count for neither side).
+- Fingerprint anchors are literal and call matches, and a short function can be paired with the wrong PS2 function in the same unit. The literal anchor at `0x800072D4` was one: it pairs with `iCameraCreate`, but the function is the exact `iCameraSetNearFarClip` body, so the name anchor now replaces it.
+- zEnv.cpp starts at `0x800A9F78` on a fingerprint anchor alone: its calls to the exact-body `xClimateSetSnow` and `xClimateSetRain` match the PS2 `zEnvEventCB`. The nine functions before it, back to `0x800A9B8C`, have joined zEntVillain by references, and the edge between them has no data evidence.
 - Header inline copies (`xMath3.h`, `xEnt.h`, `xModel.h`) are left to whichever unit holds them.
 - This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), MetroTRK, the runtime, the Dolphin SDK or RenderWare.
