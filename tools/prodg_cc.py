@@ -42,12 +42,18 @@ COMPILER_WITH_ARG = {"-G"}
 STAGE_TIMEOUT = 60
 
 
+# Compiler flags checked against the 3.5 driver's -v output and its objects. The driver
+# adds -D__OPTIMIZE__ to cpp for every -O level but -O0 and passes the warning flags to
+# cpp as well as cc1; compile_unit does the same. Anything else is rejected, since
+# untested flags can make the driver change the preprocessor arguments (-ffast-math
+# defines __FAST_MATH__, -Os defines __OPTIMIZE_SIZE__, -ansi adds -trigraphs).
+COMPILER_FLAGS = {"-O", "-O0", "-O1", "-O2", "-O3", "-g", "-fno-exceptions", "-fsigned-char",
+                  "-funsigned-char", "-mcpu=750"}
+WARNING_FLAGS = {"-w", "-Wall", "-Werror", "-Wno-inline"}
+
+
 def accepted_compiler_flag(flag):
-    # Flags whose ngccc -v output shows no change to the preprocessor arguments, other
-    # than -D__OPTIMIZE__ for -O/-O1/-O2/-O3, which compile_unit adds the same way.
-    return flag in {"-O", "-O0", "-O1", "-O2", "-O3", "-g", "-w"} \
-        or flag.startswith(("-f", "-m", "-W")) and not flag.startswith("-Wp,") \
-        or flag[:2] == "-G" and flag[2:].isdigit()
+    return flag in COMPILER_FLAGS | WARNING_FLAGS or flag[:2] == "-G" and flag[2:].isdigit()
 
 
 def parse(args):
@@ -152,6 +158,7 @@ def compile_unit(options, cpp_flags, compiler_flags, language):
         cpp = wrapper + [str(directory / "cpp.exe")] + CPP_COMMON
         if any(flag.startswith("-O") and flag != "-O0" for flag in compiler_flags):
             cpp.append("-D__OPTIMIZE__")
+        cpp += [flag for flag in compiler_flags if flag in WARNING_FLAGS]
         cpp += ["-D__NOASMPP__"] + CPP_LANG[language][0] + CPP_TARGET + CPP_LANG[language][1]
         if depfile:
             # -MD, not -MMD: this cpp leaves <...> includes out of -MMD output.
