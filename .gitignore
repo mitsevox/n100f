@@ -2,7 +2,6 @@
 /orig/*/*
 !/orig/*/.gitkeep
 /private/
-/reference/
 /build/
 /scratch/
 
