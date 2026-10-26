@@ -44,7 +44,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xFilter.cpp	xFont.cpp	0x800294E8	0x800294E8	alignment only (3 cuts tie on data)	0
 .text	xFont.cpp	xFX.cpp	0x8002A460	0x8002A460	single cut by data references	0
 .text	xFX.cpp	xhipio.cpp	0x8002B4D8	0x8002B4D8	single cut by data references	0
-.text	xhipio.cpp	xIni.cpp	0x8002C100	0x8002C100	alignment only (2 cuts tie on data)	0
+.text	xhipio.cpp	xIni.cpp	0x8002C100	0x8002C100	single cut by data references	0
 .text	xIni.cpp	xLinkList.cpp	0x8002C774	0x8002C774	alignment only (6 cuts tie on data)	0
 .text	xLinkList.cpp	xMath.cpp	0x8002C86C	0x8002C86C	alignment only (4 cuts tie on data)	0
 .text	xMath.cpp	xMath3.cpp	0x8002CF48	0x8002CF48	alignment only (4 cuts tie on data)	0

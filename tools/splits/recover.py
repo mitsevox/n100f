@@ -421,9 +421,11 @@ def main():
 
     ps2 = Ps2(args.ps2_elf, args.dwarf)
     # Functions whose bodies evidence.tsv establishes exactly (an exact BfBB body, say).
-    # Positional names are left out: they were read off an earlier alignment.
+    # Positional names are left out: they were read off an earlier alignment. That includes
+    # an exact body written for this project, whose name the body does not carry.
     exact = {int(r[1], 16): r[3] for r in csv.reader(open(args.evidence, encoding='utf-8'), delimiter='\t')
-             if r[0] == 'function' and r[4:7] == ['target', 'exact', 'exact']}
+             if r[0] == 'function' and r[4:7] == ['target', 'exact', 'exact']
+             and 'written for this project' not in r[7]}
     gc_feats = {j: gc_features(dol, r2, f[0], f[1], func_targets[j]) for j, f in enumerate(funcs)}
     ps2_feats = {i: ps2.features(f[0], f[1]) for i, f in enumerate(ps2.funcs)}
     # Calls are features too: a GC call to an exact-body function, and a PS2 jal to

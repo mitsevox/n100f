@@ -20,7 +20,7 @@ struct _zFog : xBase
     zFogAsset* tasset;
 };
 
-S32 zFogEventCB(xBase* to, xBase* from, U32 toEvent, F32* toParam, xBase* b3);
+S32 zFogEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b3);
 void zFogInit(void* b, void* tasset);
 
 #endif
