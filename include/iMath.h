@@ -4,9 +4,5 @@
 #include "types.h"
 
 F32 iurand();
-U32 irand();
-void isrand(U32 seed);
-void iMathExit();
-void iMathInit();
 
 #endif

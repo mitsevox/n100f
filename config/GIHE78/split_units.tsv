@@ -28,7 +28,7 @@ iTime.cpp	0x80016900	0x80016A30	10	13	2	2	0x800169D4=iTimeGet (name)	anchored
 ms4sound.cpp	0x80016A30	0x80016A30	0	25	0	0	-	weak
 xAnim.cpp	0x80016A30	0x8001C088	38	39	9	4	0x80016CA8=xAnimPoolAlloc (name)	anchored
 xBase.cpp	0x8001C088	0x8001C184	5	5	3	3	0x8001C0A0=xBaseLoad (name)	anchored
-xbinio.cpp	0x8001C184	0x8001D1F8	22	26	9	9	0x8001C25C=BFD_read (name)	anchored
+xbinio.cpp	0x8001C184	0x8001D1F8	22	26	13	13	0x8001C25C=BFD_read (name)	anchored
 xBound.cpp	0x8001D1F8	0x8001D9A0	7	7	0	0	-	count-match
 xCamera.cpp	0x8001D9A0	0x8002086C	29	32	4	0	0x8001DB00=xCameraNext (floats+calls)	anchored
 xClimate.cpp	0x8002086C	0x80020F08	7	7	5	3	0x800208B8=UpdateRain (strings+floats)	anchored
@@ -44,7 +44,7 @@ xFFX.cpp	0x80028DFC	0x80029458	14	14	4	4	0x80028DFC=xFFXRotMatchAlloc (name)	anc
 xFilter.cpp	0x80029458	0x800294E8	4	4	4	0	0x80029458=xFilterCurvedInterp4 (floats)	anchored
 xFont.cpp	0x800294E8	0x8002A460	15	15	2	0	0x80029810=JustifyLine (floats)	anchored
 xFX.cpp	0x8002A73C	0x8002B4D8	17	30	3	1	0x8002AAF4=MaterialSetEnvMap2 (strings)	anchored
-xhipio.cpp	0x8002B4D8	0x8002C100	15	16	11	11	0x8002B4D8=HIPLReadString (name)	anchored
+xhipio.cpp	0x8002B4D8	0x8002C100	15	16	15	15	0x8002B4D8=HIPLReadString (name)	anchored
 xIni.cpp	0x8002C100	0x8002C774	5	5	3	3	0x8002C100=xIniGetString (name)	anchored
 xLinkList.cpp	0x8002C774	0x8002C86C	5	5	0	0	-	count-match
 xMath.cpp	0x8002C86C	0x8002CF48	6	6	2	0	0x8002C900=xMathSolveCubic (floats)	anchored
@@ -59,7 +59,7 @@ xPar.cpp	0x800323D4	0x80032540	4	4	2	2	0x80032460=xParFree (name)	anchored
 xParGroup.cpp	0x80032540	0x80032D28	13	13	7	7	0x80032540=xParGroupKillPar (name)	anchored
 xParMgr.cpp	0x80032D28	0x80032DEC	3	3	1	1	0x80032DAC=xParMgrInit (name)	anchored
 xPartition.cpp	0x80032DEC	0x8003361C	10	11	1	1	0x800335F8=xPartitionGetTrueIdx (name)	anchored
-xpkrsvc.cpp	0x8003361C	0x80035854	31	40	6	5	0x80033894=LOD_r_LHDR (calls)	anchored
+xpkrsvc.cpp	0x8003361C	0x80035854	31	40	8	7	0x80033894=LOD_r_LHDR (calls)	anchored
 xQuickCull.cpp	0x80035854	0x80036908	7	7	1	0	0x80036810=xQuickCullInit (floats)	anchored
 xsavegame.cpp	0x80036908	0x80038D48	44	50	14	10	0x80036F4C=xSG_sv_flipinfo (name)	anchored
 xScene.cpp	0x80038D48	0x800394B4	13	13	0	0	-	count-match
@@ -72,7 +72,7 @@ xstransvc.cpp	0x8003F904	0x80040978	14	17	2	1	0x800402D8=xSTLoadStep (name)	anch
 xString.cpp	0x80040978	0x80040EE4	6	6	1	1	0x80040B38=xStrupr (name)	anchored
 xSurface.cpp	0x80040EE4	0x80044714	36	7	0	0	-	weak
 xTRC.cpp	0x80044714	0x80044780	1	2	1	0	0x80044478=xTRCPad (floats)	anchored
-xutil.cpp	0x80044780	0x80044C44	7	11	4	4	0x80044780=xUtil_yesno (name)	anchored
+xutil.cpp	0x80044780	0x80044C44	7	11	6	6	0x80044780=xUtil_yesno (name)	anchored
 zActionLine.cpp	0x80044C44	0x80044E20	3	4	2	1	0x80044D50=zActionLineUpdate (name)	anchored
 zAnimList.cpp	0x80044E20	0x80045174	5	5	1	0	0x80044EB8=zAnimListInit (strings+floats)	anchored
 zAssetTypes.cpp	0x800451F8	0x80045B50	13	15	2	1	0x800451F8=ATBL_Read (strings+floats+calls)	anchored
