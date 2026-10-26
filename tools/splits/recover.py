@@ -95,11 +95,17 @@ def load_symbols(path):
     return out
 
 
-def load_relocations(objdir):
+def load_relocations(objdir, named):
     """(source address, target address) for every relocation in dtk's split objects.
 
     dtk names local labels <prefix>_<ADDR>, so each section's load address follows
-    from any such symbol's value."""
+    from any such symbol's value.  Symbols named in symbols.txt carry no address
+    suffix and are looked up in `named` (name -> address) instead."""
+
+    def addr_of(nm):
+        m = re.search(r'_([0-9A-F]{8})$', nm)
+        return int(m[1], 16) if m else named.get(nm)
+
     out, skipped = [], 0
     for path in sorted(glob.glob(os.path.join(objdir, '**', '*.o'), recursive=True)):
         raw = open(path, 'rb').read()
@@ -119,9 +125,9 @@ def load_relocations(objdir):
             syms.append((name(st[6], nm), value, shndx))
         base = {}
         for nm, value, shndx in syms:
-            m = re.search(r'_([0-9A-F]{8})$', nm)
-            if m and 0 < shndx < 0xFF00:
-                base.setdefault(shndx, set()).add(int(m[1], 16) - value)
+            a = addr_of(nm)
+            if a is not None and 0 < shndx < 0xFF00:
+                base.setdefault(shndx, set()).add(a - value)
         for s in shdrs:
             if s[1] != 4:  # SHT_RELA
                 continue
@@ -132,9 +138,9 @@ def load_relocations(objdir):
             b, = bases
             for k in range(s[5] // 12):
                 off, info, addend = struct.unpack_from('>IIi', raw, s[4] + k * 12)
-                m = re.search(r'_([0-9A-F]{8})$', syms[info >> 8][0])
-                if m:
-                    out.append((b + off, int(m[1], 16) + addend))
+                a = addr_of(syms[info >> 8][0])
+                if a is not None:
+                    out.append((b + off, a + addend))
     return out, skipped
 
 
@@ -257,6 +263,24 @@ def anchors(ps2_feats, gc_feats):
     return out
 
 
+def longest_run(items):
+    """Longest subsequence of (item, unit index) pairs whose unit index never decreases."""
+    tails, tail_at, prev = [], [], [None] * len(items)
+    for i, (_, k) in enumerate(items):
+        p = bisect.bisect_right(tails, k)
+        prev[i] = tail_at[p - 1] if p else None
+        if p == len(tails):
+            tails.append(k)
+            tail_at.append(i)
+        else:
+            tails[p], tail_at[p] = k, i
+    out, i = [], tail_at[-1] if tail_at else None
+    while i is not None:
+        out.append(items[i])
+        i = prev[i]
+    return out[::-1]
+
+
 def align(ps_sizes, gc_sizes, pins):
     """Global alignment of two size sequences; pins maps ps index -> gc index."""
     n, m = len(ps_sizes), len(gc_sizes)
@@ -332,7 +356,7 @@ def main():
         i = bisect.bisect_right(daddr, a) - 1
         return i if i >= 0 else None
 
-    relocs, skipped = load_relocations(args.objdir)
+    relocs, skipped = load_relocations(args.objdir, {s[3]: s[0] for s in syms})
     if not relocs:
         raise SystemExit('no relocations: run the dtk split first')
     func_targets = collections.defaultdict(list)
@@ -445,6 +469,40 @@ def main():
         tclass[(A, B)], tconf[(A, B)] = cls, best
 
     unit_of = {f: u for u in order for f in range(tstart[u], tend[u] + 1)}
+
+    # Functions an open edge leaves between A and B join a neighbour, working inwards
+    # from each side, when every reference they make into assigned code lands in that
+    # neighbour and none in the other: calls to its functions, or loads of data only
+    # its functions load.  References to other units (library calls) decide nothing.
+    def reached(f):
+        out = {unit_of.get(fidx(t)) for t in func_targets[f] if fidx(t) != f}
+        for d in func_data[f]:
+            us = {unit_of[g] for g in data_users[d] if g in unit_of}
+            if len(us) == 1:
+                out |= us
+        return out - {None}
+
+    joined = collections.Counter()
+    changed = True
+    while changed:
+        changed = False
+        for A, B in zip(order, order[1:]):
+            if tend[A] + 1 < tstart[B] and tend[A] not in sinit and reached(tend[A] + 1) & {A, B} == {A}:
+                tend[A] += 1
+                unit_of[tend[A]] = A
+                joined[(A, B)] += 1
+                changed = True
+            if tend[A] + 1 < tstart[B] and reached(tstart[B] - 1) & {A, B} == {B}:
+                tstart[B] -= 1
+                unit_of[tstart[B]] = B
+                joined[(A, B)] += 1
+                changed = True
+    for key, n in joined.items():
+        if tend[key[0]] + 1 == tstart[key[1]]:
+            tclass[key] = f'closed by references ({n} functions joined; was {tclass[key]})'
+        else:
+            tclass[key] = f'open: {tstart[key[1]] - tend[key[0]] - 1} unassigned functions ({n} joined by references)'
+
     users = {d: {unit_of.get(f) for f in fs} for d, fs in data_users.items()}
 
     def aligned(d):
@@ -452,21 +510,21 @@ def main():
 
     # Data cuts between consecutive units that own unit-local items in a section.
     # Items that unassigned functions load stay out of every unit.
-    ranges, dclass = {}, {}
+    ranges, dclass, stray = {}, {}, {}
     for sec in DATA_SECTIONS:
+        # Unit-local items must appear in link order.  Keep the largest set of them
+        # whose owners never go backwards (longest non-decreasing run); an item out
+        # of that order is a global another unit defines, so it marks no range.
+        items = sorted((d, k) for k, u in enumerate(order)
+                       for d in owned(tstart[u], tend[u], sec) if users[d] == {u})
+        kept = longest_run(items)
+        stray[sec] = len(items) - len(kept)
         seq = []
-        for u in order:
-            ds = [d for d in owned(tstart[u], tend[u], sec) if users[d] == {u}]
-            if ds:
-                seq.append([u, min(ds), max(ds), len(ds)])
-        changed = True
-        while changed:  # drop the smaller of two overlapping neighbours
-            changed = False
-            for i in range(len(seq) - 1):
-                if seq[i][2] >= seq[i + 1][1]:
-                    del seq[i if seq[i][3] < seq[i + 1][3] else i + 1]
-                    changed = True
-                    break
+        for d, k in kept:
+            if seq and seq[-1][0] == order[k]:
+                seq[-1][2], seq[-1][3] = d, seq[-1][3] + 1
+            else:
+                seq.append([order[k], d, d, 1])
         for u, mn, mx, _ in seq:
             end = data[mx + 1][0] if mx + 1 < len(data) and data[mx + 1][2] == sec else data[mx][0] + data[mx][1]
             ranges[(u, sec)] = [mn, end]
@@ -611,7 +669,7 @@ def main():
                           f'{tend[u] - tstart[u] + 1}\t{ps2_count[u]}\t{anchored[u]}\t{fa}\t{status(u)}\n')
     print(f'relocations {len(relocs)} ({skipped} relocation sections skipped), anchors {len(seeds)}, '
           f'aligned {len(pairs)}, units {len(order)} ({sum(status(u) != "weak" for u in order)} emitted), '
-          f'data edges {len(dclass)}; .sdata2 locality violations {len(locality)}, '
+          f'data edges {len(dclass)}, out-of-order unit-local items {sum(stray.values())}; .sdata2 locality violations {len(locality)}, '
           f'repeated floats {len(duplicates)} (advice)', file=sys.stderr)
     if locality:
         sys.exit(1)
