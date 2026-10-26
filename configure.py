@@ -305,9 +305,16 @@ def MatchingFor(*versions):
 
 config.warn_missing_config = True
 config.warn_missing_source = False
-# No source unit is claimed yet. Add libraries and objects only with boundary and compiler
-# profile evidence recorded in config/GIHE78/evidence.tsv.
-config.libs: List[Dict[str, Any]] = []
+# Add libraries and objects only with boundary and compiler profile evidence recorded in
+# config/GIHE78/evidence.tsv.
+config.libs: List[Dict[str, Any]] = [
+    GameLib(
+        "game",
+        [
+            Object(Matching, "flat/xMorph.cpp"),
+        ],
+    ),
+]
 
 
 # Optional callback to adjust link order. This can be used to add, remove, or reorder objects.

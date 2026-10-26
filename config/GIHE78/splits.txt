@@ -179,6 +179,7 @@ flat/xModel.cpp:
 
 flat/xMorph.cpp:
 	.text       start:0x80030F28 end:0x80031310
+	.sdata2     start:0x802600D0 end:0x802600E0
 
 flat/xMovePoint.cpp:
 	.text       start:0x80031310 end:0x800317D4
