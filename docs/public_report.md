@@ -52,7 +52,7 @@ Heavy Iron's objects. The basis string says so. Naming those units did not chang
 Today's 420 named functions are the names dtk's analysis assigned in `symbols.txt` (MW runtime
 and some GX SDK functions, plus `__fill_mem`, which dtk names once `memset` is named), `__start`,
 the seven names the xMorph unit added (its three functions and their four callees), 334
-SLUS-20349 DWARF names applied from related-build evidence (168 exact bfbb bodies and 166
+SLUS-20349 DWARF names applied from related-build evidence (168 by an exact bfbb body match and 166 by
 positions in units whose function count and pins agree with the DWARF), and 58 names added with
 the partial units: their callees, the zCounter and zFog functions (by bfbb body and DWARF
 position), and the xSerial Read/Write and xSGReadData/xSGWriteData overload groups (by matched

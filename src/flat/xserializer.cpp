@@ -84,6 +84,7 @@ static S32 xSER_xsgclt_ldproc_ver(void*, st_XSAVEGAME_DATA* xsg, st_XSAVEGAME_RE
 static S32 xSER_xsgclt_svinfo_clt(void* cltdata, st_XSAVEGAME_DATA*, S32* cur_space,
                                   S32* max_fullgame)
 {
+    // bfbb's raw offset, kept verbatim: +0xC of the client data (lwz 0xc(r3) in the target).
     *cur_space = *(S32*)((S32)cltdata + 12);
     *max_fullgame = *(S32*)((S32)cltdata + 12);
     return 1;

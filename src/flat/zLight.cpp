@@ -2,6 +2,7 @@
 #include "zVolume.h"
 #include "zScene.h"
 #include "xString.h"
+#include "xEvent.h"
 
 static _zLight* sLight[32];
 static S32 sLightTotal;
@@ -72,17 +73,17 @@ S32 zLightEventCB(xBase* param_1, xBase* to, U32 toEvent, F32* param_4, xBase* p
     _zLight* t = (_zLight*)to;
     switch (toEvent)
     {
-    case 38:
+    case eEventOn:
     {
         t->flags |= 1;
         break;
     }
-    case 39:
+    case eEventOff:
     {
         t->flags &= 0xfffffffe;
         break;
     }
-    case 10:
+    case eEventReset:
     {
         zLightReset(t);
         break;
@@ -100,6 +101,7 @@ void zLightAddLocalEnv()
     for (int i = 0; i < sLightTotal; i++)
     {
         _zLight* zlight = sLight[i];
+        // bfbb's precedence quirk, kept verbatim: 1 != 0 binds first, so this tests bit 0.
         if ((zlight->flags & 1 != 0) && (zlight->tasset->lightFlags & 8))
         {
             iLight* light = &zlight->light;
