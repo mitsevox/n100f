@@ -1,8 +1,7 @@
 #ifndef STDLIB_H
 #define STDLIB_H
 
-// Project stub declaring only what reconstructed units call. Replace it when MSL's own
-// headers are reconstructed.
+// MSL C library declarations, limited to what reconstructed units use (docs/libraries.md).
 #ifdef __cplusplus
 extern "C" {
 #endif
