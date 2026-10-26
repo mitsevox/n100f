@@ -17,9 +17,15 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 - `xClimateInitAsset` stores `1` and `0` to `_tagRain::rain`, an `S32` in the DWARF, where bfbb writes `1.0f` and `0.0f`.
 - `xScrFxLetterbox` sets 16.0f where bfbb reads `sLetterBoxSize`, as the target does.
 
+`src/flat/iCamera.cpp`, `iEnv.cpp`, `xAnim.cpp`, `xMath3.cpp`, `xMovePoint.cpp` and `zSurface.cpp` take their function bodies the same way, from bfbb's `src/SB/Core/x/` (`iCamera`, `xAnim`, `xMath3`, `xMovePoint`), `src/SB/Core/gc/iEnv.cpp` and `src/SB/Game/zSurface.cpp` at the same revision (CC0 1.0). Local changes:
+
+- Type names and layouts follow the SLUS-20349 DWARF. `zSurfAsset` replaces bfbb's `zSurfAssetBase`, which has trailing fields N100F lacks, and `zSurfacePropUVFX` has no min/max fields. `xMovePoint` is a typedef of `_xMovePoint`. `xAnimTableGetState` takes `char*`, as its DWARF mangling does.
+- `zSurface.cpp` writes bfbb's `MAX_MAPPER` (1) and `DEG2RAD` macros out as literals, and keeps only the statics the matched functions use.
+- `iCameraSetNearFarClip` and `sCameraNearClip` use a 0.2f near plane where bfbb has 0.05f, as the target does.
+
 `include/types.h` is bfbb's `include/types.h` at the same revision, reduced to the integer and float typedefs and `NULL`.
 
-`include/xMorph.h` follows bfbb's `xMorph.h` at the same revision, with `xVec3` taken from the PS2 DWARF, where the type is `_xVec3`. Its structure layouts match the SLUS-20349 DWARF. `include/xBase.h`, `xClimate.h`, `xIni.h`, `xMath3.h`, `xordarray.h`, `xPar.h`, `xScrFx.h`, `xserializer.h`, `xString.h` and `zMenu.h` declare only what those units use, with layouts from the SLUS-20349 DWARF.
+`include/xMorph.h` follows bfbb's `xMorph.h` at the same revision, with `xVec3` taken from the PS2 DWARF, where the type is `_xVec3`. Its structure layouts match the SLUS-20349 DWARF. `include/xBase.h`, `xClimate.h`, `xIni.h`, `xMath3.h`, `xordarray.h`, `xPar.h`, `xScrFx.h`, `xserializer.h`, `xString.h`, `zMenu.h`, `iAnim.h`, `iCamera.h`, `iEnv.h`, `xAnim.h`, `xMemMgr.h`, `xMovePoint.h`, `xShadow.h`, `xstransvc.h`, `xSurface.h`, `zScene.h` and `zSurface.h` declare only what those units use, with layouts from the SLUS-20349 DWARF. `include/rwcore.h` and `rpworld.h` declare the RenderWare calls those units make, with RenderWare types kept opaque.
 
 ## Build tooling
 

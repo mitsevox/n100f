@@ -14,10 +14,27 @@ struct _xMat3x3
     U32 pad2;
 };
 
-struct _xMat4x3;
+struct _xMat4x3
+{
+    xVec3 right;
+    S32 flags;
+    xVec3 up;
+    U32 pad1;
+    xVec3 at;
+    U32 pad2;
+    xVec3 pos;
+    U32 pad3;
+};
+
+struct _xQuat
+{
+    xVec3 v;
+    F32 s;
+};
 
 typedef struct _xMat3x3 xMat3x3;
 typedef struct _xMat4x3 xMat4x3;
+typedef struct _xQuat xQuat;
 
 extern const xMat4x3 g_I3;
 
@@ -30,5 +47,9 @@ inline void xVec3Init(xVec3* v, F32 _x, F32 _y, F32 _z)
 
 void xMat3x3Euler(xMat3x3* m, F32 yaw, F32 pitch, F32 roll);
 void xMat3x3LMulVec(xVec3* o, const xMat3x3* m, const xVec3* v);
+void xMat4x3MoveLocalRight(xMat4x3* m, F32 mag);
+void xMat4x3MoveLocalUp(xMat4x3* m, F32 mag);
+void xMat4x3MoveLocalAt(xMat4x3* m, F32 mag);
+void xQuatToMat(const xQuat* q, xMat3x3* m);
 
 #endif
