@@ -520,6 +520,31 @@ def main():
             return 'count-match'
         return 'weak'
 
+    # An item inside a written range that an unassigned function loads is a reference
+    # from outside every unit.  It counts as a crossing on the edge facing that function:
+    # the data edge in the same section if there is one, else the text edge.
+    dnext = {(u, sec): v for (u, v, sec) in dclass}
+    dprev = {(v, sec): u for (u, v, sec) in dclass}
+    inside = collections.Counter()
+    for d, (addr, _, sec, *_) in enumerate(data):
+        for (u, s), (lo, hi) in final.items():
+            if s != sec or not lo <= addr < hi or status(u) == 'weak':
+                continue
+            for f in data_users.get(d, ()):
+                if f in unit_of:
+                    continue
+                if f < tstart[u]:
+                    key = (dprev[(u, sec)], u, sec) if (u, sec) in dprev else (order[order.index(u) - 1], u)
+                else:
+                    key = (u, dnext[(u, sec)], sec) if (u, sec) in dnext else (u, order[order.index(u) + 1])
+                inside[key] += 1
+    for key, n in inside.items():
+        note = f'; {n} in-range loads by unassigned functions'
+        if len(key) == 3:
+            dclass[key] = (dclass[key][0] + note, dclass[key][1] + n)
+        else:
+            tclass[key], tconf[key] = tclass[key] + note, tconf[key] + n
+
     # Target-only checks on the result.  MW pools .sdata2 literals per unit, so
     # no function may load a literal inside another unit's .sdata2 range (a global
     # const in .sdata2 would break this; none has turned up).  As advice only, a

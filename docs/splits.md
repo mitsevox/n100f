@@ -17,7 +17,7 @@ The names and extents are claims, not established facts. In `evidence.tsv`:
     - One best cut: it is used, and its crossing count is recorded.
     - Several cuts tie, and the alignment's cut is among them: the alignment's cut is used and labelled "alignment only".
     - Several cuts tie, and the alignment's cut is not among them: the tied functions stay in dtk's automatic objects, and both edges are `open`.
-5. **Data edges.** Every data section follows the same unit order. Between consecutive units that load unit-local items in a section, the cut falls on an 8-byte-aligned symbol boundary, at the candidate with the fewest crossing references. Items that unassigned functions load belong to no unit, and the edge is `open`. A range that cannot start on an aligned symbol is left to dtk.
+5. **Data edges.** Every data section follows the same unit order. Between consecutive units that load unit-local items in a section, the cut falls on an 8-byte-aligned symbol boundary, at the candidate with the fewest crossing references. Items between two units that unassigned functions load belong to no unit, and the edge is `open`. An item inside a written range that an unassigned function loads stays in the range, but it counts as a crossing reference on the edge facing that function. This is the data edge in the same section if one exists, and the text edge otherwise. A range that cannot start on an aligned symbol is left to dtk.
 6. **Emission.** A unit is written in either of two cases:
     - it has an anchor, and its GC function count is 0.5x to 2x its PS2 count;
     - it has no anchor, and the counts differ by at most one.
@@ -42,7 +42,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 ## Limits
 
 - A byte-identical relink only shows that dtk and mwld accept the cuts. It says nothing about where Heavy Iron's objects began and ended.
-- "Alignment only" edges (51 of 113) have no data evidence beyond the size alignment.
+- 51 of the 74 text edges between emitted units are "alignment only": they have no data evidence beyond the size alignment.
 - PS2 v1.01 is a sibling build, not the target. Platform `i*` units differ on GC and are mostly unsplit.
 - Header inline copies (`xMath3.h`, `xEnt.h`, `xModel.h`) are left to whichever unit holds them.
 - This does not cover the GC-only code after `zVolume`, MetroTRK, the runtime, the Dolphin SDK or RenderWare.
