@@ -8,6 +8,7 @@ USA release, disc revision 0. `main.dol` is 1,964,512 bytes with entry point `0x
 | `build.sha1` | Expected hash of the complete built executable |
 | `symbols.txt`, `splits.txt` | Symbol and split configuration. These are toolkit inputs, not recovered names or source boundaries; claims about either belong in `evidence.tsv`. |
 | `evidence.tsv` | Curated claims in the [evidence format](../README.md) |
+| `split_units.tsv`, `split_edges.tsv` | Reports from `tools/splits/recover.py`: every candidate unit with its status and first anchor, and every text and data edge with its class and crossing references. See [docs/splits.md](../../docs/splits.md). |
 
 ## Mapping onto the handbook stages
 
