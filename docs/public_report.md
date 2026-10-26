@@ -37,7 +37,7 @@ artifact against its copy of the producer policy, and never runs anything from t
 | `linkedBytes` | `complete_code` / `complete_data` (units linked from our source) |
 | `matchedBytes` | `matched_code` / `matched_data` (bytes objdiff compares equal) |
 | code `fuzzyEquivalentBytes` | sum over functions of size × fuzzy % (an exact function counts its whole size) |
-| data `fuzzyEquivalentBytes` | `null`: objdiff measures no data similarity |
+| data `fuzzyEquivalentBytes` | sum over data and bss sections of size × that section's `fuzzy_match_percent` (objdiff byte-diffs each data section) |
 | `functions.total` / `exact` | every function in the report / those at 100% |
 | `functions.named` | functions whose symbol is not an `fn_` address label |
 | `files.total` | every unit in the report, dtk's auto-generated address ranges included |
@@ -61,7 +61,7 @@ the same addresses and add up to the summary:
   address and full size), and one data tile spanning all its data sections. Tiles are in
   address order.
 - `sections` groups the functions by DOL code section (`.init`, `.text`), and puts the data
-  tiles in one `Data sections` group. objdiff reports data matches per unit, not per section.
+  tiles in one `Data sections` group. Each data tile's fuzzy bytes are the sum over its sections, the same expression the summary uses.
 
 ## The timeline
 
