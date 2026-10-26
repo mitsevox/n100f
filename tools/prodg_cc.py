@@ -5,11 +5,14 @@ The ngccc.exe driver spawns cpp, cc1 and ngcas as child processes. Under wibo th
 occasionally hangs when several compiles run at once, and the driver's fixed temporary
 file names collide between parallel jobs. This wrapper runs the same three stages
 directly, each in its own process with a timeout, and writes the intermediates to a
-private directory. The stage command lines are the ones the 3.5 driver prints with -v.
-Compiler flags are limited to the ones checked against that output: the driver turns
-others (-Os, -ansi, -traditional, ...) into extra preprocessor arguments this wrapper
-does not reproduce, so they are rejected. With the accepted flags the object is
-byte-identical to ngccc's.
+private directory. The stage arguments are the ones the 3.5 driver prints with -v, in
+the same order: the user's preprocessor, -O and warning flags in command-line order
+after the driver's version defines and before its target predefines, so the predefines
+win over a user -D or -U exactly as they do under ngccc. Flags are limited to the ones
+checked against that output; the driver turns others (-Os, -ansi, -ffast-math, ...)
+into extra preprocessor arguments this wrapper does not reproduce, so they are
+rejected. With the accepted flags the object is byte-identical to ngccc's
+(tests/test_prodg_cc.py holds the recorded driver command lines).
 
     prodg_cc.py [--wrapper wibo] --dir <compiler dir> [--depfile out.d] [-x c|c++]
         <flags> -c <source> -o <object>
@@ -37,31 +40,29 @@ CPP_LANG = {
     "c++": (["-D__GNUG__=2", "-lang-c++", "-D__cplusplus"], ["-D_LANGUAGE_C_PLUS_PLUS"]),
 }
 OPTIONS = {"--wrapper", "--dir", "--depfile", "-c", "-o", "-x"}
-CPP_WITH_ARG = {"-I", "-D", "-U", "-isystem", "-include"}
-COMPILER_WITH_ARG = {"-G"}
 STAGE_TIMEOUT = 60
 
-
-# Compiler flags checked against the 3.5 driver's -v output and its objects. The driver
-# adds -D__OPTIMIZE__ to cpp for every -O level but -O0 and passes the warning flags to
-# cpp as well as cc1; compile_unit does the same. Anything else is rejected, since
-# untested flags can make the driver change the preprocessor arguments (-ffast-math
-# defines __FAST_MATH__, -Os defines __OPTIMIZE_SIZE__, -ansi adds -trigraphs).
-COMPILER_FLAGS = {"-O", "-O0", "-O1", "-O2", "-O3", "-g", "-fno-exceptions", "-fsigned-char",
-                  "-funsigned-char", "-mcpu=750"}
+# Flags checked against the 3.5 driver's -v output and its objects. -O levels but -O0
+# also put -D__OPTIMIZE__ into the cpp arguments at their position; warning flags go to
+# both cpp and cc1; the rest go to cc1 only. Anything else is rejected, since untested
+# flags can make the driver change the preprocessor arguments (-ffast-math defines
+# __FAST_MATH__, -Os defines __OPTIMIZE_SIZE__, -ansi adds -trigraphs).
+OPTIMIZE_FLAGS = {"-O", "-O1", "-O2", "-O3"}
 WARNING_FLAGS = {"-w", "-Wall", "-Werror", "-Wno-inline"}
-
-
-def accepted_compiler_flag(flag):
-    return flag in COMPILER_FLAGS | WARNING_FLAGS or flag[:2] == "-G" and flag[2:].isdigit()
+COMPILER_FLAGS = OPTIMIZE_FLAGS | WARNING_FLAGS | {
+    "-O0", "-g", "-fno-exceptions", "-fsigned-char", "-funsigned-char", "-mcpu=750"}
+# Preprocessor flags the driver forwards unchanged. Its separate "-D X" and "-U X" forms
+# drop the value, so only the joined forms are accepted; "-I X" is forwarded joined.
+CPP_WITH_ARG = {"-include", "-isystem"}
 
 
 def parse(args):
+    """Split args into options, the cpp flags (in driver order) and the cc1 flags."""
     options, cpp_flags, compiler_flags = {}, [], []
     i = 0
     while i < len(args):
         flag = args[i]
-        if flag in OPTIONS | CPP_WITH_ARG | COMPILER_WITH_ARG:
+        if flag in OPTIONS | CPP_WITH_ARG | {"-I", "-G"}:
             if i + 1 == len(args) or args[i + 1].startswith("-"):
                 raise ValueError(f"{flag} requires a value")
             value = args[i + 1]
@@ -71,15 +72,23 @@ def parse(args):
                 options[flag] = value
             elif flag in CPP_WITH_ARG:
                 cpp_flags.extend([flag, value])
+            elif flag == "-I":
+                cpp_flags.append("-I" + value)
+            elif value.isdigit():
+                compiler_flags.append("-G" + value)
             else:
-                compiler_flags.extend([flag, value])
+                raise ValueError(f"-G requires a number: {value}")
             i += 2
             continue
+        if flag in ("-D", "-U"):
+            raise ValueError(f"Write {flag} joined to its value ({flag}NAME): ngccc drops a separate value")
         if flag.startswith(("-I", "-D", "-U")) or flag == "-nostdinc":
             cpp_flags.append(flag)
-        elif flag.startswith("-Wp,"):
-            cpp_flags.extend(flag[4:].split(","))
-        elif accepted_compiler_flag(flag):
+        elif flag in COMPILER_FLAGS or flag[:2] == "-G" and flag[2:].isdigit():
+            if flag in OPTIMIZE_FLAGS:
+                cpp_flags.append("-D__OPTIMIZE__")
+            elif flag in WARNING_FLAGS:
+                cpp_flags.append(flag)
             compiler_flags.append(flag)
         elif flag.startswith("-"):
             raise ValueError(f"Unsupported flag (not modelled from the ngccc driver): {flag}")
@@ -101,6 +110,13 @@ def parse(args):
     if language not in CPP_LANG:
         raise ValueError("Language must be c or c++")
     return options, cpp_flags, compiler_flags, language
+
+
+def stage_arguments(cpp_flags, compiler_flags, language):
+    """The cpp and cc1 arguments before their input and output files."""
+    cpp = CPP_COMMON + cpp_flags + ["-D__NOASMPP__"] + CPP_LANG[language][0] + CPP_TARGET \
+        + CPP_LANG[language][1]
+    return cpp, ["-quiet"] + compiler_flags
 
 
 def stage(command, output, environment):
@@ -155,18 +171,15 @@ def compile_unit(options, cpp_flags, compiler_flags, language):
         assembly = temporary / (output.stem + ".s")
         compiled = temporary / output.name
         dependencies = temporary / "dependencies.d"
-        cpp = wrapper + [str(directory / "cpp.exe")] + CPP_COMMON
-        if any(flag.startswith("-O") and flag != "-O0" for flag in compiler_flags):
-            cpp.append("-D__OPTIMIZE__")
-        cpp += [flag for flag in compiler_flags if flag in WARNING_FLAGS]
-        cpp += ["-D__NOASMPP__"] + CPP_LANG[language][0] + CPP_TARGET + CPP_LANG[language][1]
+        cpp_arguments, cc1_arguments = stage_arguments(cpp_flags, compiler_flags, language)
+        cpp = wrapper + [str(directory / "cpp.exe")] + cpp_arguments
         if depfile:
             # -MD, not -MMD: this cpp leaves <...> includes out of -MMD output.
             cpp += ["-MD", str(dependencies)]
-        stage(cpp + cpp_flags + [str(source), "-o", str(preprocessed)], preprocessed, environment)
+        stage(cpp + [str(source), "-o", str(preprocessed)], preprocessed, environment)
         compiler = "cc1plus.exe" if language == "c++" else "cc1.exe"
-        stage(wrapper + [str(directory / compiler)] + compiler_flags
-              + ["-quiet", str(preprocessed), "-o", str(assembly)], assembly, environment)
+        stage(wrapper + [str(directory / compiler)] + cc1_arguments
+              + [str(preprocessed), "-o", str(assembly)], assembly, environment)
         stage(wrapper + [str(directory / "NgcAs.exe"), str(assembly), "-o", str(compiled)],
               compiled, environment)
         header = compiled.read_bytes()[:20]
