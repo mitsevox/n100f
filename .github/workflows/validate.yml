@@ -25,7 +25,7 @@ jobs:
       packages: read
     container:
       # Private build environment from mitsevox/n100f-build; holds the original executable.
-      image: ghcr.io/mitsevox/n100f-build@sha256:8b3d46328be5e3bc9e92eb256709edd039beed5f4269149727295bef17819e4d
+      image: ghcr.io/mitsevox/n100f-build@sha256:3473801159a17e96bfceb1d6ad152fa413fee53cb75ad634a70e826c62ced286
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
