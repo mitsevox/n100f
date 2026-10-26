@@ -356,6 +356,10 @@ def main():
         i = bisect.bisect_right(daddr, a) - 1
         return i if i >= 0 else None
 
+    names = collections.Counter(s[3] for s in syms)
+    repeated = sorted(n for n, k in names.items() if k > 1)
+    if repeated:
+        raise SystemExit('symbols.txt names more than one symbol ' + ', '.join(repeated[:10]))
     relocs, skipped = load_relocations(args.objdir, {s[3]: s[0] for s in syms})
     if not relocs:
         raise SystemExit('no relocations: run the dtk split first')
@@ -472,10 +476,18 @@ def main():
 
     # Functions an open edge leaves between A and B join a neighbour, working inwards
     # from each side, when every reference they make into assigned code lands in that
-    # neighbour and none in the other: calls to its functions, or loads of data only
-    # its functions load.  References to other units (library calls) decide nothing.
+    # neighbour and none in the other: calls to or from its functions, or loads of
+    # data only its functions load.  References to other units decide nothing.
+    callers = collections.defaultdict(set)
+    for f, ts in func_targets.items():
+        for t in ts:
+            g = fidx(t)
+            if g is not None and g != f:
+                callers[g].add(f)
+
     def reached(f):
         out = {unit_of.get(fidx(t)) for t in func_targets[f] if fidx(t) != f}
+        out |= {unit_of.get(g) for g in callers[f]}
         for d in func_data[f]:
             us = {unit_of[g] for g in data_users[d] if g in unit_of}
             if len(us) == 1:
