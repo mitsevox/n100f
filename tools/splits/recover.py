@@ -355,6 +355,22 @@ def align(ps_sizes, gc_sizes, pins, ps_tail={}, gc_wrap={}, units=None):
     return pairs[::-1]
 
 
+def unit_extents(lines):
+    """Section extents per unit from splits.txt lines: {(unit path without extension, section): (start, end)}.
+    A unit header may carry attributes after the colon, such as `comment:8`."""
+    extents = {}
+    unit = None
+    for line in lines:
+        m = re.match(r'(\S+)\.\w+:(?:\s.*)?$', line)
+        if m:
+            unit = m[1]
+            continue
+        m = re.match(r'\s+(\.\w+)\s+start:0x([0-9A-F]+) end:0x([0-9A-F]+)', line)
+        if m and unit:
+            extents[(unit, m[1])] = (int(m[2], 16), int(m[3], 16))
+    return extents
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--dol', required=True)
@@ -393,16 +409,7 @@ def main():
     named = collections.defaultdict(list)
     for s in syms:
         named[s[3]].append(s[0])
-    extents = {}
-    unit = None
-    for line in open(os.path.join(os.path.dirname(args.symbols), 'splits.txt')):
-        m = re.match(r'(\S+)\.\w+:$', line)
-        if m:
-            unit = m[1]
-            continue
-        m = re.match(r'\s+(\.\w+)\s+start:0x([0-9A-F]+) end:0x([0-9A-F]+)', line)
-        if m and unit:
-            extents[(unit, m[1])] = (int(m[2], 16), int(m[3], 16))
+    extents = unit_extents(open(os.path.join(os.path.dirname(args.symbols), 'splits.txt')))
     relocs, skipped = load_relocations(args.objdir, named, extents)
     if not relocs:
         raise SystemExit('no relocations: run the dtk split first')

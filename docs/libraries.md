@@ -12,7 +12,7 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `RuntimeLib` | `Runtime.PPCEABI.H`, `MSL_C.PPCEABI.bare.H` | GC/1.3.2, or GC/1.3 per object | `cflags_runtime` | `runtime` |
 | `DolphinLib` | `dolphin/<library>` | GC/1.2.5n | `cflags_sdk` | `sdk` |
 
-The flags are shown compatible with the target, not established. An MSL object that placed under only one compiler sets that version. The others take the library default, and their import must confirm it.
+The flags are shown compatible with the target, not established. An MSL object that placed under only one compiler sets that version. The others take the library default, and their import must confirm it. Each import also reconfirms a pick that rests on a partial placement: `alloc.c` is GC/1.3 on 2 of its 34 functions.
 
 GC/1.2.5n writes `.comment` version 8 (compiler 2.3.0.1). GC/1.3 and GC/1.3.2 both write version 10 (2.4.2.1), which is the project default (`mw_comment_version`). The SDK units therefore carry `comment:8` in `splits.txt`.
 
@@ -22,11 +22,11 @@ Library headers declare only what the reconstructed units use, as game headers d
 
 | Path | Holds |
 | --- | --- |
-| `include/dolphin/` | Dolphin SDK public headers under the SDK's names (`dolphin/os.h`, `dolphin/gx.h`, ...). `dolphin/types.h` holds the SDK's base types. |
-| `include/libc/` | MSL C headers (`string.h`, `stdlib.h`, ...), shared with game code |
-| `src/<library>/` | Private headers of one library, next to its source |
+| `include/dolphin/` | Planned: Dolphin SDK public headers under the SDK's names, created by the first import that needs each one. The SDK's base types go in `dolphin/types.h`. |
+| `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`) |
+| `src/<library>/` | Planned: private headers of one library, next to its source |
 
-Library code includes `dolphin/types.h` and uses the SDK's type names. Game code keeps `types.h`.
+Library code uses the SDK's type names. Game code keeps `types.h`.
 
 When an import needs a declaration:
 
@@ -38,6 +38,5 @@ When an import needs a declaration:
 
 - Every function copied from an upstream is reviewed against this project's standards, whichever repository it comes from. A match in an upstream is evidence that the code exists, not that its source is acceptable.
 - Check the upstream's licence at the pinned commit, and the licence of any code that the upstream itself reused.
-- Hand-written assembly is accepted only where the original was assembly. Each such function needs an evidence row showing that no compiler emits it.
+- Originally handwritten assembly needs provenance (CONTRIBUTING.md, "Compiler versions and flags"). A library function may be linked as assembly only when the original was assembly, shown for example by the upstream library's `.s` source or by a function the SDK or MetroTRK writes as an `asm` block. A failed match is never evidence of assembly. Each such function also needs an evidence row showing that no compiler emits it, as the project owner decided for library assembly in the [project thread](https://claude.ai/code/project/chan_01QkNwcF45G3H1oTyFuyjMUG?thread=cmsg_01QkNwcF45G3H1oTyFuyjMUGDU1943Sn3o3j72V6XbAHEg). `asm` blocks in C source that the compiler builds are compiled source, not this exception.
 - Map the unit's data sections when its source compiles, and record them in `evidence.tsv`.
-- RenderWare source comes only from what the target and public, licensed references establish. Leaked RenderWare source is never used.

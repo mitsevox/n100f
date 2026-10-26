@@ -257,7 +257,8 @@ cflags_sdk = [
 # MetroTRK profile ("trk").
 cflags_trk = [
     *[f for f in cflags_base if f not in (*_lib_drop, "-inline auto", '-pragma "cats off"',
-                                          '-pragma "warn_notinlined off"', "-maxerrors 1")],
+                                          '-pragma "warn_notinlined off"', "-maxerrors 1",
+                                          "-DNDEBUG=1")],
     "-use_lmw_stmw on",
     "-common off",
     "-inline auto,deferred",
