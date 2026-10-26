@@ -5,6 +5,14 @@
 
 #include <string.h>
 
+struct st_SERIAL_CLIENTINFO
+{
+    U32 idtag;
+    S32* membuf;
+    S32 trueoff;
+    S32 actsize;
+};
+
 struct st_XSERIAL_DATA_PRIV
 {
     S32 flg_info;
@@ -18,11 +26,9 @@ struct st_XSERIAL_DATA_PRIV
 static S32 g_serinit;
 static st_XSERIAL_DATA_PRIV g_xserdata = { 0, NULL, 0, NULL, NULL, NULL };
 
-static S32 g_tbl_onbit[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static S32 g_tbl_onbit[32] = { 0 };
 
-static S32 g_tbl_clear[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static S32 g_tbl_clear[32] = { 0 };
 
 static void xSER_init_tables();
 static void xSER_init_buffers(S32 count, st_SERIAL_PERCID_SIZE* sizeinfo);
@@ -84,9 +90,9 @@ static S32 xSER_xsgclt_ldproc_ver(void*, st_XSAVEGAME_DATA* xsg, st_XSAVEGAME_RE
 static S32 xSER_xsgclt_svinfo_clt(void* cltdata, st_XSAVEGAME_DATA*, S32* cur_space,
                                   S32* max_fullgame)
 {
-    // bfbb's raw offset, kept verbatim: +0xC of the client data (lwz 0xc(r3) in the target).
-    *cur_space = *(S32*)((S32)cltdata + 12);
-    *max_fullgame = *(S32*)((S32)cltdata + 12);
+    st_SERIAL_CLIENTINFO* clt = (st_SERIAL_CLIENTINFO*)cltdata;
+    *cur_space = clt->actsize;
+    *max_fullgame = clt->actsize;
     return 1;
 }
 

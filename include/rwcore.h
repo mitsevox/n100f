@@ -3,7 +3,8 @@
 
 #include "types.h"
 
-// RenderWare types are opaque until code that accesses their members is reconstructed.
+// RenderWare types get members once reconstructed code accesses them or a declared type
+// embeds them; the others stay opaque.
 struct RwLLLink
 {
     RwLLLink* next;
@@ -37,6 +38,19 @@ struct RwRGBAReal
     F32 green;
     F32 blue;
     F32 alpha;
+};
+
+struct RwV3d
+{
+    F32 x;
+    F32 y;
+    F32 z;
+};
+
+struct RwBBox
+{
+    RwV3d sup;
+    RwV3d inf;
 };
 
 struct RwRGBA

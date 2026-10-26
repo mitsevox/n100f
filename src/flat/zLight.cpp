@@ -41,9 +41,9 @@ void zLightResolveLinks()
     }
 }
 
-static inline void zLightDestroy(_zLight* param_1)
+static inline void zLightDestroy(_zLight* zl)
 {
-    iLightDestroy(&param_1->light);
+    iLightDestroy(&zl->light);
 }
 
 void zLightDestroyAll()
@@ -57,18 +57,18 @@ void zLightDestroyAll()
     sLightTotal = 0;
 }
 
-static inline void zLightReset(_zLight* param_1)
+static inline void zLightReset(_zLight* zl)
 {
-    xBaseReset(param_1, param_1->tasset);
-    param_1->flags = 0;
-    if (param_1->tasset->lightFlags & 0x20)
+    xBaseReset(zl, zl->tasset);
+    zl->flags = 0;
+    if (zl->tasset->lightFlags & 0x20)
     {
-        param_1->flags = param_1->flags | 1;
+        zl->flags = zl->flags | 1;
     }
-    zLightEffectSet(param_1, param_1->tasset->lightEffect);
+    zLightEffectSet(zl, zl->tasset->lightEffect);
 }
 
-S32 zLightEventCB(xBase* param_1, xBase* to, U32 toEvent, F32* param_4, xBase* param_5)
+S32 zLightEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b)
 {
     _zLight* t = (_zLight*)to;
     switch (toEvent)
@@ -101,8 +101,7 @@ void zLightAddLocalEnv()
     for (int i = 0; i < sLightTotal; i++)
     {
         _zLight* zlight = sLight[i];
-        // bfbb's precedence quirk, kept verbatim: 1 != 0 binds first, so this tests bit 0.
-        if ((zlight->flags & 1 != 0) && (zlight->tasset->lightFlags & 8))
+        if ((zlight->flags & 1) && (zlight->tasset->lightFlags & 8))
         {
             iLight* light = &zlight->light;
             iLightEnv(light, 1);

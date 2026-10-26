@@ -1,9 +1,7 @@
 #ifndef XEVENT_H
 #define XEVENT_H
 
-// Only the events the reconstructed code compares against. The values come
-// from the target; the names follow bfbb, since the reference DWARF has no
-// event enumeration.
+// Partial: only the events reconstructed code uses.
 enum en_xEventTags
 {
     eEventReset = 10,

@@ -3,7 +3,8 @@
 
 #include <rwcore.h>
 
-// RenderWare types are opaque until code that accesses their members is reconstructed.
+// RenderWare types get members once reconstructed code accesses them or a declared type
+// embeds them; the others stay opaque.
 struct RpAtomic;
 struct RpMaterial;
 struct RpSector;
@@ -23,8 +24,7 @@ struct RpMaterialList
     S32 space;
 };
 
-// Members past directionalLightList are not declared: the PS2 DWARF has
-// surfaceProps at +0x68, which bfbb's GameCube RenderWare headers lack.
+// Partial: members from +0x68 on are not declared, so sizeof(RpWorld) is not its size.
 struct RpWorld
 {
     RwObject object;
@@ -38,6 +38,8 @@ struct RpWorld
     RwLinkList clumpList;
     RwLinkList lightList;
     RwLinkList directionalLightList;
+    RwV3d worldOrigin;
+    RwBBox boundingBox;
 };
 
 struct RpLight

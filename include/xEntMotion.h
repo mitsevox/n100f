@@ -21,7 +21,8 @@ struct p2EntMotionMechData
     F32 post_ret_delay;
 };
 
-// Only the mech member of the motion-data union is declared.
+// Partial: only the mech member of the union is declared, so sizeof(p2EntMotionAsset)
+// is not its size.
 struct p2EntMotionAsset
 {
     U8 type;
@@ -50,9 +51,8 @@ struct _xEntMechData
     F32* rotptr;
 };
 
-// The GameCube code reaches the union at +0x14, where the PS2 DWARF puts it
-// at +0x20. Only the mech member is declared, and the members after the
-// union (owner, target) are left out until their GameCube offsets are known.
+// Partial: only the mech member of the union is declared and the members after it are
+// left out, so sizeof(_xEntMotion) is not its size.
 struct _xEntMotion
 {
     p2EntMotionAsset* asset;
