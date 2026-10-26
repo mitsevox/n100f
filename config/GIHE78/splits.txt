@@ -38,6 +38,9 @@ flat/iDebug.cpp:
 	.bss        start:0x801DF548 end:0x801DF648
 	.sbss       start:0x8025E890 end:0x8025E898
 
+flat/iDraw.cpp:
+	.text       start:0x80009CC0 end:0x80009CCC
+
 flat/iEnv.cpp:
 	.text       start:0x80009CCC end:0x8000A408
 	.sdata      start:0x8025E3E8 end:0x8025E3F8
@@ -87,7 +90,7 @@ flat/iMorph.cpp:
 	.sdata2     start:0x8025FA38 end:0x8025FA48
 
 flat/iParMgr.cpp:
-	.text       start:0x8000FB40 end:0x80011B2C
+	.text       start:0x8000FB40 end:0x80011B30
 	.data       start:0x801AD470 end:0x801AD498
 	.bss        start:0x801E6B98 end:0x801E6D60
 	.sdata2     start:0x8025FA68 end:0x8025FA98
@@ -207,9 +210,11 @@ flat/xFont.cpp:
 	.sdata2     start:0x8025FF20 end:0x8025FF58
 
 flat/xFX.cpp:
-	.text       start:0x8002A73C end:0x8002B4D8
+	.text       start:0x8002A460 end:0x8002B4D8
 	.rodata     start:0x80193698 end:0x801936B0
-	.bss        start:0x801FFB40 end:0x801FFC00
+	.bss        start:0x801FFA40 end:0x801FFC00
+	.sdata      start:0x8025E438 end:0x8025E480
+	.sbss       start:0x8025EA80 end:0x8025EAB0
 	.sdata2     start:0x8025FF58 end:0x8025FF90
 
 flat/xhipio.cpp:
@@ -233,6 +238,10 @@ flat/xMath3.cpp:
 	.rodata     start:0x801936B0 end:0x80193730
 	.data       start:0x801AEE28 end:0x801AEE38
 	.sdata2     start:0x80260008 end:0x80260048
+
+flat/xMemMgr.cpp:
+	.text       start:0x8002F920 end:0x800300A8
+	.bss        start:0x801FFC00 end:0x801FFE08
 
 flat/xModel.cpp:
 	.text       start:0x800301A4 end:0x80030F28
@@ -337,8 +346,9 @@ flat/xstransvc.cpp:
 flat/xString.cpp:
 	.text       start:0x80040978 end:0x80040EE4
 
-flat/xTRC.cpp:
-	.text       start:0x80044714 end:0x80044780
+flat/xSurface.cpp:
+	.text       start:0x80040EE4 end:0x80040FCC
+	.sbss       start:0x8025EBD0 end:0x8025EBD8
 
 flat/xutil.cpp:
 	.text       start:0x80044780 end:0x80044C44
