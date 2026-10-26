@@ -249,11 +249,40 @@ cflags_rel = [
     "-sdata2 0",
 ]
 
-# TO_VERIFY: template default. Establish the linker and compiler versions from target evidence.
+# Game code profile: CodeWarrior for GameCube 1.3.2 (mwcceppc 2.4.2 build 81).
+# Evidence: compiler rows in config/GIHE78/evidence.tsv and docs/compiler_profile/.
+cflags_game = [
+    *[f for f in cflags_base if f not in ("-O4,p", "-inline auto", "-str reuse")],
+    "-O4,s",
+    "-inline auto,deferred",
+    "-lang=c++",
+    "-char signed",
+    "-common on",
+    "-str reuse,pool,readonly",
+    "-use_lmw_stmw on",
+    '-pragma "cpp_extensions on"',
+    "-gccinc",
+]
+
+# Same release as the game compiler. Every mwld from GC/1.0 to 2.6 relinks the baseline
+# identically, so the target does not independently establish the linker version.
 config.linker_version = "GC/1.3.2"
 
 
-# Helper function for Dolphin libraries
+# Helper function for Heavy Iron game libraries
+def GameLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
+    return {
+        "lib": lib_name,
+        "mw_version": "GC/1.3.2",
+        "cflags": cflags_game,
+        "progress_category": "game",
+        "objects": objects,
+    }
+
+
+# Helper function for Dolphin libraries. GC/1.2.5n is supported by SDK units (evidence.tsv).
+# TO_VERIFY: cflags_base is the template default; the SDK evidence was gathered with bfbb's
+# SDK flags (docs/compiler_profile/sdk.flags), which are compatible but not established.
 def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,

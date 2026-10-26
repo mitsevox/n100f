@@ -1,0 +1,9 @@
+# Probe flags for bfbb's Dolphin SDK sources (bfbb's cflags_dolphin without -gccinc,
+# which GC/1.2.5 and 1.2.5n reject).
+-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off
+-inline auto -pragma "cats off" -pragma "warn_notinlined off"
+-maxerrors 1 -nosyspath -RTTI off -multibyte
+-i include -i src/PowerPC_EABI_Support/include -i src/dolphin/include -i src/dolphin/src
+-i src/bink/include -i src/bink/src -i src
+-DNDEBUG=1 -W off
+-lang=c -fp fmadd -fp_contract off -char signed -str reuse -common off -O4,p
