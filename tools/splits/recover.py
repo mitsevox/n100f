@@ -27,8 +27,6 @@ import re
 import struct
 import sys
 
-GAME_END = 0x800D8000  # first GC-only platform code after zVolume
-CTORS = 0x8018E5C0
 DATA_SECTIONS = ['.rodata', '.data', '.bss', '.sdata', '.sbss', '.sdata2', '.sbss2']
 DATA_ALIGN = 8
 PS2_ONLY = ('p2', 'ps2', 'fakeprintf', 'crt0', 'gcc_wrapper', 'ctbsp', 'ctgeom', 'ctworld',
@@ -90,8 +88,9 @@ def load_symbols(path):
         if not m:
             continue
         size = re.search(r'size:0x([0-9A-F]+)', m[4])
+        kind = re.search(r'data:(\w+)', m[4])
         out.append((int(m[3], 16), int(size[1], 16) if size else 0, m[2], m[1],
-                    'type:function' in m[4]))
+                    'type:function' in m[4], kind[1] if kind else None))
     out.sort()
     return out
 
@@ -101,7 +100,7 @@ def load_relocations(objdir):
 
     dtk names local labels <prefix>_<ADDR>, so each section's load address follows
     from any such symbol's value."""
-    out = []
+    out, skipped = [], 0
     for path in sorted(glob.glob(os.path.join(objdir, '**', '*.o'), recursive=True)):
         raw = open(path, 'rb').read()
         shoff, = struct.unpack_from('>I', raw, 0x20)
@@ -128,6 +127,7 @@ def load_relocations(objdir):
                 continue
             bases = base.get(s[7])
             if not bases or len(bases) != 1:
+                skipped += 1
                 continue
             b, = bases
             for k in range(s[5] // 12):
@@ -135,7 +135,7 @@ def load_relocations(objdir):
                 m = re.search(r'_([0-9A-F]{8})$', syms[info >> 8][0])
                 if m:
                     out.append((b + off, int(m[1], 16) + addend))
-    return out
+    return out, skipped
 
 
 class Ps2:
@@ -305,6 +305,8 @@ def main():
     ap.add_argument('--dwarf', default='references/Scooby-Doo Night of 100 Frights/SLUS-20349/symbols/dwarf_functions.tsv')
     ap.add_argument('--symbols', default='config/GIHE78/symbols.txt')
     ap.add_argument('--objdir', default='build/GIHE78/obj', help='objects from a dtk split of the DOL')
+    ap.add_argument('--game-end', type=lambda x: int(x, 0), default=0x800D8000,
+                    help='end of the game block; GC-only platform code follows zVolume (strings FMV/cin, Tide)')
     ap.add_argument('--prefix', default='flat/')
     ap.add_argument('--splits', required=True, help='write the unit entries here')
     ap.add_argument('--edges', required=True, help='write the edge report (TSV) here')
@@ -330,7 +332,7 @@ def main():
         i = bisect.bisect_right(daddr, a) - 1
         return i if i >= 0 else None
 
-    relocs = load_relocations(args.objdir)
+    relocs, skipped = load_relocations(args.objdir)
     if not relocs:
         raise SystemExit('no relocations: run the dtk split first')
     func_targets = collections.defaultdict(list)
@@ -356,63 +358,100 @@ def main():
     shared = [i for i, f in enumerate(ps2.funcs)
               if not f[3].startswith(PS2_ONLY) and not f[3].endswith('.h')]
     shared.sort(key=lambda i: (ps2.funcs[i][3].lower(), ps2.funcs[i][0]))
-    game = [j for j, f in enumerate(funcs) if f[0] < GAME_END]
+    game = [j for j, f in enumerate(funcs) if f[0] < args.game_end]
     gpos = {j: k for k, j in enumerate(game)}
     spos = {i: k for k, i in enumerate(shared)}
     pins = {spos[i]: gpos[g] for i, g in seeds.items() if i in spos and g in gpos}
     pairs = align([ps2.funcs[i][1] for i in shared], [funcs[j][1] for j in game], pins)
 
-    core, anchored = {}, collections.Counter()
+    core, anchored, first_anchor = {}, collections.Counter(), {}
     seeded = set(seeds.values())
     for a, b in pairs:
         unit, g = ps2.funcs[shared[a]][3], game[b]
         lo, hi = core.get(unit, (g, g))
         core[unit] = (min(lo, g), max(hi, g))
-        if g in seeded:
+        if g in seeded and seeds.get(shared[a]) == g:
             anchored[unit] += 1
+            first_anchor.setdefault(unit, (g, shared[a]))
     order = sorted(core, key=lambda u: core[u][0])
     for u, v in zip(order, order[1:]):
         if core[u][1] >= core[v][0]:
             raise SystemExit(f'units overlap: {u} {v}')
 
-    def owned(lo, hi, sec):
-        return {d for f in range(lo, hi + 1) for d in func_data[f] if data[d][2] == sec}
+    def owned(lo, hi, sec, skip=()):
+        return {d for f in range(lo, hi + 1) if f not in skip
+                for d in func_data[f] if data[d][2] == sec}
 
-    # Text cuts: the split k (A owns ..k) with the fewest data references crossing
-    # the cuts implied by each neighbour's own data.
-    tstart, tend, tclass = {order[0]: core[order[0]][0]}, {order[-1]: core[order[-1]][1]}, {}
+    # .ctors entries point at static initialisers, which MW emits last in their unit.
+    ctors_base = next(s[0] for s in syms if s[3] == '_ctors')
+    ctors = []
+    while dol.u32(ctors_base + 4 * len(ctors)):
+        ctors.append((ctors_base + 4 * len(ctors), dol.u32(ctors_base + 4 * len(ctors))))
+    sinit = {fidx(t) for _, t in ctors}
+
+    # Text cuts.  Around each edge, up to eight functions on either side may move.
+    # A cut k (A owns ..k) is scored by the references that land on the wrong side
+    # of the best data cut in each section: a function on B's side loading A's
+    # data, or the reverse.  .sdata2 literals are unit-local, so they decide most
+    # edges.  Moving an anchor across the cut costs three references.
+    tstart, tend, tclass, tconf = {order[0]: core[order[0]][0]}, {order[-1]: core[order[-1]][1]}, {}, {}
     for A, B in zip(order, order[1:]):
-        lo, hi = core[A][1], core[B][0]
-        if hi - lo == 1:
-            tend[A], tstart[B], tclass[(A, B)] = lo, hi, 'adjacent anchors'
-            continue
-        span = range(core[A][0], core[B][1] + 1)
-        scores = []
-        for k in range(lo, hi):
-            total = 0
-            for sec in DATA_SECTIONS:
-                a, b = owned(*core[A], sec), owned(*core[B], sec)
-                if not a or not b or max(a) >= min(b):
-                    continue
-                window = range(max(a) + 1, min(b))
-                cands = [d for d in list(window) + [min(b)] if data[d][0] % DATA_ALIGN == 0] or [min(b)]
-                total += min(sum(1 for f in span for d in func_data[f]
-                                 if d in window and ((f <= k and d >= c) or (f > k and d < c)))
-                             for c in cands)
-            scores.append((total, k))
-        best = min(s for s, _ in scores)
-        ks = [k for s, k in scores if s == best]
-        if len(ks) == 1:
-            tend[A], tstart[B] = ks[0], ks[0] + 1
-            tclass[(A, B)] = 'data references'
+        # each unit lends its first half to the edge before it and its second half to the edge after
+        wlo = max(tstart[A], core[A][1] - 8, (core[A][0] + core[A][1] + 1) // 2)
+        whi = min(core[B][0] + 8, (core[B][0] + core[B][1]) // 2)
+        window = set(range(wlo, whi + 1))
+        span = set(range(core[A][0], core[B][1] + 1))
+        sides = []
+        for sec in DATA_SECTIONS:
+            a = owned(core[A][0], core[A][1], sec, window)
+            b = owned(core[B][0], core[B][1], sec, window)
+            if a and b and max(a) >= min(b):
+                continue
+            # items only this edge's functions load; a single cut must separate A's from B's
+            local = {d for f in window for d in func_data[f]
+                     if data[d][2] == sec and data_users[d] <= span}
+            local = {d for d in local if (not a or d > max(a)) and (not b or d < min(b))}
+            if local:
+                cands = sorted(local | ({min(b)} if b else {max(local) + 1}))
+                sides.append((sec, a, b, cands))
+
+        def crossings(k):
+            # an anchor moved to the other unit costs as much as three crossing references
+            n = 3 * sum(1 for f in window if f in seeded and ((f <= k) != (f <= core[A][1])))
+            for sec, a, b, cands in sides:
+                n += min(sum(1 for f in window for d in func_data[f] if data[d][2] == sec
+                             and ((f > k and (d < c or d in a)) or (f <= k and (d >= c or d in b))))
+                         for c in cands)
+            return n
+
+        ks = range(max(wlo - 1, tstart[A]), min(whi, core[B][1] - 1) + 1)
+        forced = [k for k in ks if k in sinit]
+        scores = {k: crossings(k) for k in (forced or ks)}
+        best = min(scores.values())
+        ties = sorted(k for k, v in scores.items() if v == best)
+        aligned_cut = core[A][1] if core[B][0] - core[A][1] == 1 else None
+        if forced and len(ties) == 1:
+            cut, cls = ties[0], 'static initialiser ends unit'
+        elif len(ties) == 1:
+            cut, cls = ties[0], 'single cut by data references'
+        elif aligned_cut in ties:
+            cut, cls = aligned_cut, f'alignment only ({len(ties)} cuts tie on data)'
         else:
-            tend[A], tstart[B] = lo, hi
-            tclass[(A, B)] = f'open: {hi - lo - 1} unassigned functions'
+            cut, cls = None, f'open: {ties[-1] - ties[0]} unassigned functions'
+        if cut is None:
+            tend[A], tstart[B] = ties[0], ties[-1] + 1
+        else:
+            tend[A], tstart[B] = cut, cut + 1
+        tclass[(A, B)], tconf[(A, B)] = cls, best
 
     unit_of = {f: u for u in order for f in range(tstart[u], tend[u] + 1)}
     users = {d: {unit_of.get(f) for f in fs} for d, fs in data_users.items()}
 
+    def aligned(d):
+        return data[d][0] % DATA_ALIGN == 0
+
     # Data cuts between consecutive units that own unit-local items in a section.
+    # Items that unassigned functions load stay out of every unit.
     ranges, dclass = {}, {}
     for sec in DATA_SECTIONS:
         seq = []
@@ -430,18 +469,46 @@ def main():
                     break
         for u, mn, mx, _ in seq:
             end = data[mx + 1][0] if mx + 1 < len(data) and data[mx + 1][2] == sec else data[mx][0] + data[mx][1]
-            ranges[(u, sec)] = [data[mn][0], end]
+            ranges[(u, sec)] = [mn, end]
         for (u, _, mx, _), (v, mn, _, _) in zip(seq, seq[1:]):
-            window = range(mx + 1, mn)
-            cands = [d for d in range(mx + 1, mn + 1) if data[d][0] % DATA_ALIGN == 0] or [mn]
-            scored = [(sum(1 for d in window for w in users.get(d, ())
-                           if (w == u and d >= c) or (w == v and d < c)), c) for c in cands]
-            best = min(s for s, _ in scored)
-            cs = [c for s, c in scored if s == best]
-            ranges[(u, sec)][1] = data[cs[0]][0]
-            ranges[(v, sec)][0] = data[cs[-1]][0]
-            dclass[(u, v, sec)] = ('single aligned candidate' if len(cs) == 1
-                                   else f'open: {len(cs)} aligned candidates', best)
+            between = range(mx + 1, mn)
+            floating = [d for d in between if None in users.get(d, ())]
+            lo_c = min(floating) if floating else mn          # A may end no later than here
+            hi_c = max(floating) + 1 if floating else mx + 1  # B may start no earlier than here
+            cands = [d for d in range(mx + 1, mn + 1) if aligned(d)]
+            a_end = [c for c in cands if c <= lo_c]
+            b_start = [c for c in cands if c >= hi_c]
+            if not floating:
+                scored = {c: sum(1 for d in between for w in users.get(d, ())
+                                 if (w == u and d >= c) or (w == v and d < c)) for c in cands}
+                best = min(scored.values()) if scored else 0
+                ties = [c for c in cands if scored[c] == best]
+                a_end, b_start = ties[:1], ties[-1:]
+            else:
+                best = 0
+            ranges[(u, sec)][1] = data[a_end[0]][0] if a_end else None
+            ranges[(v, sec)][0] = b_start[-1] if b_start else None
+            if floating:
+                cls = f'open: {len(floating)} items loaded by unassigned functions'
+            elif len(a_end) == 1 and a_end == b_start:
+                cls = 'single aligned candidate'
+            else:
+                cls = f'open: {b_start[-1] - a_end[0] + 1 if a_end and b_start else 0} items between aligned candidates'
+            dclass[(u, v, sec)] = (cls, best)
+
+    # A section range is written only if it starts on an aligned symbol and ends
+    # at a known edge; anything else stays in dtk's automatic objects.
+    final = {}
+    for (u, sec), (mn, end) in ranges.items():
+        if mn is None or end is None:
+            continue
+        if not aligned(mn):
+            back = [d for d in range(mn - 1, -1, -1) if data[d][2] == sec and aligned(d)]
+            if not back or any(users.get(d) and users[d] != {u} for d in range(back[0], mn)):
+                continue
+            mn = back[0]
+        if data[mn][0] < end:
+            final[(u, sec)] = (data[mn][0], end)
 
     ps2_count = collections.Counter(ps2.funcs[i][3] for i in shared)
 
@@ -453,7 +520,38 @@ def main():
             return 'count-match'
         return 'weak'
 
-    ctors = [(CTORS + 4 * k, dol.u32(CTORS + 4 * k)) for k in range(8)]
+    # Target-only checks on the result.  MW pools .sdata2 literals per unit, so
+    # no function may load a literal inside another unit's .sdata2 range (a global
+    # const in .sdata2 would break this; none has turned up).  As advice only, a
+    # unit range holding the same float twice is reported: pooled literals are
+    # merged, but a named static const is not merged with a literal.
+    emitted = [u for u in order if status(u) != 'weak']
+    text_owner = {f: u for u in emitted for f in range(tstart[u], tend[u] + 1)}
+    sd_owner = {}
+    for u in emitted:
+        if (u, '.sdata2') in final:
+            lo, hi = final[(u, '.sdata2')]
+            for d, item in enumerate(data):
+                if item[2] == '.sdata2' and lo <= item[0] < hi:
+                    sd_owner[d] = u
+    locality = [(f, d) for d, fs in data_users.items() if d in sd_owner
+                for f in fs if text_owner.get(f) != sd_owner[d]]
+    duplicates = []
+    for u in emitted:
+        seen = {}
+        for d in sorted(d for d, o in sd_owner.items() if o == u):
+            if data[d][5] in ('float', 'double'):
+                key = dol.read(data[d][0], data[d][1])
+                if key in seen:
+                    duplicates.append((seen[key], d))
+                seen[key] = d
+    for f, d in locality:
+        print(f'check: 0x{funcs[f][0]:08X} ({text_owner.get(f) or "unassigned"}) loads '
+              f'0x{data[d][0]:08X} in {sd_owner[d]} .sdata2', file=sys.stderr)
+    for a, b in duplicates:
+        print(f'advice: {sd_owner[a]} .sdata2 holds the float at 0x{data[a][0]:08X} '
+              f'again at 0x{data[b][0]:08X}', file=sys.stderr)
+
     with open(args.splits, 'w') as out:
         for u in order:
             if status(u) == 'weak':
@@ -461,30 +559,37 @@ def main():
             lo, hi = funcs[tstart[u]][0], funcs[tend[u]][0] + funcs[tend[u]][1]
             out.write(f'\n{args.prefix}{u}:\n\t.text       start:0x{lo:08X} end:0x{hi:08X}\n')
             for slot, target in ctors:
-                if target and lo <= target < hi:
+                if lo <= target < hi:
                     out.write(f'\t.ctors      start:0x{slot:08X} end:0x{slot + 4:08X}\n')
             for sec in DATA_SECTIONS:
-                r = ranges.get((u, sec))
-                if r and r[0] < r[1]:
+                r = final.get((u, sec))
+                if r:
                     out.write(f'\t{sec:<11} start:0x{r[0]:08X} end:0x{r[1]:08X}\n')
     with open(args.edges, 'w') as out:
-        out.write('section\tleft_unit\tright_unit\tedge\tclass\tconflicts\n')
+        out.write('section\tleft_unit\tright_unit\tleft_end\tright_start\tclass\tcrossing_refs\n')
         for A, B in zip(order, order[1:]):
-            if 'weak' in (status(A), status(B)):
-                continue
-            out.write(f'.text\t{A}\t{B}\t0x{funcs[tstart[B]][0]:08X}\t{tclass[(A, B)]}\t0\n')
-        kept = [(k, c) for k, c in dclass.items() if 'weak' not in (status(k[0]), status(k[1]))]
-        for (u, v, sec), (cls, conflicts) in sorted(kept, key=lambda kv: (kv[0][2], ranges[(kv[0][1], kv[0][2])][0])):
-            out.write(f'{sec}\t{u}\t{v}\t0x{ranges[(v, sec)][0]:08X}\t{cls}\t{conflicts}\n')
+            note = ''.join(f'; {w} left unsplit' for w in (A, B) if status(w) == 'weak')
+            out.write(f'.text\t{A}\t{B}\t0x{funcs[tend[A]][0] + funcs[tend[A]][1]:08X}\t'
+                      f'0x{funcs[tstart[B]][0]:08X}\t{tclass[(A, B)]}{note}\t{tconf[(A, B)]}\n')
+        for (u, v, sec), (cls, conflicts) in sorted(dclass.items(), key=lambda kv: (kv[0][2], order.index(kv[0][0]))):
+            a = final.get((u, sec)) if status(u) != 'weak' else None
+            b = final.get((v, sec)) if status(v) != 'weak' else None
+            out.write(f'{sec}\t{u}\t{v}\t{"0x%08X" % a[1] if a else "-"}\t{"0x%08X" % b[0] if b else "-"}\t'
+                      f'{cls if a and b else cls + "; a side left unsplit"}\t{conflicts}\n')
     if args.units:
         with open(args.units, 'w') as out:
-            out.write('unit\ttext_start\ttext_end\tgc_functions\tps2_functions\tanchors\tstatus\n')
+            out.write('unit\ttext_start\ttext_end\tgc_functions\tps2_functions\tanchors\tfirst_anchor\tstatus\n')
             for u in order:
+                fa = first_anchor.get(u)
+                fa = f'0x{funcs[fa[0]][0]:08X}={ps2.funcs[fa[1]][2]}' if fa else '-'
                 out.write(f'{u}\t0x{funcs[tstart[u]][0]:08X}\t0x{funcs[tend[u]][0] + funcs[tend[u]][1]:08X}\t'
-                          f'{tend[u] - tstart[u] + 1}\t{ps2_count[u]}\t{anchored[u]}\t{status(u)}\n')
-    print(f'anchors {len(seeds)}, aligned {len(pairs)}, units {len(order)} '
-          f'({sum(status(u) != "weak" for u in order)} emitted), '
-          f'data edges {len(dclass)}', file=sys.stderr)
+                          f'{tend[u] - tstart[u] + 1}\t{ps2_count[u]}\t{anchored[u]}\t{fa}\t{status(u)}\n')
+    print(f'relocations {len(relocs)} ({skipped} relocation sections skipped), anchors {len(seeds)}, '
+          f'aligned {len(pairs)}, units {len(order)} ({sum(status(u) != "weak" for u in order)} emitted), '
+          f'data edges {len(dclass)}; .sdata2 locality violations {len(locality)}, '
+          f'repeated floats {len(duplicates)} (advice)', file=sys.stderr)
+    if locality:
+        sys.exit(1)
 
 
 if __name__ == '__main__':
