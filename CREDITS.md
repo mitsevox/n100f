@@ -46,9 +46,23 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 
 `include/xMorph.h` follows bfbb's `xMorph.h` at the same revision, with `xVec3` taken from the PS2 DWARF, where the type is `_xVec3`. Its structure layouts match the SLUS-20349 DWARF. `include/xBase.h`, `xClimate.h`, `xIni.h`, `xMath3.h`, `xordarray.h`, `xPar.h`, `xScrFx.h`, `xserializer.h`, `xString.h`, `zMenu.h`, `iAnim.h`, `iCamera.h`, `iEnv.h`, `xAnim.h`, `xMemMgr.h`, `xMovePoint.h`, `xShadow.h`, `xstransvc.h`, `xSurface.h`, `zScene.h`, `zSurface.h`, `iLight.h`, `xEntMotion.h`, `xEvent.h`, `xFColor.h`, `xFFX.h`, `xsavegame.h`, `xutil.h`, `zCounter.h`, `zFog.h`, `zGust.h`, `zLight.h`, `zVolume.h`, `iFile.h`, `iMath.h`, `xbinio.h`, `xhipio.h` and `xpkrsvc.h` declare only what those units use, with layouts from the SLUS-20349 DWARF. `xEvent.h` declares only the four events the code compares against, with bfbb's names and the target's values. `include/rwcore.h` and `rpworld.h` declare the RenderWare calls those units make; `RpLight`, `RwLLLink`, `RwLinkList`, `RwObject`, `RwObjectHasFrame`, `RwRGBA`, `RwRGBAReal`, `RpMaterialList`, `RwV3d`, `RwBBox` and the members of `RpWorld` up to `boundingBox` follow the DWARF, which agrees there with bfbb's GameCube RenderWare headers, and the other RenderWare types stay opaque.
 
+## Library source
+
+`src/Runtime.PPCEABI.H/runtime.c` is [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4/blob/5b01c79b4910525e3fc5aa312eddd6d014e7f337/src/Runtime.PPCEABI.H/runtime.c)'s `src/Runtime.PPCEABI.H/runtime.c` at revision `5b01c79b4910525e3fc5aa312eddd6d014e7f337` (CC0 1.0). marioparty4 imported that file from [zeldaret/tp](https://github.com/zeldaret/tp) (marioparty4 commit `faacc23`, "Imported some runtime libraries", 2024-11-19); tp is CC0 1.0 at its last revision before that import, `2159eac680836de5dba2e0a987f83b7262f07180`. Local changes:
+
+- No `dolphin.h` include, so `__constants` and `__cvt_fp2unsigned` use C types.
+- The address comments are dropped, and the comment above the register macros is reworded.
+- The labels of `__cvt_sll_flt` are renamed from addresses to their roles.
+
+`src/Runtime.PPCEABI.H/__va_arg.c` and `global_destructor_chain.c` follow [zeldaret/tww](https://github.com/zeldaret/tww/tree/02de6b772d06b2ed15bbe7b25d01901fdca84966/src/PowerPC_EABI_Support/Runtime/Src)'s files of the same names at revision `02de6b772d06b2ed15bbe7b25d01901fdca84966` (CC0 1.0). Local changes:
+
+- C types replace the SDK's (`long` for `s32`, `unsigned long` for `u32`), the code is reformatted, and `__va_arg.c` drops tww's `#undef __va_arg`.
+- The va_list type comes from `include/libc/stdarg.h`, which declares tww's `__va_list_struct` directly instead of following tww's `__va_arg.h`.
+- `global_destructor_chain.c` defines `DestructorChain` and tww's `DTORCALL` macro (from tww's `NMWException.h`) itself, with a comment on the -1 argument.
+
 ## Library unit map
 
-`tools/splits/libmap.py` compiles source from the decompilations below, at the revisions pinned in `config/GIHE78/libmap.json`, only to locate and name library code in the target; none of that source is in this repository. The names libmap applies come only from the symbol lists of ac-decomp, tww and FFCC-Decomp, which derive from those games' map or debug files. The Bink names come from bfbb's symbol list ([Bink unit map](#bink-unit-map)). The other library names in `symbols.txt` come from decomp-toolkit's built-in signatures, as rows in `evidence.tsv` record.
+`tools/splits/libmap.py` compiles source from the decompilations below, at the revisions pinned in `config/GIHE78/libmap.json`, only to locate and name library code in the target; libmap itself adds no source to this repository (imported files are listed under Library source). The names libmap applies come only from the symbol lists of ac-decomp, tww and FFCC-Decomp, which derive from those games' map or debug files. The Bink names come from bfbb's symbol list ([Bink unit map](#bink-unit-map)). The other library names in `symbols.txt` come from decomp-toolkit's built-in signatures, as rows in `evidence.tsv` record.
 
 - [ACreTeam/ac-decomp](https://github.com/ACreTeam/ac-decomp), [zeldaret/tww](https://github.com/zeldaret/tww), [zcanann/FFCC-Decomp](https://github.com/zcanann/FFCC-Decomp), [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4), [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb), [bfbbdecomp/tssm](https://github.com/bfbbdecomp/tssm), [projectPiki/pikmin](https://github.com/projectPiki/pikmin), [mitsevox/tw2004](https://github.com/mitsevox/tw2004) and [mitsevox/mvp2005](https://github.com/mitsevox/mvp2005): CC0 1.0.
 - [Jovinull/sonicheroes](https://github.com/Jovinull/sonicheroes): MIT. Its notice must accompany any source imported from it.
