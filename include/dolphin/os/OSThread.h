@@ -18,6 +18,7 @@ struct OSThreadQueue {
 void OSInitThreadQueue(OSThreadQueue* queue);
 void OSSleepThread(OSThreadQueue* queue);
 void OSWakeupThread(OSThreadQueue* queue);
+void OSYieldThread(void);
 
 #ifdef __cplusplus
 }
