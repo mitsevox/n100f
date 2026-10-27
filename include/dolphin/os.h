@@ -17,6 +17,8 @@ typedef u32 OSTick;
 
 extern u32 __OSBusClock AT_ADDRESS(OS_BASE_CACHED | 0x00F8);
 
+extern volatile u32 __PIRegs[] AT_ADDRESS(0xCC003000);
+
 #define OS_BUS_CLOCK __OSBusClock
 #define OS_TIMER_CLOCK (OS_BUS_CLOCK / 4)
 

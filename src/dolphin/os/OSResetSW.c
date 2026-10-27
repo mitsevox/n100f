@@ -6,8 +6,6 @@ extern OSTime __OSStartTime;
 
 u8 GameChoice AT_ADDRESS(OS_BASE_CACHED | 0x30E3);
 
-volatile u32 __PIRegs[12] AT_ADDRESS(0xCC003000);
-
 static OSResetCallback ResetCallback;
 static BOOL Down;
 static BOOL LastState;
