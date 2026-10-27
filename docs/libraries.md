@@ -30,6 +30,7 @@ CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compi
 | `Runtime.PPCEABI.H/global_destructor_chain.c` | GC/1.3.2 (1.3 also matches) | `.dtors`, `.sbss` | C |
 | `Runtime.PPCEABI.H/runtime.c` | GC/1.3.2 (1.3 also matches) | `.rodata` | asm functions, each with an `assembly` row in `evidence.tsv` |
 | `TRK_MINNOW_DOLPHIN/` `mainloop.c`, `nubevent.c`, `nubinit.c`, `msg.c`, `serpoll.c`, `usr_put.c`, `dispatch.c`, `msghndlr.c`, `mutex_TRK.c`, `notify.c`, `mem_TRK.c`, `main_TRK.c`, `targcont.c`, `target_options.c` | GC/1.3 | each unit's `.rodata`, `.data` and `.bss`, as `data` rows in `evidence.tsv` | C |
+| `dolphin/card/*.c` (16 objects) | GC/1.2.5n, `card_debug` flags | `.data`, `.sdata`, `.bss` | C ([CARD](#card)) |
 
 All of them are `Matching` and link byte-identical.
 
@@ -41,7 +42,7 @@ Library headers declare only what the reconstructed units use, as game headers d
 | --- | --- |
 | `include/dolphin/` | Dolphin SDK public headers under the SDK's names (`dolphin/os.h` and its `dolphin/os/*.h` parts, `dolphin/db.h`, `dolphin/si.h`, ...), each created by the first import that needs it. The SDK's base types are in `dolphin/types.h`. |
 | `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`, `stdarg.h`) |
-| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_sdk` for `dolphin/dvd/__dvd.h`, `cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`) |
+| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_sdk` for `dolphin/dvd/__dvd.h`, `cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`, `cflags_card` for `dolphin/card/__card.h`) |
 
 Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types. Game code keeps `types.h`.
 
@@ -57,6 +58,16 @@ When an import needs a declaration:
 - Check the upstream's licence at the pinned commit, and the licence of any code that the upstream itself reused.
 - Originally handwritten assembly needs provenance (CONTRIBUTING.md, "Compiler versions and flags"). A library function may be linked as assembly only when the original library shipped it as assembly, shown by the original library itself (a vendor-shipped `.s` file, for example) or by the target. A decompilation's `.s` file or `asm` block is that project's choice and is never provenance, and a failed match is never evidence of assembly. Each such function also needs an evidence row showing that no compiler emits it, and review checks every one, as the project owner decided for library assembly. `asm` blocks in C source that the compiler builds are compiled source, not this exception.
 - Map the unit's data sections when its source compiles, and record them in `evidence.tsv`. Each section's start is where the target's relocations to it land, at the offsets the compiled object's relocations give. Its end is the compiled size, rounded up to the next object when padding follows. One `data` row per section names the unit and section. Where a data symbol in `symbols.txt` spans the edge, split it there.
+
+## CARD
+
+The CARD source is ac-decomp's, revised against the target (CREDITS.md, "Dolphin SDK"). Points that apply to the debug build:
+
+- `DEBUG=1` selects the SDK's debug `os.h`, where `OSPhysicalToCached` and `OSCachedToPhysical` are functions rather than macros. The target calls them, so `include/dolphin/os.h` declares the function forms under `DEBUG`.
+- An assertion's message is its condition as text, so the spacing inside the condition is part of the target's `.data` (`(u32) card->size`). Do not run `clang-format` over these files: it rewrites those conditions.
+- The sources keep functions the linker strips, such as `CARDFastOpen`. With `-str reuse` the compiler pools each object's strings in order of first use, and a stripped function can be the first user of a string that kept code shares (`CARDFastOpen` asserts `0 <= chan && chan < 2` before `CARDOpen` does), so only the full source reproduces each `.data` section. These functions have no code in the target to check them against.
+- `CardData`, the 352-byte DSP program in `CARDUnlock.c`, is binary data. `config/GIHE78/config.yml` extracts it from `main.dol` at build time (`extract`, raw header `dolphin/card/CardData.inc`), and `CARDUnlock.c` includes it, so the bytes are never committed.
+- The Bink logo movie at `0x801CDF48` contains a word that looks like a pointer into CARD's `.data`. Its symbol is marked `noreloc`, so the build does not turn that word into a relocation against a CARD symbol.
 
 ## Bink
 

@@ -7,6 +7,18 @@
 extern "C" {
 #endif
 
+typedef struct OSSram {
+    u16 checkSum;
+    u16 checkSumInv;
+    u32 ead0;
+    u32 ead1;
+    u32 counterBias;
+    s8 displayOffsetH;
+    u8 ntd;
+    u8 language;
+    u8 flags;
+} OSSram;
+
 typedef struct OSSramEx {
     u8 flashID[2][12];
     u32 wirelessKeyboardID;
@@ -18,7 +30,9 @@ typedef struct OSSramEx {
     u8 _padding1[2];
 } OSSramEx;
 
+OSSram* __OSLockSram(void);
 OSSramEx* __OSLockSramEx(void);
+BOOL __OSUnlockSram(BOOL commit);
 BOOL __OSUnlockSramEx(BOOL commit);
 
 #ifdef __cplusplus
