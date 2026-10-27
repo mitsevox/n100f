@@ -69,7 +69,6 @@ void __OSInitAudioSystem(void)
     }
 
     if (((reg16 << 16) | __DSPRegs[3]) != 0x80544348) {
-        errFlag = 1;
     }
 
     __DSPRegs[5] |= 4;

@@ -605,7 +605,7 @@ config.libs: List[Dict[str, Any]] = [
         "dsp",
         [
             Object(NonMatching, "dolphin/dsp/dsp.c"),
-            Object(Matching, "dolphin/dsp/dsp_task.c"),
+            Object(NonMatching, "dolphin/dsp/dsp_task.c"),
         ],
     ),
     DolphinLib(

@@ -10,7 +10,6 @@ BOOL __DSP_rude_task_pending;
 
 void __DSPHandler(__OSInterrupt interrupt, OSContext* context)
 {
-    DSPTaskInfo* tmp_task;
     OSContext exceptionContext;
     u16 tmp;
     u32 mail;
