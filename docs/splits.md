@@ -164,34 +164,46 @@ In `evidence.tsv` each unit has a `unit` row, each function a `function` row and
 
 # RenderWare units
 
-`splits.txt` also names 63 RenderWare units between `0x801372EC` and `0x8018E5C0`, from `tools/splits/rwmap.py`. GIHE78 links RenderWare 3.3.0.2: `RwEngineGetVersion` (`0x80169F10`) returns `0x33002`. There is no public RenderWare source to compile, so these units and names come from BfBB's RenderWare 3.5 splits and symbols (`bfbbdecomp/bfbb` `d8e8eac`, GQPE78), placed by function size sequence. The input is `config/GIHE78/rwmap.json` and the report is `config/GIHE78/rw_units.tsv`.
+`splits.txt` also names 89 RenderWare units between `0x801372EC` and `0x8018E5C0`, from `tools/splits/rwmap.py`. GIHE78 links RenderWare 3.3.0.2: `RwEngineGetVersion` (`0x80169F10`) returns `0x33002`. There is no public RenderWare source to compile. 71 units are BfBB's RenderWare 3.5 units (`bfbbdecomp/bfbb` `d8e8eac`, GQPE78), placed by function size sequence: 63 in the main pass and 8 in the gaps it leaves. The other 18 are pipeline node objects that BfBB doesn't link, found from GIHE78's own node definitions. The input is `config/GIHE78/rwmap.json` and the report is `config/GIHE78/rw_units.tsv`, whose "method" column says which step placed each unit.
 
 | Library | Units |
 | --- | --- |
-| `rpcollis` | 3 |
+| `rpcollis` | 4 |
 | `rphanim` | 1 |
-| `rpmatfx` | 5 |
-| `rpskin` | 1 |
+| `rpmatfx` | 6 |
+| `rpskin` | 2 |
 | `rpusrdat` | 1 |
-| `rpworld` | 15 |
-| `rwcore` | 37 |
+| `rpworld` | 24 |
+| `rwcore` | 51 |
 
-The units cover 661 of the region's 1,006 functions and 0x2D1C0 of its 0x572D4 bytes. 591 of those functions are named: 528 by equal size, 58 by position and 5 that already had names from game-code callers (`RpWorldDestroy`, `RpWorldAddCamera`, `RpWorldRemoveCamera`, `RwCameraShowRaster`, `_rwFrameSyncDirty`), all of which the alignment reproduces.
+The units cover 778 of the region's 1,006 functions and 0x3BC18 of its 0x572D4 bytes. 644 of those functions are named:
+
+- 553 by equal size, 15 of them by distance from a unit's outermost name (step 5);
+- 58 by position;
+- 28 from node definitions;
+- 5 that already had names from game-code callers (`RpWorldDestroy`, `RpWorldAddCamera`, `RpWorldRemoveCamera`, `RwCameraShowRaster`, `_rwFrameSyncDirty`), all of which the alignment reproduces.
 
 ## Method
 
 1. **Placement.** For each BfBB unit under `rwsdk/`, the sizes of its functions, in address order, are aligned locally against the GIHE78 functions of the region. GIHE78 is an older RenderWare and its linker strips unreferenced functions, so a unit is a subsequence of BfBB's with some sizes changed. An equal size scores `3 + min(size, 0x320) / 0xC8`, a size within 8 bytes or 6% scores 0.3, any other pair −2.5 and a gap −1. A placement is trimmed to its outermost equal sizes and needs a score of 6, and either two equal sizes or one of at least 0x200 bytes.
 2. **Order.** The tool keeps the highest-scoring chain of non-overlapping placements that keeps library order (`rpcollis`, `rphanim`, `rpmatfx`, `rpptank`, `rpskin`, `rpusrdat`, `rpworld`, `rtanim`, `rtintsec`, `rtslerp`, `rwcore`, as BfBB links them). In `rpworld`, the `rt*` tools and `rwcore`, units must also keep BfBB's order. Plugin objects may appear in any order within their library: GIHE78 links `rpmatfx.c` before the GameCube matfx objects.
-3. **Names.** An aligned pair of equal size takes BfBB's name when it is at least 0x20 bytes, or when both of its GIHE78 neighbours are equal-size pairs of the same unit. Between two such names, functions take BfBB's names by position when both sides hold the same number of functions and each GIHE78/BfBB size ratio is between 0.75 and 1.33. A name BfBB marks static is dropped if a function outside the unit calls it directly (any `bl` in `main.dol`'s text; calls through pointers are not checked). A unit needs at least two names; six single-name placements (`multiTexGcnPipe.c`, `skingcng.c`, `nodeGameCubeAtomicAllInOne.c`, `nodeGameCubeWorldSectorAllInOne.c`, `geomcond.c`, `rtslerp.c`) and one with none (`nodeDolphinSubmitNoLight.c`) are left out.
-4. **Extents.** A unit runs from its first to its last named function. It widens to take in any function that calls one of its static names, since a static is only reachable from its own object. An edge is `provisional` where the neighbouring unit's named function abuts it and `open` otherwise. Functions between units stay unassigned.
+3. **Names.** An aligned pair of equal size takes BfBB's name when it is at least 0x20 bytes, or when both of its GIHE78 neighbours are equal-size pairs of the same unit. Between two such names, functions take BfBB's names by position when both sides hold the same number of functions and each GIHE78/BfBB size ratio is between 0.75 and 1.33. A name BfBB marks static is dropped if a function outside the unit calls it directly (any `bl` in `main.dol`'s text; calls through pointers are not checked). A unit needs at least two names; six single-name placements (`multiTexGcnPipe.c`, `skingcng.c`, `nodeGameCubeAtomicAllInOne.c`, `nodeGameCubeWorldSectorAllInOne.c`, `geomcond.c`, `rtslerp.c`) and one with none (`nodeDolphinSubmitNoLight.c`) are left out here. Step 5 places four of them in their gaps.
+4. **Extents.** A unit runs from its first to its last named function. It widens to take in any function that calls one of its static names, since a static is only reachable from its own object. An edge is `provisional` where the neighbouring unit's named function abuts it and `open` otherwise.
+5. **Gaps.** Each gap between two mapped units is worked on with the order the units around it fix:
+   - *Edges* (method `chain`). A unit takes the next function past its outermost name when that function has the same size as BfBB's next function there. It also takes one further out when the same number of functions lie between on both sides, or when the sizes match at 0x20 bytes or more. The extension names that function, and names the skipped ones by position under the size-ratio rule above.
+   - *In-gap units* (method `gap`). The gap's functions are paired, in order, with the functions of the unmapped BfBB units that can sit there under the library order, plus the leftover functions of the two neighbouring units. Pairs must be of equal or near size, and the pairing maximises the summed score with no gap cost. A unit with two names under step 3's rules is mapped. Its extent reaches an abutting neighbour when the same number of functions lie between on both sides. A node getter paired with BfBB's at an equal size is named, along with the node body and pipeline-node init its definition points at, when those are paired with functions of the same unit.
+   - *Fills* (method `fill`). Sometimes only one unmapped BfBB unit can sit between two units of its library, and both of those units end at their BfBB ends. If that unit pairs in order with the gap's functions, at least once at an equal size of 0x20 bytes or more, it takes the whole gap. This places `ctworld.c` and `dltexdic.c`.
+   - *Node objects* (method `node`). A 12-byte `lis`/`addi r3`/`blr` function that returns a structure whose first word points to a `"<node>.csl"` string is a RenderWare node getter. The getter is named `RxNodeDefinitionGet<node>` when the PS2 June 2001 prototype symbol table lists that name. It gets a unit when the PS2 January 2001 or Xbox prototype keeps a source path `rwsdk/<dir>/node<node>.c` whose directory is the previous unit's. The object is taken to end with its getter: in the node objects BfBB maps, a getter ends the object or is followed by the next node's functions. It starts after the previous unit when no function between that unit and the node body (the definition's second word) is called from outside the extent. Otherwise it starts at the body.
+
+Functions outside every unit stay unassigned.
 
 Each unit has a `related` `unit` row in `evidence.tsv`. Each new name has a `related` `name` row, which states whether it was named by equal size or by position, and a `function` row whose edges are dtk's inference (`provisional`). The rows also cite corroboration that the tool does not use for placement:
 
-- The PS2 June 2001 prototype symbol table (`references/.../PROTO-PS2-2001-06-11`), an RW 3.x build of this game, lists 374 of the new names.
-- The PS2 retail DWARF lists 22 of the new names, the `ctgeom.c`, `ctbsp.c` and `rpcollis.c` functions, in `flat\p2rwcoll\ctgeom_.c`, `ctbsp_.c` and `rpcollis_.c`: Heavy Iron compiled the collision plugin into the PS2 game.
-- The PS2 January 2001 and Xbox prototypes keep RenderWare source paths as strings (`rwsdk/world/baclump.c`, `//RenderWare/RW34Active/rwsdk/src/plcore/baimmedi.c#2`, ...). A unit row says when its path is among them.
+- The PS2 June 2001 prototype symbol table (`references/.../PROTO-PS2-2001-06-11`), an RW 3.x build of this game, lists 405 of the names.
+- The PS2 retail DWARF lists 23 of the names, the `ctgeom.c`, `ctbsp.c`, `ctworld.c` and `rpcollis.c` functions, in `flat\p2rwcoll\ctgeom_.c`, `ctbsp_.c`, `ctworld_.c` and `rpcollis_.c`: Heavy Iron compiled the collision plugin into the PS2 game.
+- The PS2 January 2001 and Xbox prototypes keep RenderWare source paths as strings (`rwsdk/world/baclump.c`, `//RenderWare/RW34Active/rwsdk/src/plcore/baimmedi.c#2`, ...). A unit row says when its path is among them; 71 are.
 
-BfBB's RenderWare names and paths are a related build's; there is no GC debug symbol. bfbb does not state where they come from. 186 of the new names are functions bfbb marks static, whose names public RenderWare headers cannot supply, and 206 rest on bfbb alone: neither the PS2 prototype symbol table nor the PS2 retail DWARF lists them. No leaked RenderWare source was used, and no Criterion RenderWare source or SDK headers.
+BfBB's RenderWare names and paths are a related build's; there is no GC debug symbol. bfbb does not state where they come from. 197 of the names are functions bfbb marks static, whose names public RenderWare headers cannot supply. 228 rest on bfbb alone: neither the PS2 prototype symbol table nor the PS2 retail DWARF lists them. (For 10 of those, the GameCube node getters, bodies and inits, GIHE78's own node definitions point at the named functions.) No leaked RenderWare source was used, and no Criterion RenderWare source or SDK headers.
 
 ## Reproducing
 
@@ -210,5 +222,7 @@ On the committed files this is a fixed point: `rwunits.txt` equals the RenderWar
 - Placement rests on sizes. Equal sizes in BfBB order are strong evidence, but a positional name could swap with a neighbour of similar size; those rows say so.
 - Scores near the threshold are weak. The best placement the chain rejects scores 14.0 (`vtxfmt.c` at `0x80158DC4`, inside the chosen `gcpipe.c`; `vtxfmt.c` itself is placed at `0x8015D4E0`), and ten chosen units score 14.0 or less (`rw_units.tsv` "score"). Their names rest on the library order as much as on their sizes.
 - The compiler profile of the RenderWare objects is not established, so `configure.py` does not list them, and data sections are not split.
-- 345 functions stay unassigned. The largest gaps are `0x8017EDA0`–`0x801869A8` (31 KB after `bapipe.c`, where nothing in BfBB lines up), `0x801542DC`–`0x8015885C` and `0x80159374`–`0x8015D4E0` (world pipeline objects), and the 3.3 animation code around `rphanim.c`, which differs from 3.5.
-- `0x801372EC`, where CARD ends, is where the search starts, not a mapped edge. `ctgeom.c` probably starts there: `fn_801372EC` (0x3D8 bytes) is the line-leaf callback whose address `GeometryForAllLineIntersections` loads (`0x8013791C`), the role of BfBB's `GeomLeafNodeForAllLineIntersections` (0x374 bytes), but no equal-size name precedes it, so the unit starts at `0x801376C4`. `0x80138904`–`0x8013AA64` is probably `ctworld.c`: its last function calls the first, as `RpCollisionWorldForAllIntersections` calls `WorldForAllLineWorldSectorIntersections`. Only one of its ten sizes equals BfBB's, so it is not placed.
+- 228 functions stay unassigned. The largest gaps are `0x80159380`–`0x8015D4D4` (16 KB after `gcpipe.c`), `0x801797E0`–`0x8017BCDC` (after `dlraster.c`, where 3.3 sizes differ from BfBB's), `0x80184918`–`0x801869A8` (after `nodeTransform.c`, most likely `p2altmdl.c` and `p2clpcom.c`, whose paths the prototypes keep but BfBB has only `_rxPacketDestroy` from) and `0x8013D210`–`0x8013EF40` (the 3.3 animation code after `rphanim.c`, which differs from 3.5).
+- Names placed by distance from a unit's outermost name (step 5) can be small functions (4 to 0x1C bytes); their evidence is the position as much as the size. The node objects' starts rest on the getter-last layout and the call check, not on a size alignment.
+- `ctworld.c` is placed as the only unit that fits its gap, with one equal size (`LeafNodeForAllSpherePolyIntersections`, 0x12C). GIHE78 holds ten functions there to BfBB's seven, as the PS2 retail `ctworld_.c` also holds more (its `Old*` functions), so the other nine are not named.
+- `0x801372EC`, where CARD ends, is where the search starts, not a mapped edge. `ctgeom.c` probably starts there: `fn_801372EC` (0x3D8 bytes) is the line-leaf callback whose address `GeometryForAllLineIntersections` loads (`0x8013791C`), the role of BfBB's `GeomLeafNodeForAllLineIntersections` (0x374 bytes), but no equal-size name precedes it, so the unit starts at `0x801376C4`.

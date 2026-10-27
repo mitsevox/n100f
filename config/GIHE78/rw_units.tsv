@@ -1,64 +1,90 @@
-unit	text_start	text_end	library	functions	upstream_functions	named_equal	named_position	score
-rwsdk/plugin/collis/ctgeom.c	0x801376C4	0x80138904	rpcollis	6	7	4	2	19.4
-rwsdk/plugin/collis/ctbsp.c	0x8013AA64	0x8013B850	rpcollis	8	8	6	2	27.3
-rwsdk/plugin/collis/rpcollis.c	0x8013B850	0x8013BBE8	rpcollis	8	9	8	0	28.9
-rwsdk/plugin/hanim/rphanim.c	0x8013CF64	0x8013D210	rphanim	2	13	2	0	10.3
-rwsdk/plugin/matfx/rpmatfx.c	0x8013EF40	0x8013FA64	rpmatfx	23	50	21	1	72.0
-rwsdk/plugin/matfx/gcn/effectPipesGcn.c	0x80140010	0x80140D40	rpmatfx	12	17	4	0	15.6
-rwsdk/plugin/matfx/gcn/multiTexGcnData.c	0x80140D40	0x80141910	rpmatfx	7	7	7	0	32.0
-rwsdk/plugin/matfx/multiTex.c	0x80142C94	0x8014366C	rpmatfx	17	17	15	2	51.5
-rwsdk/plugin/matfx/multiTexEffect.c	0x8014366C	0x80144144	rpmatfx	13	14	12	1	51.9
-rwsdk/plugin/skin2/rpskin.c	0x80144244	0x80144CD4	rpskin	23	27	11	4	43.0
-rwsdk/plugin/userdata/rpusrdat.c	0x80145ECC	0x80146D40	rpusrdat	15	17	15	0	66.9
-rwsdk/world/babinwor.c	0x8014707C	0x801472BC	rpworld	6	11	6	0	23.4
-rwsdk/world/baclump.c	0x801484D4	0x8014AFC4	rpworld	38	45	28	2	87.6
-rwsdk/world/bageomet.c	0x8014B28C	0x8014C7DC	rpworld	9	20	5	0	20.9
-rwsdk/world/balight.c	0x8014C7DC	0x8014CFC8	rpworld	12	13	9	3	24.1
-rwsdk/world/bamateri.c	0x8014CFC8	0x8014D2BC	rpworld	8	14	7	1	20.8
-rwsdk/world/bamatlst.c	0x8014D674	0x8014DD4C	rpworld	5	8	5	0	17.2
-rwsdk/world/bamesh.c	0x8014DD4C	0x8014E7A4	rpworld	11	12	9	2	35.1
-rwsdk/world/bameshop.c	0x8014E950	0x80150F5C	rpworld	10	11	8	2	46.9
-rwsdk/world/basector.c	0x80150F70	0x80151038	rpworld	5	6	5	0	19.1
-rwsdk/world/baworld.c	0x80151054	0x8015275C	rpworld	24	22	15	3	55.1
-rwsdk/world/baworobj.c	0x80152834	0x80154264	rpworld	47	49	43	3	146.4
-rwsdk/world/pipe/p2/bapipew.c	0x80154264	0x801542DC	rpworld	2	5	2	0	6.6
-rwsdk/world/pipe/p2/gcn/gcpipe.c	0x8015885C	0x80159374	rpworld	9	9	4	0	16.3
-rwsdk/world/pipe/p2/gcn/vtxfmt.c	0x8015D4E0	0x8015D818	rpworld	10	15	7	0	30.6
-rwsdk/world/pipe/p2/gcn/wrldpipe.c	0x8015D864	0x8015DA50	rpworld	5	7	5	0	20.5
-rwsdk/src/plcore/babinary.c	0x80160340	0x80160F60	rwcore	14	13	10	2	32.9
-rwsdk/src/plcore/baerr.c	0x80160FD4	0x8016109C	rwcore	2	5	2	0	9.4
-rwsdk/src/plcore/bafsys.c	0x801610A8	0x801611C0	rwcore	2	4	2	0	13.5
-rwsdk/src/plcore/baimmedi.c	0x801611D0	0x801612EC	rwcore	6	7	6	0	22.5
-rwsdk/src/plcore/bamatrix.c	0x80161B70	0x8016274C	rwcore	9	18	4	1	14.1
-rwsdk/src/plcore/baresour.c	0x80163C60	0x80164374	rwcore	7	7	6	0	26.3
-rwsdk/src/plcore/bastream.c	0x801643EC	0x80164A94	rwcore	5	7	5	0	23.8
-rwsdk/src/plcore/batkbin.c	0x80164D48	0x801652F8	rwcore	8	8	8	0	31.3
-rwsdk/src/plcore/batkreg.c	0x80165344	0x801658F8	rwcore	9	10	9	0	34.3
-rwsdk/src/plcore/bavector.c	0x801659A8	0x80165CC8	rwcore	7	10	5	0	16.0
-rwsdk/src/plcore/resmem.c	0x801662AC	0x801664F8	rwcore	4	4	4	0	14.9
-rwsdk/src/plcore/rwstring.c	0x801664F8	0x80166674	rwcore	5	7	5	0	20.2
-rwsdk/src/babintex.c	0x80166F2C	0x801683DC	rwcore	9	9	9	0	44.6
-rwsdk/src/bacamera.c	0x801694EC	0x80169E98	rwcore	18	22	12	6	39.5
-rwsdk/src/badevice.c	0x80169E98	0x8016A68C	rwcore	13	14	11	2	39.8
-rwsdk/src/baframe.c	0x8016AA68	0x8016B6C4	rwcore	20	21	17	2	63.7
-rwsdk/src/baimage.c	0x8016B928	0x8016D498	rwcore	16	18	15	1	71.5
-rwsdk/src/baimras.c	0x8016D610	0x8016D794	rwcore	3	3	3	0	10.9
-rwsdk/src/baraster.c	0x8016D794	0x8016DBC8	rwcore	10	11	10	0	35.7
-rwsdk/src/basync.c	0x8016F094	0x8016F3EC	rwcore	3	6	3	0	13.3
-rwsdk/src/batextur.c	0x8016F3EC	0x80170FD8	rwcore	27	32	26	0	101.6
-rwsdk/src/batypehf.c	0x80171450	0x801714EC	rwcore	2	2	2	0	6.8
-rwsdk/driver/common/palquant.c	0x80171514	0x80173D28	rwcore	16	17	10	6	45.8
-rwsdk/driver/gcn/dl2drend.c	0x8017402C	0x801753BC	rwcore	5	6	5	0	31.7
-rwsdk/driver/gcn/dlconvrt.c	0x801753BC	0x80177334	rwcore	25	25	24	0	109.5
-rwsdk/driver/gcn/dldevice.c	0x80177E54	0x80178A3C	rwcore	6	16	2	4	15.7
-rwsdk/driver/gcn/dlraster.c	0x80178B3C	0x801797E0	rwcore	5	17	2	0	12.6
-rwsdk/driver/gcn/dlsprite.c	0x8017BCDC	0x8017C950	rwcore	9	12	7	2	31.7
-rwsdk/driver/gcn/dltextur.c	0x8017CF9C	0x8017DBB8	rwcore	4	6	3	1	14.7
-rwsdk/src/pipe/p2/baim3d.c	0x8017DE58	0x8017E5C8	rwcore	6	8	5	1	24.4
-rwsdk/src/pipe/p2/bapipe.c	0x8017ED24	0x8017EDA0	rwcore	3	4	3	0	12.6
-rwsdk/src/pipe/p2/p2core.c	0x801869A8	0x80187438	rwcore	13	7	5	1	17.4
-rwsdk/src/pipe/p2/p2define.c	0x801874A8	0x80189020	rwcore	12	11	9	1	47.6
-rwsdk/src/pipe/p2/p2dep.c	0x80189020	0x8018A644	rwcore	11	11	11	0	55.5
-rwsdk/src/pipe/p2/p2heap.c	0x8018AA7C	0x8018B69C	rwcore	6	4	4	0	19.8
-rwsdk/src/pipe/p2/p2resort.c	0x8018BB5C	0x8018C010	rwcore	2	2	2	0	12.0
-rwsdk/src/pipe/p2/gcn/im3dpipe.c	0x8018C010	0x8018C260	rwcore	4	4	4	0	15.0
+unit	text_start	text_end	library	method	functions	upstream_functions	named_equal	named_position	named_node	score
+rwsdk/plugin/collis/ctgeom.c	0x801376C4	0x80138904	rpcollis	chain	6	7	4	2	0	19.4
+rwsdk/plugin/collis/ctworld.c	0x80138904	0x8013AA64	rpcollis	fill	10	7	1	0	0	0.0
+rwsdk/plugin/collis/ctbsp.c	0x8013AA64	0x8013B850	rpcollis	chain	8	8	6	2	0	27.3
+rwsdk/plugin/collis/rpcollis.c	0x8013B850	0x8013BBE8	rpcollis	chain	8	9	8	0	0	28.9
+rwsdk/plugin/hanim/rphanim.c	0x8013CF64	0x8013D210	rphanim	chain	2	13	2	0	0	10.3
+rwsdk/plugin/matfx/rpmatfx.c	0x8013EF40	0x8013FA64	rpmatfx	chain	23	50	21	1	0	72.0
+rwsdk/plugin/matfx/gcn/effectPipesGcn.c	0x80140010	0x80140D40	rpmatfx	chain	12	17	4	0	0	15.6
+rwsdk/plugin/matfx/gcn/multiTexGcnData.c	0x80140D40	0x80141910	rpmatfx	chain	7	7	7	0	0	32.0
+rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c	0x80141910	0x80141F98	rpmatfx	gap	5	12	2	0	0	0.0
+rwsdk/plugin/matfx/multiTex.c	0x80142C94	0x8014366C	rpmatfx	chain	17	17	15	2	0	51.5
+rwsdk/plugin/matfx/multiTexEffect.c	0x8014366C	0x80144154	rpmatfx	chain	14	14	13	1	0	51.9
+rwsdk/plugin/skin2/rpskin.c	0x80144244	0x80144CDC	rpskin	chain	24	27	12	4	0	43.0
+rwsdk/plugin/skin2/gcn/skingcn.c	0x8014519C	0x80145A48	rpskin	gap	6	12	2	0	0	0.0
+rwsdk/plugin/userdata/rpusrdat.c	0x80145ECC	0x80146D40	rpusrdat	chain	15	17	15	0	0	66.9
+rwsdk/world/babinwor.c	0x8014707C	0x801472BC	rpworld	chain	6	11	6	0	0	23.4
+rwsdk/world/baclump.c	0x801484D4	0x8014AFC4	rpworld	chain	38	45	28	2	0	87.6
+rwsdk/world/bageomet.c	0x8014B28C	0x8014C7DC	rpworld	chain	9	20	5	0	0	20.9
+rwsdk/world/balight.c	0x8014C7DC	0x8014CFC8	rpworld	chain	12	13	9	3	0	24.1
+rwsdk/world/bamateri.c	0x8014CFC8	0x8014D2BC	rpworld	chain	8	14	7	1	0	20.8
+rwsdk/world/bamatlst.c	0x8014D674	0x8014DD4C	rpworld	chain	5	8	5	0	0	17.2
+rwsdk/world/bamesh.c	0x8014DD4C	0x8014E7A4	rpworld	chain	11	12	9	2	0	35.1
+rwsdk/world/bameshop.c	0x8014E950	0x80150F5C	rpworld	chain	10	11	8	2	0	46.9
+rwsdk/world/basector.c	0x80150F5C	0x80151038	rpworld	chain	6	6	6	0	0	19.1
+rwsdk/world/baworld.c	0x80151038	0x8015275C	rpworld	chain	25	22	16	3	0	55.1
+rwsdk/world/baworobj.c	0x80152834	0x80154264	rpworld	chain	47	49	43	3	0	146.4
+rwsdk/world/pipe/p2/bapipew.c	0x80154264	0x80154714	rpworld	chain	5	5	3	0	0	6.6
+rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c	0x80154714	0x80154994	rpworld	node	4	0	0	0	1	0.0
+rwsdk/world/pipe/p2/nodeAtomicInstance.c	0x80154994	0x80155B68	rpworld	node	5	0	0	0	1	0.0
+rwsdk/world/pipe/p2/nodeLight.c	0x80155B68	0x80155E34	rpworld	node	2	0	0	0	1	0.0
+rwsdk/world/pipe/p2/nodeMaterialScatter.c	0x80157088	0x801571CC	rpworld	node	2	0	0	0	1	0.0
+rwsdk/world/pipe/p2/nodePostLight.c	0x801571CC	0x80157880	rpworld	node	2	0	0	0	1	0.0
+rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c	0x80157880	0x80157A3C	rpworld	node	3	0	0	0	1	0.0
+rwsdk/world/pipe/p2/nodeWorldSectorInstance.c	0x80157A3C	0x8015885C	rpworld	node	4	0	0	0	1	0.0
+rwsdk/world/pipe/p2/gcn/gcpipe.c	0x8015885C	0x80159380	rpworld	chain	10	9	5	0	0	16.3
+rwsdk/world/pipe/p2/gcn/vtxfmt.c	0x8015D4D4	0x8015D818	rpworld	chain	11	15	8	0	0	30.6
+rwsdk/world/pipe/p2/gcn/wrldpipe.c	0x8015D85C	0x8015DA50	rpworld	chain	6	7	6	0	0	20.5
+rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c	0x8015DA50	0x8015E7E8	rpworld	gap	7	7	0	0	3	0.0
+rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c	0x8015E7E8	0x8015ED40	rpworld	gap	5	5	0	0	3	0.0
+rwsdk/src/plcore/babinary.c	0x80160340	0x80160F60	rwcore	chain	14	13	10	2	0	32.9
+rwsdk/src/plcore/baerr.c	0x80160FC0	0x8016109C	rwcore	chain	3	5	3	0	0	9.4
+rwsdk/src/plcore/bafsys.c	0x8016109C	0x801611C4	rwcore	chain	4	4	4	0	0	13.5
+rwsdk/src/plcore/baimmedi.c	0x801611C4	0x801612EC	rwcore	chain	7	7	7	0	0	22.5
+rwsdk/src/plcore/bamatrix.c	0x80161B70	0x8016274C	rwcore	chain	9	18	4	1	0	14.1
+rwsdk/src/plcore/baresour.c	0x80163C60	0x80164374	rwcore	chain	7	7	6	0	0	26.3
+rwsdk/src/plcore/bastream.c	0x801643EC	0x80164A94	rwcore	chain	5	7	5	0	0	23.8
+rwsdk/src/plcore/batkbin.c	0x80164D48	0x801652F8	rwcore	chain	8	8	8	0	0	31.3
+rwsdk/src/plcore/batkreg.c	0x80165344	0x801658F8	rwcore	chain	9	10	9	0	0	34.3
+rwsdk/src/plcore/bavector.c	0x801659A8	0x80165DD4	rwcore	chain	10	10	6	0	0	16.0
+rwsdk/src/plcore/resmem.c	0x801662AC	0x801664F8	rwcore	chain	4	4	4	0	0	14.9
+rwsdk/src/plcore/rwstring.c	0x801664F8	0x80166674	rwcore	chain	5	7	5	0	0	20.2
+rwsdk/src/babinfrm.c	0x80166B54	0x80166F2C	rwcore	gap	3	4	2	0	0	0.0
+rwsdk/src/babintex.c	0x80166F2C	0x801683DC	rwcore	chain	9	9	9	0	0	44.6
+rwsdk/src/bacamera.c	0x801694EC	0x80169E98	rwcore	chain	18	22	12	6	0	39.5
+rwsdk/src/badevice.c	0x80169E98	0x8016A68C	rwcore	chain	13	14	11	2	0	39.8
+rwsdk/src/baframe.c	0x8016AA68	0x8016B6C4	rwcore	chain	20	21	17	2	0	63.7
+rwsdk/src/baimage.c	0x8016B928	0x8016D498	rwcore	chain	16	18	15	1	0	71.5
+rwsdk/src/baimras.c	0x8016D610	0x8016D794	rwcore	chain	3	3	3	0	0	10.9
+rwsdk/src/baraster.c	0x8016D794	0x8016DBC8	rwcore	chain	10	11	10	0	0	35.7
+rwsdk/src/basync.c	0x8016F094	0x8016F3EC	rwcore	chain	3	6	3	0	0	13.3
+rwsdk/src/batextur.c	0x8016F3EC	0x80170FD8	rwcore	chain	27	32	26	0	0	101.6
+rwsdk/src/batypehf.c	0x80171450	0x801714EC	rwcore	chain	2	2	2	0	0	6.8
+rwsdk/driver/common/palquant.c	0x80171514	0x80173D28	rwcore	chain	16	17	10	6	0	45.8
+rwsdk/driver/gcn/dl2drend.c	0x8017402C	0x801753BC	rwcore	chain	5	6	5	0	0	31.7
+rwsdk/driver/gcn/dlconvrt.c	0x801753BC	0x80177334	rwcore	chain	25	25	24	0	0	109.5
+rwsdk/driver/gcn/dldevice.c	0x80177E54	0x80178A3C	rwcore	chain	6	16	2	4	0	15.7
+rwsdk/driver/gcn/dlraster.c	0x80178B04	0x801797E0	rwcore	chain	6	17	3	0	0	12.6
+rwsdk/driver/gcn/dlsprite.c	0x8017BCDC	0x8017C95C	rwcore	chain	10	12	8	2	0	31.7
+rwsdk/driver/gcn/dltexdic.c	0x8017C95C	0x8017CF88	rwcore	fill	4	3	1	0	0	0.0
+rwsdk/driver/gcn/dltextur.c	0x8017CF88	0x8017DBB8	rwcore	chain	5	6	4	1	0	14.7
+rwsdk/src/pipe/p2/baim3d.c	0x8017DE58	0x8017E5C8	rwcore	chain	6	8	5	1	0	24.4
+rwsdk/src/pipe/p2/bapipe.c	0x8017ED24	0x8017EDA4	rwcore	chain	4	4	4	0	0	12.6
+rwsdk/src/pipe/p2/nodeClipLine.c	0x8017EDA4	0x8017FEF0	rwcore	node	4	0	0	0	1	0.0
+rwsdk/src/pipe/p2/nodeClipTriangle.c	0x8017FEF0	0x8018164C	rwcore	node	4	0	0	0	1	0.0
+rwsdk/src/pipe/p2/nodeCullTriangle.c	0x8018164C	0x80181EC4	rwcore	node	4	0	0	0	1	0.0
+rwsdk/src/pipe/p2/nodeImmInstance.c	0x80181EC4	0x80182320	rwcore	node	2	0	0	0	1	0.0
+rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c	0x80182320	0x801827E4	rwcore	node	2	0	0	0	1	0.0
+rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c	0x801827E4	0x80182F34	rwcore	node	2	0	0	0	1	0.0
+rwsdk/src/pipe/p2/nodeImmRenderSetup.c	0x80182F34	0x80183340	rwcore	node	2	0	0	0	1	0.0
+rwsdk/src/pipe/p2/nodeImmStash.c	0x80183340	0x80183568	rwcore	node	2	0	0	0	1	0.0
+rwsdk/src/pipe/p2/nodeSubmitLine.c	0x80183568	0x80183860	rwcore	node	2	0	0	0	1	0.0
+rwsdk/src/pipe/p2/nodeSubmitTriangle.c	0x80183860	0x80183B10	rwcore	node	2	0	0	0	1	0.0
+rwsdk/src/pipe/p2/nodeTransform.c	0x80183B10	0x80184918	rwcore	node	4	0	0	0	1	0.0
+rwsdk/src/pipe/p2/p2core.c	0x801869A8	0x80187438	rwcore	chain	13	7	5	1	0	17.4
+rwsdk/src/pipe/p2/p2define.c	0x801874A8	0x80189020	rwcore	chain	12	11	9	1	0	47.6
+rwsdk/src/pipe/p2/p2dep.c	0x80189020	0x8018A644	rwcore	chain	11	11	11	0	0	55.5
+rwsdk/src/pipe/p2/p2heap.c	0x8018AA7C	0x8018B69C	rwcore	chain	6	4	4	0	0	19.8
+rwsdk/src/pipe/p2/p2resort.c	0x8018BB5C	0x8018C010	rwcore	chain	2	2	2	0	0	12.0
+rwsdk/src/pipe/p2/gcn/im3dpipe.c	0x8018C010	0x8018C260	rwcore	chain	4	4	4	0	0	15.0
+rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c	0x8018C260	0x8018CE90	rwcore	gap	4	4	0	0	4	0.0

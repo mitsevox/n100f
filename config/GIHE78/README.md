@@ -10,7 +10,7 @@ USA release, disc revision 0. `main.dol` is 1,964,512 bytes with entry point `0x
 | `evidence.tsv` | Curated claims in the [evidence format](../README.md) |
 | `split_units.tsv`, `split_edges.tsv` | Reports from `tools/splits/recover.py`: every candidate unit with its status and first anchor, and every text and data edge with its class and crossing references. See [docs/splits.md](../../docs/splits.md). |
 | `libmap.json`, `lib_units.tsv` | Input and report of `tools/splits/libmap.py`: the pinned upstream decompilations, compiler profiles and source globs it compiles, and every library unit it placed. See [Library units](../../docs/splits.md#library-units). |
-| `rwmap.json`, `rw_units.tsv` | Input and report of `tools/splits/rwmap.py`: the pinned BfBB symbol and split lists, the RenderWare library order, the corroborating references, and every RenderWare unit it placed. See [RenderWare units](../../docs/splits.md#renderware-units). |
+| `rwmap.json`, `rw_units.tsv` | Input and report of `tools/splits/rwmap.py`: the pinned BfBB symbol and split lists, the RenderWare library order, the corroborating references, and every RenderWare unit it placed, with the step that placed it. See [RenderWare units](../../docs/splits.md#renderware-units). |
 | `ldscript.tpl` | dtk's default linker script template with the debugger stack at `_stack_addr + 0x1000` (see the `linker` rows in `evidence.tsv`) |
 
 ## Mapping onto the handbook stages

@@ -1311,6 +1311,9 @@ dolphin/card/CARDNet.c: comment:8
 rwsdk/plugin/collis/ctgeom.c:
 	.text       start:0x801376C4 end:0x80138904
 
+rwsdk/plugin/collis/ctworld.c:
+	.text       start:0x80138904 end:0x8013AA64
+
 rwsdk/plugin/collis/ctbsp.c:
 	.text       start:0x8013AA64 end:0x8013B850
 
@@ -1329,14 +1332,20 @@ rwsdk/plugin/matfx/gcn/effectPipesGcn.c:
 rwsdk/plugin/matfx/gcn/multiTexGcnData.c:
 	.text       start:0x80140D40 end:0x80141910
 
+rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c:
+	.text       start:0x80141910 end:0x80141F98
+
 rwsdk/plugin/matfx/multiTex.c:
 	.text       start:0x80142C94 end:0x8014366C
 
 rwsdk/plugin/matfx/multiTexEffect.c:
-	.text       start:0x8014366C end:0x80144144
+	.text       start:0x8014366C end:0x80144154
 
 rwsdk/plugin/skin2/rpskin.c:
-	.text       start:0x80144244 end:0x80144CD4
+	.text       start:0x80144244 end:0x80144CDC
+
+rwsdk/plugin/skin2/gcn/skingcn.c:
+	.text       start:0x8014519C end:0x80145A48
 
 rwsdk/plugin/userdata/rpusrdat.c:
 	.text       start:0x80145ECC end:0x80146D40
@@ -1366,37 +1375,64 @@ rwsdk/world/bameshop.c:
 	.text       start:0x8014E950 end:0x80150F5C
 
 rwsdk/world/basector.c:
-	.text       start:0x80150F70 end:0x80151038
+	.text       start:0x80150F5C end:0x80151038
 
 rwsdk/world/baworld.c:
-	.text       start:0x80151054 end:0x8015275C
+	.text       start:0x80151038 end:0x8015275C
 
 rwsdk/world/baworobj.c:
 	.text       start:0x80152834 end:0x80154264
 
 rwsdk/world/pipe/p2/bapipew.c:
-	.text       start:0x80154264 end:0x801542DC
+	.text       start:0x80154264 end:0x80154714
+
+rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c:
+	.text       start:0x80154714 end:0x80154994
+
+rwsdk/world/pipe/p2/nodeAtomicInstance.c:
+	.text       start:0x80154994 end:0x80155B68
+
+rwsdk/world/pipe/p2/nodeLight.c:
+	.text       start:0x80155B68 end:0x80155E34
+
+rwsdk/world/pipe/p2/nodeMaterialScatter.c:
+	.text       start:0x80157088 end:0x801571CC
+
+rwsdk/world/pipe/p2/nodePostLight.c:
+	.text       start:0x801571CC end:0x80157880
+
+rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c:
+	.text       start:0x80157880 end:0x80157A3C
+
+rwsdk/world/pipe/p2/nodeWorldSectorInstance.c:
+	.text       start:0x80157A3C end:0x8015885C
 
 rwsdk/world/pipe/p2/gcn/gcpipe.c:
-	.text       start:0x8015885C end:0x80159374
+	.text       start:0x8015885C end:0x80159380
 
 rwsdk/world/pipe/p2/gcn/vtxfmt.c:
-	.text       start:0x8015D4E0 end:0x8015D818
+	.text       start:0x8015D4D4 end:0x8015D818
 
 rwsdk/world/pipe/p2/gcn/wrldpipe.c:
-	.text       start:0x8015D864 end:0x8015DA50
+	.text       start:0x8015D85C end:0x8015DA50
+
+rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c:
+	.text       start:0x8015DA50 end:0x8015E7E8
+
+rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c:
+	.text       start:0x8015E7E8 end:0x8015ED40
 
 rwsdk/src/plcore/babinary.c:
 	.text       start:0x80160340 end:0x80160F60
 
 rwsdk/src/plcore/baerr.c:
-	.text       start:0x80160FD4 end:0x8016109C
+	.text       start:0x80160FC0 end:0x8016109C
 
 rwsdk/src/plcore/bafsys.c:
-	.text       start:0x801610A8 end:0x801611C0
+	.text       start:0x8016109C end:0x801611C4
 
 rwsdk/src/plcore/baimmedi.c:
-	.text       start:0x801611D0 end:0x801612EC
+	.text       start:0x801611C4 end:0x801612EC
 
 rwsdk/src/plcore/bamatrix.c:
 	.text       start:0x80161B70 end:0x8016274C
@@ -1414,13 +1450,16 @@ rwsdk/src/plcore/batkreg.c:
 	.text       start:0x80165344 end:0x801658F8
 
 rwsdk/src/plcore/bavector.c:
-	.text       start:0x801659A8 end:0x80165CC8
+	.text       start:0x801659A8 end:0x80165DD4
 
 rwsdk/src/plcore/resmem.c:
 	.text       start:0x801662AC end:0x801664F8
 
 rwsdk/src/plcore/rwstring.c:
 	.text       start:0x801664F8 end:0x80166674
+
+rwsdk/src/babinfrm.c:
+	.text       start:0x80166B54 end:0x80166F2C
 
 rwsdk/src/babintex.c:
 	.text       start:0x80166F2C end:0x801683DC
@@ -1465,19 +1504,55 @@ rwsdk/driver/gcn/dldevice.c:
 	.text       start:0x80177E54 end:0x80178A3C
 
 rwsdk/driver/gcn/dlraster.c:
-	.text       start:0x80178B3C end:0x801797E0
+	.text       start:0x80178B04 end:0x801797E0
 
 rwsdk/driver/gcn/dlsprite.c:
-	.text       start:0x8017BCDC end:0x8017C950
+	.text       start:0x8017BCDC end:0x8017C95C
+
+rwsdk/driver/gcn/dltexdic.c:
+	.text       start:0x8017C95C end:0x8017CF88
 
 rwsdk/driver/gcn/dltextur.c:
-	.text       start:0x8017CF9C end:0x8017DBB8
+	.text       start:0x8017CF88 end:0x8017DBB8
 
 rwsdk/src/pipe/p2/baim3d.c:
 	.text       start:0x8017DE58 end:0x8017E5C8
 
 rwsdk/src/pipe/p2/bapipe.c:
-	.text       start:0x8017ED24 end:0x8017EDA0
+	.text       start:0x8017ED24 end:0x8017EDA4
+
+rwsdk/src/pipe/p2/nodeClipLine.c:
+	.text       start:0x8017EDA4 end:0x8017FEF0
+
+rwsdk/src/pipe/p2/nodeClipTriangle.c:
+	.text       start:0x8017FEF0 end:0x8018164C
+
+rwsdk/src/pipe/p2/nodeCullTriangle.c:
+	.text       start:0x8018164C end:0x80181EC4
+
+rwsdk/src/pipe/p2/nodeImmInstance.c:
+	.text       start:0x80181EC4 end:0x80182320
+
+rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c:
+	.text       start:0x80182320 end:0x801827E4
+
+rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c:
+	.text       start:0x801827E4 end:0x80182F34
+
+rwsdk/src/pipe/p2/nodeImmRenderSetup.c:
+	.text       start:0x80182F34 end:0x80183340
+
+rwsdk/src/pipe/p2/nodeImmStash.c:
+	.text       start:0x80183340 end:0x80183568
+
+rwsdk/src/pipe/p2/nodeSubmitLine.c:
+	.text       start:0x80183568 end:0x80183860
+
+rwsdk/src/pipe/p2/nodeSubmitTriangle.c:
+	.text       start:0x80183860 end:0x80183B10
+
+rwsdk/src/pipe/p2/nodeTransform.c:
+	.text       start:0x80183B10 end:0x80184918
 
 rwsdk/src/pipe/p2/p2core.c:
 	.text       start:0x801869A8 end:0x80187438
@@ -1496,3 +1571,6 @@ rwsdk/src/pipe/p2/p2resort.c:
 
 rwsdk/src/pipe/p2/gcn/im3dpipe.c:
 	.text       start:0x8018C010 end:0x8018C260
+
+rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c:
+	.text       start:0x8018C260 end:0x8018CE90

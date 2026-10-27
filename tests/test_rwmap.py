@@ -34,6 +34,15 @@ class Placement(unittest.TestCase):
         self.assertEqual(rwmap.local_placements([0x10, 0x20], [0x400, 0x500]), [])
 
 
+class GapPairs(unittest.TestCase):
+    def test_pairs_in_order(self):
+        # Equal and near sizes pair in order; an unrelated size stays unpaired.
+        self.assertEqual(rwmap.gap_pairs([0x14, 0x3C, 0x2B4, 0x80], [0x3C, 0x2B0, 0x80]), [(1, 0), (2, 1), (3, 2)])
+
+    def test_no_crossing(self):
+        self.assertEqual(len(rwmap.gap_pairs([0x40, 0x80], [0x80, 0x40])), 1)
+
+
 class Committed(unittest.TestCase):
     def test_library_order(self):
         libs = [lib["lib"] for lib in json.loads((ROOT / "config/GIHE78/rwmap.json").read_text())["libraries"]]
@@ -43,6 +52,10 @@ class Committed(unittest.TestCase):
         self.assertEqual(order, sorted(order))
         starts = [int(r["text_start"], 16) for r in rows]
         self.assertEqual(starts, sorted(starts))
+        self.assertLessEqual({r["method"] for r in rows}, {"chain", "gap", "fill", "node"})
+        for r in rows:
+            if r["method"] == "node":
+                self.assertRegex(r["unit"], r"/node\w+\.c$")
 
 
 if __name__ == "__main__":
