@@ -8,7 +8,7 @@
 #endif
 
 #ifndef TRUE
-#define TRUE !FALSE
+#define TRUE 1
 #endif
 
 // RenderWare types get members once reconstructed code accesses them or a declared type

@@ -254,8 +254,8 @@ S32 iModelCull(RpAtomic* model, RwMatrix* mat)
 void iModelRender(RpAtomic* model, RwMatrix* mat)
 {
     RpHAnimHierarchy* hierarchy;
-    RwFrame* frame;
     RwMatrix* pAnimOldMatrix;
+    RwFrame* frame;
 
     hierarchy = GetHierarchy(model);
 
@@ -349,8 +349,8 @@ static RpAtomic* NextAtomicCallback(RpAtomic* atomic, void* data);
 
 RpAtomic* iModelFile_RWMultiAtomic(RpAtomic* model)
 {
-    RpAtomic* nextModel;
     RpClump* clump;
+    RpAtomic* nextModel;
 
     if (!model)
     {
@@ -448,8 +448,8 @@ RpAtomic* iModelFileNew(void* buffer, U32 size)
 
 static RpAtomic* FindAtomicCallback(RpAtomic* atomic, void* data)
 {
-    RpSkin* pSkin;
     RpHAnimHierarchy* pHier;
+    RpSkin* pSkin;
 
     pHier = GetHierarchy(atomic);
     pSkin = RpSkinGeometryGetSkin(atomic->geometry);
