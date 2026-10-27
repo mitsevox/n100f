@@ -1,7 +1,6 @@
 #include "MSL_C.PPCEABI.bare.H/ansi_files.h"
 
 extern void (*__stdio_exit)(void);
-void __close_all(void);
 
 void clearerr(FILE* file)
 {

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "MSL_C.PPCEABI.bare.H/ansi_files.h"
+#include "MSL_C.PPCEABI.bare.H/buffer_io.h"
 
 int __read_console(__file_handle file, unsigned char* buff, size_t* count, __idle_proc idle_proc);
 int __write_console(__file_handle file, unsigned char* buff, size_t* count, __idle_proc idle_proc);
@@ -10,10 +11,6 @@ int __position_file(__file_handle file, unsigned long* position, int mode, __idl
 int __read_file(__file_handle file, unsigned char* buff, size_t* count, __idle_proc idle_proc);
 int __write_file(__file_handle file, unsigned char* buff, size_t* count, __idle_proc idle_proc);
 int __close_file(__file_handle file);
-
-int fclose(FILE* file);
-int fflush(FILE* file);
-int setvbuf(FILE* file, char* buff, int mode, size_t size);
 
 static unsigned char stdin_buff[0x100];
 static unsigned char stdout_buff[0x100];
