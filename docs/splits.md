@@ -74,7 +74,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 | `MSL_C.PPCEABI.bare.H` | 33 | 24 | 75 |
 | `dolphin/<library>` (SDK, OS built Apr 16 2002) | 61 | 22 | 515 |
 
-Each unit stays in the original bytes until its source lands and passes review; `configure.py` marks the imported ones `Matching`. `config/GIHE78/lib_units.tsv` lists each unit as libmap placed it, with its match kind, function counts, chosen source and the compiler versions that produced it.
+Each unit stays in the original bytes until its source lands and passes review; [libraries.md](libraries.md#imported-units) lists the imported ones. `config/GIHE78/lib_units.tsv` lists each unit as libmap placed it, with its match kind, function counts, chosen source and the compiler versions that produced it.
 
 Imports correct the map where compiled source shows more than libmap could place. Functions of 8 to 16 bytes are too common in the target to place by body, so they were left out of the first map. The MetroTRK import added a 119th unit, `mutex_TRK.c` at `0x800E2BEC` (three 8-byte functions between `support.c` and `notify.c`, the order the related maps give). It extended `msghndlr.c` to `0x800E232C` to take `SetTRKConnected` and `GetTRKConnected`, and gave `mem_TRK.c` its `.init` functions `TRK_memset` and `TRK_memcpy` at `0x80003100`. That places 7 more TRK functions than the table shows.
 
