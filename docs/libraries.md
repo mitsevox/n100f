@@ -22,17 +22,27 @@ GC/1.2.5n writes `.comment` version 8 (compiler 2.3.0.1). GC/1.3 and GC/1.3.2 bo
 
 CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compiles it at `-opt level=0 -inline off -schedule off -sym on -char signed` with `DEBUG=1`, the same flags as libmap's `card_debug` profile, so its assertions are compiled in, whatever `--debug` the build uses.
 
+## Imported units
+
+| Unit | Compiler | Data | Source |
+| --- | --- | --- | --- |
+| `Runtime.PPCEABI.H/__va_arg.c` | GC/1.3.2 (1.3 differs; 1.3.2 through 2.7 are identical) | none | C |
+| `Runtime.PPCEABI.H/global_destructor_chain.c` | GC/1.3.2 (1.3 also matches) | `.dtors`, `.sbss` | C |
+| `Runtime.PPCEABI.H/runtime.c` | GC/1.3.2 (1.3 also matches) | `.rodata` | asm functions, each with an `assembly` row in `evidence.tsv` |
+
+All three are `Matching` and link byte-identical.
+
 ## Headers
 
 Library headers declare only what the reconstructed units use, as game headers do.
 
 | Path | Holds |
 | --- | --- |
-| `include/dolphin/` | Planned: Dolphin SDK public headers under the SDK's names, created by the first import that needs each one. The SDK's base types go in `dolphin/types.h`. |
-| `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`) |
+| `include/dolphin/` | Dolphin SDK public headers under the SDK's names (`dolphin/os.h` and its `dolphin/os/*.h` parts, `dolphin/db.h`, `dolphin/si.h`, ...), each created by the first import that needs it. The SDK's base types are in `dolphin/types.h`. |
+| `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`, `stdarg.h`) |
 | `src/<library>/` | Planned: private headers of one library, next to its source |
 
-Library code uses the SDK's type names. Game code keeps `types.h`.
+Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types. Game code keeps `types.h`.
 
 When an import needs a declaration:
 
@@ -45,7 +55,7 @@ When an import needs a declaration:
 - Every function copied from an upstream is reviewed against this project's standards, whichever repository it comes from. A match in an upstream is evidence that the code exists, not that its source is acceptable.
 - Check the upstream's licence at the pinned commit, and the licence of any code that the upstream itself reused.
 - Originally handwritten assembly needs provenance (CONTRIBUTING.md, "Compiler versions and flags"). A library function may be linked as assembly only when the original library shipped it as assembly, shown by the original library itself (a vendor-shipped `.s` file, for example) or by the target. A decompilation's `.s` file or `asm` block is that project's choice and is never provenance, and a failed match is never evidence of assembly. Each such function also needs an evidence row showing that no compiler emits it, and review checks every one, as the project owner decided for library assembly. `asm` blocks in C source that the compiler builds are compiled source, not this exception.
-- Map the unit's data sections when its source compiles, and record them in `evidence.tsv`.
+- Map the unit's data sections when its source compiles, and record them in `evidence.tsv`. Each section's start is where the target's relocations to it land, at the offsets the compiled object's relocations give. Its end is the compiled size, rounded up to the next object when padding follows. One `data` row per section names the unit and section. Where a data symbol in `symbols.txt` spans the edge, split it there.
 
 ## Bink
 
