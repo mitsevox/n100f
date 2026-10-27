@@ -685,7 +685,7 @@ config.libs: List[Dict[str, Any]] = [
         "pad",
         [
             Object(Matching, "dolphin/pad/Padclamp.c"),
-            Object(NonMatching, "dolphin/pad/Pad.c"),
+            Object(Matching, "dolphin/pad/Pad.c"),
         ],
     ),
     DolphinLib(

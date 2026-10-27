@@ -34,8 +34,6 @@ void GXSetMisc(GXMiscToken token, u32 val)
 
 void GXFlush(void)
 {
-    u32 i;
-
     CHECK_GXBEGIN(253, "GXFlush");
     if (gx->dirtyState) {
         __GXSetDirtyState();
