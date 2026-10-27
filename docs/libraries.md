@@ -32,6 +32,8 @@ CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compi
 | `Runtime.PPCEABI.H/global_destructor_chain.c` | GC/1.3.2 (1.3 also matches) | `.dtors`, `.sbss` | C |
 | `Runtime.PPCEABI.H/runtime.c` | GC/1.3.2 (1.3 also matches) | `.rodata` | asm functions, each with an `assembly` row in `evidence.tsv` |
 | `TRK_MINNOW_DOLPHIN/` `mainloop.c`, `nubevent.c`, `nubinit.c`, `msg.c`, `serpoll.c`, `usr_put.c`, `dispatch.c`, `msghndlr.c`, `mutex_TRK.c`, `notify.c`, `mem_TRK.c`, `main_TRK.c`, `targcont.c`, `target_options.c` | GC/1.3 | each unit's `.rodata`, `.data` and `.bss`, as `data` rows in `evidence.tsv` | C |
+| `TRK_MINNOW_DOLPHIN/` `flush_cache.c`, `targimpl.c`, `dolphin_trk.c`, `mpc_7xx_603e.c`, `dolphin_trk_glue.c` | GC/1.3 | `data` rows in `evidence.tsv` | C, and asm functions, each with an `assembly` row in `evidence.tsv` |
+| `TRK_MINNOW_DOLPHIN/targsupp.s` | assembled | none | assembly, with an `assembly` row per stub |
 | `dolphin/card/*.c` (16 objects) | GC/1.2.5n, `card_debug` flags | `.data`, `.sdata`, `.bss` | C ([CARD](#card)) |
 | `dolphin/` SDK objects (`db`, `si`, `mtx`, `ax`, `dsp`, `dvd`, `OdemuExi2`, and `os` from `OS.c` to `OSTime.c`) | GC/1.2.5n, `cflags_sdk` | each unit's sections, as `data` rows | C; asm functions where the original was assembly, each with an `assembly` row |
 

@@ -107,5 +107,42 @@ class StageArguments(unittest.TestCase):
                 wrapper_arguments("t.c", flags)
 
 
+# Stand-in for a stage: fails (exit 3, no output) while the counter file holds fewer than
+# argv[3] runs, then writes its output file.
+FLAKY_STAGE = """import sys
+from pathlib import Path
+counter, output, failures = Path(sys.argv[1]), Path(sys.argv[2]), int(sys.argv[3])
+runs = int(counter.read_text()) if counter.exists() else 0
+counter.write_text(str(runs + 1))
+if runs < failures:
+    print("Could not read file x.s Expected 69547 bytes but read 0")
+    sys.exit(3)
+output.write_text("ok")
+"""
+
+
+class StageRetry(unittest.TestCase):
+    def run_flaky(self, failures):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            script, counter, output = directory / "stage.py", directory / "runs", directory / "out.o"
+            script.write_text(FLAKY_STAGE)
+            command = [sys.executable, str(script), str(counter), str(output), str(failures)]
+            try:
+                prodg_cc.stage("NgcAs", command, output, dict(os.environ))
+                return True, int(counter.read_text())
+            except RuntimeError:
+                return False, int(counter.read_text())
+
+    def test_one_transient_failure_is_retried(self):
+        self.assertEqual(self.run_flaky(1), (True, 2))
+
+    def test_persistent_failure_fails_after_one_retry(self):
+        self.assertEqual(self.run_flaky(5), (False, 2))
+
+    def test_success_runs_once(self):
+        self.assertEqual(self.run_flaky(0), (True, 1))
+
+
 if __name__ == "__main__":
     unittest.main()
