@@ -29,6 +29,7 @@ extern u32 __OSBusClock AT_ADDRESS(OS_BASE_CACHED | 0x00F8);
 #define OSRoundDown32B(x) (((u32)(x)) & ~(32 - 1))
 
 OSTick OSGetTick(void);
+OSTime OSGetTime(void);
 
 void OSReport(const char* msg, ...);
 
@@ -36,6 +37,7 @@ void OSReport(const char* msg, ...);
 }
 #endif
 
+#include <dolphin/os/OSAlarm.h>
 #include <dolphin/os/OSAlloc.h>
 #include <dolphin/os/OSArena.h>
 #include <dolphin/os/OSCache.h>
@@ -43,5 +45,6 @@ void OSReport(const char* msg, ...);
 #include <dolphin/os/OSInterrupt.h>
 #include <dolphin/os/OSModule.h>
 #include <dolphin/os/OSResetSW.h>
+#include <dolphin/os/OSThread.h>
 
 #endif

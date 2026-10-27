@@ -13,6 +13,7 @@ typedef u32 OSInterruptMask;
 #define OS_INTERRUPTMASK_PI_RSW 0x00000200
 
 BOOL OSDisableInterrupts(void);
+BOOL OSEnableInterrupts(void);
 BOOL OSRestoreInterrupts(BOOL level);
 OSInterruptMask __OSMaskInterrupts(OSInterruptMask mask);
 

@@ -23,6 +23,10 @@ typedef int BOOL;
 #define NULL 0
 #endif
 
+#ifdef __MWERKS__
 #define AT_ADDRESS(addr) : (addr)
+#else
+#define AT_ADDRESS(addr)
+#endif
 
 #endif
