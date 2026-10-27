@@ -140,16 +140,27 @@ def run_stage(command, output, environment):
     return process.returncode, log
 
 
+def annotation(text):
+    """Escape text for a GitHub Actions workflow command."""
+    return text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
 def stage(name, command, output, environment):
-    # Each stage is a pure function of its input file, so a failed run is retried once.
-    # On CI the ProDG tools under wibo have failed rarely with no change in their input
-    # (NgcAs: "Could not read file ... Expected 69547 bytes but read 0" on a complete .s);
-    # a real error fails both attempts and is reported once.
+    # A stage's inputs (its input file, cpp's headers, the environment) are the same on
+    # both attempts, so a failed run is retried once. On CI the ProDG tools under wibo
+    # have failed rarely with no change in their input (NgcAs: "Could not read file ...
+    # Expected 69547 bytes but read 0" on a complete .s); a real error fails both attempts
+    # and is reported once. On GitHub Actions a retry is also posted as a warning
+    # annotation, so recurrences show on the run instead of only in the log.
     status, log = run_stage(command, output, environment)
     if status != 0:
-        first = log.decode(errors="replace").strip().splitlines()
-        print(f"prodg_cc: retrying {name} after exit {status}: {first[-1] if first else 'no output'}",
-              file=sys.stderr)
+        lines = log.decode(errors="replace").strip().splitlines()
+        reason = f"exit {status}" if status is not None else f"exit 0 without {output.name}"
+        message = f"retrying {name} after {reason}: {lines[-1] if lines else 'no output'}"
+        print(f"prodg_cc: {message}", file=sys.stderr)
+        if environment.get("GITHUB_ACTIONS") == "true":
+            print(f"::warning title=prodg_cc retry::{annotation(output.name + ': ' + message)}",
+                  flush=True)
         status, log = run_stage(command, output, environment)
     sys.stderr.buffer.write(log)
     sys.stderr.flush()

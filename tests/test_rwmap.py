@@ -46,7 +46,8 @@ class GapPairs(unittest.TestCase):
 class Committed(unittest.TestCase):
     def test_library_order(self):
         libs = [lib["lib"] for lib in json.loads((ROOT / "config/GIHE78/rwmap.json").read_text())["libraries"]]
-        rows = list(csv.DictReader((ROOT / "config/GIHE78/rw_units.tsv").open(), delimiter="\t"))
+        with (ROOT / "config/GIHE78/rw_units.tsv").open() as tsv:
+            rows = list(csv.DictReader(tsv, delimiter="\t"))
         order = [libs.index(r["library"]) for r in rows]
         self.assertEqual(order, sorted(order))
         starts = [int(r["text_start"], 16) for r in rows]
