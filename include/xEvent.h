@@ -21,7 +21,10 @@ enum en_xEventTags
     eEventAnimResume = 199,
     eEventAnimTogglePause = 200,
     eEventAnimPlayRandom = 201,
-    eEventAnimPlayMaybe = 202
+    eEventAnimPlayMaybe = 202,
+    eEventShaggySwap = 209,
+    eEventShaggyGrabbed = 232,
+    eEventShaggyThrown = 233
 };
 
 #endif
