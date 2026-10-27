@@ -281,7 +281,7 @@ static void ShaggyVil_HandleVisible(_zEnt* ent, U32 toEvent)
             ent->frame->oldpos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
             ent->bound.sph.center.y = ((xMat4x3*)ent->model->Mat)->pos.y + ent->bound.sph.r;
         }
-        ent->flags &= (U8)~0x1;
+        ent->flags &= ~0x1;
         break;
     case eEventVisible:
     case eEventCollision_Visible_On:
