@@ -125,3 +125,6 @@ jobs:
           persist-credentials: false
       - name: Verify review clearance logic
         run: node --test tests/review_gate.mjs
+      - name: Run Python tool tests
+        # The ProDG live-driver check needs the build image; the Build GIHE78 job runs it.
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
