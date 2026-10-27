@@ -4,7 +4,7 @@ Recover plausible original source, supported by evidence. A byte match establish
 
 ## Setup and authority
 
-Contributions contain source, tools, and reviewed metadata. Do not publish original game binaries, disc images or assets. Symbol and debug-information extractions from the reference builds are published in `references/` by the owner's decision; they are corroborating references, not target evidence. Keep experiments and bulk research out of public Git.
+Contributions contain source, tools, and reviewed metadata. Do not publish original game binaries, disc images or assets. Symbol and debug-information extractions from the reference builds are published in `references/` by the owner's decision; they are corroborating references, not target evidence. Community speedrunning documents in `references/` are playthrough observations and hints only ([community references](docs/community_references.md)). Keep experiments and bulk research out of public Git.
 
 Clone the repository and follow the [build setup](README.md#building). Arrange access to any required reference material with the project owner. Checkout locations are a local choice; a contributor workflow must not depend on another person's absolute paths.
 

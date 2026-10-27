@@ -270,3 +270,11 @@ The RenderWare unit paths in `config/GIHE78/splits.txt` and the RenderWare funct
 `tools/patches/dtk-v1.8.3-rom-copy-info.patch` modifies [encounter/decomp-toolkit](https://github.com/encounter/decomp-toolkit/tree/v1.8.3) v1.8.3 (MIT/Apache-2.0) so that `_rom_copy_info` is also searched for in the first text section. `tools/project.py` additionally passes a non-default DOL entry symbol to mwld.
 
 `tools/prodg_cc.py` is the owner's own work, adapted from the owner's [mitsevox/nflstreet2](https://github.com/mitsevox/nflstreet2/blob/fd98b7a558e45ea93121a4f960cab719e1d37b2a/tools/prodg_cc.py) repository (`tools/prodg_cc.py`, revision `fd98b7a558e45ea93121a4f960cab719e1d37b2a`, which carries no licence file). Local changes: the preprocessor defines follow the ProDG 3.5 driver, only an explicit list of tested flags is accepted and cpp gets them in the driver's order (`tests/test_prodg_cc.py` records its command lines), tool names use the pack's lower-case `cpp.exe`, each stage runs with `SN_NGC_PATH` and a per-object `TMP`/`TEMP`, the stage timeout is 60 s instead of 30 s and a failed stage is retried once, and the dependency file comes from `-MD` and is rewritten for ninja. `tools/project.py` adds the `prodg` build rule that calls it for libraries whose `mw_version` is a verified ProDG version (currently `ProDG/3.5`).
+
+## Community references
+
+`references/Scooby-Doo Night of 100 Frights/community/` contains text copies of documents written by the Night of 100 Frights speedrunning community. Their contributors are named in the documents themselves and in the skips dictionary. Local changes are listed in that folder's `README.md`: embedded images removed, and the sheets exported to CSV.
+
+- *Scooby-Doo! Night of 100 Frights Speedrunning Encyclopedia*: <https://docs.google.com/document/d/1FYX7Y7SBNxKBtWmm-pZD0OsQUlbUBwu9KMbXXdty2IY/edit?tab=t.0#heading=h.8cpcdn50wla4>
+- *Version Differences*: <https://docs.google.com/spreadsheets/d/1fxEAG8q9Qo8He824VSc1ZosycpR-0VH3TpPt9nAWfg4/edit?gid=0#gid=0>
+- *Night of 100 Frights Skips and Glitch Dictionary*: <https://docs.google.com/spreadsheets/d/17aJcLog8pv1ZWI4qKCaqw01EhiGjziElOKTIh4Ev8yw/edit?gid=1870614921#gid=1870614921>
