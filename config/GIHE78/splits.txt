@@ -755,6 +755,8 @@ TRK_MINNOW_DOLPHIN/msg.c:
 
 TRK_MINNOW_DOLPHIN/msgbuf.c:
 	.text       start:0x800DEBAC end:0x800DF5D8
+	.rodata     start:0x801A7CA0 end:0x801A7CC0
+	.bss        start:0x8023E600 end:0x8023FFB0
 
 TRK_MINNOW_DOLPHIN/serpoll.c:
 	.text       start:0x800DF5D8 end:0x800DF9A4
@@ -797,6 +799,9 @@ TRK_MINNOW_DOLPHIN/targimpl.c:
 
 TRK_MINNOW_DOLPHIN/targsupp.s:
 	.text       start:0x800E4660 end:0x800E4680
+
+TRK_MINNOW_DOLPHIN/__exception.s:
+	.init       start:0x80003154 end:0x80005088
 
 TRK_MINNOW_DOLPHIN/dolphin_trk.c:
 	.init       start:0x80005088 end:0x8000518C
