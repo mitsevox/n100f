@@ -71,7 +71,22 @@ struct iShadowCache
 };
 
 struct _xScene;
-struct _xEntFrame;
+
+struct _xEntFrame
+{
+    xMat4x3 mat;
+    xMat4x3 dmat;
+    xVec3 oldpos;
+    xVec3 oldvel;
+    xRot oldrot;
+    xRot drot;
+    xRot rot;
+    xVec3 dpos;
+    xVec3 dvel;
+    xVec3 vel;
+    U32 mode;
+};
+
 struct _xEntCollis;
 struct _xEntShadow;
 struct xModelInstance;

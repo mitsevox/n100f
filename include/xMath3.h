@@ -38,10 +38,17 @@ struct _xSphere
     F32 r;
 };
 
+struct _xRot
+{
+    xVec3 axis;
+    F32 angle;
+};
+
 typedef struct _xMat3x3 xMat3x3;
 typedef struct _xMat4x3 xMat4x3;
 typedef struct _xQuat xQuat;
 typedef struct _xSphere xSphere;
+typedef struct _xRot xRot;
 
 extern const xMat4x3 g_I3;
 
@@ -54,6 +61,7 @@ inline void xVec3Init(xVec3* v, F32 _x, F32 _y, F32 _z)
 
 void xMat3x3Euler(xMat3x3* m, F32 yaw, F32 pitch, F32 roll);
 void xMat3x3LMulVec(xVec3* o, const xMat3x3* m, const xVec3* v);
+void xMat3x3LMulRotY(xMat3x3* o, const xMat3x3* m, F32 t);
 void xMat4x3MoveLocalRight(xMat4x3* m, F32 mag);
 void xMat4x3MoveLocalUp(xMat4x3* m, F32 mag);
 void xMat4x3MoveLocalAt(xMat4x3* m, F32 mag);
