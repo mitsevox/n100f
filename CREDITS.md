@@ -55,7 +55,24 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 
 ## Bink unit map
 
-The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bink function names in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), compiled only to identify the compiler; none of it is in this repository yet.
+The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bink function names in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), which `src/bink/src/sdk/fft.c` follows ([Bink FFT](#bink-fft)).
+
+## Bink FFT
+
+`src/bink/src/sdk/fft.c` is Takuya Ooura's general purpose FFT package (`fftsg.c`) as Bink builds it. It follows the current release, `fft.tgz` (SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), with `bitrv2` and `bitrv2conj` from the same package's `fft4g.c`. `cftfsub`, `cftbsub`, `cftrec1`, `cftrec2`, `cftexp1`, `cftexp2` and `cftfx42` are the package's 2001 forms, which the current release replaced. Ooura's notice:
+
+> Copyright(C) 1996-2001 Takuya OOURA
+> email: ooura@mmm.t.u-tokyo.ac.jp
+> download: http://momonga.t.u-tokyo.ac.jp/~ooura/fft.html
+> You may use, copy, modify this code for any purpose and
+> without fee. You may distribute this ORIGINAL package.
+
+Local changes, all as the target requires:
+- `float` replaces `double`, and the constants are `float` except the `0.5` factors of `makewt` and the `makect` loop.
+- The trigonometry calls MSL's `atanf`, `cosf` and `sinf`.
+- The twiddle table keeps the 2001 layout: `makewt` stores positive sines, `cftmdl1`, `cftmdl2`, `cftf1st` and `cftb1st` negate the third-angle sine, `cftf161` derives its first twiddle from `w[2]`, and `cftfx41` and `cftf082` index it as in 2001.
+- `rdft` and `ddct` pass `ip + 2` to the transforms.
+- The functions other than `rdft` and `ddct` are `static`, and only the functions Bink links are kept.
 
 ## Build tooling
 

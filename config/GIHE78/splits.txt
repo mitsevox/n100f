@@ -1130,6 +1130,7 @@ bink/src/sdk/varbits.c:
 
 bink/src/sdk/fft.c:
 	.text       start:0x801281AC end:0x8012C490
+	.rodata     start:0x801A8DC0 end:0x801A8E18
 
 bink/src/sdk/dct.c:
 	.text       start:0x8012C490 end:0x8012D564
