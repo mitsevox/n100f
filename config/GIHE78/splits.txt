@@ -944,6 +944,8 @@ dolphin/base/PPCArch.c: comment:8
 
 dolphin/db/db.c: comment:8
 	.text       start:0x800F8824 end:0x800F8910
+	.data       start:0x801CC660 end:0x801CC678
+	.sbss       start:0x8025F3A0 end:0x8025F3A8
 
 dolphin/dsp/dsp.c: comment:8
 	.text       start:0x800F8910 end:0x800F895C
@@ -1001,9 +1003,11 @@ dolphin/gx/GXPerf.c: comment:8
 
 dolphin/mtx/mtx.c: comment:8
 	.text       start:0x801031B4 end:0x80103280
+	.sdata      start:0x8025E680 end:0x8025E688
 
 dolphin/mtx/mtx44.c: comment:8
 	.text       start:0x80103280 end:0x80103318
+	.sdata2     start:0x80262770 end:0x80262780
 
 dolphin/os/OS.c: comment:8
 	.text       start:0x80103320 end:0x80103C58
@@ -1013,9 +1017,12 @@ dolphin/os/OSAlarm.c: comment:8
 
 dolphin/os/OSAlloc.c: comment:8
 	.text       start:0x8010438C end:0x8010469C
+	.sdata      start:0x8025E688 end:0x8025E68C
+	.sbss       start:0x8025F458 end:0x8025F468
 
 dolphin/os/OSAudioSystem.c: comment:8
 	.text       start:0x801046BC end:0x80104950
+	.data       start:0x801CCF40 end:0x801CCFC0
 
 dolphin/os/OSCache.c: comment:8
 	.text       start:0x80104950 end:0x80104D9C
@@ -1043,6 +1050,7 @@ dolphin/os/OSReset.c: comment:8
 
 dolphin/os/OSResetSW.c: comment:8
 	.text       start:0x80106AA8 end:0x80106E34
+	.sbss       start:0x8025F4A0 end:0x8025F4C0
 
 dolphin/os/OSRtc.c: comment:8
 	.text       start:0x80106E34 end:0x8010774C
@@ -1057,6 +1065,7 @@ dolphin/os/OSTime.c: comment:8
 	.text       start:0x80108608 end:0x80108A84
 
 dolphin/os/__ppc_eabi_init.c: comment:8
+	.init       start:0x800054F4 end:0x80005548
 	.text       start:0x80108A84 end:0x80108B18
 
 dolphin/si/SIBios.c: comment:8
@@ -1064,6 +1073,8 @@ dolphin/si/SIBios.c: comment:8
 
 dolphin/si/SISamplingRate.c: comment:8
 	.text       start:0x8010A1F8 end:0x8010A300
+	.data       start:0x801CD858 end:0x801CD8F0
+	.sbss       start:0x8025F4E0 end:0x8025F4E4
 
 dolphin/vi/vi.c: comment:8
 	.text       start:0x8010A300 end:0x8010BD44
