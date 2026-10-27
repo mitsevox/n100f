@@ -2,7 +2,7 @@
 """Map GIHE78's RenderWare units and names from BfBB's RenderWare splits.
 
 There is no public RenderWare source to compile, so units are placed by
-function size sequence. BfBB (GQPE78, config/GIHE78/rwmap.json "upstream")
+function size sequence. BfBB (GQPE78, config/GIHE78-rev0/rwmap.json "upstream")
 links RenderWare 3.5 with the same GameCube libraries and lists each object's
 functions in address order. GIHE78 links 3.3.0.2 and its linker strips
 unreferenced functions, so a unit's functions are a subsequence of BfBB's with
@@ -53,9 +53,9 @@ table (an RW 3.x build of this game), the PS2 retail DWARF (which compiles the
 collision plugin as flat/p2rwcoll), and RenderWare source paths left in the
 PS2 January 2001 and Xbox prototypes.
 
-    python3 tools/splits/rwmap.py --dol orig/GIHE78/sys/main.dol \\
-        --checkout ../bfbb --splits rwunits.txt --units config/GIHE78/rw_units.tsv \\
-        --evidence rwrows.tsv --symbols-out config/GIHE78/symbols.txt
+    python3 tools/splits/rwmap.py --dol orig/GIHE78-rev0/sys/main.dol \\
+        --checkout ../bfbb --splits rwunits.txt --units config/GIHE78-rev0/rw_units.tsv \\
+        --evidence rwrows.tsv --symbols-out config/GIHE78-rev0/symbols.txt
 """
 
 import argparse
@@ -212,13 +212,13 @@ def node_definitions(dol, gc):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--dol', required=True)
-    ap.add_argument('--manifest', default='config/GIHE78/rwmap.json')
-    ap.add_argument('--symbols', default='config/GIHE78/symbols.txt')
+    ap.add_argument('--manifest', default='config/GIHE78-rev0/rwmap.json')
+    ap.add_argument('--symbols', default='config/GIHE78-rev0/symbols.txt')
     ap.add_argument('--checkout', required=True, help='local checkout of the manifest upstream at its pinned commit')
     ap.add_argument('--splits', required=True)
     ap.add_argument('--units', required=True)
     ap.add_argument('--evidence', required=True)
-    ap.add_argument('--evidence-in', default='config/GIHE78/evidence.tsv', help='existing rows, to skip names they cover')
+    ap.add_argument('--evidence-in', default='config/GIHE78-rev0/evidence.tsv', help='existing rows, to skip names they cover')
     ap.add_argument('--symbols-out')
     args = ap.parse_args()
     man = json.load(open(args.manifest))

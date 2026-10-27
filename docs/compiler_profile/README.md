@@ -2,7 +2,7 @@
 
 The target has no symbols, so compiler versions are established by compiling known source under each candidate compiler and looking for the exact output in `main.dol`. The source used is [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb) at `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`: Battle for Bikini Bottom runs a later revision of the same Heavy Iron engine, and that project ships Dolphin SDK and MSL sources. The bfbb source is only a stimulus. A hit says which compiler produces those instructions; it does not establish the target's names, types or unit boundaries.
 
-The claims are the `compiler` rows in [`config/GIHE78/evidence.tsv`](../../config/GIHE78/evidence.tsv). In short:
+The claims are the `compiler` rows in [`config/GIHE78-rev0/evidence.tsv`](../../config/GIHE78-rev0/evidence.tsv). In short:
 
 | Scope | Profile | Status |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ No single body identifies 1.3.2. Each excludes part of the candidate range, and 
 ```sh
 git clone https://github.com/bfbbdecomp/bfbb ../bfbb && git -C ../bfbb checkout d8e8eac38dd617ee72161f4cb2da4498bc89aad6
 D=docs/compiler_profile
-probe() { python3 tools/compiler_probe.py --dol orig/GIHE78/sys/main.dol \
+probe() { python3 tools/compiler_probe.py --dol orig/GIHE78-rev0/sys/main.dol \
     --compilers build/compilers --wrapper build/tools/wibo --root ../bfbb --summary 10 "$@"; }
 probe --versions 1.3,1.3.2,1.3.2r,2.0,2.0p1,2.5,2.6,2.7 --flags-file $D/game.flags --sources-file $D/game_units.txt
 probe --versions 1.3,1.3.2,2.0,2.0p1,2.5,2.6,2.7 --flags-file $D/game_inline_off.flags --sources-file $D/game_units.txt \
@@ -58,7 +58,7 @@ The flag counts in `evidence.tsv` come from editing `game.flags` one setting at 
 No matching RenderWare source was found in the decompilations checked. In bfbb (d8e8eac), `src/rwsdk` holds `plugin/collis/ctbsp.c`, whose only function is an empty `_rpCollBSPTreeInit`, `tool/slerp/rtslerp.c`, which has no function at all because everything in it is commented out, and `tool/slerp/rtslerp.h`, a header with declarations only. bfbbdecomp/tssm (fc32870) has the same three `src/rwsdk` files as bfbb, as identical blobs, and no other RenderWare source. Jovinull/sonicheroes (8be2883) has four `rw_gcn_*.c` files, which are m2c output marked NonMatching in its `configure.py`. The stimuli in [`rw_probe/`](rw_probe/) were written for this project from the target's own disassembly of nine `rwcore` functions: the vector length and normalize functions, the case-insensitive string functions and the bounding-box functions. As with bfbb, a hit says which compiler produces the instructions, not what the original source was. From the repository root:
 
 ```sh
-python3 tools/compiler_probe.py --dol orig/GIHE78/sys/main.dol --compilers build/compilers \
+python3 tools/compiler_probe.py --dol orig/GIHE78-rev0/sys/main.dol --compilers build/compilers \
     --wrapper build/tools/wibo --root docs/compiler_profile --flags-file docs/compiler_profile/rw.flags \
     --versions 1.0,1.1,1.1p1,1.2.5,1.2.5n,1.3,1.3.2,1.3.2r,2.0,2.0p1,2.5,2.6,2.7 --summary 2 \
     rw_probe/bbox.c rw_probe/str.c rw_probe/vec.c

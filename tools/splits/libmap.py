@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Map GIHE78's MetroTRK, runtime, MSL, Dolphin SDK and CARD objects from public decompilations.
 
-Every candidate source in config/GIHE78/libmap.json is compiled under its
+Every candidate source in config/GIHE78-rev0/libmap.json is compiled under its
 profile and each compiler version listed there. A function whose masked body
 occurs exactly once in main.dol, at a function start of the same size,
 places the object; the whole object .text is then compared in place. A
@@ -22,11 +22,11 @@ A name is applied only when it labels a function of that size in one of the
 upstream symbol lists that the manifest marks as coming from a map or debug
 file ("names"). Other functions keep their neutral labels.
 
-    python3 tools/splits/libmap.py --dol orig/GIHE78/sys/main.dol \\
+    python3 tools/splits/libmap.py --dol orig/GIHE78-rev0/sys/main.dol \\
         --compilers build/compilers --wrapper build/tools/wibo \\
         --checkout ac-decomp=../ac-decomp --checkout tww=../tww ... \\
-        --splits libunits.txt --units config/GIHE78/lib_units.tsv \\
-        --evidence librows.tsv --symbols-out config/GIHE78/symbols.txt
+        --splits libunits.txt --units config/GIHE78-rev0/lib_units.tsv \\
+        --evidence librows.tsv --symbols-out config/GIHE78-rev0/symbols.txt
 """
 
 import argparse
@@ -193,8 +193,8 @@ def unit_path(cand, source, sdk_dirs):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--dol', required=True)
-    ap.add_argument('--manifest', default='config/GIHE78/libmap.json')
-    ap.add_argument('--symbols', default='config/GIHE78/symbols.txt')
+    ap.add_argument('--manifest', default='config/GIHE78-rev0/libmap.json')
+    ap.add_argument('--symbols', default='config/GIHE78-rev0/symbols.txt')
     ap.add_argument('--compilers', required=True, help='directory containing GC/<version>/')
     ap.add_argument('--wrapper', help='wibo or wine, when not on Windows')
     ap.add_argument('--checkout', action='append', default=[], metavar='UPSTREAM=PATH',
@@ -314,7 +314,7 @@ def main():
                f"{len(u['funcs'])} of the {u['nfuncs']} functions of {up} {commit(up)} {u['source']} match here, in object order")
         rows.append(['unit', f"0x{u['start']:08X}", f"0x{u['end']:08X}", u['path'], 'target',
                      'exact' if left else 'open', 'exact' if right else 'open',
-                     f"Compiled with GC/{' and GC/'.join(versions)} ({u['cand']['profile']} profile, config/GIHE78/libmap.json), "
+                     f"Compiled with GC/{' and GC/'.join(versions)} ({u['cand']['profile']} profile, config/GIHE78-rev0/libmap.json), "
                      f"{how} (relocated fields masked). An edge is exact where the next unit abuts it; "
                      f"otherwise the object may extend past it. Data ownership is not mapped yet."])
         for off, size, name, addr in u['funcs']:
