@@ -24,4 +24,6 @@ struct xModelInstance
     RwMatrix* Mat;
 };
 
+void xModelRender(xModelInstance* modelInst);
+
 #endif
