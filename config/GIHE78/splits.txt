@@ -1244,3 +1244,192 @@ dolphin/card/CARDStatEx.c: comment:8
 dolphin/card/CARDNet.c: comment:8
 	.text       start:0x80137214 end:0x801372EC
 	.sdata      start:0x8025E778 end:0x8025E780
+
+rwsdk/plugin/collis/ctgeom.c:
+	.text       start:0x801376C4 end:0x80138904
+
+rwsdk/plugin/collis/ctbsp.c:
+	.text       start:0x8013AA64 end:0x8013B850
+
+rwsdk/plugin/collis/rpcollis.c:
+	.text       start:0x8013B850 end:0x8013BBE8
+
+rwsdk/plugin/hanim/rphanim.c:
+	.text       start:0x8013CF64 end:0x8013D210
+
+rwsdk/plugin/matfx/rpmatfx.c:
+	.text       start:0x8013EF40 end:0x8013FA64
+
+rwsdk/plugin/matfx/gcn/effectPipesGcn.c:
+	.text       start:0x80140010 end:0x80140D40
+
+rwsdk/plugin/matfx/gcn/multiTexGcnData.c:
+	.text       start:0x80140D40 end:0x80141910
+
+rwsdk/plugin/matfx/multiTex.c:
+	.text       start:0x80142C94 end:0x8014366C
+
+rwsdk/plugin/matfx/multiTexEffect.c:
+	.text       start:0x8014366C end:0x80144144
+
+rwsdk/plugin/skin2/rpskin.c:
+	.text       start:0x80144244 end:0x80144CD4
+
+rwsdk/plugin/userdata/rpusrdat.c:
+	.text       start:0x80145ECC end:0x80146D40
+
+rwsdk/world/babinwor.c:
+	.text       start:0x8014707C end:0x801472BC
+
+rwsdk/world/baclump.c:
+	.text       start:0x801484D4 end:0x8014AFC4
+
+rwsdk/world/bageomet.c:
+	.text       start:0x8014B28C end:0x8014C7DC
+
+rwsdk/world/balight.c:
+	.text       start:0x8014C7DC end:0x8014CFC8
+
+rwsdk/world/bamateri.c:
+	.text       start:0x8014CFC8 end:0x8014D2BC
+
+rwsdk/world/bamatlst.c:
+	.text       start:0x8014D674 end:0x8014DD4C
+
+rwsdk/world/bamesh.c:
+	.text       start:0x8014DD4C end:0x8014E7A4
+
+rwsdk/world/bameshop.c:
+	.text       start:0x8014E950 end:0x80150F5C
+
+rwsdk/world/basector.c:
+	.text       start:0x80150F70 end:0x80151038
+
+rwsdk/world/baworld.c:
+	.text       start:0x80151054 end:0x8015275C
+
+rwsdk/world/baworobj.c:
+	.text       start:0x80152834 end:0x80154264
+
+rwsdk/world/pipe/p2/bapipew.c:
+	.text       start:0x80154264 end:0x801542DC
+
+rwsdk/world/pipe/p2/gcn/gcpipe.c:
+	.text       start:0x8015885C end:0x80159374
+
+rwsdk/world/pipe/p2/gcn/vtxfmt.c:
+	.text       start:0x8015D4E0 end:0x8015D818
+
+rwsdk/world/pipe/p2/gcn/wrldpipe.c:
+	.text       start:0x8015D864 end:0x8015DA50
+
+rwsdk/src/plcore/babinary.c:
+	.text       start:0x80160340 end:0x80160F60
+
+rwsdk/src/plcore/baerr.c:
+	.text       start:0x80160FD4 end:0x8016109C
+
+rwsdk/src/plcore/bafsys.c:
+	.text       start:0x801610A8 end:0x801611C0
+
+rwsdk/src/plcore/baimmedi.c:
+	.text       start:0x801611D0 end:0x801612EC
+
+rwsdk/src/plcore/bamatrix.c:
+	.text       start:0x80161B70 end:0x8016274C
+
+rwsdk/src/plcore/baresour.c:
+	.text       start:0x80163C60 end:0x80164374
+
+rwsdk/src/plcore/bastream.c:
+	.text       start:0x801643EC end:0x80164A94
+
+rwsdk/src/plcore/batkbin.c:
+	.text       start:0x80164D48 end:0x801652F8
+
+rwsdk/src/plcore/batkreg.c:
+	.text       start:0x80165344 end:0x801658F8
+
+rwsdk/src/plcore/bavector.c:
+	.text       start:0x801659A8 end:0x80165CC8
+
+rwsdk/src/plcore/resmem.c:
+	.text       start:0x801662AC end:0x801664F8
+
+rwsdk/src/plcore/rwstring.c:
+	.text       start:0x801664F8 end:0x80166674
+
+rwsdk/src/babintex.c:
+	.text       start:0x80166F2C end:0x801683DC
+
+rwsdk/src/bacamera.c:
+	.text       start:0x801694EC end:0x80169E98
+
+rwsdk/src/badevice.c:
+	.text       start:0x80169E98 end:0x8016A68C
+
+rwsdk/src/baframe.c:
+	.text       start:0x8016AA68 end:0x8016B6C4
+
+rwsdk/src/baimage.c:
+	.text       start:0x8016B928 end:0x8016D498
+
+rwsdk/src/baimras.c:
+	.text       start:0x8016D610 end:0x8016D794
+
+rwsdk/src/baraster.c:
+	.text       start:0x8016D794 end:0x8016DBC8
+
+rwsdk/src/basync.c:
+	.text       start:0x8016F094 end:0x8016F3EC
+
+rwsdk/src/batextur.c:
+	.text       start:0x8016F3EC end:0x80170FD8
+
+rwsdk/src/batypehf.c:
+	.text       start:0x80171450 end:0x801714EC
+
+rwsdk/driver/common/palquant.c:
+	.text       start:0x80171514 end:0x80173D28
+
+rwsdk/driver/gcn/dl2drend.c:
+	.text       start:0x8017402C end:0x801753BC
+
+rwsdk/driver/gcn/dlconvrt.c:
+	.text       start:0x801753BC end:0x80177334
+
+rwsdk/driver/gcn/dldevice.c:
+	.text       start:0x80177E54 end:0x80178A3C
+
+rwsdk/driver/gcn/dlraster.c:
+	.text       start:0x80178B3C end:0x801797E0
+
+rwsdk/driver/gcn/dlsprite.c:
+	.text       start:0x8017BCDC end:0x8017C950
+
+rwsdk/driver/gcn/dltextur.c:
+	.text       start:0x8017CF9C end:0x8017DBB8
+
+rwsdk/src/pipe/p2/baim3d.c:
+	.text       start:0x8017DE58 end:0x8017E5C8
+
+rwsdk/src/pipe/p2/bapipe.c:
+	.text       start:0x8017ED24 end:0x8017EDA0
+
+rwsdk/src/pipe/p2/p2core.c:
+	.text       start:0x801869A8 end:0x80187438
+
+rwsdk/src/pipe/p2/p2define.c:
+	.text       start:0x801874A8 end:0x80189020
+
+rwsdk/src/pipe/p2/p2dep.c:
+	.text       start:0x80189020 end:0x8018A644
+
+rwsdk/src/pipe/p2/p2heap.c:
+	.text       start:0x8018AA7C end:0x8018B69C
+
+rwsdk/src/pipe/p2/p2resort.c:
+	.text       start:0x8018BB5C end:0x8018C010
+
+rwsdk/src/pipe/p2/gcn/im3dpipe.c:
+	.text       start:0x8018C010 end:0x8018C260
