@@ -55,7 +55,7 @@ names come from the PS2 v1.01 DWARF and the boundaries are inferred, so no game 
 checked against Heavy Iron's objects. The basis string says so. Library units placed by a
 whole-object match have exact extents; the others have open edges. RenderWare unit edges are `provisional` or `open`. Naming those units did not change
 what `files.named` means, so the methodology and generation stay the same.
-Today's 2,558 named functions are 648 from before the library map, 822 library names, 336 Bink names, 105 names from the CARD import and 647 RenderWare names. The 648
+Today's 2,558 named functions are 606 from before the library map, 864 library names, 336 Bink names, 105 names from the CARD import and 647 RenderWare names. The 606
 are the names dtk's analysis assigned in `symbols.txt` (MW runtime and some GX SDK functions, plus
 `__fill_mem`, which dtk names once `memset` is named), `__start`, the seven names the xMorph unit
 added (its three functions and their four callees), 334 SLUS-20349 DWARF names applied from
