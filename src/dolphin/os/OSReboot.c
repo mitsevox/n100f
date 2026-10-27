@@ -25,16 +25,17 @@ static volatile BOOL Prepared = FALSE;
 extern void __DVDPrepareResetAsync(DVDCBCallback callback);
 extern BOOL DVDCheckDisk(void);
 
-static void Run(register void (*addr)())
+static asm void Run(register void (*addr)())
 {
-    OSDisableInterrupts();
-    ICFlashInvalidate();
-    asm {
-        sync
-        isync
-        mtlr addr
-        blr
-    }
+    fralloc
+    bl OSDisableInterrupts
+    bl ICFlashInvalidate
+    sync
+    isync
+    mtlr addr
+    blr
+    frfree
+    blr
 }
 
 static void Callback()

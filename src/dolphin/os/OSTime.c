@@ -83,6 +83,9 @@ static void GetDates(s32 days, OSCalendarTime* cal)
     s32 totalDays;
     s32* p_days;
     s32 month;
+
+    ASSERTLINE(285, 0 <= days);
+
     cal->wday = (days + 6) % OS_TIME_WEEK_DAY_MAX;
 
     for (year = days / OS_TIME_YEAR_DAY_MAX;
@@ -117,6 +120,7 @@ void OSTicksToCalendarTime(OSTime ticks, OSCalendarTime* td)
     if (d < 0)
     {
         d += OSSecondsToTicks(1);
+        ASSERTLINE(330, 0 <= d);
     }
     td->usec = (int)(OSTicksToMicroseconds(d) % 1000);
     td->msec = (int)(OSTicksToMilliseconds(d) % 1000);

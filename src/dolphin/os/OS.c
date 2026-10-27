@@ -47,8 +47,8 @@ void __OSDBJUMPEND(void);
 static OSBootInfo* BootInfo;
 static volatile u32* BI2DebugFlag;
 static u32* BI2DebugFlagHolder;
-static f64 ZeroPS;
 static f64 ZeroF;
+static f32 ZeroPS[2];
 static BOOL AreWeInitialized;
 
 typedef void (*OSExceptionHandler)(u8, struct OSContext*);
@@ -62,12 +62,12 @@ OSTime __OSStartTime;
 static DVDDriveInfo DriveInfo __attribute__((aligned(0x20)));
 static DVDCommandBlock DriveBlock;
 
-static asm void __OSInitFPRs(void);
+static asm void __OSFPRInit(void);
 static void OSExceptionInit(void);
 static void OSDefaultExceptionHandler(u8 exception /* r3 */,
                                       OSContext* context /* r4 */);
 
-static asm void __OSInitFPRs(void)
+static asm void __OSFPRInit(void)
 {
     nofralloc
 
