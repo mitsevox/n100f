@@ -106,6 +106,22 @@ Compiler versions and flags need evidence at the original compilation-unit or li
 
 An evidence-supported source form may be identified through its compiler output. A suspected fake match remains a local experiment, outside accepted source, unless the project owner explicitly authorizes a documented exception. A `fake match` label is not permission. Otherwise leave the original assembly linked and the recovery unresolved.
 
+### Write-only and unused locals
+
+A local that is never read, or never used at all, changes only the stack frame and register allocation, and decompilations often add one to reach a match.
+
+The owner's rule (2026-10-27):
+
+- Keep a load-bearing write-only local when two or more upstream decompilations have it in the same form and it reads like real code (named, in a real code path), with a `source-form` row naming them. Otherwise drop it, and the unit is `NonMatching`.
+- Always drop obvious padding: `unused[N]`, pad or trash arrays, and locals that exist only under `#if !DEBUG`.
+
+Gate procedure for applying it:
+
+- An import checks the files it touches with MWCC `-w unusedvar` and a scan for locals that are set but never read, which MWCC does not report. The PR reports each hit.
+- Delete a local that is not load-bearing.
+- A kept local's row names each repository, its commit and the file, and gives how many instructions differ with and without it.
+- Say only what each file shows. Do not claim one repository copied another without a diff.
+
 Put compiler reasoning, exception evidence, and matching experiments in metadata or the PR, not explanatory matching comments in reconstructed source. Preserve original assertions and diagnostics when the target requires them.
 
 ## Source readability and comments
