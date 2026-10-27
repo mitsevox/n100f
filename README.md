@@ -38,7 +38,7 @@ python3 configure.py --dtk decomp-toolkit/target/release/dtk
 ninja
 ```
 
-With no source units, this is the original-object baseline: dtk splits the DOL, mwld relinks it, and `ninja` checks the result against `config/GIHE78/build.sha1`. It is byte-identical. Game code uses CodeWarrior for GameCube 1.3.2 and the Dolphin SDK uses 1.2.5n; the evidence is in [`docs/compiler_profile/`](docs/compiler_profile/README.md). See [`docs/dtk/`](docs/dtk/getting_started.md) for the upstream tool documentation.
+dtk splits the DOL into original objects, the objects marked `Matching` in `configure.py` are compiled from `src/` in place of their split ranges, mwld relinks everything, and `ninja` checks the result against `config/GIHE78/build.sha1`. It is byte-identical. Game code uses CodeWarrior for GameCube 1.3.2 and the Dolphin SDK uses 1.2.5n; the evidence is in [`docs/compiler_profile/`](docs/compiler_profile/README.md). See [`docs/dtk/`](docs/dtk/getting_started.md) for the upstream tool documentation.
 
 CI runs the same build in the private, digest-pinned build environment from [mitsevox/n100f-build](https://github.com/mitsevox/n100f-build) (`.github/workflows/validate.yml`), which provides the original executable, the patched dtk, compilers and binutils.
 
