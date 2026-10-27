@@ -11,7 +11,7 @@ void zEntButton_Init(void* ent, void* asset)
     zEntButton_Init((_zEntButton*)ent, (p2EntAsset*)asset);
 }
 
-inline void zEntButton_Init(_zEntButton* ent, p2EntAsset* asset)
+void zEntButton_Init(_zEntButton* ent, p2EntAsset* asset)
 {
     zEntInit(ent, asset, 'BUTN');
 
