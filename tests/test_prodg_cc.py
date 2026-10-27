@@ -8,6 +8,8 @@ check every case against a live run of the driver:
     PRODG_DIR=build/compilers/ProDG/3.5 WIBO=build/tools/wibo python3 -m unittest tests/test_prodg_cc.py
 """
 
+import contextlib
+import io
 import os
 import shlex
 import subprocess
@@ -107,14 +109,18 @@ class StageArguments(unittest.TestCase):
                 wrapper_arguments("t.c", flags)
 
 
-# Stand-in for a stage: fails (exit 3, no output) while the counter file holds fewer than
-# argv[3] runs, then writes its output file.
+# Stand-in for a stage: while the counter file holds fewer than argv[3] runs it writes a
+# partial output file and fails (exit 3), then it writes its output. Each run appends to
+# the log file whether the output file already existed when it started.
 FLAKY_STAGE = """import sys
 from pathlib import Path
-counter, output, failures = Path(sys.argv[1]), Path(sys.argv[2]), int(sys.argv[3])
+counter, output, failures, log = Path(sys.argv[1]), Path(sys.argv[2]), int(sys.argv[3]), Path(sys.argv[4])
 runs = int(counter.read_text()) if counter.exists() else 0
 counter.write_text(str(runs + 1))
+with log.open("a") as seen:
+    seen.write("existed\\n" if output.exists() else "absent\\n")
 if runs < failures:
+    output.write_text("partial")
     print("Could not read file x.s Expected 69547 bytes but read 0")
     sys.exit(3)
 output.write_text("ok")
@@ -122,27 +128,47 @@ output.write_text("ok")
 
 
 class StageRetry(unittest.TestCase):
-    def run_flaky(self, failures):
+    def run_flaky(self, failures, github_actions=False):
+        """Run the stand-in through stage(); return (succeeded, runs, seen, stdout)."""
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
-            script, counter, output = directory / "stage.py", directory / "runs", directory / "out.o"
+            script, counter, output, log = (directory / "stage.py", directory / "runs",
+                                            directory / "out.o", directory / "seen")
             script.write_text(FLAKY_STAGE)
-            command = [sys.executable, str(script), str(counter), str(output), str(failures)]
+            command = [sys.executable, str(script), str(counter), str(output), str(failures), str(log)]
+            environment = {k: v for k, v in os.environ.items() if k != "GITHUB_ACTIONS"}
+            if github_actions:
+                environment["GITHUB_ACTIONS"] = "true"
+            stdout = io.StringIO()
             try:
-                prodg_cc.stage("NgcAs", command, output, dict(os.environ))
-                return True, int(counter.read_text())
+                with contextlib.redirect_stdout(stdout):
+                    prodg_cc.stage("NgcAs", command, output, environment)
+                succeeded = output.read_text() == "ok"
             except RuntimeError:
-                return False, int(counter.read_text())
+                succeeded = False
+            return succeeded, int(counter.read_text()), log.read_text().split(), stdout.getvalue()
 
     def test_one_transient_failure_is_retried(self):
-        self.assertEqual(self.run_flaky(1), (True, 2))
+        self.assertEqual(self.run_flaky(1)[:2], (True, 2))
 
     def test_persistent_failure_fails_after_one_retry(self):
-        self.assertEqual(self.run_flaky(5), (False, 2))
+        self.assertEqual(self.run_flaky(5)[:2], (False, 2))
 
     def test_success_runs_once(self):
-        self.assertEqual(self.run_flaky(0), (True, 1))
+        self.assertEqual(self.run_flaky(0)[:2], (True, 1))
 
+    def test_partial_output_is_removed_before_the_retry(self):
+        self.assertEqual(self.run_flaky(1)[2], ["absent", "absent"])
+
+    def test_retry_is_annotated_only_on_github_actions(self):
+        self.assertEqual(self.run_flaky(1)[3], "")
+        self.assertEqual(self.run_flaky(1, github_actions=True)[3],
+                         "::warning title=prodg_cc retry::out.o: retrying NgcAs after exit 3: "
+                         "Could not read file x.s Expected 69547 bytes but read 0\n")
+        self.assertEqual(self.run_flaky(0, github_actions=True)[3], "")
+
+    def test_annotation_escapes(self):
+        self.assertEqual(prodg_cc.annotation("100%\r\nx"), "100%25%0D%0Ax")
 
 if __name__ == "__main__":
     unittest.main()
