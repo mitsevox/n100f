@@ -26,8 +26,20 @@ GC/1.2.5n writes `.comment` version 8 (compiler 2.3.0.1). GC/1.3 and GC/1.3.2 bo
 | `Runtime.PPCEABI.H/__va_arg.c` | GC/1.3.2 (1.3 differs; 1.3.2 through 2.7 are identical) | none | C |
 | `Runtime.PPCEABI.H/global_destructor_chain.c` | GC/1.3.2 (1.3 also matches) | `.dtors`, `.sbss` | C |
 | `Runtime.PPCEABI.H/runtime.c` | GC/1.3.2 (1.3 also matches) | `.rodata` | asm functions, each with an `assembly` row in `evidence.tsv` |
+| `MSL_C.PPCEABI.bare.H/abort_exit.c` | GC/1.3 (msl profile) | `.bss`, `.sbss` | C |
+| `MSL_C.PPCEABI.bare.H/alloc.c` | GC/1.3 (msl profile) | `.rodata`, `.bss`, `.sbss` | C |
+| `MSL_C.PPCEABI.bare.H/arith.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/ctype.c` | GC/1.3 (msl profile) | `.data` | C |
+| `MSL_C.PPCEABI.bare.H/mbstring.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/mem.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/mem_funcs.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/qsort.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/rand.c` | GC/1.3 (msl profile) | `.sdata` | C |
+| `MSL_C.PPCEABI.bare.H/string.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata` | C |
+| `MSL_C.PPCEABI.bare.H/strtold.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/strtoul.c` | GC/1.3 (msl profile) | `.data` | C |
 
-All three are `Matching` and link byte-identical.
+All fifteen are `Matching` and link byte-identical. The MSL units build under the `msl` profile in `configure.py`: GC/1.3 with `-inline auto,deferred` and `-char signed`. The `compiler` row in `evidence.tsv` records why.
 
 ## Headers
 
@@ -36,8 +48,9 @@ Library headers declare only what the reconstructed units use, as game headers d
 | Path | Holds |
 | --- | --- |
 | `include/dolphin/` | Planned: Dolphin SDK public headers under the SDK's names, created by the first import that needs each one. The SDK's base types go in `dolphin/types.h`. |
-| `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`, `stdarg.h`) |
-| `src/<library>/` | Planned: private headers of one library, next to its source |
+| `include/libc/` | MSL C headers, shared with game code (`ctype.h`, `eof.h`, `errno.h`, `float.h`, `limits.h`, `locale.h`, `math.h`, `mem_funcs.h`, `pool_alloc.h`, `stdarg.h`, `stddef.h`, `stdio.h`, `stdlib.h`, `string.h`) |
+| `include/runtime/` | Runtime library headers (`NMWException.h`) |
+| `src/<library>/` | Private headers of one library, next to its source (`src/MSL_C.PPCEABI.bare.H/ansi_fp.h`, `scanf.h`) |
 
 Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types. Game code keeps `types.h`.
 
