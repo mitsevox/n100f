@@ -125,6 +125,29 @@ jobs:
           if-no-files-found: error
           retention-days: 90
           overwrite: true
+      - name: List measuring tools
+        id: tools
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          delimiter="tools-$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"
+          {
+            echo "lines<<$delimiter"
+            python3 -c "import sys; sys.path.insert(0, 'tools'); import public_report as p; print('\n'.join(t['name'] + '=' + t['identity'] for t in p.tools()))"
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+      - name: Publish to the site
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        # While report-v2 still feeds the site, its import requires this job to succeed, so a
+        # failed schema-1 publish must not fail the job. Removed at the report-v2 cutover.
+        continue-on-error: true
+        uses: mitsevox/mitsevox.github.io/.github/actions/publish@main
+        with:
+          target: ${{ matrix.target }}
+          report: build/${{ matrix.target }}/report.json
+          tools: ${{ steps.tools.outputs.lines }}
+          measured-at: ${{ steps.measure.outputs.measured-at }}
+          app-client-id: ${{ vars.PORTFOLIO_APP_CLIENT_ID }}
+          app-private-key: ${{ secrets.PORTFOLIO_APP_PRIVATE_KEY }}
 
   complete:
     name: Validate targets

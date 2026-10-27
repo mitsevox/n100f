@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "shared": ["src/**", "include/**", "asm/**", "configure.py", "tools/**", ".github/workflows/validate.yml", "config/targets.json", "config/ci-targets.json"],
+  "shared": ["src/**", "include/**", "asm/**", "configure.py", "tools/**", ".github/workflows/validate.yml", "config/targets.json", "config/ci-targets.json", "config/site.json"],
   "targets": {
     "GIHE78-rev0": ["config/GIHE78-rev0/**", "orig/GIHE78-rev0/**"],
     "GIHE78-rev1": ["config/GIHE78-rev1/**", "orig/GIHE78-rev1/**"]
