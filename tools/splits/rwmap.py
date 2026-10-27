@@ -32,7 +32,21 @@ some sizes changed.
    to take in any function that calls one of its static names. A unit needs
    at least two names. An edge is
    provisional where the neighbouring unit's aligned function abuts it, and
-   open otherwise. Functions between units stay unassigned.
+   open otherwise.
+5. Gaps. In each gap between mapped units, a unit takes the next function past
+   its outermost name when it has the same size as the upstream next one, or a
+   further one when as many functions lie between on both sides (or it is 0x20
+   bytes or more). The gap's functions are then paired in order with the
+   unmapped upstream units that may sit there; one with two names is mapped
+   ("gap"), and the only one that may sit between two units of its library,
+   both ending at their upstream ends, fills the gap when it pairs with an
+   equal size of 0x20 bytes or more ("fill"). Last, a 12-byte getter returning
+   an RxNodeDefinition named "<node>.csl" makes a node object ("node") when the
+   PS2 June 2001 prototype lists RxNodeDefinitionGet<node> and a prototype
+   source path rwsdk/<dir>/node<node>.c shares the previous unit's directory;
+   it ends with its getter and starts after the previous unit unless something
+   outside calls the functions before its body. Functions between units stay
+   unassigned.
 
 Corroboration, not used for placement: the PS2 June 2001 prototype symbol
 table (an RW 3.x build of this game), the PS2 retail DWARF (which compiles the
@@ -135,6 +149,64 @@ def local_placements(sizes, seq):
         if len(found) == KEEP_PER_UNIT:
             break
     return found
+
+
+def gap_pairs(sizes, seq):
+    """Order-preserving pairs of equal or near sizes with the largest total pair_score (no gap cost)."""
+    n, m = len(sizes), len(seq)
+    h = [[0.0] * (m + 1) for _ in range(n + 1)]
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            s = pair_score(sizes[i - 1], seq[j - 1])
+            h[i][j] = max(h[i - 1][j], h[i][j - 1], h[i - 1][j - 1] + s if s > 0 else 0.0)
+    pairs, i, j = [], n, m
+    while i and j:
+        s = pair_score(sizes[i - 1], seq[j - 1])
+        if s > 0 and abs(h[i][j] - h[i - 1][j - 1] - s) < 1e-9:
+            pairs.append((i - 1, j - 1))
+            i, j = i - 1, j - 1
+        elif h[i][j] == h[i - 1][j]:
+            i -= 1
+        else:
+            j -= 1
+    return pairs[::-1]
+
+
+def dol_word(dol, addr):
+    raw, sections = dol
+    for off, base, length in sections:
+        if base <= addr and addr + 4 <= base + length:
+            return struct.unpack_from('>I', raw, off + addr - base)[0]
+    return None
+
+
+def node_definitions(dol, gc):
+    """{index: (node name, RxNodeDefinition address)} for 12-byte functions returning an RxNodeDefinition.
+
+    Such a getter is lis/addi r3 of the definition, whose first word points to the node's "<name>.csl"."""
+    out = {}
+    for k, (addr, size, _, _) in enumerate(gc):
+        if size != 0xC:
+            continue
+        i0, i1, i2 = (dol_word(dol, addr + 4 * n) for n in range(3))
+        if (i0 >> 26 != 15 or (i0 >> 16) & 31 or i1 >> 26 != 14 or (i1 >> 21) & 31 != 3
+                or (i1 >> 16) & 31 != (i0 >> 21) & 31 or i2 != 0x4E800020):
+            continue
+        lo = i1 & 0xFFFF
+        target = ((i0 & 0xFFFF) << 16) + (lo - 0x10000 if lo & 0x8000 else lo)
+        text = dol_word(dol, target)
+        chars = bytearray()
+        while text is not None and len(chars) < 64:
+            word = dol_word(dol, text + len(chars))
+            if word is None:
+                break
+            chars += word.to_bytes(4, 'big')
+            if 0 in chars:
+                break
+        name = chars.split(b'\0')[0].decode('latin-1')
+        if 0 in chars and name.endswith('.csl'):
+            out[k] = (name[:-4], target)
+    return out
 
 
 def main():
@@ -251,19 +323,22 @@ def main():
             print(f"note: {u['path']} placed at 0x{gc[u['lo']][0]:08X} keeps {len(u['names'])} name(s); not mapped",
                   file=sys.stderr)
     units = [u for u in units if len(u['names']) >= 2]
-    for n, u in enumerate(units):
-        floor = units[n - 1]['hi'] if n else -1
-        ceil = units[n + 1]['lo'] if n + 1 < len(units) else len(gc)
-        for i, (f, cls) in sorted(u['names'].items()):
-            if not f[3]:
-                continue
-            outside = [c for c in callers[i] if not u['lo'] <= c <= u['hi']]
-            if foreign[i] or any(c <= floor or c >= ceil for c in outside):
-                print(f'note: static {f[2]} at 0x{gc[i][0]:08X} is called from another unit; not named', file=sys.stderr)
-                del u['names'][i]
-                continue
-            for c in outside:
-                u['lo'], u['hi'] = min(u['lo'], c), max(u['hi'], c)
+    def keep_statics(units):
+        for n, u in enumerate(units):
+            floor = units[n - 1]['hi'] if n else -1
+            ceil = units[n + 1]['lo'] if n + 1 < len(units) else len(gc)
+            for i, (f, cls) in sorted(u['names'].items()):
+                if not f[3]:
+                    continue
+                outside = [c for c in callers[i] if not u['lo'] <= c <= u['hi']]
+                if foreign[i] or any(c <= floor or c >= ceil for c in outside):
+                    print(f'note: static {f[2]} at 0x{gc[i][0]:08X} is called from another unit; not named',
+                          file=sys.stderr)
+                    del u['names'][i]
+                    continue
+                for c in outside:
+                    u['lo'], u['hi'] = min(u['lo'], c), max(u['hi'], c)
+    keep_statics(units)
 
     # Corroborating references.
     proto = collections.defaultdict(list)
@@ -284,6 +359,150 @@ def main():
             if m:
                 paths[m[1]].add(build)
 
+    # 5. Gaps between mapped units.
+    dol = dol_read(args.dol)
+    nodes = node_definitions(dol, gc)
+    rank = {path: n for n, (path, _, _) in enumerate(bunits)}
+
+    def unit_key(path):
+        k, lib = library(path)
+        return (k, rank.get(path, 0) if lib['ordered'] else 0)
+
+    def edge(u, b, forward):
+        """Extend u from its outermost name over the gap up to b (exclusive), along its upstream tail or head."""
+        named = sorted(u['names'])
+        order = {f[0]: j for j, f in enumerate(u['ufuncs'])}
+        if forward:
+            j0 = order[u['names'][named[-1]][0][0]] + 1
+            seq, gidx = u['ufuncs'][j0:], list(range(named[-1] + 1, b))
+        else:
+            j0 = order[u['names'][named[0]][0][0]]
+            seq, gidx = u['ufuncs'][:j0][::-1], list(range(named[0] - 1, b, -1))
+        ri = rj = 0
+        for i, j in gap_pairs([sizes[g] for g in gidx], [f[1] for f in seq]):
+            f = seq[j]
+            if sizes[gidx[i]] != f[1] or not (i - ri == j - rj or (i == ri and f[1] >= CLASS_A_MIN)):
+                break
+            if i - ri == j - rj:
+                for x in range(ri, i):
+                    fx = seq[rj + x - ri]
+                    if RATIO[0] <= sizes[gidx[x]] / fx[1] <= RATIO[1]:
+                        u['names'][gidx[x]] = (fx, 'B')
+            u['names'][gidx[i]] = (f, 'A' if f[1] >= CLASS_A_MIN else 'E')
+            ri, rj = i + 1, j + 1
+        for g in gidx[:ri]:
+            u['lo'], u['hi'] = min(u['lo'], g), max(u['hi'], g)
+
+    def node_roles(k, pair_of, members):
+        """Name the body and pipeline init that getter k's RxNodeDefinition points at, from the paired upstream unit."""
+        out = {}
+        for off in (4, 16):
+            target = dol_word(dol, nodes[k][1] + off)
+            i = at.get(target)
+            if i is not None and i in pair_of and pair_of[i] in members:
+                out[i] = (pair_of[i], 'R')
+        return out
+
+    def rest(u, forward):
+        """Upstream functions past u's outermost name (none for a node object, which ends with its getter)."""
+        if not u['ufuncs']:
+            return 0
+        order = {f[0]: j for j, f in enumerate(u['ufuncs'])}
+        j = order[u['names'][max(u['names']) if forward else min(u['names'])][0][0]]
+        return len(u['ufuncs']) - 1 - j if forward else j
+
+    for u in units:
+        u['method'] = 'chain'
+    snapshot = sorted(units, key=lambda u: u['lo'])
+    for n in range(len(snapshot) + 1):
+        prev = snapshot[n - 1] if n else None
+        nxt = snapshot[n] if n < len(snapshot) else None
+        if prev:
+            edge(prev, nxt['lo'] if nxt else len(gc), True)
+        if nxt:
+            edge(nxt, prev['hi'] if prev else -1, False)
+        a, b = prev['hi'] + 1 if prev else 0, nxt['lo'] if nxt else len(gc)
+        if a >= b:
+            continue
+        lo_key, hi_key = (prev['key'] if prev else (-1,)), (nxt['key'] if nxt else (len(man['libraries']),))
+        mapped = {u['path'] for u in units}
+        seq = [(path, f) for path, start, end in bunits
+               if path not in mapped and lo_key <= unit_key(path) <= hi_key
+               for f in upstream if start <= f[0] < end]
+        pairs = gap_pairs(sizes[a:b], [f[1] for _, f in seq])
+        pair_of = {a + i: seq[j][1] for i, j in pairs}
+        path_of = {a + i: seq[j][0] for i, j in pairs}
+        slot = {a + i: j for i, j in pairs}
+        found = []
+        for path in dict.fromkeys(path_of.values()):
+            idx = sorted(i for i in path_of if path_of[i] == path)
+            equal = {i for i in idx if sizes[i] == pair_of[i][1]}
+            names = {}
+            for i in equal:
+                context = all(i + d in equal and path_of[i + d] == path and slot[i + d] == slot[i] + d for d in (-1, 1))
+                if pair_of[i][1] >= CLASS_A_MIN or context:
+                    names[i] = (pair_of[i], 'A')
+            members = [f for p, f in seq if p == path]
+            order = {f[0]: j for j, f in enumerate(members)}
+            anchors = sorted(names)
+            for x, y in zip(anchors, anchors[1:]):
+                ux, uy = order[names[x][0][0]], order[names[y][0][0]]
+                if y - x > 1 and y - x == uy - ux and all(
+                        RATIO[0] <= sizes[i] / members[ux + i - x][1] <= RATIO[1] for i in range(x + 1, y)):
+                    for i in range(x + 1, y):
+                        names[i] = (members[ux + i - x], 'B')
+            for k in idx:
+                if k in nodes and k in equal and pair_of[k][2].startswith('RxNodeDefinitionGet'):
+                    names[k] = (pair_of[k], 'N')
+                    names.update(node_roles(k, pair_of, members))
+            # The only upstream unit that can sit between two units of its library, both of which end at
+            # their upstream ends, fills the gap when it pairs in order with an equal size of 0x20 or more.
+            sole = (len(set(path_of.values())) == 1 == len({p for p, _ in seq}) and prev and nxt
+                    and prev['lib'] == nxt['lib'] == library(path)[1]['lib'] and not rest(prev, True)
+                    and not rest(nxt, False) and len(idx) >= 2 and any(pair_of[i][1] >= CLASS_A_MIN for i in equal))
+            if len(names) >= 2 or sole:
+                found.append({'path': path, 'lib': library(path)[1]['lib'], 'score': 0.0, 'key': unit_key(path),
+                              'lo': a if sole else min(names), 'hi': b - 1 if sole else max(names), 'names': names,
+                              'ufuncs': members, 'pairs': [], 'method': 'fill' if sole else 'gap'})
+        found.sort(key=lambda u: u['lo'])
+        for m, u in enumerate(found):
+            if m and found[m - 1]['hi'] >= u['lo']:
+                print(f"note: {u['path']} gap placement at 0x{gc[u['lo']][0]:08X} overlaps; not mapped", file=sys.stderr)
+                continue
+            # Same number of functions on both sides out to an abutting neighbour: the extent reaches it.
+            if u['method'] == 'gap':
+                order = {f[0]: j for j, f in enumerate(u['ufuncs'])}
+                floor = found[m - 1]['hi'] + 1 if m else a
+                if order[u['names'][u['lo']][0][0]] == u['lo'] - floor and (m or prev):
+                    u['lo'] = floor
+                ceil = found[m + 1]['lo'] - 1 if m + 1 < len(found) else b - 1
+                if (len(u['ufuncs']) - 1 - order[u['names'][u['hi']][0][0]] == ceil - u['hi']
+                        and (m + 1 < len(found) or nxt)):
+                    u['hi'] = ceil
+            units.append(u)
+        # Node objects with no upstream unit: the getter returns a definition named "<node>.csl", the PS2
+        # prototype lists RxNodeDefinitionGet<node>, and a prototype source string names node<node>.c in
+        # the directory of the unit before it. The object ends with its getter.
+        for k in sorted(nodes):
+            if not a <= k < b or any(u['lo'] <= k <= u['hi'] for u in units):
+                continue
+            node, definition = nodes[k]
+            name = 'RxNodeDefinitionGet' + node
+            before = max((u for u in units if u['hi'] < k), key=lambda u: u['hi'], default=None)
+            body = at.get(dol_word(dol, definition + 4))
+            where = [p for p in paths if p.endswith('/node' + node + '.c')
+                     and before and p.rsplit('/', 1)[0] == before['path'].rsplit('/', 1)[0]]
+            if name not in proto or len(where) != 1 or body is None or not before['hi'] < body < k:
+                continue
+            start = before['hi'] + 1
+            if any(foreign[i] or any(not start <= c <= k for c in callers[i]) for i in range(start, body)):
+                start = body
+            units.append({'path': where[0], 'lib': library(where[0])[1]['lib'], 'score': 0.0,
+                          'key': unit_key(where[0]), 'lo': start, 'hi': k, 'ufuncs': [], 'pairs': [],
+                          'names': {k: ((0, 0xC, name, False), 'N')}, 'method': 'node', 'node': (node, definition)})
+    units.sort(key=lambda u: u['lo'])
+    keep_statics(units)
+
     # Name rows this tool did not write, so a run on the committed files reproduces its own rows.
     others = {}
     for line in open(args.evidence_in):
@@ -298,22 +517,46 @@ def main():
         left = n > 0 and units[n - 1]['hi'] + 1 == u['lo']
         right = n + 1 < len(units) and units[n + 1]['lo'] == u['hi'] + 1
         named = sorted(u['names'].items())
-        ka = sum(cls == 'A' for _, (_, cls) in named)
+        ka = sum(cls in 'AE' for _, (_, cls) in named)
+        kb = sum(cls == 'B' for _, (_, cls) in named)
         first = named[0]
         seen_in = sorted(paths.get(u['path'], ()))
         where = (f" The path rwsdk/{u['path']} is also a source string in the {' and '.join(seen_in)} builds."
                  if seen_in else '')
+        edges = ("An edge is provisional where the next unit's aligned function abuts it; otherwise the object "
+                 "may extend past it.")
+        if u['method'] == 'node':
+            node, definition = u['node']
+            how = (f"tools/splits/rwmap.py node object: its last function 0x{gc[u['hi']][0]:08X} returns the "
+                   f"RxNodeDefinition at 0x{definition:08X}, whose name is \"{node}.csl\"; the PS2 June 2001 "
+                   f"prototype symbol table lists {first[1][0][2]}, and the {' and '.join(seen_in)} builds name "
+                   f"this node's source rwsdk/{u['path']}, in the directory of the unit before it. "
+                   f"{u['hi'] - u['lo'] + 1} GC functions in the extent. The object is taken to end with its "
+                   f"getter: in the node objects bfbb maps (nodeGameCubeAtomicAllInOne.c, "
+                   f"nodeGameCubeWorldSectorAllInOne.c, nodeDolphinSubmitNoLight.c) a getter ends the object or "
+                   f"is followed by the next node's functions. "
+                   + ("It starts after the unit before it: no function between that unit and the node body the "
+                      "definition points at is called (bl) from outside this extent."
+                      if u['lo'] < at[dol_word(dol, definition + 4)] else
+                      "It starts at the node body the definition points at; the functions before it are not "
+                      "assigned.")
+                   + " The compiler profile and data ownership are not established.")
+        else:
+            how = (f"tools/splits/rwmap.py {dict(chain='size-sequence', gap='gap', fill='gap-fill')[u['method']]} placement of "
+                   f"{pin} {up['splits']} unit {up['unit_prefix']}{u['path']} (RenderWare 3.5, "
+                   f"{len(u['ufuncs'])} functions)"
+                   + {'chain': '', 'gap': ', aligned in order inside the gap between the mapped units on either side',
+                      'fill': ', the only unit of its library that can sit between the units on either side, which '
+                              'both end at their upstream ends; it pairs in order with the gap\'s functions, at least '
+                              'one of them at an equal size of 0x20 bytes or more, so it takes the whole gap'}[u['method']]
+                   + f": {u['hi'] - u['lo'] + 1} GC functions in the extent, {len(named)} named ({ka} by equal "
+                   f"size), first 0x{gc[first[0]][0]:08X}={first[1][0][2]}. {edges}{where} The compiler "
+                   f"profile and data ownership are not established.")
         rows.append(['unit', f'0x{start:08X}', f'0x{end:08X}', up['unit_prefix'] + u['path'], 'related',
-                     'provisional' if left else 'open', 'provisional' if right else 'open',
-                     f"tools/splits/rwmap.py size-sequence placement of {pin} {up['splits']} unit "
-                     f"{up['unit_prefix']}{u['path']} (RenderWare 3.5, {len(u['ufuncs'])} functions): "
-                     f"{u['hi'] - u['lo'] + 1} GC functions in the extent, {len(named)} named ({ka} by equal size), "
-                     f"first 0x{gc[first[0]][0]:08X}={first[1][0][2]}. An edge is provisional where the next unit's "
-                     f"aligned function abuts it; otherwise the object may extend past it.{where} The compiler "
-                     f"profile and data ownership are not established."])
-        report.append([up['unit_prefix'] + u['path'], f'0x{start:08X}', f'0x{end:08X}', u['lib'],
-                       str(u['hi'] - u['lo'] + 1), str(len(u['ufuncs'])), str(ka), str(len(named) - ka),
-                       f"{u['score']:.1f}"])
+                     'provisional' if left else 'open', 'provisional' if right else 'open', how])
+        report.append([up['unit_prefix'] + u['path'], f'0x{start:08X}', f'0x{end:08X}', u['lib'], u['method'],
+                       str(u['hi'] - u['lo'] + 1), str(len(u['ufuncs'])), str(ka), str(kb),
+                       str(len(named) - ka - kb), f"{u['score']:.1f}"])
         for i, (f, cls) in named:
             a, s, name = gc[i][0], gc[i][1], f[2]
             if a in others:
@@ -327,12 +570,31 @@ def main():
                 print(f'note: {name} at 0x{a:08X} is not unique; not named', file=sys.stderr)
                 continue
             renames[a] = name
+            unit = f"unit {up['unit_prefix']}{u['path']}"
             if cls == 'A':
                 how = f"{name} is a 0x{f[1]:X}-byte function in {pin} {up['symbols']}, the same size as this one"
-            else:
+            elif cls == 'B':
                 how = (f"{name} (0x{f[1]:X} bytes in {pin} {up['symbols']}, 0x{s:X} here) holds this position "
                        f"between two equal-size names, with the same number of functions between them on both sides")
-            how += f", aligned in the placement of unit {up['unit_prefix']}{u['path']} (tools/splits/rwmap.py)."
+            elif cls == 'E':
+                how = (f"{name} (0x{f[1]:X} bytes in {pin} {up['symbols']}) and this function, the same size, lie "
+                       f"the same number of functions past this unit's outermost size-placed name in both builds")
+            elif cls == 'N' and u['method'] == 'node':
+                how = (f"this function returns the RxNodeDefinition at 0x{u['node'][1]:08X}, whose name is "
+                       f"\"{u['node'][0]}.csl\"; RenderWare names a node's getter RxNodeDefinitionGet<node>, "
+                       f"and the PS2 June 2001 prototype symbol table lists {name}")
+            elif cls == 'N':
+                how = (f"{name} is the 0xC-byte node getter of {pin} {unit}; this function, paired with it in "
+                       f"order, returns the RxNodeDefinition at 0x{nodes[i][1]:08X} (\"{nodes[i][0]}.csl\")")
+            else:
+                getter, role = next((k, r) for k, (_, c) in named if c == 'N'
+                                    for off, r in ((4, 'node body'), (16, 'pipeline-node init'))
+                                    if dol_word(dol, nodes[k][1] + off) == a)
+                how = (f"the RxNodeDefinition returned by 0x{gc[getter][0]:08X} ({u['names'][getter][0][2]}) "
+                       f"points its {role} at this function; {pin} lists {name} (0x{f[1]:X} bytes) in {unit}, "
+                       f"paired with this function in order")
+            how += (' (tools/splits/rwmap.py node object).' if u['method'] == 'node' else
+                    f", aligned in the placement of {unit} (tools/splits/rwmap.py).")
             if f[3]:
                 how += ' BfBB lists it as static; every direct GC call to it (bl, whole text) comes from inside this unit.'
             notes = []
@@ -346,8 +608,10 @@ def main():
             how += ' Positional: a swap of similar-sized neighbours would go unnoticed.' if cls == 'B' else ''
             how += ' A related build\'s name; there is no GC debug symbol.'
             rows.append(['function', f'0x{a:08X}', f'0x{a + s:08X}', name, 'target', 'provisional', 'provisional',
-                         f"dtk 1.8.3 function inference. {pin} lists {name} at 0x{f[1]:X} bytes. Neither edge has "
-                         f"been checked against a compiled body."])
+                         f"dtk 1.8.3 function inference. "
+                         + ('A 12-byte lis/addi/blr getter.' if u['method'] == 'node' else
+                            f"{pin} lists {name} at 0x{f[1]:X} bytes.")
+                         + " Neither edge has been checked against a compiled body."])
             rows.append(['name', f'0x{a:08X}', '-', name, 'related', '-', '-', how])
 
     with open(args.splits, 'w') as out:
@@ -355,7 +619,8 @@ def main():
             if r[0] == 'unit':
                 out.write(f'\n{r[3]}:\n\t.text       start:{r[1]} end:{r[2]}\n')
     with open(args.units, 'w') as out:
-        out.write('unit\ttext_start\ttext_end\tlibrary\tfunctions\tupstream_functions\tnamed_equal\tnamed_position\tscore\n')
+        out.write('unit\ttext_start\ttext_end\tlibrary\tmethod\tfunctions\tupstream_functions\tnamed_equal\t'
+                  'named_position\tnamed_node\tscore\n')
         for r in report:
             out.write('\t'.join(r) + '\n')
     with open(args.evidence, 'w') as out:
@@ -371,7 +636,8 @@ def main():
                 out.write(line)
     byclass = collections.Counter(c for u in units for i, (f, c) in u['names'].items() if gc[i][0] in renames)
     print(f"{len(cands)} placements, {len(units)} units, {len(renames)} names "
-          f"({byclass['A']} equal size, {byclass['B']} by position)", file=sys.stderr)
+          f"({byclass['A'] + byclass['E']} equal size, {byclass['B']} by position, "
+          f"{byclass['N'] + byclass['R']} from node definitions)", file=sys.stderr)
 
 _dol = {}
 
