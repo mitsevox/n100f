@@ -45,17 +45,17 @@ artifact against its copy of the producer policy, and never runs anything from t
 | `files.exact` | named units whose code and data bytes all match |
 
 The file counts are provisional. 123 game units are named from recovered splits (see
-[splits.md](splits.md)), and 135 library units (MetroTRK, runtime, MSL, the first part of the
+[splits.md](splits.md)), and 136 library units (MetroTRK, runtime, MSL, the first part of the
 Dolphin SDK and CARD) are named by compiling public decompilations of those libraries (see
 [Library units](splits.md#library-units)), 15 Bink units are named from bfbb's identical Bink
 layout (see [Bink units](splits.md#bink-units)), and 63 RenderWare units are placed by aligning bfbb's
 RenderWare function sizes (see [RenderWare units](splits.md#renderware-units)); the rest are dtk's auto-generated address ranges.
-Today 336 of the report's 520 files are named. The game
+Today 337 of the report's 517 files are named. The game
 names come from the PS2 v1.01 DWARF and the boundaries are inferred, so no game unit boundary has been
 checked against Heavy Iron's objects. The basis string says so. Library units placed by a
 whole-object match have exact extents; the others have open edges. RenderWare unit edges are `provisional` or `open`. Naming those units did not change
 what `files.named` means, so the methodology and generation stay the same.
-Today's 2,193 named functions are 466 from before the library map, 700 library names, 336 Bink names, 105 names from the CARD import and 586 RenderWare names. The 466
+Today's 2,200 named functions are 466 from before the library map, 707 library names, 336 Bink names, 105 names from the CARD import and 586 RenderWare names. The 466
 are the names dtk's analysis assigned in `symbols.txt` (MW runtime and some GX SDK functions, plus
 `__fill_mem`, which dtk names once `memset` is named), `__start`, the seven names the xMorph unit
 added (its three functions and their four callees), 334 SLUS-20349 DWARF names applied from
@@ -65,11 +65,11 @@ zCounter and zFog functions (by bfbb body and DWARF position), the xSerial Read/
 xSGReadData/xSGWriteData overload groups (by matched caller, body shape and DWARF order), the xbinio,
 xhipio and xpkrsvc functions reached through their function tables (by table slot and DWARF order),
 the iMath functions and two xutil functions (by DWARF position), and the five names the zLaugh unit
-added (its three functions and their callees `xSndPlay` and `iSndLookup`, by DWARF order and call site). The 700 library names are 663 of the
+added (its three functions and their callees `xSndPlay` and `iSndLookup`, by DWARF order and call site). The 707 library names are 663 of the
 678 names `tools/splits/libmap.py` applies from map-backed symbol lists at the same size (the other
 15 functions were already named the same way by dtk), 26 functions that dtk's signatures name
 once those names exist, the two `.init` functions after `__start` (`__init_hardware` and
-`__flush_cache`, named from the AC and TWW map-backed symbols with the SDK import), `__DSP_debug_printf` (named from the TWW symbols with the SDK import), and 8 names the MetroTRK import added (`SetTRKConnected`, `GetTRKConnected`, the three mutex functions, `TRK_memset`, `TRK_memcpy` and `__TRK_reset`); see
+`__flush_cache`, named from the AC and TWW map-backed symbols with the SDK import), `__DSP_debug_printf` (named from the TWW symbols with the SDK import), and 15 names the MetroTRK import added (`SetTRKConnected`, `GetTRKConnected`, the three mutex functions, `TRK_memset`, `TRK_memcpy`, `__TRK_reset`, `__TRK_get_MSR`, `__TRK_set_MSR`, `EnableMetroTRKInterrupts` and the four `targsupp.s` stubs); see
 `config/GIHE78/evidence.tsv`. The 336 Bink names are bfbb's names for the functions at the same offsets of the same Bink build, as `related` rows. The 105 CARD-import names are the 97 CARD functions libmap left unnamed, each named from the imported object it matches exactly, and the eight functions outside CARD those objects call (`OSPanic`, `OSPhysicalToCached`, `OSCachedToPhysical`, `DSPInit`, `DSPAddTask`, `EXIDetach`, `EXIGetID` and `strncpy`), named from the map-backed symbol lists and confirmed by the relocations of the linked objects. The 586 RenderWare names are bfbb's names placed by `tools/splits/rwmap.py`, 528 by equal size and 58 by position, as `related` rows; bfbb does not say where they come from. A named function is not a matched one. The MetroTRK exception vector table (`0x80003154`-`0x80005088`, 7,988 bytes of `.init` code) became visible to objdiff when `mem_TRK.c` took the `.init` code before it, so it is counted as one unnamed function, `fn_80003154`, until its source is imported. That added one function and 7,988 code bytes to the totals.
 
 The methodology is `objdiff-report-v1`, generation 1. Change either in `tools/public_report.py`
