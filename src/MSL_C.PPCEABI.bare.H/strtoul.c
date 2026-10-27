@@ -2,7 +2,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include "scanf.h"
+#include "MSL_C.PPCEABI.bare.H/scanf.h"
 
 enum scan_states {
     start = 0x01,

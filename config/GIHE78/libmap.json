@@ -23,13 +23,16 @@
     "msl": {"versions": ["1.3", "1.3.2"],
             "flags": "-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off -O4,p -inline auto -pragma \"cats off\" -pragma \"warn_notinlined off\" -maxerrors 1 -nosyspath -RTTI off -str reuse -multibyte -DNDEBUG=1 -W off -use_lmw_stmw on -str reuse,pool,readonly -gccinc -common off -inline auto,deferred -char signed"},
     "trk": {"versions": ["1.3", "1.3.2"],
-            "flags": "-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off -w off -O4,p -nosyspath -RTTI off -str reuse -multibyte -use_lmw_stmw on -common off -inline auto,deferred -sdata 0 -sdata2 0 -rostr -char signed"}
+            "flags": "-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off -w off -O4,p -nosyspath -RTTI off -str reuse -multibyte -use_lmw_stmw on -common off -inline auto,deferred -sdata 0 -sdata2 0 -rostr -char signed"},
+    "card_debug": {"versions": ["1.2.5n"], "comment": 8,
+                   "flags": "-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off -pragma \"cats off\" -pragma \"warn_notinlined off\" -maxerrors 1 -nosyspath -RTTI off -str reuse -multibyte -opt level=0 -inline off -schedule off -sym on -char signed"}
   },
   "candidates": [
     {"upstream": "ac-decomp", "library": "TRK_MINNOW_DOLPHIN", "profile": "trk", "include": ["include", "include/dolphin", "include/libc", "src/static/dolphin"], "sources": ["src/static/TRK_MINNOW_DOLPHIN/*.c"]},
     {"upstream": "ac-decomp", "library": "Runtime.PPCEABI.H", "profile": "runtime", "include": ["include", "include/dolphin", "include/libc", "src/static/dolphin"], "sources": ["src/static/Runtime.PPCEABI.H/*.c"]},
     {"upstream": "ac-decomp", "library": "MSL_C.PPCEABI.bare.H", "profile": "runtime", "include": ["include", "include/dolphin", "include/libc", "src/static/dolphin"], "sources": ["src/static/MSL_C.PPCEABI.bare.H/*.c"]},
     {"upstream": "ac-decomp", "library": "dolphin", "profile": "sdk", "include": ["include", "include/dolphin", "include/libc", "src/static/dolphin"], "sources": ["src/static/dolphin/*/*.c"]},
+    {"upstream": "ac-decomp", "library": "dolphin", "profile": "card_debug", "region": ["0x80130994", "0x801372EC"], "include": ["include", "include/dolphin", "include/libc", "src/static/dolphin"], "defines": ["DEBUG=1"], "sources": ["src/static/dolphin/card/*.c"]},
     {"upstream": "marioparty4", "library": "TRK_MINNOW_DOLPHIN", "profile": "trk", "include": ["include"], "sources": ["src/TRK_MINNOW_DOLPHIN/*.c"]},
     {"upstream": "marioparty4", "library": "Runtime.PPCEABI.H", "profile": "runtime", "include": ["include"], "sources": ["src/Runtime.PPCEABI.H/*.c"]},
     {"upstream": "marioparty4", "library": "MSL_C.PPCEABI.bare.H", "profile": "runtime", "include": ["include"], "sources": ["src/MSL_C.PPCEABI.bare.H/*.c"]},

@@ -5,8 +5,8 @@
 #include <limits.h>
 #include <locale.h>
 #include <math.h>
-#include "ansi_fp.h"
-#include "scanf.h"
+#include "MSL_C.PPCEABI.bare.H/ansi_fp.h"
+#include "MSL_C.PPCEABI.bare.H/scanf.h"
 
 enum scan_states {
     start = 0x0001,

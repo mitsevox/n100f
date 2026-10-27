@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Map GIHE78's MetroTRK, runtime, MSL and Dolphin SDK objects from public decompilations.
+"""Map GIHE78's MetroTRK, runtime, MSL, Dolphin SDK and CARD objects from public decompilations.
 
 Every candidate source in config/GIHE78/libmap.json is compiled under its
 profile and each compiler version listed there. A function whose masked body
 occurs exactly once in main.dol, at a function start of the same size,
-places the object; the whole object .text is then compared in place. For each
+places the object; the whole object .text is then compared in place. A
+placement must lie inside the manifest "region", or inside the candidate's own
+"region" where it sets one. For each
 object the best placement wins (a whole-object match first, then the most
 matched bytes, then manifest order) and placements may not overlap.
 
@@ -245,7 +247,8 @@ def main():
             if not funcs:
                 continue
             start, end = funcs[0][3], funcs[-1][3] + funcs[-1][1]
-            if not lo <= start < end <= hi:
+            clo, chi = (int(x, 16) for x in cand['region']) if 'region' in cand else (lo, hi)
+            if not clo <= start < end <= chi:
                 continue
             rank = args.manifest['candidates'].index(cand)
             placements.append({'cand': cand, 'version': version, 'source': source, 'whole': whole,
@@ -354,8 +357,9 @@ def main():
             out.write('\t'.join(r) + '\n')
     if args.symbols_out:
         pending = sorted(added)
+        lines = open(args.symbols).readlines()  # --symbols-out may be the same file
         with open(args.symbols_out, 'w') as out:
-            for line in open(args.symbols):
+            for line in lines:
                 m = re.match(r'(\S+) = (\.\w+):0x([0-9A-F]+); // type:(\w+)( size:0x[0-9A-F]+)?(.*)', line)
                 if m and m[2] == '.text':
                     a = int(m[3], 16)
