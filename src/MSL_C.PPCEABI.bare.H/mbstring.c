@@ -95,7 +95,7 @@ int mbtowc(wchar_t* pwc, const char* s, size_t n)
     return utf8_to_unicode(pwc, s, n);
 }
 
-static int unicode_to_UTF8(char* s, wchar_t wchar)
+int unicode_to_UTF8(char* s, wchar_t wchar)
 {
     int number_of_bytes;
     wchar_t wide_char;

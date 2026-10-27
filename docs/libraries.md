@@ -1,6 +1,6 @@
 # Library code
 
-The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and the Dolphin SDK, followed by Bink, the CARD library and RenderWare. [splits.md](splits.md#library-units) describes how the first four and CARD were mapped, and [Bink units](splits.md#bink-units) how Bink was. This page covers how their source comes in.
+The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and the Dolphin SDK, followed by Bink, the CARD library and RenderWare. [splits.md](splits.md#library-units) describes how the first four and CARD were mapped, [Bink units](splits.md#bink-units) how Bink was, and [RenderWare units](splits.md#renderware-units) how RenderWare was. This page covers how their source comes in.
 
 ## Build configuration
 
@@ -14,6 +14,8 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `DolphinLib` | `dolphin/<library>` | GC/1.2.5n | `cflags_sdk` | `sdk` |
 | `BinkLib` | `binkngc` | ProDG/3.5 | `cflags_bink` | `bink` |
 | `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card` | `sdk` |
+
+RenderWare units are not listed: their compiler profile is not established. Never use leaked RenderWare source for them.
 
 The flags are shown compatible with the target, not established. MSL is one profile for the whole library: the twelve imported units match under GC/1.3 with `-inline auto,deferred` and `-char signed`, six of them differ under GC/1.3.2, and none needs GC/1.3.2. Each later MSL import reconfirms the profile on its own unit.
 
