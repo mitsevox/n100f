@@ -660,9 +660,9 @@ static void fastidct8x8(unsigned char* out, int stride, short* in, const int* q)
     int* w;
     unsigned char* o;
     int ctr;
-    int x0, x1, x2, x3, x4, x5, x6, x7;
-    int u0, u1, u2, u3;
-    int k5, v0, v1, v2, v3;
+    int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+    int tmp10, tmp11, tmp12, tmp13;
+    int z5, z10, z11, z12, z13;
 
     w = ws;
     for (ctr = 8; ctr > 0; ctr--)
@@ -683,35 +683,35 @@ static void fastidct8x8(unsigned char* out, int stride, short* in, const int* q)
         }
         else
         {
-            x0 = DEQ(0);
-            x1 = DEQ(2);
-            x2 = DEQ(4);
-            x3 = DEQ(6);
-            u0 = x0 + x2;
-            u1 = x0 - x2;
-            u3 = x1 + x3;
-            u2 = MUL(x1 - x3, 2896) - u3;
-            t[0] = u0 + u3;
-            t[3] = u0 - u3;
-            t[1] = u1 + u2;
-            t[2] = u1 - u2;
+            tmp0 = DEQ(0);
+            tmp1 = DEQ(2);
+            tmp2 = DEQ(4);
+            tmp3 = DEQ(6);
+            tmp10 = tmp0 + tmp2;
+            tmp11 = tmp0 - tmp2;
+            tmp13 = tmp1 + tmp3;
+            tmp12 = MUL(tmp1 - tmp3, 2896) - tmp13;
+            t[0] = tmp10 + tmp13;
+            t[3] = tmp10 - tmp13;
+            t[1] = tmp11 + tmp12;
+            t[2] = tmp11 - tmp12;
 
-            x4 = DEQ(1);
-            x5 = DEQ(3);
-            x6 = DEQ(5);
-            x7 = DEQ(7);
-            v3 = x6 + x5;
-            v0 = x6 - x5;
-            v1 = x4 + x7;
-            v2 = x4 - x7;
-            t[7] = v1 + v3;
-            u1 = MUL(v1 - v3, 2896);
-            k5 = MUL(v0 + v2, 3784);
-            u0 = MUL(v2, 2217) - k5;
-            u2 = MUL(v0, -5352) + k5;
-            t[6] = u2 - t[7];
-            t[5] = u1 - t[6];
-            t[4] = u0 + t[5];
+            tmp4 = DEQ(1);
+            tmp5 = DEQ(3);
+            tmp6 = DEQ(5);
+            tmp7 = DEQ(7);
+            z13 = tmp6 + tmp5;
+            z10 = tmp6 - tmp5;
+            z11 = tmp4 + tmp7;
+            z12 = tmp4 - tmp7;
+            t[7] = z11 + z13;
+            tmp11 = MUL(z11 - z13, 2896);
+            z5 = MUL(z10 + z12, 3784);
+            tmp10 = MUL(z12, 2217) - z5;
+            tmp12 = MUL(z10, -5352) + z5;
+            t[6] = tmp12 - t[7];
+            t[5] = tmp11 - t[6];
+            t[4] = tmp10 + t[5];
 
             w[0] = t[0] + t[7];
             w[56] = t[0] - t[7];
@@ -731,27 +731,27 @@ static void fastidct8x8(unsigned char* out, int stride, short* in, const int* q)
     o = out;
     for (ctr = 8; ctr > 0; ctr--)
     {
-        u0 = w[0] + w[4];
-        u1 = w[0] - w[4];
-        u3 = w[2] + w[6];
-        u2 = MUL(w[2] - w[6], 2896) - u3;
-        t[0] = u0 + u3;
-        t[3] = u0 - u3;
-        t[1] = u1 + u2;
-        t[2] = u1 - u2;
+        tmp10 = w[0] + w[4];
+        tmp11 = w[0] - w[4];
+        tmp13 = w[2] + w[6];
+        tmp12 = MUL(w[2] - w[6], 2896) - tmp13;
+        t[0] = tmp10 + tmp13;
+        t[3] = tmp10 - tmp13;
+        t[1] = tmp11 + tmp12;
+        t[2] = tmp11 - tmp12;
 
-        v3 = w[5] + w[3];
-        v0 = w[5] - w[3];
-        v1 = w[1] + w[7];
-        v2 = w[1] - w[7];
-        t[7] = v1 + v3;
-        u1 = MUL(v1 - v3, 2896);
-        k5 = MUL(v0 + v2, 3784);
-        u0 = MUL(v2, 2217) - k5;
-        u2 = MUL(v0, -5352) + k5;
-        t[6] = u2 - t[7];
-        t[5] = u1 - t[6];
-        t[4] = u0 + t[5];
+        z13 = w[5] + w[3];
+        z10 = w[5] - w[3];
+        z11 = w[1] + w[7];
+        z12 = w[1] - w[7];
+        t[7] = z11 + z13;
+        tmp11 = MUL(z11 - z13, 2896);
+        z5 = MUL(z10 + z12, 3784);
+        tmp10 = MUL(z12, 2217) - z5;
+        tmp12 = MUL(z10, -5352) + z5;
+        t[6] = tmp12 - t[7];
+        t[5] = tmp11 - t[6];
+        t[4] = tmp10 + t[5];
 
         o[0] = (t[0] + t[7] + 127) >> 8;
         o[7] = (t[0] - t[7] + 127) >> 8;
@@ -775,9 +775,9 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
     unsigned char* o2;
     unsigned int p0, p1, p2, p3;
     int ctr;
-    int x0, x1, x2, x3, x4, x5, x6, x7;
-    int u0, u1, u2, u3;
-    int k5, v0, v1, v2, v3;
+    int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+    int tmp10, tmp11, tmp12, tmp13;
+    int z5, z10, z11, z12, z13;
 
     w = ws;
     for (ctr = 8; ctr > 0; ctr--)
@@ -798,35 +798,35 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
         }
         else
         {
-            x0 = DEQ(0);
-            x1 = DEQ(2);
-            x2 = DEQ(4);
-            x3 = DEQ(6);
-            u0 = x0 + x2;
-            u1 = x0 - x2;
-            u3 = x1 + x3;
-            u2 = MUL(x1 - x3, 2896) - u3;
-            t[0] = u0 + u3;
-            t[3] = u0 - u3;
-            t[1] = u1 + u2;
-            t[2] = u1 - u2;
+            tmp0 = DEQ(0);
+            tmp1 = DEQ(2);
+            tmp2 = DEQ(4);
+            tmp3 = DEQ(6);
+            tmp10 = tmp0 + tmp2;
+            tmp11 = tmp0 - tmp2;
+            tmp13 = tmp1 + tmp3;
+            tmp12 = MUL(tmp1 - tmp3, 2896) - tmp13;
+            t[0] = tmp10 + tmp13;
+            t[3] = tmp10 - tmp13;
+            t[1] = tmp11 + tmp12;
+            t[2] = tmp11 - tmp12;
 
-            x4 = DEQ(1);
-            x5 = DEQ(3);
-            x6 = DEQ(5);
-            x7 = DEQ(7);
-            v3 = x6 + x5;
-            v0 = x6 - x5;
-            v1 = x4 + x7;
-            v2 = x4 - x7;
-            t[7] = v1 + v3;
-            u1 = MUL(v1 - v3, 2896);
-            k5 = MUL(v0 + v2, 3784);
-            u0 = MUL(v2, 2217) - k5;
-            u2 = MUL(v0, -5352) + k5;
-            t[6] = u2 - t[7];
-            t[5] = u1 - t[6];
-            t[4] = u0 + t[5];
+            tmp4 = DEQ(1);
+            tmp5 = DEQ(3);
+            tmp6 = DEQ(5);
+            tmp7 = DEQ(7);
+            z13 = tmp6 + tmp5;
+            z10 = tmp6 - tmp5;
+            z11 = tmp4 + tmp7;
+            z12 = tmp4 - tmp7;
+            t[7] = z11 + z13;
+            tmp11 = MUL(z11 - z13, 2896);
+            z5 = MUL(z10 + z12, 3784);
+            tmp10 = MUL(z12, 2217) - z5;
+            tmp12 = MUL(z10, -5352) + z5;
+            t[6] = tmp12 - t[7];
+            t[5] = tmp11 - t[6];
+            t[4] = tmp10 + t[5];
 
             w[0] = t[0] + t[7];
             w[56] = t[0] - t[7];
@@ -848,27 +848,27 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
     stride += stride;
     for (ctr = 8; ctr > 0; ctr--)
     {
-        u0 = w[0] + w[4];
-        u1 = w[0] - w[4];
-        u3 = w[2] + w[6];
-        u2 = MUL(w[2] - w[6], 2896) - u3;
-        t[0] = u0 + u3;
-        t[3] = u0 - u3;
-        t[1] = u1 + u2;
-        t[2] = u1 - u2;
+        tmp10 = w[0] + w[4];
+        tmp11 = w[0] - w[4];
+        tmp13 = w[2] + w[6];
+        tmp12 = MUL(w[2] - w[6], 2896) - tmp13;
+        t[0] = tmp10 + tmp13;
+        t[3] = tmp10 - tmp13;
+        t[1] = tmp11 + tmp12;
+        t[2] = tmp11 - tmp12;
 
-        v3 = w[5] + w[3];
-        v0 = w[5] - w[3];
-        v1 = w[1] + w[7];
-        v2 = w[1] - w[7];
-        t[7] = v1 + v3;
-        u1 = MUL(v1 - v3, 2896);
-        k5 = MUL(v0 + v2, 3784);
-        u0 = MUL(v2, 2217) - k5;
-        u2 = MUL(v0, -5352) + k5;
-        t[6] = u2 - t[7];
-        t[5] = u1 - t[6];
-        t[4] = u0 + t[5];
+        z13 = w[5] + w[3];
+        z10 = w[5] - w[3];
+        z11 = w[1] + w[7];
+        z12 = w[1] - w[7];
+        t[7] = z11 + z13;
+        tmp11 = MUL(z11 - z13, 2896);
+        z5 = MUL(z10 + z12, 3784);
+        tmp10 = MUL(z12, 2217) - z5;
+        tmp12 = MUL(z10, -5352) + z5;
+        t[6] = tmp12 - t[7];
+        t[5] = tmp11 - t[6];
+        t[4] = tmp10 + t[5];
 
         p0 = ((((t[0] + t[7] + 127) >> 8) & 0xFF) << 16) | (((t[1] + t[6] + 127) >> 8) & 0xFF);
         p1 = ((((t[2] + t[5] + 127) >> 8) & 0xFF) << 16) | (((t[3] + t[4] + 127) >> 8) & 0xFF);
@@ -915,9 +915,9 @@ void FastmIDCT8x8WithMotion(unsigned char* out, int stride, short* in, int qidx,
     int* w;
     unsigned char* o;
     int ctr;
-    int x0, x1, x2, x3, x4, x5, x6, x7;
-    int u0, u1, u2, u3;
-    int k5, v0, v1, v2, v3;
+    int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+    int tmp10, tmp11, tmp12, tmp13;
+    int z5, z10, z11, z12, z13;
 
     q = ifimquantlevels8[qidx];
     w = ws;
@@ -939,35 +939,35 @@ void FastmIDCT8x8WithMotion(unsigned char* out, int stride, short* in, int qidx,
         }
         else
         {
-            x0 = DEQ(0);
-            x1 = DEQ(2);
-            x2 = DEQ(4);
-            x3 = DEQ(6);
-            u0 = x0 + x2;
-            u1 = x0 - x2;
-            u3 = x1 + x3;
-            u2 = MUL(x1 - x3, 2896) - u3;
-            t[0] = u0 + u3;
-            t[3] = u0 - u3;
-            t[1] = u1 + u2;
-            t[2] = u1 - u2;
+            tmp0 = DEQ(0);
+            tmp1 = DEQ(2);
+            tmp2 = DEQ(4);
+            tmp3 = DEQ(6);
+            tmp10 = tmp0 + tmp2;
+            tmp11 = tmp0 - tmp2;
+            tmp13 = tmp1 + tmp3;
+            tmp12 = MUL(tmp1 - tmp3, 2896) - tmp13;
+            t[0] = tmp10 + tmp13;
+            t[3] = tmp10 - tmp13;
+            t[1] = tmp11 + tmp12;
+            t[2] = tmp11 - tmp12;
 
-            x4 = DEQ(1);
-            x5 = DEQ(3);
-            x6 = DEQ(5);
-            x7 = DEQ(7);
-            v3 = x6 + x5;
-            v0 = x6 - x5;
-            v1 = x4 + x7;
-            v2 = x4 - x7;
-            t[7] = v1 + v3;
-            u1 = MUL(v1 - v3, 2896);
-            k5 = MUL(v0 + v2, 3784);
-            u0 = MUL(v2, 2217) - k5;
-            u2 = MUL(v0, -5352) + k5;
-            t[6] = u2 - t[7];
-            t[5] = u1 - t[6];
-            t[4] = u0 + t[5];
+            tmp4 = DEQ(1);
+            tmp5 = DEQ(3);
+            tmp6 = DEQ(5);
+            tmp7 = DEQ(7);
+            z13 = tmp6 + tmp5;
+            z10 = tmp6 - tmp5;
+            z11 = tmp4 + tmp7;
+            z12 = tmp4 - tmp7;
+            t[7] = z11 + z13;
+            tmp11 = MUL(z11 - z13, 2896);
+            z5 = MUL(z10 + z12, 3784);
+            tmp10 = MUL(z12, 2217) - z5;
+            tmp12 = MUL(z10, -5352) + z5;
+            t[6] = tmp12 - t[7];
+            t[5] = tmp11 - t[6];
+            t[4] = tmp10 + t[5];
 
             w[0] = t[0] + t[7];
             w[56] = t[0] - t[7];
@@ -987,27 +987,27 @@ void FastmIDCT8x8WithMotion(unsigned char* out, int stride, short* in, int qidx,
     o = out;
     for (ctr = 8; ctr > 0; ctr--)
     {
-        u0 = w[0] + w[4];
-        u1 = w[0] - w[4];
-        u3 = w[2] + w[6];
-        u2 = MUL(w[2] - w[6], 2896) - u3;
-        t[0] = u0 + u3;
-        t[3] = u0 - u3;
-        t[1] = u1 + u2;
-        t[2] = u1 - u2;
+        tmp10 = w[0] + w[4];
+        tmp11 = w[0] - w[4];
+        tmp13 = w[2] + w[6];
+        tmp12 = MUL(w[2] - w[6], 2896) - tmp13;
+        t[0] = tmp10 + tmp13;
+        t[3] = tmp10 - tmp13;
+        t[1] = tmp11 + tmp12;
+        t[2] = tmp11 - tmp12;
 
-        v3 = w[5] + w[3];
-        v0 = w[5] - w[3];
-        v1 = w[1] + w[7];
-        v2 = w[1] - w[7];
-        t[7] = v1 + v3;
-        u1 = MUL(v1 - v3, 2896);
-        k5 = MUL(v0 + v2, 3784);
-        u0 = MUL(v2, 2217) - k5;
-        u2 = MUL(v0, -5352) + k5;
-        t[6] = u2 - t[7];
-        t[5] = u1 - t[6];
-        t[4] = u0 + t[5];
+        z13 = w[5] + w[3];
+        z10 = w[5] - w[3];
+        z11 = w[1] + w[7];
+        z12 = w[1] - w[7];
+        t[7] = z11 + z13;
+        tmp11 = MUL(z11 - z13, 2896);
+        z5 = MUL(z10 + z12, 3784);
+        tmp10 = MUL(z12, 2217) - z5;
+        tmp12 = MUL(z10, -5352) + z5;
+        t[6] = tmp12 - t[7];
+        t[5] = tmp11 - t[6];
+        t[4] = tmp10 + t[5];
 
         o[0] = m[0] + ((t[0] + t[7] + 127) >> 8);
         o[7] = m[7] + ((t[0] - t[7] + 127) >> 8);
@@ -1025,52 +1025,52 @@ void FastmIDCT8x8WithMotion(unsigned char* out, int stride, short* in, int qidx,
 
 void FastFDCT8x8(int* out, unsigned char* in)
 {
-    int x0, x1, x2, x3, x4, x5, x6, x7;
-    int u0, u1, u2, u3;
-    int k1, k2, k3, k4, k5, v1, v3;
+    int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+    int tmp10, tmp11, tmp12, tmp13;
+    int z1, z2, z3, z4, z5, z11, z13;
     int* d;
     int ctr;
 
     d = out;
     for (ctr = 8; ctr > 0; ctr--)
     {
-        x0 = (in[0] + in[7]) << 8;
-        x7 = (in[0] - in[7]) << 8;
-        x1 = (in[1] + in[6]) << 8;
-        x6 = (in[1] - in[6]) << 8;
-        x2 = (in[2] + in[5]) << 8;
-        x5 = (in[2] - in[5]) << 8;
-        x3 = (in[3] + in[4]) << 8;
-        x4 = (in[3] - in[4]) << 8;
+        tmp0 = (in[0] + in[7]) << 8;
+        tmp7 = (in[0] - in[7]) << 8;
+        tmp1 = (in[1] + in[6]) << 8;
+        tmp6 = (in[1] - in[6]) << 8;
+        tmp2 = (in[2] + in[5]) << 8;
+        tmp5 = (in[2] - in[5]) << 8;
+        tmp3 = (in[3] + in[4]) << 8;
+        tmp4 = (in[3] - in[4]) << 8;
 
-        u0 = x0 + x3;
-        u3 = x0 - x3;
-        u1 = x1 + x2;
-        u2 = x1 - x2;
+        tmp10 = tmp0 + tmp3;
+        tmp13 = tmp0 - tmp3;
+        tmp11 = tmp1 + tmp2;
+        tmp12 = tmp1 - tmp2;
 
-        d[0] = u0 + u1;
-        d[4] = u0 - u1;
+        d[0] = tmp10 + tmp11;
+        d[4] = tmp10 - tmp11;
 
-        k1 = MUL(u2 + u3, 1448);
-        d[2] = u3 + k1;
-        d[6] = u3 - k1;
+        z1 = MUL(tmp12 + tmp13, 1448);
+        d[2] = tmp13 + z1;
+        d[6] = tmp13 - z1;
 
-        u0 = x4 + x5;
-        u1 = x5 + x6;
-        u2 = x6 + x7;
+        tmp10 = tmp4 + tmp5;
+        tmp11 = tmp5 + tmp6;
+        tmp12 = tmp6 + tmp7;
 
-        k5 = MUL(u0 - u2, 784);
-        k2 = MUL(u0, 1108) + k5;
-        k4 = MUL(u2, 2676) + k5;
-        k3 = MUL(u1, 1448);
+        z5 = MUL(tmp10 - tmp12, 784);
+        z2 = MUL(tmp10, 1108) + z5;
+        z4 = MUL(tmp12, 2676) + z5;
+        z3 = MUL(tmp11, 1448);
 
-        v1 = x7 + k3;
-        v3 = x7 - k3;
+        z11 = tmp7 + z3;
+        z13 = tmp7 - z3;
 
-        d[5] = v3 + k2;
-        d[3] = v3 - k2;
-        d[1] = v1 + k4;
-        d[7] = v1 - k4;
+        d[5] = z13 + z2;
+        d[3] = z13 - z2;
+        d[1] = z11 + z4;
+        d[7] = z11 - z4;
 
         d += 8;
         in += 8;
@@ -1079,43 +1079,43 @@ void FastFDCT8x8(int* out, unsigned char* in)
     d = out;
     for (ctr = 8; ctr > 0; ctr--)
     {
-        x0 = d[0] + d[56];
-        x7 = d[0] - d[56];
-        x1 = d[8] + d[48];
-        x6 = d[8] - d[48];
-        x2 = d[16] + d[40];
-        x5 = d[16] - d[40];
-        x3 = d[24] + d[32];
-        x4 = d[24] - d[32];
+        tmp0 = d[0] + d[56];
+        tmp7 = d[0] - d[56];
+        tmp1 = d[8] + d[48];
+        tmp6 = d[8] - d[48];
+        tmp2 = d[16] + d[40];
+        tmp5 = d[16] - d[40];
+        tmp3 = d[24] + d[32];
+        tmp4 = d[24] - d[32];
 
-        u0 = x0 + x3;
-        u3 = x0 - x3;
-        u1 = x1 + x2;
-        u2 = x1 - x2;
+        tmp10 = tmp0 + tmp3;
+        tmp13 = tmp0 - tmp3;
+        tmp11 = tmp1 + tmp2;
+        tmp12 = tmp1 - tmp2;
 
-        d[0] = u0 + u1;
-        d[32] = u0 - u1;
+        d[0] = tmp10 + tmp11;
+        d[32] = tmp10 - tmp11;
 
-        k1 = MUL(u2 + u3, 1448);
-        d[16] = u3 + k1;
-        d[48] = u3 - k1;
+        z1 = MUL(tmp12 + tmp13, 1448);
+        d[16] = tmp13 + z1;
+        d[48] = tmp13 - z1;
 
-        u0 = x4 + x5;
-        u1 = x5 + x6;
-        u2 = x6 + x7;
+        tmp10 = tmp4 + tmp5;
+        tmp11 = tmp5 + tmp6;
+        tmp12 = tmp6 + tmp7;
 
-        k5 = MUL(u0 - u2, 784);
-        k2 = MUL(u0, 1108) + k5;
-        k4 = MUL(u2, 2676) + k5;
-        k3 = MUL(u1, 1448);
+        z5 = MUL(tmp10 - tmp12, 784);
+        z2 = MUL(tmp10, 1108) + z5;
+        z4 = MUL(tmp12, 2676) + z5;
+        z3 = MUL(tmp11, 1448);
 
-        v1 = x7 + k3;
-        v3 = x7 - k3;
+        z11 = tmp7 + z3;
+        z13 = tmp7 - z3;
 
-        d[40] = v3 + k2;
-        d[24] = v3 - k2;
-        d[8] = v1 + k4;
-        d[56] = v1 - k4;
+        d[40] = z13 + z2;
+        d[24] = z13 - z2;
+        d[8] = z11 + z4;
+        d[56] = z11 - z4;
 
         d++;
     }
@@ -1123,52 +1123,52 @@ void FastFDCT8x8(int* out, unsigned char* in)
 
 void FastFDCTs8x8(int* out, signed char* in)
 {
-    int x0, x1, x2, x3, x4, x5, x6, x7;
-    int u0, u1, u2, u3;
-    int k1, k2, k3, k4, k5, v1, v3;
+    int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+    int tmp10, tmp11, tmp12, tmp13;
+    int z1, z2, z3, z4, z5, z11, z13;
     int* d;
     int ctr;
 
     d = out;
     for (ctr = 8; ctr > 0; ctr--)
     {
-        x0 = (in[0] + in[7]) << 8;
-        x7 = (in[0] - in[7]) << 8;
-        x1 = (in[1] + in[6]) << 8;
-        x6 = (in[1] - in[6]) << 8;
-        x2 = (in[2] + in[5]) << 8;
-        x5 = (in[2] - in[5]) << 8;
-        x3 = (in[3] + in[4]) << 8;
-        x4 = (in[3] - in[4]) << 8;
+        tmp0 = (in[0] + in[7]) << 8;
+        tmp7 = (in[0] - in[7]) << 8;
+        tmp1 = (in[1] + in[6]) << 8;
+        tmp6 = (in[1] - in[6]) << 8;
+        tmp2 = (in[2] + in[5]) << 8;
+        tmp5 = (in[2] - in[5]) << 8;
+        tmp3 = (in[3] + in[4]) << 8;
+        tmp4 = (in[3] - in[4]) << 8;
 
-        u0 = x0 + x3;
-        u3 = x0 - x3;
-        u1 = x1 + x2;
-        u2 = x1 - x2;
+        tmp10 = tmp0 + tmp3;
+        tmp13 = tmp0 - tmp3;
+        tmp11 = tmp1 + tmp2;
+        tmp12 = tmp1 - tmp2;
 
-        d[0] = u0 + u1;
-        d[4] = u0 - u1;
+        d[0] = tmp10 + tmp11;
+        d[4] = tmp10 - tmp11;
 
-        k1 = MUL(u2 + u3, 1448);
-        d[2] = u3 + k1;
-        d[6] = u3 - k1;
+        z1 = MUL(tmp12 + tmp13, 1448);
+        d[2] = tmp13 + z1;
+        d[6] = tmp13 - z1;
 
-        u0 = x4 + x5;
-        u1 = x5 + x6;
-        u2 = x6 + x7;
+        tmp10 = tmp4 + tmp5;
+        tmp11 = tmp5 + tmp6;
+        tmp12 = tmp6 + tmp7;
 
-        k5 = MUL(u0 - u2, 784);
-        k2 = MUL(u0, 1108) + k5;
-        k4 = MUL(u2, 2676) + k5;
-        k3 = MUL(u1, 1448);
+        z5 = MUL(tmp10 - tmp12, 784);
+        z2 = MUL(tmp10, 1108) + z5;
+        z4 = MUL(tmp12, 2676) + z5;
+        z3 = MUL(tmp11, 1448);
 
-        v1 = x7 + k3;
-        v3 = x7 - k3;
+        z11 = tmp7 + z3;
+        z13 = tmp7 - z3;
 
-        d[5] = v3 + k2;
-        d[3] = v3 - k2;
-        d[1] = v1 + k4;
-        d[7] = v1 - k4;
+        d[5] = z13 + z2;
+        d[3] = z13 - z2;
+        d[1] = z11 + z4;
+        d[7] = z11 - z4;
 
         d += 8;
         in += 8;
@@ -1177,43 +1177,43 @@ void FastFDCTs8x8(int* out, signed char* in)
     d = out;
     for (ctr = 8; ctr > 0; ctr--)
     {
-        x0 = d[0] + d[56];
-        x7 = d[0] - d[56];
-        x1 = d[8] + d[48];
-        x6 = d[8] - d[48];
-        x2 = d[16] + d[40];
-        x5 = d[16] - d[40];
-        x3 = d[24] + d[32];
-        x4 = d[24] - d[32];
+        tmp0 = d[0] + d[56];
+        tmp7 = d[0] - d[56];
+        tmp1 = d[8] + d[48];
+        tmp6 = d[8] - d[48];
+        tmp2 = d[16] + d[40];
+        tmp5 = d[16] - d[40];
+        tmp3 = d[24] + d[32];
+        tmp4 = d[24] - d[32];
 
-        u0 = x0 + x3;
-        u3 = x0 - x3;
-        u1 = x1 + x2;
-        u2 = x1 - x2;
+        tmp10 = tmp0 + tmp3;
+        tmp13 = tmp0 - tmp3;
+        tmp11 = tmp1 + tmp2;
+        tmp12 = tmp1 - tmp2;
 
-        d[0] = u0 + u1;
-        d[32] = u0 - u1;
+        d[0] = tmp10 + tmp11;
+        d[32] = tmp10 - tmp11;
 
-        k1 = MUL(u2 + u3, 1448);
-        d[16] = u3 + k1;
-        d[48] = u3 - k1;
+        z1 = MUL(tmp12 + tmp13, 1448);
+        d[16] = tmp13 + z1;
+        d[48] = tmp13 - z1;
 
-        u0 = x4 + x5;
-        u1 = x5 + x6;
-        u2 = x6 + x7;
+        tmp10 = tmp4 + tmp5;
+        tmp11 = tmp5 + tmp6;
+        tmp12 = tmp6 + tmp7;
 
-        k5 = MUL(u0 - u2, 784);
-        k2 = MUL(u0, 1108) + k5;
-        k4 = MUL(u2, 2676) + k5;
-        k3 = MUL(u1, 1448);
+        z5 = MUL(tmp10 - tmp12, 784);
+        z2 = MUL(tmp10, 1108) + z5;
+        z4 = MUL(tmp12, 2676) + z5;
+        z3 = MUL(tmp11, 1448);
 
-        v1 = x7 + k3;
-        v3 = x7 - k3;
+        z11 = tmp7 + z3;
+        z13 = tmp7 - z3;
 
-        d[40] = v3 + k2;
-        d[24] = v3 - k2;
-        d[8] = v1 + k4;
-        d[56] = v1 - k4;
+        d[40] = z13 + z2;
+        d[24] = z13 - z2;
+        d[8] = z11 + z4;
+        d[56] = z11 - z4;
 
         d++;
     }

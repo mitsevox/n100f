@@ -140,7 +140,7 @@ Each SDK file below holds what the target links of that object. Includes are red
 
 ## Bink unit map
 
-The Bink unit paths and boundaries in `config/GIHE78/splits.txt`, the 336 Bink function names in `symbols.txt` and the names of the `popmal.c` and `varbits.c` data objects come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), which `src/bink/src/sdk/fft.c` follows ([Bink FFT](#bink-fft)).
+The Bink unit paths and boundaries in `config/GIHE78/splits.txt`, the 336 Bink function names in `symbols.txt` and the names of the `popmal.c` and `varbits.c` data objects and of `dct.c`'s quantisation tables (`ifiquantlevels8`, `ifquantlevels8`, `ifimquantlevels8` and `ifmquantlevels8`) come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), which `src/bink/src/sdk/fft.c` follows ([Bink FFT](#bink-fft)), and `src/bink/src/sdk/dct.c` follows the Independent JPEG Group's software ([Bink DCT](#bink-dct)).
 
 ## Bink FFT
 
@@ -169,6 +169,53 @@ Local changes, all as the target requires:
 - `makewt` does not call `makeipt`, and its `nwh == 4` special case is folded into `nwh >= 4` (the same in the `nw1` block).
 - `rdft` and `ddct` pass `ip + 2` to the transforms.
 - The functions other than `rdft` and `ddct` are `static`, and only the functions Bink links are kept.
+
+## Bink DCT
+
+`src/bink/src/sdk/dct.c` is based on the Independent JPEG Group's software: its transforms are `jpeg_fdct_ifast` (`jfdctfst.c`) and `jpeg_idct_ifast` (`jidctfst.c`) from IJG release 6b, `jpegsrc.v6b.tar.gz` (SHA-256 `75c3ec241e9996504fe02a9ed4d12f16b74ade713972f3db9e65ce95cd27e35d`, https://www.ijg.org/files/), as RAD adapted them for Bink. This software is based in part on the work of the Independent JPEG Group. The copyright and no-warranty notice from the release's `README` (section "LEGAL ISSUES"), unaltered:
+
+> The authors make NO WARRANTY or representation, either express or implied,
+> with respect to this software, its quality, accuracy, merchantability, or
+> fitness for a particular purpose.  This software is provided "AS IS", and you,
+> its user, assume the entire risk as to its quality and accuracy.
+>
+> This software is copyright (C) 1991-1998, Thomas G. Lane.
+> All Rights Reserved except as specified below.
+>
+> Permission is hereby granted to use, copy, modify, and distribute this
+> software (or portions thereof) for any purpose, without fee, subject to these
+> conditions:
+> (1) If any part of the source code for this software is distributed, then this
+> README file must be included, with this copyright and no-warranty notice
+> unaltered; and any additions, deletions, or changes to the original files
+> must be clearly indicated in accompanying documentation.
+> (2) If only executable code is distributed, then the accompanying
+> documentation must state that "this software is based in part on the work of
+> the Independent JPEG Group".
+> (3) Permission for use of this software is granted only if the user accepts
+> full responsibility for any undesirable consequences; the authors accept
+> NO LIABILITY for damages of any kind.
+>
+> These conditions apply to any software derived from or based on the IJG code,
+> not just to the unmodified library.  If you use our work, you ought to
+> acknowledge us.
+>
+> Permission is NOT granted for the use of any IJG author's name or company name
+> in advertising or publicity relating to this software or products derived from
+> it.  This software may be referred to only as "the Independent JPEG Group's
+> software".
+>
+> We specifically permit and encourage the use of this software as the basis of
+> commercial products, provided that all warranty or liability claims are
+> assumed by the product vendor.
+
+Changes to the original files, all as the target requires:
+- Only the two transforms are kept; they are rewritten as Bink's functions (`FastFDCT8x8` and `FastFDCTs8x8` for the forward transform, `fastidct8x8`, `fastidct8x8d` and `FastmIDCT8x8WithMotion` for the inverse) with Bink's argument lists, and none of IJG's headers, macros or other files are used.
+- The fixed-point constants are 11-bit (`CONST_BITS` 11: 1448, 784, 1108, 2676 and 2896, 3784, 2217, -5352) instead of 8-bit, with `MUL(x, c)` as `((x) * (c)) >> 11`.
+- The forward transform reads 8-bit samples (`unsigned char` in `FastFDCT8x8`, `signed char` in `FastFDCTs8x8`) in rows of 8, scales the first-stage sums and differences by `<< 8`, and writes a separate `int` block, where IJG's works in place on a prepared `DCTELEM` block.
+- The inverse transform dequantises with Bink's tables (`ifiquantlevels8` and `ifimquantlevels8`, indexed by a quality level) as `(in * q) >> 11`, tests the AC terms with a single `|` chain, keeps the row pass's phase-2 values in a `t[8]` array, and rounds outputs as `(x + 127) >> 8` with no range-limit table.
+- `fastidct8x8d` writes each output pixel twice across and each row twice down, and `FastmIDCT8x8WithMotion` adds each output pixel to an 8-byte-stride motion block.
+- The three inverse transforms are not yet byte-exact; see [Bink](docs/libraries.md#bink).
 
 ## RenderWare unit map
 
