@@ -75,7 +75,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 
 # Library units
 
-`splits.txt` also names 137 library units after the game units: 121 from `0x800DE530` to `0x80111EC0`, and the CARD library's 16 from `0x80130990` to `0x801372EC`, after Bink. 136 of them come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target. The table counts libmap's placements, as `config/GIHE78/lib_units.tsv` records them; import corrections are described after it.
+`splits.txt` also names 138 library units after the game units: 122 from `0x800DE530` to `0x80111EC0`, and the CARD library's 16 from `0x80130990` to `0x801372EC`, after Bink. 136 of them come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target. The table counts libmap's placements, as `config/GIHE78/lib_units.tsv` records them; import corrections are described after it.
 
 | Library | Units | Whole-object matches | Functions placed |
 | --- | --- | --- | --- |
@@ -87,7 +87,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 
 Each unit stays in the original bytes until its source lands and passes review; [libraries.md](libraries.md#imported-units) lists the imported ones. `config/GIHE78/lib_units.tsv` lists each unit as libmap placed it, with its match kind, function counts, chosen source and the compiler versions that produced it.
 
-Imports correct the map where compiled source shows more than libmap could place. Functions of 8 to 16 bytes are too common in the target to place by body, so they were left out of the first map. The MetroTRK import added a unit, `mutex_TRK.c`, at `0x800E2BEC` (three 8-byte functions between `support.c` and `notify.c`, the order the related maps give). It extended `msghndlr.c` to `0x800E232C` to take `SetTRKConnected` and `GetTRKConnected`, and gave `mem_TRK.c` its `.init` functions `TRK_memset` and `TRK_memcpy` at `0x80003100`. That places 7 more TRK functions than the table shows. The MSL import extended `string.c` to `0x800EE7BC` to take `strlen` (a 0x1C-byte body that occurs once in the target) and named 15 of the matched functions that had kept `fn_` labels, from the imported sources, with `inferred` or `related` rows.
+Imports correct the map where compiled source shows more than libmap could place. Functions of 8 to 16 bytes are too common in the target to place by body, so they were left out of the first map. The MetroTRK import added a unit, `mutex_TRK.c`, at `0x800E2BEC` (three 8-byte functions between `support.c` and `notify.c`, the order the related maps give). It extended `msghndlr.c` to `0x800E232C` to take `SetTRKConnected` and `GetTRKConnected`, and gave `mem_TRK.c` its `.init` functions `TRK_memset` and `TRK_memcpy` at `0x80003100`. It also split `targsupp.s` (four 8-byte trap stubs at `0x800E4660`) off the end of `targimpl.c`, started `targimpl.c` at `0x800E2DD0` to take `__TRK_get_MSR` and `__TRK_set_MSR`, extended `dolphin_trk.c` to `0x800E47C0` to take `EnableMetroTRKInterrupts`, and gave `dolphin_trk.c` its `.init` function `__TRK_reset` at `0x80005088`. That places 16 more TRK functions than the table shows. The MSL import extended `string.c` to `0x800EE7BC` to take `strlen` (a 0x1C-byte body that occurs once in the target) and named 15 of the matched functions that had kept `fn_` labels, from the imported sources, with `inferred` or `related` rows.
 
 ## Method
 
