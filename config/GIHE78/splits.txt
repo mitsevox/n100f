@@ -1184,6 +1184,9 @@ dolphin/os/__ppc_eabi_init.c: comment:8
 
 dolphin/si/SIBios.c: comment:8
 	.text       start:0x80108B18 end:0x8010A1F8
+	.data       start:0x801CD788 end:0x801CD858
+	.bss        start:0x8025BCA0 end:0x8025BEA0
+	.sbss       start:0x8025F4D0 end:0x8025F4E0
 
 dolphin/si/SISamplingRate.c: comment:8
 	.text       start:0x8010A1F8 end:0x8010A300
@@ -1192,21 +1195,39 @@ dolphin/si/SISamplingRate.c: comment:8
 
 dolphin/vi/vi.c: comment:8
 	.text       start:0x8010A300 end:0x8010BD44
+	.data       start:0x801CD8F0 end:0x801CDBB8
+	.bss        start:0x8025BEA0 end:0x8025BFE8
+	.sbss       start:0x8025F4E8 end:0x8025F538
 
 dolphin/pad/Padclamp.c: comment:8
 	.text       start:0x8010BD44 end:0x8010BF7C
+	.sdata      start:0x8025E6A8 end:0x8025E6B0
 
 dolphin/pad/Pad.c: comment:8
 	.text       start:0x8010BF7C end:0x8010DA44
+	.data       start:0x801CDBB8 end:0x801CDBC8
+	.bss        start:0x8025BFE8 end:0x8025C038
+	.sdata      start:0x8025E6B0 end:0x8025E6D0
+	.sbss       start:0x8025F538 end:0x8025F560
 
 dolphin/dvd/dvdlow.c: comment:8
 	.text       start:0x8010DA44 end:0x8010E898
+	.bss        start:0x8025C038 end:0x8025C108
+	.sdata      start:0x8025E6D0 end:0x8025E6D8
+	.sbss       start:0x8025F560 end:0x8025F5A8
 
 dolphin/dvd/dvdfs.c: comment:8
-	.text       start:0x8010E898 end:0x8010F20C
+	.text       start:0x8010E898 end:0x8010F23C
+	.data       start:0x801CDBC8 end:0x801CDD58
+	.sdata      start:0x8025E6D8 end:0x8025E6E0
+	.sbss       start:0x8025F5A8 end:0x8025F5C8
 
 dolphin/dvd/dvd.c: comment:8
 	.text       start:0x8010F23C end:0x801118F0
+	.data       start:0x801CDD58 end:0x801CDE70
+	.bss        start:0x8025C120 end:0x8025C1F8
+	.sdata      start:0x8025E6E0 end:0x8025E6E8
+	.sbss       start:0x8025F5C8 end:0x8025F618
 
 dolphin/dvd/dvdqueue.c: comment:8
 	.text       start:0x801118F0 end:0x80111AE8
