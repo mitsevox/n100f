@@ -861,6 +861,8 @@ MSL_C.PPCEABI.bare.H/alloc.c:
 
 MSL_C.PPCEABI.bare.H/ansi_files.c:
 	.text       start:0x800E7350 end:0x800E7650
+	.data       start:0x801CA268 end:0x801CA3A8
+	.bss        start:0x802428D0 end:0x80242BD0
 
 MSL_C.PPCEABI.bare.H/ansi_fp.c:
 	.text       start:0x800E7650 end:0x800E92BC
@@ -912,6 +914,8 @@ MSL_C.PPCEABI.bare.H/rand.c:
 
 MSL_C.PPCEABI.bare.H/scanf.c:
 	.text       start:0x800ED2A8 end:0x800EE2F0
+	.rodata     start:0x801A7F48 end:0x801A7F70
+	.data       start:0x801CAA78 end:0x801CAB48
 
 MSL_C.PPCEABI.bare.H/string.c:
 	.text       start:0x800EE2F0 end:0x800EE7BC
@@ -929,6 +933,7 @@ MSL_C.PPCEABI.bare.H/strtoul.c:
 
 MSL_C.PPCEABI.bare.H/uart_console_io.c:
 	.text       start:0x800F0098 end:0x800F015C
+	.sbss       start:0x8025F240 end:0x8025F248
 
 MSL_C.PPCEABI.bare.H/wchar_io.c:
 	.text       start:0x800F015C end:0x800F01E4
