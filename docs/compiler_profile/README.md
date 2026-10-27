@@ -55,7 +55,7 @@ The flag counts in `evidence.tsv` come from editing `game.flags` one setting at 
 
 ## RenderWare
 
-No RenderWare source is public: bfbb's `src/rwsdk` holds only one-function stubs of `ctbsp.c` and `rtslerp.c`, and no other decompilation has matching RenderWare. The stimuli in [`rw_probe/`](rw_probe/) were written for this project from the target's own disassembly of nine `rwcore` functions: the vector length and normalize functions, the case-insensitive string functions and the bounding-box functions. As with bfbb, a hit says which compiler produces the instructions, not what the original source was. From the repository root:
+No matching RenderWare source was found in the decompilations checked. In bfbb (d8e8eac), `src/rwsdk` holds `plugin/collis/ctbsp.c`, whose only function is an empty `_rpCollBSPTreeInit`, `tool/slerp/rtslerp.c`, which has no function at all because everything in it is commented out, and `tool/slerp/rtslerp.h`, a header with declarations only. bfbbdecomp/tssm (fc32870) has no RenderWare source. Jovinull/sonicheroes (8be2883) has four `rw_gcn_*.c` files, which are m2c output marked NonMatching in its `configure.py`. The stimuli in [`rw_probe/`](rw_probe/) were written for this project from the target's own disassembly of nine `rwcore` functions: the vector length and normalize functions, the case-insensitive string functions and the bounding-box functions. As with bfbb, a hit says which compiler produces the instructions, not what the original source was. From the repository root:
 
 ```sh
 python3 tools/compiler_probe.py --dol orig/GIHE78/sys/main.dol --compilers build/compilers \
