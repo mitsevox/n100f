@@ -19,6 +19,7 @@ double atan2(double y, double x);
 float atanf(float x);
 double cos(double x);
 float cosf(float x);
+float powf(float x, float y);
 float sinf(float x);
 
 #ifdef __cplusplus

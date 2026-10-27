@@ -1280,6 +1280,7 @@ bink/src/sdk/decode/ngc/binkngc.c:
 
 bink/src/sdk/decode/ngc/ngcsnd.c:
 	.text       start:0x801123B4 end:0x80113890
+	.rodata     start:0x801A8680 end:0x801A86B0
 
 bink/src/sdk/decode/binkread.c:
 	.text       start:0x80113890 end:0x801179EC
