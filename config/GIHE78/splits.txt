@@ -1171,6 +1171,8 @@ bink/src/sdk/decode/expand.c:
 
 bink/src/sdk/popmal.c:
 	.text       start:0x801241E0 end:0x80124378
+	.bss        start:0x8025D388 end:0x8025D488
+	.sdata      start:0x8025E750 end:0x8025E764
 
 bink/src/sdk/decode/ngc/ngcrgb.c:
 	.text       start:0x80124378 end:0x801272BC
@@ -1180,6 +1182,7 @@ bink/src/sdk/decode/ngc/ngcyuy2.c:
 
 bink/src/sdk/varbits.c:
 	.text       start:0x80127FC8 end:0x801281AC
+	.rodata     start:0x801A8C40 end:0x801A8DC0
 
 bink/src/sdk/fft.c:
 	.text       start:0x801281AC end:0x8012C490
