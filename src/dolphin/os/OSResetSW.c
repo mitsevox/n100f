@@ -4,8 +4,6 @@ OSTime __OSGetSystemTime(void);
 
 extern OSTime __OSStartTime;
 
-u8 GameChoice AT_ADDRESS(OS_BASE_CACHED | 0x30E3);
-
 static OSResetCallback ResetCallback;
 static BOOL Down;
 static BOOL LastState;

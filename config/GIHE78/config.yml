@@ -9,3 +9,9 @@ splits: config/GIHE78/splits.txt
 # GC/1.2.5n SDK units write 8 and carry `comment:8` in splits.txt.
 mw_comment_version: 10
 ldscript_template: config/GIHE78/ldscript.tpl
+# Binary data that reconstructed source includes at build time, extracted from main.dol so the
+# bytes stay out of the repository (docs/libraries.md).
+extract:
+- symbol: CardData
+  header: dolphin/card/CardData.inc
+  header_type: raw
