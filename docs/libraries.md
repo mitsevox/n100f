@@ -142,4 +142,10 @@ The 8 zero bytes between `fft.c`'s `.rodata` and the tables (`0x801A8E18`-`0x801
 
 Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units can include `dolphin/os.h`. The MW units are unchanged.
 
-Bink headers are this project's own, declaring only what the reconstructed units use. The logo movie stays out of the repository: its data is split from `main.dol` at build time like any other unmapped data.
+`bink/src/sdk/decode/binkread.c`, Bink's public API (opening, decoding, timing, sound tracks and statistics), is this project's own reconstruction from the target and is `NonMatching`. 47 of its 53 functions compile to the target byte for byte under ProDG 3.5 to 3.9.3, and so do its `.rodata`, `.bss`, `.sdata` and `.sbss` and the `TrackNums` table in `.data`. `BinkCopyToBufferRect`, `BinkDoFrame`, `BinkGetKeyFrame`, `smallestrect`, `BinkOpenTrack` and `BinkSetSoundOnOff` differ in register choice, block order or scheduling; each function row says how, and none of the causes is established. The unit would stay `NonMatching` without them, because its `.data` also holds the logo movie. Some details of the source come from the target's code:
+
+- `BinkOpen`'s failure paths share code through `goto` labels placed inside the first error block of each kind, and the preload failure frees the stack copy's `planes[0]`, as the target does.
+- `BinkGetRealtime` fills the result's `frame_rate_div` from `frame_rate`, and `BinkNextFrame` sets `io.busy` to 1 and straight back to 0.
+- Like the other Bink units, the file has no prototype for `memset` or `memcpy`. It declares `memmove` itself.
+
+Bink headers are this project's own, declaring only what the reconstructed units use. The logo movie stays out of the repository: `binkread.c` declares `LogoData` `extern`, and its bytes come from `main.dol` at build time.

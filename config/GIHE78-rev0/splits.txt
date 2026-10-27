@@ -1283,6 +1283,11 @@ bink/src/sdk/decode/ngc/ngcsnd.c:
 
 bink/src/sdk/decode/binkread.c:
 	.text       start:0x80113890 end:0x801179EC
+	.rodata     start:0x801A86B0 end:0x801A8730
+	.data       start:0x801CDF28 end:0x801D1960
+	.bss        start:0x8025C288 end:0x8025C388
+	.sdata      start:0x8025E710 end:0x8025E738
+	.sbss       start:0x8025F624 end:0x8025F628
 
 bink/src/sdk/decode/ngc/ngcfile.c:
 	.text       start:0x801179EC end:0x801184CC
