@@ -63,11 +63,12 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 
 - The asm functions (`TRK_flush_cache`, `__TRK_get_MSR`, `__TRK_set_MSR`, `TRK_ppc_memcpy`, `TRKInterruptHandler`, `TRKExceptionHandler`, `TRKSwapAndGo`, `TRKInterruptHandlerEnableInterrupts`, `InitMetroTRK`, `TRKSaveExtended1Block`, `TRKRestoreExtended1Block`, `TRKLoadContext`) keep ac-decomp's instructions. Their labels are named for what they do, ac-decomp's bit-mask comments are dropped, and stack and state offsets are written as `ProcessorState_PPC`, `TRKState_PPC` and `OSContext` member references.
 - `targimpl.c` builds without ac-decomp's `#pragma dont_inline` blocks. `TRKPPCAccessSPR`, `TRKPPCAccessPairedSingleRegister`, `TRKPPCAccessSpecialReg`, `TRKTargetReadInstruction`, `TRKTargetCheckStep`, `TRKTargetDoStep`, `TRKTargetStepDone` and `TRKTargetEnableTrace` are `static inline` by choice: the target has no out-of-line copy of them. `TRKTargetAccessExtended2` drops an unused `access_func[10]` local.
-- `TRK_flush_cache` takes `u32 start` where ac-decomp takes `void*`. Its callers pass `(u32)` conversions of their pointers, or their `u32` values with no cast, where ac-decomp writes `(void*)(u32)access_func` and `(void*)` casts; the `source-form` row for `TRK_flush_cache` gives the evidence.
-- `gTRKExceptionStatus`, `gTRKStepStatus` and `TRK_saved_exceptionID` in `targimpl.c`, and `lc_base` and `TRK_ISR_OFFSETS` in `dolphin_trk.c`, are global, as the related maps list them, where ac-decomp makes them `static`. The code is the same.
+- `TRK_flush_cache` takes `u32 start` where ac-decomp takes `void*`. Its callers pass `(u32)` conversions of their pointers, or their `u32` values with no cast, where ac-decomp writes `(void*)(u32)access_func` and `(void*)` casts. Both forms compile to the same code; the `source-form` row for `TRK_flush_cache` says why this one is used.
+- `gTRKExceptionStatus`, `gTRKStepStatus`, `TRK_saved_exceptionID`, `TRK_ppc_memcpy` and `TRKExceptionHandler` in `targimpl.c`, and `lc_base` and `TRK_ISR_OFFSETS` in `dolphin_trk.c`, are global, as the related maps list them, where ac-decomp makes them `static`. The code is the same.
+- `TRKTargetStop` returns `DSError` (`DS_NoError`) where ac-decomp returns `u32` (`0`), and passes `TRUE` where ac-decomp passes `1`. `TRKInitializeIntDrivenUART` is defined without ac-decomp's `volatile` on its last parameter, as `trk.h` declares it, and its parameters are named.
 - `TRK_copy_vector` (`static inline`) and `__TRK_copy_vectors` (`static`) are internal by choice: `__TRK_reset` inlines both and the target has no out-of-line copy. `TRKPollUART`, `TRKReadUARTN` and `TRKWriteUARTN` are `static inline` for the same reason. The enumerator `PPC_FloatingPointUnavaiable` is spelled `PPC_FloatingPointUnavailable`.
 - `WriteUART1` and `TRKReadUARTPoll` take `s8`, the type their callers in `msg.c` and `serpoll.c` pass; with `u8` those callers compile differently. The comm-table function types take `u8**`, matching `TRKInitializeIntDrivenUART`.
-- `targsupp.s` is written with dtk's `.fn` macros and 4-byte alignment.
+- `targsupp.s` is written with dtk's `.fn` macros in place of ac-decomp's `.global`/`.type`/`.size` directives, without its `.file` directive, and keeps its 16-byte alignment.
 
 `include/dolphin/types.h` declares the Dolphin SDK base types these units use, with the SDK's names and widths as ac-decomp's `include/dolphin/types.h` gives them at the same revision. Its `NULL` is `0`, as in `include/types.h`, where ac-decomp's is `((void*)0)`. `include/dolphin/os/OSContext.h` (the `OSContext` layout), `include/dolphin/os/OSThread.h` (`OSEnableScheduler`), the `__OSInterruptHandler` type in `include/dolphin/os/OSInterrupt.h`, `include/dolphin/OdemuExi2/DebuggerDriver.h` and `include/dolphin/amcstubs/AmcExi2Stubs.h` declare what `dolphin_trk_glue.c` uses, following ac-decomp's `include/dolphin/os/`, `include/dolphin/odemuexi/DebuggerDriver.h` and `include/amcstubs/AmcExi2Stubs.h` at the same revision.
 
@@ -93,6 +94,10 @@ Each SDK file below holds what the target links of that object. Includes are red
 - `src/dolphin/os/OSLink.c` and the `PSMTXConcat` body and `Unit01` table in `src/dolphin/mtx/mtx.c` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`src/dolphin/src/`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`, CC0 1.0). `mtx.c` keeps only `PSMTXConcat`, the one function of the object the target links.
 - `src/dolphin/mtx/mtx44.c` holds `C_MTXOrtho` from [mitsevox/tw2004](https://github.com/mitsevox/tw2004/tree/11985bcd413b9da33d0ae58de6877e0906dc6a59) (`extern/sdk/dolphin/mtx/mtx44.c`, revision `11985bcd413b9da33d0ae58de6877e0906dc6a59`, CC0 1.0), without the `#line` directive, the unused `mtxUnit` table and the empty `#ifdef GEKKO` blocks.
 - `src/dolphin/os/OSAlloc.c` takes its bodies from [Jovinull/sonicheroes](https://github.com/Jovinull/sonicheroes/tree/8be28830640b0be85ebf128048e9bca574b9932d) (`src/dolphin/os/OSAlloc.c`, revision `8be28830640b0be85ebf128048e9bca574b9932d`), under the MIT licence. Its notice is in [`src/dolphin/LICENSE.sonicheroes`](src/dolphin/LICENSE.sonicheroes). Local changes: the local `NULL`, `OSHeapHandle` and rounding macros come from `include/dolphin/`, and the header and minimum-object sizes are written in decimal.
+- `src/dolphin/OdemuExi2/DebuggerDriver.c` takes its bodies from [mitsevox/mvp2005](https://github.com/mitsevox/mvp2005/tree/f0af8a9a4382c04c19d93bb67938ed553fd322d9) (`src/dolphin/odemustubs/DebuggerDriver.c`, revision `f0af8a9a4382c04c19d93bb67938ed553fd322d9`, CC0 1.0). mvp2005 imported it from [emoose/re4](https://github.com/emoose/re4/tree/feb6805b07856e50e551e578b152463db81a4ab9) (`src/lib/DebuggerDriver.c`, revision `feb6805b07856e50e551e578b152463db81a4ab9`, CC0 1.0), whose file names [mariopartyrd/partyboard](https://github.com/mariopartyrd/partyboard)'s `src/OdemuExi2/DebuggerDriver.c` (CC0 1.0) as its source. re4 does not pin a partyboard revision; partyboard last changed that file at `4fdca137cd70e67b988192163bec68873b514774` (2025-03-16), before re4 added its copy (2026-09-08), and re4's copy reorders and condenses it. Local changes: `DBInitComm` drops the dead store `pEXIInputFlag = (u8 *)EXIInputFlag;` and its extra block, `__PIRegs` and `__EXIRegs` come from `include/dolphin/`, placeholder parameter names are replaced (`DBGWrite`/`DBGRead` take `address` and `length` instead of `count` and `param3`, and their command word is `cmd` instead of `v1`; `DBInitComm`, `DBGHandler`, `MWCallback`, `DBGReadStatus`, `DBGReadMailbox` and the mailbox helpers name their parameters `inputFlag`, `callback`, `interrupt`, `context`, `status` and `mail`), and `DBWrite` and `DBRead` return `FALSE` instead of `0`.
+- `src/dolphin/ax/AXSPB.c`, `src/dolphin/ax/AXProf.c`, `src/dolphin/dvd/dvdqueue.c` and `src/dolphin/dvd/dvderror.c` take their bodies from the same bfbb revision (`src/dolphin/src/`, CC0 1.0), without its `#ifdef DEBUG` reports and commented-out functions, and without `inline` on `__AXDepopFade` (AXSPB.c) and `Convert` (dvderror.c). `__AXStudio` keeps its 32-byte alignment, written as `__attribute__((aligned(32)))`.
+- `src/dolphin/dsp/dsp_task.c` takes its bodies from [bfbbdecomp/tssm](https://github.com/bfbbdecomp/tssm/tree/fc32870698f34fcf06e649d0122eeaaa282b60e3) (`src/dolphin/src/dsp/dsp_task.c`, revision `fc32870698f34fcf06e649d0122eeaaa282b60e3`, CC0 1.0), without its `DECL_WEAK` on `__DSPHandler`, whose first parameter is named. `__DSP_add_task` comes from the marioparty4 revision above (`src/dolphin/dsp/dsp_task.c`). The target has no code for it: the linker strips it, and only its debug string remains in the unit's `.data`. Its body cannot be checked against the target.
+- `src/dolphin/dvd/fstload.c` takes its bodies from the marioparty4 revision above (`src/dolphin/dvd/fstload.c`). The boot-block read size is `OSRoundUp32B(sizeof(DVDBB2))` instead of marioparty4's `sizeof(bb2)` (a pointer); both round up to `0x20`, so the code is unchanged. `__fstLoad()` is declared `__fstLoad(void)`.
 
 `include/dolphin/` declares only what these units use, under the SDK's header names. `__OSBusClock` is the SDK's fixed-address variable at `0x800000F8`, through which `OS_BUS_CLOCK` reads the bus clock. Reading the clock through a pointer cast instead changes code generation in `__OSResetSWInterruptHandler`.
 
@@ -105,7 +110,35 @@ Each SDK file below holds what the target links of that object. Includes are red
 
 ## Bink unit map
 
-The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bink function names in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), compiled only to identify the compiler; none of it is in this repository yet.
+The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bink function names in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), which `src/bink/src/sdk/fft.c` follows ([Bink FFT](#bink-fft)).
+
+## Bink FFT
+
+`src/bink/src/sdk/fft.c` is Takuya Ooura's general purpose FFT package (`fftsg.c`) as Bink builds it. It follows the current release, `fft.tgz` (SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), with `bitrv2` and `bitrv2conj` from the same package's `fft4g.c`. `cftfsub`, `cftbsub`, `cftrec1`, `cftrec2`, `cftexp1`, `cftexp2` and `cftfx42` are reconstructed in the package's pre-2006 structure (the `cftrec1`/`cftrec2` recursion and `cftexp1`/`cftexp2`), which the current release replaced, and fitted to the target; no copy of an earlier release was available to check their text against.
+
+The code is used under the licence on Ooura's FFT page, https://www.kurims.kyoto-u.ac.jp/~ooura/fft.html (section "License"):
+
+> Copyright Takuya OOURA, 1996-2001
+>
+> You may use, copy, modify and distribute this code for any purpose
+> (include commercial use) and without fee. Please refer to this
+> package when you modify this code.
+
+This section is that reference. The package's `readme.txt` carries an older notice, kept here as the package's attribution (its download address no longer works):
+
+> Copyright(C) 1996-2001 Takuya OOURA
+> email: ooura@mmm.t.u-tokyo.ac.jp
+> download: http://momonga.t.u-tokyo.ac.jp/~ooura/fft.html
+> You may use, copy, modify this code for any purpose and
+> without fee. You may distribute this ORIGINAL package.
+
+Local changes, all as the target requires:
+- `float` replaces `double`, and the constants are `float` except the `0.5` factors of `makewt` and the `makect` loop.
+- The trigonometry calls MSL's `atanf`, `cosf` and `sinf`.
+- The twiddle table keeps the older layout: `makewt` stores positive sines, `cftmdl1`, `cftmdl2`, `cftf1st` and `cftb1st` negate the third-angle sine and `cftf162` does not (`wk3i = w[7]`), `cftf161` derives its first twiddle from `w[2]`, and `cftfx41` and `cftf082` index the table as the older layout requires.
+- `makewt` does not call `makeipt`, and its `nwh == 4` special case is folded into `nwh >= 4` (the same in the `nw1` block).
+- `rdft` and `ddct` pass `ip + 2` to the transforms.
+- The functions other than `rdft` and `ddct` are `static`, and only the functions Bink links are kept.
 
 ## Build tooling
 

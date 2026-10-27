@@ -68,11 +68,11 @@ u128 TRKvalue128_temp;
 
 Default_PPC gTRKSaveState;
 
-static void TRKExceptionHandler(u16 exceptionID);
+void TRKExceptionHandler(u16 exceptionID);
 void TRKInterruptHandlerEnableInterrupts(void);
 void __TRK_set_MSR(u32 msr);
-static void TRK_ppc_memcpy(register void* dest, register const void* src, register int n,
-                           register u32 dest_msr, register u32 src_msr);
+void TRK_ppc_memcpy(register void* dest, register const void* src, register int n,
+                    register u32 dest_msr, register u32 src_msr);
 static inline DSError TRKPPCAccessSPR(void* value, u32 spr, BOOL read);
 static inline DSError TRKPPCAccessPairedSingleRegister(void* srcDest, u32 psr, BOOL read);
 DSError TRKPPCAccessFPRegister(void* srcDest, u32 fpr, BOOL read);
@@ -132,8 +132,8 @@ DSError TRKValidMemory32(const void* addr, size_t length, ValidMemoryOptions rea
 }
 
 // Copies n bytes, reading under src_msr and writing under dest_msr.
-static asm void TRK_ppc_memcpy(register void* dest, register const void* src, register int n,
-                               register u32 dest_msr, register u32 src_msr) {
+asm void TRK_ppc_memcpy(register void* dest, register const void* src, register int n,
+                        register u32 dest_msr, register u32 src_msr) {
 #define saved_msr r8
 #define byte r9
 #define count r10
@@ -539,7 +539,7 @@ handle_exception:
 
 // An exception inside TRK itself: record it, skip the faulting instruction where that is safe,
 // and return.
-static asm void TRKExceptionHandler(u16 exceptionID) {
+asm void TRKExceptionHandler(u16 exceptionID) {
     nofralloc
     lis r2, gTRKExceptionStatus@h
     ori r2, r2, gTRKExceptionStatus@l

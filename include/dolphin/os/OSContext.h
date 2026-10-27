@@ -21,10 +21,11 @@ typedef struct OSContext {
     u16 mode;
     u16 state;
     u32 gqr[8];
-    u32 psf_pad;
     f64 psf[32];
 } OSContext;
 
+void OSSetCurrentContext(OSContext* context);
+void OSClearContext(OSContext* context);
 void OSDumpContext(OSContext* context);
 
 #ifdef __cplusplus

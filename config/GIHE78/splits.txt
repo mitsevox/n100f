@@ -795,7 +795,7 @@ TRK_MINNOW_DOLPHIN/targimpl.c:
 	.data       start:0x801CA1D8 end:0x801CA208
 	.bss        start:0x8023FFD8 end:0x80240558
 
-TRK_MINNOW_DOLPHIN/targsupp.s: comment:0
+TRK_MINNOW_DOLPHIN/targsupp.s:
 	.text       start:0x800E4660 end:0x800E4680
 
 TRK_MINNOW_DOLPHIN/dolphin_trk.c:
@@ -940,6 +940,8 @@ MSL_C.PPCEABI.bare.H/s_tan.c:
 
 dolphin/OdemuExi2/DebuggerDriver.c: comment:8
 	.text       start:0x800F391C end:0x800F439C
+	.sdata      start:0x8025E618 end:0x8025E620
+	.sbss       start:0x8025F248 end:0x8025F260
 
 dolphin/ai/ai.c: comment:8
 	.text       start:0x800F43E0 end:0x800F4C5C
@@ -961,12 +963,15 @@ dolphin/ax/AXOut.c: comment:8
 
 dolphin/ax/AXSPB.c: comment:8
 	.text       start:0x800F715C end:0x800F7624
+	.bss        start:0x8024A800 end:0x8024A840
+	.sbss       start:0x8025F358 end:0x8025F380
 
 dolphin/ax/AXVPB.c: comment:8
 	.text       start:0x800F819C end:0x800F8734
 
 dolphin/ax/AXProf.c: comment:8
 	.text       start:0x800F8734 end:0x800F877C
+	.sbss       start:0x8025F390 end:0x8025F3A0
 
 dolphin/base/PPCArch.c: comment:8
 	.text       start:0x800F87BC end:0x800F881C
@@ -981,6 +986,8 @@ dolphin/dsp/dsp.c: comment:8
 
 dolphin/dsp/dsp_task.c: comment:8
 	.text       start:0x800F8C3C end:0x800F94C0
+	.data       start:0x801CC6B0 end:0x801CC7F0
+	.sbss       start:0x8025F3B0 end:0x8025F3C8
 
 dolphin/exi/EXIBios.c: comment:8
 	.text       start:0x800F94C0 end:0x800FAA10
@@ -1125,12 +1132,18 @@ dolphin/dvd/dvd.c: comment:8
 
 dolphin/dvd/dvdqueue.c: comment:8
 	.text       start:0x801118F0 end:0x80111AE8
+	.bss        start:0x8025C1F8 end:0x8025C218
 
 dolphin/dvd/dvderror.c: comment:8
 	.text       start:0x80111AE8 end:0x80111C80
+	.data       start:0x801CDE70 end:0x801CDEB8
 
 dolphin/dvd/fstload.c: comment:8
 	.text       start:0x80111C80 end:0x80111EC0
+	.data       start:0x801CDEB8 end:0x801CDF28
+	.bss        start:0x8025C218 end:0x8025C288
+	.sdata      start:0x8025E6E8 end:0x8025E6F8
+	.sbss       start:0x8025F618 end:0x8025F624
 
 bink/src/sdk/decode/ngc/binkngc.c:
 	.text       start:0x80111EC0 end:0x801123B4
@@ -1170,6 +1183,7 @@ bink/src/sdk/varbits.c:
 
 bink/src/sdk/fft.c:
 	.text       start:0x801281AC end:0x8012C490
+	.rodata     start:0x801A8DC0 end:0x801A8E18
 
 bink/src/sdk/dct.c:
 	.text       start:0x8012C490 end:0x8012D564
