@@ -1,14 +1,14 @@
 #include <rwcore.h>
 #include <stdarg.h>
 
-typedef struct rwErrorGlobals rwErrorGlobals;
-struct rwErrorGlobals
+typedef struct ErrorModuleData ErrorModuleData;
+struct ErrorModuleData
 {
-    RwError errorCode;
+    RwError lastError;
 };
 
-#define ERRORGLOBAL(var) \
-    (((rwErrorGlobals*)((U8*)RwEngineInstance + errorModule.globalsOffset))->var)
+#define ERROR_DATA(var) \
+    (((ErrorModuleData*)((U8*)RwEngineInstance + errorModule.globalsOffset))->var)
 
 static RwModuleInfo errorModule;
 
@@ -21,18 +21,18 @@ void* _rwErrorClose(void* instance)
 
 RwError* RwErrorSet(RwError* code)
 {
-    if (ERRORGLOBAL(errorCode).pluginID == 0 &&
-        ERRORGLOBAL(errorCode).errorCode == (S32)0x80000000)
+    if (ERROR_DATA(lastError).pluginID == 0 &&
+        ERROR_DATA(lastError).errorCode == (S32)0x80000000)
     {
         if (code->errorCode & 0x80000000)
         {
-            ERRORGLOBAL(errorCode).pluginID = 0;
+            ERROR_DATA(lastError).pluginID = 0;
         }
         else
         {
-            ERRORGLOBAL(errorCode).pluginID = code->pluginID;
+            ERROR_DATA(lastError).pluginID = code->pluginID;
         }
-        ERRORGLOBAL(errorCode).errorCode = code->errorCode;
+        ERROR_DATA(lastError).errorCode = code->errorCode;
     }
 
     return code;

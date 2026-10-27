@@ -94,6 +94,7 @@ struct RwMatrixTag
 typedef struct RwMatrixTag RwMatrix;
 typedef struct RwCamera RwCamera;
 typedef struct RwFrame RwFrame;
+typedef struct RwStream RwStream;
 
 typedef struct RwError RwError;
 struct RwError
@@ -152,6 +153,9 @@ struct RwTexture
 
 typedef struct RwFreeList RwFreeList;
 
+typedef void* (*RwMemoryAllocFn)(RwFreeList* fl);
+typedef RwFreeList* (*RwMemoryFreeFn)(RwFreeList* fl, void* pData);
+
 // Partial: the members after the two object sizes are not declared.
 typedef struct RwPluginRegistry RwPluginRegistry;
 struct RwPluginRegistry
@@ -165,11 +169,12 @@ typedef void* (*RwPluginObjectConstructor)(void* object, S32 offsetInObject, S32
 typedef void* (*RwPluginObjectDestructor)(void* object, S32 offsetInObject, S32 sizeInObject);
 typedef void* (*RwPluginObjectCopy)(void* dstObject, const void* srcObject, S32 offsetInObject,
                                     S32 sizeInObject);
-typedef void* (*RwPluginDataChunkReadCallBack)(void* stream, S32 binaryLength, void* object,
-                                               S32 offsetInObject, S32 sizeInObject);
-typedef void* (*RwPluginDataChunkWriteCallBack)(void* stream, S32 binaryLength,
-                                                const void* object, S32 offsetInObject,
-                                                S32 sizeInObject);
+typedef RwStream* (*RwPluginDataChunkReadCallBack)(RwStream* stream, S32 binaryLength,
+                                                   void* object, S32 offsetInObject,
+                                                   S32 sizeInObject);
+typedef RwStream* (*RwPluginDataChunkWriteCallBack)(RwStream* stream, S32 binaryLength,
+                                                    const void* object, S32 offsetInObject,
+                                                    S32 sizeInObject);
 typedef S32 (*RwPluginDataChunkGetSizeCallBack)(const void* object, S32 offsetInObject,
                                                  S32 sizeInObject);
 
@@ -185,8 +190,8 @@ struct RwGlobals
     RwFileFunctions fileFuncs;
     U8 unkF0[0x40];
     RwMemoryFunctions memoryFuncs;
-    void* (*freeListAlloc)(RwFreeList* freeList);
-    RwFreeList* (*freeListFree)(RwFreeList* freeList, void* element);
+    RwMemoryAllocFn memoryAlloc;
+    RwMemoryFreeFn memoryFree;
 };
 
 #define RWSRCGLOBAL(var) (((RwGlobals*)RwEngineInstance)->var)

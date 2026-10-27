@@ -1,13 +1,13 @@
 #include <rpworld.h>
 
-typedef struct rpMaterialGlobals rpMaterialGlobals;
-struct rpMaterialGlobals
+typedef struct MaterialModuleData MaterialModuleData;
+struct MaterialModuleData
 {
-    RwFreeList* matFreeList;
+    RwFreeList* freeList;
 };
 
-#define MATERIALGLOBAL(var) \
-    (((rpMaterialGlobals*)((U8*)RwEngineInstance + materialModule.globalsOffset))->var)
+#define MATERIAL_DATA(var) \
+    (((MaterialModuleData*)((U8*)RwEngineInstance + materialModule.globalsOffset))->var)
 
 static RwPluginRegistry materialTKList = { sizeof(RpMaterial), sizeof(RpMaterial) };
 static RwSurfaceProperties defaultSurfaceProperties = { 1.0f, 1.0f, 1.0f };
@@ -29,9 +29,9 @@ void _rpMaterialSetDefaultSurfaceProperties(const RwSurfaceProperties* surfacePr
 void* _rpMaterialOpen(void* instance, S32 offset, S32 size)
 {
     materialModule.globalsOffset = offset;
-    MATERIALGLOBAL(matFreeList) = RwFreeListCreate(materialTKList.sizeOfStruct, 20, 0);
+    MATERIAL_DATA(freeList) = RwFreeListCreate(materialTKList.sizeOfStruct, 20, 0);
 
-    if (!MATERIALGLOBAL(matFreeList))
+    if (!MATERIAL_DATA(freeList))
     {
         return NULL;
     }
@@ -43,10 +43,10 @@ void* _rpMaterialOpen(void* instance, S32 offset, S32 size)
 
 void* _rpMaterialClose(void* instance, S32 offset, S32 size)
 {
-    if (MATERIALGLOBAL(matFreeList))
+    if (MATERIAL_DATA(freeList))
     {
-        RwFreeListDestroy(MATERIALGLOBAL(matFreeList));
-        MATERIALGLOBAL(matFreeList) = NULL;
+        RwFreeListDestroy(MATERIAL_DATA(freeList));
+        MATERIAL_DATA(freeList) = NULL;
     }
 
     materialModule.numInstances--;
@@ -62,7 +62,7 @@ S32 RpMaterialDestroy(RpMaterial* material)
     {
         _rwPluginRegistryDeInitObject(&materialTKList, material);
         RpMaterialSetTexture(material, NULL);
-        RWSRCGLOBAL(freeListFree)(MATERIALGLOBAL(matFreeList), material);
+        RWSRCGLOBAL(memoryFree)(MATERIAL_DATA(freeList), material);
     }
     else
     {

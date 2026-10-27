@@ -1,14 +1,14 @@
 #include <rpworld.h>
 #include <math.h>
 
-typedef struct rpLightGlobals rpLightGlobals;
-struct rpLightGlobals
+typedef struct LightModuleData LightModuleData;
+struct LightModuleData
 {
-    RwFreeList* lightFreeList;
+    RwFreeList* freeList;
 };
 
-#define LIGHTGLOBAL(var) \
-    (((rpLightGlobals*)((U8*)RwEngineInstance + lightModule.globalsOffset))->var)
+#define LIGHT_DATA(var) \
+    (((LightModuleData*)((U8*)RwEngineInstance + lightModule.globalsOffset))->var)
 
 static RwPluginRegistry lightTKList = { sizeof(RpLight), sizeof(RpLight) };
 static RwModuleInfo lightModule;
@@ -82,14 +82,14 @@ S32 RpLightDestroy(RpLight* light)
 {
     _rwPluginRegistryDeInitObject(&lightTKList, light);
     _rwObjectHasFrameReleaseFrame(light);
-    RWSRCGLOBAL(freeListFree)(LIGHTGLOBAL(lightFreeList), light);
+    RWSRCGLOBAL(memoryFree)(LIGHT_DATA(freeList), light);
 
     return 1;
 }
 
 RpLight* RpLightCreate(S32 type)
 {
-    RpLight* light = (RpLight*)RWSRCGLOBAL(freeListAlloc)(LIGHTGLOBAL(lightFreeList));
+    RpLight* light = (RpLight*)RWSRCGLOBAL(memoryAlloc)(LIGHT_DATA(freeList));
 
     if (!light)
     {
@@ -125,9 +125,9 @@ RpLight* RpLightCreate(S32 type)
 
 void* _rpLightClose(void* instance, S32 offset, S32 size)
 {
-    RwFreeListForAllUsed(LIGHTGLOBAL(lightFreeList), LightTidyDestroyLight, NULL);
-    RwFreeListDestroy(LIGHTGLOBAL(lightFreeList));
-    LIGHTGLOBAL(lightFreeList) = NULL;
+    RwFreeListForAllUsed(LIGHT_DATA(freeList), LightTidyDestroyLight, NULL);
+    RwFreeListDestroy(LIGHT_DATA(freeList));
+    LIGHT_DATA(freeList) = NULL;
 
     lightModule.numInstances--;
 

@@ -242,7 +242,7 @@ The RenderWare unit paths in `config/GIHE78/splits.txt` and the RenderWare funct
 
 ## RenderWare sources
 
-`src/rwsdk/` is written for this project from the target's disassembly, with no Criterion RenderWare source or SDK headers. Its structure layouts follow the SLUS-20349 DWARF in `references/` where it has the type. The function names it adds come from the PS2 June 2001 prototype symbol table in `references/`; the data names (`RwEngineInstance`, the module and plugin-registry objects, `defaultSurfaceProperties`) come from bfbb's `config/GQPE78/symbols.txt` at the revision above. Field names the DWARF does not have are descriptive ([libraries](docs/libraries.md#reconstructed-renderware-sources)).
+`src/rwsdk/` is written for this project from the target's disassembly, with no Criterion RenderWare source or SDK headers. Its structure layouts follow the SLUS-20349 DWARF in `references/` where it has the type. The function names it adds come from the PS2 June 2001 prototype symbol table in `references/`; the data names (`RwEngineInstance`, the module and plugin-registry objects, `defaultSurfaceProperties`) come from bfbb's `config/GQPE78/symbols.txt` at the revision above. Type, member, typedef and macro names the DWARF does not have come from bfbb's `include/rwsdk/rwplcore.h` and `include/rwsdk/rpworld.h` at the same revision, as related names; the file-local module data and resource-heap types use this project's own names ([libraries](docs/libraries.md#reconstructed-renderware-sources)).
 
 ## Build tooling
 

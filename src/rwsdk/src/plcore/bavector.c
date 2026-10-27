@@ -1,19 +1,19 @@
 #include <rwcore.h>
 
-typedef RwV3d* (*rwVectorMultFn)(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
+typedef RwV3d* (*VectorMultFn)(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
                                  const RwMatrix* matrix);
 
-typedef struct rwVectorGlobals rwVectorGlobals;
-struct rwVectorGlobals
+typedef struct VectorModuleData VectorModuleData;
+struct VectorModuleData
 {
-    U32* sqrtTable;
-    U32* invSqrtTable;
-    rwVectorMultFn multPoints;
-    rwVectorMultFn multVectors;
+    U32* sqrtLookup;
+    U32* invSqrtLookup;
+    VectorMultFn pointsFn;
+    VectorMultFn vectorsFn;
 };
 
-#define VECTORGLOBAL(var) \
-    (((rwVectorGlobals*)((U8*)RwEngineInstance + vectorModule.globalsOffset))->var)
+#define VECTOR_DATA(var) \
+    (((VectorModuleData*)((U8*)RwEngineInstance + vectorModule.globalsOffset))->var)
 
 static RwModuleInfo vectorModule;
 
@@ -45,19 +45,19 @@ static RwV3d* VectorMultVector(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numP
     return out;
 }
 
-S32 _rwVectorSetMultFn(rwVectorMultFn multPoints, rwVectorMultFn multVectors)
+S32 _rwVectorSetMultFn(VectorMultFn multPoints, VectorMultFn multVectors)
 {
     if (!multPoints)
     {
         multPoints = VectorMultPoint;
     }
-    VECTORGLOBAL(multPoints) = multPoints;
+    VECTOR_DATA(pointsFn) = multPoints;
 
     if (!multVectors)
     {
         multVectors = VectorMultVector;
     }
-    VECTORGLOBAL(multVectors) = multVectors;
+    VECTOR_DATA(vectorsFn) = multVectors;
 
     return 1;
 }
@@ -99,12 +99,12 @@ F32 RwV3dLength(const RwV3d* in)
 
 F32 _rwSqrt(F32 num)
 {
-    volatile U32* bits = (volatile U32*)&num;
+    U32* bits = (U32*)&num;
 
     if (*bits)
     {
         *bits += 0x800;
-        *bits = ((*bits >> 1) & 0x3FC00000) + VECTORGLOBAL(sqrtTable)[(*bits >> 12) & 0xFFF];
+        *bits = ((*bits >> 1) & 0x3FC00000) + VECTOR_DATA(sqrtLookup)[(*bits >> 12) & 0xFFF];
     }
 
     return num;
@@ -112,12 +112,12 @@ F32 _rwSqrt(F32 num)
 
 F32 _rwInvSqrt(F32 num)
 {
-    volatile U32* bits = (volatile U32*)&num;
+    U32* bits = (U32*)&num;
 
     if (*bits)
     {
         *bits += 0x800;
-        *bits = ((~*bits >> 1) & 0x3FC00000) + VECTORGLOBAL(invSqrtTable)[(*bits >> 12) & 0xFFF];
+        *bits = ((~*bits >> 1) & 0x3FC00000) + VECTOR_DATA(invSqrtLookup)[(*bits >> 12) & 0xFFF];
     }
 
     return num;
@@ -126,27 +126,27 @@ F32 _rwInvSqrt(F32 num)
 RwV3d* RwV3dTransformPoints(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
                             const RwMatrix* matrix)
 {
-    return VECTORGLOBAL(multPoints)(pointsOut, pointsIn, numPoints, matrix);
+    return VECTOR_DATA(pointsFn)(pointsOut, pointsIn, numPoints, matrix);
 }
 
 RwV3d* RwV3dTransformVectors(RwV3d* vectorsOut, const RwV3d* vectorsIn, S32 numPoints,
                              const RwMatrix* matrix)
 {
-    return VECTORGLOBAL(multVectors)(vectorsOut, vectorsIn, numPoints, matrix);
+    return VECTOR_DATA(vectorsFn)(vectorsOut, vectorsIn, numPoints, matrix);
 }
 
 void* _rwVectorClose(void* instance)
 {
-    if (VECTORGLOBAL(invSqrtTable))
+    if (VECTOR_DATA(invSqrtLookup))
     {
-        ((RwGlobals*)RwEngineInstance)->memoryFuncs.rwfree(VECTORGLOBAL(invSqrtTable));
-        VECTORGLOBAL(invSqrtTable) = NULL;
+        ((RwGlobals*)RwEngineInstance)->memoryFuncs.rwfree(VECTOR_DATA(invSqrtLookup));
+        VECTOR_DATA(invSqrtLookup) = NULL;
     }
 
-    if (VECTORGLOBAL(sqrtTable))
+    if (VECTOR_DATA(sqrtLookup))
     {
-        ((RwGlobals*)RwEngineInstance)->memoryFuncs.rwfree(VECTORGLOBAL(sqrtTable));
-        VECTORGLOBAL(sqrtTable) = NULL;
+        ((RwGlobals*)RwEngineInstance)->memoryFuncs.rwfree(VECTOR_DATA(sqrtLookup));
+        VECTOR_DATA(sqrtLookup) = NULL;
     }
 
     vectorModule.numInstances--;

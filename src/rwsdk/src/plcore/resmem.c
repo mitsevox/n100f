@@ -1,19 +1,19 @@
 #include <rwcore.h>
 
-typedef struct rwResHeap rwResHeap;
-typedef struct rwResHeapEntry rwResHeapEntry;
+typedef struct ResHeap ResHeap;
+typedef struct ResHeapBlock ResHeapBlock;
 
-struct rwResHeap
+struct ResHeap
 {
-    rwResHeapEntry* entries;
-    rwResHeapEntry* freeEntries;
+    ResHeapBlock* first;
+    ResHeapBlock* firstFree;
 };
 
-struct rwResHeapEntry
+struct ResHeapBlock
 {
-    rwResHeap* heap;
-    rwResHeapEntry* next;
-    rwResHeapEntry* prev;
+    ResHeap* heap;
+    ResHeapBlock* next;
+    ResHeapBlock* prev;
     U32 size;
     S32 used;
     U8 pad[0xC];
@@ -21,9 +21,9 @@ struct rwResHeapEntry
 
 S32 _rwResHeapInit(void* mem, U32 size)
 {
-    rwResHeap* heap = (rwResHeap*)mem;
-    rwResHeapEntry* entry = (rwResHeapEntry*)(((U32)mem + sizeof(rwResHeap) + 31) & ~31);
-    S32 freeSize = (S32)((((U32)mem + size) & ~31) - (U32)entry) - sizeof(rwResHeapEntry);
+    ResHeap* heap = (ResHeap*)mem;
+    ResHeapBlock* entry = (ResHeapBlock*)(((U32)mem + sizeof(ResHeap) + 31) & ~31);
+    S32 freeSize = (S32)((((U32)mem + size) & ~31) - (U32)entry) - sizeof(ResHeapBlock);
 
     if (freeSize < 32)
     {
@@ -35,8 +35,8 @@ S32 _rwResHeapInit(void* mem, U32 size)
     entry->prev = NULL;
     entry->used = 0;
     entry->size = freeSize;
-    heap->entries = entry;
-    heap->freeEntries = entry;
+    heap->first = entry;
+    heap->firstFree = entry;
 
     return 1;
 }
@@ -48,19 +48,19 @@ S32 _rwResHeapClose(void* mem)
 
 void _rwResHeapFree(void* mem)
 {
-    rwResHeapEntry* entry = (rwResHeapEntry*)mem - 1;
-    rwResHeap* heap;
-    rwResHeapEntry* prev;
-    rwResHeapEntry* next;
+    ResHeapBlock* entry = (ResHeapBlock*)mem - 1;
+    ResHeap* heap;
+    ResHeapBlock* prev;
+    ResHeapBlock* next;
 
     entry->used = 0;
     heap = entry->heap;
     prev = entry->prev;
     next = entry->next;
 
-    if (heap->freeEntries == NULL || entry < heap->freeEntries)
+    if (heap->firstFree == NULL || entry < heap->firstFree)
     {
-        heap->freeEntries = entry;
+        heap->firstFree = entry;
     }
 
     if (prev && (~prev->used & 1))
@@ -70,7 +70,7 @@ void _rwResHeapFree(void* mem)
         {
             next->prev = prev;
         }
-        prev->size += entry->size + sizeof(rwResHeapEntry);
+        prev->size += entry->size + sizeof(ResHeapBlock);
         entry = prev;
     }
 
@@ -81,19 +81,19 @@ void _rwResHeapFree(void* mem)
         {
             next->next->prev = entry;
         }
-        entry->size += next->size + sizeof(rwResHeapEntry);
+        entry->size += next->size + sizeof(ResHeapBlock);
     }
 }
 
 void* _rwResHeapAlloc(void* mem, U32 size)
 {
-    rwResHeap* heap = (rwResHeap*)mem;
-    rwResHeapEntry* entry;
-    rwResHeapEntry* best = NULL;
+    ResHeap* heap = (ResHeap*)mem;
+    ResHeapBlock* entry;
+    ResHeapBlock* best = NULL;
 
     size = (size + 31) & ~31;
 
-    for (entry = heap->freeEntries; entry; entry = entry->next)
+    for (entry = heap->firstFree; entry; entry = entry->next)
     {
         if ((~entry->used & 1) && entry->size >= size && (!best || entry->size < best->size))
         {
@@ -106,9 +106,9 @@ void* _rwResHeapAlloc(void* mem, U32 size)
         return NULL;
     }
 
-    if (best->size > size + 2 * sizeof(rwResHeapEntry))
+    if (best->size > size + 2 * sizeof(ResHeapBlock))
     {
-        rwResHeapEntry* split = (rwResHeapEntry*)((U8*)best + size + sizeof(rwResHeapEntry));
+        ResHeapBlock* split = (ResHeapBlock*)((U8*)best + size + sizeof(ResHeapBlock));
 
         if (best->next && (~best->next->used & 1))
         {
@@ -118,7 +118,7 @@ void* _rwResHeapAlloc(void* mem, U32 size)
         else
         {
             split->next = best->next;
-            split->size = best->size - size - sizeof(rwResHeapEntry);
+            split->size = best->size - size - sizeof(ResHeapBlock);
         }
 
         best->next = split;
@@ -132,12 +132,12 @@ void* _rwResHeapAlloc(void* mem, U32 size)
         split->heap = best->heap;
     }
 
-    if (best == heap->freeEntries)
+    if (best == heap->firstFree)
     {
         do
         {
-            heap->freeEntries = heap->freeEntries->next;
-        } while (heap->freeEntries && (heap->freeEntries->used & 1));
+            heap->firstFree = heap->firstFree->next;
+        } while (heap->firstFree && (heap->firstFree->used & 1));
     }
 
     best->used = 1;
