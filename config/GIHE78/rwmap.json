@@ -1,0 +1,34 @@
+{
+  "region": ["0x801372EC", "0x8018E5C0"],
+  "upstream": {
+    "name": "bfbb",
+    "url": "https://github.com/bfbbdecomp/bfbb",
+    "commit": "d8e8eac38dd617ee72161f4cb2da4498bc89aad6",
+    "license": "CC0-1.0",
+    "symbols": "config/GQPE78/symbols.txt",
+    "splits": "config/GQPE78/splits.txt",
+    "unit_prefix": "rwsdk/",
+    "description": "SpongeBob SquarePants: Battle for Bikini Bottom GQPE78 (Heavy Iron, RenderWare 3.5) symbols and splits"
+  },
+  "libraries": [
+    {"lib": "rpcollis", "dirs": ["plugin/collis/"], "ordered": false},
+    {"lib": "rphanim", "dirs": ["plugin/hanim/"], "ordered": false},
+    {"lib": "rpmatfx", "dirs": ["plugin/matfx/"], "ordered": false},
+    {"lib": "rpptank", "dirs": ["plugin/ptank/"], "ordered": false},
+    {"lib": "rpskin", "dirs": ["plugin/skin2/"], "ordered": false},
+    {"lib": "rpusrdat", "dirs": ["plugin/userdata/"], "ordered": false},
+    {"lib": "rpworld", "dirs": ["world/"], "ordered": true},
+    {"lib": "rtanim", "dirs": ["tool/anim/"], "ordered": true},
+    {"lib": "rtintsec", "dirs": ["tool/intsec/"], "ordered": true},
+    {"lib": "rtslerp", "dirs": ["tool/slerp/"], "ordered": true},
+    {"lib": "rwcore", "dirs": ["src/", "os/", "driver/"], "ordered": true}
+  ],
+  "references": {
+    "ps2_proto_symtab": "references/Scooby-Doo Night of 100 Frights/PROTO-PS2-2001-06-11/symbols/symtab.tsv",
+    "ps2_retail_dwarf": "references/Scooby-Doo Night of 100 Frights/SLUS-20349/symbols/dwarf_functions.tsv",
+    "path_strings": [
+      "references/Scooby-Doo Night of 100 Frights/PROTO-PS2-2001-01-31/symbols/source_anchors.tsv",
+      "references/Scooby-Doo Night of 100 Frights/PROTO-XBOX-2003-07-08/symbols/source_anchors.tsv"
+    ]
+  }
+}

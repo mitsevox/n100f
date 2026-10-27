@@ -10,9 +10,11 @@ The names and extents are claims, not established facts. In `evidence.tsv`:
 
 ## CARD
 
-The CARD library, `0x80130994` to `0x801372EC`, is the SDK's debug build: its 102 assertion calls to `OSPanic` (`0x80105548`) are compiled in, and its code compiles from ac-decomp's `src/static/dolphin/card` with `DEBUG=1` under GC/1.2.5n at `-opt level=0 -inline off -schedule off -sym on -char signed`, the flags of the SDK's debug libraries. `-sym on` changes the code: without it the same sources place 8 functions instead of 68, and under the release `sdk` profile they place 1. `-char signed` places one function more than `-char unsigned` (`__CARDCompareFileName`, in `CARDOpen.c`) and the same in every other object, so one signed profile covers the library. The `card_debug` profile holds these flags, with the rest of `configure.py`'s base flags so the two compile the same way, and the ac-decomp candidate that uses it carries its own `region`, so it places nothing outside CARD and the other candidates place nothing inside it. The library itself starts at `0x80130990`: the `blr` there is the empty `__CARDDefaultApiCallback`, the first function of `CARDBios.c`, which compiles to that one instruction directly before `__CARDSyncCallback`. libmap does not place it, because a lone `blr` matches anywhere, so the `CARDBios.c` unit starts at `0x80130994` until the import links the whole object.
+The CARD library, `0x80130990` to `0x801372EC`, is the SDK's debug build: its 102 assertion calls to `OSPanic` (`0x80105548`) are compiled in, and its code compiles from ac-decomp's `src/static/dolphin/card` with `DEBUG=1` under GC/1.2.5n at `-opt level=0 -inline off -schedule off -sym on -char signed`, the flags of the SDK's debug libraries. `-sym on` changes the code: without it the same sources place 8 functions instead of 68, and under the release `sdk` profile they place 1. `-char signed` places one function more than `-char unsigned` (`__CARDCompareFileName`, in `CARDOpen.c`) and the same in every other object, so one signed profile covers the library. The `card_debug` profile holds these flags, with the rest of `configure.py`'s base flags so the two compile the same way, and the ac-decomp candidate that uses it carries its own `region`, so it places nothing outside CARD and the other candidates place nothing inside it. The library itself starts at `0x80130990`: the `blr` there is the empty `__CARDDefaultApiCallback`, the first function of `CARDBios.c`, which compiles to that one instruction directly before `__CARDSyncCallback`. libmap does not place it, because a lone `blr` matches anywhere; the `CARDBios.c` unit starts at `0x80130990`, where the imported object links whole.
 
-The units follow the SDK's link order: CARDBios, CARDUnlock, CARDRdwr, CARDBlock, CARDDir, CARDCheck, CARDMount, CARDFormat, CARDOpen, CARDCreate, CARDRead, CARDWrite, CARDDelete, CARDStat, CARDStatEx and CARDNet. The linker removed functions the game never calls (`CARDWrite`, `CARDFastDelete`, ...), so an object matches whole only where nothing was removed. The rest are partial placements with `open` edges: ac-decomp's sources are an older SDK revision, and some assertion line numbers in `CARDBios.c`, `CARDMount.c`, `CARDFormat.c` and `CARDUnlock.c` differ from the target's. Only `__CARDGetControlBlock` and `__CARDIsPublic` take names, because the map-backed symbol lists come from release builds, where the other functions have different sizes.
+The units follow the SDK's link order: CARDBios, CARDUnlock, CARDRdwr, CARDBlock, CARDDir, CARDCheck, CARDMount, CARDFormat, CARDOpen, CARDCreate, CARDRead, CARDWrite, CARDDelete, CARDStat, CARDStatEx and CARDNet. The linker removed functions the game never calls (`CARDWrite`, `CARDFastDelete`, ...), so an object matches whole only where nothing was removed. libmap places the rest only partially: ac-decomp's sources are an older SDK revision, and some assertion line numbers in `CARDBios.c`, `CARDMount.c`, `CARDFormat.c` and `CARDUnlock.c` differ from the target's. libmap names only `__CARDGetControlBlock` and `__CARDIsPublic`, because the map-backed symbol lists come from release builds, where the other functions have different sizes.
+
+The import ([CARD](libraries.md#card)) links all 16 objects `Matching`, with the assertion lines taken from the target, so every edge is now the edge of a linked object. Its 99 functions are named from the imported source (`name` rows in `evidence.tsv`), and each object's `.data`, `.sdata` and `.bss` are mapped from the compiled object's relocations. `CARDDelete.c` and `CARDNet.c` have no `.data` in the target: their strings belong only to functions the linker removed.
 
 The 14 KB after CARD, `0x801372EC` to `0x8013AA64`, is not CARD. It resembles RenderWare's RpCollision plugin as BfBB links it, without matching it in order: of the first 7 function sizes, 4 equal BfBB's `ctgeom.c` sizes in the same positions (0x12C, 0x1D8, 0x3A8, and 0xF8 for `RpAtomicForAllIntersections` at `0x8013880C`), and the longest run of equal sizes is 2. The RenderWare split settles it.
 
@@ -69,11 +71,11 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 - xMath3.cpp is a partial unit in `configure.py`. The tail-call rule gave it the wrappers `xMath3Exit` and `xMath3Init` (`0x8002F8E0`, `0x8002F900`), which count as unmatched, so the game total went from 267 to 269 functions with 77 still exact.
 - iModel.cpp runs to `0x8000EBC0` on call references, not on PS2 sizes alone: `0x8000E994` passes `0x8000EA5C` to `RpClumpForAllAtomics`, `0x8000EA5C` passes the GC-only static `0x8000EB64`, and `0x8000EB60` is the empty `iModelInit`, which xModel calls.
 - Header inline copies (`xMath3.h`, `xEnt.h`, `xModel.h`) are left to whichever unit holds them.
-- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), Bink or RenderWare. MetroTRK, the runtime, MSL, the first part of the Dolphin SDK and the CARD library are mapped separately, under [Library units](#library-units), and Bink under [Bink units](#bink-units).
+- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`). MetroTRK, the runtime, MSL, the first part of the Dolphin SDK and the CARD library are mapped separately, under [Library units](#library-units), Bink under [Bink units](#bink-units) and RenderWare under [RenderWare units](#renderware-units).
 
 # Library units
 
-`splits.txt` also names 136 library units after the game units: 120 from `0x800DE530` to `0x80111EC0`, and the CARD library's 16 from `0x80130994` to `0x801372EC`, after Bink. 134 of them come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target. The table counts libmap's placements, as `config/GIHE78/lib_units.tsv` records them; import corrections are described after it.
+`splits.txt` also names 136 library units after the game units: 120 from `0x800DE530` to `0x80111EC0`, and the CARD library's 16 from `0x80130990` to `0x801372EC`, after Bink. 134 of them come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target. The table counts libmap's placements, as `config/GIHE78/lib_units.tsv` records them; import corrections are described after it.
 
 | Library | Units | Whole-object matches | Functions placed |
 | --- | --- | --- | --- |
@@ -159,3 +161,54 @@ bfbb does not say where its Bink paths, boundaries and names come from, so they 
 - Game code calls only Bink's public API: `BinkOpen`, `BinkClose`, `BinkDoFrame`, `BinkNextFrame`, `BinkWait`, `BinkGoto`, `BinkCopyToBuffer`, `BinkSetVolume`, `BinkGetError`, `RADSetMemory` and `RADSetAudioMemory`.
 
 In `evidence.tsv` each unit has a `unit` row, each function a `function` row and a `related` `name` row. The `unit` and `function` rows are `related` until an import reproduces the unit, and `target` after (so far `fft.c`). A `compiler` row records that the block is ProDG code. A unit's data sections are split when its import reproduces them; so far that is `fft.c`'s `.rodata`.
+
+# RenderWare units
+
+`splits.txt` also names 63 RenderWare units between `0x801372EC` and `0x8018E5C0`, from `tools/splits/rwmap.py`. GIHE78 links RenderWare 3.3.0.2: `RwEngineGetVersion` (`0x80169F10`) returns `0x33002`. There is no public RenderWare source to compile, so these units and names come from BfBB's RenderWare 3.5 splits and symbols (`bfbbdecomp/bfbb` `d8e8eac`, GQPE78), placed by function size sequence. The input is `config/GIHE78/rwmap.json` and the report is `config/GIHE78/rw_units.tsv`.
+
+| Library | Units |
+| --- | --- |
+| `rpcollis` | 3 |
+| `rphanim` | 1 |
+| `rpmatfx` | 5 |
+| `rpskin` | 1 |
+| `rpusrdat` | 1 |
+| `rpworld` | 15 |
+| `rwcore` | 37 |
+
+The units cover 661 of the region's 1,006 functions and 0x2D1C0 of its 0x572D4 bytes. 591 of those functions are named: 528 by equal size, 58 by position and 5 that already had names from game-code callers (`RpWorldDestroy`, `RpWorldAddCamera`, `RpWorldRemoveCamera`, `RwCameraShowRaster`, `_rwFrameSyncDirty`), all of which the alignment reproduces.
+
+## Method
+
+1. **Placement.** For each BfBB unit under `rwsdk/`, the sizes of its functions, in address order, are aligned locally against the GIHE78 functions of the region. GIHE78 is an older RenderWare and its linker strips unreferenced functions, so a unit is a subsequence of BfBB's with some sizes changed. An equal size scores `3 + min(size, 0x320) / 0xC8`, a size within 8 bytes or 6% scores 0.3, any other pair −2.5 and a gap −1. A placement is trimmed to its outermost equal sizes and needs a score of 6, and either two equal sizes or one of at least 0x200 bytes.
+2. **Order.** The tool keeps the highest-scoring chain of non-overlapping placements that keeps library order (`rpcollis`, `rphanim`, `rpmatfx`, `rpptank`, `rpskin`, `rpusrdat`, `rpworld`, `rtanim`, `rtintsec`, `rtslerp`, `rwcore`, as BfBB links them). In `rpworld`, the `rt*` tools and `rwcore`, units must also keep BfBB's order. Plugin objects may appear in any order within their library: GIHE78 links `rpmatfx.c` before the GameCube matfx objects.
+3. **Names.** An aligned pair of equal size takes BfBB's name when it is at least 0x20 bytes, or when both of its GIHE78 neighbours are equal-size pairs of the same unit. Between two such names, functions take BfBB's names by position when both sides hold the same number of functions and each GIHE78/BfBB size ratio is between 0.75 and 1.33. A name BfBB marks static is dropped if a function outside the unit calls it directly (any `bl` in `main.dol`'s text; calls through pointers are not checked). A unit needs at least two names; six single-name placements (`multiTexGcnPipe.c`, `skingcng.c`, `nodeGameCubeAtomicAllInOne.c`, `nodeGameCubeWorldSectorAllInOne.c`, `geomcond.c`, `rtslerp.c`) and one with none (`nodeDolphinSubmitNoLight.c`) are left out.
+4. **Extents.** A unit runs from its first to its last named function. It widens to take in any function that calls one of its static names, since a static is only reachable from its own object. An edge is `provisional` where the neighbouring unit's named function abuts it and `open` otherwise. Functions between units stay unassigned.
+
+Each unit has a `related` `unit` row in `evidence.tsv`. Each new name has a `related` `name` row, which states whether it was named by equal size or by position, and a `function` row whose edges are dtk's inference (`provisional`). The rows also cite corroboration that the tool does not use for placement:
+
+- The PS2 June 2001 prototype symbol table (`references/.../PROTO-PS2-2001-06-11`), an RW 3.x build of this game, lists 374 of the new names.
+- The PS2 retail DWARF lists 22 of the new names, the `ctgeom.c`, `ctbsp.c` and `rpcollis.c` functions, in `flat\p2rwcoll\ctgeom_.c`, `ctbsp_.c` and `rpcollis_.c`: Heavy Iron compiled the collision plugin into the PS2 game.
+- The PS2 January 2001 and Xbox prototypes keep RenderWare source paths as strings (`rwsdk/world/baclump.c`, `//RenderWare/RW34Active/rwsdk/src/plcore/baimmedi.c#2`, ...). A unit row says when its path is among them.
+
+BfBB's RenderWare names and paths are a related build's; there is no GC debug symbol. bfbb does not state where they come from. 186 of the new names are functions bfbb marks static, whose names public RenderWare headers cannot supply, and 206 rest on bfbb alone: neither the PS2 prototype symbol table nor the PS2 retail DWARF lists them. No leaked RenderWare source was used, and no Criterion RenderWare source or SDK headers.
+
+## Reproducing
+
+The tool needs a checkout of `bfbbdecomp/bfbb` at the pinned commit; only `config/GQPE78/` is read.
+
+```sh
+python3 tools/splits/rwmap.py --dol orig/GIHE78/sys/main.dol --checkout ../bfbb \
+  --splits rwunits.txt --units config/GIHE78/rw_units.tsv \
+  --evidence rwrows.tsv --symbols-out config/GIHE78/symbols.txt
+```
+
+On the committed files this is a fixed point: `rwunits.txt` equals the RenderWare part of `splits.txt`, `rwrows.tsv` equals the tool's rows in `evidence.tsv`, and `symbols.txt` comes back unchanged. Names that other rows already cover are skipped, with a note saying whether they agree.
+
+## Limits
+
+- Placement rests on sizes. Equal sizes in BfBB order are strong evidence, but a positional name could swap with a neighbour of similar size; those rows say so.
+- Scores near the threshold are weak. The best placement the chain rejects scores 14.0 (`vtxfmt.c` at `0x80158DC4`, inside the chosen `gcpipe.c`; `vtxfmt.c` itself is placed at `0x8015D4E0`), and ten chosen units score 14.0 or less (`rw_units.tsv` "score"). Their names rest on the library order as much as on their sizes.
+- The compiler profile of the RenderWare objects is not established, so `configure.py` does not list them, and data sections are not split.
+- 345 functions stay unassigned. The largest gaps are `0x8017EDA0`–`0x801869A8` (31 KB after `bapipe.c`, where nothing in BfBB lines up), `0x801542DC`–`0x8015885C` and `0x80159374`–`0x8015D4E0` (world pipeline objects), and the 3.3 animation code around `rphanim.c`, which differs from 3.5.
+- `0x801372EC`, where CARD ends, is where the search starts, not a mapped edge. `ctgeom.c` probably starts there: `fn_801372EC` (0x3D8 bytes) is the line-leaf callback whose address `GeometryForAllLineIntersections` loads (`0x8013791C`), the role of BfBB's `GeomLeafNodeForAllLineIntersections` (0x374 bytes), but no equal-size name precedes it, so the unit starts at `0x801376C4`. `0x80138904`–`0x8013AA64` is probably `ctworld.c`: its last function calls the first, as `RpCollisionWorldForAllIntersections` calls `WorldForAllLineWorldSectorIntersections`. Only one of its ten sizes equals BfBB's, so it is not placed.
