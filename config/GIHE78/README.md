@@ -17,7 +17,7 @@ USA release, disc revision 0. `main.dol` is 1,964,512 bytes with entry point `0x
 
 | Handbook stage | Implementation |
 | --- | --- |
-| Original-byte baseline | `python3 configure.py && ninja` with no `Matching` objects: dtk splits the DOL, relinks it and checks `build.sha1` |
+| Original-byte baseline | dtk splits the DOL into original objects, which every object not marked `Matching` links unchanged; `ninja` relinks the DOL and checks `build.sha1` |
 | Accepted-source build | Objects marked `Matching` in `configure.py` replace their split ranges; the complete DOL must still match `build.sha1` |
 | Independent comparisons | Objects marked `NonMatching` stay in their normal `src/` files; objdiff measures them against the split target objects while the original bytes remain linked |
 | Promotion | Change the object from `NonMatching` to `Matching` after review; the source path does not move |

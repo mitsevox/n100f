@@ -266,6 +266,7 @@ cflags_trk = [
     "-sdata2 0",
     "-rostr",
     "-char signed",
+    "-i src",
 ]
 
 # Bink profile: ProDG (SN Systems GCC). The version is not established; ProDG/3.5 is the
@@ -277,6 +278,19 @@ cflags_bink = [
     "-nostdinc",
     "-I include",
     "-I include/libc",
+]
+
+# CARD profile ("card_debug"): the GIHE78 CARD library is the SDK's debug build, which is
+# compiled at -opt level=0 with symbols and assertions.
+cflags_card = [
+    *[f for f in cflags_base if f not in (*_lib_drop, "-O4,p", "-inline auto", "-sym on",
+                                          "-DDEBUG=1", "-DNDEBUG=1")],
+    "-opt level=0",
+    "-inline off",
+    "-schedule off",
+    "-sym on",
+    "-DDEBUG=1",
+    "-char signed",
 ]
 
 # REL flags
@@ -324,6 +338,18 @@ def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
         "lib": lib_name,
         "mw_version": "GC/1.2.5n",
         "cflags": cflags_sdk,
+        "progress_category": "sdk",
+        "objects": objects,
+    }
+
+
+# Helper function for the CARD library: the SDK debug build under GC/1.2.5n, .comment version 8
+# (compiler row in evidence.tsv).
+def CardLib(objects: List[Object]) -> Dict[str, Any]:
+    return {
+        "lib": "card",
+        "mw_version": "GC/1.2.5n",
+        "cflags": cflags_card,
         "progress_category": "sdk",
         "objects": objects,
     }
@@ -412,35 +438,36 @@ config.libs: List[Dict[str, Any]] = [
     # Library units: config/GIHE78/lib_units.tsv and docs/splits.md "Library units".
     TRKLib(
         [
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/mainloop.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/nubevent.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/nubinit.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/msg.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/mainloop.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/nubevent.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/nubinit.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/msg.c"),
             Object(NonMatching, "TRK_MINNOW_DOLPHIN/msgbuf.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/serpoll.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/usr_put.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/dispatch.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/msghndlr.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/serpoll.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/usr_put.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/dispatch.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/msghndlr.c"),
             Object(NonMatching, "TRK_MINNOW_DOLPHIN/support.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/notify.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/mutex_TRK.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/notify.c"),
             Object(NonMatching, "TRK_MINNOW_DOLPHIN/flush_cache.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/mem_TRK.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/mem_TRK.c"),
             Object(NonMatching, "TRK_MINNOW_DOLPHIN/targimpl.c"),
             Object(NonMatching, "TRK_MINNOW_DOLPHIN/dolphin_trk.c"),
             Object(NonMatching, "TRK_MINNOW_DOLPHIN/mpc_7xx_603e.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/main_TRK.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/main_TRK.c"),
             Object(NonMatching, "TRK_MINNOW_DOLPHIN/dolphin_trk_glue.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/targcont.c"),
-            Object(NonMatching, "TRK_MINNOW_DOLPHIN/target_options.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/targcont.c"),
+            Object(Matching, "TRK_MINNOW_DOLPHIN/target_options.c"),
             Object(NonMatching, "TRK_MINNOW_DOLPHIN/mslsupp.c"),
         ],
     ),
     RuntimeLib(
         "Runtime.PPCEABI.H",
         [
-            Object(NonMatching, "Runtime.PPCEABI.H/__va_arg.c"),
-            Object(NonMatching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
-            Object(NonMatching, "Runtime.PPCEABI.H/runtime.c"),
+            Object(Matching, "Runtime.PPCEABI.H/__va_arg.c"),
+            Object(Matching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
+            Object(Matching, "Runtime.PPCEABI.H/runtime.c"),
         ],
     ),
     RuntimeLib(
@@ -520,7 +547,7 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "db",
         [
-            Object(NonMatching, "dolphin/db/db.c"),
+            Object(Matching, "dolphin/db/db.c"),
         ],
     ),
     DolphinLib(
@@ -559,8 +586,8 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "mtx",
         [
-            Object(NonMatching, "dolphin/mtx/mtx.c"),
-            Object(NonMatching, "dolphin/mtx/mtx44.c"),
+            Object(Matching, "dolphin/mtx/mtx.c"),
+            Object(Matching, "dolphin/mtx/mtx44.c"),
         ],
     ),
     DolphinLib(
@@ -568,29 +595,29 @@ config.libs: List[Dict[str, Any]] = [
         [
             Object(NonMatching, "dolphin/os/OS.c"),
             Object(NonMatching, "dolphin/os/OSAlarm.c"),
-            Object(NonMatching, "dolphin/os/OSAlloc.c"),
-            Object(NonMatching, "dolphin/os/OSAudioSystem.c"),
+            Object(Matching, "dolphin/os/OSAlloc.c"),
+            Object(Matching, "dolphin/os/OSAudioSystem.c"),
             Object(NonMatching, "dolphin/os/OSCache.c"),
             Object(NonMatching, "dolphin/os/OSContext.c"),
             Object(NonMatching, "dolphin/os/OSError.c"),
             Object(NonMatching, "dolphin/os/OSInterrupt.c"),
-            Object(NonMatching, "dolphin/os/OSLink.c"),
+            Object(Matching, "dolphin/os/OSLink.c"),
             Object(NonMatching, "dolphin/os/OSMemory.c"),
             Object(NonMatching, "dolphin/os/OSReboot.c"),
             Object(NonMatching, "dolphin/os/OSReset.c"),
-            Object(NonMatching, "dolphin/os/OSResetSW.c"),
+            Object(Matching, "dolphin/os/OSResetSW.c"),
             Object(NonMatching, "dolphin/os/OSRtc.c"),
-            Object(NonMatching, "dolphin/os/OSSync.c"),
+            Object(Matching, "dolphin/os/OSSync.c"),
             Object(NonMatching, "dolphin/os/OSThread.c"),
             Object(NonMatching, "dolphin/os/OSTime.c"),
-            Object(NonMatching, "dolphin/os/__ppc_eabi_init.c"),
+            Object(Matching, "dolphin/os/__ppc_eabi_init.c"),
         ],
     ),
     DolphinLib(
         "si",
         [
             Object(NonMatching, "dolphin/si/SIBios.c"),
-            Object(NonMatching, "dolphin/si/SISamplingRate.c"),
+            Object(Matching, "dolphin/si/SISamplingRate.c"),
         ],
     ),
     DolphinLib(
@@ -634,6 +661,26 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "bink/src/sdk/fft.c"),
             Object(NonMatching, "bink/src/sdk/dct.c"),
             Object(NonMatching, "bink/src/sdk/bitplane.c"),
+        ],
+    ),
+    CardLib(
+        [
+            Object(NonMatching, "dolphin/card/CARDBios.c"),
+            Object(NonMatching, "dolphin/card/CARDUnlock.c"),
+            Object(NonMatching, "dolphin/card/CARDRdwr.c"),
+            Object(NonMatching, "dolphin/card/CARDBlock.c"),
+            Object(NonMatching, "dolphin/card/CARDDir.c"),
+            Object(NonMatching, "dolphin/card/CARDCheck.c"),
+            Object(NonMatching, "dolphin/card/CARDMount.c"),
+            Object(NonMatching, "dolphin/card/CARDFormat.c"),
+            Object(NonMatching, "dolphin/card/CARDOpen.c"),
+            Object(NonMatching, "dolphin/card/CARDCreate.c"),
+            Object(NonMatching, "dolphin/card/CARDRead.c"),
+            Object(NonMatching, "dolphin/card/CARDWrite.c"),
+            Object(NonMatching, "dolphin/card/CARDDelete.c"),
+            Object(NonMatching, "dolphin/card/CARDStat.c"),
+            Object(NonMatching, "dolphin/card/CARDStatEx.c"),
+            Object(NonMatching, "dolphin/card/CARDNet.c"),
         ],
     ),
 ]

@@ -46,16 +46,84 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 
 `include/xMorph.h` follows bfbb's `xMorph.h` at the same revision, with `xVec3` taken from the PS2 DWARF, where the type is `_xVec3`. Its structure layouts match the SLUS-20349 DWARF. `include/xBase.h`, `xClimate.h`, `xIni.h`, `xMath3.h`, `xordarray.h`, `xPar.h`, `xScrFx.h`, `xserializer.h`, `xString.h`, `zMenu.h`, `iAnim.h`, `iCamera.h`, `iEnv.h`, `xAnim.h`, `xMemMgr.h`, `xMovePoint.h`, `xShadow.h`, `xstransvc.h`, `xSurface.h`, `zScene.h`, `zSurface.h`, `iLight.h`, `xEntMotion.h`, `xEvent.h`, `xFColor.h`, `xFFX.h`, `xsavegame.h`, `xutil.h`, `zCounter.h`, `zFog.h`, `zGust.h`, `zLight.h`, `zVolume.h`, `iFile.h`, `iMath.h`, `xbinio.h`, `xhipio.h` and `xpkrsvc.h` declare only what those units use, with layouts from the SLUS-20349 DWARF. `xEvent.h` declares only the four events the code compares against, with bfbb's names and the target's values. `include/rwcore.h` and `rpworld.h` declare the RenderWare calls those units make; `RpLight`, `RwLLLink`, `RwLinkList`, `RwObject`, `RwObjectHasFrame`, `RwRGBA`, `RwRGBAReal`, `RpMaterialList`, `RwV3d`, `RwBBox` and the members of `RpWorld` up to `boundingBox` follow the DWARF, which agrees there with bfbb's GameCube RenderWare headers, and the other RenderWare types stay opaque.
 
+## Library source
+
+`src/TRK_MINNOW_DOLPHIN/` (`mainloop.c`, `nubevent.c`, `nubinit.c`, `msg.c`, `serpoll.c`, `usr_put.c`, `dispatch.c`, `msghndlr.c`, `support.c`, `mutex_TRK.c`, `notify.c`, `mem_TRK.c`, `main_TRK.c`, `targcont.c`, `target_options.c`) takes its function bodies from the files of the same names in [ACreTeam/ac-decomp](https://github.com/ACreTeam/ac-decomp/tree/09ca8e8b5b24e6ab44047ee980cf0088ad7ecb4c/src/static/TRK_MINNOW_DOLPHIN) `src/static/TRK_MINNOW_DOLPHIN/`, revision `09ca8e8b5b24e6ab44047ee980cf0088ad7ecb4c`, published under CC0 1.0. ac-decomp's MetroTRK files carry the Pikmin GPIE01_01 addresses of their functions (`TRK_main` at `0x80220418`, for example), so ac-decomp took this code from [projectPiki/pikmin](https://github.com/projectPiki/pikmin/tree/9a21636), which is also CC0 1.0 at revision `9a21636` (`LICENSE.MD`). `msg.c` takes its local variable names from [zcanann/FFCC-Decomp](https://github.com/zcanann/FFCC-Decomp/blob/90edb0012af66d0250dd9beb6602484bde6c228a/src/TRK_MINNOW_DOLPHIN/msg.c) at revision `90edb0012af66d0250dd9beb6602484bde6c228a` (CC0 1.0). Local changes:
+
+- The units include `TRK_MINNOW_DOLPHIN/trk.h`, which declares only what they use. Its type, enumerator and function names are ac-decomp's readable names, not recovered ones, with these exceptions: `TRKFramingState.fcsType` is called `fcs`, and `TRKEventQueue`'s unnamed first field (`_00`) is called `mutex` (see the `type` and `field` rows in `config/GIHE78/evidence.tsv`). The `TRKBufferID` and `NubEventID` typedefs are dropped for plain `int` and `u32`, which they stand for. ac-decomp's address comments and notes are dropped.
+- `TRKHandleRequestEvent`, `TRKHandleSupportEvent`, `TRKIdle`, `TRKCopyEvent`, `TRKSendACK` and `TRK_InitializeEndian` are declared `static inline` by choice: the target has no out-of-line copy of them, so their original linkage is unknown. `TRKOverrideDispatch`, which ac-decomp marks unused, is left out.
+- `TRKDoNotifyStopped` appends its command with `TRKAppendBuffer1_ui8` where ac-decomp spells the same body out as a local inline, and `TRKDoSetOption` builds its replies with `TRKMessageIntoReply` and `TRKSendACK` where ac-decomp writes out the appends. The code is the same.
+- msghndlr.c functions that ac-decomp lets fall off the end now return their error, and `TRKDoStep` returns the result of its rejecting `TRKStandardACK` calls, which is the value the target leaves in r3. The code is the same. `TRKSetBufferPosition` takes 0 where ac-decomp passes `DSREPLY_NoError`.
+- `serpoll.c` and `support.c` give m2c-style locals (`var_r29`, `sp8`) descriptive names, and the frame-completion helper `serpoll_inline_00` is called `TRKCompleteFrame`. `support.c` also renames parameters: `TRKRequestSend`'s `p1`, `p2` and `p3` are `minReplyLength`, `retries` and `timeout`; `HandleOpenFileSupportRequest`'s `param_3` is `handle`, the file handle it returns; `HandleCloseFileSupportRequest`'s first parameter (`replyError` in ac-decomp) is `handle`, the file handle it sends; and `HandlePositionFileSupportRequest`'s first parameter (`replyErr` in ac-decomp), `param_2` and `param_3` are `handle`, `position` and `mode`.
+- `TRKSuppAccessFile` passes a plain `5` where ac-decomp writes `read ? 5 : 5`, a select that chooses nothing. The function then does not match, so `support.c` is `NonMatching` and the original bytes stay linked. `TRK_memcpy` returns `dest`, which ac-decomp leaves out; the code is the same.
+- `usr_puts_serial` calls `OSReport` without a prototype in scope: the target's call does not set the variadic-argument flag that a call through the SDK's `OSReport(const char*, ...)` prototype sets.
+- `TRKInitializeIntDrivenUART` is declared without ac-decomp's `volatile`, which does not change the code that calls it.
+
+`include/dolphin/types.h` declares the Dolphin SDK base types these units use, with the SDK's names and widths as ac-decomp's `include/dolphin/types.h` gives them at the same revision. Its `NULL` is `0`, as in `include/types.h`, where ac-decomp's is `((void*)0)`.
+
+`src/Runtime.PPCEABI.H/runtime.c` is [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4/blob/5b01c79b4910525e3fc5aa312eddd6d014e7f337/src/Runtime.PPCEABI.H/runtime.c)'s `src/Runtime.PPCEABI.H/runtime.c` at revision `5b01c79b4910525e3fc5aa312eddd6d014e7f337` (CC0 1.0). marioparty4 imported that file from [zeldaret/tp](https://github.com/zeldaret/tp) (marioparty4 commit `faacc23`, "Imported some runtime libraries", 2024-11-19); tp is CC0 1.0 at its last revision before that import, `2159eac680836de5dba2e0a987f83b7262f07180`. Local changes:
+
+- No `dolphin.h` include, so `__constants` and `__cvt_fp2unsigned` use C types.
+- The address comments are dropped, and the comment above the register macros is reworded.
+- The labels of `__cvt_sll_flt` are renamed from addresses to their roles.
+
+`src/Runtime.PPCEABI.H/__va_arg.c` and `global_destructor_chain.c` follow [zeldaret/tww](https://github.com/zeldaret/tww/tree/02de6b772d06b2ed15bbe7b25d01901fdca84966/src/PowerPC_EABI_Support/Runtime/Src)'s files of the same names at revision `02de6b772d06b2ed15bbe7b25d01901fdca84966` (CC0 1.0). Local changes:
+
+- C types replace the SDK's (`long` for `s32`, `unsigned long` for `u32`), the code is reformatted, and `__va_arg.c` drops tww's `#undef __va_arg`.
+- The va_list type comes from `include/libc/stdarg.h`, which declares tww's `__va_list_struct` directly instead of following tww's `__va_arg.h`.
+- `global_destructor_chain.c` defines `DestructorChain` and tww's `DTORCALL` macro (from tww's `NMWException.h`) itself, with a comment on the -1 argument.
+
+## Dolphin SDK
+
+Each SDK file below holds what the target links of that object. Includes are reduced to `include/dolphin/`, and `// clang-format` markers, debug-only code and asserts that compile to nothing are dropped.
+
+- `src/dolphin/db/db.c`, `src/dolphin/os/OSSync.c` and `src/dolphin/si/SISamplingRate.c` take their bodies from [ACreTeam/ac-decomp](https://github.com/ACreTeam/ac-decomp/tree/09ca8e8b5b24e6ab44047ee980cf0088ad7ecb4c) (`src/static/dolphin/`, revision `09ca8e8b5b24e6ab44047ee980cf0088ad7ecb4c`, CC0 1.0). Local changes: in `db.c`, `__DBInterface` uses the `DBInterface` typedef, the `ExceptionDestination` store casts to `void (*)(void)` instead of `void*`, and `__DBExceptionDestinationAux` initialises `contextAddr` and `context` in their declarations. `OSSync.c` subtracts `__OSSystemCallVectorStart` from `__OSSystemCallVectorEnd` without `&`. `SISamplingRate.c` defines the VI register index `VI_CLOCK_SEL` itself and drops the unused `LATENCY` macro.
+- `src/dolphin/os/OSAudioSystem.c` takes its bodies from the same ac-decomp revision (CC0 1.0). Local changes: ac-decomp ends the DSP handshake with an empty `if` and the statement `reg16 != 42069;`. Those lines exist only to force register allocation. Here the check against the DSP's reply sets `errFlag`, which the function already declares, and the code is unchanged. This form was written for this project. `DSPInitCode` is `static`, as in the target, and `__OSStopAudioSystem` names its register-shaped variable `reg`.
+- `src/dolphin/os/OSResetSW.c` and `src/dolphin/os/__ppc_eabi_init.c` take their bodies from [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4/tree/5b01c79b4910525e3fc5aa312eddd6d014e7f337) (`src/dolphin/os/`, revision `5b01c79b4910525e3fc5aa312eddd6d014e7f337`, CC0 1.0). `__init_hardware` and `__flush_cache` are declared in `.init`, where the target has them. `__flush_cache` spells marioparty4's `~0` and `~14` immediates as `0xFFFF` and `0xFFF1`, the same instructions.
+- `src/dolphin/os/OSLink.c` and the `PSMTXConcat` body and `Unit01` table in `src/dolphin/mtx/mtx.c` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`src/dolphin/src/`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`, CC0 1.0). `mtx.c` keeps only `PSMTXConcat`, the one function of the object the target links.
+- `src/dolphin/mtx/mtx44.c` holds `C_MTXOrtho` from [mitsevox/tw2004](https://github.com/mitsevox/tw2004/tree/11985bcd413b9da33d0ae58de6877e0906dc6a59) (`extern/sdk/dolphin/mtx/mtx44.c`, revision `11985bcd413b9da33d0ae58de6877e0906dc6a59`, CC0 1.0), without the `#line` directive, the unused `mtxUnit` table and the empty `#ifdef GEKKO` blocks.
+- `src/dolphin/os/OSAlloc.c` takes its bodies from [Jovinull/sonicheroes](https://github.com/Jovinull/sonicheroes/tree/8be28830640b0be85ebf128048e9bca574b9932d) (`src/dolphin/os/OSAlloc.c`, revision `8be28830640b0be85ebf128048e9bca574b9932d`), under the MIT licence. Its notice is in [`src/dolphin/LICENSE.sonicheroes`](src/dolphin/LICENSE.sonicheroes). Local changes: the local `NULL`, `OSHeapHandle` and rounding macros come from `include/dolphin/`, and the header and minimum-object sizes are written in decimal.
+
+`include/dolphin/` declares only what these units use, under the SDK's header names. `__OSBusClock` is the SDK's fixed-address variable at `0x800000F8`, through which `OS_BUS_CLOCK` reads the bus clock. Reading the clock through a pointer cast instead changes code generation in `__OSResetSWInterruptHandler`.
+
 ## Library unit map
 
-`tools/splits/libmap.py` compiles source from the decompilations below, at the revisions pinned in `config/GIHE78/libmap.json`, only to locate and name library code in the target; none of that source is in this repository. The names libmap applies come only from the symbol lists of ac-decomp, tww and FFCC-Decomp, which derive from those games' map or debug files. The Bink names come from bfbb's symbol list ([Bink unit map](#bink-unit-map)). The other library names in `symbols.txt` come from decomp-toolkit's built-in signatures, as rows in `evidence.tsv` record.
+`tools/splits/libmap.py` compiles source from the decompilations below, at the revisions pinned in `config/GIHE78/libmap.json`, only to locate and name library code in the target; libmap itself adds no source to this repository (imported files are listed under Library source). The names libmap applies come only from the symbol lists of ac-decomp, tww and FFCC-Decomp, which derive from those games' map or debug files. The Bink names come from bfbb's symbol list ([Bink unit map](#bink-unit-map)). The other library names in `symbols.txt` come from decomp-toolkit's built-in signatures, as rows in `evidence.tsv` record.
 
 - [ACreTeam/ac-decomp](https://github.com/ACreTeam/ac-decomp), [zeldaret/tww](https://github.com/zeldaret/tww), [zcanann/FFCC-Decomp](https://github.com/zcanann/FFCC-Decomp), [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4), [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb), [bfbbdecomp/tssm](https://github.com/bfbbdecomp/tssm), [projectPiki/pikmin](https://github.com/projectPiki/pikmin), [mitsevox/tw2004](https://github.com/mitsevox/tw2004) and [mitsevox/mvp2005](https://github.com/mitsevox/mvp2005): CC0 1.0.
 - [Jovinull/sonicheroes](https://github.com/Jovinull/sonicheroes): MIT. Its notice must accompany any source imported from it.
 
 ## Bink unit map
 
-The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bink function names in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), compiled only to identify the compiler; none of it is in this repository yet.
+The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bink function names in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), which `src/bink/src/sdk/fft.c` follows ([Bink FFT](#bink-fft)).
+
+## Bink FFT
+
+`src/bink/src/sdk/fft.c` is Takuya Ooura's general purpose FFT package (`fftsg.c`) as Bink builds it. It follows the current release, `fft.tgz` (SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), with `bitrv2` and `bitrv2conj` from the same package's `fft4g.c`. `cftfsub`, `cftbsub`, `cftrec1`, `cftrec2`, `cftexp1`, `cftexp2` and `cftfx42` are reconstructed in the package's pre-2006 structure (the `cftrec1`/`cftrec2` recursion and `cftexp1`/`cftexp2`), which the current release replaced, and fitted to the target; no copy of an earlier release was available to check their text against.
+
+The code is used under the licence on Ooura's FFT page, https://www.kurims.kyoto-u.ac.jp/~ooura/fft.html (section "License"):
+
+> Copyright Takuya OOURA, 1996-2001
+>
+> You may use, copy, modify and distribute this code for any purpose
+> (include commercial use) and without fee. Please refer to this
+> package when you modify this code.
+
+This section is that reference. The package's `readme.txt` carries an older notice, kept here as the package's attribution (its download address no longer works):
+
+> Copyright(C) 1996-2001 Takuya OOURA
+> email: ooura@mmm.t.u-tokyo.ac.jp
+> download: http://momonga.t.u-tokyo.ac.jp/~ooura/fft.html
+> You may use, copy, modify this code for any purpose and
+> without fee. You may distribute this ORIGINAL package.
+
+Local changes, all as the target requires:
+- `float` replaces `double`, and the constants are `float` except the `0.5` factors of `makewt` and the `makect` loop.
+- The trigonometry calls MSL's `atanf`, `cosf` and `sinf`.
+- The twiddle table keeps the older layout: `makewt` stores positive sines, `cftmdl1`, `cftmdl2`, `cftf1st` and `cftb1st` negate the third-angle sine and `cftf162` does not (`wk3i = w[7]`), `cftf161` derives its first twiddle from `w[2]`, and `cftfx41` and `cftf082` index the table as the older layout requires.
+- `makewt` does not call `makeipt`, and its `nwh == 4` special case is folded into `nwh >= 4` (the same in the `nw1` block).
+- `rdft` and `ddct` pass `ip + 2` to the transforms.
+- The functions other than `rdft` and `ddct` are `static`, and only the functions Bink links are kept.
 
 ## RenderWare unit map
 
