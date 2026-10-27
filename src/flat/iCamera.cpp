@@ -237,8 +237,8 @@ void iCameraBegin(RwCamera* cam, S32 clear)
 
 void iCameraDestroy(RwCamera* camera)
 {
-    RwFrame* frame;
     RwRaster* raster;
+    RwFrame* frame;
 
     _rwFrameSyncDirty();
 
@@ -274,8 +274,8 @@ void iCameraDestroy(RwCamera* camera)
 
 RwCamera* iCameraCreate(S32 width, S32 height)
 {
-    RwCamera* camera;
     RwV2d vw;
+    RwCamera* camera;
 
     camera = RwCameraCreate();
 
