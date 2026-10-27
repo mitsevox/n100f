@@ -19,6 +19,8 @@ typedef struct OSBootInfo {
     u32 FSTMaxLength;
 } OSBootInfo;
 
+#define OS_BOOTROM_ADDR ((void*)0x81300000)
+
 #ifdef __cplusplus
 }
 #endif

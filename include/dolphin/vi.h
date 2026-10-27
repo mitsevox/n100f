@@ -10,6 +10,8 @@ extern "C" {
 #define VI_NTSC 0
 #define VI_PAL 1
 #define VI_MPAL 2
+#define VI_DEBUG 3
+#define VI_DEBUG_PAL 4
 #define VI_EURGB60 5
 
 extern volatile u16 __VIRegs[] AT_ADDRESS(0xCC002000);

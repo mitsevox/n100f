@@ -7,6 +7,7 @@
 extern "C" {
 #endif
 
+void SIInit(void);
 void SISetXY(u32 x, u32 y);
 void SISetSamplingRate(u32 msec);
 void SIRefreshSamplingRate(void);
