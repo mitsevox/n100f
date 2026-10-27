@@ -8,7 +8,9 @@ extern "C" {
 #endif
 
 void* OSGetArenaHi(void);
+void* OSGetArenaLo(void);
 void OSSetArenaHi(void* newHi);
+void OSSetArenaLo(void* newLo);
 
 #ifdef __cplusplus
 }

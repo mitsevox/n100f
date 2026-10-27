@@ -10,6 +10,7 @@ extern "C" {
 typedef s64 OSTime;
 typedef u32 OSTick;
 
+#define OS_CACHED_REGION_PREFIX 0x8000
 #define OS_BASE_CACHED 0x80000000
 
 void* OSPhysicalToCached(u32 paddr);
@@ -31,22 +32,51 @@ extern volatile u32 __PIRegs[] AT_ADDRESS(0xCC003000);
 #define OSSecondsToTicks(sec) ((sec) * OS_TIMER_CLOCK)
 #define OSMillisecondsToTicks(msec) ((msec) * (OS_TIMER_CLOCK / 1000))
 #define OSMicrosecondsToTicks(usec) (((usec) * (OS_TIMER_CLOCK / 125000)) / 8)
+#define OSTicksToMilliseconds(ticks) ((ticks) / (OS_TIMER_CLOCK / 1000))
+#define OSTicksToMicroseconds(ticks) (((ticks) * 8) / (OS_TIMER_CLOCK / 125000))
+
+typedef struct OSCalendarTime {
+    int sec;
+    int min;
+    int hour;
+    int mday;
+    int mon;
+    int year;
+    int wday;
+    int yday;
+    int msec;
+    int usec;
+} OSCalendarTime;
 
 #define OSRoundUp32B(x) (((u32)(x) + 32 - 1) & ~(32 - 1))
 #define OSRoundDown32B(x) (((u32)(x)) & ~(32 - 1))
 
 OSTime OSGetTime(void);
 OSTick OSGetTick(void);
+void OSTicksToCalendarTime(OSTime ticks, OSCalendarTime* td);
 
+#define OS_CONSOLE_RETAIL1 0x00000001
+#define OS_CONSOLE_RETAIL 0x00000000
+#define OS_CONSOLE_DEVHW1 0x10000004
+#define OS_CONSOLE_MINNOW 0x10000003
+#define OS_CONSOLE_ARTHUR 0x10000002
+#define OS_CONSOLE_PC_EMULATOR 0x10000001
+#define OS_CONSOLE_EMULATOR 0x10000000
+#define OS_CONSOLE_DEVELOPMENT 0x10000000
+
+void OSInit(void);
+u32 OSGetConsoleType(void);
 void OSReport(const char* msg, ...);
 void OSPanic(const char* file, int line, const char* msg, ...);
 
 #if DEBUG
 #define ASSERTLINE(line, cond) ((cond) || (OSPanic(__FILE__, line, "Failed assertion " #cond), 0))
 #define ASSERTMSGLINE(line, cond, msg) ((cond) || (OSPanic(__FILE__, line, msg), 0))
+#define ASSERTMSG1LINE(line, cond, msg, arg1) ((cond) || (OSPanic(__FILE__, line, msg, arg1), 0))
 #else
 #define ASSERTLINE(line, cond) ((void)0)
 #define ASSERTMSGLINE(line, cond, msg) ((void)0)
+#define ASSERTMSG1LINE(line, cond, msg, arg1) ((void)0)
 #endif
 
 #ifdef __cplusplus
@@ -56,8 +86,11 @@ void OSPanic(const char* file, int line, const char* msg, ...);
 #include <dolphin/os/OSAlarm.h>
 #include <dolphin/os/OSAlloc.h>
 #include <dolphin/os/OSArena.h>
+#include <dolphin/os/OSBootInfo.h>
 #include <dolphin/os/OSCache.h>
 #include <dolphin/os/OSContext.h>
+#include <dolphin/os/OSError.h>
+#include <dolphin/os/OSException.h>
 #include <dolphin/os/OSFont.h>
 #include <dolphin/os/OSInterrupt.h>
 #include <dolphin/os/OSModule.h>

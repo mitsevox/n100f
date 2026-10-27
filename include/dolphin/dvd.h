@@ -36,6 +36,16 @@ struct DVDCommandBlock {
     void* userData;
 };
 
+typedef struct DVDDriveInfo {
+    u16 revisionLevel;
+    u16 deviceCode;
+    u32 releaseDate;
+    u8 padding[24];
+} DVDDriveInfo;
+
+void DVDInit(void);
+BOOL DVDSetAutoInvalidation(BOOL autoInval);
+BOOL DVDInquiryAsync(DVDCommandBlock* block, DVDDriveInfo* info, DVDCBCallback callback);
 void DVDReset(void);
 s32 DVDGetDriveStatus(void);
 BOOL DVDReadDiskID(DVDCommandBlock* block, DVDDiskID* diskID, DVDCBCallback callback);

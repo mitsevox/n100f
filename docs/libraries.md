@@ -48,8 +48,9 @@ CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compi
 | `TRK_MINNOW_DOLPHIN/` `flush_cache.c`, `targimpl.c`, `dolphin_trk.c`, `mpc_7xx_603e.c`, `dolphin_trk_glue.c` | GC/1.3 | `data` rows in `evidence.tsv` | C, and asm functions, each with an `assembly` row in `evidence.tsv` |
 | `TRK_MINNOW_DOLPHIN/targsupp.s` | assembled | none | assembly, with an `assembly` row per stub |
 | `dolphin/card/*.c` (16 objects) | GC/1.2.5n, `card_debug` flags | `.data`, `.sdata`, `.bss` | C ([CARD](#card)) |
+| `dolphin/` SDK objects (`db`, `si`, `mtx`, `ax`, `dsp`, `dvd`, `OdemuExi2`, and `os` from `OS.c` to `OSTime.c`) | GC/1.2.5n, `cflags_sdk` | each unit's sections, as `data` rows | C; asm functions where the original was assembly, each with an `assembly` row |
 
-All of them are `Matching` and link byte-identical. The MSL units build under the `msl` profile in `configure.py`: GC/1.3 with `-inline auto,deferred` and `-char signed`. The `compiler` row in `evidence.tsv` records why.
+All of them are `Matching` and link byte-identical, except `dolphin/os/OSMemory.c`, `OSReset.c` and `OSRtc.c`. Each of those compiles to the target's code except one function's stack frame, which is smaller than the target's unless an unused local is added (CREDITS.md, "Dolphin SDK"), so they stay `NonMatching` and the original bytes stay linked. The MSL units build under the `msl` profile in `configure.py`: GC/1.3 with `-inline auto,deferred` and `-char signed`. The `compiler` row in `evidence.tsv` records why.
 
 ## Headers
 

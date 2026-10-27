@@ -1066,14 +1066,23 @@ dolphin/mtx/mtx44.c: comment:8
 
 dolphin/os/OS.c: comment:8
 	.text       start:0x80103320 end:0x80103C58
+	.data       start:0x801CCD80 end:0x801CCF40
+	.bss        start:0x8025B1A0 end:0x8025B1F0
+	.sbss       start:0x8025F428 end:0x8025F450
 
 dolphin/os/OSAlarm.c: comment:8
-	.text       start:0x80103C68 end:0x80104340
+	.text       start:0x80103C68 end:0x8010438C
+	.sbss       start:0x8025F450 end:0x8025F458
 
 dolphin/os/OSAlloc.c: comment:8
 	.text       start:0x8010438C end:0x8010469C
 	.sdata      start:0x8025E688 end:0x8025E68C
 	.sbss       start:0x8025F458 end:0x8025F468
+
+dolphin/os/OSArena.c: comment:8
+	.text       start:0x8010469C end:0x801046BC
+	.sdata      start:0x8025E690 end:0x8025E698
+	.sbss       start:0x8025F468 end:0x8025F470
 
 dolphin/os/OSAudioSystem.c: comment:8
 	.text       start:0x801046BC end:0x80104950
@@ -1081,15 +1090,26 @@ dolphin/os/OSAudioSystem.c: comment:8
 
 dolphin/os/OSCache.c: comment:8
 	.text       start:0x80104950 end:0x80104D9C
+	.data       start:0x801CCFC0 end:0x801CD1F0
 
 dolphin/os/OSContext.c: comment:8
 	.text       start:0x80104D9C end:0x80105548
+	.data       start:0x801CD1F0 end:0x801CD3C8
 
 dolphin/os/OSError.c: comment:8
 	.text       start:0x80105548 end:0x80105890
+	.data       start:0x801CD3C8 end:0x801CD6E8
+	.bss        start:0x8025B1F0 end:0x8025B240
+	.sdata      start:0x8025E698 end:0x8025E6A0
+
+dolphin/os/OSFont.c: comment:8
+	.text       start:0x80105890 end:0x801058E8
+	.sdata      start:0x8025E6A0 end:0x8025E6A8
 
 dolphin/os/OSInterrupt.c: comment:8
-	.text       start:0x80105890 end:0x80106104
+	.text       start:0x801058E8 end:0x80106150
+	.data       start:0x801CD6E8 end:0x801CD718
+	.sbss       start:0x8025F470 end:0x8025F488
 
 dolphin/os/OSLink.c: comment:8
 	.text       start:0x80106150 end:0x80106168
@@ -1097,8 +1117,13 @@ dolphin/os/OSLink.c: comment:8
 dolphin/os/OSMemory.c: comment:8
 	.text       start:0x80106168 end:0x80106448
 
+dolphin/os/OSMutex.c: comment:8
+	.text       start:0x80106448 end:0x801064B8
+
 dolphin/os/OSReboot.c: comment:8
-	.text       start:0x801064B4 end:0x801066C4
+	.text       start:0x801064B8 end:0x801066C4
+	.bss        start:0x8025B240 end:0x8025B260
+	.sbss       start:0x8025F488 end:0x8025F498
 
 dolphin/os/OSReset.c: comment:8
 	.text       start:0x801066C4 end:0x80106AA8
@@ -1115,9 +1140,12 @@ dolphin/os/OSSync.c: comment:8
 
 dolphin/os/OSThread.c: comment:8
 	.text       start:0x801077D0 end:0x80108608
+	.bss        start:0x8025B2B8 end:0x8025BCA0
+	.sbss       start:0x8025F4C0 end:0x8025F4D0
 
 dolphin/os/OSTime.c: comment:8
 	.text       start:0x80108608 end:0x80108A84
+	.data       start:0x801CD728 end:0x801CD788
 
 dolphin/os/__ppc_eabi_init.c: comment:8
 	.init       start:0x800054F4 end:0x80005548

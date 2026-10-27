@@ -1,0 +1,29 @@
+#include <dolphin/os.h>
+#include <dolphin/os/OSFont.h>
+#include <dolphin/vi.h>
+
+#define VI_DTV_STAT 0x37
+
+u16 OSGetFontEncode(void)
+{
+    static u16 fontEncode = 0xFFFF;
+
+    if (fontEncode <= 1) {
+        return fontEncode;
+    }
+    switch (*(int*)OSPhysicalToCached(0xCC)) {
+    case VI_NTSC:
+        fontEncode = (__VIRegs[VI_DTV_STAT] & 2) ? OS_FONT_ENCODE_SJIS
+                                                 : OS_FONT_ENCODE_ANSI;
+        break;
+    case VI_PAL:
+    case VI_MPAL:
+    case VI_DEBUG:
+    case VI_DEBUG_PAL:
+    case VI_EURGB60:
+    default:
+        fontEncode = OS_FONT_ENCODE_ANSI;
+        break;
+    }
+    return fontEncode;
+}
