@@ -38,6 +38,7 @@ void GXBeginDisplayList(void *list, u32 size)
 unsigned long GXEndDisplayList(void)
 {
     u32 ov;
+    u32 reg;
     BOOL enabled;
     u32 cpenable;
 
@@ -46,7 +47,8 @@ unsigned long GXEndDisplayList(void)
     if (gx->dirtyState != 0) {
         __GXSetDirtyState();
     }
-    ov = (__piReg[5] >> 26) & 1;
+    reg = __piReg[5];
+    ov = (reg >> 26) & 1;
     __GXSaveCPUFifoAux(&DisplayListFifo);
     ASSERTMSGLINE(198, !ov, "GXEndDisplayList: display list commands overflowed buffer");
     GXSetCPUFifo((GXFifoObj *)OldCPUFifo);
