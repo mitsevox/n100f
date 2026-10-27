@@ -61,7 +61,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 - xMath3.cpp is a partial unit in `configure.py`. The tail-call rule gave it the wrappers `xMath3Exit` and `xMath3Init` (`0x8002F8E0`, `0x8002F900`), which count as unmatched, so the game total went from 267 to 269 functions with 77 still exact.
 - iModel.cpp runs to `0x8000EBC0` on call references, not on PS2 sizes alone: `0x8000E994` passes `0x8000EA5C` to `RpClumpForAllAtomics`, `0x8000EA5C` passes the GC-only static `0x8000EB64`, and `0x8000EB60` is the empty `iModelInit`, which xModel calls.
 - Header inline copies (`xMath3.h`, `xEnt.h`, `xModel.h`) are left to whichever unit holds them.
-- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), Bink, the CARD library or RenderWare. MetroTRK, the runtime, MSL and the first part of the Dolphin SDK are mapped separately, under [Library units](#library-units).
+- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), Bink, the CARD library or RenderWare. MetroTRK, the runtime, MSL and the first part of the Dolphin SDK are mapped separately, under [Library units](#library-units), and Bink under [Bink units](#bink-units).
 
 # Library units
 
@@ -117,3 +117,34 @@ On the committed files it writes no rows. From the baseline, the sequence is: ru
 - Library units count as named files in the public report. Function bytes are unchanged; named functions rose from 461 to 1,148.
 - Upstream source is evidence that the code exists, not that its source meets this project's standards. Every function copied in a later PR is reviewed like any other.
 - The SDK units carry `comment:8` in `splits.txt`, as GC/1.2.5n writes; see [libraries.md](libraries.md).
+
+# Bink units
+
+`splits.txt` names 15 Bink units from `0x80111EC0` to `0x80130990`, after the last SDK part 1 unit (`dolphin/dvd/fstload.c`, whose whole `.text` matches up to `0x80111EC0`).
+
+BfBB links the same Bink build. Its GQPE78 Bink block (`0x80196880` to `0x801B5350` in bfbb `d8e8eac` `config/GQPE78/symbols.txt`) has the same size, `0x1EAD0`, and all 336 of its functions sit at the same offsets with the same sizes as GIHE78's. So each bfbb Bink unit and function name carries over at an offset of `0x849C0`.
+
+| Unit | Start | End | Functions |
+| --- | --- | --- | --- |
+| `bink/src/sdk/decode/ngc/binkngc.c` | `0x80111EC0` | `0x801123B4` | 16 |
+| `bink/src/sdk/decode/ngc/ngcsnd.c` | `0x801123B4` | `0x80113890` | 29 |
+| `bink/src/sdk/decode/binkread.c` | `0x80113890` | `0x801179EC` | 53 |
+| `bink/src/sdk/decode/ngc/ngcfile.c` | `0x801179EC` | `0x801184CC` | 13 |
+| `bink/src/sdk/decode/yuv.cpp` | `0x801184CC` | `0x8011F78C` | 97 |
+| `bink/src/sdk/decode/binkacd.c` | `0x8011F78C` | `0x80120470` | 8 |
+| `bink/shared/time/radcb.c` | `0x80120470` | `0x80120B54` | 20 |
+| `bink/src/sdk/decode/expand.c` | `0x80120B54` | `0x801241E0` | 16 |
+| `bink/src/sdk/popmal.c` | `0x801241E0` | `0x80124378` | 3 |
+| `bink/src/sdk/decode/ngc/ngcrgb.c` | `0x80124378` | `0x801272BC` | 25 |
+| `bink/src/sdk/decode/ngc/ngcyuy2.c` | `0x801272BC` | `0x80127FC8` | 8 |
+| `bink/src/sdk/varbits.c` | `0x80127FC8` | `0x801281AC` | 1 |
+| `bink/src/sdk/fft.c` | `0x801281AC` | `0x8012C490` | 32 |
+| `bink/src/sdk/dct.c` | `0x8012C490` | `0x8012D564` | 8 |
+| `bink/src/sdk/bitplane.c` | `0x8012D564` | `0x80130990` | 7 |
+
+bfbb does not say where its Bink paths, boundaries and names come from, so they are `related` and every inner edge is `provisional`. Its list includes static functions and a local `gcc2_compiled.` label, the marker GCC 2 emits at the start of each object's `.text`, at each of the 15 unit starts, which suggests a symbol table from RAD's library rather than names chosen by hand. Two checks support them:
+
+- None of the 190 functions bfbb marks `scope:local` is called from outside its unit (455 direct calls to Bink functions checked in the whole of `.text`).
+- Game code calls only Bink's public API: `BinkOpen`, `BinkClose`, `BinkDoFrame`, `BinkNextFrame`, `BinkWait`, `BinkGoto`, `BinkCopyToBuffer`, `BinkSetVolume`, `BinkGetError`, `RADSetMemory` and `RADSetAudioMemory`.
+
+In `evidence.tsv` each unit has a `related` `unit` row, each function a `function` row and a `related` `name` row. A `compiler` row records that the block is ProDG code. Data sections are not split; each import maps its unit's data when its source compiles.
