@@ -48,6 +48,19 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 
 ## Library source
 
+`src/TRK_MINNOW_DOLPHIN/` (`mainloop.c`, `nubevent.c`, `nubinit.c`, `msg.c`, `serpoll.c`, `usr_put.c`, `dispatch.c`, `msghndlr.c`, `support.c`, `mutex_TRK.c`, `notify.c`, `mem_TRK.c`, `main_TRK.c`, `targcont.c`, `target_options.c`) takes its function bodies from the files of the same names in [ACreTeam/ac-decomp](https://github.com/ACreTeam/ac-decomp/tree/09ca8e8b5b24e6ab44047ee980cf0088ad7ecb4c/src/static/TRK_MINNOW_DOLPHIN) `src/static/TRK_MINNOW_DOLPHIN/`, revision `09ca8e8b5b24e6ab44047ee980cf0088ad7ecb4c`, published under CC0 1.0. ac-decomp's MetroTRK files carry the Pikmin GPIE01_01 addresses of their functions (`TRK_main` at `0x80220418`, for example), so ac-decomp took this code from [projectPiki/pikmin](https://github.com/projectPiki/pikmin/tree/9a21636), which is also CC0 1.0 at revision `9a21636` (`LICENSE.MD`). `msg.c` takes its local variable names from [zcanann/FFCC-Decomp](https://github.com/zcanann/FFCC-Decomp/blob/90edb0012af66d0250dd9beb6602484bde6c228a/src/TRK_MINNOW_DOLPHIN/msg.c) at revision `90edb0012af66d0250dd9beb6602484bde6c228a` (CC0 1.0). Local changes:
+
+- The units include `TRK_MINNOW_DOLPHIN/trk.h`, which declares only what they use. Its type, enumerator and function names are ac-decomp's readable names, not recovered ones, with these exceptions: `TRKFramingState.fcsType` is called `fcs`, and `TRKEventQueue`'s unnamed first field (`_00`) is called `mutex` (see the `type` and `field` rows in `config/GIHE78/evidence.tsv`). The `TRKBufferID` and `NubEventID` typedefs are dropped for plain `int` and `u32`, which they stand for. ac-decomp's address comments and notes are dropped.
+- `TRKHandleRequestEvent`, `TRKHandleSupportEvent`, `TRKIdle`, `TRKCopyEvent`, `TRKSendACK` and `TRK_InitializeEndian` are declared `static inline` by choice: the target has no out-of-line copy of them, so their original linkage is unknown. `TRKOverrideDispatch`, which ac-decomp marks unused, is left out.
+- `TRKDoNotifyStopped` appends its command with `TRKAppendBuffer1_ui8` where ac-decomp spells the same body out as a local inline, and `TRKDoSetOption` builds its replies with `TRKMessageIntoReply` and `TRKSendACK` where ac-decomp writes out the appends. The code is the same.
+- msghndlr.c functions that ac-decomp lets fall off the end now return their error, and `TRKDoStep` returns the result of its rejecting `TRKStandardACK` calls, which is the value the target leaves in r3. The code is the same. `TRKSetBufferPosition` takes 0 where ac-decomp passes `DSREPLY_NoError`.
+- `serpoll.c` and `support.c` give m2c-style locals (`var_r29`, `sp8`) descriptive names, and the frame-completion helper `serpoll_inline_00` is called `TRKCompleteFrame`. `support.c` also renames parameters: `TRKRequestSend`'s `p1`, `p2` and `p3` are `minReplyLength`, `retries` and `timeout`; `HandleOpenFileSupportRequest`'s `param_3` is `handle`, the file handle it returns; `HandleCloseFileSupportRequest`'s first parameter (`replyError` in ac-decomp) is `handle`, the file handle it sends; and `HandlePositionFileSupportRequest`'s first parameter (`replyErr` in ac-decomp), `param_2` and `param_3` are `handle`, `position` and `mode`.
+- `TRKSuppAccessFile` passes a plain `5` where ac-decomp writes `read ? 5 : 5`, a select that chooses nothing. The function then does not match, so `support.c` is `NonMatching` and the original bytes stay linked. `TRK_memcpy` returns `dest`, which ac-decomp leaves out; the code is the same.
+- `usr_puts_serial` calls `OSReport` without a prototype in scope: the target's call does not set the variadic-argument flag that a call through the SDK's `OSReport(const char*, ...)` prototype sets.
+- `TRKInitializeIntDrivenUART` is declared without ac-decomp's `volatile`, which does not change the code that calls it.
+
+`include/dolphin/types.h` declares the Dolphin SDK base types these units use, with the SDK's names and widths as ac-decomp's `include/dolphin/types.h` gives them at the same revision. Its `NULL` is `0`, as in `include/types.h`, where ac-decomp's is `((void*)0)`.
+
 `src/Runtime.PPCEABI.H/runtime.c` is [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4/blob/5b01c79b4910525e3fc5aa312eddd6d014e7f337/src/Runtime.PPCEABI.H/runtime.c)'s `src/Runtime.PPCEABI.H/runtime.c` at revision `5b01c79b4910525e3fc5aa312eddd6d014e7f337` (CC0 1.0). marioparty4 imported that file from [zeldaret/tp](https://github.com/zeldaret/tp) (marioparty4 commit `faacc23`, "Imported some runtime libraries", 2024-11-19); tp is CC0 1.0 at its last revision before that import, `2159eac680836de5dba2e0a987f83b7262f07180`. Local changes:
 
 - No `dolphin.h` include, so `__constants` and `__cvt_fp2unsigned` use C types.
@@ -86,7 +99,35 @@ Each SDK file below holds what the target links of that object. Includes are red
 
 ## Bink unit map
 
-The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bink function names in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), compiled only to identify the compiler; none of it is in this repository yet.
+The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bink function names in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), which `src/bink/src/sdk/fft.c` follows ([Bink FFT](#bink-fft)).
+
+## Bink FFT
+
+`src/bink/src/sdk/fft.c` is Takuya Ooura's general purpose FFT package (`fftsg.c`) as Bink builds it. It follows the current release, `fft.tgz` (SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), with `bitrv2` and `bitrv2conj` from the same package's `fft4g.c`. `cftfsub`, `cftbsub`, `cftrec1`, `cftrec2`, `cftexp1`, `cftexp2` and `cftfx42` are reconstructed in the package's pre-2006 structure (the `cftrec1`/`cftrec2` recursion and `cftexp1`/`cftexp2`), which the current release replaced, and fitted to the target; no copy of an earlier release was available to check their text against.
+
+The code is used under the licence on Ooura's FFT page, https://www.kurims.kyoto-u.ac.jp/~ooura/fft.html (section "License"):
+
+> Copyright Takuya OOURA, 1996-2001
+>
+> You may use, copy, modify and distribute this code for any purpose
+> (include commercial use) and without fee. Please refer to this
+> package when you modify this code.
+
+This section is that reference. The package's `readme.txt` carries an older notice, kept here as the package's attribution (its download address no longer works):
+
+> Copyright(C) 1996-2001 Takuya OOURA
+> email: ooura@mmm.t.u-tokyo.ac.jp
+> download: http://momonga.t.u-tokyo.ac.jp/~ooura/fft.html
+> You may use, copy, modify this code for any purpose and
+> without fee. You may distribute this ORIGINAL package.
+
+Local changes, all as the target requires:
+- `float` replaces `double`, and the constants are `float` except the `0.5` factors of `makewt` and the `makect` loop.
+- The trigonometry calls MSL's `atanf`, `cosf` and `sinf`.
+- The twiddle table keeps the older layout: `makewt` stores positive sines, `cftmdl1`, `cftmdl2`, `cftf1st` and `cftb1st` negate the third-angle sine and `cftf162` does not (`wk3i = w[7]`), `cftf161` derives its first twiddle from `w[2]`, and `cftfx41` and `cftf082` index the table as the older layout requires.
+- `makewt` does not call `makeipt`, and its `nwh == 4` special case is folded into `nwh >= 4` (the same in the `nw1` block).
+- `rdft` and `ddct` pass `ip + 2` to the transforms.
+- The functions other than `rdft` and `ddct` are `static`, and only the functions Bink links are kept.
 
 ## Build tooling
 

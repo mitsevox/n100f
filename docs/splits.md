@@ -73,7 +73,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 
 # Library units
 
-`splits.txt` also names 134 library units after the game units: 118 from `0x800DE530` to `0x80111EC0`, and the CARD library's 16 from `0x80130994` to `0x801372EC`, after Bink. They come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target.
+`splits.txt` also names 135 library units after the game units: 119 from `0x800DE530` to `0x80111EC0`, and the CARD library's 16 from `0x80130994` to `0x801372EC`, after Bink. 134 of them come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target. The table counts libmap's placements, as `config/GIHE78/lib_units.tsv` records them; import corrections are described after it.
 
 | Library | Units | Whole-object matches | Functions placed |
 | --- | --- | --- | --- |
@@ -83,7 +83,9 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 | `dolphin/<library>` (SDK, OS built Apr 16 2002) | 61 | 22 | 515 |
 | `dolphin/card` (the SDK's debug build) | 16 | 5 | 68 |
 
-Each unit stays in the original bytes until its source lands and passes review; [libraries.md](libraries.md#imported-units) lists the imported ones. `config/GIHE78/lib_units.tsv` lists each unit with its match kind, function counts, chosen source and the compiler versions that produced it.
+Each unit stays in the original bytes until its source lands and passes review; [libraries.md](libraries.md#imported-units) lists the imported ones. `config/GIHE78/lib_units.tsv` lists each unit as libmap placed it, with its match kind, function counts, chosen source and the compiler versions that produced it.
+
+Imports correct the map where compiled source shows more than libmap could place. Functions of 8 to 16 bytes are too common in the target to place by body, so they were left out of the first map. The MetroTRK import added a unit, `mutex_TRK.c`, at `0x800E2BEC` (three 8-byte functions between `support.c` and `notify.c`, the order the related maps give). It extended `msghndlr.c` to `0x800E232C` to take `SetTRKConnected` and `GetTRKConnected`, and gave `mem_TRK.c` its `.init` functions `TRK_memset` and `TRK_memcpy` at `0x80003100`. That places 7 more TRK functions than the table shows.
 
 ## Method
 
@@ -121,8 +123,8 @@ On the committed files it writes no rows. From the baseline, the sequence is: ru
 
 ## Limits
 
-- Data sections are not split. Each import PR maps its unit's data when the source compiles.
-- An `open` edge only bounds what matched. The real object can extend past it, and 66 of the 134 units are partial placements.
+- Data sections are split only where an import has reproduced them. Each import PR maps its unit's data when the source compiles.
+- An `open` edge only bounds what matched. The real object can extend past it, and 66 of libmap's 134 units are partial placements.
 - Library units count as named files in the public report. Function bytes are unchanged; named functions rose from 461 to 1,148, and to 1,150 with CARD (the Bink names below add 336).
 - Upstream source is evidence that the code exists, not that its source meets this project's standards. Every function copied in a later PR is reviewed like any other.
 - The SDK units carry `comment:8` in `splits.txt`, as GC/1.2.5n writes; see [libraries.md](libraries.md).
@@ -151,9 +153,9 @@ BfBB links the same Bink build. Its GQPE78 Bink block (`0x80196880` to `0x801B53
 | `bink/src/sdk/dct.c` | `0x8012C490` | `0x8012D564` | 8 |
 | `bink/src/sdk/bitplane.c` | `0x8012D564` | `0x80130990` | 7 |
 
-bfbb does not say where its Bink paths, boundaries and names come from, so they are `related` and every inner edge is `provisional`. Its list includes static functions and a local `gcc2_compiled.` label, the marker GCC 2 emits at the start of each object's `.text`, at each of the 15 unit starts, which suggests a symbol table from RAD's library rather than names chosen by hand. Two checks support them:
+bfbb does not say where its Bink paths, boundaries and names come from, so they are `related` and their inner edges start `provisional`. An edge becomes `exact` when an import reproduces the unit on either side of it, as `fft.c` has done for the `varbits.c` end, both `fft.c` edges and the `dct.c` start. Its list includes static functions and a local `gcc2_compiled.` label, the marker GCC 2 emits at the start of each object's `.text`, at each of the 15 unit starts, which suggests a symbol table from RAD's library rather than names chosen by hand. Two checks support them:
 
 - None of the 190 functions bfbb marks `scope:local` is called from outside its unit (455 direct calls to Bink functions checked in the whole of `.text`).
 - Game code calls only Bink's public API: `BinkOpen`, `BinkClose`, `BinkDoFrame`, `BinkNextFrame`, `BinkWait`, `BinkGoto`, `BinkCopyToBuffer`, `BinkSetVolume`, `BinkGetError`, `RADSetMemory` and `RADSetAudioMemory`.
 
-In `evidence.tsv` each unit has a `related` `unit` row, each function a `function` row and a `related` `name` row. A `compiler` row records that the block is ProDG code. Data sections are not split; each import maps its unit's data when its source compiles.
+In `evidence.tsv` each unit has a `unit` row, each function a `function` row and a `related` `name` row. The `unit` and `function` rows are `related` until an import reproduces the unit, and `target` after (so far `fft.c`). A `compiler` row records that the block is ProDG code. A unit's data sections are split when its import reproduces them; so far that is `fft.c`'s `.rodata`.
