@@ -160,7 +160,7 @@ bfbb does not say where its Bink paths, boundaries and names come from, so they 
 - None of the 190 functions bfbb marks `scope:local` is called from outside its unit (455 direct calls to Bink functions checked in the whole of `.text`).
 - Game code calls only Bink's public API: `BinkOpen`, `BinkClose`, `BinkDoFrame`, `BinkNextFrame`, `BinkWait`, `BinkGoto`, `BinkCopyToBuffer`, `BinkSetVolume`, `BinkGetError`, `RADSetMemory` and `RADSetAudioMemory`.
 
-In `evidence.tsv` each unit has a `unit` row, each function a `function` row and a `related` `name` row. The `unit` and `function` rows are `related` until an import reproduces the unit, and `target` after (so far `fft.c`, `radcb.c`, `popmal.c` and `varbits.c`). A `compiler` row records that the block is ProDG code. A unit's data sections are split when its import reproduces them; so far those are `fft.c`'s and `varbits.c`'s `.rodata` and `popmal.c`'s `.bss` and `.sdata`.
+In `evidence.tsv` each unit has a `unit` row, each function a `function` row and a `related` `name` row. The `unit` and `function` rows are `related` until an import reproduces the unit, and `target` after (so far `fft.c`, `radcb.c`, `popmal.c` and `varbits.c`). A `compiler` row records that the block is ProDG code. A unit's data sections are split when its import reproduces them; so far those are `fft.c`'s, `varbits.c`'s and `dct.c`'s `.rodata` and `popmal.c`'s `.bss` and `.sdata`.
 
 # RenderWare units
 

@@ -50,7 +50,7 @@ Dolphin SDK and CARD) are named by compiling public decompilations of those libr
 [Library units](splits.md#library-units)), 15 Bink units are named from bfbb's identical Bink
 layout (see [Bink units](splits.md#bink-units)), and 63 RenderWare units are placed by aligning bfbb's
 RenderWare function sizes (see [RenderWare units](splits.md#renderware-units)); the rest are dtk's auto-generated address ranges.
-Today 342 of the report's 520 files are named. The game
+Today 342 of the report's 521 files are named. The game
 names come from the PS2 v1.01 DWARF and the boundaries are inferred, so no game unit boundary has been
 checked against Heavy Iron's objects. The basis string says so. Library units placed by a
 whole-object match have exact extents; the others have open edges. RenderWare unit edges are `provisional` or `open`. Naming those units did not change

@@ -105,6 +105,14 @@ No public decompilation supplies Bink source this project can import:
 - `varbits.c` indexes `VarBitsLens` in its 8-bit loop through a local, `len = 8`, rather than the literal `VarBitsLens[8]`. The target keeps the byte offset in a callee-saved register: it saves `r31` in a 16-byte frame, sets `li r31,32` before the loop and loads with `lwzx r0,r12,r31`. With the literal, GCC folds the offset into `lwz r0,32(r12)` and drops the frame, and 11 lines differ. No literal or `const` form reproduces the target, so the original indexed through a non-constant width at that point. A form that uses the width everywhere, masks included, does not reproduce it either, so the exact original form is not established.
 - `varbits.c` declares `_bitlevels` 64-byte aligned. That alignment is what places it at `+0xC0` after `VarBitsLens` and pads the section to `0x180` bytes, which is where `fft.c`'s `.rodata` starts.
 
+`bink/src/sdk/dct.c` is a `NonMatching` partial reconstruction. Its 8x8 transforms are the Independent JPEG Group's fast integer DCTs, `jpeg_fdct_ifast` (`jfdctfst.c`) and `jpeg_idct_ifast` (`jidctfst.c`) from IJG release 6b, which RAD adapted. The reconstruction follows IJG 6b statement for statement and keeps IJG's variable names; RAD's changes, which the target shows, are listed with IJG's notice in CREDITS.md ([Bink DCT](../CREDITS.md#bink-dct)). `FastFDCT8x8`, `FastFDCTs8x8` and the three table wrappers (`FastIDCT8x8`, `FastIDCT8x8d`, `FastmIDCT8x8`) compile to the target byte for byte under ProDG 3.5 to 3.9.3, and so do the four quantisation tables in `.rodata`. Three functions still differ:
+
+- `fastidct8x8`: the column pass matches except for the registers. The row pass spills fewer values into the `t[8]` array than the target does, so it is 14 instructions short.
+- `fastidct8x8d` writes each output pixel twice across and each row twice down, as 32-bit words. Its shape is close, but the register allocation differs throughout.
+- `FastmIDCT8x8WithMotion` adds each output pixel to an 8-byte-stride motion block. It has the same register allocation and spill differences as `fastidct8x8`.
+
+The 8 zero bytes between `fft.c`'s `.rodata` and the tables (`0x801A8E18`-`0x801A8E20`) are unassigned. The object's `.rodata` has 4-byte alignment, so the tables will not land at `0x801A8E20` until the source or the split accounts for those bytes.
+
 Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units can include `dolphin/os.h`. The MW units are unchanged.
 
 Bink headers are this project's own, declaring only what the reconstructed units use. The logo movie stays out of the repository: its data is split from `main.dol` at build time like any other unmapped data.
