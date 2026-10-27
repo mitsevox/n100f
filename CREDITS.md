@@ -273,7 +273,7 @@ The RenderWare unit paths in `config/GIHE78/splits.txt` and the RenderWare funct
 
 ## Community references
 
-`references/Scooby-Doo Night of 100 Frights/community/` contains text copies of documents written by the Night of 100 Frights speedrunning community, retrieved on 2026-10-27. Individual discoverers are credited inline in the encyclopedia and in the skips dictionary's "Who?" column. None of the three documents states a licence. They are kept in full by the project owner's decision while the owner asks their maintainers for permission, and they will be replaced with a link index if the maintainers object. Local changes are listed in that folder's `README.md`: embedded images removed, and the sheets exported to CSV.
+`references/Scooby-Doo Night of 100 Frights/community/` contains text copies of documents written by the Night of 100 Frights speedrunning community, retrieved on 2026-10-27. Discoverers are credited in the skips dictionary's "Who?" column. The encyclopedia names no authors, though some strats carry players' names. None of the three documents states a licence. They are kept in full by the project owner's decision while the owner asks their maintainers for permission, and they will be replaced with a link index if the maintainers object. Local changes are listed in that folder's `README.md`: embedded images removed, and the sheets exported to CSV.
 
 - *Scooby-Doo! Night of 100 Frights Speedrunning Encyclopedia*: <https://docs.google.com/document/d/1FYX7Y7SBNxKBtWmm-pZD0OsQUlbUBwu9KMbXXdty2IY/edit?tab=t.0#heading=h.8cpcdn50wla4>
 - *Version Differences*: <https://docs.google.com/spreadsheets/d/1fxEAG8q9Qo8He824VSc1ZosycpR-0VH3TpPt9nAWfg4/edit?gid=0#gid=0>
