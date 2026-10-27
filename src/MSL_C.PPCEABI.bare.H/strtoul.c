@@ -73,7 +73,7 @@ unsigned long __strtoul(int base, int max_width, int (*ReadProc)(void*, int, int
             scan_state = need_digit;
             break;
 
-        case 4:
+        case leading_zero:
             if (c == 'X' || c == 'x') {
                 base = 16;
                 scan_state = need_digit;
@@ -279,31 +279,6 @@ unsigned long long __strtoull(int base, int max_width, int (*ReadProc)(void*, in
     }
 
     unfetch(c);
-    return value;
-}
-
-unsigned long strtoul(const char* str, char** end, int base)
-{
-    unsigned long value;
-    int count, negative, overflow;
-
-    __InStrCtrl isc;
-    isc.NextChar = (char*)str;
-    isc.NullCharDetected = 0;
-
-    value = __strtoul(base, 0x7FFFFFFF, &__StringRead, (void*)&isc, &count, &negative, &overflow);
-
-    if (end) {
-        *end = (char*)str + count;
-    }
-
-    if (overflow) {
-        value = ULONG_MAX;
-        errno = 0x22;
-    } else if (negative) {
-        value = -value;
-    }
-
     return value;
 }
 

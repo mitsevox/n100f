@@ -9,7 +9,8 @@ The claims are the `compiler` rows in [`config/GIHE78/evidence.tsv`](../../confi
 | Heavy Iron game code | GC/1.3.2 (mwcceppc 2.4.2 build 81) | Version established by the intersection of the bodies below. |
 | Game flags | `-O4,s`, `-char signed`, `-inline auto,deferred` | `-O4,s` and `-char signed` supported. Inlining is provisional: some bodies match only with `-inline off`. Other flags are untested BfBB or template values. |
 | Dolphin SDK | GC/1.2.5n | Version established; flags are bfbb's and only shown compatible. |
-| MSL / Runtime | — | Undetermined (mixed results). |
+| MSL C library | GC/1.3, `-inline auto,deferred`, `-char signed` | Twelve imported units match; six differ under GC/1.3.2, and none needs it. Signed char and deferred inlining are each required by some unit (`compiler` row in `evidence.tsv`). |
+| Runtime | GC/1.3.2 | `__va_arg.c` differs under GC/1.3 with the runtime flags, but matches under GC/1.3 with `-char signed`, so the imported units do not separate the two settings. |
 | Linker | GC/1.3.2 | Same release as the compiler. Every mwld from 1.0 to 2.6 relinks the baseline identically. |
 
 No single body identifies 1.3.2. Each excludes part of the candidate range, and only their intersection leaves 1.3.2:

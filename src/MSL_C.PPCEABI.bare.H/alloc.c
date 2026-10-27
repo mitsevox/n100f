@@ -215,19 +215,14 @@ static void SubBlock_merge_next(SubBlock* pBlock, SubBlock** pStart)
     SubBlock* next_sub_block;
     unsigned long this_cur_size;
 
-    next_sub_block = (SubBlock*)((char*)pBlock + (pBlock->size & 0xFFFFFFF8));
+    next_sub_block = (SubBlock*)((char*)pBlock + SubBlock_size(pBlock));
 
-    if (!(next_sub_block->size & 2)) {
-        this_cur_size = (pBlock->size & 0xFFFFFFF8) + (next_sub_block->size & 0xFFFFFFF8);
+    if (SubBlock_is_free(next_sub_block)) {
+        this_cur_size = SubBlock_size(pBlock) + SubBlock_size(next_sub_block);
 
-        pBlock->size &= ~0xFFFFFFF8;
-        pBlock->size |= this_cur_size & 0xFFFFFFF8;
+        SubBlock_set_size(pBlock, this_cur_size);
 
-        if (!(pBlock->size & 2)) {
-            *(unsigned long*)((char*)(pBlock) + (this_cur_size)-4) = (this_cur_size);
-        }
-
-        if (!(pBlock->size & 2)) {
+        if (SubBlock_is_free(pBlock)) {
             *(unsigned long*)((char*)pBlock + this_cur_size) &= ~4;
         } else {
             *(unsigned long*)((char*)pBlock + this_cur_size) |= 4;
