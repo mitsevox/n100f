@@ -1,0 +1,7 @@
+# Probe flags for docs/compiler_profile/rw_probe/ (run with --root docs/compiler_profile).
+# -O4 and -char signed are needed (see README). -O4,p and -O4,s, -fp_contract on and off, and
+# -inline auto and auto,deferred all give the same hits, so contraction is set from the whole
+# RenderWare text (README), not here.
+-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off
+-pragma "cats off" -nosyspath -RTTI off -str reuse -lang=c -common off
+-O4,p -inline auto -char signed
