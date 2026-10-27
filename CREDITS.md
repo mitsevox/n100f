@@ -59,7 +59,17 @@ The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bin
 
 ## Bink FFT
 
-`src/bink/src/sdk/fft.c` is Takuya Ooura's general purpose FFT package (`fftsg.c`) as Bink builds it. It follows the current release, `fft.tgz` (SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), with `bitrv2` and `bitrv2conj` from the same package's `fft4g.c`. `cftfsub`, `cftbsub`, `cftrec1`, `cftrec2`, `cftexp1`, `cftexp2` and `cftfx42` are the package's 2001 forms, which the current release replaced. Ooura's notice:
+`src/bink/src/sdk/fft.c` is Takuya Ooura's general purpose FFT package (`fftsg.c`) as Bink builds it. It follows the current release, `fft.tgz` (SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), with `bitrv2` and `bitrv2conj` from the same package's `fft4g.c`. `cftfsub`, `cftbsub`, `cftrec1`, `cftrec2`, `cftexp1`, `cftexp2` and `cftfx42` are reconstructed in the package's pre-2006 structure (the `cftrec1`/`cftrec2` recursion and `cftexp1`/`cftexp2`), which the current release replaced, and fitted to the target; no copy of an earlier release was available to check their text against.
+
+The code is used under the licence on Ooura's FFT page, https://www.kurims.kyoto-u.ac.jp/~ooura/fft.html (section "License"):
+
+> Copyright Takuya OOURA, 1996-2001
+>
+> You may use, copy, modify and distribute this code for any purpose
+> (include commercial use) and without fee. Please refer to this
+> package when you modify this code.
+
+This section is that reference. The package's `readme.txt` carries an older notice, kept here as the package's attribution (its download address no longer works):
 
 > Copyright(C) 1996-2001 Takuya OOURA
 > email: ooura@mmm.t.u-tokyo.ac.jp
@@ -70,7 +80,8 @@ The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bin
 Local changes, all as the target requires:
 - `float` replaces `double`, and the constants are `float` except the `0.5` factors of `makewt` and the `makect` loop.
 - The trigonometry calls MSL's `atanf`, `cosf` and `sinf`.
-- The twiddle table keeps the 2001 layout: `makewt` stores positive sines, `cftmdl1`, `cftmdl2`, `cftf1st` and `cftb1st` negate the third-angle sine, `cftf161` derives its first twiddle from `w[2]`, and `cftfx41` and `cftf082` index it as in 2001.
+- The twiddle table keeps the older layout: `makewt` stores positive sines, `cftmdl1`, `cftmdl2`, `cftf1st` and `cftb1st` negate the third-angle sine and `cftf162` does not (`wk3i = w[7]`), `cftf161` derives its first twiddle from `w[2]`, and `cftfx41` and `cftf082` index the table as the older layout requires.
+- `makewt` does not call `makeipt`, and its `nwh == 4` special case is folded into `nwh >= 4` (the same in the `nw1` block).
 - `rdft` and `ddct` pass `ip + 2` to the transforms.
 - The functions other than `rdft` and `ddct` are `static`, and only the functions Bink links are kept.
 

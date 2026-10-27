@@ -112,7 +112,7 @@ On the committed files it writes no rows. From the baseline, the sequence is: ru
 
 ## Limits
 
-- Data sections are not split. Each import PR maps its unit's data when the source compiles.
+- Data sections are split only where an import has reproduced them. Each import PR maps its unit's data when the source compiles.
 - An `open` edge only bounds what matched. The real object can extend past it, and 55 of the 118 units are partial placements.
 - Library units count as named files in the public report. Function bytes are unchanged; named functions rose from 461 to 1,148.
 - Upstream source is evidence that the code exists, not that its source meets this project's standards. Every function copied in a later PR is reviewed like any other.
@@ -142,9 +142,9 @@ BfBB links the same Bink build. Its GQPE78 Bink block (`0x80196880` to `0x801B53
 | `bink/src/sdk/dct.c` | `0x8012C490` | `0x8012D564` | 8 |
 | `bink/src/sdk/bitplane.c` | `0x8012D564` | `0x80130990` | 7 |
 
-bfbb does not say where its Bink paths, boundaries and names come from, so they are `related` and every inner edge is `provisional`. Its list includes static functions and a local `gcc2_compiled.` label, the marker GCC 2 emits at the start of each object's `.text`, at each of the 15 unit starts, which suggests a symbol table from RAD's library rather than names chosen by hand. Two checks support them:
+bfbb does not say where its Bink paths, boundaries and names come from, so they are `related` and their inner edges start `provisional`. An edge becomes `exact` when an import reproduces the unit on either side of it, as `fft.c` has done for the `varbits.c` end, both `fft.c` edges and the `dct.c` start. Its list includes static functions and a local `gcc2_compiled.` label, the marker GCC 2 emits at the start of each object's `.text`, at each of the 15 unit starts, which suggests a symbol table from RAD's library rather than names chosen by hand. Two checks support them:
 
 - None of the 190 functions bfbb marks `scope:local` is called from outside its unit (455 direct calls to Bink functions checked in the whole of `.text`).
 - Game code calls only Bink's public API: `BinkOpen`, `BinkClose`, `BinkDoFrame`, `BinkNextFrame`, `BinkWait`, `BinkGoto`, `BinkCopyToBuffer`, `BinkSetVolume`, `BinkGetError`, `RADSetMemory` and `RADSetAudioMemory`.
 
-In `evidence.tsv` each unit has a `related` `unit` row, each function a `function` row and a `related` `name` row. A `compiler` row records that the block is ProDG code. Data sections are not split; each import maps its unit's data when its source compiles.
+In `evidence.tsv` each unit has a `related` `unit` row, each function a `function` row and a `related` `name` row. A `compiler` row records that the block is ProDG code. A unit's data sections are split when its import reproduces them; so far that is `fft.c`'s `.rodata`.
