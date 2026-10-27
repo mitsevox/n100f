@@ -50,9 +50,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the work and review process. AI agent
 
 ## Explicit target identity
 
-`config/targets.json` is the versioned catalog. `GIHE78-rev0` is build/report-supported;
-`GIHE78-rev1` is archived identity metadata with no validated build or progress. Git commit
-`revision` remains separate from `discRevision`. Shared reconstruction stays in `src/` and
+`config/targets.json` is the versioned catalog, in the site's schema-1 target shape. `GIHE78-rev0`
+is active (built, verified and measured); `GIHE78-rev1` is archived identity metadata with no
+validated build or progress. A target's disc `revision` is unrelated to Git commit revisions. Shared reconstruction stays in `src/` and
 `include/`; target splits, symbols, evidence and policies live in `config/<targetId>/`.
 Generated Ninja, objdiff and editor configurations live in `build/<targetId>/`, so switching
 targets does not overwrite another target's configuration. For objdiff's source watcher/editor, run `python3 tools/activate_target.py --target GIHE78-rev0`
@@ -64,4 +64,10 @@ CI uses `config/ci-targets.json` to select dependent build targets, including de
 both sides of renames. Shared inputs select all actual dependents; unknown inputs select all
 buildable targets. Docs-only/archived-only changes run tool checks without a binary build.
 Manual `Validate` runs audit all buildable targets. Caches/reused publication remain disabled.
-See [the report workflow](docs/public_report.md) for independent target publication and migration.
+
+## Progress site
+
+On `main`, each active target's job publishes its objdiff report to the
+[progress site](https://mitsevox.github.io/games/n100f/) through the site's shared publish action,
+after the complete executable is verified. `config/site.json` holds the game's presentation;
+`tools/measuring_tools.py` lists the tools recorded as provenance. Pull requests publish nothing.
