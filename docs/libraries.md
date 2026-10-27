@@ -1,6 +1,6 @@
 # Library code
 
-The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and the Dolphin SDK, followed by Bink, the CARD library and RenderWare. [splits.md](splits.md#library-units) describes how the first four were mapped. This page covers how their source comes in.
+The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and the Dolphin SDK, followed by Bink, the CARD library and RenderWare. [splits.md](splits.md#library-units) describes how the first four were mapped, and [RenderWare units](splits.md#renderware-units) how RenderWare was. This page covers how their source comes in.
 
 ## Build configuration
 
@@ -11,6 +11,8 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `TRKLib` | `TRK_MINNOW_DOLPHIN` | GC/1.3 | `cflags_trk` | `trk` |
 | `RuntimeLib` | `Runtime.PPCEABI.H`, `MSL_C.PPCEABI.bare.H` | GC/1.3.2, or GC/1.3 per object | `cflags_runtime` | `runtime` |
 | `DolphinLib` | `dolphin/<library>` | GC/1.2.5n | `cflags_sdk` | `sdk` |
+
+RenderWare units are not listed: their compiler profile is not established. Never use leaked RenderWare source for them.
 
 The flags are shown compatible with the target, not established. An MSL object that placed under only one compiler sets that version. The others take the library default, and their import must confirm it. Each import also reconfirms a pick that rests on a partial placement: `alloc.c` is GC/1.3 on 2 of its 34 functions.
 

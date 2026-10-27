@@ -61,7 +61,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 - xMath3.cpp is a partial unit in `configure.py`. The tail-call rule gave it the wrappers `xMath3Exit` and `xMath3Init` (`0x8002F8E0`, `0x8002F900`), which count as unmatched, so the game total went from 267 to 269 functions with 77 still exact.
 - iModel.cpp runs to `0x8000EBC0` on call references, not on PS2 sizes alone: `0x8000E994` passes `0x8000EA5C` to `RpClumpForAllAtomics`, `0x8000EA5C` passes the GC-only static `0x8000EB64`, and `0x8000EB60` is the empty `iModelInit`, which xModel calls.
 - Header inline copies (`xMath3.h`, `xEnt.h`, `xModel.h`) are left to whichever unit holds them.
-- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), Bink, the CARD library or RenderWare. MetroTRK, the runtime, MSL and the first part of the Dolphin SDK are mapped separately, under [Library units](#library-units).
+- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), Bink or the CARD library. MetroTRK, the runtime, MSL and the first part of the Dolphin SDK are mapped separately, under [Library units](#library-units), and RenderWare under [RenderWare units](#renderware-units).
 
 # Library units
 
@@ -117,3 +117,53 @@ On the committed files it writes no rows. From the baseline, the sequence is: ru
 - Library units count as named files in the public report. Function bytes are unchanged; named functions rose from 461 to 1,148.
 - Upstream source is evidence that the code exists, not that its source meets this project's standards. Every function copied in a later PR is reviewed like any other.
 - The SDK units carry `comment:8` in `splits.txt`, as GC/1.2.5n writes; see [libraries.md](libraries.md).
+
+# RenderWare units
+
+`splits.txt` also names 62 RenderWare units between `0x8013AA64` and `0x8018E5C0`, from `tools/splits/rwmap.py`. GIHE78 links RenderWare 3.3.0.2. There is no public RenderWare source to compile, so these units and names come from BfBB's RenderWare 3.5 splits and symbols (`bfbbdecomp/bfbb` `d8e8eac`, GQPE78), placed by function size sequence. The input is `config/GIHE78/rwmap.json` and the report is `config/GIHE78/rw_units.tsv`.
+
+| Library | Units |
+| --- | --- |
+| `rpcollis` | 2 |
+| `rphanim` | 1 |
+| `rpmatfx` | 5 |
+| `rpskin` | 1 |
+| `rpusrdat` | 1 |
+| `rpworld` | 15 |
+| `rwcore` | 37 |
+
+The units cover 655 of the region's 989 functions and 0x2BF80 of its 0x53B5C bytes. 585 of those functions are named: 524 by equal size, 56 by position and 5 that already had names from game-code callers (`RpWorldDestroy`, `RpWorldAddCamera`, `RpWorldRemoveCamera`, `RwCameraShowRaster`, `_rwFrameSyncDirty`), all of which the alignment reproduces.
+
+## Method
+
+1. **Placement.** For each BfBB unit under `rwsdk/`, the sizes of its functions, in address order, are aligned locally against the GIHE78 functions of the region. GIHE78 is an older RenderWare and its linker strips unreferenced functions, so a unit is a subsequence of BfBB's with some sizes changed. An equal size scores `3 + min(size, 0x320) / 0xC8`, a size within 8 bytes or 6% scores 0.3, any other pair −2.5 and a gap −1. A placement is trimmed to its outermost equal sizes and needs a score of 6, and either two equal sizes or one of at least 0x200 bytes.
+2. **Order.** The tool keeps the highest-scoring chain of non-overlapping placements that keeps library order (`rpcollis`, `rphanim`, `rpmatfx`, `rpptank`, `rpskin`, `rpusrdat`, `rpworld`, `rtanim`, `rtintsec`, `rtslerp`, `rwcore`, as BfBB links them). In `rpworld`, the `rt*` tools and `rwcore`, units must also keep BfBB's order. Plugin objects may appear in any order within their library: GIHE78 links `rpmatfx.c` before the GameCube matfx objects.
+3. **Names.** An aligned pair of equal size takes BfBB's name when it is at least 0x20 bytes, or when both of its GIHE78 neighbours are equal-size pairs of the same unit. Between two such names, functions take BfBB's names by position when both sides hold the same number of functions and each GIHE78/BfBB size ratio is between 0.75 and 1.33. A name BfBB marks static is dropped if a function outside the unit calls it. A unit needs at least two names; six single-name placements (`multiTexGcnPipe.c`, `skingcng.c`, `nodeGameCubeAtomicAllInOne.c`, `nodeGameCubeWorldSectorAllInOne.c`, `geomcond.c`, `rtslerp.c`) and one with none (`nodeDolphinSubmitNoLight.c`) are left out.
+4. **Extents.** A unit runs from its first to its last named function. It widens to take in any function that calls one of its static names, since a static is only reachable from its own object. An edge is `provisional` where the neighbouring unit's named function abuts it and `open` otherwise. Functions between units stay unassigned.
+
+Each unit has a `related` `unit` row in `evidence.tsv`. Each new name has a `related` `name` row, which states whether it was named by equal size or by position, and a `function` row whose edges are dtk's inference (`provisional`). The rows also cite corroboration that the tool does not use for placement:
+
+- The PS2 June 2001 prototype symbol table (`references/.../PROTO-PS2-2001-06-11`), an RW 3.x build of this game, lists 374 of the new names.
+- The PS2 retail DWARF lists the `ctbsp.c` and `rpcollis.c` functions, with their names, in `flat\p2rwcoll\ctbsp_.c` and `rpcollis_.c`: Heavy Iron compiled the collision plugin into the PS2 game.
+- The PS2 January 2001 and Xbox prototypes keep RenderWare source paths as strings (`rwsdk/world/baclump.c`, `//RenderWare/RW34Active/rwsdk/src/plcore/baimmedi.c#2`, ...). A unit row says when its path is among them.
+
+No leaked RenderWare source was used. BfBB's RenderWare names and paths are a related build's; there is no GC debug symbol.
+
+## Reproducing
+
+The tool needs a checkout of `bfbbdecomp/bfbb` at the pinned commit; only `config/GQPE78/` is read.
+
+```sh
+python3 tools/splits/rwmap.py --dol orig/GIHE78/sys/main.dol --checkout ../bfbb \
+  --splits rwunits.txt --units config/GIHE78/rw_units.tsv \
+  --evidence rwrows.tsv --symbols-out config/GIHE78/symbols.txt
+```
+
+On the committed files this is a fixed point: `rwunits.txt` equals the RenderWare part of `splits.txt`, `rwrows.tsv` equals the tool's rows in `evidence.tsv`, and `symbols.txt` comes back unchanged. Names that other rows already cover are skipped, with a note saying whether they agree.
+
+## Limits
+
+- Placement rests on sizes. Equal sizes in BfBB order are strong evidence, but a positional name could swap with a neighbour of similar size; those rows say so.
+- The compiler profile of the RenderWare objects is not established, so `configure.py` does not list them, and data sections are not split.
+- 334 functions stay unassigned. The largest gaps are `0x8017EDA0`–`0x801869A8` (31 KB after `bapipe.c`, where nothing in BfBB lines up), `0x801542DC`–`0x8015885C` and `0x80159374`–`0x8015D4E0` (world pipeline objects), and the 3.3 animation code around `rphanim.c`, which differs from 3.5.
+- The collision plugin's `ctgeom.c` and `ctworld.c`, which BfBB links before `ctbsp.c`, are not in this region.

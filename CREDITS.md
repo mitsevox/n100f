@@ -53,6 +53,10 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 - [ACreTeam/ac-decomp](https://github.com/ACreTeam/ac-decomp), [zeldaret/tww](https://github.com/zeldaret/tww), [zcanann/FFCC-Decomp](https://github.com/zcanann/FFCC-Decomp), [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4), [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb), [bfbbdecomp/tssm](https://github.com/bfbbdecomp/tssm), [projectPiki/pikmin](https://github.com/projectPiki/pikmin), [mitsevox/tw2004](https://github.com/mitsevox/tw2004) and [mitsevox/mvp2005](https://github.com/mitsevox/mvp2005): CC0 1.0.
 - [Jovinull/sonicheroes](https://github.com/Jovinull/sonicheroes): MIT. Its notice must accompany any source imported from it.
 
+## RenderWare unit map
+
+`tools/splits/rwmap.py` reads the GQPE78 `symbols.txt` and `splits.txt` of [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb) at the revision pinned in `config/GIHE78/rwmap.json` (CC0 1.0) to place and name RenderWare units. No RenderWare source, public or otherwise, is in this repository.
+
 ## Build tooling
 
 `configure.py`, `tools/*.py` (except project-specific additions), `.vscode/`, `.flake8`, `.gitattributes` and `docs/dtk/` come from [encounter/dtk-template](https://github.com/encounter/dtk-template/tree/d366876408b754891a0392badbc63bff3490469f), revision `d366876408b754891a0392badbc63bff3490469f`, published under CC0 1.0 (`tools/LICENSE.dtk-template`). Local changes: project configuration in `configure.py`, removed example libraries and REL helper, and merged ignore rules.
