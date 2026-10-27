@@ -50,7 +50,7 @@ Dolphin SDK and CARD) are named by compiling public decompilations of those libr
 [Library units](splits.md#library-units)), 15 Bink units are named from bfbb's identical Bink
 layout (see [Bink units](splits.md#bink-units)), and 89 RenderWare units are placed, 71 by aligning bfbb's
 RenderWare function sizes and 18 pipeline node objects from the game's own node definitions (see [RenderWare units](splits.md#renderware-units)); the rest are dtk's auto-generated address ranges.
-Today 370 of the report's 532 files are named (the si, pad, vi and dvd import mapped those units' data, which absorbed seven of dtk's auto-generated data ranges and left one alignment gap, `auto_06_8025C108_bss`, between `dvdlow.c` and `dvd.c`). The game
+Today 370 of the report's 532 files are named (the si, pad, vi and dvd import absorbed seven of dtk's auto-generated ranges: six data ranges, now mapped to those units' data sections, and the `.text` gap `auto_01_8010F20C_text`, now the end of `dvdfs.c`; it left one alignment gap, `auto_06_8025C108_bss`, between `dvdlow.c` and `dvd.c`). The game
 names come from the PS2 v1.01 DWARF and the boundaries are inferred, so no game unit boundary has been
 checked against Heavy Iron's objects. The basis string says so. Library units placed by a
 whole-object match have exact extents; the others have open edges. RenderWare unit edges are `provisional` or `open`. Naming those units did not change
