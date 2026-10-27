@@ -31,8 +31,9 @@ typedef struct OSSramEx {
 } OSSramEx;
 
 OSSram* __OSLockSram(void);
-OSSramEx* __OSLockSramEx(void);
 BOOL __OSUnlockSram(BOOL commit);
+BOOL __OSSyncSram(void);
+OSSramEx* __OSLockSramEx(void);
 BOOL __OSUnlockSramEx(BOOL commit);
 
 #ifdef __cplusplus

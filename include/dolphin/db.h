@@ -1,13 +1,13 @@
 #ifndef _DOLPHIN_DB_H_
 #define _DOLPHIN_DB_H_
 
-#include <dolphin/types.h>
+#include <dolphin/os/OSException.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef u8 __OSException;
+#define OS_DBINTERFACE_ADDR 0x00000040
 
 typedef struct DBInterface {
     u32 bPresent;

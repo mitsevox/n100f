@@ -10,6 +10,9 @@ extern "C" {
 
 extern volatile u32 __EXIRegs[] AT_ADDRESS(0xCC006800);
 
+#define EXI_READ 0
+#define EXI_WRITE 1
+
 typedef void (*EXICallback)(s32 chan, OSContext* context);
 
 EXICallback EXISetExiCallback(s32 chan, EXICallback exiCallback);
@@ -27,6 +30,8 @@ BOOL EXIAttach(s32 chan, EXICallback extCallback);
 BOOL EXIDetach(s32 chan);
 u32 EXIGetState(s32 chan);
 s32 EXIGetID(s32 chan, u32 dev, u32* id);
+
+void EXIInit(void);
 
 #ifdef __cplusplus
 }
