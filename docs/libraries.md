@@ -140,6 +140,13 @@ No public decompilation supplies Bink source this project can import:
 
 The 8 zero bytes between `fft.c`'s `.rodata` and the tables (`0x801A8E18`-`0x801A8E20`) are unassigned. The object's `.rodata` has 4-byte alignment, so the tables will not land at `0x801A8E20` until the source or the split accounts for those bytes.
 
+`bink/src/sdk/decode/binkacd.c`, Bink's audio decoder, is this project's own reconstruction from the target and is `NonMatching`. Seven of its eight functions compile to the target byte for byte under ProDG 3.5 to 3.9.3, and so do its `.rodata` (`0x801A8730`-`0x801A8790`) and `.data` (`rlelens`, `bandtopfreq` and `invertbins`, `0x801DC240`-`0x801DC380`). `quanttos16chans2` has the target's instructions except that the loop counter and the second channel's offset swap registers, which adds one `mr`; the cause is not established. Four details of the source come from the target's code:
+
+- Its one-bit reads (`VARBITSGET1`) are a conditional expression, not a statement. The target tests the run flag and negates the sign bit inside each arm of the refill, which GCC does only for a conditional expression used as a whole.
+- `BinkAudioDecompressOpen` takes two square roots inline with `frsqrte` and three Newton steps. GCC 2.95 has no C form for `frsqrte`, so the estimate is one `__asm__` statement in a `static inline` helper, and the steps are C.
+- `CLAMP16` casts the in-range value to `S16`. The cast gives the clamp its own result register, as the target has.
+- Like `popmal.c` and `radcb.c`, the file has no prototype for `memset` or `memcpy`.
+
 Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units can include `dolphin/os.h`. The MW units are unchanged.
 
 Bink headers are this project's own, declaring only what the reconstructed units use. The logo movie stays out of the repository: its data is split from `main.dol` at build time like any other unmapped data.

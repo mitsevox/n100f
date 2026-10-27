@@ -1292,6 +1292,8 @@ bink/src/sdk/decode/yuv.cpp:
 
 bink/src/sdk/decode/binkacd.c:
 	.text       start:0x8011F78C end:0x80120470
+	.rodata     start:0x801A8730 end:0x801A8790
+	.data       start:0x801DC240 end:0x801DC380
 
 bink/shared/time/radcb.c:
 	.text       start:0x80120470 end:0x80120B54
