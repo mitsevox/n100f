@@ -140,6 +140,13 @@ No public decompilation supplies Bink source this project can import:
 
 The 8 zero bytes between `fft.c`'s `.rodata` and the tables (`0x801A8E18`-`0x801A8E20`) are unassigned. The object's `.rodata` has 4-byte alignment, so the tables will not land at `0x801A8E20` until the source or the split accounts for those bytes.
 
+`bink/src/sdk/decode/ngc/ngcfile.c` is Bink's GameCube file reader: it streams a movie from the disc through a read-ahead buffer with asynchronous DVD reads, or reads it directly when no buffer is set. It is this project's own reconstruction from the target, and its whole `.text` compiles to the unit under every ProDG version from 3.5 to 3.9.3, byte for byte once the relocations are resolved. The reader's state block is declared in `include/bink/binkio.h` as `BinkIO`, with project names; RAD's own header is not used. Four details of the source come from the target:
+
+- `intelendian` swaps each word with `lwbrx`, written as one inline `asm` statement, since GCC 2.95 has no C form for the instruction.
+- The `BinkIO` counters and three private fields are `volatile`; the target reloads them after each store and keeps their accesses in order.
+- `memmove` is prototyped and `memcpy` and `memset` are not, the same `crclr 6` evidence as for `popmal.c` and `radcb.c`.
+- `BinkFileReadFrame` uses one scratch local for three short-lived values, `BinkFileIdle`'s switch names the three DVD states it ignores, and `BinkFileSetInfo` masks the size at each use. Each changes the register allocation or the code layout, as the `source-form` rows in `evidence.tsv` record.
+
 Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units can include `dolphin/os.h`. The MW units are unchanged.
 
 Bink headers are this project's own, declaring only what the reconstructed units use. The logo movie stays out of the repository: its data is split from `main.dol` at build time like any other unmapped data.
