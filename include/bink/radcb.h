@@ -10,7 +10,7 @@ typedef S32 (*RADCBFUNC)(RADCB* cb, U32 ticks);
 struct RADCB
 {
     RADCB* next;
-    U32 user;
+    U8 unk04[4];
     S32 result;
     volatile S32 state;
     volatile S32 suspends;
