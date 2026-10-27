@@ -12,10 +12,15 @@ typedef u32 OSTick;
 
 #define OS_BASE_CACHED 0x80000000
 
+void* OSPhysicalToCached(u32 paddr);
+u32 OSCachedToPhysical(void* caddr);
+#if !DEBUG
 #define OSPhysicalToCached(paddr) ((void*)((u32)(paddr) + OS_BASE_CACHED))
 #define OSCachedToPhysical(caddr) ((u32)((u8*)(caddr) - OS_BASE_CACHED))
+#endif
 
 extern u32 __OSBusClock AT_ADDRESS(OS_BASE_CACHED | 0x00F8);
+extern u8 GameChoice AT_ADDRESS(OS_BASE_CACHED | 0x30E3);
 
 extern volatile u32 __PIRegs[] AT_ADDRESS(0xCC003000);
 
@@ -30,20 +35,35 @@ extern volatile u32 __PIRegs[] AT_ADDRESS(0xCC003000);
 #define OSRoundUp32B(x) (((u32)(x) + 32 - 1) & ~(32 - 1))
 #define OSRoundDown32B(x) (((u32)(x)) & ~(32 - 1))
 
+OSTime OSGetTime(void);
 OSTick OSGetTick(void);
 
 void OSReport(const char* msg, ...);
+void OSPanic(const char* file, int line, const char* msg, ...);
+
+#if DEBUG
+#define ASSERTLINE(line, cond) ((cond) || (OSPanic(__FILE__, line, "Failed assertion " #cond), 0))
+#define ASSERTMSGLINE(line, cond, msg) ((cond) || (OSPanic(__FILE__, line, msg), 0))
+#else
+#define ASSERTLINE(line, cond) ((void)0)
+#define ASSERTMSGLINE(line, cond, msg) ((void)0)
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
+#include <dolphin/os/OSAlarm.h>
 #include <dolphin/os/OSAlloc.h>
 #include <dolphin/os/OSArena.h>
 #include <dolphin/os/OSCache.h>
 #include <dolphin/os/OSContext.h>
+#include <dolphin/os/OSFont.h>
 #include <dolphin/os/OSInterrupt.h>
 #include <dolphin/os/OSModule.h>
+#include <dolphin/os/OSReset.h>
 #include <dolphin/os/OSResetSW.h>
+#include <dolphin/os/OSRtc.h>
+#include <dolphin/os/OSThread.h>
 
 #endif

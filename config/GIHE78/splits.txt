@@ -1180,52 +1180,70 @@ bink/src/sdk/bitplane.c:
 	.text       start:0x8012D564 end:0x80130990
 
 dolphin/card/CARDBios.c: comment:8
-	.text       start:0x80130994 end:0x80131FF4
+	.text       start:0x80130990 end:0x80131FF4
+	.data       start:0x801DC3C0 end:0x801DC580
+	.bss        start:0x8025D488 end:0x8025D6C8
+	.sdata      start:0x8025E768 end:0x8025E770
 
 dolphin/card/CARDUnlock.c: comment:8
-	.text       start:0x80132020 end:0x8013275C
+	.text       start:0x80131FF4 end:0x80132A00
+	.data       start:0x801DC580 end:0x801DC718
+	.sdata      start:0x8025E770 end:0x8025E778
 
 dolphin/card/CARDRdwr.c: comment:8
 	.text       start:0x80132A00 end:0x80132DC8
+	.data       start:0x801DC718 end:0x801DC7C8
 
 dolphin/card/CARDBlock.c: comment:8
 	.text       start:0x80132DC8 end:0x80133340
+	.data       start:0x801DC7C8 end:0x801DC868
 
 dolphin/card/CARDDir.c: comment:8
 	.text       start:0x80133340 end:0x8013365C
+	.data       start:0x801DC868 end:0x801DC8F0
 
 dolphin/card/CARDCheck.c: comment:8
 	.text       start:0x8013365C end:0x801342A8
+	.data       start:0x801DC8F0 end:0x801DC9E8
 
 dolphin/card/CARDMount.c: comment:8
-	.text       start:0x801342A8 end:0x80134508
+	.text       start:0x801342A8 end:0x80134D7C
+	.data       start:0x801DC9E8 end:0x801DCB18
 
 dolphin/card/CARDFormat.c: comment:8
-	.text       start:0x8013523C end:0x80135298
+	.text       start:0x80134D7C end:0x80135298
+	.data       start:0x801DCB18 end:0x801DCBB8
 
 dolphin/card/CARDOpen.c: comment:8
-	.text       start:0x80135298 end:0x80135648
+	.text       start:0x80135298 end:0x80135650
+	.data       start:0x801DCBB8 end:0x801DCCB0
 
 dolphin/card/CARDCreate.c: comment:8
 	.text       start:0x80135650 end:0x80135B08
+	.data       start:0x801DCCB0 end:0x801DCD98
 
 dolphin/card/CARDRead.c: comment:8
 	.text       start:0x80135B08 end:0x801361EC
+	.data       start:0x801DCD98 end:0x801DD020
 
 dolphin/card/CARDWrite.c: comment:8
 	.text       start:0x801361EC end:0x80136654
+	.data       start:0x801DD020 end:0x801DD148
 
 dolphin/card/CARDDelete.c: comment:8
 	.text       start:0x80136654 end:0x80136860
 
 dolphin/card/CARDStat.c: comment:8
 	.text       start:0x80136860 end:0x80136DB4
+	.data       start:0x801DD148 end:0x801DD278
 
 dolphin/card/CARDStatEx.c: comment:8
 	.text       start:0x80136DB4 end:0x80137214
+	.data       start:0x801DD278 end:0x801DD3F0
 
 dolphin/card/CARDNet.c: comment:8
 	.text       start:0x80137214 end:0x801372EC
+	.sdata      start:0x8025E778 end:0x8025E780
 
 rwsdk/plugin/collis/ctgeom.c:
 	.text       start:0x801376C4 end:0x80138904

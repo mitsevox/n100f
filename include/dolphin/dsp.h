@@ -48,10 +48,12 @@ extern DSPTaskInfo* __DSP_tmp_task;
 extern DSPTaskInfo* __DSP_rude_task;
 extern BOOL __DSP_rude_task_pending;
 
+void DSPInit(void);
 u32 DSPCheckMailToDSP(void);
 u32 DSPCheckMailFromDSP(void);
 u32 DSPReadMailFromDSP(void);
 void DSPSendMailToDSP(u32 mail);
+DSPTaskInfo* DSPAddTask(DSPTaskInfo* task);
 
 void __DSPHandler(__OSInterrupt interrupt, OSContext* context);
 void __DSP_exec_task(DSPTaskInfo* curr, DSPTaskInfo* next);
