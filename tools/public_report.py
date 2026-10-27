@@ -359,7 +359,9 @@ def timeline(summary_doc, measured_at,version=DEFAULT_TARGET):
 
 
 def git(*args):
-    return subprocess.check_output(['git', '-C', ROOT, *args], text=True).strip()
+    # Container checkout ownership can differ from the runtime user. Trust
+    # only this checkout for this command; never a global wildcard exception.
+    return subprocess.check_output(['git','-c','safe.directory='+ROOT,'-C',ROOT,*args],text=True).strip()
 
 
 def tools():
