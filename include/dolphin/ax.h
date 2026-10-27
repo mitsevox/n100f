@@ -7,7 +7,48 @@
 extern "C" {
 #endif
 
-typedef struct _AXPBDPOP {
+typedef struct _AXPBMIX
+{
+    u16 vL;
+    u16 vDeltaL;
+    u16 vR;
+    u16 vDeltaR;
+    u16 vAuxAL;
+    u16 vDeltaAuxAL;
+    u16 vAuxAR;
+    u16 vDeltaAuxAR;
+    u16 vAuxBL;
+    u16 vDeltaAuxBL;
+    u16 vAuxBR;
+    u16 vDeltaAuxBR;
+    u16 vAuxBS;
+    u16 vDeltaAuxBS;
+    u16 vS;
+    u16 vDeltaS;
+    u16 vAuxAS;
+    u16 vDeltaAuxAS;
+} AXPBMIX;
+
+typedef struct _AXPBITD
+{
+    u16 flag;
+    u16 bufferHi;
+    u16 bufferLo;
+    u16 shiftL;
+    u16 shiftR;
+    u16 targetShiftL;
+    u16 targetShiftR;
+} AXPBITD;
+
+typedef struct _AXPBUPDATE
+{
+    u16 updNum[5];
+    u16 dataHi;
+    u16 dataLo;
+} AXPBUPDATE;
+
+typedef struct _AXPBDPOP
+{
     s16 aL;
     s16 aAuxAL;
     s16 aAuxBL;
@@ -19,12 +60,111 @@ typedef struct _AXPBDPOP {
     s16 aAuxBS;
 } AXPBDPOP;
 
-typedef struct _AXPB {
-    u8 unk00[0x52];
+typedef struct _AXPBVE
+{
+    u16 currentVolume;
+    s16 currentDelta;
+} AXPBVE;
+
+typedef struct _AXPBFIR
+{
+    u16 numCoefs;
+    u16 coefsHi;
+    u16 coefsLo;
+} AXPBFIR;
+
+typedef struct _AXPBADDR
+{
+    u16 loopFlag;
+    u16 format;
+    u16 loopAddressHi;
+    u16 loopAddressLo;
+    u16 endAddressHi;
+    u16 endAddressLo;
+    u16 currentAddressHi;
+    u16 currentAddressLo;
+} AXPBADDR;
+
+typedef struct _AXPBADPCM
+{
+    u16 a[8][2];
+    u16 gain;
+    u16 pred_scale;
+    u16 yn1;
+    u16 yn2;
+} AXPBADPCM;
+
+typedef struct _AXPBSRC
+{
+    u16 ratioHi;
+    u16 ratioLo;
+    u16 currentAddressFrac;
+    u16 last_samples[4];
+} AXPBSRC;
+
+typedef struct _AXPBADPCMLOOP
+{
+    u16 loop_pred_scale;
+    u16 loop_yn1;
+    u16 loop_yn2;
+} AXPBADPCMLOOP;
+
+typedef struct _AXPB
+{
+    u16 nextHi;
+    u16 nextLo;
+    u16 currHi;
+    u16 currLo;
+    u16 srcSelect;
+    u16 coefSelect;
+    u16 mixerCtrl;
+    u16 state;
+    u16 type;
+    AXPBMIX mix;
+    AXPBITD itd;
+    AXPBUPDATE update;
     AXPBDPOP dpop;
+    AXPBVE ve;
+    AXPBFIR fir;
+    AXPBADDR addr;
+    AXPBADPCM adpcm;
+    AXPBSRC src;
+    AXPBADPCMLOOP adpcmLoop;
+    u16 pad[3];
 } AXPB;
 
-typedef struct _AXSPB {
+typedef struct _AXVPB
+{
+    void* next;
+    void* prev;
+    void* next1;
+    u32 priority;
+    void (*callback)(void*);
+    u32 userContext;
+    u32 index;
+    u32 sync;
+    u32 depop;
+    u32 updateMS;
+    u32 updateCounter;
+    u32 updateTotal;
+    u16* updateWrite;
+    u16 updateData[128];
+    void* itdBuffer;
+    AXPB pb;
+} AXVPB;
+
+typedef struct _AXPBITDBUFFER
+{
+    s16 data[32];
+} AXPBITDBUFFER;
+
+typedef struct _AXPBU
+{
+    u16 data[128];
+} AXPBU;
+
+typedef struct _AXSPB
+{
     u16 dpopLHi;
     u16 dpopLLo;
     s16 dpopLDelta;
@@ -54,7 +194,8 @@ typedef struct _AXSPB {
     s16 dpopBSDelta;
 } AXSPB;
 
-typedef struct _AXPROFILE {
+typedef struct _AXPROFILE
+{
     u64 axFrameStart;
     u64 auxProcessingStart;
     u64 auxProcessingEnd;
@@ -64,16 +205,79 @@ typedef struct _AXPROFILE {
     u32 axNumVoices;
 } AXPROFILE;
 
-u32 __AXGetStudio(void);
-void __AXPrintStudio(void);
-void __AXSPBInit(void);
-void __AXSPBQuit(void);
-void __AXDepopVoice(AXPB* p);
+typedef struct AX_AUX_DATA
+{
+    s32* l;
+    s32* r;
+    s32* s;
+} AX_AUX_DATA;
 
-AXPROFILE* __AXGetCurrentProfile(void);
+typedef void (*AXCallback)();
+
+#define AX_MAX_VOICES 64
+
+#define AX_SRC_TYPE_NONE 0
+#define AX_SRC_TYPE_LINEAR 1
+#define AX_SRC_TYPE_4TAP_8K 2
+#define AX_SRC_TYPE_4TAP_12K 3
+#define AX_SRC_TYPE_4TAP_16K 4
+
+// sync flags
+#define AX_SYNC_FLAG_COPYALL (1 << 31)
+#define AX_SYNC_FLAG_COPYADPCMLOOP (1 << 20)
+#define AX_SYNC_FLAG_COPYRATIO (1 << 19)
+#define AX_SYNC_FLAG_COPYSRC (1 << 18)
+#define AX_SYNC_FLAG_COPYADPCM (1 << 17)
+#define AX_SYNC_FLAG_COPYCURADDR (1 << 16)
+#define AX_SYNC_FLAG_COPYENDADDR (1 << 15)
+#define AX_SYNC_FLAG_COPYLOOPADDR (1 << 14)
+#define AX_SYNC_FLAG_COPYLOOP (1 << 13)
+#define AX_SYNC_FLAG_COPYADDR (1 << 12)
+#define AX_SYNC_FLAG_COPYFIR (1 << 11)
+#define AX_SYNC_FLAG_SWAPVOL (1 << 10)
+#define AX_SYNC_FLAG_COPYVOL (1 << 9)
+#define AX_SYNC_FLAG_COPYDPOP (1 << 8)
+#define AX_SYNC_FLAG_COPYUPDATE (1 << 7)
+#define AX_SYNC_FLAG_COPYTSHIFT (1 << 6)
+#define AX_SYNC_FLAG_COPYITD (1 << 5)
+#define AX_SYNC_FLAG_COPYAXPBMIX (1 << 4)
+#define AX_SYNC_FLAG_COPYTYPE (1 << 3)
+#define AX_SYNC_FLAG_COPYSTATE (1 << 2)
+#define AX_SYNC_FLAG_COPYMXRCTRL (1 << 1)
+#define AX_SYNC_FLAG_COPYSELECT (1 << 0)
+
+#define AX_PRIORITY_STACKS 32
+
+// AX
+void AXInit(void);
+void AXQuit(void);
+
+// AXAlloc
+void AXFreeVoice(AXVPB* p);
+AXVPB* AXAcquireVoice(u32 priority, void (*callback)(void*), u32 userContext);
+
+// AXOut
+void AXRegisterCallback(AXCallback callback);
+
+// AXVPB
+void AXSetVoiceSrcType(AXVPB* p, u32 type);
+void AXSetVoiceState(AXVPB* p, u16 state);
+void AXSetVoiceType(AXVPB* p, u16 type);
+void AXSetVoiceAddr(AXVPB* p, AXPBADDR* addr);
+void AXSetVoiceLoop(AXVPB* p, u16 loop);
+void AXSetVoiceLoopAddr(AXVPB* p, u32 addr);
+void AXSetVoiceEndAddr(AXVPB* p, u32 addr);
+void AXSetVoiceCurrentAddr(AXVPB* p, u32 addr);
+void AXSetVoiceAdpcm(AXVPB* p, AXPBADPCM* adpcm);
+void AXSetVoiceSrc(AXVPB* p, AXPBSRC* src_);
+void AXSetVoiceSrcRatio(AXVPB* p, f32 ratio);
+
+// DSPCode
+extern u16 axDspSlaveLength;
+extern u16 axDspSlave[];
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif // _DOLPHIN_AX_H_

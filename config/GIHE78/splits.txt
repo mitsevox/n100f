@@ -982,14 +982,28 @@ dolphin/ar/arq.c: comment:8
 	.text       start:0x800F58E4 end:0x800F5DD0
 	.sbss       start:0x8025F2C0 end:0x8025F2F0
 
+dolphin/ax/AX.c: comment:8
+	.text       start:0x800F5DD0 end:0x800F5E38
+
 dolphin/ax/AXAlloc.c: comment:8
 	.text       start:0x800F5E38 end:0x800F630C
+	.bss        start:0x80242BD0 end:0x80242CE0
+	.sbss       start:0x8025F2F0 end:0x8025F2F8
+
+dolphin/ax/AXAux.c: comment:8
+	.text       start:0x800F630C end:0x800F6628
+	.bss        start:0x80242CE0 end:0x802459E0
+	.sbss       start:0x8025F2F8 end:0x8025F328
 
 dolphin/ax/AXCL.c: comment:8
-	.text       start:0x800F6630 end:0x800F666C
+	.text       start:0x800F6628 end:0x800F6A9C
+	.bss        start:0x802459E0 end:0x80245FE0
+	.sbss       start:0x8025F328 end:0x8025F338
 
 dolphin/ax/AXOut.c: comment:8
-	.text       start:0x800F6C98 end:0x800F6CF0
+	.text       start:0x800F6A9C end:0x800F715C
+	.bss        start:0x80245FE0 end:0x8024A800
+	.sbss       start:0x8025F338 end:0x8025F358
 
 dolphin/ax/AXSPB.c: comment:8
 	.text       start:0x800F715C end:0x800F7624
@@ -997,7 +1011,11 @@ dolphin/ax/AXSPB.c: comment:8
 	.sbss       start:0x8025F358 end:0x8025F380
 
 dolphin/ax/AXVPB.c: comment:8
-	.text       start:0x800F819C end:0x800F8734
+	.text       start:0x800F7624 end:0x800F8734
+	.data       start:0x801CABD0 end:0x801CAC80
+	.bss        start:0x8024A840 end:0x8025A640
+	.sbss       start:0x8025F380 end:0x8025F390
+	.sdata2     start:0x80262680 end:0x80262688
 
 dolphin/ax/AXProf.c: comment:8
 	.text       start:0x800F8734 end:0x800F877C
