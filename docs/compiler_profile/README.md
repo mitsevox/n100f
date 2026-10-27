@@ -12,6 +12,7 @@ The claims are the `compiler` rows in [`config/GIHE78/evidence.tsv`](../../confi
 | MSL C library | GC/1.3, `-inline auto,deferred`, `-char signed` | Twelve imported units match; six differ under GC/1.3.2, and none needs it. Signed char and deferred inlining are each required by some unit (`compiler` row in `evidence.tsv`). |
 | Runtime | GC/1.3.2 | `__va_arg.c` differs under GC/1.3 with the runtime flags, but matches under GC/1.3 with `-char signed`, so the imported units do not separate the two settings. |
 | Linker | GC/1.3.2 | Same release as the compiler. Every mwld from 1.0 to 2.6 relinks the baseline identically. |
+| RenderWare | GC/1.3 or GC/1.3.2, `-O4`, `-char signed`, no fused multiply-add, no `lmw`/`stmw` | Version family established (1.0 to 1.2.5n and 2.0 to 2.7 excluded); 1.3 and 1.3.2 are not separated. Probed in `rwcore` only. See [RenderWare](#renderware). |
 
 No single body identifies 1.3.2. Each excludes part of the candidate range, and only their intersection leaves 1.3.2:
 
@@ -48,8 +49,27 @@ probe --versions 1.2.5,1.2.5n,1.3.2 --flags-file $D/sdk.flags --sources-file $D/
 | `game_no_gccinc.flags` | The same without `-gccinc`, which 1.0 to 1.2.5n reject. |
 | `sdk.flags` | bfbb's SDK flags without `-gccinc`. |
 | `game_units.txt`, `sdk_units.txt` | The bfbb units marked Matching upstream (72 game, 88 SDK). |
+| `rw.flags`, `rw_probe/` | The RenderWare probe flags and this project's stimuli ([RenderWare](#renderware)). |
 
 The flag counts in `evidence.tsv` come from editing `game.flags` one setting at a time, in the order the row lists, and reading the 1.3.2 line of the summary. Keep probe output out of Git.
+
+## RenderWare
+
+No matching RenderWare source was found in the decompilations checked. In bfbb (d8e8eac), `src/rwsdk` holds `plugin/collis/ctbsp.c`, whose only function is an empty `_rpCollBSPTreeInit`, `tool/slerp/rtslerp.c`, which has no function at all because everything in it is commented out, and `tool/slerp/rtslerp.h`, a header with declarations only. bfbbdecomp/tssm (fc32870) has the same three `src/rwsdk` files as bfbb, as identical blobs, and no other RenderWare source. Jovinull/sonicheroes (8be2883) has four `rw_gcn_*.c` files, which are m2c output marked NonMatching in its `configure.py`. The stimuli in [`rw_probe/`](rw_probe/) were written for this project from the target's own disassembly of nine `rwcore` functions: the vector length and normalize functions, the case-insensitive string functions and the bounding-box functions. As with bfbb, a hit says which compiler produces the instructions, not what the original source was. From the repository root:
+
+```sh
+python3 tools/compiler_probe.py --dol orig/GIHE78/sys/main.dol --compilers build/compilers \
+    --wrapper build/tools/wibo --root docs/compiler_profile --flags-file docs/compiler_profile/rw.flags \
+    --versions 1.0,1.1,1.1p1,1.2.5,1.2.5n,1.3,1.3.2,1.3.2r,2.0,2.0p1,2.5,2.6,2.7 --summary 2 \
+    rw_probe/bbox.c rw_probe/str.c rw_probe/vec.c
+```
+
+All nine are found exactly once. Four of them (`0x80166800`, `0x80165B04`, `0x80165A88`, `0x80165BD8`) match only under 1.3, 1.3.2 and 1.3.2r. `-O3` loses six and `-char unsigned` loses the three string functions; `-O4,s`, `-fp_contract on` and `-inline off` change none of the nine bodies. Two settings come from the whole RenderWare text rather than the stimuli, because the game code differs on both:
+
+- There are no fused multiply-adds (`fmadds` and its relatives). The game text has 1,848, so RenderWare was built without contraction.
+- There are no `lmw`/`stmw`. RenderWare saves registers through `_savegpr_N`/`_restgpr_N` (418 branches), which is mwcceppc's output without `-use_lmw_stmw on`; the game text has 849 `lmw`.
+
+The `compiler` rows in `evidence.tsv` list each body. Nothing in `configure.py` uses this profile yet.
 
 ## Caveats
 
