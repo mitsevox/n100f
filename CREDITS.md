@@ -172,7 +172,7 @@ Local changes, all as the target requires:
 
 ## Bink DCT
 
-`src/bink/src/sdk/dct.c` is based on the Independent JPEG Group's software: its transforms are `jpeg_fdct_ifast` (`jfdctfst.c`) and `jpeg_idct_ifast` (`jidctfst.c`) from IJG release 6b, `jpegsrc.v6b.tar.gz` (SHA-256 `75c3ec241e9996504fe02a9ed4d12f16b74ade713972f3db9e65ce95cd27e35d`, https://www.ijg.org/files/), as RAD adapted them for Bink. This software is based in part on the work of the Independent JPEG Group. The copyright and no-warranty notice from the release's `README` (section "LEGAL ISSUES"), unaltered:
+`src/bink/src/sdk/dct.c` is based on the Independent JPEG Group's software: its transforms are `jpeg_fdct_ifast` (`jfdctfst.c`) and `jpeg_idct_ifast` (`jidctfst.c`) from IJG release 6b, `jpegsrc.v6b.tar.gz` (SHA-256 `75c3ec241e9996504fe02a9ed4d12f16b74ade713972f3db9e65ce95cd27e35d`, https://www.ijg.org/files/), as RAD adapted them for Bink. This software is based in part on the work of the Independent JPEG Group. The release's `README` is included unaltered as [`licenses/IJG-README`](licenses/IJG-README), as IJG's condition (1) requires. Its copyright and no-warranty notice (section "LEGAL ISSUES"):
 
 > The authors make NO WARRANTY or representation, either express or implied,
 > with respect to this software, its quality, accuracy, merchantability, or
