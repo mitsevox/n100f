@@ -806,9 +806,12 @@ Runtime.PPCEABI.H/__va_arg.c:
 
 Runtime.PPCEABI.H/global_destructor_chain.c:
 	.text       start:0x800E5774 end:0x800E57BC
+	.dtors      start:0x8018E5E0 end:0x8018E5E4
+	.sbss       start:0x8025F218 end:0x8025F220
 
 Runtime.PPCEABI.H/runtime.c:
 	.text       start:0x800E57BC end:0x800E5F4C
+	.rodata     start:0x801A7D90 end:0x801A7DA8
 
 MSL_C.PPCEABI.bare.H/abort_exit.c:
 	.text       start:0x800E60BC end:0x800E6188
