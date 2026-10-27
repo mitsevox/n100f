@@ -356,8 +356,9 @@ def main():
             out.write('\t'.join(r) + '\n')
     if args.symbols_out:
         pending = sorted(added)
+        lines = open(args.symbols).readlines()  # --symbols-out may be the same file
         with open(args.symbols_out, 'w') as out:
-            for line in open(args.symbols):
+            for line in lines:
                 m = re.match(r'(\S+) = (\.\w+):0x([0-9A-F]+); // type:(\w+)( size:0x[0-9A-F]+)?(.*)', line)
                 if m and m[2] == '.text':
                     a = int(m[3], 16)

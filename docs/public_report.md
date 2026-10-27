@@ -45,14 +45,14 @@ artifact against its copy of the producer policy, and never runs anything from t
 | `files.exact` | named units whose code and data bytes all match |
 
 The file counts are provisional. 123 game units are named from recovered splits (see
-[splits.md](splits.md)), and 118 library units (MetroTRK, runtime, MSL and the first part of the
-Dolphin SDK) are named by compiling public decompilations of those libraries (see
+[splits.md](splits.md)), and 134 library units (MetroTRK, runtime, MSL, the first part of the
+Dolphin SDK and CARD) are named by compiling public decompilations of those libraries (see
 [Library units](splits.md#library-units)); the rest are dtk's auto-generated address ranges. The game
 names come from the PS2 v1.01 DWARF and the boundaries are inferred, so no game unit boundary has been
 checked against Heavy Iron's objects. The basis string says so. Library units placed by a
 whole-object match have exact extents; the others have open edges. Naming those units did not change
 what `files.named` means, so the methodology and generation stay the same.
-Today's 1,148 named functions are 461 from before the library map and 687 library names. The 461
+Today's 1,150 named functions are 461 from before the library map and 689 library names. The 461
 are the names dtk's analysis assigned in `symbols.txt` (MW runtime and some GX SDK functions, plus
 `__fill_mem`, which dtk names once `memset` is named), `__start`, the seven names the xMorph unit
 added (its three functions and their four callees), 334 SLUS-20349 DWARF names applied from
@@ -61,8 +61,8 @@ count and pins agree with the DWARF), and 99 names added with the partial units:
 zCounter and zFog functions (by bfbb body and DWARF position), the xSerial Read/Write and
 xSGReadData/xSGWriteData overload groups (by matched caller, body shape and DWARF order), the xbinio,
 xhipio and xpkrsvc functions reached through their function tables (by table slot and DWARF order),
-the iMath functions and two xutil functions (by DWARF position). The 687 library names are 661 of the
-676 names `tools/splits/libmap.py` applies from map-backed symbol lists at the same size (the other
+the iMath functions and two xutil functions (by DWARF position). The 689 library names are 663 of the
+678 names `tools/splits/libmap.py` applies from map-backed symbol lists at the same size (the other
 15 functions were already named the same way by dtk), and 26 functions that dtk's signatures name
 once those names exist; see `config/GIHE78/evidence.tsv`. A named function is not a matched one.
 

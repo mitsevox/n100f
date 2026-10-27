@@ -11,13 +11,13 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `TRKLib` | `TRK_MINNOW_DOLPHIN` | GC/1.3 | `cflags_trk` | `trk` |
 | `RuntimeLib` | `Runtime.PPCEABI.H`, `MSL_C.PPCEABI.bare.H` | GC/1.3.2, or GC/1.3 per object | `cflags_runtime` | `runtime` |
 | `DolphinLib` | `dolphin/<library>` | GC/1.2.5n | `cflags_sdk` | `sdk` |
-| `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card`; `CARDOpen.c` takes `cflags_card_signed` | `sdk` |
+| `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card` | `sdk` |
 
 The flags are shown compatible with the target, not established. An MSL object that placed under only one compiler sets that version. The others take the library default, and their import must confirm it. Each import also reconfirms a pick that rests on a partial placement: `alloc.c` is GC/1.3 on 2 of its 34 functions.
 
 GC/1.2.5n writes `.comment` version 8 (compiler 2.3.0.1). GC/1.3 and GC/1.3.2 both write version 10 (2.4.2.1), which is the project default (`mw_comment_version`). The SDK and CARD units therefore carry `comment:8` in `splits.txt`.
 
-CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compiles it at `-opt level=0 -inline off -schedule off -sym on` with `DEBUG=1`, so its assertions are compiled in, whatever `--debug` the build uses.
+CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compiles it at `-opt level=0 -inline off -schedule off -sym on -char signed` with `DEBUG=1`, the same flags as libmap's `card_debug` profile, so its assertions are compiled in, whatever `--debug` the build uses.
 
 ## Headers
 

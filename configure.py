@@ -269,8 +269,7 @@ cflags_trk = [
 ]
 
 # CARD profile ("card_debug"): the GIHE78 CARD library is the SDK's debug build, which is
-# compiled at -opt level=0 with symbols and assertions. CARDOpen.c places with -char signed
-# ("card_debug_signed").
+# compiled at -opt level=0 with symbols and assertions.
 cflags_card = [
     *[f for f in cflags_base if f not in (*_lib_drop, "-O4,p", "-inline auto", "-sym on",
                                           "-DDEBUG=1", "-DNDEBUG=1")],
@@ -279,9 +278,8 @@ cflags_card = [
     "-schedule off",
     "-sym on",
     "-DDEBUG=1",
-    "-char unsigned",
+    "-char signed",
 ]
-cflags_card_signed = [*[f for f in cflags_card if f != "-char unsigned"], "-char signed"]
 
 # REL flags
 cflags_rel = [
@@ -632,7 +630,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "dolphin/card/CARDCheck.c"),
             Object(NonMatching, "dolphin/card/CARDMount.c"),
             Object(NonMatching, "dolphin/card/CARDFormat.c"),
-            Object(NonMatching, "dolphin/card/CARDOpen.c", cflags=cflags_card_signed),
+            Object(NonMatching, "dolphin/card/CARDOpen.c"),
             Object(NonMatching, "dolphin/card/CARDCreate.c"),
             Object(NonMatching, "dolphin/card/CARDRead.c"),
             Object(NonMatching, "dolphin/card/CARDWrite.c"),
