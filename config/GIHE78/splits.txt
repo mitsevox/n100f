@@ -817,13 +817,13 @@ MSL_C.PPCEABI.bare.H/abort_exit.c:
 	.text       start:0x800E60BC end:0x800E6188
 
 MSL_C.PPCEABI.bare.H/alloc.c:
-	.text       start:0x800E6F3C end:0x800E7174
+	.text       start:0x800E6188 end:0x800E7350
 
 MSL_C.PPCEABI.bare.H/ansi_files.c:
-	.text       start:0x800E744C end:0x800E74E4
+	.text       start:0x800E7350 end:0x800E7650
 
 MSL_C.PPCEABI.bare.H/ansi_fp.c:
-	.text       start:0x800E924C end:0x800E92BC
+	.text       start:0x800E7650 end:0x800E92BC
 
 MSL_C.PPCEABI.bare.H/arith.c:
 	.text       start:0x800E92BC end:0x800E92CC
@@ -850,7 +850,10 @@ MSL_C.PPCEABI.bare.H/mbstring.c:
 	.text       start:0x800EA910 end:0x800EAC80
 
 MSL_C.PPCEABI.bare.H/mem.c:
-	.text       start:0x800EAC80 end:0x800EB0D0
+	.text       start:0x800EAC80 end:0x800EADF0
+
+MSL_C.PPCEABI.bare.H/mem_funcs.c:
+	.text       start:0x800EADF0 end:0x800EB0D0
 
 MSL_C.PPCEABI.bare.H/misc_io.c:
 	.text       start:0x800EB0D0 end:0x800EB0F8
@@ -858,17 +861,20 @@ MSL_C.PPCEABI.bare.H/misc_io.c:
 MSL_C.PPCEABI.bare.H/printf.c:
 	.text       start:0x800EB0F8 end:0x800ED118
 
+MSL_C.PPCEABI.bare.H/qsort.c:
+	.text       start:0x800ED118 end:0x800ED288
+
 MSL_C.PPCEABI.bare.H/rand.c:
 	.text       start:0x800ED288 end:0x800ED2A8
 
 MSL_C.PPCEABI.bare.H/scanf.c:
-	.text       start:0x800ED36C end:0x800ED3FC
+	.text       start:0x800ED2A8 end:0x800EE2F0
 
 MSL_C.PPCEABI.bare.H/string.c:
-	.text       start:0x800EE6E8 end:0x800EE7A0
+	.text       start:0x800EE2F0 end:0x800EE7A0
 
 MSL_C.PPCEABI.bare.H/strtold.c:
-	.text       start:0x800EE7BC end:0x800EE848
+	.text       start:0x800EE7BC end:0x800EF854
 
 MSL_C.PPCEABI.bare.H/strtoul.c:
 	.text       start:0x800EF854 end:0x800F0098

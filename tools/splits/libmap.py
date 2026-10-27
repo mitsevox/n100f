@@ -221,7 +221,8 @@ def main():
         if cand['upstream'] not in args.checkout:
             continue
         root = args.checkout[cand['upstream']]
-        sources = sorted({os.path.relpath(p, root) for pat in cand['sources'] for p in glob.glob(os.path.join(root, pat))})
+        sources = sorted({os.path.relpath(p, root) for pat in cand['sources'] for p in glob.glob(os.path.join(root, pat))}
+                         - set(cand.get('exclude', [])))
         for v in args.manifest['profiles'][cand['profile']]['versions']:
             for s in sources:
                 jobs.append((args, cand, v, s))

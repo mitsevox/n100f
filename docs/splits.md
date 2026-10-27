@@ -65,24 +65,24 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 
 # Library units
 
-`splits.txt` also names 118 library units from `0x800DE530` to `0x80111EC0`, after the game units. They come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target.
+`splits.txt` also names 120 library units from `0x800DE530` to `0x80111EC0`, after the game units. They come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target.
 
 | Library | Units | Whole-object matches | Functions placed |
 | --- | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN` (MetroTRK v0.10) | 21 | 14 | 119 |
 | `Runtime.PPCEABI.H` | 3 | 3 | 16 |
-| `MSL_C.PPCEABI.bare.H` | 33 | 24 | 75 |
+| `MSL_C.PPCEABI.bare.H` | 35 | 27 | 110 |
 | `dolphin/<library>` (SDK, OS built Apr 16 2002) | 61 | 22 | 515 |
 
 Each unit stays in the original bytes until its source lands and passes review; [libraries.md](libraries.md#imported-units) lists the imported ones. `config/GIHE78/lib_units.tsv` lists each unit with its match kind, function counts, chosen source and the compiler versions that produced it.
 
 ## Method
 
-1. **Candidates.** `config/GIHE78/libmap.json` lists each upstream with its URL, pinned commit and licence, the compiler profiles (`sdk`: GC/1.2.5n; `runtime` and `trk`: GC/1.3 and GC/1.3.2), and the source globs to try. The tool checks that every checkout is at its pinned commit.
+1. **Candidates.** `config/GIHE78/libmap.json` lists each upstream with its URL, pinned commit and licence, the compiler profiles (`sdk`: GC/1.2.5n; `runtime`, `msl` and `trk`: GC/1.3 and GC/1.3.2), and the source globs to try, less any `exclude` list. Each MSL upstream is listed twice, under `runtime` and under `msl` (the library's own flags: deferred inlining and signed `char`), because some upstreams write their files in the target's order and others in Metrowerks' source order, which deferred inlining reverses. sonicheroes' `mem.c` is excluded: it joins what the Wind Waker map shows as two objects, `mem.c` and `mem_funcs.c`. The tool checks that every checkout is at its pinned commit.
 2. **Probe.** Each source file is compiled under its profile with every listed version. In each function, the fields a relocation fills are masked. A function places the object when its masked body occurs exactly once in `main.dol`, at a function start, at full size.
 3. **Placement.** The whole object `.text` is first compared in place. If it matches, the unit's extent and every function in it are exact. Otherwise the unit keeps the longest run of unique hits that is in order both in the object and in the target, with gaps no wider than twice the object distance plus `0x400`. For each object path, the best placement wins: a whole-object match first, then the most matched bytes, then manifest order. Placements may not overlap.
 4. **Extents.** A whole-object match fixes dtk's function boundaries: inner functions dtk invented are removed, an overlapping predecessor is cut short, functions dtk missed are added, and sizes are corrected. The tool prints a `note:` for each change.
-5. **Names.** A matched function takes its upstream name only when that name labels a function of the same size in a symbol list the manifest marks as map-backed. Those lists are Animal Crossing (GAFE01, from its `static.map`), The Wind Waker (GZLE01, from the debug maps) and Final Fantasy Crystal Chronicles (GCCE01, from its debug symbols). Other matched functions keep their `fn_` labels: 47 today, 37 whose upstream name is in none of the three lists and 10 whose name is there only at another size (`OSPanic`, `fopen`, ...). A function that is static in the compiled object gets `scope:local`.
+5. **Names.** A matched function takes its upstream name only when that name labels a function of the same size in a symbol list the manifest marks as map-backed. Those lists are Animal Crossing (GAFE01, from its `static.map`), The Wind Waker (GZLE01, from the debug maps) and Final Fantasy Crystal Chronicles (GCCE01, from its debug symbols). Other matched functions keep their `fn_` labels: 63 today, 49 whose upstream name is in none of the three lists and 14 whose name is there only at another size (`OSPanic`, `fopen`, ...). A function that is static in the compiled object gets `scope:local`.
 6. **Paths.** Runtime files go under `Runtime.PPCEABI.H/`, MSL under `MSL_C.PPCEABI.bare.H/`, MetroTRK under `TRK_MINNOW_DOLPHIN/`, and SDK files under `dolphin/<library>/`, with the library taken from ac-decomp's directory layout.
 
 In `evidence.tsv`, each unit has a `target` `unit` row whose edges are `exact` where the next unit abuts it and `open` otherwise. Each placed function has a `target` `function` row, and each name libmap applies has a `related` `name` row that cites the symbol lists. Three `compiler` rows record the per-object versions: MetroTRK is GC/1.3, MSL mixes GC/1.3 and GC/1.3.2 by object, and `__va_arg.c` is GC/1.3.2. The `linker` row records the one linker-script change: `config/GIHE78/ldscript.tpl` is dtk's default template with `_db_stack_addr` at `_stack_addr + 0x1000`, which the relink needs once `InitMetroTRK` and `OSInit` are named.
@@ -113,7 +113,7 @@ On the committed files it writes no rows. From the baseline, the sequence is: ru
 ## Limits
 
 - Data sections are not split. Each import PR maps its unit's data when the source compiles.
-- An `open` edge only bounds what matched. The real object can extend past it, and 55 of the 118 units are partial placements.
+- An `open` edge only bounds what matched. The real object can extend past it, and 54 of the 120 units are partial placements.
 - Library units count as named files in the public report. Function bytes are unchanged; named functions rose from 461 to 1,148.
 - Upstream source is evidence that the code exists, not that its source meets this project's standards. Every function copied in a later PR is reviewed like any other.
 - The SDK units carry `comment:8` in `splits.txt`, as GC/1.2.5n writes; see [libraries.md](libraries.md).
