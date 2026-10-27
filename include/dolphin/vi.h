@@ -24,6 +24,7 @@ typedef enum {
     VI_TVMODE_NTSC_INT = VI_TVMODE(VI_NTSC, VI_INTERLACE),
     VI_TVMODE_NTSC_DS = VI_TVMODE(VI_NTSC, VI_NON_INTERLACE),
     VI_TVMODE_NTSC_PROG = VI_TVMODE(VI_NTSC, VI_PROGRESSIVE),
+    VI_TVMODE_NTSC_3D = 3,
     VI_TVMODE_PAL_INT = VI_TVMODE(VI_PAL, VI_INTERLACE),
     VI_TVMODE_PAL_DS = VI_TVMODE(VI_PAL, VI_NON_INTERLACE),
     VI_TVMODE_EURGB60_INT = VI_TVMODE(VI_EURGB60, VI_INTERLACE),
@@ -40,8 +41,21 @@ typedef enum {
     VI_XFBMODE_DF
 } VIXFBMode;
 
+typedef void (*VIRetraceCallback)(u32 retraceCount);
+
 extern volatile u16 __VIRegs[] AT_ADDRESS(0xCC002000);
 
+u32 VIGetCurrentLine(void);
+void VIConfigure(const struct _GXRenderModeObj* rm);
+void VISetBlack(BOOL black);
+void VIWaitForRetrace(void);
+u32 VIGetRetraceCount(void);
+VIRetraceCallback VISetPreRetraceCallback(VIRetraceCallback callback);
+VIRetraceCallback VISetPostRetraceCallback(VIRetraceCallback callback);
+void VISetNextFrameBuffer(void* fb);
+void VIInit(void);
+void VIFlush(void);
+u32 VIGetNextField(void);
 u32 VIGetTvFormat(void);
 
 #ifdef __cplusplus

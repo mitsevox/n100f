@@ -35,6 +35,8 @@ BOOL __OSUnlockSram(BOOL commit);
 BOOL __OSSyncSram(void);
 OSSramEx* __OSLockSramEx(void);
 BOOL __OSUnlockSramEx(BOOL commit);
+u16 OSGetWirelessID(s32 chan);
+void OSSetWirelessID(s32 chan, u16 id);
 
 #ifdef __cplusplus
 }
