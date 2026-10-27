@@ -18,6 +18,7 @@ typedef enum {
 
     DS_EventQueueFull = 0x100,
 
+    DS_NoMessageBufferAvailable = 0x300,
     DS_MessageBufferOverflow = 0x301,
     DS_MessageBufferReadError = 0x302,
 
@@ -86,7 +87,14 @@ typedef enum {
 typedef enum {
     DS_IONoError = 0,
     DS_IOError = 1,
+    DS_IOEOF = 2,
 } DSIOResult;
+
+// Host file handles of the standard streams.
+typedef enum {
+    DS_Stdin = 0,
+    DS_Stdout = 1,
+} DSFileHandle;
 
 // Serial framing receiver states.
 typedef enum {
@@ -359,6 +367,7 @@ DSError TRKInitializeSerialHandler(void);
 DSError TRKTerminateSerialHandler(void);
 
 // usr_put.c
+BOOL usr_puts_serial(const char* msg);
 void usr_put_initialize(void);
 
 // dispatch.c
@@ -492,6 +501,12 @@ void ReserveEXI2Port(void);
 
 // targcont.c
 unsigned int TRKTargetContinue(void);
+
+// targsupp.s
+int TRKAccessFile(u32 command, u32 file_handle, size_t* length, u8* buffer);
+int TRKOpenFile(u32 command, const char* name, u8 mode, u32* handle);
+int TRKCloseFile(u32 command, u32 file_handle);
+int TRKPositionFile(u32 command, u32 file_handle, u32* position, u8 mode);
 
 // target_options.c
 void SetUseSerialIO(u8 sio);
