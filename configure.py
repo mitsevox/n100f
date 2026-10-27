@@ -520,7 +520,7 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "db",
         [
-            Object(NonMatching, "dolphin/db/db.c"),
+            Object(Matching, "dolphin/db/db.c"),
         ],
     ),
     DolphinLib(
@@ -559,8 +559,8 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "mtx",
         [
-            Object(NonMatching, "dolphin/mtx/mtx.c"),
-            Object(NonMatching, "dolphin/mtx/mtx44.c"),
+            Object(Matching, "dolphin/mtx/mtx.c"),
+            Object(Matching, "dolphin/mtx/mtx44.c"),
         ],
     ),
     DolphinLib(
@@ -568,29 +568,29 @@ config.libs: List[Dict[str, Any]] = [
         [
             Object(NonMatching, "dolphin/os/OS.c"),
             Object(NonMatching, "dolphin/os/OSAlarm.c"),
-            Object(NonMatching, "dolphin/os/OSAlloc.c"),
-            Object(NonMatching, "dolphin/os/OSAudioSystem.c"),
+            Object(Matching, "dolphin/os/OSAlloc.c"),
+            Object(Matching, "dolphin/os/OSAudioSystem.c"),
             Object(NonMatching, "dolphin/os/OSCache.c"),
             Object(NonMatching, "dolphin/os/OSContext.c"),
             Object(NonMatching, "dolphin/os/OSError.c"),
             Object(NonMatching, "dolphin/os/OSInterrupt.c"),
-            Object(NonMatching, "dolphin/os/OSLink.c"),
+            Object(Matching, "dolphin/os/OSLink.c"),
             Object(NonMatching, "dolphin/os/OSMemory.c"),
             Object(NonMatching, "dolphin/os/OSReboot.c"),
             Object(NonMatching, "dolphin/os/OSReset.c"),
-            Object(NonMatching, "dolphin/os/OSResetSW.c"),
+            Object(Matching, "dolphin/os/OSResetSW.c"),
             Object(NonMatching, "dolphin/os/OSRtc.c"),
-            Object(NonMatching, "dolphin/os/OSSync.c"),
+            Object(Matching, "dolphin/os/OSSync.c"),
             Object(NonMatching, "dolphin/os/OSThread.c"),
             Object(NonMatching, "dolphin/os/OSTime.c"),
-            Object(NonMatching, "dolphin/os/__ppc_eabi_init.c"),
+            Object(Matching, "dolphin/os/__ppc_eabi_init.c"),
         ],
     ),
     DolphinLib(
         "si",
         [
             Object(NonMatching, "dolphin/si/SIBios.c"),
-            Object(NonMatching, "dolphin/si/SISamplingRate.c"),
+            Object(Matching, "dolphin/si/SISamplingRate.c"),
         ],
     ),
     DolphinLib(
