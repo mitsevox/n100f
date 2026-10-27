@@ -5,18 +5,62 @@
 
 // RenderWare types get members once reconstructed code accesses them or a declared type
 // embeds them; the others stay opaque.
-struct RpAtomic;
-struct RpMaterial;
-struct RpSector;
+typedef struct RpAtomic RpAtomic;
+typedef struct RpSector RpSector;
+typedef struct RpPolygon RpPolygon;
+typedef struct RpVertexNormal RpVertexNormal;
+typedef struct RwTexCoords RwTexCoords;
+typedef struct RwResEntry RwResEntry;
+typedef struct RpCollSector RpCollSector;
+typedef struct RpMeshHeader RpMeshHeader;
+typedef struct RxPipeline RxPipeline;
 
-enum RpWorldRenderOrder
+typedef struct RpMaterial RpMaterial;
+struct RpMaterial
+{
+    RwTexture* texture;
+    RwRGBA color;
+    RxPipeline* pipeline;
+    RwSurfaceProperties surfaceProps;
+    S16 refCount;
+    S16 pad;
+};
+
+typedef struct RpWorldSector RpWorldSector;
+struct RpWorldSector
+{
+    S32 type;
+    RpPolygon* polygons;
+    RwV3d* vertices;
+    RpVertexNormal* normals;
+    RwTexCoords* texCoords[8];
+    RwRGBA* preLitLum;
+    RwResEntry* repEntry;
+    RwLinkList collAtomicsInWorldSector;
+    RwLinkList noCollAtomicsInWorldSector;
+    RwLinkList lightsInWorldSector;
+    RwBBox boundingBox;
+    RwBBox tightBoundingBox;
+    RpCollSector* colSectorRoot;
+    RpMeshHeader* mesh;
+    RxPipeline* pipeline;
+    U16 matListWindowBase;
+    U16 numVertices;
+    U16 numPolygons;
+    U16 pad;
+};
+
+typedef RpWorldSector* (*RpWorldSectorCallBackRender)(RpWorldSector* worldSector);
+
+typedef enum RpWorldRenderOrder
 {
     rpWORLDRENDERNARENDERORDER = 0,
     rpWORLDRENDERFRONT2BACK = 1,
     rpWORLDRENDERBACK2FRONT = 2,
     rpWORLDRENDERORDERFORCEENUMSIZEINT = 0x7FFFFFFF
-};
+} RpWorldRenderOrder;
 
+typedef struct RpMaterialList RpMaterialList;
 struct RpMaterialList
 {
     RpMaterial** materials;
@@ -24,7 +68,7 @@ struct RpMaterialList
     S32 space;
 };
 
-// Partial: members from +0x68 on are not declared, so sizeof(RpWorld) is not its size.
+typedef struct RpWorld RpWorld;
 struct RpWorld
 {
     RwObject object;
@@ -40,8 +84,12 @@ struct RpWorld
     RwLinkList directionalLightList;
     RwV3d worldOrigin;
     RwBBox boundingBox;
+    RwSurfaceProperties surfaceProps;
+    RpWorldSectorCallBackRender renderCallBack;
+    RxPipeline* pipeline;
 };
 
+typedef struct RpLight RpLight;
 struct RpLight
 {
     RwObjectHasFrame object;
@@ -57,6 +105,8 @@ struct RpLight
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+S32 RpLightDestroy(RpLight* light);
 
 RpWorld* RpWorldAddCamera(RpWorld* world, RwCamera* camera);
 RpWorld* RpWorldRemoveCamera(RpWorld* world, RwCamera* camera);
