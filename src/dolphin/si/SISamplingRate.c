@@ -2,6 +2,8 @@
 #include <dolphin/si.h>
 #include <dolphin/vi.h>
 
+#define VI_CLOCK_SEL 54
+
 static u32 SamplingRate = 0;
 
 typedef struct XY {

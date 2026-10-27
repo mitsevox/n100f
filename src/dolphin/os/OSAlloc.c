@@ -60,7 +60,7 @@ static HeapCell* DLInsert(HeapCell* list, HeapCell* cell)
     return cell;
 }
 
-static inline HeapCell* DLExtract(HeapCell* list, HeapCell* cell)
+static HeapCell* DLExtract(HeapCell* list, HeapCell* cell)
 {
     if (cell->next != NULL) {
         cell->next->prev = cell->prev;

@@ -1,13 +1,8 @@
 #include <dolphin/base/PPCArch.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef void (*voidfunctionptr)(void);
 
 __declspec(section ".init") extern voidfunctionptr _ctors[];
-__declspec(section ".init") extern voidfunctionptr _dtors[];
 
 void __OSPSInit(void);
 void __OSCacheInit(void);
@@ -63,7 +58,3 @@ void _ExitProcess(void)
 {
     PPCHalt();
 }
-
-#ifdef __cplusplus
-}
-#endif

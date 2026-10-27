@@ -12,8 +12,6 @@ extern "C" {
 #define VI_MPAL 2
 #define VI_EURGB60 5
 
-#define VI_CLOCK_SEL 54
-
 extern volatile u16 __VIRegs[] AT_ADDRESS(0xCC002000);
 
 u32 VIGetTvFormat(void);
