@@ -7,10 +7,25 @@
 
 struct xAnimTransition;
 struct xAnimTable;
-struct xAnimFile;
 struct xAnimEffect;
 struct xAnimTransitionList;
 struct xModelInstance;
+
+struct xAnimFile
+{
+    xAnimFile* Next;
+    char* Name;
+    U32 ID;
+    U32 FileFlags;
+    F32 Duration;
+    F32 TimeOffset;
+    F32 PhysBase[4];
+    F32 PhysDelta[4];
+    U16 BoneCount;
+    U8 NumAnims[2];
+    void** RawData;
+    void* Physics;
+};
 
 struct xAnimState
 {
@@ -71,7 +86,7 @@ struct xAnimTransition
     U16* BlendOffset;
 };
 
-// Partial: members up to Translate.
+// Partial: members up to ModelInst.
 struct xAnimPlay
 {
     xAnimPlay* Next;
@@ -81,6 +96,11 @@ struct xAnimPlay
     void* Object;
     xAnimTable* Table;
     xVec3 Translate[2];
+    U32 pad1;
+    xQuat Quat[2];
+    F32 Yaw;
+    xMemPool* Pool;
+    xModelInstance* ModelInst;
 };
 
 typedef U32 (*xAnimTransitionConditionalCallback)(xAnimTransition*, xAnimSingle*, void*);
