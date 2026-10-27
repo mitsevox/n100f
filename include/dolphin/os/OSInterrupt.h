@@ -78,6 +78,7 @@ typedef void (*__OSInterruptHandler)(__OSInterrupt interrupt, OSContext* context
 #define OS_INTERRUPTMASK_PI (OS_INTERRUPTMASK_PI_CP | OS_INTERRUPTMASK_PI_SI | OS_INTERRUPTMASK_PI_DI | OS_INTERRUPTMASK_PI_RSW | OS_INTERRUPTMASK_PI_ERROR | OS_INTERRUPTMASK_PI_VI | OS_INTERRUPTMASK_PI_PE_TOKEN | OS_INTERRUPTMASK_PI_PE_FINISH | OS_INTERRUPTMASK_PI_DEBUG | OS_INTERRUPTMASK_PI_HSP)
 
 BOOL OSDisableInterrupts(void);
+BOOL OSEnableInterrupts(void);
 BOOL OSRestoreInterrupts(BOOL level);
 __OSInterruptHandler __OSSetInterruptHandler(__OSInterrupt interrupt, __OSInterruptHandler handler);
 OSInterruptMask __OSMaskInterrupts(OSInterruptMask mask);

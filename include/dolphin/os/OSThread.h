@@ -67,6 +67,7 @@ s32 OSEnableScheduler(void);
 void OSSleepThread(OSThreadQueue* queue);
 void OSWakeupThread(OSThreadQueue* queue);
 void OSCancelThread(OSThread* thread);
+void OSYieldThread(void);
 
 #ifdef __cplusplus
 }
