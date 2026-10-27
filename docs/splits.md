@@ -8,6 +8,14 @@ The names and extents are claims, not established facts. In `evidence.tsv`:
 
 `config/GIHE78/split_units.tsv` lists all 134 candidate units, and `config/GIHE78/split_edges.tsv` gives every text and data edge with its class and the number of references that cross it.
 
+## CARD
+
+The CARD library, `0x80130994` to `0x801372EC`, is the SDK's debug build: its 102 assertion calls to `OSPanic` (`0x80105548`) are compiled in, and its code compiles from ac-decomp's `src/static/dolphin/card` with `DEBUG=1` under GC/1.2.5n at `-opt level=0 -inline off -schedule off -sym on -char signed`, the flags of the SDK's debug libraries. `-sym on` changes the code: without it the same sources place 8 functions instead of 68, and under the release `sdk` profile they place 1. `-char signed` places one function more than `-char unsigned` (`__CARDCompareFileName`, in `CARDOpen.c`) and the same in every other object, so one signed profile covers the library. The `card_debug` profile holds these flags, with the rest of `configure.py`'s base flags so the two compile the same way, and the ac-decomp candidate that uses it carries its own `region`, so it places nothing outside CARD and the other candidates place nothing inside it. The library itself starts at `0x80130990`: the `blr` there is the empty `__CARDDefaultApiCallback`, the first function of `CARDBios.c`, which compiles to that one instruction directly before `__CARDSyncCallback`. libmap does not place it, because a lone `blr` matches anywhere, so the `CARDBios.c` unit starts at `0x80130994` until the import links the whole object.
+
+The units follow the SDK's link order: CARDBios, CARDUnlock, CARDRdwr, CARDBlock, CARDDir, CARDCheck, CARDMount, CARDFormat, CARDOpen, CARDCreate, CARDRead, CARDWrite, CARDDelete, CARDStat, CARDStatEx and CARDNet. The linker removed functions the game never calls (`CARDWrite`, `CARDFastDelete`, ...), so an object matches whole only where nothing was removed. The rest are partial placements with `open` edges: ac-decomp's sources are an older SDK revision, and some assertion line numbers in `CARDBios.c`, `CARDMount.c`, `CARDFormat.c` and `CARDUnlock.c` differ from the target's. Only `__CARDGetControlBlock` and `__CARDIsPublic` take names, because the map-backed symbol lists come from release builds, where the other functions have different sizes.
+
+The 14 KB after CARD, `0x801372EC` to `0x8013AA64`, is not CARD. It resembles RenderWare's RpCollision plugin as BfBB links it, without matching it in order: of the first 7 function sizes, 4 equal BfBB's `ctgeom.c` sizes in the same positions (0x12C, 0x1D8, 0x3A8, and 0xF8 for `RpAtomicForAllIntersections` at `0x8013880C`), and the longest run of equal sizes is 2. The RenderWare split settles it.
+
 ## Method
 
 1. **Anchors.** Anchors come in two kinds.
@@ -61,11 +69,11 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 - xMath3.cpp is a partial unit in `configure.py`. The tail-call rule gave it the wrappers `xMath3Exit` and `xMath3Init` (`0x8002F8E0`, `0x8002F900`), which count as unmatched, so the game total went from 267 to 269 functions with 77 still exact.
 - iModel.cpp runs to `0x8000EBC0` on call references, not on PS2 sizes alone: `0x8000E994` passes `0x8000EA5C` to `RpClumpForAllAtomics`, `0x8000EA5C` passes the GC-only static `0x8000EB64`, and `0x8000EB60` is the empty `iModelInit`, which xModel calls.
 - Header inline copies (`xMath3.h`, `xEnt.h`, `xModel.h`) are left to whichever unit holds them.
-- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), Bink, the CARD library or RenderWare. MetroTRK, the runtime, MSL and the first part of the Dolphin SDK are mapped separately, under [Library units](#library-units), and Bink under [Bink units](#bink-units).
+- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`), Bink or RenderWare. MetroTRK, the runtime, MSL, the first part of the Dolphin SDK and the CARD library are mapped separately, under [Library units](#library-units), and Bink under [Bink units](#bink-units).
 
 # Library units
 
-`splits.txt` also names 118 library units from `0x800DE530` to `0x80111EC0`, after the game units. They come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target.
+`splits.txt` also names 135 library units after the game units: 119 from `0x800DE530` to `0x80111EC0`, and the CARD library's 16 from `0x80130994` to `0x801372EC`, after Bink. 134 of them come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target. The table counts libmap's placements, as `config/GIHE78/lib_units.tsv` records them; import corrections are described after it.
 
 | Library | Units | Whole-object matches | Functions placed |
 | --- | --- | --- | --- |
@@ -73,8 +81,11 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 | `Runtime.PPCEABI.H` | 3 | 3 | 16 |
 | `MSL_C.PPCEABI.bare.H` | 33 | 24 | 75 |
 | `dolphin/<library>` (SDK, OS built Apr 16 2002) | 61 | 22 | 515 |
+| `dolphin/card` (the SDK's debug build) | 16 | 5 | 68 |
 
-Each unit stays in the original bytes until its source lands and passes review; [libraries.md](libraries.md#imported-units) lists the imported ones. `config/GIHE78/lib_units.tsv` lists each unit with its match kind, function counts, chosen source and the compiler versions that produced it.
+Each unit stays in the original bytes until its source lands and passes review; [libraries.md](libraries.md#imported-units) lists the imported ones. `config/GIHE78/lib_units.tsv` lists each unit as libmap placed it, with its match kind, function counts, chosen source and the compiler versions that produced it.
+
+Imports correct the map where compiled source shows more than libmap could place. Functions of 8 to 16 bytes are too common in the target to place by body, so they were left out of the first map. The MetroTRK import added a unit, `mutex_TRK.c`, at `0x800E2BEC` (three 8-byte functions between `support.c` and `notify.c`, the order the related maps give). It extended `msghndlr.c` to `0x800E232C` to take `SetTRKConnected` and `GetTRKConnected`, and gave `mem_TRK.c` its `.init` functions `TRK_memset` and `TRK_memcpy` at `0x80003100`. That places 7 more TRK functions than the table shows.
 
 ## Method
 
@@ -101,7 +112,7 @@ python3 tools/splits/libmap.py --dol orig/GIHE78/sys/main.dol \
   --evidence librows.tsv --symbols-out config/GIHE78/symbols.txt
 ```
 
-On the committed files this is a fixed point: `libunits.txt` equals the library part of `splits.txt`, `librows.tsv` equals the tool's rows in `evidence.tsv`, and `symbols.txt` comes back unchanged. Then check the signature rows with a decomp-toolkit checkout at the pinned version:
+On the committed files this is a fixed point: `libunits.txt` equals the libmap units in `splits.txt` (the Bink units sit between the SDK units and CARD), `librows.tsv` equals the tool's rows in `evidence.tsv`, and `symbols.txt` comes back unchanged. Then check the signature rows with a decomp-toolkit checkout at the pinned version:
 
 ```sh
 python3 tools/splits/sigrows.py --dtk-src ../decomp-toolkit --dol orig/GIHE78/sys/main.dol \
@@ -113,8 +124,8 @@ On the committed files it writes no rows. From the baseline, the sequence is: ru
 ## Limits
 
 - Data sections are split only where an import has reproduced them. Each import PR maps its unit's data when the source compiles.
-- An `open` edge only bounds what matched. The real object can extend past it, and 55 of the 118 units are partial placements.
-- Library units count as named files in the public report. Function bytes are unchanged; named functions rose from 461 to 1,148.
+- An `open` edge only bounds what matched. The real object can extend past it, and 66 of libmap's 134 units are partial placements.
+- Library units count as named files in the public report. Function bytes are unchanged; named functions rose from 461 to 1,148, and to 1,150 with CARD (the Bink names below add 336).
 - Upstream source is evidence that the code exists, not that its source meets this project's standards. Every function copied in a later PR is reviewed like any other.
 - The SDK units carry `comment:8` in `splits.txt`, as GC/1.2.5n writes; see [libraries.md](libraries.md).
 
@@ -147,4 +158,4 @@ bfbb does not say where its Bink paths, boundaries and names come from, so they 
 - None of the 190 functions bfbb marks `scope:local` is called from outside its unit (455 direct calls to Bink functions checked in the whole of `.text`).
 - Game code calls only Bink's public API: `BinkOpen`, `BinkClose`, `BinkDoFrame`, `BinkNextFrame`, `BinkWait`, `BinkGoto`, `BinkCopyToBuffer`, `BinkSetVolume`, `BinkGetError`, `RADSetMemory` and `RADSetAudioMemory`.
 
-In `evidence.tsv` each unit has a `related` `unit` row, each function a `function` row and a `related` `name` row. A `compiler` row records that the block is ProDG code. A unit's data sections are split when its import reproduces them; so far that is `fft.c`'s `.rodata`.
+In `evidence.tsv` each unit has a `unit` row, each function a `function` row and a `related` `name` row. The `unit` and `function` rows are `related` until an import reproduces the unit, and `target` after (so far `fft.c`). A `compiler` row records that the block is ProDG code. A unit's data sections are split when its import reproduces them; so far that is `fft.c`'s `.rodata`.

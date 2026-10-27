@@ -743,9 +743,12 @@ TRK_MINNOW_DOLPHIN/mainloop.c:
 
 TRK_MINNOW_DOLPHIN/nubevent.c:
 	.text       start:0x800DE628 end:0x800DE850
+	.bss        start:0x8023E5D0 end:0x8023E5F8
 
 TRK_MINNOW_DOLPHIN/nubinit.c:
 	.text       start:0x800DE850 end:0x800DE9D0
+	.rodata     start:0x801A7C80 end:0x801A7CA0
+	.bss        start:0x8023E5F8 end:0x8023E600
 
 TRK_MINNOW_DOLPHIN/msg.c:
 	.text       start:0x800DE9D0 end:0x800DEBAC
@@ -755,18 +758,26 @@ TRK_MINNOW_DOLPHIN/msgbuf.c:
 
 TRK_MINNOW_DOLPHIN/serpoll.c:
 	.text       start:0x800DF5D8 end:0x800DF9A4
+	.bss        start:0x8023FFB0 end:0x8023FFC8
 
 TRK_MINNOW_DOLPHIN/usr_put.c:
 	.text       start:0x800DF9A4 end:0x800DFA30
 
 TRK_MINNOW_DOLPHIN/dispatch.c:
 	.text       start:0x800DFA30 end:0x800DFACC
+	.data       start:0x801CA118 end:0x801CA1A0
+	.bss        start:0x8023FFC8 end:0x8023FFD0
 
 TRK_MINNOW_DOLPHIN/msghndlr.c:
-	.text       start:0x800DFACC end:0x800E2310
+	.text       start:0x800DFACC end:0x800E232C
+	.data       start:0x801CA1A0 end:0x801CA1D8
+	.bss        start:0x8023FFD0 end:0x8023FFD8
 
 TRK_MINNOW_DOLPHIN/support.c:
 	.text       start:0x800E232C end:0x800E2BEC
+
+TRK_MINNOW_DOLPHIN/mutex_TRK.c:
+	.text       start:0x800E2BEC end:0x800E2C04
 
 TRK_MINNOW_DOLPHIN/notify.c:
 	.text       start:0x800E2C04 end:0x800E2CDC
@@ -775,6 +786,7 @@ TRK_MINNOW_DOLPHIN/flush_cache.c:
 	.text       start:0x800E2CDC end:0x800E2D14
 
 TRK_MINNOW_DOLPHIN/mem_TRK.c:
+	.init       start:0x80003100 end:0x80003154
 	.text       start:0x800E2D14 end:0x800E2DD0
 
 TRK_MINNOW_DOLPHIN/targimpl.c:
@@ -788,6 +800,7 @@ TRK_MINNOW_DOLPHIN/mpc_7xx_603e.c:
 
 TRK_MINNOW_DOLPHIN/main_TRK.c:
 	.text       start:0x800E4B38 end:0x800E4B7C
+	.bss        start:0x80240560 end:0x80240568
 
 TRK_MINNOW_DOLPHIN/dolphin_trk_glue.c:
 	.text       start:0x800E4B7C end:0x800E5028
@@ -797,6 +810,7 @@ TRK_MINNOW_DOLPHIN/targcont.c:
 
 TRK_MINNOW_DOLPHIN/target_options.c:
 	.text       start:0x800E505C end:0x800E5078
+	.bss        start:0x80242790 end:0x80242798
 
 TRK_MINNOW_DOLPHIN/mslsupp.c:
 	.text       start:0x800E5078 end:0x800E56AC
@@ -1151,3 +1165,51 @@ bink/src/sdk/dct.c:
 
 bink/src/sdk/bitplane.c:
 	.text       start:0x8012D564 end:0x80130990
+
+dolphin/card/CARDBios.c: comment:8
+	.text       start:0x80130994 end:0x80131FF4
+
+dolphin/card/CARDUnlock.c: comment:8
+	.text       start:0x80132020 end:0x8013275C
+
+dolphin/card/CARDRdwr.c: comment:8
+	.text       start:0x80132A00 end:0x80132DC8
+
+dolphin/card/CARDBlock.c: comment:8
+	.text       start:0x80132DC8 end:0x80133340
+
+dolphin/card/CARDDir.c: comment:8
+	.text       start:0x80133340 end:0x8013365C
+
+dolphin/card/CARDCheck.c: comment:8
+	.text       start:0x8013365C end:0x801342A8
+
+dolphin/card/CARDMount.c: comment:8
+	.text       start:0x801342A8 end:0x80134508
+
+dolphin/card/CARDFormat.c: comment:8
+	.text       start:0x8013523C end:0x80135298
+
+dolphin/card/CARDOpen.c: comment:8
+	.text       start:0x80135298 end:0x80135648
+
+dolphin/card/CARDCreate.c: comment:8
+	.text       start:0x80135650 end:0x80135B08
+
+dolphin/card/CARDRead.c: comment:8
+	.text       start:0x80135B08 end:0x801361EC
+
+dolphin/card/CARDWrite.c: comment:8
+	.text       start:0x801361EC end:0x80136654
+
+dolphin/card/CARDDelete.c: comment:8
+	.text       start:0x80136654 end:0x80136860
+
+dolphin/card/CARDStat.c: comment:8
+	.text       start:0x80136860 end:0x80136DB4
+
+dolphin/card/CARDStatEx.c: comment:8
+	.text       start:0x80136DB4 end:0x80137214
+
+dolphin/card/CARDNet.c: comment:8
+	.text       start:0x80137214 end:0x801372EC

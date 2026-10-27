@@ -3,6 +3,7 @@
 
 // Dolphin SDK base types, limited to what reconstructed units use (docs/libraries.md).
 
+typedef signed char s8;
 typedef signed short s16;
 typedef signed long s32;
 typedef signed long long s64;
