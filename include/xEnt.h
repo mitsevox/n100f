@@ -3,6 +3,7 @@
 
 #include "xBase.h"
 #include "xMath3.h"
+#include "xModel.h"
 
 struct p2EntAsset : p2BaseAsset
 {
@@ -196,6 +197,11 @@ void xEntEndUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 inline void xEntShow(_xEnt* ent)
 {
     ent->flags |= 0x1;
+}
+
+inline xVec3* xEntGetPos(_xEnt* ent)
+{
+    return (xVec3*)&ent->model->Mat->pos;
 }
 
 inline void xEntHide(_xEnt* ent)

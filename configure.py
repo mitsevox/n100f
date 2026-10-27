@@ -485,6 +485,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xutil.cpp"),
             Object(NonMatching, "flat/zCounter.cpp"),
             Object(NonMatching, "flat/zEntButton.cpp"),
+            Object(Matching, "flat/zEntDestructObj.cpp"),
             Object(NonMatching, "flat/zEntShaggy.cpp"),
             Object(NonMatching, "flat/zFog.cpp"),
             Object(NonMatching, "flat/zGust.cpp"),
