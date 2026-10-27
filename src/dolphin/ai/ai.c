@@ -136,7 +136,7 @@ void __AI_set_stream_sample_rate(u32 rate)
     s32 state;
     u8 left;
     u8 right;
-    s32 temp_r26;
+    u32 dsp_src_state;
 
     if (rate == AIGetStreamSampleRate()) {
         return;
@@ -146,11 +146,11 @@ void __AI_set_stream_sample_rate(u32 rate)
     right = AIGetStreamVolRight();
     AISetStreamVolRight(0);
     AISetStreamVolLeft(0);
-    temp_r26 = __AIRegs[0] & 0x40;
+    dsp_src_state = __AIRegs[0] & 0x40;
     __AIRegs[0] &= ~0x40;
     oldInts = OSDisableInterrupts();
     __AI_SRC_INIT();
-    __AIRegs[0] |= temp_r26;
+    __AIRegs[0] |= dsp_src_state;
     __AIRegs[0] = (__AIRegs[0] & ~0x20) | 0x20;
     __AIRegs[0] = (__AIRegs[0] & ~2) | (rate * 2);
     OSRestoreInterrupts(oldInts);

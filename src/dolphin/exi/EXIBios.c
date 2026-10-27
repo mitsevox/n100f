@@ -342,7 +342,7 @@ int EXIDetach(long chan) {
         return 0;
     }
     exi->state &= ~8;
-    __OSMaskInterrupts(0x700000U >> (chan * 3));
+    __OSMaskInterrupts((OS_INTERRUPTMASK_EXI_0_EXT | OS_INTERRUPTMASK_EXI_0_TC | OS_INTERRUPTMASK_EXI_0_EXI) >> (3 * chan));
     OSRestoreInterrupts(enabled);
     return 1;
 }
@@ -465,7 +465,7 @@ static void EXTIntrruptHandler(signed short interrupt, struct OSContext * contex
 
     chan = (interrupt-11)/3;
 
-    __OSMaskInterrupts(0x700000U >> (chan * 3));
+    __OSMaskInterrupts((OS_INTERRUPTMASK_EXI_0_EXT | OS_INTERRUPTMASK_EXI_0_TC | OS_INTERRUPTMASK_EXI_0_EXI) >> (3 * chan));
     __EXIRegs[(chan * 5)] = 0;
     exi = &Ecb[chan];
     callback = exi->extCallback;
