@@ -29,7 +29,7 @@ class UnitExtents(unittest.TestCase):
         })
 
     def test_committed_splits(self):
-        lines = (ROOT / "config" / "GIHE78" / "splits.txt").read_text().splitlines(keepends=True)
+        lines = (ROOT / "config" / "GIHE78-rev0" / "splits.txt").read_text().splitlines(keepends=True)
         expected = {}
         unit = None
         for line in lines:

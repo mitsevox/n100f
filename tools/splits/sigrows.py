@@ -10,8 +10,8 @@ signatures against main.dol and writes a `name` row (and a `function` row for
 functions) citing the dtk version, the signature file and the entry hash.
 
     python3 tools/splits/sigrows.py --dtk-src ../decomp-toolkit \\
-        --dol orig/GIHE78/sys/main.dol --symbols config/GIHE78/symbols.txt \\
-        --evidence config/GIHE78/evidence.tsv --output sigrows.tsv
+        --dol orig/GIHE78-rev0/sys/main.dol --symbols config/GIHE78-rev0/symbols.txt \\
+        --evidence config/GIHE78-rev0/evidence.tsv --output sigrows.tsv
 
 Names that no signature reaches are listed on stderr; they need their own rows.
 """

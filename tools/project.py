@@ -136,6 +136,7 @@ class ProgressCategory:
 class ProjectConfig:
     def __init__(self) -> None:
         # Paths
+        self.project_dir: Path = Path(".")  # Generated configuration, isolated per target
         self.build_dir: Path = Path("build")  # Output build files
         self.src_dir: Path = Path("src")  # C/C++/asm source files
         self.tools_dir: Path = Path("tools")  # Python scripts
@@ -458,6 +459,8 @@ def generate_build(config: ProjectConfig) -> None:
     generate_build_ninja(config, objects, build_config)
     generate_objdiff_config(config, objects, build_config)
     generate_compile_commands(config, objects, build_config)
+    from tools.activate_target import refresh_active
+    refresh_active(config.version, Path.cwd())
 
 
 # Generate build.ninja
@@ -469,6 +472,7 @@ def generate_build_ninja(
     out = io.StringIO()
     n = ninja_syntax.Writer(out)
     n.variable("ninja_required_version", "1.3")
+    n.variable("builddir", config.project_dir)
     n.newline()
 
     configure_script = Path(os.path.relpath(os.path.abspath(sys.argv[0])))
@@ -1401,7 +1405,7 @@ def generate_build_ninja(
         n.build(
             outputs=report_path,
             rule="report",
-            implicit=[objdiff, "objdiff.json", "all_source"],
+            implicit=[objdiff, config.project_dir / "objdiff.json", "all_source"],
             order_only="post-build",
         )
 
@@ -1555,7 +1559,7 @@ def generate_build_ninja(
         description=f"RUN {configure_script}",
     )
     n.build(
-        outputs=["build.ninja", "objdiff.json"],
+        outputs=[config.project_dir / "build.ninja", config.project_dir / "objdiff.json"],
         rule="configure",
         implicit=[
             build_config_path,
@@ -1582,7 +1586,7 @@ def generate_build_ninja(
         n.default(build_config_path)
 
     # Write build.ninja
-    with open("build.ninja", "w", encoding="utf-8") as f:
+    with open(config.project_dir / "build.ninja", "w", encoding="utf-8") as f:
         f.write(out.getvalue())
     out.close()
 
@@ -1598,8 +1602,8 @@ def generate_objdiff_config(
 
     # Load existing objdiff.json
     existing_units = {}
-    if Path("objdiff.json").is_file():
-        with open("objdiff.json", "r", encoding="utf-8") as r:
+    if (config.project_dir / "objdiff.json").is_file():
+        with open(config.project_dir / "objdiff.json", "r", encoding="utf-8") as r:
             existing_config = json.load(r)
             existing_units = {unit["name"]: unit for unit in existing_config["units"]}
 
@@ -1611,6 +1615,7 @@ def generate_objdiff_config(
     objdiff_config: Dict[str, Any] = {
         "min_version": "2.0.0-beta.5",
         "custom_make": ninja,
+        "custom_args": ["-C", str(Path.cwd()), "-f", str((config.project_dir / "build.ninja").absolute())],
         "build_target": False,
         "watch_patterns": [
             "*.c",
@@ -1811,12 +1816,24 @@ def generate_objdiff_config(
             return d
 
     # Write objdiff.json
-    with open("objdiff.json", "w", encoding="utf-8") as w:
+    with open(config.project_dir / "objdiff.json", "w", encoding="utf-8") as w:
 
         def unix_path(input: Any) -> str:
             return str(input).replace(os.sep, "/") if input else ""
 
-        json.dump(cleandict(objdiff_config), w, indent=2, default=unix_path)
+        # objdiff resolves paths relative to its project directory. Absolute object
+        # and source paths keep source shared while every config is target-local.
+        value=cleandict(objdiff_config)
+        def absolute_paths(node):
+            if isinstance(node,dict):
+                for key,item in node.items():
+                    if key in ("target_path","base_path","source_path","target_dir","base_dir") and item is not None:
+                        node[key]=str(Path(item).absolute())
+                    else:absolute_paths(item)
+            elif isinstance(node,list):
+                for item in node:absolute_paths(item)
+        absolute_paths(value)
+        json.dump(value, w, indent=2, default=unix_path)
 
 
 def generate_compile_commands(
@@ -2022,7 +2039,7 @@ def generate_compile_commands(
             add_unit(unit)
 
     # Write compile_commands.json
-    with open("compile_commands.json", "w", encoding="utf-8") as w:
+    with open(config.project_dir / "compile_commands.json", "w", encoding="utf-8") as w:
 
         def default_format(o):
             if isinstance(o, Path):
