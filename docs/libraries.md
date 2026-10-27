@@ -9,14 +9,15 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | Helper | Libraries | Compiler | Flags | Progress category |
 | --- | --- | --- | --- | --- |
 | `TRKLib` | `TRK_MINNOW_DOLPHIN` | GC/1.3 | `cflags_trk` | `trk` |
-| `RuntimeLib` | `Runtime.PPCEABI.H`, `MSL_C.PPCEABI.bare.H` | GC/1.3.2, or GC/1.3 per object | `cflags_runtime` | `runtime` |
+| `RuntimeLib` | `Runtime.PPCEABI.H` | GC/1.3.2 | `cflags_runtime` | `runtime` |
+| `MSLLib` | `MSL_C.PPCEABI.bare.H` | GC/1.3 | `cflags_msl` | `runtime` |
 | `DolphinLib` | `dolphin/<library>` | GC/1.2.5n | `cflags_sdk` | `sdk` |
 | `BinkLib` | `binkngc` | ProDG/3.5 | `cflags_bink` | `bink` |
 | `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card` | `sdk` |
 
 RenderWare units are not listed: their compiler profile is not established. Never use leaked RenderWare source for them.
 
-The flags are shown compatible with the target, not established. An MSL object that placed under only one compiler sets that version. The others take the library default, and their import must confirm it. Each import also reconfirms a pick that rests on a partial placement: `alloc.c` is GC/1.3 on 2 of its 34 functions.
+The flags are shown compatible with the target, not established. MSL is one profile for the whole library: the twelve imported units match under GC/1.3 with `-inline auto,deferred` and `-char signed`, six of them differ under GC/1.3.2, and none needs GC/1.3.2. Each later MSL import reconfirms the profile on its own unit.
 
 Bink is ProDG (SN Systems GCC) code, built through `tools/prodg_cc.py`. `fft.c` compiles to its unit under every ProDG version from 3.5 to 3.9.3, and Ooura's FFT compiles to none of its functions under CodeWarrior, so the family is established but the version is not. `cflags_bink` is likewise shown compatible, not established: it rests on `fft.c` only. `ProDG/3.5` is the only version the wrapper supports; the first import whose code separates the versions settles it.
 
@@ -28,16 +29,28 @@ CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compi
 
 | Unit | Compiler | Data | Source |
 | --- | --- | --- | --- |
-| `Runtime.PPCEABI.H/__va_arg.c` | GC/1.3.2 (1.3 differs; 1.3.2 through 2.7 are identical) | none | C |
+| `Runtime.PPCEABI.H/__va_arg.c` | GC/1.3.2 (with `cflags_runtime`, 1.3 differs and 1.3.2 through 2.7 are identical; with `-char signed` added, 1.3 also matches) | none | C |
 | `Runtime.PPCEABI.H/global_destructor_chain.c` | GC/1.3.2 (1.3 also matches) | `.dtors`, `.sbss` | C |
 | `Runtime.PPCEABI.H/runtime.c` | GC/1.3.2 (1.3 also matches) | `.rodata` | asm functions, each with an `assembly` row in `evidence.tsv` |
 | `TRK_MINNOW_DOLPHIN/` `mainloop.c`, `nubevent.c`, `nubinit.c`, `msg.c`, `serpoll.c`, `usr_put.c`, `dispatch.c`, `msghndlr.c`, `mutex_TRK.c`, `notify.c`, `mem_TRK.c`, `main_TRK.c`, `targcont.c`, `target_options.c` | GC/1.3 | each unit's `.rodata`, `.data` and `.bss`, as `data` rows in `evidence.tsv` | C |
+| `MSL_C.PPCEABI.bare.H/abort_exit.c` | GC/1.3 (msl profile) | `.bss`, `.sbss` | C |
+| `MSL_C.PPCEABI.bare.H/alloc.c` | GC/1.3 (msl profile) | `.rodata`, `.bss`, `.sbss` | C |
+| `MSL_C.PPCEABI.bare.H/arith.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/ctype.c` | GC/1.3 (msl profile) | `.data` | C |
+| `MSL_C.PPCEABI.bare.H/mbstring.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/mem.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/mem_funcs.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/qsort.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/rand.c` | GC/1.3 (msl profile) | `.sdata` | C |
+| `MSL_C.PPCEABI.bare.H/string.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata` | C |
+| `MSL_C.PPCEABI.bare.H/strtold.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/strtoul.c` | GC/1.3 (msl profile) | `.data` | C |
 | `TRK_MINNOW_DOLPHIN/` `flush_cache.c`, `targimpl.c`, `dolphin_trk.c`, `mpc_7xx_603e.c`, `dolphin_trk_glue.c` | GC/1.3 | `data` rows in `evidence.tsv` | C, and asm functions, each with an `assembly` row in `evidence.tsv` |
 | `TRK_MINNOW_DOLPHIN/targsupp.s` | assembled | none | assembly, with an `assembly` row per stub |
 | `dolphin/card/*.c` (16 objects) | GC/1.2.5n, `card_debug` flags | `.data`, `.sdata`, `.bss` | C ([CARD](#card)) |
 | `dolphin/` SDK objects (`db`, `si`, `mtx`, `ax`, `dsp`, `dvd`, `OdemuExi2`, and `os` from `OS.c` to `OSTime.c`) | GC/1.2.5n, `cflags_sdk` | each unit's sections, as `data` rows | C; asm functions where the original was assembly, each with an `assembly` row |
 
-All of them are `Matching` and link byte-identical, except `dolphin/os/OSMemory.c`, `OSReset.c` and `OSRtc.c`. Each of those compiles to the target's code except one function's stack frame, which is smaller than the target's unless an unused local is added (CREDITS.md, "Dolphin SDK"), so they stay `NonMatching` and the original bytes stay linked.
+All of them are `Matching` and link byte-identical, except `dolphin/os/OSMemory.c`, `OSReset.c` and `OSRtc.c`. Each of those compiles to the target's code except one function's stack frame, which is smaller than the target's unless an unused local is added (CREDITS.md, "Dolphin SDK"), so they stay `NonMatching` and the original bytes stay linked. The MSL units build under the `msl` profile in `configure.py`: GC/1.3 with `-inline auto,deferred` and `-char signed`. The `compiler` row in `evidence.tsv` records why.
 
 ## Headers
 
@@ -46,8 +59,9 @@ Library headers declare only what the reconstructed units use, as game headers d
 | Path | Holds |
 | --- | --- |
 | `include/dolphin/` | Dolphin SDK public headers under the SDK's names (`dolphin/os.h` and its `dolphin/os/*.h` parts, `dolphin/db.h`, `dolphin/si.h`, ...), each created by the first import that needs it. The SDK's base types are in `dolphin/types.h`. |
-| `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`, `stdarg.h`) |
-| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_sdk` for `dolphin/dvd/__dvd.h`, `cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`, `cflags_card` for `dolphin/card/__card.h`) |
+| `include/libc/` | MSL C headers, shared with game code (`ctype.h`, `eof.h`, `errno.h`, `float.h`, `limits.h`, `locale.h`, `math.h`, `mem_funcs.h`, `pool_alloc.h`, `stdarg.h`, `stddef.h`, `stdio.h`, `stdlib.h`, `string.h`) |
+| `include/runtime/` | Runtime library headers (`NMWException.h`) |
+| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_sdk` for `dolphin/dvd/__dvd.h`, `cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`, `cflags_card` for `dolphin/card/__card.h`, `cflags_msl` for `MSL_C.PPCEABI.bare.H/ansi_fp.h` and `scanf.h`) |
 
 Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types. Game code keeps `types.h`.
 
@@ -81,7 +95,7 @@ No public decompilation supplies Bink source this project can import:
 - bfbb (`d8e8eac`) has the same Bink build (see [Bink units](splits.md#bink-units)), but 10 of its 15 Bink files are empty and the rest are unfinished. Its `src/bink/include/bink.h`, `radbase.h` and `rad3d.h` are RAD Game Tools' SDK headers (`radbase.h` carries RAD's copyright string), and its `binkread.c` embeds RAD's logo movie as `LogoData`. bfbb's CC0 dedication cannot cover RAD's material, so none of it is copied.
 - tssm (`fc32870`) has a Bink header and no Bink source.
 
-`bink/src/sdk/fft.c` is Takuya Ooura's general-purpose FFT package (`fftsg.c`) built for `float`: the function names match, and nine functions of the current release (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`) compile to the target unchanged apart from the type. Five Bink functions (`cftrec1`, `cftrec2`, `cftexp1`, `cftexp2`, `cftfx42`) follow the package's pre-2006 structure and are fitted to the target. The licence on Ooura's FFT page allows use, copying, modification and distribution of modified code for any purpose, on condition that modified code refers to the package. His notice is in CREDITS.md, not in the source, as the project owner decided. `src/bink/src/sdk/fft.c` reproduces the unit's whole `.text` and its `.rodata` under every ProDG version from 3.5 to 3.9.3, so it does not settle the version either. It stays `NonMatching` until the MSL float wrappers it calls (`atanf`, `cosf` and `sinf`, `0x800F38F8`, `0x800F38D4` and `0x800F38B0`) are named, because the link resolves those calls by name.
+`bink/src/sdk/fft.c` is Takuya Ooura's general-purpose FFT package (`fftsg.c`) built for `float`: the function names match, and nine functions of the current release (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`) compile to the target unchanged apart from the type. Five Bink functions (`cftrec1`, `cftrec2`, `cftexp1`, `cftexp2`, `cftfx42`) follow the package's pre-2006 structure and are fitted to the target. The licence on Ooura's FFT page allows use, copying, modification and distribution of modified code for any purpose, on condition that modified code refers to the package. His notice is in CREDITS.md, not in the source, as the project owner decided. `src/bink/src/sdk/fft.c` reproduces the unit's whole `.text` and its `.rodata` under every ProDG version from 3.5 to 3.9.3, so it does not settle the version either. It is `Matching`: the link resolves its calls to the MSL float wrappers (`atanf`, `cosf` and `sinf`, `0x800F38F8`, `0x800F38D4` and `0x800F38B0`) by name, and the MSL import names them.
 
 `bink/shared/time/radcb.c`, `bink/src/sdk/popmal.c` and `bink/src/sdk/varbits.c` are this project's own reconstructions from the target, and are `Matching`. Each compiles to its unit's whole `.text` and data under every ProDG version from 3.5 to 3.9.3, byte for byte once the relocations are resolved, so they do not settle the version either. Five details of their source come from the target's code, not from style:
 
