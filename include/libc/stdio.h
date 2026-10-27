@@ -2,6 +2,8 @@
 #define STDIO_H
 
 // MSL C library declarations, limited to what reconstructed units use (docs/libraries.md).
+#include <stddef.h>
+#include <eof.h>
 
 #ifdef __cplusplus
 extern "C" {
