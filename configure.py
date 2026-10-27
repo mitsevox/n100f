@@ -568,14 +568,20 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "ai",
         [
-            Object(NonMatching, "dolphin/ai/ai.c"),
+            Object(Matching, "dolphin/ai/ai.c"),
+        ],
+    ),
+    DolphinLib(
+        "amcstubs",
+        [
+            Object(Matching, "dolphin/amcstubs/AmcExi2Stubs.c"),
         ],
     ),
     DolphinLib(
         "ar",
         [
-            Object(NonMatching, "dolphin/ar/ar.c"),
-            Object(NonMatching, "dolphin/ar/arq.c"),
+            Object(Matching, "dolphin/ar/ar.c"),
+            Object(Matching, "dolphin/ar/arq.c"),
         ],
     ),
     DolphinLib(
@@ -592,7 +598,7 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "base",
         [
-            Object(NonMatching, "dolphin/base/PPCArch.c"),
+            Object(Matching, "dolphin/base/PPCArch.c"),
         ],
     ),
     DolphinLib(
@@ -604,15 +610,16 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "dsp",
         [
-            Object(NonMatching, "dolphin/dsp/dsp.c"),
+            Object(Matching, "dolphin/dsp/dsp.c"),
+            Object(Matching, "dolphin/dsp/dsp_debug.c"),
             Object(Matching, "dolphin/dsp/dsp_task.c"),
         ],
     ),
     DolphinLib(
         "exi",
         [
-            Object(NonMatching, "dolphin/exi/EXIBios.c"),
-            Object(NonMatching, "dolphin/exi/EXIUart.c"),
+            Object(Matching, "dolphin/exi/EXIBios.c"),
+            Object(Matching, "dolphin/exi/EXIUart.c"),
         ],
     ),
     DolphinLib(
