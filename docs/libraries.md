@@ -140,6 +140,14 @@ No public decompilation supplies Bink source this project can import:
 
 The 8 zero bytes between `fft.c`'s `.rodata` and the tables (`0x801A8E18`-`0x801A8E20`) are unassigned. The object's `.rodata` has 4-byte alignment, so the tables will not land at `0x801A8E20` until the source or the split accounts for those bytes.
 
+`bink/src/sdk/decode/ngc/binkngc.c` is a `NonMatching` partial reconstruction of Bink's GameCube platform layer: the 64-bit multiply and divide helpers, the timers and the memory hooks. `radmemset16`, `RADSetMemory`, `radmalloc`, `radfree`, `RADSetAudioMemory`, `radaudiomalloc` and `radaudiofree` compile to the target byte for byte under ProDG 3.5 to 3.9.3, and so does the unit's `.sdata` (`0x8025E6F8`-`0x8025E710`). Three details of the source come from the target:
+
+- The time base reads (`mftbu`, `mftb`, `mftbu`, retried while the upper halves differ) and the four `cntlzw` instructions in `mult64anddiv` and `div64` are inline `asm`. GCC has no C form for `mftb`, and it emits `cntlzw` from C only with extra instructions the target lacks. The project owner approved inline asm for exactly these two instructions, with a `source-form` row in `evidence.tsv` for each use.
+- `div64` and `ReadTimeBase` are plain (non-static) `inline` functions defined before their callers. GCC 2.95 inlines only a function it has already seen, and emits the out-of-line copies at the end of the file, which is where the target has them.
+- The statics are written with an explicit `= 0`, which places them in `.sdata` rather than `.sbss`, and the file-scope hooks are defined just before `RADSetMemory`, so that `RADTimerRead`'s function-scope `starttime` comes first, as in the target.
+
+Nine functions still differ. `mult64anddiv`, `mult64andshift` and `div64` build their 64-bit products and differences in registers that are not consecutive pairs (`mulhwu`/`mullw` and `subfc`/`subfe` into unrelated registers), which GCC's `DImode` values never do, so the original likely wrote them as assembly; no C form tried reproduces them, and any further asm needs the owner's approval first. `RADTimerRead`, the four cycle-timer functions and `ReadTimeBase` have the target's shape, within one instruction of its length, but allocate registers differently around the time base reads and the 64-bit arithmetic.
+
 Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units can include `dolphin/os.h`. The MW units are unchanged.
 
 Bink headers are this project's own, declaring only what the reconstructed units use. The logo movie stays out of the repository: its data is split from `main.dol` at build time like any other unmapped data.
