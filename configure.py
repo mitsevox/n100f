@@ -484,7 +484,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(Matching, "TRK_MINNOW_DOLPHIN/dolphin_trk_glue.c"),
             Object(Matching, "TRK_MINNOW_DOLPHIN/targcont.c"),
             Object(Matching, "TRK_MINNOW_DOLPHIN/target_options.c"),
-            Object(Matching, "TRK_MINNOW_DOLPHIN/mslsupp.c"),
+            Object(NonMatching, "TRK_MINNOW_DOLPHIN/mslsupp.c"),
         ],
     ),
     RuntimeLib(

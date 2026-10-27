@@ -230,7 +230,7 @@ DSError TRKReadBuffer1_ui16(TRKBuffer* buffer, u16* data) {
     DSError err;
     u8* bigEndianData;
     u8* byteData;
-    u8 swapBuffer[sizeof(data)];
+    u8 swapBuffer[sizeof(*data)];
 
     if (gTRKBigEndian) {
         bigEndianData = (u8*)data;
@@ -254,7 +254,7 @@ DSError TRKReadBuffer1_ui32(TRKBuffer* buffer, u32* data) {
     DSError err;
     u8* bigEndianData;
     u8* byteData;
-    u8 swapBuffer[sizeof(data)];
+    u8 swapBuffer[sizeof(*data)];
 
     if (gTRKBigEndian) {
         bigEndianData = (u8*)data;
@@ -280,7 +280,7 @@ DSError TRKReadBuffer1_ui64(TRKBuffer* buffer, u64* data) {
     DSError err;
     u8* bigEndianData;
     u8* byteData;
-    u8 swapBuffer[sizeof(data)];
+    u8 swapBuffer[sizeof(*data)];
 
     if (gTRKBigEndian) {
         bigEndianData = (u8*)data;

@@ -184,7 +184,7 @@ static int convertFileMode(__file_modes* mode) {
     }
 
     if (binary_io == 1) {
-        result = (result | 8) & 0xFF;
+        result |= 8;
     }
 
     return result;
