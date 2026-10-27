@@ -1,7 +1,6 @@
 typedef float RwReal;
 typedef int RwInt32;
 typedef struct RwV3d { RwReal x, y, z; } RwV3d;
-typedef struct RwMatrix { RwV3d right; unsigned int flags; RwV3d up; unsigned int pad1; RwV3d at; unsigned int pad2; RwV3d pos; unsigned int pad3; } RwMatrix;
 typedef struct RwError { RwInt32 pluginID; RwInt32 errorCode; } RwError;
 
 extern RwReal _rwSqrt(RwReal x);

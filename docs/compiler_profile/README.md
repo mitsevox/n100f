@@ -55,7 +55,7 @@ The flag counts in `evidence.tsv` come from editing `game.flags` one setting at 
 
 ## RenderWare
 
-No matching RenderWare source was found in the decompilations checked. In bfbb (d8e8eac), `src/rwsdk` holds `plugin/collis/ctbsp.c`, whose only function is an empty `_rpCollBSPTreeInit`, `tool/slerp/rtslerp.c`, which has no function at all because everything in it is commented out, and `tool/slerp/rtslerp.h`, a header with declarations only. bfbbdecomp/tssm (fc32870) has no RenderWare source. Jovinull/sonicheroes (8be2883) has four `rw_gcn_*.c` files, which are m2c output marked NonMatching in its `configure.py`. The stimuli in [`rw_probe/`](rw_probe/) were written for this project from the target's own disassembly of nine `rwcore` functions: the vector length and normalize functions, the case-insensitive string functions and the bounding-box functions. As with bfbb, a hit says which compiler produces the instructions, not what the original source was. From the repository root:
+No matching RenderWare source was found in the decompilations checked. In bfbb (d8e8eac), `src/rwsdk` holds `plugin/collis/ctbsp.c`, whose only function is an empty `_rpCollBSPTreeInit`, `tool/slerp/rtslerp.c`, which has no function at all because everything in it is commented out, and `tool/slerp/rtslerp.h`, a header with declarations only. bfbbdecomp/tssm (fc32870) has the same three `src/rwsdk` files as bfbb, as identical blobs, and no other RenderWare source. Jovinull/sonicheroes (8be2883) has four `rw_gcn_*.c` files, which are m2c output marked NonMatching in its `configure.py`. The stimuli in [`rw_probe/`](rw_probe/) were written for this project from the target's own disassembly of nine `rwcore` functions: the vector length and normalize functions, the case-insensitive string functions and the bounding-box functions. As with bfbb, a hit says which compiler produces the instructions, not what the original source was. From the repository root:
 
 ```sh
 python3 tools/compiler_probe.py --dol orig/GIHE78/sys/main.dol --compilers build/compilers \
@@ -64,7 +64,7 @@ python3 tools/compiler_probe.py --dol orig/GIHE78/sys/main.dol --compilers build
     rw_probe/bbox.c rw_probe/str.c rw_probe/vec.c
 ```
 
-All nine are found exactly once. Four of them (`0x80166800`, `0x80165B04`, `0x80165A88`, `0x80165BD8`) match only under 1.3, 1.3.2 and 1.3.2r. `-O3` loses six and `-char unsigned` loses the three string functions; `-O4,s`, `-fp_contract on` and `-inline off` change nothing. Two settings come from the whole RenderWare text rather than the stimuli, because the game code differs on both:
+All nine are found exactly once. Four of them (`0x80166800`, `0x80165B04`, `0x80165A88`, `0x80165BD8`) match only under 1.3, 1.3.2 and 1.3.2r. `-O3` loses six and `-char unsigned` loses the three string functions; `-O4,s`, `-fp_contract on` and `-inline off` change none of the nine bodies. Two settings come from the whole RenderWare text rather than the stimuli, because the game code differs on both:
 
 - There are no fused multiply-adds (`fmadds` and its relatives). The game text has 1,848, so RenderWare was built without contraction.
 - There are no `lmw`/`stmw`. RenderWare saves registers through `_savegpr_N`/`_restgpr_N` (418 branches), which is mwcceppc's output without `-use_lmw_stmw on`; the game text has 849 `lmw`.

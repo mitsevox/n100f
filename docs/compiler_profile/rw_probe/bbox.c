@@ -3,41 +3,41 @@ typedef int RwInt32;
 typedef struct RwV3d { RwReal x, y, z; } RwV3d;
 typedef struct RwBBox { RwV3d sup; RwV3d inf; } RwBBox;
 
-RwBBox *BBoxCalculate(RwBBox *boundBox, const RwV3d *verts, RwInt32 numVerts)
+RwBBox *BBoxCalculate(RwBBox *box, const RwV3d *points, RwInt32 count)
 {
-    boundBox->inf = *verts;
-    boundBox->sup = *verts;
-    verts++;
+    box->inf = *points;
+    box->sup = *points;
+    points++;
     {
-        RwInt32 i = numVerts - 1;
+        RwInt32 i = count - 1;
         while (i--)
     {
-        if (boundBox->inf.x > verts->x) boundBox->inf.x = verts->x;
-        if (boundBox->inf.y > verts->y) boundBox->inf.y = verts->y;
-        if (boundBox->inf.z > verts->z) boundBox->inf.z = verts->z;
-        if (boundBox->sup.x < verts->x) boundBox->sup.x = verts->x;
-        if (boundBox->sup.y < verts->y) boundBox->sup.y = verts->y;
-        if (boundBox->sup.z < verts->z) boundBox->sup.z = verts->z;
-        verts++;
+        if (box->inf.x > points->x) box->inf.x = points->x;
+        if (box->inf.y > points->y) box->inf.y = points->y;
+        if (box->inf.z > points->z) box->inf.z = points->z;
+        if (box->sup.x < points->x) box->sup.x = points->x;
+        if (box->sup.y < points->y) box->sup.y = points->y;
+        if (box->sup.z < points->z) box->sup.z = points->z;
+        points++;
     }
     }
-    return boundBox;
+    return box;
 }
 
-RwBBox *BBoxInitialize(RwBBox *boundBox, const RwV3d *vertex)
+RwBBox *BBoxInitialize(RwBBox *box, const RwV3d *point)
 {
-    boundBox->inf = *vertex;
-    boundBox->sup = *vertex;
-    return boundBox;
+    box->inf = *point;
+    box->sup = *point;
+    return box;
 }
 
-RwBBox *BBoxAddPoint(RwBBox *boundBox, const RwV3d *vertex)
+RwBBox *BBoxAddPoint(RwBBox *box, const RwV3d *point)
 {
-    if (boundBox->inf.x > vertex->x) boundBox->inf.x = vertex->x;
-    if (boundBox->inf.y > vertex->y) boundBox->inf.y = vertex->y;
-    if (boundBox->inf.z > vertex->z) boundBox->inf.z = vertex->z;
-    if (boundBox->sup.x < vertex->x) boundBox->sup.x = vertex->x;
-    if (boundBox->sup.y < vertex->y) boundBox->sup.y = vertex->y;
-    if (boundBox->sup.z < vertex->z) boundBox->sup.z = vertex->z;
-    return boundBox;
+    if (box->inf.x > point->x) box->inf.x = point->x;
+    if (box->inf.y > point->y) box->inf.y = point->y;
+    if (box->inf.z > point->z) box->inf.z = point->z;
+    if (box->sup.x < point->x) box->sup.x = point->x;
+    if (box->sup.y < point->y) box->sup.y = point->y;
+    if (box->sup.z < point->z) box->sup.z = point->z;
+    return box;
 }
