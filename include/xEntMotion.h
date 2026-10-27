@@ -1,7 +1,7 @@
 #ifndef XENTMOTION_H
 #define XENTMOTION_H
 
-#include "xVec3.h"
+#include "xMath3.h"
 
 struct p2EntMotionMechData
 {
@@ -51,8 +51,19 @@ struct _xEntMechData
     F32* rotptr;
 };
 
-// Partial: only the mech member of the union is declared and the members after it are
-// left out, so sizeof(_xEntMotion) is not its size.
+struct _xEntPenData
+{
+    xVec3 top;
+    F32 w;
+    xMat4x3 omat;
+};
+
+#define k_XENTMOTION_STOPPED 0x4
+
+struct _xEnt;
+
+// Partial: only the mech and pen members of the union are declared. pen is the largest
+// member, so sizeof(_xEntMotion) is its size.
 struct _xEntMotion
 {
     p2EntMotionAsset* asset;
@@ -65,11 +76,36 @@ struct _xEntMotion
     union
     {
         _xEntMechData mech;
+        _xEntPenData pen;
     };
+    _xEnt* owner;
+    _xEnt* target;
 };
 
+struct _xScene;
+struct _xEntFrame;
+
+void xEntMotionInit(_xEntMotion* motion, _xEnt* owner, p2EntMotionAsset* asset);
+void xEntMotionReset(_xEntMotion* motion, _xScene* sc);
+void xEntMotionSetup(_xEntMotion* motion, _xScene* sc);
+void xEntMotionMove(_xEntMotion* motion, _xScene* sc, F32 dt, _xEntFrame* frame);
 void xEntMechForward(_xEntMotion* motion);
 void xEntMechReverse(_xEntMotion* motion);
 void xEntMotionDebugExit();
+
+inline void xEntMotionRun(_xEntMotion* motion)
+{
+    motion->flags &= (U16)~k_XENTMOTION_STOPPED;
+}
+
+inline void xEntMotionStop(_xEntMotion* motion)
+{
+    motion->flags |= k_XENTMOTION_STOPPED;
+}
+
+inline U32 xEntMotionIsStopped(const _xEntMotion* motion)
+{
+    return motion->flags & k_XENTMOTION_STOPPED;
+}
 
 #endif
