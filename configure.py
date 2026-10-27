@@ -279,6 +279,19 @@ cflags_bink = [
     "-I include/libc",
 ]
 
+# CARD profile ("card_debug"): the GIHE78 CARD library is the SDK's debug build, which is
+# compiled at -opt level=0 with symbols and assertions.
+cflags_card = [
+    *[f for f in cflags_base if f not in (*_lib_drop, "-O4,p", "-inline auto", "-sym on",
+                                          "-DDEBUG=1", "-DNDEBUG=1")],
+    "-opt level=0",
+    "-inline off",
+    "-schedule off",
+    "-sym on",
+    "-DDEBUG=1",
+    "-char signed",
+]
+
 # REL flags
 cflags_rel = [
     *cflags_base,
@@ -324,6 +337,18 @@ def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
         "lib": lib_name,
         "mw_version": "GC/1.2.5n",
         "cflags": cflags_sdk,
+        "progress_category": "sdk",
+        "objects": objects,
+    }
+
+
+# Helper function for the CARD library: the SDK debug build under GC/1.2.5n, .comment version 8
+# (compiler row in evidence.tsv).
+def CardLib(objects: List[Object]) -> Dict[str, Any]:
+    return {
+        "lib": "card",
+        "mw_version": "GC/1.2.5n",
+        "cflags": cflags_card,
         "progress_category": "sdk",
         "objects": objects,
     }
@@ -634,6 +659,26 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "bink/src/sdk/fft.c"),
             Object(NonMatching, "bink/src/sdk/dct.c"),
             Object(NonMatching, "bink/src/sdk/bitplane.c"),
+        ],
+    ),
+    CardLib(
+        [
+            Object(NonMatching, "dolphin/card/CARDBios.c"),
+            Object(NonMatching, "dolphin/card/CARDUnlock.c"),
+            Object(NonMatching, "dolphin/card/CARDRdwr.c"),
+            Object(NonMatching, "dolphin/card/CARDBlock.c"),
+            Object(NonMatching, "dolphin/card/CARDDir.c"),
+            Object(NonMatching, "dolphin/card/CARDCheck.c"),
+            Object(NonMatching, "dolphin/card/CARDMount.c"),
+            Object(NonMatching, "dolphin/card/CARDFormat.c"),
+            Object(NonMatching, "dolphin/card/CARDOpen.c"),
+            Object(NonMatching, "dolphin/card/CARDCreate.c"),
+            Object(NonMatching, "dolphin/card/CARDRead.c"),
+            Object(NonMatching, "dolphin/card/CARDWrite.c"),
+            Object(NonMatching, "dolphin/card/CARDDelete.c"),
+            Object(NonMatching, "dolphin/card/CARDStat.c"),
+            Object(NonMatching, "dolphin/card/CARDStatEx.c"),
+            Object(NonMatching, "dolphin/card/CARDNet.c"),
         ],
     ),
 ]
