@@ -1,12 +1,5 @@
 #include "xEntMotion.h"
 
-#define k_XENTMOTION_STOPPED 0x4
-
-static inline void xEntMotionRun(_xEntMotion* motion)
-{
-    motion->flags &= (U16)~k_XENTMOTION_STOPPED;
-}
-
 void xEntMechForward(_xEntMotion* motion)
 {
     p2EntMotionMechData* mech = &(motion->asset->mech);
