@@ -97,6 +97,18 @@ def load_symbols(path):
     return out
 
 
+def name_index(syms):
+    """name -> distinct addresses, in address order, for load_symbols() output.
+
+    symbols.txt can give one name twice at one address (a function and a label, as
+    for gTRKInterruptVectorTable); that is one address, not an ambiguous name."""
+    named = collections.defaultdict(list)
+    for s in syms:
+        if s[0] not in named[s[3]]:
+            named[s[3]].append(s[0])
+    return named
+
+
 def load_relocations(objdir, named, extents):
     """(source address, target address) for every relocation in dtk's split objects.
 
@@ -406,9 +418,7 @@ def main():
         i = bisect.bisect_right(daddr, a) - 1
         return i if i >= 0 else None
 
-    named = collections.defaultdict(list)
-    for s in syms:
-        named[s[3]].append(s[0])
+    named = name_index(syms)
     extents = unit_extents(open(os.path.join(os.path.dirname(args.symbols), 'splits.txt')))
     relocs, skipped = load_relocations(args.objdir, named, extents)
     if not relocs:

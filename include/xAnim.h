@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "xMemMgr.h"
+#include "xMath3.h"
 
 struct xAnimTransition;
 struct xAnimFile;
@@ -28,12 +29,45 @@ struct xAnimState
     U16* FadeOffset;
 };
 
-// Partial: members up to Time.
+struct xAnimActiveEffect;
+struct xAnimPlay;
+
 struct xAnimSingle
 {
     U32 SingleFlags;
     xAnimState* State;
     F32 Time;
+    F32 CurrentSpeed;
+    F32 BilinearLerp[2];
+    xAnimEffect* Effect;
+    U32 ActiveCount;
+    xAnimActiveEffect* ActiveList;
+    xAnimPlay* Play;
+    F32 LastTime;
+    xVec3 LastTranslation;
+    F32 LastYaw;
+    U32 pad;
+    xQuat LastQuat;
+    xAnimTransition* Sync;
+    xAnimTransition* Tran;
+    xAnimSingle* Blend;
+    F32 BlendFactor;
+};
+
+struct xAnimTransition
+{
+    xAnimTransition* Next;
+    xAnimState* Dest;
+    U32 (*Conditional)(xAnimTransition*, xAnimSingle*, void*);
+    U32 (*Callback)(xAnimTransition*, xAnimSingle*, void*);
+    U32 Flags;
+    U32 UserFlags;
+    F32 SrcTime;
+    F32 DestTime;
+    U16 Priority;
+    U16 QueuePriority;
+    F32 BlendRecip;
+    U16* BlendOffset;
 };
 
 // Partial: members up to Single.

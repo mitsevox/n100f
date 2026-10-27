@@ -4,5 +4,6 @@
 #include "types.h"
 
 F32 iurand();
+U32 irand();
 
 #endif
