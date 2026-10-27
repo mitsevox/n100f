@@ -6,6 +6,7 @@
 extern u32 __OSPhysicalMemSize AT_ADDRESS(OS_BASE_CACHED | 0x0028);
 extern u32 __OSSimulatedMemSize AT_ADDRESS(OS_BASE_CACHED | 0x00F0);
 extern volatile int __OSTVMode AT_ADDRESS(OS_BASE_CACHED | 0x00CC);
+extern volatile u16 __OSDeviceCode AT_ADDRESS(OS_BASE_CACHED | 0x30E6);
 
 extern volatile u16 __MEMRegs[] AT_ADDRESS(0xCC004000);
 
@@ -39,6 +40,7 @@ typedef struct BI2Debug {
 } BI2Debug;
 
 void __OSCacheInit(void);
+u32 __OSGetDIConfig(void);
 void __OSContextInit(void);
 void __OSInitAudioSystem(void);
 void __OSInitMemoryProtection(void);

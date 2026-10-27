@@ -968,22 +968,42 @@ dolphin/OdemuExi2/DebuggerDriver.c: comment:8
 	.sbss       start:0x8025F248 end:0x8025F260
 
 dolphin/ai/ai.c: comment:8
-	.text       start:0x800F43E0 end:0x800F4C5C
+	.text       start:0x800F439C end:0x800F4C5C
+	.sbss       start:0x8025F260 end:0x8025F2A0
+
+dolphin/amcstubs/AmcExi2Stubs.c: comment:8
+	.text       start:0x800F4C5C end:0x800F4C8C
 
 dolphin/ar/ar.c: comment:8
-	.text       start:0x800F4CD0 end:0x800F58E4
+	.text       start:0x800F4C8C end:0x800F58E4
+	.sbss       start:0x8025F2A0 end:0x8025F2C0
 
 dolphin/ar/arq.c: comment:8
-	.text       start:0x800F58E4 end:0x800F5C78
+	.text       start:0x800F58E4 end:0x800F5DD0
+	.sbss       start:0x8025F2C0 end:0x8025F2F0
+
+dolphin/ax/AX.c: comment:8
+	.text       start:0x800F5DD0 end:0x800F5E38
 
 dolphin/ax/AXAlloc.c: comment:8
 	.text       start:0x800F5E38 end:0x800F630C
+	.bss        start:0x80242BD0 end:0x80242CE0
+	.sbss       start:0x8025F2F0 end:0x8025F2F8
+
+dolphin/ax/AXAux.c: comment:8
+	.text       start:0x800F630C end:0x800F6628
+	.bss        start:0x80242CE0 end:0x802459E0
+	.sbss       start:0x8025F2F8 end:0x8025F328
 
 dolphin/ax/AXCL.c: comment:8
-	.text       start:0x800F6630 end:0x800F666C
+	.text       start:0x800F6628 end:0x800F6A9C
+	.bss        start:0x802459E0 end:0x80245FE0
+	.sbss       start:0x8025F328 end:0x8025F338
 
 dolphin/ax/AXOut.c: comment:8
-	.text       start:0x800F6C98 end:0x800F6CF0
+	.text       start:0x800F6A9C end:0x800F715C
+	.bss        start:0x80245FE0 end:0x8024A800
+	.sbss       start:0x8025F338 end:0x8025F358
 
 dolphin/ax/AXSPB.c: comment:8
 	.text       start:0x800F715C end:0x800F7624
@@ -991,14 +1011,18 @@ dolphin/ax/AXSPB.c: comment:8
 	.sbss       start:0x8025F358 end:0x8025F380
 
 dolphin/ax/AXVPB.c: comment:8
-	.text       start:0x800F819C end:0x800F8734
+	.text       start:0x800F7624 end:0x800F8734
+	.data       start:0x801CABD0 end:0x801CAC80
+	.bss        start:0x8024A840 end:0x8025A640
+	.sbss       start:0x8025F380 end:0x8025F390
+	.sdata2     start:0x80262680 end:0x80262688
 
 dolphin/ax/AXProf.c: comment:8
 	.text       start:0x800F8734 end:0x800F877C
 	.sbss       start:0x8025F390 end:0x8025F3A0
 
 dolphin/base/PPCArch.c: comment:8
-	.text       start:0x800F87BC end:0x800F881C
+	.text       start:0x800F877C end:0x800F8824
 
 dolphin/db/db.c: comment:8
 	.text       start:0x800F8824 end:0x800F8910
@@ -1006,7 +1030,12 @@ dolphin/db/db.c: comment:8
 	.sbss       start:0x8025F3A0 end:0x8025F3A8
 
 dolphin/dsp/dsp.c: comment:8
-	.text       start:0x800F8910 end:0x800F895C
+	.text       start:0x800F8910 end:0x800F8BEC
+	.data       start:0x801CC678 end:0x801CC6B0
+	.sbss       start:0x8025F3A8 end:0x8025F3B0
+
+dolphin/dsp/dsp_debug.c: comment:8
+	.text       start:0x800F8BEC end:0x800F8C3C
 
 dolphin/dsp/dsp_task.c: comment:8
 	.text       start:0x800F8C3C end:0x800F94C0
@@ -1014,10 +1043,12 @@ dolphin/dsp/dsp_task.c: comment:8
 	.sbss       start:0x8025F3B0 end:0x8025F3C8
 
 dolphin/exi/EXIBios.c: comment:8
-	.text       start:0x800F94C0 end:0x800FAA10
+	.text       start:0x800F94C0 end:0x800FAD8C
+	.bss        start:0x8025A640 end:0x8025A700
 
 dolphin/exi/EXIUart.c: comment:8
 	.text       start:0x800FAD8C end:0x800FAFFC
+	.sbss       start:0x8025F3C8 end:0x8025F3D8
 
 dolphin/gx/GXInit.c: comment:8
 	.text       start:0x800FAFFC end:0x800FC0E8

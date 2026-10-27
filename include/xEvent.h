@@ -8,6 +8,7 @@ enum en_xEventTags
     eEventInvisible = 4,
     eEventReset = 10,
     eEventToggle = 15,
+    eEventStop = 19,
     eEventOn = 38,
     eEventOff = 39,
     eEventPress = 55,

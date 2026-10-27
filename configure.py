@@ -13,7 +13,10 @@
 ###
 
 import argparse
+import json
+import re
 import sys
+from tools.targets import registry, build_targets
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -26,11 +29,10 @@ from tools.project import (
     is_windows,
 )
 
-# Game versions
-DEFAULT_VERSION = 0
-VERSIONS = [
-    "GIHE78",  # 0
-]
+# Explicit identities; archived revisions are discoverable but cannot build.
+TARGET_REGISTRY = registry()
+VERSIONS = build_targets(TARGET_REGISTRY)
+DEFAULT_VERSION = VERSIONS.index(TARGET_REGISTRY['defaultTarget'])
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -44,7 +46,6 @@ parser.add_argument(
     "-v",
     "--version",
     choices=VERSIONS,
-    type=str.upper,
     default=VERSIONS[DEFAULT_VERSION],
     help="version to build",
 )
@@ -136,7 +137,13 @@ args = parser.parse_args()
 
 config = ProjectConfig()
 config.version = str(args.version)
-version_num = VERSIONS.index(config.version)
+config.project_dir = args.build_dir / config.version
+config.project_dir.mkdir(parents=True, exist_ok=True)
+build_settings=json.loads((Path("config") / config.version / "build.json").read_text())
+if set(build_settings)!={"buildVersion","versionDefine"} or type(build_settings["buildVersion"]) is not int or build_settings["buildVersion"]<0 or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*",build_settings["versionDefine"]):
+    raise ValueError("Invalid target build constants")
+version_num=build_settings["buildVersion"]
+version_define=build_settings["versionDefine"]
 
 # Apply arguments
 config.build_dir = args.build_dir
@@ -184,7 +191,11 @@ if args.map:
     # config.ldflags.append("-listclosure") # For Wii linkers
 
 # Use for any additional files that should cause a re-configure when modified
-config.reconfig_deps = []
+config.reconfig_deps = [
+    Path("config/targets.json"),
+    Path("tools/targets.py"),
+    Path("config") / config.version / "build.json",
+]
 
 # Optional numeric ID for decomp.me preset
 # Can be overridden in libraries or objects
@@ -215,7 +226,7 @@ cflags_base = [
     "-i include/libc",
     f"-i build/{config.version}/include",
     f"-DBUILD_VERSION={version_num}",
-    f"-DVERSION_{config.version}",
+    f"-DVERSION_{version_define}",
 ]
 
 # Debug flags
@@ -234,7 +245,7 @@ elif args.warn == "error":
     cflags_base.append("-W error")
 
 # Library profiles: the flags tools/splits/libmap.py places the library units with
-# (config/GIHE78/libmap.json "profiles"). They are shown compatible, not established.
+# (config/GIHE78-rev0/libmap.json "profiles"). They are shown compatible, not established.
 _lib_drop = ("-fp_contract on",)
 
 # Runtime profile ("runtime").
@@ -324,14 +335,14 @@ cflags_rel = [
 ]
 
 # Game code profile: CodeWarrior for GameCube 1.3.2 (mwcceppc 2.4.2 build 81).
-# Evidence: compiler rows in config/GIHE78/evidence.tsv and docs/compiler_profile/.
+# Evidence: compiler rows in config/GIHE78-rev0/evidence.tsv and docs/compiler_profile/.
 cflags_game = [
     *[f for f in cflags_base if f not in ("-O4,p", "-inline auto", "-str reuse")],
     "-O4,s",
     "-inline auto,deferred",
     "-lang=c++",
     "-char signed",
-    "-common on",
+    "-common off",
     "-str reuse,readonly",
     "-use_lmw_stmw on",
     '-pragma "cpp_extensions on"',
@@ -447,7 +458,7 @@ def MatchingFor(*versions):
 config.warn_missing_config = True
 config.warn_missing_source = False
 # Add libraries and objects only with boundary and compiler profile evidence recorded in
-# config/GIHE78/evidence.tsv.
+# config/GIHE78-rev0/evidence.tsv.
 config.libs: List[Dict[str, Any]] = [
     GameLib(
         "game",
@@ -482,7 +493,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zSurface.cpp"),
         ],
     ),
-    # Library units: config/GIHE78/lib_units.tsv and docs/splits.md "Library units".
+    # Library units: config/GIHE78-rev0/lib_units.tsv and docs/splits.md "Library units".
     TRKLib(
         [
             Object(Matching, "TRK_MINNOW_DOLPHIN/mainloop.c"),
@@ -568,31 +579,39 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "ai",
         [
-            Object(NonMatching, "dolphin/ai/ai.c"),
+            Object(Matching, "dolphin/ai/ai.c"),
+        ],
+    ),
+    DolphinLib(
+        "amcstubs",
+        [
+            Object(Matching, "dolphin/amcstubs/AmcExi2Stubs.c"),
         ],
     ),
     DolphinLib(
         "ar",
         [
-            Object(NonMatching, "dolphin/ar/ar.c"),
-            Object(NonMatching, "dolphin/ar/arq.c"),
+            Object(Matching, "dolphin/ar/ar.c"),
+            Object(Matching, "dolphin/ar/arq.c"),
         ],
     ),
     DolphinLib(
         "ax",
         [
-            Object(NonMatching, "dolphin/ax/AXAlloc.c"),
-            Object(NonMatching, "dolphin/ax/AXCL.c"),
-            Object(NonMatching, "dolphin/ax/AXOut.c"),
+            Object(Matching, "dolphin/ax/AX.c"),
+            Object(Matching, "dolphin/ax/AXAlloc.c"),
+            Object(Matching, "dolphin/ax/AXAux.c"),
+            Object(Matching, "dolphin/ax/AXCL.c"),
+            Object(Matching, "dolphin/ax/AXOut.c"),
             Object(Matching, "dolphin/ax/AXSPB.c"),
-            Object(NonMatching, "dolphin/ax/AXVPB.c"),
+            Object(Matching, "dolphin/ax/AXVPB.c"),
             Object(Matching, "dolphin/ax/AXProf.c"),
         ],
     ),
     DolphinLib(
         "base",
         [
-            Object(NonMatching, "dolphin/base/PPCArch.c"),
+            Object(Matching, "dolphin/base/PPCArch.c"),
         ],
     ),
     DolphinLib(
@@ -604,15 +623,16 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "dsp",
         [
-            Object(NonMatching, "dolphin/dsp/dsp.c"),
+            Object(Matching, "dolphin/dsp/dsp.c"),
+            Object(Matching, "dolphin/dsp/dsp_debug.c"),
             Object(Matching, "dolphin/dsp/dsp_task.c"),
         ],
     ),
     DolphinLib(
         "exi",
         [
-            Object(NonMatching, "dolphin/exi/EXIBios.c"),
-            Object(NonMatching, "dolphin/exi/EXIUart.c"),
+            Object(Matching, "dolphin/exi/EXIBios.c"),
+            Object(Matching, "dolphin/exi/EXIUart.c"),
         ],
     ),
     DolphinLib(
@@ -738,7 +758,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(Matching, "dolphin/card/CARDNet.c"),
         ],
     ),
-    # RenderWare units: config/GIHE78/rw_units.tsv and docs/splits.md "RenderWare units".
+    # RenderWare units: config/GIHE78-rev0/rw_units.tsv and docs/splits.md "RenderWare units".
     RWLib(
         "rpcollis",
         [
@@ -897,6 +917,7 @@ config.progress_categories = [
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`
 config.progress_report_args = [
+    "--project", str(config.project_dir),
     # Marks relocations as mismatching if the target value is different
     # Default is "functionRelocDiffs=none", which is most lenient
     # "--config functionRelocDiffs=data_value",

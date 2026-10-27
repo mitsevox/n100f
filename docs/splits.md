@@ -1,12 +1,12 @@
 # Game-unit splits
 
-`config/GIHE78/splits.txt` names 123 game units (`flat/<file>`). They come from `tools/splits/recover.py`, which compares the target with the PS2 USA retail v1.01 executable SLUS-20349 (SHA-1 `ebe640193e0ceb38deca343a0b576cfcba2d5920`). That executable keeps its DWARF.
+`config/GIHE78-rev0/splits.txt` names 123 game units (`flat/<file>`). They come from `tools/splits/recover.py`, which compares the target with the PS2 USA retail v1.01 executable SLUS-20349 (SHA-1 `ebe640193e0ceb38deca343a0b576cfcba2d5920`). That executable keeps its DWARF.
 
 The names and extents are claims, not established facts. In `evidence.tsv`:
 - each unit's extent is an `inferred` `unit` row with `provisional` or `open` edges;
 - each source path is a separate `related` `unit-anchor` row, since it comes from another build's DWARF.
 
-`config/GIHE78/split_units.tsv` lists all 134 candidate units, and `config/GIHE78/split_edges.tsv` gives every text and data edge with its class and the number of references that cross it.
+`config/GIHE78-rev0/split_units.tsv` lists all 134 candidate units, and `config/GIHE78-rev0/split_edges.tsv` gives every text and data edge with its class and the number of references that cross it.
 
 ## CARD
 
@@ -48,9 +48,9 @@ All five `.ctors` initialisers end up inside emitted units: zEntPlayer, zEntShag
 The PS2 ELF is in the private build image at `/orig/SLUS-20349/SLUS_203.49`. After a dtk split (`ninja` or `dtk dol split`), run:
 
 ```sh
-python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
+python3 tools/splits/recover.py --dol orig/GIHE78-rev0/sys/main.dol \
   --ps2-elf /orig/SLUS-20349/SLUS_203.49 \
-  --splits units.txt --edges config/GIHE78/split_edges.tsv --units config/GIHE78/split_units.tsv
+  --splits units.txt --edges config/GIHE78-rev0/split_edges.tsv --units config/GIHE78-rev0/split_units.tsv
 ```
 
 `units.txt` is the unit part of `splits.txt`. The relocations, and so the output, are the same whichever split produced the objects. Relocations to symbols that `symbols.txt` names are resolved through `symbols.txt`, so renaming functions does not change the output. Adding an exact-body `function` row to `evidence.tsv` can: it adds a name anchor and call features. Re-run the tool when one lands and commit what changes. Names are looked up in `symbols.txt` before dtk's address-suffixed labels. A name that `symbols.txt` gives to more than one symbol, such as two file-local statics, resolves in the object that defines it, to the one of its addresses that lies inside that object's range for the section in `splits.txt`. (dtk gives a static that another object references an address suffix, so only statics referenced from their own object reach this.) The tool stops when an object references such a name without defining it, or when not exactly one of its addresses lies inside the defining object's range.
@@ -75,7 +75,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 
 # Library units
 
-`splits.txt` also names 143 library units: after the game units, 126 from `0x800DE530` to `0x80111EC0` and the CARD library's 16 from `0x80130990` to `0x801372EC`, after Bink; and MetroTRK's exception vector table, `__exception.s`, in `.init` at `0x80003154`. 136 of them come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target. The table counts libmap's placements, as `config/GIHE78/lib_units.tsv` records them; import corrections are described after it.
+`splits.txt` also names 143 library units: after the game units, 126 from `0x800DE530` to `0x80111EC0` and the CARD library's 16 from `0x80130990` to `0x801372EC`, after Bink; and MetroTRK's exception vector table, `__exception.s`, in `.init` at `0x80003154`. 136 of them come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target. The table counts libmap's placements, as `config/GIHE78-rev0/lib_units.tsv` records them; import corrections are described after it.
 
 | Library | Units | Whole-object matches | Functions placed |
 | --- | --- | --- | --- |
@@ -85,20 +85,20 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 | `dolphin/<library>` (SDK, OS built Apr 16 2002) | 61 | 22 | 515 |
 | `dolphin/card` (the SDK's debug build) | 16 | 5 | 68 |
 
-Each unit stays in the original bytes until its source lands and passes review; [libraries.md](libraries.md#imported-units) lists the imported ones. `config/GIHE78/lib_units.tsv` lists each unit as libmap placed it, with its match kind, function counts, chosen source and the compiler versions that produced it.
+Each unit stays in the original bytes until its source lands and passes review; [libraries.md](libraries.md#imported-units) lists the imported ones. `config/GIHE78-rev0/lib_units.tsv` lists each unit as libmap placed it, with its match kind, function counts, chosen source and the compiler versions that produced it.
 
 Imports correct the map where compiled source shows more than libmap could place. Functions of 8 to 16 bytes are too common in the target to place by body, so they were left out of the first map. The MetroTRK import added a unit, `mutex_TRK.c`, at `0x800E2BEC` (three 8-byte functions between `support.c` and `notify.c`, the order the related maps give). It extended `msghndlr.c` to `0x800E232C` to take `SetTRKConnected` and `GetTRKConnected`, and gave `mem_TRK.c` its `.init` functions `TRK_memset` and `TRK_memcpy` at `0x80003100`. It also split `targsupp.s` (four 8-byte trap stubs at `0x800E4660`) off the end of `targimpl.c`, started `targimpl.c` at `0x800E2DD0` to take `__TRK_get_MSR` and `__TRK_set_MSR`, extended `dolphin_trk.c` to `0x800E47C0` to take `EnableMetroTRKInterrupts`, and gave `dolphin_trk.c` its `.init` function `__TRK_reset` at `0x80005088`. It split `__exception.s` (`0x80003154`-`0x80005088`, the 0x1F34-byte vector table between `mem_TRK.c`'s and `dolphin_trk.c`'s `.init` code, an object of its own in Animal Crossing's map) and placed `__close_file` and `__close_console` in `mslsupp.c`, whose identical 0x84-byte bodies libmap could not place. That places 19 more TRK functions than the table shows. The MSL import extended `string.c` to `0x800EE7BC` to take `strlen` (a 0x1C-byte body that occurs once in the target) and named 15 of the matched functions that had kept `fn_` labels, from the imported sources, with `inferred` or `related` rows. The os import added three SDK units, each its own object in Animal Crossing's map: `OSArena.c` at `0x8010469C` (the four arena accessors, between `OSAlloc.c` and `OSAudioSystem.c`), `OSFont.c` at `0x80105890` (`OSGetFontEncode`, split from the front of `OSInterrupt.c`) and `OSMutex.c` at `0x80106448` (`__OSUnlockAllMutex`, whose final `blr` dtk had split off as a separate 4-byte function). The gx import extended `GXFifo.c` to `0x800FCB34` to take `GXGetCPUFifo` and `GXGetGPFifo`, started `GXGeometry.c` at `0x800FDF54` to take `__GXSetDirtyState` and `GXBegin`, added `GXStubs.c` at `0x80102000` (`__GXSetRange`, a 4-byte `blr` that Animal Crossing's map gives an object of its own between `GXPixel.c` and `GXDisplayList.c`) and started `GXDisplayList.c` after it at `0x80102004` to take `GXBeginDisplayList` and `GXEndDisplayList`, in the order of the AC symbols. The dvd import moved the `dvdfs.c`/`dvd.c` edge from `0x8010F20C` to `0x8010F23C`: the 0x30-byte `cbForSeekAsync`, which `DVDSeekAsyncPrio` passes, is the last function of `dvdfs.c`, and `dvd.c` starts at `DVDInit`.
 
 ## Method
 
-1. **Candidates.** `config/GIHE78/libmap.json` lists each upstream with its URL, pinned commit and licence, the compiler profiles (`sdk`: GC/1.2.5n; `runtime`, `msl` and `trk`: GC/1.3 and GC/1.3.2), and the source globs to try, less any `exclude` list. Each MSL upstream is listed twice, under `runtime` and under `msl` (the library's own flags: deferred inlining and signed `char`), because some upstreams write their files in the target's order and others in Metrowerks' source order, which deferred inlining reverses. sonicheroes' `mem.c` is excluded: it joins what the Wind Waker map shows as two objects, `mem.c` and `mem_funcs.c`. The tool checks that every checkout is at its pinned commit.
+1. **Candidates.** `config/GIHE78-rev0/libmap.json` lists each upstream with its URL, pinned commit and licence, the compiler profiles (`sdk`: GC/1.2.5n; `runtime`, `msl` and `trk`: GC/1.3 and GC/1.3.2), and the source globs to try, less any `exclude` list. Each MSL upstream is listed twice, under `runtime` and under `msl` (the library's own flags: deferred inlining and signed `char`), because some upstreams write their files in the target's order and others in Metrowerks' source order, which deferred inlining reverses. sonicheroes' `mem.c` is excluded: it joins what the Wind Waker map shows as two objects, `mem.c` and `mem_funcs.c`. The tool checks that every checkout is at its pinned commit.
 2. **Probe.** Each source file is compiled under its profile with every listed version. In each function, the fields a relocation fills are masked. A function places the object when its masked body occurs exactly once in `main.dol`, at a function start, at full size.
 3. **Placement.** The whole object `.text` is first compared in place. If it matches, the unit's extent and every function in it are exact. Otherwise the unit keeps the longest run of unique hits that is in order both in the object and in the target, with gaps no wider than twice the object distance plus `0x400`. For each object path, the best placement wins: a whole-object match first, then the most matched bytes, then manifest order. Placements may not overlap.
 4. **Extents.** A whole-object match fixes dtk's function boundaries: inner functions dtk invented are removed, an overlapping predecessor is cut short, functions dtk missed are added, and sizes are corrected. The tool prints a `note:` for each change.
 5. **Names.** A matched function takes its upstream name only when that name labels a function of the same size in a symbol list the manifest marks as map-backed. Those lists are Animal Crossing (GAFE01, from its `static.map`), The Wind Waker (GZLE01, from the debug maps) and Final Fantasy Crystal Chronicles (GCCE01, from its debug symbols). Other matched functions keep their `fn_` labels: 47 today, 37 whose upstream name is in none of the three lists and 10 whose name is there only at another size (`fopen`, `setvbuf`, ...). A function that is static in the compiled object gets `scope:local`.
 6. **Paths.** Runtime files go under `Runtime.PPCEABI.H/`, MSL under `MSL_C.PPCEABI.bare.H/`, MetroTRK under `TRK_MINNOW_DOLPHIN/`, and SDK files under `dolphin/<library>/`, with the library taken from ac-decomp's directory layout.
 
-In `evidence.tsv`, each unit has a `target` `unit` row whose edges are `exact` where the next unit abuts it and `open` otherwise. Each placed function has a `target` `function` row, and each name libmap applies has a `related` `name` row that cites the symbol lists. Three `compiler` rows record the per-object versions: MetroTRK is GC/1.3, MSL is GC/1.3 with deferred inlining and signed char (the `msl` profile), and `__va_arg.c` is GC/1.3.2 with the runtime profile. The `linker` row records the one linker-script change: `config/GIHE78/ldscript.tpl` is dtk's default template with `_db_stack_addr` at `_stack_addr + 0x1000`, which the relink needs once `InitMetroTRK` and `OSInit` are named.
+In `evidence.tsv`, each unit has a `target` `unit` row whose edges are `exact` where the next unit abuts it and `open` otherwise. Each placed function has a `target` `function` row, and each name libmap applies has a `related` `name` row that cites the symbol lists. Three `compiler` rows record the per-object versions: MetroTRK is GC/1.3, MSL is GC/1.3 with deferred inlining and signed char (the `msl` profile), and `__va_arg.c` is GC/1.3.2 with the runtime profile. The `linker` row records the one linker-script change: `config/GIHE78-rev0/ldscript.tpl` is dtk's default template with `_db_stack_addr` at `_stack_addr + 0x1000`, which the relink needs once `InitMetroTRK` and `OSInit` are named.
 
 7. **dtk signatures.** The new names also switch on dtk's built-in signatures (`src/analysis/signatures.rs`), which dtk applies at the address of the symbol each one is keyed on. A matching signature names its function and every symbol its relocations reach, and a split writes those names back to `symbols.txt`. This adds 134 names: 26 functions, 9 `.text` labels and 99 data objects, among them `OSReport` at `0x80015F00`, an empty 0x50-byte variadic body inside the game block whose original unit is unknown. `tools/splits/sigrows.py` re-checks the same signatures against `main.dol` and writes a `signature` `name` row, and a `function` row for functions, for every name in `symbols.txt` that has no `name` row. Each row cites the dtk version, the signature file and the entry hash. A function's end is `exact` only when the signature itself covers the body; otherwise it is dtk's analysis and `provisional`. The same pass covers 11 older dtk signature names from the baseline that had no rows (`GXInit`, `gx`, `gxData`, `PPCMfhid2`, ...).
 
@@ -107,18 +107,18 @@ In `evidence.tsv`, each unit has a `target` `unit` row whose edges are `exact` w
 The tool needs local checkouts of the upstreams at their pinned commits and the compilers from `configure.py`. Run it against the committed `symbols.txt`:
 
 ```sh
-python3 tools/splits/libmap.py --dol orig/GIHE78/sys/main.dol \
+python3 tools/splits/libmap.py --dol orig/GIHE78-rev0/sys/main.dol \
   --compilers build/compilers --wrapper build/tools/wibo \
   --checkout ac-decomp=../ac-decomp --checkout tww=../tww ...one per upstream... \
-  --splits libunits.txt --units config/GIHE78/lib_units.tsv \
-  --evidence librows.tsv --symbols-out config/GIHE78/symbols.txt
+  --splits libunits.txt --units config/GIHE78-rev0/lib_units.tsv \
+  --evidence librows.tsv --symbols-out config/GIHE78-rev0/symbols.txt
 ```
 
 On the committed files this is a fixed point up to the import corrections above (and the unit and function rows that imports rewrite or replace): `libunits.txt` equals the libmap units in `splits.txt` (the Bink units sit between the SDK units and CARD), `librows.tsv` equals the tool's rows in `evidence.tsv`, and `symbols.txt` comes back unchanged. Then check the signature rows with a decomp-toolkit checkout at the pinned version:
 
 ```sh
-python3 tools/splits/sigrows.py --dtk-src ../decomp-toolkit --dol orig/GIHE78/sys/main.dol \
-  --symbols config/GIHE78/symbols.txt --evidence config/GIHE78/evidence.tsv --output sigrows.tsv
+python3 tools/splits/sigrows.py --dtk-src ../decomp-toolkit --dol orig/GIHE78-rev0/sys/main.dol \
+  --symbols config/GIHE78-rev0/symbols.txt --evidence config/GIHE78-rev0/evidence.tsv --output sigrows.tsv
 ```
 
 On the committed files it writes no rows. From the baseline, the sequence is: run libmap against the baseline `symbols.txt`, make the manual changes below, run `dtk dol split` twice so the signature names settle in `symbols.txt` (`__OSArenaHi` only appears on the second pass), run libmap again, then append the libmap and sigrows rows. The first run needed three manual changes, which are now in `symbols.txt`. `fn_800E2E1C` was split at `0x800E2FB0`, because dtk's `TRKInterruptHandler` signature relocates to `TRKExceptionHandler` there. And five data labels (`lbl_801CA2B8`, `lbl_801CA308`, `lbl_801CA358`, `lbl_8025F484`, `lbl_8025F574`) were removed, because they overlapped the `__files`, `__OSLastInterruptTime` and `LastResetEnd` objects that dtk's signatures create.
@@ -164,7 +164,7 @@ In `evidence.tsv` each unit has a `unit` row, each function a `function` row and
 
 # RenderWare units
 
-`splits.txt` also names 89 RenderWare units between `0x801372EC` and `0x8018E5C0`, from `tools/splits/rwmap.py`. GIHE78 links RenderWare 3.3.0.2: `RwEngineGetVersion` (`0x80169F10`) returns `0x33002`. There is no public RenderWare source to compile. 71 units are BfBB's RenderWare 3.5 units (`bfbbdecomp/bfbb` `d8e8eac`, GQPE78), placed by function size sequence: 63 in the main pass and 8 in the gaps it leaves. The other 18 are pipeline node objects that BfBB doesn't link, found from GIHE78's own node definitions. The input is `config/GIHE78/rwmap.json` and the report is `config/GIHE78/rw_units.tsv`, whose "method" column says which step placed each unit.
+`splits.txt` also names 89 RenderWare units between `0x801372EC` and `0x8018E5C0`, from `tools/splits/rwmap.py`. GIHE78 links RenderWare 3.3.0.2: `RwEngineGetVersion` (`0x80169F10`) returns `0x33002`. There is no public RenderWare source to compile. 71 units are BfBB's RenderWare 3.5 units (`bfbbdecomp/bfbb` `d8e8eac`, GQPE78), placed by function size sequence: 63 in the main pass and 8 in the gaps it leaves. The other 18 are pipeline node objects that BfBB doesn't link, found from GIHE78's own node definitions. The input is `config/GIHE78-rev0/rwmap.json` and the report is `config/GIHE78-rev0/rw_units.tsv`, whose "method" column says which step placed each unit.
 
 | Library | Units |
 | --- | --- |
@@ -210,9 +210,9 @@ BfBB's RenderWare names and paths are a related build's; there is no GC debug sy
 The tool needs a checkout of `bfbbdecomp/bfbb` at the pinned commit; only `config/GQPE78/` is read.
 
 ```sh
-python3 tools/splits/rwmap.py --dol orig/GIHE78/sys/main.dol --checkout ../bfbb \
-  --splits rwunits.txt --units config/GIHE78/rw_units.tsv \
-  --evidence rwrows.tsv --symbols-out config/GIHE78/symbols.txt
+python3 tools/splits/rwmap.py --dol orig/GIHE78-rev0/sys/main.dol --checkout ../bfbb \
+  --splits rwunits.txt --units config/GIHE78-rev0/rw_units.tsv \
+  --evidence rwrows.tsv --symbols-out config/GIHE78-rev0/symbols.txt
 ```
 
 On the committed files this is a fixed point: `rwunits.txt` equals the RenderWare part of `splits.txt`, `rwrows.tsv` equals the tool's rows in `evidence.tsv`, and `symbols.txt` comes back unchanged. Names that other rows already cover are skipped, with a note saying whether they agree.

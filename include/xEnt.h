@@ -23,6 +23,24 @@ struct p2EntAsset : p2BaseAsset
     U32 animListID;
 };
 
+struct _iCollis
+{
+    S32 unknown;
+};
+
+struct _xCollis
+{
+    U32 flags;
+    U32 oid;
+    void* optr;
+    F32 dist;
+    xVec3 norm;
+    xVec3 tohit;
+    xVec3 depen;
+    xVec3 hdng;
+    _iCollis ixtra;
+};
+
 struct _xBox
 {
     xVec3 upper;
@@ -72,6 +90,26 @@ struct iShadowCache
 
 struct _xScene;
 
+struct _xEnt;
+
+struct _xEntDrive
+{
+    U32 flags;
+    F32 otm;
+    F32 otmr;
+    F32 os;
+    F32 tm;
+    F32 tmr;
+    F32 s;
+    _xEnt* odriver;
+    _xEnt* driver;
+    _xEnt* driven;
+    xVec3 op;
+    xVec3 p;
+    xVec3 q;
+    F32 yaw;
+};
+
 struct _xEntFrame
 {
     xMat4x3 mat;
@@ -87,7 +125,7 @@ struct _xEntFrame
     U32 mode;
 };
 
-// Partial: members up to idx.
+// Partial: members up to colls.
 struct _xEntCollis
 {
     U8 chk;
@@ -102,6 +140,7 @@ struct _xEntCollis
     U8 stat_eidx;
     U8 trig_idx;
     U8 idx;
+    _xCollis colls[18];
 };
 
 struct _xEntShadow;
@@ -145,8 +184,14 @@ struct _xEnt : xBase
     _xEntShadow* ent_shadow;
 };
 
+void xEntCollide(_xEnt* ent, _xScene* sc, F32 dt);
+void xEntApplyPhysics(_xEnt* ent, _xScene* sc, F32 dt);
+void xEntMove(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntReset(_xEnt* ent);
+U32 xEntIsVisible(_xEnt* ent);
+void xEntBeginUpdate(_xEnt* ent, _xScene* sc, F32 dt);
+void xEntEndUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 
 inline void xEntShow(_xEnt* ent)
 {

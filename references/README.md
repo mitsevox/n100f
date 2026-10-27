@@ -21,3 +21,7 @@ Notes on the DWARF exports:
 - MW records every aggregate as `class`. `dwarf_types.h` keeps that, so read `class` as struct/class.
 - Functions referenced through pointers also show up as `global_variable` entries with a function type (e.g. animation callbacks). They're kept as-is.
 - Static functions sometimes carry no parameter entries. The mangled name still encodes their parameter types.
+
+## Community references
+
+[`community/`](Scooby-Doo%20Night%20of%20100%20Frights/community/README.md) holds text copies of the speedrunning community's encyclopedia, version-differences sheet and skips dictionary. They are playthrough observations, not reverse-engineered evidence: use them as hints and back every claim with this project's own evidence ([community references](../docs/community_references.md)).

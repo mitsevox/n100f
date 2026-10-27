@@ -7,6 +7,7 @@
 struct _zEntHangable;
 struct _zMovePoint;
 struct _zPlatform;
+struct st_zEntVillain;
 
 struct ShaggyGuts
 {
@@ -53,6 +54,13 @@ struct ShaggyGuts
     F32 swapTimer;
 };
 
+struct ShaggyMagnet
+{
+    _zEnt* shaggy;
+    xBase* target;
+    F32 radius;
+};
+
 extern ShaggyGuts gShaggy[16];
 extern U32 gNumShaggy;
 
@@ -63,5 +71,20 @@ void Shaggy0_PlayerTransitions(xAnimTable* table);
 xAnimTable* zEntShaggy_Anim1();
 void Shaggy1_PlayerStates(xAnimTable* table);
 void Shaggy1_PlayerTransitions(xAnimTable* table);
+xAnimTable* zEntShaggy_Anim2();
+xAnimTable* zEntShaggy_Anim3();
+xAnimTable* zEntShaggy_Anim5();
+void Shaggy5_WitchTransitions(xAnimTable* table);
+xAnimTable* zEntShaggy_Anim8();
+xAnimTable* zEntShaggy_Chimney();
+S32 Shaggy2_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
+S32 Shaggy2Plat_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
+void Shaggy1_SetHangable(_zEnt* ent, _zEntHangable* hang);
+void Shaggy1_PlayerUpdate(_zEnt* shag, _xScene* sc, F32 dt);
+void zEntShaggy_Init(st_zEntVillain* ent);
+void zEntShaggy_UpdateDep();
+U32 zEntIsShaggy(_zEnt* ent);
+F32 zEntShaggy_GetSpin(_zEnt* ent);
+void zEntShaggy_SetSpin(_zEnt* ent, F32 spin);
 
 #endif
