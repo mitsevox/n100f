@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#define iabs(x) (float)(__fabs((float)x))
+
 F32 iurand();
 U32 irand();
 

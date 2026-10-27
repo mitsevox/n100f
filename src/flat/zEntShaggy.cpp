@@ -20,7 +20,7 @@ F32 THROW_MINHEIGHT = 4.25f;
 F32 THROW_DEFHEIGHT = 6.0f;
 static F32 gShaggy3TurnAngle;
 static S32 (*sVilEventFunc)(xBase*, xBase*, U32, F32*, xBase*);
-static void (*sPlatMoveFunc)(_xEnt*, _xScene*, F32, _xEntFrame*);
+static void (*sVilMoveFunc)(_xEnt*, _xScene*, F32, _xEntFrame*);
 F32 sHangVirtualPeak = 0.75f + THROW_DEFHEIGHT;
 
 void ShaggySwap(_zEnt* src, _zEnt* dest);
@@ -1054,7 +1054,7 @@ static U32 Shaggy3_MoveDead(xAnimTransition* tran, xAnimSingle* anim, _zPlatform
     {
         return 0;
     }
-    return (U32)(!globals.player.Health && (frame->mode & 0x2)) &&
+    return !globals.player.Health && (frame->mode & 0x2) &&
            frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
                    frame->dpos.z * frame->dpos.z >=
                0.0005f;
@@ -1096,7 +1096,7 @@ static U32 Shaggy3_Right(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* e
 
 static U32 Shaggy3_Center(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
 {
-    return (F32)fabs(gShaggy3TurnAngle) <= 0.0015f && !anim->Blend->State;
+    return xabs(gShaggy3TurnAngle) <= 0.0015f && !anim->Blend->State;
 }
 
 static U32 Shaggy3_MowerStopCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
@@ -1555,7 +1555,7 @@ xAnimTable* zEntShaggy_Anim5()
 
 static void Shaggy5_Move(_xEnt* ent, _xScene* sc, F32 dt, _xEntFrame* frame)
 {
-    sPlatMoveFunc(ent, sc, dt, frame);
+    sVilMoveFunc(ent, sc, dt, frame);
 }
 
 static U32 Shaggy8_FlipOver(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
