@@ -13,6 +13,7 @@ struct _zEnt : _xEnt
 void zEntInit(_zEnt* ent, p2EntAsset* asset, U32 type);
 void zEntLoad(_zEnt* ent, xSerial* s);
 void zEntSave(_zEnt* ent, xSerial* s);
+void zEntEvent(xBase* to, U32 toEvent);
 void zEntEvent(xBase* from, xBase* to, U32 toEvent);
 void zEntAnimEvent(_zEnt* ent, U32 animEvent, F32* animParam);
 

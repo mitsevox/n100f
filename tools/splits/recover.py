@@ -408,7 +408,8 @@ def main():
 
     named = collections.defaultdict(list)
     for s in syms:
-        named[s[3]].append(s[0])
+        if s[0] not in named[s[3]]:  # a function and a label can share a name and address
+            named[s[3]].append(s[0])
     extents = unit_extents(open(os.path.join(os.path.dirname(args.symbols), 'splits.txt')))
     relocs, skipped = load_relocations(args.objdir, named, extents)
     if not relocs:

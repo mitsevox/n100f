@@ -42,14 +42,23 @@ struct zShaggy1Globals
     _zEnt* Hangable[10];
 };
 
-// Partial: members up to HangEnt. The members between ent and JumpState, and between
-// JumpState and Shaggy1, are left opaque.
+// Partial: members up to HangEnt. The members between ent and Shaggy1 that no reconstructed
+// function uses are left opaque.
 struct zPlayerGlobals
 {
     _zEnt ent;
-    U8 opaque_EC[0x114 - 0xEC];
+    U8 opaque_EC[0xF0 - 0xEC];
+    U32 Health;
+    S32 Speed;
+    U8 opaque_F8[0x114 - 0xF8];
     S32 JumpState;
-    U8 opaque_118[0x1E0 - 0x118];
+    U8 opaque_118[0x140 - 0x118];
+    F32 ScareTimer;
+    U8 opaque_144[0x148 - 0x144];
+    U32 ScareShaggy;
+    U8 opaque_14C[0x164 - 0x14C];
+    F32 FallDeathTimer;
+    U8 opaque_168[0x1E0 - 0x168];
     zShaggy1Globals Shaggy1;
     _zEnt* Shaggy8Call;
     F32 Shaggy8CallTimer;
