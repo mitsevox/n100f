@@ -573,7 +573,7 @@ static void Close(BinkSnd* snd)
     NGC_SoundShutdown(snd);
 }
 
-static S32 Open(BinkSnd* snd, U32 freq, S32 bits, S32 chans)
+static S32 Open(BinkSnd* snd, U32 freq, S32 bits, S32 chans, U32 flags, struct Bink* bink)
 {
     memset(snd, 0, sizeof(*snd));
     snd->freq = freq;
@@ -595,7 +595,7 @@ static S32 Open(BinkSnd* snd, U32 freq, S32 bits, S32 chans)
 
     if (!NGC_SoundInit(snd))
         return 0;
-    snd->unk64 = 0;
+    snd->latency = 0;
     return 1;
 }
 
