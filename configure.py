@@ -237,13 +237,22 @@ elif args.warn == "error":
 # (config/GIHE78/libmap.json "profiles"). They are shown compatible, not established.
 _lib_drop = ("-fp_contract on",)
 
-# Runtime and MSL profile ("runtime").
+# Runtime profile ("runtime").
 cflags_runtime = [
     *[f for f in cflags_base if f not in _lib_drop],
     "-use_lmw_stmw on",
     "-str reuse,pool,readonly",
     "-gccinc",
     "-common off",
+]
+
+# MSL C profile ("msl"): the runtime profile plus deferred inlining (functions are emitted
+# in reverse source order) and signed char. Evidence: compiler rows in evidence.tsv.
+cflags_msl = [
+    *cflags_runtime,
+    "-inline auto,deferred",
+    "-char signed",
+    "-i src",
 ]
 
 # Dolphin SDK profile ("sdk").
@@ -357,14 +366,23 @@ def CardLib(objects: List[Object]) -> Dict[str, Any]:
     }
 
 
-# Helper function for the Metrowerks runtime and MSL C library. MSL mixes GC/1.3 and GC/1.3.2
-# per object (compiler rows in evidence.tsv); objects that place under only one version set
-# it, and the rest take the library default, which their import must confirm.
+# Helper function for the Metrowerks runtime: GC/1.3.2 (compiler row in evidence.tsv).
 def RuntimeLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
         "mw_version": "GC/1.3.2",
         "cflags": cflags_runtime,
+        "progress_category": "runtime",
+        "objects": objects,
+    }
+
+
+# Helper function for the MSL C library: GC/1.3 (compiler row in evidence.tsv).
+def MSLLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
+    return {
+        "lib": lib_name,
+        "mw_version": "GC/1.3",
+        "cflags": cflags_msl,
         "progress_category": "runtime",
         "objects": objects,
     }
@@ -475,29 +493,31 @@ config.libs: List[Dict[str, Any]] = [
             Object(Matching, "Runtime.PPCEABI.H/runtime.c"),
         ],
     ),
-    RuntimeLib(
+    MSLLib(
         "MSL_C.PPCEABI.bare.H",
         [
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/abort_exit.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/alloc.c", mw_version="GC/1.3"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/abort_exit.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/alloc.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/ansi_files.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/ansi_fp.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/arith.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/arith.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/buffer_io.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/char_io.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/ctype.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/ctype.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/direct_io.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/file_io.c", mw_version="GC/1.3"),
+            Object(NonMatching, "MSL_C.PPCEABI.bare.H/file_io.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/FILE_POS.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/mbstring.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/mem.c", mw_version="GC/1.3"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/mbstring.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/mem.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/mem_funcs.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/misc_io.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/printf.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/rand.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/qsort.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/rand.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/scanf.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/string.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/strtold.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/strtoul.c", mw_version="GC/1.3"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/string.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/strtold.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/strtoul.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/uart_console_io.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/wchar_io.c"),
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/e_atan2.c"),
@@ -663,7 +683,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "bink/src/sdk/decode/ngc/ngcrgb.c"),
             Object(NonMatching, "bink/src/sdk/decode/ngc/ngcyuy2.c"),
             Object(Matching, "bink/src/sdk/varbits.c"),
-            Object(NonMatching, "bink/src/sdk/fft.c"),
+            Object(Matching, "bink/src/sdk/fft.c"),
             Object(NonMatching, "bink/src/sdk/dct.c"),
             Object(NonMatching, "bink/src/sdk/bitplane.c"),
         ],

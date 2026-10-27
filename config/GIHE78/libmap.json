@@ -20,6 +20,8 @@
             "flags": "-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off -O4,p -inline auto -pragma \"cats off\" -pragma \"warn_notinlined off\" -maxerrors 1 -nosyspath -RTTI off -str reuse -multibyte -DNDEBUG=1 -W off -fp_contract off -char signed -common off"},
     "runtime": {"versions": ["1.3", "1.3.2"],
                 "flags": "-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off -O4,p -inline auto -pragma \"cats off\" -pragma \"warn_notinlined off\" -maxerrors 1 -nosyspath -RTTI off -str reuse -multibyte -DNDEBUG=1 -W off -use_lmw_stmw on -str reuse,pool,readonly -gccinc -common off -inline auto"},
+    "msl": {"versions": ["1.3", "1.3.2"],
+            "flags": "-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off -O4,p -inline auto -pragma \"cats off\" -pragma \"warn_notinlined off\" -maxerrors 1 -nosyspath -RTTI off -str reuse -multibyte -DNDEBUG=1 -W off -use_lmw_stmw on -str reuse,pool,readonly -gccinc -common off -inline auto,deferred -char signed"},
     "trk": {"versions": ["1.3", "1.3.2"],
             "flags": "-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off -w off -O4,p -nosyspath -RTTI off -str reuse -multibyte -use_lmw_stmw on -common off -inline auto,deferred -sdata 0 -sdata2 0 -rostr -char signed"},
     "card_debug": {"versions": ["1.2.5n"], "comment": 8,
@@ -37,7 +39,7 @@
     {"upstream": "marioparty4", "library": "dolphin", "profile": "sdk", "include": ["include"], "sources": ["src/dolphin/*.c", "src/dolphin/*/*.c", "src/OdemuExi2/*.c"]},
     {"upstream": "sonicheroes", "library": "TRK_MINNOW_DOLPHIN", "profile": "trk", "include": ["include"], "sources": ["src/dolphin/trk/*.c"]},
     {"upstream": "sonicheroes", "library": "Runtime.PPCEABI.H", "profile": "runtime", "include": ["include"], "sources": ["src/Runtime.PPCEABI.H/*.c"]},
-    {"upstream": "sonicheroes", "library": "MSL_C.PPCEABI.bare.H", "profile": "runtime", "include": ["include"], "sources": ["src/MSL_C/*.c"]},
+    {"upstream": "sonicheroes", "library": "MSL_C.PPCEABI.bare.H", "profile": "runtime", "include": ["include"], "sources": ["src/MSL_C/*.c"], "exclude": ["src/MSL_C/mem.c"]},
     {"upstream": "sonicheroes", "library": "dolphin", "profile": "sdk", "include": ["include", "src/dolphin/ax", "src/dolphin/axfx", "src/dolphin/mix", "src/dolphin/dsp", "src/dolphin/card"], "sources": ["src/dolphin/*/*.c"]},
     {"upstream": "tw2004", "library": "TRK_MINNOW_DOLPHIN", "profile": "trk", "include": ["extern/trk/include", "extern/trk/include/stl"], "defines": ["VERSION_GPVE01"], "sources": ["extern/trk/MetroTRK/*.c"]},
     {"upstream": "tw2004", "library": "MSL_C.PPCEABI.bare.H", "profile": "runtime", "include": ["include", "extern/sdk/include", "extern/sdk/libc"], "defines": ["VERSION=0"], "sources": ["extern/sdk/runtime/*.c"]},
@@ -53,6 +55,15 @@
     {"upstream": "tssm", "library": "MSL_C.PPCEABI.bare.H", "profile": "runtime", "include": ["include", "src/PowerPC_EABI_Support/include", "src/dolphin/include", "src"], "sources": ["src/PowerPC_EABI_Support/src/MSL_C/*/*.c"]},
     {"upstream": "FFCC-Decomp", "library": "MSL_C.PPCEABI.bare.H", "profile": "runtime", "include": ["include"], "sources": ["src/MSL_C/PPCEABI/bare/H/*.c"]},
     {"upstream": "FFCC-Decomp", "library": "TRK_MINNOW_DOLPHIN", "profile": "trk", "include": ["include"], "sources": ["src/TRK_MINNOW_DOLPHIN/*.c"]},
-    {"upstream": "pikmin", "library": "MSL_C.PPCEABI.bare.H", "profile": "runtime", "include": ["include", "include/stl"], "sources": ["src/MSL_C/PPCEABI/bare/H/*.c"]}
+    {"upstream": "pikmin", "library": "MSL_C.PPCEABI.bare.H", "profile": "runtime", "include": ["include", "include/stl"], "sources": ["src/MSL_C/PPCEABI/bare/H/*.c"]},
+    {"upstream": "ac-decomp", "library": "MSL_C.PPCEABI.bare.H", "profile": "msl", "include": ["include", "include/dolphin", "include/libc", "src/static/dolphin"], "sources": ["src/static/MSL_C.PPCEABI.bare.H/*.c"]},
+    {"upstream": "marioparty4", "library": "MSL_C.PPCEABI.bare.H", "profile": "msl", "include": ["include"], "sources": ["src/MSL_C.PPCEABI.bare.H/*.c"]},
+    {"upstream": "sonicheroes", "library": "MSL_C.PPCEABI.bare.H", "profile": "msl", "include": ["include"], "sources": ["src/MSL_C/*.c"], "exclude": ["src/MSL_C/mem.c"]},
+    {"upstream": "tw2004", "library": "MSL_C.PPCEABI.bare.H", "profile": "msl", "include": ["include", "extern/sdk/include", "extern/sdk/libc"], "defines": ["VERSION=0"], "sources": ["extern/sdk/runtime/*.c"]},
+    {"upstream": "tww", "library": "MSL_C.PPCEABI.bare.H", "profile": "msl", "include": ["include", "src", "src/PowerPC_EABI_Support/MSL/MSL_C/MSL_Common/Include", "src/PowerPC_EABI_Support/MSL/MSL_C/MSL_Common_Embedded/Math/Include", "src/PowerPC_EABI_Support/MSL/MSL_C/PPC_EABI/Include"], "sources": ["src/PowerPC_EABI_Support/MSL/MSL_C/*/Src/*.c", "src/PowerPC_EABI_Support/MSL/MSL_C/MSL_Common_Embedded/Math/Double_precision/*.c"]},
+    {"upstream": "bfbb", "library": "MSL_C.PPCEABI.bare.H", "profile": "msl", "include": ["include", "src/PowerPC_EABI_Support/include", "src/dolphin/include", "src"], "sources": ["src/PowerPC_EABI_Support/src/MSL_C/*/*.c", "src/PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/Math/Double_precision/*.c"]},
+    {"upstream": "tssm", "library": "MSL_C.PPCEABI.bare.H", "profile": "msl", "include": ["include", "src/PowerPC_EABI_Support/include", "src/dolphin/include", "src"], "sources": ["src/PowerPC_EABI_Support/src/MSL_C/*/*.c"]},
+    {"upstream": "FFCC-Decomp", "library": "MSL_C.PPCEABI.bare.H", "profile": "msl", "include": ["include"], "sources": ["src/MSL_C/PPCEABI/bare/H/*.c"]},
+    {"upstream": "pikmin", "library": "MSL_C.PPCEABI.bare.H", "profile": "msl", "include": ["include", "include/stl"], "sources": ["src/MSL_C/PPCEABI/bare/H/*.c"]}
   ]
 }
