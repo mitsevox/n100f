@@ -29,8 +29,9 @@ CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compi
 | `Runtime.PPCEABI.H/__va_arg.c` | GC/1.3.2 (1.3 differs; 1.3.2 through 2.7 are identical) | none | C |
 | `Runtime.PPCEABI.H/global_destructor_chain.c` | GC/1.3.2 (1.3 also matches) | `.dtors`, `.sbss` | C |
 | `Runtime.PPCEABI.H/runtime.c` | GC/1.3.2 (1.3 also matches) | `.rodata` | asm functions, each with an `assembly` row in `evidence.tsv` |
+| `TRK_MINNOW_DOLPHIN/` `mainloop.c`, `nubevent.c`, `nubinit.c`, `msg.c`, `serpoll.c`, `usr_put.c`, `dispatch.c`, `msghndlr.c`, `mutex_TRK.c`, `notify.c`, `mem_TRK.c`, `main_TRK.c`, `targcont.c`, `target_options.c` | GC/1.3 | each unit's `.rodata`, `.data` and `.bss`, as `data` rows in `evidence.tsv` | C |
 
-All three are `Matching` and link byte-identical.
+All of them are `Matching` and link byte-identical.
 
 ## Headers
 
@@ -40,7 +41,7 @@ Library headers declare only what the reconstructed units use, as game headers d
 | --- | --- |
 | `include/dolphin/` | Dolphin SDK public headers under the SDK's names (`dolphin/os.h` and its `dolphin/os/*.h` parts, `dolphin/db.h`, `dolphin/si.h`, ...), each created by the first import that needs it. The SDK's base types are in `dolphin/types.h`. |
 | `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`, `stdarg.h`) |
-| `src/<library>/` | Planned: private headers of one library, next to its source |
+| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`) |
 
 Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types. Game code keeps `types.h`.
 
