@@ -60,5 +60,8 @@ U32 Shaggy0_FlipCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent);
 xAnimTable* zEntShaggy_Anim0();
 void Shaggy0_PlayerStates(xAnimTable* table);
 void Shaggy0_PlayerTransitions(xAnimTable* table);
+xAnimTable* zEntShaggy_Anim1();
+void Shaggy1_PlayerStates(xAnimTable* table);
+void Shaggy1_PlayerTransitions(xAnimTable* table);
 
 #endif
