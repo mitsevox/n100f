@@ -904,6 +904,10 @@ MSL_C.PPCEABI.bare.H/misc_io.c:
 
 MSL_C.PPCEABI.bare.H/printf.c:
 	.text       start:0x800EB0F8 end:0x800ED118
+	.rodata     start:0x801A7F20 end:0x801A7F48
+	.data       start:0x801CA848 end:0x801CAA78
+	.sdata      start:0x8025E5D0 end:0x8025E5D8
+	.sdata2     start:0x80262188 end:0x80262190
 
 MSL_C.PPCEABI.bare.H/qsort.c:
 	.text       start:0x800ED118 end:0x800ED288
