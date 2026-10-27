@@ -966,7 +966,6 @@ static void Shaggy1_MiddleUpdate(_zEnt* shag, _xScene* sc, F32 dt)
 static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
 {
     F32 dz;
-    F32 dy;
     F32 dx;
     xMat3x3* mat;
     F32 mag;
@@ -1031,9 +1030,9 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
             if (xabs(mat->up.y - 1.0f) > 0.0001f)
             {
                 dx = -mat->up.x;
-                dy = 1.0f - mat->up.y;
+                cy = 1.0f - mat->up.y;
                 dz = -mat->up.z;
-                mag = dx * dx + dy * dy + dz * dz;
+                mag = dx * dx + cy * cy + dz * dz;
                 if (mag < 0.0049f)
                 {
                     mat->up.x = 0.0f;
@@ -1044,10 +1043,10 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
                 {
                     mag = 0.07f * (1.0f / sqrtf(mag));
                     dx *= mag;
-                    dy *= mag;
+                    cy *= mag;
                     dz *= mag;
                     mat->up.x += dx;
-                    mat->up.y += dy;
+                    mat->up.y += cy;
                     mat->up.z += dz;
                     xVec3Normalize(&mat->up, &mat->up);
                     xVec3Cross(&mat->right, &mat->up, &mat->at);
@@ -2585,9 +2584,7 @@ static void Shaggy5_Update(_zEnt* ent, _xScene* sc, F32 dt)
                      ((xMat4x3*)guts->geronimoChase->model->Mat)->pos.x;
             F32 dz = ((xMat4x3*)ent->model->Mat)->pos.z -
                      ((xMat4x3*)guts->geronimoChase->model->Mat)->pos.z;
-            F32 dist2 = dx * dx + dz * dz;
-
-            if (dist2 < 16.0f)
+            if (dx * dx + dz * dz < 16.0f)
             {
                 ((st_zEntVillain*)ent)->spd_move += 0.5f * dt;
                 ((st_zEntVillain*)ent)->spd_chase += 0.5f * dt;
@@ -2600,7 +2597,7 @@ static void Shaggy5_Update(_zEnt* ent, _xScene* sc, F32 dt)
                     ((st_zEntVillain*)ent)->spd_chase = 4.1f;
                 }
             }
-            if (dist2 > 36.0f)
+            if (dx * dx + dz * dz > 36.0f)
             {
                 ((st_zEntVillain*)ent)->spd_move -= 0.5f * dt;
                 ((st_zEntVillain*)ent)->spd_chase -= 0.5f * dt;
@@ -2637,68 +2634,68 @@ static void ShaggySwap(_zEnt* src, _zEnt* dest)
 
     if (xEntIsVisible(src) && !src->model->Anim->Single->Blend->State)
     {
-            dstState = "Idle";
-            srcState = src->model->Anim->Single->State->Name;
-            if (sguts->shaggyType == 5)
+        dstState = "Idle";
+        srcState = src->model->Anim->Single->State->Name;
+        if (sguts->shaggyType == 5)
+        {
+            switch (dguts->shaggyType)
             {
-                switch (dguts->shaggyType)
-                {
-                case 0:
-                case 5:
-                    sguts->prefIdle = 0;
-                    if (strcmp(srcState, "Idle") != 0)
-                    {
-                        return;
-                    }
-                    break;
-                case 1:
-                    sguts->prefIdle = 1;
-                    if (strcmp(srcState, "Idle_scared") != 0)
-                    {
-                        return;
-                    }
-                    break;
-                case 7:
-                    sguts->prefIdle = 2;
-                    if (strcmp(srcState, "Idle_hungry") != 0)
-                    {
-                        return;
-                    }
-                    break;
-                }
-            }
-            else
-            {
+            case 0:
+            case 5:
+                sguts->prefIdle = 0;
                 if (strcmp(srcState, "Idle") != 0)
                 {
                     return;
                 }
-                dguts->prefIdle = 0;
-                switch (sguts->shaggyType)
+                break;
+            case 1:
+                sguts->prefIdle = 1;
+                if (strcmp(srcState, "Idle_scared") != 0)
                 {
-                case 1:
-                    dguts->prefIdle = 1;
-                    dstState = "Idle_scared";
-                    break;
-                case 7:
-                    dguts->prefIdle = 2;
-                    dstState = "Idle_hungry";
-                    break;
+                    return;
                 }
+                break;
+            case 7:
+                sguts->prefIdle = 2;
+                if (strcmp(srcState, "Idle_hungry") != 0)
+                {
+                    return;
+                }
+                break;
             }
+        }
+        else
+        {
+            if (strcmp(srcState, "Idle") != 0)
+            {
+                return;
+            }
+            dguts->prefIdle = 0;
+            switch (sguts->shaggyType)
+            {
+            case 1:
+                dguts->prefIdle = 1;
+                dstState = "Idle_scared";
+                break;
+            case 7:
+                dguts->prefIdle = 2;
+                dstState = "Idle_hungry";
+                break;
+            }
+        }
 
-            sguts->swap = NULL;
-            zEntEvent(src, dest, eEventVisible);
-            *(xMat4x3*)dest->model->Mat = *(xMat4x3*)src->model->Mat;
-            dest->frame->mat = src->frame->mat;
-            dest->frame->oldpos = src->frame->oldpos;
-            dest->bound.sph.center = src->bound.sph.center;
-            xAnimPlaySetState(dest->model->Anim->Single,
-                              xAnimTableGetState(dest->model->Anim->Table, dstState), 0.0f);
-            dest->model->Anim->Single->Time = src->model->Anim->Single->Time;
-            zEntEvent(src, eEventInvisible);
-            memcpy((xMat4x3*)dest->model->Mat + 1, (xMat4x3*)src->model->Mat + 1,
-                   dest->model->BoneCount << 6);
+        sguts->swap = NULL;
+        zEntEvent(src, dest, eEventVisible);
+        *(xMat4x3*)dest->model->Mat = *(xMat4x3*)src->model->Mat;
+        dest->frame->mat = src->frame->mat;
+        dest->frame->oldpos = src->frame->oldpos;
+        dest->bound.sph.center = src->bound.sph.center;
+        xAnimPlaySetState(dest->model->Anim->Single,
+                          xAnimTableGetState(dest->model->Anim->Table, dstState), 0.0f);
+        dest->model->Anim->Single->Time = src->model->Anim->Single->Time;
+        zEntEvent(src, eEventInvisible);
+        memcpy((xMat4x3*)dest->model->Mat + 1, (xMat4x3*)src->model->Mat + 1,
+               dest->model->BoneCount << 6);
     }
 }
 
