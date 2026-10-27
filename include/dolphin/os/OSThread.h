@@ -7,6 +7,17 @@
 extern "C" {
 #endif
 
+typedef struct OSThread OSThread;
+typedef struct OSThreadQueue OSThreadQueue;
+
+struct OSThreadQueue {
+    OSThread* head;
+    OSThread* tail;
+};
+
+void OSInitThreadQueue(OSThreadQueue* queue);
+void OSSleepThread(OSThreadQueue* queue);
+void OSWakeupThread(OSThreadQueue* queue);
 void OSYieldThread(void);
 
 #ifdef __cplusplus
