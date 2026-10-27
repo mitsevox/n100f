@@ -25,7 +25,11 @@ typedef int BOOL;
 #define NULL 0
 #endif
 
+#ifdef __MWERKS__
 #define AT_ADDRESS(addr) : (addr)
 #define ATTRIBUTE_ALIGN(num) __attribute__((aligned(num)))
+#else
+#define AT_ADDRESS(addr)
+#endif
 
 #endif
