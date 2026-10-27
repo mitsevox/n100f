@@ -655,6 +655,6 @@ inline int vsscanf(const char* s, const char* format, va_list arg)
 int sscanf(const char* s, const char* pFormat, ...)
 {
     va_list args;
-    __builtin_va_info(&args);
+    va_start(args, pFormat);
     return vsscanf(s, pFormat, args);
 }

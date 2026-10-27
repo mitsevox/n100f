@@ -14,20 +14,7 @@ typedef struct {
 
 typedef void* (*__OutputProc)(void* object, const char* buffer, int n);
 
-typedef void* (*__OutputProc)(void* object, const char* buffer, int n);
-
 size_t wcstombs(char* dst, const wchar_t* src, size_t n);
-
-#define LDBL_MANT_DIG 53
-#define LDBL_MAX_EXP  1024
-
-#define TARGET_FLOAT_BITS           64
-#define TARGET_FLOAT_BYTES          (TARGET_FLOAT_BITS / 8)
-#define TARGET_FLOAT_MAX_EXP        LDBL_MAX_EXP
-#define TARGET_FLOAT_MANT_DIG       LDBL_MANT_DIG
-#define TARGET_FLOAT_IMPLICIT_J_BIT 1
-#define TARGET_FLOAT_MANT_BITS      (TARGET_FLOAT_MANT_DIG - TARGET_FLOAT_IMPLICIT_J_BIT)
-#define TARGET_FLOAT_EXP_BITS       (TARGET_FLOAT_BITS - TARGET_FLOAT_MANT_BITS - 1)
 
 enum justification_options { left_justification, right_justification, zero_fill };
 
@@ -506,8 +493,6 @@ static char* longlong2str(signed long long num, char* pBuf, print_format fmt)
 
 static char* double2hex(long double num, char* buff, print_format format)
 {
-    int offset, what_nibble = 0;
-    char* wrk_byte_ptr;
     char *p, *q;
     char working_byte;
     long double ld;
@@ -1207,7 +1192,7 @@ int fprintf(FILE* file, const char* format, ...)
     if (fwide(file, -1) >= 0)
         return -1;
 
-    __builtin_va_info(args);
+    va_start(args, format);
 
     return __pformatter(__FileWrite, file, format, args);
 }
@@ -1249,7 +1234,7 @@ int sprintf(char* s, const char* format, ...)
     __OutStrCtrl arg;
     int result;
 
-    __builtin_va_info(args);
+    va_start(args, format);
 
     arg.CharStr      = s;
     arg.MaxCharCount = -1;

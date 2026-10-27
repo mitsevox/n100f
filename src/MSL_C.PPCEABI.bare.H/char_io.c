@@ -43,7 +43,7 @@ int fgetc(FILE* file)
     return *file->buffer_ptr++;
 }
 
-char* fgets(char* string, int count, register FILE* file)
+char* fgets(char* string, int count, FILE* file)
 {
     char* current;
     int character;
