@@ -19,7 +19,6 @@ typedef struct _AXPBDPOP {
     s16 aAuxBS;
 } AXPBDPOP;
 
-// Only the depop block is declared; the parameter block's other fields are not used yet.
 typedef struct _AXPB {
     u8 unk00[0x52];
     AXPBDPOP dpop;

@@ -29,7 +29,7 @@ static u8 ErrorCode2Num(u32 errorCode)
     return 29;
 }
 
-inline u8 Convert(u32 error)
+u8 Convert(u32 error)
 {
     u32 statusCode;
     u32 errorCode;

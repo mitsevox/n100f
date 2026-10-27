@@ -18,7 +18,7 @@ u32 __AXGetStudio(void)
     return (u32)&__AXStudio;
 }
 
-inline void __AXDepopFade(long* hostSum, long* dspVolume, s16* dspDelta)
+void __AXDepopFade(long* hostSum, long* dspVolume, s16* dspDelta)
 {
     int frames;
     long delta;
