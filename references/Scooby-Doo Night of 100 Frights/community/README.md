@@ -12,7 +12,7 @@ None of the three documents states a licence. They are kept in full by the proje
 
 Changes from the originals:
 
-- The encyclopedia's embedded images (gameplay screenshots and box art) are removed. Each is marked `*[Image omitted]*`, except for three replacements: the three disc photos in "How to Tell if You Have GCN Version 0 or Version 1" are transcribed as the ring codes they show (`*[Image: ...]*`), and the one linked video thumbnail becomes `*[Video thumbnail omitted]*` with its link kept. Video links are kept.
+- The encyclopedia's embedded images (gameplay screenshots and box art) are removed. Each is marked `*[Image omitted]*`, except in four places: the three disc photos in "How to Tell if You Have GCN Version 0 or Version 1" are transcribed as the ring codes they show (`*[Image: ...]*`), and the one linked video thumbnail becomes `*[Video thumbnail omitted]*` with its link kept. Video links are kept.
 - The CSVs drop empty rows and trailing empty columns, and line breaks inside cells become spaces. The sheets' hyperlinks do not survive CSV export, so cells such as `Link`, `1,2` or `Imgur` are link labels; the URLs are in the original sheets.
 
 The community's "GameCube Version 0" and "Version 1" (the sheet's "1.0" and "1.1") correspond to the disc ring codes `DOL-GIHE-0-00 USA` and `DOL-GIHE-0-01 USA`. This project's target is version 0 (`DOL-GIHE-USA`, `GIHE78` revision 0). Version 1 is reported to lock hanging objects such as chandeliers in place and to drop the Coast 3 "invisible fishnet"; all PAL GameCube copies are reported to be version 1.
