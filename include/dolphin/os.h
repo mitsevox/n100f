@@ -43,5 +43,6 @@ void OSReport(const char* msg, ...);
 #include <dolphin/os/OSInterrupt.h>
 #include <dolphin/os/OSModule.h>
 #include <dolphin/os/OSResetSW.h>
+#include <dolphin/os/OSThread.h>
 
 #endif
