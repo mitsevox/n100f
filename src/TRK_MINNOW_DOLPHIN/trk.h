@@ -291,7 +291,7 @@ unsigned int TRKTargetContinue(void);
 void SetUseSerialIO(u8 sio);
 u8 GetUseSerialIO(void);
 
-// The one-byte append, which the units expand in place.
+// Appends one byte to a message buffer.
 static inline DSError TRKAppendBuffer1_ui8(TRKBuffer* buffer, const u8 data) {
     if (buffer->position >= TRKMSGBUF_SIZE) {
         return DS_MessageBufferOverflow;

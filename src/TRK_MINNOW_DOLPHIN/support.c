@@ -1,6 +1,9 @@
 #include "TRK_MINNOW_DOLPHIN/trk.h"
 
-#include <string.h>
+// Shortest replies to a read and a write request: the ack header (2 bytes), the I/O result
+// (1) and the transferred length (2). Read data follows the header.
+#define READ_FILE_REPLY_MIN_LENGTH 5
+#define WRITE_FILE_REPLY_MIN_LENGTH 5
 
 // Reads or writes a host file through the debugger, in pieces of up to 0x800 bytes.
 DSError TRKSuppAccessFile(u32 file_handle, u8* data, size_t* count, u8* io_result, BOOL need_reply,
@@ -54,7 +57,7 @@ DSError TRKSuppAccessFile(u32 file_handle, u8* data, size_t* count, u8* io_resul
                 replyLength = 0;
                 replyIOResult = 0;
 
-                error = TRKRequestSend(buffer, &replyBufferId, read ? 5 : 5, 3, !(read && file_handle == 0));
+                error = TRKRequestSend(buffer, &replyBufferId, read ? READ_FILE_REPLY_MIN_LENGTH : WRITE_FILE_REPLY_MIN_LENGTH, 3, !(read && file_handle == 0));
                 if (error == DS_NoError) {
                     replyBuffer = (TRKBuffer*)TRKGetBuffer(replyBufferId);
                     TRKSetBufferPosition(replyBuffer, 2);

@@ -11,6 +11,8 @@ __declspec(section ".init") void* TRK_memcpy(void* dest, const void* src, size_t
     while (--count) {
         *++d = *++s;
     }
+
+    return dest;
 }
 
 __declspec(section ".init") void* TRK_memset(void* dest, int val, size_t count) {

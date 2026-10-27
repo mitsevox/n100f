@@ -213,7 +213,6 @@ cflags_base = [
     "-multibyte",  # For Wii compilers, replace with `-enc SJIS`
     "-i include",
     "-i include/libc",
-    "-i src",
     f"-i build/{config.version}/include",
     f"-DBUILD_VERSION={version_num}",
     f"-DVERSION_{config.version}",
@@ -267,6 +266,7 @@ cflags_trk = [
     "-sdata2 0",
     "-rostr",
     "-char signed",
+    "-i src",
 ]
 
 # Bink profile: ProDG (SN Systems GCC). The version is not established; ProDG/3.5 is the
