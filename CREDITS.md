@@ -48,9 +48,17 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 
 ## Library source
 
-`src/Runtime.PPCEABI.H/runtime.c` is [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4/blob/5b01c79b4910525e3fc5aa312eddd6d014e7f337/src/Runtime.PPCEABI.H/runtime.c)'s `src/Runtime.PPCEABI.H/runtime.c` at revision `5b01c79b4910525e3fc5aa312eddd6d014e7f337` (CC0 1.0). Local changes: no `dolphin.h` include, so `__constants` and `__cvt_fp2unsigned` use C types; address comments dropped; the labels of `__cvt_sll_flt` renamed from addresses to their roles.
+`src/Runtime.PPCEABI.H/runtime.c` is [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4/blob/5b01c79b4910525e3fc5aa312eddd6d014e7f337/src/Runtime.PPCEABI.H/runtime.c)'s `src/Runtime.PPCEABI.H/runtime.c` at revision `5b01c79b4910525e3fc5aa312eddd6d014e7f337` (CC0 1.0). marioparty4 imported that file from [zeldaret/tp](https://github.com/zeldaret/tp) (marioparty4 commit `faacc23`, "Imported some runtime libraries", 2024-11-19); tp is CC0 1.0 at its last revision before that import, `2159eac680836de5dba2e0a987f83b7262f07180`. Local changes:
 
-`src/Runtime.PPCEABI.H/__va_arg.c` and `global_destructor_chain.c` follow [zeldaret/tww](https://github.com/zeldaret/tww/tree/02de6b772d06b2ed15bbe7b25d01901fdca84966/src/PowerPC_EABI_Support/Runtime/Src)'s files of the same names at revision `02de6b772d06b2ed15bbe7b25d01901fdca84966` (CC0 1.0). Local changes: C types in place of the SDK's, the va_list type comes from `include/libc/stdarg.h`, and `DestructorChain` is defined in the source file. `include/libc/stdarg.h` declares tww's `__va_list_struct`.
+- No `dolphin.h` include, so `__constants` and `__cvt_fp2unsigned` use C types.
+- The address comments are dropped, and the comment above the register macros is reworded.
+- The labels of `__cvt_sll_flt` are renamed from addresses to their roles.
+
+`src/Runtime.PPCEABI.H/__va_arg.c` and `global_destructor_chain.c` follow [zeldaret/tww](https://github.com/zeldaret/tww/tree/02de6b772d06b2ed15bbe7b25d01901fdca84966/src/PowerPC_EABI_Support/Runtime/Src)'s files of the same names at revision `02de6b772d06b2ed15bbe7b25d01901fdca84966` (CC0 1.0). Local changes:
+
+- C types replace the SDK's (`long` for `s32`, `unsigned long` for `u32`), the code is reformatted, and `__va_arg.c` drops tww's `#undef __va_arg`.
+- The va_list type comes from `include/libc/stdarg.h`, which declares tww's `__va_list_struct` directly instead of following tww's `__va_arg.h`.
+- `global_destructor_chain.c` defines `DestructorChain` and tww's `DTORCALL` macro (from tww's `NMWException.h`) itself, with a comment on the -1 argument.
 
 ## Library unit map
 

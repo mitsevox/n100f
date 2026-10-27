@@ -20,7 +20,7 @@ GC/1.2.5n writes `.comment` version 8 (compiler 2.3.0.1). GC/1.3 and GC/1.3.2 bo
 
 | Unit | Compiler | Data | Source |
 | --- | --- | --- | --- |
-| `Runtime.PPCEABI.H/__va_arg.c` | GC/1.3.2 (1.3 differs) | none | C |
+| `Runtime.PPCEABI.H/__va_arg.c` | GC/1.3.2 (1.3 differs; 1.3.2 through 2.7 are identical) | none | C |
 | `Runtime.PPCEABI.H/global_destructor_chain.c` | GC/1.3.2 (1.3 also matches) | `.dtors`, `.sbss` | C |
 | `Runtime.PPCEABI.H/runtime.c` | GC/1.3.2 (1.3 also matches) | `.rodata` | asm functions, each with an `assembly` row in `evidence.tsv` |
 
@@ -36,7 +36,7 @@ Library headers declare only what the reconstructed units use, as game headers d
 | `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`, `stdarg.h`) |
 | `src/<library>/` | Planned: private headers of one library, next to its source |
 
-Library code uses the SDK's type names. Game code keeps `types.h`.
+Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types, as Metrowerks' own sources do. Game code keeps `types.h`.
 
 When an import needs a declaration:
 
