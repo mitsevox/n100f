@@ -304,6 +304,17 @@ cflags_card = [
     "-i src",
 ]
 
+# RenderWare profile: CodeWarrior for GameCube 1.3 or 1.3.2 (not separated), -O4, signed char,
+# no fused multiply-add and no lmw/stmw. Evidence: RenderWare compiler rows in evidence.tsv and
+# docs/compiler_profile/README.md "RenderWare".
+cflags_rw = [
+    *[f for f in cflags_base if f not in _lib_drop],
+    "-fp_contract off",
+    "-lang=c",
+    "-char signed",
+    "-common off",
+]
+
 # REL flags
 cflags_rel = [
     *cflags_base,
@@ -406,6 +417,18 @@ def BinkLib(objects: List[Object]) -> Dict[str, Any]:
         "mw_version": "ProDG/3.5",
         "cflags": cflags_bink,
         "progress_category": "bink",
+        "objects": objects,
+    }
+
+
+# Helper function for RenderWare 3.3.0.2. GC/1.3 and GC/1.3.2 produce the same probed bodies;
+# GC/1.3.2 is the game's release (compiler rows in evidence.tsv).
+def RWLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
+    return {
+        "lib": lib_name,
+        "mw_version": "GC/1.3.2",
+        "cflags": cflags_rw,
+        "progress_category": "renderware",
         "objects": objects,
     }
 
@@ -713,6 +736,131 @@ config.libs: List[Dict[str, Any]] = [
             Object(Matching, "dolphin/card/CARDNet.c"),
         ],
     ),
+    # RenderWare units: config/GIHE78/rw_units.tsv and docs/splits.md "RenderWare units".
+    RWLib(
+        "rpcollis",
+        [
+            Object(NonMatching, "rwsdk/plugin/collis/ctgeom.c"),
+            Object(NonMatching, "rwsdk/plugin/collis/ctworld.c"),
+            Object(NonMatching, "rwsdk/plugin/collis/ctbsp.c"),
+            Object(NonMatching, "rwsdk/plugin/collis/rpcollis.c"),
+        ],
+    ),
+    RWLib(
+        "rphanim",
+        [
+            Object(NonMatching, "rwsdk/plugin/hanim/rphanim.c"),
+        ],
+    ),
+    RWLib(
+        "rpmatfx",
+        [
+            Object(NonMatching, "rwsdk/plugin/matfx/rpmatfx.c"),
+            Object(NonMatching, "rwsdk/plugin/matfx/gcn/effectPipesGcn.c"),
+            Object(NonMatching, "rwsdk/plugin/matfx/gcn/multiTexGcnData.c"),
+            Object(NonMatching, "rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c"),
+            Object(NonMatching, "rwsdk/plugin/matfx/multiTex.c"),
+            Object(NonMatching, "rwsdk/plugin/matfx/multiTexEffect.c"),
+        ],
+    ),
+    RWLib(
+        "rpskin",
+        [
+            Object(NonMatching, "rwsdk/plugin/skin2/rpskin.c"),
+            Object(NonMatching, "rwsdk/plugin/skin2/gcn/skingcn.c"),
+        ],
+    ),
+    RWLib(
+        "rpusrdat",
+        [
+            Object(NonMatching, "rwsdk/plugin/userdata/rpusrdat.c"),
+        ],
+    ),
+    RWLib(
+        "rpworld",
+        [
+            Object(NonMatching, "rwsdk/world/babinwor.c"),
+            Object(NonMatching, "rwsdk/world/baclump.c"),
+            Object(NonMatching, "rwsdk/world/bageomet.c"),
+            Object(NonMatching, "rwsdk/world/balight.c"),
+            Object(NonMatching, "rwsdk/world/bamateri.c"),
+            Object(NonMatching, "rwsdk/world/bamatlst.c"),
+            Object(NonMatching, "rwsdk/world/bamesh.c"),
+            Object(NonMatching, "rwsdk/world/bameshop.c"),
+            Object(NonMatching, "rwsdk/world/basector.c"),
+            Object(NonMatching, "rwsdk/world/baworld.c"),
+            Object(NonMatching, "rwsdk/world/baworobj.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/bapipew.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/nodeAtomicInstance.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/nodeLight.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/nodeMaterialScatter.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/nodePostLight.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/nodeWorldSectorInstance.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/gcpipe.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/vtxfmt.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/wrldpipe.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c"),
+        ],
+    ),
+    RWLib(
+        "rwcore",
+        [
+            Object(NonMatching, "rwsdk/src/plcore/babinary.c"),
+            Object(NonMatching, "rwsdk/src/plcore/baerr.c"),
+            Object(NonMatching, "rwsdk/src/plcore/bafsys.c"),
+            Object(NonMatching, "rwsdk/src/plcore/baimmedi.c"),
+            Object(NonMatching, "rwsdk/src/plcore/bamatrix.c"),
+            Object(NonMatching, "rwsdk/src/plcore/baresour.c"),
+            Object(NonMatching, "rwsdk/src/plcore/bastream.c"),
+            Object(NonMatching, "rwsdk/src/plcore/batkbin.c"),
+            Object(NonMatching, "rwsdk/src/plcore/batkreg.c"),
+            Object(NonMatching, "rwsdk/src/plcore/bavector.c"),
+            Object(NonMatching, "rwsdk/src/plcore/resmem.c"),
+            Object(NonMatching, "rwsdk/src/plcore/rwstring.c"),
+            Object(NonMatching, "rwsdk/src/babinfrm.c"),
+            Object(NonMatching, "rwsdk/src/babintex.c"),
+            Object(NonMatching, "rwsdk/src/bacamera.c"),
+            Object(NonMatching, "rwsdk/src/badevice.c"),
+            Object(NonMatching, "rwsdk/src/baframe.c"),
+            Object(NonMatching, "rwsdk/src/baimage.c"),
+            Object(NonMatching, "rwsdk/src/baimras.c"),
+            Object(NonMatching, "rwsdk/src/baraster.c"),
+            Object(NonMatching, "rwsdk/src/basync.c"),
+            Object(NonMatching, "rwsdk/src/batextur.c"),
+            Object(NonMatching, "rwsdk/src/batypehf.c"),
+            Object(NonMatching, "rwsdk/driver/common/palquant.c"),
+            Object(NonMatching, "rwsdk/driver/gcn/dl2drend.c"),
+            Object(NonMatching, "rwsdk/driver/gcn/dlconvrt.c"),
+            Object(NonMatching, "rwsdk/driver/gcn/dldevice.c"),
+            Object(NonMatching, "rwsdk/driver/gcn/dlraster.c"),
+            Object(NonMatching, "rwsdk/driver/gcn/dlsprite.c"),
+            Object(NonMatching, "rwsdk/driver/gcn/dltexdic.c"),
+            Object(NonMatching, "rwsdk/driver/gcn/dltextur.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/baim3d.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/bapipe.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeClipLine.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeClipTriangle.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeCullTriangle.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeImmInstance.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeImmRenderSetup.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeImmStash.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeSubmitLine.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeSubmitTriangle.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/nodeTransform.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/p2core.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/p2define.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/p2dep.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/p2heap.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/p2resort.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/gcn/im3dpipe.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c"),
+        ],
+    ),
 ]
 
 
@@ -742,6 +890,7 @@ config.progress_categories = [
     ProgressCategory("runtime", "Runtime and MSL Code"),
     ProgressCategory("trk", "MetroTRK Code"),
     ProgressCategory("bink", "Bink Code"),
+    ProgressCategory("renderware", "RenderWare Code"),
 ]
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`

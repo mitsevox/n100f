@@ -69,7 +69,7 @@ All nine are found exactly once. Four of them (`0x80166800`, `0x80165B04`, `0x80
 - There are no fused multiply-adds (`fmadds` and its relatives). The game text has 1,848, so RenderWare was built without contraction.
 - There are no `lmw`/`stmw`. RenderWare saves registers through `_savegpr_N`/`_restgpr_N` (418 branches), which is mwcceppc's output without `-use_lmw_stmw on`; the game text has 849 `lmw`.
 
-The `compiler` rows in `evidence.tsv` list each body. Nothing in `configure.py` uses this profile yet.
+The `compiler` rows in `evidence.tsv` list each body. `configure.py` applies it to the RenderWare units as `cflags_rw` under GC/1.3.2 ([libraries](../libraries.md)).
 
 ## Caveats
 

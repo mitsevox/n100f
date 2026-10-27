@@ -14,8 +14,9 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `DolphinLib` | `dolphin/<library>` | GC/1.2.5n | `cflags_sdk` | `sdk` |
 | `BinkLib` | `binkngc` | ProDG/3.5 | `cflags_bink` | `bink` |
 | `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card` | `sdk` |
+| `RWLib` | `rpcollis`, `rphanim`, `rpmatfx`, `rpskin`, `rpusrdat`, `rpworld`, `rwcore` (`rwsdk/`) | GC/1.3.2 | `cflags_rw` | `renderware` |
 
-RenderWare units are not listed yet. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated, and some flags are established ([compiler profile](compiler_profile/README.md#renderware)). Never use leaked RenderWare source for them.
+The 89 RenderWare units in `config/GIHE78/rw_units.tsv` are listed NonMatching, one `RWLib` per library. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated; `RWLib` uses GC/1.3.2, the game's release. `cflags_rw` sets the established flags (`-O4`, `-char signed`, `-fp_contract off`, no `-use_lmw_stmw on`) and keeps the base flags for the rest, which are not established ([compiler profile](compiler_profile/README.md#renderware)). The probe covered `rwcore` only, so the plugin and world libraries take the same profile on the assumption that one build produced the whole SDK. Never use leaked RenderWare source for them.
 
 The flags are shown compatible with the target, not established. MSL is one profile for the whole library: the twelve imported units match under GC/1.3 with `-inline auto,deferred` and `-char signed`, six of them differ under GC/1.3.2, and none needs GC/1.3.2. Each later MSL import reconfirms the profile on its own unit.
 
