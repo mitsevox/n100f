@@ -269,6 +269,17 @@ cflags_trk = [
     "-char signed",
 ]
 
+# Bink profile: ProDG (SN Systems GCC). The version is not established; ProDG/3.5 is the
+# only one tools/prodg_cc.py reproduces (compiler row for Bink in evidence.tsv).
+cflags_bink = [
+    "-O2",
+    "-mcpu=750",
+    "-fno-exceptions",
+    "-nostdinc",
+    "-I include",
+    "-I include/libc",
+]
+
 # REL flags
 cflags_rel = [
     *cflags_base,
@@ -339,6 +350,17 @@ def TRKLib(objects: List[Object]) -> Dict[str, Any]:
         "mw_version": "GC/1.3",
         "cflags": cflags_trk,
         "progress_category": "trk",
+        "objects": objects,
+    }
+
+
+# Helper function for RAD Game Tools' Bink: ProDG (compiler row in evidence.tsv).
+def BinkLib(objects: List[Object]) -> Dict[str, Any]:
+    return {
+        "lib": "binkngc",
+        "mw_version": "ProDG/3.5",
+        "cflags": cflags_bink,
+        "progress_category": "bink",
         "objects": objects,
     }
 
@@ -597,6 +619,25 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "dolphin/dvd/fstload.c"),
         ],
     ),
+    BinkLib(
+        [
+            Object(NonMatching, "bink/src/sdk/decode/ngc/binkngc.c"),
+            Object(NonMatching, "bink/src/sdk/decode/ngc/ngcsnd.c"),
+            Object(NonMatching, "bink/src/sdk/decode/binkread.c"),
+            Object(NonMatching, "bink/src/sdk/decode/ngc/ngcfile.c"),
+            Object(NonMatching, "bink/src/sdk/decode/yuv.cpp"),
+            Object(NonMatching, "bink/src/sdk/decode/binkacd.c"),
+            Object(NonMatching, "bink/shared/time/radcb.c"),
+            Object(NonMatching, "bink/src/sdk/decode/expand.c"),
+            Object(NonMatching, "bink/src/sdk/popmal.c"),
+            Object(NonMatching, "bink/src/sdk/decode/ngc/ngcrgb.c"),
+            Object(NonMatching, "bink/src/sdk/decode/ngc/ngcyuy2.c"),
+            Object(NonMatching, "bink/src/sdk/varbits.c"),
+            Object(NonMatching, "bink/src/sdk/fft.c"),
+            Object(NonMatching, "bink/src/sdk/dct.c"),
+            Object(NonMatching, "bink/src/sdk/bitplane.c"),
+        ],
+    ),
 ]
 
 
@@ -625,6 +666,7 @@ config.progress_categories = [
     ProgressCategory("sdk", "SDK Code"),
     ProgressCategory("runtime", "Runtime and MSL Code"),
     ProgressCategory("trk", "MetroTRK Code"),
+    ProgressCategory("bink", "Bink Code"),
 ]
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`

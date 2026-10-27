@@ -62,10 +62,14 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 
 ## Library unit map
 
-`tools/splits/libmap.py` compiles source from the decompilations below, at the revisions pinned in `config/GIHE78/libmap.json`, only to locate and name library code in the target; none of that source is in this repository. The names libmap applies come only from the symbol lists of ac-decomp, tww and FFCC-Decomp, which derive from those games' map or debug files. The other library names in `symbols.txt` come from decomp-toolkit's built-in signatures, as rows in `evidence.tsv` record.
+`tools/splits/libmap.py` compiles source from the decompilations below, at the revisions pinned in `config/GIHE78/libmap.json`, only to locate and name library code in the target; none of that source is in this repository. The names libmap applies come only from the symbol lists of ac-decomp, tww and FFCC-Decomp, which derive from those games' map or debug files. The Bink names come from bfbb's symbol list ([Bink unit map](#bink-unit-map)). The other library names in `symbols.txt` come from decomp-toolkit's built-in signatures, as rows in `evidence.tsv` record.
 
 - [ACreTeam/ac-decomp](https://github.com/ACreTeam/ac-decomp), [zeldaret/tww](https://github.com/zeldaret/tww), [zcanann/FFCC-Decomp](https://github.com/zcanann/FFCC-Decomp), [mariopartyrd/marioparty4](https://github.com/mariopartyrd/marioparty4), [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb), [bfbbdecomp/tssm](https://github.com/bfbbdecomp/tssm), [projectPiki/pikmin](https://github.com/projectPiki/pikmin), [mitsevox/tw2004](https://github.com/mitsevox/tw2004) and [mitsevox/mvp2005](https://github.com/mitsevox/mvp2005): CC0 1.0.
 - [Jovinull/sonicheroes](https://github.com/Jovinull/sonicheroes): MIT. Its notice must accompany any source imported from it.
+
+## Bink unit map
+
+The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bink function names in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), compiled only to identify the compiler; none of it is in this repository yet.
 
 ## Build tooling
 
