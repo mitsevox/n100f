@@ -70,6 +70,7 @@ static inline int __fpclassifyd(double x)
 #define signbit(x) ((int)(__HI(x) & 0x80000000))
 
 
+double atan(double x);
 double atan2(double y, double x);
 double copysign(double x, double y);
 double frexp(double x, int* exp);
@@ -79,6 +80,7 @@ double nextafter(double x, double y);
 double pow(double x, double y);
 float atanf(float x);
 double cos(double x);
+double sin(double x);
 float cosf(float x);
 float sinf(float x);
 
