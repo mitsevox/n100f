@@ -1,0 +1,6 @@
+# Probe flags for docs/compiler_profile/rw_probe/ (run with --root docs/compiler_profile).
+# -O4 and -char signed are needed (see README); -O4,p and -O4,s, -fp fmadd with
+# -fp_contract off and plain -fp hardware, and -inline auto and auto,deferred all give the same hits.
+-nodefaults -proc gekko -align powerpc -enum int -fp hardware -Cpp_exceptions off
+-pragma "cats off" -nosyspath -RTTI off -str reuse -lang=c -common off
+-O4,p -inline auto -fp fmadd -fp_contract off -char signed

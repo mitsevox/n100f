@@ -15,7 +15,7 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `BinkLib` | `binkngc` | ProDG/3.5 | `cflags_bink` | `bink` |
 | `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card` | `sdk` |
 
-RenderWare units are not listed: their compiler profile is not established. Never use leaked RenderWare source for them.
+RenderWare units are not listed yet. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated, and some flags are established ([compiler profile](compiler_profile/README.md#renderware)). Never use leaked RenderWare source for them.
 
 The flags are shown compatible with the target, not established. MSL is one profile for the whole library: the twelve imported units match under GC/1.3 with `-inline auto,deferred` and `-char signed`, six of them differ under GC/1.3.2, and none needs GC/1.3.2. Each later MSL import reconfirms the profile on its own unit.
 
