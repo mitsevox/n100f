@@ -47,13 +47,15 @@ artifact against its copy of the producer policy, and never runs anything from t
 The file counts are provisional. 123 game units are named from recovered splits (see
 [splits.md](splits.md)), and 118 library units (MetroTRK, runtime, MSL and the first part of the
 Dolphin SDK) are named by compiling public decompilations of those libraries (see
-[Library units](splits.md#library-units)), and 15 Bink units are named from bfbb's identical Bink
-layout (see [Bink units](splits.md#bink-units)); the rest are dtk's auto-generated address ranges. The game
+[Library units](splits.md#library-units)), 15 Bink units are named from bfbb's identical Bink
+layout (see [Bink units](splits.md#bink-units)), and 63 RenderWare units are placed by aligning bfbb's
+RenderWare function sizes (see [RenderWare units](splits.md#renderware-units)); the rest are dtk's auto-generated address ranges.
+Today 319 of the report's 475 files are named. The game
 names come from the PS2 v1.01 DWARF and the boundaries are inferred, so no game unit boundary has been
 checked against Heavy Iron's objects. The basis string says so. Library units placed by a
-whole-object match have exact extents; the others have open edges. Naming those units did not change
+whole-object match have exact extents; the others have open edges. RenderWare unit edges are `provisional` or `open`. Naming those units did not change
 what `files.named` means, so the methodology and generation stay the same.
-Today's 1,484 named functions are 461 from before the library map, 687 library names and 336 Bink names. The 461
+Today's 2,070 named functions are 461 from before the library map, 687 library names, 336 Bink names and 586 RenderWare names. The 461
 are the names dtk's analysis assigned in `symbols.txt` (MW runtime and some GX SDK functions, plus
 `__fill_mem`, which dtk names once `memset` is named), `__start`, the seven names the xMorph unit
 added (its three functions and their four callees), 334 SLUS-20349 DWARF names applied from
@@ -65,7 +67,7 @@ xhipio and xpkrsvc functions reached through their function tables (by table slo
 the iMath functions and two xutil functions (by DWARF position). The 687 library names are 661 of the
 676 names `tools/splits/libmap.py` applies from map-backed symbol lists at the same size (the other
 15 functions were already named the same way by dtk), and 26 functions that dtk's signatures name
-once those names exist; see `config/GIHE78/evidence.tsv`. The 336 Bink names are bfbb's names for the functions at the same offsets of the same Bink build, as `related` rows. A named function is not a matched one.
+once those names exist; see `config/GIHE78/evidence.tsv`. The 336 Bink names are bfbb's names for the functions at the same offsets of the same Bink build, as `related` rows. The 586 RenderWare names are bfbb's names placed by `tools/splits/rwmap.py`, 528 by equal size and 58 by position, as `related` rows; bfbb does not say where they come from. A named function is not a matched one.
 
 The methodology is `objdiff-report-v1`, generation 1. Change either in `tools/public_report.py`
 when what a number means changes, so old rows keep their meaning.
