@@ -40,6 +40,7 @@ struct xFFXRotMatchState
     xFFXRotMatchState* next;
 };
 
+void xFFXApply(_xEnt* ent, _xScene* sc, F32 dt);
 xFFX* xFFXAlloc();
 xFFXShakeState* xFFXShakeAlloc();
 xFFXRotMatchState* xFFXRotMatchAlloc();

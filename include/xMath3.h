@@ -59,7 +59,21 @@ inline void xVec3Init(xVec3* v, F32 _x, F32 _y, F32 _z)
     v->z = _z;
 }
 
+F32 xVec3Normalize(xVec3* o, const xVec3* v);
+
+inline void xVec3Cross(xVec3* o, const xVec3* a, const xVec3* b)
+{
+    xVec3 temp;
+
+    temp.x = a->y * b->z - b->y * a->z;
+    temp.y = a->z * b->x - b->z * a->x;
+    temp.z = a->x * b->y - b->x * a->y;
+    *o = temp;
+}
+
+void xMat3x3RotY(xMat3x3* m, F32 t);
 void xMat3x3Euler(xMat3x3* m, F32 yaw, F32 pitch, F32 roll);
+void xMat3x3RMulVec(xVec3* o, const xMat3x3* m, const xVec3* v);
 void xMat3x3LMulVec(xVec3* o, const xMat3x3* m, const xVec3* v);
 void xMat3x3LMulRotY(xMat3x3* o, const xMat3x3* m, F32 t);
 void xMat4x3MoveLocalRight(xMat4x3* m, F32 mag);
