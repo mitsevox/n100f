@@ -53,7 +53,7 @@ names come from the PS2 v1.01 DWARF and the boundaries are inferred, so no game 
 checked against Heavy Iron's objects. The basis string says so. Library units placed by a
 whole-object match have exact extents; the others have open edges. Naming those units did not change
 what `files.named` means, so the methodology and generation stay the same.
-Today's 1,489 named functions are 461 from before the library map, 692 library names and 336 Bink names. The 461
+Today's 1,594 named functions are 461 from before the library map, 692 library names, 336 Bink names and 105 names from the CARD import. The 461
 are the names dtk's analysis assigned in `symbols.txt` (MW runtime and some GX SDK functions, plus
 `__fill_mem`, which dtk names once `memset` is named), `__start`, the seven names the xMorph unit
 added (its three functions and their four callees), 334 SLUS-20349 DWARF names applied from
@@ -68,7 +68,7 @@ the iMath functions and two xutil functions (by DWARF position). The 692 library
 once those names exist, the two `.init` functions after `__start` (`__init_hardware` and
 `__flush_cache`, named from the AC and TWW map-backed symbols with the SDK import), and
 `__DSP_debug_printf` (named from the TWW symbols with the SDK import); see
-`config/GIHE78/evidence.tsv`. The 336 Bink names are bfbb's names for the functions at the same offsets of the same Bink build, as `related` rows. A named function is not a matched one.
+`config/GIHE78/evidence.tsv`. The 336 Bink names are bfbb's names for the functions at the same offsets of the same Bink build, as `related` rows. The 105 CARD-import names are the 97 CARD functions libmap left unnamed, each named from the imported object it matches exactly, and the eight functions outside CARD those objects call (`OSPanic`, `OSPhysicalToCached`, `OSCachedToPhysical`, `DSPInit`, `DSPAddTask`, `EXIDetach`, `EXIGetID` and `strncpy`), named from the map-backed symbol lists and confirmed by the relocations of the linked objects. A named function is not a matched one.
 
 The methodology is `objdiff-report-v1`, generation 1. Change either in `tools/public_report.py`
 when what a number means changes, so old rows keep their meaning.
