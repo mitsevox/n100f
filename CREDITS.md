@@ -84,6 +84,8 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 - The address comments are dropped, and the comment above the register macros is reworded.
 - The labels of `__cvt_sll_flt` are renamed from addresses to their roles.
 
+`src/Runtime.PPCEABI.H/GCN_mem_alloc.c` is [zcanann/FFCC-Decomp](https://github.com/zcanann/FFCC-Decomp/blob/90edb0012af66d0250dd9beb6602484bde6c228a/src/Runtime.PPCEABI.H/GCN_mem_alloc.c)'s `src/Runtime.PPCEABI.H/GCN_mem_alloc.c` at revision `90edb0012af66d0250dd9beb6602484bde6c228a` (CC0 1.0). Local changes: its header comment and address comments are dropped, `InitDefaultHeap` is declared `static inline` where FFCC-Decomp writes `inline static`, and the code is reformatted.
+
 `src/Runtime.PPCEABI.H/__va_arg.c` and `global_destructor_chain.c` follow [zeldaret/tww](https://github.com/zeldaret/tww/tree/02de6b772d06b2ed15bbe7b25d01901fdca84966/src/PowerPC_EABI_Support/Runtime/Src)'s files of the same names at revision `02de6b772d06b2ed15bbe7b25d01901fdca84966` (CC0 1.0). Local changes:
 
 - C types replace the SDK's (`long` for `s32`, `unsigned long` for `u32`), the code is reformatted, and `__va_arg.c` drops tww's `#undef __va_arg`.
