@@ -16,6 +16,16 @@ The flags are shown compatible with the target, not established. An MSL object t
 
 GC/1.2.5n writes `.comment` version 8 (compiler 2.3.0.1). GC/1.3 and GC/1.3.2 both write version 10 (2.4.2.1), which is the project default (`mw_comment_version`). The SDK units therefore carry `comment:8` in `splits.txt`.
 
+## Imported units
+
+| Unit | Compiler | Data | Source |
+| --- | --- | --- | --- |
+| `Runtime.PPCEABI.H/__va_arg.c` | GC/1.3.2 (1.3 differs) | none | C |
+| `Runtime.PPCEABI.H/global_destructor_chain.c` | GC/1.3.2 (1.3 also matches) | `.dtors`, `.sbss` | C |
+| `Runtime.PPCEABI.H/runtime.c` | GC/1.3.2 (1.3 also matches) | `.rodata` | asm functions, each with an `assembly` row in `evidence.tsv` |
+
+All three are `Matching` and link byte-identical.
+
 ## Headers
 
 Library headers declare only what the reconstructed units use, as game headers do.
@@ -23,7 +33,7 @@ Library headers declare only what the reconstructed units use, as game headers d
 | Path | Holds |
 | --- | --- |
 | `include/dolphin/` | Planned: Dolphin SDK public headers under the SDK's names, created by the first import that needs each one. The SDK's base types go in `dolphin/types.h`. |
-| `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`) |
+| `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`, `stdarg.h`) |
 | `src/<library>/` | Planned: private headers of one library, next to its source |
 
 Library code uses the SDK's type names. Game code keeps `types.h`.

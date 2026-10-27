@@ -74,7 +74,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78/sys/main.dol \
 | `MSL_C.PPCEABI.bare.H` | 33 | 24 | 75 |
 | `dolphin/<library>` (SDK, OS built Apr 16 2002) | 61 | 22 | 515 |
 
-No source is imported yet; every unit stays in the original bytes until its source lands and passes review. `config/GIHE78/lib_units.tsv` lists each unit with its match kind, function counts, chosen source and the compiler versions that produced it.
+Each unit stays in the original bytes until its source lands and passes review; [libraries.md](libraries.md#imported-units) lists the imported ones. `config/GIHE78/lib_units.tsv` lists each unit with its match kind, function counts, chosen source and the compiler versions that produced it.
 
 ## Method
 

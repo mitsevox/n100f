@@ -416,9 +416,9 @@ config.libs: List[Dict[str, Any]] = [
     RuntimeLib(
         "Runtime.PPCEABI.H",
         [
-            Object(NonMatching, "Runtime.PPCEABI.H/__va_arg.c"),
-            Object(NonMatching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
-            Object(NonMatching, "Runtime.PPCEABI.H/runtime.c"),
+            Object(Matching, "Runtime.PPCEABI.H/__va_arg.c"),
+            Object(Matching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
+            Object(Matching, "Runtime.PPCEABI.H/runtime.c"),
         ],
     ),
     RuntimeLib(
