@@ -596,7 +596,7 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "os",
         [
-            Object(Matching, "dolphin/os/OS.c", extra_cflags=["-opt nopeephole"]),
+            Object(Matching, "dolphin/os/OS.c"),
             Object(Matching, "dolphin/os/OSAlarm.c"),
             Object(Matching, "dolphin/os/OSAlloc.c"),
             Object(Matching, "dolphin/os/OSArena.c"),

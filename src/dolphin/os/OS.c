@@ -47,6 +47,8 @@ void __OSDBJUMPEND(void);
 static OSBootInfo* BootInfo;
 static volatile u32* BI2DebugFlag;
 static u32* BI2DebugFlagHolder;
+static f64 ZeroPS;
+static f64 ZeroF;
 static BOOL AreWeInitialized;
 
 typedef void (*OSExceptionHandler)(u8, struct OSContext*);
@@ -60,10 +62,95 @@ OSTime __OSStartTime;
 static DVDDriveInfo DriveInfo __attribute__((aligned(0x20)));
 static DVDCommandBlock DriveBlock;
 
-// functions
+static asm void __OSInitFPRs(void);
 static void OSExceptionInit(void);
 static void OSDefaultExceptionHandler(u8 exception /* r3 */,
                                       OSContext* context /* r4 */);
+
+static asm void __OSInitFPRs(void)
+{
+    nofralloc
+
+    mfmsr r3
+    ori r3, r3, 0x2000
+    mtmsr r3
+
+    mfspr r3, 0x398
+    rlwinm. r3, r3, 3, 0x1f, 0x1f
+    beq skip_ps_init
+
+    lis r3, ZeroPS@ha
+    addi r3, r3, ZeroPS@l
+    psq_l f0, 0(r3), 0, 0
+    ps_mr f1, f0
+    ps_mr f2, f0
+    ps_mr f3, f0
+    ps_mr f4, f0
+    ps_mr f5, f0
+    ps_mr f6, f0
+    ps_mr f7, f0
+    ps_mr f8, f0
+    ps_mr f9, f0
+    ps_mr f10, f0
+    ps_mr f11, f0
+    ps_mr f12, f0
+    ps_mr f13, f0
+    ps_mr f14, f0
+    ps_mr f15, f0
+    ps_mr f16, f0
+    ps_mr f17, f0
+    ps_mr f18, f0
+    ps_mr f19, f0
+    ps_mr f20, f0
+    ps_mr f21, f0
+    ps_mr f22, f0
+    ps_mr f23, f0
+    ps_mr f24, f0
+    ps_mr f25, f0
+    ps_mr f26, f0
+    ps_mr f27, f0
+    ps_mr f28, f0
+    ps_mr f29, f0
+    ps_mr f30, f0
+    ps_mr f31, f0
+
+skip_ps_init:
+    lfd f0, ZeroF(r13)
+    fmr f1, f0
+    fmr f2, f0
+    fmr f3, f0
+    fmr f4, f0
+    fmr f5, f0
+    fmr f6, f0
+    fmr f7, f0
+    fmr f8, f0
+    fmr f9, f0
+    fmr f10, f0
+    fmr f11, f0
+    fmr f12, f0
+    fmr f13, f0
+    fmr f14, f0
+    fmr f15, f0
+    fmr f16, f0
+    fmr f17, f0
+    fmr f18, f0
+    fmr f19, f0
+    fmr f20, f0
+    fmr f21, f0
+    fmr f22, f0
+    fmr f23, f0
+    fmr f24, f0
+    fmr f25, f0
+    fmr f26, f0
+    fmr f27, f0
+    fmr f28, f0
+    fmr f29, f0
+    fmr f30, f0
+    fmr f31, f0
+
+    mtfsf 0xff, f0
+    blr
+}
 
 unsigned long OSGetConsoleType()
 {
@@ -187,11 +274,10 @@ void OSInit()
 
     consoleType = OSGetConsoleType();
     // work out what console type this corresponds to and report it
-    // consoleTypeSwitchHi = inputConsoleType & 0xF0000000;
-    if ((consoleType & 0x10000000) == OS_CONSOLE_RETAIL) { // check "first" byte
+    if ((consoleType & 0x10000000) == OS_CONSOLE_RETAIL) {
         OSReport("Retail %d\n", consoleType);
     } else {
-        switch (consoleType) { // if "first" byte is 2, check "the rest"
+        switch (consoleType) {
         case OS_CONSOLE_EMULATOR:
             OSReport("Mac Emulator\n");
             break;
@@ -273,7 +359,6 @@ static void OSExceptionInit(void)
     for (exception = 0; exception < __OS_EXCEPTION_MAX; exception++) {
         if (BI2DebugFlag && (*BI2DebugFlag >= 2)
             && __DBIsExceptionMarked(exception)) {
-            // this DBPrintf is suspicious.
             DBPrintf(">>> OSINIT: exception %d commandeered by TRK\n",
                      exception);
             continue;
