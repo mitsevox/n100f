@@ -98,12 +98,15 @@ xAnimState* xAnimTableNewState(xAnimTable* table, char* name, U32 flags, U32 use
                                F32* boneBlend, F32* timeSnap, F32 fadeRecip, U16* fadeOffset);
 xAnimTransition* xAnimTableNewTransition(xAnimTable* table, char* source, char* dest,
                                          xAnimTransitionConditionalCallback conditional,
-                                         xAnimTransitionCallback callback, U32 flags,
-                                         U32 userFlags, F32 srcTime, F32 destTime, U16 priority,
-                                         U16 queuePriority, F32 blendRecip, U16* blendOffset);
+                                         xAnimTransitionCallback callback, U32 flags, U32 userFlags,
+                                         F32 srcTime, F32 destTime, U16 priority, U16 queuePriority,
+                                         F32 blendRecip, U16* blendOffset);
 void xAnimTableAddTransition(xAnimTable* table, xAnimTransition* tran, char* source);
 xAnimState* xAnimTableGetStateID(xAnimTable* table, U32 ID);
 xAnimState* xAnimTableGetState(xAnimTable* table, char* name);
+xAnimEffect* xAnimStateNewEffect(xAnimState* state, U32 flags, F32 startTime, F32 endTime,
+                                 U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*),
+                                 U32 userDataSize);
 void xAnimPlaySetup(xAnimPlay* play, void* object, xAnimTable* table, xModelInstance* modelInst);
 xAnimPlay* xAnimPoolAlloc(xMemPool* pool, void* object, xAnimTable* table,
                           xModelInstance* modelInst);

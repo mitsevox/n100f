@@ -56,7 +56,9 @@ struct zPlayerGlobals
     F32 ScareTimer;
     U8 opaque_144[0x148 - 0x144];
     U32 ScareShaggy;
-    U8 opaque_14C[0x164 - 0x14C];
+    U8 opaque_14C[0x150 - 0x14C];
+    F32 DamageTimer;
+    U8 opaque_154[0x164 - 0x154];
     F32 FallDeathTimer;
     U8 opaque_168[0x1E0 - 0x168];
     zShaggy1Globals Shaggy1;

@@ -7,6 +7,8 @@
 #include "iMath.h"
 #include "zEntHangable.h"
 #include "zMovePoint.h"
+#include "zEntVillain.h"
+#include "zPlatform.h"
 #include <string.h>
 #include <math.h>
 
@@ -15,7 +17,11 @@ U32 gNumShaggy;
 F32 gACCEL_START;
 F32 gACCEL_END;
 F32 THROW_MINHEIGHT = 4.25f;
+F32 THROW_DEFHEIGHT = 6.0f;
+static F32 gShaggy3TurnAngle;
 static S32 (*sVilEventFunc)(xBase*, xBase*, U32, F32*, xBase*);
+static void (*sVilMoveFunc)(_xEnt*, _xScene*, F32, _xEntFrame*);
+F32 sHangVirtualPeak = 0.75f + THROW_DEFHEIGHT;
 
 void ShaggySwap(_zEnt* src, _zEnt* dest);
 
@@ -33,6 +39,32 @@ static inline ShaggyGuts* zEntShaggy_FindGuts(_zEnt* ent)
         }
     }
     return NULL;
+}
+
+U32 zEntIsShaggy(_zEnt* ent)
+{
+    return ent->baseType == 2 && ent->subType >= 0x1C && ent->subType <= 0x25;
+}
+
+F32 zEntShaggy_GetSpin(_zEnt* ent)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+
+    if (guts)
+    {
+        return guts->hangspin;
+    }
+    return 0.0f;
+}
+
+void zEntShaggy_SetSpin(_zEnt* ent, F32 spin)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+
+    if (guts)
+    {
+        guts->hangspin = spin;
+    }
 }
 
 _zEnt* zEntShaggy_GetSwap(_zEnt* ent)
@@ -943,6 +975,218 @@ static S32 Shaggy0_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
     return retval;
 }
 
+static U32 Shaggy2_StateChange(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+
+    return guts && guts->chimneyState == tran->UserFlags && guts->chimneyTimer == 0.0f;
+}
+
+static U32 Shaggy2_Apex(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+
+    return guts && guts->chimneyVel < 1.0f;
+}
+
+static U32 Shaggy2_RandCheck(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    return (S32)irand() > 0;
+}
+
+xAnimTable* zEntShaggy_Anim2()
+{
+    xAnimTable* table;
+
+    table = xAnimTableNew("Shaggy2", NULL);
+    xAnimTableNewState(table, "Idle", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle2", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Shoot", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Apex", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Fall", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Intro", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewTransition(table, "Idle Idle2 Fall Apex", "Intro",
+                            (xAnimTransitionConditionalCallback)Shaggy2_StateChange, NULL, 0, 2,
+                            0.0f, 0.0f, 1, 0, 0.0f, NULL);
+    xAnimTableNewTransition(table, "Idle Idle2 Intro", "Shoot",
+                            (xAnimTransitionConditionalCallback)Shaggy2_StateChange, NULL, 0, 3,
+                            0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Shoot", "Apex",
+                            (xAnimTransitionConditionalCallback)Shaggy2_Apex, NULL, 0, 0, 0.0f,
+                            0.0f, 1, 0, 0.1f, NULL);
+    xAnimTableNewTransition(table, "Apex", "Fall", NULL, NULL, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.0f,
+                            NULL);
+    xAnimTableNewTransition(table, "Intro", "Idle", NULL, NULL, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f,
+                            NULL);
+    xAnimTableNewTransition(table, "Intro", "Idle2",
+                            (xAnimTransitionConditionalCallback)Shaggy2_RandCheck, NULL, 0x10, 0,
+                            0.0f, 0.0f, 1, 0, 0.1f, NULL);
+
+    return table;
+}
+
+static void Shaggy2_Render(_xEnt* ent)
+{
+    if (xEntIsVisible(ent))
+    {
+        xModelRender(ent->model);
+    }
+}
+
+static U32 Shaggy3_Move(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
+{
+    _xEntFrame* frame = ent->frame;
+
+    if (frame == NULL)
+    {
+        return 0;
+    }
+    return (frame->mode & 0x2) && frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
+                                          frame->dpos.z * frame->dpos.z >=
+                                      0.0005f;
+}
+
+static U32 Shaggy3_MoveDead(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
+{
+    _xEntFrame* frame = ent->frame;
+
+    if (frame == NULL)
+    {
+        return 0;
+    }
+    return !globals.player.Health && (frame->mode & 0x2) &&
+           frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
+                   frame->dpos.z * frame->dpos.z >=
+               0.0005f;
+}
+
+static U32 Shaggy3_Stop(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
+{
+    _xEntFrame* frame = ent->frame;
+
+    if (frame == NULL)
+    {
+        return 0;
+    }
+    U8 stopped = 1;
+
+    if ((frame->mode & 0x2) && !(frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
+                                     frame->dpos.z * frame->dpos.z <
+                                 0.0005f))
+    {
+        stopped = 0;
+    }
+    return stopped && globals.player.DamageTimer < 1.25f;
+}
+
+static U32 Shaggy3_StopScare(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
+{
+    return zEntShaggy_FindGuts(ent)->stopEvent;
+}
+
+static U32 Shaggy3_Left(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
+{
+    return globals.player.Health && gShaggy3TurnAngle > 0.0015f && !anim->Blend->State;
+}
+
+static U32 Shaggy3_Right(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
+{
+    return globals.player.Health && gShaggy3TurnAngle < -0.0015f && !anim->Blend->State;
+}
+
+static U32 Shaggy3_Center(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
+{
+    return xabs(gShaggy3TurnAngle) <= 0.0015f && !anim->Blend->State;
+}
+
+static U32 Shaggy3_MowerStopCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
+                               void* object)
+{
+    zPlatformEventCB(NULL, (xBase*)object, eEventStop, NULL, NULL);
+    return 0;
+}
+
+xAnimTable* zEntShaggy_Anim3()
+{
+    xAnimTable* table;
+
+    table = xAnimTableNew("Shaggy3", NULL);
+    xAnimTableNewState(table, "Idle", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Drive", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Drive2", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "TurnLeft", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "TurnRight", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "StopReact", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Talk", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewTransition(
+        table, "Idle", "Drive", (xAnimTransitionConditionalCallback)Shaggy3_Move,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+    xAnimTableNewTransition(table, "Drive Drive2 TurnLeft TurnRight", "Idle",
+                            (xAnimTransitionConditionalCallback)Shaggy3_Stop, NULL, 0, 0, 0.0f,
+                            0.0f, 2, 0, 0.1f, NULL);
+    xAnimTableNewTransition(table, "Drive Drive2 TurnLeft TurnRight", "StopReact",
+                            (xAnimTransitionConditionalCallback)Shaggy3_StopScare, NULL, 0, 0, 0.0f,
+                            0.0f, 3, 0, 0.1f, NULL);
+    xAnimTableNewTransition(table, "Drive Drive2 TurnRight", "TurnLeft",
+                            (xAnimTransitionConditionalCallback)Shaggy3_Left, NULL, 0, 0, 0.0f,
+                            0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Drive Drive2 TurnLeft", "TurnRight",
+                            (xAnimTransitionConditionalCallback)Shaggy3_Right, NULL, 0, 0, 0.0f,
+                            0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table, "TurnLeft TurnRight", "Drive", (xAnimTransitionConditionalCallback)Shaggy3_Center,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "StopReact", "Idle", NULL, NULL, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f,
+                            NULL);
+    xAnimTableNewTransition(table, "Idle", "Talk", (xAnimTransitionConditionalCallback)Shaggy1_Talk,
+                            NULL, 0, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+    xAnimTableNewTransition(table, "Talk", "Idle",
+                            (xAnimTransitionConditionalCallback)Shaggy1_Notalk, NULL, 0, 0, 0.0f,
+                            0.0f, 1, 0, 0.1f, NULL);
+    xAnimTableNewTransition(table, "Drive", "Drive2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 3, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "Drive2", "Drive", (xAnimTransitionConditionalCallback)Shaggy1_IdlePick,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 5, 0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle Drive TurnLeft TurnRight", "Drive2",
+                            (xAnimTransitionConditionalCallback)Shaggy3_MoveDead,
+                            (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0, 0.0f, 0.0f, 3, 0,
+                            0.15f, NULL);
+    xAnimStateNewEffect(xAnimTableGetState(table, "StopReact"), 9, 0.5f, 0.0f, Shaggy3_MowerStopCB,
+                        0);
+
+    return table;
+}
+
+static U32 Shaggy5_MoveTran(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
+
+    return (goal == ZVIL_GOAL_PATROL || goal == ZVIL_GOAL_FOLLOW) &&
+           guts->prefMove == tran->UserFlags;
+}
+
+static U32 Shaggy5_IdleTran(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
+
+    return goal != ZVIL_GOAL_PATROL && goal != ZVIL_GOAL_FOLLOW &&
+           guts->prefIdle == tran->UserFlags;
+}
+
+static U32 Shaggy5_WitchAttached(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    return zEntShaggy_FindGuts(ent)->witchFollow != NULL;
+}
+
+static U32 Shaggy5_WitchDropped(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    return zEntShaggy_FindGuts(ent)->witchDrop != NULL;
+}
+
 static U32 Shaggy5_Action(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
 {
     ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
@@ -954,4 +1198,524 @@ static U32 Shaggy5_ActionCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent
 {
     zEntShaggy_FindGuts(ent)->actionIndex = 0;
     return 0;
+}
+
+static U32 Shaggy5_EatMoveCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+
+    guts->eatTimer = 1000.0f;
+    guts->actionIndex = 0;
+    return 0;
+}
+
+static U32 Shaggy5_EatStop(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
+
+    return goal != ZVIL_GOAL_PATROL && goal != ZVIL_GOAL_FOLLOW && guts->eatTimer > 0.0f;
+}
+
+static U32 Shaggy5_EatStopCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    zEntShaggy_FindGuts(ent)->eatTimer = 2.0f;
+    return 0;
+}
+
+static U32 Shaggy5_EatTimeUp(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    return zEntShaggy_FindGuts(ent)->eatTimer <= 0.0f;
+}
+
+static U32 Shaggy5_GargRunPick(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+
+    return guts->prefIdle == 3 && !guts->swap && guts->idleTimer > 0.0625f * tran->UserFlags &&
+           guts->idleTimer - 0.5f < 0.0625f * tran->UserFlags;
+}
+
+static U32 Witch_HasShaggy(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    for (S32 i = 0; i < (S32)gNumShaggy; i++)
+    {
+        if (ent == gShaggy[i].witchFollow)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static U32 Witch_DropShaggyMove(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
+
+    return (goal == ZVIL_GOAL_PATROL || goal == ZVIL_GOAL_FOLLOW) &&
+           !Witch_HasShaggy(tran, anim, ent);
+}
+
+static U32 Witch_DropShaggyIdle(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
+
+    return goal != ZVIL_GOAL_PATROL && goal != ZVIL_GOAL_FOLLOW &&
+           !Witch_HasShaggy(tran, anim, ent);
+}
+
+static U32 Witch_GrabShaggyCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ent->collis->chk &= 0xDF;
+    return 0;
+}
+
+static U32 Witch_DropShaggyCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ent->collis->chk |= 0x20;
+    return 0;
+}
+
+void Shaggy5_WitchTransitions(xAnimTable* table)
+{
+    xAnimTransition* tran;
+
+    tran = xAnimTableNewTransition(table, "Idle Idle_Fidget_1 Idle_Fidget_2", "Shaggy_hold",
+                                   (xAnimTransitionConditionalCallback)Witch_HasShaggy,
+                                   (xAnimTransitionCallback)Witch_GrabShaggyCB, 0, 0, 0.0f, 0.0f, 1,
+                                   0, 0.15f, NULL);
+    xAnimTableAddTransition(table, tran, "Bored Bored_Fidget_1 Bored_Fidget_1 Move Chase Surprize");
+    xAnimTableAddTransition(table, tran,
+                            "Taunt Taunt_1 Taunt_2 Hear_Start Hear_Loop Look_Start Look_Loop");
+    xAnimTableAddTransition(table, tran,
+                            "Investigate_Start Investigate AttackIdle Attack Attack_1 Attack_2");
+    xAnimTableAddTransition(
+        table, tran,
+        "Combo Combo_1 Combo_2 Lob_Attack Lob_Combo Extend_Attack_Start Extend_Attack_Loop");
+    xAnimTableAddTransition(
+        table, tran,
+        "Extend_Combo Hit_By_Gum Gummed Gummed_Resist Gummed_BreakFree Hit_When_Gummed");
+    xAnimTableAddTransition(
+        table, tran, "Bounced_When_Gummed Hit_By_Soap Soaped Soaped_Resist Soaped_BreakFree");
+    xAnimTableAddTransition(
+        table, tran, "Hit_When_Soaped Bounced_When_Soaped Dazed_Begin Dazed Dazed_Recovery Death");
+    xAnimTableAddTransition(
+        table, tran,
+        "Death_From_Above Death_From_Dazed Death_Idle Jump_Windup Jump_In_Air Jump_Landing");
+    xAnimTableNewTransition(
+        table, "Shaggy_hold", "Idle", (xAnimTransitionConditionalCallback)Witch_DropShaggyIdle,
+        (xAnimTransitionCallback)Witch_DropShaggyCB, 0, 0, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table, "Shaggy_hold", "Move", (xAnimTransitionConditionalCallback)Witch_DropShaggyMove,
+        (xAnimTransitionCallback)Witch_DropShaggyCB, 0, 0, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+}
+
+xAnimTable* zEntShaggy_Anim5()
+{
+    xAnimTable* table;
+    xAnimTransition* tran;
+
+    table = xAnimTableNew("Shaggy5", NULL);
+    xAnimTableNewState(table, "Idle", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle2", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle3", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_scared", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_scared2", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_scared3", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_hungry", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_hungry2", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_garg", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_garg2", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_garg3", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_witch", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Move_walk", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Move_run", 0x10, 0x2000006, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Move_hungry", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Move_sneak", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Move_turn", 0x10, 0x2000000, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Chimney_intro", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Fire_hit", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Eat_tomove", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Eat_tostop", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Eat_loop", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "React_scare", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "React_death", 0, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Talk", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Talk2", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Talk3", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Talk4", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewTransition(
+        table,
+        "Idle Idle2 Idle3 Idle_scared Idle_scared2 Idle_scared3 Idle_hungry Idle_hungry2 Idle_garg "
+        "Idle_garg2 Idle_garg3 Move_sneak Move_run Move_hungry",
+        "Move_walk", (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0, 0, 0.0f, 0.0f,
+        1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table,
+        "Idle Idle2 Idle3 Idle_scared Idle_scared2 Idle_scared3 Idle_hungry Idle_hungry2 Idle_garg "
+        "Idle_garg2 Idle_garg3 Move_walk Move_run Move_hungry",
+        "Move_sneak", (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0, 3, 0.0f, 0.0f,
+        1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table,
+        "Idle Idle2 Idle3 Idle_scared Idle_scared2 Idle_scared3 Idle_hungry Idle_hungry2 Idle_garg "
+        "Idle_garg2 Idle_garg3 Move_walk Move_sneak Move_hungry",
+        "Move_run", (xAnimTransitionConditionalCallback)Shaggy5_MoveTran,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 1, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table,
+        "Idle Idle2 Idle3 Idle_scared Idle_scared2 Idle_scared3 Idle_hungry Idle_hungry2 Idle_garg "
+        "Idle_garg2 Idle_garg3 Move_walk Move_sneak Move_run",
+        "Move_hungry", (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0, 2, 0.0f, 0.0f,
+        1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table,
+        "Move_walk Move_sneak Move_run Move_hungry Idle_scared Idle_scared2 Idle_scared3 "
+        "Idle_hungry Idle_hungry2 Idle_garg Idle_garg2 Idle_garg3 ",
+        "Idle", (xAnimTransitionConditionalCallback)Shaggy5_IdleTran,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table,
+                            "Move_walk Move_sneak Move_run Move_hungry Idle Idle2 Idle3 "
+                            "Idle_hungry Idle_hungry2 Idle_garg Idle_garg2 Idle_garg3 ",
+                            "Idle_scared", (xAnimTransitionConditionalCallback)Shaggy5_IdleTran,
+                            (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 1, 0.0f, 0.0f, 1, 0,
+                            0.15f, NULL);
+    xAnimTableNewTransition(
+        table,
+        "Move_walk Move_sneak Move_run Move_hungry Idle Idle2 Idle3 Idle_scared Idle_scared2 "
+        "Idle_scared3 Idle_garg Idle_garg2 Idle_garg3 ",
+        "Idle_hungry", (xAnimTransitionConditionalCallback)Shaggy5_IdleTran,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 2, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table,
+                            "Move_walk Move_sneak Move_run Move_hungry Idle Idle2 Idle3 "
+                            "Idle_scared Idle_scared2 Idle_scared3 Idle_hungry Idle_hungry2 ",
+                            "Idle_garg", (xAnimTransitionConditionalCallback)Shaggy5_IdleTran,
+                            (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 3, 0.0f, 0.0f, 1, 0,
+                            0.15f, NULL);
+    tran = xAnimTableNewTransition(table,
+                                   "Idle Idle2 Idle3 Idle_scared Idle_scared2 Idle_scared3 "
+                                   "Idle_hungry Idle_hungry2 Idle_garg Idle_garg2 Idle_garg3 ",
+                                   "Idle_witch",
+                                   (xAnimTransitionConditionalCallback)Shaggy5_WitchAttached, NULL,
+                                   0, 0, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableAddTransition(table, tran, "Move_walk Move_sneak Move_run Move_turn Fire_hit");
+    xAnimTableNewTransition(table, "Idle_witch", "Chimney_intro",
+                            (xAnimTransitionConditionalCallback)Shaggy5_WitchDropped, NULL, 0, 0,
+                            0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table,
+        "Idle Idle2 Idle3 Idle_scared Idle_scared2 Idle_scared3 Idle_hungry Idle_hungry2 Idle_garg "
+        "Idle_garg2 Idle_garg3 Move_walk Move_sneak Move_run Move_hungry ",
+        "Eat_tomove", (xAnimTransitionConditionalCallback)Shaggy5_Action,
+        (xAnimTransitionCallback)Shaggy5_EatMoveCB, 0, 1, 0.0f, 0.0f, 2, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Eat_tomove", "Move_hungry", NULL, NULL, 0x10, 0, 0.0f, 0.0f, 0,
+                            0, 0.0f, NULL);
+    xAnimTableNewTransition(
+        table, "Move_hungry", "Eat_tostop", (xAnimTransitionConditionalCallback)Shaggy5_EatStop,
+        (xAnimTransitionCallback)Shaggy5_EatStopCB, 0, 0, 0.0f, 0.0f, 3, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Eat_tostop", "Eat_loop", NULL, NULL, 0x10, 0, 0.0f, 0.0f, 0, 0,
+                            0.0f, NULL);
+    xAnimTableNewTransition(table, "Eat_loop", "Idle_hungry",
+                            (xAnimTransitionConditionalCallback)Shaggy5_EatTimeUp, NULL, 0, 0, 0.0f,
+                            0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table, "React_scare", "Idle", (xAnimTransitionConditionalCallback)Shaggy5_IdleTran,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table, "React_scare", "Idle_scared", (xAnimTransitionConditionalCallback)Shaggy5_IdleTran,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0x10, 1, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table, "React_scare", "Idle_hungry", (xAnimTransitionConditionalCallback)Shaggy5_IdleTran,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0x10, 2, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table, "React_scare", "Idle_garg", (xAnimTransitionConditionalCallback)Shaggy5_IdleTran,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0x10, 3, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "React_scare", "Move_walk",
+                            (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0x10, 0,
+                            0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "React_scare", "Move_sneak",
+                            (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0x10, 3,
+                            0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table, "React_scare", "Move_run", (xAnimTransitionConditionalCallback)Shaggy5_MoveTran,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0x10, 1, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "React_scare", "Move_hungry",
+                            (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0x10, 2,
+                            0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Idle", "Idle2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 4, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle2", "Idle",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 7, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle", "Idle2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 12, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle2", "Idle",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 14, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle", "Idle3",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 0x11,
+                            0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "Idle3", "Idle", (xAnimTransitionConditionalCallback)Shaggy1_IdlePick,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0x13, 0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "Idle2 Idle3", "Idle", (xAnimTransitionConditionalCallback)Shaggy1_IdleLeave,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0, 0.0f, 0.0f, 2, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Idle_scared", "Idle_scared2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 4, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_scared2", "Idle_scared",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 7, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_scared", "Idle_scared2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 12, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_scared2", "Idle_scared",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 14, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_scared", "Idle_scared3",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 0x11,
+                            0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "Idle_scared3", "Idle_scared", (xAnimTransitionConditionalCallback)Shaggy1_IdlePick,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0x13, 0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_scared2 Idle_scared3", "Idle_scared",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdleLeave,
+                            (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0, 0.0f, 0.0f, 2, 0,
+                            0.15f, NULL);
+    xAnimTableNewTransition(table, "Idle_hungry", "Idle_hungry2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 4, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_hungry2", "Idle_hungry",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 7, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_hungry", "Idle_hungry2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 12, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_hungry2", "Idle_hungry",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 14, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_hungry", "Idle_hungry2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 0x11,
+                            0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "Idle_hungry2", "Idle_hungry", (xAnimTransitionConditionalCallback)Shaggy1_IdlePick,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0x13, 0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "Idle_hungry2", "Idle_hungry", (xAnimTransitionConditionalCallback)Shaggy1_IdleLeave,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0, 0.0f, 0.0f, 2, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Idle_garg", "Idle_garg2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 4, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_garg2", "Idle_garg",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 7, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_garg", "Idle_garg2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 12, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_garg2", "Idle_garg",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 14, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_garg", "Idle_garg3",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 0x11,
+                            0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "Idle_garg3", "Idle_garg", (xAnimTransitionConditionalCallback)Shaggy1_IdlePick,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0x13, 0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle_garg2 Idle_garg3", "Idle_garg",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdleLeave,
+                            (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0, 0.0f, 0.0f, 2, 0,
+                            0.15f, NULL);
+    xAnimTableNewTransition(table, "Move_run", "Fire_hit",
+                            (xAnimTransitionConditionalCallback)Shaggy5_GargRunPick, NULL, 0, 0x46,
+                            0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(
+        table, "Move_run", "Fire_hit", (xAnimTransitionConditionalCallback)Shaggy5_GargRunPick,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0x7b, 0.0f, 0.0f, 1, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Fire_hit", "Move_run", NULL, NULL, 0x10, 0, 0.0f, 0.0f, 1, 0,
+                            0.15f, NULL);
+    xAnimTableNewTransition(
+        table,
+        "Idle Idle2 Idle3 Idle_scared Idle_scared2 Idle_scared3 Idle_hungry Idle_hungry2 Idle_garg "
+        "Idle_garg2 Idle_garg3 Move_walk Move_sneak Move_run",
+        "React_scare", (xAnimTransitionConditionalCallback)Shaggy1_ScareReact, NULL, 0, 0, 0.0f,
+        0.0f, 11, 0, 0.15f, NULL);
+    tran = xAnimTableNewTransition(
+        table,
+        "Idle Idle2 Idle3 Idle_scared Idle_scared2 Idle_scared3 Idle_hungry Idle_hungry2 Idle_garg "
+        "Idle_garg2 Idle_garg3 Move_walk Move_sneak Move_run Move_hungry React_scare",
+        "React_death", (xAnimTransitionConditionalCallback)Shaggy1_DeathReact, NULL, 0, 0, 0.0f,
+        0.0f, 12, 0, 0.15f, NULL);
+    xAnimTableAddTransition(table, tran, "Chimney_intro Fire_hit Eat_tomove Eat_tostop Eat_loop");
+
+    return table;
+}
+
+static void Shaggy5_Move(_xEnt* ent, _xScene* sc, F32 dt, _xEntFrame* frame)
+{
+    sVilMoveFunc(ent, sc, dt, frame);
+}
+
+static U32 Shaggy8_FlipOver(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+
+    return guts && guts->barrelButted;
+}
+
+static U32 Shaggy8_FlipOverCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    zEntShaggy_FindGuts(ent)->barrelButted = 0;
+    return 0;
+}
+
+static U32 Shaggy8_FlipBack(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
+
+    return guts && guts->barrelFellOver;
+}
+
+static U32 Shaggy8_FlipBackCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    zEntShaggy_FindGuts(ent)->barrelFellOver = 0;
+    return 0;
+}
+
+static U32 Shaggy8_Stopped(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
+
+    return goal != ZVIL_GOAL_PATROL && goal != ZVIL_GOAL_FOLLOW;
+}
+
+static U32 Shaggy8_Crash(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    return zEntShaggy_FindGuts(ent)->actionIndex != 0;
+}
+
+static U32 Shaggy8_Bounce(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    return zEntShaggy_FindGuts(ent)->barrelBounced != 0;
+}
+
+static U32 Shaggy8_BounceCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    zEntShaggy_FindGuts(ent)->barrelBounced = 0;
+    return 0;
+}
+
+static U32 Shaggy8_Getup(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
+{
+    return zEntShaggy_FindGuts(ent)->swapTimer >= 3.0f;
+}
+
+static U32 Shaggy8_BarrelDestroy(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
+                                 void* object)
+{
+    _zEnt* ent = (_zEnt*)object;
+    xModelInstance* inst;
+
+    zEntShaggy_FindGuts(ent);
+    inst = ent->model->Next;
+    if (inst)
+    {
+        inst->Flags &= ~0x3;
+    }
+    return 0;
+}
+
+xAnimTable* zEntShaggy_Anim8()
+{
+    xAnimTable* table;
+
+    table = xAnimTableNew("Shaggy8", NULL);
+    xAnimTableNewState(table, "Idle", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle2", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle3", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Stand_idle", 0x10, 0x10001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Stand_walk", 0x10, 0x2010004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Stand_run", 0x10, 0x2010006, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Stand_bounce", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Crash", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Sit", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GetUp", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "NoBarrelIdle", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "FlipOver", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "FlipBack", 0x20, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewTransition(table, "Crash", "Sit", NULL, NULL, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.0f,
+                            NULL);
+    xAnimTableNewTransition(table, "GetUp", "NoBarrelIdle", NULL, NULL, 0x10, 0, 0.0f, 0.0f, 1, 0,
+                            0.0f, NULL);
+    xAnimTableNewTransition(
+        table, "Idle Idle2 Idle3", "FlipOver", (xAnimTransitionConditionalCallback)Shaggy8_FlipOver,
+        (xAnimTransitionCallback)Shaggy8_FlipOverCB, 0, 0, 0.0f, 0.0f, 2, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Stand_idle Stand_walk Stand_run", "FlipBack",
+                            (xAnimTransitionConditionalCallback)Shaggy8_FlipBack,
+                            (xAnimTransitionCallback)Shaggy8_FlipBackCB, 0, 0, 0.0f, 0.0f, 2, 0,
+                            0.15f, NULL);
+    xAnimTableNewTransition(table, "Stand_idle Stand_run", "Stand_walk",
+                            (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0, 0, 0.0f,
+                            0.0f, 3, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Stand_idle Stand_run", "Stand_walk",
+                            (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0, 3, 0.0f,
+                            0.0f, 3, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Stand_idle Stand_walk", "Stand_run",
+                            (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0, 1, 0.0f,
+                            0.0f, 3, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Stand_walk Stand_run", "Stand_idle",
+                            (xAnimTransitionConditionalCallback)Shaggy8_Stopped, NULL, 0, 0, 0.0f,
+                            0.0f, 3, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Stand_idle Stand_walk Stand_run", "Crash",
+                            (xAnimTransitionConditionalCallback)Shaggy8_Crash,
+                            (xAnimTransitionCallback)Shaggy5_ActionCB, 0, 0, 0.0f, 0.0f, 4, 0,
+                            0.15f, NULL);
+    xAnimTableNewTransition(table, "Sit", "GetUp",
+                            (xAnimTransitionConditionalCallback)Shaggy8_Getup, NULL, 0, 0, 0.0f,
+                            0.0f, 1, 0, 0.1f, NULL);
+    xAnimTableNewTransition(table, "Stand_idle Stand_walk Stand_run Stand_bounce", "Stand_bounce",
+                            (xAnimTransitionConditionalCallback)Shaggy8_Bounce,
+                            (xAnimTransitionCallback)Shaggy8_BounceCB, 0, 0, 0.0f, 0.0f, 5, 0,
+                            0.08f, NULL);
+    xAnimTableNewTransition(table, "Stand_bounce", "Stand_walk",
+                            (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0x10, 0,
+                            0.0f, 0.0f, 3, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Stand_bounce", "Stand_walk",
+                            (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0x10, 3,
+                            0.0f, 0.0f, 3, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Stand_bounce", "Stand_run",
+                            (xAnimTransitionConditionalCallback)Shaggy5_MoveTran, NULL, 0x10, 1,
+                            0.0f, 0.0f, 3, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "Stand_bounce", "Stand_idle",
+                            (xAnimTransitionConditionalCallback)Shaggy8_Stopped, NULL, 0x10, 0,
+                            0.0f, 0.0f, 3, 0, 0.15f, NULL);
+    xAnimTableNewTransition(table, "FlipOver", "Stand_idle", NULL, NULL, 0x10, 0, 0.0f, 0.0f, 0, 0,
+                            0.0f, NULL);
+    xAnimTableNewTransition(table, "FlipBack", "Idle", NULL,
+                            (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0x10, 0, 0.0f, 0.0f, 0, 0,
+                            0.1f, NULL);
+    xAnimTableNewTransition(table, "Idle", "Idle2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 4, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle2", "Idle",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 7, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle", "Idle2",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 12, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle2", "Idle",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 14, 0.0f,
+                            0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(table, "Idle", "Idle3",
+                            (xAnimTransitionConditionalCallback)Shaggy1_IdlePick, NULL, 0, 0x11,
+                            0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "Idle3", "Idle", (xAnimTransitionConditionalCallback)Shaggy1_IdlePick,
+        (xAnimTransitionCallback)Shaggy1_IdleResetCB, 0, 0x13, 0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimStateNewEffect(xAnimTableGetState(table, "Crash"), 1, 0.2f, 0.0f, Shaggy8_BarrelDestroy,
+                        0);
+
+    return table;
 }
