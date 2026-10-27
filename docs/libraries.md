@@ -1,6 +1,6 @@
 # Library code
 
-The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and the Dolphin SDK, followed by Bink, the CARD library and RenderWare. [splits.md](splits.md#library-units) describes how the first four were mapped, and [Bink units](splits.md#bink-units) how Bink was. This page covers how their source comes in.
+The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and the Dolphin SDK, followed by Bink, the CARD library and RenderWare. [splits.md](splits.md#library-units) describes how the first four and CARD were mapped, and [Bink units](splits.md#bink-units) how Bink was. This page covers how their source comes in.
 
 ## Build configuration
 
@@ -12,12 +12,15 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `RuntimeLib` | `Runtime.PPCEABI.H`, `MSL_C.PPCEABI.bare.H` | GC/1.3.2, or GC/1.3 per object | `cflags_runtime` | `runtime` |
 | `DolphinLib` | `dolphin/<library>` | GC/1.2.5n | `cflags_sdk` | `sdk` |
 | `BinkLib` | `binkngc` | ProDG/3.5 | `cflags_bink` | `bink` |
+| `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card` | `sdk` |
 
 The flags are shown compatible with the target, not established. An MSL object that placed under only one compiler sets that version. The others take the library default, and their import must confirm it. Each import also reconfirms a pick that rests on a partial placement: `alloc.c` is GC/1.3 on 2 of its 34 functions.
 
 Bink is ProDG (SN Systems GCC) code, built through `tools/prodg_cc.py`. Ooura's FFT compiles to nine of its functions under every ProDG version from 3.5 to 3.9.3 and under no CodeWarrior version, so the family is established but the version is not. `cflags_bink` is likewise shown compatible, not established: it rests on those nine functions only. `ProDG/3.5` is the only version the wrapper supports; the first import whose code separates the versions settles it.
 
-GC/1.2.5n writes `.comment` version 8 (compiler 2.3.0.1). GC/1.3 and GC/1.3.2 both write version 10 (2.4.2.1), which is the project default (`mw_comment_version`). The SDK units therefore carry `comment:8` in `splits.txt`.
+GC/1.2.5n writes `.comment` version 8 (compiler 2.3.0.1). GC/1.3 and GC/1.3.2 both write version 10 (2.4.2.1), which is the project default (`mw_comment_version`). The SDK and CARD units therefore carry `comment:8` in `splits.txt`.
+
+CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compiles it at `-opt level=0 -inline off -schedule off -sym on -char signed` with `DEBUG=1`, the same flags as libmap's `card_debug` profile, so its assertions are compiled in, whatever `--debug` the build uses.
 
 ## Imported units
 

@@ -1163,3 +1163,51 @@ bink/src/sdk/dct.c:
 
 bink/src/sdk/bitplane.c:
 	.text       start:0x8012D564 end:0x80130990
+
+dolphin/card/CARDBios.c: comment:8
+	.text       start:0x80130994 end:0x80131FF4
+
+dolphin/card/CARDUnlock.c: comment:8
+	.text       start:0x80132020 end:0x8013275C
+
+dolphin/card/CARDRdwr.c: comment:8
+	.text       start:0x80132A00 end:0x80132DC8
+
+dolphin/card/CARDBlock.c: comment:8
+	.text       start:0x80132DC8 end:0x80133340
+
+dolphin/card/CARDDir.c: comment:8
+	.text       start:0x80133340 end:0x8013365C
+
+dolphin/card/CARDCheck.c: comment:8
+	.text       start:0x8013365C end:0x801342A8
+
+dolphin/card/CARDMount.c: comment:8
+	.text       start:0x801342A8 end:0x80134508
+
+dolphin/card/CARDFormat.c: comment:8
+	.text       start:0x8013523C end:0x80135298
+
+dolphin/card/CARDOpen.c: comment:8
+	.text       start:0x80135298 end:0x80135648
+
+dolphin/card/CARDCreate.c: comment:8
+	.text       start:0x80135650 end:0x80135B08
+
+dolphin/card/CARDRead.c: comment:8
+	.text       start:0x80135B08 end:0x801361EC
+
+dolphin/card/CARDWrite.c: comment:8
+	.text       start:0x801361EC end:0x80136654
+
+dolphin/card/CARDDelete.c: comment:8
+	.text       start:0x80136654 end:0x80136860
+
+dolphin/card/CARDStat.c: comment:8
+	.text       start:0x80136860 end:0x80136DB4
+
+dolphin/card/CARDStatEx.c: comment:8
+	.text       start:0x80136DB4 end:0x80137214
+
+dolphin/card/CARDNet.c: comment:8
+	.text       start:0x80137214 end:0x801372EC
