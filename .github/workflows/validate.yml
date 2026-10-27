@@ -46,6 +46,12 @@ jobs:
         run: |
           ninja progress build/GIHE78/report.json
           echo "measured-at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+      - name: Check ProDG wrapper against the driver
+        # The build above downloaded wibo; the image ships the ProDG compilers.
+        env:
+          PRODG_DIR: /compilers/ProDG/3.5
+          WIBO: build/tools/wibo
+        run: python3 -m unittest -v tests/test_prodg_cc.py
       - name: Upload progress report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

@@ -1102,3 +1102,48 @@ dolphin/dvd/dvderror.c: comment:8
 
 dolphin/dvd/fstload.c: comment:8
 	.text       start:0x80111C80 end:0x80111EC0
+
+bink/src/sdk/decode/ngc/binkngc.c:
+	.text       start:0x80111EC0 end:0x801123B4
+
+bink/src/sdk/decode/ngc/ngcsnd.c:
+	.text       start:0x801123B4 end:0x80113890
+
+bink/src/sdk/decode/binkread.c:
+	.text       start:0x80113890 end:0x801179EC
+
+bink/src/sdk/decode/ngc/ngcfile.c:
+	.text       start:0x801179EC end:0x801184CC
+
+bink/src/sdk/decode/yuv.cpp:
+	.text       start:0x801184CC end:0x8011F78C
+
+bink/src/sdk/decode/binkacd.c:
+	.text       start:0x8011F78C end:0x80120470
+
+bink/shared/time/radcb.c:
+	.text       start:0x80120470 end:0x80120B54
+
+bink/src/sdk/decode/expand.c:
+	.text       start:0x80120B54 end:0x801241E0
+
+bink/src/sdk/popmal.c:
+	.text       start:0x801241E0 end:0x80124378
+
+bink/src/sdk/decode/ngc/ngcrgb.c:
+	.text       start:0x80124378 end:0x801272BC
+
+bink/src/sdk/decode/ngc/ngcyuy2.c:
+	.text       start:0x801272BC end:0x80127FC8
+
+bink/src/sdk/varbits.c:
+	.text       start:0x80127FC8 end:0x801281AC
+
+bink/src/sdk/fft.c:
+	.text       start:0x801281AC end:0x8012C490
+
+bink/src/sdk/dct.c:
+	.text       start:0x8012C490 end:0x8012D564
+
+bink/src/sdk/bitplane.c:
+	.text       start:0x8012D564 end:0x80130990
