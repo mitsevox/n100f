@@ -360,4 +360,3 @@ static void cbForSeekAsync(long result, struct DVDCommandBlock * block) {
     }
 }
 
-/* This is based on the revolution SDK, these may not match in all cases */

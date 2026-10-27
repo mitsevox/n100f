@@ -492,8 +492,6 @@ inline static void setInterruptRegs(VITiming* tm)
 	MARK_CHANGED(25);
 	regs[24] = vct | 0x1000;
 	MARK_CHANGED(24);
-
-	vct;
 }
 
 inline static void setPicConfig(u16 fbSizeX, VIXFBMode xfbMode, u16 panPosX,
@@ -865,7 +863,6 @@ u32 VIGetNextField(void)
 {
 	s32 nextField;
 	BOOL enabled;
-	u8 unused[4];
 
 	enabled   = OSDisableInterrupts();
 	nextField = getCurrentFieldEvenOdd() ^ 1;

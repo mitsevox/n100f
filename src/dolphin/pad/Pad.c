@@ -338,7 +338,6 @@ u32 PADRead(PADStatus* status) {
     u32 data[2];
     u32 chanBit;
     u32 sr;
-    int chanShift;
     u32 motor;
 
     enabled = OSDisableInterrupts();
@@ -346,7 +345,6 @@ u32 PADRead(PADStatus* status) {
 
     for(chan = 0; chan < 4; chan++, status++) {
         chanBit = 0x80000000 >> chan;
-        chanShift = (3 - chan) * 8;
 
         if (PendingBits & chanBit) {
             PADReset(0);

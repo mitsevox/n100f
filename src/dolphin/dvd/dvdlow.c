@@ -172,7 +172,7 @@ void __DVDInterruptHandler(__OSInterrupt interrupt, OSContext* context)
 }
 
 static void AlarmHandler(OSAlarm* alarm, OSContext* context) {
-    BOOL processed = ProcessNextCommand();
+    ProcessNextCommand();
 
 }
 
