@@ -178,11 +178,8 @@ void __GXUpdateBPMask(void)
     u32 i;
     u32 tmap;
     u32 new_imask;
-    u32 nStages;
-    u32 new_dmask;
 
     new_imask = 0;
-    new_dmask = 0;
     nIndStages = GET_REG_FIELD(gx->genMode, 3, 16);
     for (i = 0; i < nIndStages; i++) {
         switch (i) {
