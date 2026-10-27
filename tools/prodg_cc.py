@@ -119,11 +119,14 @@ def stage_arguments(cpp_flags, compiler_flags, language):
     return cpp, ["-quiet"] + compiler_flags
 
 
-def stage(command, output, environment):
-    process = subprocess.Popen(command, stdin=subprocess.DEVNULL, env=environment,
-                               start_new_session=True)
+def run_stage(command, output, environment):
+    """Run one stage; return its exit status (None if it produced no output) and its output."""
+    if output.exists():
+        output.unlink()
+    process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT, env=environment, start_new_session=True)
     try:
-        status = process.wait(timeout=STAGE_TIMEOUT)
+        log, _ = process.communicate(timeout=STAGE_TIMEOUT)
     except subprocess.TimeoutExpired:
         os.killpg(process.pid, signal.SIGKILL)
         process.wait()
@@ -132,10 +135,28 @@ def stage(command, output, environment):
         os.killpg(process.pid, signal.SIGKILL)
         process.wait()
         raise
+    if process.returncode == 0 and not output.is_file():
+        return None, log
+    return process.returncode, log
+
+
+def stage(name, command, output, environment):
+    # Each stage is a pure function of its input file, so a failed run is retried once.
+    # On CI the ProDG tools under wibo have failed rarely with no change in their input
+    # (NgcAs: "Could not read file ... Expected 69547 bytes but read 0" on a complete .s);
+    # a real error fails both attempts and is reported once.
+    status, log = run_stage(command, output, environment)
+    if status != 0:
+        first = log.decode(errors="replace").strip().splitlines()
+        print(f"prodg_cc: retrying {name} after exit {status}: {first[-1] if first else 'no output'}",
+              file=sys.stderr)
+        status, log = run_stage(command, output, environment)
+    sys.stderr.buffer.write(log)
+    sys.stderr.flush()
+    if status is None:
+        raise RuntimeError(f"Compiler stage did not produce {output.name}")
     if status != 0:
         raise RuntimeError(f"Compiler stage failed with exit {status}")
-    if not output.is_file():
-        raise RuntimeError(f"Compiler stage did not produce {output.name}")
 
 
 def make_depfile(text, target):
@@ -176,11 +197,11 @@ def compile_unit(options, cpp_flags, compiler_flags, language):
         if depfile:
             # -MD, not -MMD: this cpp leaves <...> includes out of -MMD output.
             cpp += ["-MD", str(dependencies)]
-        stage(cpp + [str(source), "-o", str(preprocessed)], preprocessed, environment)
+        stage("cpp", cpp + [str(source), "-o", str(preprocessed)], preprocessed, environment)
         compiler = "cc1plus.exe" if language == "c++" else "cc1.exe"
-        stage(wrapper + [str(directory / compiler)] + cc1_arguments
+        stage(compiler, wrapper + [str(directory / compiler)] + cc1_arguments
               + [str(preprocessed), "-o", str(assembly)], assembly, environment)
-        stage(wrapper + [str(directory / "NgcAs.exe"), str(assembly), "-o", str(compiled)],
+        stage("NgcAs", wrapper + [str(directory / "NgcAs.exe"), str(assembly), "-o", str(compiled)],
               compiled, environment)
         header = compiled.read_bytes()[:20]
         if len(header) != 20 or header[:7] != b"\x7fELF\x01\x02\x01" \

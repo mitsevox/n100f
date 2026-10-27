@@ -16,6 +16,7 @@ struct OSThreadQueue {
 };
 
 void OSInitThreadQueue(OSThreadQueue* queue);
+s32 OSEnableScheduler(void);
 void OSSleepThread(OSThreadQueue* queue);
 void OSWakeupThread(OSThreadQueue* queue);
 void OSYieldThread(void);
