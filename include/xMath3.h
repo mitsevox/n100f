@@ -3,7 +3,6 @@
 
 #include "types.h"
 #include "xVec3.h"
-#include <math.h>
 
 struct _xMat3x3
 {
@@ -70,15 +69,6 @@ inline void xVec3Cross(xVec3* o, const xVec3* a, const xVec3* b)
     temp.y = a->z * b->x - b->z * a->x;
     temp.z = a->x * b->y - b->x * a->y;
     *o = temp;
-}
-
-inline F32 xVec3Dist(const xVec3* a, const xVec3* b)
-{
-    F32 dx = a->x - b->x;
-    F32 dy = a->y - b->y;
-    F32 dz = a->z - b->z;
-
-    return sqrtf(dx * dx + dy * dy + dz * dz);
 }
 
 void xMat3x3RotY(xMat3x3* m, F32 t);

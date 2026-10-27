@@ -2093,11 +2093,6 @@ static S32 Shaggy0_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
     return retval;
 }
 
-static void Shaggy2_PrintModlTime(F32 time)
-{
-    printf("ModlTime = %f\n", time);
-}
-
 static U32 Shaggy2_StateChange(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
 {
     ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
@@ -3801,11 +3796,6 @@ void zEntShaggy_Init(st_zEntVillain* ent)
     ent->penby = 0x1C;
 }
 
-static inline xMat4x3* zEntShaggy_BoneMat(xModelInstance* minst, U32 bone)
-{
-    return &((xMat4x3*)minst->Mat)[bone];
-}
-
 static inline S32 zEntShaggy_HasAnimTable(_zEnt* ent, const char* name)
 {
     xModelInstance* minst;
@@ -3831,6 +3821,15 @@ static inline void zEntShaggy_SyncVisible()
             ShaggyVil_HandleVisible(ent, (ent->asset->flags & 0x1) ? eEventVisible : eEventInvisible);
         }
     }
+}
+
+static inline F32 xVec3Dist(const xVec3* a, const xVec3* b)
+{
+    F32 dx = a->x - b->x;
+    F32 dy = a->y - b->y;
+    F32 dz = a->z - b->z;
+
+    return sqrtf(dx * dx + dy * dy + dz * dz);
 }
 
 void zEntShaggy_SceneStart(zScene* sc)
@@ -3890,11 +3889,12 @@ void zEntShaggy_SceneStart(zScene* sc)
             gShaggy[gNumShaggy].talkTimer = 0.0f;
             gShaggy[gNumShaggy].talkSwitch = -1.0f;
             gShaggy[gNumShaggy].talkRand = irand() >> 16;
-            gShaggy[gNumShaggy++].geronimoChase =
+            gShaggy[gNumShaggy].geronimoChase =
                 (globals.sceneCur->sceneID == zSceneIDFromName("o006") &&
                  gShaggy[gNumShaggy].ent->id == xStrHash("SHAGGY5")) ?
                     (_zEnt*)zSceneFindObject(xStrHash("GERONIMO")) :
                     NULL;
+            gNumShaggy++;
         }
 
         if (sc->ents[i]->baseType == 0x17 && sc->ents[i]->id >= hangHashID &&
@@ -3937,7 +3937,7 @@ void zEntShaggy_SceneStart(zScene* sc)
                 tmpinst->Next->Anim = NULL;
                 xModelInstanceFree(tmpinst->Next);
                 xModelInstanceAttach(newminst, tmpinst);
-                zEntShaggy_BoneMat(newminst, newminst->BoneCount + 1)->pos.y = -0.6f;
+                ((xMat4x3*)&newminst->Mat[newminst->BoneCount + 1])->pos.y = -0.6f;
                 newminst->Flags &= ~0x7;
                 iModelTagIndex(&ChimneyTag, tmpinst->Data, ChimneyTagIndex);
                 iModelTagIndex(&ShaggyTag, tmpinst->Next->Data, ShaggyTagIndex);
@@ -4045,7 +4045,7 @@ void zEntShaggy_SceneReset()
                 minst = minst->Next;
                 if (minst)
                 {
-                    zEntShaggy_BoneMat(minst, minst->BoneCount + 1)->pos.y = -0.6f;
+                    ((xMat4x3*)&minst->Mat[minst->BoneCount + 1])->pos.y = -0.6f;
                     minst->Flags &= ~0x7;
                 }
             }
