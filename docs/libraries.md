@@ -37,7 +37,7 @@ Library headers declare only what the reconstructed units use, as game headers d
 | --- | --- |
 | `include/dolphin/` | Dolphin SDK public headers under the SDK's names (`dolphin/os.h` and its `dolphin/os/*.h` parts, `dolphin/db.h`, `dolphin/si.h`, ...), each created by the first import that needs it. The SDK's base types are in `dolphin/types.h`. |
 | `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`, `stdarg.h`) |
-| `src/<library>/` | Planned: private headers of one library, next to its source |
+| `src/<library>/` | Private headers of one library, next to its source. `-i src` is on the include path, so a unit includes them by path from `src/` (`"dolphin/dvd/__dvd.h"`). |
 
 Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types. Game code keeps `types.h`.
 
