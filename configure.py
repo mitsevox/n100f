@@ -306,7 +306,8 @@ cflags_card = [
 
 # RenderWare profile: CodeWarrior for GameCube 1.3 or 1.3.2 (not separated), -O4, signed char,
 # no fused multiply-add and no lmw/stmw. Evidence: RenderWare compiler rows in evidence.tsv and
-# docs/compiler_profile/README.md "RenderWare".
+# docs/compiler_profile/README.md "RenderWare". -lang=c and -common off come from rw.flags and
+# are not established (docs/libraries.md).
 cflags_rw = [
     *[f for f in cflags_base if f not in _lib_drop],
     "-fp_contract off",
