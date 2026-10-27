@@ -1,4 +1,5 @@
 #include <dolphin/os.h>
+#include <limits.h>
 
 #define OS_TIME_MONTH_MAX 12
 #define OS_TIME_WEEK_DAY_MAX 7
@@ -70,6 +71,8 @@ inline s32 GetYearDays(s32 year, s32 mon)
 
 inline s32 GetLeapDays(s32 year)
 {
+    ASSERTLINE(260, 0 <= year);
+
     if (year < 1)
     {
         return 0;
@@ -125,13 +128,22 @@ void OSTicksToCalendarTime(OSTime ticks, OSCalendarTime* td)
     td->usec = (int)(OSTicksToMicroseconds(d) % 1000);
     td->msec = (int)(OSTicksToMilliseconds(d) % 1000);
 
+    ASSERTLINE(334, 0 <= td->usec);
+    ASSERTLINE(335, 0 <= td->msec);
+
     ticks -= d;
+
+    ASSERTLINE(338, ticks % OSSecondsToTicks(1) == 0);
+    ASSERTLINE(342, 0 <= OSTicksToSeconds(ticks) / 86400 + BIAS &&
+                        OSTicksToSeconds(ticks) / 86400 + BIAS <= INT_MAX);
+
     days = (int)(OSTicksToSeconds(ticks) / 86400 + BIAS);
     secs = (int)(OSTicksToSeconds(ticks) % 86400);
     if (secs < 0)
     {
         days -= 1;
         secs += 24 * 60 * 60;
+        ASSERTLINE(349, 0 <= secs);
     }
 
     GetDates(days, td);
