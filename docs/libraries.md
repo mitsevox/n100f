@@ -15,7 +15,7 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 
 The flags are shown compatible with the target, not established. An MSL object that placed under only one compiler sets that version. The others take the library default, and their import must confirm it. Each import also reconfirms a pick that rests on a partial placement: `alloc.c` is GC/1.3 on 2 of its 34 functions.
 
-Bink is ProDG (SN Systems GCC) code, built through `tools/prodg_cc.py`. Ooura's FFT compiles to nine of its functions under every ProDG version from 3.5 to 3.9.3 and under no CodeWarrior version, so the family is established but the version is not. `ProDG/3.5` is the only version the wrapper supports; the first import whose code separates the versions settles it.
+Bink is ProDG (SN Systems GCC) code, built through `tools/prodg_cc.py`. Ooura's FFT compiles to nine of its functions under every ProDG version from 3.5 to 3.9.3 and under no CodeWarrior version, so the family is established but the version is not. `cflags_bink` is likewise shown compatible, not established: it rests on those nine functions only. `ProDG/3.5` is the only version the wrapper supports; the first import whose code separates the versions settles it.
 
 GC/1.2.5n writes `.comment` version 8 (compiler 2.3.0.1). GC/1.3 and GC/1.3.2 both write version 10 (2.4.2.1), which is the project default (`mw_comment_version`). The SDK units therefore carry `comment:8` in `splits.txt`.
 

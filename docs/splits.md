@@ -142,7 +142,7 @@ BfBB links the same Bink build. Its GQPE78 Bink block (`0x80196880` to `0x801B53
 | `bink/src/sdk/dct.c` | `0x8012C490` | `0x8012D564` | 8 |
 | `bink/src/sdk/bitplane.c` | `0x8012D564` | `0x80130990` | 7 |
 
-bfbb does not say where its Bink paths, boundaries and names come from, so they are `related` and every inner edge is `provisional`. Two checks support them:
+bfbb does not say where its Bink paths, boundaries and names come from, so they are `related` and every inner edge is `provisional`. Its list includes static functions and a local `gcc2_compiled.` label, the marker GCC 2 emits at the start of each object's `.text`, at each of the 15 unit starts, which suggests a symbol table from RAD's library rather than names chosen by hand. Two checks support them:
 
 - None of the 190 functions bfbb marks `scope:local` is called from outside its unit (455 direct calls to Bink functions checked in the whole of `.text`).
 - Game code calls only Bink's public API: `BinkOpen`, `BinkClose`, `BinkDoFrame`, `BinkNextFrame`, `BinkWait`, `BinkGoto`, `BinkCopyToBuffer`, `BinkSetVolume`, `BinkGetError`, `RADSetMemory` and `RADSetAudioMemory`.
