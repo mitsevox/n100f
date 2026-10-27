@@ -130,6 +130,10 @@ Local changes, all as the target requires:
 - `rdft` and `ddct` pass `ip + 2` to the transforms.
 - The functions other than `rdft` and `ddct` are `static`, and only the functions Bink links are kept.
 
+## RenderWare unit map
+
+The RenderWare unit paths in `config/GIHE78/splits.txt` and the RenderWare function names that `tools/splits/rwmap.py` applies in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`, pinned in `config/GIHE78/rwmap.json`), published under CC0 1.0. The unit boundaries are rwmap.py's own: it places bfbb's units by aligning their function sizes against the target, and 62 of the 63 units keep at least one open edge ([RenderWare units](docs/splits.md#renderware-units)). bfbb does not state where its RenderWare names come from. Public RenderWare headers cannot supply the names of static functions, and many of bfbb's are static. No Criterion RenderWare source or SDK headers are in this repository; `include/rwcore.h` and `include/rpworld.h` are this project's own declarations.
+
 ## Build tooling
 
 `configure.py`, `tools/*.py` (except project-specific additions), `.vscode/`, `.flake8`, `.gitattributes` and `docs/dtk/` come from [encounter/dtk-template](https://github.com/encounter/dtk-template/tree/d366876408b754891a0392badbc63bff3490469f), revision `d366876408b754891a0392badbc63bff3490469f`, published under CC0 1.0 (`tools/LICENSE.dtk-template`). Local changes: project configuration in `configure.py`, removed example libraries and REL helper, and merged ignore rules.
