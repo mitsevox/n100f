@@ -52,7 +52,7 @@ CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compi
 | `TRK_MINNOW_DOLPHIN/msgbuf.c` | GC/1.3 | `.rodata`, `.bss` | C |
 | `TRK_MINNOW_DOLPHIN/mslsupp.c` | GC/1.3 | none | C |
 | `dolphin/card/*.c` (16 objects) | GC/1.2.5n, `card_debug` flags | `.data`, `.sdata`, `.bss` | C ([CARD](#card)) |
-| `dolphin/` SDK objects (`db`, `si`, `mtx`, `ax`, `dsp`, `dvd`, `OdemuExi2`, and `os` from `OS.c` to `OSTime.c`) | GC/1.2.5n, `cflags_sdk` | each unit's sections, as `data` rows | C; asm functions where the original was assembly, each with an `assembly` row |
+| `dolphin/` SDK objects (`db`, `si`, `mtx`, `ax`, `dsp`, `dvd`, `OdemuExi2`, `os` from `OS.c` to `OSTime.c`, and `gx` from `GXInit.c` to `GXPerf.c`) | GC/1.2.5n, `cflags_sdk` | each unit's sections, as `data` rows | C; asm functions where the original was assembly, each with an `assembly` row |
 
 All of them are `Matching` and link byte-identical, except `dolphin/os/OSMemory.c`, `OSReset.c` and `OSRtc.c`, and `TRK_MINNOW_DOLPHIN/msgbuf.c` and `mslsupp.c`. Each of the three os units compiles to the target's code except one function's stack frame, which is smaller than the target's unless an unused local is added (CREDITS.md, "Dolphin SDK"), so they stay `NonMatching` and the original bytes stay linked. `msgbuf.c` matches in 15 of its 19 functions: the compiler inlines `TRKAppendBuffer` into the other four, where the target calls it, and only a per-function `#pragma dont_inline` changes that (the `source-form` row for the unit in `evidence.tsv`), so it stays `NonMatching` too. `mslsupp.c` matches in eight of its nine functions: `convertFileMode` ends the binary flag with a narrowing that only sonicheroes' no-op `& 0xFF` mask reproduces, which this project does not use (the `source-form` row), so it stays `NonMatching` as well. The MSL units build under the `msl` profile in `configure.py`: GC/1.3 with `-inline auto,deferred` and `-char signed`. The `compiler` row in `evidence.tsv` records why.
 
@@ -65,7 +65,7 @@ Library headers declare only what the reconstructed units use, as game headers d
 | `include/dolphin/` | Dolphin SDK public headers under the SDK's names (`dolphin/os.h` and its `dolphin/os/*.h` parts, `dolphin/db.h`, `dolphin/si.h`, ...), each created by the first import that needs it. The SDK's base types are in `dolphin/types.h`. |
 | `include/libc/` | MSL C headers, shared with game code (`ctype.h`, `eof.h`, `errno.h`, `float.h`, `limits.h`, `locale.h`, `math.h`, `mem_funcs.h`, `pool_alloc.h`, `stdarg.h`, `stddef.h`, `stdio.h`, `stdlib.h`, `string.h`) |
 | `include/runtime/` | Runtime library headers (`NMWException.h`) |
-| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_sdk` for `dolphin/dvd/__dvd.h`, `cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`, `cflags_card` for `dolphin/card/__card.h`, `cflags_msl` for `MSL_C.PPCEABI.bare.H/ansi_fp.h` and `scanf.h`) |
+| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_sdk` for `dolphin/dvd/__dvd.h` and `dolphin/gx/__gx.h`, `cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`, `cflags_card` for `dolphin/card/__card.h`, `cflags_msl` for `MSL_C.PPCEABI.bare.H/ansi_fp.h` and `scanf.h`) |
 
 Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types. Game code keeps `types.h`.
 
