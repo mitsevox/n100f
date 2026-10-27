@@ -45,7 +45,7 @@ artifact against its copy of the producer policy, and never runs anything from t
 | `files.exact` | named units whose code and data bytes all match |
 
 The file counts are provisional. 123 game units are named from recovered splits (see
-[splits.md](splits.md)), and 118 library units (MetroTRK, runtime, MSL and the first part of the
+[splits.md](splits.md)), and 119 library units (MetroTRK, runtime, MSL and the first part of the
 Dolphin SDK) are named by compiling public decompilations of those libraries (see
 [Library units](splits.md#library-units)); the rest are dtk's auto-generated address ranges. The game
 names come from the PS2 v1.01 DWARF and the boundaries are inferred, so no game unit boundary has been
