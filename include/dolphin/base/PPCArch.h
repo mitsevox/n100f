@@ -29,6 +29,7 @@ extern "C" {
 u32 PPCMfmsr(void);
 void PPCMtmsr(u32 newMSR);
 u32 PPCMfhid0(void);
+void PPCMthid0(u32 newHID0);
 u32 PPCMfl2cr(void);
 void PPCMtl2cr(u32 newL2cr);
 u32 PPCMfhid2(void);

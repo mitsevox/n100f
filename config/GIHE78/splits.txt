@@ -968,13 +968,19 @@ dolphin/OdemuExi2/DebuggerDriver.c: comment:8
 	.sbss       start:0x8025F248 end:0x8025F260
 
 dolphin/ai/ai.c: comment:8
-	.text       start:0x800F43E0 end:0x800F4C5C
+	.text       start:0x800F439C end:0x800F4C5C
+	.sbss       start:0x8025F260 end:0x8025F2A0
+
+dolphin/amcstubs/AmcExi2Stubs.c: comment:8
+	.text       start:0x800F4C5C end:0x800F4C8C
 
 dolphin/ar/ar.c: comment:8
-	.text       start:0x800F4CD0 end:0x800F58E4
+	.text       start:0x800F4C8C end:0x800F58E4
+	.sbss       start:0x8025F2A0 end:0x8025F2C0
 
 dolphin/ar/arq.c: comment:8
-	.text       start:0x800F58E4 end:0x800F5C78
+	.text       start:0x800F58E4 end:0x800F5DD0
+	.sbss       start:0x8025F2C0 end:0x8025F2F0
 
 dolphin/ax/AXAlloc.c: comment:8
 	.text       start:0x800F5E38 end:0x800F630C
@@ -998,7 +1004,7 @@ dolphin/ax/AXProf.c: comment:8
 	.sbss       start:0x8025F390 end:0x8025F3A0
 
 dolphin/base/PPCArch.c: comment:8
-	.text       start:0x800F87BC end:0x800F881C
+	.text       start:0x800F877C end:0x800F8824
 
 dolphin/db/db.c: comment:8
 	.text       start:0x800F8824 end:0x800F8910
@@ -1006,7 +1012,12 @@ dolphin/db/db.c: comment:8
 	.sbss       start:0x8025F3A0 end:0x8025F3A8
 
 dolphin/dsp/dsp.c: comment:8
-	.text       start:0x800F8910 end:0x800F895C
+	.text       start:0x800F8910 end:0x800F8BEC
+	.data       start:0x801CC678 end:0x801CC6B0
+	.sbss       start:0x8025F3A8 end:0x8025F3B0
+
+dolphin/dsp/dsp_debug.c: comment:8
+	.text       start:0x800F8BEC end:0x800F8C3C
 
 dolphin/dsp/dsp_task.c: comment:8
 	.text       start:0x800F8C3C end:0x800F94C0
@@ -1014,10 +1025,12 @@ dolphin/dsp/dsp_task.c: comment:8
 	.sbss       start:0x8025F3B0 end:0x8025F3C8
 
 dolphin/exi/EXIBios.c: comment:8
-	.text       start:0x800F94C0 end:0x800FAA10
+	.text       start:0x800F94C0 end:0x800FAD8C
+	.bss        start:0x8025A640 end:0x8025A700
 
 dolphin/exi/EXIUart.c: comment:8
 	.text       start:0x800FAD8C end:0x800FAFFC
+	.sbss       start:0x8025F3C8 end:0x8025F3D8
 
 dolphin/gx/GXInit.c: comment:8
 	.text       start:0x800FAFFC end:0x800FC0E8
