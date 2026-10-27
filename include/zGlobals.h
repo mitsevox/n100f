@@ -5,8 +5,7 @@
 
 struct zScene;
 
-// Partial: only sceneCur is declared. The members before it are left opaque; the GC
-// layout differs from SLUS-20349's, where sceneCur is at 0xB94.
+// Partial: only sceneCur is declared. The members before it are left opaque.
 struct zGlobals
 {
     U8 opaque_0[0xB64];

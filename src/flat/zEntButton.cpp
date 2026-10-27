@@ -11,7 +11,7 @@ void zEntButton_Init(void* ent, void* asset)
     zEntButton_Init((_zEntButton*)ent, (p2EntAsset*)asset);
 }
 
-void zEntButton_Init(_zEntButton* ent, p2EntAsset* asset)
+inline void zEntButton_Init(_zEntButton* ent, p2EntAsset* asset)
 {
     zEntInit(ent, asset, 'BUTN');
 
@@ -153,7 +153,7 @@ void zEntButton_Update(_zEntButton* ent, _xScene* sc, F32 dt)
     }
 }
 
-static void zEntButton_SetReady(_zEntButton* ent)
+static inline void zEntButton_SetReady(_zEntButton* ent)
 {
     if (ent->state != 0)
     {
