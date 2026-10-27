@@ -59,6 +59,13 @@ inline void xVec3Init(xVec3* v, F32 _x, F32 _y, F32 _z)
     v->z = _z;
 }
 
+inline void xVec3Sub(xVec3* o, const xVec3* a, const xVec3* b)
+{
+    o->x = a->x - b->x;
+    o->y = a->y - b->y;
+    o->z = a->z - b->z;
+}
+
 F32 xVec3Normalize(xVec3* o, const xVec3* v);
 
 inline void xVec3Cross(xVec3* o, const xVec3* a, const xVec3* b)

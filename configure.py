@@ -454,6 +454,7 @@ config.libs: List[Dict[str, Any]] = [
         [
             Object(NonMatching, "flat/iCamera.cpp"),
             Object(NonMatching, "flat/iEnv.cpp"),
+            Object(Matching, "flat/iMath.cpp"),
             Object(NonMatching, "flat/xAnim.cpp"),
             Object(NonMatching, "flat/xBase.cpp"),
             Object(NonMatching, "flat/xbinio.cpp"),
@@ -464,7 +465,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xIni.cpp"),
             Object(NonMatching, "flat/xMath3.cpp"),
             Object(Matching, "flat/xMorph.cpp"),
-            Object(NonMatching, "flat/xMovePoint.cpp"),
+            Object(Matching, "flat/xMovePoint.cpp"),
             Object(NonMatching, "flat/xordarray.cpp"),
             Object(NonMatching, "flat/xPar.cpp"),
             Object(NonMatching, "flat/xpkrsvc.cpp"),
