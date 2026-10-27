@@ -258,7 +258,8 @@ cflags_runtime = [
 ]
 
 # MSL C profile ("msl"): the runtime profile plus deferred inlining (functions are emitted
-# in reverse source order) and signed char. Evidence: compiler rows in evidence.tsv.
+# in reverse source order), signed char and fused multiply-add (the fdlibm kernels).
+# Evidence: compiler rows in evidence.tsv.
 cflags_msl = [
     *cflags_runtime,
     "-inline auto,deferred",
