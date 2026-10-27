@@ -131,7 +131,7 @@ Local changes, all as the target requires:
 
 ## RenderWare unit map
 
-The RenderWare unit paths and boundaries in `config/GIHE78/splits.txt` and the RenderWare function names that `tools/splits/rwmap.py` applies in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`, pinned in `config/GIHE78/rwmap.json`), published under CC0 1.0 ([RenderWare units](docs/splits.md#renderware-units)). bfbb does not state where its RenderWare names come from. Public RenderWare headers cannot supply the names of static functions, and many of bfbb's are static. No RenderWare source or headers are in this repository.
+The RenderWare unit paths in `config/GIHE78/splits.txt` and the RenderWare function names that `tools/splits/rwmap.py` applies in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`, pinned in `config/GIHE78/rwmap.json`), published under CC0 1.0. The unit boundaries are rwmap.py's own: it places bfbb's units by aligning their function sizes against the target, and 62 of the 63 units keep at least one open edge ([RenderWare units](docs/splits.md#renderware-units)). bfbb does not state where its RenderWare names come from. Public RenderWare headers cannot supply the names of static functions, and many of bfbb's are static. No Criterion RenderWare source or SDK headers are in this repository; `include/rwcore.h` and `include/rpworld.h` are this project's own declarations.
 
 ## Build tooling
 

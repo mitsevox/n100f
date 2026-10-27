@@ -14,7 +14,7 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `BinkLib` | `binkngc` | ProDG/3.5 | `cflags_bink` | `bink` |
 | `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card` | `sdk` |
 
-RenderWare units are not listed: their compiler profile is not established.
+RenderWare units are not listed: their compiler profile is not established. Never use leaked RenderWare source for them.
 
 The flags are shown compatible with the target, not established. An MSL object that placed under only one compiler sets that version. The others take the library default, and their import must confirm it. Each import also reconfirms a pick that rests on a partial placement: `alloc.c` is GC/1.3 on 2 of its 34 functions.
 

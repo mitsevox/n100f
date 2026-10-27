@@ -189,7 +189,7 @@ Each unit has a `related` `unit` row in `evidence.tsv`. Each new name has a `rel
 - The PS2 retail DWARF lists 22 of the new names, the `ctgeom.c`, `ctbsp.c` and `rpcollis.c` functions, in `flat\p2rwcoll\ctgeom_.c`, `ctbsp_.c` and `rpcollis_.c`: Heavy Iron compiled the collision plugin into the PS2 game.
 - The PS2 January 2001 and Xbox prototypes keep RenderWare source paths as strings (`rwsdk/world/baclump.c`, `//RenderWare/RW34Active/rwsdk/src/plcore/baimmedi.c#2`, ...). A unit row says when its path is among them.
 
-BfBB's RenderWare names and paths are a related build's; there is no GC debug symbol. bfbb does not state where they come from. 186 of the new names are functions bfbb marks static, whose names public RenderWare headers cannot supply, and 206 rest on bfbb alone: neither the PS2 prototype symbol table nor the PS2 retail DWARF lists them. No RenderWare source or headers were used.
+BfBB's RenderWare names and paths are a related build's; there is no GC debug symbol. bfbb does not state where they come from. 186 of the new names are functions bfbb marks static, whose names public RenderWare headers cannot supply, and 206 rest on bfbb alone: neither the PS2 prototype symbol table nor the PS2 retail DWARF lists them. No leaked RenderWare source was used, and no Criterion RenderWare source or SDK headers.
 
 ## Reproducing
 
