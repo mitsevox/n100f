@@ -7,7 +7,7 @@ instruction sequence occurs in the target's text sections. A function that
 appears under one compiler version and not another is version evidence; the
 source itself is only a stimulus and establishes nothing about names.
 
-    python3 tools/compiler_probe.py --dol orig/GIHE78/sys/main.dol \\
+    python3 tools/compiler_probe.py --dol orig/GIHE78-rev0/sys/main.dol \\
         --compilers build/compilers --wrapper build/tools/wibo \\
         --root ../bfbb --versions 1.3,1.3.2,2.0 \\
         --flags-file probe_flags.txt src/SB/Core/x/xsavegame.cpp ...

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Public report-v1 inputs for the shared site (https://mitsevox.github.io/), adapted from mvp2005.
+"""Public report-v2 inputs for the shared site (https://mitsevox.github.io/), adapted from mvp2005.
 
 inputs    objdiff's report.json -> summary.json (the measured code/data bytes and the function
           inventory), map.json (every function as a tile, by unit and by section) and
@@ -29,7 +29,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT = 'n100f'
 CONSOLE = 'GameCube'
 WORKFLOW = '.github/workflows/validate.yml'
-ARTIFACT = 'public-report'
+LEGACY_ARTIFACT = 'public-report'
+try:
+    from tools.targets import registry,select
+except ModuleNotFoundError:
+    from targets import registry,select
+DEFAULT_TARGET='GIHE78-rev0'
 # Bump when what a number means changes (the site keeps old rows under their own methodology).
 METHODOLOGY = 'objdiff-report-v1'
 GENERATION = 1
@@ -227,10 +232,16 @@ def sha256(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def package_timeline(manifest_raw, read, where):
+def package_timeline(manifest_raw, read, where,version=DEFAULT_TARGET):
     """The timeline rows of one package, its asset checked against its manifest; None when the
     package has no timeline."""
-    module = json.loads(manifest_raw)['modules']['timeline']
+    manifest=json.loads(manifest_raw)
+    item=select(version)
+    if manifest.get('project')!=PROJECT or manifest.get('repository')!='mitsevox/n100f' or not (
+            manifest.get('schemaVersion')==2 and manifest.get('target')==item['target']
+            or manifest.get('schemaVersion')==1 and manifest.get('target') in item['legacyTargets']):
+        fail('%s: timeline belongs to another target' % where)
+    module=manifest['modules']['timeline']
     if module['status'] != 'supported':
         return None
     raw = read(module['asset']['path'])
@@ -239,7 +250,7 @@ def package_timeline(manifest_raw, read, where):
     return json.loads(raw)['snapshots']
 
 
-def site_timelines():
+def site_timelines(version=DEFAULT_TARGET):
     """The timelines the site holds as accepted, from each branch of its store."""
     result = []
     for branch in SITE_BRANCHES:
@@ -248,61 +259,85 @@ def site_timelines():
         entry = json.loads(read('data/reports.lock.json'))['projects'].get(PROJECT)
         if not entry:
             continue
+        legacy_flat='targets' not in entry
+        if not legacy_flat:entry=entry['targets'].get(version)
+        if not entry:continue
         raw = read(entry['path'] + '/manifest.json')
         if sha256(raw) != entry['manifestSha256']:
             fail('site %s: accepted manifest differs from its lock' % branch)
-        rows = package_timeline(raw, lambda path: read(entry['path'] + '/' + path), 'site ' + branch)
+        manifest=json.loads(raw);item=select(version)
+        if legacy_flat:
+            if manifest.get('project')!=PROJECT or manifest.get('repository')!='mitsevox/n100f':
+                fail('site %s: accepted legacy identity belongs to another repository' % branch)
+            known=any(manifest.get('target')==candidate['target'] or manifest.get('target') in candidate['legacyTargets']
+                      for candidate in registry()['targets'])
+            if not known:fail('site %s: accepted legacy target is unknown' % branch)
+            if manifest.get('target')!=item['target'] and manifest.get('target') not in item['legacyTargets']:
+                # A known other revision in a checked-in bootstrap is not this
+                # target's history. Unknown/corrupt identities still fail closed.
+                continue
+        rows = package_timeline(raw, lambda path: read(entry['path'] + '/' + path), 'site ' + branch,version)
         if rows is not None:
             result.append(rows)
     return result
 
 
-def previous_run():
-    """This workflow's last successful main publication before this run.
-
-    Returns (run id, the public-report artifact's files); 'expired' when the newest such run's
-    artifact is gone; None when no earlier main run published one (the timeline's first row)."""
-    repository, run_id = os.environ.get('GITHUB_REPOSITORY'), os.environ.get('GITHUB_RUN_ID')
-    if not (repository and run_id):
-        return None
-    api = '%s/repos/%s/actions/' % (os.environ.get('GITHUB_API_URL', 'https://api.github.com'), repository)
-    runs = json.loads(fetch(api + 'workflows/%s/runs?branch=main&status=success&per_page=50'
-                            % os.path.basename(WORKFLOW), 'application/vnd.github+json'))['workflow_runs']
-    for run in runs:
-        if run['event'] not in ('push', 'workflow_dispatch') or str(run['id']) == run_id:
-            continue
-        artifacts = json.loads(fetch(api + 'runs/%d/artifacts?name=%s' % (run['id'], ARTIFACT),
-                                     'application/vnd.github+json'))['artifacts']
-        if not artifacts:
-            # Main runs from before the site report existed publish nothing; keep looking.
-            continue
-        if artifacts[0]['expired']:
-            return 'expired'
-        # The download redirects to a signed URL, which must not get the token.
-        try:
-            urllib.request.build_opener(NoRedirect).open(urllib.request.Request(
-                api + 'artifacts/%d/zip' % artifacts[0]['id'],
-                headers={'Authorization': 'Bearer ' + os.environ.get('GH_TOKEN', '')}), timeout=60)
-            fail('run %d: artifact download did not redirect' % run['id'])
-        except urllib.error.HTTPError as redirect:
-            if redirect.code != 302:
-                raise
-            location = redirect.headers['Location']
-        return run['id'], zipfile.ZipFile(io.BytesIO(fetch(location, '*/*', token=False)))
-    return None
+def api_rows(url,field):
+    """Do not interpret a truncated job/artifact response as missing history."""
+    for page in range(1,11):
+        value=json.loads(fetch(url+('&' if '?' in url else '?')+'per_page=100&page='+str(page),'application/vnd.github+json'))
+        batch=value[field]
+        if not isinstance(batch,list) or len(batch)>100:fail('invalid paginated '+field)
+        yield from batch
+        if len(batch)<100:return
+    fail(field+' exceeds retained scan bound')
 
 
-def timeline(summary_doc, measured_at):
+def previous_run(version=DEFAULT_TARGET):
+    """Restore this target only, including successful jobs in partially failed runs."""
+    repository,run_id=os.environ.get('GITHUB_REPOSITORY'),os.environ.get('GITHUB_RUN_ID')
+    if not (repository and run_id):return None
+    item=select(version)
+    api='%s/repos/%s/actions/' % (os.environ.get('GITHUB_API_URL','https://api.github.com'),repository)
+    names=['report-v2-'+version]+([LEGACY_ARTIFACT] if item['legacyTargets'] else [])
+    for page in range(1,11):
+        runs=json.loads(fetch(api+'workflows/%s/runs?branch=main&status=completed&per_page=100&page=%d' %
+                              (os.path.basename(WORKFLOW),page),'application/vnd.github+json'))['workflow_runs']
+        for run in runs:
+            if run['event'] not in ('push','workflow_dispatch') or str(run['id'])==run_id or run['conclusion'] not in ('success','failure'):continue
+            artifacts=list(api_rows(api+'runs/%d/artifacts' % run['id'],'artifacts'))
+            matches=[a for a in artifacts if a['name'] in names]
+            if not matches:continue
+            if len(matches)!=1:fail('run %d: ambiguous target history artifacts' % run['id'])
+            artifact=matches[0]
+            job_name='Validate '+version if artifact['name'].startswith('report-v2-') else 'Site report'
+            jobs=list(api_rows(api+'runs/%d/attempts/%d/jobs' % (run['id'],run['run_attempt']),'jobs'))
+            jobs=[j for j in jobs if j['name']==job_name and j['conclusion']=='success' and j['run_attempt']==run['run_attempt']]
+            if len(jobs)!=1:continue
+            if artifact['expired']:return 'expired'
+            try:
+                urllib.request.build_opener(NoRedirect).open(urllib.request.Request(api+'artifacts/%d/zip' % artifact['id'],
+                    headers={'Authorization':'Bearer '+os.environ.get('GH_TOKEN','')}),timeout=60)
+                fail('run %d: artifact download did not redirect' % run['id'])
+            except urllib.error.HTTPError as redirect:
+                if redirect.code!=302:raise
+                location=redirect.headers['Location']
+            return run['id'],zipfile.ZipFile(io.BytesIO(fetch(location,'*/*',token=False)))
+        if len(runs)<100:return None
+    fail('target history exceeds retained scan bound; restore an accepted checkpoint explicitly')
+
+
+def timeline(summary_doc, measured_at,version=DEFAULT_TARGET):
     """Earlier rows unchanged, then this commit's measured row. A fetch failure stops the build:
     a timeline restarted from nothing would drop rows the site already published. It starts
     empty only when no earlier main run published a report and the site holds none."""
     revision = git('rev-parse', 'HEAD')
-    accepted = site_timelines()
-    previous = previous_run()
+    accepted = site_timelines(version)
+    previous = previous_run(version)
     rows = None
     if isinstance(previous, tuple):
         run_id, files = previous
-        rows = package_timeline(files.read('manifest.json'), files.read, 'run %d' % run_id)
+        rows = package_timeline(files.read('manifest.json'), files.read, 'run %d' % run_id,version)
     if rows is None and accepted:
         rows = max(accepted, key=len)
     if rows is None:
@@ -324,7 +359,9 @@ def timeline(summary_doc, measured_at):
 
 
 def git(*args):
-    return subprocess.check_output(['git', '-C', ROOT, *args], text=True).strip()
+    # Container checkout ownership can differ from the runtime user. Trust
+    # only this checkout for this command; never a global wildcard exception.
+    return subprocess.check_output(['git','-c','safe.directory='+ROOT,'-C',ROOT,*args],text=True).strip()
 
 
 def tools():
@@ -348,10 +385,11 @@ def tools():
 
 
 def target(version):
-    line = open(os.path.join(ROOT, 'config', version, 'build.sha1')).read().split()
-    if not re.fullmatch(r'[0-9a-f]{40}', line[0]):
-        fail('config/%s/build.sha1 has no SHA-1' % version)
-    return {'id': version, 'console': CONSOLE, 'sha1': line[0]}
+    item=select(version)
+    if not item['support']['build'] or 'report-v2' not in item['support']['reportFormats']:fail('target has no verified report support')
+    line=open(os.path.join(ROOT,'config',version,'build.sha1')).read().split()
+    if line!=[item['target']['sha1'],'build/'+version+'/main.dol']:fail('target checksum configuration differs from registry')
+    return item['target']
 
 
 def now():
@@ -395,21 +433,23 @@ def main():
     s = sub.add_parser('inputs', help='write summary.json, map.json and timeline.json into a new public-input folder')
     s.add_argument('--report', required=True, help="objdiff's report.json")
     s.add_argument('--measured-at', required=True)
+    s.add_argument('--version',default=DEFAULT_TARGET)
     s.add_argument('--output', required=True, help='folder to create')
     sub.add_parser('now', help='print the current UTC time (the measurement time, right after ninja)')
     md = sub.add_parser('metadata', help="write the site packager's execution metadata")
-    md.add_argument('--version', default='GIHE78')
+    md.add_argument('--version',default=DEFAULT_TARGET)
     md.add_argument('--measured-at', required=True)
     md.add_argument('--output', required=True)
     args = parser.parse_args()
     if args.command == 'now':
         print(now())
     elif args.command == 'inputs':
+        target(args.version)
         report = json.load(open(args.report))
         os.makedirs(args.output)
         summary_doc = summary(report)
         write(os.path.join(args.output, 'summary.json'), summary_doc)
-        write(os.path.join(args.output, 'timeline.json'), timeline(summary_doc, args.measured_at))
+        write(os.path.join(args.output, 'timeline.json'), timeline(summary_doc,args.measured_at,args.version))
         # Thousands of function tiles: written compact, unlike the small files above.
         with open(os.path.join(args.output, 'map.json'), 'w') as f:
             json.dump(map_document(report), f, separators=(',', ':'), sort_keys=True)
