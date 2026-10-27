@@ -28,5 +28,5 @@ U32 irand()
 
 F32 iurand()
 {
-    return irand() * (1.0f / 4294967296.0f);
+    return irand() * 2.3283064e-10f;
 }
