@@ -24,9 +24,10 @@ some sizes changed.
    also equal-size pairs of the unit (class A). Between two consecutive class A
    pairs, functions take BfBB's names by position when both sides hold the
    same number of functions and every size ratio is within 0.75 to 1.33
-   (class B). A name BfBB marks static must only be called from inside its
-   unit; otherwise the name is dropped. A function that already has a name
-   row from other evidence keeps it; the tool reports whether the two agree.
+   (class B). A name BfBB marks static must only be called (bl, anywhere in
+   main.dol's text) from inside its unit; otherwise the name is dropped. A
+   function that already has a name row from other evidence keeps it; the
+   tool reports whether the two agree.
 4. Extents. A unit runs from its first to its last aligned function, widened
    to take in any function that calls one of its static names. A unit needs
    at least two names. An edge is
@@ -236,6 +237,12 @@ def main():
         for t in calls(dol_read(args.dol), f[0], f[1]):
             if t in at:
                 callers[at[t]].add(k)
+    foreign = collections.defaultdict(set)
+    for f in load_functions(args.symbols):
+        if not lo <= f[0] < hi:
+            for t in calls(dol_read(args.dol), f[0], f[1]):
+                if t in at:
+                    foreign[at[t]].add(f[0])
     for u in units:
         u['lo'] = min(u['names'], default=u['lo'])
         u['hi'] = max(u['names'], default=u['hi'])
@@ -251,7 +258,7 @@ def main():
             if not f[3]:
                 continue
             outside = [c for c in callers[i] if not u['lo'] <= c <= u['hi']]
-            if any(c <= floor or c >= ceil for c in outside):
+            if foreign[i] or any(c <= floor or c >= ceil for c in outside):
                 print(f'note: static {f[2]} at 0x{gc[i][0]:08X} is called from another unit; not named', file=sys.stderr)
                 del u['names'][i]
                 continue
@@ -327,7 +334,7 @@ def main():
                        f"between two equal-size names, with the same number of functions between them on both sides")
             how += f", aligned in the placement of unit {up['unit_prefix']}{u['path']} (tools/splits/rwmap.py)."
             if f[3]:
-                how += ' BfBB lists it as static; every GC caller is inside this unit.'
+                how += ' BfBB lists it as static; every direct GC call to it (bl, whole text) comes from inside this unit.'
             notes = []
             if name in retail:
                 notes.append(f'the PS2 retail SLUS-20349 DWARF lists {name} ({retail[name][0]} bytes) in '
