@@ -252,6 +252,7 @@ cflags_sdk = [
     "-fp_contract off",
     "-char signed",
     "-common off",
+    "-i src",
 ]
 
 # MetroTRK profile ("trk").
@@ -511,7 +512,7 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "OdemuExi2",
         [
-            Object(NonMatching, "dolphin/OdemuExi2/DebuggerDriver.c"),
+            Object(Matching, "dolphin/OdemuExi2/DebuggerDriver.c"),
         ],
     ),
     DolphinLib(
@@ -533,9 +534,9 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "dolphin/ax/AXAlloc.c"),
             Object(NonMatching, "dolphin/ax/AXCL.c"),
             Object(NonMatching, "dolphin/ax/AXOut.c"),
-            Object(NonMatching, "dolphin/ax/AXSPB.c"),
+            Object(Matching, "dolphin/ax/AXSPB.c"),
             Object(NonMatching, "dolphin/ax/AXVPB.c"),
-            Object(NonMatching, "dolphin/ax/AXProf.c"),
+            Object(Matching, "dolphin/ax/AXProf.c"),
         ],
     ),
     DolphinLib(
@@ -554,7 +555,7 @@ config.libs: List[Dict[str, Any]] = [
         "dsp",
         [
             Object(NonMatching, "dolphin/dsp/dsp.c"),
-            Object(NonMatching, "dolphin/dsp/dsp_task.c"),
+            Object(Matching, "dolphin/dsp/dsp_task.c"),
         ],
     ),
     DolphinLib(
@@ -639,9 +640,9 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "dolphin/dvd/dvdlow.c"),
             Object(NonMatching, "dolphin/dvd/dvdfs.c"),
             Object(NonMatching, "dolphin/dvd/dvd.c"),
-            Object(NonMatching, "dolphin/dvd/dvdqueue.c"),
-            Object(NonMatching, "dolphin/dvd/dvderror.c"),
-            Object(NonMatching, "dolphin/dvd/fstload.c"),
+            Object(Matching, "dolphin/dvd/dvdqueue.c"),
+            Object(Matching, "dolphin/dvd/dvderror.c"),
+            Object(Matching, "dolphin/dvd/fstload.c"),
         ],
     ),
     BinkLib(

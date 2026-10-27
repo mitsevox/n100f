@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 void* OSGetArenaHi(void);
+void OSSetArenaHi(void* newHi);
 
 #ifdef __cplusplus
 }
