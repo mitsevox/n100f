@@ -63,5 +63,13 @@ void Shaggy0_PlayerTransitions(xAnimTable* table);
 xAnimTable* zEntShaggy_Anim1();
 void Shaggy1_PlayerStates(xAnimTable* table);
 void Shaggy1_PlayerTransitions(xAnimTable* table);
+xAnimTable* zEntShaggy_Anim2();
+xAnimTable* zEntShaggy_Anim3();
+xAnimTable* zEntShaggy_Anim5();
+void Shaggy5_WitchTransitions(xAnimTable* table);
+xAnimTable* zEntShaggy_Anim8();
+U32 zEntIsShaggy(_zEnt* ent);
+F32 zEntShaggy_GetSpin(_zEnt* ent);
+void zEntShaggy_SetSpin(_zEnt* ent, F32 spin);
 
 #endif

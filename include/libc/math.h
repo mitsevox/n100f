@@ -25,4 +25,11 @@ float sinf(float x);
 }
 #endif
 
+#ifdef __cplusplus
+inline double fabs(double x)
+{
+    return __fabs(x);
+}
+#endif
+
 #endif

@@ -147,6 +147,7 @@ struct _xEnt : xBase
 
 void xEntUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntReset(_xEnt* ent);
+U32 xEntIsVisible(_xEnt* ent);
 
 inline void xEntShow(_xEnt* ent)
 {
