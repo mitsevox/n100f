@@ -6,6 +6,7 @@
 #include "xMath3.h"
 
 struct xAnimTransition;
+struct xAnimTable;
 struct xAnimFile;
 struct xAnimEffect;
 struct xAnimTransitionList;
@@ -70,13 +71,16 @@ struct xAnimTransition
     U16* BlendOffset;
 };
 
-// Partial: members up to Single.
+// Partial: members up to Translate.
 struct xAnimPlay
 {
     xAnimPlay* Next;
     U16 NumSingle;
     U16 BoneCount;
     xAnimSingle* Single;
+    void* Object;
+    xAnimTable* Table;
+    xVec3 Translate[2];
 };
 
 typedef U32 (*xAnimTransitionConditionalCallback)(xAnimTransition*, xAnimSingle*, void*);
@@ -107,6 +111,7 @@ xAnimState* xAnimTableGetState(xAnimTable* table, char* name);
 xAnimEffect* xAnimStateNewEffect(xAnimState* state, U32 flags, F32 startTime, F32 endTime,
                                  U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*),
                                  U32 userDataSize);
+void xAnimPlaySetState(xAnimSingle* single, xAnimState* state, F32 startTime);
 void xAnimPlaySetup(xAnimPlay* play, void* object, xAnimTable* table, xModelInstance* modelInst);
 xAnimPlay* xAnimPoolAlloc(xMemPool* pool, void* object, xAnimTable* table,
                           xModelInstance* modelInst);

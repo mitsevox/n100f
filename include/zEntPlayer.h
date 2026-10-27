@@ -42,7 +42,7 @@ struct zShaggy1Globals
     _zEnt* Hangable[10];
 };
 
-// Partial: members up to HangEnt. The members between ent and Shaggy1 that no reconstructed
+// Partial: members up to drv. The members between ent and drv that no reconstructed
 // function uses are left opaque.
 struct zPlayerGlobals
 {
@@ -52,7 +52,10 @@ struct zPlayerGlobals
     S32 Speed;
     U8 opaque_F8[0x114 - 0xF8];
     S32 JumpState;
-    U8 opaque_118[0x140 - 0x118];
+    U8 opaque_118[0x130 - 0x118];
+    F32 DecelRunSpeed;
+    U8 opaque_134[0x13C - 0x134];
+    U32 HeadbuttHit;
     F32 ScareTimer;
     U8 opaque_144[0x148 - 0x144];
     U32 ScareShaggy;
@@ -66,6 +69,8 @@ struct zPlayerGlobals
     F32 Shaggy8CallTimer;
     _zEntHangable* HangFound;
     _zEntHangable* HangEnt;
+    U8 opaque_2D8[0x3F8 - 0x2D8];
+    _xEntDrive drv;
 };
 
 #endif

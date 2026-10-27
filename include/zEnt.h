@@ -15,6 +15,8 @@ void zEntLoad(_zEnt* ent, xSerial* s);
 void zEntSave(_zEnt* ent, xSerial* s);
 void zEntEvent(xBase* to, U32 toEvent);
 void zEntEvent(xBase* from, xBase* to, U32 toEvent);
+void zEntEvent(xBase* from, U32 fromEvent, xBase* to, U32 toEvent, F32* toParam,
+               xBase* toParamWidget, S32 forceEvent);
 void zEntAnimEvent(_zEnt* ent, U32 animEvent, F32* animParam);
 
 #endif

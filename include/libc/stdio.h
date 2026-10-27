@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 
+int printf(const char* format, ...);
 int sprintf(char* s, const char* format, ...);
 int vprintf(const char* format, va_list arg);
 

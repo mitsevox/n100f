@@ -331,7 +331,7 @@ cflags_game = [
     "-inline auto,deferred",
     "-lang=c++",
     "-char signed",
-    "-common on",
+    "-common off",
     "-str reuse,readonly",
     "-use_lmw_stmw on",
     '-pragma "cpp_extensions on"',
