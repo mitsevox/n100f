@@ -119,13 +119,7 @@ GXFifoObj *GXInit(void *base, u32 size)
     {
         SET_REG_FIELD(0, gx->vatA[i], 1, 30, 1);
         SET_REG_FIELD(0, gx->vatB[i], 1, 31, 1);
-        {
-            s32 regAddr;
-            GX_WRITE_U8(8);
-            GX_WRITE_U8(i | 0x80);
-            GX_WRITE_U32(gx->vatB[i]);
-            regAddr = i - 12;
-        }
+        GX_WRITE_SOME_REG4(8, i | 0x80, gx->vatB[i], i - 12);
     }
     {
         u32 reg1 = 0;
