@@ -17,6 +17,7 @@ extern int __double_huge[];
 
 double atan2(double y, double x);
 float atanf(float x);
+double cos(double x);
 float cosf(float x);
 float sinf(float x);
 

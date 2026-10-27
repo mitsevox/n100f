@@ -16,7 +16,29 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card` | `sdk` |
 | `RWLib` | `rpcollis`, `rphanim`, `rpmatfx`, `rpskin`, `rpusrdat`, `rpworld`, `rwcore` (`rwsdk/`) | GC/1.3.2 | `cflags_rw` | `renderware` |
 
-The 89 RenderWare units in `config/GIHE78/rw_units.tsv` are listed NonMatching, one `RWLib` per library. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated; `RWLib` uses GC/1.3.2, the game's release. `cflags_rw` sets the established settings: `-O4`, `-char signed`, no contraction (expressed as `-fp_contract off`) and no `-use_lmw_stmw on`. `-lang=c` and `-common off` are carried over from `docs/compiler_profile/rw.flags`; they are not established, because the probe stimuli have no globals and do not test the language mode, and they are to be confirmed when RenderWare data is split. The rest are the base flags, which are not established either ([compiler profile](compiler_profile/README.md#renderware)). The probe covered `rwcore` only, so the plugin and world libraries take the same profile on the assumption that one build produced the whole SDK. Never use leaked RenderWare source for them.
+The 89 RenderWare units in `config/GIHE78/rw_units.tsv` are listed NonMatching, one `RWLib` per library. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated; `RWLib` uses GC/1.3.2, the game's release. `cflags_rw` sets the established settings: `-O4`, `-char signed`, no contraction (expressed as `-fp_contract off`) and no `-use_lmw_stmw on`. `-lang=c` and `-common off` are carried over from `docs/compiler_profile/rw.flags`; they are not established, because the probe stimuli have no globals and do not test the language mode, and they are to be confirmed when RenderWare data is split. The rest are the base flags, which are not established either ([compiler profile](compiler_profile/README.md#renderware)). The probe covered `rwcore` only; the 23 exact `rpworld` functions below now support the same profile for the world library, and the other plugins take it on the assumption that one build produced the whole SDK. Never use leaked RenderWare source for them.
+
+### Reconstructed RenderWare sources
+
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source or SDK headers were used. The units stay NonMatching (data is not split), and 45 of their functions compile to the target bytes with every relocation resolving to the target's symbol:
+
+| Unit | Exact | Not yet |
+| --- | --- | --- |
+| `rwsdk/src/plcore/bavector.c` | 9 of 10 | `VectorMultVector` (register allocation and scheduling) |
+| `rwsdk/src/plcore/rwstring.c` | 3 of 5 | `StrChr`, `StrRChr` (register allocation) |
+| `rwsdk/src/plcore/baerr.c` | 3 of 3 | |
+| `rwsdk/src/plcore/bafsys.c` | 3 of 4 | `_rwFileSystemOpen`, not written: it stores MSL stdio functions that are still address labels |
+| `rwsdk/src/plcore/resmem.c` | 4 of 4 | |
+| `rwsdk/world/basector.c` | 6 of 6 | |
+| `rwsdk/world/bamateri.c` | 7 of 8 | the function at `0x8014CFC8`, which opens the light module ([RenderWare limits](splits.md#limits-2)) |
+| `rwsdk/world/balight.c` | 10 of 12 | `RpLightGetConeAngle`, `RpLightStreamRead` |
+
+Structure layouts come from the SLUS-20349 DWARF where it has the type (game code includes RenderWare's headers) and from the target's accesses otherwise; `evidence.tsv` has a `type` or `field` row for each. The GameCube layout can differ: `RwTexture.refCount` is at `+0x54` here and `+0x50` in the DWARF. `include/rwcore.h` and `include/rpworld.h` now declare their types with `typedef` so the same headers serve the C RenderWare units and the C++ game code. Source-form details the target fixes:
+
+- `_rwSqrt` and `_rwInvSqrt` work on the float's bits through a `volatile U32*`. The target stores the argument to the stack and reloads the word for every use (three loads, two stores), which only `volatile` reproduces under this profile; a plain pointer or a union lets the compiler keep the word in a register.
+- The resource heap tests a block's `used` word as `~used & 1` where the block must be free (`nor` then `clrlwi.`) and as `used & 1` where it must be in use (`clrlwi.` alone). `!(used & 1)` and `(used & 1) == 0` compile to `clrlwi.` with the opposite branch and do not match.
+- `VectorMultVector` computes `x * right + y * up` for all three components before adding the `at` terms and storing: the target loads `right.y`, `right.z`, `up.y` and `up.z` before the first store. The source does the same, but the register allocation still differs.
+
 
 The flags are shown compatible with the target, not established. MSL is one profile for the whole library: the twelve imported units match under GC/1.3 with `-inline auto,deferred` and `-char signed`, six of them differ under GC/1.3.2, and none needs GC/1.3.2. Each later MSL import reconfirms the profile on its own unit.
 
