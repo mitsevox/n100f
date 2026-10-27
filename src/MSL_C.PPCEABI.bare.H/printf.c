@@ -16,13 +16,6 @@ typedef void* (*__OutputProc)(void* object, const char* buffer, int n);
 
 typedef void* (*__OutputProc)(void* object, const char* buffer, int n);
 
-typedef struct decform {
-    char style;
-    char unused;
-    short digits;
-} decform;
-
-void __num2dec(const decform* f, double x, decimal* d);
 size_t wcstombs(char* dst, const wchar_t* src, size_t n);
 
 #define LDBL_MANT_DIG 53
