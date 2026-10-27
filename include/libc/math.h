@@ -15,6 +15,7 @@ extern int __double_huge[];
 #define NAN (*(float*)__float_nan)
 #define HUGE_VAL (*(double*)__double_huge)
 
+double atan2(double y, double x);
 float atanf(float x);
 float cosf(float x);
 float sinf(float x);
