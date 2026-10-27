@@ -100,7 +100,7 @@ Each SDK file below holds what the target links of that object. Includes are red
 
 ## Bink unit map
 
-The Bink unit paths and boundaries in `config/GIHE78/splits.txt` and the 336 Bink function names in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), which `src/bink/src/sdk/fft.c` follows ([Bink FFT](#bink-fft)).
+The Bink unit paths and boundaries in `config/GIHE78/splits.txt`, the 336 Bink function names in `symbols.txt` and the names of the `popmal.c` and `varbits.c` data objects come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0, whose Bink block has the same function offsets and sizes ([Bink units](docs/splits.md#bink-units)). bfbb does not state where its Bink names come from. None of bfbb's Bink source or headers is in this repository; see [Bink](docs/libraries.md#bink). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), which `src/bink/src/sdk/fft.c` follows ([Bink FFT](#bink-fft)).
 
 ## Bink FFT
 
@@ -129,6 +129,10 @@ Local changes, all as the target requires:
 - `makewt` does not call `makeipt`, and its `nwh == 4` special case is folded into `nwh >= 4` (the same in the `nw1` block).
 - `rdft` and `ddct` pass `ip + 2` to the transforms.
 - The functions other than `rdft` and `ddct` are `static`, and only the functions Bink links are kept.
+
+## RenderWare unit map
+
+The RenderWare unit paths in `config/GIHE78/splits.txt` and the RenderWare function names that `tools/splits/rwmap.py` applies in `symbols.txt` come from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/tree/d8e8eac38dd617ee72161f4cb2da4498bc89aad6) (`config/GQPE78/splits.txt` and `symbols.txt`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`, pinned in `config/GIHE78/rwmap.json`), published under CC0 1.0. The unit boundaries are rwmap.py's own: it places bfbb's units by aligning their function sizes against the target, and 62 of the 63 units keep at least one open edge ([RenderWare units](docs/splits.md#renderware-units)). bfbb does not state where its RenderWare names come from. Public RenderWare headers cannot supply the names of static functions, and many of bfbb's are static. No Criterion RenderWare source or SDK headers are in this repository; `include/rwcore.h` and `include/rpworld.h` are this project's own declarations.
 
 ## Build tooling
 
