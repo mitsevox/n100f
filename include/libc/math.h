@@ -20,6 +20,7 @@ float atanf(float x);
 double cos(double x);
 float cosf(float x);
 float sinf(float x);
+double tan(double x);
 
 #ifdef __cplusplus
 }
