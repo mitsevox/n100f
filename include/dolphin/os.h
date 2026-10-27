@@ -20,7 +20,7 @@ u32 OSCachedToPhysical(void* caddr);
 #endif
 
 extern u32 __OSBusClock AT_ADDRESS(OS_BASE_CACHED | 0x00F8);
-extern u8 __gUnknown800030E3 AT_ADDRESS(OS_BASE_CACHED | 0x30E3);
+extern u8 GameChoice AT_ADDRESS(OS_BASE_CACHED | 0x30E3);
 
 extern volatile u32 __PIRegs[] AT_ADDRESS(0xCC003000);
 

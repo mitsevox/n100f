@@ -53,16 +53,16 @@ void __CARDDisable(BOOL disable) {
 
     enabled = OSDisableInterrupts();
 
-    __gUnknown800030E3 &= 0x7F;
+    GameChoice &= 0x7F;
     if (disable) {
-        __gUnknown800030E3 |= 0x80;
+        GameChoice |= 0x80;
     }
 
     OSRestoreInterrupts(enabled);
 }
 
 int CARDProbe(s32 chan) {
-    if (__gUnknown800030E3 & 0x80) {
+    if (GameChoice & 0x80) {
         return FALSE;
     }
 
@@ -79,7 +79,7 @@ s32 CARDProbeEx(s32 chan, s32* memSize, s32* sectorSize) {
     if (chan < 0 || 2 <= chan)
         return CARD_RESULT_FATAL_ERROR;
 
-    if (__gUnknown800030E3 & 0x80) {
+    if (GameChoice & 0x80) {
         return CARD_RESULT_NOCARD;
     }
 
@@ -284,7 +284,7 @@ s32 CARDMountAsync(s32 chan, void* workArea, CARDCallback detachCallback, CARDCa
     if (chan < 0 || 2 <= chan)
         return CARD_RESULT_FATAL_ERROR;
 
-    if (__gUnknown800030E3 & 0x80) {
+    if (GameChoice & 0x80) {
         return CARD_RESULT_NOCARD;
     }
 
