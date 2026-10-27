@@ -76,7 +76,6 @@ long double __strtold(int max_width, int (*ReadProc)(void*, int, int), void* Rea
     int expsign = 0;
     int exp_digits = 0;
     int intdigits = 0;
-    int RadixPointFound = 0;
     short exponent = 0;
     int dot;
 
