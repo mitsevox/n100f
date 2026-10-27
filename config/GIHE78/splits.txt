@@ -1021,45 +1021,71 @@ dolphin/exi/EXIUart.c: comment:8
 
 dolphin/gx/GXInit.c: comment:8
 	.text       start:0x800FAFFC end:0x800FC0E8
+	.bss        start:0x8025A700 end:0x8025AC78
+	.sdata      start:0x8025E628 end:0x8025E630
+	.sbss       start:0x8025F3D8 end:0x8025F3E8
+	.sdata2     start:0x80262688 end:0x802626A8
 
 dolphin/gx/GXFifo.c: comment:8
-	.text       start:0x800FC0E8 end:0x800FCB24
+	.text       start:0x800FC0E8 end:0x800FCB34
+	.sbss       start:0x8025F3E8 end:0x8025F408
 
 dolphin/gx/GXAttr.c: comment:8
 	.text       start:0x800FCB34 end:0x800FD94C
+	.data       start:0x801CC7F0 end:0x801CC910
+	.sdata      start:0x8025E630 end:0x8025E640
 
 dolphin/gx/GXMisc.c: comment:8
 	.text       start:0x800FD94C end:0x800FDF54
+	.sbss       start:0x8025F408 end:0x8025F420
 
 dolphin/gx/GXGeometry.c: comment:8
-	.text       start:0x800FE0BC end:0x800FE30C
+	.text       start:0x800FDF54 end:0x800FE30C
 
 dolphin/gx/GXFrameBuf.c: comment:8
 	.text       start:0x800FE30C end:0x800FEDA0
+	.data       start:0x801CC910 end:0x801CCA00
+	.sdata2     start:0x802626A8 end:0x802626B0
 
 dolphin/gx/GXLight.c: comment:8
 	.text       start:0x800FEDA0 end:0x800FF69C
+	.data       start:0x801CCA00 end:0x801CCA20
+	.sdata2     start:0x802626B0 end:0x802626E8
 
 dolphin/gx/GXTexture.c: comment:8
 	.text       start:0x800FF69C end:0x80100888
+	.data       start:0x801CCA20 end:0x801CCC48
+	.sdata      start:0x8025E640 end:0x8025E680
+	.sdata2     start:0x802626E8 end:0x80262718
 
 dolphin/gx/GXBump.c: comment:8
 	.text       start:0x80100888 end:0x80100EF4
+	.sdata2     start:0x80262718 end:0x80262720
 
 dolphin/gx/GXTev.c: comment:8
 	.text       start:0x80100EF4 end:0x801018B8
+	.data       start:0x801CCC48 end:0x801CCC70
 
 dolphin/gx/GXPixel.c: comment:8
 	.text       start:0x801018B8 end:0x80102000
+	.data       start:0x801CCC70 end:0x801CCC90
+	.sdata2     start:0x80262720 end:0x80262750
+
+dolphin/gx/GXStubs.c: comment:8
+	.text       start:0x80102000 end:0x80102004
 
 dolphin/gx/GXDisplayList.c: comment:8
-	.text       start:0x801021A0 end:0x80102210
+	.text       start:0x80102004 end:0x80102210
+	.bss        start:0x8025AC78 end:0x8025B1A0
+	.sbss       start:0x8025F420 end:0x8025F428
 
 dolphin/gx/GXTransform.c: comment:8
 	.text       start:0x80102210 end:0x801028E0
+	.sdata2     start:0x80262750 end:0x80262768
 
 dolphin/gx/GXPerf.c: comment:8
 	.text       start:0x801028E0 end:0x80103188
+	.data       start:0x801CCC90 end:0x801CCD80
 
 dolphin/mtx/mtx.c: comment:8
 	.text       start:0x801031B4 end:0x80103280

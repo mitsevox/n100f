@@ -1,0 +1,283 @@
+#include <dolphin/base/PPCArch.h>
+#include <dolphin/gx.h>
+#include <dolphin/os.h>
+
+#include "dolphin/gx/__gx.h"
+
+static GXDrawSyncCallback TokenCB;
+static GXDrawDoneCallback DrawDoneCB;
+static u8 DrawDone;
+static OSThreadQueue FinishQueue;
+
+void GXSetMisc(GXMiscToken token, u32 val)
+{
+    switch (token) {
+    case GX_MT_XF_FLUSH:
+        gx->vNum      = val;
+		gx->vNumNot   = !gx->vNum;
+		gx->bpSentNot = GX_TRUE;
+
+        if (gx->vNum != 0) {
+            gx->dirtyState |= 8;
+        }
+        break;
+    case GX_MT_DL_SAVE_CONTEXT:
+        ASSERTMSGLINE(210, !gx->inDispList, "GXSetMisc: Cannot change DL context setting while making a display list");
+        gx->dlSaveContext = (val > 0);
+        break;
+    case GX_MT_NULL:
+        break;
+    default:
+        break;
+    }
+}
+
+void GXFlush(void)
+{
+    u32 i;
+
+    CHECK_GXBEGIN(253, "GXFlush");
+    if (gx->dirtyState) {
+        __GXSetDirtyState();
+    }
+
+    GX_WRITE_U32(0);
+	GX_WRITE_U32(0);
+	GX_WRITE_U32(0);
+	GX_WRITE_U32(0);
+	GX_WRITE_U32(0);
+	GX_WRITE_U32(0);
+	GX_WRITE_U32(0);
+	GX_WRITE_U32(0);
+    PPCSync();
+}
+
+void GXResetWriteGatherPipe(void)
+{
+    while (PPCMfwpar() & 1) {
+    }
+    PPCMtwpar(OSUncachedToPhysical((void *)GXFIFO_ADDR));
+}
+
+static void __GXAbortWait(u32 clocks)
+{
+    OSTime time0;
+    OSTime time1;
+
+    time0 = OSGetTime();
+    do {
+        time1 = OSGetTime();
+    } while (time1 - time0 <= (clocks / 4));
+}
+
+void __GXAbort(void) {
+	__piReg[0x18 / 4] = 1;
+	__GXAbortWait(200);
+	__piReg[0x18 / 4] = 0;
+	__GXAbortWait(20);
+}
+
+void GXAbortFrame(void)
+{
+    __GXAbort();
+    __GXCleanGPFifo();
+}
+
+void GXSetDrawSync(u16 token)
+{
+    BOOL enabled;
+    u32 reg;
+
+    CHECK_GXBEGIN(379, "GXSetDrawSync");
+
+    enabled = OSDisableInterrupts();
+    reg = token | 0x48000000;
+    GX_WRITE_RAS_REG(reg);
+    SET_REG_FIELD(392, reg, 16, 0, token);
+    SET_REG_FIELD(393, reg, 8, 24, 0x47);
+    GX_WRITE_RAS_REG(reg);
+    GXFlush();
+    OSRestoreInterrupts(enabled);
+    gx->bpSentNot = GX_FALSE;
+}
+
+u16 GXReadDrawSync(void)
+{
+    u16 token = __peReg[7];
+    return token;
+}
+
+void GXSetDrawDone(void)
+{
+    u32 reg;
+    BOOL enabled;
+
+    CHECK_GXBEGIN(437, "GXSetDrawDone");
+    enabled = OSDisableInterrupts();
+    reg = 0x45000002;
+    GX_WRITE_RAS_REG(reg);
+    GXFlush();
+    DrawDone = 0;
+    OSRestoreInterrupts(enabled);
+}
+
+void GXWaitDrawDone(void)
+{
+    BOOL enabled;
+
+    CHECK_GXBEGIN(483, "GXWaitDrawDone");
+
+    enabled = OSDisableInterrupts();
+    while (!DrawDone) {
+        OSSleepThread(&FinishQueue);
+    }
+    OSRestoreInterrupts(enabled);
+}
+
+void GXDrawDone(void)
+{
+    CHECK_GXBEGIN(515, "GXDrawDone");
+    GXSetDrawDone();
+    GXWaitDrawDone();
+}
+
+void GXPixModeSync(void)
+{
+    CHECK_GXBEGIN(550, "GXPixModeSync");
+    GX_WRITE_RAS_REG(gx->peCtrl);
+    gx->bpSentNot = GX_FALSE;
+}
+
+void GXPokeAlphaMode(GXCompare func, u8 threshold)
+{
+    u32 reg;
+
+    reg = (func << 8) | threshold;
+    __peReg[3] = reg;
+}
+
+void GXPokeAlphaRead(GXAlphaReadMode mode)
+{
+    u32 reg;
+
+    reg = 0;
+    SET_REG_FIELD(642, reg, 2, 0, mode);
+    SET_REG_FIELD(643, reg, 1, 2, 1);
+    __peReg[4] = reg;
+}
+
+void GXPokeAlphaUpdate(GXBool update_enable)
+{
+    u32 reg;
+
+    reg = __peReg[1];
+    SET_REG_FIELD(653, reg, 1, 4, update_enable);
+    __peReg[1] = reg;
+}
+
+void GXPokeBlendMode(GXBlendMode type, GXBlendFactor src_factor, GXBlendFactor dst_factor, GXLogicOp op)
+{
+    u32 reg;
+
+    reg = __peReg[1];
+    SET_REG_FIELD(669, reg, 1, 0, (type == GX_BM_BLEND) || (type == GX_BM_SUBTRACT));
+    SET_REG_FIELD(670, reg, 1, 11, (type == GX_BM_SUBTRACT));
+    SET_REG_FIELD(672, reg, 1, 1, (type == GX_BM_LOGIC));
+    SET_REG_FIELD(673, reg, 4, 12, op);
+    SET_REG_FIELD(674, reg, 3, 8, src_factor);
+    SET_REG_FIELD(675, reg, 3, 5, dst_factor);
+    SET_REG_FIELD(676, reg, 8, 24, 0x41);
+    __peReg[1] = reg;
+}
+
+void GXPokeColorUpdate(GXBool update_enable)
+{
+    u32 reg;
+
+    reg = __peReg[1];
+    SET_REG_FIELD(687, reg, 1, 3, update_enable);
+    __peReg[1] = reg;
+}
+
+void GXPokeDstAlpha(GXBool enable, u8 alpha)
+{
+    u32 reg = 0;
+
+    SET_REG_FIELD(696, reg, 8, 0, alpha);
+    SET_REG_FIELD(697, reg, 1, 8, enable);
+    __peReg[2] = reg;
+}
+
+void GXPokeDither(GXBool dither)
+{
+    u32 reg;
+
+    reg = __peReg[1];
+    SET_REG_FIELD(707, reg, 1, 2, dither);
+    __peReg[1] = reg;
+}
+
+void GXPokeZMode(GXBool compare_enable, GXCompare func, GXBool update_enable)
+{
+    u32 reg = 0;
+
+
+    SET_REG_FIELD(716, reg, 1, 0, compare_enable);
+    SET_REG_FIELD(717, reg, 3, 1, func);
+    SET_REG_FIELD(718, reg, 1, 4, update_enable);
+    __peReg[0] = reg;
+}
+
+static void GXTokenInterruptHandler(__OSInterrupt interrupt, OSContext *context)
+{
+    u16 token;
+    OSContext exceptionContext;
+    u32 reg;
+
+    token = __peReg[7];
+    if (TokenCB != NULL) {
+        OSClearContext(&exceptionContext);
+        OSSetCurrentContext(&exceptionContext);
+        TokenCB(token);
+        OSClearContext(&exceptionContext);
+        OSSetCurrentContext(context);
+    }
+    reg = __peReg[5];
+    SET_REG_FIELD(0, reg, 1, 2, 1);
+    __peReg[5] = reg;
+}
+
+static void GXFinishInterruptHandler(__OSInterrupt interrupt, OSContext *context)
+{
+    OSContext exceptionContext;
+    u32 reg;
+
+    reg = __peReg[5];
+    SET_REG_FIELD(0, reg, 1, 3, 1);
+    __peReg[5] = reg;
+    DrawDone = 1;
+    if (DrawDoneCB != NULL) {
+        OSClearContext(&exceptionContext);
+        OSSetCurrentContext(&exceptionContext);
+        DrawDoneCB();
+        OSClearContext(&exceptionContext);
+        OSSetCurrentContext(context);
+    }
+    OSWakeupThread(&FinishQueue);
+}
+
+void __GXPEInit(void)
+{
+    u32 reg;
+    __OSSetInterruptHandler(0x12, GXTokenInterruptHandler);
+    __OSSetInterruptHandler(0x13, GXFinishInterruptHandler);
+    OSInitThreadQueue(&FinishQueue);
+    __OSUnmaskInterrupts(0x2000);
+    __OSUnmaskInterrupts(0x1000);
+    reg = __peReg[5];
+    SET_REG_FIELD(0, reg, 1, 2, 1);
+    SET_REG_FIELD(0, reg, 1, 3, 1);
+    SET_REG_FIELD(0, reg, 1, 0, 1);
+    SET_REG_FIELD(0, reg, 1, 1, 1);
+    __peReg[5] = reg;
+}
