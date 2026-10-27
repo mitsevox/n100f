@@ -3,8 +3,8 @@
 
 #include "types.h"
 
-typedef void* (*RADMEMALLOC)(U32 bytes);
-typedef void (*RADMEMFREE)(void* ptr);
+typedef void* (*RADMEMALLOC)(U32 size);
+typedef void (*RADMEMFREE)(void* mem);
 
 void* radmalloc(U32 size);
 void radfree(void* ptr);
