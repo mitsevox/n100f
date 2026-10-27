@@ -120,11 +120,11 @@ On the committed files it writes no rows. From the baseline, the sequence is: ru
 
 # RenderWare units
 
-`splits.txt` also names 62 RenderWare units between `0x8013AA64` and `0x8018E5C0`, from `tools/splits/rwmap.py`. GIHE78 links RenderWare 3.3.0.2. There is no public RenderWare source to compile, so these units and names come from BfBB's RenderWare 3.5 splits and symbols (`bfbbdecomp/bfbb` `d8e8eac`, GQPE78), placed by function size sequence. The input is `config/GIHE78/rwmap.json` and the report is `config/GIHE78/rw_units.tsv`.
+`splits.txt` also names 63 RenderWare units between `0x801372EC` and `0x8018E5C0`, from `tools/splits/rwmap.py`. GIHE78 links RenderWare 3.3.0.2. There is no public RenderWare source to compile, so these units and names come from BfBB's RenderWare 3.5 splits and symbols (`bfbbdecomp/bfbb` `d8e8eac`, GQPE78), placed by function size sequence. The input is `config/GIHE78/rwmap.json` and the report is `config/GIHE78/rw_units.tsv`.
 
 | Library | Units |
 | --- | --- |
-| `rpcollis` | 2 |
+| `rpcollis` | 3 |
 | `rphanim` | 1 |
 | `rpmatfx` | 5 |
 | `rpskin` | 1 |
@@ -132,7 +132,7 @@ On the committed files it writes no rows. From the baseline, the sequence is: ru
 | `rpworld` | 15 |
 | `rwcore` | 37 |
 
-The units cover 655 of the region's 989 functions and 0x2BF80 of its 0x53B5C bytes. 585 of those functions are named: 524 by equal size, 56 by position and 5 that already had names from game-code callers (`RpWorldDestroy`, `RpWorldAddCamera`, `RpWorldRemoveCamera`, `RwCameraShowRaster`, `_rwFrameSyncDirty`), all of which the alignment reproduces.
+The units cover 661 of the region's 1,006 functions and 0x2D1C0 of its 0x572D4 bytes. 591 of those functions are named: 528 by equal size, 58 by position and 5 that already had names from game-code callers (`RpWorldDestroy`, `RpWorldAddCamera`, `RpWorldRemoveCamera`, `RwCameraShowRaster`, `_rwFrameSyncDirty`), all of which the alignment reproduces.
 
 ## Method
 
@@ -144,7 +144,7 @@ The units cover 655 of the region's 989 functions and 0x2BF80 of its 0x53B5C byt
 Each unit has a `related` `unit` row in `evidence.tsv`. Each new name has a `related` `name` row, which states whether it was named by equal size or by position, and a `function` row whose edges are dtk's inference (`provisional`). The rows also cite corroboration that the tool does not use for placement:
 
 - The PS2 June 2001 prototype symbol table (`references/.../PROTO-PS2-2001-06-11`), an RW 3.x build of this game, lists 374 of the new names.
-- The PS2 retail DWARF lists the `ctbsp.c` and `rpcollis.c` functions, with their names, in `flat\p2rwcoll\ctbsp_.c` and `rpcollis_.c`: Heavy Iron compiled the collision plugin into the PS2 game.
+- The PS2 retail DWARF lists 22 of the new names, the `ctgeom.c`, `ctbsp.c` and `rpcollis.c` functions, in `flat\p2rwcoll\ctgeom_.c`, `ctbsp_.c` and `rpcollis_.c`: Heavy Iron compiled the collision plugin into the PS2 game.
 - The PS2 January 2001 and Xbox prototypes keep RenderWare source paths as strings (`rwsdk/world/baclump.c`, `//RenderWare/RW34Active/rwsdk/src/plcore/baimmedi.c#2`, ...). A unit row says when its path is among them.
 
 No leaked RenderWare source was used. BfBB's RenderWare names and paths are a related build's; there is no GC debug symbol.
@@ -165,5 +165,5 @@ On the committed files this is a fixed point: `rwunits.txt` equals the RenderWar
 
 - Placement rests on sizes. Equal sizes in BfBB order are strong evidence, but a positional name could swap with a neighbour of similar size; those rows say so.
 - The compiler profile of the RenderWare objects is not established, so `configure.py` does not list them, and data sections are not split.
-- 334 functions stay unassigned. The largest gaps are `0x8017EDA0`–`0x801869A8` (31 KB after `bapipe.c`, where nothing in BfBB lines up), `0x801542DC`–`0x8015885C` and `0x80159374`–`0x8015D4E0` (world pipeline objects), and the 3.3 animation code around `rphanim.c`, which differs from 3.5.
-- The collision plugin's `ctgeom.c` and `ctworld.c`, which BfBB links before `ctbsp.c`, are not in this region.
+- 345 functions stay unassigned. The largest gaps are `0x8017EDA0`–`0x801869A8` (31 KB after `bapipe.c`, where nothing in BfBB lines up), `0x801542DC`–`0x8015885C` and `0x80159374`–`0x8015D4E0` (world pipeline objects), and the 3.3 animation code around `rphanim.c`, which differs from 3.5.
+- The region starts at `0x801372EC`, where CARD ends; the first function there is probably `ctgeom.c`'s `GeomLeafNodeForAllLineIntersections` (0x3D8 bytes, 0x374 in BfBB), but no equal-size name precedes it. `0x80138904`–`0x8013AA64` is probably `ctworld.c`: its last function calls the first, as `RpCollisionWorldForAllIntersections` calls `WorldForAllLineWorldSectorIntersections`. Only one of its ten sizes equals BfBB's, so it is not placed.

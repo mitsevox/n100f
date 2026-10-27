@@ -1092,6 +1092,9 @@ dolphin/dvd/dvderror.c: comment:8
 dolphin/dvd/fstload.c: comment:8
 	.text       start:0x80111C80 end:0x80111EC0
 
+rwsdk/plugin/collis/ctgeom.c:
+	.text       start:0x801376C4 end:0x80138904
+
 rwsdk/plugin/collis/ctbsp.c:
 	.text       start:0x8013AA64 end:0x8013B850
 

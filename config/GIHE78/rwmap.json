@@ -1,5 +1,5 @@
 {
-  "region": ["0x8013AA64", "0x8018E5C0"],
+  "region": ["0x801372EC", "0x8018E5C0"],
   "upstream": {
     "name": "bfbb",
     "url": "https://github.com/bfbbdecomp/bfbb",

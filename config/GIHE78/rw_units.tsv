@@ -1,4 +1,5 @@
 unit	text_start	text_end	library	functions	upstream_functions	named_equal	named_position	score
+rwsdk/plugin/collis/ctgeom.c	0x801376C4	0x80138904	rpcollis	6	7	4	2	19.4
 rwsdk/plugin/collis/ctbsp.c	0x8013AA64	0x8013B850	rpcollis	8	8	6	2	27.3
 rwsdk/plugin/collis/rpcollis.c	0x8013B850	0x8013BBE8	rpcollis	8	9	8	0	28.9
 rwsdk/plugin/hanim/rphanim.c	0x8013CF64	0x8013D210	rphanim	2	13	2	0	10.3
