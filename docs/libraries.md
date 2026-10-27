@@ -36,7 +36,7 @@ Library headers declare only what the reconstructed units use, as game headers d
 | `include/libc/` | MSL C headers, shared with game code (`string.h`, `stdlib.h`, `stdarg.h`) |
 | `src/<library>/` | Planned: private headers of one library, next to its source |
 
-Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types, as Metrowerks' own sources do. Game code keeps `types.h`.
+Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types. Game code keeps `types.h`.
 
 When an import needs a declaration:
 
