@@ -4,12 +4,20 @@
 // Partial: only the events reconstructed code uses.
 enum en_xEventTags
 {
+    eEventDisable = 2,
     eEventVisible = 3,
     eEventInvisible = 4,
     eEventReset = 10,
+    eEventIncrement = 11,
+    eEventDecrement = 12,
     eEventToggle = 15,
+    eEventRun = 18,
     eEventStop = 19,
+    eEventExpired = 20,
     eEventDestroy = 22,
+    eEventPause = 23,
+    eEventPlay = 24,
+    eEventPlayMaybe = 26,
     eEventMount = 32,
     eEventDismount = 33,
     eEventOn = 38,
@@ -38,7 +46,8 @@ enum en_xEventTags
     eEventShaggyThrown = 233,
     eEventTranslucentOn = 252,
     eEventTranslucentOff = 253,
-    eEventTranslucentToggle = 254
+    eEventTranslucentToggle = 254,
+    eEventDisableGroupContents = 262
 };
 
 #endif

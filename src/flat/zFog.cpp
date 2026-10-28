@@ -4,54 +4,62 @@
 
 void zFogInit(void* b, void* tasset)
 {
-    xBase* ent = (xBase*)b;
-
-    xBaseInit(ent, (p2BaseAsset*)tasset);
-    ent->eventFunc = zFogEventCB;
-    ((_zFog*)ent)->tasset = (zFogAsset*)tasset;
-    if (ent->linkCount != 0)
+    xBaseInit((_zFog*)b, (zFogAsset*)tasset);
+    ((_zFog*)b)->eventFunc = zFogEventCB;
+    ((_zFog*)b)->tasset = (zFogAsset*)tasset;
+    if (((_zFog*)b)->linkCount)
     {
-        ent->link = (p2LinkAsset*)(((_zFog*)ent)->tasset + 1);
+        ((_zFog*)b)->link = (p2LinkAsset*)(((_zFog*)b)->tasset + 1);
     }
     else
     {
-        ent->link = NULL;
+        ((_zFog*)b)->link = NULL;
     }
 }
 
-static inline void zFogReset(_zFog* ent)
+void zFogSave(_zFog* ent, xSerial* s)
 {
-    xBaseReset((xBase*)ent, (p2BaseAsset*)ent->tasset);
+    xBaseSave(ent, s);
 }
 
-S32 zFogEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b3)
+void zFogLoad(_zFog* ent, xSerial* s)
 {
+    xBaseLoad(ent, s);
+}
+
+S32 zFogEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
+{
+    _zFog* t = (_zFog*)to;
+
     switch (toEvent)
     {
     case eEventOn:
         iFogParams fog;
         fog.type = rwFOGTYPELINEAR;
-        zFogAsset* asset = ((_zFog*)to)->tasset;
-        fog.start = asset->fogStart;
-        fog.stop = asset->fogStop;
-        fog.density = asset->fogDensity;
-        fog.fogcolor.red = asset->fogColor[0];
-        fog.fogcolor.green = asset->fogColor[1];
-        fog.fogcolor.blue = asset->fogColor[2];
-        fog.fogcolor.alpha = asset->fogColor[3];
-        fog.bgcolor.red = asset->bkgndColor[0];
-        fog.bgcolor.green = asset->bkgndColor[1];
-        fog.bgcolor.blue = asset->bkgndColor[2];
-        fog.bgcolor.alpha = asset->bkgndColor[3];
+        fog.start = t->tasset->fogStart;
+        fog.stop = t->tasset->fogStop;
+        fog.density = t->tasset->fogDensity;
+        fog.fogcolor.red = t->tasset->fogColor[0];
+        fog.fogcolor.green = t->tasset->fogColor[1];
+        fog.fogcolor.blue = t->tasset->fogColor[2];
+        fog.fogcolor.alpha = t->tasset->fogColor[3];
+        fog.bgcolor.red = t->tasset->bkgndColor[0];
+        fog.bgcolor.green = t->tasset->bkgndColor[1];
+        fog.bgcolor.blue = t->tasset->bkgndColor[2];
+        fog.bgcolor.alpha = t->tasset->bkgndColor[3];
         fog.table = NULL;
-        iCameraSetFogParams(&fog, asset->transitionTime);
+        iCameraSetFogParams(&fog, t->tasset->transitionTime);
         break;
     case eEventOff:
         iCameraSetFogParams(NULL, 0.0f);
         break;
     case eEventReset:
-        zFogReset((_zFog*)to);
+        xBaseReset(t, t->tasset);
         break;
     }
     return 1;
+}
+
+void zFogUpdate(xBase*, _xScene*, F32)
+{
 }
