@@ -5,8 +5,9 @@
 #include "xBase.h"
 
 struct _xEnt;
+struct _xEnv;
 
-// Partial: members up to npcs.
+// Partial: members up to env.
 struct _xScene
 {
     U16 flags;
@@ -29,6 +30,9 @@ struct _xScene
     _xEnt** stats;
     _xEnt** dyns;
     _xEnt** npcs;
+    _xEnt** act_ents;
+    _xEnt** nact_ents;
+    _xEnv* env;
 };
 
 xBase* xSceneResolvID(_xScene* sc, U32 id);

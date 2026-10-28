@@ -52,12 +52,24 @@ struct _xRot
     F32 angle;
 };
 
+struct _xIsect
+{
+    U32 flags;
+    F32 penned;
+    F32 contained;
+    F32 lapped;
+    xVec3 point;
+    xVec3 norm;
+    F32 dist;
+};
+
 typedef struct _xMat3x3 xMat3x3;
 typedef struct _xMat4x3 xMat4x3;
 typedef struct _xVec4 xVec4;
 typedef struct _xQuat xQuat;
 typedef struct _xSphere xSphere;
 typedef struct _xRot xRot;
+typedef struct _xIsect xIsect;
 
 extern const xMat4x3 g_I3;
 extern const xVec3 g_O3;

@@ -3,6 +3,7 @@
 
 #include "iModel.h"
 #include "zEnt.h"
+#include "zFeet.h"
 
 struct _zEntBubble;
 struct _zMovePoint;
@@ -640,14 +641,6 @@ enum en_ZVILLAIN_BUMPED_RESPONSE
     ZVIL_BUMPED_GUM,
     ZVIL_BUMPED_DAMAGE,
     ZVIL_BUMPED_ATTACK,
-};
-
-struct tagzFeet
-{
-    S32 total;
-    _xEnt* owner;
-    S16 entity_type;
-    S16 pitch;
 };
 
 struct st_ZVIL_PRECALC
