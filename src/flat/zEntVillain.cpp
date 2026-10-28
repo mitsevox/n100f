@@ -6,11 +6,15 @@
 #include "xEvent.h"
 #include "xMath.h"
 #include "xMemMgr.h"
+#include "xordarray.h"
 #include "xScene.h"
+#include "zEntPlayer.h"
 #include "zEntShaggy.h"
 #include "zEntProjectile.h"
 #include "zGlobals.h"
+#include "zLaugh.h"
 #include "zLightning.h"
+#include "zParEmitter.h"
 #include "zScene.h"
 
 #include <string.h>
@@ -106,6 +110,51 @@ struct st_ZVMM_FLASK_DATA
     F32 rad_aftermath;
 };
 
+enum en_VPAR_EMITTER_ROLE
+{
+    VPAR_EMIT_BOGUS = -1,
+    VPAR_EMIT_WALLPRINT,
+    VPAR_EMIT_EXTATTACK,
+    VPAR_EMIT_SOAPY,
+    VPAR_EMIT_POPSOAP,
+    VPAR_EMIT_GUMMY,
+    VPAR_EMIT_POPGUM,
+    VPAR_EMIT_BUTTBOUNCE,
+    VPAR_EMIT_HEADBUTT,
+    VPAR_EMIT_STUN,
+    VPAR_EMIT_DYING,
+    VPAR_EMIT_DECAY,
+    VPAR_EMIT_POOF,
+    VPAR_EMIT_RESPAWN,
+    VPAR_EMIT_TELEPORT,
+    VPAR_EMIT_BORED,
+    VPAR_EMIT_GUARD,
+    VPAR_EMIT_QUESTMARK,
+    VPAR_EMIT_EXCLAIM
+};
+
+// One particle emitter a villain type uses, and the role it plays.
+struct st_zEntVillain_ParEmitRecord
+{
+    en_VPAR_EMITTER_ROLE emitrole;
+    en_zEntVillainSubTypeID viltype;
+    S32 priority;
+    U32 vilowner;
+    U32 emitterID;
+    _zParEmitter* emitctxt;
+    S32 flg_need;
+    S32 flg_omit;
+};
+
+
+// How many of one villain type the player has gummed, soaped and beaten, and how many there are.
+struct st_NPC_TALLY_RECORD
+{
+    S32 cnt_hitgum;
+    S32 cnt_hitsoap;
+    S32 cnt_killed;
+    S32 cnt_mortals;
+};
 
 // Settings for one villain subtype.
 struct st_ZVIL_NPCTYPE_LOOKUP
@@ -164,8 +213,16 @@ static S32 VSUP_choose(S32* list, F32* wts, S32 cnt);
 static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
 
 static void zVIL_tag_verts(st_zEntVillain* ent);
+static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt);
+static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt);
 static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo);
 static void VPRJ_zapTheAxe(zEntProjectile* prj, S32 cleanup);
+static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal);
+static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser);
+static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser);
+static void VEFX_plop_gum(st_zEntVillain* ent);
+static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE emittype, F32 dt);
+static void VBON_drop_bonusItem(st_zEntVillain* vil);
 
 static S32 VILN_std_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
                          en_BEHAVIOUR_GOAL goal);
@@ -328,6 +385,9 @@ static char* g_animname[ZVIL_ANIM_NOMORE + 1] = {
     "CRIT_BatSleep", "CRIT_SpiderDrop", "CRIT_Smashed", "SIMP_Action", NULL,
 };
 
+// The player's tally per villain type; the last row holds the totals.
+static st_NPC_TALLY_RECORD g_stattally[eEntVillainType_NoMore + 1] = { 0 };
+
 // Lightning data of the thrown Black Knight axes.
 static st_BKAXE_DATA g_axfxpool[10] = { 0 };
 
@@ -337,11 +397,26 @@ static st_BGG_QUAKEBALL g_quakepool[4] = { 0 };
 // Mastermind flasks.
 static st_ZVMM_FLASK_DATA g_mmflask[10] = { 0 };
 
+// The particle emitters the scene's villains use.
+static st_XORDEREDARRAY g_emitlist = { 0 };
+
 // How many times the villain system has been started without being shut down.
 static S32 g_npcinit;
 
+// How many villains the scene has.
+static S32 g_npccnt;
+
 // All villains of the scene, in one block.
 static st_zEntVillain* g_npcpool;
+
+// Records of the particle emitters the villains use, how many are in use, and whether they
+// are set up.
+static st_zEntVillain_ParEmitRecord* g_emitpool;
+static S32 g_emitnext;
+static S32 g_emitready;
+
+// A block of scratch memory the villain system keeps from startup.
+static char* g_datablock;
 
 // Counts down one start of the villain system and returns how many remain.
 S32 zEntVillain_Shutdown()
@@ -350,6 +425,26 @@ S32 zEntVillain_Shutdown()
     {
         return g_npcinit;
     }
+    return g_npcinit;
+}
+
+// Gets the villains ready for a new scene: discards the old villain block (filled with 0x33),
+// clears the emitter list and allocates a fresh, empty block of 32 emitter records.
+S32 zEntVillain_scenePrepare()
+{
+    zEntVillain_MemPool(0);
+    XOrdInit(&g_emitlist, 32);
+    g_emitpool = (st_zEntVillain_ParEmitRecord*)xMemAlloc(gActiveHeap, 32 * sizeof(st_zEntVillain_ParEmitRecord));
+    memset(g_emitpool, 0, 32 * sizeof(st_zEntVillain_ParEmitRecord));
+    g_emitnext = 0;
+    g_emitready = 0;
+    return 1;
+}
+
+// Discards the villain block (filled with 0x33) when a scene ends.
+S32 zEntVillain_sceneFinish()
+{
+    zEntVillain_MemPool(0);
     return g_npcinit;
 }
 
@@ -406,15 +501,136 @@ xAnimTable* zEntVillain_AnimTable_Standard()
     return VANM_mktable_STD();
 }
 
+// Allocates a zeroed block for npccnt villains and returns it. With 0, fills the old block with
+// 0x33 bytes and forgets it.
+st_zEntVillain* zEntVillain_MemPool(U32 npccnt)
+{
+    if (npccnt)
+    {
+        g_npccnt = npccnt;
+        g_npcpool = (st_zEntVillain*)xMemAlloc(gActiveHeap, g_npccnt * sizeof(st_zEntVillain));
+        memset(g_npcpool, 0, npccnt * sizeof(st_zEntVillain));
+    }
+    else
+    {
+        if (g_npcpool && g_npccnt > 0)
+        {
+            memset(g_npcpool, 0x33, g_npccnt * sizeof(st_zEntVillain));
+        }
+        g_npccnt = 0;
+        g_npcpool = NULL;
+    }
+
+    return g_npcpool;
+}
+
 // Returns the villain in slot npcidx of the pool.
 st_zEntVillain* zEntVillain_NPCInst(U32 npcidx)
 {
     return &g_npcpool[npcidx];
 }
 
+// Writes the villain's state to a saved game.
+void zEntVillain_Save(st_zEntVillain* ent, xSerial* xser)
+{
+    VSAV_save(ent, xser);
+}
+
+// Reads the villain's state from a saved game.
+void zEntVillain_Load(st_zEntVillain* ent, xSerial* xser)
+{
+    VSAV_load(ent, xser);
+}
+
+// Draws the extras of every villain: the gum blob on a gummed villain, and whatever its type
+// draws on top once it is active.
+void zEntVillain_BonusRender()
+{
+    S32 npccnt;
+    st_zEntVillain* vil;
+    S32 i;
+
+    npccnt = g_npccnt;
+    for (i = 0; i < npccnt; i++)
+    {
+        vil = &g_npcpool[i];
+
+        if (vil->goal == ZVIL_GOAL_GUMMED)
+        {
+            VEFX_plop_gum(vil);
+        }
+
+        if (vil->mode >= ZVIL_MODE_NORMAL && vil->vhf->xtrarend)
+        {
+            xSceneID2Name(globals.sceneCur, vil->id);
+            vil->vhf->xtrarend(vil);
+        }
+    }
+}
+
+// Tells the villain the player bounced on it and returns how its type responded. Bounce particles
+// go up unless the type ignored it or took damage; if it killed a villain that counts for the
+// tally, the tally goes up, and a villain that drops a bonus item drops it.
+en_ZVILLAIN_BOUNCE_RESPONSE zEntVillain_Bounce(st_zEntVillain* ent)
+{
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_BOUNCED };
+
+    stimctxt.res_buttbounce = ZVIL_BOUNCE_NONE;
+    zVIL_input_stim(ent, ZVIL_STIM_BOUNCED, &stimctxt);
+
+    if (stimctxt.res_buttbounce != ZVIL_BOUNCE_NONE && stimctxt.res_buttbounce != ZVIL_BOUNCE_DAMAGE)
+    {
+        VPAR_emit_partype(ent, VPAR_EMIT_BUTTBOUNCE, globals.update_dt);
+    }
+
+    if (ent->ability & 0x4)
+    {
+        zEntPlayer_Notify(31);
+    }
+
+    if (ent->goal == ZVIL_GOAL_DIE)
+    {
+        if ((ent->ability & 0x200000) && (g_npcTable[ent->asset->subtype].ability & 0x200000) &&
+            (g_npcTable[ent->asset->subtype].abl_vuln & 0x4))
+        {
+            g_stattally[ent->asset->subtype].cnt_killed++;
+            g_stattally[eEntVillainType_NoMore].cnt_killed++;
+        }
+
+        if (ent->allow & 0x800)
+        {
+            VBON_drop_bonusItem(ent);
+        }
+    }
+
+    return stimctxt.res_buttbounce;
+}
+
+// Tells the villain something bumped into it and returns how its type responded.
+en_ZVILLAIN_BUMPED_RESPONSE zEntVillain_Bumped(st_zEntVillain* ent, const _xCollis* colrec)
+{
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_BUMPED };
+
+    stimctxt.stim = ZVIL_STIM_BUMPED;
+    stimctxt.colrec = (_xCollis*)colrec;
+    stimctxt.res_bumped = ZVIL_BUMPED_NONE;
+    zVIL_input_stim(ent, ZVIL_STIM_BUMPED, &stimctxt);
+    return stimctxt.res_bumped;
+}
+
 // Called when the player is hurt; villains do nothing with it.
 void zEntVillain_HeroWasHurt()
 {
+}
+
+// Stuns the villain with the given strength (at least 0.1), and lets the laugh track know.
+void zEntVillain_Stun(st_zEntVillain* ent, F32 strength)
+{
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_STUNNING };
+
+    stimctxt.amt_stun = MAX(strength, 0.1f);
+    zVIL_input_stim(ent, ZVIL_STIM_STUNNING, &stimctxt);
+    zLaughNotify(12);
 }
 
 // Reads one of the villain's flag groups from its subtype's settings; the allow group reads as 0.
@@ -1077,6 +1293,24 @@ static S32 VILN_BMM_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
 }
 
 
+// Passes a stimulus to the villain's type, unless it is on standby and its standby time has not
+// run out. If the type answers with a stimulus of its own, the villain changes goal to suit it.
+static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt)
+{
+    st_STIMULUS_CONTEXT_DATA stimresp = { ZVIL_STIM_NONE };
+
+    if (!ent->standby || (ent->standby && ent->tmr_list[ZVIL_TDUR_STDBY] <= 0.0f))
+    {
+        stimresp = *stimctxt;
+        stimresp.stim = ZVIL_STIM_NONE;
+        ent->vhf->stimulus(ent, stimctxt, &stimresp);
+        if (stimresp.stim)
+        {
+            zVIL_trangoal(ent, &stimresp, globals.update_dt);
+        }
+    }
+}
+
 // Sets up a model tag for each of the villain's configured vertex positions that is not zero, and
 // marks it in flg_vert.
 static void zVIL_tag_verts(st_zEntVillain* ent)
@@ -1101,6 +1335,73 @@ static void zVIL_tag_verts(st_zEntVillain* ent)
     }
 }
 
+
+// Writes the villain's saved state as two bits: bit 0 when its goal is the afterlife or base
+// setup, bit 1 when it is active and its asset says it starts unborn (prebirth).
+static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser)
+{
+    S32 iv;
+    en_BEHAVIOUR_GOAL gol;
+
+    if (!(ent->baseFlags & 0x2))
+    {
+        return 0;
+    }
+
+    zEntSave(ent, xser);
+
+    iv = 0;
+    gol = ent->goal;
+    if (gol == ZVIL_GOAL_AFTERLIFE || gol == ZVIL_GOAL_BASEINIT)
+    {
+        iv |= 0x1;
+    }
+    else if (ent->mode > ZVIL_MODE_SHUTDOWN && ent->mode < ZVIL_MODE_DEATH)
+    {
+        switch (ent->vilcfg.vilp2ass->behaviorState)
+        {
+        case ZVIL_START_PREBIRTH:
+            iv |= 0x2;
+            break;
+        }
+    }
+
+    xser->Write_b2(iv);
+    return 1;
+}
+
+// Reads the villain's saved state back. Bit 0 shuts it down at base setup, hides it and stops
+// anything from colliding with it; bit 1 shuts it down at startup.
+static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser)
+{
+    S32 iv = 0;
+
+    if (!(ent->baseFlags & 0x2))
+    {
+        return 1;
+    }
+
+    zEntLoad(ent, xser);
+
+    xser->Read_b2(&iv);
+    if (iv & 0x1)
+    {
+        ent->goaldflt = ZVIL_GOAL_IDLE;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_BASEINIT);
+        ent->chkby = 0;
+        ent->penby = 0;
+        ent->flags &= ~0x1;
+    }
+    else if (iv & 0x2)
+    {
+        ent->goaldflt = ZVIL_GOAL_IDLE;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_STARTUP);
+    }
+
+    return 1;
+}
 
 // Keeps the Black Knight's axe's collision sphere (radius 0.75) on its position.
 static void VPRJ_BBK_bupdate(_xEnt* prjent, _xVec3* pos)
