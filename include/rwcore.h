@@ -26,7 +26,12 @@ struct RwLinkList
     RwLLLink link;
 };
 
+#define rwLLLinkGetData(linkvar, type, entry)                                                      \
+    ((type*)(((U8*)(linkvar)) - (S32)&((type*)0)->entry))
 #define rwLLLinkGetNext(linkvar) ((linkvar)->next)
+#define rwLLLinkInitialize(linkvar)                                                                \
+    ((linkvar)->prev = (RwLLLink*)NULL, (linkvar)->next = (RwLLLink*)NULL)
+#define rwLLLinkAttached(linkvar) ((linkvar)->next)
 #define rwLinkListInitialize(list)                                                                 \
     ((list)->link.next = ((RwLLLink*)(list)), (list)->link.prev = ((RwLLLink*)(list)))
 #define rwLinkListEmpty(list) (((list)->link.next) == (&(list)->link))
@@ -518,16 +523,24 @@ struct RwFileFunctions
 };
 
 typedef char* (*vecStrcpyFunc)(char* dest, const char* srce);
+typedef char* (*vecStrncpyFunc)(char* dest, const char* srce, U32 size);
+typedef char* (*vecStrncatFunc)(char* dest, const char* srce, U32 size);
+typedef S32 (*vecStrcmpFunc)(const char* string1, const char* string2);
 typedef U32 (*vecStrlenFunc)(const char* string);
 
-// Partial: this build's table is 0x40 bytes; only the two members the target reaches at fixed
+// Partial: this build's table is 0x40 bytes; only the members the target reaches at fixed
 // offsets are declared.
 typedef struct RwStringFunctions RwStringFunctions;
 struct RwStringFunctions
 {
     U8 unk0[0x8];
     vecStrcpyFunc vecStrcpy;
-    U8 unkC[0x20];
+    vecStrncpyFunc vecStrncpy;
+    U8 unk10[0x4];
+    vecStrncatFunc vecStrncat;
+    U8 unk18[0xC];
+    vecStrcmpFunc vecStrcmp;
+    U8 unk28[0x4];
     vecStrlenFunc vecStrlen;
     U8 unk30[0x10];
 };
@@ -786,6 +799,9 @@ struct RwGlobals
 #define RWSRCGLOBAL(var) (((RwGlobals*)RwEngineInstance)->var)
 
 #define rwstrcpy RWSRCGLOBAL(stringFuncs).vecStrcpy
+#define rwstrncpy RWSRCGLOBAL(stringFuncs).vecStrncpy
+#define rwstrncat RWSRCGLOBAL(stringFuncs).vecStrncat
+#define rwstrcmp RWSRCGLOBAL(stringFuncs).vecStrcmp
 #define rwstrlen RWSRCGLOBAL(stringFuncs).vecStrlen
 #define RwMalloc(_s) ((RWSRCGLOBAL(memoryFuncs).rwmalloc)((_s)))
 #define RwFree(_p) ((RWSRCGLOBAL(memoryFuncs).rwfree)((_p)))
@@ -880,6 +896,10 @@ RwStream* RwStreamOpen(RwStreamType type, RwStreamAccessType accessType, const v
 S32 RwStreamClose(RwStream* stream, void* pData);
 U32 RwStreamRead(RwStream* stream, void* buffer, U32 length);
 RwStream* RwStreamWrite(RwStream* stream, const void* buffer, U32 length);
+S32 _rwStringStreamGetSize(const char* string);
+const char* _rwStringStreamWrite(const char* string, RwStream* stream);
+char* _rwStringStreamFindAndRead(char* string, RwStream* stream);
+U32 RwEngineGetVersion(void);
 RwStream* RwStreamSkip(RwStream* stream, U32 offset);
 RwStream* RwStreamReadChunkHeaderInfo(RwStream* stream, RwChunkHeaderInfo* chunkHeaderInfo);
 RwStream* _rwStreamWriteVersionedChunkHeader(RwStream* stream, S32 type, S32 size, U32 version,
