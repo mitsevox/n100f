@@ -19,7 +19,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def activate(target_id,root=ROOT):
-    if not select(target_id)['support']['build']:raise ValueError('Archived target has no build workspace')
+    if select(target_id)['status']!='active':raise ValueError('Inactive target has no build workspace')
     directory=root/'build'/target_id
     objdiff=directory/'objdiff.json'
     value=json.loads(objdiff.read_text())

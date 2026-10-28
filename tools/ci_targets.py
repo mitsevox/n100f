@@ -20,7 +20,7 @@ def affected(paths,targets,dependencies,force=False):
     active=set(build_targets(targets))
     if set(dependencies)!={'schemaVersion','shared','targets','nonBuild'} or dependencies['schemaVersion']!=1:
         raise ValueError('Invalid CI dependency map')
-    known={item['target']['id'] for item in targets['targets']}
+    known={target['id'] for target in targets['targets']}
     if set(dependencies['targets'])!=known:raise ValueError('CI dependencies must cover every known target')
     patterns=[dependencies['shared'],dependencies['nonBuild'],*dependencies['targets'].values()]
     if any(not isinstance(group,list) or any(not isinstance(p,str) or not p or p.startswith('/') or '..' in p.split('/') for p in group) for group in patterns):raise ValueError('Unsafe CI dependency patterns')

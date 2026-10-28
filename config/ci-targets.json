@@ -5,5 +5,5 @@
     "GIHE78-rev0": ["config/GIHE78-rev0/**", "orig/GIHE78-rev0/**"],
     "GIHE78-rev1": ["config/GIHE78-rev1/**", "orig/GIHE78-rev1/**"]
   },
-  "nonBuild": ["*.md", "docs/**", "references/**", "tests/**", ".github/workflows/review.yml", ".github/workflows/notify-portfolio.yml", ".gitignore", ".gitattributes"]
+  "nonBuild": ["*.md", "docs/**", "references/**", "tests/**", ".github/workflows/review.yml", ".gitignore", ".gitattributes"]
 }
