@@ -6,6 +6,8 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 
 `src/flat/xMorph.cpp` takes its function bodies from [bfbbdecomp/bfbb](https://github.com/bfbbdecomp/bfbb/blob/d8e8eac38dd617ee72161f4cb2da4498bc89aad6/src/SB/Core/x/xMorph.cpp) (`src/SB/Core/x/xMorph.cpp`, revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`), published under CC0 1.0. Local changes: includes reduced to the headers this project defines.
 
+`zPlatform_Init`, `zPlatform_Reset`, `zPlatform_Update`, `zPlatform_Shake` and the tremble helper in `src/flat/zPlatform.cpp` adapt [bfbbdecomp/bfbb's zPlatform.cpp](https://github.com/bfbbdecomp/bfbb/blob/d8e8eac38dd617ee72161f4cb2da4498bc89aad6/src/SB/Game/zPlatform.cpp) at the same revision and CC0 1.0 licence to this game's layouts and target behavior. In particular, initialization, reset and the emitter flags follow this target rather than bfbb's additional platform types and state.
+
 `src/flat/xBase.cpp`, `xClimate.cpp`, `xIni.cpp`, `xordarray.cpp`, `xPar.cpp`, `xScrFx.cpp` and `xString.cpp` take the bodies of their functions from the files of the same names in bfbb's `src/SB/Core/x/` at the same revision (CC0 1.0). Each file holds only the functions whose compiled form matches the target. Local changes:
 
 - Includes are reduced to the headers this project defines, and type names follow the SLUS-20349 DWARF (`p2BaseAsset`, `p2EnvAsset`).

@@ -4,6 +4,7 @@
 #include "types.h"
 #include "xBase.h"
 #include "xScene.h"
+#include "xMemMgr.h"
 
 struct _zEnt;
 struct _zPortal;
@@ -13,7 +14,8 @@ struct _tagClimate;
 // Partial: the _xScene members past env are left opaque.
 struct zScene : _xScene
 {
-    U8 opaque_44[0x6C - 0x44];
+    xMemPool mempool;
+    U8 opaque_60[0x6C - 0x60];
     U32 sceneID;
     _zPortal* pendingPortal;
     U32 num_ents;
