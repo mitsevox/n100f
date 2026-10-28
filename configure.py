@@ -834,7 +834,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/world/bameshop.c"),
             Object(NonMatching, "rwsdk/world/basector.c"),
             Object(NonMatching, "rwsdk/world/baworld.c"),
-            Object(NonMatching, "rwsdk/world/baworobj.c"),
+            Object(Matching, "rwsdk/world/baworobj.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/bapipew.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/nodeAtomicInstance.c"),

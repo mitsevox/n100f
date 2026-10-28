@@ -6,7 +6,7 @@ typedef struct WorldCameraExt WorldCameraExt;
 struct WorldCameraExt
 {
     RpWorldSector** sectors;
-    U32 unk4;
+    S32 maxSectors;
     S32 numSectors;
     RpWorld* world;
     RwCamera* (*beginUpdate)(RwCamera*);
@@ -65,18 +65,35 @@ struct WorldObjModuleData
     ((lnk).next = (list).link.next, (lnk).prev = &(list).link,     \
      (list).link.next->prev = &(lnk), (list).link.next = &(lnk))
 
-// Light subtypes from this value on are positioned by a frame; the ones below it are not.
-#define LIGHT_POSITIONED_FIRST 0x80
+// The standard device function a camera's world tells whether it renders front to back.
+#define STDFUNC_RENDERORDER 22
 
-static S32 cameraExtOffset;
-static S32 atomicExtOffset;
-static S32 clumpExtOffset;
-static S32 lightExtOffset;
+// The plugin IDs this unit registers under: the world object extensions, the mesh streams and
+// the native data streams.
+#define WORLDOBJ_PLUGINID 0x509
+#define MESH_PLUGINID 0x50E
+#define NATIVE_PLUGINID 0x510
+
+// How many entries a camera's sector list grows by when it fills.
+#define SECTORLIST_GROWBY 50
+
+// The depth of the stack the sector tree walks keep their pending subtrees on.
+#define SECTOR_STACK_SIZE 64
+
+// A plane sector's type is the byte offset of the coordinate it splits on.
+#define SECTORCOORD(vec, type) (*(F32*)((U8*)&(vec) + (type)))
+
 static RwModuleInfo worldObjModule;
+static S32 lightExtOffset;
+static S32 clumpExtOffset;
+static S32 atomicExtOffset;
+static S32 cameraExtOffset;
 
 RwObjectHasFrame* WorldCameraSync(RwObjectHasFrame* object);
 RwObjectHasFrame* WorldAtomicSync(RwObjectHasFrame* object);
 RwObjectHasFrame* WorldLightSync(RwObjectHasFrame* object);
+void WorldAttachAtomicSphere(RpWorld* world, RpAtomic* atomic);
+RpWorld* WorldSyncCamera(RpWorld* world, RwCamera* camera);
 
 RwStream* _rpMeshWrite(const RpMeshHeader* meshHeader, const void* object, RwStream* stream,
                        const RpMaterialList* matList);
@@ -90,10 +107,49 @@ S32 _rpWorldSectorNativeSize(const RpWorldSector* sector);
 RwStream* _rpWorldSectorNativeWrite(RwStream* stream, const RpWorldSector* sector);
 RwStream* _rpWorldSectorNativeRead(RwStream* stream, RpWorldSector* sector);
 
+RwStream* _rpReadAtomicRights(RwStream* stream, S32 length, void* object, S32 offset, S32 size);
+RwStream* _rpWriteAtomicRights(RwStream* stream, S32 length, const void* object, S32 offset,
+                               S32 size);
+S32 _rpSizeAtomicRights(const void* object, S32 offset, S32 size);
+RwStream* _rpReadWorldRights(RwStream* stream, S32 length, void* object, S32 offset, S32 size);
+RwStream* _rpWriteWorldRights(RwStream* stream, S32 length, const void* object, S32 offset,
+                              S32 size);
+S32 _rpSizeWorldRights(const void* object, S32 offset, S32 size);
+RwStream* _rpReadSectRights(RwStream* stream, S32 length, void* object, S32 offset, S32 size);
+RwStream* _rpWriteSectRights(RwStream* stream, S32 length, const void* object, S32 offset,
+                             S32 size);
+S32 _rpSizeSectRights(const void* object, S32 offset, S32 size);
+S32 _rpWorldPipeAttach(void);
+
 RpWorld* RpWorldSectorGetWorld(const RpWorldSector* sector);
 RpWorld* RpWorldAddAtomic(RpWorld* world, RpAtomic* atomic);
 RpWorld* RpWorldAddClump(RpWorld* world, RpClump* clump);
 RpWorld* RpWorldAddLight(RpWorld* world, RpLight* light);
+
+static void* WorldObjectOpen(void* instance, S32 offset, S32 size)
+{
+    worldObjModule.globalsOffset = offset;
+
+    WORLDOBJ_DATA(tieFreeList) = RwFreeListCreate(sizeof(WorldTie), 100, 0);
+    if (!WORLDOBJ_DATA(tieFreeList))
+    {
+        return NULL;
+    }
+
+    WORLDOBJ_DATA(lightTieFreeList) = RwFreeListCreate(sizeof(LightTie), 20, 0);
+    if (!WORLDOBJ_DATA(lightTieFreeList))
+    {
+        RwFreeListDestroy(WORLDOBJ_DATA(tieFreeList));
+        WORLDOBJ_DATA(tieFreeList) = NULL;
+        return NULL;
+    }
+
+    RWSRCGLOBAL(renderFrame) = 1;
+
+    worldObjModule.numInstances++;
+
+    return instance;
+}
 
 static void* WorldObjectClose(void* instance, S32 offset, S32 size)
 {
@@ -133,13 +189,35 @@ static RwCamera* WorldCameraEndUpdate(RwCamera* camera)
     return ext->endUpdate(camera);
 }
 
+RwObjectHasFrame* WorldCameraSync(RwObjectHasFrame* object)
+{
+    WorldCameraExt* ext = WORLDEXTFROMOBJECT(WorldCameraExt, object, cameraExtOffset);
+
+    if (ext->sync(object))
+    {
+        RpWorld* world = ext->world;
+
+        if (world)
+        {
+            RwStandardFunc renderOrderFunc = RWSRCGLOBAL(stdFunc)[STDFUNC_RENDERORDER];
+
+            WorldSyncCamera(world, (RwCamera*)object);
+            renderOrderFunc(NULL, NULL, world->renderOrder == rpWORLDRENDERFRONT2BACK);
+        }
+
+        return object;
+    }
+
+    return NULL;
+}
+
 static void* WorldInitCameraExt(void* object, S32 offset, S32 size)
 {
     RwCamera* camera = (RwCamera*)object;
     WorldCameraExt* ext = WORLDEXTFROMOBJECT(WorldCameraExt, camera, cameraExtOffset);
 
     ext->sectors = NULL;
-    ext->unk4 = 0;
+    ext->maxSectors = 0;
     ext->numSectors = 0;
 
     ext->beginUpdate = camera->beginUpdate;
@@ -161,7 +239,7 @@ static void* WorldCopyCameraExt(void* dstObject, const void* srcObject, S32 offs
     const WorldCameraExt* srcExt = WORLDEXTFROMOBJECT(WorldCameraExt, srcObject, cameraExtOffset);
 
     dstExt->sectors = NULL;
-    dstExt->unk4 = 0;
+    dstExt->maxSectors = 0;
     dstExt->numSectors = 0;
 
     if (srcExt->world)
@@ -183,7 +261,7 @@ static void* WorldDeInitCameraExt(void* object, S32 offset, S32 size)
     }
 
     ext->sectors = NULL;
-    ext->unk4 = 0;
+    ext->maxSectors = 0;
     ext->numSectors = 0;
 
     camera->beginUpdate = ext->beginUpdate;
@@ -214,6 +292,108 @@ S32 _rpTieDestroy(WorldTie* tie)
     }
 
     return 1;
+}
+
+void WorldAttachAtomicSphere(RpWorld* world, RpAtomic* atomic)
+{
+    RpSector* stack[SECTOR_STACK_SIZE];
+    S32 nStack = 0;
+    RpSector* sector;
+    RwV3d inf;
+    RwV3d sup;
+    const RwSphere* sphere = RpAtomicGetWorldBoundingSphere(atomic);
+
+    inf = sphere->center;
+    sup = sphere->center;
+
+    inf.x -= sphere->radius;
+    inf.y -= sphere->radius;
+    inf.z -= sphere->radius;
+    sup.x += sphere->radius;
+    sup.y += sphere->radius;
+    sup.z += sphere->radius;
+
+    sector = world->rootSector;
+
+    do
+    {
+        if (sector->type < 0)
+        {
+            WorldTie* tie = (WorldTie*)RWSRCGLOBAL(memoryAlloc)(WORLDOBJ_DATA(tieFreeList));
+
+            tie->sector = (RpWorldSector*)sector;
+            tie->atomic = atomic;
+
+            if (rwObjectTestFlags(atomic, rpATOMICCOLLISIONTEST))
+            {
+                ADDLINK(((RpWorldSector*)sector)->collAtomicsInWorldSector, tie->sectorLink);
+            }
+            else
+            {
+                ADDLINK(((RpWorldSector*)sector)->noCollAtomicsInWorldSector, tie->sectorLink);
+            }
+
+            ADDLINK(atomic->llWorldSectorsInAtomic, tie->atomicLink);
+
+            sector = stack[nStack--];
+        }
+        else
+        {
+            RpPlaneSector* plane = (RpPlaneSector*)sector;
+
+            if (SECTORCOORD(inf, plane->type) < plane->leftValue)
+            {
+                sector = plane->leftSubTree;
+
+                if (plane->rightValue < SECTORCOORD(sup, plane->type))
+                {
+                    stack[++nStack] = plane->rightSubTree;
+                }
+            }
+            else if (plane->rightValue < SECTORCOORD(sup, plane->type))
+            {
+                sector = plane->rightSubTree;
+            }
+            else
+            {
+                sector = stack[nStack--];
+            }
+        }
+    } while (nStack >= 0);
+}
+
+RwObjectHasFrame* WorldAtomicSync(RwObjectHasFrame* object)
+{
+    RpAtomic* atomic = (RpAtomic*)object;
+    RwLLLink* end;
+    RwLLLink* cur;
+    WorldObjectExt* ext = WORLDEXTFROMOBJECT(WorldObjectExt, atomic, atomicExtOffset);
+    RpWorld* world;
+
+    if (ext->sync(object))
+    {
+        world = ext->world;
+
+        if (world)
+        {
+            cur = atomic->llWorldSectorsInAtomic.link.next;
+            end = &atomic->llWorldSectorsInAtomic.link;
+
+            while (cur != end)
+            {
+                WorldTie* tie = TIEFROMATOMICLINK(cur);
+
+                cur = cur->next;
+                _rpTieDestroy(tie);
+            }
+
+            WorldAttachAtomicSphere(world, atomic);
+        }
+
+        return object;
+    }
+
+    return NULL;
 }
 
 static void* WorldInitAtomicExt(void* object, S32 offset, S32 size)
@@ -279,6 +459,116 @@ static void* WorldDeInitClumpExt(void* object, S32 offset, S32 size)
     return object;
 }
 
+RwObjectHasFrame* WorldLightSync(RwObjectHasFrame* object)
+{
+    RpWorld* world;
+    RwFrame* frame;
+    S32 nStack;
+    RpSector* sector;
+    RpLight* light;
+    RwLLLink* end;
+    RwLLLink* cur;
+    WorldObjectExt* ext;
+    F32 radius;
+    RpSector* stack[SECTOR_STACK_SIZE];
+
+    light = (RpLight*)object;
+    ext = WORLDEXTFROMOBJECT(WorldObjectExt, light, lightExtOffset);
+
+    if (ext->sync(object))
+    {
+        if (RpLightGetType(light) < rpLIGHTPOSITIONINGSTART)
+        {
+            return (RwObjectHasFrame*)light;
+        }
+
+        world = ext->world;
+        frame = (RwFrame*)rwObjectGetParent(light);
+
+        if (world && frame)
+        {
+            RwV3d inf;
+            RwV3d sup;
+            const RwV3d* pos;
+
+            radius = light->radius;
+            nStack = 0;
+            cur = light->WorldSectorsInLight.link.next;
+            end = &light->WorldSectorsInLight.link;
+
+            while (cur != end)
+            {
+                LightTie* tie = TIEFROMLIGHTLINK(cur);
+
+                cur = cur->next;
+                _rpLightTieDestroy(tie);
+            }
+
+            pos = &RwFrameGetLTM(frame)->pos;
+
+            inf = *pos;
+            sup = *pos;
+
+            sup.x += radius;
+            sup.y += radius;
+            sup.z += radius;
+            inf.x -= radius;
+            inf.y -= radius;
+            inf.z -= radius;
+
+            sector = world->rootSector;
+
+            do
+            {
+                if (sector->type < 0)
+                {
+                    LightTie* tie =
+                        (LightTie*)RWSRCGLOBAL(memoryAlloc)(WORLDOBJ_DATA(lightTieFreeList));
+
+                    tie->sector = (RpWorldSector*)sector;
+                    tie->light = light;
+
+                    ADDLINK(((RpWorldSector*)sector)->lightsInWorldSector, tie->sectorLink);
+                    ADDLINK(light->WorldSectorsInLight, tie->lightLink);
+
+                    sector = stack[nStack--];
+                }
+                else
+                {
+                    RpPlaneSector* plane = (RpPlaneSector*)sector;
+
+                    if (SECTORCOORD(inf, plane->type) < plane->leftValue)
+                    {
+                        sector = plane->leftSubTree;
+
+                        if (plane->rightValue < SECTORCOORD(sup, plane->type))
+                        {
+                            stack[++nStack] = plane->rightSubTree;
+                        }
+                    }
+                    else if (plane->rightValue < SECTORCOORD(sup, plane->type))
+                    {
+                        sector = plane->rightSubTree;
+                    }
+                    else
+                    {
+                        sector = stack[nStack--];
+                    }
+                }
+            } while (nStack >= 0);
+        }
+    }
+    else
+    {
+        RwError err;
+        err.pluginID = 2;
+        err.errorCode = _rwerror(0x80000016);
+        RwErrorSet(&err);
+    }
+
+    return (RwObjectHasFrame*)light;
+}
+
 static void* WorldInitLightExt(void* object, S32 offset, S32 size)
 {
     RpLight* light = (RpLight*)object;
@@ -318,6 +608,137 @@ static void* WorldDeInitLightExt(void* object, S32 offset, S32 size)
     }
 
     return object;
+}
+
+RpWorld* WorldSyncCamera(RpWorld* world, RwCamera* camera)
+{
+    RpSector* sector;
+    const RwFrustumPlane* planes;
+    WorldCameraExt* ext = WORLDEXTFROMOBJECT(WorldCameraExt, camera, cameraExtOffset);
+    S32 backToFront;
+    S32 nStack = 0;
+    S32 numSectors = 0;
+    RpSector* stack[SECTOR_STACK_SIZE];
+    RwV3d pos;
+    RwV3d inf;
+    RwV3d sup;
+
+    pos =RwFrameGetLTM(RwCameraGetFrame(camera))->pos;
+    backToFront = (world->renderOrder == rpWORLDRENDERBACK2FRONT);
+    planes = camera->frustumPlanes;
+    inf = camera->frustumBoundBox.inf;
+    sup = camera->frustumBoundBox.sup;
+
+    sector = ext->world->rootSector;
+
+    do
+    {
+        if (sector->type < 0)
+        {
+            const RwFrustumPlane* plane = planes;
+            S32 outside;
+            S32 i;
+            const RwV3d* box = (const RwV3d*)&((RpWorldSector*)sector)->boundingBox;
+
+            for (i = 0; i < 6; i++)
+            {
+                RwV3d corner;
+                RwSplitBits dot;
+
+                corner.x = box[plane->closestX].x;
+                corner.y = box[plane->closestY].y;
+                corner.z = box[plane->closestZ].z;
+                dot.nReal = corner.x * plane->plane.normal.x + corner.y * plane->plane.normal.y +
+                            corner.z * plane->plane.normal.z - plane->plane.distance;
+
+                outside = dot.nInt > 0;
+                if (outside)
+                {
+                    break;
+                }
+
+                plane++;
+            }
+
+            if (!outside)
+            {
+                if (numSectors >= ext->maxSectors)
+                {
+                    S32 grown;
+                    S32 size = (ext->maxSectors + SECTORLIST_GROWBY) * sizeof(RpWorldSector*);
+                    RpWorldSector** sectors;
+
+                    if (ext->sectors)
+                    {
+                        sectors = (RpWorldSector**)RWSRCGLOBAL(memoryFuncs).rwrealloc(ext->sectors,
+                                                                                    size);
+                    }
+                    else
+                    {
+                        sectors = (RpWorldSector**)RWSRCGLOBAL(memoryFuncs).rwmalloc(size);
+                    }
+
+                    if (sectors)
+                    {
+                        ext->sectors = sectors;
+                        ext->maxSectors += SECTORLIST_GROWBY;
+                        grown = 1;
+                    }
+                    else
+                    {
+                        RwError err;
+                        err.pluginID = 2;
+                        err.errorCode = _rwerror(0x80000013, size);
+                        RwErrorSet(&err);
+                        grown = 0;
+                    }
+
+                    if (!grown)
+                    {
+                        ext->numSectors = numSectors;
+                        return world;
+                    }
+                }
+
+                ext->sectors[numSectors++] = (RpWorldSector*)sector;
+            }
+
+            sector = stack[nStack--];
+        }
+        else
+        {
+            RpPlaneSector* plane = (RpPlaneSector*)sector;
+            RwSplitBits toLeft;
+            RwSplitBits toRight;
+
+            toLeft.nReal = SECTORCOORD(inf, plane->type) - plane->leftValue;
+            toRight.nReal = plane->rightValue - SECTORCOORD(sup, plane->type);
+
+            if (toLeft.nInt < 0 && toRight.nInt < 0)
+            {
+                S32 rightOfPlane = SECTORCOORD(pos, plane->type) > plane->value;
+
+                if ((backToFront && rightOfPlane) || (!backToFront && !rightOfPlane))
+                {
+                    stack[++nStack] = plane->rightSubTree;
+                    sector = plane->leftSubTree;
+                }
+                else
+                {
+                    stack[++nStack] = plane->leftSubTree;
+                    sector = plane->rightSubTree;
+                }
+            }
+            else
+            {
+                sector = (toLeft.nInt < 0) ? plane->leftSubTree : plane->rightSubTree;
+            }
+        }
+    } while (nStack >= 0);
+
+    ext->numSectors = numSectors;
+
+    return world;
 }
 
 static RpAtomic* WorldAddClumpAtomic(RpAtomic* atomic, void* data)
@@ -445,6 +866,64 @@ static S32 sizeSectorMesh(const void* object, S32 offsetInObject, S32 sizeInObje
     return _rpMeshSize(sector->mesh, RpWorldSectorGetWorld(sector));
 }
 
+S32 _rpWorldObjRegisterExtensions(void)
+{
+    S32 result;
+
+    result = RwEngineRegisterPlugin(sizeof(WorldObjModuleData), WORLDOBJ_PLUGINID,
+                                    WorldObjectOpen, WorldObjectClose);
+
+    cameraExtOffset = RwCameraRegisterPlugin(sizeof(WorldCameraExt), WORLDOBJ_PLUGINID,
+                                             WorldInitCameraExt, WorldDeInitCameraExt,
+                                             WorldCopyCameraExt);
+    result |= cameraExtOffset;
+
+    atomicExtOffset = RpAtomicRegisterPlugin(sizeof(WorldObjectExt), WORLDOBJ_PLUGINID,
+                                             WorldInitAtomicExt, WorldDeInitAtomicExt,
+                                             WorldCopyAtomicExt);
+    result |= atomicExtOffset;
+
+    clumpExtOffset = RpClumpRegisterPlugin(sizeof(RpWorld*), WORLDOBJ_PLUGINID, WorldInitClumpExt,
+                                           WorldDeInitClumpExt, WorldCopyClumpExt);
+    result |= clumpExtOffset;
+
+    lightExtOffset = RpLightRegisterPlugin(sizeof(WorldObjectExt), WORLDOBJ_PLUGINID,
+                                           WorldInitLightExt, WorldDeInitLightExt,
+                                           WorldCopyLightExt);
+    result |= lightExtOffset;
+
+    result |= RpGeometryRegisterPlugin(0, MESH_PLUGINID, NULL, NULL, NULL);
+    result |= RpWorldSectorRegisterPlugin(0, MESH_PLUGINID, NULL, NULL, NULL);
+    result |= RpGeometryRegisterPluginStream(MESH_PLUGINID, readGeometryMesh, writeGeometryMesh,
+                                             sizeGeometryMesh);
+    result |= RpWorldSectorRegisterPluginStream(MESH_PLUGINID, readSectorMesh, writeSectorMesh,
+                                                sizeSectorMesh);
+
+    result |= RpGeometryRegisterPlugin(0, NATIVE_PLUGINID, NULL, NULL, NULL);
+    result |= RpWorldSectorRegisterPlugin(0, NATIVE_PLUGINID, NULL, NULL, NULL);
+    result |= RpGeometryRegisterPluginStream(NATIVE_PLUGINID, readGeometryNative,
+                                             writeGeometryNative, sizeGeometryNative);
+    result |= RpWorldSectorRegisterPluginStream(NATIVE_PLUGINID, readWorldSectorNative,
+                                                writeWorldSectorNative, sizeWorldSectorNative);
+
+    result |= RpAtomicRegisterPlugin(0, rwID_RIGHTTORENDER, NULL, NULL, NULL);
+    result |= RpAtomicRegisterPluginStream(rwID_RIGHTTORENDER, _rpReadAtomicRights,
+                                           _rpWriteAtomicRights, _rpSizeAtomicRights);
+    result |= RpWorldRegisterPlugin(0, rwID_RIGHTTORENDER, NULL, NULL, NULL);
+    result |= RpWorldRegisterPluginStream(rwID_RIGHTTORENDER, _rpReadWorldRights,
+                                          _rpWriteWorldRights, _rpSizeWorldRights);
+    result |= RpWorldSectorRegisterPlugin(0, rwID_RIGHTTORENDER, NULL, NULL, NULL);
+    result |= RpWorldSectorRegisterPluginStream(rwID_RIGHTTORENDER, _rpReadSectRights,
+                                                _rpWriteSectRights, _rpSizeSectRights);
+
+    if (result < 0)
+    {
+        return 0;
+    }
+
+    return _rpWorldPipeAttach() != 0;
+}
+
 RpWorld* RpWorldAddCamera(RpWorld* world, RwCamera* camera)
 {
     WorldCameraExt* ext = WORLDEXTFROMOBJECT(WorldCameraExt, camera, cameraExtOffset);
@@ -472,7 +951,7 @@ RpWorld* RpWorldRemoveCamera(RpWorld* world, RwCamera* camera)
         }
 
         ext->sectors = NULL;
-        ext->unk4 = 0;
+        ext->maxSectors = 0;
         ext->numSectors = 0;
         ext->world = NULL;
 
@@ -524,6 +1003,42 @@ RpAtomic* RpAtomicForAllWorldSectors(RpAtomic* atomic, RpWorldSectorCallBack cal
     return atomic;
 }
 
+RpWorld* RpWorldAddClump(RpWorld* world, RpClump* clump)
+{
+    RwFrame* frame;
+    RpWorld** ext = WORLDEXTFROMOBJECT(RpWorld*, clump, clumpExtOffset);
+
+    if (!*ext)
+    {
+        frame = RpClumpGetFrame(clump);
+
+        ADDLINK(world->clumpList, clump->inWorldLink);
+        world->numClumpsInWorld++;
+        *ext = world;
+
+        RpClumpForAllAtomics(clump, WorldAddClumpAtomic, world);
+        RpClumpForAllLights(clump, WorldAddClumpLight, world);
+        RpClumpForAllCameras(clump, WorldAddClumpCamera, world);
+
+        if (frame)
+        {
+            RwMatrixOptimize(&frame->modelling, NULL);
+            RwFrameUpdateObjects(frame);
+        }
+
+        return world;
+    }
+
+    {
+        RwError err;
+        err.pluginID = 2;
+        err.errorCode = _rwerror(3);
+        RwErrorSet(&err);
+    }
+
+    return NULL;
+}
+
 RwCamera* RwCameraForAllSectorsInFrustum(RwCamera* camera, RpWorldSectorCallBack callBack,
                                          void* pData)
 {
@@ -549,7 +1064,7 @@ RpWorld* RpWorldAddLight(RpWorld* world, RpLight* light)
 {
     *WORLDEXTFROMOBJECT(RpWorld*, light, lightExtOffset) = world;
 
-    if (light->object.object.subType < LIGHT_POSITIONED_FIRST)
+    if (light->object.object.subType < rpLIGHTPOSITIONINGSTART)
     {
         ADDLINK(world->directionalLightList, light->inWorld);
     }

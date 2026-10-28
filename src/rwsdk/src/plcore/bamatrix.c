@@ -2,14 +2,6 @@
 
 #define rwMATRIXTYPEMASK 0x00000003
 
-typedef struct RwMatrixTolerance RwMatrixTolerance;
-struct RwMatrixTolerance
-{
-    F32 Normal;
-    F32 Orthogonal;
-    F32 Identity;
-};
-
 // The matrix module's data in the engine instance. Partial: only the tolerances are declared.
 typedef struct MatrixModuleData MatrixModuleData;
 struct MatrixModuleData
