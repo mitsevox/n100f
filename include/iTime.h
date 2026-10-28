@@ -3,6 +3,9 @@
 
 #include "types.h"
 
-S64 iTimeGet();
+typedef S64 iTime;
+
+iTime iTimeGet();
+F32 iTimeDiffSec(iTime t0, iTime t1);
 
 #endif
