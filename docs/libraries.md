@@ -24,7 +24,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 
 ### Reconstructed RenderWare sources
 
-`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` is linked as a Matching object (text-only, all 7 functions); the other units stay NonMatching (data is not split, or functions remain). 125 functions compile to the target bytes with every relocation resolving to the target's symbol:
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` is linked as a Matching object (text-only, all 7 functions); the other units stay NonMatching (data is not split, or functions remain). 186 functions compile to the target bytes with every relocation resolving to the target's symbol:
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |
@@ -40,19 +40,32 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/bacamera.c` | 7 of 18 | 11 others |
 | `rwsdk/src/baraster.c` | 6 of 10 | `RwRasterCreate`, `RwRasterDestroy`, `RwRasterShowRaster`, `_rwRasterClose` |
 | `rwsdk/src/batextur.c` | 12 of 27 | 15 others |
+| `rwsdk/src/plcore/batkbin.c` | 3 of 8 | 5 others |
+| `rwsdk/src/plcore/bamatrix.c` | 2 of 9 | 7 others |
+| `rwsdk/src/plcore/bastream.c` | 1 of 5 | `RwStreamRead`, `RwStreamWrite`, `RwStreamSkip`, `RwStreamClose` |
+| `rwsdk/src/babinfrm.c` | 2 of 3 | `fn_80166BDC` |
+| `rwsdk/src/babintex.c` | 2 of 9 | 7 others |
+| `rwsdk/src/baimage.c` | 3 of 16 | 13 others |
+| `rwsdk/src/batypehf.c` | 1 of 2 | `_rwObjectHasFrameSetFrame` |
 | `rwsdk/world/basector.c` | 6 of 6 | |
 | `rwsdk/world/bamateri.c` | 7 of 8 | the function at `0x8014CFC8`, which opens the light module ([RenderWare limits](splits.md#limits-2)) |
 | `rwsdk/world/balight.c` | 10 of 12 | `RpLightGetConeAngle`, `RpLightStreamRead` |
 | `rwsdk/world/baclump.c` | 24 of 38 | 14 others, including `_rpAtomicResyncInterpolatedSphere` |
 | `rwsdk/world/bageomet.c` | 3 of 9 | 6 others |
 | `rwsdk/world/baworld.c` | 4 of 25 | 21 others |
+| `rwsdk/world/baworobj.c` | 40 of 47 | the sync functions (`WorldCameraSync`, `WorldAtomicSync`, `WorldLightSync`, `WorldSyncCamera`), `WorldAttachAtomicSphere`, `_rpWorldObjRegisterExtensions`, `RpWorldAddClump` |
+| `rwsdk/world/bamatlst.c` | 3 of 5 | `_rpMaterialListDeinitialize`, `_rpMaterialListStreamRead` |
+| `rwsdk/world/bamesh.c` | 2 of 11 | 9 others |
+| `rwsdk/world/babinwor.c` | 2 of 6 | the world and sector rights read/write functions |
 
-Structure layouts come from the SLUS-20349 DWARF where it has the type (game code includes RenderWare's headers) and from the target's accesses otherwise; `evidence.tsv` has a `type` or `field` row for each. The GameCube layout can differ: `RwTexture.refCount` is at `+0x54` here and `+0x50` in the DWARF, and `RpClump` has a light list at `+0x10` and a camera list at `+0x18` (size `0x30`) where the DWARF's PS2 class has neither, as bfbb's GameCube header does. The size-sequence labels at `0x80149A4C` and `0x80149A80` were corrected to `RpClumpRemoveLight` and `RpClumpRemoveCamera` (the bodies use the light and camera extension offsets, in bfbb's order). `include/rwcore.h` and `include/rpworld.h` now declare their types with `typedef` so the same headers serve the C RenderWare units and the C++ game code. Type, member, typedef and macro names the DWARF lacks (`RwGlobals`, `RwDevice`, `RwError`, `RwPluginRegistry`, `RwPluginRegEntry`, the plugin, device and callback typedefs, `RWSRCGLOBAL`) follow bfbb's `include/rwsdk/rwplcore.h`, `rwcore.h` and `rpworld.h` (derived from the SDK headers) as related names. The file-local module data (`VectorModuleData`, `ErrorModuleData`, `MaterialModuleData`, `LightModuleData`, `TextureModuleData`, `FrameModuleData`, `CameraModuleData`), `ClumpObjectExt`, `WorldSectorSearch`, the `STDFUNC_*` indices into `RwGlobals.stdFunc` and resource-heap types (`ResHeap`, `ResHeapBlock`) have no source and use this project's own names. Source-form details the target fixes:
+Structure layouts come from the SLUS-20349 DWARF where it has the type (game code includes RenderWare's headers) and from the target's accesses otherwise; `evidence.tsv` has a `type` or `field` row for each. The GameCube layout can differ: `RwTexture.refCount` is at `+0x54` here and `+0x50` in the DWARF, and `RpClump` has a light list at `+0x10` and a camera list at `+0x18` (size `0x30`) where the DWARF's PS2 class has neither, as bfbb's GameCube header does. The size-sequence labels at `0x80149A4C` and `0x80149A80` were corrected to `RpClumpRemoveLight` and `RpClumpRemoveCamera` (the bodies use the light and camera extension offsets, in bfbb's order). `include/rwcore.h` and `include/rpworld.h` now declare their types with `typedef` so the same headers serve the C RenderWare units and the C++ game code. Type, member, typedef and macro names the DWARF lacks (`RwGlobals`, `RwDevice`, `RwError`, `RwPluginRegistry`, `RwPluginRegEntry`, the plugin, device and callback typedefs, `RWSRCGLOBAL`) follow bfbb's `include/rwsdk/rwplcore.h`, `rwcore.h` and `rpworld.h` (derived from the SDK headers) as related names. The file-local module data (`VectorModuleData`, `ErrorModuleData`, `MaterialModuleData`, `LightModuleData`, `TextureModuleData`, `FrameModuleData`, `CameraModuleData`, `WorldObjModuleData`, `MatrixModuleData`, `StreamModuleData`), `ClumpObjectExt`, `WorldSectorSearch`, the world-object extensions and ties (`WorldCameraExt`, `WorldObjectExt`, `WorldTie`, `LightTie`), the `STDFUNC_*` indices into `RwGlobals.stdFunc` and resource-heap types (`ResHeap`, `ResHeapBlock`) have no source and use this project's own names. Source-form details the target fixes:
 
 - `_rwSqrt` and `_rwInvSqrt` (59% and 62%) are not counted as exact. The target stores the argument to the stack and reloads the word after each store; under this profile only a `volatile` access reproduces that, and nothing shows the original used one, so the source keeps a plain pointer ([CONTRIBUTING](../CONTRIBUTING.md) bars a qualifier whose only justification is matching bytes).
 - The resource heap tests a block's `used` word as `~used & 1` where the block must be free (`nor` then `clrlwi.`) and as `used & 1` where it must be in use (`clrlwi.` alone). `!(used & 1)` and `(used & 1) == 0` compile to `clrlwi.` with the opposite branch and do not match.
 - `_rpClumpRegisterExtensions` ends with `return (_rpClumpLightExtOffset = RpLightRegisterPlugin(...)) >= 0;`: the target takes the sign bit before it stores the offset. Storing first and testing the global puts the store before the shift.
 - `StrChr` and `StrRChr` copy the `char` argument into an `S32` local before the loop: the target sign-extends it once into `r5`, and comparing with the parameter directly swaps `r4` and `r5`.
+- `baworobj.c` defines `_rpTieDestroy` and `_rpLightTieDestroy` before the extension deinitializers and `RpWorldRemoveLight`, which call them: the target has their bodies inline there, and keeps the global copies.
+- The three tie-list walks in `baworobj.c` declare the list head before the cursor; the other order swaps their registers.
 - `VectorMultVector` computes `x * right + y * up` for all three components before adding the `at` terms and storing: the target loads `right.y`, `right.z`, `up.y` and `up.z` before the first store. The source does the same, but the register allocation still differs.
 
 

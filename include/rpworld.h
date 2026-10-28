@@ -23,6 +23,15 @@ struct RxPipeline
     U32 pluginData;
 };
 
+struct RpMeshHeader
+{
+    U32 flags;
+    U16 numMeshes;
+    U16 serialNum;
+    U32 totalIndicesInMesh;
+    U32 firstMeshOffset;
+};
+
 typedef struct RpMaterial RpMaterial;
 struct RpMaterial
 {
@@ -59,6 +68,7 @@ struct RpWorldSector
 };
 
 typedef RpWorldSector* (*RpWorldSectorCallBackRender)(RpWorldSector* worldSector);
+typedef RpWorldSector* (*RpWorldSectorCallBack)(RpWorldSector* worldSector, void* data);
 
 typedef enum RpWorldRenderOrder
 {
