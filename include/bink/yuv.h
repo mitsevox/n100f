@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void YUV_init(U32 type);
+void YUV_init(S32 layout);
 void YUV_blit_32bpp(void* dest, U32 destx, U32 desty, S32 pitch, U8* src, U32 srcx, U32 srcy,
                     U32 srcw, U32 srch, U32 width, U32 height, U32 flags);
 void YUV_blit_32abpp(void* dest, U32 destx, U32 desty, S32 pitch, U8* src, U32 srcx, U32 srcy,

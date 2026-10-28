@@ -29,9 +29,9 @@ void YUV_32_4x2_even(S32 n)
 
     tpitch = (S.pitch * 4 + 63) & ~63;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 4;
+    S.dst0 += n * 16;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 4;
+    S.dst1 += n * 16;
     u = S.u;
     v = S.v;
     y0 = S.y0;
@@ -92,9 +92,9 @@ void YUV_32x2_4x2_even(S32 n)
 
     tpitch = (S.pitch * 4 + 63) & ~63;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 8;
+    S.dst0 += n * 32;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 8;
+    S.dst1 += n * 32;
     u = S.u;
     v = S.v;
     y0 = S.y0;
@@ -161,9 +161,9 @@ void YUV_32m_4x2(S32 n)
 
     tpitch = (S.pitch * 4 + 63) & ~63;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 4;
+    S.dst0 += n * 16;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 4;
+    S.dst1 += n * 16;
     y0 = S.y0;
     y1 = S.y1;
 
@@ -209,9 +209,9 @@ void YUV_32mx2_4x2(S32 n)
 
     tpitch = (S.pitch * 4 + 63) & ~63;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 8;
+    S.dst0 += n * 32;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 8;
+    S.dst1 += n * 32;
     y0 = S.y0;
     y1 = S.y1;
 
@@ -265,9 +265,9 @@ void YUV_16_4x2_even(S32 n)
 
     tpitch = (S.pitch * 4 + 31) & ~31;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 2;
+    S.dst0 += n * 8;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 2;
+    S.dst1 += n * 8;
     u = S.u;
     v = S.v;
     y0 = S.y0;
@@ -333,9 +333,9 @@ void YUV_16x2_4x2_even(S32 n)
 
     tpitch = (S.pitch * 4 + 31) & ~31;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 4;
+    S.dst0 += n * 16;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 4;
+    S.dst1 += n * 16;
     u = S.u;
     v = S.v;
     y0 = S.y0;
@@ -409,9 +409,9 @@ void YUV_16m_4x2(S32 n)
 
     tpitch = (S.pitch * 4 + 31) & ~31;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 2;
+    S.dst0 += n * 8;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 2;
+    S.dst1 += n * 8;
     y1 = S.y1;
     y0 = S.y0;
 
@@ -446,9 +446,9 @@ void YUV_16mx2_4x2(S32 n)
 
     tpitch = (S.pitch * 4 + 31) & ~31;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 4;
+    S.dst0 += n * 16;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 4;
+    S.dst1 += n * 16;
     y1 = S.y1;
     y0 = S.y0;
 
@@ -501,9 +501,9 @@ void YUV_32a_4x2_even(S32 n)
 
     tpitch = (S.pitch * 4 + 63) & ~63;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 4;
+    S.dst0 += n * 16;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 4;
+    S.dst1 += n * 16;
     a0 = S.a0;
     a1 = S.a1;
     u = S.u;
@@ -572,9 +572,9 @@ void YUV_32ax2_4x2_even(S32 n)
 
     tpitch = (S.pitch * 4 + 63) & ~63;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 8;
+    S.dst0 += n * 32;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 8;
+    S.dst1 += n * 32;
     a0 = S.a0;
     a1 = S.a1;
     u = S.u;
@@ -649,9 +649,9 @@ void YUV_32am_4x2(S32 n)
 
     tpitch = (S.pitch * 4 + 63) & ~63;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 4;
+    S.dst0 += n * 16;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 4;
+    S.dst1 += n * 16;
     a0 = S.a0;
     a1 = S.a1;
     y0 = S.y0;
@@ -705,9 +705,9 @@ void YUV_32amx2_4x2(S32 n)
 
     tpitch = (S.pitch * 4 + 63) & ~63;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 8;
+    S.dst0 += n * 32;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 8;
+    S.dst1 += n * 32;
     a0 = S.a0;
     a1 = S.a1;
     y0 = S.y0;
@@ -769,9 +769,9 @@ void YUV_16a4_4x2_even(S32 n)
 
     tpitch = (S.pitch * 4 + 31) & ~31;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 2;
+    S.dst0 += n * 8;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 2;
+    S.dst1 += n * 8;
     a0 = S.a0;
     a1 = S.a1;
     u = S.u;
@@ -850,9 +850,9 @@ void YUV_16a4x2_4x2_even(S32 n)
 
     tpitch = (S.pitch * 4 + 31) & ~31;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 4;
+    S.dst0 += n * 16;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 4;
+    S.dst1 += n * 16;
     a0 = S.a0;
     a1 = S.a1;
     u = S.u;
@@ -939,9 +939,9 @@ void YUV_16a4m_4x2(S32 n)
 
     tpitch = (S.pitch * 4 + 31) & ~31;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 2;
+    S.dst0 += n * 8;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 2;
+    S.dst1 += n * 8;
     a0 = S.a0;
     a1 = S.a1;
     y0 = S.y0;
@@ -989,9 +989,9 @@ void YUV_16a4mx2_4x2(S32 n)
 
     tpitch = (S.pitch * 4 + 31) & ~31;
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
-    S.dst0 += n * 4;
+    S.dst0 += n * 16;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 4;
+    S.dst1 += n * 16;
     a0 = S.a0;
     a1 = S.a1;
     y0 = S.y0;
