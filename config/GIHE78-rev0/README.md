@@ -13,6 +13,8 @@ USA release, disc revision 0. `main.dol` is 1,964,512 bytes with entry point `0x
 | `rwmap.json`, `rw_units.tsv` | Input and report of `tools/splits/rwmap.py`: the pinned BfBB symbol and split lists, the RenderWare library order, the corroborating references, and every RenderWare unit it placed, with the step that placed it. See [RenderWare units](../../docs/splits.md#renderware-units). |
 | `ldscript.tpl` | dtk's default linker script template with the debugger stack at `_stack_addr + 0x1000` (see the `linker` rows in `evidence.tsv`) |
 
+A `function` row of `evidence.tsv` whose exact body was written for this project, rather than taken from a related build, says so with the phrase `written for this project` in its evidence. The phrase is reserved: `tools/splits/recover.py` reads it to keep such a body out of its name anchors, because the body matches but its name came from position. Use it only for that, and always for that.
+
 ## Mapping onto the handbook stages
 
 | Handbook stage | Implementation |

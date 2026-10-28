@@ -32,5 +32,6 @@ struct _xScene
 };
 
 xBase* xSceneResolvID(_xScene* sc, U32 id);
+char* xSceneID2Name(_xScene* sc, U32 id);
 
 #endif
