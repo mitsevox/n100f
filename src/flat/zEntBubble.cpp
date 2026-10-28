@@ -344,6 +344,7 @@ void zEntBubble_Update(_zEntBubble* ent, _xScene* sc, F32 dt)
         _xCollis* coll;
         _xCollis* endcoll;
         _zEnt* vill;
+        en_ZVILLAIN_BUBBLE_RESPONSE response;
 
         xEntBeginUpdate(ent, sc, dt);
         zEntBubble_FX(ent, dt);
@@ -384,7 +385,8 @@ void zEntBubble_Update(_zEntBubble* ent, _xScene* sc, F32 dt)
                 }
 
                 vill = (_zEnt*)coll->optr;
-                switch (zEntVillain_Bubble((st_zEntVillain*)vill, ent))
+                response = zEntVillain_Bubble((st_zEntVillain*)vill, ent);
+                switch (response)
                 {
                 case ZVIL_BUBBLE_ENVELOP:
                     ent->state = 0x10;

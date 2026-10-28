@@ -10,7 +10,7 @@ struct _zPortal;
 struct _zEnv;
 struct _tagClimate;
 
-// Partial: the _xScene members past npcs and baseCount and baseList are left opaque.
+// Partial: the _xScene members past npcs, and baseCount and baseList, are left opaque.
 struct zScene : _xScene
 {
     U8 opaque_38[0x6C - 0x38];
