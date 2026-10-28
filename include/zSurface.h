@@ -6,6 +6,8 @@
 #include "xSurface.h"
 #include "xVec3.h"
 
+struct _xCollis;
+
 struct zSurfMatFX
 {
     U32 flags;
@@ -95,6 +97,7 @@ struct zSurfaceProps
 
 void zSurfaceRegisterMapper(U32 assetId);
 void zSurfaceExit();
+xSurface* zSurfaceGetSurface(const _xCollis* coll);
 U32 zSurfaceGetSlide(const xSurface* surf);
 U32 zSurfaceGetStep(const xSurface* surf);
 F32 zSurfaceGetSlideStartAngle(const xSurface* surf);
