@@ -4,5 +4,6 @@
 #include "types.h"
 
 void* xSTFindAsset(U32 aid, U32* size);
+const char* xSTAssetName(U32 aid);
 
 #endif

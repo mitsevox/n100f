@@ -20,11 +20,20 @@ struct zScene : _xScene
     _zEnt** ents;
 };
 
+struct IDBasePair
+{
+    U32 id;
+    xBase* base;
+};
+
 extern _tagClimate gClimate;
 extern _zEnv* gCurEnv;
 
 xBase* zSceneFindObject(U32 gameID);
 xBase* zSceneGetObject(S32 type, S32 idx);
+const char* zSceneGetName(U32 gameID);
+const char* zSceneGetName(xBase* b);
+S32 zSceneSetup_serialTraverseCB(U32 clientID, xSerial* xser);
 
 inline U32 zSceneIDFromName(const char* name)
 {

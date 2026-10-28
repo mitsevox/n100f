@@ -62,6 +62,14 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 - `iSGTgtCount` calls the target's unnamed `fn_80016768`, a reset-button poll, where bfbb calls `iTRCDisk::CheckDVDAndResetState`; the target's function is not bfbb's.
 - `zVarEntryCB_MCAvailable` takes no parameter and returns `U32`, as its DWARF mangling does.
 
+`src/flat/iTime.cpp`, `zEnt.cpp`, `zParSys.cpp`, `zPortal.cpp`, `zRenderState.cpp`, `zScene.cpp`, `zScript.cpp` and `zTimer.cpp` take their function bodies the same way, from bfbb's `src/SB/Core/gc/iTime.cpp`, `src/SB/Game/zEnt.cpp`, `src/SB/Core/x/xEvent.cpp` (the two `zEntEvent` forwarders), `src/SB/Core/x/xParSys.cpp`, `src/SB/Game/zPortal.cpp`, `src/SB/Core/x/xRenderState.cpp`, `src/SB/Game/zScene.cpp`, `src/SB/Game/zScript.cpp` and `src/SB/Core/x/xTimer.cpp` at the same revision (CC0 1.0). Each file holds only the functions whose compiled form matches the target. Local changes:
+
+- bfbb's `xTimer`, `xParSys` and `xRenderState` functions and types take the names the SLUS-20349 DWARF gives them in this game (`zTimerLoad`, `_zTimer`, `zParSysEventCB`, `zParSys`, `zRenderStateSetDstBlendMode` and so on). Parameters bfbb declares `const F32*` are `F32*`, as the DWARF manglings have them.
+- `zPortalInit(void*, void*)` and `zScriptInit(void*, void*)` hold the bodies bfbb puts in its typed overloads, which the DWARF does not list; the target has one function each.
+- `zParSysEventCB` does bfbb's `xParSysReset` work inline, since the DWARF has no `zParSysReset`.
+- `zParamGetString` and `zParamGetInt` take `zAssetModelParam`, the DWARF's name for bfbb's `xModelAssetParam`. `zParamGetString` and `zSceneFindObject` are defined so that `zParamGetInt` and `zSceneGetName(U32)` inline them, as the target does. The target has no copy of `zParamGetString` of its own, and `zEnt.o` emits one that nothing references.
+- `include/zTimer.h`, `zScript.h`, `zPortal.h` and `zParSys.h` follow the DWARF layouts. `include/xParGroup.h` declares the `xParGroup` calls these units make and keeps the type opaque. `p2LinkAsset` in `xBase.h` follows the DWARF.
+
 
 `src/flat/zEntDestructObj.cpp` follows bfbb's `src/SB/Game/zEntDestructObj.cpp` at the same revision (CC0 1.0) for `zEntDestructObj_Init`, `zEntDestructObjEventCB` and `zEntDestructObj_DestroyFX`, cut down to what the target does: Init keeps bfbb's statements from the `penby` store through the second `eventFunc` store except bfbb's `chkby |= XENT_COLLTYPE_DYN`, which the target lacks, and writes bfbb's raw `+ 0x8c` link offset as the two asset sizes; the callback keeps bfbb's case structure and `(U8)~` masks; DestroyFX keeps the switch that picks the emitter and rumble type and the distance test against the player. bfbb's sound, shrapnel, model-swap, throw-target and respawn code has no counterpart in this game and is left out. The other functions are written for this project from the target and the SLUS-20349 DWARF.
 
