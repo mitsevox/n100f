@@ -1,6 +1,8 @@
 #include <rwcore.h>
 
-// The standard device function that clears a camera's rasters.
+// The standard device functions the camera calls.
+#define STDFUNC_CAMERABEGINUPDATE 1
+#define STDFUNC_CAMERAENDUPDATE 10
 #define STDFUNC_CAMERACLEAR 21
 
 // The camera module's data in the engine instance.
@@ -17,6 +19,60 @@ RwPluginRegistry cameraTKList = { sizeof(RwCamera), sizeof(RwCamera) };
 static RwModuleInfo cameraModule;
 
 RwRaster* RwRasterShowRaster(RwRaster* raster, void* dev, U32 flags);
+void _rwPipeInitForCamera(const RwCamera* camera);
+
+static RwCamera* CameraEndUpdate(RwCamera* camera)
+{
+    if (RWSRCGLOBAL(stdFunc)[STDFUNC_CAMERAENDUPDATE](NULL, camera, 0))
+    {
+        RWSRCGLOBAL(curCamera) = NULL;
+        return camera;
+    }
+
+    return NULL;
+}
+
+static RwCamera* CameraBeginUpdate(RwCamera* camera)
+{
+    RWSRCGLOBAL(curCamera) = camera;
+    _rwFrameSyncDirty();
+
+    if (RWSRCGLOBAL(stdFunc)[STDFUNC_CAMERABEGINUPDATE](NULL, camera, 0))
+    {
+        _rwPipeInitForCamera(camera);
+        return camera;
+    }
+
+    return NULL;
+}
+
+void* _rwCameraClose(void* instance, S32 offset, S32 size)
+{
+    if (CAMERA_DATA(freeList))
+    {
+        RwFreeListDestroy(CAMERA_DATA(freeList));
+        CAMERA_DATA(freeList) = NULL;
+    }
+
+    cameraModule.numInstances--;
+
+    return instance;
+}
+
+void* _rwCameraOpen(void* instance, S32 offset, S32 size)
+{
+    cameraModule.globalsOffset = offset;
+    CAMERA_DATA(freeList) = RwFreeListCreate(cameraTKList.sizeOfStruct, 4, 4);
+
+    if (!CAMERA_DATA(freeList))
+    {
+        return NULL;
+    }
+
+    cameraModule.numInstances++;
+
+    return instance;
+}
 
 RwCamera* RwCameraEndUpdate(RwCamera* camera)
 {

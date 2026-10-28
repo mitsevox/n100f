@@ -330,6 +330,9 @@ flat/xShadow.cpp:
 	.sbss       start:0x8025EB90 end:0x8025EBC0
 	.sdata2     start:0x80260188 end:0x80260260
 
+flat/xSnd.cpp:
+	.text       start:0x8003CD24 end:0x8003D5C0
+
 flat/xSpline.cpp:
 	.text       start:0x8003D680 end:0x8003F904
 	.rodata     start:0x80193EF8 end:0x80193F08
@@ -744,6 +747,15 @@ gc/iAnim.cpp:
 	.bss        start:0x80239028 end:0x8023B3C8
 	.sdata      start:0x8025E5C0 end:0x8025E5C8
 	.sdata2     start:0x80262040 end:0x80262070
+
+gc/iFMV.cpp:
+	.text       start:0x800DB168 end:0x800DBDA8
+	.rodata     start:0x801A7B20 end:0x801A7C08
+	.bss        start:0x8023CF90 end:0x8023CFA8
+	.sdata      start:0x8025E5C8 end:0x8025E5D0
+	.sbss       start:0x8025F1A8 end:0x8025F1E8
+	.sdata2     start:0x802620B8 end:0x802620F8
+	.sbss2      start:0x80262CF0 end:0x80262CF4
 
 gc/ngcrad3d.c:
 	.text       start:0x800DBDA8 end:0x800DC29C
@@ -1230,8 +1242,9 @@ dolphin/gx/GXPerf.c: comment:8
 	.data       start:0x801CCC90 end:0x801CCD80
 
 dolphin/mtx/mtx.c: comment:8
-	.text       start:0x801031B4 end:0x80103280
+	.text       start:0x80103188 end:0x80103280
 	.sdata      start:0x8025E680 end:0x8025E688
+	.sdata2     start:0x80262768 end:0x80262770
 
 dolphin/mtx/mtx44.c: comment:8
 	.text       start:0x80103280 end:0x80103318
@@ -1635,6 +1648,7 @@ rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c:
 
 rwsdk/src/plcore/babinary.c:
 	.text       start:0x80160340 end:0x80160F60
+	.data       start:0x801DDB60 end:0x801DDBCC
 
 rwsdk/src/plcore/baerr.c:
 	.text       start:0x80160FC0 end:0x8016109C

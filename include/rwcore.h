@@ -26,6 +26,23 @@ struct RwLinkList
     RwLLLink link;
 };
 
+#define rwLinkListAddLLLink(list, linkvar)                                                         \
+    ((linkvar)->next = (list)->link.next, (linkvar)->prev = (&(list)->link),                       \
+     ((list)->link.next)->prev = (linkvar), (list)->link.next = (linkvar))
+#define rwLinkListRemoveLLLink(linkvar)                                                            \
+    (((linkvar)->prev)->next = (linkvar)->next, ((linkvar)->next)->prev = (linkvar)->prev)
+
+typedef struct RwResEntry RwResEntry;
+typedef void (*RwResEntryDestroyNotify)(RwResEntry* resEntry);
+struct RwResEntry
+{
+    RwLLLink link;
+    S32 size;
+    void* owner;
+    RwResEntry** ownerRef;
+    RwResEntryDestroyNotify destroyNotify;
+};
+
 typedef struct RwObject RwObject;
 struct RwObject
 {
@@ -255,8 +272,28 @@ typedef enum RwFrustumTestResult
     rwFRUSTUMTESTRESULTFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwFrustumTestResult;
 
+#define rwID_STRUCT 0x01
+#define rwID_STRING 0x02
+#define rwID_EXTENSION 0x03
+#define rwID_CAMERA 0x05
+#define rwID_TEXTURE 0x06
+#define rwID_MATERIAL 0x07
+#define rwID_MATLIST 0x08
+#define rwID_ATOMICSECT 0x09
+#define rwID_PLANESECT 0x0A
+#define rwID_WORLD 0x0B
+#define rwID_MATRIX 0x0D
+#define rwID_FRAMELIST 0x0E
+#define rwID_GEOMETRY 0x0F
 #define rwID_CLUMP 0x10
+#define rwID_LIGHT 0x12
+#define rwID_UNICODESTRING 0x13
+#define rwID_ATOMIC 0x14
+#define rwID_GEOMETRYLIST 0x1A
 #define rwID_RIGHTTORENDER 0x1f
+
+#define rwLIBRARYBASEVERSION 0x31000
+#define rwLIBRARYCURRENTVERSION 0x33002
 
 #define rwMATRIXTYPEORTHONORMAL 0x00000003
 #define rwMATRIXINTERNALIDENTITY 0x00020000
@@ -373,6 +410,16 @@ typedef enum RwRenderState
 #define RwCameraSetFogDistance(_camera, _distance) \
     (((_camera)->fogPlane = (_distance)), (_camera))
 
+typedef struct RwChunkHeaderInfo RwChunkHeaderInfo;
+struct RwChunkHeaderInfo
+{
+    U32 type;
+    U32 length;
+    U32 version;
+    U32 buildNum;
+    S32 isComplex;
+};
+
 typedef struct RwError RwError;
 struct RwError
 {
@@ -453,6 +500,7 @@ struct RwImage
 };
 
 typedef RwTexture* (*RwTextureCallBackRead)(const char* name, const char* maskName);
+typedef RwTexture* (*RwTextureCallBack)(RwTexture* texture, void* pData);
 
 // Partial: only entrySize is declared.
 typedef struct RwFreeList RwFreeList;
@@ -522,8 +570,31 @@ typedef enum RwPrimitiveType
     rwPRIMITIVETYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwPrimitiveType;
 
+// Partial: this driver's 2D vertex is 0x1C bytes; the last word is not reached.
 typedef struct RwIm2DVertex RwIm2DVertex;
+struct RwIm2DVertex
+{
+    F32 x;
+    F32 y;
+    F32 z;
+    RwRGBA emissiveColor;
+    F32 u;
+    F32 v;
+    U8 unk18[4];
+};
 typedef U16 RwImVertexIndex;
+
+#define RwIm2DVertexSetScreenX(vert, scrnx) ((vert)->x = (scrnx))
+#define RwIm2DVertexSetScreenY(vert, scrny) ((vert)->y = (scrny))
+#define RwIm2DVertexSetScreenZ(vert, scrnz) ((vert)->z = (scrnz))
+#define RwIm2DVertexSetIntRGBA(vert, r, g, b, a)                                                   \
+    do                                                                                             \
+    {                                                                                              \
+        (vert)->emissiveColor.red = r;                                                             \
+        (vert)->emissiveColor.green = g;                                                           \
+        (vert)->emissiveColor.blue = b;                                                            \
+        (vert)->emissiveColor.alpha = a;                                                           \
+    } while (0)
 
 typedef S32 (*RwStandardFunc)(void* pOut, void* pInOut, S32 nI);
 typedef S32 (*RwSystemFunc)(S32 nOption, void* pOut, void* pInOut, S32 nIn);
@@ -567,7 +638,7 @@ struct RwGlobals
     U16 pad[2];
     RwDevice dOpenDevice;
     RwStandardFunc stdFunc[29];
-    U8 unkBC[0x8];
+    RwLinkList dirtyFrameList;
     RwFileFunctions fileFuncs;
     U8 unkF0[0x40];
     RwMemoryFunctions memoryFuncs;
@@ -578,11 +649,40 @@ struct RwGlobals
 
 #define RWSRCGLOBAL(var) (((RwGlobals*)RwEngineInstance)->var)
 
+// Partial: the resource arena's globals, at resourcesModule.globalsOffset in the engine
+// instance. Only the arena size and the in-use entry list are reached.
+typedef struct RwResourcesGlobals RwResourcesGlobals;
+struct RwResourcesGlobals
+{
+    U32 arenaSize;
+    U8 unk4[0x20];
+    RwLinkList* usedEntryList;
+};
+
+#define RWRESOURCESGLOBAL(var)                                                                     \
+    (((RwResourcesGlobals*)((U8*)RwEngineInstance + resourcesModule.globalsOffset))->var)
+
+// The release build's form: an entry still linked is moved to the head of the in-use list.
+#define RwResourcesUseResEntry(entry)                                                              \
+    ((((entry)->link.next) ? (rwLinkListRemoveLLLink(&((entry)->link)),                            \
+                              rwLinkListAddLLLink(RWRESOURCESGLOBAL(usedEntryList),                \
+                                                  &((entry)->link)))                               \
+                           : NULL),                                                                \
+     (entry))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 extern void* RwEngineInstance;
+extern RwModuleInfo resourcesModule;
+
+RwResEntry* RwResourcesAllocateResEntry(void* owner, RwResEntry** ownerRef, S32 size,
+                                        RwResEntryDestroyNotify destroyNotify);
+S32 RwResourcesFreeResEntry(RwResEntry* entry);
+S32 RwResourcesGetArenaSize(void);
+S32 RwIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices,
+                                 S32 numVertices, RwImVertexIndex* indices, S32 numIndices);
 
 RwCamera* RwCameraCreate();
 S32 RwCameraDestroy(RwCamera* camera);
@@ -598,6 +698,10 @@ S32 RwCameraRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor con
 void _rwObjectHasFrameSetFrame(void* object, RwFrame* frame);
 RwRaster* RwRasterCreate(S32 width, S32 height, S32 depth, S32 flags);
 S32 RwRasterDestroy(RwRaster* raster);
+S32 RwImageDestroy(RwImage* image);
+RwImage* RwImageFreePixels(RwImage* image);
+const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict,
+                                                    RwTextureCallBack fpCallBack, void* pData);
 S32 RwRenderStateSet(RwRenderState state, void* value);
 S32 RwEngineRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor initCB,
                            RwPluginObjectDestructor termCB);
@@ -616,6 +720,14 @@ RwV3d* RwV3dTransformPoints(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoin
 RwFrustumTestResult RwCameraFrustumTestSphere(const RwCamera* camera, const RwSphere* sphere);
 RwStream* RwStreamOpen(RwStreamType type, RwStreamAccessType accessType, const void* pData);
 S32 RwStreamClose(RwStream* stream, void* pData);
+U32 RwStreamRead(RwStream* stream, void* buffer, U32 length);
+RwStream* RwStreamWrite(RwStream* stream, const void* buffer, U32 length);
+RwStream* RwStreamSkip(RwStream* stream, U32 offset);
+RwStream* RwStreamReadChunkHeaderInfo(RwStream* stream, RwChunkHeaderInfo* chunkHeaderInfo);
+RwStream* _rwStreamWriteVersionedChunkHeader(RwStream* stream, S32 type, S32 size, U32 version,
+                                             U32 buildNum);
+void* RwMemLittleEndian32(void* mem, U32 size);
+void* RwMemNative32(void* mem, U32 size);
 S32 RwStreamFindChunk(RwStream* stream, U32 type, U32* lengthOut, U32* versionOut);
 void _rwFrameSyncDirty();
 

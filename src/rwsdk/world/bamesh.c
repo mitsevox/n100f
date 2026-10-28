@@ -17,6 +17,28 @@ RpMeshHeader* _rpMeshHeaderCreate(U32 size)
     return (RpMeshHeader*)RWSRCGLOBAL(memoryFuncs).rwmalloc(size);
 }
 
+RpMeshHeader* _rpMeshHeaderForAllMeshes(RpMeshHeader* meshHeader, RpMeshCallBack fpCallBack,
+                                        void* pData)
+{
+    S32 numMeshes;
+    RpMesh* mesh;
+
+    mesh = (RpMesh*)((U8*)(meshHeader + 1) + meshHeader->firstMeshOffset);
+    numMeshes = meshHeader->numMeshes;
+
+    while (numMeshes--)
+    {
+        if (!fpCallBack(mesh, meshHeader, pData))
+        {
+            return meshHeader;
+        }
+
+        mesh++;
+    }
+
+    return meshHeader;
+}
+
 S32 _rpMeshSize(const RpMeshHeader* meshHeader, const void* object)
 {
     const RwObject* owner = (const RwObject*)object;

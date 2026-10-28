@@ -40,7 +40,7 @@ struct Bink {
     U32 mask_size;
     U32 largest_frame;
     U32 num_offsets;
-    U32 num_tracks;
+    S32 num_tracks;
     U32 high_rate;
     U32 high_frame;
     S32 paused;

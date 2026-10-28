@@ -10,7 +10,6 @@ typedef struct RpSector RpSector;
 typedef struct RpPolygon RpPolygon;
 typedef struct RpVertexNormal RpVertexNormal;
 typedef struct RwTexCoords RwTexCoords;
-typedef struct RwResEntry RwResEntry;
 typedef struct RpCollSector RpCollSector;
 typedef struct RpMeshHeader RpMeshHeader;
 typedef struct RxPipeline RxPipeline;
@@ -33,6 +32,17 @@ struct RpMeshHeader
 };
 
 typedef struct RpMaterial RpMaterial;
+
+typedef struct RpMesh RpMesh;
+struct RpMesh
+{
+    U16* indices;
+    U32 numIndices;
+    RpMaterial* material;
+};
+
+typedef RpMesh* (*RpMeshCallBack)(RpMesh* mesh, RpMeshHeader* meshHeader, void* pData);
+typedef RpMaterial* (*RpMaterialCallBack)(RpMaterial* material, void* data);
 struct RpMaterial
 {
     RwTexture* texture;
