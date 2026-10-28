@@ -105,6 +105,27 @@ typedef struct RwFrame RwFrame;
 typedef struct RwRaster RwRaster;
 typedef struct RwStream RwStream;
 
+struct RwRaster
+{
+    RwRaster* parent;
+    U8* cpPixels;
+    U8* palette;
+    S32 width;
+    S32 height;
+    S32 depth;
+    S32 stride;
+    S16 nOffsetX;
+    S16 nOffsetY;
+    U8 cType;
+    U8 cFlags;
+    U8 privateFlags;
+    U8 cFormat;
+    U8* originalPixels;
+    S32 originalWidth;
+    S32 originalHeight;
+    S32 originalStride;
+};
+
 typedef struct RwV2d RwV2d;
 struct RwV2d
 {
@@ -158,15 +179,19 @@ struct RwCamera
     U16 renderFrame;
     U16 pad;
     RwFrustumPlane frustumPlanes[6];
+    U8 unk110[0x78];
 };
 
-// Partial: only the members up to the world matrix are declared.
 struct RwFrame
 {
     RwObject object;
     RwLLLink inDirtyListLink;
     RwMatrix modelling;
     RwMatrix ltm;
+    RwLinkList objectList;
+    RwFrame* child;
+    RwFrame* next;
+    RwFrame* root;
 };
 
 typedef RwFrame* (*RwFrameCallBack)(RwFrame* frame, void* data);
@@ -341,26 +366,62 @@ struct RwSurfaceProperties
     F32 diffuse;
 };
 
-// Partial: only refCount is declared; the GameCube layout has it at +0x54.
+typedef struct RwTexDictionary RwTexDictionary;
+struct RwTexDictionary
+{
+    RwObject object;
+    RwLinkList texturesInDict;
+    RwLLLink lInInstance;
+};
+
+// Partial: the name, mask and filtering members are not declared; the GameCube layout has
+// refCount at +0x54.
 typedef struct RwTexture RwTexture;
 struct RwTexture
 {
-    U8 unk0[0x54];
+    RwRaster* raster;
+    RwTexDictionary* dict;
+    RwLLLink lInDictionary;
+    U8 unk10[0x44];
     S32 refCount;
 };
 
+typedef struct RwImage RwImage;
+struct RwImage
+{
+    S32 flags;
+    S32 width;
+    S32 height;
+    S32 depth;
+    S32 stride;
+    U8* cpPixels;
+    RwRGBA* palette;
+};
+
+typedef RwTexture* (*RwTextureCallBackRead)(const char* name, const char* maskName);
+
+// Partial: only entrySize is declared.
 typedef struct RwFreeList RwFreeList;
+struct RwFreeList
+{
+    U8 unk0[0x10];
+    S32 entrySize;
+};
 
 typedef void* (*RwMemoryAllocFn)(RwFreeList* fl);
 typedef RwFreeList* (*RwMemoryFreeFn)(RwFreeList* fl, void* pData);
 
-// Partial: the members after the two object sizes are not declared.
+typedef struct RwPluginRegEntry RwPluginRegEntry;
+
+// Partial: only the object sizes and the first entry are declared.
 typedef struct RwPluginRegistry RwPluginRegistry;
 struct RwPluginRegistry
 {
     S32 sizeOfStruct;
     S32 origSizeOfStruct;
-    U8 unk8[0x10];
+    U8 unk8[0x8];
+    RwPluginRegEntry* firstRegEntry;
+    U8 unk14[0x4];
 };
 
 typedef void* (*RwPluginObjectConstructor)(void* object, S32 offsetInObject, S32 sizeInObject);
@@ -375,6 +436,71 @@ typedef RwStream* (*RwPluginDataChunkWriteCallBack)(RwStream* stream, S32 binary
                                                     S32 sizeInObject);
 typedef S32 (*RwPluginDataChunkGetSizeCallBack)(const void* object, S32 offsetInObject,
                                                  S32 sizeInObject);
+typedef S32 (*RwPluginDataChunkAlwaysCallBack)(void* object, S32 offsetInObject,
+                                               S32 sizeInObject);
+typedef S32 (*RwPluginDataChunkRightsCallBack)(void* object, S32 offsetInObject,
+                                               S32 sizeInObject, U32 extraData);
+
+// Partial: the object callbacks between rightsCB and nextRegEntry are not declared.
+struct RwPluginRegEntry
+{
+    S32 offset;
+    S32 size;
+    U32 pluginID;
+    RwPluginDataChunkReadCallBack readCB;
+    RwPluginDataChunkWriteCallBack writeCB;
+    RwPluginDataChunkGetSizeCallBack getSizeCB;
+    RwPluginDataChunkAlwaysCallBack alwaysCB;
+    RwPluginDataChunkRightsCallBack rightsCB;
+    U8 unk20[0x10];
+    RwPluginRegEntry* nextRegEntry;
+};
+
+typedef enum RwPrimitiveType
+{
+    rwPRIMTYPENAPRIMTYPE = 0,
+    rwPRIMTYPELINELIST = 1,
+    rwPRIMTYPEPOLYLINE = 2,
+    rwPRIMTYPETRILIST = 3,
+    rwPRIMTYPETRISTRIP = 4,
+    rwPRIMTYPETRIFAN = 5,
+    rwPRIMTYPEPOINTLIST = 6,
+    rwPRIMITIVETYPEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwPrimitiveType;
+
+typedef struct RwIm2DVertex RwIm2DVertex;
+typedef U16 RwImVertexIndex;
+
+typedef S32 (*RwStandardFunc)(void* pOut, void* pInOut, S32 nI);
+typedef S32 (*RwSystemFunc)(S32 nOption, void* pOut, void* pInOut, S32 nIn);
+typedef S32 (*RwRenderStateSetFunction)(RwRenderState nState, void* pParam);
+typedef S32 (*RwRenderStateGetFunction)(RwRenderState nState, void* pParam);
+typedef S32 (*RwIm2DRenderLineFunction)(RwIm2DVertex* vertices, S32 numVertices, S32 vert1,
+                                        S32 vert2);
+typedef S32 (*RwIm2DRenderTriangleFunction)(RwIm2DVertex* vertices, S32 numVertices, S32 vert1,
+                                            S32 vert2, S32 vert3);
+typedef S32 (*RwIm2DRenderPrimitiveFunction)(RwPrimitiveType primType, RwIm2DVertex* vertices,
+                                             S32 numVertices);
+typedef S32 (*RwIm2DRenderIndexedPrimitiveFunction)(RwPrimitiveType primType,
+                                                    RwIm2DVertex* vertices, S32 numVertices,
+                                                    RwImVertexIndex* indices, S32 numIndices);
+
+// Partial: the immediate-mode 3D entries after the 2D ones are not declared.
+typedef struct RwDevice RwDevice;
+struct RwDevice
+{
+    F32 gammaCorrection;
+    RwSystemFunc fpSystem;
+    F32 zBufferNear;
+    F32 zBufferFar;
+    RwRenderStateSetFunction fpRenderStateSet;
+    RwRenderStateGetFunction fpRenderStateGet;
+    RwIm2DRenderLineFunction fpIm2DRenderLine;
+    RwIm2DRenderTriangleFunction fpIm2DRenderTriangle;
+    RwIm2DRenderPrimitiveFunction fpIm2DRenderPrimitive;
+    RwIm2DRenderIndexedPrimitiveFunction fpIm2DRenderIndexedPrimitive;
+    U8 unk28[0x10];
+};
 
 // Partial: only the members reconstructed code reaches are declared.
 typedef struct RwGlobals RwGlobals;
@@ -384,12 +510,16 @@ struct RwGlobals
     void* curWorld;
     U16 renderFrame;
     U16 lightFrame;
-    U8 unkC[0xB8];
+    U16 pad[2];
+    RwDevice dOpenDevice;
+    RwStandardFunc stdFunc[29];
+    U8 unkBC[0x8];
     RwFileFunctions fileFuncs;
     U8 unkF0[0x40];
     RwMemoryFunctions memoryFuncs;
     RwMemoryAllocFn memoryAlloc;
     RwMemoryFreeFn memoryFree;
+    U8 unk148[0xC];
 };
 
 #define RWSRCGLOBAL(var) (((RwGlobals*)RwEngineInstance)->var)
@@ -409,6 +539,8 @@ RwCamera* RwCameraShowRaster(RwCamera* camera, void* pDev, U32 flags);
 RwCamera* RwCameraSetNearClipPlane(RwCamera* camera, F32 nearClip);
 RwCamera* RwCameraSetFarClipPlane(RwCamera* camera, F32 farClip);
 RwCamera* RwCameraSetViewWindow(RwCamera* camera, const RwV2d* viewWindow);
+S32 RwCameraRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                           RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
 void _rwObjectHasFrameSetFrame(void* object, RwFrame* frame);
 RwRaster* RwRasterCreate(S32 width, S32 height, S32 depth, S32 flags);
 S32 RwRasterDestroy(RwRaster* raster);
@@ -445,6 +577,11 @@ S32 _rwPluginRegistryAddPluginStream(RwPluginRegistry* reg, U32 pluginID,
                                      RwPluginDataChunkReadCallBack readCB,
                                      RwPluginDataChunkWriteCallBack writeCB,
                                      RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 _rwPluginRegistryAddPlgnStrmlwysCB(RwPluginRegistry* reg, U32 pluginID,
+                                       RwPluginDataChunkAlwaysCallBack alwaysCB);
+S32 _rwPluginRegistryAddPlgnStrmRightsCB(RwPluginRegistry* reg, U32 pluginID,
+                                         RwPluginDataChunkRightsCallBack rightsCB);
+S32 _rwPluginRegistryGetPluginOffset(const RwPluginRegistry* reg, U32 pluginID);
 const RwPluginRegistry* _rwPluginRegistryInitObject(const RwPluginRegistry* reg, void* object);
 const RwPluginRegistry* _rwPluginRegistryDeInitObject(const RwPluginRegistry* reg, void* object);
 

@@ -20,27 +20,52 @@ The 89 RenderWare units in `config/GIHE78-rev0/rw_units.tsv` are listed NonMatch
 
 ### RenderWare SDK names and headers
 
-This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcore.h`, `rpworld.h`, `rphanim.h` and `rpskin.h`). Identifier names, and layouts checked against the target, may come from bfbb's `include/rwsdk/` headers, which are copies of the RenderWare SDK headers. By the project owner's decision, SDK macro bodies and enums may also be copied from there (2026-10-28, n100f#74), each credited in [CREDITS.md](../CREDITS.md) with its local changes. Nothing else is copied: no RenderWare function code, comments or other header text. A name or layout no allowed source gives stays opaque or is written from the target (for example a bare enum value with an evidence row), never filled in from recollection of the SDK, and leaked RenderWare source is never used.
+This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcore.h`, `rpworld.h`, `rphanim.h` and `rpskin.h`). Identifier names, and layouts checked against the target, may come from bfbb's `include/rwsdk/` headers, which are derived from the RenderWare SDK headers. By the project owner's decision, SDK macro bodies and enums may also be copied from there (2026-10-28, n100f#74), each credited in [CREDITS.md](../CREDITS.md) with its local changes. Nothing else is copied: no RenderWare function code, comments or other header text. A name or layout no allowed source gives stays opaque or is written from the target (for example a bare enum value with an evidence row), never filled in from recollection of the SDK, and leaked RenderWare source is never used.
 
 ### Reconstructed RenderWare sources
 
-`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. The units stay NonMatching (data is not split), and 43 of their functions compile to the target bytes with every relocation resolving to the target's symbol:
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` is linked as a Matching object (text-only, all 7 functions); the other units stay NonMatching (data is not split, or functions remain). 186 functions compile to the target bytes with every relocation resolving to the target's symbol:
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |
 | `rwsdk/src/plcore/bavector.c` | 7 of 10 | `VectorMultVector` (register allocation and scheduling), `_rwSqrt` and `_rwInvSqrt` (see below) |
-| `rwsdk/src/plcore/rwstring.c` | 3 of 5 | `StrChr`, `StrRChr` (register allocation) |
+| `rwsdk/src/plcore/rwstring.c` | 5 of 5 | (end edge open: bfbb's unit has 7 functions) |
 | `rwsdk/src/plcore/baerr.c` | 3 of 3 | |
 | `rwsdk/src/plcore/bafsys.c` | 3 of 4 | `_rwFileSystemOpen`, not written yet: it stores MSL stdio functions, which were address labels when the unit was imported and are now named (`fopen`, `fread`, `fgets`, `fputs`, `feof`) |
 | `rwsdk/src/plcore/resmem.c` | 4 of 4 | |
+| `rwsdk/src/plcore/baimmedi.c` | 7 of 7 | (Matching) |
+| `rwsdk/src/plcore/batkreg.c` | 4 of 9 | 5 others |
+| `rwsdk/src/badevice.c` | 6 of 13 | 7 others |
+| `rwsdk/src/baframe.c` | 7 of 20 | 13 others |
+| `rwsdk/src/bacamera.c` | 7 of 18 | 11 others |
+| `rwsdk/src/baraster.c` | 6 of 10 | `RwRasterCreate`, `RwRasterDestroy`, `RwRasterShowRaster`, `_rwRasterClose` |
+| `rwsdk/src/batextur.c` | 12 of 27 | 15 others |
+| `rwsdk/src/plcore/batkbin.c` | 3 of 8 | 5 others |
+| `rwsdk/src/plcore/bamatrix.c` | 2 of 9 | 7 others |
+| `rwsdk/src/plcore/bastream.c` | 1 of 5 | `RwStreamRead`, `RwStreamWrite`, `RwStreamSkip`, `RwStreamClose` |
+| `rwsdk/src/babinfrm.c` | 2 of 3 | `fn_80166BDC` |
+| `rwsdk/src/babintex.c` | 2 of 9 | 7 others |
+| `rwsdk/src/baimage.c` | 3 of 16 | 13 others |
+| `rwsdk/src/batypehf.c` | 1 of 2 | `_rwObjectHasFrameSetFrame` |
 | `rwsdk/world/basector.c` | 6 of 6 | |
 | `rwsdk/world/bamateri.c` | 7 of 8 | the function at `0x8014CFC8`, which opens the light module ([RenderWare limits](splits.md#limits-2)) |
 | `rwsdk/world/balight.c` | 10 of 12 | `RpLightGetConeAngle`, `RpLightStreamRead` |
+| `rwsdk/world/baclump.c` | 24 of 38 | 14 others, including `_rpAtomicResyncInterpolatedSphere` |
+| `rwsdk/world/bageomet.c` | 3 of 9 | 6 others |
+| `rwsdk/world/baworld.c` | 4 of 25 | 21 others |
+| `rwsdk/world/baworobj.c` | 40 of 47 | the sync functions (`WorldCameraSync`, `WorldAtomicSync`, `WorldLightSync`, `WorldSyncCamera`), `WorldAttachAtomicSphere`, `_rpWorldObjRegisterExtensions`, `RpWorldAddClump` |
+| `rwsdk/world/bamatlst.c` | 3 of 5 | `_rpMaterialListDeinitialize`, `_rpMaterialListStreamRead` |
+| `rwsdk/world/bamesh.c` | 2 of 11 | 9 others |
+| `rwsdk/world/babinwor.c` | 2 of 6 | the world and sector rights read/write functions |
 
-Structure layouts come from the SLUS-20349 DWARF where it has the type (game code includes RenderWare's headers) and from the target's accesses otherwise; `evidence.tsv` has a `type` or `field` row for each. The GameCube layout can differ: `RwTexture.refCount` is at `+0x54` here and `+0x50` in the DWARF. `include/rwcore.h` and `include/rpworld.h` now declare their types with `typedef` so the same headers serve the C RenderWare units and the C++ game code. Type, member, typedef and macro names the DWARF lacks (`RwGlobals`, `RwError`, `RwPluginRegistry`, the plugin callback typedefs, `RWSRCGLOBAL`) follow bfbb's `include/rwsdk/rwplcore.h` and `rpworld.h` (copies of the SDK headers) as related names. The file-local module data (`VectorModuleData`, `ErrorModuleData`, `MaterialModuleData`, `LightModuleData`) and resource-heap types (`ResHeap`, `ResHeapBlock`) have no source and use this project's own names. Source-form details the target fixes:
+Structure layouts come from the SLUS-20349 DWARF where it has the type (game code includes RenderWare's headers) and from the target's accesses otherwise; `evidence.tsv` has a `type` or `field` row for each. The GameCube layout can differ: `RwTexture.refCount` is at `+0x54` here and `+0x50` in the DWARF, and `RpClump` has a light list at `+0x10` and a camera list at `+0x18` (size `0x30`) where the DWARF's PS2 class has neither, as bfbb's GameCube header does. The size-sequence labels at `0x80149A4C` and `0x80149A80` were corrected to `RpClumpRemoveLight` and `RpClumpRemoveCamera` (the bodies use the light and camera extension offsets, in bfbb's order). `include/rwcore.h` and `include/rpworld.h` now declare their types with `typedef` so the same headers serve the C RenderWare units and the C++ game code. Type, member, typedef and macro names the DWARF lacks (`RwGlobals`, `RwDevice`, `RwError`, `RwPluginRegistry`, `RwPluginRegEntry`, the plugin, device and callback typedefs, `RWSRCGLOBAL`) follow bfbb's `include/rwsdk/rwplcore.h`, `rwcore.h` and `rpworld.h` (derived from the SDK headers) as related names. The file-local module data (`VectorModuleData`, `ErrorModuleData`, `MaterialModuleData`, `LightModuleData`, `TextureModuleData`, `FrameModuleData`, `CameraModuleData`, `WorldObjModuleData`, `MatrixModuleData`, `StreamModuleData`), `ClumpObjectExt`, `WorldSectorSearch`, the world-object extensions and ties (`WorldCameraExt`, `WorldObjectExt`, `WorldTie`, `LightTie`), the `STDFUNC_*` indices into `RwGlobals.stdFunc` and resource-heap types (`ResHeap`, `ResHeapBlock`) have no source and use this project's own names. Source-form details the target fixes:
 
 - `_rwSqrt` and `_rwInvSqrt` (59% and 62%) are not counted as exact. The target stores the argument to the stack and reloads the word after each store; under this profile only a `volatile` access reproduces that, and nothing shows the original used one, so the source keeps a plain pointer ([CONTRIBUTING](../CONTRIBUTING.md) bars a qualifier whose only justification is matching bytes).
 - The resource heap tests a block's `used` word as `~used & 1` where the block must be free (`nor` then `clrlwi.`) and as `used & 1` where it must be in use (`clrlwi.` alone). `!(used & 1)` and `(used & 1) == 0` compile to `clrlwi.` with the opposite branch and do not match.
+- `_rpClumpRegisterExtensions` ends with `return (_rpClumpLightExtOffset = RpLightRegisterPlugin(...)) >= 0;`: the target takes the sign bit before it stores the offset. Storing first and testing the global puts the store before the shift.
+- `StrChr` and `StrRChr` copy the `char` argument into an `S32` local before the loop: the target sign-extends it once into `r5`, and comparing with the parameter directly swaps `r4` and `r5`.
+- `baworobj.c` defines `_rpTieDestroy` and `_rpLightTieDestroy` before the extension deinitializers and `RpWorldRemoveLight`, which call them: the target has their bodies inline there, and keeps the global copies.
+- The three tie-list walks in `baworobj.c` declare the list head before the cursor; the other order swaps their registers.
 - `VectorMultVector` computes `x * right + y * up` for all three components before adding the `at` terms and storing: the target loads `right.y`, `right.z`, `up.y` and `up.z` before the first store. The source does the same, but the register allocation still differs.
 
 
@@ -207,7 +232,7 @@ Nine functions still differ. `mult64anddiv`, `mult64andshift` and `div64` build 
 - `CLAMP16` casts the in-range value to `S16`. The cast gives the clamp its own result register, as the target has.
 - The file does not include `string.h`, whose `size_t` prototypes conflict with GCC's builtin `memset` and `memcpy` and change both functions that call them. Compatible prototypes or none give the target's bytes.
 
-`bink/src/sdk/decode/ngc/ngcyuy2.c` converts decoded YUV 4:2:0 rows to the GameCube's YUY2 format, two output rows per call, with luma-only and pixel-doubling variants. It is this project's own reconstruction from the target and is `Matching`: its whole `.text` compiles to the target under ProDG 3.5 to 3.9.3. It reads and advances the YUV state `S`, which belongs to `yuv.cpp`, so `include/bink/yuvstate.h` declares only the six pointers it uses. Its four helpers are plain `inline` functions, which is what gives the target both the inlined bodies and the out-of-line copies at the end of the unit. The signedness of each count and the separate locals in the odd-word tails also come from the target's code (see the source-form rows).
+`bink/src/sdk/decode/ngc/ngcyuy2.c` converts decoded YUV 4:2:0 rows to the GameCube's YUY2 format, two output rows per call, with luma-only and pixel-doubling variants. It is this project's own reconstruction from the target and is `Matching`: its whole `.text` compiles to the target under ProDG 3.5 to 3.9.3. It reads and advances the YUV state `S`, which belongs to `yuv.cpp`, which `include/bink/yuvstate.h` declares. Its four helpers are plain `inline` functions, which is what gives the target both the inlined bodies and the out-of-line copies at the end of the unit. The signedness of each count and the separate locals in the odd-word tails also come from the target's code (see the source-form rows).
 
 `bink/src/sdk/decode/ngc/ngcsnd.c` is Bink's GameCube sound backend: `BinkOpenNGCSound` returns its `Open`, which fills a `BinkSnd` with eight callbacks and streams the decoded samples through two halves of a staging buffer to ARAM with ARQ, playing them on one AX voice per channel. It is this project's own reconstruction from the target (bfbb's `ngcsnd.c` is empty) and is `Matching`: its whole `.text` and its `.rodata` compile to the target under ProDG 3.5 to 3.9.3. `include/bink/binksnd.h` declares the whole 0x178-byte `BinkSnd`, because `Open` clears it with `memset(snd, 0, sizeof(*snd))`. The Bink API functions that drive the backend use the fields this unit does not touch. `Open` is declared with the six arguments BinkOpen passes when it calls it through the `BinkSndOpen` pointer (`blrl` at `0x80114D90`, with the open flags in `r7`); this unit uses the first four. The backend's private state (`NGCSND`) lives in `BinkSnd.priv` and is reached through a cast of `snd->priv`. Its nine helpers are plain `inline` functions, which gives the target both the inlined bodies and the out-of-line copies at the end of the unit. The volatile lock index, the `U16` voice state, the missing `string.h` and the statement forms in `NGC_SoundInit`, `Lock`, `Unlock`, `NGC_StarvedClear` and `Ready` come from the target's code (see the source-form rows).
 
@@ -235,6 +260,14 @@ Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units c
 - The scratch block `tmp` is written by byte through a `U8` pointer; plain subscripts of a `U8` array change the code. It is declared as 8 doubles, for the alignment of its 8-byte copies, though `U8 tmp[64]` with the same writes compiles the same. The 16x16 fill writes its first and last rows around a 7-iteration loop, and the pattern index is signed.
 - `ExpandPlane` declares `readcolors`, `rowadd` and `maskpitch` in the order of their stack slots, and `OpenReadBundle` computes the last index in a local before masking it to 16 bits.
 - Two 8-byte zero objects, `huff4decode00align` and `huff4decodesalign` (bfbb's names), precede `rlelens` in `.sdata2`, where the target has them.
+
+`bink/src/sdk/decode/yuv.cpp`, Bink's blitter layer (`YUV_init`, `YUV_blit`, `YUV_blit_mask`, the unaligned row and column converters and the per-format `BLITS` tables that pick the `ngcrgb.c` and `ngcyuy2.c` converters), is this project's own reconstruction from the target (bfbb's `yuv.cpp` is empty) and is `NonMatching`. It is C++, built by ProDG's `cc1plus` with the C flags. 89 of its 97 functions compile to the target byte for byte under ProDG 3.5 to 3.9.3, and so do its `.data`, `.bss`, `.sdata` and `.sbss`. `YUV_blit`, `YUV_blit_mask` and `YUV_init` have the target's instructions with a different register allocation, and the five YUY2 mono column converters differ in a few instructions; the causes are not established (function rows). Some details of the source come from the target's code:
+
+- The zero tables are initialised (`= { 0 }`) and 32-byte aligned, which puts them in `.data` as the target has them; GCC would put uninitialised ones in `.bss`.
+- `S` owns its row pointers as `U8*`, which the row functions step by bytes, so `ngcrgb.c` and `ngcyuy2.c` scale their steps to bytes. `YUVSTATE` names the three colour offset indexes at `+0x20` (`g`, `b`, `r`).
+- `setevenodd` tests the mode as an `if` chain and chains its mono stores (`ODD = EVEN = ...`), `YUV_blit` copies the caller's pitch before doubling it, `YUV_blit_mask` reuses one local for two short-lived values, and `YUV_init` takes an `S32` layout and builds its tables in the target's block order (`source-form` rows).
+- The converters take a `long` count, as their mangled C++ callers' types show, and the file-local functions take `unsigned long` arguments.
+- `radmem.h` and `binkngc.h` wrap their declarations in `extern "C"` so the C++ unit links to the C units.
 
 `bink/src/sdk/bitplane.c`, Bink's bit-plane coefficient coder, is this project's own reconstruction from the target (bfbb's `bitplane.c` is empty) and is `Matching`: its whole `.text` compiles to the unit under every ProDG version from 3.5 to 3.9.3. It codes an 8x8 block's coefficients in zigzag order one bit plane at a time, from the highest plane down, keeping a list of pending groups (three 16-coefficient regions and the first coefficients or quad) that is split into quads and single coefficients as they become significant. `LenBPLossless` counts the bits `WriteBPLossless` would write for a 16-bit block, `WriteBPLossy` writes an 8-bit block and returns 0 for an all-zero one, and `ReadBPLossless`, `ReadBPLossy` and `ReadBPLossyWithMotion` decode them; the lossy readers share the file-local `readlossy`. The object has no data of its own: it reads `zigzag` (in `dct.c`'s `.rodata` in bfbb's split) and `VarBitsLens` from `varbits.c`. Some details of the source come from the target's code:
 

@@ -15,6 +15,23 @@ typedef struct RpCollSector RpCollSector;
 typedef struct RpMeshHeader RpMeshHeader;
 typedef struct RxPipeline RxPipeline;
 
+// Partial: only pluginId and pluginData are declared.
+struct RxPipeline
+{
+    U8 unk0[0x2C];
+    U32 pluginId;
+    U32 pluginData;
+};
+
+struct RpMeshHeader
+{
+    U32 flags;
+    U16 numMeshes;
+    U16 serialNum;
+    U32 totalIndicesInMesh;
+    U32 firstMeshOffset;
+};
+
 typedef struct RpMaterial RpMaterial;
 struct RpMaterial
 {
@@ -51,6 +68,7 @@ struct RpWorldSector
 };
 
 typedef RpWorldSector* (*RpWorldSectorCallBackRender)(RpWorldSector* worldSector);
+typedef RpWorldSector* (*RpWorldSectorCallBack)(RpWorldSector* worldSector, void* data);
 
 typedef enum RpWorldRenderOrder
 {
@@ -92,6 +110,14 @@ struct RpWorld
 typedef struct RpGeometry RpGeometry;
 typedef struct RpClump RpClump;
 typedef struct RpTriangle RpTriangle;
+
+typedef enum RpInterpolatorFlag
+{
+    rpINTERPOLATORDIRTYINSTANCE = 0x01,
+    rpINTERPOLATORDIRTYSPHERE = 0x02,
+    rpINTERPOLATORNOFRAMEDIRTY = 0x04,
+    rpINTERPOLATORFLAGFORCEENUMSIZEINT = 0x7FFFFFFF
+} RpInterpolatorFlag;
 
 typedef struct RpInterpolator RpInterpolator;
 struct RpInterpolator
@@ -153,14 +179,15 @@ struct RpAtomic
     RxPipeline* pipeline;
 };
 
+// Partial: the GameCube layout has the light and camera lists the PS2 DWARF lacks; the members
+// after them are not declared.
 struct RpClump
 {
     RwObject object;
     RwLinkList atomicList;
-    RwLLLink inWorldLink;
-    RpClump* (*callback)(RpClump* clump, void* data);
-    U16 renderFrame;
-    U16 pad;
+    RwLinkList lightList;
+    RwLinkList cameraList;
+    U8 unk20[0x10];
 };
 
 #define RpAtomicGetFrame(_atomic) ((RwFrame*)rwObjectGetParent(_atomic))
@@ -185,6 +212,10 @@ extern "C" {
 #endif
 
 S32 RpLightDestroy(RpLight* light);
+S32 RpLightRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                          RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+
+S32 RpAtomicDestroy(RpAtomic* atomic);
 
 S32 RpClumpDestroy(RpClump* clump);
 RpClump* RpClumpForAllAtomics(RpClump* clump, RpAtomicCallBack callback, void* pData);

@@ -102,42 +102,42 @@ void YUY2_4x2(S32 n)
 {
     YUY2_4x2Helper(n, S.dst0, S.y0, S.u, S.v);
     YUY2_4x2Helper(n, S.dst1, S.y1, S.u, S.v);
-    S.dst0 += n * 2;
-    S.dst1 += n * 2;
-    S.y0 += n;
-    S.y1 += n;
-    S.u += n;
-    S.v += n;
+    S.dst0 += n * 8;
+    S.dst1 += n * 8;
+    S.y0 += n * 4;
+    S.y1 += n * 4;
+    S.u += n * 2;
+    S.v += n * 2;
 }
 
 void YUY2_x2_4x2(S32 n)
 {
     YUY2_x2_4x2Helper(n, S.dst0, S.y0, S.u, S.v);
     YUY2_x2_4x2Helper(n, S.dst1, S.y1, S.u, S.v);
-    S.dst0 += n * 4;
-    S.dst1 += n * 4;
-    S.y0 += n;
-    S.y1 += n;
-    S.u += n;
-    S.v += n;
+    S.dst0 += n * 16;
+    S.dst1 += n * 16;
+    S.y0 += n * 4;
+    S.y1 += n * 4;
+    S.u += n * 2;
+    S.v += n * 2;
 }
 
 void YUY2_m_4x2(S32 n)
 {
     YUY2_m_4x2Helper(n, S.dst0, S.y0);
     YUY2_m_4x2Helper(n, S.dst1, S.y1);
-    S.dst0 += n * 2;
-    S.dst1 += n * 2;
-    S.y0 += n;
-    S.y1 += n;
+    S.dst0 += n * 8;
+    S.dst1 += n * 8;
+    S.y0 += n * 4;
+    S.y1 += n * 4;
 }
 
 void YUY2_mx2_4x2(S32 n)
 {
     YUY2_mx2_4x2Helper(n, S.dst0, S.y0);
     YUY2_mx2_4x2Helper(n, S.dst1, S.y1);
-    S.dst0 += n * 4;
-    S.dst1 += n * 4;
-    S.y0 += n;
-    S.y1 += n;
+    S.dst0 += n * 16;
+    S.dst1 += n * 16;
+    S.y0 += n * 4;
+    S.y1 += n * 4;
 }
