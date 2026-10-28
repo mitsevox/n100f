@@ -92,7 +92,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zEntProjectile.cpp	zEntShaggy.cpp	0x8006D624	0x8006D624	single cut by data references	0
 .text	zEntShaggy.cpp	zEntSimpleObj.cpp	0x8007A8D0	0x8007A8D0	static initialiser ends unit; zEntSimpleObj.cpp left unsplit	0
 .text	zEntSimpleObj.cpp	zEntTrigger.cpp	0x8007ACB8	0x8007ACB8	alignment only (7 cuts tie on data, 6 on calls); zEntSimpleObj.cpp left unsplit	0
-.text	zEntTrigger.cpp	zEntVillain.cpp	0x8007B08C	0x8007B08C	closed by references (1 functions joined; was open: 1 unassigned functions)	0
+.text	zEntTrigger.cpp	zEntVillain.cpp	0x8007B08C	0x8007B08C	alignment only (2 cuts tie on data)	0
 .text	zEntVillain.cpp	zEnv.cpp	0x800A9F78	0x800A9F78	single cut by call references (2 cuts tie on data)	0
 .text	zEnv.cpp	zFeet.cpp	0x800AA338	0x800AA338	single cut by data references	0
 .text	zFeet.cpp	zFMV.cpp	0x800ABD84	0x800ABD84	alignment only (2 cuts tie on data)	0
