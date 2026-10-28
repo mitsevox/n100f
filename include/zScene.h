@@ -43,4 +43,6 @@ inline U32 zSceneIDFromName(const char* name)
     return ((name[0] & ~0x20) << 24) | (name[1] << 16) | (name[2] << 8) | name[3];
 }
 
+extern U32 gTransitionSceneID;
+
 #endif

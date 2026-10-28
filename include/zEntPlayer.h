@@ -101,4 +101,7 @@ struct zPlayerGlobals
     zPlayerStatic s;
 };
 
+U32 zEntPlayer_MoveInfo();
+S32 zEntPlayer_Damage(xBase* src, U32 damage);
+
 #endif

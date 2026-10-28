@@ -149,7 +149,12 @@ struct _xEntCollis
     U8 trigs_exited[8];
 };
 
-struct _xEntShadow;
+struct _xEntShadow
+{
+    xVec3 pos;
+    xVec3 vec;
+};
+
 struct xModelInstance;
 struct xSurface;
 struct xFFX;
