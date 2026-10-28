@@ -511,6 +511,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(Matching, "gc/iAnim.cpp"),
             Object(Matching, "gc/iMix.c"),
             Object(NonMatching, "gc/ngcrad3d.c"),
+            Object(NonMatching, "gc/iFMV.cpp"),
         ],
     ),
     # Library units: config/GIHE78-rev0/lib_units.tsv and docs/splits.md "Library units".

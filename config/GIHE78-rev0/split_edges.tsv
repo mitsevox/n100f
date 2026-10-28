@@ -65,8 +65,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xScene.cpp	xScrFx.cpp	0x800394B4	0x800394B4	alignment only (8 cuts tie on data)	0
 .text	xScrFx.cpp	xserializer.cpp	0x80039C90	0x80039C90	single cut by data references	1
 .text	xserializer.cpp	xShadow.cpp	0x8003AD40	0x8003AD40	single cut by data references	0
-.text	xShadow.cpp	xSnd.cpp	0x8003CD24	0x8003CD24	alignment only (6 cuts tie on data); xSnd.cpp left unsplit	0
-.text	xSnd.cpp	xSpline.cpp	0x8003D5C0	0x8003D680	open: 1 unassigned functions (1 joined by references); xSnd.cpp left unsplit	0
+.text	xShadow.cpp	xSnd.cpp	0x8003CD24	0x8003CD24	alignment only (6 cuts tie on data)	0
+.text	xSnd.cpp	xSpline.cpp	0x8003D5C0	0x8003D680	open: 1 unassigned functions (1 joined by references)	0
 .text	xSpline.cpp	xstransvc.cpp	0x8003F904	0x8003F904	alignment only (2 cuts tie on data)	0
 .text	xstransvc.cpp	xString.cpp	0x80040978	0x80040978	alignment only (2 cuts tie on data)	0
 .text	xString.cpp	xSurface.cpp	0x80040EE4	0x80040EE4	alignment only (4 cuts tie on data)	0

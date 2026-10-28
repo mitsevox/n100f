@@ -12,6 +12,8 @@ extern "C" {
 
 void* radmalloc(U32 size);
 void radfree(void* ptr);
+void RADSetMemory(RADMEMALLOC a, RADMEMFREE f);
+void RADSetAudioMemory(RADMEMALLOC a, RADMEMFREE f);
 
 #ifdef __cplusplus
 }
