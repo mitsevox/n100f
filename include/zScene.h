@@ -18,7 +18,16 @@ struct zScene : _xScene
     _zEnt** ents;
 };
 
+struct IDBasePair
+{
+    U32 id;
+    xBase* base;
+};
+
 xBase* zSceneFindObject(U32 gameID);
+const char* zSceneGetName(U32 gameID);
+const char* zSceneGetName(xBase* b);
+S32 zSceneSetup_serialTraverseCB(U32 clientID, xSerial* xser);
 
 inline U32 zSceneIDFromName(const char* name)
 {
