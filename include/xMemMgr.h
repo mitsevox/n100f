@@ -20,5 +20,7 @@ extern U32 gActiveHeap;
 
 void* xMemAlloc(U32 heapID, U32 size);
 void* xMemPoolAlloc(xMemPool* pool);
+void* xMemPushTemp(U32 size);
+void xMemPopTemp(void* addr);
 
 #endif
