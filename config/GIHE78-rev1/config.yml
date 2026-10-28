@@ -1,0 +1,7 @@
+object_base: orig/GIHE78-rev1
+object: sys/main.dol
+hash: cc84bc42b1054b572b5bb65968cf80b71ff41d0b
+symbols: config/GIHE78-rev1/symbols.txt
+splits: config/GIHE78-rev1/splits.txt
+mw_comment_version: 10
+ldscript_template: config/GIHE78-rev1/ldscript.tpl
