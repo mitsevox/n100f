@@ -10,10 +10,10 @@ struct _zPortal;
 struct _zEnv;
 struct _tagClimate;
 
-// Partial: the _xScene members past npcs are left opaque.
+// Partial: the _xScene members past env are left opaque.
 struct zScene : _xScene
 {
-    U8 opaque_38[0x6C - 0x38];
+    U8 opaque_44[0x6C - 0x44];
     U32 sceneID;
     _zPortal* pendingPortal;
     U32 num_ents;
