@@ -29,6 +29,7 @@ struct _zParEmitterCustomSettings
     F32 emit_interval_current;
 };
 
+_zParEmitter* zParEmitterFind(char* asset_name);
 xPar* zParEmitterEmitCustom(_zParEmitter* p, F32 dt, _zParEmitterCustomSettings* info);
 
 #endif
