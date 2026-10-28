@@ -741,7 +741,7 @@ config.libs: List[Dict[str, Any]] = [
     BinkLib(
         [
             Object(NonMatching, "bink/src/sdk/decode/ngc/binkngc.c"),
-            Object(NonMatching, "bink/src/sdk/decode/ngc/ngcsnd.c"),
+            Object(Matching, "bink/src/sdk/decode/ngc/ngcsnd.c"),
             Object(NonMatching, "bink/src/sdk/decode/binkread.c"),
             Object(Matching, "bink/src/sdk/decode/ngc/ngcfile.c"),
             Object(NonMatching, "bink/src/sdk/decode/yuv.cpp"),
