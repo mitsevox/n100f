@@ -167,7 +167,7 @@ void zLobMaster_timestep(zScene*, F32 dt)
         lobber = ZLOB_find_lobber(que->aid_lobber);
         if (!lobber)
         {
-            // lobber is NULL here, so this clears address 0 rather than the queue entry.
+            // lobber is NULL here, so this memset writes to address 0.
             memset(lobber, 0, sizeof(st_LOBMASTER_QUEUE));
             continue;
         }
@@ -463,7 +463,7 @@ static S32 ZLOB_elcb_event(xBase* from, xBase* xb, U32 toEvent, F32*, xBase*)
 static S32 ZLOB_doLaunch(st_LOBMASTER_DATA* lob)
 {
     S32 salvo = 0;
-    S32 type = LOBMASTER_CUSTOM;
+    en_LOB_MASTER_TYPE type = LOBMASTER_CUSTOM;
     S32 cnt = 0;
     S32 rc;
     S32 i;
@@ -502,7 +502,7 @@ static S32 ZLOB_doLaunch(st_LOBMASTER_DATA* lob)
 
 static S32 ZLOB_shoot_one(st_LOBMASTER_DATA* lob, S32 nth, S32 total)
 {
-    S32 type = LOBMASTER_CUSTOM;
+    en_LOB_MASTER_TYPE type = LOBMASTER_CUSTOM;
 
     LCFG_getParam(&lob->cfg, ZLOB_PARM_LOBMASTERTYPE, &type);
 
@@ -694,13 +694,14 @@ static S32 ZLOB_shoot_legacy(st_LOBMASTER_DATA* lob, S32, S32)
         if (fac_arc != 0.0f || bounce->acc_gravity != 0.0f)
         {
             ST_CAT_AIMDATA aim = { ZPRJ_CAIM_GRAVBALL };
+            st_CAT_AIMGRAV* grav = &aim.grav;
 
             aim.spd_base = spd_launch;
             xVec3Copy(&aim.dir_base, &dir_launch);
-            xVec3Copy(&aim.grav.pos_src, &pos_launch);
-            xVec3Copy(&aim.grav.pos_tgt, zMovePointGetPos(lob->nav_nextbull));
-            aim.grav.acc_gravity = bounce->acc_gravity;
-            aim.grav.fac_arcness = (fac_arc < 0.0f) ? 1.0f : fac_arc;
+            xVec3Copy(&grav->pos_src, &pos_launch);
+            xVec3Copy(&grav->pos_tgt, zMovePointGetPos(lob->nav_nextbull));
+            grav->acc_gravity = bounce->acc_gravity;
+            grav->fac_arcness = (fac_arc < 0.0f) ? 1.0f : fac_arc;
 
             prj->AimAtTarget(&aim, 0);
 
@@ -865,7 +866,13 @@ static S32 ZLOB_shoot_debris(st_LOBMASTER_DATA* lob, S32 nth, S32 total)
 
     flg_player = zEntPlayer_MoveInfo();
 
-    xEntSeeThru(prj);
+    prj->flags |= 0x4;
+    prj->fade_tmr = 1.25f;
+    if ((gTransitionSceneID ^ 0x20000000) == zSceneIDFromName("o004") &&
+        (prj->id == 0xF933F89E || prj->id == 0xFFF2B7AA))
+    {
+        prj->fade_tmr = 0.25f;
+    }
     prj->fade_tmr = 0.2f + prj->tym_maxlife;
 
     bounce->acc_gravity = 1.5f;
@@ -1182,7 +1189,7 @@ static S32 LPRJ_debris_attach(zEntProjectile* prj)
     return 1;
 }
 
-static S32 LPRJ_debris_logix(zEntProjectile* prj, F32 dt, zScene* sc, _xEntFrame* frame)
+static S32 LPRJ_debris_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame)
 {
     st_ZPRJ_CAT_BOUNCEBALL* bounce = &prj->cat_data.bounce;
     xVec3 vec_accum = { 0 };

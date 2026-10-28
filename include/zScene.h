@@ -4,7 +4,6 @@
 #include "types.h"
 #include "xBase.h"
 #include "xScene.h"
-#include "xEnt.h"
 
 struct _zEnt;
 struct _zPortal;
@@ -45,17 +44,5 @@ inline U32 zSceneIDFromName(const char* name)
 }
 
 extern U32 gTransitionSceneID;
-
-inline void xEntSeeThru(_xEnt* ent)
-{
-    ent->flags |= 0x4;
-    ent->fade_tmr = 1.25f;
-
-    if ((gTransitionSceneID ^ 0x20000000) == zSceneIDFromName("o004") &&
-        (ent->id == 0xF933F89E || ent->id == 0xFFF2B7AA))
-    {
-        ent->fade_tmr = 0.25f;
-    }
-}
 
 #endif

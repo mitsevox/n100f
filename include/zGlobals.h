@@ -35,8 +35,7 @@ struct zGlobals
     iFogParams fogB;
     iTime fog_t0;
     iTime fog_t1;
-    U8 opaque_BF8[0x32F8 - 0xBF8];
-    S32 option_vibration;
+    U8 opaque_BF8[0x32FC - 0xBF8];
     F32 update_dt;
 };
 
