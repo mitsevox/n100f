@@ -310,7 +310,12 @@ def consistent(a,smap):
 
 def merge(toolkit,ported):
     """The sibling's symbol lines: every ported symbol, and every toolkit symbol that no ported
-    symbol covers. A toolkit symbol running into a ported one is cut short at its start."""
+    symbol covers. A toolkit symbol running into a ported one is cut short at its start. Where the
+    toolkit already gives the address that name as another kind of symbol (its signatures name
+    gTRKInterruptVectorTable a label), the toolkit's symbol stays: the toolkit adds it again
+    during analysis, and the name would be defined twice."""
+    kinds={(s.name,s.addr):s.kind for s in toolkit}
+    ported=[p for p in ported if kinds.get((p[3].split(' ',1)[0],p[1]),None) in (None,Symbol(p[3]).kind)]
     starts=defaultdict(list);cover=defaultdict(list)
     for section,t,size,_ in ported:
         starts[section].append(t);cover[section].append((t,t+max(size,1)))
