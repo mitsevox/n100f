@@ -7,6 +7,8 @@
 
 struct _zEnt;
 struct _zPortal;
+struct _zEnv;
+struct _tagClimate;
 
 // Partial: members up to ents. The _xScene members past gravity are left opaque.
 struct zScene : _xScene
@@ -18,7 +20,11 @@ struct zScene : _xScene
     _zEnt** ents;
 };
 
+extern _tagClimate gClimate;
+extern _zEnv* gCurEnv;
+
 xBase* zSceneFindObject(U32 gameID);
+xBase* zSceneGetObject(S32 type, S32 idx);
 
 inline U32 zSceneIDFromName(const char* name)
 {
