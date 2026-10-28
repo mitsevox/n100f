@@ -766,24 +766,33 @@ struct st_STIMULUS_CONTEXT_DATA
 {
     en_NPC_STIMULUS stim;
     _zEnt* tgt_ent;
-    en_BEHAVIOUR_GOAL gods_goal;
-    _zEntBubble* bubble;
-    _xVec3 dir_headbutt;
-    _xCollis* colrec;
-    _xVec3 pos_guard;
-    _xVec3 gotopos;
-    xBase* widge;
-    S32 use_alt_action;
-    S32 mm_teleport_hurtz_doggie;
-    zSFX* talkSFX;
-    F32 off_goto;
-    F32 mag_headbutt;
-    F32 amt_stun;
-    S32 res_gods;
-    en_ZVILLAIN_BUBBLE_RESPONSE res_bubble;
-    en_ZVILLAIN_HEADBUTT_RESPONSE res_headbutt;
-    en_ZVILLAIN_BOUNCE_RESPONSE res_buttbounce;
-    en_ZVILLAIN_BUMPED_RESPONSE res_bumped;
+    union
+    {
+        en_BEHAVIOUR_GOAL gods_goal;
+        _zEntBubble* bubble;
+        _xVec3 dir_headbutt;
+        _xCollis* colrec;
+        _xVec3 pos_guard;
+        _xVec3 gotopos;
+        xBase* widge;
+        S32 use_alt_action;
+        S32 mm_teleport_hurtz_doggie;
+        zSFX* talkSFX;
+    };
+    union
+    {
+        F32 off_goto;
+        F32 mag_headbutt;
+        F32 amt_stun;
+    };
+    union
+    {
+        S32 res_gods;
+        en_ZVILLAIN_BUBBLE_RESPONSE res_bubble;
+        en_ZVILLAIN_HEADBUTT_RESPONSE res_headbutt;
+        en_ZVILLAIN_BOUNCE_RESPONSE res_buttbounce;
+        en_ZVILLAIN_BUMPED_RESPONSE res_bumped;
+    };
     S32 res_bogus;
     en_BEHAVIOUR_GOAL trangoal;
     en_NPC_MODE tranmode;

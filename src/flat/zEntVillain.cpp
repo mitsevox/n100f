@@ -101,7 +101,7 @@ xAnimTable* zEntVillain_AnimTable_Shark()
 xAnimTable* zEntVillain_AnimTable_Witch()
 {
     xAnimTable* table = VANM_mktable_STD();
-    xAnimTableNewState(table, "Witch_Fly01", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Shaggy_hold", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
     Shaggy5_WitchTransitions(table);
     return table;
 }
@@ -717,8 +717,9 @@ static xAnimTable* VANM_mktable_MM()
                             (xAnimTransitionConditionalCallback)VANM_dodflt,
                             (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f,
                             NULL);
+    // Slot 0 is set twice and slot 10 never, so "MM_Battle_Move" is not added here and slot
+    // 10 keeps "MM_Battle_Stunned_end" from the list above.
     strptrz[0] = "MM_Battle_Move";
-    strptrz[0] = "MM_Battle_Attack_ready_loop";
     strptrz[1] = "MM_Battle_Turn";
     strptrz[2] = "MM_Battle_Backstep";
     strptrz[3] = "MM_Foreplay_Taunt";
@@ -728,6 +729,7 @@ static xAnimTable* VANM_mktable_MM()
     strptrz[7] = "MM_Battle_Stunned_loop";
     strptrz[8] = "MM_Battle_Stunned_end";
     strptrz[9] = "MM_Battle_Attack_start";
+    strptrz[0] = "MM_Battle_Attack_ready_loop";
     strptrz[11] = "MM_Battle_Attack";
     for (i = 0; i < 12; i++)
     {
@@ -2072,8 +2074,8 @@ static xAnimSingle* VANM_entSingle(const _zEnt* ent)
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
 {
     S32 idx = 0;
-    F32 eqwt = 1.0f / cnt;
-    F32 rnd = iurand();
+    F32 dlta = 1.0f / cnt;
+    F32 pt = iurand();
     F32 lo;
     F32 hi = 0.0f;
 
@@ -2086,9 +2088,9 @@ static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
         }
         else
         {
-            hi += eqwt;
+            hi += dlta;
         }
-        if (rnd >= lo && rnd <= hi)
+        if (pt >= lo && pt <= hi)
         {
             idx = i;
             break;
@@ -2100,7 +2102,7 @@ static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
 
 static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
 {
-    F32 tot = 0.0f;
+    F32 sum = 0.0f;
     S32 i;
 
     for (i = 0; i < cnt; i++)
@@ -2109,12 +2111,12 @@ static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
         {
             wts[i] = -wts[i];
         }
-        tot += wts[i];
+        sum += wts[i];
     }
 
-    F32 scale = arbref / tot;
+    F32 fac = arbref / sum;
     for (i = 0; i < cnt; i++)
     {
-        wts[i] *= scale;
+        wts[i] *= fac;
     }
 }
