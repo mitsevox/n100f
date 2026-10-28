@@ -305,7 +305,8 @@ static void bink_idle_on_io(BinkIO* io)
 
 static S32 bink_get_priority_sound(RADCB* cb, U32 time)
 {
-    U32 last = ((U32*)cb)[-1];
+    Bink* bink = (Bink*)((U8*)cb - 836);
+    U32 last = bink->last_almost_empty;
 
     if (last != time)
         return ~last;
