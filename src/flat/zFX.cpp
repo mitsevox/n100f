@@ -8,13 +8,6 @@ void fn_8002AC2C();
 void fn_8002AC30(RpWorld*);
 }
 
-// Stop the scene's warping effect.
-void zFX_SceneExit(RpWorld* world)
-{
-    fn_8002AC2C();
-    iFXWarbSetParams(IFX_WARB_NONE, NULL);
-}
-
 // Set up warping for the tide or tree entity in this scene.
 void zFX_SceneEnter(RpWorld* world)
 {
@@ -40,4 +33,11 @@ void zFX_SceneEnter(RpWorld* world)
     {
         iFXWarbInit(ent, mode);
     }
+}
+
+// Stop the scene's warping effect.
+void zFX_SceneExit(RpWorld* world)
+{
+    fn_8002AC2C();
+    iFXWarbSetParams(IFX_WARB_NONE, NULL);
 }
