@@ -9,21 +9,24 @@ Both originals must be present at their config.yml paths. The sibling's symbols.
 toolkit's own map of its original (the tool's input as well as its output): ported symbols replace
 the toolkit's at the same address, and every address nothing maps to keeps the toolkit's symbol.
 
-Functions pair in three passes. A function whose instructions, with relocated fields masked (branch
-targets, `lis` halves and their `addi`/load/store partners, r2/r13 offsets), occur exactly once on
-each side is an anchor; anchors that break address order are dropped. Between consecutive anchors,
-equal runs of functions pair in order. Each pair with the same instruction count and opcodes then
-contributes the address pairs its relocated fields resolve to, and a branch target that resolves
-the same way in every pair pairs those functions too. Data symbols map by those address pairs,
-with a majority over every reference into the symbol, and an unreferenced symbol takes the shift of
-both neighbours only when they agree and its initialized bytes are equal outside pointer words.
+Functions pair in passes. A function whose instructions, with relocated fields masked (branch
+targets, `lis` halves and their partner instructions, r2/r13 offsets), occur exactly once on each
+side is an anchor; anchors that break address order are dropped. Between consecutive pairs, equal
+runs of functions pair in order, by position alone. A branch target that resolves the same way
+from every paired caller pairs too, and so does a function the sibling's toolkit merged into its
+predecessor, at the same offset, when its masked instructions are equal there. Data symbols map
+through the addresses that pairs with the same instruction shape and mapped pointer words resolve
+to, by a majority over every reference into the symbol and only where the bytes are equal outside
+pointer words; a run of unreferenced data between two mapped symbols takes their shifts where the
+bytes allow. A label maps at its offset inside a mapped symbol whose contents are the same there.
+Only pairs whose contents are the same apart from relocations are written; the report lists the
+pairs found by position alone whose contents differ, which are not.
 
-A unit's section range is ported only when both edges map and every symbol of the range maps, in
-order, with the same spacing apart from functions whose size the toolkit inferred differently;
-any other unit is left out of the sibling and listed. The report lists every unmapped symbol and
-every unit left out, so a reviewer can check what the port claims. The pairing establishes that
-the code is the same apart from relocations, not that a name or boundary is right on either target:
-every ported name keeps whatever evidence its origin target recorded."""
+A unit's section range is ported only when both edges map, the range has the same length on both
+sides, and every symbol in it maps with the range's shift and the same contents; any other unit
+is left out of the sibling, with the reason in the report. The pairing establishes sameness of
+contents, not that a name or boundary is right on either target: every ported name keeps
+whatever evidence its origin target recorded."""
 import argparse
 import bisect
 from collections import Counter, defaultdict
@@ -215,8 +218,10 @@ def same_shape(wa,wb):
     return [(p,q) for p,q in zip(wa,wb) if p[1] is not None and q[1] is not None]
 
 
-def pointers(raw):
-    return [i for i in range(0,len(raw)-3,4) if 0x80000000<=int.from_bytes(raw[i:i+4],'big')<0x81800000]
+def pointers(raw,side):
+    """Offsets of the words that hold an address inside one of the side's sections or its .bss
+    (a tiny negative float can still land there; such a word is excused from the byte comparison)."""
+    return [i for i in range(0,len(raw)-3,4) if section_of(side.dol,int.from_bytes(raw[i:i+4],'big'),side.bss) is not None]
 
 
 def section_of(dol,addr,bss):
@@ -229,7 +234,7 @@ def same_bytes(a,b,s,t):
     """Initialized bytes equal outside pointer words; both absent (.bss) counts as equal."""
     ra=a.dol.read(s.addr,s.size);rb=b.dol.read(t,s.size)
     if ra is None or rb is None:return ra is None and rb is None and a.in_bss(s.addr) and b.in_bss(t)
-    ptr=set(pointers(ra))|set(pointers(rb))
+    ptr=set(pointers(ra,a))|set(pointers(rb,b))
     return all(ra[k:k+4]==rb[k:k+4] for k in range(0,len(ra)//4*4,4) if k not in ptr) and ra[len(ra)//4*4:]==rb[len(rb)//4*4:]
 
 
@@ -278,11 +283,26 @@ def port(a,b):
             done_ptr.add(id(s))
             ra=a.dol.read(s.addr,s.size);rb=b.dol.read(smap[id(s)],s.size)
             if ra is None or rb is None:continue
-            for k in pointers(ra):
+            for k in pointers(ra,a):
                 if k+4<=len(rb):vote(int.from_bytes(ra[k:k+4],'big'),int.from_bytes(rb[k:k+4],'big'))
         if len(smap)==before:break
+    # A label inside a mapped symbol whose contents are the same there keeps its offset.
+    for s in a.symbols:
+        if s.kind!='label' or id(s) in smap:continue
+        for p in a.symbols:
+            if p.kind!='label' and id(p) in smap and p.addr<=s.addr<p.addr+p.size and equal_at(a,b,p,smap[id(p)]):
+                smap[id(s)]=smap[id(p)]+s.addr-p.addr;break
     consistent(a,smap)
     return fmap,smap
+
+
+def equal_at(a,b,s,t):
+    """A symbol's contents are the same at `t`: masked code for a function, bytes outside pointer
+    words for data."""
+    if s.kind=='function':
+        here=b.code(t,s.size)
+        return bool(here) and s.addr in a.functions and here[1]==a.functions[s.addr][2]
+    return same_bytes(a,b,s,t)
 
 
 def consistent(a,smap):
@@ -365,9 +385,8 @@ def port_splits(a,b,smap):
     def pointers_agree(section,x,y,size):
         ra=a.dol.read(x,size);rb=b.dol.read(y,size)
         if ra is None or rb is None:return False
-        ptr_a={int.from_bytes(ra[k:k+4],'big') for k in pointers(ra)}
         fn={s.addr:smap[id(s)] for s in a.symbols if id(s) in smap}
-        return all(fn.get(int.from_bytes(ra[k:k+4],'big'))==int.from_bytes(rb[k:k+4],'big') for k in pointers(ra)) and len(pointers(ra))==len(pointers(rb))
+        return all(fn.get(int.from_bytes(ra[k:k+4],'big'))==int.from_bytes(rb[k:k+4],'big') for k in pointers(ra,a)) and len(pointers(ra,a))==len(pointers(rb,b))
     def where(section,addr,end):
         found={smap[id(s)] for s in at.get((section,addr),[]) if id(s) in smap}
         if len(found)==1:return found.pop()
@@ -393,10 +412,13 @@ def port_splits(a,b,smap):
         new=[];why=None;partial=[]
         for section,start,end,rest in ranges:
             s1,e1=where(section,start,False),where(section,end,True)
-            if s1 is None or e1 is None or e1<s1:why='%s edge does not map'%section;break
+            if s1 is None or e1 is None:why='%s edge does not map'%section;break
+            if e1-s1!=end-start:why='%s range is 0x%X bytes here, 0x%X on the source'%(section,e1-s1,end-start);break
             inside=[s for s in a.symbols if s.section==section and start<=s.addr<end]
-            if any(id(s) in smap and not s1<=smap[id(s)]<max(e1,s1+1) for s in inside):why='%s symbols map outside the range'%section;break
-            partial+=[s.name for s in inside if id(s) not in smap]
+            moved=[s.name for s in inside if id(s) not in smap or smap[id(s)]-s.addr!=s1-start]
+            if moved:why='%s symbols unmapped or shifted: %s'%(section,' '.join(moved));break
+            changed=[s.name for s in inside if s.kind!='label' and not equal_at(a,b,s,smap[id(s)])]
+            if changed:why='%s contents differ: %s'%(section,' '.join(changed));break
             new.append((section,s1,e1,rest))
         if why:left.append((name,why));continue
         out.append((name,attrs,new,partial))
@@ -434,27 +456,25 @@ def main():
     args=p.parse_args()
     a,b=Side(args.source),Side(args.target)
     fmap,smap=port(a,b)
-    b_size={s.addr:s.size for s in b.symbols if s.kind=='function'}
     ported=[];report=[]
     for s in a.symbols:
         t=smap.get(id(s))
         if t is None:report.append(('symbol',s.name,'0x%08X'%s.addr,'-','unmapped'));continue
-        size=s.size
-        if s.kind=='function' and s.addr in a.functions:
-            # The rev0 extent where the masked code is the same there, else the toolkit's.
-            same=b.code(t,s.size)
-            if not same or same[1]!=a.functions[s.addr][2]:size=b_size.get(t,s.size)
-        ported.append((s.section,t,size,s.line(t,size)))
-        report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'mapped' if size==s.size else 'mapped, size 0x%X'%size))
+        if s.kind!='label' and not equal_at(a,b,s,t):
+            report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'not written: paired by position only, contents differ'));continue
+        ported.append((s.section,t,s.size,s.line(t)))
+        report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'same contents'))
     lines=merge(b.symbols,ported)
     units,left=port_splits(a,b,smap)
-    for name,_,ranges,partial in units:
-        report.append(('unit',name,'-','-','ported'+(', not ported: '+' '.join(partial) if partial else '')))
+    report+=[('unit',name,'-','-','ported') for name,_,_,_ in units]
     report+=[('unit',name,'-','-','left out: '+why) for name,why in left]
     fn=[s for s in a.symbols if s.kind=='function'];other=[s for s in a.symbols if s.kind!='function']
-    print('functions: %d of %d mapped'%(sum(id(s) in smap for s in fn),len(fn)))
-    print('other symbols: %d of %d mapped'%(sum(id(s) in smap for s in other),len(other)))
-    print('units: %d of %d ported (%d with unmapped symbols inside), %d left out'%(len(units),len(units)+len(left),sum(1 for u in units if u[3]),len(left)))
+    same={(r[1],r[2]) for r in report if r[0]=='symbol' and r[4]=='same contents'}
+    position=[r for r in report if r[0]=='symbol' and r[4].startswith('not written')]
+    kinds={(s.name,'0x%08X'%s.addr):s.kind for s in a.symbols}
+    print('functions: %d of %d written with the same contents, %d more paired by position only'%(sum(kinds[k]=='function' for k in same),len(fn),sum(kinds[(r[1],r[2])]=='function' for r in position)))
+    print('other symbols: %d of %d written with the same contents, %d more paired by position only'%(sum(kinds[k]!='function' for k in same),len(other),sum(kinds[(r[1],r[2])]!='function' for r in position)))
+    print('units: %d of %d ported, %d left out'%(len(units),len(units)+len(left),len(left)))
     if args.report:
         args.report.parent.mkdir(parents=True,exist_ok=True)
         args.report.write_text('kind\tname\tfrom\tto\tstate\n'+''.join('\t'.join(r)+'\n' for r in report))
