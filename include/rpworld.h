@@ -262,6 +262,8 @@ S32 RpLightDestroy(RpLight* light);
 S32 RpLightRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
                           RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
 
+RpGeometry* RpGeometryLock(RpGeometry* geometry, S32 lockMode);
+
 S32 RpAtomicDestroy(RpAtomic* atomic);
 const RwSphere* RpAtomicGetWorldBoundingSphere(RpAtomic* atomic);
 S32 RpAtomicRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
