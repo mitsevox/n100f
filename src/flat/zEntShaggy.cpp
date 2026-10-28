@@ -2093,7 +2093,7 @@ static S32 Shaggy0_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
     return retval;
 }
 
-static void Shaggy2_DebugModlTime(F32 time)
+static void zEntShaggy_UnknownModlTime(F32 time)
 {
     printf("ModlTime = %f\n", time);
 }
