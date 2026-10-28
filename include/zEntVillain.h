@@ -900,8 +900,17 @@ struct st_zEntVillain : _zEnt
 };
 
 en_ZVILLAIN_BUBBLE_RESPONSE zEntVillain_Bubble(st_zEntVillain* ent, _zEntBubble* bub);
+en_ZVILLAIN_BUMPED_RESPONSE zEntVillain_Bumped(st_zEntVillain* ent, const _xCollis* colrec);
 void zEntVillain_HeroWasHurt();
+void zEntVillain_Stun(st_zEntVillain* ent, F32 strength);
 st_zEntVillain* zEntVillain_NPCInst(U32 npcidx);
+en_ZVILLAIN_BOUNCE_RESPONSE zEntVillain_Bounce(st_zEntVillain* ent);
+void zEntVillain_BonusRender();
+void zEntVillain_Load(st_zEntVillain* ent, xSerial* xser);
+void zEntVillain_Save(st_zEntVillain* ent, xSerial* xser);
+st_zEntVillain* zEntVillain_MemPool(U32 npccnt);
+S32 zEntVillain_sceneFinish();
+S32 zEntVillain_scenePrepare();
 S32 zEntVillain_Shutdown();
 
 #endif

@@ -11,6 +11,7 @@ struct st_XORDEREDARRAY
     S32 warnlvl;
 };
 
+void XOrdInit(st_XORDEREDARRAY* array, S32 max);
 S32 XOrdLookup(st_XORDEREDARRAY* array, const void* key, S32 (*test)(const void*, void*));
 void XOrdInsert(st_XORDEREDARRAY* array, void* elt, S32 (*compare)(void*, void*));
 void XOrdAppend(st_XORDEREDARRAY* array, void* elt);
