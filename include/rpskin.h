@@ -38,6 +38,7 @@ const RwMatrixWeights* RpSkinGetVertexBoneWeights(RpSkin* skin);
 const U32* RpSkinGetVertexBoneIndices(RpSkin* skin);
 const RwMatrix* RpSkinGetSkinToBoneMatrices(RpSkin* skin);
 RpAtomic* RpSkinAtomicSetHAnimHierarchy(RpAtomic* atomic, RpHAnimHierarchy* hierarchy);
+RpAtomic* RpSkinAtomicSetType(RpAtomic* atomic, RpSkinType type);
 
 #ifdef __cplusplus
 }
