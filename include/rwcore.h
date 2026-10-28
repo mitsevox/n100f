@@ -426,6 +426,23 @@ typedef enum RwRenderState
     rwRENDERSTATEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwRenderState;
 
+typedef enum RwBlendFunction
+{
+    rwBLENDNABLEND = 0,
+    rwBLENDZERO,
+    rwBLENDONE,
+    rwBLENDSRCCOLOR,
+    rwBLENDINVSRCCOLOR,
+    rwBLENDSRCALPHA,
+    rwBLENDINVSRCALPHA,
+    rwBLENDDESTALPHA,
+    rwBLENDINVDESTALPHA,
+    rwBLENDDESTCOLOR,
+    rwBLENDINVDESTCOLOR,
+    rwBLENDSRCALPHASAT,
+    rwBLENDFUNCTIONFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwBlendFunction;
+
 #define rwObjectGetSubType(o) (((const RwObject*)(o))->subType)
 #define rwObjectGetFlags(o) (((const RwObject*)(o))->flags)
 #define rwObjectTestFlags(o, f) ((((const RwObject*)(o))->flags) & (U8)(f))
@@ -832,6 +849,8 @@ const RwPluginRegistry* _rwPluginRegistryDeInitObject(const RwPluginRegistry* re
 void _rwObjectHasFrameReleaseFrame(void* object);
 
 S32 RwTextureDestroy(RwTexture* texture);
+RwTexture* RwTexDictionaryAddTexture(RwTexDictionary* dict, RwTexture* texture);
+RwTexDictionary* RwTexDictionaryGetCurrent(void);
 
 RwFrame* RwFrameUpdateObjects(RwFrame* frame);
 
