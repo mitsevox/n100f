@@ -1,6 +1,6 @@
 # Game-unit splits
 
-`config/GIHE78-rev0/splits.txt` names 123 game units (`flat/<file>`). They come from `tools/splits/recover.py`, which compares the target with the PS2 USA retail v1.01 executable SLUS-20349 (SHA-1 `ebe640193e0ceb38deca343a0b576cfcba2d5920`). That executable keeps its DWARF.
+`config/GIHE78-rev0/splits.txt` names 124 game units (`flat/<file>`). They come from `tools/splits/recover.py`, which compares the target with the PS2 USA retail v1.01 executable SLUS-20349 (SHA-1 `ebe640193e0ceb38deca343a0b576cfcba2d5920`). That executable keeps its DWARF.
 
 The names and extents are claims, not established facts. In `evidence.tsv`:
 - each unit's extent is an `inferred` `unit` row with `provisional` or `open` edges;
@@ -38,7 +38,7 @@ The 14 KB after CARD, `0x801372EC` to `0x8013AA64`, is not CARD. It resembles Re
     - it has an anchor, and its GC function count is 0.5x to 2x its PS2 count;
     - it has no anchor, and the counts differ by at most one.
 
-    The other 11 candidates (five platform `i*` files, ms4sound.cpp, xDebug.cpp, xDraw.cpp, xSnd.cpp, xTRC.cpp and zEntSimpleObj.cpp) are listed in `split_units.tsv` as `weak` and stay in dtk's automatic objects.
+    The other 10 candidates (five platform `i*` files, ms4sound.cpp, xDebug.cpp, xDraw.cpp, xTRC.cpp and zEntSimpleObj.cpp) are listed in `split_units.tsv` as `weak` and stay in dtk's automatic objects.
 7. **Checks.** The tool exits non-zero if any function loads a `.sdata2` item inside another unit's `.sdata2` range. MW pools literals per unit, so a cross-unit load means a wrong edge. A global `const` placed in `.sdata2` would also trip this check; none does today. As advice only, it also reports a unit range that holds the same float twice. Pooled literals are merged, but a named static `const` is not merged with a literal.
 
 All five `.ctors` initialisers end up inside emitted units: zEntPlayer, zEntShaggy, zHud, zScene and zUI.
@@ -58,7 +58,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78-rev0/sys/main.dol \
 ## Limits
 
 - A byte-identical relink only shows that dtk and mwld accept the cuts. It says nothing about where Heavy Iron's objects began and ended.
-- 50 of the 113 text edges between emitted units are "alignment only": they have no data or call evidence beyond the size alignment. 8 more are confirmed only by outgoing calls, and 7 rest on call references alone.
+- 51 of the 115 text edges between emitted units are "alignment only": they have no data or call evidence beyond the size alignment. 8 more are confirmed only by outgoing calls, and 7 rest on call references alone.
 - iDraw.cpp is written on 3 of its 4 PS2 functions, `0x80009CC0` to `0x80009CCC`, all empty stubs. One of them is placed only because `xDrawBegin` calls it where PS2 tail-calls `iDrawBegin`. zPortal.cpp and zRenderState.cpp have no anchor at all; they are written because their function counts match the PS2 units exactly once the tail calls pair.
 - PS2 v1.01 is a sibling build, not the target. Platform `i*` units differ on GC and are mostly unsplit.
 - The weak `iAnim.cpp` candidate at `0x80005AFC` is contradicted: BfBB's `iAnim.cpp` is GC platform code, and its `iAnimBlend` sits in the GC-only block at `0x800D7E00`.
@@ -71,7 +71,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78-rev0/sys/main.dol \
 - xMath3.cpp is a partial unit in `configure.py`. The tail-call rule gave it the wrappers `xMath3Exit` and `xMath3Init` (`0x8002F8E0`, `0x8002F900`), which count as unmatched, so the game total went from 267 to 269 functions with 77 still exact.
 - iModel.cpp runs to `0x8000EBC0` on call references, not on PS2 sizes alone: `0x8000E994` passes `0x8000EA5C` to `RpClumpForAllAtomics`, `0x8000EA5C` passes the GC-only static `0x8000EB64`, and `0x8000EB60` is the empty `iModelInit`, which xModel calls.
 - Header inline copies (`xMath3.h`, `xEnt.h`, `xModel.h`) are left to whichever unit holds them.
-- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`). That block is split by hand, one unit per reconstructed file, under `gc/`: so far `gc/iAnim.cpp` (`0x800D7E00` to `0x800D84A0`), whose sections each start where `flat/zVar.cpp`'s end, `gc/ngcrad3d.c` (`0x800DBDA8` to `0x800DC29C`, the RAD 3D image layer under the FMV player), and `gc/iMix.c` (`0x800DC95C` to `0x800DE530`, the SDK MIX mixer), which ends where MetroTRK begins. Their `unit` rows in `evidence.tsv` give the edge and path evidence; the `gc/` directory follows BfBB's layout and is not target evidence. MetroTRK, the runtime, MSL, the first part of the Dolphin SDK and the CARD library are mapped separately, under [Library units](#library-units), Bink under [Bink units](#bink-units) and RenderWare under [RenderWare units](#renderware-units).
+- This does not cover the GC-only code from `0x800D7E00` (it opens with `iAnimBlend`: an instruction match, with relocations masked, to BfBB's `gc/iAnim.cpp` under GC/1.3.2; see `evidence.tsv`). That block is split by hand, one unit per reconstructed file, under `gc/`: so far `gc/iAnim.cpp` (`0x800D7E00` to `0x800D84A0`), whose sections each start where `flat/zVar.cpp`'s end, `gc/iFMV.cpp` (`0x800DB168` to `0x800DBDA8`, the Bink movie player), `gc/ngcrad3d.c` (`0x800DBDA8` to `0x800DC29C`, the RAD 3D image layer under the FMV player), and `gc/iMix.c` (`0x800DC95C` to `0x800DE530`, the SDK MIX mixer), which ends where MetroTRK begins. Their `unit` rows in `evidence.tsv` give the edge and path evidence; the `gc/` directory follows BfBB's layout and is not target evidence. MetroTRK, the runtime, MSL, the first part of the Dolphin SDK and the CARD library are mapped separately, under [Library units](#library-units), Bink under [Bink units](#bink-units) and RenderWare under [RenderWare units](#renderware-units).
 
 # Library units
 

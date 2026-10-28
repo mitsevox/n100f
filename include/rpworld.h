@@ -10,7 +10,6 @@ typedef struct RpSector RpSector;
 typedef struct RpPolygon RpPolygon;
 typedef struct RpVertexNormal RpVertexNormal;
 typedef struct RwTexCoords RwTexCoords;
-typedef struct RwResEntry RwResEntry;
 typedef struct RpCollSector RpCollSector;
 typedef struct RpMeshHeader RpMeshHeader;
 typedef struct RxPipeline RxPipeline;

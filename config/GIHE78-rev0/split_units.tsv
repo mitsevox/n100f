@@ -66,7 +66,7 @@ xScene.cpp	0x80038D48	0x800394B4	13	13	0	0	-	count-match
 xScrFx.cpp	0x800394B4	0x80039C90	7	7	3	2	0x800394C4=xScrFxIsLetterbox (name)	anchored
 xserializer.cpp	0x80039C90	0x8003AD40	39	41	8	7	0x80039CFC=xSER_xsgclt_svproc_fill (name)	anchored
 xShadow.cpp	0x8003AD40	0x8003CD24	11	16	3	0	0x8003AD40=ShadowRender (floats)	anchored
-xSnd.cpp	0x8003CD24	0x8003D5C0	18	23	0	0	-	weak
+xSnd.cpp	0x8003CD24	0x8003D5C0	18	23	1	0	0x8003D058=xSndPlay (strings)	anchored
 xSpline.cpp	0x8003D680	0x8003F904	11	13	2	1	0x8003DB84=xSpline3_EvalArcApprox (name)	anchored
 xstransvc.cpp	0x8003F904	0x80040978	14	17	2	1	0x800402D8=xSTLoadStep (name)	anchored
 xString.cpp	0x80040978	0x80040EE4	6	6	1	1	0x80040B38=xStrupr (name)	anchored
