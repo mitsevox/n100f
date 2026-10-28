@@ -3,7 +3,13 @@
 
 #include "types.h"
 
-// Partial: the analog, state and rumble members after the button masks are left opaque.
+struct _tagPadAnalog
+{
+    S8 x;
+    S8 y;
+};
+
+// Partial: the state and rumble members after the analog sticks are left opaque.
 // The object is 0x68 bytes, as mPad[4] spans 0x1A0.
 struct _tagxPad
 {
@@ -12,7 +18,9 @@ struct _tagxPad
     U32 on;
     U32 pressed;
     U32 released;
-    U8 opaque_38[0x68 - 0x38];
+    _tagPadAnalog analog1;
+    _tagPadAnalog analog2;
+    U8 opaque_3C[0x68 - 0x3C];
 };
 
 extern _tagxPad mPad[4];
