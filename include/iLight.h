@@ -20,5 +20,6 @@ extern RpWorld* gLightWorld;
 
 void iLightEnv(iLight* light, S32 env);
 void iLightDestroy(iLight* light);
+void iLightSetColor(iLight* light, _xFColor* col);
 
 #endif
