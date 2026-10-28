@@ -15,17 +15,17 @@ typedef struct RxExecContext RxExecContext;
 struct RxExecContext
 {
     RxPipeline* pipeline;
-    RxPipelineNode* unk4;
+    void* unk4;
     S32 exitCode;
     U32 unkC;
     RxPipelineNodeParam params;
 };
 
 RxExecContext _rxExecCtxGlobal;
-U32 _rxHeapInitialSize;
-U32 _rxPipelineMaxNodes;
-S32 RxPipelineInstanced;
 RxHeap* _rxHeapGlobal;
+S32 RxPipelineInstanced;
+U32 _rxHeapInitialSize = 0x1000;
+U32 _rxPipelineMaxNodes = 64;
 
 S32 _rxPipelineClose(void)
 {

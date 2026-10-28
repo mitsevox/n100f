@@ -874,13 +874,13 @@ struct RxPipelineNodeParam
 typedef struct RxNodeMethods RxNodeMethods;
 struct RxNodeMethods
 {
-    S32 (*nodeBody)(RxPipelineNode* self, const RxPipelineNodeParam* params);
-    S32 (*nodeInit)(RxNodeDefinition* self);
-    void (*nodeTerm)(RxNodeDefinition* self);
-    S32 (*pipelineNodeInit)(RxPipelineNode* self);
-    void (*pipelineNodeTerm)(RxPipelineNode* self);
-    S32 (*pipelineNodeConfig)(RxPipelineNode* self, RxPipeline* pipeline);
-    U32 (*configMsgHandler)(RxPipelineNode* self, U32 msg, U32 intparam, void* ptrparam);
+    S32 (*nodeBody)(RxPipelineNode*, RxPipelineNodeParam*);
+    S32 (*nodeInit)(RxNodeDefinition*);
+    void (*nodeTerm)(RxNodeDefinition*);
+    S32 (*pipelineNodeInit)(RxPipelineNode*);
+    void (*pipelineNodeTerm)(RxPipelineNode*);
+    S32 (*pipelineNodeConfig)(RxPipelineNode*, RxPipeline*);
+    U32 (*configMsgHandler)(RxPipelineNode*, U32, U32, void*);
 };
 
 typedef struct RxIoSpec RxIoSpec;
@@ -960,11 +960,51 @@ struct RxPipeline
 
 typedef RxPipeline RxLockedPipe;
 
-// Opaque: the pipeline globals only take its address.
+typedef enum RwShadeMode
+{
+    rwSHADEMODENASHADEMODE = 0,
+    rwSHADEMODEFLAT = 1,
+    rwSHADEMODEGOURAUD = 2,
+    rwSHADEMODEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwShadeMode;
+
+typedef enum RwTextureAddressMode
+{
+    rwTEXTUREADDRESSNATEXTUREADDRESS = 0,
+    rwTEXTUREADDRESSWRAP = 1,
+    rwTEXTUREADDRESSMIRROR = 2,
+    rwTEXTUREADDRESSCLAMP = 3,
+    rwTEXTUREADDRESSBORDER = 4,
+    rwTEXTUREADDRESSMODEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwTextureAddressMode;
+
+typedef enum RwTextureFilterMode
+{
+    rwFILTERNAFILTERMODE = 0,
+    rwFILTERNEAREST = 1,
+    rwFILTERLINEAR = 2,
+    rwFILTERMIPNEAREST = 3,
+    rwFILTERMIPLINEAR = 4,
+    rwFILTERLINEARMIPNEAREST = 5,
+    rwFILTERLINEARMIPLINEAR = 6,
+    rwTEXTUREFILTERMODEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwTextureFilterMode;
+
 typedef struct RxRenderStateVector RxRenderStateVector;
 struct RxRenderStateVector
 {
-    U8 unk0[0x30];
+    U32 Flags;
+    RwShadeMode ShadeMode;
+    RwBlendFunction SrcBlend;
+    RwBlendFunction DestBlend;
+    RwRaster* TextureRaster;
+    RwTextureAddressMode AddressModeU;
+    RwTextureAddressMode AddressModeV;
+    RwTextureFilterMode FilterMode;
+    RwRGBA BorderColor;
+    RwFogType FogType;
+    RwRGBA FogColor;
+    U8* FogTable;
 };
 
 // The pipeline module's globals, at _rxPipelineGlobalsOffset in the engine instance.
