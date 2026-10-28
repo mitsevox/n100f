@@ -60,6 +60,7 @@ typedef struct _xSphere xSphere;
 typedef struct _xRot xRot;
 
 extern const xMat4x3 g_I3;
+extern const xVec3 g_O3;
 extern const xVec3 g_Y3;
 extern const xVec3 g_NY3;
 
