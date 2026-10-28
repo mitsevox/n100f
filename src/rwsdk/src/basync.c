@@ -1,8 +1,8 @@
 #include <rwcore.h>
 
-// Private frame flags: the hierarchy root is on the dirty list, this frame's local
-// transformation matrix needs recomputing, and its objects need resynchronising.
-#define FRAME_ROOTDIRTY 0x01
+// Private frame flags: the hierarchy's matrices need recomputing (set on the root),
+// this frame's matrix needs recomputing, and its objects need resynchronising.
+#define FRAME_HIERARCHYLTMDIRTY 0x01
 #define FRAME_LTMDIRTY 0x04
 #define FRAME_OBJECTSDIRTY 0x08
 #define FRAME_SUBTREEDIRTY (FRAME_LTMDIRTY | FRAME_OBJECTSDIRTY)
@@ -68,7 +68,7 @@ static void FrameSyncHierarchy(RwFrame* frame)
 {
     U8 flags = frame->object.privateFlags;
 
-    if (flags & FRAME_ROOTDIRTY)
+    if (flags & FRAME_HIERARCHYLTMDIRTY)
     {
         U8 ltmFlags = flags & FRAME_LTMDIRTY;
 
@@ -145,5 +145,5 @@ void _rwFrameSyncHierarchyLTM(RwFrame* frame)
 
     FrameSyncHierarchyLTMRecurse(frame->child, flags);
 
-    frame->object.privateFlags = flags & ~(FRAME_ROOTDIRTY | FRAME_LTMDIRTY);
+    frame->object.privateFlags = flags & ~(FRAME_HIERARCHYLTMDIRTY | FRAME_LTMDIRTY);
 }
