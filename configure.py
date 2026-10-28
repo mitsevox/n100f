@@ -717,7 +717,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "dolphin/os/OSArena.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "dolphin/os/OSAudioSystem.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "dolphin/os/OSCache.c"),
-            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "dolphin/os/OSContext.c"),
+            Object(MatchingFor("GIHE78-rev0"), "dolphin/os/OSContext.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "dolphin/os/OSError.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "dolphin/os/OSFont.c"),
             Object(MatchingFor("GIHE78-rev0"), "dolphin/os/OSInterrupt.c"),
