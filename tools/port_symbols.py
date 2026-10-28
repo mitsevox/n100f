@@ -328,7 +328,10 @@ def merge(toolkit,ported):
             size=st[j]-s.addr
         lines.append((s.addr,1,s.line(size=size)))
     lines.sort(key=lambda x:(x[0],x[1]))
-    return [l for _,_,l in lines]
+    # A label naming the same address as a symbol of the same name would be defined twice in the
+    # toolkit's assembly for a unit that does not link its source.
+    named={(t,l.split(' ',1)[0]) for t,_,l in lines if 'type:label' not in l}
+    return [l for t,_,l in lines if 'type:label' not in l or (t,l.split(' ',1)[0]) not in named]
 
 
 def port_splits(a,b,smap):
