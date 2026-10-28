@@ -10,15 +10,16 @@ toolkit's own map of its original (the tool's input as well as its output): port
 the toolkit's at the same address, and every address nothing maps to keeps the toolkit's symbol.
 
 Functions pair in passes. A function whose instructions, with relocated fields masked (branch
-targets, `lis` halves and their partner instructions, r2/r13 offsets), occur exactly once on each
-side is an anchor; anchors that break address order are dropped. Between consecutive pairs, equal
+targets, r2/r13 offsets, and a `lis` half with its partner instruction where every path carries
+that half and the two form an address), occur exactly once on each side is an anchor; anchors that break address order are dropped. Between consecutive pairs, equal
 runs of functions pair in order, by position alone. A branch target that resolves the same way
 from every paired caller pairs too, and so does a function the sibling's toolkit merged into its
 predecessor, at the same offset, when its masked instructions are equal there. Data symbols map
 through the addresses that pairs with the same instruction shape and mapped pointer words resolve
 to, by a majority over every reference into the symbol and only where the bytes are equal outside
 pointer words; a run of unreferenced data between two mapped symbols takes their shifts where the
-bytes allow. A label maps at its offset inside a mapped symbol whose contents are the same there.
+bytes allow. Uninitialized (.bss) data maps only where every reference into it shifts with it.
+A label maps at its offset inside a mapped symbol whose contents are the same there.
 Only pairs whose contents are the same apart from relocations are written; the report lists the
 pairs found by position alone that the tool cannot show equal, which are not (not proof they differ).
 
@@ -55,6 +56,15 @@ class Dol:
         h=struct.unpack('>18I18I18III',self.data[:0xE0])
         self.sections=[(h[18+i],h[i],h[36+i]) for i in range(18) if h[36+i]]
         self.bss=(h[54],h[55])
+        # Code addresses that initialized data holds (jump table cases, function pointers).
+        text=[(h[18+i],h[18+i]+h[36+i]) for i in range(7) if h[36+i]]
+        self.code_refs=set()
+        for i in range(7,18):
+            if not h[36+i]:continue
+            raw=self.data[h[i]:h[i]+h[36+i]]
+            for k in range(0,len(raw)-3,4):
+                v=int.from_bytes(raw[k:k+4],'big')
+                if any(lo<=v<hi for lo,hi in text):self.code_refs.add(v)
         words=struct.unpack('>%dI'%((len(self.data)-0x100)//4),self.data[0x100:0x100+(len(self.data)-0x100)//4*4])
         self.sda={}
         for a,b in zip(words,words[1:]):
@@ -132,25 +142,66 @@ def written(w):
     return set()
 
 
-def walk(code,sda):
+def branch(pc,w):
+    """The target of a relative branch, and whether control can fall through past it."""
+    op=w>>26;bo=(w>>21)&31
+    if op==18:
+        disp=w&0x03FFFFFC
+        return (None if w&2 else (pc+(disp-0x04000000 if disp&0x02000000 else disp))&0xFFFFFFFF),bool(w&1)
+    if op==16:
+        disp=w&0xFFFC
+        return (None if w&2 else (pc+(disp-0x10000 if disp&0x8000 else disp))&0xFFFFFFFF),bool(w&1) or bo&0x14!=0x14
+    if op==19 and (w>>1)&0x3FF in (16,528):return None,bool(w&1) or bo&0x14!=0x14
+    return None,True
+
+
+def walk(code,sda,is_addr,entries=frozenset()):
     """Per instruction: the masked word, and the absolute address its relocated field names, if any.
-    A `lis` half is followed only until its register is written again."""
-    hi={};out=[]
-    for pc,w in code:
-        op,rd,ra=w>>26,(w>>21)&31,(w>>16)&31;ref=None;new=None
+    A `lis` half reaches an instruction only when every path to it carries the same `lis` unwritten:
+    paths are fall-through and relative branches, and an instruction no path reaches, or an address
+    in `entries` (one that data points at, such as a jump table case), starts with nothing known. A `lis` and its partner are masked
+    only when they form an address for which `is_addr` holds; any other `lis` is a constant and stays
+    as it is."""
+    n=len(code);at={pc:i for i,(pc,_) in enumerate(code)};preds=[[] for _ in range(n)]
+    for i,(pc,w) in enumerate(code):
+        target,falls=branch(pc,w)
+        if target in at:preds[at[target]].append(i)
+        if falls and i+1<n:preds[i+1].append(i)
+    def step(i,state):
+        w=code[i][1];op,rd=w>>26,(w>>21)&31
+        state={r:v for r,v in state.items() if r not in written(w)}
+        if op==15 and (w>>16)&31==0:state[rd]=((w&0xFFFF)<<16,frozenset((i,)))
+        return state
+    def state_in(i,out):
+        known=[out[p] for p in preds[i] if out[p] is not None]
+        if i==0 or code[i][0] in entries or not preds[i]:known.append({})
+        if not known:return None
+        # Paths that load the same half in different `lis` instructions agree on it.
+        return {r:(v,frozenset().union(*(k[r][1] for k in known))) for r,(v,_) in known[0].items()
+                if all(r in k and k[r][0]==v for k in known[1:])}
+    out=[None]*n;changed=True
+    while changed:
+        changed=False
+        for i in range(n):
+            st=state_in(i,out)
+            if st is None:continue
+            new=step(i,st)
+            if new!=out[i]:out[i]=new;changed=True
+    result=[];used=set()
+    for i,(pc,w) in enumerate(code):
+        hi=state_in(i,out) or {}
+        op,rd,ra=w>>26,(w>>21)&31,(w>>16)&31;ref=None
         if op==18 and not w&2:
-            disp=w&0x03FFFFFC;ref=(pc+(disp-0x04000000 if disp&0x02000000 else disp))&0xFFFFFFFF;w&=~0x03FFFFFC
-        elif op==15 and ra==0:
-            new=(w&0xFFFF)<<16;w&=~0xFFFF
-        elif op==24 and rd in hi:
-            ref=hi[rd]|(w&0xFFFF);w&=~0xFFFF
-        elif op in LOADS_STORES and op!=24 and (ra in sda or ra in hi):
-            simm=(w&0xFFFF)-((w&0x8000)<<1)
-            ref=((sda[ra] if ra in sda else hi[ra])+simm)&0xFFFFFFFF;w&=~0xFFFF
-        for r in written(w):hi.pop(r,None)
-        if new is not None:hi[rd]=new
-        out.append((w,ref))
-    return out
+            ref=branch(pc,w)[0];w&=~0x03FFFFFC
+        elif op==24 and rd in hi and is_addr(hi[rd][0]|(w&0xFFFF)):
+            ref=hi[rd][0]|(w&0xFFFF);w&=~0xFFFF;used|=hi[rd][1]
+        elif op in LOADS_STORES and op!=24 and ra in sda:
+            ref=(sda[ra]+(w&0xFFFF)-((w&0x8000)<<1))&0xFFFFFFFF;w&=~0xFFFF
+        elif op in LOADS_STORES and op!=24 and ra in hi and is_addr((hi[ra][0]+(w&0xFFFF)-((w&0x8000)<<1))&0xFFFFFFFF):
+            ref=(hi[ra][0]+(w&0xFFFF)-((w&0x8000)<<1))&0xFFFFFFFF;w&=~0xFFFF;used|=hi[ra][1]
+        result.append((w,ref))
+    for i in used:result[i]=(result[i][0]&~0xFFFF,None)
+    return result
 
 
 class Side:
@@ -159,6 +210,9 @@ class Side:
         self.dol=Dol(dol);self.symbols=symbols(sym);self.splits_path=split
         self.bss=self.dol.bss
         self.in_bss=lambda addr:self.bss[0]<=addr<self.bss[0]+self.bss[1] and self.dol.read(addr,1) is None
+        # References from paired code and mapped data (source address -> shifts), and the .bss
+        # symbols that sit between two neighbours of one shift; port() fills them.
+        self.refs={};self.ref_keys=[];self.blind=set()
         self.functions={}
         for s in self.symbols:
             if s.kind!='function' or not s.size:continue
@@ -169,7 +223,8 @@ class Side:
         """The walked instructions and masked hash of `size` bytes of code at `addr`."""
         raw=self.dol.read(addr,size)
         if raw is None or size%4:return None
-        walked=walk(list(zip(range(addr,addr+size,4),struct.unpack('>%dI'%(size//4),raw))),{2:self.dol.sda[2],13:self.dol.sda[13]})
+        walked=walk(list(zip(range(addr,addr+size,4),struct.unpack('>%dI'%(size//4),raw))),{2:self.dol.sda[2],13:self.dol.sda[13]},
+                    is_address,self.dol.code_refs)
         return walked,hashlib.sha1(struct.pack('>%dI'%len(walked),*[w for w,_ in walked])).digest()
 
     def adopt(self,addr,other):
@@ -230,6 +285,13 @@ def pair_functions(a,b):
     return fmap
 
 
+def is_address(x):
+    """An address in the console's cached main memory (24 MiB from 0x80000000): the sections and
+    .bss, and the linker's stack and arena addresses after them. Hardware registers and other
+    constants fall outside it."""
+    return 0x80000000<=x<0x81800000
+
+
 def same_shape(wa,wb):
     if len(wa)!=len(wb) or any(x>>26!=y>>26 for (x,_),(y,_) in zip(wa,wb)):return []
     return [(p,q) for p,q in zip(wa,wb) if p[1] is not None and q[1] is not None]
@@ -248,9 +310,15 @@ def section_of(dol,addr,bss):
 
 
 def same_bytes(a,b,s,t):
-    """Initialized bytes equal outside pointer words; both absent (.bss) counts as equal."""
+    """Initialized bytes equal outside pointer words. Uninitialized (.bss) data has no bytes to
+    compare: every reference into it must shift with it, and one nothing references counts only
+    between two neighbours of the same shift. port_splits checks each .bss range the same way."""
     ra=a.dol.read(s.addr,s.size);rb=b.dol.read(t,s.size)
-    if ra is None or rb is None:return ra is None and rb is None and a.in_bss(s.addr) and b.in_bss(t)
+    if ra is None or rb is None:
+        if not (ra is None and rb is None and a.in_bss(s.addr) and b.in_bss(t)):return False
+        k=a.ref_keys;lo=bisect.bisect_left(k,s.addr);hi=bisect.bisect_left(k,s.addr+max(s.size,1))
+        shifts={d for r in k[lo:hi] for d in a.refs[r]}
+        return shifts=={t-s.addr} or (not shifts and id(s) in a.blind)
     ptr=set(pointers(ra,a))|set(pointers(rb,b))
     return all(ra[k:k+4]==rb[k:k+4] for k in range(0,len(ra)//4*4,4) if k not in ptr) and ra[len(ra)//4*4:]==rb[len(rb)//4*4:]
 
@@ -268,10 +336,10 @@ def port(a,b):
     for s in a.symbols:
         if s.kind!='function':by_section[s.section].append(s)
     for items in by_section.values():items.sort(key=lambda s:s.addr)
-    done_ptr=set()
+    done_ptr=set();a.refs=refs
     while True:
         before=len(smap)
-        starts=sorted(refs)
+        starts=a.ref_keys=sorted(refs)
         for s in a.symbols:
             if s.kind=='function' or id(s) in smap:continue
             lo=bisect.bisect_left(starts,s.addr);hi=bisect.bisect_left(starts,s.addr+max(s.size,1))
@@ -289,6 +357,7 @@ def port(a,b):
                 if j-i<2:continue
                 dp=smap[id(items[i])]-items[i].addr;dn=smap[id(items[j])]-items[j].addr
                 run=items[i+1:j]
+                if dp==dn:a.blind.update(id(s) for s in run)
                 for k in range(len(run),-1,-1):
                     if all(same_bytes(a,b,s,s.addr+dp) for s in run[:k]) and all(same_bytes(a,b,s,s.addr+dn) for s in run[k:]):
                         for s in run[:k]:smap[id(s)]=s.addr+dp
@@ -303,6 +372,7 @@ def port(a,b):
             for k in pointers(ra,a):
                 if k+4<=len(rb):vote(int.from_bytes(ra[k:k+4],'big'),int.from_bytes(rb[k:k+4],'big'))
         if len(smap)==before:break
+    a.ref_keys=sorted(refs)
     # A label inside a mapped symbol whose contents are the same there keeps its offset.
     for s in a.symbols:
         if s.kind!='label' or id(s) in smap:continue
@@ -310,7 +380,7 @@ def port(a,b):
             if p.kind!='label' and id(p) in smap and p.addr<=s.addr<p.addr+p.size and equal_at(a,b,p,smap[id(p)]):
                 smap[id(s)]=smap[id(p)]+s.addr-p.addr;break
     consistent(a,smap)
-    return fmap,smap
+    return fmap,smap,refs
 
 
 def equal_at(a,b,s,t):
@@ -347,12 +417,7 @@ def consistent(a,smap):
 
 def merge(toolkit,ported):
     """The sibling's symbol lines: every ported symbol, and every toolkit symbol that no ported
-    symbol covers. A toolkit symbol running into a ported one is cut short at its start. Where the
-    toolkit already gives the address that name as another kind of symbol (its signatures name
-    gTRKInterruptVectorTable a label), the toolkit's symbol stays: the toolkit adds it again
-    during analysis, and the name would be defined twice."""
-    kinds={(s.name,s.addr):s.kind for s in toolkit}
-    ported=[p for p in ported if kinds.get((p[3].split(' ',1)[0],p[1]),None) in (None,Symbol(p[3]).kind)]
+    symbol covers. A toolkit symbol running into a ported one is cut short at its start."""
     starts=defaultdict(list);cover=defaultdict(list)
     for section,t,size,_ in ported:
         starts[section].append(t);cover[section].append((t,t+max(size,1)))
@@ -376,7 +441,7 @@ def merge(toolkit,ported):
     return [l for t,_,l in lines if 'type:label' not in l or (t,l.split(' ',1)[0]) not in named]
 
 
-def port_splits(a,b,smap):
+def port_splits(a,b,smap,refs):
     """Each unit's section ranges on the sibling, or the reason the unit is left out. A range's
     start is the sibling address of the symbol at its start; its end is the sibling address of the
     symbol at its end (the next unit's first symbol), or the section's end."""
@@ -436,6 +501,11 @@ def port_splits(a,b,smap):
             if moved:why='%s symbols unmapped or shifted: %s'%(section,' '.join(moved));break
             changed=[s.name for s in inside if s.kind!='label' and not equal_at(a,b,s,smap[id(s)])]
             if changed:why='%s contents not shown equal: %s'%(section,' '.join(changed));break
+            # Uninitialized data has no bytes to compare: every reference into the range from paired
+            # code or mapped data must land at the range's shift, so sizes and order agree.
+            if a.in_bss(start):
+                off=[r for r in refs if start<=r<end and set(refs[r])!={s1-start}]
+                if off:why='%s references shift differently at 0x%08X'%(section,min(off));break
             new.append((section,s1,e1,rest))
         if why:left.append((name,why));continue
         out.append((name,attrs,new,partial))
@@ -472,22 +542,28 @@ def main():
     p.add_argument('--report',type=Path,help='write the per-symbol and per-unit report (TSV)')
     args=p.parse_args()
     a,b=Side(args.source),Side(args.target)
-    fmap,smap=port(a,b)
+    fmap,smap,refs=port(a,b)
     ported=[];report=[]
+    toolkit_kind={(s.name,s.addr):s.kind for s in b.symbols}
     for s in a.symbols:
         t=smap.get(id(s))
         if t is None:report.append(('symbol',s.name,'0x%08X'%s.addr,'-','unmapped'));continue
         if s.kind!='label' and not equal_at(a,b,s,t):
             report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'not written: paired by position only, contents not shown equal'));continue
+        # Where the toolkit gives the address this name as another kind of symbol (its signatures
+        # make gTRKInterruptVectorTable a label), the toolkit's symbol stays: the toolkit adds it
+        # again during analysis, and the name would be defined twice.
+        if toolkit_kind.get((s.name,t),s.kind)!=s.kind:
+            report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'not written: the toolkit gives this name as a %s'%toolkit_kind[(s.name,t)]));continue
         ported.append((s.section,t,s.size,s.line(t)))
         report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'same contents'))
     lines=merge(b.symbols,ported)
-    units,left=port_splits(a,b,smap)
+    units,left=port_splits(a,b,smap,refs)
     report+=[('unit',name,'-','-','ported') for name,_,_,_ in units]
     report+=[('unit',name,'-','-','left out: '+why) for name,why in left]
     fn=[s for s in a.symbols if s.kind=='function'];other=[s for s in a.symbols if s.kind!='function']
     same={(r[1],r[2]) for r in report if r[0]=='symbol' and r[4]=='same contents'}
-    position=[r for r in report if r[0]=='symbol' and r[4].startswith('not written')]
+    position=[r for r in report if r[0]=='symbol' and r[4].startswith('not written: paired')]
     kinds={(s.name,'0x%08X'%s.addr):s.kind for s in a.symbols}
     print('functions: %d of %d written with the same contents, %d more paired by position only'%(sum(kinds[k]=='function' for k in same),len(fn),sum(kinds[(r[1],r[2])]=='function' for r in position)))
     print('other symbols: %d of %d written with the same contents, %d more paired by position only'%(sum(kinds[k]!='function' for k in same),len(other),sum(kinds[(r[1],r[2])]!='function' for r in position)))
