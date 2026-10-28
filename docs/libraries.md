@@ -219,4 +219,12 @@ Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units c
 - `BinkGetRealtime` fills the result's `frame_rate_div` from `frame_rate`, and `BinkNextFrame` sets `io.busy` to 1 and straight back to 0.
 - The file does not include `string.h`, whose `size_t` prototypes conflict with GCC's builtin `memset` and `memcpy` and change six functions. It declares `memmove` itself.
 
+`bink/src/sdk/decode/expand.c`, the video plane decoder (bundle readers, `ExpandPlane` and `ExpandBink`), is this project's own reconstruction from the target and is `NonMatching`. bfbb's `expand.c` holds only the unit's tables, as strings, and is not used: the tables here are written from the target's bytes. 15 of its 16 functions compile to the target byte for byte under ProDG 3.5 to 3.9.3, and so do its `.rodata`, `.data` and `.sdata2`. `ExpandPlane` has the target's structure in every block type, but its register allocation differs in several of them and it is 4 bytes longer; its function row says how, and the cause is not established. Some details of the source come from the target's code:
+
+- The 8-row copies and fills advance two pointers in turn, each set from the other right after its row is written, and the raw 8x8 block reads its rows by index from the color bundle, which the target reloads after every store.
+- The motion source of types 2, 4 and 7 is computed in one expression, so both offset bundles are read before either pointer is stored.
+- The scratch block `tmp` is written by byte through a `U8` pointer; plain subscripts of a `U8` array change the code. It is declared as 8 doubles, for the alignment of its 8-byte copies, though `U8 tmp[64]` with the same writes compiles the same. The 16x16 fill writes its first and last rows around a 7-iteration loop, and the pattern index is signed.
+- `ExpandPlane` declares `readcolors`, `rowadd` and `maskpitch` in the order of their stack slots, and `OpenReadBundle` computes the last index in a local before masking it to 16 bits.
+- Two 8-byte zero objects, `huff4decode00align` and `huff4decodesalign` (bfbb's names), precede `rlelens` in `.sdata2`, where the target has them.
+
 Bink headers are this project's own, declaring only what the reconstructed units use. The logo movie stays out of the repository: `binkread.c` declares `LogoData` `extern`, and its bytes come from `main.dol` at build time.
