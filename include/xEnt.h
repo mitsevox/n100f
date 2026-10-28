@@ -197,6 +197,7 @@ void xEntUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntReset(_xEnt* ent);
 U32 xEntIsVisible(_xEnt* ent);
 void xEntDefaultBoundUpdate(_xEnt* ent, xVec3* pos);
+void xEntSetMaterialMul(_xEnt* ent, F32 r, F32 g, F32 b);
 void xEntBeginUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntEndUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 
