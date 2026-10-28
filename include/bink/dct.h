@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+extern const U8 zigzag[64];
 extern const U8 patterns[16][64];
 
 void FastIDCT8x8(unsigned char* out, int stride, short* in, int qidx);

@@ -758,7 +758,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(Matching, "bink/src/sdk/varbits.c"),
             Object(Matching, "bink/src/sdk/fft.c"),
             Object(NonMatching, "bink/src/sdk/dct.c"),
-            Object(NonMatching, "bink/src/sdk/bitplane.c"),
+            Object(Matching, "bink/src/sdk/bitplane.c"),
         ],
     ),
     CardLib(
