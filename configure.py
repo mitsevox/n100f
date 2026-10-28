@@ -508,6 +508,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zTimer.cpp"),
             Object(NonMatching, "flat/zVar.cpp"),
             Object(Matching, "gc/iAnim.cpp"),
+            Object(Matching, "gc/iMix.c"),
         ],
     ),
     # Library units: config/GIHE78-rev0/lib_units.tsv and docs/splits.md "Library units".
