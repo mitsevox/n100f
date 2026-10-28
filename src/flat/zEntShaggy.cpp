@@ -2093,6 +2093,11 @@ static S32 Shaggy0_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
     return retval;
 }
 
+static void Shaggy2_DebugModlTime(F32 time)
+{
+    printf("ModlTime = %f\n", time);
+}
+
 static U32 Shaggy2_StateChange(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
 {
     ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
