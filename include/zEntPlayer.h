@@ -90,7 +90,9 @@ struct zPlayerGlobals
     F32 Shaggy8CallTimer;
     _zEntHangable* HangFound;
     _zEntHangable* HangEnt;
-    U8 opaque_2D8[0x3C8 - 0x2D8];
+    _zEntHangable* HangEntLast;
+    xVec3 HangPivot;
+    U8 opaque_2E8[0x3C8 - 0x2E8];
     S32 Inv_Ammo[2];
     S32 Inv_AmmoMax[2];
     iModelTag BubbleTag;
