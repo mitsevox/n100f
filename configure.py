@@ -868,7 +868,7 @@ config.libs: List[Dict[str, Any]] = [
     RWLib(
         "rwcore",
         [
-            Object(NonMatching, "rwsdk/src/plcore/babinary.c"),
+            Object(Matching, "rwsdk/src/plcore/babinary.c"),
             Object(NonMatching, "rwsdk/src/plcore/baerr.c"),
             Object(NonMatching, "rwsdk/src/plcore/bafsys.c"),
             Object(Matching, "rwsdk/src/plcore/baimmedi.c"),
@@ -890,7 +890,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/baraster.c"),
             Object(NonMatching, "rwsdk/src/basync.c"),
             Object(NonMatching, "rwsdk/src/batextur.c"),
-            Object(NonMatching, "rwsdk/src/batypehf.c"),
+            Object(Matching, "rwsdk/src/batypehf.c"),
             Object(NonMatching, "rwsdk/driver/common/palquant.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dl2drend.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dlconvrt.c"),

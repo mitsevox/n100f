@@ -7,6 +7,23 @@ static RwPluginRegistry geometryTKList = { sizeof(RpGeometry), sizeof(RpGeometry
 
 S32 _rpMeshDestroy(RpMeshHeader* mesh);
 
+RpGeometry* RpGeometryForAllMaterials(RpGeometry* geometry, RpMaterialCallBack fpCallBack,
+                                      void* pData)
+{
+    S32 numMaterials = geometry->matList.numMaterials;
+    S32 i;
+
+    for (i = 0; i < numMaterials; i++)
+    {
+        if (!fpCallBack(geometry->matList.materials[i], pData))
+        {
+            return geometry;
+        }
+    }
+
+    return geometry;
+}
+
 RpGeometry* RpGeometryLock(RpGeometry* geometry, S32 lockMode)
 {
     geometry->lockedSinceLastInst |= lockMode;

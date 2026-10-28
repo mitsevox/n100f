@@ -255,8 +255,28 @@ typedef enum RwFrustumTestResult
     rwFRUSTUMTESTRESULTFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwFrustumTestResult;
 
+#define rwID_STRUCT 0x01
+#define rwID_STRING 0x02
+#define rwID_EXTENSION 0x03
+#define rwID_CAMERA 0x05
+#define rwID_TEXTURE 0x06
+#define rwID_MATERIAL 0x07
+#define rwID_MATLIST 0x08
+#define rwID_ATOMICSECT 0x09
+#define rwID_PLANESECT 0x0A
+#define rwID_WORLD 0x0B
+#define rwID_MATRIX 0x0D
+#define rwID_FRAMELIST 0x0E
+#define rwID_GEOMETRY 0x0F
 #define rwID_CLUMP 0x10
+#define rwID_LIGHT 0x12
+#define rwID_UNICODESTRING 0x13
+#define rwID_ATOMIC 0x14
+#define rwID_GEOMETRYLIST 0x1A
 #define rwID_RIGHTTORENDER 0x1f
+
+#define rwLIBRARYBASEVERSION 0x31000
+#define rwLIBRARYCURRENTVERSION 0x33002
 
 #define rwMATRIXTYPEORTHONORMAL 0x00000003
 #define rwMATRIXINTERNALIDENTITY 0x00020000
@@ -373,6 +393,16 @@ typedef enum RwRenderState
 #define RwCameraSetFogDistance(_camera, _distance) \
     (((_camera)->fogPlane = (_distance)), (_camera))
 
+typedef struct RwChunkHeaderInfo RwChunkHeaderInfo;
+struct RwChunkHeaderInfo
+{
+    U32 type;
+    U32 length;
+    U32 version;
+    U32 buildNum;
+    S32 isComplex;
+};
+
 typedef struct RwError RwError;
 struct RwError
 {
@@ -453,6 +483,7 @@ struct RwImage
 };
 
 typedef RwTexture* (*RwTextureCallBackRead)(const char* name, const char* maskName);
+typedef RwTexture* (*RwTextureCallBack)(RwTexture* texture, void* pData);
 
 // Partial: only entrySize is declared.
 typedef struct RwFreeList RwFreeList;
@@ -567,7 +598,7 @@ struct RwGlobals
     U16 pad[2];
     RwDevice dOpenDevice;
     RwStandardFunc stdFunc[29];
-    U8 unkBC[0x8];
+    RwLinkList dirtyFrameList;
     RwFileFunctions fileFuncs;
     U8 unkF0[0x40];
     RwMemoryFunctions memoryFuncs;
@@ -598,6 +629,10 @@ S32 RwCameraRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor con
 void _rwObjectHasFrameSetFrame(void* object, RwFrame* frame);
 RwRaster* RwRasterCreate(S32 width, S32 height, S32 depth, S32 flags);
 S32 RwRasterDestroy(RwRaster* raster);
+S32 RwImageDestroy(RwImage* image);
+RwImage* RwImageFreePixels(RwImage* image);
+const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict,
+                                                    RwTextureCallBack fpCallBack, void* pData);
 S32 RwRenderStateSet(RwRenderState state, void* value);
 S32 RwEngineRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor initCB,
                            RwPluginObjectDestructor termCB);
@@ -616,6 +651,14 @@ RwV3d* RwV3dTransformPoints(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoin
 RwFrustumTestResult RwCameraFrustumTestSphere(const RwCamera* camera, const RwSphere* sphere);
 RwStream* RwStreamOpen(RwStreamType type, RwStreamAccessType accessType, const void* pData);
 S32 RwStreamClose(RwStream* stream, void* pData);
+U32 RwStreamRead(RwStream* stream, void* buffer, U32 length);
+RwStream* RwStreamWrite(RwStream* stream, const void* buffer, U32 length);
+RwStream* RwStreamSkip(RwStream* stream, U32 offset);
+RwStream* RwStreamReadChunkHeaderInfo(RwStream* stream, RwChunkHeaderInfo* chunkHeaderInfo);
+RwStream* _rwStreamWriteVersionedChunkHeader(RwStream* stream, S32 type, S32 size, U32 version,
+                                             U32 buildNum);
+void* RwMemLittleEndian32(void* mem, U32 size);
+void* RwMemNative32(void* mem, U32 size);
 S32 RwStreamFindChunk(RwStream* stream, U32 type, U32* lengthOut, U32* versionOut);
 void _rwFrameSyncDirty();
 

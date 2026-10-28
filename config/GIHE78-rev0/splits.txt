@@ -1635,6 +1635,7 @@ rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c:
 
 rwsdk/src/plcore/babinary.c:
 	.text       start:0x80160340 end:0x80160F60
+	.data       start:0x801DDB60 end:0x801DDBCC
 
 rwsdk/src/plcore/baerr.c:
 	.text       start:0x80160FC0 end:0x8016109C

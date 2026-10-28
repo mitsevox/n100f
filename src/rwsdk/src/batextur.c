@@ -21,6 +21,9 @@ struct TextureModuleData
 #define TEXTURE_DATA(var) \
     (((TextureModuleData*)((U8*)RwEngineInstance + textureModule.globalsOffset))->var)
 
+#define TEXTUREFROMDICTLINK(link) \
+    ((RwTexture*)((U8*)(link) - (S32)&((RwTexture*)0)->lInDictionary))
+
 RwPluginRegistry textureTKList = { sizeof(RwTexture), sizeof(RwTexture) };
 static RwModuleInfo textureModule;
 
@@ -66,6 +69,28 @@ S32 RwTextureSetAutoMipmapping(S32 enable)
 S32 RwTextureGetAutoMipmapping(void)
 {
     return TEXTURE_DATA(autoMipmapping);
+}
+
+const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict,
+                                                    RwTextureCallBack fpCallBack, void* pData)
+{
+    const RwLLLink* next;
+    const RwLLLink* cur = dict->texturesInDict.link.next;
+    const RwLLLink* end = &dict->texturesInDict.link;
+
+    while (cur != end)
+    {
+        next = cur->next;
+
+        if (!fpCallBack(TEXTUREFROMDICTLINK(cur), pData))
+        {
+            break;
+        }
+
+        cur = next;
+    }
+
+    return dict;
 }
 
 RwTexture* RwTexDictionaryAddTexture(RwTexDictionary* dict, RwTexture* texture)
