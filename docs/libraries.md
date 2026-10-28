@@ -145,7 +145,7 @@ The 8 zero bytes between `fft.c`'s `.rodata` and the tables (`0x801A8E18`-`0x801
 - Its one-bit reads (`VARBITSGET1`) are a conditional expression, not a statement. The target tests the run flag and negates the sign bit inside each arm of the refill, which GCC does only for a conditional expression used as a whole.
 - `BinkAudioDecompressOpen` takes two square roots inline with `frsqrte` and three Newton steps. GCC 2.95 has no C form for `frsqrte`, so the estimate is one `__asm__` statement in a `static inline` helper, and the steps are C.
 - `CLAMP16` casts the in-range value to `S16`. The cast gives the clamp its own result register, as the target has.
-- Like `popmal.c` and `radcb.c`, the file has no prototype for `memset` or `memcpy`.
+- The file does not include `string.h`, whose `size_t` prototypes conflict with GCC's builtin `memset` and `memcpy` and change both functions that call them. Compatible prototypes or none give the target's bytes.
 
 Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units can include `dolphin/os.h`. The MW units are unchanged.
 
