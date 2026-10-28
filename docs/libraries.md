@@ -31,7 +31,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/plcore/bavector.c` | 7 of 10 | `VectorMultVector` (register allocation and scheduling), `_rwSqrt` and `_rwInvSqrt` (see below) |
 | `rwsdk/src/plcore/rwstring.c` | 3 of 5 | `StrChr`, `StrRChr` (register allocation) |
 | `rwsdk/src/plcore/baerr.c` | 3 of 3 | |
-| `rwsdk/src/plcore/bafsys.c` | 3 of 4 | `_rwFileSystemOpen`, not written: it stores MSL stdio functions that are still address labels |
+| `rwsdk/src/plcore/bafsys.c` | 3 of 4 | `_rwFileSystemOpen`, not written yet: it stores MSL stdio functions, which were address labels when the unit was imported and are now named (`fopen`, `fread`, `fgets`, `fputs`, `feof`) |
 | `rwsdk/src/plcore/resmem.c` | 4 of 4 | |
 | `rwsdk/world/basector.c` | 6 of 6 | |
 | `rwsdk/world/bamateri.c` | 7 of 8 | the function at `0x8014CFC8`, which opens the light module ([RenderWare limits](splits.md#limits-2)) |
@@ -44,7 +44,7 @@ Structure layouts come from the SLUS-20349 DWARF where it has the type (game cod
 - `VectorMultVector` computes `x * right + y * up` for all three components before adding the `at` terms and storing: the target loads `right.y`, `right.z`, `up.y` and `up.z` before the first store. The source does the same, but the register allocation still differs.
 
 
-The flags are shown compatible with the target, not established. MSL is one profile for the whole library: the twelve imported units match under GC/1.3 with `-inline auto,deferred` and `-char signed`, six of them differ under GC/1.3.2, and none needs GC/1.3.2. Each later MSL import reconfirms the profile on its own unit.
+The flags are shown compatible with the target, not established. MSL is one profile for the whole library: the 52 imported units match under GC/1.3 with `-inline auto,deferred`, `-char signed` and `-fp_contract on`, twelve of them differ under GC/1.3.2, and none needs GC/1.3.2. Ten of the fdlibm units need `-fp_contract on` (fused multiply-add), and every other MSL unit compiles identically with it on or off. Each later MSL import reconfirms the profile on its own unit.
 
 Bink is ProDG (SN Systems GCC) code, built through `tools/prodg_cc.py`. `fft.c` compiles to its unit under every ProDG version from 3.5 to 3.9.3, and Ooura's FFT compiles to none of its functions under CodeWarrior, so the family is established but the version is not. `cflags_bink` is likewise shown compatible, not established: it rests on `fft.c` only. `ProDG/3.5` is the only version the wrapper supports; the first import whose code separates the versions settles it.
 
@@ -59,19 +59,60 @@ CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compi
 | `Runtime.PPCEABI.H/__va_arg.c` | GC/1.3.2 (with `cflags_runtime`, 1.3 differs and 1.3.2 through 2.7 are identical; with `-char signed` added, 1.3 also matches) | none | C |
 | `Runtime.PPCEABI.H/global_destructor_chain.c` | GC/1.3.2 (1.3 also matches) | `.dtors`, `.sbss` | C |
 | `Runtime.PPCEABI.H/runtime.c` | GC/1.3.2 (1.3 also matches) | `.rodata` | asm functions, each with an `assembly` row in `evidence.tsv` |
+| `Runtime.PPCEABI.H/GCN_mem_alloc.c` | GC/1.3.2 (1.3 and 2.0 also match) | `.rodata` | C |
 | `TRK_MINNOW_DOLPHIN/` `mainloop.c`, `nubevent.c`, `nubinit.c`, `msg.c`, `serpoll.c`, `usr_put.c`, `dispatch.c`, `msghndlr.c`, `mutex_TRK.c`, `notify.c`, `mem_TRK.c`, `main_TRK.c`, `targcont.c`, `target_options.c` | GC/1.3 | each unit's `.rodata`, `.data` and `.bss`, as `data` rows in `evidence.tsv` | C |
 | `MSL_C.PPCEABI.bare.H/abort_exit.c` | GC/1.3 (msl profile) | `.bss`, `.sbss` | C |
 | `MSL_C.PPCEABI.bare.H/alloc.c` | GC/1.3 (msl profile) | `.rodata`, `.bss`, `.sbss` | C |
+| `MSL_C.PPCEABI.bare.H/ansi_files.c` | GC/1.3 (msl profile) | `.data`, `.bss` | C |
+| `MSL_C.PPCEABI.bare.H/ansi_fp.c` | GC/1.3 (msl profile) | `.rodata`, `.data`, `.sdata2` | C |
 | `MSL_C.PPCEABI.bare.H/arith.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/buffer_io.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/char_io.c` | GC/1.3 (msl profile) | none | C |
 | `MSL_C.PPCEABI.bare.H/ctype.c` | GC/1.3 (msl profile) | `.data` | C |
+| `MSL_C.PPCEABI.bare.H/direct_io.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/e_acos.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/e_asin.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/e_atan2.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/e_exp.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/e_fmod.c` | GC/1.3 (msl profile) | `.rodata` | C |
+| `MSL_C.PPCEABI.bare.H/e_pow.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/e_rem_pio2.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/file_io.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/FILE_POS.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/k_cos.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/k_rem_pio2.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/k_sin.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/k_tan.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/math_ppc.c` | GC/1.3 (msl profile) | none | C |
 | `MSL_C.PPCEABI.bare.H/mbstring.c` | GC/1.3 (msl profile) | `.sdata2` | C |
 | `MSL_C.PPCEABI.bare.H/mem.c` | GC/1.3 (msl profile) | none | C |
 | `MSL_C.PPCEABI.bare.H/mem_funcs.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/misc_io.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/printf.c` | GC/1.3 (msl profile) | `.rodata`, `.data`, `.sdata`, `.sdata2` | C |
 | `MSL_C.PPCEABI.bare.H/qsort.c` | GC/1.3 (msl profile) | none | C |
 | `MSL_C.PPCEABI.bare.H/rand.c` | GC/1.3 (msl profile) | `.sdata` | C |
+| `MSL_C.PPCEABI.bare.H/s_atan.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_copysign.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/s_cos.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_floor.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_frexp.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_ldexp.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_modf.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/s_nextafter.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/s_sin.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_tan.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/scanf.c` | GC/1.3 (msl profile) | `.rodata`, `.data` | C |
 | `MSL_C.PPCEABI.bare.H/string.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata` | C |
 | `MSL_C.PPCEABI.bare.H/strtold.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
 | `MSL_C.PPCEABI.bare.H/strtoul.c` | GC/1.3 (msl profile) | `.data` | C |
+| `MSL_C.PPCEABI.bare.H/uart_console_io.c` | GC/1.3 (msl profile) | `.sbss` | C |
+| `MSL_C.PPCEABI.bare.H/w_acos.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/w_asin.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/w_atan2.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/w_exp.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/w_fmod.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/w_pow.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/wchar_io.c` | GC/1.3 (msl profile) | none | C |
 | `TRK_MINNOW_DOLPHIN/` `flush_cache.c`, `targimpl.c`, `dolphin_trk.c`, `mpc_7xx_603e.c`, `dolphin_trk_glue.c` | GC/1.3 | `data` rows in `evidence.tsv` | C, and asm functions, each with an `assembly` row in `evidence.tsv` |
 | `TRK_MINNOW_DOLPHIN/targsupp.s` | assembled | none | assembly, with an `assembly` row per stub |
 | `TRK_MINNOW_DOLPHIN/__exception.s` | assembled | none | assembly (the exception vector table), with an `assembly` row |
@@ -91,7 +132,7 @@ Library headers declare only what the reconstructed units use, as game headers d
 | `include/dolphin/` | Dolphin SDK public headers under the SDK's names (`dolphin/os.h` and its `dolphin/os/*.h` parts, `dolphin/db.h`, `dolphin/si.h`, ...), each created by the first import that needs it. The SDK's base types are in `dolphin/types.h`. |
 | `include/libc/` | MSL C headers, shared with game code (`ctype.h`, `eof.h`, `errno.h`, `float.h`, `limits.h`, `locale.h`, `math.h`, `mem_funcs.h`, `pool_alloc.h`, `stdarg.h`, `stddef.h`, `stdio.h`, `stdlib.h`, `string.h`) |
 | `include/runtime/` | Runtime library headers (`NMWException.h`) |
-| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_sdk` for `dolphin/dvd/__dvd.h` and `dolphin/gx/__gx.h`, `cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`, `cflags_card` for `dolphin/card/__card.h`, `cflags_msl` for `MSL_C.PPCEABI.bare.H/ansi_fp.h` and `scanf.h`) |
+| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_sdk` for `dolphin/dvd/__dvd.h` and `dolphin/gx/__gx.h`, `cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`, `cflags_card` for `dolphin/card/__card.h`, `cflags_msl` for `MSL_C.PPCEABI.bare.H/ansi_files.h`, `ansi_fp.h`, `buffer_io.h`, `char_io.h`, `direct_io.h`, `fdlibm.h`, `file_io.h` and `scanf.h`) |
 
 Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types. Game code keeps `types.h`.
 
