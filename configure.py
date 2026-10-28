@@ -856,7 +856,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/plcore/babinary.c"),
             Object(NonMatching, "rwsdk/src/plcore/baerr.c"),
             Object(NonMatching, "rwsdk/src/plcore/bafsys.c"),
-            Object(NonMatching, "rwsdk/src/plcore/baimmedi.c"),
+            Object(Matching, "rwsdk/src/plcore/baimmedi.c"),
             Object(NonMatching, "rwsdk/src/plcore/bamatrix.c"),
             Object(NonMatching, "rwsdk/src/plcore/baresour.c"),
             Object(NonMatching, "rwsdk/src/plcore/bastream.c"),

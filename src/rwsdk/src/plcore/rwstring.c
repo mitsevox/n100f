@@ -78,12 +78,13 @@ char* StrLwr(char* str)
 char* StrChr(const char* str, char c)
 {
     char* found = NULL;
+    S32 match = c;
     char ch;
 
     do
     {
         ch = *str;
-        if (ch == c)
+        if (ch == match)
         {
             found = (char*)str;
             break;
@@ -97,12 +98,13 @@ char* StrChr(const char* str, char c)
 char* StrRChr(const char* str, char c)
 {
     char* found = NULL;
+    S32 match = c;
     char ch;
 
     do
     {
         ch = *str;
-        if (ch == c)
+        if (ch == match)
         {
             found = (char*)str;
         }

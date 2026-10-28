@@ -20,27 +20,39 @@ The 89 RenderWare units in `config/GIHE78-rev0/rw_units.tsv` are listed NonMatch
 
 ### RenderWare SDK names and headers
 
-This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcore.h`, `rpworld.h`, `rphanim.h` and `rpskin.h`). Identifier names, and layouts checked against the target, may come from bfbb's `include/rwsdk/` headers, which are copies of the RenderWare SDK headers. By the project owner's decision, SDK macro bodies and enums may also be copied from there (2026-10-28, n100f#74), each credited in [CREDITS.md](../CREDITS.md) with its local changes. Nothing else is copied: no RenderWare function code, comments or other header text. A name or layout no allowed source gives stays opaque or is written from the target (for example a bare enum value with an evidence row), never filled in from recollection of the SDK, and leaked RenderWare source is never used.
+This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcore.h`, `rpworld.h`, `rphanim.h` and `rpskin.h`). Identifier names, and layouts checked against the target, may come from bfbb's `include/rwsdk/` headers, which are derived from the RenderWare SDK headers. By the project owner's decision, SDK macro bodies and enums may also be copied from there (2026-10-28, n100f#74), each credited in [CREDITS.md](../CREDITS.md) with its local changes. Nothing else is copied: no RenderWare function code, comments or other header text. A name or layout no allowed source gives stays opaque or is written from the target (for example a bare enum value with an evidence row), never filled in from recollection of the SDK, and leaked RenderWare source is never used.
 
 ### Reconstructed RenderWare sources
 
-`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. The units stay NonMatching (data is not split), and 43 of their functions compile to the target bytes with every relocation resolving to the target's symbol:
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` is linked as a Matching object (text-only, all 7 functions); the other units stay NonMatching (data is not split, or functions remain). 125 functions compile to the target bytes with every relocation resolving to the target's symbol:
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |
 | `rwsdk/src/plcore/bavector.c` | 7 of 10 | `VectorMultVector` (register allocation and scheduling), `_rwSqrt` and `_rwInvSqrt` (see below) |
-| `rwsdk/src/plcore/rwstring.c` | 3 of 5 | `StrChr`, `StrRChr` (register allocation) |
+| `rwsdk/src/plcore/rwstring.c` | 5 of 5 | (end edge open: bfbb's unit has 7 functions) |
 | `rwsdk/src/plcore/baerr.c` | 3 of 3 | |
 | `rwsdk/src/plcore/bafsys.c` | 3 of 4 | `_rwFileSystemOpen`, not written yet: it stores MSL stdio functions, which were address labels when the unit was imported and are now named (`fopen`, `fread`, `fgets`, `fputs`, `feof`) |
 | `rwsdk/src/plcore/resmem.c` | 4 of 4 | |
+| `rwsdk/src/plcore/baimmedi.c` | 7 of 7 | (Matching) |
+| `rwsdk/src/plcore/batkreg.c` | 4 of 9 | 5 others |
+| `rwsdk/src/badevice.c` | 6 of 13 | 7 others |
+| `rwsdk/src/baframe.c` | 7 of 20 | 13 others |
+| `rwsdk/src/bacamera.c` | 7 of 18 | 11 others |
+| `rwsdk/src/baraster.c` | 6 of 10 | `RwRasterCreate`, `RwRasterDestroy`, `RwRasterShowRaster`, `_rwRasterClose` |
+| `rwsdk/src/batextur.c` | 12 of 27 | 15 others |
 | `rwsdk/world/basector.c` | 6 of 6 | |
 | `rwsdk/world/bamateri.c` | 7 of 8 | the function at `0x8014CFC8`, which opens the light module ([RenderWare limits](splits.md#limits-2)) |
 | `rwsdk/world/balight.c` | 10 of 12 | `RpLightGetConeAngle`, `RpLightStreamRead` |
+| `rwsdk/world/baclump.c` | 24 of 38 | 14 others, including `_rpAtomicResyncInterpolatedSphere` |
+| `rwsdk/world/bageomet.c` | 3 of 9 | 6 others |
+| `rwsdk/world/baworld.c` | 4 of 25 | 21 others |
 
-Structure layouts come from the SLUS-20349 DWARF where it has the type (game code includes RenderWare's headers) and from the target's accesses otherwise; `evidence.tsv` has a `type` or `field` row for each. The GameCube layout can differ: `RwTexture.refCount` is at `+0x54` here and `+0x50` in the DWARF. `include/rwcore.h` and `include/rpworld.h` now declare their types with `typedef` so the same headers serve the C RenderWare units and the C++ game code. Type, member, typedef and macro names the DWARF lacks (`RwGlobals`, `RwError`, `RwPluginRegistry`, the plugin callback typedefs, `RWSRCGLOBAL`) follow bfbb's `include/rwsdk/rwplcore.h` and `rpworld.h` (copies of the SDK headers) as related names. The file-local module data (`VectorModuleData`, `ErrorModuleData`, `MaterialModuleData`, `LightModuleData`) and resource-heap types (`ResHeap`, `ResHeapBlock`) have no source and use this project's own names. Source-form details the target fixes:
+Structure layouts come from the SLUS-20349 DWARF where it has the type (game code includes RenderWare's headers) and from the target's accesses otherwise; `evidence.tsv` has a `type` or `field` row for each. The GameCube layout can differ: `RwTexture.refCount` is at `+0x54` here and `+0x50` in the DWARF, and `RpClump` has a light list at `+0x10` and a camera list at `+0x18` (size `0x30`) where the DWARF's PS2 class has neither, as bfbb's GameCube header does. The size-sequence labels at `0x80149A4C` and `0x80149A80` were corrected to `RpClumpRemoveLight` and `RpClumpRemoveCamera` (the bodies use the light and camera extension offsets, in bfbb's order). `include/rwcore.h` and `include/rpworld.h` now declare their types with `typedef` so the same headers serve the C RenderWare units and the C++ game code. Type, member, typedef and macro names the DWARF lacks (`RwGlobals`, `RwDevice`, `RwError`, `RwPluginRegistry`, `RwPluginRegEntry`, the plugin, device and callback typedefs, `RWSRCGLOBAL`) follow bfbb's `include/rwsdk/rwplcore.h`, `rwcore.h` and `rpworld.h` (derived from the SDK headers) as related names. The file-local module data (`VectorModuleData`, `ErrorModuleData`, `MaterialModuleData`, `LightModuleData`, `TextureModuleData`, `FrameModuleData`, `CameraModuleData`), `ClumpObjectExt`, `WorldSectorSearch`, the `STDFUNC_*` indices into `RwGlobals.stdFunc` and resource-heap types (`ResHeap`, `ResHeapBlock`) have no source and use this project's own names. Source-form details the target fixes:
 
 - `_rwSqrt` and `_rwInvSqrt` (59% and 62%) are not counted as exact. The target stores the argument to the stack and reloads the word after each store; under this profile only a `volatile` access reproduces that, and nothing shows the original used one, so the source keeps a plain pointer ([CONTRIBUTING](../CONTRIBUTING.md) bars a qualifier whose only justification is matching bytes).
 - The resource heap tests a block's `used` word as `~used & 1` where the block must be free (`nor` then `clrlwi.`) and as `used & 1` where it must be in use (`clrlwi.` alone). `!(used & 1)` and `(used & 1) == 0` compile to `clrlwi.` with the opposite branch and do not match.
+- `_rpClumpRegisterExtensions` ends with `return (_rpClumpLightExtOffset = RpLightRegisterPlugin(...)) >= 0;`: the target takes the sign bit before it stores the offset. Storing first and testing the global puts the store before the shift.
+- `StrChr` and `StrRChr` copy the `char` argument into an `S32` local before the loop: the target sign-extends it once into `r5`, and comparing with the parameter directly swaps `r4` and `r5`.
 - `VectorMultVector` computes `x * right + y * up` for all three components before adding the `at` terms and storing: the target loads `right.y`, `right.z`, `up.y` and `up.z` before the first store. The source does the same, but the register allocation still differs.
 
 
