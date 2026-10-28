@@ -11,6 +11,8 @@ typedef struct VARBITS
     U32 bitlen;
 } VARBITS;
 
+extern const U32 VarBitsLens[33];
+
 void VarBitsCopy(VARBITS* dest, VARBITS* src, U32 size);
 
 #endif
