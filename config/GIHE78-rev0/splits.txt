@@ -738,6 +738,19 @@ flat/zVar.cpp:
 	.sbss       start:0x8025F140 end:0x8025F170
 	.sdata2     start:0x80261FE8 end:0x80262040
 
+gc/iAnim.cpp:
+	.text       start:0x800D7E00 end:0x800D84A0
+	.rodata     start:0x801A7B10 end:0x801A7B20
+	.bss        start:0x80239028 end:0x8023B3C8
+	.sdata      start:0x8025E5C0 end:0x8025E5C8
+	.sdata2     start:0x80262040 end:0x80262070
+
+gc/iMix.c:
+	.text       start:0x800DC95C end:0x800DE530
+	.data       start:0x801C9558 end:0x801CA118
+	.bss        start:0x8023CFD0 end:0x8023E5D0
+	.sbss       start:0x8025F208 end:0x8025F214
+
 TRK_MINNOW_DOLPHIN/mainloop.c:
 	.text       start:0x800DE530 end:0x800DE628
 
@@ -1571,7 +1584,8 @@ rwsdk/world/baworld.c:
 	.text       start:0x80151038 end:0x8015275C
 
 rwsdk/world/baworobj.c:
-	.text       start:0x80152834 end:0x80154264
+	.text       start:0x8015275C end:0x80154264
+	.sbss       start:0x8025F750 end:0x8025F768
 
 rwsdk/world/pipe/p2/bapipew.c:
 	.text       start:0x80154264 end:0x80154714

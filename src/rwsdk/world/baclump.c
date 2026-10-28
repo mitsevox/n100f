@@ -1,8 +1,5 @@
 #include <rpworld.h>
 
-typedef RwCamera* (*RwCameraCallBack)(RwCamera* camera, void* data);
-typedef RpLight* (*RpLightCallBack)(RpLight* light, void* data);
-
 // The extension the clump plugin adds to cameras and lights: the owning clump and the link in
 // that clump's camera or light list.
 typedef struct ClumpObjectExt ClumpObjectExt;

@@ -43,6 +43,22 @@ struct RpMaterial
     S16 pad;
 };
 
+struct RpSector
+{
+    S32 type;
+};
+
+typedef struct RpPlaneSector RpPlaneSector;
+struct RpPlaneSector
+{
+    S32 type;
+    F32 value;
+    RpSector* leftSubTree;
+    RpSector* rightSubTree;
+    F32 leftValue;
+    F32 rightValue;
+};
+
 typedef struct RpWorldSector RpWorldSector;
 struct RpWorldSector
 {
@@ -162,6 +178,8 @@ struct RpGeometry
 typedef RpAtomic* (*RpAtomicCallBackRender)(RpAtomic* atomic);
 typedef RpAtomic* (*RpAtomicCallBack)(RpAtomic* atomic, void* data);
 
+#define rpATOMICCOLLISIONTEST 0x01
+
 struct RpAtomic
 {
     RwObjectHasFrame object;
@@ -187,7 +205,8 @@ struct RpClump
     RwLinkList atomicList;
     RwLinkList lightList;
     RwLinkList cameraList;
-    U8 unk20[0x10];
+    RwLLLink inWorldLink;
+    U8 unk28[0x8];
 };
 
 #define RpAtomicGetFrame(_atomic) ((RwFrame*)rwObjectGetParent(_atomic))
@@ -207,6 +226,24 @@ struct RpLight
     U16 pad;
 };
 
+#define rpLIGHTPOSITIONINGSTART 0x80
+
+typedef enum RpLightType
+{
+    rpNALIGHTTYPE = 0,
+    rpLIGHTDIRECTIONAL,
+    rpLIGHTAMBIENT,
+    rpLIGHTPOINT = rpLIGHTPOSITIONINGSTART,
+    rpLIGHTSPOT,
+    rpLIGHTSPOTSOFT,
+    rpLIGHTTYPEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RpLightType;
+
+#define RpLightGetType(_light) ((RpLightType)rwObjectGetSubType((_light)))
+
+typedef RwCamera* (*RwCameraCallBack)(RwCamera* camera, void* data);
+typedef RpLight* (*RpLightCallBack)(RpLight* light, void* data);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -216,9 +253,34 @@ S32 RpLightRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor cons
                           RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
 
 S32 RpAtomicDestroy(RpAtomic* atomic);
+const RwSphere* RpAtomicGetWorldBoundingSphere(RpAtomic* atomic);
+S32 RpAtomicRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                           RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RpAtomicRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                 RwPluginDataChunkWriteCallBack writeCB,
+                                 RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RpClumpRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                          RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RpGeometryRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                             RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RpGeometryRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                   RwPluginDataChunkWriteCallBack writeCB,
+                                   RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RpWorldSectorRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                                RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RpWorldSectorRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                      RwPluginDataChunkWriteCallBack writeCB,
+                                      RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RpWorldRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                          RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RpWorldRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                RwPluginDataChunkWriteCallBack writeCB,
+                                RwPluginDataChunkGetSizeCallBack getSizeCB);
 
 S32 RpClumpDestroy(RpClump* clump);
 RpClump* RpClumpForAllAtomics(RpClump* clump, RpAtomicCallBack callback, void* pData);
+RpClump* RpClumpForAllCameras(RpClump* clump, RwCameraCallBack callback, void* pData);
+RpClump* RpClumpForAllLights(RpClump* clump, RpLightCallBack callback, void* pData);
 RpClump* RpClumpStreamRead(RwStream* stream);
 
 RpWorld* RpWorldAddCamera(RpWorld* world, RwCamera* camera);

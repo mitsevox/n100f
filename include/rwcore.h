@@ -100,6 +100,15 @@ struct RwMatrixTag
 };
 
 typedef struct RwMatrixTag RwMatrix;
+
+typedef struct RwMatrixTolerance RwMatrixTolerance;
+struct RwMatrixTolerance
+{
+    F32 Normal;
+    F32 Orthogonal;
+    F32 Identity;
+};
+
 typedef struct RwCamera RwCamera;
 typedef struct RwFrame RwFrame;
 typedef struct RwRaster RwRaster;
@@ -124,6 +133,14 @@ struct RwRaster
     S32 originalWidth;
     S32 originalHeight;
     S32 originalStride;
+};
+
+typedef union RwSplitBits RwSplitBits;
+union RwSplitBits
+{
+    F32 nReal;
+    volatile S32 nInt;
+    volatile U32 nUInt;
 };
 
 typedef struct RwV2d RwV2d;
@@ -179,7 +196,8 @@ struct RwCamera
     U16 renderFrame;
     U16 pad;
     RwFrustumPlane frustumPlanes[6];
-    U8 unk110[0x78];
+    RwBBox frustumBoundBox;
+    U8 unk128[0x60];
 };
 
 struct RwFrame
@@ -238,6 +256,7 @@ typedef enum RwFrustumTestResult
 } RwFrustumTestResult;
 
 #define rwID_CLUMP 0x10
+#define rwID_RIGHTTORENDER 0x1f
 
 #define rwMATRIXTYPEORTHONORMAL 0x00000003
 #define rwMATRIXINTERNALIDENTITY 0x00020000
@@ -250,6 +269,38 @@ typedef enum RwFrustumTestResult
         (m)->up.z = (m)->at.x = (m)->at.y = (F32)((0.0));                                          \
         (m)->pos.x = (m)->pos.y = (m)->pos.z = (F32)((0.0));                                       \
         (m)->flags |= (rwMATRIXINTERNALIDENTITY | rwMATRIXTYPEORTHONORMAL);                        \
+    } while (0)
+
+#define _RW_S1 ((float)-1.6666667163e-01)
+#define _RW_S2 ((float)8.3333337680e-03)
+#define _RW_S3 ((float)-1.9841270114e-04)
+#define _RW_S4 ((float)2.7557314297e-06)
+#define _RW_S5 ((float)-2.5050759689e-08)
+#define _RW_S6 ((float)1.5896910177e-10)
+
+#define RwSinMinusPiToPiMacro(result, x)                                                           \
+    do                                                                                             \
+    {                                                                                              \
+        const float z = x * x;                                                                     \
+        const float v = z * x;                                                                     \
+        const float r = (_RW_S2 + z * (_RW_S3 + z * (_RW_S4 + z * (_RW_S5 + z * _RW_S6))));        \
+        result = x + v * (_RW_S1 + z * r);                                                         \
+    } while (0)
+
+#define RwV3dScaleMacro(o, a, s)                                                                   \
+    do                                                                                             \
+    {                                                                                              \
+        (o)->x = (((a)->x) * ((s)));                                                               \
+        (o)->y = (((a)->y) * ((s)));                                                               \
+        (o)->z = (((a)->z) * ((s)));                                                               \
+    } while (0)
+
+#define RwV3dIncrementScaledMacro(o, a, s)                                                         \
+    do                                                                                             \
+    {                                                                                              \
+        (o)->x += (((a)->x) * ((s)));                                                              \
+        (o)->y += (((a)->y) * ((s)));                                                              \
+        (o)->z += (((a)->z) * ((s)));                                                              \
     } while (0)
 
 #define RwCameraGetCurrentCamera() ((RwCamera*)RWSRCGLOBAL(curCamera))
@@ -306,6 +357,9 @@ typedef enum RwRenderState
     rwRENDERSTATEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwRenderState;
 
+#define rwObjectGetSubType(o) (((const RwObject*)(o))->subType)
+#define rwObjectGetFlags(o) (((const RwObject*)(o))->flags)
+#define rwObjectTestFlags(o, f) ((((const RwObject*)(o))->flags) & (U8)(f))
 #define rwObjectGetParent(object) (((const RwObject*)(object))->parent)
 #define rwObjectSetParent(c, p) (((RwObject*)(c))->parent) = (void*)(p)
 #define RwFrameGetMatrix(_f) (&(_f)->modelling)
@@ -545,12 +599,16 @@ void _rwObjectHasFrameSetFrame(void* object, RwFrame* frame);
 RwRaster* RwRasterCreate(S32 width, S32 height, S32 depth, S32 flags);
 S32 RwRasterDestroy(RwRaster* raster);
 S32 RwRenderStateSet(RwRenderState state, void* value);
+S32 RwEngineRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor initCB,
+                           RwPluginObjectDestructor termCB);
 RwMatrix* RwMatrixUpdate(RwMatrix* matrix);
+RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance);
 RwFrame* RwFrameCreate();
 S32 RwFrameDestroy(RwFrame* frame);
 RwFrame* RwFrameOrthoNormalize(RwFrame* frame);
 RwFrame* RwFrameForAllChildren(RwFrame* frame, RwFrameCallBack callBack, void* data);
 RwFrame* RwFrameGetRoot(const RwFrame* frame);
+RwMatrix* RwFrameGetLTM(RwFrame* frame);
 S32 RwFrameDestroyHierarchy(RwFrame* frame);
 RwMatrix* RwMatrixMultiply(RwMatrix* matrixOut, const RwMatrix* MatrixIn1, const RwMatrix* matrixIn2);
 RwV3d* RwV3dTransformPoints(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
