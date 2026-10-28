@@ -522,6 +522,7 @@ struct RwFileFunctions
     S32 (*rwftell)(void* fptr);
 };
 
+typedef S32 (*vecSprintfFunc)(char* buffer, const char* format, ...);
 typedef char* (*vecStrcpyFunc)(char* dest, const char* srce);
 typedef char* (*vecStrncpyFunc)(char* dest, const char* srce, U32 size);
 typedef char* (*vecStrncatFunc)(char* dest, const char* srce, U32 size);
@@ -533,7 +534,8 @@ typedef U32 (*vecStrlenFunc)(const char* string);
 typedef struct RwStringFunctions RwStringFunctions;
 struct RwStringFunctions
 {
-    U8 unk0[0x8];
+    vecSprintfFunc vecSprintf;
+    U8 unk4[0x4];
     vecStrcpyFunc vecStrcpy;
     vecStrncpyFunc vecStrncpy;
     U8 unk10[0x4];
@@ -775,6 +777,15 @@ struct RwDevice
     U8 unk28[0x10];
 };
 
+typedef enum RwEngineStatus
+{
+    rwENGINESTATUSIDLE = 0,
+    rwENGINESTATUSINITED = 1,
+    rwENGINESTATUSOPENED = 2,
+    rwENGINESTATUSSTARTED = 3,
+    rwENGINESTATUSFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwEngineStatus;
+
 // Partial: only the members reconstructed code reaches are declared.
 typedef struct RwGlobals RwGlobals;
 struct RwGlobals
@@ -792,12 +803,14 @@ struct RwGlobals
     RwMemoryFunctions memoryFuncs;
     RwMemoryAllocFn memoryAlloc;
     RwMemoryFreeFn memoryFree;
-    U8 unk148[0x8];
+    void* metrics;
+    RwEngineStatus engineStatus;
     U32 resArenaInitSize;
 };
 
 #define RWSRCGLOBAL(var) (((RwGlobals*)RwEngineInstance)->var)
 
+#define rwsprintf RWSRCGLOBAL(stringFuncs).vecSprintf
 #define rwstrcpy RWSRCGLOBAL(stringFuncs).vecStrcpy
 #define rwstrncpy RWSRCGLOBAL(stringFuncs).vecStrncpy
 #define rwstrncat RWSRCGLOBAL(stringFuncs).vecStrncat
@@ -805,6 +818,7 @@ struct RwGlobals
 #define rwstrlen RWSRCGLOBAL(stringFuncs).vecStrlen
 #define RwMalloc(_s) ((RWSRCGLOBAL(memoryFuncs).rwmalloc)((_s)))
 #define RwFree(_p) ((RWSRCGLOBAL(memoryFuncs).rwfree)((_p)))
+#define RwRealloc(_p, _s) ((RWSRCGLOBAL(memoryFuncs).rwrealloc)((_p), (_s)))
 
 typedef struct RxClusterDefinition RxClusterDefinition;
 struct RxClusterDefinition
@@ -852,13 +866,39 @@ struct RxPacket
     RxCluster clusters[1];
 };
 
+typedef struct rxHeapFreeBlock rxHeapFreeBlock;
+typedef struct rxHeapBlockHeader rxHeapBlockHeader;
+
+struct rxHeapBlockHeader
+{
+    rxHeapBlockHeader* prev;
+    rxHeapBlockHeader* next;
+    U32 size;
+    rxHeapFreeBlock* freeEntry;
+    U32 pad[4];
+};
+
+struct rxHeapFreeBlock
+{
+    U32 size;
+    rxHeapBlockHeader* ptr;
+};
+
+typedef struct rxHeapSuperBlockDescriptor rxHeapSuperBlockDescriptor;
+struct rxHeapSuperBlockDescriptor
+{
+    void* start;
+    U32 size;
+    rxHeapSuperBlockDescriptor* next;
+};
+
 typedef struct RxHeap RxHeap;
 struct RxHeap
 {
     U32 superBlockSize;
-    void* head;
-    void* headBlock;
-    void* freeBlocks;
+    rxHeapSuperBlockDescriptor* head;
+    rxHeapBlockHeader* headBlock;
+    rxHeapFreeBlock* freeBlocks;
     U32 entriesAlloced;
     U32 entriesUsed;
     S32 dirty;
@@ -1097,6 +1137,7 @@ RwImage* RwImageFreePixels(RwImage* image);
 const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict,
                                                     RwTextureCallBack fpCallBack, void* pData);
 S32 RwRenderStateSet(RwRenderState state, void* value);
+S32 RwRenderStateGet(RwRenderState state, void* value);
 void* RwIm3DTransform(RwIm3DVertex* pVerts, U32 numVerts, RwMatrix* ltm, U32 flags);
 S32 RwIm3DEnd(void);
 S32 RwIm3DRenderPrimitive(RwPrimitiveType primType);
@@ -1164,6 +1205,9 @@ S32 _rxHeapReset(RxHeap* heap);
 void RxHeapDestroy(RxHeap* heap);
 RxHeap* RxHeapCreate(U32 size);
 RxRenderStateVector* RxRenderStateVectorSetDefaultRenderStateVector(RxRenderStateVector* rsvp);
+RxRenderStateVector* RxRenderStateVectorCreate(S32 current);
+void RxRenderStateVectorDestroy(RxRenderStateVector* rsvp);
+RxRenderStateVector* RxRenderStateVectorLoadDriverState(RxRenderStateVector* rsvp);
 RwFreeList* RwFreeListForAllUsed(RwFreeList* freeList, void (*callBack)(void* mem, void* data),
                                  void* data);
 
