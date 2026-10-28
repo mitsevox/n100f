@@ -9,9 +9,35 @@
 // The callback ImagePathForAllFullNames calls with each candidate file name.
 typedef S32 (*ImagePathCallBack)(const char* fullName, void* data);
 
+// The image module's data in the engine instance. Partial: only the free list is declared.
+typedef struct ImageModuleData ImageModuleData;
+struct ImageModuleData
+{
+    RwFreeList* freeList;
+};
+
+#define IMAGE_DATA(var) \
+    (((ImageModuleData*)((U8*)RwEngineInstance + imageModule.globalsOffset))->var)
+
+static RwPluginRegistry imageTKList = { sizeof(RwImage), sizeof(RwImage) };
+static RwModuleInfo imageModule;
+
 void ImagePathForAllFullNames(const char* imageName, S32 maxLength, ImagePathCallBack callBack,
                               void* data);
 S32 ImageDetermineExtender(const char* fullName, void* data);
+
+S32 RwImageDestroy(RwImage* image)
+{
+    if (image->flags & IMAGE_ALLOCATED)
+    {
+        RwImageFreePixels(image);
+    }
+
+    _rwPluginRegistryDeInitObject(&imageTKList, image);
+    RWSRCGLOBAL(memoryFree)(IMAGE_DATA(freeList), image);
+
+    return TRUE;
+}
 
 RwImage* RwImageFreePixels(RwImage* image)
 {

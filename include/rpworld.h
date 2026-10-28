@@ -32,6 +32,17 @@ struct RpMeshHeader
 };
 
 typedef struct RpMaterial RpMaterial;
+
+typedef struct RpMesh RpMesh;
+struct RpMesh
+{
+    U16* indices;
+    U32 numIndices;
+    RpMaterial* material;
+};
+
+typedef RpMesh* (*RpMeshCallBack)(RpMesh* mesh, RpMeshHeader* meshHeader, void* pData);
+typedef RpMaterial* (*RpMaterialCallBack)(RpMaterial* material, void* data);
 struct RpMaterial
 {
     RwTexture* texture;
