@@ -3,17 +3,25 @@
 
 #include "types.h"
 #include "zEntPlayer.h"
+#include "iCamera.h"
+#include "iTime.h"
 
 struct zScene;
 
-// Partial: only player and sceneCur are declared. The members before and between them
-// are left opaque.
+// Partial: only player, sceneCur and the fog state are declared. The members before and
+// between them are left opaque.
 struct zGlobals
 {
     U8 opaque_0[0x1F8];
     zPlayerGlobals player;
     U8 opaque_4D0[0xB64 - 0x1F8 - sizeof(zPlayerGlobals)];
     zScene* sceneCur;
+    U8 opaque_B68[0xB90 - 0xB68];
+    iFogParams fog;
+    iFogParams fogA;
+    iFogParams fogB;
+    iTime fog_t0;
+    iTime fog_t1;
 };
 
 extern zGlobals globals;
