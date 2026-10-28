@@ -15,6 +15,7 @@ struct iEnv
 };
 
 void iEnvFree(iEnv* env);
+void iEnvRender(iEnv* env);
 void iEnvEndRenderFX(iEnv* env);
 
 #endif
