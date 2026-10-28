@@ -304,7 +304,7 @@ static const U8 rlelens[4] = {4, 8, 12, 32};
 
 static void OpenReadBundle(U8* base, BUNDLE* b, U32 start, U32 width, U32 bits, U32 mult, S32 sign)
 {
-    S32 last = (width >> 3) * mult - 1;
+    U32 last = (width >> 3) * mult - 1;
 
     b->cur = 0;
     b->end = 0;
@@ -1093,7 +1093,7 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                             v = ((v << 8) | (v & 0xFF)) | ((v << 16) & 0xFF000000);
                             ((U32*)d)[3] = v;
                             ((U32*)(d + pitch))[3] = v;
-                            colors.cur = (U8*)(sr + 4);
+                            colors.cur += 8;
                             d += pitch * 2;
                         }
                         break;

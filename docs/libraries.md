@@ -146,8 +146,8 @@ Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units c
 
 - The 8-row copies and fills advance two pointers in turn, each set from the other right after its row is written, and the raw 8x8 block reads its rows by index from the color bundle, which the target reloads after every store.
 - The motion source of types 2, 4 and 7 is computed in one expression, so both offset bundles are read before either pointer is stored.
-- The scratch block `tmp` is 8 doubles written by byte through a cast, the 16x16 fill writes its first and last rows around a 7-iteration loop, and the pattern index is signed.
-- `ExpandPlane` declares `readcolors`, `rowadd` and `maskpitch` in the order of their stack slots, and `OpenReadBundle` computes the last index in a signed local before masking it to 16 bits.
+- The scratch block `tmp` is written by byte through a `U8` pointer; plain subscripts of a `U8` array change the code. It is declared as 8 doubles, for the alignment of its 8-byte copies, though `U8 tmp[64]` with the same writes compiles the same. The 16x16 fill writes its first and last rows around a 7-iteration loop, and the pattern index is signed.
+- `ExpandPlane` declares `readcolors`, `rowadd` and `maskpitch` in the order of their stack slots, and `OpenReadBundle` computes the last index in a local before masking it to 16 bits.
 - Two 8-byte zero objects, `huff4decode00align` and `huff4decodesalign` (bfbb's names), precede `rlelens` in `.sdata2`, where the target has them.
 
 Bink headers are this project's own, declaring only what the reconstructed units use. The logo movie stays out of the repository: its data is split from `main.dol` at build time like any other unmapped data.
