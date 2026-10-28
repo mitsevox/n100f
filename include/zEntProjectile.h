@@ -4,6 +4,7 @@
 #include "types.h"
 #include "xEnt.h"
 #include "xMath3.h"
+#include "xLinkList.h"
 
 struct zScene;
 struct zEntProjectile;
@@ -170,12 +171,6 @@ struct st_ZPRJ_COMMON
     xMat3x3 mat_flex;
 };
 
-struct st_ENODE
-{
-    st_ENODE* next;
-    st_ENODE* prev;
-};
-
 struct st_ZPRJ_LINKNODE
 {
     st_ENODE node;
@@ -188,6 +183,147 @@ struct st_ZPRJ_TYPERECORD
     zProjectileTypeAsset* src_ptype;
     en_ZPRJ_CATEGORY categ;
     RpAtomic* mdlFile[2];
+};
+
+struct zProjectileTypeAsset : p2BaseAsset
+{
+    S32 efxType;
+    U32 modelID;
+    U32 animID;
+    U32 atRestModelID;
+    U32 atRestAnimID;
+    S32 destructEnabled;
+    F32 destructTime;
+    F32 destructDist;
+    S32 oriented;
+    S32 extra_space[6];
+};
+
+struct st_PROJECTILE_DEPOT
+{
+    S32 typecnt;
+    st_ZPRJ_TYPERECORD* typetable;
+    S32 typeidx;
+    S32 rawcnt;
+    zEntProjectile* rawpool;
+    st_ELIST prjpool;
+    st_ELIST prjinuse;
+};
+
+enum en_ZPRJ_FX_TYPE
+{
+    ZPRJ_FXTYPE_NONE,
+    ZPRJ_FXTYPE_SMOKE,
+    ZPRJ_FXTYPE_WOOD,
+    ZPRJ_FXTYPE_TAR,
+    ZPRJ_FXTYPE_FIREBALL,
+    ZPRJ_FXTYPE_NODAMAGE_FIREBALL,
+    ZPRJ_FXTYPE_ICE,
+    ZPRJ_FXTYPE_BLACKKNIGHT,
+    ZPRJ_FXTYPE_WITCHDOCTOR,
+    ZPRJ_FXTYPE_REDBEARD,
+    ZPRJ_FXTYPE_MASTERMIND_RED,
+    ZPRJ_FXTYPE_MASTERMIND_GREEN,
+    ZPRJ_FXTYPE_MASTERMIND_BLACK,
+    ZPRJ_FXTYPE_UNUSED3,
+    ZPRJ_FXTYPE_UNUSED4,
+    ZPRJ_FXTYPE_UNUSED5,
+    ZPRJ_FXTYPE_TOTAL
+};
+
+enum en_ZPRJ_MODEL_INDEX
+{
+    ZPRJ_MDLIDX_STD,
+    ZPRJ_MDLIDX_POSTHIT,
+    ZPRJ_MDLIDX_NOMORE
+};
+
+enum en_ZPRJ_DOCOL_HEURISTICS
+{
+    ZPRJ_DOCOL_CUSTOWNER,
+    ZPRJ_DOCOL_CUSTCAT,
+    ZPRJ_DOCOL_ALWAYS,
+    ZPRJ_DOCOL_RANDPCT,
+    ZPRJ_DOCOL_SINE,
+    ZPRJ_DOCOL_TOGGLE,
+    ZPRJ_DOCOL_VELBOUND,
+    ZPRJ_DOCOL_NOMORE
+};
+
+enum en_ZPRJ_SOLVER_METHODS
+{
+    ZPRJ_ATGTSOLV_METHA,
+    ZPRJ_ATGTSOLV_METHB,
+    ZPRJ_ATGTSOLV_METHC
+};
+
+struct st_ZPRJ_SOLV_METHOD_A
+{
+    xVec3 vel_launch;
+    xVec3 dir_launch;
+    F32 spd_muzzle;
+    xVec3 pos_launch;
+    xVec3 pos_target;
+    F32 acc_gravity;
+    F32 fac_arcness;
+    F32 dst_range;
+};
+
+struct st_NEWT_USERDATA
+{
+    F32 g;
+    F32 g_2;
+    F32 y_y0;
+    F32 v0;
+    S32 cnt_iter;
+};
+
+struct st_ZPRJ_SOLV_METHOD_B
+{
+    S32 flg_stat;
+    xVec3 vel_launch;
+    xVec3 acc_gravity;
+    xVec3 pos_base;
+    F32 spd_base;
+    xVec3 dir_base;
+    xVec3 pos_tgt;
+    xVec3 vel_tgt;
+    F32 dst_tgtXZ;
+    F32 spd_max;
+    F32 spd_min;
+    S32 cnt_subspd;
+    F32 ang_thmax;
+    F32 ang_thmin;
+    S32 cnt_subang;
+    F32 acc_maxgrav;
+    F32 acc_mingrav;
+    S32 cnt_subgrav;
+    S32 is_winner;
+    S32 cnt_pause;
+    F32 last_speed;
+    F32 last_angle;
+    F32 last_grav;
+    st_NEWT_USERDATA newtdata;
+};
+
+struct st_ZPRJ_SOLV_METHOD_C
+{
+    xVec3 vel_launch;
+    F32 spd_muzzle;
+    F32 acc_gravity;
+    xVec3 pos_launch;
+    xVec3 pos_target;
+};
+
+struct st_ZPRJ_AUTOCALC_INFO
+{
+    en_ZPRJ_SOLVER_METHODS method;
+    union
+    {
+        st_ZPRJ_SOLV_METHOD_A metha;
+        st_ZPRJ_SOLV_METHOD_B methb;
+        st_ZPRJ_SOLV_METHOD_C methc;
+    };
 };
 
 struct zGustData
@@ -230,21 +366,50 @@ struct zEntProjectile : _xEnt
     _xEntShadow raw_shadow;
     zGustData raw_gust;
 
+    void PEFX_flight(en_ZPRJ_FX_TYPE fxtyp, F32 dt);
+    void DoEffects(en_PROJECTILE_EVENT event, F32 dt);
+    S32 LookForFloorRoof(_xScene*, F32);
+    S32 ZPRJ_render();
+    S32 DoColCheck(F32 dt);
+    S32 ZPRJ_update(zScene* scn, F32 dt);
+    void OrientToPath(_xEntFrame* frame, S32 flg_orient);
     void OrientSet(S32 orient);
+    S32 SetupFrame(xVec3* pos, xVec3* veloc);
+    S32 Setup_xEnt();
+    S32 SetupPrelim(en_ZPRJ_CATEGORY cat, U32 ptaid);
+    S32 Init(en_ZPRJ_CATEGORY cat, U32 ptypeID);
+    void Recycle();
     S32 AimAtTarget(ST_CAT_AIMDATA* info, S32 apply);
+    S32 AssignModel(en_ZPRJ_MODEL_INDEX midx);
     void FlexMatSet(xVec3* rot_euler, F32 dt);
     void FlexVecSet(xVec3* vec_flex);
+    S32 SendEvent(en_PROJECTILE_EVENT event, F32 dt, void* edata, S32* res_user);
     S32 SendEvent(en_PROJECTILE_EVENT event, F32 dt);
+    S32 SendEvent(en_PROJECTILE_EVENT event);
     void SyncFrame(S32 applyToModel);
+    void Abort();
     void ColDelaySet(F32 tym, S32 addto);
     en_ZPRJ_STATES StateSet(en_ZPRJ_STATES state);
 };
 
+S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 apply);
 void zEntProjectile_softReflect(xVec3* dir_new, xVec3* dir_cur, xVec3* oppose, F32 scaleMag);
 F32 zEntProjectile_colAccum(zEntProjectile* prj, xVec3* dir_away);
-zEntProjectile* zEntProjectile_acquire(en_ZPRJ_CATEGORY cat, U32 ptypeID);
 S32 zEntProjectile_gen_render(zEntProjectile* prj);
+S32 zEntProjectile_gen_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame);
+S32 zEntProjectile_gen_attach(zEntProjectile* prj);
+zEntProjectile* zEntProjectile_acquire(en_ZPRJ_CATEGORY cat, U32 ptypeID);
+en_ZPRJ_CATEGORY zEntProjectile_catFromPrjType(U32 ptypeID, en_ZPRJ_CATEGORY prefer);
+void zEntProjectile_poolRender(en_ZPRJ_CATEGORY cat);
+S32 zEntProjectile_poolUpdate(en_ZPRJ_CATEGORY, zScene* scn, F32 dt);
+void zEntProjectile_prepSystem(S32 num_ptype, zScene*);
+void zEntProjectile_sceneFinish();
+void zEntProjectile_sceneReset();
+void zEntProjectile_scenePrepare();
+void zEntProjectile_registerType(zProjectileTypeAsset* ptype);
 S32 zEntProjectile_addProps(en_ZPRJ_CATEGORY cat, st_ZPRJ_CATEGORY_PROPS* props);
 S32 zEntProjectile_addCat(en_ZPRJ_CATEGORY cat, st_ZPRJ_CATEGORY_FUNCS* funcs);
+void zEntProjectile_Shutdown();
+void zEntProjectile_Startup();
 
 #endif
