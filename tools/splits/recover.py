@@ -367,6 +367,27 @@ def align(ps_sizes, gc_sizes, pins, ps_tail={}, gc_wrap={}, units=None):
     return pairs[::-1]
 
 
+def outside_loads(data, ranges, data_users, holder, tstart):
+    """Loads of items inside written data ranges by functions no written unit holds.
+
+    data is the list of (addr, size, section, ...) items, ranges maps (unit, section)
+    to the written [lo, hi) of each emitted unit, data_users maps an item to the
+    functions that load it, holder(f) is the emitted unit holding function f or None,
+    and tstart[u] is u's first function.  A function in a unit left unsplit is outside
+    every written unit, like an unassigned one.  Returns a Counter keyed by
+    (unit, section, before), where before says the loading function precedes the unit.
+    """
+    counts = collections.Counter()
+    for d, (addr, _, sec, *_) in enumerate(data):
+        for (u, s), (lo, hi) in ranges.items():
+            if s != sec or not lo <= addr < hi:
+                continue
+            for f in data_users.get(d, ()):
+                if holder(f) is None:
+                    counts[(u, sec, f < tstart[u])] += 1
+    return counts
+
+
 def unit_extents(lines):
     """Section extents per unit from splits.txt lines: {(unit path without extension, section): (start, end)}.
     A unit header may carry attributes after the colon, such as `comment:8`."""
@@ -849,26 +870,23 @@ def main():
         if data[mn][0] < end:
             final[(u, sec)] = (data[mn][0], end)
 
-    # An item inside a written range that an unassigned function loads is a reference
-    # from outside every unit.  It counts as a crossing on the edge facing that function:
-    # the data edge in the same section if there is one, else the text edge.
+    # An item inside a written range that a function no emitted unit holds loads
+    # (unassigned, or in a weak unit) is a reference from outside every written unit.
+    # It counts as a crossing on the edge facing that function: the data edge in the
+    # same section if there is one, else the text edge.
     dnext = {(u, sec): v for (u, v, sec) in dclass}
     dprev = {(v, sec): u for (u, v, sec) in dclass}
     inside = collections.Counter()
-    for d, (addr, _, sec, *_) in enumerate(data):
-        for (u, s), (lo, hi) in final.items():
-            if s != sec or not lo <= addr < hi or status(u) == 'weak':
-                continue
-            for f in data_users.get(d, ()):
-                if f in unit_of:
-                    continue
-                if f < tstart[u]:
-                    key = (dprev[(u, sec)], u, sec) if (u, sec) in dprev else (order[order.index(u) - 1], u)
-                else:
-                    key = (u, dnext[(u, sec)], sec) if (u, sec) in dnext else (u, order[order.index(u) + 1])
-                inside[key] += 1
+    written = {k: r for k, r in final.items() if status(k[0]) != 'weak'}
+    for (u, sec, before), n in outside_loads(data, written, data_users,
+                                             lambda f: None if outside(f) else unit_of[f], tstart).items():
+        if before:
+            key = (dprev[(u, sec)], u, sec) if (u, sec) in dprev else (order[order.index(u) - 1], u)
+        else:
+            key = (u, dnext[(u, sec)], sec) if (u, sec) in dnext else (u, order[order.index(u) + 1])
+        inside[key] += n
     for key, n in inside.items():
-        note = f'; {n} in-range loads by unassigned functions'
+        note = f'; {n} in-range loads by functions outside the written units'
         if len(key) == 3:
             dclass[key] = (dclass[key][0] + note, dclass[key][1] + n)
         else:
