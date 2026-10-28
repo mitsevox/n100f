@@ -428,8 +428,8 @@ S32 zEntVillain_Shutdown()
     return g_npcinit;
 }
 
-// Gets the villains ready for a new scene: frees the old villain block, clears the emitter list
-// and allocates a fresh, empty block of 32 emitter records.
+// Gets the villains ready for a new scene: discards the old villain block (filled with 0x33),
+// clears the emitter list and allocates a fresh, empty block of 32 emitter records.
 S32 zEntVillain_scenePrepare()
 {
     zEntVillain_MemPool(0);
@@ -441,7 +441,7 @@ S32 zEntVillain_scenePrepare()
     return 1;
 }
 
-// Frees the villain block when a scene ends.
+// Discards the villain block (filled with 0x33) when a scene ends.
 S32 zEntVillain_sceneFinish()
 {
     zEntVillain_MemPool(0);
@@ -568,9 +568,9 @@ void zEntVillain_BonusRender()
     }
 }
 
-// Tells the villain the player bounced on it and returns how its type responded. A bounce that
-// lands sends up bounce particles; if it killed a villain that counts for the tally, the tally
-// goes up, and a villain that drops a bonus item drops it.
+// Tells the villain the player bounced on it and returns how its type responded. Bounce particles
+// go up unless the type ignored it or took damage; if it killed a villain that counts for the
+// tally, the tally goes up, and a villain that drops a bonus item drops it.
 en_ZVILLAIN_BOUNCE_RESPONSE zEntVillain_Bounce(st_zEntVillain* ent)
 {
     st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_BOUNCED };
@@ -1370,8 +1370,8 @@ static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser)
     return 1;
 }
 
-// Reads the villain's saved state back. Bit 0 shuts it down at base setup and stops anything from
-// colliding with it; bit 1 shuts it down at startup.
+// Reads the villain's saved state back. Bit 0 shuts it down at base setup, hides it and stops
+// anything from colliding with it; bit 1 shuts it down at startup.
 static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser)
 {
     S32 iv = 0;
