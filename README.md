@@ -7,9 +7,9 @@ A matching decompilation of **Scooby-Doo! Night of 100 Frights** (GameCube, Heav
 | Id | Region | Revision | Status | Original SHA-1 |
 | --- | --- | --- | --- | --- |
 | `GIHE78-rev0` | USA | 0 | active | `c77fb29d39b5898933e8ef4d1ccd2ddac404554e` |
-| `GIHE78-rev1` | USA | 1 | archived | `cc84bc42b1054b572b5bb65968cf80b71ff41d0b` |
+| `GIHE78-rev1` | USA | 1 | active | `cc84bc42b1054b572b5bb65968cf80b71ff41d0b` |
 
-`config/targets.json` is the registry; each target's inputs are in `config/<id>/`. The `GIHE78-rev0` original is `sys/main.dol`, 1,964,512 bytes, entry point `0x80016898`, with no linker map or symbols. `GIHE78-rev1` is identity metadata only: no build and no progress.
+`config/targets.json` is the registry; each target's inputs are in `config/<id>/`. The default remains `GIHE78-rev0`. Its original is `sys/main.dol`, 1,964,512 bytes, entry point `0x80016898`, with no linker map or symbols. `GIHE78-rev1` has a byte-identical relink from original split objects and starts with no source units linked; its original is 2,032,480 bytes with entry point `0x80016A00`. See its [target notes](config/GIHE78-rev1/README.md) for the initial map and startup-name evidence.
 
 ## Building
 
