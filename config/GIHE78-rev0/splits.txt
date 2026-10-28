@@ -1578,7 +1578,8 @@ rwsdk/world/baworld.c:
 	.text       start:0x80151038 end:0x8015275C
 
 rwsdk/world/baworobj.c:
-	.text       start:0x80152834 end:0x80154264
+	.text       start:0x8015275C end:0x80154264
+	.sbss       start:0x8025F750 end:0x8025F768
 
 rwsdk/world/pipe/p2/bapipew.c:
 	.text       start:0x80154264 end:0x80154714

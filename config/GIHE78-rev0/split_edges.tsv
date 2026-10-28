@@ -38,7 +38,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xDraw.cpp	xEnt.cpp	0x80021E70	0x80021E70	alignment only (4 cuts tie on data, 3 on calls); xDraw.cpp left unsplit	0
 .text	xEnt.cpp	xEntDrive.cpp	0x800258F4	0x800258F4	single cut by data references	0
 .text	xEntDrive.cpp	xEntMotion.cpp	0x80026158	0x80026158	single cut by data references	0
-.text	xEntMotion.cpp	xEnv.cpp	0x80028D18	0x80028D18	alignment only (2 cuts tie on data)	0
+.text	xEntMotion.cpp	xEnv.cpp	0x80028D18	0x80028D18	single cut by data references	0
 .text	xEnv.cpp	xFFX.cpp	0x80028DFC	0x80028DFC	single cut by data references	0
 .text	xFFX.cpp	xFilter.cpp	0x80029458	0x80029458	single cut by data references	0
 .text	xFilter.cpp	xFont.cpp	0x800294E8	0x800294E8	alignment only (3 cuts tie on data)	0
