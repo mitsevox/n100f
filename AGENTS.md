@@ -1,14 +1,28 @@
 # Agent instructions
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before working. It defines the contribution passes, [investigation and escalation](CONTRIBUTING.md#investigation-and-escalation), matching integrity, source comments, and approval process. Consult the [README](README.md) for the target and build entry point.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before working: it defines the review tiers, the task loop, matching integrity, the evidence records and the hostile-review checklist. The [README](README.md) names the targets, the owner and the build commands.
 
-- Follow [work coordination](CONTRIBUTING.md#work-coordination): reserve only a bounded active batch, not a subsystem backlog. Work on a dedicated branch and your own checkout or worktree. Preserve unrelated changes and coordinate live overlaps and shared-file edits; old blanket claims do not reserve code.
-- Use authorized reference material when relevant. Keep raw binaries, disc images, assets and trial output out of public Git. Text extractions of the reference builds' symbols and debug information belong in `references/` (owner decision, 2026-10-26). If required evidence or tools are unavailable, report the gap rather than invent a result.
-- Keep contribution branches, PRs, and reviews in this repository. Use the pinned, owner-approved build environment; do not alter supporting dependencies or their access controls. Report dependency problems here for the owner's decision.
-- Keep recovered facts, hypotheses, function-level matches, combined-build results, and review verdicts distinct. Report what was actually checked and on which revision.
-- Preserve useful partial reconstruction in normal source files and register its measured comparisons. Commit and submit it without requiring 100% matching; reviewed partial source may merge and publish fuzzy/exact-unlinked progress. Original bytes remain in the verified linked build until promotion. Matching incompleteness alone is not a review failure.
-- Complete the required accuracy and hostile-review passes. An author cannot provide its own independent review. A `SHIP` verdict means that review passed; it does not approve a merge.
-- **Only the project owner identified in the README, or the owner's designated [merge gate](CONTRIBUTING.md#owner-delegation-merge-gate), authorizes and performs merges into `main`.** No agent, including the merge gate, enables auto-merge, pushes to `main`, force-pushes `main` or another contributor's branch, or changes approval controls (branch protection, `review.yml`, `REVIEW_OWNER`). Agents other than the merge gate do not merge PRs or post owner clearance. Push a work branch or open a PR only when authorized for the task, then leave it for the merge gate.
-- After fixes or a branch refresh, default to reviewing the delta and affected dependencies. Cite and carry forward adequate independent coverage; do not restart full reviews or duplicate full validation without a concrete coverage gap. Follow the recheck and final-revision rules in CONTRIBUTING.md.
-- Address review feedback without weakening checks, hiding mismatches, or changing project rules to accommodate a patch. Propose workflow improvements through the contribution process.
-- Keep handoffs concise: changes, evidence, validation, unresolved findings, and review state. Use PRs/issues for feedback and private research for detailed experiment histories; do not add running public status diaries.
+- Keep original executables, disc images, assets and trial output out of public Git. Use the pinned, owner-approved build environment and do not alter supporting dependencies or their access controls; report dependency problems in an issue for the owner's decision.
+- Work on a dedicated branch in your own checkout or worktree. Open a draft PR early with the unit names and target ids in its title; check open PRs before starting. Preserve unrelated changes and coordinate live overlaps on shared files.
+- Keep recovered facts, hypotheses, function-level matches, combined-build results and review verdicts distinct. Report what was actually checked, on which revision and for which targets.
+- Preserve useful partial reconstruction in normal source files as `NonMatching` objects so CI measures it. Original bytes stay in the verified linked build until promotion. Matching incompleteness alone is not a review failure.
+- Record evidence for names, boundaries, types and compiler profiles in `config/<target id>/evidence.tsv` ([format](config/README.md)) in the same PR as the change it supports.
+- State the PR's tier in its Scope line and complete the records that tier requires. An author cannot provide its own independent review. A `SHIP` verdict means that review passed; it does not approve a merge.
+- **Only the project owner authorizes and performs merges into `main`.** No agent enables auto-merge, pushes to `main`, force-pushes `main` or another contributor's branch, or changes branch rules, repository settings, the build image or its digest. Push a work branch or open a PR only when authorized for the task, then leave it for the owner's decision.
+- Address review feedback without weakening checks, hiding mismatches or changing project rules to accommodate a patch. Propose workflow improvements through a separate PR.
+- Keep handoffs concise: changes, evidence, validation per target, unresolved findings and review state. Do not add running status diaries to the repository.
+
+Before calling a shared change safe for every target, an agent has done four things, per active target:
+
+1. Built every active target and confirmed `config/<target id>/build.sha1` on each.
+2. Run objdiff per target for each touched unit and reported the `Matching` state and progress delta in the PR's Targets table.
+3. Run `python3 tools/versions.py diff` on every file it added a `#if VERSION_` block to, and read the result.
+4. Added evidence rows to each affected target's `evidence.tsv`.
+
+## Project
+
+- **Toolchain.** Heavy Iron game code is CodeWarrior GC/1.3.2 and the Dolphin SDK GC/1.2.5n; MSL C, the runtime, RenderWare and Bink have their own profiles. The evidence and the flag files are in [docs/compiler_profile/](docs/compiler_profile/README.md); `configure.py` chooses the profile per library. Bink builds with ProDG through `tools/prodg_cc.py`, which the `Project checks` step tests against the driver in the build image.
+- **dtk patch.** The build image's decomp-toolkit carries [tools/patches/dtk-v1.8.3-rom-copy-info.patch](tools/patches/dtk-v1.8.3-rom-copy-info.patch): this game enters through a routine in `.text`, where stock dtk does not look for `_rom_copy_info`. Do not build without it.
+- **References.** Text extractions of the reference builds' symbols and debug information are in `references/` by the owner's decision (2026-10-26); they corroborate, they are not target evidence. Community speedrunning documents there are playthrough observations only ([community references](docs/community_references.md)). Library provenance and the libmap tool are in [docs/libraries.md](docs/libraries.md); split decisions in [docs/splits.md](docs/splits.md).
+- **Investigation.** State the question first. Disassembly, references and Ghidra answer what the target does; controlled compiler experiments under the documented profile answer why plausible source differs; a bounded headless Dolphin trace answers which behavior fits an execution. None establishes original source alone. When evidence stays insufficient, keep the original assembly linked and report the gap.
+- **objdiff view.** objdiff watches only its project directory, so `python3 tools/activate_target.py --target GIHE78-rev0` copies that target's generated `objdiff.json` and `compile_commands.json` to the root; open the root workspace. The canonical files stay in `build/<target id>/`.
