@@ -303,6 +303,8 @@ S32 RpWorldRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack read
                                 RwPluginDataChunkGetSizeCallBack getSizeCB);
 
 S32 RpClumpDestroy(RpClump* clump);
+RpClump* RpClumpAddAtomic(RpClump* clump, RpAtomic* atomic);
+RpClump* RpClumpRemoveAtomic(RpClump* clump, RpAtomic* atomic);
 RpClump* RpClumpForAllAtomics(RpClump* clump, RpAtomicCallBack callback, void* pData);
 RpClump* RpClumpForAllCameras(RpClump* clump, RwCameraCallBack callback, void* pData);
 RpClump* RpClumpForAllLights(RpClump* clump, RpLightCallBack callback, void* pData);
