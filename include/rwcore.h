@@ -806,6 +806,191 @@ struct RwGlobals
 #define RwMalloc(_s) ((RWSRCGLOBAL(memoryFuncs).rwmalloc)((_s)))
 #define RwFree(_p) ((RWSRCGLOBAL(memoryFuncs).rwfree)((_p)))
 
+typedef struct RxClusterDefinition RxClusterDefinition;
+struct RxClusterDefinition
+{
+    char* name;
+    U32 defaultStride;
+    U32 defaultAttributes;
+    char* attributeSet;
+};
+
+typedef struct RxPipelineCluster RxPipelineCluster;
+struct RxPipelineCluster
+{
+    RxClusterDefinition* clusterRef;
+    U32 creationAttributes;
+};
+
+typedef struct RxCluster RxCluster;
+struct RxCluster
+{
+    U16 flags;
+    U16 stride;
+    void* data;
+    void* currentData;
+    U32 numAlloced;
+    U32 numUsed;
+    RxPipelineCluster* clusterRef;
+    U32 attributes;
+};
+
+typedef struct RxPipeline RxPipeline;
+typedef struct RxPipelineNode RxPipelineNode;
+typedef struct RxNodeDefinition RxNodeDefinition;
+typedef struct RxPipelineNodeTopSortData RxPipelineNodeTopSortData;
+
+typedef struct RxPacket RxPacket;
+struct RxPacket
+{
+    U16 flags;
+    U16 numClusters;
+    RxPipeline* pipeline;
+    U32* inputToClusterSlot;
+    U32* slotsContinue;
+    RxPipelineCluster** slotClusterRefs;
+    RxCluster clusters[1];
+};
+
+typedef struct RxHeap RxHeap;
+struct RxHeap
+{
+    U32 superBlockSize;
+    void* head;
+    void* headBlock;
+    void* freeBlocks;
+    U32 entriesAlloced;
+    U32 entriesUsed;
+    S32 dirty;
+};
+
+typedef struct RxPipelineNodeParam RxPipelineNodeParam;
+struct RxPipelineNodeParam
+{
+    void* dataParam;
+    RxHeap* heap;
+};
+
+typedef struct RxNodeMethods RxNodeMethods;
+struct RxNodeMethods
+{
+    S32 (*nodeBody)(RxPipelineNode* self, const RxPipelineNodeParam* params);
+    S32 (*nodeInit)(RxNodeDefinition* self);
+    void (*nodeTerm)(RxNodeDefinition* self);
+    S32 (*pipelineNodeInit)(RxPipelineNode* self);
+    void (*pipelineNodeTerm)(RxPipelineNode* self);
+    S32 (*pipelineNodeConfig)(RxPipelineNode* self, RxPipeline* pipeline);
+    U32 (*configMsgHandler)(RxPipelineNode* self, U32 msg, U32 intparam, void* ptrparam);
+};
+
+typedef struct RxIoSpec RxIoSpec;
+struct RxIoSpec
+{
+    U32 numClustersOfInterest;
+    void* clustersOfInterest;
+    S32* inputRequirements;
+    U32 numOutputs;
+    void* outputs;
+};
+
+struct RxNodeDefinition
+{
+    char* name;
+    RxNodeMethods nodeMethods;
+    RxIoSpec io;
+    U32 pipelineNodePrivateDataSize;
+    S32 editable;
+    S32 InputPipesCnt;
+};
+
+struct RxPipelineNode
+{
+    RxNodeDefinition* nodeDef;
+    U32 numOutputs;
+    U32* outputs;
+    RxPipelineCluster** slotClusterRefs;
+    U32* slotsContinue;
+    void* privateData;
+    U32* inputToClusterSlot;
+    RxPipelineNodeTopSortData* topSortData;
+    void* initializationData;
+    U32 initializationDataSize;
+};
+
+struct RxPipelineNodeTopSortData
+{
+    U32 numIns;
+    U32 numInsVisited;
+    void* req;
+};
+
+typedef enum rxEmbeddedPacketState
+{
+    rxPKST_PACKETLESS = 0,
+    rxPKST_UNUSED = 1,
+    rxPKST_INUSE = 2,
+    rxPKST_PENDING = 3,
+    rxEMBEDDEDPACKETSTATEFORCEENUMSIZEINT = 0x7FFFFFFF
+} rxEmbeddedPacketState;
+
+typedef struct RxPipelineRequiresCluster RxPipelineRequiresCluster;
+struct RxPipelineRequiresCluster
+{
+    RxClusterDefinition* clusterDef;
+    S32 rqdOrOpt;
+    U32 slotIndex;
+};
+
+struct RxPipeline
+{
+    S32 locked;
+    U32 numNodes;
+    RxPipelineNode* nodes;
+    U32 packetNumClusterSlots;
+    rxEmbeddedPacketState embeddedPacketState;
+    RxPacket* embeddedPacket;
+    U32 numInputRequirements;
+    RxPipelineRequiresCluster* inputRequirements;
+    void* superBlock;
+    U32 superBlockSize;
+    U32 entryPoint;
+    U32 pluginId;
+    U32 pluginData;
+};
+
+typedef RxPipeline RxLockedPipe;
+
+// Opaque: the pipeline globals only take its address.
+typedef struct RxRenderStateVector RxRenderStateVector;
+struct RxRenderStateVector
+{
+    U8 unk0[0x30];
+};
+
+// The pipeline module's globals, at _rxPipelineGlobalsOffset in the engine instance.
+typedef struct RxPipelineGlobals RxPipelineGlobals;
+struct RxPipelineGlobals
+{
+    RwFreeList* pipesFreeList;
+    RxRenderStateVector defaultRenderState;
+    void* unk34;
+    void* unk38;
+    U32 maxNodesPerPipeline;
+    RxPipeline* defaultAtomicPipeline;
+    RxPipeline* defaultSectorPipeline;
+    RxPipeline* defaultMaterialPipeline;
+    RxPipeline* genericAtomicPipeline;
+    RxPipeline* genericSectorPipeline;
+    RxPipeline* genericMaterialPipeline;
+    RxPipeline* platformAtomicPipeline;
+    RxPipeline* platformSectorPipeline;
+};
+
+extern S32 _rxPipelineGlobalsOffset;
+
+#define RXPIPELINEGLOBAL(var)                                                                      \
+    (((RxPipelineGlobals*)((U8*)RwEngineInstance + _rxPipelineGlobalsOffset))->var)
+
 // The resource arena's globals, at resourcesModule.globalsOffset in the engine instance. The
 // entries live on the two embedded lists: usedEntryList points at the one holding the entries
 // used since the last purge, unusedEntryList at the one holding the rest, and a purge swaps them.
@@ -916,6 +1101,29 @@ RwFreeList* RwFreeListCreate(S32 entrySize, S32 entriesPerBlock, S32 alignment);
 S32 RwFreeListDestroy(RwFreeList* freeList);
 S32 _rxPipelineClose(void);
 S32 _rxPipelineOpen(void);
+RxPipelineNode* PipelineNodeDestroy(RxPipelineNode* node, RxPipeline* pipeline);
+RxHeap* RxHeapGetGlobalHeap(void);
+RxPacket* RxPacketCreate(RxPipelineNode* node);
+RxCluster* RxClusterSetExternalData(RxCluster* cluster, void* data, U16 stride, U32 numElements);
+RxCluster* RxClusterSetData(RxCluster* cluster, void* data, U16 stride, U32 numElements);
+RxCluster* RxClusterInitializeData(RxCluster* cluster, U32 numElements, U16 stride);
+RxCluster* RxClusterResizeData(RxCluster* cluster, U32 numElements);
+RxCluster* RxClusterLockWrite(RxPacket* packet, U32 clusterIndex, RxPipelineNode* node);
+RxPipeline* RxPipelineExecute(RxPipeline* pipeline, void* data, S32 heapReset);
+RxPipeline* RxPipelineCreate(void);
+void _rxPipelineDestroy(RxPipeline* pipeline);
+RxLockedPipe* RxPipelineLock(RxPipeline* pipeline);
+RxLockedPipe* RxLockedPipeAddFragment(RxLockedPipe* pipeline, U32* firstIndex,
+                                      RxNodeDefinition* nodeDef0, ...);
+RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline);
+void _rxPacketDestroy(RxPacket* packet);
+void RxHeapFree(RxHeap* heap, void* block);
+void* RxHeapAlloc(RxHeap* heap, U32 size);
+void* RxHeapRealloc(RxHeap* heap, void* block, U32 newSize, S32 allowCopy);
+S32 _rxHeapReset(RxHeap* heap);
+void RxHeapDestroy(RxHeap* heap);
+RxHeap* RxHeapCreate(U32 size);
+RxRenderStateVector* RxRenderStateVectorSetDefaultRenderStateVector(RxRenderStateVector* rsvp);
 RwFreeList* RwFreeListForAllUsed(RwFreeList* freeList, void (*callBack)(void* mem, void* data),
                                  void* data);
 
