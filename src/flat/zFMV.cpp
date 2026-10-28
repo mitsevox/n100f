@@ -57,8 +57,7 @@ struct zFMVFile
     U32 fileNameID;
 };
 
-extern "C" {
-zFMVFile lbl_801C5590[] =
+static zFMVFile zFMVFileTable[eFMVFileCount] =
 {
     { eFMVFile_HeavyIronLOGO, "HILogo", 0 },
     { eFMVFile_SDTitleSequence, "Intro", 0 },
@@ -102,25 +101,21 @@ zFMVFile lbl_801C5590[] =
     { eFMVFile_Cin13, "cin_mmsc", 0 },
     { eFMVFile_Cin14, "cin_shbr", 0 },
 };
+extern "C" {
+U32 lbl_8025EEC8;
 }
-extern "C" U32 lbl_8025EEC8;
 extern "C" void fn_8003D49C();
 extern "C" void fn_8003D41C();
 U32 iFMVPlay(char* filename, U32 buttons, F32 time);
 
-// Return the name stored in the movie table for the requested entry.
-char* zFMVFileGetName(eFMVFile fileEnum)
-{
-    return lbl_801C5590[fileEnum].fileName;
-}
-
 // Play a movie and set a flag after Credits2 in scene s005.
 U32 zFMVPlay(char* filename, U32 buttons, F32 time)
 {
-    char path[64];
-    sprintf(path, "%s/%s%s", "FMV", filename, ".bik");
+    U32 ret;
+    char c[64];
+    sprintf(c, "%s/%s%s", "FMV", filename, ".bik");
     fn_8003D49C();
-    U32 ret = iFMVPlay(path, buttons, time);
+    ret = iFMVPlay(c, buttons, time);
     fn_8003D41C();
     if (xStricmp(filename, "Credits2") == 0 &&
         globals.sceneCur->sceneID == zSceneIDFromName("s005"))
@@ -128,4 +123,10 @@ U32 zFMVPlay(char* filename, U32 buttons, F32 time)
         lbl_8025EEC8 = 1;
     }
     return ret;
+}
+
+// Return the name stored in the movie table for the requested entry.
+char* zFMVFileGetName(eFMVFile fileEnum)
+{
+    return zFMVFileTable[fileEnum].fileName;
 }

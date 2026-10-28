@@ -261,6 +261,14 @@ extern "C" {
 S32 RpLightDestroy(RpLight* light);
 S32 RpLightRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
                           RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RpLightRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                RwPluginDataChunkWriteCallBack writeCB,
+                                RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RpMaterialRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                             RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RpMaterialRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                   RwPluginDataChunkWriteCallBack writeCB,
+                                   RwPluginDataChunkGetSizeCallBack getSizeCB);
 
 RpGeometry* RpGeometryLock(RpGeometry* geometry, S32 lockMode);
 

@@ -372,6 +372,28 @@ typedef enum RwRasterType
     rwRASTERTYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwRasterType;
 
+typedef enum RwRasterFormat
+{
+    rwRASTERFORMATDEFAULT = 0x0000,
+    rwRASTERFORMAT1555 = 0x0100,
+    rwRASTERFORMAT565 = 0x0200,
+    rwRASTERFORMAT4444 = 0x0300,
+    rwRASTERFORMATLUM8 = 0x0400,
+    rwRASTERFORMAT8888 = 0x0500,
+    rwRASTERFORMAT888 = 0x0600,
+    rwRASTERFORMAT16 = 0x0700,
+    rwRASTERFORMAT24 = 0x0800,
+    rwRASTERFORMAT32 = 0x0900,
+    rwRASTERFORMAT555 = 0x0a00,
+    rwRASTERFORMATAUTOMIPMAP = 0x1000,
+    rwRASTERFORMATPAL8 = 0x2000,
+    rwRASTERFORMATPAL4 = 0x4000,
+    rwRASTERFORMATMIPMAP = 0x8000,
+    rwRASTERFORMATPIXELFORMATMASK = 0x0f00,
+    rwRASTERFORMATMASK = 0xff00,
+    rwRASTERFORMATFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwRasterFormat;
+
 typedef enum RwRenderState
 {
     rwRENDERSTATENARENDERSTATE = 0,
@@ -403,6 +425,23 @@ typedef enum RwRenderState
     rwRENDERSTATESTENCILFUNCTIONWRITEMASK,
     rwRENDERSTATEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwRenderState;
+
+typedef enum RwBlendFunction
+{
+    rwBLENDNABLEND = 0,
+    rwBLENDZERO,
+    rwBLENDONE,
+    rwBLENDSRCCOLOR,
+    rwBLENDINVSRCCOLOR,
+    rwBLENDSRCALPHA,
+    rwBLENDINVSRCALPHA,
+    rwBLENDDESTALPHA,
+    rwBLENDINVDESTALPHA,
+    rwBLENDDESTCOLOR,
+    rwBLENDINVDESTCOLOR,
+    rwBLENDSRCALPHASAT,
+    rwBLENDFUNCTIONFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwBlendFunction;
 
 #define rwObjectGetSubType(o) (((const RwObject*)(o))->subType)
 #define rwObjectGetFlags(o) (((const RwObject*)(o))->flags)
@@ -467,6 +506,21 @@ struct RwFileFunctions
     S32 (*rwfseek)(void* fptr, S32 offset, S32 origin);
     S32 (*rwfflush)(void* fptr);
     S32 (*rwftell)(void* fptr);
+};
+
+typedef char* (*vecStrcpyFunc)(char* dest, const char* srce);
+typedef U32 (*vecStrlenFunc)(const char* string);
+
+// Partial: this build's table is 0x40 bytes; only the two members the target reaches at fixed
+// offsets are declared.
+typedef struct RwStringFunctions RwStringFunctions;
+struct RwStringFunctions
+{
+    U8 unk0[0x8];
+    vecStrcpyFunc vecStrcpy;
+    U8 unkC[0x20];
+    vecStrlenFunc vecStrlen;
+    U8 unk30[0x10];
 };
 
 typedef struct RwSurfaceProperties RwSurfaceProperties;
@@ -612,6 +666,62 @@ typedef U16 RwImVertexIndex;
         (vert)->emissiveColor.alpha = a;                                                           \
     } while (0)
 
+typedef struct RxObjSpace3DVertex RxObjSpace3DVertex;
+struct RxObjSpace3DVertex
+{
+    F32 x;
+    F32 y;
+    F32 z;
+    F32 nx;
+    F32 ny;
+    F32 nz;
+    U8 r;
+    U8 g;
+    U8 b;
+    U8 a;
+    F32 u;
+    F32 v;
+};
+
+typedef RxObjSpace3DVertex RxObjSpace3DLitVertex;
+typedef RxObjSpace3DLitVertex RwIm3DVertex;
+
+inline void RwIm3DVertexSetPos(RwIm3DVertex* vert, F32 x, F32 y, F32 z)
+{
+    vert->x = x;
+    vert->y = y;
+    vert->z = z;
+}
+
+inline void RwIm3DVertexSetU(RwIm3DVertex* vert, F32 u)
+{
+    vert->u = u;
+}
+
+inline void RwIm3DVertexSetV(RwIm3DVertex* vert, F32 v)
+{
+    vert->v = v;
+}
+
+inline void RwIm3DVertexSetRGBA(RwIm3DVertex* vert, U8 r, U8 g, U8 b, U8 a)
+{
+    vert->r = r;
+    vert->g = g;
+    vert->b = b;
+    vert->a = a;
+}
+
+enum RwIm3DTransformFlags
+{
+    rwIM3D_VERTEXUV = 1,
+    rwIM3D_ALLOPAQUE = 2,
+    rwIM3D_NOCLIP = 4,
+    rwIM3D_VERTEXXYZ = 8,
+    rwIM3D_VERTEXRGBA = 16,
+    rwIM3DTRANSFORMFLAGSFORCEENUMSIZEINT = 0x7FFFFFFF
+};
+typedef enum RwIm3DTransformFlags RwIm3DTransformFlags;
+
 typedef S32 (*RwStandardFunc)(void* pOut, void* pInOut, S32 nI);
 typedef S32 (*RwSystemFunc)(S32 nOption, void* pOut, void* pInOut, S32 nIn);
 typedef S32 (*RwRenderStateSetFunction)(RwRenderState nState, void* pParam);
@@ -656,22 +766,33 @@ struct RwGlobals
     RwStandardFunc stdFunc[29];
     RwLinkList dirtyFrameList;
     RwFileFunctions fileFuncs;
-    U8 unkF0[0x40];
+    RwStringFunctions stringFuncs;
     RwMemoryFunctions memoryFuncs;
     RwMemoryAllocFn memoryAlloc;
     RwMemoryFreeFn memoryFree;
-    U8 unk148[0xC];
+    U8 unk148[0x8];
+    U32 resArenaInitSize;
 };
 
 #define RWSRCGLOBAL(var) (((RwGlobals*)RwEngineInstance)->var)
 
-// Partial: the resource arena's globals, at resourcesModule.globalsOffset in the engine
-// instance. Only the arena size and the in-use entry list are reached.
+#define rwstrcpy RWSRCGLOBAL(stringFuncs).vecStrcpy
+#define rwstrlen RWSRCGLOBAL(stringFuncs).vecStrlen
+#define RwMalloc(_s) ((RWSRCGLOBAL(memoryFuncs).rwmalloc)((_s)))
+#define RwFree(_p) ((RWSRCGLOBAL(memoryFuncs).rwfree)((_p)))
+
+// The resource arena's globals, at resourcesModule.globalsOffset in the engine instance. The
+// entries live on the two embedded lists: usedEntryList points at the one holding the entries
+// used since the last purge, unusedEntryList at the one holding the rest, and a purge swaps them.
 typedef struct RwResourcesGlobals RwResourcesGlobals;
 struct RwResourcesGlobals
 {
     U32 arenaSize;
-    U8 unk4[0x20];
+    S32 usedSize;
+    S32 reclaimedSize;
+    void* heap;
+    RwLinkList entryLists[2];
+    RwLinkList* unusedEntryList;
     RwLinkList* usedEntryList;
 };
 
@@ -697,7 +818,13 @@ RwResEntry* RwResourcesAllocateResEntry(void* owner, RwResEntry** ownerRef, S32 
                                         RwResEntryDestroyNotify destroyNotify);
 S32 RwResourcesFreeResEntry(RwResEntry* entry);
 S32 RwResourcesGetArenaSize(void);
+S32 RwResourcesSetArenaSize(U32 size);
+S32 RwResourcesEmptyArena(void);
 void _rwResourcesPurge(void);
+S32 _rwResHeapInit(void* mem, U32 size);
+S32 _rwResHeapClose(void* mem);
+void _rwResHeapFree(void* mem);
+void* _rwResHeapAlloc(void* mem, U32 size);
 S32 RwIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices,
                                  S32 numVertices, RwImVertexIndex* indices, S32 numIndices);
 
@@ -720,6 +847,9 @@ RwImage* RwImageFreePixels(RwImage* image);
 const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict,
                                                     RwTextureCallBack fpCallBack, void* pData);
 S32 RwRenderStateSet(RwRenderState state, void* value);
+void* RwIm3DTransform(RwIm3DVertex* pVerts, U32 numVerts, RwMatrix* ltm, U32 flags);
+S32 RwIm3DEnd(void);
+S32 RwIm3DRenderPrimitive(RwPrimitiveType primType);
 S32 RwEngineRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor initCB,
                            RwPluginObjectDestructor termCB);
 RwMatrix* RwMatrixUpdate(RwMatrix* matrix);
@@ -778,11 +908,32 @@ const RwPluginRegistry* _rwPluginRegistryDeInitObject(const RwPluginRegistry* re
 void _rwObjectHasFrameReleaseFrame(void* object);
 
 S32 RwTextureDestroy(RwTexture* texture);
+RwTexture* RwTexDictionaryAddTexture(RwTexDictionary* dict, RwTexture* texture);
+RwTexDictionary* RwTexDictionaryGetCurrent(void);
 
 RwFrame* RwFrameUpdateObjects(RwFrame* frame);
 
 F32 _rwSqrt(F32 num);
 F32 _rwInvSqrt(F32 num);
+
+RwStream* RwStreamReadInt32(RwStream* stream, S32* ints, U32 numBytes);
+RwStream* RwStreamWriteInt32(RwStream* stream, const S32* ints, U32 numBytes);
+RwStream* RwStreamReadReal(RwStream* stream, F32* reals, U32 numBytes);
+RwStream* RwStreamWriteReal(RwStream* stream, const F32* reals, U32 numBytes);
+
+S32 RwFrameRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                          RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RwFrameRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                RwPluginDataChunkWriteCallBack writeCB,
+                                RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RwCameraRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                 RwPluginDataChunkWriteCallBack writeCB,
+                                 RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RwTextureRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                            RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RwTextureRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                  RwPluginDataChunkWriteCallBack writeCB,
+                                  RwPluginDataChunkGetSizeCallBack getSizeCB);
 
 #ifdef __cplusplus
 }
