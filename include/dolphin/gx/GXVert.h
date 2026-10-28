@@ -24,6 +24,31 @@ typedef union {
 
 volatile PPCWGPipe GXWGFifo AT_ADDRESS(GXFIFO_ADDR);
 
+static inline void GXPosition3s16(const s16 x, const s16 y, const s16 z)
+{
+    GXWGFifo.s16 = x;
+    GXWGFifo.s16 = y;
+    GXWGFifo.s16 = z;
+}
+
+static inline void GXColor4u8(const u8 r, const u8 g, const u8 b, const u8 a)
+{
+    GXWGFifo.u8 = r;
+    GXWGFifo.u8 = g;
+    GXWGFifo.u8 = b;
+    GXWGFifo.u8 = a;
+}
+
+static inline void GXTexCoord2f32(const f32 s, const f32 t)
+{
+    GXWGFifo.f32 = s;
+    GXWGFifo.f32 = t;
+}
+
+static inline void GXEnd(void)
+{
+}
+
 #ifdef __cplusplus
 }
 #endif
