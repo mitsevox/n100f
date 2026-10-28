@@ -3,6 +3,8 @@
 
 #include "zEnt.h"
 
+struct _zEntBubble;
+
 // Partial: only the goals reconstructed code compares against.
 enum en_BEHAVIOUR_GOAL
 {
@@ -20,5 +22,15 @@ struct st_zEntVillain : _zEnt
     F32 spd_move;
     F32 spd_chase;
 };
+
+enum en_ZVILLAIN_BUBBLE_RESPONSE
+{
+    ZVIL_BUBBLE_NONE = 0,
+    ZVIL_BUBBLE_ENVELOP = 1,
+    ZVIL_BUBBLE_BREAK = 2,
+    ZVIL_BUBBLE_BOUNCE = 3
+};
+
+en_ZVILLAIN_BUBBLE_RESPONSE zEntVillain_Bubble(st_zEntVillain* ent, _zEntBubble* bub);
 
 #endif
