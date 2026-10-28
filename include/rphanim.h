@@ -3,7 +3,6 @@
 
 #include <rpworld.h>
 
-typedef struct RpHAnimAnimation RpHAnimAnimation;
 typedef struct RpHAnimHierarchy RpHAnimHierarchy;
 
 typedef struct RpHAnimNodeInfo RpHAnimNodeInfo;
@@ -15,33 +14,14 @@ struct RpHAnimNodeInfo
     RwFrame* pFrame;
 };
 
-typedef RpHAnimHierarchy* (*RpHAnimHierarchyCallBack)(RpHAnimHierarchy* hierarchy, void* data);
-
 struct RpHAnimHierarchy
 {
     S32 flags;
     S32 numNodes;
-    RpHAnimAnimation* pCurrentAnim;
-    F32 currentTime;
-    void* pNextFrame;
-    RpHAnimHierarchyCallBack pAnimCallBack;
-    void* pAnimCallBackData;
-    F32 animCallBackTime;
-    RpHAnimHierarchyCallBack pAnimLoopCallBack;
-    void* pAnimLoopCallBackData;
+    U8 opaque_8[0x28 - 0x8];
     RwMatrix* pMatrixArray;
-    void* pMatrixArrayUnaligned;
+    U8 opaque_2C[0x30 - 0x2C];
     RpHAnimNodeInfo* pNodeInfo;
-    RwFrame* parentFrame;
-    S32 maxKeyFrameSize;
-    S32 currentKeyFrameSize;
-    void (*keyFrameToMatrixCB)(RwMatrix* matrix, void* voidIFrame);
-    void (*keyFrameBlendCB)(void* voidOut, void* voidIn1, void* voidIn2, F32 alpha);
-    void (*keyFrameInterpolateCB)(void* voidOut, void* voidIn1, void* voidIn2, F32 time);
-    void (*keyFrameAddCB)(void* voidOut, void* voidIn1, void* voidIn2);
-    RpHAnimHierarchy* parentHierarchy;
-    S32 offsetInParent;
-    S32 rootParentOffset;
 };
 
 typedef enum RpHAnimHierarchyFlag

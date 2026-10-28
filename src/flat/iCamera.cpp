@@ -69,7 +69,7 @@ void iCameraUpdateFog(RwCamera* cam, iTime t)
     RwRenderStateSet(rwRENDERSTATEFOGTYPE, (void*)fp->type);
     RwRenderStateSet(rwRENDERSTATEFOGCOLOR, (void*)bite_me);
     RwRenderStateSet(rwRENDERSTATEFOGDENSITY, (void*)&fp->density);
-    RwRenderStateSet(rwRENDERSTATEFOGTABLE, (void*)fp->table);
+    RwRenderStateSet((RwRenderState)18, (void*)fp->table);
 
     RwCameraSetFogDistance(cam, fp->start);
     RwCameraSetFarClipPlane(cam, fp->stop);

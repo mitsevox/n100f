@@ -269,23 +269,30 @@ typedef enum RwRenderState
     rwRENDERSTATEFOGCOLOR,
     rwRENDERSTATEFOGTYPE,
     rwRENDERSTATEFOGDENSITY,
-    rwRENDERSTATEFOGTABLE,
-    rwRENDERSTATEALPHAPRIMITIVEBUFFER,
-    rwRENDERSTATECULLMODE,
+    rwRENDERSTATECULLMODE = 20,
+    rwRENDERSTATESTENCILENABLE,
+    rwRENDERSTATESTENCILFAIL,
+    rwRENDERSTATESTENCILZFAIL,
+    rwRENDERSTATESTENCILPASS,
+    rwRENDERSTATESTENCILFUNCTION,
+    rwRENDERSTATESTENCILFUNCTIONREF,
+    rwRENDERSTATESTENCILFUNCTIONMASK,
+    rwRENDERSTATESTENCILFUNCTIONWRITEMASK,
     rwRENDERSTATEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwRenderState;
 
 #define rwObjectGetParent(object) (((const RwObject*)(object))->parent)
-#define RwFrameGetMatrix(frame) (&(frame)->modelling)
-#define RwCameraGetFrame(camera) ((RwFrame*)rwObjectGetParent(camera))
-#define RwCameraSetFrame(camera, frame) \
-    (_rwObjectHasFrameSetFrame((camera), (frame)), (camera))
-#define RwCameraGetRaster(camera) ((camera)->frameBuffer)
-#define RwCameraSetRaster(camera, raster) (((camera)->frameBuffer = (raster)), (camera))
-#define RwCameraGetZRaster(camera) ((camera)->zBuffer)
-#define RwCameraSetZRaster(camera, zRaster) (((camera)->zBuffer = (zRaster)), (camera))
-#define RwCameraSetFogDistance(camera, fogDistance) \
-    (((camera)->fogPlane = (fogDistance)), (camera))
+#define rwObjectSetParent(c, p) (((RwObject*)(c))->parent) = (void*)(p)
+#define RwFrameGetMatrix(_f) (&(_f)->modelling)
+#define RwCameraGetFrame(_camera) ((RwFrame*)rwObjectGetParent((_camera)))
+#define RwCameraSetFrame(_camera, _frame) \
+    (_rwObjectHasFrameSetFrame((_camera), (_frame)), (_camera))
+#define RwCameraGetRaster(_camera) ((_camera)->frameBuffer)
+#define RwCameraSetRaster(_camera, _raster) (((_camera)->frameBuffer = (_raster)), (_camera))
+#define RwCameraGetZRaster(_camera) ((_camera)->zBuffer)
+#define RwCameraSetZRaster(_camera, _raster) (((_camera)->zBuffer = (_raster)), (_camera))
+#define RwCameraSetFogDistance(_camera, _distance) \
+    (((_camera)->fogPlane = (_distance)), (_camera))
 
 typedef struct RwError RwError;
 struct RwError

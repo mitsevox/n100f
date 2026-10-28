@@ -163,9 +163,9 @@ struct RpClump
     U16 pad;
 };
 
-#define RpAtomicGetFrame(atomic) ((RwFrame*)rwObjectGetParent(atomic))
-#define RpClumpGetFrame(clump) ((RwFrame*)rwObjectGetParent(clump))
-#define RpClumpSetFrame(clump, frame) (((clump)->object.parent = (frame)), (clump))
+#define RpAtomicGetFrame(_atomic) ((RwFrame*)rwObjectGetParent(_atomic))
+#define RpClumpGetFrame(_clump) ((RwFrame*)rwObjectGetParent(_clump))
+#define RpClumpSetFrame(_clump, _frame) (rwObjectSetParent(_clump, _frame), (_clump))
 
 typedef struct RpLight RpLight;
 struct RpLight
