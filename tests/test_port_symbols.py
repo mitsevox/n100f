@@ -75,6 +75,11 @@ class Adopt(unittest.TestCase):
         self.assertFalse(side.adopt(0x1000,self.other(0xB0,b'elsewhere')))
         self.assertEqual(sorted(side.functions),[0x1000,0x10AC])
 
+    def test_a_paired_function_is_not_swallowed(self):
+        side=self.side()
+        self.assertFalse(side.adopt(0x1000,self.other(0xB0,b'whole'),{0x10AC}))
+        self.assertEqual(sorted(side.functions),[0x1000,0x10AC])
+
     def test_a_shorter_function_does_not_replace(self):
         self.assertFalse(self.side().adopt(0x1000,self.other(0x80,b'whole')))
 
