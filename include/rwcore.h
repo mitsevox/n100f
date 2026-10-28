@@ -252,6 +252,38 @@ typedef enum RwFrustumTestResult
         (m)->flags |= (rwMATRIXINTERNALIDENTITY | rwMATRIXTYPEORTHONORMAL);                        \
     } while (0)
 
+#define _RW_S1 ((float)-1.6666667163e-01)
+#define _RW_S2 ((float)8.3333337680e-03)
+#define _RW_S3 ((float)-1.9841270114e-04)
+#define _RW_S4 ((float)2.7557314297e-06)
+#define _RW_S5 ((float)-2.5050759689e-08)
+#define _RW_S6 ((float)1.5896910177e-10)
+
+#define RwSinMinusPiToPiMacro(result, x)                                                           \
+    do                                                                                             \
+    {                                                                                              \
+        const float z = x * x;                                                                     \
+        const float v = z * x;                                                                     \
+        const float r = (_RW_S2 + z * (_RW_S3 + z * (_RW_S4 + z * (_RW_S5 + z * _RW_S6))));        \
+        result = x + v * (_RW_S1 + z * r);                                                         \
+    } while (0)
+
+#define RwV3dScaleMacro(o, a, s)                                                                   \
+    do                                                                                             \
+    {                                                                                              \
+        (o)->x = (((a)->x) * ((s)));                                                               \
+        (o)->y = (((a)->y) * ((s)));                                                               \
+        (o)->z = (((a)->z) * ((s)));                                                               \
+    } while (0)
+
+#define RwV3dIncrementScaledMacro(o, a, s)                                                         \
+    do                                                                                             \
+    {                                                                                              \
+        (o)->x += (((a)->x) * ((s)));                                                              \
+        (o)->y += (((a)->y) * ((s)));                                                              \
+        (o)->z += (((a)->z) * ((s)));                                                              \
+    } while (0)
+
 #define RwCameraGetCurrentCamera() ((RwCamera*)RWSRCGLOBAL(curCamera))
 
 typedef enum RwCameraClearMode
