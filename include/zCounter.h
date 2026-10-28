@@ -16,8 +16,10 @@ struct _zCounter : xBase
     U8 pad;
 };
 
-void zCounterLoad(_zCounter* ent, xSerial* s);
-void zCounterSave(_zCounter* ent, xSerial* s);
+void zCounterInit(void* b, void* asset);
 void zCounterReset(xBase* b);
+void zCounterSave(_zCounter* ent, xSerial* s);
+void zCounterLoad(_zCounter* ent, xSerial* s);
+S32 zCounterEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*);
 
 #endif

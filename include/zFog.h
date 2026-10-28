@@ -20,7 +20,12 @@ struct _zFog : xBase
     zFogAsset* tasset;
 };
 
-S32 zFogEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b3);
+struct _xScene;
+
+S32 zFogEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*);
 void zFogInit(void* b, void* tasset);
+void zFogSave(_zFog* ent, xSerial* s);
+void zFogLoad(_zFog* ent, xSerial* s);
+void zFogUpdate(xBase*, _xScene*, F32);
 
 #endif
