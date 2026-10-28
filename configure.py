@@ -474,7 +474,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xEntMotion.cpp"),
             Object(NonMatching, "flat/xEnv.cpp"),
             Object(NonMatching, "flat/xFFX.cpp"),
-            Object(MatchingFor("GIHE78-rev0"), "flat/xFilter.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xFilter.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xhipio.cpp"),
             Object(NonMatching, "flat/xIni.cpp"),
             Object(NonMatching, "flat/xMath3.cpp"),
