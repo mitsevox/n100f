@@ -233,11 +233,9 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
 
     for (i = 0; i < depot->rawcnt; i++)
     {
-        zEntProjectile* prj = &depot->rawpool[i];
-
-        memset(prj, 0, sizeof(zEntProjectile));
-        prj->linknode.backref = prj;
-        AddTail(&depot->prjpool, &prj->linknode.node);
+        memset(&depot->rawpool[i], 0, sizeof(zEntProjectile));
+        depot->rawpool[i].linknode.backref = &depot->rawpool[i];
+        AddTail(&depot->prjpool, &depot->rawpool[i].linknode.node);
     }
 
     if (g_sfxnames[0] == NULL)
@@ -481,7 +479,7 @@ void zEntProjectile::ColDelaySet(F32 tym, S32 addto)
 void zEntProjectile::Abort()
 {
     flg_stat |= 0x40000;
-    SendEvent(ZPRJ_EVNT_ABORT, 0.0f, NULL, NULL);
+    SendEvent(ZPRJ_EVNT_ABORT, globals.update_dt, NULL, NULL);
     StateSet(ZPRJ_STATE_DEAD);
 }
 
@@ -657,7 +655,7 @@ void zEntProjectile::Recycle()
 {
     if (!(flg_stat & 0x10000000) && !(flg_stat & 0x40000))
     {
-        SendEvent(ZPRJ_EVNT_DEATH, 0.0f, NULL, NULL);
+        SendEvent(ZPRJ_EVNT_DEATH, globals.update_dt, NULL, NULL);
     }
 
     if (!(flg_stat & 0x8000000))
@@ -837,7 +835,7 @@ S32 zEntProjectile::Setup_xEnt()
 
 S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
 {
-    xMat4x3 initmat;
+    xMat4x3 initmat = {};
     xVec3 vel_dflt = { 0.0f, 0.0f, 0.0f };
     xVec3 pos_dflt = { 0.0f, 0.0f, 0.0f };
 
@@ -977,7 +975,7 @@ S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
     tmr_curstate += dt;
     tmr_coldelay = MAX(-1.0f, tmr_coldelay - dt);
 
-    flg_stat &= ~0x8000000;
+    flg_stat &= ~0x60000000;
     SendEvent(ZPRJ_EVNT_NEWTIME, dt, NULL, NULL);
 
     if (plyr_colrec->flags & 1)
@@ -1813,7 +1811,7 @@ S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 appl
 static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd_limit, F32 dst_range,
                             xVec3* vec_vel)
 {
-    xVec3 vec_tmp = {};
+    xVec3 vec_tgt = {};
     F32 tym_limit = -1.0f;
     F32 tym_ariv;
     S32 limit_tally = 0;
@@ -1821,20 +1819,20 @@ static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd
     F32 sol[2] = {};
     F32 c;
     F32 b;
-    xVec3 vec_tgt = {};
+    xVec3 vec_tmp = {};
     F32 dst_tgt;
 
-    vec_tmp = vec_tgtOrig;
+    vec_tgt = vec_tgtOrig;
     dst_tgt = sqrtf(vec_tgtOrig.x * vec_tgtOrig.x + vec_tgtOrig.z * vec_tgtOrig.z);
 
     if (dst_range > 0.0f && dst_tgt > dst_range)
     {
         limit_tally = 1;
-        xVec3Copy(&vec_tmp, &vec_tgtOrig);
-        vec_tmp.y = 0.0f;
-        xVec3Normalize(&vec_tmp, &vec_tmp);
-        xVec3SMul(&vec_tmp, &vec_tmp, dst_range);
-        vec_tmp.y = vec_tgtOrig.y;
+        xVec3Copy(&vec_tgt, &vec_tgtOrig);
+        vec_tgt.y = 0.0f;
+        xVec3Normalize(&vec_tgt, &vec_tgt);
+        xVec3SMul(&vec_tgt, &vec_tgt, dst_range);
+        vec_tgt.y = vec_tgtOrig.y;
     }
 
     if (dst_range > 0.0f)
@@ -1847,7 +1845,7 @@ static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd
 
     xVec3Init(vec_vel, 0.0f, 0.0f, 0.0f);
 
-    solcnt = xMathSolveQuadratic(c, b, -vec_tmp.y, &sol[0], &sol[1]);
+    solcnt = xMathSolveQuadratic(c, b, -vec_tgt.y, &sol[0], &sol[1]);
     if (solcnt == 2)
     {
         tym_ariv = MAX(sol[0], sol[1]);
@@ -1875,19 +1873,19 @@ static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd
         }
     }
 
-    vec_tgt.x = vec_tmp.x / tym_ariv;
-    vec_tgt.y = 0.0f;
-    vec_tgt.z = vec_tmp.z / tym_ariv;
+    vec_tmp.x = vec_tgt.x / tym_ariv;
+    vec_tmp.y = 0.0f;
+    vec_tmp.z = vec_tgt.z / tym_ariv;
 
-    if (vec_tgt.x * vec_tgt.x + vec_tgt.z * vec_tgt.z > spd_limit * spd_limit)
+    if (vec_tmp.x * vec_tmp.x + vec_tmp.z * vec_tmp.z > spd_limit * spd_limit)
     {
         limit_tally++;
-        xVec3Normalize(&vec_tgt, &vec_tgt);
-        xVec3SMul(&vec_tgt, &vec_tgt, spd_limit);
+        xVec3Normalize(&vec_tmp, &vec_tmp);
+        xVec3SMul(&vec_tmp, &vec_tmp, spd_limit);
     }
 
-    vec_tgt.y = b;
-    xVec3Copy(vec_vel, &vec_tgt);
+    vec_tmp.y = b;
+    xVec3Copy(vec_vel, &vec_tmp);
 
     return limit_tally;
 }
