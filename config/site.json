@@ -1,0 +1,10 @@
+{
+ "schema": 1,
+ "slug": "n100f",
+ "title": "Scooby-Doo! Night of 100 Frights",
+ "shortTitle": "Night of 100 Frights",
+ "console": "GameCube",
+ "year": "2002",
+ "contributions": {"accepting": false},
+ "artwork": {"cover": "cover.webp", "width": 1112, "height": 1600}
+}

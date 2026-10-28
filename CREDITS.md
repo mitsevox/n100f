@@ -276,7 +276,7 @@ The RenderWare unit paths in `config/GIHE78-rev0/splits.txt` and the RenderWare 
 
 ## Build tooling
 
-`configure.py`, `tools/*.py` (except project-specific additions), `.vscode/`, `.flake8`, `.gitattributes` and `docs/dtk/` come from [encounter/dtk-template](https://github.com/encounter/dtk-template/tree/d366876408b754891a0392badbc63bff3490469f), revision `d366876408b754891a0392badbc63bff3490469f`, published under CC0 1.0 (`tools/LICENSE.dtk-template`). Local changes: project configuration in `configure.py`, removed example libraries and REL helper, and merged ignore rules.
+`configure.py`, `tools/*.py` (except project-specific additions), `.vscode/`, `.flake8` and `.gitattributes` come from [encounter/dtk-template](https://github.com/encounter/dtk-template/tree/d366876408b754891a0392badbc63bff3490469f), revision `d366876408b754891a0392badbc63bff3490469f`, published under CC0 1.0 (`tools/LICENSE.dtk-template`). Local changes: project configuration in `configure.py`, removed example libraries and REL helper, and merged ignore rules. Its documentation (`docs/`, `config/GAMEID/config.example.yml`) is linked at that revision rather than copied.
 
 `config/GIHE78-rev0/ldscript.tpl` is decomp-toolkit v1.8.3's `assets/ldscript.lcf` with `_db_stack_addr` at `_stack_addr + 0x1000`, used under decomp-toolkit's MIT licence (`tools/LICENSE.decomp-toolkit`).
 
