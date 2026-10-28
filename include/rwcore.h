@@ -372,6 +372,28 @@ typedef enum RwRasterType
     rwRASTERTYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwRasterType;
 
+typedef enum RwRasterFormat
+{
+    rwRASTERFORMATDEFAULT = 0x0000,
+    rwRASTERFORMAT1555 = 0x0100,
+    rwRASTERFORMAT565 = 0x0200,
+    rwRASTERFORMAT4444 = 0x0300,
+    rwRASTERFORMATLUM8 = 0x0400,
+    rwRASTERFORMAT8888 = 0x0500,
+    rwRASTERFORMAT888 = 0x0600,
+    rwRASTERFORMAT16 = 0x0700,
+    rwRASTERFORMAT24 = 0x0800,
+    rwRASTERFORMAT32 = 0x0900,
+    rwRASTERFORMAT555 = 0x0a00,
+    rwRASTERFORMATAUTOMIPMAP = 0x1000,
+    rwRASTERFORMATPAL8 = 0x2000,
+    rwRASTERFORMATPAL4 = 0x4000,
+    rwRASTERFORMATMIPMAP = 0x8000,
+    rwRASTERFORMATPIXELFORMATMASK = 0x0f00,
+    rwRASTERFORMATMASK = 0xff00,
+    rwRASTERFORMATFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwRasterFormat;
+
 typedef enum RwRenderState
 {
     rwRENDERSTATENARENDERSTATE = 0,
@@ -467,6 +489,21 @@ struct RwFileFunctions
     S32 (*rwfseek)(void* fptr, S32 offset, S32 origin);
     S32 (*rwfflush)(void* fptr);
     S32 (*rwftell)(void* fptr);
+};
+
+typedef char* (*vecStrcpyFunc)(char* dest, const char* srce);
+typedef U32 (*vecStrlenFunc)(const char* string);
+
+// Partial: this build's table is 0x40 bytes; only the two members the target reaches at fixed
+// offsets are declared.
+typedef struct RwStringFunctions RwStringFunctions;
+struct RwStringFunctions
+{
+    U8 unk0[0x8];
+    vecStrcpyFunc vecStrcpy;
+    U8 unkC[0x20];
+    vecStrlenFunc vecStrlen;
+    U8 unk30[0x10];
 };
 
 typedef struct RwSurfaceProperties RwSurfaceProperties;
@@ -656,22 +693,33 @@ struct RwGlobals
     RwStandardFunc stdFunc[29];
     RwLinkList dirtyFrameList;
     RwFileFunctions fileFuncs;
-    U8 unkF0[0x40];
+    RwStringFunctions stringFuncs;
     RwMemoryFunctions memoryFuncs;
     RwMemoryAllocFn memoryAlloc;
     RwMemoryFreeFn memoryFree;
-    U8 unk148[0xC];
+    U8 unk148[0x8];
+    U32 resArenaInitSize;
 };
 
 #define RWSRCGLOBAL(var) (((RwGlobals*)RwEngineInstance)->var)
 
-// Partial: the resource arena's globals, at resourcesModule.globalsOffset in the engine
-// instance. Only the arena size and the in-use entry list are reached.
+#define rwstrcpy RWSRCGLOBAL(stringFuncs).vecStrcpy
+#define rwstrlen RWSRCGLOBAL(stringFuncs).vecStrlen
+#define RwMalloc(_s) ((RWSRCGLOBAL(memoryFuncs).rwmalloc)((_s)))
+#define RwFree(_p) ((RWSRCGLOBAL(memoryFuncs).rwfree)((_p)))
+
+// The resource arena's globals, at resourcesModule.globalsOffset in the engine instance. The
+// entries live on the two embedded lists: usedEntryList points at the one holding the entries
+// used since the last purge, unusedEntryList at the one holding the rest, and a purge swaps them.
 typedef struct RwResourcesGlobals RwResourcesGlobals;
 struct RwResourcesGlobals
 {
     U32 arenaSize;
-    U8 unk4[0x20];
+    S32 usedSize;
+    S32 reclaimedSize;
+    void* heap;
+    RwLinkList entryLists[2];
+    RwLinkList* unusedEntryList;
     RwLinkList* usedEntryList;
 };
 
@@ -697,7 +745,13 @@ RwResEntry* RwResourcesAllocateResEntry(void* owner, RwResEntry** ownerRef, S32 
                                         RwResEntryDestroyNotify destroyNotify);
 S32 RwResourcesFreeResEntry(RwResEntry* entry);
 S32 RwResourcesGetArenaSize(void);
+S32 RwResourcesSetArenaSize(U32 size);
+S32 RwResourcesEmptyArena(void);
 void _rwResourcesPurge(void);
+S32 _rwResHeapInit(void* mem, U32 size);
+S32 _rwResHeapClose(void* mem);
+void _rwResHeapFree(void* mem);
+void* _rwResHeapAlloc(void* mem, U32 size);
 S32 RwIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices,
                                  S32 numVertices, RwImVertexIndex* indices, S32 numIndices);
 
@@ -783,6 +837,25 @@ RwFrame* RwFrameUpdateObjects(RwFrame* frame);
 
 F32 _rwSqrt(F32 num);
 F32 _rwInvSqrt(F32 num);
+
+RwStream* RwStreamReadInt32(RwStream* stream, S32* ints, U32 numBytes);
+RwStream* RwStreamWriteInt32(RwStream* stream, const S32* ints, U32 numBytes);
+RwStream* RwStreamReadReal(RwStream* stream, F32* reals, U32 numBytes);
+RwStream* RwStreamWriteReal(RwStream* stream, const F32* reals, U32 numBytes);
+
+S32 RwFrameRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                          RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RwFrameRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                RwPluginDataChunkWriteCallBack writeCB,
+                                RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RwCameraRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                 RwPluginDataChunkWriteCallBack writeCB,
+                                 RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RwTextureRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                            RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RwTextureRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                  RwPluginDataChunkWriteCallBack writeCB,
+                                  RwPluginDataChunkGetSizeCallBack getSizeCB);
 
 #ifdef __cplusplus
 }

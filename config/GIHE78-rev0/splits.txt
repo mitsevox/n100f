@@ -1586,7 +1586,8 @@ rwsdk/plugin/skin2/gcn/skingcn.c:
 	.text       start:0x8014519C end:0x80145A48
 
 rwsdk/plugin/userdata/rpusrdat.c:
-	.text       start:0x80145ECC end:0x80146D40
+	.text       start:0x80145EB8 end:0x8014707C
+	.sbss       start:0x8025F6B0 end:0x8025F6F0
 
 rwsdk/world/babinwor.c:
 	.text       start:0x8014707C end:0x801472BC
