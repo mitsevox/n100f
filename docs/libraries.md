@@ -144,7 +144,7 @@ The 8 zero bytes between `fft.c`'s `.rodata` and the tables (`0x801A8E18`-`0x801
 
 - `intelendian` swaps each word with `lwbrx`, written as one inline `asm` statement, since GCC 2.95 has no C form for the instruction.
 - The `BinkIO` counters and three private fields are `volatile`; the target reloads them after each store and keeps their accesses in order.
-- `memmove` is prototyped and `memcpy` and `memset` are not, the same `crclr 6` evidence as for `popmal.c` and `radcb.c`.
+- `memmove` is declared in the file and `string.h` is not included. The `crclr 6` before `memcpy` and `memset` comes from GCC's builtins for them, so compatible prototypes or none give the same bytes; `string.h`'s `size_t` prototypes conflict with the builtins.
 - `BinkFileReadFrame` uses one scratch local for three short-lived values, `BinkFileIdle`'s switch names the three DVD states it ignores, and `BinkFileSetInfo` masks the size at each use. Each changes the register allocation or the code layout, as the `source-form` rows in `evidence.tsv` record.
 
 Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units can include `dolphin/os.h`. The MW units are unchanged.
