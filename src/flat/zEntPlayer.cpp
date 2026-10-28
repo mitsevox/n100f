@@ -13,12 +13,18 @@
 #include "xString.h"
 #include "xMath.h"
 #include "xMath3.h"
+#include "xMovePoint.h"
+#include "xScene.h"
 #include "iMath.h"
 
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct st_zEntVillain;
+struct _zEntPickup;
+struct xSerial;
+struct xAnimActiveEffect;
 
 struct zPlayerSituation
 {
@@ -29,6 +35,17 @@ struct zPlayerSituation
     F32 elapsedTime;
     U32 count;
     U32 type;
+};
+
+struct _tagPlayerFX
+{
+    _zParEmitter* emit_land[23];
+    _zParEmitter* emit_stop[23];
+    _zParEmitter* emit_scratch;
+    _zParEmitter* emit_digup[2];
+    F32 timer_stop;
+    F32 timer_scratch;
+    F32 timer_digup;
 };
 
 struct _tagPlayerSndFX
@@ -99,6 +116,19 @@ struct _tagPlayerSndFX
 };
 
 S32 zEntVillain_Headbutt(st_zEntVillain* vil, xVec3* hdng);
+void xCameraSetTarget(_tagxCamFrame* cam, xVec3* target);
+void xCameraSetTarget(_tagxCamFrame* cam, xMat4x3* target);
+void xCameraPickInitial(_tagxCamFrame* cam, U32 id);
+void xCameraSetController(_tagxCamFrame* cam, F32 x, F32 y, F32 dt);
+void zSceneGameStatsTally_snack(U32 quantity);
+U32 zEntPickup_lastSnackInArea();
+void zEntPickup_hideSnackGateInfo(_zEntPickup* pickup);
+void zEntPickup_UnlockSnackGate(_xEnt* ent);
+void zHudShowAllSnacksArea();
+void zHud_showSnack();
+void zHud_showSnackSpecial();
+void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt);
+F32 CalcJumpImpulse_Smooth(F32 g, F32 j, F32 h, F32 Tgc, F32 Tgs);
 S32 Shaggy8_HBCallback(_zEnt* ent, _xCollis* coll);
 
 static xVec3 headcoll_oses[12] = {
@@ -148,6 +178,10 @@ static _zParEmitter* sEmitterBounceOnVillain;
 static _zParEmitter* sEmitterHeadButt;
 static _zParEmitter* sEmitterHeadButt2;
 static U32 sSoundWaterSplash;
+U32 sSnackDecrement;
+_zEntPickup* sDecrementSnackGateEnt;
+F32 sDecrementDelay;
+F32 sDecrementAmount;
 F32 startJump;
 F32 startDouble;
 F32 startBounce;
@@ -161,6 +195,7 @@ static U32 sVOPriority;
 static zPlayerSituation* sVONextSituation;
 static F32 sVOTimer;
 
+_tagPlayerFX gPlayerfx;
 static _tagPlayerSndFX sPlayerSndfx;
 xVec3 vHangBefore;
 xVec3 vHangFirst;
@@ -476,7 +511,7 @@ static U32 NosneakPlunger(xAnimTransition* tran, xAnimSingle* anim, void* param_
 
 static U32 ScareCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 {
-    return 0.0f != globals.player.ScareTimer && HealthCheck(tran, anim, param_3);
+    return globals.player.ScareTimer && HealthCheck(tran, anim, param_3);
 }
 
 static U32 CowerCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
@@ -514,7 +549,7 @@ static U32 ScareCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
         globals.player.Jump_CanDouble = 0;
     }
     zEntPlayer_FXLostChance(&globals.player.ent, 0.03f);
-    zRumbleStart(0, (_tagSDRumbleType)7);
+    zRumbleStart(0, SDR_GotScared);
     return 0;
 }
 
@@ -1055,6 +1090,427 @@ static U32 SD0_TossCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
     return 0;
 }
 
+static U32 FaceBlow(xAnimTransition* tran, xAnimSingle* anim)
+{
+    return globals.player.Face_AnimSpecific == 6;
+}
+
+static U32 FaceMad(xAnimTransition* tran, xAnimSingle* anim)
+{
+    return globals.player.Face_AnimSpecific == 5;
+}
+
+static U32 FaceClearScareCB(xAnimTransition* tran, xAnimSingle* anim)
+{
+    globals.player.Face_ScareTimer = 0.0f;
+    return 0;
+}
+
+static U32 FaceScare(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return 0.0f != globals.player.Face_ScareTimer &&
+           globals.player.Face_ScareRandom == tran->UserFlags;
+}
+
+static U32 FaceEvent(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return 0.0f != globals.player.Face_EventTimer && globals.player.Face_Event == tran->UserFlags &&
+           0.0f == globals.player.Face_ScareTimer && globals.player.Face_AnimSpecific < 5;
+}
+
+static U32 FaceRun(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return globals.player.Face_AnimSpecific == 4 && 0.0f == globals.player.Face_ScareTimer &&
+           0.0f == globals.player.Face_EventTimer;
+}
+
+static U32 FacePant(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return 0.0f != globals.player.Face_PantTimer && globals.player.Face_AnimSpecific < 4 &&
+           0.0f == globals.player.Face_ScareTimer && 0.0f == globals.player.Face_EventTimer;
+}
+
+static U32 FaceTeeter(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return globals.player.Face_AnimSpecific == 1 && 0.0f == globals.player.Face_ScareTimer &&
+           0.0f == globals.player.Face_EventTimer && 0.0f == globals.player.Face_PantTimer;
+}
+
+static U32 FaceSneak(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return globals.player.Face_AnimSpecific == 2 && 0.0f == globals.player.Face_ScareTimer &&
+           0.0f == globals.player.Face_EventTimer && 0.0f == globals.player.Face_PantTimer;
+}
+
+static U32 FaceSwing(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return globals.player.Face_AnimSpecific == 3 && 0.0f == globals.player.Face_ScareTimer &&
+           0.0f == globals.player.Face_EventTimer && 0.0f == globals.player.Face_PantTimer;
+}
+
+static U32 FaceIdle(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return globals.player.Face_AnimSpecific == 0 && 0.0f == globals.player.Face_ScareTimer &&
+           0.0f == globals.player.Face_EventTimer && 0.0f == globals.player.Face_PantTimer;
+}
+
+static void PlayerFaceUpdate(F32 dt)
+{
+    xAnimState* astate;
+
+    if (globals.player.Face_ScareTimer > 0.0f)
+    {
+        globals.player.Face_ScareTimer -= dt;
+        if (globals.player.Face_ScareTimer < 0.0f)
+        {
+            globals.player.Face_ScareTimer = 0.0f;
+        }
+    }
+    if (globals.player.Face_EventTimer > 0.0f)
+    {
+        globals.player.Face_EventTimer -= dt;
+        if (globals.player.Face_EventTimer < 0.0f)
+        {
+            globals.player.Face_EventTimer = 0.0f;
+        }
+    }
+    if (globals.player.Face_PantTimer > 0.0f)
+    {
+        globals.player.Face_PantTimer -= dt;
+        if (globals.player.Face_PantTimer < 0.0f)
+        {
+            globals.player.Face_PantTimer = 0.0f;
+        }
+    }
+    globals.player.Face_AnimSpecific = 0;
+    astate = globals.player.ent.model->Anim->Single->State;
+    if (astate->UserFlags & 0x40000)
+    {
+        globals.player.Face_AnimSpecific = 1;
+    }
+    if ((astate->UserFlags & 0x1E) == 2)
+    {
+        globals.player.Face_AnimSpecific = 2;
+    }
+    if ((astate->UserFlags & 0x1E) == 6 && !(astate->UserFlags & 0x20))
+    {
+        globals.player.Face_AnimSpecific = 4;
+    }
+    if (astate->UserFlags & 0x20000)
+    {
+        globals.player.Face_AnimSpecific = 3;
+    }
+    if (astate->UserFlags & 0x10000)
+    {
+        globals.player.Face_AnimSpecific = 5;
+    }
+    if (astate->UserFlags & 0x80000)
+    {
+        globals.player.Face_AnimSpecific = 6;
+    }
+}
+
+xAnimTable* zEntPlayer_TongueAnimTable()
+{
+    xAnimTable* table;
+
+    table = xAnimTableNew("PlayerHead", NULL);
+    xAnimTableNewState(table, "Idle", 0, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    return table;
+}
+
+xAnimTable* zEntPlayer_UmbrellaAnimTable()
+{
+    xAnimTable* table;
+
+    table = xAnimTableNew("PlayerUmbrella", NULL);
+    xAnimTableNewState(table, "Idle", 0, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+    return table;
+}
+
+static U32 LampDrawCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return !(anim->Play->ModelInst->Flags & 0x1);
+}
+
+static U32 LamponCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    if (anim->Play->ModelInst->Flags & 0x1)
+    {
+        return 0;
+    }
+    return !strcmp(globals.player.ent.model->Anim->Single->State->Name, "IdleToLampshade");
+}
+
+static U32 LampoffCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return !strcmp(globals.player.ent.model->Anim->Single->State->Name, "LampshadeToSneak");
+}
+
+static U32 LampbackCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return !strcmp(globals.player.ent.model->Anim->Single->State->Name, "SneakToLampshade");
+}
+
+static U32 LampFixbugCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
+{
+    return !strcmp(globals.player.ent.model->Anim->Single->State->Name, "Idle_lampshade");
+}
+
+void zEntPlayer_Load(_xEnt* ent, xSerial* s)
+{
+}
+
+static void zEntPlayer_SnackDecrement(F32 dt)
+{
+    U32 amount;
+
+    if (sSnackDecrement)
+    {
+        zEntEvent(&globals.player.ent, 8);
+        zHud_showSnack();
+        sDecrementDelay -= dt;
+        if (sDecrementDelay <= 0.0f)
+        {
+            sDecrementDelay = 0.0f;
+            zEntPickup_hideSnackGateInfo(sDecrementSnackGateEnt);
+            xSndPlay(sPlayerSndfx.snackcounter_id, 0.5f, 0.5f, 0.0f, 0x80, 2, 0);
+            sDecrementAmount += 2.5f * dt;
+            amount = sDecrementAmount;
+            if (amount > sSnackDecrement)
+            {
+                amount = sSnackDecrement;
+            }
+            if ((S32)(globals.player.Inv_ScoobySnacks - amount) < 0)
+            {
+                globals.player.Inv_ScoobySnacks = 0;
+                sSnackDecrement = 0;
+            }
+            else
+            {
+                globals.player.Inv_ScoobySnacks -= amount;
+                sSnackDecrement -= amount;
+            }
+            if (!sSnackDecrement)
+            {
+                zEntEvent(&globals.player.ent, 9);
+                zEntPickup_UnlockSnackGate((_xEnt*)sDecrementSnackGateEnt);
+                zHud_showSnackSpecial();
+                sDecrementSnackGateEnt = NULL;
+            }
+        }
+    }
+}
+
+void zEntPlayer_Move(_xEnt* ent, _xScene* sc, F32 dt, _xEntFrame* frame)
+{
+    S32 px;
+    S32 pz;
+
+    frame->mode = 0;
+    frame->mode &= ~0x400;
+    frame->mode &= ~0x800;
+    if (globals.player.Health)
+    {
+        px = -globals.pad0->analog1.x;
+        pz = -globals.pad0->analog1.y;
+        if (globals.pad0->on & 0x80)
+        {
+            px = globals.player.s.AnalogMax;
+        }
+        else if (globals.pad0->on & 0x20)
+        {
+            px = -globals.player.s.AnalogMax;
+        }
+        if (globals.pad0->on & 0x10)
+        {
+            pz = globals.player.s.AnalogMax;
+        }
+        else if (globals.pad0->on & 0x40)
+        {
+            pz = -globals.player.s.AnalogMax;
+        }
+        PlayerAbsControl(ent, px, pz, dt);
+        if (globals.player.ControlOn)
+        {
+            xCameraSetController(&globals.camera, globals.pad0->analog1.x,
+                                 globals.pad0->analog1.y, dt);
+        }
+    }
+}
+
+S32 zEntPlayer_Damage(xBase* src, U32 damage, xVec3* knockback)
+{
+    if (!zEntPlayer_Damage(src, damage))
+    {
+        return 0;
+    }
+    if (knockback)
+    {
+        globals.player.ent.frame->vel.x = knockback->x;
+        globals.player.ent.frame->vel.y = knockback->y;
+        globals.player.ent.frame->vel.z = knockback->z;
+    }
+    return 1;
+}
+
+void zEntPlayer_GiveScoobySnack(U32 quantity)
+{
+    globals.player.Inv_ScoobySnacks += quantity;
+    zSceneGameStatsTally_snack(quantity);
+    if (zEntPickup_lastSnackInArea())
+    {
+        zHudShowAllSnacksArea();
+    }
+}
+
+S32 zEntPlayer_HasScoobySnack(U32 quantity)
+{
+    return globals.player.Inv_ScoobySnacks >= quantity;
+}
+
+void zEntPlayer_TakeScoobySnack(_xEnt* ent, U32 quantity)
+{
+    sDecrementSnackGateEnt = (_zEntPickup*)ent;
+    sDecrementDelay = 1.1f;
+    sDecrementAmount = 2.0f;
+    sSnackDecrement += quantity;
+}
+
+void zEntPlayer_GiveClue(U32 quantity)
+{
+    globals.player.Inv_Clue += quantity;
+}
+
+void zEntPlayer_GiveKey(U32 quantity)
+{
+    globals.player.Inv_Key += quantity;
+    if (globals.player.Inv_Key > 99)
+    {
+        globals.player.Inv_Key = 99;
+    }
+}
+
+void zEntPlayer_GiveChance(U32 quantity)
+{
+    globals.player.Inv_Chances += quantity;
+    if (globals.player.Inv_Chances > 99)
+    {
+        globals.player.Inv_Chances = 99;
+    }
+}
+
+void zEntPlayer_GiveHealth(U32 quantity)
+{
+    globals.player.Health += quantity;
+    if (globals.player.Health > 5)
+    {
+        globals.player.Health = 5;
+    }
+}
+
+void zEntPlayer_GiveHotsauce(U32 value)
+{
+    if (value == 0)
+    {
+        globals.player.HotsauceTimer = 10.0f;
+    }
+    else
+    {
+        globals.player.HotsauceTimer = value;
+    }
+}
+
+void CalcJumpImpulse(zJumpParam* param)
+{
+    param->ImpulseVel = CalcJumpImpulse_Smooth(globals.player.s.Gravity, globals.player.s.JumpGravity,
+                                               param->PeakHeight, param->TimeGravChange,
+                                               globals.player.s.GravSmooth);
+}
+
+void zEntPlayerJumpStart(_xEnt* ent, zJumpParam* jump)
+{
+    globals.player.Jump_CurrGravity = globals.player.s.JumpGravity;
+    globals.player.Jump_HoldTimer = jump->TimeHold;
+    globals.player.Jump_ChangeTimer = jump->TimeGravChange;
+    if (ent->frame->vel.y > 0.0f && globals.player.JumpState == 2)
+    {
+        ent->frame->vel.y = jump->ImpulseVel;
+    }
+    else
+    {
+        ent->frame->vel.y = jump->ImpulseVel;
+    }
+    globals.player.JumpState = 2;
+    if ((ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xE ||
+        ent->model->Anim->Single->State->UserFlags & 0x100)
+    {
+        globals.player.Bounced = 1;
+    }
+}
+
+static xVec3* GetPosVec(xBase* target)
+{
+    xVec3* pos = (xVec3*)&g_O3;
+
+    switch (target->baseType)
+    {
+    case 13:
+        pos = ((xMovePoint*)target)->pos;
+        break;
+    case 2:
+    case 3:
+    case 4:
+    case 6:
+    case 8:
+    case 11:
+    case 12:
+    case 18:
+    case 23:
+    case 24:
+    case 27:
+        pos = xEntGetPos((_xEnt*)target);
+        break;
+    }
+    return pos;
+}
+
+void zEntPlayer_StoreCheckPoint(F32* toParam)
+{
+    xVec3 p = globals.player.ent.frame->mat.pos;
+    F32 r = globals.player.ent.frame->rot.angle;
+    xVec3Copy(&globals.player.cp.pos, &p);
+    if (toParam)
+    {
+        if (toParam[0])
+        {
+            globals.player.cp.rot = toParam[0];
+        }
+        else
+        {
+            globals.player.cp.rot = r;
+        }
+    }
+    else
+    {
+        globals.player.cp.rot = r;
+    }
+    globals.player.cp.initCamID = globals.camera.hi_cam.id;
+}
+
+void zEntPlayer_LoadCheckPoint()
+{
+    xVec3Copy(&globals.player.ent.frame->mat.pos, &globals.player.cp.pos);
+    xVec3Copy((xVec3*)&globals.player.ent.model->Mat->pos, &globals.player.cp.pos);
+    if (globals.player.cp.rot)
+    {
+        globals.player.ent.frame->rot.angle = globals.player.cp.rot;
+    }
+    xCameraSetTarget(&globals.camera, &globals.player.ent.frame->mat.pos);
+    xCameraSetTarget(&globals.camera, (xMat4x3*)globals.player.ent.model->Mat);
+    xCameraPickInitial(&globals.camera, globals.player.cp.initCamID);
+}
+
 void zEntPlayer_SNDBitePickup(_xEnt*)
 {
     F32 pitch;
@@ -1146,23 +1602,46 @@ void zEntPlayer_Notify(S32 situation)
     }
 }
 
-void zEntPlayerJumpStart(_xEnt* ent, zJumpParam* jump)
+static U32 zEntPlayer_FXScratchCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
+                                  void* object)
 {
-    globals.player.Jump_CurrGravity = globals.player.s.JumpGravity;
-    globals.player.Jump_HoldTimer = jump->TimeHold;
-    globals.player.Jump_ChangeTimer = jump->TimeGravChange;
-    if (ent->frame->vel.y > 0.0f && globals.player.JumpState == 2)
+    gPlayerfx.timer_scratch = 1.65f;
+    zRumbleStart(0, SDR_FleaScratch);
+    return 0;
+}
+
+static U32 zEntPlayer_FXDigupCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
+                                void* object)
+{
+    gPlayerfx.timer_digup = 0.3f;
+    zRumbleStart(0, SDR_Digging);
+    return 0;
+}
+
+static U32 zEntPlayer_FXSpringCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
+                                 void* object)
+{
+    _zParEmitterCustomSettings info;
+    _xEnt* ent;
+
+    if (sEmitterSprings)
     {
-        ent->frame->vel.y = jump->ImpulseVel;
+        ent = &globals.player.ent;
+        info.custom_flags = 0x20;
+        iModelTagEval(ent->model->Data, &globals.player.HangPawTag[2], ent->model->Mat,
+                      &info.pos);
+        info.pos.y += 0.5f;
+        zParEmitterEmitCustom(sEmitterSprings, 1.0f / 30.0f, &info);
+        iModelTagEval(ent->model->Data, &globals.player.HangPawTag[3], ent->model->Mat,
+                      &info.pos);
+        info.pos.y += 0.5f;
+        zParEmitterEmitCustom(sEmitterSprings, 1.0f / 30.0f, &info);
     }
-    else
-    {
-        ent->frame->vel.y = jump->ImpulseVel;
-    }
-    globals.player.JumpState = 2;
-    if ((ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xE ||
-        ent->model->Anim->Single->State->UserFlags & 0x100)
-    {
-        globals.player.Bounced = 1;
-    }
+    return 0;
+}
+
+static U32 zEntPlayer_FXOpenBrollyCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
+                                     void* object)
+{
+    return 0;
 }
