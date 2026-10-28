@@ -8,12 +8,22 @@
 
 struct zScene;
 struct _zCutsceneMgr;
+struct _tagxPad;
 
-// Partial: only player, cmgr, sceneCur and the fog state are declared. The members before and
-// between them are left opaque.
+// Partial: only the RenderWare camera is declared. The GC object is 0x1F0 bytes.
+struct _tagxCamFrame
+{
+    RwCamera* lo_cam;
+    U8 opaque_4[0x1F0 - 0x4];
+};
+
+// Partial: only camera, the pads, player, cmgr, sceneCur and the fog state are declared. The
+// members between them are left opaque.
 struct zGlobals
 {
-    U8 opaque_0[0x1F8];
+    _tagxCamFrame camera;
+    _tagxPad* pad0;
+    _tagxPad* pad1;
     zPlayerGlobals player;
     U8 opaque_4D0[0x860 - 0x1F8 - sizeof(zPlayerGlobals)];
     _zCutsceneMgr* cmgr;

@@ -26,6 +26,23 @@ struct RwLinkList
     RwLLLink link;
 };
 
+#define rwLinkListAddLLLink(list, linkvar)                                                         \
+    ((linkvar)->next = (list)->link.next, (linkvar)->prev = (&(list)->link),                       \
+     ((list)->link.next)->prev = (linkvar), (list)->link.next = (linkvar))
+#define rwLinkListRemoveLLLink(linkvar)                                                            \
+    (((linkvar)->prev)->next = (linkvar)->next, ((linkvar)->next)->prev = (linkvar)->prev)
+
+typedef struct RwResEntry RwResEntry;
+typedef void (*RwResEntryDestroyNotify)(RwResEntry* resEntry);
+struct RwResEntry
+{
+    RwLLLink link;
+    S32 size;
+    void* owner;
+    RwResEntry** ownerRef;
+    RwResEntryDestroyNotify destroyNotify;
+};
+
 typedef struct RwObject RwObject;
 struct RwObject
 {
@@ -522,8 +539,31 @@ typedef enum RwPrimitiveType
     rwPRIMITIVETYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwPrimitiveType;
 
+// Partial: this driver's 2D vertex is 0x1C bytes; the last word is not reached.
 typedef struct RwIm2DVertex RwIm2DVertex;
+struct RwIm2DVertex
+{
+    F32 x;
+    F32 y;
+    F32 z;
+    RwRGBA emissiveColor;
+    F32 u;
+    F32 v;
+    U8 unk18[4];
+};
 typedef U16 RwImVertexIndex;
+
+#define RwIm2DVertexSetScreenX(vert, scrnx) ((vert)->x = (scrnx))
+#define RwIm2DVertexSetScreenY(vert, scrny) ((vert)->y = (scrny))
+#define RwIm2DVertexSetScreenZ(vert, scrnz) ((vert)->z = (scrnz))
+#define RwIm2DVertexSetIntRGBA(vert, r, g, b, a)                                                   \
+    do                                                                                             \
+    {                                                                                              \
+        (vert)->emissiveColor.red = r;                                                             \
+        (vert)->emissiveColor.green = g;                                                           \
+        (vert)->emissiveColor.blue = b;                                                            \
+        (vert)->emissiveColor.alpha = a;                                                           \
+    } while (0)
 
 typedef S32 (*RwStandardFunc)(void* pOut, void* pInOut, S32 nI);
 typedef S32 (*RwSystemFunc)(S32 nOption, void* pOut, void* pInOut, S32 nIn);
@@ -578,11 +618,40 @@ struct RwGlobals
 
 #define RWSRCGLOBAL(var) (((RwGlobals*)RwEngineInstance)->var)
 
+// Partial: the resource arena's globals, at resourcesModule.globalsOffset in the engine
+// instance. Only the arena size and the in-use entry list are reached.
+typedef struct RwResourcesGlobals RwResourcesGlobals;
+struct RwResourcesGlobals
+{
+    U32 arenaSize;
+    U8 unk4[0x20];
+    RwLinkList* usedEntryList;
+};
+
+#define RWRESOURCESGLOBAL(var)                                                                     \
+    (((RwResourcesGlobals*)((U8*)RwEngineInstance + resourcesModule.globalsOffset))->var)
+
+// The release build's form: an entry still linked is moved to the head of the in-use list.
+#define RwResourcesUseResEntry(entry)                                                              \
+    ((((entry)->link.next) ? (rwLinkListRemoveLLLink(&((entry)->link)),                            \
+                              rwLinkListAddLLLink(RWRESOURCESGLOBAL(usedEntryList),                \
+                                                  &((entry)->link)))                               \
+                           : NULL),                                                                \
+     (entry))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 extern void* RwEngineInstance;
+extern RwModuleInfo resourcesModule;
+
+RwResEntry* RwResourcesAllocateResEntry(void* owner, RwResEntry** ownerRef, S32 size,
+                                        RwResEntryDestroyNotify destroyNotify);
+S32 RwResourcesFreeResEntry(RwResEntry* entry);
+S32 RwResourcesGetArenaSize(void);
+S32 RwIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices,
+                                 S32 numVertices, RwImVertexIndex* indices, S32 numIndices);
 
 RwCamera* RwCameraCreate();
 S32 RwCameraDestroy(RwCamera* camera);
