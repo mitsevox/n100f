@@ -3,6 +3,9 @@
 
 #include <rpworld.h>
 
+struct _xEnt;
+
 void xShadowSetWorld(RpWorld* world);
+void xShadowRender(_xEnt* ent);
 
 #endif

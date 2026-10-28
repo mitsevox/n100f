@@ -61,6 +61,7 @@ typedef struct _xRot xRot;
 
 extern const xMat4x3 g_I3;
 extern const xVec3 g_Y3;
+extern const xVec3 g_NY3;
 
 inline void xVec3Init(xVec3* v, F32 _x, F32 _y, F32 _z)
 {
@@ -132,6 +133,7 @@ void xMat4x3MoveLocalUp(xMat4x3* m, F32 mag);
 void xMat4x3MoveLocalAt(xMat4x3* m, F32 mag);
 void xQuatToMat(const xQuat* q, xMat3x3* m);
 void xMat4x3Mul(xMat4x3* o, const xMat4x3* a, const xMat4x3* b);
+F32 xMat3x3LookVec(xMat3x3* m, const xVec3* at);
 void xMat4x3RMul3x3(xMat4x3* o, const xMat3x3* m3x3, const xMat4x3* m);
 
 #endif

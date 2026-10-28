@@ -2,6 +2,8 @@
 #define ZGLOBALS_H
 
 #include "types.h"
+#include "xBase.h"
+#include "xMath3.h"
 #include "zEntPlayer.h"
 #include "iCamera.h"
 #include "iTime.h"
@@ -10,11 +12,25 @@ struct zScene;
 struct _zCutsceneMgr;
 struct _tagxPad;
 
-// Partial: only the RenderWare camera is declared. The GC object is 0x1F0 bytes.
+// Partial: only the header and the matrix are declared. The GC object is 0xA0 bytes; the
+// PS2 copy is 0xB0 because its matrices are 16-byte aligned.
+struct _tagxCam : xBase
+{
+    U32 valid_flags;
+    S32 cam_type;
+    U32 flags;
+    xMat4x3 mat;
+    U8 opaque_5C[0xA0 - 0x5C];
+};
+
+// Partial: only the RenderWare camera and the two cameras are declared. The GC object is
+// 0x1F0 bytes.
 struct _tagxCamFrame
 {
     RwCamera* lo_cam;
-    U8 opaque_4[0x1F0 - 0x4];
+    _tagxCam orig_cam;
+    _tagxCam hi_cam;
+    U8 opaque_144[0x1F0 - 0x144];
 };
 
 // Partial: only camera, the pads, player, cmgr, sceneCur, the fog state and update_dt are
