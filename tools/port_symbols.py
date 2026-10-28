@@ -20,7 +20,7 @@ to, by a majority over every reference into the symbol and only where the bytes 
 pointer words; a run of unreferenced data between two mapped symbols takes their shifts where the
 bytes allow. A label maps at its offset inside a mapped symbol whose contents are the same there.
 Only pairs whose contents are the same apart from relocations are written; the report lists the
-pairs found by position alone whose contents differ, which are not.
+pairs found by position alone that the tool cannot show equal, which are not (not proof they differ).
 
 A unit's section range is ported only when both edges map, the range has the same length on both
 sides, and every symbol in it maps with the range's shift and the same contents; any other unit
@@ -104,12 +104,29 @@ def splits(path):
     return head,units
 
 
+# Opcode 31 extended opcodes, by what they write.
+X31_NONE={0,4,32,54,86,144,146,150,151,210,215,242,246,278,306,407,438,467,470,535,566,598,599,
+          661,662,663,725,727,854,918,982,983,1014}
+X31_RA={24,26,28,60,124,183,247,284,316,412,439,444,476,536,567,631,695,759,792,824,922,954}
+X31_RD_RA={55,119,311,375}
+
+
 def written(w):
-    """The GPRs an instruction may write (conservative: X-forms give both register fields)."""
+    """The GPRs an instruction may write. An opcode this model does not know gives every register field."""
     op,rd,ra=w>>26,(w>>21)&31,(w>>16)&31
-    if op in (7,8,12,13,14,15,32,33,34,35,40,41,42,43,46):return {rd}
+    if op in (7,8,12,13,14,15,32,34,40,42):return {rd}
+    if op in (33,35,41,43):return {rd,ra}
+    if op in (37,39,45,49,51,53,55):return {ra}
+    if op==46:return set(range(rd,32))
     if op in (20,21,23,24,25,26,27,28,29):return {ra}
-    if op==31:return {rd,ra}
+    if op==31:
+        xo=(w>>1)&0x3FF
+        if xo in (533,597):return set(range(32))
+        if xo in X31_NONE:return set()
+        if xo in X31_RA:return {ra}
+        if xo in X31_RD_RA:return {rd,ra}
+        if xo&0x1FF in (8,10,11,40,75,104,136,138,200,202,232,234,235,266,459,491):return {rd}
+        return {rd} if xo in (19,20,23,83,87,279,310,339,343,371,534,595,659,790) else {rd,ra}
     if op==18 and w&1:return {0}|set(range(3,13))
     if op in (19,16) and w&1:return {0}|set(range(3,13))
     return set()
@@ -418,7 +435,7 @@ def port_splits(a,b,smap):
             moved=[s.name for s in inside if id(s) not in smap or smap[id(s)]-s.addr!=s1-start]
             if moved:why='%s symbols unmapped or shifted: %s'%(section,' '.join(moved));break
             changed=[s.name for s in inside if s.kind!='label' and not equal_at(a,b,s,smap[id(s)])]
-            if changed:why='%s contents differ: %s'%(section,' '.join(changed));break
+            if changed:why='%s contents not shown equal: %s'%(section,' '.join(changed));break
             new.append((section,s1,e1,rest))
         if why:left.append((name,why));continue
         out.append((name,attrs,new,partial))
@@ -461,7 +478,7 @@ def main():
         t=smap.get(id(s))
         if t is None:report.append(('symbol',s.name,'0x%08X'%s.addr,'-','unmapped'));continue
         if s.kind!='label' and not equal_at(a,b,s,t):
-            report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'not written: paired by position only, contents differ'));continue
+            report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'not written: paired by position only, contents not shown equal'));continue
         ported.append((s.section,t,s.size,s.line(t)))
         report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'same contents'))
     lines=merge(b.symbols,ported)

@@ -234,6 +234,12 @@ flat/xPad.cpp:
 	.sbss       start:0x80270968 end:0x80270970
 	.sdata2     start:0x80271FB8 end:0x80271FC8
 
+flat/xPar.cpp:
+	.text       start:0x800324EC end:0x80032658
+	.bss        start:0x80210858 end:0x80237958
+	.sbss       start:0x80270970 end:0x80270978
+	.sdata2     start:0x80271FC8 end:0x80271FD0
+
 flat/xParGroup.cpp:
 	.text       start:0x80032658 end:0x80032E40
 	.bss        start:0x80237958 end:0x80237D58
@@ -495,6 +501,17 @@ flat/zHologram.cpp:
 	.rodata     start:0x801A1720 end:0x801A1890
 	.bss        start:0x8023F360 end:0x8023F3A0
 	.sdata2     start:0x80273248 end:0x80273250
+
+flat/zHud.cpp:
+	.text       start:0x800B07F8 end:0x800B9610
+	.ctors      start:0x8018B868 end:0x8018B86C
+	.rodata     start:0x801A1890 end:0x801A2280
+	.data       start:0x801D48E8 end:0x801D5628
+	.bss        start:0x8023F3A0 end:0x80243D48
+	.sdata      start:0x802703F8 end:0x80270408
+	.sbss       start:0x80270E30 end:0x80270E80
+	.sdata2     start:0x80273270 end:0x80273468
+	.sbss2      start:0x80274B70 end:0x80274B88
 
 flat/zLaugh.cpp:
 	.text       start:0x800B9610 end:0x800B98B8
@@ -1212,8 +1229,18 @@ bink/src/sdk/decode/binkread.c:
 bink/src/sdk/decode/ngc/ngcfile.c:
 	.text       start:0x80117CDC end:0x801187BC
 
+bink/src/sdk/decode/yuv.cpp:
+	.text       start:0x801187BC end:0x8011FA7C
+	.data       start:0x801E22E0 end:0x801ECBC0
+	.bss        start:0x8026E228 end:0x8026F228
+	.sdata      start:0x802705D8 end:0x802705F0
+	.sbss       start:0x802714D8 end:0x80271500
+
 bink/shared/time/radcb.c:
 	.text       start:0x80120760 end:0x80120E44
+
+bink/src/sdk/decode/ngc/ngcrgb.c:
+	.text       start:0x80124668 end:0x801275AC
 
 bink/src/sdk/decode/ngc/ngcyuy2.c:
 	.text       start:0x801275AC end:0x801282B8
@@ -1221,6 +1248,10 @@ bink/src/sdk/decode/ngc/ngcyuy2.c:
 bink/src/sdk/varbits.c:
 	.text       start:0x801282B8 end:0x8012849C
 	.rodata     start:0x801A5CC0 end:0x801A5E40
+
+bink/src/sdk/dct.c:
+	.text       start:0x8012C780 end:0x8012D854
+	.rodata     start:0x801A5EA0 end:0x801A9EA0
 
 bink/src/sdk/bitplane.c:
 	.text       start:0x8012D854 end:0x80130C80
@@ -1351,9 +1382,6 @@ rwsdk/src/plcore/baresour.c:
 rwsdk/src/plcore/batkbin.c:
 	.text       start:0x801647F8 end:0x80164DA8
 
-rwsdk/src/plcore/bavector.c:
-	.text       start:0x801658DC end:0x80165D08
-
 rwsdk/src/plcore/rwstring.c:
 	.text       start:0x80166020 end:0x8016619C
 
@@ -1364,10 +1392,12 @@ rwsdk/src/baimras.c:
 	.text       start:0x8016C520 end:0x8016C6A4
 
 rwsdk/src/baraster.c:
-	.text       start:0x8016C6A4 end:0x8016CAD8
+	.text       start:0x8016C6A4 end:0x8016CC14
+	.data       start:0x801EE618 end:0x801EE630
+	.sbss       start:0x80271690 end:0x80271698
 
 rwsdk/src/basync.c:
-	.text       start:0x8016DC7C end:0x8016DFD4
+	.text       start:0x8016D5CC end:0x8016DFD4
 
 rwsdk/src/batypehf.c:
 	.text       start:0x80170048 end:0x801700E4
@@ -1386,6 +1416,7 @@ rwsdk/src/pipe/p2/baim3d.c:
 
 rwsdk/src/pipe/p2/bapipe.c:
 	.text       start:0x8017CBE4 end:0x8017CC64
+	.sbss       start:0x80271758 end:0x80271760
 
 rwsdk/src/pipe/p2/nodeCullTriangle.c:
 	.text       start:0x8017F50C end:0x8017FD84
