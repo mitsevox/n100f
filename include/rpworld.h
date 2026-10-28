@@ -190,6 +190,8 @@ typedef RpAtomic* (*RpAtomicCallBack)(RpAtomic* atomic, void* data);
 
 #define rpATOMICCOLLISIONTEST 0x01
 
+#define rpGEOMETRYNATIVE 0x01000000
+
 struct RpAtomic
 {
     RwObjectHasFrame object;
@@ -279,6 +281,9 @@ S32 RpAtomicRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor con
 S32 RpAtomicRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
                                  RwPluginDataChunkWriteCallBack writeCB,
                                  RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RpAtomicSetStreamAlwaysCallBack(U32 pluginID, RwPluginDataChunkAlwaysCallBack alwaysCB);
+S32 RpAtomicSetStreamRightsCallBack(U32 pluginID, RwPluginDataChunkRightsCallBack rightsCB);
+S32 RpAtomicGetPluginOffset(U32 pluginID);
 S32 RpClumpRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
                           RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
 S32 RpGeometryRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,

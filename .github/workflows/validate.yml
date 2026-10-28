@@ -133,6 +133,11 @@ jobs:
           PRODG_DIR: /compilers/ProDG/3.5
           WIBO: build/tools/wibo
         run: python3 -m unittest -v tests/test_prodg_cc.py
+      - name: Check the split reports
+        # recover.py's output changes when an exact-body function row lands in evidence.tsv; the
+        # committed flat/ units, split_units.tsv and split_edges.tsv must be what it writes now.
+        # The failure message gives the command that updates them.
+        run: python3 tools/splits/check_recover.py --target "$TARGET_ID" --ps2-elf /orig/SLUS-20349/SLUS_203.49
       - name: List measuring tools
         id: tools
         # Every event: the tools the published provenance names, verified against what the image
