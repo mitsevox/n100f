@@ -13,10 +13,8 @@
 ###
 
 import argparse
-import json
-import re
 import sys
-from tools.targets import registry, build_targets
+from tools.targets import registry, build_targets, define
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -139,11 +137,9 @@ config = ProjectConfig()
 config.version = str(args.version)
 config.project_dir = args.build_dir / config.version
 config.project_dir.mkdir(parents=True, exist_ok=True)
-build_settings=json.loads((Path("config") / config.version / "build.json").read_text())
-if set(build_settings)!={"buildVersion","versionDefine"} or type(build_settings["buildVersion"]) is not int or build_settings["buildVersion"]<0 or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*",build_settings["versionDefine"]):
-    raise ValueError("Invalid target build constants")
-version_num=build_settings["buildVersion"]
-version_define=build_settings["versionDefine"]
+# BUILD_VERSION stays defined for dtk-template compatibility and is never read; source tests
+# VERSION_<ID> (include/version.h).
+version_num = VERSIONS.index(config.version)
 
 # Apply arguments
 config.build_dir = args.build_dir
@@ -194,7 +190,6 @@ if args.map:
 config.reconfig_deps = [
     Path("config/targets.json"),
     Path("tools/targets.py"),
-    Path("config") / config.version / "build.json",
 ]
 
 # Optional numeric ID for decomp.me preset
@@ -226,7 +221,7 @@ cflags_base = [
     "-i include/libc",
     f"-i build/{config.version}/include",
     f"-DBUILD_VERSION={version_num}",
-    f"-DVERSION_{version_define}",
+    f"-D{define(config.version)}",
 ]
 
 # Debug flags
