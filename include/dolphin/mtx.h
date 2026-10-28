@@ -16,6 +16,7 @@ typedef struct Vec {
     f32 z;
 } Vec;
 
+void PSMTXIdentity(Mtx m);
 void PSMTXConcat(const Mtx a, const Mtx b, Mtx ab);
 void C_MTXOrtho(Mtx44 m, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f);
 

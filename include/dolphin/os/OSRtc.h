@@ -38,6 +38,12 @@ BOOL __OSUnlockSramEx(BOOL commit);
 u16 OSGetWirelessID(s32 chan);
 void OSSetWirelessID(s32 chan, u16 id);
 
+#define OS_SOUND_MODE_MONO 0
+#define OS_SOUND_MODE_STEREO 1
+
+u32 OSGetSoundMode(void);
+void OSSetSoundMode(u32 mode);
+
 #ifdef __cplusplus
 }
 #endif

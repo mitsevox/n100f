@@ -73,6 +73,7 @@ static inline int __fpclassifyd(double x)
 double atan(double x);
 double atan2(double y, double x);
 double copysign(double x, double y);
+double fmod(double x, double y);
 double frexp(double x, int* exp);
 double ldexp(double x, int exp);
 double modf(double x, double* iptr);

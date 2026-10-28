@@ -493,6 +493,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(Matching, "flat/zEntBubble.cpp"),
             Object(NonMatching, "flat/zEntButton.cpp"),
             Object(Matching, "flat/zEntDestructObj.cpp"),
+            Object(NonMatching, "flat/zEntHangable.cpp"),
             Object(NonMatching, "flat/zEntShaggy.cpp"),
             Object(NonMatching, "flat/zFog.cpp"),
             Object(Matching, "flat/zGameExtras.cpp"),
@@ -513,6 +514,9 @@ config.libs: List[Dict[str, Any]] = [
             Object(Matching, "gc/iAnim.cpp"),
             Object(Matching, "gc/iMix.c"),
             Object(NonMatching, "gc/ngcrad3d.c"),
+            Object(NonMatching, "gc/iFMV.cpp"),
+            Object(NonMatching, "gc/iSnd.cpp"),
+            Object(NonMatching, "gc/iFX.cpp"),
         ],
     ),
     # Library units: config/GIHE78-rev0/lib_units.tsv and docs/splits.md "Library units".
@@ -870,7 +874,7 @@ config.libs: List[Dict[str, Any]] = [
     RWLib(
         "rwcore",
         [
-            Object(NonMatching, "rwsdk/src/plcore/babinary.c"),
+            Object(Matching, "rwsdk/src/plcore/babinary.c"),
             Object(NonMatching, "rwsdk/src/plcore/baerr.c"),
             Object(NonMatching, "rwsdk/src/plcore/bafsys.c"),
             Object(Matching, "rwsdk/src/plcore/baimmedi.c"),
@@ -892,7 +896,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/baraster.c"),
             Object(NonMatching, "rwsdk/src/basync.c"),
             Object(NonMatching, "rwsdk/src/batextur.c"),
-            Object(NonMatching, "rwsdk/src/batypehf.c"),
+            Object(Matching, "rwsdk/src/batypehf.c"),
             Object(NonMatching, "rwsdk/driver/common/palquant.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dl2drend.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dlconvrt.c"),

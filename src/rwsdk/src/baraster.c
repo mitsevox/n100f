@@ -1,6 +1,7 @@
 #include <rwcore.h>
 
 // The standard device functions the raster calls.
+#define STDFUNC_RASTERDESTROY 5
 #define STDFUNC_RASTERLOCK 15
 #define STDFUNC_RASTERUNLOCK 16
 #define STDFUNC_RASTERLOCKPALETTE 23
@@ -12,7 +13,19 @@
 #define rwRASTERPALETTELOCKEDWRITE 0x10
 #define rwRASTERPALETTELOCKED (rwRASTERPALETTELOCKEDREAD | rwRASTERPALETTELOCKEDWRITE)
 
+// The raster module's data in the engine instance. Partial: only the free list is declared.
+typedef struct RasterModuleData RasterModuleData;
+struct RasterModuleData
+{
+    U8 unk0[0x60];
+    RwFreeList* freeList;
+};
+
+#define RASTER_DATA(var) \
+    (((RasterModuleData*)((U8*)RwEngineInstance + rasterModule.globalsOffset))->var)
+
 static RwPluginRegistry rasterTKList = { sizeof(RwRaster), sizeof(RwRaster) };
+static RwModuleInfo rasterModule;
 
 RwRaster* RwRasterUnlock(RwRaster* raster)
 {
@@ -27,6 +40,15 @@ RwRaster* RwRasterUnlockPalette(RwRaster* raster)
     raster->privateFlags &= ~rwRASTERPALETTELOCKED;
 
     return raster;
+}
+
+S32 RwRasterDestroy(RwRaster* raster)
+{
+    _rwPluginRegistryDeInitObject(&rasterTKList, raster);
+    RWSRCGLOBAL(stdFunc)[STDFUNC_RASTERDESTROY](NULL, raster, 0);
+    RWSRCGLOBAL(memoryFree)(RASTER_DATA(freeList), raster);
+
+    return TRUE;
 }
 
 S32 RwRasterRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
@@ -75,4 +97,17 @@ U8* RwRasterLock(RwRaster* raster, U8 level, S32 lockMode)
     }
 
     return NULL;
+}
+
+void* _rwRasterClose(void* instance, S32 offset, S32 size)
+{
+    if (RASTER_DATA(freeList))
+    {
+        RwFreeListDestroy(RASTER_DATA(freeList));
+        RASTER_DATA(freeList) = NULL;
+    }
+
+    rasterModule.numInstances--;
+
+    return instance;
 }
