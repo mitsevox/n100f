@@ -7,6 +7,12 @@
 #include "zRumble.h"
 #include "zLaugh.h"
 #include "zPitchChange.h"
+#include "zSurface.h"
+#include "zEGenerator.h"
+#include "xBound.h"
+#include "zScene.h"
+#include "zEntPickup.h"
+#include "zEntTrigger.h"
 #include "xPad.h"
 #include "xSnd.h"
 #include "iSnd.h"
@@ -124,12 +130,29 @@ void zSceneGameStatsTally_snack(U32 quantity);
 U32 zEntPickup_lastSnackInArea();
 void zEntPickup_hideSnackGateInfo(_zEntPickup* pickup);
 void zEntPickup_UnlockSnackGate(_xEnt* ent);
+void zEntPickup_Drop(_zEntPickup* ent);
+void xEntBeginCollCheckTrigs(_xEnt* ent);
+void xEntEndCollCheckTrigs(_xEnt* ent);
+void xSceneForAllTriggers(_xScene* sc, _xEnt* (*func)(_xEnt*, _xScene*, void*), void* data);
+_xEnt* zEntPlayerCollTriggerCB(_xEnt* ent, _xScene* sc, void* data);
 void zHudShowAllSnacksArea();
 void zHud_showSnack();
 void zHud_showSnackSpecial();
 void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt);
 F32 CalcJumpImpulse_Smooth(F32 g, F32 j, F32 h, F32 Tgc, F32 Tgs);
 S32 Shaggy8_HBCallback(_zEnt* ent, _xCollis* coll);
+void xAnimTableRemoveEffectByCB(xAnimTable* table,
+                                U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*));
+void zFeetExit(_xEnt* ent, xAnimTable* table);
+U32 zEntPlayer_SNDSkidCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single, void* object);
+static U32 zEntPlayer_FXScratchCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
+                                  void* object);
+static U32 zEntPlayer_FXDigupCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
+                                void* object);
+static U32 zEntPlayer_FXSpringCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
+                                 void* object);
+static U32 zEntPlayer_FXOpenBrollyCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
+                                     void* object);
 
 static xVec3 headcoll_oses[12] = {
     { 0.0f, 0.0f, 0.15f },  { 0.0f, 0.0f, 0.15f },   { 0.0f, 0.0f, 0.4f },  { 0.0f, 0.0f, 0.3f },
@@ -187,6 +210,7 @@ F32 startDouble;
 F32 startBounce;
 static U32 surfSticky;
 static F32 surfSlickTimer;
+static F32 surfSlickRatio;
 S32 headcoll_anim;
 F32 headcoll_tmr;
 F32 headcoll_bltime;
@@ -196,6 +220,11 @@ static zPlayerSituation* sVONextSituation;
 static F32 sVOTimer;
 
 _tagPlayerFX gPlayerfx;
+xMat4x3 gPlayerAbsMat;
+xMat4x3 rendermat;
+xVec3 floor_supp[4];
+F32 floor_dist[4];
+F32 floor_tmr[4];
 static _tagPlayerSndFX sPlayerSndfx;
 xVec3 vHangBefore;
 xVec3 vHangFirst;
@@ -1449,6 +1478,361 @@ void zEntPlayerJumpStart(_xEnt* ent, zJumpParam* jump)
     }
 }
 
+void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
+{
+    xVec3* v;
+    F32 velen2;
+    _xCollis* colls;
+    _xCollis* coll;
+    S32 i;
+    F32 s;
+
+    if (ent->model->Anim->Single->State->UserFlags & 0x100)
+    {
+        return;
+    }
+
+    v = &ent->frame->vel;
+
+    if (!(globals.player.SlideTimer > 0.0f) && !surfSlickRatio &&
+        !(globals.player.SlipFadeTimer > 0.0f))
+    {
+        if (globals.player.JumpState == 0)
+        {
+            v->x = 0.0f;
+            v->y = 0.0f;
+            v->z = 0.0f;
+        }
+        return;
+    }
+
+    if (!globals.player.Slide && globals.player.SlideTimer > 0.0f)
+    {
+        F32 sft = 2.15f - globals.player.SlideTimer;
+        if (globals.player.JumpState == 0 || globals.player.JumpState == 1)
+        {
+            if (globals.player.JumpState == 0)
+            {
+                v->y = 0.0f;
+            }
+            if (sft < 0.4f)
+            {
+                sft = 0.4f - sft;
+                s = sft / (sft + dt);
+                v->x *= s;
+                v->z *= s;
+            }
+            else
+            {
+                v->x = 0.0f;
+                v->z = 0.0f;
+                return;
+            }
+        }
+        else
+        {
+            if (sft < 2.15f)
+            {
+                sft = 2.15f - sft;
+                s = sft / (sft + dt);
+                v->x *= s;
+                v->z *= s;
+            }
+            else
+            {
+                v->x = 0.0f;
+                v->z = 0.0f;
+                return;
+            }
+        }
+    }
+
+    velen2 = xVec3Length2(v);
+    if ((F32)fabs(velen2) < 0.0001f)
+    {
+        v->x = 0.0f;
+        v->y = 0.0f;
+        v->z = 0.0f;
+        return;
+    }
+
+    i = 0;
+    colls = ent->collis->colls;
+    coll = colls;
+    if (surfSlickRatio)
+    {
+        if (coll->optr)
+        {
+            if (ent->frame->mat.pos.y - ent->frame->oldpos.y > 0.0f)
+            {
+                v->x *= 0.97f;
+                v->z *= 0.97f;
+            }
+        }
+        else
+        {
+            v->y = 0.0f;
+        }
+        coll = &colls[2];
+        i = 2;
+    }
+    else if (!(globals.player.SlideTimer > 0.0f))
+    {
+        if (globals.player.SlipFadeTimer > 0.0f)
+        {
+            s = globals.player.SlipFadeTimer / (globals.player.SlipFadeTimer + dt);
+            v->x *= s;
+            v->z *= s;
+        }
+        else
+        {
+            v->x = 0.0f;
+            v->z = 0.0f;
+            return;
+        }
+    }
+
+    for (; i < 6; i++, coll++)
+    {
+        if (!(coll->flags & 1) || !(coll->dist < 0.7f))
+        {
+            continue;
+        }
+        if (coll->optr && ((xBase*)coll->optr)->baseType == 2)
+        {
+            continue;
+        }
+        if (xVec3Dot(v, &coll->hdng) < 0.0f)
+        {
+            continue;
+        }
+        F32 rft = xVec3Dot(v, &coll->norm);
+        if (rft > 0.0f)
+        {
+            continue;
+        }
+        if (-rft >= 0.965926f * velen2)
+        {
+            v->x = 0.0f;
+            v->y = 0.0f;
+            v->z = 0.0f;
+            return;
+        }
+        xVec3 dv;
+        xVec3SMul(&dv, &coll->norm, 0.5f * -rft);
+        v->x += dv.x;
+        v->y += dv.y;
+        v->z += dv.z;
+        velen2 = xVec3Length2(v);
+    }
+}
+
+static U32 PlayerDepenQuery(_xEnt* ent, _xEnt* other, _xScene* sc, F32 dt, _xCollis* coll)
+{
+    zSurfaceProps* prop;
+    xSurface* surf;
+
+    if (globals.player.DamageTimer > 0.0f)
+    {
+        surf = zSurfaceGetSurface(coll);
+        if (surf && !surf->state)
+        {
+            prop = (zSurfaceProps*)surf->moprops;
+            if (prop && prop->asset)
+            {
+                switch (prop->asset->game_damage_type)
+                {
+                case 0:
+                    return 1;
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                    if (prop->asset->game_damage_flags & 1)
+                    {
+                        return 0;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+static void PlayerBoundUpdate(_xEnt* ent, xVec3* pos)
+{
+    xVec3 dpos;
+
+    xEntDefaultBoundUpdate(ent, pos);
+
+    if ((U32)(headcoll_anim - 4) <= 3 || headcoll_anim == 8)
+    {
+        xVec3Sub(&dpos, pos, (xVec3*)&ent->model->Mat->pos);
+        iModelTagEval(globals.player.ent.model->Next->Data, &globals.player.head_tag,
+                      globals.player.ent.model->Next->Mat, &globals.player.head_sph.center);
+        xVec3Add(&globals.player.head_sph.center, &globals.player.head_sph.center, &dpos);
+        xVec3Sub(&dpos, xBoundCenter(&ent->bound), &globals.player.head_sph.center);
+        xVec3Normalize(&dpos, &dpos);
+        xVec3SMul(&dpos, &dpos, 0.4f);
+        xVec3Add(&globals.player.head_sph.center, &globals.player.head_sph.center, &dpos);
+        globals.player.head_sph.r = 0.7f;
+        if (globals.player.head_sph.center.y < ent->bound.sph.center.y)
+        {
+            globals.player.head_sph.center.y = ent->bound.sph.center.y;
+        }
+    }
+    else
+    {
+        xMat3x3RMulVec(&dpos, (xMat3x3*)&rendermat, &headcoll_os);
+        xVec3Add(&globals.player.head_sph.center, xBoundCenter(&ent->bound), &dpos);
+        globals.player.head_sph.r = 0.7f;
+    }
+}
+
+void zEntPlayerSurfDamageUpdate(_xEnt* p, _xScene* sc, F32 dt)
+{
+    _xCollis* coll;
+    _xCollis* cend;
+    xSurface* surf;
+    S32 damaged;
+    zSurfaceProps* prop;
+    _xEnt* cent;
+
+    if (globals.player.DamageTimer > 0.0f)
+    {
+        return;
+    }
+
+    coll = &p->collis->colls[0];
+    cend = &coll[p->collis->idx];
+    for (; coll < cend; coll++)
+    {
+        if (!(coll->flags & 1))
+        {
+            continue;
+        }
+
+        surf = zSurfaceGetSurface(coll);
+        if (!surf || surf->state)
+        {
+            continue;
+        }
+
+        prop = (zSurfaceProps*)surf->moprops;
+        damaged = 0;
+        if (!prop || !prop->asset)
+        {
+            continue;
+        }
+
+        switch (prop->asset->game_damage_type)
+        {
+        case 4:
+        case 6:
+            if (zEntPlayer_Damage(surf, 1) ? 1 : 0)
+            {
+                globals.player.DamageTimer = 5.0f;
+            }
+            zRumbleStart(0, SDR_GotScared);
+            damaged = 1;
+            break;
+        case 1:
+            cent = (_xEnt*)coll->optr;
+            if (cent && cent->baseType == 0x29 && !(((zEGenerator*)cent)->flags & 1))
+            {
+                break;
+            }
+        case 2:
+        case 3:
+        case 5:
+            if (globals.player.Health)
+            {
+                globals.player.DamageTimer = 0.0f;
+                zEntPlayer_Damage(surf, globals.player.Health);
+                damaged = 1;
+            }
+            break;
+        }
+
+        if (damaged)
+        {
+            if (coll->optr)
+            {
+                globals.player.DamageSource = (_zEnt*)coll->optr;
+            }
+            return;
+        }
+    }
+}
+
+void zEntPlayerExit(_xEnt* ent)
+{
+    xAnimTableRemoveEffectByCB(ent->model->Anim->Table, zEntPlayer_FXScratchCB);
+    xAnimTableRemoveEffectByCB(ent->model->Anim->Table, zEntPlayer_SNDSkidCB);
+    xAnimTableRemoveEffectByCB(ent->model->Anim->Table, zEntPlayer_FXDigupCB);
+    xAnimTableRemoveEffectByCB(ent->model->Anim->Table, zEntPlayer_FXOpenBrollyCB);
+    xAnimTableRemoveEffectByCB(ent->model->Anim->Table, zEntPlayer_FXSpringCB);
+    zFeetExit(ent, ent->model->Anim->Table);
+}
+
+void zEntPlayerCollTrigger(_xEnt* ent, _xScene* sc)
+{
+    U16 i;
+
+    xEntBeginCollCheckTrigs(ent);
+    xSceneForAllTriggers(sc, zEntPlayerCollTriggerCB, ent);
+    xEntEndCollCheckTrigs(ent);
+
+    for (i = 0; i < sc->num_trigs; i++)
+    {
+        if (!(ent->baseFlags & 1))
+        {
+            continue;
+        }
+
+        if (ent->collis->trigs_entered[i >> 3] & (1 << (i % 8)))
+        {
+            p2EntTriggerAsset* asset = (p2EntTriggerAsset*)((U8*)sc->trigs[i]->asset + sizeof(p2EntAsset));
+            if (asset->flags & 1)
+            {
+                if (xVec3Dot(&asset->direction, (xVec3*)&ent->model->Mat->at) <= 0.0f)
+                {
+                    zEntEvent(sc->trigs[i], 5, NULL);
+                }
+            }
+            else
+            {
+                zEntEvent(sc->trigs[i], 5, NULL);
+            }
+        }
+
+        if (ent->collis->trigs_exited[i >> 3] & (1 << (i % 8)))
+        {
+            p2EntTriggerAsset* asset = (p2EntTriggerAsset*)((U8*)sc->trigs[i]->asset + sizeof(p2EntAsset));
+            if (asset->flags & 1)
+            {
+                if (xVec3Dot(&asset->direction, (xVec3*)&ent->model->Mat->at) <= 0.0f)
+                {
+                    zEntEvent(sc->trigs[i], 6, NULL);
+                }
+            }
+            else
+            {
+                zEntEvent(sc->trigs[i], 6, NULL);
+            }
+        }
+
+        if (ent->collis->trigs_cur[i >> 3] & (1 << (i % 8)) && globals.player.ControlOn &&
+            globals.pad0->pressed & 0x20000)
+        {
+            zEntEvent(sc->trigs[i], 0x3B);
+        }
+    }
+}
+
 static xVec3* GetPosVec(xBase* target)
 {
     xVec3* pos = (xVec3*)&g_O3;
@@ -1473,6 +1857,102 @@ static xVec3* GetPosVec(xBase* target)
         break;
     }
     return pos;
+}
+
+static void PlayerTeeterCheck(_xEnt* ent, _xScene* sc, F32 dt)
+{
+    S32 i;
+
+    if (globals.player.MountChimney)
+    {
+        globals.player.Teeter = 4;
+        return;
+    }
+
+    if (globals.player.Teeter)
+    {
+        globals.player.Teeter--;
+    }
+
+    if (globals.player.JumpState == 0)
+    {
+        for (i = 0; i < 4; i++)
+        {
+            if (floor_dist[i] > 0.424264f)
+            {
+                if (floor_tmr[i] >= 0.2f)
+                {
+                    floor_tmr[i] = 0.2f;
+                    globals.player.Teeter = 1;
+                    return;
+                }
+                floor_tmr[i] += dt;
+            }
+            else
+            {
+                floor_tmr[i] = 0.0f;
+            }
+        }
+    }
+}
+
+static void PlayerDigUpdate(_xEnt* ent, F32 dt)
+{
+    F32 digT;
+    F32 digDelta;
+    U32 i;
+    p2LinkAsset* curlink;
+    xBase* tgt;
+    _xEnt* tgtEnt;
+
+    digT = globals.player.DigTimer;
+    digDelta = digT + dt;
+
+    if (digT < 0.8f && digDelta >= 0.8f)
+    {
+        curlink = globals.player.Diggable->link;
+        for (i = 0; i < globals.player.Diggable->linkCount; i++, curlink++)
+        {
+            tgt = zSceneFindObject(curlink->dstAssetID);
+            if (tgt->baseType == 4 && ((_zEntPickup*)tgt)->state == 0x10)
+            {
+                zEntPickup_Drop((_zEntPickup*)tgt);
+                zEntPlayer_Notify(5);
+            }
+        }
+    }
+
+    if (digT < 0.4f && digDelta >= 0.4f)
+    {
+        curlink = globals.player.Diggable->link;
+        for (i = 0; i < globals.player.Diggable->linkCount; i++, curlink++)
+        {
+            tgt = zSceneFindObject(curlink->dstAssetID);
+            if (tgt->baseType == 6)
+            {
+                tgtEnt = (_xEnt*)tgt;
+                tgtEnt->flags |= 1;
+                tgtEnt->chkby = 0x18;
+                if (tgtEnt->model->Anim)
+                {
+                    tgtEnt->model->Anim->Single->CurrentSpeed = tgtEnt->model->Anim->Single->State->Speed;
+                    tgtEnt->model->Anim->Single->Time = 0.0f;
+                }
+            }
+        }
+    }
+
+    if (digT < 0.8f && digDelta >= 0.8f)
+    {
+        globals.player.Diggable->flags &= ~1;
+        globals.player.Diggable->chkby = 0;
+    }
+
+    if (digDelta > 2.0f)
+    {
+        digDelta = 0.0f;
+    }
+    globals.player.DigTimer = digDelta;
 }
 
 void zEntPlayer_StoreCheckPoint(F32* toParam)
@@ -1589,17 +2069,31 @@ void zEntPlayer_Notify(S32 situation)
 {
     zPlayerSituation* s;
 
-    if (globals.player.ControlOn)
+    if (!globals.player.ControlOn)
     {
-        s = &sPlayerInfo[situation];
-        if ((!sVONextSituation || sVONextSituation->priority < s->priority) &&
-            (!iSndIsPlaying(sVOAssetID) || s->priority > sVOPriority) &&
-            (!s->countMax || s->count < s->countMax) && s->delay <= s->elapsedTime)
-        {
-            sVONextSituation = s;
-            sVOTimer = s->punchDelay;
-        }
+        return;
     }
+
+    s = &sPlayerInfo[situation];
+    if (sVONextSituation && sVONextSituation->priority >= s->priority)
+    {
+        return;
+    }
+    if (iSndIsPlaying(sVOAssetID) && s->priority <= sVOPriority)
+    {
+        return;
+    }
+    if (s->countMax && s->count >= s->countMax)
+    {
+        return;
+    }
+    if (s->delay > s->elapsedTime)
+    {
+        return;
+    }
+
+    sVONextSituation = s;
+    sVOTimer = s->punchDelay;
 }
 
 static U32 zEntPlayer_FXScratchCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
