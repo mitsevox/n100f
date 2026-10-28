@@ -151,7 +151,7 @@ void xSceneForAllTriggers(_xScene* sc, _xEnt* (*func)(_xEnt*, _xScene*, void*), 
 void xEntCollCheckNPCs(_xEnt* p, _xScene* sc, _xEnt* (*hitIt)(_xEnt*, _xScene*, void*));
 void xEntCollCheckDyns(_xEnt* p, _xScene* sc, _xEnt* (*hitIt)(_xEnt*, _xScene*, void*));
 void xEntCollCheckStats(_xEnt* p, _xScene* sc, _xEnt* (*hitIt)(_xEnt*, _xScene*, void*));
-void iSphereHitsEnv4(const xSphere* b, const _xEnv* env, const xMat3x3* mat, _xCollis* coll);
+S32 iSphereHitsEnv4(const xSphere* b, const _xEnv* env, const xMat3x3* mat, _xCollis* coll);
 static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt);
 static _xEnt* PlayerCollCheckOneVillain(_xEnt* ent, _xScene* sc, void* data);
 static _xEnt* PlayerCollCheckOneEnt(_xEnt* ent, _xScene* sc, void* data);
@@ -2017,11 +2017,11 @@ void zEntPlayerCollide(_xEnt* ent, _xScene* sc, F32 dt)
     if (ent->collis->chk & 0x20)
     {
         ent->collis->env_sidx = ent->collis->idx;
-        ent->bound.sph.r = 0.91f;
-        iSphereHitsEnv4(&ent->bound.sph, sc->env, (xMat3x3*)ent->frame, ent->collis->colls);
+        ent->bound.sph.r = 0.7f * 1.3f;
+        iSphereHitsEnv4(&ent->bound.sph, sc->env, (xMat3x3*)&ent->frame->mat, ent->collis->colls);
         ent->bound.sph.r = 0.7f;
-        globals.player.head_sph.r = 0.91f;
-        iSphereHitsEnv4(&globals.player.head_sph, sc->env, (xMat3x3*)ent->frame,
+        globals.player.head_sph.r = 0.7f * 1.3f;
+        iSphereHitsEnv4(&globals.player.head_sph, sc->env, (xMat3x3*)&ent->frame->mat,
                         ent->collis->colls);
         globals.player.head_sph.r = 0.7f;
         PlayerCollsAllTranslate(ent->collis->colls, 0.0f, 0.0f, 0.0f);
