@@ -907,5 +907,8 @@ struct st_zEntVillain : _zEnt
 };
 
 en_ZVILLAIN_BUBBLE_RESPONSE zEntVillain_Bubble(st_zEntVillain* ent, _zEntBubble* bub);
+void zEntVillain_HeroWasHurt();
+st_zEntVillain* zEntVillain_NPCInst(U32 npcidx);
+S32 zEntVillain_Shutdown();
 
 #endif
