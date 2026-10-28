@@ -14,6 +14,13 @@ typedef struct decimal {
     } sig;
 } decimal;
 
+typedef struct decform {
+    char style;
+    char unused;
+    short digits;
+} decform;
+
+void __num2dec(const decform* f, double x, decimal* d);
 double __dec2num(const decimal* d);
 
 #endif
