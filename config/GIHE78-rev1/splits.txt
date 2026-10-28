@@ -1083,12 +1083,12 @@ dolphin/ax/AX.c: comment:8
 
 dolphin/ax/AXAlloc.c: comment:8
 	.text       start:0x800F5E58 end:0x800F6320
-	.bss        start:0x80253480 end:0x80253590
+	.bss        start:0x80253480 end:0x80253580
 	.sbss       start:0x80271188 end:0x80271190
 
 dolphin/ax/AXAux.c: comment:8
 	.text       start:0x800F6320 end:0x800F67A8
-	.bss        start:0x80253590 end:0x80256280
+	.bss        start:0x80253580 end:0x80256280
 	.sbss       start:0x80271190 end:0x802711C8
 
 dolphin/ax/AXCL.c: comment:8

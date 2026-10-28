@@ -142,11 +142,24 @@ class Side:
         self.functions={}
         for s in self.symbols:
             if s.kind!='function' or not s.size:continue
-            raw=self.dol.read(s.addr,s.size)
-            if raw is None:continue
-            code=list(zip(range(s.addr,s.addr+s.size,4),struct.unpack('>%dI'%(s.size//4),raw)))
-            walked=walk(code,{2:self.dol.sda[2],13:self.dol.sda[13]})
-            self.functions[s.addr]=(s,walked,hashlib.sha1(struct.pack('>%dI'%len(walked),*[w for w,_ in walked])).digest())
+            found=self.code(s.addr,s.size)
+            if found:self.functions[s.addr]=(s,)+found
+
+    def code(self,addr,size):
+        """The walked instructions and masked hash of `size` bytes of code at `addr`."""
+        raw=self.dol.read(addr,size)
+        if raw is None or size%4:return None
+        walked=walk(list(zip(range(addr,addr+size,4),struct.unpack('>%dI'%(size//4),raw))),{2:self.dol.sda[2],13:self.dol.sda[13]})
+        return walked,hashlib.sha1(struct.pack('>%dI'%len(walked),*[w for w,_ in walked])).digest()
+
+    def adopt(self,addr,other):
+        """Pair `other` (a function of the other side) with the code at `addr` when its masked
+        instructions are the same there: the toolkit merged it into a neighbour on this side."""
+        if addr in self.functions:return self.functions[addr][2]==other[2]
+        found=self.code(addr,other[0].size)
+        if not found or found[1]!=other[2]:return False
+        self.functions[addr]=(None,)+found
+        return True
 
 
 def monotonic(pairs):
@@ -185,7 +198,13 @@ def pair_functions(a,b):
         for x,c in votes.items():
             if x not in fmap and len(c)==1:
                 y=next(iter(c))
-                if y in b.functions and y not in fmap.values():fmap[x]=y
+                if y not in fmap.values() and (y in b.functions or b.adopt(y,a.functions[x])):fmap[x]=y
+        # A function the sibling's toolkit merged into the one before it sits at the same offset.
+        sa=sorted(a.functions)
+        for p,x in zip(sa,sa[1:]):
+            if p in fmap and x not in fmap:
+                y=fmap[p]+x-p
+                if y not in fmap.values() and b.adopt(y,a.functions[x]):fmap[x]=y
         fmap=monotonic(fmap.items())
         if len(fmap)==before and not added:break
     return fmap
@@ -412,7 +431,11 @@ def main():
     for s in a.symbols:
         t=smap.get(id(s))
         if t is None:report.append(('symbol',s.name,'0x%08X'%s.addr,'-','unmapped'));continue
-        size=b_size.get(t,s.size) if s.kind=='function' else s.size
+        size=s.size
+        if s.kind=='function' and s.addr in a.functions:
+            # The rev0 extent where the masked code is the same there, else the toolkit's.
+            same=b.code(t,s.size)
+            if not same or same[1]!=a.functions[s.addr][2]:size=b_size.get(t,s.size)
         ported.append((s.section,t,size,s.line(t,size)))
         report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'mapped' if size==s.size else 'mapped, size 0x%X'%size))
     lines=merge(b.symbols,ported)
