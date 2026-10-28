@@ -479,7 +479,7 @@ static S32 Ready(BinkSnd* snd)
         {
             end = P->wrapat;
             MyAXSetVoiceEndAddr(P, end);
-            P->wrapat = avail;
+            P->wrapat = 0;
             P->writepos = P->aram;
         }
 
