@@ -8,6 +8,7 @@ struct _zEntHangable;
 struct _zMovePoint;
 struct _zPlatform;
 struct st_zEntVillain;
+struct zScene;
 
 struct ShaggyGuts
 {
@@ -81,7 +82,10 @@ S32 Shaggy2_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* to
 S32 Shaggy2Plat_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
 void Shaggy1_SetHangable(_zEnt* ent, _zEntHangable* hang);
 void Shaggy1_PlayerUpdate(_zEnt* shag, _xScene* sc, F32 dt);
+void Shaggy1_ChooseThrowTarget(_zEnt* ent);
 void zEntShaggy_Init(st_zEntVillain* ent);
+void zEntShaggy_SceneStart(zScene* sc);
+void zEntShaggy_SceneReset();
 void zEntShaggy_UpdateDep();
 U32 zEntIsShaggy(_zEnt* ent);
 F32 zEntShaggy_GetSpin(_zEnt* ent);

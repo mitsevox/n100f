@@ -15,11 +15,76 @@ extern int __double_huge[];
 #define NAN (*(float*)__float_nan)
 #define HUGE_VAL (*(double*)__double_huge)
 
+#define __HI(x) (*(int*)&x)
+#define __LO(x) (*(1 + (int*)&x))
+
+#define FP_NAN 1
+#define FP_INFINITE 2
+#define FP_ZERO 3
+#define FP_NORMAL 4
+#define FP_SUBNORMAL 5
+
+static inline int __fpclassifyf(float x)
+{
+    switch ((*(int*)&x) & 0x7f800000) {
+    case 0x7f800000:
+        if ((*(int*)&x) & 0x007fffff)
+            return FP_NAN;
+        else
+            return FP_INFINITE;
+        break;
+    case 0:
+        if ((*(int*)&x) & 0x007fffff)
+            return FP_SUBNORMAL;
+        else
+            return FP_ZERO;
+        break;
+    }
+    return FP_NORMAL;
+}
+
+static inline int __fpclassifyd(double x)
+{
+    switch (__HI(x) & 0x7ff00000) {
+    case 0x7ff00000:
+        if ((__HI(x) & 0x000fffff) || (__LO(x) & 0xffffffff))
+            return FP_NAN;
+        else
+            return FP_INFINITE;
+        break;
+    case 0:
+        if ((__HI(x) & 0x000fffff) || (__LO(x) & 0xffffffff))
+            return FP_SUBNORMAL;
+        else
+            return FP_ZERO;
+        break;
+    }
+    return FP_NORMAL;
+}
+
+#define fpclassify(x) \
+    (sizeof(x) == sizeof(float) ? __fpclassifyf((float)(x)) : __fpclassifyd((double)(x)))
+#define isnan(x) (fpclassify(x) == FP_NAN)
+#define isinf(x) (fpclassify(x) == FP_INFINITE)
+#define isfinite(x) (fpclassify(x) > FP_INFINITE)
+#define signbit(x) ((int)(__HI(x) & 0x80000000))
+
+
+double atan(double x);
 double atan2(double y, double x);
+double copysign(double x, double y);
+double frexp(double x, int* exp);
+double ldexp(double x, int exp);
+double modf(double x, double* iptr);
+double nextafter(double x, double y);
+double pow(double x, double y);
 float atanf(float x);
 double cos(double x);
+double sin(double x);
 float cosf(float x);
+double pow(double x, double y);
 float sinf(float x);
+double tan(double x);
 
 #ifdef __cplusplus
 }

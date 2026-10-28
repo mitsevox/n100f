@@ -5,6 +5,7 @@
 #include "xBase.h"
 #include "xVec3.h"
 
+struct _xScene;
 struct xSpline3;
 
 struct p2MovePointAsset : p2BaseAsset
@@ -35,7 +36,14 @@ struct _xMovePoint : xBase
 
 typedef struct _xMovePoint xMovePoint;
 
+void xMovePointInit(xMovePoint* m, p2MovePointAsset* asset);
+void xMovePointSave(xMovePoint* ent, xSerial* s);
+void xMovePointLoad(xMovePoint* ent, xSerial* s);
 void xMovePointReset(xMovePoint* m);
+void xMovePointSetup(xMovePoint* m, _xScene* sc);
+void xMovePointSplineSetup(xMovePoint* m);
 void xMovePointSplineDestroy(xMovePoint* m);
+F32 xMovePointGetNext(const xMovePoint* m, const xMovePoint* prev, xMovePoint** next, xVec3* hdng);
+xVec3* xMovePointGetPos(const xMovePoint* m);
 
 #endif
