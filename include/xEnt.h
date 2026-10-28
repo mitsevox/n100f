@@ -204,6 +204,10 @@ U32 xEntIsVisible(_xEnt* ent);
 void xEntDefaultBoundUpdate(_xEnt* ent, xVec3* pos);
 void xEntSetMaterialMul(_xEnt* ent, F32 r, F32 g, F32 b);
 void xEntBeginUpdate(_xEnt* ent, _xScene* sc, F32 dt);
+void xEntRender(_xEnt* ent);
+void xEntMotionToMatrix(_xEnt* ent, _xEntFrame* frame);
+void xEntBeginCollide(_xEnt* ent, _xScene* sc, F32 dt);
+void xEntEndCollide(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntEndUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 
 inline void xEntShow(_xEnt* ent)

@@ -4,6 +4,9 @@
 #include "xBase.h"
 #include "xVec3.h"
 
+struct _xEnt;
+struct _xScene;
+
 struct _zVolume;
 
 struct zGustAsset : p2BaseAsset
@@ -28,5 +31,6 @@ struct _zGust : xBase
 _zGust* zGustGetGust(U16 n);
 S32 zGustEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b);
 void zGustUpdateFX(F32 seconds);
+void zGustUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* gdata);
 
 #endif
