@@ -77,6 +77,11 @@ inline void xVec3Sub(xVec3* o, const xVec3* a, const xVec3* b)
 
 F32 xVec3Normalize(xVec3* o, const xVec3* v);
 
+inline F32 xVec3Dot(const xVec3* a, const xVec3* b)
+{
+    return a->x * b->x + a->y * b->y + a->z * b->z;
+}
+
 inline void xVec3Cross(xVec3* o, const xVec3* a, const xVec3* b)
 {
     xVec3 temp;
