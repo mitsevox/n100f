@@ -66,7 +66,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xScrFx.cpp	xserializer.cpp	0x80039C90	0x80039C90	single cut by data references	1
 .text	xserializer.cpp	xShadow.cpp	0x8003AD40	0x8003AD40	single cut by data references	0
 .text	xShadow.cpp	xSnd.cpp	0x8003CD24	0x8003CD24	alignment only (6 cuts tie on data)	0
-.text	xSnd.cpp	xSpline.cpp	0x8003D5C0	0x8003D680	open: 1 unassigned functions (1 joined by references)	0
+.text	xSnd.cpp	xSpline.cpp	0x8003D680	0x8003D680	closed by references (1 functions joined; was open: 1 unassigned functions)	0
 .text	xSpline.cpp	xstransvc.cpp	0x8003F904	0x8003F904	alignment only (2 cuts tie on data)	0
 .text	xstransvc.cpp	xString.cpp	0x80040978	0x80040978	alignment only (2 cuts tie on data)	0
 .text	xString.cpp	xSurface.cpp	0x80040EE4	0x80040EE4	alignment only (4 cuts tie on data)	0
@@ -237,7 +237,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .rodata	xpkrsvc.cpp	xsavegame.cpp	0x80193B38	0x80193B38	single aligned candidate	0
 .rodata	xsavegame.cpp	xserializer.cpp	0x80193E90	0x80193E90	single aligned candidate	0
 .rodata	xserializer.cpp	xShadow.cpp	0x80193EA8	0x80193EA8	single aligned candidate	0
-.rodata	xShadow.cpp	xSpline.cpp	0x80193EE8	0x80193EF8	open: 1 items loaded by unassigned functions	0
+.rodata	xShadow.cpp	xSnd.cpp	0x80193EE8	0x80193EE8	single aligned candidate	0
+.rodata	xSnd.cpp	xSpline.cpp	0x80193EF8	0x80193EF8	single aligned candidate	0
 .rodata	xSpline.cpp	xstransvc.cpp	0x80193F08	0x80193F08	single aligned candidate	0
 .rodata	xstransvc.cpp	xTRC.cpp	0x80193F60	-	single aligned candidate; a side left unsplit	0
 .rodata	xTRC.cpp	zActionLine.cpp	-	0x801960D8	single aligned candidate; a side left unsplit	0
@@ -439,8 +440,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	xsavegame.cpp	xScene.cpp	0x80260148	0x80260148	single aligned candidate	0
 .sdata2	xScene.cpp	xScrFx.cpp	0x80260150	0x80260150	single aligned candidate	0
 .sdata2	xScrFx.cpp	xShadow.cpp	0x80260188	0x80260188	single aligned candidate	0
-.sdata2	xShadow.cpp	xSnd.cpp	0x80260260	-	single aligned candidate; a side left unsplit	0
-.sdata2	xSnd.cpp	xSpline.cpp	-	0x80260280	open: 1 items loaded by unassigned functions; a side left unsplit	0
+.sdata2	xShadow.cpp	xSnd.cpp	0x80260260	0x80260260	single aligned candidate	0
+.sdata2	xSnd.cpp	xSpline.cpp	0x80260280	0x80260280	single aligned candidate	0
 .sdata2	xSpline.cpp	xstransvc.cpp	0x802602F0	0x802602F0	single aligned candidate	0
 .sdata2	xstransvc.cpp	xTRC.cpp	0x80260310	-	single aligned candidate; a side left unsplit	0
 .sdata2	xTRC.cpp	xutil.cpp	-	0x802603A8	single aligned candidate; a side left unsplit	0
