@@ -2,6 +2,7 @@
 
 #include "iMath.h"
 #include "xAnim.h"
+#include "xEvent.h"
 #include "xMath.h"
 #include "xMemMgr.h"
 #include "xScene.h"
@@ -10,6 +11,63 @@
 #include "zScene.h"
 
 #include <string.h>
+
+enum en_RBS_STAGE
+{
+    RBS_STAGE_PRELIGHT = 4000,
+    RBS_STAGE_OUTBOUND,
+    RBS_STAGE_INBOUND
+};
+
+// Redbeard's thrown sword.
+struct st_REDBEARD_SWORD : _xEnt
+{
+    S32 flg_stat;
+    en_RBS_STAGE stage;
+    U32 aid_mdlFile;
+    RpAtomic* mdlFile;
+    st_zEntVillain* rbvil;
+    xModelInstance* mdl_animsword;
+    _xEntFrame raw_frame;
+    _xEntCollis raw_collis;
+    _xEnt* ent_colchk[5];
+    F32 tym_age;
+    F32 dst_far;
+    F32 spd_fly;
+    _xVec3 dir_end;
+    _xVec3 pos_end;
+};
+
+
+// Settings for one villain subtype.
+struct st_ZVIL_NPCTYPE_LOOKUP
+{
+    S32 enabled;
+    F32 decay;
+    F32 ds2_atpos;
+    F32 strength;
+    F32 inv_mass;
+    S32 dmg_give;
+    F32 dst_noisy;
+    F32 rad_bound;
+    _xVec3 vec_bndoff;
+    F32 rad_bound2;
+    _xVec3 vec_bnd2off;
+    S32 ability;
+    S32 abl_atak;
+    S32 abl_dtct;
+    S32 abl_move;
+    S32 abl_spyk;
+    S32 abl_vuln;
+    en_NPC_PERSONALITIES typ_person;
+    U8 flg_physics;
+    U8 pad[3];
+    U8 flg_chk;
+    U8 flg_pen;
+    U8 flg_chkby;
+    U8 flg_penby;
+};
+
 
 static xAnimTable* VANM_mktable_STD();
 static xAnimTable* VANM_mktable_GANG();
@@ -31,8 +89,141 @@ static en_NPC_ANIMSTATES VANM_randset(st_zEntVillain* ent, F32* wts,
 static xAnimTransition* VANM_findtran(st_zEntVillain* ent, xAnimTable* table, xAnimState* from,
                                       xAnimState* to, S32 autoslamit, xAnimTransition** newtran);
 static xAnimSingle* VANM_entSingle(const _zEnt* ent);
+static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum);
+static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter);
+
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt);
 static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
+
+static void zVIL_tag_verts(st_zEntVillain* ent);
+static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo);
+
+static S32 VILN_std_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                         en_BEHAVIOUR_GOAL goal);
+static S32 VILN_std_query(st_zEntVillain* vil, en_ZVIL_QUERY query);
+static S32 VILN_std_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                             xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp);
+static S32 VILN_std_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                           st_STIMULUS_CONTEXT_DATA* resp);
+static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt,
+                          st_STIMULUS_CONTEXT_DATA* resp);
+static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                             st_STIMULUS_CONTEXT_DATA* resp);
+static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt);
+static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
+static S32 VILN_std_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* resp);
+static S32 VILN_std_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot);
+
+// Per-subtype villain settings, indexed by the asset subtype (en_zEntVillainSubTypeID). Only the
+// members up to the bound offset have initial values.
+static st_ZVIL_NPCTYPE_LOOKUP g_npcTable[eEntVillainType_NoMore + 1] = {
+    // eEntVillainTypeBat
+    { 1, 1.0f, 0.3f, 1.0f, 2.0f, 1, 8.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeBlackKnight
+    { 1, -1.0f, 0.3f, -1.0f, 1.0f, 1, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeBuckMasters
+    { 1, 2.0f, 1.0f, 2.0f, 0.7f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeCreeper
+    { 1, 2.0f, 1.0f, 3.0f, 0.4f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeSeaCreature
+    { 1, 2.0f, 1.0f, 2.0f, 0.2f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeGargoyle
+    { 1, 2.0f, 1.0f, -1.0f, 0.5f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeGhost
+    { 1, 2.0f, 0.5f, 0.5f, 2.0f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeGhostDiver
+    { 1, 2.0f, 1.0f, 1.0f, 0.5f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeGreenGhost
+    { 1, 2.0f, 0.5f, -1.0f, 1.0f, 1, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeHeadlessSpecter
+    { 1, 2.0f, 1.0f, 0.3f, 1.0f, 1, 12.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypePhantom
+    { 1, -1.0f, 0.5f, 1.0f, 1.0f, 1, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeRedbeard
+    { 1, -1.0f, 0.5f, 1.0f, 1.0f, 1, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeRobot
+    { 1, 2.0f, 1.0f, 1.0f, 0.3f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeScarecrow
+    { 1, 2.0f, 1.0f, -0.5f, 0.7f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShark
+    { 1, -1.0f, 1.0f, 5.0f, 1.0f, 1, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeSpaceKook
+    { 1, 2.0f, 1.0f, -1.0f, 0.6f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeTarMonster
+    { 1, 2.0f, 1.0f, -1.0f, 0.3f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeWitch
+    { 1, -1.0f, 0.01f, -1.0f, 0.9f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeWitchDoctor
+    { 1, 2.0f, 1.0f, -1.0f, 0.7f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeWolfman
+    { 1, 2.0f, 1.0f, 0.5f, 0.7f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeZombie
+    { 1, 2.0f, 1.0f, 1.0f, 0.6f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeCrab
+    { 1, 1.0f, 0.5f, 0.2f, 1.0f, 1, 10.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeRat
+    { 1, 1.0f, 0.5f, 0.2f, 1.0f, 1, 12.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeFlyingFish
+    { 1, -1.0f, 0.5f, 0.2f, 1.0f, 1, 12.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeSpider
+    { 1, 1.0f, 0.5f, 0.2f, 1.0f, 1, 10.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeHand
+    { 1, 1.0f, 0.5f, 0.2f, 1.0f, 1, 10.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeKillerPlant
+    { 1, -1.0f, 0.5f, 0.2f, 1.0f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeBird
+    { 1, 1.0f, 0.5f, 0.2f, 1.0f, 1, 12.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy0
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy1
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy2
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy3
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy4
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy5
+    { 1, -1.0f, 0.4f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy6
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy7
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy8
+    { 1, -1.0f, 0.3f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy9
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeFred
+    { 1, -1.0f, 0.5f, -1.0f, -1.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeDaphne
+    { 1, -1.0f, 0.5f, -1.0f, -1.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeVelma
+    { 1, -1.0f, 0.5f, -1.0f, -1.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainBossBlackKnight
+    { 1, 3.0f, 0.5f, 1.0f, 1.0f, 1, 100.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainBossGreenGhost
+    { 1, 3.0f, 0.3f, 1.0f, 1.0f, 1, 100.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainBossRedbeard
+    { 1, 3.0f, 0.5f, 1.0f, 1.0f, 1, 100.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainBossMastermind
+    { 1, 3.0f, 0.5f, 1.0f, 1.0f, 1, 100.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainCaptainMoody
+    { 1, 2.0f, 0.5f, 2.0f, 1.0f, 1, 25.0f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainCaveMan
+    { 1, 2.0f, 0.5f, 3.0f, 0.4f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainHolly
+    { 1, -1.0f, 0.5f, 0.0f, 0.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainGroundsKeeper
+    { 1, -1.0f, 0.5f, 0.0f, 0.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainProfessor
+    { 1, -1.0f, 0.5f, 0.0f, 0.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainType_NoMore
+    { 0 },
+};
+
+// Redbeard's swords.
+static st_REDBEARD_SWORD g_rbsword[4];
+
 
 // Hash of each animation state name, filled in at startup; the index is en_NPC_ANIMSTATES.
 static U32 g_anamhash[ZVIL_ANIM_NOMORE] = { 0 };
@@ -120,6 +311,691 @@ xAnimTable* zEntVillain_AnimTable_Standard()
 {
     return VANM_mktable_STD();
 }
+
+// Reads one of the villain's flag groups from its subtype's settings; the allow group reads as 0.
+static S32 VILN_std_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL)
+{
+    S32 result = 0;
+
+    switch (flaggroup)
+    {
+    case ZVIL_FGRP_PHYS:
+        result = g_npcTable[vil->asset->subtype].flg_physics;
+        break;
+    case ZVIL_FGRP_CHK:
+        result = g_npcTable[vil->asset->subtype].flg_chk;
+        break;
+    case ZVIL_FGRP_PEN:
+        result = g_npcTable[vil->asset->subtype].flg_pen;
+        break;
+    case ZVIL_FGRP_CHKBY:
+        result = g_npcTable[vil->asset->subtype].flg_chkby;
+        break;
+    case ZVIL_FGRP_PENBY:
+        result = g_npcTable[vil->asset->subtype].flg_penby;
+        break;
+    case ZVIL_FGRP_ABLE:
+        result = g_npcTable[vil->asset->subtype].ability;
+        break;
+    case ZVIL_FGRP_ATAK:
+        result = g_npcTable[vil->asset->subtype].abl_atak;
+        break;
+    case ZVIL_FGRP_DTCT:
+        result = g_npcTable[vil->asset->subtype].abl_dtct;
+        break;
+    case ZVIL_FGRP_MOVE:
+        result = g_npcTable[vil->asset->subtype].abl_move;
+        break;
+    case ZVIL_FGRP_SPYK:
+        result = g_npcTable[vil->asset->subtype].abl_spyk;
+        break;
+    case ZVIL_FGRP_VULN:
+        result = g_npcTable[vil->asset->subtype].abl_vuln;
+        break;
+    case ZVIL_FGRP_ALOW:
+        break;
+    }
+
+    return result;
+}
+
+
+// Handles the villain's notices: on prepare, sets up its model vertex tags; on precalc, refreshes
+// its precalculated data once it is in normal mode or later.
+static S32 VILN_std_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS_CONTEXT_DATA*)
+{
+    switch (note)
+    {
+    case ZVIL_NOTE_PREPARE:
+        zVIL_tag_verts(vil);
+        break;
+    case ZVIL_NOTE_PRECALC:
+        if (vil->mode >= ZVIL_MODE_NORMAL) zVIL_precalc(vil, 0xF);
+        break;
+    case ZVIL_NOTE_OLDTIME:
+        break;
+    }
+
+    return 1;
+}
+
+
+// When a soaped villain with ability bit 20 has bumped into something, it bounces its knockback
+// velocity off it. Nothing is returned.
+static S32 VILN_std_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA*)
+{
+    _xVec3 vec_accum = { 0.0f, 0.0f, 0.0f };
+    S32 yep = VSUP_accum_collide(vil, &vec_accum);
+
+    if (yep && vil->goal == ZVIL_GOAL_SOAPED && (vil->ability & 0x100000))
+    {
+        VSUP_cheap_reflect(&vil->vec_knocked, &vec_accum);
+    }
+}
+
+
+// Draws the villain's gum blob, when it has one.
+static S32 VILN_std_xtrarend(st_zEntVillain* vil)
+{
+    if (vil->mdl_gumBlob) xModelRender(vil->mdl_gumBlob);
+    return 1;
+}
+
+// Render callback: draws the entity with back faces culled, then turns culling off again.
+static void VILN_KookRender(_xEnt* ent)
+{
+    RwRenderStateSet(rwRENDERSTATECULLMODE, (void*)rwCULLMODECULLBACK);
+    xEntRender(ent);
+    RwRenderStateSet(rwRENDERSTATECULLMODE, (void*)rwCULLMODECULLNONE);
+}
+
+// The killer plant can attack only when bit 3 of its allow flags and bit 0 of its player flags
+// are set; any other question gets the standard answer.
+static S32 VILN_kp_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+    S32 result;
+
+    switch (query)
+    {
+    case ZVIL_Q_CANATTACK:
+        if (!(vil->allow & 0x8))
+        {
+            result = 0;
+        }
+        else if (!(prec->flg_plyr & 0x1))
+        {
+            result = 0;
+        }
+        else
+        {
+            result = 1;
+        }
+        break;
+    default:
+        result = VILN_std_query(vil, query);
+        break;
+    }
+
+    return result;
+}
+
+
+// Small creatures (bats, crabs, rats, flying fish, birds) read flag groups the standard way.
+static S32 VILN_crit_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                          en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// Small creatures (bats, crabs, rats, flying fish, birds) answer queries the standard way.
+static S32 VILN_crit_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) handle game events the standard way.
+static S32 VILN_crit_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                              xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) react to notices the standard way.
+static S32 VILN_crit_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                            st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_notice(vil, note, resp);
+}
+
+
+// Small creatures (bats, crabs, rats, flying fish, birds) sense the player the standard way.
+static S32 VILN_crit_aware(st_zEntVillain* vil, _xScene* scn, F32 dt,
+                           st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_aware(vil, scn, dt, resp);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) react to stimuli the standard way.
+static S32 VILN_crit_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                              st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_stimulus(vil, stimctxt, resp);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) change goals the standard way.
+static S32 VILN_crit_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    return VILN_std_trangoal(vil, stimctxt, dt);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) move the standard way.
+static S32 VILN_crit_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    return VILN_std_calcmove(vil, scn, dt, frame);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) respond to stimuli the standard way.
+static S32 VILN_crit_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_respond(vil, resp);
+}
+
+
+// Small creatures (bats, crabs, rats, flying fish, birds) pick animations the standard way.
+static S32 VILN_crit_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot)
+{
+    return VILN_std_pickanim(vil, goal, gspot);
+}
+
+// The shark reads flag groups the standard way.
+static S32 VILN_shark_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                           en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The shark answers queries the standard way.
+static S32 VILN_shark_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The shark handles game events the standard way.
+static S32 VILN_shark_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                               xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The shark changes goals the standard way.
+static S32 VILN_shark_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    return VILN_std_trangoal(vil, stimctxt, dt);
+}
+
+// The shark has nothing extra to do here; this always succeeds.
+static S32 VILN_shark_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*)
+{
+    return 1;
+}
+
+// The shark has nothing extra to do here; this always succeeds.
+static S32 VILN_shark_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// The Shaggy villain types read flag groups the standard way.
+static S32 VILN_shag_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                          en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Shaggy villain types answer queries the standard way.
+static S32 VILN_shag_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The Shaggy villain types handle game events the standard way.
+static S32 VILN_shag_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                              xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The Shaggy villain types react to notices the standard way.
+static S32 VILN_shag_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                            st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_notice(vil, note, resp);
+}
+
+
+// The Shaggy villain types sense the player the standard way.
+static S32 VILN_shag_aware(st_zEntVillain* vil, _xScene* scn, F32 dt,
+                           st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_aware(vil, scn, dt, resp);
+}
+
+// The Shaggy villain types react to stimuli the standard way.
+static S32 VILN_shag_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                              st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_stimulus(vil, stimctxt, resp);
+}
+
+// The Shaggy villain types change goals the standard way.
+static S32 VILN_shag_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    return VILN_std_trangoal(vil, stimctxt, dt);
+}
+
+// The Shaggy villain types move the standard way.
+static S32 VILN_shag_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    return VILN_std_calcmove(vil, scn, dt, frame);
+}
+
+// The Shaggy villain types respond to stimuli the standard way.
+static S32 VILN_shag_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_respond(vil, resp);
+}
+
+
+// The Shaggy villain types pick animations the standard way.
+static S32 VILN_shag_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot)
+{
+    return VILN_std_pickanim(vil, goal, gspot);
+}
+
+// Shaggy villain type 5 reads flag groups the standard way.
+static S32 VILN_shagM_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                           en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// Shaggy villain type 5 answers queries the standard way.
+static S32 VILN_shagM_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// Shaggy villain type 5 handles game events the standard way.
+static S32 VILN_shagM_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                               xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// Shaggy villain type 5 reacts to notices the standard way.
+static S32 VILN_shagM_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                             st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_notice(vil, note, resp);
+}
+
+
+// Shaggy villain type 5 has nothing extra to do here; this always succeeds.
+static S32 VILN_shagM_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// Shaggy villain type 5 asks for no particular animation and sets its play speed to 0.97.
+static S32 VILN_shagM_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT)
+{
+    vil->anim_playnext = ZVIL_ANIM_UNKNOWN;
+    vil->anim_playing = 0;
+    vil->anim_loopmult = 0.97f;
+    return 1;
+}
+
+
+// Fred, Daphne, Velma, Holly, the groundskeeper and the professor read flag groups the standard
+// way.
+static S32 VILN_gang_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                          en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// Fred, Daphne, Velma, Holly, the groundskeeper and the professor answer queries the standard way.
+static S32 VILN_gang_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// Fred, Daphne, Velma, Holly, the groundskeeper and the professor handle game events the standard
+// way.
+static S32 VILN_gang_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                              xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// Fred, Daphne, Velma, Holly, the groundskeeper and the professor have nothing extra to do here;
+// this always succeeds.
+static S32 VILN_gang_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// When Fred changes animation, his first model part gets flag bits 1 and 0 set, and his second
+// part has bit 0 set only while he plays the gang boss action.
+static S32 VILN_gang_animtran(st_zEntVillain* vil, xAnimTransition* tran, xAnimSingle*)
+{
+    xModelInstance* minst = vil->model;
+    S32 idx = 0;
+
+    if (vil->asset->subtype != eEntVillainTypeFred) return 1;
+
+    while (minst)
+    {
+        switch (idx)
+        {
+        case 0:
+            minst->Flags |= 0x2;
+            minst->Flags |= 0x1;
+            break;
+        case 1:
+            if (tran->Dest->ID == g_anamhash[ZVIL_ANIM_GANG_BOSSACTION])
+            {
+                minst->Flags |= 0x1;
+            }
+            else
+            {
+                minst->Flags &= ~0x1;
+            }
+            break;
+        }
+        minst = minst->Next;
+        idx++;
+    }
+
+    return 1;
+}
+
+
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights read flag groups
+// the standard way.
+static S32 VILN_sham_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                          en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights answer queries the
+// standard way.
+static S32 VILN_sham_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights handle game events
+// the standard way.
+static S32 VILN_sham_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                              xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights react to notices
+// the standard way.
+static S32 VILN_sham_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                            st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_notice(vil, note, resp);
+}
+
+
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights have nothing extra
+// to do here; this always succeeds.
+static S32 VILN_sham_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// The Black Knight boss reads flag groups the standard way.
+static S32 VILN_BBK_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Black Knight boss answers queries the standard way.
+static S32 VILN_BBK_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The Black Knight boss has nothing extra to do here; this always succeeds.
+static S32 VILN_BBK_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// When the Black Knight boss changes animation, his first model part has flag bit 0 cleared during
+// the shock skeleton animation and bits 1 and 0 set otherwise, and his second part the reverse.
+static S32 VILN_BBK_animtran(st_zEntVillain* vil, xAnimTransition* tran, xAnimSingle*)
+{
+    xModelInstance* minst = vil->model;
+    S32 idx;
+
+    idx = 0;
+    while (minst)
+    {
+        switch (idx)
+        {
+        case 0:
+            if (tran->Dest->ID == g_anamhash[ZVIL_ANIM_BK_SHOCKSKEL])
+            {
+                minst->Flags &= ~0x1;
+            }
+            else
+            {
+                minst->Flags |= 0x2;
+                minst->Flags |= 0x1;
+            }
+            break;
+        case 1:
+            if (tran->Dest->ID == g_anamhash[ZVIL_ANIM_BK_SHOCKSKEL])
+            {
+                minst->Flags |= 0x2;
+                minst->Flags |= 0x1;
+            }
+            else
+            {
+                minst->Flags &= ~0x1;
+            }
+            break;
+        }
+        minst = minst->Next;
+        idx++;
+    }
+
+    return 1;
+}
+
+
+// The Green Ghost boss reads flag groups the standard way.
+static S32 VILN_BGG_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Green Ghost boss answers queries the standard way.
+static S32 VILN_BGG_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The Green Ghost boss handles game events the standard way.
+static S32 VILN_BGG_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                             xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The Green Ghost boss has nothing extra to do here; this always succeeds.
+static S32 VILN_BGG_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// The Redbeard boss reads flag groups the standard way.
+static S32 VILN_BRB_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Redbeard boss answers queries the standard way.
+static S32 VILN_BRB_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The Redbeard boss handles game events the standard way.
+static S32 VILN_BRB_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                             xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The Redbeard boss has nothing extra to do here; this always succeeds.
+static S32 VILN_BRB_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// The Redbeard boss draws the model of his first sword when its status bit 2 is set.
+static S32 VILN_BRB_xtrarend(st_zEntVillain*)
+{
+    st_REDBEARD_SWORD* rbs = &g_rbsword[0];
+    if (rbs->flg_stat & 0x4) xModelRender(rbs->model);
+    return 1;
+}
+
+
+// The Mastermind boss reads flag groups the standard way.
+static S32 VILN_BMM_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Mastermind boss answers whether the player is too close (within a squared distance of 9)
+// and whether he can attack (bit 3 of his allow flags); any other question gets the standard
+// answer.
+static S32 VILN_BMM_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+    S32 result;
+
+    switch (query)
+    {
+    case ZVIL_Q_PLYRTOOCLOSE:
+        if (prec->ds2_VtoP < 9.0f)
+        {
+            result = 1;
+        }
+        else
+        {
+            result = 0;
+        }
+        break;
+    case ZVIL_Q_CANATTACK:
+        if (vil->allow & 0x8)
+        {
+            result = 1;
+        }
+        else
+        {
+            result = 0;
+        }
+        break;
+    default:
+        result = VILN_std_query(vil, query);
+        break;
+    }
+
+    return result;
+}
+
+// The Mastermind boss turns the push-button event into the push-button stimulus, unless he is set
+// up with more than one hit point and is down to his last; other events are handled the standard
+// way.
+static S32 VILN_BMM_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                             xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    S32 result;
+
+    switch (toEvent)
+    {
+    case eEventBossMMPushButton:
+        if (vil->vilcfg.hitpts > 1)
+        {
+            if (vil->hitpts > 1)
+            {
+                resp->stim = ZVIL_STIM_MMPUSHBUTTON;
+            }
+        }
+        else
+        {
+            resp->stim = ZVIL_STIM_MMPUSHBUTTON;
+        }
+        result = 1;
+        break;
+    case eEventNPCDetectOn:
+    case eEventNPCDetectOff:
+    case eEventNPCChaseOn:
+    case eEventNPCChaseOff:
+    default:
+        result = VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+        break;
+    }
+
+    return result;
+}
+
+
+// Sets up a model tag for each of the villain's configured vertex positions that is not zero, and
+// marks it in flg_vert.
+static void zVIL_tag_verts(st_zEntVillain* ent)
+{
+    _xVec3* tmp_pos;
+    S32 i;
+
+    for (i = 0; i < 12; i++)
+    {
+        tmp_pos = &ent->vilcfg.pos_verts[i];
+        if (xVec3Length2(tmp_pos))
+        {
+            iModelTagSetup(&ent->tag_vert[i], ent->model->Data, tmp_pos->x, tmp_pos->y,
+                           tmp_pos->z);
+            ent->flg_vert |= 1 << i;
+            xSceneID2Name(globals.sceneCur, ent->id);
+        }
+        else
+        {
+            xSceneID2Name(globals.sceneCur, ent->id);
+        }
+    }
+}
+
 
 // Builds the Black Knight's animation table: patrol, shock, attack and gloat states.
 static xAnimTable* VANM_mktable_BK()
@@ -2119,4 +2995,23 @@ static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
     {
         wts[i] *= fac;
     }
+}
+
+// Flips each component of out that points against the matching component of alter.
+static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
+{
+    if (alter->x < 0.0f && out->x > 0.0f)
+        out->x *= -1.0f;
+    else if (alter->x > 0.0f && out->x < 0.0f)
+        out->x *= -1.0f;
+
+    if (alter->y < 0.0f && out->y > 0.0f)
+        out->y *= -1.0f;
+    else if (alter->y > 0.0f && out->y < 0.0f)
+        out->y *= -1.0f;
+
+    if (alter->z < 0.0f && out->z > 0.0f)
+        out->z *= -1.0f;
+    else if (alter->z > 0.0f && out->z < 0.0f)
+        out->z *= -1.0f;
 }
