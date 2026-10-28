@@ -127,6 +127,8 @@ xAnimTransition* xAnimTableNewTransition(xAnimTable* table, char* source, char* 
                                          F32 blendRecip, U16* blendOffset);
 void xAnimTableAddTransition(xAnimTable* table, xAnimTransition* tran, char* source);
 xAnimState* xAnimTableGetStateID(xAnimTable* table, U32 ID);
+void xAnimTableAddFile(xAnimTable* table, xAnimFile* file, char* states);
+xAnimState* xAnimTableAddFileID(xAnimTable* table, xAnimFile* file, U32 stateID);
 xAnimState* xAnimTableGetState(xAnimTable* table, char* name);
 xAnimEffect* xAnimStateNewEffect(xAnimState* state, U32 flags, F32 startTime, F32 endTime,
                                  U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*),
