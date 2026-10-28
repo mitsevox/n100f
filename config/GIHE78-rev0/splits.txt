@@ -331,7 +331,9 @@ flat/xShadow.cpp:
 	.sdata2     start:0x80260188 end:0x80260260
 
 flat/xSnd.cpp:
-	.text       start:0x8003CD24 end:0x8003D5C0
+	.text       start:0x8003CD24 end:0x8003D680
+	.rodata     start:0x80193EE8 end:0x80193EF8
+	.sdata2     start:0x80260260 end:0x80260280
 
 flat/xSpline.cpp:
 	.text       start:0x8003D680 end:0x8003F904
@@ -747,6 +749,12 @@ gc/iAnim.cpp:
 	.bss        start:0x80239028 end:0x8023B3C8
 	.sdata      start:0x8025E5C0 end:0x8025E5C8
 	.sdata2     start:0x80262040 end:0x80262070
+
+gc/iSnd.cpp:
+	.text       start:0x800D84A0 end:0x800DB168
+	.bss        start:0x8023B3C8 end:0x8023CF90
+	.sbss       start:0x8025F170 end:0x8025F1A8
+	.sdata2     start:0x80262070 end:0x802620B8
 
 gc/iFMV.cpp:
 	.text       start:0x800DB168 end:0x800DBDA8
