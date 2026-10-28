@@ -1,21 +1,7 @@
 #include "zEntTrigger.h"
 #include "xEvent.h"
 #include "zScene.h"
-
-struct _xIsect
-{
-    U32 flags;
-    F32 penned;
-    F32 contained;
-    F32 lapped;
-    xVec3 point;
-    xVec3 norm;
-    F32 dist;
-};
-
-void iBoxIsectVec(const _xBox*, const xVec3*, _xIsect*);
-extern "C" void fn_8000D99C(const xSphere*, const xVec3*, _xIsect*);
-extern "C" void fn_8000D42C(const _xCylinder*, const xVec3*, _xIsect*);
+#include "iMath3.h"
 
 void zEntTriggerUpdate(zEntTrigger* trig, _xScene* scene, F32 dt);
 S32 zEntTriggerEventCB(xBase* from, xBase* to, U32 toEvent, F32* param, xBase* widget);
@@ -80,7 +66,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 sphere.center = tasset->p[0];
                 sphere.r = tasset->p[1].x;
                 _xIsect isect;
-                fn_8000D99C(&sphere, pos, &isect);
+                iSphereIsectVec(&sphere, pos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }
@@ -91,7 +77,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 cylinder.r = tasset->p[1].x;
                 cylinder.h = tasset->p[1].y;
                 _xIsect isect;
-                fn_8000D42C(&cylinder, pos, &isect);
+                iCylinderIsectVec(&cylinder, pos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }
@@ -101,7 +87,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 sphere.center = tasset->p[0];
                 sphere.r = tasset->p[1].x;
                 _xIsect isect;
-                fn_8000D99C(&sphere, pos, &isect);
+                iSphereIsectVec(&sphere, pos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }
