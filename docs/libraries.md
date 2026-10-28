@@ -18,16 +18,20 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 
 The 89 RenderWare units in `config/GIHE78-rev0/rw_units.tsv` are listed NonMatching, one `RWLib` per library. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated; `RWLib` uses GC/1.3.2, the game's release. `cflags_rw` sets the established settings: `-O4`, `-char signed`, no contraction (expressed as `-fp_contract off`) and no `-use_lmw_stmw on`. `-lang=c` and `-common off` are carried over from `docs/compiler_profile/rw.flags`; they are not established, because the probe stimuli have no globals and do not test the language mode, and they are to be confirmed when RenderWare data is split. The rest are the base flags, which are not established either ([compiler profile](compiler_profile/README.md#renderware)). The probe covered `rwcore` only; the 23 exact `rpworld` functions below now support the same profile for the world library, and the other plugins take it on the assumption that one build produced the whole SDK. Never use leaked RenderWare source for them.
 
+### RenderWare SDK names and headers
+
+This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcore.h`, `rpworld.h`, `rphanim.h` and `rpskin.h`). Identifier names, and layouts checked against the target, may come from bfbb's `include/rwsdk/` headers, which are copies of the RenderWare SDK headers. By the project owner's decision, SDK macro bodies and enums may also be copied from there (2026-10-28, n100f#74), each credited in [CREDITS.md](../CREDITS.md) with its local changes. Nothing else is copied: no RenderWare function code, comments or other header text. A name or layout no allowed source gives stays opaque or is written from the target (for example a bare enum value with an evidence row), never filled in from recollection of the SDK, and leaked RenderWare source is never used.
+
 ### Reconstructed RenderWare sources
 
-`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Identifier names, and layouts checked against the target, may come from bfbb's `include/rwsdk/` headers, which are copies of the RenderWare SDK headers (names only, by the project owner's decision; no code, comments or header text is copied). The units stay NonMatching (data is not split), and 43 of their functions compile to the target bytes with every relocation resolving to the target's symbol:
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. The units stay NonMatching (data is not split), and 43 of their functions compile to the target bytes with every relocation resolving to the target's symbol:
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |
 | `rwsdk/src/plcore/bavector.c` | 7 of 10 | `VectorMultVector` (register allocation and scheduling), `_rwSqrt` and `_rwInvSqrt` (see below) |
 | `rwsdk/src/plcore/rwstring.c` | 3 of 5 | `StrChr`, `StrRChr` (register allocation) |
 | `rwsdk/src/plcore/baerr.c` | 3 of 3 | |
-| `rwsdk/src/plcore/bafsys.c` | 3 of 4 | `_rwFileSystemOpen`, not written: it stores MSL stdio functions that are still address labels |
+| `rwsdk/src/plcore/bafsys.c` | 3 of 4 | `_rwFileSystemOpen`, not written yet: it stores MSL stdio functions, which were address labels when the unit was imported and are now named (`fopen`, `fread`, `fgets`, `fputs`, `feof`) |
 | `rwsdk/src/plcore/resmem.c` | 4 of 4 | |
 | `rwsdk/world/basector.c` | 6 of 6 | |
 | `rwsdk/world/bamateri.c` | 7 of 8 | the function at `0x8014CFC8`, which opens the light module ([RenderWare limits](splits.md#limits-2)) |
@@ -40,7 +44,7 @@ Structure layouts come from the SLUS-20349 DWARF where it has the type (game cod
 - `VectorMultVector` computes `x * right + y * up` for all three components before adding the `at` terms and storing: the target loads `right.y`, `right.z`, `up.y` and `up.z` before the first store. The source does the same, but the register allocation still differs.
 
 
-The flags are shown compatible with the target, not established. MSL is one profile for the whole library: the twelve imported units match under GC/1.3 with `-inline auto,deferred` and `-char signed`, six of them differ under GC/1.3.2, and none needs GC/1.3.2. Each later MSL import reconfirms the profile on its own unit.
+The flags are shown compatible with the target, not established. MSL is one profile for the whole library: the 52 imported units match under GC/1.3 with `-inline auto,deferred`, `-char signed` and `-fp_contract on`, twelve of them differ under GC/1.3.2, and none needs GC/1.3.2. Ten of the fdlibm units need `-fp_contract on` (fused multiply-add), and every other MSL unit compiles identically with it on or off. Each later MSL import reconfirms the profile on its own unit.
 
 Bink is ProDG (SN Systems GCC) code, built through `tools/prodg_cc.py`. `fft.c` compiles to its unit under every ProDG version from 3.5 to 3.9.3, and Ooura's FFT compiles to none of its functions under CodeWarrior, so the family is established but the version is not. `cflags_bink` is likewise shown compatible, not established: it rests on `fft.c` only. `ProDG/3.5` is the only version the wrapper supports; the first import whose code separates the versions settles it.
 
@@ -55,19 +59,60 @@ CARD is the SDK's debug build ([splits.md](splits.md#card)). `cflags_card` compi
 | `Runtime.PPCEABI.H/__va_arg.c` | GC/1.3.2 (with `cflags_runtime`, 1.3 differs and 1.3.2 through 2.7 are identical; with `-char signed` added, 1.3 also matches) | none | C |
 | `Runtime.PPCEABI.H/global_destructor_chain.c` | GC/1.3.2 (1.3 also matches) | `.dtors`, `.sbss` | C |
 | `Runtime.PPCEABI.H/runtime.c` | GC/1.3.2 (1.3 also matches) | `.rodata` | asm functions, each with an `assembly` row in `evidence.tsv` |
+| `Runtime.PPCEABI.H/GCN_mem_alloc.c` | GC/1.3.2 (1.3 and 2.0 also match) | `.rodata` | C |
 | `TRK_MINNOW_DOLPHIN/` `mainloop.c`, `nubevent.c`, `nubinit.c`, `msg.c`, `serpoll.c`, `usr_put.c`, `dispatch.c`, `msghndlr.c`, `mutex_TRK.c`, `notify.c`, `mem_TRK.c`, `main_TRK.c`, `targcont.c`, `target_options.c` | GC/1.3 | each unit's `.rodata`, `.data` and `.bss`, as `data` rows in `evidence.tsv` | C |
 | `MSL_C.PPCEABI.bare.H/abort_exit.c` | GC/1.3 (msl profile) | `.bss`, `.sbss` | C |
 | `MSL_C.PPCEABI.bare.H/alloc.c` | GC/1.3 (msl profile) | `.rodata`, `.bss`, `.sbss` | C |
+| `MSL_C.PPCEABI.bare.H/ansi_files.c` | GC/1.3 (msl profile) | `.data`, `.bss` | C |
+| `MSL_C.PPCEABI.bare.H/ansi_fp.c` | GC/1.3 (msl profile) | `.rodata`, `.data`, `.sdata2` | C |
 | `MSL_C.PPCEABI.bare.H/arith.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/buffer_io.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/char_io.c` | GC/1.3 (msl profile) | none | C |
 | `MSL_C.PPCEABI.bare.H/ctype.c` | GC/1.3 (msl profile) | `.data` | C |
+| `MSL_C.PPCEABI.bare.H/direct_io.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/e_acos.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/e_asin.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/e_atan2.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/e_exp.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/e_fmod.c` | GC/1.3 (msl profile) | `.rodata` | C |
+| `MSL_C.PPCEABI.bare.H/e_pow.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/e_rem_pio2.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/file_io.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/FILE_POS.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/k_cos.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/k_rem_pio2.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/k_sin.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/k_tan.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/math_ppc.c` | GC/1.3 (msl profile) | none | C |
 | `MSL_C.PPCEABI.bare.H/mbstring.c` | GC/1.3 (msl profile) | `.sdata2` | C |
 | `MSL_C.PPCEABI.bare.H/mem.c` | GC/1.3 (msl profile) | none | C |
 | `MSL_C.PPCEABI.bare.H/mem_funcs.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/misc_io.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/printf.c` | GC/1.3 (msl profile) | `.rodata`, `.data`, `.sdata`, `.sdata2` | C |
 | `MSL_C.PPCEABI.bare.H/qsort.c` | GC/1.3 (msl profile) | none | C |
 | `MSL_C.PPCEABI.bare.H/rand.c` | GC/1.3 (msl profile) | `.sdata` | C |
+| `MSL_C.PPCEABI.bare.H/s_atan.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_copysign.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/s_cos.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_floor.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_frexp.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_ldexp.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_modf.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/s_nextafter.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/s_sin.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/s_tan.c` | GC/1.3 (msl profile) | `.sdata2` | C |
+| `MSL_C.PPCEABI.bare.H/scanf.c` | GC/1.3 (msl profile) | `.rodata`, `.data` | C |
 | `MSL_C.PPCEABI.bare.H/string.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata` | C |
 | `MSL_C.PPCEABI.bare.H/strtold.c` | GC/1.3 (msl profile) | `.rodata`, `.sdata2` | C |
 | `MSL_C.PPCEABI.bare.H/strtoul.c` | GC/1.3 (msl profile) | `.data` | C |
+| `MSL_C.PPCEABI.bare.H/uart_console_io.c` | GC/1.3 (msl profile) | `.sbss` | C |
+| `MSL_C.PPCEABI.bare.H/w_acos.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/w_asin.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/w_atan2.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/w_exp.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/w_fmod.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/w_pow.c` | GC/1.3 (msl profile) | none | C |
+| `MSL_C.PPCEABI.bare.H/wchar_io.c` | GC/1.3 (msl profile) | none | C |
 | `TRK_MINNOW_DOLPHIN/` `flush_cache.c`, `targimpl.c`, `dolphin_trk.c`, `mpc_7xx_603e.c`, `dolphin_trk_glue.c` | GC/1.3 | `data` rows in `evidence.tsv` | C, and asm functions, each with an `assembly` row in `evidence.tsv` |
 | `TRK_MINNOW_DOLPHIN/targsupp.s` | assembled | none | assembly, with an `assembly` row per stub |
 | `TRK_MINNOW_DOLPHIN/__exception.s` | assembled | none | assembly (the exception vector table), with an `assembly` row |
@@ -87,7 +132,7 @@ Library headers declare only what the reconstructed units use, as game headers d
 | `include/dolphin/` | Dolphin SDK public headers under the SDK's names (`dolphin/os.h` and its `dolphin/os/*.h` parts, `dolphin/db.h`, `dolphin/si.h`, ...), each created by the first import that needs it. The SDK's base types are in `dolphin/types.h`. |
 | `include/libc/` | MSL C headers, shared with game code (`ctype.h`, `eof.h`, `errno.h`, `float.h`, `limits.h`, `locale.h`, `math.h`, `mem_funcs.h`, `pool_alloc.h`, `stdarg.h`, `stddef.h`, `stdio.h`, `stdlib.h`, `string.h`) |
 | `include/runtime/` | Runtime library headers (`NMWException.h`) |
-| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_sdk` for `dolphin/dvd/__dvd.h` and `dolphin/gx/__gx.h`, `cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`, `cflags_card` for `dolphin/card/__card.h`, `cflags_msl` for `MSL_C.PPCEABI.bare.H/ansi_fp.h` and `scanf.h`) |
+| `src/<library>/` | Private headers of one library, next to its source, included as `"<library>/<header>"` through an `-i src` path in that library's flags (`cflags_sdk` for `dolphin/dvd/__dvd.h` and `dolphin/gx/__gx.h`, `cflags_trk` for `TRK_MINNOW_DOLPHIN/trk.h`, `cflags_card` for `dolphin/card/__card.h`, `cflags_msl` for `MSL_C.PPCEABI.bare.H/ansi_files.h`, `ansi_fp.h`, `buffer_io.h`, `char_io.h`, `direct_io.h`, `fdlibm.h`, `file_io.h` and `scanf.h`) |
 
 Dolphin SDK code uses the SDK's type names. The runtime and MSL use plain C types. Game code keeps `types.h`.
 
@@ -119,7 +164,7 @@ The CARD source is ac-decomp's, revised against the target (CREDITS.md, "Dolphin
 
 No public decompilation supplies Bink source this project can import:
 
-- bfbb (`d8e8eac`) has the same Bink build (see [Bink units](splits.md#bink-units)), but 10 of its 15 Bink files are empty and the rest are unfinished. Its `src/bink/include/bink.h`, `radbase.h` and `rad3d.h` are RAD Game Tools' SDK headers (`radbase.h` carries RAD's copyright string), and its `binkread.c` embeds RAD's logo movie as `LogoData`. bfbb's CC0 dedication cannot cover RAD's material, so none of it is copied.
+- bfbb (`d8e8eac`) has the same Bink build (see [Bink units](splits.md#bink-units)), but 10 of its 15 Bink files are empty and the rest are unfinished. Its `src/bink/include/bink.h`, `radbase.h` and `rad3d.h` are RAD Game Tools' SDK headers (`radbase.h` carries RAD's copyright string), and its `binkread.c` embeds RAD's logo movie as `LogoData`. bfbb's CC0 dedication cannot cover RAD's material, so none of its code, header text or movie data is copied. The exception is bfbb's own `binkngc.c` and `binkngc.h`, which carry no RAD material: `binkngc.c` here follows them for the memory functions, as CREDITS.md records. The project owner allowed names-only use of `bink.h`'s struct and field names: the Bink headers keep this project's own names, and each type and field row in `evidence.tsv` gives the `bink.h` name it corresponds to ([Bink SDK names](../CREDITS.md#bink-sdk-names)).
 - tssm (`fc32870`) has a Bink header and no Bink source.
 
 `bink/src/sdk/fft.c` is Takuya Ooura's general-purpose FFT package (`fftsg.c`) built for `float`: the function names match, and nine functions of the current release (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`) compile to the target unchanged apart from the type. Five Bink functions (`cftrec1`, `cftrec2`, `cftexp1`, `cftexp2`, `cftfx42`) follow the package's pre-2006 structure and are fitted to the target. The licence on Ooura's FFT page allows use, copying, modification and distribution of modified code for any purpose, on condition that modified code refers to the package. His notice is in CREDITS.md, not in the source, as the project owner decided. `src/bink/src/sdk/fft.c` reproduces the unit's whole `.text` and its `.rodata` under every ProDG version from 3.5 to 3.9.3, so it does not settle the version either. It is `Matching`: the link resolves its calls to the MSL float wrappers (`atanf`, `cosf` and `sinf`, `0x800F38F8`, `0x800F38D4` and `0x800F38B0`) by name, and the MSL import names them.
@@ -139,6 +184,21 @@ No public decompilation supplies Bink source this project can import:
 - `FastmIDCT8x8WithMotion` adds each output pixel to an 8-byte-stride motion block. It has the same register allocation and spill differences as `fastidct8x8`.
 
 The 8 zero bytes between `fft.c`'s `.rodata` and the tables (`0x801A8E18`-`0x801A8E20`) are unassigned. The object's `.rodata` has 4-byte alignment, so the tables will not land at `0x801A8E20` until the source or the split accounts for those bytes.
+
+`bink/src/sdk/decode/ngc/binkngc.c` is a `NonMatching` partial reconstruction of Bink's GameCube platform layer: the 64-bit multiply and divide helpers, the timers and the memory hooks. `radmemset16`, `RADSetMemory`, `radmalloc`, `radfree`, `RADSetAudioMemory`, `radaudiomalloc` and `radaudiofree` compile to the target byte for byte under ProDG 3.5 to 3.9.3, and so does the unit's `.sdata` (`0x8025E6F8`-`0x8025E710`). Three details of the source come from the target:
+
+- The time base reads (`mftbu`, `mftb`, `mftbu`, retried while the upper halves differ) and the four `cntlzw` instructions in `mult64anddiv` and `div64` are inline `asm`. GCC has no C form for `mftb`, and it emits `cntlzw` from C only with extra instructions the target lacks. The project owner approved inline asm for exactly these two instructions, with a `source-form` row in `evidence.tsv` for each use.
+- `div64` and `ReadTimeBase` are plain (non-static) `inline` functions defined before their callers. GCC 2.95 inlines only a function it has already seen, and emits the out-of-line copies at the end of the file, which is where the target has them.
+- The statics are written with an explicit `= 0`, which places them in `.sdata` rather than `.sbss`, and the file-scope hooks are defined just before `RADSetMemory`, so that `RADTimerRead`'s function-scope `starttime` comes first, as in the target.
+
+Nine functions still differ. `mult64anddiv`, `mult64andshift` and `div64` build their 64-bit products and differences in registers that are not consecutive pairs (`mulhwu`/`mullw` and `subfc`/`subfe` into unrelated registers), which GCC's `DImode` values never do, so the original likely wrote them as assembly; no C form tried reproduces them, and any further asm needs the owner's approval first. `RADTimerRead`, the four cycle-timer functions and `ReadTimeBase` have the target's shape, within one instruction of its length, but allocate registers differently around the time base reads and the 64-bit arithmetic.
+
+`bink/src/sdk/decode/ngc/ngcfile.c` is Bink's GameCube file reader: it streams a movie from the disc through a read-ahead buffer with asynchronous DVD reads, or reads it directly when no buffer is set. It is this project's own reconstruction from the target, and its whole `.text` compiles to the unit under every ProDG version from 3.5 to 3.9.3, byte for byte once the relocations are resolved. The reader's state block is declared in `include/bink/binkio.h` as `BinkIO`, with project names; its rows give the matching `BINKIO` names from RAD's `bink.h` ([Bink SDK names](../CREDITS.md#bink-sdk-names)). Four details of the source come from the target:
+
+- `intelendian` swaps each word with `lwbrx`, written as one inline `asm` statement, since GCC 2.95 has no C form for the instruction.
+- The `BinkIO` counters and three private fields are `volatile`; for all but `idle_time` and `bg_time` the target reloads them after each store or keeps their accesses in order (the volatile row lists which access decides each).
+- `memmove` is declared in the file and `string.h` is not included. The `crclr 6` before `memcpy` and `memset` comes from GCC's builtins for them, so compatible prototypes or none give the same bytes; `string.h`'s `size_t` prototypes conflict with the builtins.
+- `BinkFileReadFrame` uses one scratch local for three short-lived values, `BinkFileIdle`'s switch names the three DVD states it ignores, and `BinkFileSetInfo` masks the size at each use. Each changes the register allocation or the code layout, as the `source-form` rows in `evidence.tsv` record.
 
 `bink/src/sdk/decode/binkacd.c`, Bink's audio decoder, is this project's own reconstruction from the target and is `NonMatching`. Seven of its eight functions compile to the target byte for byte under ProDG 3.5 to 3.9.3, and so do its `.rodata` (`0x801A8730`-`0x801A8790`) and `.data` (`rlelens`, `bandtopfreq` and `invertbins`, `0x801DC240`-`0x801DC380`). `quanttos16chans2` has the target's instructions except that the loop counter and the second channel's offset swap registers, which adds one `mr`; the cause is not established. Four details of the source come from the target's code:
 

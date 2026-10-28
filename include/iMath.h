@@ -5,7 +5,10 @@
 
 #define iabs(x) (float)(__fabs((float)x))
 
-F32 iurand();
+void iMathInit();
+void iMathExit();
+void isrand(U32 seed);
 U32 irand();
+F32 iurand();
 
 #endif

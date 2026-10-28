@@ -10,6 +10,8 @@ extern "C" {
 
 typedef int (*_compare_function)(const void*, const void*);
 
+void* malloc(size_t size);
+void free(void* ptr);
 int abs(int n);
 int rand(void);
 int atoi(const char* str);
