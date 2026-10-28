@@ -4,6 +4,7 @@
 #include "xModel.h"
 #include "xString.h"
 #include "xMath.h"
+#include "xMathInlines.h"
 #include "iMath.h"
 #include "zEntHangable.h"
 #include "zMovePoint.h"
@@ -1911,9 +1912,7 @@ void Shaggy1_ChooseThrowTarget(_zEnt* ent)
             }
             dx = nearpt.x - ((xMat4x3*)globals.player.ent.model->Mat)->pos.x;
             dz = nearpt.z - ((xMat4x3*)globals.player.ent.model->Mat)->pos.z;
-            dx *= dx;
-            dz *= dz;
-            throwdist = sqrtf(dx + dz);
+            throwdist = sqrtf(SQ(dx) + SQ(dz));
             globals.player.Shaggy1.ThrowTgtAdjust = 1;
             globals.player.Shaggy1.ThrowTgtSpeed = throwdist / hangtime;
         }
