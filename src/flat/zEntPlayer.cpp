@@ -267,26 +267,31 @@ static void HeadcollUpdate(F32 dt)
 static void HeadbuttTest(_xCollis* coll, _xCollis* endcoll, F32 angle_cosine,
                          S32 (*headbuttCB)(_zEnt*, _xCollis*))
 {
-    F32 sinr;
-    F32 cosr;
+    _zEnt* ent = &globals.player.ent;
+    F32 dx;
+    F32 dz;
+    F32 mag;
+    _zEnt* villent;
+    F32 dx2;
+    F32 dz2;
 
-    if ((globals.player.ent.model->Anim->Single->State->UserFlags & 0x1E) != 0xC)
+    if ((ent->model->Anim->Single->State->UserFlags & 0x1E) != 0xC)
     {
         return;
     }
-    sinr = sin(globals.player.ent.frame->rot.angle);
-    cosr = cos(globals.player.ent.frame->rot.angle);
+    dx = sin(ent->frame->rot.angle);
+    dz = cos(ent->frame->rot.angle);
     for (; coll < endcoll; coll++)
     {
-        if (fabsf(coll->hdng.z) < 0.7071f)
+        villent = (_zEnt*)coll->optr;
+        if (fabsf(coll->hdng.y) < 0.7071f)
         {
-            _xEnt* hit = (_xEnt*)coll->optr;
-            F32 dx = hit->frame->mat.pos.x - ((xMat4x3*)globals.player.ent.model->Mat)->pos.x;
-            F32 dz = hit->frame->mat.pos.z - ((xMat4x3*)globals.player.ent.model->Mat)->pos.z;
-            F32 dist = sqrtf(dx * dx + dz * dz);
-            if (dist > 0.0000001f && sinr * dx + cosr * dz > angle_cosine * dist)
+            dx2 = villent->frame->mat.pos.x - ((xMat4x3*)ent->model->Mat)->pos.x;
+            dz2 = villent->frame->mat.pos.z - ((xMat4x3*)ent->model->Mat)->pos.z;
+            mag = sqrtf(dx2 * dx2 + dz2 * dz2);
+            if (mag > 0.0000001f && dx * dx2 + dz * dz2 > angle_cosine * mag)
             {
-                if (headbuttCB((_zEnt*)&globals.player.ent, coll))
+                if (headbuttCB(ent, coll))
                 {
                     return;
                 }
