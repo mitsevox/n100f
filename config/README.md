@@ -36,11 +36,6 @@ For a `name` claim, `target` requires explicit target name evidence; behavior al
 `inferred`. Record the function's extent in a separate `function` row so a name claim cannot silently
 establish its boundaries. Types and fields likewise need their own evidence.
 
-A `function` row whose exact body was written for this project, rather than taken from a related build,
-says so with the phrase `written for this project` in its evidence. The phrase is reserved:
-`tools/splits/recover.py` reads it to keep such a body out of its name anchors, because the body matches
-but its name came from position. Use it only for that, and always for that.
-
 Edge claims other than `-` belong to `function`, `data`, `unit`, `assembly` and `linker` rows. `exact` means evidence establishes that edge. `provisional` means a candidate edge still needs
 confirmation. `open` marks an anchor with the true start at or before it, or the true end at or after it.
 Use `-` where no edge is claimed. A `unit-anchor` identifies evidence of a source path, not a unit's extent
