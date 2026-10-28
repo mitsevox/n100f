@@ -70,6 +70,12 @@ struct xAnimSingle
     F32 BlendFactor;
 };
 
+struct xAnimTransitionList
+{
+    xAnimTransitionList* Next;
+    xAnimTransition* T;
+};
+
 struct xAnimTransition
 {
     xAnimTransition* Next;
@@ -137,5 +143,7 @@ void xAnimPlaySetState(xAnimSingle* single, xAnimState* state, F32 startTime);
 void xAnimPlaySetup(xAnimPlay* play, void* object, xAnimTable* table, xModelInstance* modelInst);
 xAnimPlay* xAnimPoolAlloc(xMemPool* pool, void* object, xAnimTable* table,
                           xModelInstance* modelInst);
+void xAnimPlayStartTransition(xAnimPlay* play, xAnimTransition* transition);
+xAnimTransition* xAnimTempTransitionAlloc();
 
 #endif
