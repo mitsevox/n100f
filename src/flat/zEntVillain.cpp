@@ -407,9 +407,9 @@ xAnimTable* zEntVillain_AnimTable_Standard()
 }
 
 // Returns the villain in slot idx of the pool.
-st_zEntVillain* zEntVillain_NPCInst(U32 idx)
+st_zEntVillain* zEntVillain_NPCInst(U32 npcidx)
 {
-    return &g_npcpool[idx];
+    return &g_npcpool[npcidx];
 }
 
 // Called when the player is hurt; villains do nothing with it.
