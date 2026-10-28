@@ -19,6 +19,14 @@ The first relink failed its executable hash. The owner approved one symbol-name 
 
 To regenerate the initial toolkit map, remove `symbols.txt` and `splits.txt` locally and configure/build with the patched toolkit and the verified original. Before expecting a byte-identical relink, reapply the documented name-only change from `fn_80005304` to `__start`, retaining the function's other metadata. Regeneration does not recover a source map or establish original names.
 
+## Ported symbols and units
+
+`symbols.txt` and `splits.txt` are now `tools/port_symbols.py GIHE78-rev0 GIHE78-rev1 --write` applied to the initial toolkit map. The tool pairs revision 0 functions with this revision's by their instructions with relocated fields masked, maps data through the addresses the paired code and mapped pointer words resolve to (bytes equal outside pointer words), and carries a unit's section ranges when both edges map. The two `evidence.tsv` rows for the run state what it claims: a ported name or range carries only the claim its revision 0 evidence row records.
+
+At the time of the port: 4,686 of 4,746 functions and 6,585 of 6,709 other symbols mapped; 385 of 399 units ported, 23 of them with revision 0 symbols that have no counterpart here. Left out, because an edge does not map: flat/iDebug.cpp, flat/iFont.cpp, flat/iTime.cpp, flat/zMain.cpp, flat/zMenu.cpp, gc/iMix.c, dolphin/ax/AXVPB.c, dolphin/si/SISamplingRate.c, dolphin/dvd/dvdlow.c, bink binkacd.c, expand.c, popmal.c and fft.c, and rwsdk babinary.c. `python3 tools/port_symbols.py GIHE78-rev0 GIHE78-rev1 --report <file>` lists every symbol and unit.
+
+The ported units compile from the shared source and are measured here, but none links: every Matching declaration still names revision 0 only. To regenerate after revision 0's map changes, restore the initial toolkit map (above), reapply `__start`, and run the tool with `--write`. The `CardData` extract is copied from revision 0 because the ported CARD units include it.
+
 ## Validation
 
 With the pinned native tools and patched toolkit:
@@ -29,4 +37,4 @@ ninja -f build/GIHE78-rev1/build.ninja
 ninja -f build/GIHE78-rev1/build.ninja progress build/GIHE78-rev1/report.json
 ```
 
-The executable check reports `build/GIHE78-rev1/main.dol: OK`. Initial measurement totals are 1,599,360 code bytes, 955,052 data bytes and 4,792 functions in 20 auto-generated units, with zero linked or matched bytes. These are this target's own measurements. Empty category percentages do not indicate recovered source. CI, independent review, owner merge and publication are separate gates.
+The executable check reports `build/GIHE78-rev1/main.dol: OK`. With the ported units, the report measures 1,829 of 4,791 functions (415,008 of 1,607,348 code bytes) matching the shared source, with nothing linked. Initial measurement totals, before the port, were 1,599,360 code bytes, 955,052 data bytes and 4,792 functions in 20 auto-generated units, with zero linked or matched bytes. These are this target's own measurements. Empty category percentages do not indicate recovered source. CI, independent review, owner merge and publication are separate gates.
