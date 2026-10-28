@@ -180,7 +180,7 @@ The Bink unit paths and boundaries in `config/GIHE78-rev0/splits.txt`, the 336 B
 
 ## Bink SDK names
 
-The type and field rows of the Bink headers in `config/GIHE78-rev0/evidence.tsv` cite the struct and field names of RAD Game Tools' Bink SDK header as bfbb carries it (`src/bink/include/bink.h` at [`d8e8eac38dd617ee72161f4cb2da4498bc89aad6`](https://github.com/bfbbdecomp/bfbb/blob/d8e8eac38dd617ee72161f4cb2da4498bc89aad6/src/bink/include/bink.h)), as the project owner allowed. Only the names are used, to say which field each offset is; no RAD code or header text is copied, and the headers in `include/bink/` keep this project's own names. That header is from a different SDK version than this build where its `BINK` and `BINKSND` layouts differ, which the rows say.
+The type and field rows of the Bink headers in `config/GIHE78-rev0/evidence.tsv` cite the struct and field names of RAD Game Tools' Bink SDK header as bfbb carries it (`src/bink/include/bink.h` at [`d8e8eac38dd617ee72161f4cb2da4498bc89aad6`](https://github.com/bfbbdecomp/bfbb/blob/d8e8eac38dd617ee72161f4cb2da4498bc89aad6/src/bink/include/bink.h)), as the project owner allowed. Only the names are used, to say which field each offset is; no RAD code or header text is copied, and the headers in `include/bink/` keep this project's own names.
 
 ## Bink FFT
 
