@@ -2,21 +2,33 @@
 #include "xEvent.h"
 #include "zEnt.h"
 
+static inline void zTimerInit(xBase* b, zTimerAsset* tasset);
+
 void zTimerInit(void* b, void* tasset)
 {
-    xBaseInit((_zTimer*)b, (zTimerAsset*)tasset);
-    ((_zTimer*)b)->eventFunc = zTimerEventCB;
-    ((_zTimer*)b)->tasset = (zTimerAsset*)tasset;
-    if (((_zTimer*)b)->linkCount)
+    zTimerInit((xBase*)b, (zTimerAsset*)tasset);
+}
+
+static inline void zTimerInit(xBase* b, zTimerAsset* tasset)
+{
+    xBaseInit(b, tasset);
+
+    _zTimer* t = (_zTimer*)b;
+
+    t->eventFunc = zTimerEventCB;
+    t->tasset = tasset;
+
+    if (t->linkCount)
     {
-        ((_zTimer*)b)->link = (p2LinkAsset*)(((_zTimer*)b)->tasset + 1);
+        t->link = (p2LinkAsset*)(t->tasset + 1);
     }
     else
     {
-        ((_zTimer*)b)->link = NULL;
+        t->link = NULL;
     }
-    ((_zTimer*)b)->state = 0;
-    ((_zTimer*)b)->secondsLeft = ((zTimerAsset*)tasset)->seconds;
+
+    t->state = 0;
+    t->secondsLeft = tasset->seconds;
 }
 
 void zTimerSave(_zTimer* ent, xSerial* s)

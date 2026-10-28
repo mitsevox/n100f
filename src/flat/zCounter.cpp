@@ -2,21 +2,33 @@
 #include "xEvent.h"
 #include "zEnt.h"
 
+static inline void zCounterInit(xBase* b, zCounterAsset* asset);
+
 void zCounterInit(void* b, void* asset)
 {
-    xBaseInit((_zCounter*)b, (zCounterAsset*)asset);
-    ((_zCounter*)b)->eventFunc = zCounterEventCB;
-    ((_zCounter*)b)->asset = (zCounterAsset*)asset;
-    if (((_zCounter*)b)->linkCount)
+    zCounterInit((xBase*)b, (zCounterAsset*)asset);
+}
+
+static inline void zCounterInit(xBase* b, zCounterAsset* asset)
+{
+    _zCounter* t = (_zCounter*)b;
+
+    xBaseInit(t, asset);
+
+    t->eventFunc = zCounterEventCB;
+    t->asset = asset;
+
+    if (t->linkCount)
     {
-        ((_zCounter*)b)->link = (p2LinkAsset*)(((_zCounter*)b)->asset + 1);
+        t->link = (p2LinkAsset*)(t->asset + 1);
     }
     else
     {
-        ((_zCounter*)b)->link = 0;
+        t->link = 0;
     }
-    ((_zCounter*)b)->state = 0;
-    ((_zCounter*)b)->count = ((zCounterAsset*)asset)->count;
+
+    t->state = 0;
+    t->count = asset->count;
 }
 
 void zCounterReset(xBase* b)

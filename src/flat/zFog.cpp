@@ -2,18 +2,25 @@
 #include "xEvent.h"
 #include "iCamera.h"
 
+static inline void zFogInit(xBase* ent, zFogAsset* tasset);
+
 void zFogInit(void* b, void* tasset)
 {
-    xBaseInit((_zFog*)b, (zFogAsset*)tasset);
-    ((_zFog*)b)->eventFunc = zFogEventCB;
-    ((_zFog*)b)->tasset = (zFogAsset*)tasset;
-    if (((_zFog*)b)->linkCount)
+    zFogInit((xBase*)b, (zFogAsset*)tasset);
+}
+
+static inline void zFogInit(xBase* ent, zFogAsset* tasset)
+{
+    xBaseInit(ent, tasset);
+    ent->eventFunc = zFogEventCB;
+    ((_zFog*)ent)->tasset = tasset;
+    if (ent->linkCount != 0)
     {
-        ((_zFog*)b)->link = (p2LinkAsset*)(((_zFog*)b)->tasset + 1);
+        ent->link = (p2LinkAsset*)(((_zFog*)ent)->tasset + 1);
     }
     else
     {
-        ((_zFog*)b)->link = NULL;
+        ent->link = NULL;
     }
 }
 
@@ -25,6 +32,11 @@ void zFogSave(_zFog* ent, xSerial* s)
 void zFogLoad(_zFog* ent, xSerial* s)
 {
     xBaseLoad(ent, s);
+}
+
+static inline void zFogReset(_zFog* ent)
+{
+    xBaseReset(ent, ent->tasset);
 }
 
 S32 zFogEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
@@ -54,7 +66,7 @@ S32 zFogEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
         iCameraSetFogParams(NULL, 0.0f);
         break;
     case eEventReset:
-        xBaseReset(t, t->tasset);
+        zFogReset(t);
         break;
     }
     return 1;

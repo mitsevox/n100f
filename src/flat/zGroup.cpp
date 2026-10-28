@@ -6,20 +6,28 @@
 
 // Groups list the ids of their members after the asset header; an event sent to a group goes to
 // every member, or to one random member when groupFlags bit 0 is set.
+static inline void zGroupInit(xBase* b, zGroupAsset* asset);
+
 void zGroupInit(void* b, void* asset)
 {
-    xBaseInit((_zGroup*)b, (zGroupAsset*)asset);
-    ((_zGroup*)b)->eventFunc = zGroupEventCB;
-    ((_zGroup*)b)->asset = (zGroupAsset*)asset;
-    if (((_zGroup*)b)->linkCount)
+    zGroupInit((xBase*)b, (zGroupAsset*)asset);
+}
+
+static inline void zGroupInit(xBase* b, zGroupAsset* asset)
+{
+    _zGroup* t = (_zGroup*)b;
+
+    xBaseInit(b, asset);
+    b->eventFunc = zGroupEventCB;
+    t->asset = asset;
+    if (b->linkCount)
     {
-        ((_zGroup*)b)->link =
-            (p2LinkAsset*)((U8*)((_zGroup*)b)->asset + sizeof(zGroupAsset) +
-                           ((zGroupAsset*)asset)->itemCount * sizeof(U32));
+        b->link = (p2LinkAsset*)((U8*)(t->asset) + sizeof(zGroupAsset) +
+                                 asset->itemCount * sizeof(U32));
     }
     else
     {
-        ((_zGroup*)b)->link = NULL;
+        b->link = NULL;
     }
 }
 

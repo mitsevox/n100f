@@ -5,20 +5,29 @@
 #include "iMath.h"
 #include "zScene.h"
 
+static inline void zSFXInit(zSFX* t, zSFXAsset* asset);
+
 void zSFXInit(void* t, void* asset)
 {
-    xBaseInit((zSFX*)t, (zSFXAsset*)asset);
-    ((zSFX*)t)->eventFunc = zSFXEventCB;
-    ((zSFX*)t)->asset = (zSFXAsset*)asset;
-    if (((zSFX*)t)->linkCount)
+    zSFXInit((zSFX*)t, (zSFXAsset*)asset);
+}
+
+static inline void zSFXInit(zSFX* t, zSFXAsset* asset)
+{
+    xBaseInit(t, asset);
+
+    t->eventFunc = zSFXEventCB;
+    t->asset = asset;
+
+    if (t->linkCount)
     {
-        ((zSFX*)t)->link = (p2LinkAsset*)(((zSFX*)t)->asset + 1);
+        t->link = (p2LinkAsset*)(t->asset + 1);
     }
     else
     {
-        ((zSFX*)t)->link = NULL;
+        t->link = 0;
     }
-    ((zSFX*)t)->sndID = 0;
+    t->sndID = 0;
 }
 
 void zSFXSave(zSFX* ent, xSerial* s)
