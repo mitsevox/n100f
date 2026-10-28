@@ -101,10 +101,15 @@ struct _tagPlayerSndFX
 S32 zEntVillain_Headbutt(st_zEntVillain* vil, xVec3* hdng);
 S32 Shaggy8_HBCallback(_zEnt* ent, _xCollis* coll);
 
-static xVec3 headcoll_oses[12];
-static F32 headcoll_bltimes[12];
-xVec3 headcoll_fromos;
-xVec3 headcoll_os;
+static xVec3 headcoll_oses[12] = {
+    { 0.0f, 0.0f, 0.15f },  { 0.0f, 0.0f, 0.15f },   { 0.0f, 0.0f, 0.4f },  { 0.0f, 0.0f, 0.3f },
+    { 0.0f, 1.15f, -0.15f }, { 0.0f, 1.0f, -0.2f },  { 0.0f, 0.9f, 0.45f }, { 0.0f, 0.75f, 0.5f },
+    { 0.0f, 0.9f, -0.25f },  { 0.0f, 0.0f, -0.15f }, { 0.0f, 0.0f, 0.45f }, { 0.0f, 0.0f, 0.5f },
+};
+static F32 headcoll_bltimes[12] = { 0.15f, 0.15f, 0.1f,  0.1f,  0.15f, 0.15f,
+                                    0.15f, 0.15f, 0.15f, 0.15f, 0.15f, 0.15f };
+xVec3 headcoll_fromos = { 0.0f, 0.0f, 0.0f };
+xVec3 headcoll_os = { 0.0f, 0.0f, 0.0f };
 
 static zPlayerSituation sPlayerInfo[37] = {
     { 0, 0, 120.0f, 0.0f, 0.0f, 0, 0 },  { 1, 0, 2.0f, 0.0f, 0.0f, 0, 1 },
