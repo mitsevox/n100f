@@ -2,6 +2,7 @@
 #define XSCENE_H
 
 #include "types.h"
+#include "xBase.h"
 
 // Partial: members up to gravity.
 struct _xScene
@@ -16,5 +17,7 @@ struct _xScene
     U16 num_nact_ents;
     F32 gravity;
 };
+
+xBase* xSceneResolvID(_xScene* sc, U32 id);
 
 #endif

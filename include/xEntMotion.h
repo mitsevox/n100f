@@ -21,7 +21,17 @@ struct p2EntMotionMechData
     F32 post_ret_delay;
 };
 
-// Partial: only the mech member of the union is declared, so sizeof(p2EntMotionAsset)
+struct p2EntMotionERData
+{
+    xVec3 ret_pos;
+    xVec3 ext_dpos;
+    F32 ext_tm;
+    F32 ext_wait_tm;
+    F32 ret_tm;
+    F32 ret_wait_tm;
+};
+
+// Partial: only the er and mech members of the union are declared, so sizeof(p2EntMotionAsset)
 // is not its size.
 struct p2EntMotionAsset
 {
@@ -30,6 +40,7 @@ struct p2EntMotionAsset
     U16 flags;
     union
     {
+        p2EntMotionERData er;
         p2EntMotionMechData mech;
     };
 };

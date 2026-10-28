@@ -26,6 +26,14 @@ struct _xMat4x3
     U32 pad3;
 };
 
+struct _xVec4
+{
+    F32 x;
+    F32 y;
+    F32 z;
+    F32 w;
+};
+
 struct _xQuat
 {
     xVec3 v;
@@ -46,6 +54,7 @@ struct _xRot
 
 typedef struct _xMat3x3 xMat3x3;
 typedef struct _xMat4x3 xMat4x3;
+typedef struct _xVec4 xVec4;
 typedef struct _xQuat xQuat;
 typedef struct _xSphere xSphere;
 typedef struct _xRot xRot;
@@ -59,14 +68,14 @@ inline void xVec3Init(xVec3* v, F32 _x, F32 _y, F32 _z)
     v->z = _z;
 }
 
-F32 xVec3Normalize(xVec3* o, const xVec3* v);
-
 inline void xVec3Sub(xVec3* o, const xVec3* a, const xVec3* b)
 {
     o->x = a->x - b->x;
     o->y = a->y - b->y;
     o->z = a->z - b->z;
 }
+
+F32 xVec3Normalize(xVec3* o, const xVec3* v);
 
 inline F32 xVec3Dot(const xVec3* a, const xVec3* b)
 {
@@ -92,5 +101,6 @@ void xMat4x3MoveLocalRight(xMat4x3* m, F32 mag);
 void xMat4x3MoveLocalUp(xMat4x3* m, F32 mag);
 void xMat4x3MoveLocalAt(xMat4x3* m, F32 mag);
 void xQuatToMat(const xQuat* q, xMat3x3* m);
+void xMat4x3Mul(xMat4x3* o, const xMat4x3* a, const xMat4x3* b);
 
 #endif
