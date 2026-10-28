@@ -18,9 +18,13 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 
 The 89 RenderWare units in `config/GIHE78-rev0/rw_units.tsv` are listed NonMatching, one `RWLib` per library. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated; `RWLib` uses GC/1.3.2, the game's release. `cflags_rw` sets the established settings: `-O4`, `-char signed`, no contraction (expressed as `-fp_contract off`) and no `-use_lmw_stmw on`. `-lang=c` and `-common off` are carried over from `docs/compiler_profile/rw.flags`; they are not established, because the probe stimuli have no globals and do not test the language mode, and they are to be confirmed when RenderWare data is split. The rest are the base flags, which are not established either ([compiler profile](compiler_profile/README.md#renderware)). The probe covered `rwcore` only; the 23 exact `rpworld` functions below now support the same profile for the world library, and the other plugins take it on the assumption that one build produced the whole SDK. Never use leaked RenderWare source for them.
 
+### RenderWare SDK names and headers
+
+This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcore.h`, `rpworld.h`, `rphanim.h` and `rpskin.h`). Identifier names, and layouts checked against the target, may come from bfbb's `include/rwsdk/` headers, which are copies of the RenderWare SDK headers. By the project owner's decision, SDK macro bodies and enums may also be copied from there (2026-10-28, n100f#74), each credited in [CREDITS.md](../CREDITS.md) with its local changes. Nothing else is copied: no RenderWare function code, comments or other header text. A name or layout no allowed source gives stays opaque or is written from the target (for example a bare enum value with an evidence row), never filled in from recollection of the SDK, and leaked RenderWare source is never used.
+
 ### Reconstructed RenderWare sources
 
-`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Identifier names, and layouts checked against the target, may come from bfbb's `include/rwsdk/` headers, which are copies of the RenderWare SDK headers (names only, by the project owner's decision; no code, comments or header text is copied). The units stay NonMatching (data is not split), and 43 of their functions compile to the target bytes with every relocation resolving to the target's symbol:
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. The units stay NonMatching (data is not split), and 43 of their functions compile to the target bytes with every relocation resolving to the target's symbol:
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |

@@ -16,6 +16,9 @@ struct xMemPool
     U32 Total;
 };
 
+extern U32 gActiveHeap;
+
+void* xMemAlloc(U32 heapID, U32 size);
 void* xMemPoolAlloc(xMemPool* pool);
 
 #endif
