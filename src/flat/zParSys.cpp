@@ -166,7 +166,8 @@ S32 zParSysEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toP
 static void zParGroupUpdateR(zParSys* s, _zParGroup* g, F32 dt);
 static inline void zParGroupUpdate(zParSys* s, _zParGroup* g, F32 dt);
 
-// A system first runs its parent chain's commands on each of its groups, root first, then its own.
+// Each active group first runs the parent chain's commands, root first, then this system's own
+// commands while it is alive; every group is then animated.
 void zParSysUpdate(xBase* to, _xScene*, F32 dt)
 {
     zParSys* s = (zParSys*)to;

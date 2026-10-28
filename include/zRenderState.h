@@ -23,7 +23,7 @@ enum _SDRenderState
 
 void zRenderStateSetDstBlendMode(S32 xmode);
 void zRenderStateSetSrcBlendMode(S32 xmode);
-void zRenderStateSetTexture(U32 textureID);
+void zRenderStateSetTexture(U32 assetID);
 void zRenderState(_SDRenderState next);
 
 #endif
