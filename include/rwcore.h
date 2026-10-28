@@ -649,6 +649,62 @@ typedef U16 RwImVertexIndex;
         (vert)->emissiveColor.alpha = a;                                                           \
     } while (0)
 
+typedef struct RxObjSpace3DVertex RxObjSpace3DVertex;
+struct RxObjSpace3DVertex
+{
+    F32 x;
+    F32 y;
+    F32 z;
+    F32 nx;
+    F32 ny;
+    F32 nz;
+    U8 r;
+    U8 g;
+    U8 b;
+    U8 a;
+    F32 u;
+    F32 v;
+};
+
+typedef RxObjSpace3DVertex RxObjSpace3DLitVertex;
+typedef RxObjSpace3DLitVertex RwIm3DVertex;
+
+inline void RwIm3DVertexSetPos(RwIm3DVertex* vert, F32 x, F32 y, F32 z)
+{
+    vert->x = x;
+    vert->y = y;
+    vert->z = z;
+}
+
+inline void RwIm3DVertexSetU(RwIm3DVertex* vert, F32 u)
+{
+    vert->u = u;
+}
+
+inline void RwIm3DVertexSetV(RwIm3DVertex* vert, F32 v)
+{
+    vert->v = v;
+}
+
+inline void RwIm3DVertexSetRGBA(RwIm3DVertex* vert, U8 r, U8 g, U8 b, U8 a)
+{
+    vert->r = r;
+    vert->g = g;
+    vert->b = b;
+    vert->a = a;
+}
+
+enum RwIm3DTransformFlags
+{
+    rwIM3D_VERTEXUV = 1,
+    rwIM3D_ALLOPAQUE = 2,
+    rwIM3D_NOCLIP = 4,
+    rwIM3D_VERTEXXYZ = 8,
+    rwIM3D_VERTEXRGBA = 16,
+    rwIM3DTRANSFORMFLAGSFORCEENUMSIZEINT = 0x7FFFFFFF
+};
+typedef enum RwIm3DTransformFlags RwIm3DTransformFlags;
+
 typedef S32 (*RwStandardFunc)(void* pOut, void* pInOut, S32 nI);
 typedef S32 (*RwSystemFunc)(S32 nOption, void* pOut, void* pInOut, S32 nIn);
 typedef S32 (*RwRenderStateSetFunction)(RwRenderState nState, void* pParam);
@@ -774,6 +830,9 @@ RwImage* RwImageFreePixels(RwImage* image);
 const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict,
                                                     RwTextureCallBack fpCallBack, void* pData);
 S32 RwRenderStateSet(RwRenderState state, void* value);
+void* RwIm3DTransform(RwIm3DVertex* pVerts, U32 numVerts, RwMatrix* ltm, U32 flags);
+S32 RwIm3DEnd(void);
+S32 RwIm3DRenderPrimitive(RwPrimitiveType primType);
 S32 RwEngineRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor initCB,
                            RwPluginObjectDestructor termCB);
 RwMatrix* RwMatrixUpdate(RwMatrix* matrix);

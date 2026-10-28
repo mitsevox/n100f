@@ -120,6 +120,16 @@ inline void xVec3Cross(xVec3* o, const xVec3* a, const xVec3* b)
     *o = temp;
 }
 
+inline void xVec3Lerp(xVec3* o, const xVec3* a, const xVec3* b, F32 t)
+{
+    xVec3 temp;
+
+    temp.x = a->x + (b->x - a->x) * t;
+    temp.y = a->y + (b->y - a->y) * t;
+    temp.z = a->z + (b->z - a->z) * t;
+    *o = temp;
+}
+
 void xMat3x3RotY(xMat3x3* m, F32 t);
 void xMat3x3RotC(xMat3x3* m, F32 _x, F32 _y, F32 _z, F32 t);
 void xMat3x3Euler(xMat3x3* m, F32 yaw, F32 pitch, F32 roll);
