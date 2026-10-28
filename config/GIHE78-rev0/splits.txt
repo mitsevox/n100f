@@ -844,6 +844,10 @@ Runtime.PPCEABI.H/runtime.c:
 	.text       start:0x800E57BC end:0x800E5F4C
 	.rodata     start:0x801A7D90 end:0x801A7DA8
 
+Runtime.PPCEABI.H/GCN_mem_alloc.c:
+	.text       start:0x800E5F4C end:0x800E60BC
+	.rodata     start:0x801A7DA8 end:0x801A7E20
+
 MSL_C.PPCEABI.bare.H/abort_exit.c:
 	.text       start:0x800E60BC end:0x800E6188
 	.bss        start:0x80242798 end:0x80242898
@@ -857,9 +861,14 @@ MSL_C.PPCEABI.bare.H/alloc.c:
 
 MSL_C.PPCEABI.bare.H/ansi_files.c:
 	.text       start:0x800E7350 end:0x800E7650
+	.data       start:0x801CA268 end:0x801CA3A8
+	.bss        start:0x802428D0 end:0x80242BD0
 
 MSL_C.PPCEABI.bare.H/ansi_fp.c:
 	.text       start:0x800E7650 end:0x800E92BC
+	.rodata     start:0x801A7E38 end:0x801A7F18
+	.data       start:0x801CA3A8 end:0x801CA510
+	.sdata2     start:0x80262150 end:0x80262180
 
 MSL_C.PPCEABI.bare.H/arith.c:
 	.text       start:0x800E92BC end:0x800E92CC
@@ -898,6 +907,10 @@ MSL_C.PPCEABI.bare.H/misc_io.c:
 
 MSL_C.PPCEABI.bare.H/printf.c:
 	.text       start:0x800EB0F8 end:0x800ED118
+	.rodata     start:0x801A7F20 end:0x801A7F48
+	.data       start:0x801CA848 end:0x801CAA78
+	.sdata      start:0x8025E5D0 end:0x8025E5D8
+	.sdata2     start:0x80262188 end:0x80262190
 
 MSL_C.PPCEABI.bare.H/qsort.c:
 	.text       start:0x800ED118 end:0x800ED288
@@ -908,6 +921,8 @@ MSL_C.PPCEABI.bare.H/rand.c:
 
 MSL_C.PPCEABI.bare.H/scanf.c:
 	.text       start:0x800ED2A8 end:0x800EE2F0
+	.rodata     start:0x801A7F48 end:0x801A7F70
+	.data       start:0x801CAA78 end:0x801CAB48
 
 MSL_C.PPCEABI.bare.H/string.c:
 	.text       start:0x800EE2F0 end:0x800EE7BC
@@ -925,30 +940,83 @@ MSL_C.PPCEABI.bare.H/strtoul.c:
 
 MSL_C.PPCEABI.bare.H/uart_console_io.c:
 	.text       start:0x800F0098 end:0x800F015C
+	.sbss       start:0x8025F240 end:0x8025F248
 
 MSL_C.PPCEABI.bare.H/wchar_io.c:
 	.text       start:0x800F015C end:0x800F01E4
 
+MSL_C.PPCEABI.bare.H/e_acos.c:
+	.text       start:0x800F01E4 end:0x800F04F4
+	.sdata2     start:0x802621A8 end:0x80262238
+
+MSL_C.PPCEABI.bare.H/e_asin.c:
+	.text       start:0x800F04F4 end:0x800F0758
+	.sdata2     start:0x80262238 end:0x802622D0
+
 MSL_C.PPCEABI.bare.H/e_atan2.c:
 	.text       start:0x800F0758 end:0x800F09E8
+	.sdata2     start:0x802622D0 end:0x80262328
+
+MSL_C.PPCEABI.bare.H/e_exp.c:
+	.text       start:0x800F09E8 end:0x800F0C04
+	.rodata     start:0x801A8338 end:0x801A8368
+	.sdata2     start:0x80262328 end:0x802623A0
 
 MSL_C.PPCEABI.bare.H/e_fmod.c:
 	.text       start:0x800F0C04 end:0x800F0F40
+	.rodata     start:0x801A8368 end:0x801A8378
+
+MSL_C.PPCEABI.bare.H/e_pow.c:
+	.text       start:0x800F0F40 end:0x800F17CC
+	.rodata     start:0x801A8378 end:0x801A83A8
+	.sdata2     start:0x802623A0 end:0x802624B0
+
+MSL_C.PPCEABI.bare.H/e_rem_pio2.c:
+	.text       start:0x800F17CC end:0x800F1B6C
+	.rodata     start:0x801A83A8 end:0x801A8530
+	.sdata2     start:0x802624B0 end:0x80262508
+
+MSL_C.PPCEABI.bare.H/k_cos.c:
+	.text       start:0x800F1B6C end:0x800F1C60
+	.sdata2     start:0x80262508 end:0x80262550
+
+MSL_C.PPCEABI.bare.H/k_rem_pio2.c:
+	.text       start:0x800F1C60 end:0x800F2AB4
+	.rodata     start:0x801A8530 end:0x801A8580
+	.sdata2     start:0x80262550 end:0x80262590
+
+MSL_C.PPCEABI.bare.H/k_sin.c:
+	.text       start:0x800F2AB4 end:0x800F2B54
+	.sdata2     start:0x80262590 end:0x802625C8
+
+MSL_C.PPCEABI.bare.H/k_tan.c:
+	.text       start:0x800F2B54 end:0x800F2D68
+	.rodata     start:0x801A8580 end:0x801A85E8
+	.sdata2     start:0x802625C8 end:0x80262600
+
+MSL_C.PPCEABI.bare.H/s_atan.c:
+	.text       start:0x800F2D68 end:0x800F2F68
+	.rodata     start:0x801A85E8 end:0x801A8680
+	.sdata2     start:0x80262600 end:0x80262628
 
 MSL_C.PPCEABI.bare.H/s_copysign.c:
 	.text       start:0x800F2F68 end:0x800F2F90
 
 MSL_C.PPCEABI.bare.H/s_cos.c:
 	.text       start:0x800F2F90 end:0x800F3064
+	.sdata2     start:0x80262628 end:0x80262630
 
 MSL_C.PPCEABI.bare.H/s_floor.c:
 	.text       start:0x800F3064 end:0x800F31AC
+	.sdata2     start:0x80262630 end:0x80262640
 
 MSL_C.PPCEABI.bare.H/s_frexp.c:
 	.text       start:0x800F31AC end:0x800F3238
+	.sdata2     start:0x80262640 end:0x80262648
 
 MSL_C.PPCEABI.bare.H/s_ldexp.c:
 	.text       start:0x800F3238 end:0x800F33FC
+	.sdata2     start:0x80262648 end:0x80262670
 
 MSL_C.PPCEABI.bare.H/s_modf.c:
 	.text       start:0x800F33FC end:0x800F34F8
@@ -958,9 +1026,32 @@ MSL_C.PPCEABI.bare.H/s_nextafter.c:
 
 MSL_C.PPCEABI.bare.H/s_sin.c:
 	.text       start:0x800F367C end:0x800F3754
+	.sdata2     start:0x80262670 end:0x80262678
 
 MSL_C.PPCEABI.bare.H/s_tan.c:
 	.text       start:0x800F3754 end:0x800F37CC
+	.sdata2     start:0x80262678 end:0x80262680
+
+MSL_C.PPCEABI.bare.H/w_acos.c:
+	.text       start:0x800F37CC end:0x800F37EC
+
+MSL_C.PPCEABI.bare.H/w_asin.c:
+	.text       start:0x800F37EC end:0x800F380C
+
+MSL_C.PPCEABI.bare.H/w_atan2.c:
+	.text       start:0x800F380C end:0x800F382C
+
+MSL_C.PPCEABI.bare.H/w_exp.c:
+	.text       start:0x800F382C end:0x800F384C
+
+MSL_C.PPCEABI.bare.H/w_fmod.c:
+	.text       start:0x800F384C end:0x800F386C
+
+MSL_C.PPCEABI.bare.H/w_pow.c:
+	.text       start:0x800F386C end:0x800F388C
+
+MSL_C.PPCEABI.bare.H/math_ppc.c:
+	.text       start:0x800F388C end:0x800F391C
 
 dolphin/OdemuExi2/DebuggerDriver.c: comment:8
 	.text       start:0x800F391C end:0x800F439C
@@ -1277,9 +1368,11 @@ dolphin/dvd/fstload.c: comment:8
 
 bink/src/sdk/decode/ngc/binkngc.c:
 	.text       start:0x80111EC0 end:0x801123B4
+	.sdata      start:0x8025E6F8 end:0x8025E710
 
 bink/src/sdk/decode/ngc/ngcsnd.c:
 	.text       start:0x801123B4 end:0x80113890
+	.rodata     start:0x801A8680 end:0x801A86B0
 
 bink/src/sdk/decode/binkread.c:
 	.text       start:0x80113890 end:0x801179EC
@@ -1297,6 +1390,8 @@ bink/src/sdk/decode/yuv.cpp:
 
 bink/src/sdk/decode/binkacd.c:
 	.text       start:0x8011F78C end:0x80120470
+	.rodata     start:0x801A8730 end:0x801A8790
+	.data       start:0x801DC240 end:0x801DC380
 
 bink/shared/time/radcb.c:
 	.text       start:0x80120470 end:0x80120B54

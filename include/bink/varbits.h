@@ -6,7 +6,7 @@
 typedef struct VARBITS
 {
     U32* cur;
-    U8 unk04[4];
+    void* start;
     U32 bits;
     U32 bitlen;
 } VARBITS;

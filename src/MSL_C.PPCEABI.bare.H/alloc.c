@@ -564,7 +564,6 @@ static inline void* __pool_alloc(__mem_pool* pool, unsigned long size)
 
 void* __pool_realloc(__mem_pool* pool, void* ptr, size_t size)
 {
-    __mem_pool_obj* pool_obj = (__mem_pool_obj*)pool;
     unsigned long current_size;
     void* newptr;
 
