@@ -383,6 +383,20 @@ def unit_extents(lines):
     return extents
 
 
+# The phrase a `function` row's evidence carries when its exact body was written for this
+# project rather than taken from a related build (config/README.md). Such a body matches
+# the target but carries no name of its own, so the row is not a name anchor.
+OWN_SOURCE_MARKER = 'written for this project'
+
+
+def exact_bodies(rows):
+    """Address -> name for the evidence rows that pin by name: `function` rows with
+    `target`, `exact`, `exact` whose evidence does not carry OWN_SOURCE_MARKER."""
+    return {int(r[1], 16): r[3] for r in rows
+            if r[0] == 'function' and r[4:7] == ['target', 'exact', 'exact']
+            and OWN_SOURCE_MARKER not in r[7]}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--dol', required=True)
@@ -440,9 +454,7 @@ def main():
     # Functions whose bodies evidence.tsv establishes exactly (an exact BfBB body, say).
     # Positional names are left out: they were read off an earlier alignment. That includes
     # an exact body written for this project, whose name the body does not carry.
-    exact = {int(r[1], 16): r[3] for r in csv.reader(open(args.evidence, encoding='utf-8'), delimiter='\t')
-             if r[0] == 'function' and r[4:7] == ['target', 'exact', 'exact']
-             and 'written for this project' not in r[7]}
+    exact = exact_bodies(csv.reader(open(args.evidence, encoding='utf-8'), delimiter='\t'))
     gc_feats = {j: gc_features(dol, r2, f[0], f[1], func_targets[j]) for j, f in enumerate(funcs)}
     ps2_feats = {i: ps2.features(f[0], f[1]) for i, f in enumerate(ps2.funcs)}
     # Calls are features too: a GC call to an exact-body function, and a PS2 jal to
