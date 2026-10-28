@@ -164,7 +164,7 @@ static void* SkinAtomicCopy(void* dstObject, const void* srcObject, S32 offset, 
     return dstObject;
 }
 
-static void SkinAtomicSetType(RpAtomic* atomic, RpSkinType type)
+static RpAtomic* SkinAtomicSetType(RpAtomic* atomic, RpSkinType type)
 {
     RpSkinType attachType;
 
@@ -181,7 +181,7 @@ static void SkinAtomicSetType(RpAtomic* atomic, RpSkinType type)
         attachType = type;
     }
 
-    _rpSkinPipelinesAttach(atomic, attachType);
+    return _rpSkinPipelinesAttach(atomic, attachType);
 }
 
 static S32 SkinAtomicAlways(void* object, S32 offset, S32 size)
@@ -515,4 +515,9 @@ const U32* RpSkinGetVertexBoneIndices(RpSkin* skin)
 const RwMatrix* RpSkinGetSkinToBoneMatrices(RpSkin* skin)
 {
     return skin->skinToBoneMatrices;
+}
+
+RpAtomic* RpSkinAtomicSetType(RpAtomic* atomic, RpSkinType type)
+{
+    return SkinAtomicSetType(atomic, type);
 }
