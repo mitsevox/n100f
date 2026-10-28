@@ -4,7 +4,7 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 
 ## Build configuration
 
-`configure.py` lists every mapped library unit as a `NonMatching` object, so objdiff measures each unit against its split target as soon as its source exists. Each library uses the profile the unit map was placed with (`config/GIHE78/libmap.json` "profiles"):
+`configure.py` lists every mapped library unit as a `NonMatching` object, so objdiff measures each unit against its split target as soon as its source exists. Each library uses the profile the unit map was placed with (`config/GIHE78-rev0/libmap.json` "profiles"):
 
 | Helper | Libraries | Compiler | Flags | Progress category |
 | --- | --- | --- | --- | --- |
@@ -16,7 +16,7 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card` | `sdk` |
 | `RWLib` | `rpcollis`, `rphanim`, `rpmatfx`, `rpskin`, `rpusrdat`, `rpworld`, `rwcore` (`rwsdk/`) | GC/1.3.2 | `cflags_rw` | `renderware` |
 
-The 89 RenderWare units in `config/GIHE78/rw_units.tsv` are listed NonMatching, one `RWLib` per library. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated; `RWLib` uses GC/1.3.2, the game's release. `cflags_rw` sets the established settings: `-O4`, `-char signed`, no contraction (expressed as `-fp_contract off`) and no `-use_lmw_stmw on`. `-lang=c` and `-common off` are carried over from `docs/compiler_profile/rw.flags`; they are not established, because the probe stimuli have no globals and do not test the language mode, and they are to be confirmed when RenderWare data is split. The rest are the base flags, which are not established either ([compiler profile](compiler_profile/README.md#renderware)). The probe covered `rwcore` only; the 23 exact `rpworld` functions below now support the same profile for the world library, and the other plugins take it on the assumption that one build produced the whole SDK. Never use leaked RenderWare source for them.
+The 89 RenderWare units in `config/GIHE78-rev0/rw_units.tsv` are listed NonMatching, one `RWLib` per library. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated; `RWLib` uses GC/1.3.2, the game's release. `cflags_rw` sets the established settings: `-O4`, `-char signed`, no contraction (expressed as `-fp_contract off`) and no `-use_lmw_stmw on`. `-lang=c` and `-common off` are carried over from `docs/compiler_profile/rw.flags`; they are not established, because the probe stimuli have no globals and do not test the language mode, and they are to be confirmed when RenderWare data is split. The rest are the base flags, which are not established either ([compiler profile](compiler_profile/README.md#renderware)). The probe covered `rwcore` only; the 23 exact `rpworld` functions below now support the same profile for the world library, and the other plugins take it on the assumption that one build produced the whole SDK. Never use leaked RenderWare source for them.
 
 ### Reconstructed RenderWare sources
 
@@ -112,7 +112,7 @@ The CARD source is ac-decomp's, revised against the target (CREDITS.md, "Dolphin
 - `DEBUG=1` selects the SDK's debug `os.h`, where `OSPhysicalToCached` and `OSCachedToPhysical` are functions rather than macros. The target calls them, so `include/dolphin/os.h` declares the function forms under `DEBUG`.
 - An assertion's message is its condition as text, so the spacing inside the condition is part of the target's `.data` (`(u32) card->size`). Do not run `clang-format` over these files: it rewrites those conditions.
 - The sources keep functions the linker strips, such as `CARDFastOpen`. With `-str reuse` the compiler pools each object's strings in order of first use, and a stripped function can be the first user of a string that kept code shares (`CARDFastOpen` asserts `0 <= chan && chan < 2` before `CARDOpen` does), so only the full source reproduces each `.data` section. These functions have no code in the target to check them against.
-- `CardData`, the 352-byte DSP program in `CARDUnlock.c`, is binary data. `config/GIHE78/config.yml` extracts it from `main.dol` at build time (`extract`, raw header `dolphin/card/CardData.inc`), and `CARDUnlock.c` includes it, so the bytes are never committed.
+- `CardData`, the 352-byte DSP program in `CARDUnlock.c`, is binary data. `config/GIHE78-rev0/config.yml` extracts it from `main.dol` at build time (`extract`, raw header `dolphin/card/CardData.inc`), and `CARDUnlock.c` includes it, so the bytes are never committed.
 - The Bink logo movie at `0x801CDF48` contains a word that looks like a pointer into CARD's `.data`. Its symbol is marked `noreloc`, so the build does not turn that word into a relocation against a CARD symbol.
 
 ## Bink

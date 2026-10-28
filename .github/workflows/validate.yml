@@ -13,107 +13,31 @@ concurrency:
   group: validate-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-jobs:
-  build:
-    name: Build GIHE78
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    outputs:
-      measured-at: ${{ steps.measure.outputs.measured-at }}
-    permissions:
-      contents: read
-      packages: read
-    container:
-      # Private build environment from mitsevox/n100f-build; holds the original executable.
-      image: ghcr.io/mitsevox/n100f-build@sha256:3473801159a17e96bfceb1d6ad152fa413fee53cb75ad634a70e826c62ced286
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Require a repository contribution branch
-        env:
-          SOURCE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-        run: test "$SOURCE_REPOSITORY" = "$GITHUB_REPOSITORY"
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-      - name: Provide original executable
-        run: cp -a /orig .
-      - name: Configure
-        run: python3 configure.py --dtk /usr/local/bin/dtk --binutils /binutils --compilers /compilers
-      - name: Build, verify complete executable and measure progress
-        id: measure
-        run: |
-          ninja progress build/GIHE78/report.json
-          echo "measured-at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
-      - name: Check ProDG wrapper against the driver
-        # The build above downloaded wibo; the image ships the ProDG compilers.
-        env:
-          PRODG_DIR: /compilers/ProDG/3.5
-          WIBO: build/tools/wibo
-        run: python3 -m unittest -v tests/test_prodg_cc.py
-      - name: Upload progress report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: GIHE78_report
-          path: build/GIHE78/report.json
-          if-no-files-found: error
+env:
+  # PARAMETER 1: the private build image, always by digest (never by tag). The digest is printed
+  # in the image workflow's run summary. The target job runs in it (through the plan job's
+  # `image` output, because a container image cannot read env), and tools/measuring_tools.py
+  # reads this variable to record it as provenance.
+  BUILD_IMAGE: ghcr.io/mitsevox/n100f-build@sha256:502c957567a21fd77283fad6d437ae3b6cf19856a8b456157040b6d36cb83773
 
-  # The shared site's report-v1 package (docs/public_report.md). The site imports it from
-  # successful main runs only, authenticating this job, its steps and this file's Git blob against
-  # its copy of config/GIHE78/producer.json: renaming the job or a step, or any change to this
-  # file, is a policy change that needs the new blob approved there.
-  site-report:
-    name: Site report
-    needs: build
+jobs:
+  plan:
+    name: Plan affected targets
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      actions: read # the previous main run's public-report (the timeline)
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      has_targets: ${{ steps.plan.outputs.has_targets }}
+      # A container image cannot read the env context; the plan job hands BUILD_IMAGE on.
+      image: ${{ env.BUILD_IMAGE }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          fetch-depth: 0
           persist-credentials: false
-      - name: Download verified progress report
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: GIHE78_report
-          path: build/GIHE78
-      - name: Export public report inputs
-        env:
-          GH_TOKEN: ${{ github.token }}
-          MEASURED_AT: ${{ needs.build.outputs.measured-at }}
-        run: |
-          python3 tools/public_report.py inputs --report build/GIHE78/report.json \
-            --measured-at "$MEASURED_AT" --output build/public-input
-          python3 tools/public_report.py metadata --version GIHE78 \
-            --measured-at "$MEASURED_AT" --output build/public-metadata.json
-      - name: Check out pinned site packager
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          repository: mitsevox/mitsevox.github.io
-          ref: 8e52d0078e041718437f101af9a47f4734c38355
-          path: build/site-tools
-          persist-credentials: false
-      - name: Set up site packager runtime
-        uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
-        with:
-          version: '0.12.9'
-      - name: Package and validate public report
-        run: |
-          uv run --locked --project build/site-tools python build/site-tools/tools/package_report.py \
-            --input build/public-input --metadata build/public-metadata.json \
-            --policy config/GIHE78/producer.json --output build/public-report
-      - name: Upload public report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: public-report
-          path: build/public-report/*.json
-          if-no-files-found: error
-          retention-days: 90
-          # The site requires this exact name, so a re-run replaces the earlier attempt's package.
-          overwrite: true
+      - name: Select affected target inputs
+        id: plan
+        run: python3 tools/ci_targets.py
 
   tests:
     name: Tool tests
@@ -123,8 +47,101 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Verify review clearance logic
-        run: node --test tests/review_gate.mjs
-      - name: Run Python tool tests
-        # The ProDG live-driver check needs the build image; the Build GIHE78 job runs it.
-        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Run tool tests
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          python3 tools/targets.py check
+          python3 tools/versions.py check
+          python3 tools/evidence.py check
+      - name: Check the scaffold
+        uses: mitsevox/mitsevox.github.io/.github/actions/scaffold-check@main
+
+  target:
+    name: Validate ${{ matrix.target }}
+    needs: [plan, tests]
+    if: needs.plan.outputs.has_targets == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ${{ needs.plan.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      TARGET_ID: ${{ matrix.target }}
+    steps:
+      - name: Require a repository contribution branch
+        env:
+          SOURCE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+        run: test "$SOURCE_REPOSITORY" = "$GITHUB_REPOSITORY"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Provide target original
+        # PARAMETER 2: the original's path. The image holds /orig/<target id>/sys/main.dol and the
+        # checkout expects orig/<target id>/sys/main.dol (the `object` line of config.yml). The
+        # toolkit refuses an original whose hash differs from config.yml.
+        run: |
+          mkdir -p "orig/$TARGET_ID/sys"
+          cp "/orig/$TARGET_ID/sys/main.dol" "orig/$TARGET_ID/sys/main.dol"
+      - name: Configure target
+        # PARAMETER 3: the configure command. The paths are where the build image installs the tools.
+        run: python3 configure.py --version "$TARGET_ID" --dtk /usr/local/bin/dtk --binutils /binutils --compilers /compilers
+      - name: Build, verify complete executable and measure progress
+        id: measure
+        # PARAMETER 3: the build command. It must fail unless the complete executable matches the
+        # original, and it must write objdiff's report for this target to build/<target id>/report.json.
+        run: |
+          ninja -f "build/$TARGET_ID/build.ninja" progress "build/$TARGET_ID/report.json"
+          echo "measured-at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+      - name: Project checks
+        # The Bink unit builds with ProDG through tools/prodg_cc.py; check the wrapper against the
+        # driver in the build image.
+        env:
+          PRODG_DIR: /compilers/ProDG/3.5
+          WIBO: build/tools/wibo
+        run: python3 -m unittest -v tests/test_prodg_cc.py
+      - name: List measuring tools
+        id: tools
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          delimiter="tools-$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"
+          {
+            echo "lines<<$delimiter"
+            python3 tools/measuring_tools.py
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+      - name: Publish to the site
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: mitsevox/mitsevox.github.io/.github/actions/publish@main
+        with:
+          target: ${{ matrix.target }}
+          report: build/${{ matrix.target }}/report.json
+          tools: ${{ steps.tools.outputs.lines }}
+          measured-at: ${{ steps.measure.outputs.measured-at }}
+          # PARAMETER 4: the variable and secret that hold the App credential (Publishing chapter).
+          app-client-id: ${{ vars.DATA_APP_CLIENT_ID }}
+          app-private-key: ${{ secrets.DATA_APP_PRIVATE_KEY }}
+
+  complete:
+    name: Validate targets
+    needs: [plan, tests, target]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      PLAN: ${{ needs.plan.result }}
+      TESTS: ${{ needs.tests.result }}
+      HAS_TARGETS: ${{ needs.plan.outputs.has_targets }}
+      TARGETS: ${{ needs.target.result }}
+    steps:
+      - name: Require all selected target validations
+        run: |
+          test "$PLAN" = success && test "$TESTS" = success
+          if [ "$HAS_TARGETS" = true ]; then test "$TARGETS" = success; else test "$TARGETS" = skipped; fi
