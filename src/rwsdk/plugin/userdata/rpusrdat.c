@@ -1,7 +1,7 @@
 #include <rpusrdat.h>
 #include <string.h>
 
-#define rwID_USERDATAPLUGIN 0x11F
+#define USERDATA_PLUGIN_ID 0x11F
 
 // The user data arrays an object carries, in the plugin space of each object type.
 typedef struct UserDataList UserDataList;
@@ -45,7 +45,6 @@ static RwStream* UserDataStreamRead(RpUserDataArray* array, RwStream* stream)
 {
     S32 length;
 
-
     if (!RwStreamReadInt32(stream, &length, sizeof(S32)))
     {
         return NULL;
@@ -80,10 +79,8 @@ static RwStream* UserDataStreamRead(RpUserDataArray* array, RwStream* stream)
     {
     case rpINTUSERDATA:
     {
-
         S32* ints;
         S32 i;
-
 
         array->data = RwMalloc(array->numElements * sizeof(S32));
         ints = (S32*)array->data;
@@ -107,7 +104,6 @@ static RwStream* UserDataStreamRead(RpUserDataArray* array, RwStream* stream)
     }
     case rpREALUSERDATA:
     {
-
         S32 i;
         F32* reals;
 
@@ -133,13 +129,11 @@ static RwStream* UserDataStreamRead(RpUserDataArray* array, RwStream* stream)
     }
     case rpSTRINGUSERDATA:
     {
-
         S32 i;
         char** strings;
 
         array->data = RwMalloc(array->numElements * sizeof(char*));
         strings = (char**)array->data;
-
 
         if (!strings)
         {
@@ -661,13 +655,13 @@ S32 RpUserDataGetFormatSize(RpUserDataFormat format)
 
 S32 RpUserDataPluginAttach(void)
 {
-    if (RwEngineRegisterPlugin(0, rwID_USERDATAPLUGIN, UserDataOpen, UserDataClose) < 0)
+    if (RwEngineRegisterPlugin(0, USERDATA_PLUGIN_ID, UserDataOpen, UserDataClose) < 0)
     {
         return FALSE;
     }
 
     userDataGeometryOffset =
-        RpGeometryRegisterPlugin(sizeof(UserDataList), rwID_USERDATAPLUGIN, UserDataObjectConstruct,
+        RpGeometryRegisterPlugin(sizeof(UserDataList), USERDATA_PLUGIN_ID, UserDataObjectConstruct,
                                  UserDataObjectDestruct, UserDataObjectCopy);
 
     if (userDataGeometryOffset < 0)
@@ -676,7 +670,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataGeometryStreamOffset =
-        RpGeometryRegisterPluginStream(rwID_USERDATAPLUGIN, UserDataObjectStreamRead,
+        RpGeometryRegisterPluginStream(USERDATA_PLUGIN_ID, UserDataObjectStreamRead,
                                        UserDataObjectStreamWrite, UserDataObjectGetSize);
 
     if (userDataGeometryStreamOffset < 0)
@@ -685,7 +679,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataWorldSectorOffset = RpWorldSectorRegisterPlugin(
-        sizeof(UserDataList), rwID_USERDATAPLUGIN, UserDataObjectConstruct, UserDataObjectDestruct,
+        sizeof(UserDataList), USERDATA_PLUGIN_ID, UserDataObjectConstruct, UserDataObjectDestruct,
         UserDataObjectCopy);
 
     if (userDataGeometryOffset < 0)
@@ -694,7 +688,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataWorldSectorStreamOffset =
-        RpWorldSectorRegisterPluginStream(rwID_USERDATAPLUGIN, UserDataObjectStreamRead,
+        RpWorldSectorRegisterPluginStream(USERDATA_PLUGIN_ID, UserDataObjectStreamRead,
                                           UserDataObjectStreamWrite, UserDataObjectGetSize);
 
     if (userDataGeometryStreamOffset < 0)
@@ -703,7 +697,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataFrameOffset =
-        RwFrameRegisterPlugin(sizeof(UserDataList), rwID_USERDATAPLUGIN, UserDataObjectConstruct,
+        RwFrameRegisterPlugin(sizeof(UserDataList), USERDATA_PLUGIN_ID, UserDataObjectConstruct,
                               UserDataObjectDestruct, UserDataObjectCopy);
 
     if (userDataFrameOffset < 0)
@@ -712,7 +706,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataFrameStreamOffset =
-        RwFrameRegisterPluginStream(rwID_USERDATAPLUGIN, UserDataObjectStreamRead,
+        RwFrameRegisterPluginStream(USERDATA_PLUGIN_ID, UserDataObjectStreamRead,
                                     UserDataObjectStreamWrite, UserDataObjectGetSize);
 
     if (userDataFrameStreamOffset < 0)
@@ -721,7 +715,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataCameraOffset =
-        RwCameraRegisterPlugin(sizeof(UserDataList), rwID_USERDATAPLUGIN, UserDataObjectConstruct,
+        RwCameraRegisterPlugin(sizeof(UserDataList), USERDATA_PLUGIN_ID, UserDataObjectConstruct,
                                UserDataObjectDestruct, UserDataObjectCopy);
 
     if (userDataCameraOffset < 0)
@@ -730,7 +724,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataCameraStreamOffset =
-        RwCameraRegisterPluginStream(rwID_USERDATAPLUGIN, UserDataObjectStreamRead,
+        RwCameraRegisterPluginStream(USERDATA_PLUGIN_ID, UserDataObjectStreamRead,
                                      UserDataObjectStreamWrite, UserDataObjectGetSize);
 
     if (userDataCameraStreamOffset < 0)
@@ -739,7 +733,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataLightOffset =
-        RpLightRegisterPlugin(sizeof(UserDataList), rwID_USERDATAPLUGIN, UserDataObjectConstruct,
+        RpLightRegisterPlugin(sizeof(UserDataList), USERDATA_PLUGIN_ID, UserDataObjectConstruct,
                               UserDataObjectDestruct, UserDataObjectCopy);
 
     if (userDataLightOffset < 0)
@@ -748,7 +742,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataLightStreamOffset =
-        RpLightRegisterPluginStream(rwID_USERDATAPLUGIN, UserDataObjectStreamRead,
+        RpLightRegisterPluginStream(USERDATA_PLUGIN_ID, UserDataObjectStreamRead,
                                     UserDataObjectStreamWrite, UserDataObjectGetSize);
 
     if (userDataLightStreamOffset < 0)
@@ -757,7 +751,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataMaterialOffset =
-        RpMaterialRegisterPlugin(sizeof(UserDataList), rwID_USERDATAPLUGIN, UserDataObjectConstruct,
+        RpMaterialRegisterPlugin(sizeof(UserDataList), USERDATA_PLUGIN_ID, UserDataObjectConstruct,
                                  UserDataObjectDestruct, UserDataObjectCopy);
 
     if (userDataMaterialOffset < 0)
@@ -766,7 +760,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataMaterialStreamOffset =
-        RpMaterialRegisterPluginStream(rwID_USERDATAPLUGIN, UserDataObjectStreamRead,
+        RpMaterialRegisterPluginStream(USERDATA_PLUGIN_ID, UserDataObjectStreamRead,
                                        UserDataObjectStreamWrite, UserDataObjectGetSize);
 
     if (userDataMaterialStreamOffset < 0)
@@ -775,7 +769,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataTextureOffset =
-        RwTextureRegisterPlugin(sizeof(UserDataList), rwID_USERDATAPLUGIN, UserDataObjectConstruct,
+        RwTextureRegisterPlugin(sizeof(UserDataList), USERDATA_PLUGIN_ID, UserDataObjectConstruct,
                                 UserDataObjectDestruct, UserDataObjectCopy);
 
     if (userDataTextureOffset < 0)
@@ -784,7 +778,7 @@ S32 RpUserDataPluginAttach(void)
     }
 
     userDataTextureStreamOffset =
-        RwTextureRegisterPluginStream(rwID_USERDATAPLUGIN, UserDataObjectStreamRead,
+        RwTextureRegisterPluginStream(USERDATA_PLUGIN_ID, UserDataObjectStreamRead,
                                       UserDataObjectStreamWrite, UserDataObjectGetSize);
 
     if (userDataTextureStreamOffset < 0)

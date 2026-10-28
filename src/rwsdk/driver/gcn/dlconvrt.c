@@ -14,17 +14,17 @@ S32 _rwDlFindMSB(S32 num)
     return msb;
 }
 
-U32 _rwDlConv8888To555(const RwRGBA* rgba)
+static U32 _rwDlConv8888To555(const RwRGBA* rgba)
 {
     return 0x8000 | ((rgba->red << 7) & 0x7C00) | ((rgba->green << 2) & 0x3E0) | ((rgba->blue >> 3) & 0x1F);
 }
 
-U32 _rwDlConv8888To565(const RwRGBA* rgba)
+static U32 _rwDlConv8888To565(const RwRGBA* rgba)
 {
     return ((rgba->red << 8) & 0xF800) | ((rgba->green << 3) & 0x7E0) | ((rgba->blue >> 3) & 0x1F);
 }
 
-U32 _rwDlConv8888To555or3444(const RwRGBA* rgba)
+static U32 _rwDlConv8888To555or3444(const RwRGBA* rgba)
 {
     if (rgba->alpha != 0xFF)
     {
@@ -35,12 +35,12 @@ U32 _rwDlConv8888To555or3444(const RwRGBA* rgba)
     return _rwDlConv8888To555(rgba);
 }
 
-U32 _rwDlConv8888ToDl888(const RwRGBA* rgba)
+static U32 _rwDlConv8888ToDl888(const RwRGBA* rgba)
 {
     return 0xFF000000 | (rgba->red << 16) | (rgba->green << 8) | rgba->blue;
 }
 
-U32 _rwDlConv8888ToDl8888(const RwRGBA* rgba)
+static U32 _rwDlConv8888ToDl8888(const RwRGBA* rgba)
 {
     return (rgba->alpha << 24) | (rgba->red << 16) | (rgba->green << 8) | rgba->blue;
 }
@@ -93,7 +93,7 @@ S32 _rwDlRGBToPixel(U32* pixelOut, const RwRGBA* rgba, S32 format)
     return TRUE;
 }
 
-void _rwDlConv555To8888(RwRGBA* rgba, U32 pixel)
+static void _rwDlConv555To8888(RwRGBA* rgba, U32 pixel)
 {
     rgba->red = ((pixel >> 10) & 0x1F) << 3;
     rgba->green = ((pixel >> 5) & 0x1F) << 3;
@@ -101,7 +101,7 @@ void _rwDlConv555To8888(RwRGBA* rgba, U32 pixel)
     rgba->alpha = 0xFF;
 }
 
-void _rwDlConv565To8888(RwRGBA* rgba, U32 pixel)
+static void _rwDlConv565To8888(RwRGBA* rgba, U32 pixel)
 {
     rgba->red = ((pixel >> 11) & 0x1F) << 3;
     rgba->green = ((pixel >> 5) & 0x3F) << 2;
@@ -109,7 +109,7 @@ void _rwDlConv565To8888(RwRGBA* rgba, U32 pixel)
     rgba->alpha = 0xFF;
 }
 
-void _rwDlConv1555To8888(RwRGBA* rgba, U32 pixel)
+static void _rwDlConv1555To8888(RwRGBA* rgba, U32 pixel)
 {
     if (pixel & 0x8000)
     {
@@ -124,7 +124,7 @@ void _rwDlConv1555To8888(RwRGBA* rgba, U32 pixel)
     }
 }
 
-void _rwDlConv4444To8888(RwRGBA* rgba, U32 pixel)
+static void _rwDlConv4444To8888(RwRGBA* rgba, U32 pixel)
 {
     if (pixel & 0x8000)
     {
@@ -139,7 +139,7 @@ void _rwDlConv4444To8888(RwRGBA* rgba, U32 pixel)
     }
 }
 
-void _rwDlConvDl888To8888(RwRGBA* rgba, U32 pixel)
+static void _rwDlConvDl888To8888(RwRGBA* rgba, U32 pixel)
 {
     rgba->alpha = 0xFF;
     rgba->red = (U8)(pixel >> 16);
@@ -147,7 +147,7 @@ void _rwDlConvDl888To8888(RwRGBA* rgba, U32 pixel)
     rgba->blue = (U8)pixel;
 }
 
-void _rwDlConvDl8888To8888(RwRGBA* rgba, U32 pixel)
+static void _rwDlConvDl8888To8888(RwRGBA* rgba, U32 pixel)
 {
     rgba->alpha = (U8)(pixel >> 24);
     rgba->red = (U8)(pixel >> 16);

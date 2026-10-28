@@ -494,8 +494,8 @@ struct RwFileFunctions
 typedef char* (*vecStrcpyFunc)(char* dest, const char* srce);
 typedef U32 (*vecStrlenFunc)(const char* string);
 
-// Partial: this build's table is 0x40 bytes, one entry shorter than bfbb's, so only the two
-// members the target reaches at fixed offsets are declared.
+// Partial: this build's table is 0x40 bytes; only the two members the target reaches at fixed
+// offsets are declared.
 typedef struct RwStringFunctions RwStringFunctions;
 struct RwStringFunctions
 {
