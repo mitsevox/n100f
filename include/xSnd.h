@@ -52,7 +52,12 @@ struct xSndGlobals
 
 extern xSndGlobals gSnd;
 
+struct _xEnt;
+
+void xSndStop(U32 snd);
+void xSndPause(U32 snd, U32 pause);
 U32 xSndPlay3D(U32 id, F32 vol, F32 pitch, U32 priority, U32 flags, xVec3* pos, F32 radius);
+U32 xSndPlay3D(U32 id, F32 vol, F32 pitch, U32 priority, U32 flags, _xEnt* parent, F32 radius);
 U32 xSndPlay(U32 id, F32 volL, F32 volR, F32 pitch, U32 priority, U32 flags, U32 parentID);
 
 #endif

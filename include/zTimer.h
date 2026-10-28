@@ -17,7 +17,12 @@ struct _zTimer : xBase
     F32 secondsLeft;
 };
 
-void zTimerLoad(_zTimer* ent, xSerial* s);
+struct _xScene;
+
+void zTimerInit(void* b, void* tasset);
 void zTimerSave(_zTimer* ent, xSerial* s);
+void zTimerLoad(_zTimer* ent, xSerial* s);
+S32 zTimerEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*);
+void zTimerUpdate(xBase* to, _xScene*, F32 dt);
 
 #endif
