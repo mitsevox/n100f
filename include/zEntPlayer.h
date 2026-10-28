@@ -5,6 +5,8 @@
 #include "iModel.h"
 
 struct _zEntHangable;
+struct _zPlatform;
+struct xSurface;
 
 struct zShaggy1Globals
 {
@@ -43,11 +45,44 @@ struct zShaggy1Globals
     _zEnt* Hangable[10];
 };
 
-// Partial: members up to FireSoapTimer. The members before it that no reconstructed
-// function uses are left opaque.
+struct zJumpParam
+{
+    F32 PeakHeight;
+    F32 TimeGravChange;
+    F32 TimeHold;
+    F32 ImpulseVel;
+};
+
 struct zPlayerStatic
 {
-    U8 opaque_0[0xF4];
+    U16 AnalogMin;
+    U16 AnalogMax;
+    F32 SpeedSneak[4];
+    F32 SpeedWalk[4];
+    F32 SpeedRun[4];
+    F32 SpeedAir[4];
+    F32 SpeedHotsauce[4];
+    F32 AnimSneak[3];
+    F32 AnimWalk[3];
+    F32 Gravity;
+    F32 JumpGravity;
+    F32 GravSmooth;
+    F32 FloatSpeed;
+    F32 ButtsmashSpeed;
+    zJumpParam Jump;
+    zJumpParam Double;
+    zJumpParam Bounce;
+    zJumpParam Spring;
+    zJumpParam Toss;
+    F32 HeadbuttSpeedMin;
+    F32 HeadbuttSpeedMax;
+    F32 HeadbuttAccel;
+    F32 HeadbuttTimeMin;
+    F32 HeadbuttTimeMax;
+    F32 HeadbuttTurn;
+    F32 FireDelay;
+    F32 FireRepeat;
+    F32 FirePress;
     F32 FireTargetYaw;
     F32 FireTargetPitch;
     F32 FireTargetDist;
@@ -57,34 +92,88 @@ struct zPlayerStatic
     F32 FireSoapSpeed;
     F32 FireGumTimer;
     F32 FireSoapTimer;
+    U32 Initial_Specials;
+    U32 TakeDamage;
+    F32 StartSlideAngle;
+    F32 StopSlideAngle;
+    F32 RotMatchMaxAngle;
+    F32 RotMatchMatchTime;
+    F32 RotMatchRelaxTime;
+    U16 AmmoCapacityGum;
+    U16 AmmoCapacitySoap;
+    U16 AmmoSceneGum;
+    U16 AmmoSceneSoap;
 };
 
-// Partial: members up to s. The members between ent and s that no reconstructed
-// function uses are left opaque.
+struct zCheckPoint
+{
+    xVec3 pos;
+    F32 rot;
+    U32 initCamID;
+};
+
 struct zPlayerGlobals
 {
     _zEnt ent;
-    U8 opaque_EC[0xF0 - 0xEC];
+    U32 Visible;
     U32 Health;
     S32 Speed;
-    U8 opaque_F8[0x114 - 0xF8];
+    S32 Sneak;
+    S32 Teeter;
+    S32 CanSlip;
+    F32 SlipFadeTimer;
+    S32 Slide;
+    F32 SlideTimer;
+    S32 Stepping;
     S32 JumpState;
-    U8 opaque_118[0x128 - 0x118];
+    S32 LastJumpState;
+    F32 JumpTimer;
+    F32 LookAroundTimer;
+    U32 LookAroundRand;
     U32 LastProjectile;
-    U8 opaque_12C[0x130 - 0x12C];
+    F32 DecelRun;
     F32 DecelRunSpeed;
-    U8 opaque_134[0x13C - 0x134];
+    F32 HotsauceTimer;
+    F32 LeanLerp;
     U32 HeadbuttHit;
     F32 ScareTimer;
-    U8 opaque_144[0x148 - 0x144];
+    xBase* ScareSource;
     U32 ScareShaggy;
-    U8 opaque_14C[0x150 - 0x14C];
+    F32 CowerTimer;
     F32 DamageTimer;
-    U8 opaque_154[0x164 - 0x154];
+    F32 ControlOffTimer;
+    F32 HelmetTimer;
+    U32 WorldDisguise;
+    U32 Bounced;
     F32 FallDeathTimer;
-    U8 opaque_168[0x1B0 - 0x168];
+    F32 HeadbuttVel;
+    F32 HeadbuttTimer;
+    U32 SpecialReceived;
+    _xEnt* MountChimney;
+    F32 MountChimOldY;
+    F32 ShockRadius;
+    F32 ShockRadiusOld;
+    F32 Face_ScareTimer;
+    U32 Face_ScareRandom;
+    U32 Face_Event;
+    F32 Face_EventTimer;
+    F32 Face_PantTimer;
+    U32 Face_AnimSpecific;
+    U32 IdleRand;
+    F32 IdleMinorTimer;
+    F32 IdleMajorTimer;
+    F32 IdleSitTimer;
+    S32 Transparent;
     _zEnt* FireTarget;
-    U8 opaque_1B4[0x1E0 - 0x1B4];
+    _zEnt* DamageSource;
+    U32 ControlOn;
+    U32 ControlOnEvent;
+    U32 AutoMoveSpeed;
+    F32 AutoMoveDist;
+    xVec3 AutoMoveTarget;
+    xBase* AutoMoveObject;
+    _zEnt* Diggable;
+    F32 DigTimer;
     zShaggy1Globals Shaggy1;
     _zEnt* Shaggy8Call;
     F32 Shaggy8CallTimer;
@@ -92,13 +181,43 @@ struct zPlayerGlobals
     _zEntHangable* HangEnt;
     _zEntHangable* HangEntLast;
     xVec3 HangPivot;
-    U8 opaque_2E8[0x3C8 - 0x2E8];
+    xVec3 HangVel;
+    F32 HangLength;
+    xVec3 HangStartPos;
+    F32 HangStartLerp;
+    iModelTag HangPawTag[4];
+    F32 HangPawOffset;
+    F32 HangElapsed;
+    F32 Jump_CurrGravity;
+    F32 Jump_HoldTimer;
+    F32 Jump_ChangeTimer;
+    S32 Jump_CanDouble;
+    S32 Jump_CanFloat;
+    S32 Jump_SpringboardStart;
+    _zPlatform* Jump_Springboard;
+    S32 cheat_mode;
+    U32 Inv_Clue;
+    U32 Inv_Key;
+    U32 Inv_Chances;
+    U32 Inv_ScoobySnacks;
+    U32 Inv_Specials;
+    U32 Inv_Mtokens[1];
     S32 Inv_Ammo[2];
     S32 Inv_AmmoMax[2];
     iModelTag BubbleTag;
     _xEntDrive drv;
-    U8 opaque_448[0x510 - 0x448];
+    xSurface* floor_surf;
+    xVec3 floor_norm;
+    S32 slope;
+    _xCollis earc_coll;
+    _xSphere head_sph;
+    iModelTag center_tag;
+    iModelTag head_tag;
+    U32 TongueFlags[2];
+    xVec3 RootUp;
+    xVec3 RootUpTarget;
     zPlayerStatic s;
+    zCheckPoint cp;
 };
 
 U32 zEntPlayer_MoveInfo();
