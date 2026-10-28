@@ -30,7 +30,8 @@ static S32 sMusicLastEnum[TRACK_COUNT] = { 0, 0 };
 static F32 sMusicTimer[TRACK_COUNT] = { 0.0f, 0.0f };
 
 // Entry [1] of each sound is its loop flag. Entries 21 to 23 are set twice: the first writes store
-// 0 over the upper-case names' hashes, and the mixed-case names replace them below.
+// 0 over the upper-case names' hashes (probably [0] written for [1]), and the mixed-case names
+// replace them below.
 void zMusicInit()
 {
     sMusicPaused = 0;
