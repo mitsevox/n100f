@@ -738,6 +738,13 @@ flat/zVar.cpp:
 	.sbss       start:0x8025F140 end:0x8025F170
 	.sdata2     start:0x80261FE8 end:0x80262040
 
+gc/iAnim.cpp:
+	.text       start:0x800D7E00 end:0x800D84A0
+	.rodata     start:0x801A7B10 end:0x801A7B20
+	.bss        start:0x80239028 end:0x8023B3C8
+	.sdata      start:0x8025E5C0 end:0x8025E5C8
+	.sdata2     start:0x80262040 end:0x80262070
+
 TRK_MINNOW_DOLPHIN/mainloop.c:
 	.text       start:0x800DE530 end:0x800DE628
 
