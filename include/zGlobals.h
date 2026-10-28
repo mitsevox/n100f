@@ -17,8 +17,8 @@ struct _tagxCamFrame
     U8 opaque_4[0x1F0 - 0x4];
 };
 
-// Partial: only camera, the pads, player, cmgr, sceneCur and the fog state are declared. The
-// members between them are left opaque.
+// Partial: only camera, the pads, player, cmgr, sceneCur, the fog state and update_dt are
+// declared. The members between them are left opaque.
 struct zGlobals
 {
     _tagxCamFrame camera;
@@ -35,6 +35,9 @@ struct zGlobals
     iFogParams fogB;
     iTime fog_t0;
     iTime fog_t1;
+    U8 opaque_BF8[0x32F8 - 0xBF8];
+    S32 option_vibration;
+    F32 update_dt;
 };
 
 extern zGlobals globals;
