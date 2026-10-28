@@ -548,7 +548,7 @@ static S32 VILN_shark_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
     return 1;
 }
 
-// The Shaggy villain types read flag groups the standard way.
+// The Shaggy villain types other than Shaggy5 read flag groups the standard way.
 static S32 VILN_shag_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
                           en_BEHAVIOUR_GOAL goal)
 {
@@ -556,20 +556,20 @@ static S32 VILN_shag_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
 }
 
 
-// The Shaggy villain types answer queries the standard way.
+// The Shaggy villain types other than Shaggy5 answer queries the standard way.
 static S32 VILN_shag_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
 {
     return VILN_std_query(vil, query);
 }
 
-// The Shaggy villain types handle game events the standard way.
+// The Shaggy villain types other than Shaggy5 handle game events the standard way.
 static S32 VILN_shag_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
                               xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
 }
 
-// The Shaggy villain types react to notices the standard way.
+// The Shaggy villain types other than Shaggy5 react to notices the standard way.
 static S32 VILN_shag_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
                             st_STIMULUS_CONTEXT_DATA* resp)
 {
@@ -577,40 +577,40 @@ static S32 VILN_shag_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
 }
 
 
-// The Shaggy villain types sense the player the standard way.
+// The Shaggy villain types other than Shaggy5 sense the player the standard way.
 static S32 VILN_shag_aware(st_zEntVillain* vil, _xScene* scn, F32 dt,
                            st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_aware(vil, scn, dt, resp);
 }
 
-// The Shaggy villain types react to stimuli the standard way.
+// The Shaggy villain types other than Shaggy5 react to stimuli the standard way.
 static S32 VILN_shag_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
                               st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_stimulus(vil, stimctxt, resp);
 }
 
-// The Shaggy villain types change goals the standard way.
+// The Shaggy villain types other than Shaggy5 change goals the standard way.
 static S32 VILN_shag_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
 {
     return VILN_std_trangoal(vil, stimctxt, dt);
 }
 
-// The Shaggy villain types move the standard way.
+// The Shaggy villain types other than Shaggy5 move the standard way.
 static S32 VILN_shag_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
 {
     return VILN_std_calcmove(vil, scn, dt, frame);
 }
 
-// The Shaggy villain types respond to stimuli the standard way.
+// The Shaggy villain types other than Shaggy5 respond to stimuli the standard way.
 static S32 VILN_shag_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_respond(vil, resp);
 }
 
 
-// The Shaggy villain types pick animations the standard way.
+// The Shaggy villain types other than Shaggy5 pick animations the standard way.
 static S32 VILN_shag_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot)
 {
     return VILN_std_pickanim(vil, goal, gspot);

@@ -1609,8 +1609,7 @@ VILN_sham_notice__FP14st_zEntVillain14en_ZVIL_NOTICEP24st_STIMULUS_CONTEXT_DATA 
 VILN_sham_sysevent__FP14st_zEntVillainP5xBaseUiPfP5xBaseP24st_STIMULUS_CONTEXT_DATA = .text:0x80099258; // type:function size:0x20 scope:local
 VILN_sham_query__FP14st_zEntVillain13en_ZVIL_QUERY = .text:0x80099278; // type:function size:0x20 scope:local
 VILN_sham_flag__FP14st_zEntVillain19en_ZVIL_FLAG_GROUPS17en_BEHAVIOUR_GOAL = .text:0x80099298; // type:function size:0x188 scope:local
-VILN_gang_animtran__FP14st_zEntVillainP15xAnimTransitionP11xAnimSingle = .text:0x80099420; // type:function size:0xAC scope:local
-fn_800994CC = .text:0x800994CC; // type:function size:0x4
+VILN_gang_animtran__FP14st_zEntVillainP15xAnimTransitionP11xAnimSingle = .text:0x80099420; // type:function size:0xB0 scope:local
 VILN_gang_pickanim__FP14st_zEntVillain17en_BEHAVIOUR_GOAL17en_ZVIL_GOAL_SPOT = .text:0x800994D0; // type:function size:0x554 scope:local
 VILN_gang_respond__FP14st_zEntVillainP24st_STIMULUS_CONTEXT_DATA = .text:0x80099A24; // type:function size:0x8 scope:local
 VILN_gang_calcmove__FP14st_zEntVillainP7_xScenefPC10_xEntFrame = .text:0x80099A2C; // type:function size:0x69C scope:local
