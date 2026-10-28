@@ -2,12 +2,15 @@
 
 #include "iMath.h"
 #include "xAnim.h"
+#include "xBound.h"
 #include "xEvent.h"
 #include "xMath.h"
 #include "xMemMgr.h"
 #include "xScene.h"
 #include "zEntShaggy.h"
+#include "zEntProjectile.h"
 #include "zGlobals.h"
+#include "zLightning.h"
 #include "zScene.h"
 
 #include <string.h>
@@ -36,6 +39,71 @@ struct st_REDBEARD_SWORD : _xEnt
     F32 spd_fly;
     _xVec3 dir_end;
     _xVec3 pos_end;
+};
+
+enum en_BGG_PHASE
+{
+    BGG_PHAZ_UNKNOWN,
+    BGG_PHAZ_BUILDUP,
+    BGG_PHAZ_FLY,
+    BGG_PHAZ_FALL,
+    BGG_PHAZ_SHOCKWAVE
+};
+
+// A Green Ghost quake ball in flight.
+struct st_BGG_QUAKEBALL
+{
+    S32 flg_stat;
+    en_BGG_PHASE phase;
+    F32 rad_build;
+    F32 spd_flight;
+    _xVec3 pos_tgt;
+    F32 tym_flightMax;
+    F32 rad_shock;
+    F32 hyt_shock;
+    F32 tym_shock;
+};
+
+// The lightning around a thrown Black Knight axe.
+struct st_BKAXE_DATA
+{
+    S32 flg_stat;
+    _tagLightning* strk[8];
+    F32 rad_zap;
+    F32 dst_zapdrop;
+    F32 tym_zapdur;
+    _xVec3 planes;
+};
+
+enum en_ZVMM_FLASK_STAGE
+{
+    MAST_STAGE_UNKNOWN,
+    MAST_STAGE_TEASE,
+    MAST_STAGE_TOSS,
+    MAST_STAGE_AFTERMATH
+};
+
+enum en_ZVMM_FLASK_TYPE
+{
+    MAST_FLSK_FIRE,
+    MAST_FLSK_ACID,
+    MAST_FLSK_SMOG,
+    MAST_FLSK_NOMORE
+};
+
+// A flask thrown by the Mastermind.
+struct st_ZVMM_FLASK_DATA
+{
+    S32 flg_stat;
+    en_ZVMM_FLASK_STAGE stage;
+    en_ZVMM_FLASK_TYPE typ_flask;
+    _xVec3 pos_tgt;
+    F32 spd_flight;
+    F32 arcness;
+    F32 heavy;
+    F32 tym_aftermath;
+    F32 hyt_aftermath;
+    F32 rad_aftermath;
 };
 
 
@@ -97,6 +165,7 @@ static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
 
 static void zVIL_tag_verts(st_zEntVillain* ent);
 static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo);
+static void VPRJ_zapTheAxe(zEntProjectile* prj, S32 cleanup);
 
 static S32 VILN_std_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
                          en_BEHAVIOUR_GOAL goal);
@@ -259,6 +328,31 @@ static char* g_animname[ZVIL_ANIM_NOMORE + 1] = {
     "CRIT_BatSleep", "CRIT_SpiderDrop", "CRIT_Smashed", "SIMP_Action", NULL,
 };
 
+// Lightning data of the thrown Black Knight axes.
+static st_BKAXE_DATA g_axfxpool[10] = { 0 };
+
+// Green Ghost quake balls.
+static st_BGG_QUAKEBALL g_quakepool[4] = { 0 };
+
+// Mastermind flasks.
+static st_ZVMM_FLASK_DATA g_mmflask[10] = { 0 };
+
+// How many times the villain system has been started without being shut down.
+static S32 g_npcinit;
+
+// All villains of the scene, in one block.
+static st_zEntVillain* g_npcpool;
+
+// Counts down one start of the villain system and returns how many remain.
+S32 zEntVillain_Shutdown()
+{
+    if (--g_npcinit == 0)
+    {
+        return g_npcinit;
+    }
+    return g_npcinit;
+}
+
 xAnimTable* zEntVillain_AnimTable_BlackKnight()
 {
     return VANM_mktable_BK();
@@ -310,6 +404,17 @@ xAnimTable* zEntVillain_AnimTable_Gang()
 xAnimTable* zEntVillain_AnimTable_Standard()
 {
     return VANM_mktable_STD();
+}
+
+// Returns the villain in slot idx of the pool.
+st_zEntVillain* zEntVillain_NPCInst(U32 idx)
+{
+    return &g_npcpool[idx];
+}
+
+// Called when the player is hurt; villains do nothing with it.
+void zEntVillain_HeroWasHurt()
+{
 }
 
 // Reads one of the villain's flag groups from its subtype's settings; the allow group reads as 0.
@@ -994,6 +1099,228 @@ static void zVIL_tag_verts(st_zEntVillain* ent)
             xSceneID2Name(globals.sceneCur, ent->id);
         }
     }
+}
+
+
+// Keeps the Black Knight's axe's collision sphere (radius 0.75) on its position.
+static void VPRJ_BBK_bupdate(_xEnt* prjent, _xVec3* pos)
+{
+    prjent->bound.sph.center = *pos;
+    prjent->bound.sph.r = 0.75f;
+    xBoundUpdate(&prjent->bound);
+}
+
+// Sets up a thrown Black Knight axe: it keeps its own collision sphere, gets a collision delay,
+// lives at least 30 seconds and takes a free slot of the axe pool. Returns 1 if a slot was free.
+static S32 VPRJ_BBK_attach(zEntProjectile* prj)
+{
+    S32 i;
+
+    prj->bupdate = VPRJ_BBK_bupdate;
+    prj->cat_data.idx_cdat = ZPRJ_CDAT_BOUNCE;
+    prj->OrientSet(0);
+    prj->ColDelaySet(50.0f, 1);
+    prj->tym_maxlife = MAX(30.0f, prj->tym_maxlife);
+
+    for (i = 0; i < 10; i++)
+    {
+        if (!(g_axfxpool[i].flg_stat & 1))
+        {
+            memset(&g_axfxpool[i], 0, sizeof(st_BKAXE_DATA));
+            g_axfxpool[i].flg_stat |= 1;
+            prj->xtradata = &g_axfxpool[i];
+            break;
+        }
+    }
+
+    if (prj->xtradata)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+// Releases a Black Knight axe's pool slot, cleaning up its lightning first.
+static void VPRJ_BBK_detach(zEntProjectile* prj)
+{
+    st_BKAXE_DATA* axfx = (st_BKAXE_DATA*)prj->xtradata;
+
+    if (axfx)
+    {
+        VPRJ_zapTheAxe(prj, 1);
+        memset(axfx, 0, sizeof(st_BKAXE_DATA));
+        prj->xtradata = NULL;
+    }
+}
+
+// Moves a thrown Black Knight axe. In flight it falls under the bounce gravity and, when its
+// category flag 0x4000000 is set, turns by its flex matrix. At rest it keeps turning only while
+// it does not lie flat, and flag bit 2 of its lightning data is cleared once it stops. Returns 1.
+static S32 VPRJ_BBK_prjmove(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame)
+{
+    st_BKAXE_DATA* axfx = (st_BKAXE_DATA*)prj->xtradata;
+    st_ZPRJ_CAT_BOUNCEBALL* bounce = &prj->cat_data.bounce;
+
+    switch (bounce->atRest)
+    {
+    default:
+        frame->dvel.x = 0.0f;
+        frame->dvel.y = -(dt * bounce->acc_gravity);
+        frame->dvel.z = 0.0f;
+        frame->mode |= 0x8;
+
+        if (prj->flg_categ & 0x4000000)
+        {
+            xMat4x3RMul3x3(&frame->mat, &prj->common.mat_flex, &frame->mat);
+            prj->frame->mode |= 0x100;
+        }
+        break;
+    case 1:
+        if (frame->mat.at.y > -0.25f)
+        {
+            xMat4x3RMul3x3(&frame->mat, &prj->common.mat_flex, &frame->mat);
+            prj->frame->mode |= 0x100;
+        }
+
+        if ((axfx->flg_stat & 0x2) && !(prj->frame->mode & 0x100))
+        {
+            axfx->flg_stat &= ~0x2;
+        }
+        break;
+    }
+
+    return 1;
+}
+
+// Sets up a Green Ghost quake ball: it is drawn as an arrow, starts building up and takes a free
+// slot of the quake ball pool. Returns 1 if a slot was free.
+static S32 VPRJ_BGG_attach(zEntProjectile* prj)
+{
+    S32 i;
+
+    prj->cat_data.idx_cdat = ZPRJ_CDAT_ARROW;
+    prj->flags &= ~0x1;
+    prj->flg_prop &= ~0x8;
+
+    for (i = 0; i < 4; i++)
+    {
+        st_BGG_QUAKEBALL* quake = &g_quakepool[i];
+        if (!(quake->flg_stat & 1))
+        {
+            memset(quake, 0, sizeof(st_BGG_QUAKEBALL));
+            quake->flg_stat |= 1;
+            quake->phase = BGG_PHAZ_BUILDUP;
+            prj->xtradata = quake;
+            break;
+        }
+    }
+
+    return prj->xtradata ? 1 : 0;
+}
+
+// Releases a Green Ghost quake ball's pool slot.
+static void VPRJ_BGG_detach(zEntProjectile* prj)
+{
+    st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)prj->xtradata;
+
+    if (quake)
+    {
+        memset(quake, 0, sizeof(st_BGG_QUAKEBALL));
+        prj->xtradata = NULL;
+    }
+}
+
+// Sets up a Redbeard sword projectile and takes a free sword. Returns 1 if one was free.
+static S32 VPRJ_BRB_attach(zEntProjectile* prj)
+{
+    S32 i;
+
+    prj->cat_data.idx_cdat = ZPRJ_CDAT_ARROW;
+
+    for (i = 0; i < 4; i++)
+    {
+        st_REDBEARD_SWORD* sword = &g_rbsword[i];
+        if (!(sword->flg_stat & 1))
+        {
+            memset(sword, 0, sizeof(st_REDBEARD_SWORD));
+            sword->flg_stat |= 1;
+            prj->xtradata = sword;
+            break;
+        }
+    }
+
+    return prj->xtradata ? 1 : 0;
+}
+
+// Releases a Redbeard sword.
+static void VPRJ_BRB_detach(zEntProjectile* prj)
+{
+    st_REDBEARD_SWORD* sword = (st_REDBEARD_SWORD*)prj->xtradata;
+
+    if (sword)
+    {
+        memset(sword, 0, sizeof(st_REDBEARD_SWORD));
+        prj->xtradata = NULL;
+    }
+}
+
+// Redbeard sword projectiles take every event as handled.
+static S32 VPRJ_BRB_notify(zEntProjectile*, en_PROJECTILE_EVENT, void*)
+{
+    return 1;
+}
+
+// Keeps the Mastermind's flask's collision sphere (radius 0.5) on its position.
+static void VPRJ_BMM_bupdate(_xEnt* prjent, _xVec3* pos)
+{
+    prjent->bound.sph.center = *pos;
+    prjent->bound.sph.r = 0.5f;
+    xBoundUpdate(&prjent->bound);
+}
+
+// Sets up a thrown Mastermind flask: it keeps its own collision sphere and takes a free slot of
+// the flask pool. Returns 1 if a slot was free.
+static S32 VPRJ_BMM_attach(zEntProjectile* prj)
+{
+    S32 i;
+
+    prj->cat_data.idx_cdat = ZPRJ_CDAT_BOUNCE;
+    prj->bupdate = VPRJ_BMM_bupdate;
+    prj->OrientSet(0);
+
+    for (i = 0; i < 10; i++)
+    {
+        if (!(g_mmflask[i].flg_stat & 1))
+        {
+            memset(&g_mmflask[i], 0, sizeof(st_ZVMM_FLASK_DATA));
+            g_mmflask[i].flg_stat |= 1;
+            prj->xtradata = &g_mmflask[i];
+            break;
+        }
+    }
+
+    return prj->xtradata ? 1 : 0;
+}
+
+// Releases a Mastermind flask's pool slot.
+static void VPRJ_BMM_detach(zEntProjectile* prj)
+{
+    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
+
+    if (flask)
+    {
+        memset(flask, 0, sizeof(st_ZVMM_FLASK_DATA));
+        prj->xtradata = NULL;
+    }
+}
+
+// Keeps a Redbeard sword's collision sphere (radius 0.75) on its position.
+static void VWEP_rbs_bupdate(_xEnt* ent_rbs, _xVec3* pos)
+{
+    ent_rbs->bound.type = 1;
+    ent_rbs->bound.sph.r = 0.75f;
+    ent_rbs->bound.sph.center = *pos;
+    xBoundUpdate(&ent_rbs->bound);
 }
 
 
