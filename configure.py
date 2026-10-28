@@ -750,7 +750,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "bink/src/sdk/decode/expand.c"),
             Object(Matching, "bink/src/sdk/popmal.c"),
             Object(NonMatching, "bink/src/sdk/decode/ngc/ngcrgb.c"),
-            Object(NonMatching, "bink/src/sdk/decode/ngc/ngcyuy2.c"),
+            Object(Matching, "bink/src/sdk/decode/ngc/ngcyuy2.c"),
             Object(Matching, "bink/src/sdk/varbits.c"),
             Object(Matching, "bink/src/sdk/fft.c"),
             Object(NonMatching, "bink/src/sdk/dct.c"),

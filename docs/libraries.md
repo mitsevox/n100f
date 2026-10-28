@@ -207,6 +207,8 @@ Nine functions still differ. `mult64anddiv`, `mult64andshift` and `div64` build 
 - `CLAMP16` casts the in-range value to `S16`. The cast gives the clamp its own result register, as the target has.
 - The file does not include `string.h`, whose `size_t` prototypes conflict with GCC's builtin `memset` and `memcpy` and change both functions that call them. Compatible prototypes or none give the target's bytes.
 
+`bink/src/sdk/decode/ngc/ngcyuy2.c` converts decoded YUV 4:2:0 rows to the GameCube's YUY2 format, two output rows per call, with luma-only and pixel-doubling variants. It is this project's own reconstruction from the target and is `Matching`: its whole `.text` compiles to the target under ProDG 3.5 to 3.9.3. It reads and advances the YUV state `S`, which belongs to `yuv.cpp`, so `include/bink/yuvstate.h` declares only the six pointers it uses. Its four helpers are plain `inline` functions, which is what gives the target both the inlined bodies and the out-of-line copies at the end of the unit. The signedness of each count and the separate locals in the odd-word tails also come from the target's code (see the source-form rows).
+
 Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units can include `dolphin/os.h`. The MW units are unchanged.
 
 Bink headers are this project's own, declaring only what the reconstructed units use. The logo movie stays out of the repository: its data is split from `main.dol` at build time like any other unmapped data.
