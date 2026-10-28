@@ -4,6 +4,7 @@
 #include "xModel.h"
 #include "xString.h"
 #include "xMath.h"
+#include "xMathInlines.h"
 #include "iMath.h"
 #include "zEntHangable.h"
 #include "zMovePoint.h"
@@ -1109,17 +1110,17 @@ static void Shaggy1_MiddleUpdate(_zEnt* shag, _xScene* sc, F32 dt)
 
 static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
 {
-    F32 dz;
-    F32 dx;
-    xMat3x3* mat;
-    F32 mag;
-    xVec3* pos;
-    _zEntPickup* pup;
-    zScene* zsc;
-    F32 cz;
-    F32 cy;
-    F32 cx;
     U32 i;
+    F32 cx;
+    F32 cy;
+    F32 cz;
+    zScene* zsc;
+    _zEntPickup* pup;
+    xVec3* pos;
+    F32 mag;
+    xMat3x3* mat;
+    F32 dx;
+    F32 dz;
 
     if (!xEntIsVisible(ent))
     {
@@ -1911,13 +1912,18 @@ void Shaggy1_ChooseThrowTarget(_zEnt* ent)
             }
             dx = nearpt.x - ((xMat4x3*)globals.player.ent.model->Mat)->pos.x;
             dz = nearpt.z - ((xMat4x3*)globals.player.ent.model->Mat)->pos.z;
-            throwdist = sqrtf(dx * dx + dz * dz);
+            throwdist = sqrtf(SQ(dx) + SQ(dz));
             globals.player.Shaggy1.ThrowTgtAdjust = 1;
             globals.player.Shaggy1.ThrowTgtSpeed = throwdist / hangtime;
         }
     }
     else
     {
+        F32 ax = ent->frame->mat.at.x;
+        F32 az = ent->frame->mat.at.z;
+        F32 bx = ent->frame->mat.pos.x + -2.0f * ax;
+        F32 bz = ent->frame->mat.pos.z + -2.0f * az;
+
         for (i = 0; i < 10; i++)
         {
             hang = (_zEntHangable*)globals.player.Shaggy1.Hangable[i];
@@ -1929,11 +1935,9 @@ void Shaggy1_ChooseThrowTarget(_zEnt* ent)
             {
                 continue;
             }
-            dx = ((xMat4x3*)hang->model->Mat)->pos.x -
-                 (ent->frame->mat.pos.x + -2.0f * ent->frame->mat.at.x);
-            dz = ((xMat4x3*)hang->model->Mat)->pos.z -
-                 (ent->frame->mat.pos.z + -2.0f * ent->frame->mat.at.z);
-            dot = dx * ent->frame->mat.at.x + dz * ent->frame->mat.at.z;
+            dx = ((xMat4x3*)hang->model->Mat)->pos.x - bx;
+            dz = ((xMat4x3*)hang->model->Mat)->pos.z - bz;
+            dot = dx * ax + dz * az;
             mag = sqrtf(dx * dx + dz * dz);
             if (mag < 0.00001f || dot < 0.7071f * mag)
             {
@@ -2374,10 +2378,16 @@ static U32 Shaggy3_MoveDead(xAnimTransition* tran, xAnimSingle* anim, _zPlatform
     {
         return 0;
     }
-    return !globals.player.Health && (frame->mode & 0x2) &&
-           frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
-                   frame->dpos.z * frame->dpos.z >=
-               0.0005f;
+    U8 retval = 0;
+    U8 moving = !globals.player.Health && (frame->mode & 0x2);
+
+    if (moving && frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
+                          frame->dpos.z * frame->dpos.z >=
+                      0.0005f)
+    {
+        retval = 1;
+    }
+    return retval;
 }
 
 static U32 Shaggy3_Stop(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
@@ -2388,6 +2398,7 @@ static U32 Shaggy3_Stop(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* en
     {
         return 0;
     }
+    U8 retval = 0;
     U8 stopped = 1;
 
     if ((frame->mode & 0x2) && !(frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
@@ -2396,7 +2407,11 @@ static U32 Shaggy3_Stop(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* en
     {
         stopped = 0;
     }
-    return stopped && globals.player.DamageTimer < 1.25f;
+    if (stopped && globals.player.DamageTimer < 1.25f)
+    {
+        retval = 1;
+    }
+    return retval;
 }
 
 static U32 Shaggy3_StopScare(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
@@ -3456,7 +3471,7 @@ S32 Shaggy8_HBCallback(_zEnt* plyr, _xCollis* coll)
         plyr->frame->mat.pos.x = ((xMat4x3*)plyr->model->Mat)->pos.x;
         plyr->frame->mat.pos.y = ((xMat4x3*)plyr->model->Mat)->pos.y;
         plyr->frame->mat.pos.z = ((xMat4x3*)plyr->model->Mat)->pos.z;
-        globals.player.DecelRunSpeed *= 0.25f;
+        globals.player.DecelRunSpeed = 0.25f * globals.player.DecelRunSpeed;
         globals.player.HeadbuttHit = 1;
         zRumbleStart(0, SDR_Headbutt);
         return 1;
