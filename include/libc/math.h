@@ -83,6 +83,7 @@ double cos(double x);
 double sin(double x);
 float cosf(float x);
 float sinf(float x);
+double tan(double x);
 
 #ifdef __cplusplus
 }

@@ -25,5 +25,9 @@ struct xModelInstance
 };
 
 void xModelRender(xModelInstance* modelInst);
+xModelInstance* xModelInstanceAlloc(RpAtomic* data, void* object, U16 flags, U8 boneIndex,
+                                    U8* boneRemap);
+void xModelInstanceFree(xModelInstance* modelInst);
+void xModelInstanceAttach(xModelInstance* inst, xModelInstance* parent);
 
 #endif
