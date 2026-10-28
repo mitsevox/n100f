@@ -93,7 +93,7 @@ Files touched: `config/GIHE78-rev1/config.yml` and `config/GIHE78-rev1/evidence.
 
 Files touched: `configure.py`.
 
-1. Record the state before: `grep -c 'Object(Matching,' configure.py` prints a number; call it N (180 at commits 626918e and 81e3273; it changes with every merged unit, so use what you see). `python3 configure.py --version GIHE78-rev0 --dtk decomp-toolkit/target/release/dtk && cp build/GIHE78-rev0/build.ninja /tmp/before.ninja && cp build/GIHE78-rev0/objdiff.json /tmp/before.json`.
+1. Record the state before: `grep -c 'Object(Matching,' configure.py` prints a number; call it N (180 at commits 626918e, 81e3273 and 56b8521; it changes with every merged `Matching` unit, so use what you see). `python3 configure.py --version GIHE78-rev0 --dtk decomp-toolkit/target/release/dtk && cp build/GIHE78-rev0/build.ninja /tmp/before.ninja && cp build/GIHE78-rev0/objdiff.json /tmp/before.json`.
 2. `python3 tools/matching_scope.py pin GIHE78-rev0` (rev0 is the only active target, so the full set the tool requires is this one id).
 3. Gate: the first output line is `pinned N Matching declaration(s) to MatchingFor(GIHE78-rev0); NonMatching, Equivalent and MatchingFor declarations untouched` with the same N; the second line says what to compare, which sub-step 5 does. A line starting `matching_scope: Matching is used outside` or `matching_scope: Object calls whose first argument is not` means `configure.py` uses `Matching`, or declares a unit, in a way the tool does not rewrite; stop and report the listed lines.
 4. Gate: `grep -c 'Object(Matching,' configure.py` prints `0`, and `grep -c 'Object(MatchingFor("GIHE78-rev0"),' configure.py` prints N.
