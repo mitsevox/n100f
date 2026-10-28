@@ -406,7 +406,7 @@ xAnimTable* zEntVillain_AnimTable_Standard()
     return VANM_mktable_STD();
 }
 
-// Returns the villain in slot idx of the pool.
+// Returns the villain in slot npcidx of the pool.
 st_zEntVillain* zEntVillain_NPCInst(U32 npcidx)
 {
     return &g_npcpool[npcidx];
