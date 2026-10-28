@@ -5,5 +5,6 @@
 
 void xBoundUpdate(_xBound* b);
 xVec3* xBoundCenter(const _xBound* b);
+void xBoundHitsBound(const _xBound* a, const _xBound* b, _xCollis* c);
 
 #endif

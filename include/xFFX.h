@@ -41,6 +41,7 @@ struct xFFXRotMatchState
 };
 
 void xFFXApply(_xEnt* ent, _xScene* sc, F32 dt);
+S16 xFFXAddEffect(_xEnt* ent, void (*dof)(_xEnt*, _xScene*, F32, void*), void* fd);
 xFFX* xFFXAlloc();
 xFFXShakeState* xFFXShakeAlloc();
 xFFXRotMatchState* xFFXRotMatchAlloc();

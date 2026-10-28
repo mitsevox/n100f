@@ -26,6 +26,8 @@ struct xModelInstance
     xVec3 Scale;
 };
 
+void xModelPoolInit(U32 count, U32 numMatrices);
+void xModelEval(xModelInstance* modelInst);
 void xModelRender(xModelInstance* modelInst);
 xModelInstance* xModelInstanceAlloc(RpAtomic* data, void* object, U16 flags, U8 boneIndex,
                                     U8* boneRemap);
