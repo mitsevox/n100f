@@ -134,7 +134,6 @@ static void ReadKickoff(BinkIO* io);
 static void DVDReadCallback(s32 result, DVDFileInfo* fi)
 {
     BinkIO* io = ((NGCFILE*)fi)->io;
-    U32 t;
 
     if (N->cancelling)
         return;
@@ -227,7 +226,6 @@ static void ReadKickoff(BinkIO* io)
 
 static U32 BinkFileIdle(BinkIO* io)
 {
-
     if (io->error)
         return 0;
 
@@ -404,7 +402,6 @@ static void BinkFileSetInfo(BinkIO* io, void* buf, U32 size, U32 filesize, U32 s
 
 static void BinkFileClose(BinkIO* io)
 {
-
     CancelReadRequests(io);
     if (!N->dontclose)
         DVDClose(&N->fi);
@@ -412,7 +409,6 @@ static void BinkFileClose(BinkIO* io)
 
 S32 BinkFileOpen(BinkIO* io, const char* name, U32 flags)
 {
-
     memset(io, 0, sizeof(BinkIO));
 
     if (flags & 0x800000)
