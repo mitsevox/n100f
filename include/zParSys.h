@@ -4,8 +4,9 @@
 #include "types.h"
 #include "xBase.h"
 #include "xParGroup.h"
+#include "zParCmd.h"
 
-struct zParCmd;
+struct _xScene;
 
 struct zParSysAsset : p2BaseAsset
 {
@@ -29,14 +30,19 @@ struct _zParGroup : xParGroup
 struct zParSys : xBase
 {
     zParSysAsset* tasset;
-    U32 cmdCount;
+    S32 cmdCount;
     zParCmd* cmd;
     zParSys* parent;
     _zParGroup* group;
     U8 visible;
 };
 
-S32 zParSysEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
+void zParSysInit(void* b, void* tasset);
+void zParSysInit(xBase* b, zParSysAsset* tasset);
+void zParSysSetup(zParSys* t);
 void zParSysExit(zParSys* t);
+S32 zParSysEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
+void zParSysUpdate(xBase* to, _xScene*, F32 dt);
+void zParSysRender(xBase* b);
 
 #endif
