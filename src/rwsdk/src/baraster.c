@@ -1,9 +1,12 @@
 #include <rwcore.h>
+#include <string.h>
 
 // The standard device functions the raster calls.
+#define STDFUNC_RASTERCREATE 4
 #define STDFUNC_RASTERDESTROY 5
 #define STDFUNC_RASTERLOCK 15
 #define STDFUNC_RASTERUNLOCK 16
+#define STDFUNC_RASTERSHOWRASTER 20
 #define STDFUNC_RASTERLOCKPALETTE 23
 #define STDFUNC_RASTERUNLOCKPALETTE 24
 #define STDFUNC_RASTERGETMIPLEVELS 28
@@ -13,11 +16,15 @@
 #define rwRASTERPALETTELOCKEDWRITE 0x10
 #define rwRASTERPALETTELOCKED (rwRASTERPALETTELOCKEDREAD | rwRASTERPALETTELOCKEDWRITE)
 
-// The raster module's data in the engine instance. Partial: only the free list is declared.
+// The raster module's data in the engine instance. emptyRaster is a raster with no pixels that
+// _rwRasterOpen sets up and points unk0 at.
 typedef struct RasterModuleData RasterModuleData;
 struct RasterModuleData
 {
-    U8 unk0[0x60];
+    RwRaster* unk0;
+    U8 unk4[0x24];
+    S32 unk28;
+    RwRaster emptyRaster;
     RwFreeList* freeList;
 };
 
@@ -87,6 +94,53 @@ S32 RwRasterGetNumLevels(RwRaster* raster)
     return -1;
 }
 
+RwRaster* RwRasterShowRaster(RwRaster* raster, void* dev, U32 flags)
+{
+    RwStandardFunc showRaster = RWSRCGLOBAL(stdFunc)[STDFUNC_RASTERSHOWRASTER];
+
+    _rwResourcesPurge();
+
+    if (showRaster(raster, dev, flags))
+    {
+        return raster;
+    }
+
+    return NULL;
+}
+
+RwRaster* RwRasterCreate(S32 width, S32 height, S32 depth, S32 flags)
+{
+    RwRaster* raster = (RwRaster*)RWSRCGLOBAL(memoryAlloc)(RASTER_DATA(freeList));
+
+    if (raster)
+    {
+        RwStandardFunc rasterCreate = RWSRCGLOBAL(stdFunc)[STDFUNC_RASTERCREATE];
+
+        raster->privateFlags = 0;
+        raster->cFlags = 0;
+        raster->width = width;
+        raster->height = height;
+        raster->nOffsetX = 0;
+        raster->nOffsetY = 0;
+        raster->depth = depth;
+        raster->parent = raster;
+        raster->cpPixels = NULL;
+        raster->palette = NULL;
+
+        if (!rasterCreate(NULL, raster, flags))
+        {
+            RWSRCGLOBAL(memoryFree)(RASTER_DATA(freeList), raster);
+            return NULL;
+        }
+
+        _rwPluginRegistryInitObject(&rasterTKList, raster);
+
+        return raster;
+    }
+
+    return NULL;
+}
+
 U8* RwRasterLock(RwRaster* raster, U8 level, S32 lockMode)
 {
     U8* pixels;
@@ -108,6 +162,33 @@ void* _rwRasterClose(void* instance, S32 offset, S32 size)
     }
 
     rasterModule.numInstances--;
+
+    return instance;
+}
+
+void* _rwRasterOpen(void* instance, S32 offset, S32 size)
+{
+    rasterModule.globalsOffset = offset;
+
+    memset(&RASTER_DATA(emptyRaster), 0, sizeof(RwRaster));
+    RASTER_DATA(emptyRaster).width = 0;
+    RASTER_DATA(emptyRaster).height = 0;
+    RASTER_DATA(emptyRaster).depth = 0;
+    RASTER_DATA(emptyRaster).cFlags = rwRASTERDONTALLOCATE;
+    RASTER_DATA(emptyRaster).cpPixels = NULL;
+    RASTER_DATA(emptyRaster).palette = NULL;
+    RASTER_DATA(emptyRaster).cType = rwRASTERTYPENORMAL;
+    RASTER_DATA(unk28) = 0;
+    RASTER_DATA(unk0) = &RASTER_DATA(emptyRaster);
+
+    RASTER_DATA(freeList) = RwFreeListCreate(rasterTKList.sizeOfStruct, 20, 0);
+
+    if (!RASTER_DATA(freeList))
+    {
+        return NULL;
+    }
+
+    rasterModule.numInstances++;
 
     return instance;
 }

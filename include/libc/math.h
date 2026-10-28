@@ -112,6 +112,24 @@ extern inline float sqrtf(float x)
 
 extern inline double fabs(double x) { return __fabs(x); }
 extern inline float fabsf(float x) { return ::fabs(x); }
+#else
+// The C units (the MSL math units and RenderWare) inline the double sqrt.
+static inline double sqrt(double x)
+{
+    if (x > 0.0) {
+        double guess = __frsqrte(x);
+        guess = .5 * guess * (3.0 - guess * guess * x);
+        guess = .5 * guess * (3.0 - guess * guess * x);
+        guess = .5 * guess * (3.0 - guess * guess * x);
+        guess = .5 * guess * (3.0 - guess * guess * x);
+        return x * guess;
+    } else if (x == 0.0) {
+        return 0;
+    } else if (x) {
+        return NAN;
+    }
+    return INFINITY;
+}
 #endif
 
 #endif
