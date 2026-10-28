@@ -82,6 +82,7 @@ float atanf(float x);
 double cos(double x);
 double sin(double x);
 float cosf(float x);
+double pow(double x, double y);
 float sinf(float x);
 double tan(double x);
 

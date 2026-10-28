@@ -200,6 +200,13 @@ Nine functions still differ. `mult64anddiv`, `mult64andshift` and `div64` build 
 - `memmove` is declared in the file and `string.h` is not included. The `crclr 6` before `memcpy` and `memset` comes from GCC's builtins for them, so compatible prototypes or none give the same bytes; `string.h`'s `size_t` prototypes conflict with the builtins.
 - `BinkFileReadFrame` uses one scratch local for three short-lived values, `BinkFileIdle`'s switch names the three DVD states it ignores, and `BinkFileSetInfo` masks the size at each use. Each changes the register allocation or the code layout, as the `source-form` rows in `evidence.tsv` record.
 
+`bink/src/sdk/decode/binkacd.c`, Bink's audio decoder, is this project's own reconstruction from the target and is `NonMatching`. Seven of its eight functions compile to the target byte for byte under ProDG 3.5 to 3.9.3, and so do its `.rodata` (`0x801A8730`-`0x801A8790`) and `.data` (`rlelens`, `bandtopfreq` and `invertbins`, `0x801DC240`-`0x801DC380`). `quanttos16chans2` has the target's instructions except that the loop counter and the second channel's offset swap registers, which adds one `mr`; the cause is not established. Four details of the source come from the target's code:
+
+- Its one-bit reads (`VARBITSGET1`) are a conditional expression, not a statement. The target tests the run flag and negates the sign bit inside each arm of the refill, which GCC does only for a conditional expression used as a whole.
+- `BinkAudioDecompressOpen` takes two square roots inline with `frsqrte` and three Newton steps. GCC 2.95 has no C form for `frsqrte`, so the estimate is one `__asm__` statement in a `static inline` helper, and the steps are C.
+- `CLAMP16` casts the in-range value to `S16`. The cast gives the clamp its own result register, as the target has.
+- The file does not include `string.h`, whose `size_t` prototypes conflict with GCC's builtin `memset` and `memcpy` and change both functions that call them. Compatible prototypes or none give the target's bytes.
+
 Under GCC, `dolphin/types.h` defines `AT_ADDRESS` as empty, so the ProDG units can include `dolphin/os.h`. The MW units are unchanged.
 
 Bink headers are this project's own, declaring only what the reconstructed units use. The logo movie stays out of the repository: its data is split from `main.dol` at build time like any other unmapped data.
