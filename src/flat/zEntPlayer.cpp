@@ -1622,16 +1622,18 @@ static U32 zEntPlayer_FXSpringCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnim
                                  void* object)
 {
     _zParEmitterCustomSettings info;
+    _xEnt* ent;
 
     if (sEmitterSprings)
     {
+        ent = &globals.player.ent;
         info.custom_flags = 0x20;
-        iModelTagEval(globals.player.ent.model->Data, &globals.player.HangPawTag[2],
-                      globals.player.ent.model->Mat, &info.pos);
+        iModelTagEval(ent->model->Data, &globals.player.HangPawTag[2], ent->model->Mat,
+                      &info.pos);
         info.pos.y += 0.5f;
         zParEmitterEmitCustom(sEmitterSprings, 1.0f / 30.0f, &info);
-        iModelTagEval(globals.player.ent.model->Data, &globals.player.HangPawTag[3],
-                      globals.player.ent.model->Mat, &info.pos);
+        iModelTagEval(ent->model->Data, &globals.player.HangPawTag[3], ent->model->Mat,
+                      &info.pos);
         info.pos.y += 0.5f;
         zParEmitterEmitCustom(sEmitterSprings, 1.0f / 30.0f, &info);
     }
