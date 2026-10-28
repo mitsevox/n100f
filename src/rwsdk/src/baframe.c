@@ -15,6 +15,10 @@ struct FrameModuleData
 #define FRAME_DATA(var) \
     (((FrameModuleData*)((U8*)RwEngineInstance + frameModule.globalsOffset))->var)
 
+// The object that owns a link in a frame's object list.
+#define OBJECTFROMFRAMELINK(link) \
+    ((RwObject*)((U8*)(link) - (S32)&((RwObjectHasFrame*)0)->lFrame))
+
 RwPluginRegistry frameTKList = { sizeof(RwFrame), sizeof(RwFrame) };
 static RwModuleInfo frameModule;
 
@@ -117,6 +121,27 @@ RwFrame* RwFrameForAllChildren(RwFrame* frame, RwFrameCallBack callBack, void* d
         }
 
         child = next;
+    }
+
+    return frame;
+}
+
+RwFrame* RwFrameForAllObjects(RwFrame* frame, RwObjectCallBack callBack, void* data)
+{
+    RwLLLink* next;
+    RwLLLink* end = rwLinkListGetTerminator(&frame->objectList);
+    RwLLLink* cur = rwLinkListGetFirstLLLink(&frame->objectList);
+
+    while (cur != end)
+    {
+        next = rwLLLinkGetNext(cur);
+
+        if (!callBack(OBJECTFROMFRAMELINK(cur), data))
+        {
+            return frame;
+        }
+
+        cur = next;
     }
 
     return frame;
