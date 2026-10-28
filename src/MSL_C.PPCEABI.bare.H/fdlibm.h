@@ -14,23 +14,6 @@ double floor(double x);
 
 static inline double fabs(double x) { return __fabs(x); }
 
-static inline double sqrt(double x)
-{
-    if (x > 0.0) {
-        double guess = __frsqrte(x);
-        guess = .5 * guess * (3.0 - guess * guess * x);
-        guess = .5 * guess * (3.0 - guess * guess * x);
-        guess = .5 * guess * (3.0 - guess * guess * x);
-        guess = .5 * guess * (3.0 - guess * guess * x);
-        return x * guess;
-    } else if (x == 0.0) {
-        return 0;
-    } else if (x) {
-        return NAN;
-    }
-    return INFINITY;
-}
-
 static inline double scalbn(double x, int n) { return ldexp(x, n); }
 
 double __ieee754_acos(double x);

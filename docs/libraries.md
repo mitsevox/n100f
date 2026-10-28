@@ -24,21 +24,24 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 
 ### Reconstructed RenderWare sources
 
-`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` (text-only, all 7 functions), `baworobj.c` (all 48 functions and its `.sbss`), `babinary.c` (all 14 functions and its jump table in `.data`) and `batypehf.c` (text-only, both functions) are linked as Matching objects; the other units stay NonMatching (data is not split, or functions remain). 223 functions compile to the target bytes with every relocation resolving to the target's symbol:
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` (text-only, all 7 functions), `baworobj.c` (all 48 functions and its `.sbss`), `babinary.c` (all 14 functions and its jump table in `.data`), `batypehf.c` (text-only, both functions), `basync.c` (text-only, all 7 functions), `baraster.c` (all 11 functions, its `.data` and its `.sbss`), `bapipe.c` (all 4 functions and its `.sbss`) and `baimras.c` (text-only, all 3 functions) are linked as Matching objects; the other units stay NonMatching (data is not split, or functions remain). 248 functions compile to the target bytes with every relocation resolving to the target's symbol:
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |
-| `rwsdk/src/plcore/bavector.c` | 7 of 10 | `VectorMultVector` (register allocation and scheduling), `_rwSqrt` and `_rwInvSqrt` (see below) |
+| `rwsdk/src/plcore/bavector.c` | 11 of 12 | `_rwVectorOpen` (97%: the stack slots of the two inlined table builders' locals, and one load per table loop scheduled before the store instead of after it) |
 | `rwsdk/src/plcore/rwstring.c` | 5 of 5 | (end edge open: bfbb's unit has 7 functions) |
 | `rwsdk/src/plcore/baerr.c` | 3 of 3 | |
 | `rwsdk/src/plcore/bafsys.c` | 3 of 4 | `_rwFileSystemOpen`, not written yet: it stores MSL stdio functions, which were address labels when the unit was imported and are now named (`fopen`, `fread`, `fgets`, `fputs`, `feof`) |
 | `rwsdk/src/plcore/resmem.c` | 4 of 4 | |
 | `rwsdk/src/plcore/baimmedi.c` | 7 of 7 | (Matching) |
-| `rwsdk/src/plcore/batkreg.c` | 4 of 9 | 5 others |
+| `rwsdk/src/plcore/batkreg.c` | 7 of 9 | `_rwPluginRegistryClose` (unnamed callee), `_rwPluginRegistryAddPlugin` |
 | `rwsdk/src/badevice.c` | 6 of 13 | 7 others |
-| `rwsdk/src/baframe.c` | 10 of 20 | 10 others |
+| `rwsdk/src/baframe.c` | 11 of 20 | 9 others |
 | `rwsdk/src/bacamera.c` | 11 of 18 | 7 others, including `CameraSync` (unnamed callees) |
-| `rwsdk/src/baraster.c` | 8 of 10 | `RwRasterCreate`, `RwRasterShowRaster` |
+| `rwsdk/src/baraster.c` | 11 of 11 | (Matching; ends at `_rwRasterOpen`, `0x8016DD04`) |
+| `rwsdk/src/baimras.c` | 3 of 3 | (Matching) |
+| `rwsdk/src/basync.c` | 7 of 7 | (Matching; starts at `SyncObject`, `0x8016E9E4`) |
+| `rwsdk/src/pipe/p2/bapipe.c` | 4 of 4 | (Matching) |
 | `rwsdk/src/batextur.c` | 13 of 27 | 14 others |
 | `rwsdk/src/plcore/batkbin.c` | 3 of 8 | 5 others |
 | `rwsdk/src/plcore/bamatrix.c` | 3 of 9 | 6 others |
@@ -61,7 +64,10 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 
 Structure layouts come from the SLUS-20349 DWARF where it has the type (game code includes RenderWare's headers) and from the target's accesses otherwise; `evidence.tsv` has a `type` or `field` row for each. The GameCube layout can differ: `RwTexture.refCount` is at `+0x54` here and `+0x50` in the DWARF, and `RpClump` has a light list at `+0x10` and a camera list at `+0x18` (size `0x30`) where the DWARF's PS2 class has neither, as bfbb's GameCube header does. The size-sequence labels at `0x80149A4C` and `0x80149A80` were corrected to `RpClumpRemoveLight` and `RpClumpRemoveCamera` (the bodies use the light and camera extension offsets, in bfbb's order). `include/rwcore.h` and `include/rpworld.h` now declare their types with `typedef` so the same headers serve the C RenderWare units and the C++ game code. Type, member, typedef and macro names the DWARF lacks (`RwGlobals`, `RwDevice`, `RwError`, `RwPluginRegistry`, `RwPluginRegEntry`, the plugin, device and callback typedefs, `RWSRCGLOBAL`) follow bfbb's `include/rwsdk/rwplcore.h`, `rwcore.h` and `rpworld.h` (derived from the SDK headers) as related names. The file-local module data (`VectorModuleData`, `ErrorModuleData`, `MaterialModuleData`, `LightModuleData`, `TextureModuleData`, `FrameModuleData`, `CameraModuleData`, `WorldObjModuleData`, `MatrixModuleData`, `StreamModuleData`), `ClumpObjectExt`, `WorldSectorSearch`, the world-object extensions and ties (`WorldCameraExt`, `WorldObjectExt`, `WorldTie`, `LightTie`), the world-object plugin ids and sector-walk constants, `BinaryChunkHeader`, `RasterModuleData`, `ImageModuleData`, the private frame flags, the `STDFUNC_*` indices into `RwGlobals.stdFunc` and resource-heap types (`ResHeap`, `ResHeapBlock`) have no source and use this project's own names. Source-form details the target fixes:
 
-- `_rwSqrt` and `_rwInvSqrt` (59% and 62%) are not counted as exact. The target stores the argument to the stack and reloads the word after each store; under this profile only a `volatile` access reproduces that, and nothing shows the original used one, so the source keeps a plain pointer ([CONTRIBUTING](../CONTRIBUTING.md) bars a qualifier whose only justification is matching bytes).
+- `_rwSqrt` and `_rwInvSqrt` reach the argument's bits through the SDK's own `RwSplitBits` union, whose `volatile` integer members give the target's reload of the word after each store; a plain `U32` pointer keeps it in a register (59% and 62%).
+- `bavector.c`'s table builders take `sqrt` from the C branch of `include/libc/math.h` (the `frsqrte` form with four Newton steps the MSL math units use), which the target inlines.
+- `basync.c`'s hierarchy walks take the parent frame into a local before `RwMatrixMultiply`; without it CodeWarrior inlines the recursion one level deeper than the target's six. `FrameSyncHierarchy` keeps the LTM flag in a `U8` local, which gives the target's registers.
+- `RwRasterShowRaster` and `RwRasterCreate` load the device function into a local first, as the target does before `_rwResourcesPurge` and the raster's field stores.
 - The resource heap tests a block's `used` word as `~used & 1` where the block must be free (`nor` then `clrlwi.`) and as `used & 1` where it must be in use (`clrlwi.` alone). `!(used & 1)` and `(used & 1) == 0` compile to `clrlwi.` with the opposite branch and do not match.
 - `_rpClumpRegisterExtensions` ends with `return (_rpClumpLightExtOffset = RpLightRegisterPlugin(...)) >= 0;`: the target takes the sign bit before it stores the offset. Storing first and testing the global puts the store before the shift.
 - `StrChr` and `StrRChr` copy the `char` argument into an `S32` local before the loop: the target sign-extends it once into `r5`, and comparing with the parameter directly swaps `r4` and `r5`.
@@ -74,7 +80,7 @@ Structure layouts come from the SLUS-20349 DWARF where it has the type (game cod
 - `babinary.c` swaps 32-bit words with the plain C expression `(w >> 24) | ((w >> 8) & 0xFF00) | ((w << 8) & 0xFF0000) | (w << 24)`, which CodeWarrior compiles to `stwbrx`. The `__stwbrx` intrinsic gives the same instruction, but in a lighter loop that every GC compiler unrolls eight times instead of the target's four. The swap and float-conversion loops reuse `size` as their count, which the inlined copies need.
 - `ChunkIsComplex` sets an `isComplex` local in each case and returns it once. It compiles to the same code as returning from each case, but the larger source keeps it out of line in `RwStreamReadChunkHeaderInfo`, as in the target.
 - `_rwStreamReadChunkHeader` stores the read-size comparison in a local before testing it, which gives the target's `cntlzw` form.
-- `VectorMultVector` computes `x * right + y * up` for all three components before adding the `at` terms and storing: the target loads `right.y`, `right.z`, `up.y` and `up.z` before the first store. The source does the same, but the register allocation still differs.
+- `VectorMultPoint` and `VectorMultVector` declare `z, y, x` then `outX, outY, outZ` and build each output in place (`outX = x * right.x; outX += y * up.x;`); other declaration orders or one expression per component give the same instructions with other registers.
 
 
 The flags are shown compatible with the target, not established. MSL is one profile for the whole library: the 52 imported units match under GC/1.3 with `-inline auto,deferred`, `-char signed` and `-fp_contract on`, twelve of them differ under GC/1.3.2, and none needs GC/1.3.2. Ten of the fdlibm units need `-fp_contract on` (fused multiply-add), and every other MSL unit compiles identically with it on or off. Each later MSL import reconfirms the profile on its own unit.
