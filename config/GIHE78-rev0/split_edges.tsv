@@ -282,10 +282,10 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	iCollideFast.cpp	iDebug.cpp	0x8025E890	0x8025E890	single aligned candidate	0
 .sbss	iDebug.cpp	iEnv.cpp	0x8025E898	0x8025E898	single aligned candidate	0
 .sbss	iEnv.cpp	iFont.cpp	0x8025E8A8	0x8025E8B8	open: 4 items loaded by unassigned functions	0
-.sbss	iFont.cpp	iLight.cpp	0x8025E8D8	0x8025E8D8	single aligned candidate	0
+.sbss	iFont.cpp	iLight.cpp	0x8025E8D8	0x8025E8D8	single aligned candidate; 1 in-range loads by functions outside the written units	1
 .sbss	iLight.cpp	iMath.cpp	0x8025E8E0	0x8025E8E0	single aligned candidate	0
 .sbss	iMath.cpp	iMemMgr.cpp	0x8025E8E8	0x8025E8E8	single aligned candidate	0
-.sbss	iMemMgr.cpp	iModel.cpp	0x8025E900	0x8025E900	single aligned candidate	0
+.sbss	iMemMgr.cpp	iModel.cpp	0x8025E900	0x8025E900	single aligned candidate; 6 in-range loads by functions outside the written units	6
 .sbss	iModel.cpp	iMorph.cpp	0x8025E908	0x8025E908	single aligned candidate	0
 .sbss	iMorph.cpp	isavegame.cpp	0x8025E920	0x8025E920	single aligned candidate	0
 .sbss	isavegame.cpp	iScrFX.cpp	0x8025E950	0x8025E950	single aligned candidate	0
@@ -303,7 +303,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	xFFX.cpp	xFX.cpp	0x8025EA78	0x8025EA80	open: 2 items between aligned candidates	0
 .sbss	xFX.cpp	xhipio.cpp	0x8025EAB0	0x8025EAB0	single aligned candidate	0
 .sbss	xhipio.cpp	xMemMgr.cpp	0x8025EAB8	-	open: 1 items loaded by unassigned functions; a side left unsplit	0
-.sbss	xMemMgr.cpp	xModel.cpp	-	0x8025EAC0	single aligned candidate; 2 in-range loads by unassigned functions; a side left unsplit	2
+.sbss	xMemMgr.cpp	xModel.cpp	-	0x8025EAC0	single aligned candidate; 2 in-range loads by functions outside the written units; a side left unsplit	2
 .sbss	xModel.cpp	xPad.cpp	0x8025EAD0	0x8025EAD0	single aligned candidate	0
 .sbss	xPad.cpp	xPar.cpp	0x8025EAD8	0x8025EAD8	single aligned candidate	0
 .sbss	xPar.cpp	xParGroup.cpp	0x8025EAE0	0x8025EAE0	single aligned candidate	0
@@ -334,7 +334,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	zFeet.cpp	zFMV.cpp	0x8025EEC8	0x8025EEC8	single aligned candidate	0
 .sbss	zFMV.cpp	zGame.cpp	0x8025EED0	0x8025EED8	open: 2 items between aligned candidates	0
 .sbss	zGame.cpp	zGameExtras.cpp	0x8025EF28	0x8025EF28	single aligned candidate	0
-.sbss	zGameExtras.cpp	zGameState.cpp	0x8025EF80	0x8025EF80	single aligned candidate	0
+.sbss	zGameExtras.cpp	zGameState.cpp	0x8025EF80	0x8025EF80	single aligned candidate; 1 in-range loads by functions outside the written units	1
 .sbss	zGameState.cpp	zGust.cpp	0x8025EF88	0x8025EF88	single aligned candidate	0
 .sbss	zGust.cpp	zHud.cpp	0x8025EF98	0x8025EF98	single aligned candidate	0
 .sbss	zHud.cpp	zLaugh.cpp	0x8025EFE8	0x8025EFE8	single aligned candidate	0
