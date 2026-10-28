@@ -448,6 +448,15 @@ typedef enum RwBlendFunction
     rwBLENDFUNCTIONFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwBlendFunction;
 
+typedef enum RwCullMode
+{
+    rwCULLMODENACULLMODE = 0,
+    rwCULLMODECULLNONE,
+    rwCULLMODECULLBACK,
+    rwCULLMODECULLFRONT,
+    rwCULLMODEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwCullMode;
+
 #define rwObjectGetSubType(o) (((const RwObject*)(o))->subType)
 #define rwObjectGetFlags(o) (((const RwObject*)(o))->flags)
 #define rwObjectTestFlags(o, f) ((((const RwObject*)(o))->flags) & (U8)(f))
