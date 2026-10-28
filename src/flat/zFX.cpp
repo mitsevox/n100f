@@ -3,15 +3,15 @@
 #include "zScene.h"
 
 extern "C" {
-void fn_8002A5F4(U32);
-void fn_8002AC2C();
+void fn_8002A5F4(RwTexture*);
+void fn_8002AC2C(RpWorld*);
 void fn_8002AC30(RpWorld*);
 }
 
-// Set up warping for the tide or tree entity in this scene.
+// Set up scene effects and warping for the tide or tree entity.
 void zFX_SceneEnter(RpWorld* world)
 {
-    fn_8002A5F4(0);
+    fn_8002A5F4(NULL);
     fn_8002AC30(world);
 
     iFXWarbModes mode = IFX_WARB_WATER_WAVE;
@@ -38,6 +38,6 @@ void zFX_SceneEnter(RpWorld* world)
 // Stop the scene's warping effect.
 void zFX_SceneExit(RpWorld* world)
 {
-    fn_8002AC2C();
+    fn_8002AC2C(world);
     iFXWarbSetParams(IFX_WARB_NONE, NULL);
 }
