@@ -14,7 +14,7 @@ targets, r2/r13 offsets, and a `lis` half with its partner instruction where eve
 that half and the two form an address), occur exactly once on each side is an anchor; anchors that break address order are dropped. Between consecutive pairs, equal
 runs of functions pair in order, by position alone. A branch target that resolves the same way
 from every paired caller pairs too, and so does a function the sibling's toolkit merged into its
-predecessor, at the same offset, when its masked instructions are equal there. Data symbols map
+predecessor, or split in two, at the same offset, when its masked instructions are equal there. Data symbols map
 through the addresses that pairs with the same instruction shape and mapped pointer words resolve
 to, by a majority over every reference into the symbol and only where the bytes are equal outside
 pointer words; a run of unreferenced data between two mapped symbols takes their shifts where the
@@ -229,10 +229,16 @@ class Side:
 
     def adopt(self,addr,other):
         """Pair `other` (a function of the other side) with the code at `addr` when its masked
-        instructions are the same there: the toolkit merged it into a neighbour on this side."""
-        if addr in self.functions:return self.functions[addr][2]==other[2]
-        found=self.code(addr,other[0].size)
+        instructions are the same there: the toolkit merged it into a neighbour on this side, or split
+        it, so that a longer `other` covers this side's function and the ones after it."""
+        size=other[0].size
+        if addr in self.functions:
+            have=self.functions[addr][0]
+            if self.functions[addr][2]==other[2]:return True
+            if have is None or size<=have.size:return False
+        found=self.code(addr,size)
         if not found or found[1]!=other[2]:return False
+        for x in [x for x in self.functions if addr<x<addr+size]:del self.functions[x]
         self.functions[addr]=(None,)+found
         return True
 
