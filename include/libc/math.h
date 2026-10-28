@@ -108,6 +108,9 @@ extern inline float sqrtf(float x)
     }
     return x;
 }
+
+extern inline double fabs(double x) { return __fabs(x); }
+extern inline float fabsf(float x) { return ::fabs(x); }
 #endif
 
 #endif
