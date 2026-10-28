@@ -5,3 +5,9 @@ symbols: config/GIHE78-rev1/symbols.txt
 splits: config/GIHE78-rev1/splits.txt
 mw_comment_version: 10
 ldscript_template: config/GIHE78-rev1/ldscript.tpl
+# Binary data that reconstructed source includes at build time, extracted from main.dol so the
+# bytes stay out of the repository (docs/libraries.md). CardData is ported from GIHE78-rev0.
+extract:
+- symbol: CardData
+  header: dolphin/card/CardData.inc
+  header_type: raw
