@@ -12,15 +12,6 @@ typedef struct RpVertexNormal RpVertexNormal;
 typedef struct RwTexCoords RwTexCoords;
 typedef struct RpCollSector RpCollSector;
 typedef struct RpMeshHeader RpMeshHeader;
-typedef struct RxPipeline RxPipeline;
-
-// Partial: only pluginId and pluginData are declared.
-struct RxPipeline
-{
-    U8 unk0[0x2C];
-    U32 pluginId;
-    U32 pluginData;
-};
 
 struct RpMeshHeader
 {
@@ -313,6 +304,32 @@ RpClump* RpClumpStreamRead(RwStream* stream);
 RpWorld* RpWorldAddCamera(RpWorld* world, RwCamera* camera);
 RpWorld* RpWorldRemoveCamera(RpWorld* world, RwCamera* camera);
 S32 RpWorldDestroy(RpWorld* world);
+
+RxPipeline* RpWorldSetDefaultSectorPipeline(RxPipeline* pipeline);
+RxPipeline* RpAtomicSetDefaultPipeline(RxPipeline* pipeline);
+void _rpWorldPipelineClose(void);
+S32 _rpWorldPipelineOpen(void);
+S32 _rpWorldPipeAttach(void);
+S32 _rpCreatePlatformMaterialPipelines(void);
+void _rpDestroyPlatformMaterialPipelines(void);
+S32 _rpCreatePlatformWorldSectorPipelines(void);
+void _rpDestroyPlatformWorldSectorPipelines(void);
+S32 _rpCreatePlatformAtomicPipelines(void);
+void _rpDestroyPlatformAtomicPipelines(void);
+
+RxNodeDefinition* RxNodeDefinitionGetTransform(void);
+RxNodeDefinition* RxNodeDefinitionGetCullTriangle(void);
+RxNodeDefinition* RxNodeDefinitionGetLight(void);
+RxNodeDefinition* RxNodeDefinitionGetPostLight(void);
+RxNodeDefinition* RxNodeDefinitionGetClipTriangle(void);
+RxNodeDefinition* RxNodeDefinitionGetSubmitTriangle(void);
+RxNodeDefinition* RxNodeDefinitionGetAtomicInstance(void);
+RxNodeDefinition* RxNodeDefinitionGetAtomicEnumerateLights(void);
+RxNodeDefinition* RxNodeDefinitionGetMaterialScatter(void);
+RxNodeDefinition* RxNodeDefinitionGetWorldSectorInstance(void);
+RxNodeDefinition* RxNodeDefinitionGetWorldSectorEnumerateLights(void);
+RxNodeDefinition* RxNodeDefinitionGetGameCubeAtomicAllInOne(void);
+RxNodeDefinition* RxNodeDefinitionGetGameCubeWorldSectorAllInOne(void);
 
 #ifdef __cplusplus
 }
