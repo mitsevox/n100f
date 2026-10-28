@@ -180,7 +180,6 @@ static inline void _insertionsort(U8* base, U32 numItems, U32 stride, U32 keyOff
         {
             SWAPITEMS(cur, cur + stride, stride);
         }
-
     }
 }
 
