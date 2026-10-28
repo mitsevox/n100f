@@ -316,7 +316,7 @@ void iModelAnimMatrices(RpAtomic* model, xQuat* quat, xVec3* tran, RwMatrix* mat
 
         for (i = 0; i < numFrames; i++)
         {
-            if (pCurrentFrameFlags & rpHANIMPUSHPARENTMATRIX)
+            if (pCurrentFrameFlags & 2)
             {
                 *pMatrixStackTop++ = parentMatrix;
             }
@@ -328,7 +328,7 @@ void iModelAnimMatrices(RpAtomic* model, xQuat* quat, xVec3* tran, RwMatrix* mat
             RwMatrixMultiply(&world, &local, &parentMatrix);
             *pMatrixArray = world;
 
-            parentMatrix = (pCurrentFrameFlags & rpHANIMPOPPARENTMATRIX) ? *--pMatrixStackTop : world;
+            parentMatrix = (pCurrentFrameFlags & 1) ? *--pMatrixStackTop : world;
 
             pMatrixArray++;
             quat++;

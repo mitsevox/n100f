@@ -54,9 +54,6 @@ typedef enum RpHAnimHierarchyFlag
     rpHANIMHIERARCHYFLAGFORCEENUMSIZEINT = 0x7FFFFFFF
 } RpHAnimHierarchyFlag;
 
-#define rpHANIMPOPPARENTMATRIX 0x01
-#define rpHANIMPUSHPARENTMATRIX 0x02
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -20,7 +20,7 @@ The 89 RenderWare units in `config/GIHE78-rev0/rw_units.tsv` are listed NonMatch
 
 ### Reconstructed RenderWare sources
 
-`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Identifier names, and layouts checked against the target, may come from bfbb's `include/rwsdk/` headers, which are copies of the RenderWare SDK headers (names only, by the project owner's decision; no code, comments or header text is copied). The units stay NonMatching (data is not split), and 43 of their functions compile to the target bytes with every relocation resolving to the target's symbol:
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Identifier names, and layouts checked against the target, may come from bfbb's `include/rwsdk/` headers, which are copies of the RenderWare SDK headers. By the project owner's decision, identifier names may come from there, and so may SDK macro bodies and enums (2026-10-28, n100f#74), each credited in [CREDITS.md](../CREDITS.md); no RenderWare function code, comments or other header text is copied, and leaked RenderWare source is never used. The units stay NonMatching (data is not split), and 43 of their functions compile to the target bytes with every relocation resolving to the target's symbol:
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |
