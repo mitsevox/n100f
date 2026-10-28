@@ -1,4 +1,4 @@
-# See config.example.yml for documentation.
+# Format: https://github.com/encounter/dtk-template/blob/d366876408b754891a0392badbc63bff3490469f/config/GAMEID/config.example.yml
 # Hash measured from the owner's copy.
 object_base: orig/GIHE78-rev0
 object: sys/main.dol
