@@ -14,5 +14,6 @@ enum _tagSDRumbleType
 };
 
 void zRumbleStart(S32 pad_id, _tagSDRumbleType rumble_type);
+void zRumbleStartDistance(S32 pad_id, F32 real_dist, F32 max_dist);
 
 #endif

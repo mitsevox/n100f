@@ -6,5 +6,6 @@
 struct iSndFileInfo;
 
 iSndFileInfo* iSndLookup(U32 id);
+U32 iSndIsPlaying(U32 assetID);
 
 #endif
