@@ -61,8 +61,8 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/baworobj.c` | 48 of 48 | (Matching; starts at `WorldObjectOpen`, `0x8015275C`) |
 | `rwsdk/world/bamatlst.c` | 3 of 5 | `_rpMaterialListDeinitialize`, `_rpMaterialListStreamRead` |
 | `rwsdk/world/bamesh.c` | 3 of 11 | 8 others |
-| `rwsdk/world/babinwor.c` | 6 of 6 | (data and end edge open: unsplit code after the unit reads its `.sbss`) |
-| `rwsdk/world/pipe/p2/gcn/vtxfmt.c` | 11 of 11 | (data and end edge open: `.bss` and `.sbss` not split) |
+| `rwsdk/world/babinwor.c` | 6 of 6 | (data and end edge open: unsplit code after the unit writes and reads its `.sbss`) |
+| `rwsdk/world/pipe/p2/gcn/vtxfmt.c` | 11 of 11 | (data and both edges open: `.bss` and `.sbss` not split; `fn_8015D314` before it fits bfbb's `_rwDlVtxFmtSetup`) |
 | `rwsdk/plugin/matfx/rpmatfx.c` | 23 of 23 | (data open: `.sdata2` and `MatFXInfo` not split; the MatFX open and stream code before it is unsplit) |
 | `rwsdk/plugin/userdata/rpusrdat.c` | 12 of 17 | `UserDataListCopy`, `UserDataObjectStreamRead`, `UserDataObjectStreamWrite`, `UserDataObjectGetSize` and `RpGeometryGetUserDataArrayCount` (90-99%: the loop counter and the array offset take each other's registers; `UserDataObjectGetSize` also orders the string length sum `addi` then `add`) |
 | `rwsdk/driver/gcn/dlconvrt.c` | 12 of 25 | `_rwDlRGBToPixel` (88%: the target keeps `pixel` in a stack slot), `_rwDlPixelToRGB` (93%: the target calls `_rwDlConv565To8888` out of line in its default case and inlines it for 565) and the 11 image and raster conversion functions, not written yet |
