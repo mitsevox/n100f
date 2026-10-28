@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "defaultTarget": "GIHE78-rev0",
+  "targets": [
+    {"id": "GIHE78-rev0", "platform": "gamecube", "label": "GIHE78", "region": "USA", "revision": "0",
+     "sha1": "c77fb29d39b5898933e8ef4d1ccd2ddac404554e", "status": "active"},
+    {"id": "GIHE78-rev1", "platform": "gamecube", "label": "GIHE78", "region": "USA", "revision": "1",
+     "sha1": "cc84bc42b1054b572b5bb65968cf80b71ff41d0b", "status": "archived"}
+  ]
+}

@@ -388,9 +388,9 @@ def main():
     ap.add_argument('--dol', required=True)
     ap.add_argument('--ps2-elf', required=True)
     ap.add_argument('--dwarf', default='references/Scooby-Doo Night of 100 Frights/SLUS-20349/symbols/dwarf_functions.tsv')
-    ap.add_argument('--symbols', default='config/GIHE78/symbols.txt')
-    ap.add_argument('--evidence', default='config/GIHE78/evidence.tsv', help='function rows with exact bodies pin by name')
-    ap.add_argument('--objdir', default='build/GIHE78/obj', help='objects from a dtk split of the DOL')
+    ap.add_argument('--symbols', default='config/GIHE78-rev0/symbols.txt')
+    ap.add_argument('--evidence', default='config/GIHE78-rev0/evidence.tsv', help='function rows with exact bodies pin by name')
+    ap.add_argument('--objdir', default='build/GIHE78-rev0/obj', help='objects from a dtk split of the DOL')
     ap.add_argument('--game-end', type=lambda x: int(x, 0), default=0x800D7E00,
                     help='end of the game block; GC-only code starts here with iAnimBlend (BfBB gc/iAnim.cpp)')
     ap.add_argument('--prefix', default='flat/')
