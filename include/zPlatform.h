@@ -2,12 +2,17 @@
 #define ZPLATFORM_H
 
 #include "zEnt.h"
+#include "xEntMotion.h"
 
-// Partial: members up to moving. The members before it that no reconstructed function uses
-// are left opaque.
+struct p2PlatformAsset;
+
+// Partial: members up to moving. The members between motion and moving that no
+// reconstructed function uses are left opaque.
 struct _zPlatform : _zEnt
 {
-    U8 opaque_EC[0x174 - 0xEC];
+    p2PlatformAsset* passet;
+    _xEntMotion motion;
+    U8 opaque_motion_end[0x174 - 0xF0 - sizeof(_xEntMotion)];
     S32 moving;
 };
 

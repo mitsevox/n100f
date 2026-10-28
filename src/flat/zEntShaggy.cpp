@@ -19,6 +19,10 @@
 #include "xFFX.h"
 #include "zScene.h"
 #include "zEntPickup.h"
+#include "zEntTrigger.h"
+#include "zVolume.h"
+#include "iAnim.h"
+#include "iAnimSKB.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -31,6 +35,8 @@ F32 gACCEL_START;
 F32 gACCEL_END;
 F32 THROW_MINHEIGHT = 4.25f;
 F32 THROW_DEFHEIGHT = 6.0f;
+static U32 ChimneyTagIndex = 27;
+static U32 ShaggyTagIndex = 397;
 static F32 gShaggy3TurnAngle;
 static _zParEmitter* gTractorEmitter;
 static _zParEmitter* gBurningManEmitter;
@@ -904,10 +910,148 @@ void Shaggy1_SetHangable(_zEnt* ent, _zEntHangable* hang)
     guts->hangme = hang;
 }
 
+static void Shaggy1_BonusAnims(_zEnt* ent)
+{
+    U32 rootbone;
+    F32 catch_tranadjust[3] = { 0.0f, 0.0f, 0.6f };
+    F32 shark_tranadjust[3] = { 0.0f, -0.56f, 0.0f };
+    xQuat tempquat;
+    xAnimState* state;
+    xAnimTable* plyrtbl;
+    xAnimState* plyrstate;
+    void* hang_animdata = NULL;
+    void* hangswing_animdata = NULL;
+    xVec3 va;
+    xVec3 vb;
+    F32 temptran[3];
+
+    state = ent->model->Anim->Table->StateList;
+    plyrtbl = globals.player.ent.model->Anim->Table;
+    while (state)
+    {
+        if (state->Name[0] == 'S' && state->Name[1] == 'D' &&
+            (state->Name[2] == '1' || state->Name[2] == '0'))
+        {
+            for (plyrstate = plyrtbl->StateList; plyrstate; plyrstate = plyrstate->Next)
+            {
+                if (plyrstate->ID == state->ID)
+                {
+                    plyrstate->Speed = state->Speed;
+                    plyrstate->Data = state->Data;
+                }
+            }
+            rootbone = 2;
+        }
+        else
+        {
+            rootbone = 1;
+        }
+
+        if (!(((iAnimSKBHeader*)state->Data->RawData[0])->Flags & 0x80000000))
+        {
+            ((iAnimSKBHeader*)state->Data->RawData[0])->Flags |= 0x80000000;
+
+            if (!xStricmp(state->Name, "SD0_CatchJump") || !xStricmp(state->Name, "SD0_Hold") ||
+                !xStricmp(state->Name, "SD0_HoldWalk") || !xStricmp(state->Name, "SD0_CatchThrow") ||
+                !xStricmp(state->Name, "SD0_Throw") || !xStricmp(state->Name, "SD0_SetDown") ||
+                !xStricmp(state->Name, "SD1_Hold") || !xStricmp(state->Name, "SD1_HoldWalk") ||
+                !xStricmp(state->Name, "SD1_CatchJump") || !xStricmp(state->Name, "SD1_CatchThrow") ||
+                !xStricmp(state->Name, "SD1_Throw") || !xStricmp(state->Name, "SD1_ThrowIdle") ||
+                !xStricmp(state->Name, "SD1_ThrowWalk") || !xStricmp(state->Name, "SD1_HangReact") ||
+                !xStricmp(state->Name, "SD1_LandReact") || !xStricmp(state->Name, "SD1_SetDown") ||
+                (!xStricmp(state->Name, "Hold") && ent->subType == 0x1C) ||
+                (!xStricmp(state->Name, "ThrowIdle") && ent->subType == 0x1C) ||
+                !xStricmp(state->Name, "LandReact") || !xStricmp(state->Name, "CatchJump") ||
+                !xStricmp(state->Name, "CatchThrow") || !xStricmp(state->Name, "Throw") ||
+                !xStricmp(state->Name, "HoldWalk") || !xStricmp(state->Name, "SetDown"))
+            {
+                _iAnimSKBAdjustTranslate((iAnimSKBHeader*)state->Data->RawData[0], rootbone,
+                                         catch_tranadjust);
+            }
+
+            if (!xStricmp(state->Name, "SharkHang") || !xStricmp(state->Name, "SharkHang2") ||
+                !xStricmp(state->Name, "SharkHang3") || !xStricmp(state->Name, "SharkSwing") ||
+                !xStricmp(state->Name, "SharkTalk"))
+            {
+                _iAnimSKBAdjustTranslate((iAnimSKBHeader*)state->Data->RawData[0], rootbone,
+                                         shark_tranadjust);
+            }
+
+            if (ent->subType == 0x1C)
+            {
+                if (!xStricmp(state->Name, "SD0_Hold") || !xStricmp(state->Name, "SD0_HoldWalk") ||
+                    !xStricmp(state->Name, "SD0_CatchThrow") || !xStricmp(state->Name, "SD0_Throw") ||
+                    !xStricmp(state->Name, "Hold") || !xStricmp(state->Name, "ThrowIdle") ||
+                    !xStricmp(state->Name, "LandReact") || !xStricmp(state->Name, "CatchThrow") ||
+                    !xStricmp(state->Name, "Throw") || !xStricmp(state->Name, "HoldWalk"))
+                {
+                    _iAnimSKBFlip180((iAnimSKBHeader*)state->Data->RawData[0], rootbone);
+                }
+            }
+
+            if (!(state->Name[0] == 'S' && state->Name[1] == 'D' &&
+                  (state->Name[2] == '1' || state->Name[2] == '0') && state->Name[3] == '_') &&
+                (xStricmp(state->Name, "Hold") || ent->subType == 0x1C))
+            {
+                _iAnimSKBSwapTranslate((iAnimSKBHeader*)state->Data->RawData[0], 0, rootbone);
+            }
+
+            if (!xStricmp(state->Name, "SD1_HangReact"))
+            {
+                _iAnimSKBFixTransPop(state->Data->RawData[0],
+                                     plyrtbl->StateList->Data->RawData[0], 3);
+            }
+        }
+
+        if (!xStricmp(state->Name, "Apex") && ent->subType == 0x1D)
+        {
+            iAnimEval(state->Data->RawData[0], 0.0f, 1, &globals.player.Shaggy1.ReleaseTrans,
+                      &tempquat);
+        }
+        if (!xStricmp(state->Name, "Hang"))
+        {
+            iAnimEval(state->Data->RawData[0], 0.0f, 1, &globals.player.Shaggy1.HangTrans,
+                      &tempquat);
+            hang_animdata = state->Data->RawData[0];
+        }
+        if (!xStricmp(state->Name, "HangSwing"))
+        {
+            hangswing_animdata = state->Data->RawData[0];
+        }
+        if (!xStricmp(state->Name, "Throw") && ent->subType == 0x1D)
+        {
+            iAnimEval(state->Data->RawData[0], state->Data->Duration - 0.03333f, 1, &va,
+                      &tempquat);
+            iAnimEval(state->Data->RawData[0], state->Data->Duration, 1, &vb, &tempquat);
+            globals.player.Shaggy1.ThrowPos.x = vb.x;
+            globals.player.Shaggy1.ThrowPos.y = vb.y;
+            globals.player.Shaggy1.ThrowPos.z = vb.z;
+            globals.player.Shaggy1.ThrowVel.x = (vb.x - va.x) / 0.03333f;
+            globals.player.Shaggy1.ThrowVel.y = (vb.y - va.y) / 0.03333f;
+            globals.player.Shaggy1.ThrowVel.z = (vb.z - va.z) / 0.03333f;
+            gACCEL_END = state->Data->Duration;
+            gACCEL_START = gACCEL_END - 0.2f;
+        }
+        state = state->Next;
+    }
+
+    temptran[0] = 0.0f;
+    temptran[1] = globals.player.Shaggy1.ReleaseTrans.y - globals.player.Shaggy1.HangTrans.y;
+    temptran[2] = 0.0f;
+    if (hang_animdata)
+    {
+        _iAnimSKBAdjustTranslate((iAnimSKBHeader*)hang_animdata, 0, temptran);
+    }
+    if (hangswing_animdata)
+    {
+        _iAnimSKBAdjustTranslate((iAnimSKBHeader*)hangswing_animdata, 0, temptran);
+    }
+}
+
 static void Shaggy1_MiddleUpdate(_zEnt* shag, _xScene* sc, F32 dt)
 {
-    F32 dz;
-    F32 dx;
+    F32 dz = 0.0f;
+    F32 dx = 0.0f;
     F32 oldgravity;
     xAnimState* plyrstate;
     xAnimState* astate;
@@ -1068,14 +1212,14 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
         }
         else
         {
-            ent->penby &= ~0x10;
-            ent->chkby &= ~0x10;
+            ent->penby &= (U8)~0x10;
+            ent->chkby &= (U8)~0x10;
         }
     }
     else if (guts->hangme)
     {
-        ent->penby &= ~0x10;
-        ent->chkby &= ~0x10;
+        ent->penby &= (U8)~0x10;
+        ent->chkby &= (U8)~0x10;
         xEntBeginUpdate(ent, sc, dt);
         xEntEndUpdate(ent, sc, dt);
     }
@@ -1423,12 +1567,233 @@ void Shaggy1_PlayerUpdate(_zEnt* shag, _xScene* sc, F32 dt)
     globals.player.Shaggy1.GrabTry = NULL;
 }
 
+static inline void NearestPointBox2D(xVec3* near, xVec3* vec, xVec3* lower, xVec3* upper)
+{
+    near->x = vec->x;
+    near->y = lower->y;
+    near->z = vec->z;
+    if (vec->x < lower->x)
+    {
+        near->x = lower->x;
+    }
+    else if (vec->x > upper->x)
+    {
+        near->x = upper->x;
+    }
+    if (vec->z < lower->z)
+    {
+        near->z = lower->z;
+    }
+    else if (vec->z > upper->z)
+    {
+        near->z = upper->z;
+    }
+}
+
+static inline void NearestPointSphere2D(xVec3* near, xVec3* vec, xVec3* center, F32 radius)
+{
+    F32 dx;
+    F32 dz;
+    F32 mag2;
+    F32 magmul;
+
+    near->y = center->y;
+    dx = vec->x - center->x;
+    dz = vec->z - center->z;
+    mag2 = dx * dx + dz * dz;
+    if (mag2 <= radius * radius)
+    {
+        near->x = vec->x;
+        near->z = vec->z;
+    }
+    else
+    {
+        magmul = radius / sqrtf(mag2);
+        near->x = dx * magmul + center->x;
+        near->z = dz * magmul + center->z;
+    }
+}
+
+static inline S32 PointInQuadXZ(xVec3* quad, xVec3* vec)
+{
+    F32 fNx;
+    F32 fNz;
+    F32 fDx;
+    F32 fDz;
+
+    fNx = quad[2].z - quad[0].z;
+    fNz = quad[0].x - quad[2].x;
+    fDx = vec->x - quad[0].x;
+    fDz = vec->z - quad[0].z;
+    if (fNx * fDx + fNz * fDz > 0.0f)
+    {
+        fNx = quad[1].z - quad[0].z;
+        fNz = quad[0].x - quad[1].x;
+        if (fNx * fDx + fNz * fDz > 0.0f)
+        {
+            return 0;
+        }
+        fNx = quad[2].z - quad[1].z;
+        fNz = quad[1].x - quad[2].x;
+        fDx = vec->x - quad[1].x;
+        fDz = vec->z - quad[1].z;
+        if (fNx * fDx + fNz * fDz > 0.0f)
+        {
+            return 0;
+        }
+    }
+    else
+    {
+        fNx = quad[0].z - quad[3].z;
+        fNz = quad[3].x - quad[0].x;
+        if (fNx * fDx + fNz * fDz > 0.0f)
+        {
+            return 0;
+        }
+        fNx = quad[3].z - quad[2].z;
+        fNz = quad[2].x - quad[3].x;
+        fDx = vec->x - quad[3].x;
+        fDz = vec->z - quad[3].z;
+        if (fNx * fDx + fNz * fDz > 0.0f)
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void NearestPointObb2D(xVec3* near, xVec3* vec, _xBox* b, xMat4x3* m)
+{
+    xVec3 test;
+    S32 i;
+    xVec3 corner[4];
+    F32 planeD;
+    F32 dx;
+    F32 dz;
+    F32 pdot;
+    F32 ddot;
+    F32 lerp;
+    F32 testdist2;
+    xVec3* v2;
+
+    if (m->up.y > 0.0f)
+    {
+        corner[0].x = corner[3].x = b->lower.x;
+        corner[1].x = corner[2].x = b->upper.x;
+        corner[0].z = corner[1].z = b->lower.z;
+        corner[2].z = corner[3].z = b->upper.z;
+    }
+    else
+    {
+        corner[0].x = corner[1].x = b->lower.x;
+        corner[2].x = corner[3].x = b->upper.x;
+        corner[0].z = corner[3].z = b->lower.z;
+        corner[1].z = corner[2].z = b->upper.z;
+    }
+    corner[0].y = corner[1].y = corner[2].y = corner[3].y = b->lower.y;
+
+    xMat3x3RMulVec(&corner[0], (xMat3x3*)m, &corner[0]);
+    corner[0].x += m->pos.x;
+    corner[0].y += m->pos.y;
+    corner[0].z += m->pos.z;
+    xMat3x3RMulVec(&corner[1], (xMat3x3*)m, &corner[1]);
+    corner[1].x += m->pos.x;
+    corner[1].y += m->pos.y;
+    corner[1].z += m->pos.z;
+    xMat3x3RMulVec(&corner[2], (xMat3x3*)m, &corner[2]);
+    corner[2].x += m->pos.x;
+    corner[2].y += m->pos.y;
+    corner[2].z += m->pos.z;
+    xMat3x3RMulVec(&corner[3], (xMat3x3*)m, &corner[3]);
+    corner[3].x += m->pos.x;
+    corner[3].y += m->pos.y;
+    corner[3].z += m->pos.z;
+
+    if (iabs(m->up.y) > 0.0001f && PointInQuadXZ(corner, vec))
+    {
+        planeD = corner[0].x * m->up.x + corner[0].y * m->up.y + corner[0].z * m->up.z;
+        near->x = vec->x;
+        near->z = vec->z;
+        near->y = (planeD - m->up.x * vec->x - m->up.z * vec->z) / m->up.y;
+        return;
+    }
+
+    for (i = 0; i < 4; i++)
+    {
+        v2 = &corner[(i + 1) & 3];
+        dx = v2->x - corner[i].x;
+        dz = v2->z - corner[i].z;
+        pdot = dx * (vec->x - corner[i].x) + dz * (vec->z - corner[i].z);
+        if (pdot <= 0.0f)
+        {
+            test = corner[i];
+        }
+        else
+        {
+            ddot = dx * dx + dz * dz;
+            if (pdot >= ddot)
+            {
+                test = *v2;
+            }
+            else
+            {
+                lerp = pdot / sqrtf(ddot);
+                test.x = corner[i].x + lerp * (v2->x - corner[i].x);
+                test.y = corner[i].y + lerp * (v2->y - corner[i].y);
+                test.z = corner[i].z + lerp * (v2->z - corner[i].z);
+            }
+        }
+        testdist2 = (test.x - vec->x) * (test.x - vec->x) + (test.z - vec->z) * (test.z - vec->z);
+        if (i == 0 || testdist2 < 1e20f)
+        {
+            *near = test;
+        }
+    }
+}
+
+static inline void NearestPointTrigger2D(xVec3* near, xVec3* vec, zEntTrigger* trig)
+{
+    p2EntTriggerAsset* tasset = (p2EntTriggerAsset*)(trig->asset + 1);
+
+    switch (trig->subType)
+    {
+    case 0:
+        NearestPointBox2D(near, vec, &tasset->p[0], &tasset->p[1]);
+        break;
+    case 1:
+    case 2:
+    case 3:
+        NearestPointSphere2D(near, vec, &tasset->p[0], tasset->p[1].x);
+        break;
+    }
+}
+
+static inline void fn_80074C1C(xVec3* near, xVec3* vec, _xBound* b)
+{
+    switch (b->type)
+    {
+    case 1:
+        NearestPointSphere2D(near, vec, &b->sph.center, b->sph.r);
+        break;
+    case 2:
+        NearestPointBox2D(near, vec, &b->box.box.lower, &b->box.box.upper);
+        break;
+    case 3:
+        NearestPointSphere2D(near, vec, &b->cyl.center, b->cyl.r);
+        near->y -= b->cyl.h;
+        break;
+    case 4:
+        NearestPointObb2D(near, vec, &b->box.box, b->mat);
+        break;
+    }
+}
+
 static inline F32 Shaggy1_CalcThrowAccel(F32 peak, F32* timepeak)
 {
-    F32 sol[2];
-    F32 Vthrow;
-    F32 Ta;
     U32 solcnt;
+    F32 Ta;
+    F32 Vthrow;
+    F32 sol[2];
 
     Ta = gACCEL_END - gACCEL_START;
     Vthrow = globals.player.Shaggy1.ThrowVel.y;
@@ -1457,6 +1822,141 @@ static inline F32 Shaggy1_CalcThrowAccel(F32 peak, F32* timepeak)
         *timepeak = (Vthrow + sol[0] * Ta) / 20.0f;
     }
     return sol[0];
+}
+
+void Shaggy1_ChooseThrowTarget(_zEnt* ent)
+{
+    U32 i;
+    F32 dot;
+    F32 mag;
+    F32 timepeak;
+    xVec3 nearpt;
+    F32 dx;
+    F32 dz;
+    F32 throwdist;
+    F32 dropheight;
+    F32 hangtime;
+    _zEntHangable* hang;
+
+    globals.player.Shaggy1.ThrowState = 3;
+    globals.player.Shaggy1.HangTarget = NULL;
+    globals.player.Shaggy1.ThrowAccel = Shaggy1_CalcThrowAccel(THROW_DEFHEIGHT, &timepeak);
+    globals.player.Shaggy1.ThrowTgtSpeed = 0.0f;
+    globals.player.Shaggy1.ThrowTgtAdjust = 0;
+    sHangVirtualPeak = 0.75f + THROW_DEFHEIGHT;
+
+    if (globals.player.Shaggy1.ThrowTgt)
+    {
+        switch (globals.player.Shaggy1.ThrowTgt->baseType)
+        {
+        case 0x1:
+            NearestPointTrigger2D(&nearpt, &((xMat4x3*)ent->model->Mat)->pos,
+                                  (zEntTrigger*)globals.player.Shaggy1.ThrowTgt);
+            break;
+        case 0x1D:
+            fn_80074C1C(&nearpt, &((xMat4x3*)ent->model->Mat)->pos,
+                        &((_zVolume*)globals.player.Shaggy1.ThrowTgt)->asset->bound);
+            break;
+        case 0xD:
+            nearpt = *((_zMovePoint*)globals.player.Shaggy1.ThrowTgt)->pos;
+            break;
+        case 0x2:
+        case 0x3:
+        case 0x4:
+        case 0x6:
+        case 0xB:
+        case 0xC:
+        case 0x12:
+        case 0x17:
+        case 0x18:
+        case 0x1B:
+            nearpt = ((xMat4x3*)((_xEnt*)globals.player.Shaggy1.ThrowTgt)->model->Mat)->pos;
+            break;
+        default:
+            return;
+        }
+
+        dx = nearpt.x - ent->frame->mat.pos.x;
+        dz = nearpt.z - ent->frame->mat.pos.z;
+        dot = dx * ent->frame->mat.at.x + dz * ent->frame->mat.at.z;
+        mag = sqrtf(dx * dx + dz * dz);
+        if (mag < 0.00001f ||
+            dot < mag * (F32)cos(3.1415927f * globals.player.Shaggy1.ThrowTgtAngle / 180.0f))
+        {
+            globals.player.Shaggy1.ThrowTgtVec = ((xMat4x3*)globals.player.ent.model->Mat)->pos;
+            sDefHangTime = timepeak + sqrtf(2.0f * THROW_DEFHEIGHT / 20.0f);
+            return;
+        }
+
+        nearpt.y += globals.player.Shaggy1.ThrowTgtOffset;
+        globals.player.Shaggy1.ThrowState = 1;
+        globals.player.Shaggy1.ThrowTgtVec = nearpt;
+        globals.player.Shaggy1.ThrowAccel =
+            Shaggy1_CalcThrowAccel(globals.player.Shaggy1.ThrowTgtPeak, &timepeak);
+        if (globals.player.Shaggy1.ThrowTgt->baseType == 0x17)
+        {
+            sHangVirtualPeak = 0.75f + globals.player.Shaggy1.ThrowTgtPeak;
+            globals.player.Shaggy1.HangTarget = (_zEnt*)globals.player.Shaggy1.ThrowTgt;
+            globals.player.Shaggy1.HangStart.y = 0.0f;
+            globals.player.Shaggy1.HangRelative.y = 0.0f;
+        }
+        else
+        {
+            dropheight = ((xMat4x3*)globals.player.ent.model->Mat)->pos.y +
+                         globals.player.Shaggy1.ThrowTgtPeak - nearpt.y;
+            hangtime = timepeak;
+            if (dropheight > 0.0f)
+            {
+                hangtime += sqrtf(2.0f * dropheight / 20.0f);
+            }
+            dx = nearpt.x - ((xMat4x3*)globals.player.ent.model->Mat)->pos.x;
+            dz = nearpt.z - ((xMat4x3*)globals.player.ent.model->Mat)->pos.z;
+            throwdist = sqrtf(dx * dx + dz * dz);
+            globals.player.Shaggy1.ThrowTgtAdjust = 1;
+            globals.player.Shaggy1.ThrowTgtSpeed = throwdist / hangtime;
+        }
+    }
+    else
+    {
+        for (i = 0; i < 10; i++)
+        {
+            hang = (_zEntHangable*)globals.player.Shaggy1.Hangable[i];
+            if (!hang)
+            {
+                return;
+            }
+            if (hang->enabled <= 0)
+            {
+                continue;
+            }
+            dx = ((xMat4x3*)hang->model->Mat)->pos.x -
+                 (ent->frame->mat.pos.x + -2.0f * ent->frame->mat.at.x);
+            dz = ((xMat4x3*)hang->model->Mat)->pos.z -
+                 (ent->frame->mat.pos.z + -2.0f * ent->frame->mat.at.z);
+            dot = dx * ent->frame->mat.at.x + dz * ent->frame->mat.at.z;
+            mag = sqrtf(dx * dx + dz * dz);
+            if (mag < 0.00001f || dot < 0.7071f * mag)
+            {
+                continue;
+            }
+            dx = ((xMat4x3*)hang->model->Mat)->pos.x - ((xMat4x3*)ent->model->Mat)->pos.x;
+            dz = ((xMat4x3*)hang->model->Mat)->pos.z - ((xMat4x3*)ent->model->Mat)->pos.z;
+            if (dx * dx + dz * dz > 25.0f)
+            {
+                continue;
+            }
+            globals.player.Shaggy1.HangTarget = hang;
+            globals.player.Shaggy1.HangStart.y = 0.0f;
+            globals.player.Shaggy1.HangRelative.y = 0.0f;
+            if (hang->follow)
+            {
+                zEntEvent(hang->follow, eEventStop);
+            }
+            globals.player.Shaggy1.ThrowState = 1;
+            globals.player.Shaggy1.ThrowTgtVec = ((xMat4x3*)hang->model->Mat)->pos;
+            return;
+        }
+    }
 }
 
 static void ShaggyVil_HandleVisible(_zEnt* ent, U32 toEvent)
@@ -3294,4 +3794,278 @@ void zEntShaggy_Init(st_zEntVillain* ent)
     ent->collis->pen = 0x66;
     ent->chkby = 0x1C;
     ent->penby = 0x1C;
+}
+
+static inline S32 zEntShaggy_HasAnimTable(_zEnt* ent, const char* name)
+{
+    xModelInstance* minst;
+
+    for (minst = ent->model; minst; minst = minst->Next)
+    {
+        if (minst->Anim && !xStricmp(minst->Anim->Table->Name, name))
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static inline void zEntShaggy_SyncVisible()
+{
+    for (S32 i = 0; i < (S32)gNumShaggy; i++)
+    {
+        _zEnt* ent = gShaggy[i].ent;
+
+        if (ent->baseType == 2)
+        {
+            ShaggyVil_HandleVisible(ent, (ent->asset->flags & 0x1) ? eEventVisible : eEventInvisible);
+        }
+    }
+}
+
+static inline F32 xVec3Dist(const xVec3* a, const xVec3* b)
+{
+    F32 dx = a->x - b->x;
+    F32 dy = a->y - b->y;
+    F32 dz = a->z - b->z;
+
+    return sqrtf(dx * dx + dy * dy + dz * dz);
+}
+
+void zEntShaggy_SceneStart(zScene* sc)
+{
+    U32 i;
+    U32 j;
+    U32 hangHashID;
+    xModelInstance* inst;
+    xModelInstance* inst2;
+    RpAtomic* data1;
+    xModelInstance* minst;
+    _zPlatform* plat;
+    xModelInstance* tmpinst;
+    U32 hangcount;
+
+    sSndCallPitch = 359.0f * iurand();
+    gTractorEmitter = zParEmitterFind("THORN CLIPPINGS EMITTER");
+    gBurningManEmitter = zParEmitterFind("SHAGGY BURNNING EMITTER");
+    gNumShaggy = 0;
+    memset(gShaggy, 0, sizeof(gShaggy));
+
+    hangcount = 0;
+    hangHashID = xStrHash("SHAGGY_HANG0");
+    memset(globals.player.Shaggy1.Hangable, 0, sizeof(globals.player.Shaggy1.Hangable));
+
+    for (i = 0; i < sc->num_ents; i++)
+    {
+        if (zEntIsShaggy(sc->ents[i]))
+        {
+            switch (sc->ents[i]->subType)
+            {
+            case 0x1C:
+            case 0x1D:
+                Shaggy1_BonusAnims(sc->ents[i]);
+                break;
+            case 0x1E:
+            case 0x1F:
+                break;
+            case 0x24:
+                inst = sc->ents[i]->model;
+                inst2 = inst->Next;
+                if (inst && inst2 && iModelVertCount(inst2->Data) > iModelVertCount(inst->Data))
+                {
+                    data1 = inst->Data;
+                    inst->Data = inst2->Data;
+                    inst2->Data = data1;
+                }
+                break;
+            }
+
+            gShaggy[gNumShaggy].ent = sc->ents[i];
+            gShaggy[gNumShaggy].shaggyType = sc->ents[i]->subType - 0x1C;
+            gShaggy[gNumShaggy].hangme = NULL;
+            gShaggy[gNumShaggy].oldAt = ((xMat4x3*)sc->ents[i]->model->Mat)->at;
+            gShaggy[gNumShaggy].oldAt2 = gShaggy[gNumShaggy].oldAt;
+            gShaggy[gNumShaggy].oldY = 1e10f;
+            gShaggy[gNumShaggy].talkTimer = 0.0f;
+            gShaggy[gNumShaggy].talkSwitch = -1.0f;
+            gShaggy[gNumShaggy].talkRand = irand() >> 16;
+            gShaggy[gNumShaggy].geronimoChase =
+                (globals.sceneCur->sceneID == zSceneIDFromName("o006") &&
+                 gShaggy[gNumShaggy].ent->id == xStrHash("SHAGGY5")) ?
+                    (_zEnt*)zSceneFindObject(xStrHash("GERONIMO")) :
+                    NULL;
+            gNumShaggy++;
+        }
+
+        if (sc->ents[i]->baseType == 0x17 && sc->ents[i]->id >= hangHashID &&
+            sc->ents[i]->id <= hangHashID + 9)
+        {
+            globals.player.Shaggy1.Hangable[hangcount++] = sc->ents[i];
+        }
+
+        if (sc->ents[i]->baseType == 6 && sc->ents[i]->model->Anim &&
+            strcmp(sc->ents[i]->model->Anim->Table->Name, "Shaggy3") == 0)
+        {
+            gShaggy[gNumShaggy].ent = sc->ents[i];
+            gShaggy[gNumShaggy].shaggyType = 3;
+            gShaggy[gNumShaggy].hangme = NULL;
+            gShaggy[gNumShaggy].oldAt = ((xMat4x3*)sc->ents[i]->model->Mat)->at;
+            gShaggy[gNumShaggy].oldAt2 = gShaggy[gNumShaggy].oldAt;
+            gShaggy[gNumShaggy].oldY = 1e10f;
+            gShaggy[gNumShaggy].stopMode = 1;
+            gShaggy[gNumShaggy].stopParam = 5.0f;
+            gShaggy[gNumShaggy].stopEvent = 0;
+            gShaggy[gNumShaggy].runEvent = 0;
+            gNumShaggy++;
+            sc->ents[i]->update = (void (*)(_xEnt*, _xScene*, F32))Shaggy3_Update;
+            sc->ents[i]->eventFunc = Shaggy3_EventCB;
+        }
+
+        if (sc->ents[i]->baseType == 6 && zEntShaggy_HasAnimTable(sc->ents[i], "ShaggyChimney"))
+        {
+            minst = sc->ents[i]->model;
+            minst->Flags = 0;
+            tmpinst = minst->Next;
+            tmpinst->Flags = (tmpinst->Flags & ~0x8) | 0x20;
+            if (tmpinst->Next)
+            {
+                xModelInstance* newminst = xModelInstanceAlloc(tmpinst->Next->Data, tmpinst->Next->Object,
+                                               (tmpinst->Next->Flags & ~0x8) | 0x60, 0, NULL);
+                newminst->Anim = tmpinst->Next->Anim;
+                *(xMat4x3*)newminst->Mat = *(xMat4x3*)tmpinst->Next->Mat;
+                newminst->Anim->ModelInst = newminst;
+                tmpinst->Next->Anim = NULL;
+                xModelInstanceFree(tmpinst->Next);
+                xModelInstanceAttach(newminst, tmpinst);
+                ((xMat4x3*)&newminst->Mat[newminst->BoneCount + 1])->pos.y = -0.6f;
+                newminst->Flags &= ~0x7;
+                iModelTagIndex(&ChimneyTag, tmpinst->Data, ChimneyTagIndex);
+                iModelTagIndex(&ShaggyTag, tmpinst->Next->Data, ShaggyTagIndex);
+            }
+
+            gShaggy[gNumShaggy].ent = sc->ents[i];
+            gShaggy[gNumShaggy].shaggyType = 2;
+            gShaggy[gNumShaggy].chimneyState = 0;
+            gShaggy[gNumShaggy].chimneyTimer = 0.0f;
+            sc->ents[i]->update = (void (*)(_xEnt*, _xScene*, F32))Shaggy2_Update;
+            sc->ents[i]->render = Shaggy2_Render;
+            sc->ents[i]->eventFunc = Shaggy2_EventCB;
+            sc->ents[i]->chkby |= 0x10;
+            sc->ents[i]->penby |= 0x10;
+
+            plat = (_zPlatform*)sc->ents[i];
+            gShaggy[gNumShaggy].chimneyHeight = plat->motion.asset->er.ext_dpos.y;
+            gShaggy[gNumShaggy].timeLaunch = plat->motion.asset->er.ret_wait_tm;
+            gShaggy[gNumShaggy].timeTop = plat->motion.asset->er.ext_wait_tm;
+            gShaggy[gNumShaggy].chimneyGrav = plat->motion.asset->er.ext_tm;
+            gShaggy[gNumShaggy].timeEvent = 0.0f;
+            gShaggy[gNumShaggy].oldY = 1e10f;
+            if (!gShaggy[gNumShaggy].chimneyHeight)
+            {
+                gShaggy[gNumShaggy].chimneyHeight = 4.0f;
+            }
+            if (!gShaggy[gNumShaggy].timeLaunch)
+            {
+                gShaggy[gNumShaggy].timeLaunch = 3.0f;
+            }
+            gShaggy[gNumShaggy].chimneyPlat = NULL;
+
+            for (j = 0; j < sc->num_ents; j++)
+            {
+                if (i != j && sc->ents[j]->baseType == 6)
+                {
+                    if (xVec3Dist(&sc->ents[j]->asset->pos, &sc->ents[i]->asset->pos) < 0.1f)
+                    {
+                        gShaggy[gNumShaggy].chimneyPlat = (_zPlatform*)sc->ents[j];
+                        sc->ents[j]->flags &= ~0x1;
+                        sc->ents[j]->model->Flags = 0;
+                        sc->ents[j]->eventFunc = Shaggy2Plat_EventCB;
+                        break;
+                    }
+                }
+            }
+            gNumShaggy++;
+        }
+
+        if (sc->ents[i]->baseType == 0xB && zEntShaggy_HasAnimTable(sc->ents[i], "ShaggyChimney"))
+        {
+            for (minst = sc->ents[i]->model->Next; minst; minst = minst->Next)
+            {
+                minst->Flags = 0;
+            }
+        }
+    }
+
+    zEntShaggy_SyncVisible();
+}
+
+void zEntShaggy_SceneReset()
+{
+    U32 i;
+
+    for (i = 0; i < gNumShaggy; i++)
+    {
+        gShaggy[i].hangme = NULL;
+        gShaggy[i].hangspin = 0.0f;
+        gShaggy[i].chimneyState = 0;
+        gShaggy[i].oldAt = ((xMat4x3*)gShaggy[i].ent->model->Mat)->at;
+        gShaggy[i].oldAt2 = gShaggy[i].oldAt;
+        gShaggy[i].witchFollow = NULL;
+        gShaggy[i].witchDrop = NULL;
+        gShaggy[i].barrelButted = 0;
+        gShaggy[i].barrelBounced = 0;
+        gShaggy[i].swap = NULL;
+        gShaggy[i].actionIndex = 0;
+        gShaggy[i].eatTimer = 0.0f;
+        gShaggy[i].facerot = 0.0f;
+        gShaggy[i].facept = NULL;
+        gShaggy[i].talkTimer = 0.0f;
+        gShaggy[i].talkSwitch = -1.0f;
+        gShaggy[i].stopMode = 1;
+        gShaggy[i].stopParam = 5.0f;
+        gShaggy[i].stopEvent = 0;
+        gShaggy[i].runEvent = 0;
+        gShaggy[i].geronimoChase =
+            (globals.sceneCur->sceneID == zSceneIDFromName("o006") &&
+             gShaggy[i].ent->id == xStrHash("SHAGGY5")) ?
+                (_zEnt*)zSceneFindObject(xStrHash("GERONIMO")) :
+                NULL;
+
+        if (gShaggy[i].ent->baseType == 2)
+        {
+            gShaggy[i].ent->pflags |= 0x4;
+        }
+        if (gShaggy[i].ent->baseType == 6 &&
+            zEntShaggy_HasAnimTable(gShaggy[i].ent, "ShaggyChimney"))
+        {
+            xModelInstance* minst = gShaggy[i].ent->model->Next;
+
+            if (minst)
+            {
+                minst = minst->Next;
+                if (minst)
+                {
+                    ((xMat4x3*)&minst->Mat[minst->BoneCount + 1])->pos.y = -0.6f;
+                    minst->Flags &= ~0x7;
+                }
+            }
+        }
+        if (gShaggy[i].ent->baseType == 2 && gShaggy[i].ent->subType == 0x24)
+        {
+            xModelInstance* minst = gShaggy[i].ent->model->Next;
+
+            if (minst)
+            {
+                minst->Flags |= 0x3;
+            }
+        }
+        if (gShaggy[i].ent->baseType == 6 && zEntShaggy_HasAnimTable(gShaggy[i].ent, "Shaggy3"))
+        {
+            xAnimPlaySetState(gShaggy[i].ent->model->Anim->Single,
+                              gShaggy[i].ent->model->Anim->Table->StateList, 0.0f);
+        }
+    }
+
+    sMagnetCount = 0;
+    zEntShaggy_SyncVisible();
 }

@@ -14,5 +14,7 @@ struct iModelTag
 
 void iModelTagEval(RpAtomic* model, iModelTag* tag, RwMatrix* mat, xVec3* dest);
 void iModelRender(RpAtomic* model, RwMatrix* mat);
+U32 iModelTagIndex(iModelTag* tag, RpAtomic* model, S32 v);
+U32 iModelVertCount(RpAtomic* model);
 
 #endif
