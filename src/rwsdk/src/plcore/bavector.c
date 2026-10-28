@@ -1,4 +1,8 @@
 #include <rwcore.h>
+#include <math.h>
+
+// Entries in each square root lookup table: one per mantissa step, for two exponents.
+#define SQRTTABLE_SIZE 0x1000
 
 typedef RwV3d* (*VectorMultFn)(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
                                  const RwMatrix* matrix);
@@ -17,8 +21,39 @@ struct VectorModuleData
 
 static RwModuleInfo vectorModule;
 
-RwV3d* VectorMultPoint(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
-                       const RwMatrix* matrix);
+static RwV3d* VectorMultPoint(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
+                              const RwMatrix* matrix)
+{
+    RwV3d* out = pointsOut;
+
+    while (--numPoints >= 0)
+    {
+        F32 z, y, x;
+        F32 outX, outY, outZ;
+
+        x = pointsIn->x;
+        y = pointsIn->y;
+        z = pointsIn->z;
+
+        outX = x * matrix->right.x;
+        outY = x * matrix->right.y;
+        outZ = x * matrix->right.z;
+        outX += y * matrix->up.x;
+        outY += y * matrix->up.y;
+        outZ += y * matrix->up.z;
+        outX += z * matrix->at.x;
+        outY += z * matrix->at.y;
+        outZ += z * matrix->at.z;
+
+        pointsIn++;
+        pointsOut->x = outX + matrix->pos.x;
+        pointsOut->y = outY + matrix->pos.y;
+        pointsOut->z = outZ + matrix->pos.z;
+        pointsOut++;
+    }
+
+    return out;
+}
 
 static RwV3d* VectorMultVector(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
                                const RwMatrix* matrix)
@@ -27,13 +62,19 @@ static RwV3d* VectorMultVector(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numP
 
     while (--numPoints >= 0)
     {
-        F32 x = pointsIn->x;
-        F32 y = pointsIn->y;
-        F32 z = pointsIn->z;
+        F32 z, y, x;
+        F32 outX, outY, outZ;
 
-        F32 outX = x * matrix->right.x + y * matrix->up.x;
-        F32 outY = x * matrix->right.y + y * matrix->up.y;
-        F32 outZ = x * matrix->right.z + y * matrix->up.z;
+        x = pointsIn->x;
+        y = pointsIn->y;
+        z = pointsIn->z;
+
+        outX = x * matrix->right.x;
+        outY = x * matrix->right.y;
+        outZ = x * matrix->right.z;
+        outX += y * matrix->up.x;
+        outY += y * matrix->up.y;
+        outZ += y * matrix->up.z;
 
         pointsIn++;
         pointsOut->x = outX + z * matrix->at.x;
@@ -99,28 +140,34 @@ F32 RwV3dLength(const RwV3d* in)
 
 F32 _rwSqrt(F32 num)
 {
-    U32* bits = (U32*)&num;
+    RwSplitBits bits;
 
-    if (*bits)
+    bits.nReal = num;
+
+    if (bits.nUInt)
     {
-        *bits += 0x800;
-        *bits = ((*bits >> 1) & 0x3FC00000) + VECTOR_DATA(sqrtLookup)[(*bits >> 12) & 0xFFF];
+        bits.nUInt += 0x800;
+        bits.nUInt =
+            ((bits.nUInt >> 1) & 0x3FC00000) + VECTOR_DATA(sqrtLookup)[(bits.nUInt >> 12) & 0xFFF];
     }
 
-    return num;
+    return bits.nReal;
 }
 
 F32 _rwInvSqrt(F32 num)
 {
-    U32* bits = (U32*)&num;
+    RwSplitBits bits;
 
-    if (*bits)
+    bits.nReal = num;
+
+    if (bits.nUInt)
     {
-        *bits += 0x800;
-        *bits = ((~*bits >> 1) & 0x3FC00000) + VECTOR_DATA(invSqrtLookup)[(*bits >> 12) & 0xFFF];
+        bits.nUInt += 0x800;
+        bits.nUInt = ((~bits.nUInt >> 1) & 0x3FC00000) +
+                     VECTOR_DATA(invSqrtLookup)[(bits.nUInt >> 12) & 0xFFF];
     }
 
-    return num;
+    return bits.nReal;
 }
 
 RwV3d* RwV3dTransformPoints(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
@@ -150,6 +197,126 @@ void* _rwVectorClose(void* instance)
     }
 
     vectorModule.numInstances--;
+
+    return instance;
+}
+
+static S32 SqrtTableCreate(void)
+{
+    U32* table = (U32*)RWSRCGLOBAL(memoryFuncs).rwmalloc(SQRTTABLE_SIZE * sizeof(U32));
+
+    if (!table)
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x80000013, SQRTTABLE_SIZE * sizeof(U32));
+        RwErrorSet(&err);
+        return FALSE;
+    }
+    else
+    {
+        RwSplitBits num;
+        U32* entry = table + SQRTTABLE_SIZE / 2;
+        S32 i;
+
+        num.nReal = 1.0f;
+
+        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
+        {
+            RwSplitBits root;
+            RwSplitBits value;
+
+            root.nReal = (F32)sqrt(num.nReal);
+            value.nUInt = root.nUInt - 0x1FC00000;
+            *entry++ = value.nUInt;
+            num.nUInt += 0x1000;
+        }
+
+        entry = table;
+
+        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
+        {
+            RwSplitBits root;
+            RwSplitBits value;
+
+            root.nReal = (F32)sqrt(num.nReal);
+            value.nUInt = root.nUInt - 0x20000000;
+            *entry++ = value.nUInt;
+            num.nUInt += 0x1000;
+        }
+
+        VECTOR_DATA(sqrtLookup) = table;
+        return TRUE;
+    }
+}
+
+static S32 InvSqrtTableCreate(void)
+{
+    U32* table = (U32*)RWSRCGLOBAL(memoryFuncs).rwmalloc(SQRTTABLE_SIZE * sizeof(U32));
+
+    if (!table)
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x80000013, SQRTTABLE_SIZE * sizeof(U32));
+        RwErrorSet(&err);
+        return FALSE;
+    }
+    else
+    {
+        RwSplitBits num;
+        U32* entry = table + SQRTTABLE_SIZE / 2;
+        S32 i;
+
+        num.nReal = 1.0f;
+
+        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
+        {
+            RwSplitBits root;
+            RwSplitBits value;
+
+            root.nReal = (F32)(1.0 / sqrt(num.nReal));
+            value.nUInt = root.nUInt - 0x20000000;
+            *entry++ = value.nUInt;
+            num.nUInt += 0x1000;
+        }
+
+        entry = table;
+
+        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
+        {
+            RwSplitBits root;
+            RwSplitBits value;
+
+            root.nReal = (F32)(1.0 / sqrt(num.nReal));
+            value.nUInt = root.nUInt - 0x1FC00000;
+            *entry++ = value.nUInt;
+            num.nUInt += 0x1000;
+        }
+
+        VECTOR_DATA(invSqrtLookup) = table;
+        return TRUE;
+    }
+}
+
+void* _rwVectorOpen(void* instance, S32 offset, S32 size)
+{
+    vectorModule.globalsOffset = offset;
+
+    VECTOR_DATA(pointsFn) = VectorMultPoint;
+    VECTOR_DATA(vectorsFn) = VectorMultVector;
+
+    if (!SqrtTableCreate())
+    {
+        return NULL;
+    }
+
+    if (!InvSqrtTableCreate())
+    {
+        return NULL;
+    }
+
+    vectorModule.numInstances++;
 
     return instance;
 }

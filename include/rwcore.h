@@ -26,6 +26,12 @@ struct RwLinkList
     RwLLLink link;
 };
 
+#define rwLLLinkGetNext(linkvar) ((linkvar)->next)
+#define rwLinkListInitialize(list)                                                                 \
+    ((list)->link.next = ((RwLLLink*)(list)), (list)->link.prev = ((RwLLLink*)(list)))
+#define rwLinkListEmpty(list) (((list)->link.next) == (&(list)->link))
+#define rwLinkListGetFirstLLLink(list) ((list)->link.next)
+#define rwLinkListGetTerminator(list) (&((list)->link))
 #define rwLinkListAddLLLink(list, linkvar)                                                         \
     ((linkvar)->next = (list)->link.next, (linkvar)->prev = (&(list)->link),                       \
      ((list)->link.next)->prev = (linkvar), (list)->link.next = (linkvar))
@@ -52,6 +58,8 @@ struct RwObject
     U8 privateFlags;
     void* parent;
 };
+
+typedef RwObject* (*RwObjectCallBack)(RwObject* object, void* data);
 
 typedef struct RwObjectHasFrame RwObjectHasFrame;
 struct RwObjectHasFrame
@@ -130,6 +138,8 @@ typedef struct RwCamera RwCamera;
 typedef struct RwFrame RwFrame;
 typedef struct RwRaster RwRaster;
 typedef struct RwStream RwStream;
+
+#define rwRASTERGAMMACORRECTED 0x01
 
 struct RwRaster
 {
@@ -515,15 +525,15 @@ typedef RwFreeList* (*RwMemoryFreeFn)(RwFreeList* fl, void* pData);
 
 typedef struct RwPluginRegEntry RwPluginRegEntry;
 
-// Partial: only the object sizes and the first entry are declared.
 typedef struct RwPluginRegistry RwPluginRegistry;
 struct RwPluginRegistry
 {
     S32 sizeOfStruct;
     S32 origSizeOfStruct;
-    U8 unk8[0x8];
+    S32 maxSizeOfStruct;
+    S32 staticAlloc;
     RwPluginRegEntry* firstRegEntry;
-    U8 unk14[0x4];
+    RwPluginRegEntry* lastRegEntry;
 };
 
 typedef void* (*RwPluginObjectConstructor)(void* object, S32 offsetInObject, S32 sizeInObject);
@@ -543,7 +553,8 @@ typedef S32 (*RwPluginDataChunkAlwaysCallBack)(void* object, S32 offsetInObject,
 typedef S32 (*RwPluginDataChunkRightsCallBack)(void* object, S32 offsetInObject,
                                                S32 sizeInObject, U32 extraData);
 
-// Partial: the object callbacks between rightsCB and nextRegEntry are not declared.
+typedef void* (*RwPluginErrorStrCallBack)(void*);
+
 struct RwPluginRegEntry
 {
     S32 offset;
@@ -554,8 +565,13 @@ struct RwPluginRegEntry
     RwPluginDataChunkGetSizeCallBack getSizeCB;
     RwPluginDataChunkAlwaysCallBack alwaysCB;
     RwPluginDataChunkRightsCallBack rightsCB;
-    U8 unk20[0x10];
+    RwPluginObjectConstructor constructCB;
+    RwPluginObjectDestructor destructCB;
+    RwPluginObjectCopy copyCB;
+    RwPluginErrorStrCallBack errStrCB;
     RwPluginRegEntry* nextRegEntry;
+    RwPluginRegEntry* prevRegEntry;
+    RwPluginRegistry* parentRegistry;
 };
 
 typedef enum RwPrimitiveType
@@ -681,6 +697,7 @@ RwResEntry* RwResourcesAllocateResEntry(void* owner, RwResEntry** ownerRef, S32 
                                         RwResEntryDestroyNotify destroyNotify);
 S32 RwResourcesFreeResEntry(RwResEntry* entry);
 S32 RwResourcesGetArenaSize(void);
+void _rwResourcesPurge(void);
 S32 RwIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices,
                                  S32 numVertices, RwImVertexIndex* indices, S32 numIndices);
 
@@ -711,6 +728,7 @@ RwFrame* RwFrameCreate();
 S32 RwFrameDestroy(RwFrame* frame);
 RwFrame* RwFrameOrthoNormalize(RwFrame* frame);
 RwFrame* RwFrameForAllChildren(RwFrame* frame, RwFrameCallBack callBack, void* data);
+RwFrame* RwFrameForAllObjects(RwFrame* frame, RwObjectCallBack callBack, void* data);
 RwFrame* RwFrameGetRoot(const RwFrame* frame);
 RwMatrix* RwFrameGetLTM(RwFrame* frame);
 S32 RwFrameDestroyHierarchy(RwFrame* frame);
@@ -729,13 +747,15 @@ RwStream* _rwStreamWriteVersionedChunkHeader(RwStream* stream, S32 type, S32 siz
 void* RwMemLittleEndian32(void* mem, U32 size);
 void* RwMemNative32(void* mem, U32 size);
 S32 RwStreamFindChunk(RwStream* stream, U32 type, U32* lengthOut, U32* versionOut);
-void _rwFrameSyncDirty();
+S32 _rwFrameSyncDirty(void);
 
 RwError* RwErrorSet(RwError* code);
 S32 _rwerror(S32 code, ...);
 
 RwFreeList* RwFreeListCreate(S32 entrySize, S32 entriesPerBlock, S32 alignment);
 S32 RwFreeListDestroy(RwFreeList* freeList);
+S32 _rxPipelineClose(void);
+S32 _rxPipelineOpen(void);
 RwFreeList* RwFreeListForAllUsed(RwFreeList* freeList, void (*callBack)(void* mem, void* data),
                                  void* data);
 
