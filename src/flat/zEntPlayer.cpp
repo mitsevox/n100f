@@ -144,7 +144,7 @@ S32 Shaggy8_HBCallback(_zEnt* ent, _xCollis* coll);
 void xAnimTableRemoveEffectByCB(xAnimTable* table,
                                 U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*));
 void zFeetExit(_xEnt* ent, xAnimTable* table);
-U32 zEntPlayer_SNDSkidCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single, void* object);
+static U32 zEntPlayer_SNDSkidCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single, void* object);
 static U32 zEntPlayer_FXScratchCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
                                   void* object);
 static U32 zEntPlayer_FXDigupCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
@@ -209,8 +209,8 @@ F32 startJump;
 F32 startDouble;
 F32 startBounce;
 static U32 surfSticky;
-static F32 surfSlickTimer;
 static F32 surfSlickRatio;
+static F32 surfSlickTimer;
 S32 headcoll_anim;
 F32 headcoll_tmr;
 F32 headcoll_bltime;
@@ -220,14 +220,14 @@ static zPlayerSituation* sVONextSituation;
 static F32 sVOTimer;
 
 _tagPlayerFX gPlayerfx;
+static _tagPlayerSndFX sPlayerSndfx;
+xVec3 vHangBefore;
+xVec3 vHangFirst;
 xMat4x3 gPlayerAbsMat;
 xMat4x3 rendermat;
 xVec3 floor_supp[4];
 F32 floor_dist[4];
 F32 floor_tmr[4];
-static _tagPlayerSndFX sPlayerSndfx;
-xVec3 vHangBefore;
-xVec3 vHangFirst;
 _zParEmitterCustomSettings g_info;
 
 static void zEntPlayer_FXLostChance(_xEnt* ent, F32 seconds);
@@ -1668,7 +1668,8 @@ static void PlayerBoundUpdate(_xEnt* ent, xVec3* pos)
 
     xEntDefaultBoundUpdate(ent, pos);
 
-    if ((U32)(headcoll_anim - 4) <= 3 || headcoll_anim == 8)
+    if (headcoll_anim == 4 || headcoll_anim == 5 || headcoll_anim == 6 || headcoll_anim == 7 ||
+        headcoll_anim == 8)
     {
         xVec3Sub(&dpos, pos, (xVec3*)&ent->model->Mat->pos);
         iModelTagEval(globals.player.ent.model->Next->Data, &globals.player.head_tag,
@@ -1795,7 +1796,7 @@ void zEntPlayerCollTrigger(_xEnt* ent, _xScene* sc)
 
         if (ent->collis->trigs_entered[i >> 3] & (1 << (i % 8)))
         {
-            p2EntTriggerAsset* asset = (p2EntTriggerAsset*)((U8*)sc->trigs[i]->asset + sizeof(p2EntAsset));
+            p2EntTriggerAsset* asset = (p2EntTriggerAsset*)(sc->trigs[i]->asset + 1);
             if (asset->flags & 1)
             {
                 if (xVec3Dot(&asset->direction, (xVec3*)&ent->model->Mat->at) <= 0.0f)
@@ -1811,7 +1812,7 @@ void zEntPlayerCollTrigger(_xEnt* ent, _xScene* sc)
 
         if (ent->collis->trigs_exited[i >> 3] & (1 << (i % 8)))
         {
-            p2EntTriggerAsset* asset = (p2EntTriggerAsset*)((U8*)sc->trigs[i]->asset + sizeof(p2EntAsset));
+            p2EntTriggerAsset* asset = (p2EntTriggerAsset*)(sc->trigs[i]->asset + 1);
             if (asset->flags & 1)
             {
                 if (xVec3Dot(&asset->direction, (xVec3*)&ent->model->Mat->at) <= 0.0f)
