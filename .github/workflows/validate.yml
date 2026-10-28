@@ -18,7 +18,7 @@ env:
   # in the image workflow's run summary. The target job runs in it (through the plan job's
   # `image` output, because a container image cannot read env), and tools/measuring_tools.py
   # reads this variable to record it as provenance.
-  BUILD_IMAGE: ghcr.io/mitsevox/n100f-build@sha256:502c957567a21fd77283fad6d437ae3b6cf19856a8b456157040b6d36cb83773
+  BUILD_IMAGE: ghcr.io/mitsevox/n100f-build@sha256:e4ddcdd208e71dc866c54871b054b087f511c6b359b849f2f46a214a9b31b168
 
 jobs:
   plan:
