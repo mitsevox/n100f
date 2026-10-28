@@ -15,7 +15,8 @@ Method (docs/splits.md has the reasoning and limits):
 Inputs are the target DOL, the PS2 ELF, the DWARF function export in
 references/, symbols.txt, evidence.tsv and the objects of a dtk split (for relocations).
 Output is the unit part of splits.txt plus a TSV describing every edge.
-Nothing here establishes original names; see config/README.md.
+Nothing here establishes original names; see config/README.md (the evidence format) and
+config/GIHE78-rev0/README.md (the reserved phrase `written for this project`).
 """
 
 import argparse
@@ -405,8 +406,8 @@ def unit_extents(lines):
 
 
 # The phrase a `function` row's evidence carries when its exact body was written for this
-# project rather than taken from a related build (config/README.md). Such a body matches
-# the target but carries no name of its own, so the row is not a name anchor.
+# project rather than taken from a related build (config/GIHE78-rev0/README.md). Such a body
+# matches the target but carries no name of its own, so the row is not a name anchor.
 OWN_SOURCE_MARKER = 'written for this project'
 
 
