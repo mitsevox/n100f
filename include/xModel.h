@@ -2,13 +2,14 @@
 #define XMODEL_H
 
 #include "types.h"
+#include "xVec3.h"
 #include <rwcore.h>
 
 struct xModelPool;
 struct xAnimPlay;
 struct RpAtomic;
 
-// Partial: members up to Mat.
+// Partial: members up to Scale.
 struct xModelInstance
 {
     xModelInstance* Next;
@@ -22,6 +23,7 @@ struct xModelInstance
     U8 BoneIndex;
     U8* BoneRemap;
     RwMatrix* Mat;
+    xVec3 Scale;
 };
 
 void xModelRender(xModelInstance* modelInst);

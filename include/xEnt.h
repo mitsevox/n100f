@@ -126,7 +126,6 @@ struct _xEntFrame
     U32 mode;
 };
 
-// Partial: members up to colls.
 struct _xEntCollis
 {
     U8 chk;
@@ -142,6 +141,12 @@ struct _xEntCollis
     U8 trig_idx;
     U8 idx;
     _xCollis colls[18];
+    void (*post)(_xEnt*, _xScene*, F32, _xEntCollis*);
+    U32 (*depenq)(_xEnt*, _xEnt*, _xScene*, F32, _xCollis*);
+    U8 trigs_cur[8];
+    U8 trigs_prev[8];
+    U8 trigs_entered[8];
+    U8 trigs_exited[8];
 };
 
 struct _xEntShadow;
@@ -191,6 +196,7 @@ void xEntMove(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntReset(_xEnt* ent);
 U32 xEntIsVisible(_xEnt* ent);
+void xEntDefaultBoundUpdate(_xEnt* ent, xVec3* pos);
 void xEntBeginUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntEndUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 

@@ -2,6 +2,7 @@
 #define ZENTPLAYER_H
 
 #include "zEnt.h"
+#include "iModel.h"
 
 struct _zEntHangable;
 
@@ -42,7 +43,23 @@ struct zShaggy1Globals
     _zEnt* Hangable[10];
 };
 
-// Partial: members up to drv. The members between ent and drv that no reconstructed
+// Partial: members up to FireSoapTimer. The members before it that no reconstructed
+// function uses are left opaque.
+struct zPlayerStatic
+{
+    U8 opaque_0[0xF4];
+    F32 FireTargetYaw;
+    F32 FireTargetPitch;
+    F32 FireTargetDist;
+    F32 FireTargetRadius;
+    F32 FireTrack;
+    F32 FireGumSpeed;
+    F32 FireSoapSpeed;
+    F32 FireGumTimer;
+    F32 FireSoapTimer;
+};
+
+// Partial: members up to s. The members between ent and s that no reconstructed
 // function uses are left opaque.
 struct zPlayerGlobals
 {
@@ -52,7 +69,9 @@ struct zPlayerGlobals
     S32 Speed;
     U8 opaque_F8[0x114 - 0xF8];
     S32 JumpState;
-    U8 opaque_118[0x130 - 0x118];
+    U8 opaque_118[0x128 - 0x118];
+    U32 LastProjectile;
+    U8 opaque_12C[0x130 - 0x12C];
     F32 DecelRunSpeed;
     U8 opaque_134[0x13C - 0x134];
     U32 HeadbuttHit;
@@ -63,14 +82,21 @@ struct zPlayerGlobals
     F32 DamageTimer;
     U8 opaque_154[0x164 - 0x154];
     F32 FallDeathTimer;
-    U8 opaque_168[0x1E0 - 0x168];
+    U8 opaque_168[0x1B0 - 0x168];
+    _zEnt* FireTarget;
+    U8 opaque_1B4[0x1E0 - 0x1B4];
     zShaggy1Globals Shaggy1;
     _zEnt* Shaggy8Call;
     F32 Shaggy8CallTimer;
     _zEntHangable* HangFound;
     _zEntHangable* HangEnt;
-    U8 opaque_2D8[0x3F8 - 0x2D8];
+    U8 opaque_2D8[0x3C8 - 0x2D8];
+    S32 Inv_Ammo[2];
+    S32 Inv_AmmoMax[2];
+    iModelTag BubbleTag;
     _xEntDrive drv;
+    U8 opaque_448[0x510 - 0x448];
+    zPlayerStatic s;
 };
 
 #endif

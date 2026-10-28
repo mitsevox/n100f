@@ -25,10 +25,13 @@ struct zParEmitterAsset : p2BaseAsset
     U8 color_death[4];
 };
 
-// Partial: members up to tasset.
+struct xParGroup;
+
+// Partial: members up to group.
 struct _zParEmitter : xBase
 {
     zParEmitterAsset* tasset;
+    xParGroup* group;
 };
 
 struct _zParEmitterCustomSettings
