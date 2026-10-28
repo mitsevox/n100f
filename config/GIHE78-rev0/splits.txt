@@ -331,7 +331,9 @@ flat/xShadow.cpp:
 	.sdata2     start:0x80260188 end:0x80260260
 
 flat/xSnd.cpp:
-	.text       start:0x8003CD24 end:0x8003D5C0
+	.text       start:0x8003CD24 end:0x8003D680
+	.rodata     start:0x80193EE8 end:0x80193EF8
+	.sdata2     start:0x80260260 end:0x80260280
 
 flat/xSpline.cpp:
 	.text       start:0x8003D680 end:0x8003F904
@@ -748,6 +750,12 @@ gc/iAnim.cpp:
 	.sdata      start:0x8025E5C0 end:0x8025E5C8
 	.sdata2     start:0x80262040 end:0x80262070
 
+gc/iSnd.cpp:
+	.text       start:0x800D84A0 end:0x800DB168
+	.bss        start:0x8023B3C8 end:0x8023CF90
+	.sbss       start:0x8025F170 end:0x8025F1A8
+	.sdata2     start:0x80262070 end:0x802620B8
+
 gc/iFMV.cpp:
 	.text       start:0x800DB168 end:0x800DBDA8
 	.rodata     start:0x801A7B20 end:0x801A7C08
@@ -763,6 +771,13 @@ gc/ngcrad3d.c:
 	.bss        start:0x8023CFA8 end:0x8023CFD0
 	.sbss       start:0x8025F1E8 end:0x8025F1F0
 	.sdata2     start:0x802620F8 end:0x80262110
+
+gc/iFX.cpp:
+	.text       start:0x800DC29C end:0x800DC95C
+	.rodata     start:0x801A7C70 end:0x801A7C80
+	.data       start:0x801C9548 end:0x801C9558
+	.sbss       start:0x8025F1F0 end:0x8025F208
+	.sdata2     start:0x80262110 end:0x80262150
 
 gc/iMix.c:
 	.text       start:0x800DC95C end:0x800DE530

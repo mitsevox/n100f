@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+#include "iSnd.h"
 #include "xVec3.h"
 
 struct xSndVol
@@ -11,8 +12,26 @@ struct xSndVol
     F32 volR;
 };
 
-// Partial: the voices and listener frame after the volumes are left opaque. The GC object is
-// 0x1270 bytes.
+// The PS2 layout (0x44 bytes) plus the GC iSndInfo's lastStreamBuffer.
+struct xSndVoiceInfo
+{
+    U32 assetID;
+    U32 sndID;
+    U32 parentID;
+    xVec3* parentPos;
+    S32 internalID;
+    U16 flags;
+    U16 priority;
+    F32 vol;
+    F32 pitch;
+    U32 sample_rate;
+    U32 deadct;
+    xVec3 pos;
+    F32 radius2;
+    iSndInfo ps;
+};
+
+// The PS2 layout with 64 voices instead of 48 (0x1270 bytes).
 struct xSndGlobals
 {
     U32 stereo;
@@ -20,7 +39,15 @@ struct xSndGlobals
     xSndVol mastervol;
     xSndVol streamvol;
     xSndVol fxvol;
-    U8 opaque_20[0x1270 - 0x20];
+    xSndVoiceInfo voice[64];
+    xVec3 right;
+    xVec3 up;
+    xVec3 at;
+    xVec3 pos;
+    F32 radius2;
+    xVec3 nearpos;
+    xVec3 farpos;
+    U32 suspendCD;
 };
 
 extern xSndGlobals gSnd;

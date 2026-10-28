@@ -66,7 +66,7 @@ xScene.cpp	0x80038D48	0x800394B4	13	13	0	0	-	count-match
 xScrFx.cpp	0x800394B4	0x80039C90	7	7	3	2	0x800394C4=xScrFxIsLetterbox (name)	anchored
 xserializer.cpp	0x80039C90	0x8003AD40	39	41	8	7	0x80039CFC=xSER_xsgclt_svproc_fill (name)	anchored
 xShadow.cpp	0x8003AD40	0x8003CD24	11	16	3	0	0x8003AD40=ShadowRender (floats)	anchored
-xSnd.cpp	0x8003CD24	0x8003D5C0	18	23	1	0	0x8003D058=xSndPlay (strings)	anchored
+xSnd.cpp	0x8003CD24	0x8003D680	19	23	6	0	0x8003CE34=xSndSetFrame (floats)	anchored
 xSpline.cpp	0x8003D680	0x8003F904	11	13	2	1	0x8003DB84=xSpline3_EvalArcApprox (name)	anchored
 xstransvc.cpp	0x8003F904	0x80040978	14	17	2	1	0x800402D8=xSTLoadStep (name)	anchored
 xString.cpp	0x80040978	0x80040EE4	6	6	1	1	0x80040B38=xStrupr (name)	anchored
@@ -105,7 +105,7 @@ zGameState.cpp	0x800AF8D8	0x800AFD6C	7	7	0	0	-	count-match
 zGroup.cpp	0x800AFD6C	0x800AFF5C	7	7	1	0	0x800AFDBC=zGroupEventCB (calls)	anchored
 zGust.cpp	0x800AFF5C	0x800B07B4	9	9	5	3	0x800AFF5C=zGustUpdateFX (name)	anchored
 zHologram.cpp	0x800B07B4	0x800B09F0	3	4	0	0	-	count-match
-zHud.cpp	0x800B09F0	0x800B9808	57	58	16	0	0x800B0F3C=zHud_DrawText (floats)	anchored
+zHud.cpp	0x800B09F0	0x800B9808	57	58	17	0	0x800B0F3C=zHud_DrawText (floats)	anchored
 zLaugh.cpp	0x800B9808	0x800B9AB0	3	4	1	0	0x800B9A14=zLaughInit (strings)	anchored
 zLight.cpp	0x800B9AB0	0x800BA800	15	15	10	7	0x800B9AB0=zLightOn (name)	anchored
 zLightEffect.cpp	0x800BA800	0x800BAE00	22	23	2	0	0x800BA800=zLightEffectCauldron (floats)	anchored

@@ -12,6 +12,7 @@ typedef int (*_compare_function)(const void*, const void*);
 
 void* malloc(size_t size);
 void free(void* ptr);
+void exit(int status);
 int abs(int n);
 int rand(void);
 int atoi(const char* str);
