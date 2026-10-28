@@ -1,7 +1,5 @@
 #include <rpworld.h>
 
-typedef RpWorldSector* (*RpWorldSectorCallBack)(RpWorldSector* worldSector, void* data);
-
 // What WorldFindSector looks for and whether it found it.
 typedef struct WorldSectorSearch WorldSectorSearch;
 struct WorldSectorSearch

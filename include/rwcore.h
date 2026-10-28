@@ -387,6 +387,16 @@ struct RwTexture
 };
 
 typedef struct RwImage RwImage;
+struct RwImage
+{
+    S32 flags;
+    S32 width;
+    S32 height;
+    S32 depth;
+    S32 stride;
+    U8* cpPixels;
+    RwRGBA* palette;
+};
 
 typedef RwTexture* (*RwTextureCallBackRead)(const char* name, const char* maskName);
 
@@ -401,16 +411,7 @@ struct RwFreeList
 typedef void* (*RwMemoryAllocFn)(RwFreeList* fl);
 typedef RwFreeList* (*RwMemoryFreeFn)(RwFreeList* fl, void* pData);
 
-// Partial: the callbacks between pluginID and nextRegEntry are not declared.
 typedef struct RwPluginRegEntry RwPluginRegEntry;
-struct RwPluginRegEntry
-{
-    S32 offset;
-    S32 size;
-    U32 pluginID;
-    U8 unkC[0x24];
-    RwPluginRegEntry* nextRegEntry;
-};
 
 // Partial: only the object sizes and the first entry are declared.
 typedef struct RwPluginRegistry RwPluginRegistry;
@@ -439,6 +440,21 @@ typedef S32 (*RwPluginDataChunkAlwaysCallBack)(void* object, S32 offsetInObject,
                                                S32 sizeInObject);
 typedef S32 (*RwPluginDataChunkRightsCallBack)(void* object, S32 offsetInObject,
                                                S32 sizeInObject, U32 extraData);
+
+// Partial: the object callbacks between rightsCB and nextRegEntry are not declared.
+struct RwPluginRegEntry
+{
+    S32 offset;
+    S32 size;
+    U32 pluginID;
+    RwPluginDataChunkReadCallBack readCB;
+    RwPluginDataChunkWriteCallBack writeCB;
+    RwPluginDataChunkGetSizeCallBack getSizeCB;
+    RwPluginDataChunkAlwaysCallBack alwaysCB;
+    RwPluginDataChunkRightsCallBack rightsCB;
+    U8 unk20[0x10];
+    RwPluginRegEntry* nextRegEntry;
+};
 
 typedef enum RwPrimitiveType
 {
