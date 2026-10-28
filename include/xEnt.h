@@ -199,7 +199,7 @@ inline void xEntShow(_xEnt* ent)
     ent->flags |= 0x1;
 }
 
-inline xVec3* xEntGetPos(_xEnt* ent)
+inline xVec3* xEntGetPos(const _xEnt* ent)
 {
     return (xVec3*)&ent->model->Mat->pos;
 }
