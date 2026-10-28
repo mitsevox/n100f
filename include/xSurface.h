@@ -23,5 +23,6 @@ struct xSurface : xBase
 };
 
 void xSurfaceExit();
+xSurface* xSurfaceGetByIdx(U16 n);
 
 #endif

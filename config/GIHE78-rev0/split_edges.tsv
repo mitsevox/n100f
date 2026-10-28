@@ -38,7 +38,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xDraw.cpp	xEnt.cpp	0x80021E70	0x80021E70	alignment only (4 cuts tie on data, 3 on calls); xDraw.cpp left unsplit	0
 .text	xEnt.cpp	xEntDrive.cpp	0x800258F4	0x800258F4	single cut by data references	0
 .text	xEntDrive.cpp	xEntMotion.cpp	0x80026158	0x80026158	single cut by data references	0
-.text	xEntMotion.cpp	xEnv.cpp	0x80028D18	0x80028D18	alignment only (2 cuts tie on data)	0
+.text	xEntMotion.cpp	xEnv.cpp	0x80028D18	0x80028D18	single cut by data references	0
 .text	xEnv.cpp	xFFX.cpp	0x80028DFC	0x80028DFC	single cut by data references	0
 .text	xFFX.cpp	xFilter.cpp	0x80029458	0x80029458	single cut by data references	0
 .text	xFilter.cpp	xFont.cpp	0x800294E8	0x800294E8	alignment only (3 cuts tie on data)	0
@@ -101,8 +101,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zFX.cpp	zGame.cpp	0x800AC0BC	0x800AC0BC	single cut by data references	1
 .text	zGame.cpp	zGameExtras.cpp	0x800ADC40	0x800ADC40	single cut by data references	2
 .text	zGameExtras.cpp	zGameState.cpp	0x800AF8D8	0x800AF8D8	alignment only (2 cuts tie on data)	0
-.text	zGameState.cpp	zGroup.cpp	0x800AFD6C	0x800AFD6C	alignment only (6 cuts tie on data, 5 on calls)	0
-.text	zGroup.cpp	zGust.cpp	0x800AFF5C	0x800AFF5C	alignment only (5 cuts tie on data)	0
+.text	zGameState.cpp	zGroup.cpp	0x800AFD6C	0x800AFD6C	alignment only (5 cuts tie on data)	0
+.text	zGroup.cpp	zGust.cpp	0x800AFF5C	0x800AFF5C	alignment only (4 cuts tie on data)	0
 .text	zGust.cpp	zHologram.cpp	0x800B07B4	0x800B07B4	single cut by data references	0
 .text	zHologram.cpp	zHud.cpp	0x800B09F0	0x800B09F0	single cut by data references	0
 .text	zHud.cpp	zLaugh.cpp	0x800B9808	0x800B9808	static initialiser ends unit	1
@@ -116,20 +116,20 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zMovePoint.cpp	zMusic.cpp	0x800C0524	0x800C0524	alignment only (9 cuts tie on data)	0
 .text	zMusic.cpp	zParCmd.cpp	0x800C2EB0	0x800C2EB0	single cut by data references	0
 .text	zParCmd.cpp	zParEmitter.cpp	0x800C4BE0	0x800C4BE0	alignment only (4 cuts tie on data)	0
-.text	zParEmitter.cpp	zParSys.cpp	0x800C6708	0x800C6708	alignment only (4 cuts tie on data)	0
+.text	zParEmitter.cpp	zParSys.cpp	0x800C6708	0x800C6708	single cut by data references	0
 .text	zParSys.cpp	zPendulum.cpp	0x800C7000	0x800C7000	alignment only (3 cuts tie on data, 2 on calls)	0
 .text	zPendulum.cpp	zPitchChange.cpp	0x800C751C	0x800C751C	alignment confirmed by outgoing calls (5 cuts tie on data)	0
 .text	zPitchChange.cpp	zPlatform.cpp	0x800C7680	0x800C7680	single cut by data references	0
 .text	zPlatform.cpp	zPortal.cpp	0x800C8AE4	0x800C8AE4	alignment only (4 cuts tie on data, 2 on calls)	0
-.text	zPortal.cpp	zRenderState.cpp	0x800C8BDC	0x800C8BDC	alignment only (5 cuts tie on data)	0
+.text	zPortal.cpp	zRenderState.cpp	0x800C8BDC	0x800C8BDC	single cut by data references	0
 .text	zRenderState.cpp	zRumble.cpp	0x800C90D4	0x800C90D4	alignment only (3 cuts tie on data)	0
 .text	zRumble.cpp	zSaveLoad.cpp	0x800C9368	0x800C9368	single cut by data references	0
 .text	zSaveLoad.cpp	zScene.cpp	0x800CD170	0x800CD170	single cut by data references	0
 .text	zScene.cpp	zScript.cpp	0x800D1B20	0x800D1B20	static initialiser ends unit	0
-.text	zScript.cpp	zSFX.cpp	0x800D1E50	0x800D1E50	alignment confirmed by outgoing calls (4 cuts tie on data)	0
+.text	zScript.cpp	zSFX.cpp	0x800D1E50	0x800D1E50	single cut by data references	0
 .text	zSFX.cpp	zSurface.cpp	0x800D229C	0x800D229C	alignment confirmed by outgoing calls (3 cuts tie on data)	0
-.text	zSurface.cpp	zTimer.cpp	0x800D340C	0x800D340C	alignment only (4 cuts tie on data, 2 on calls)	0
-.text	zTimer.cpp	zUI.cpp	0x800D3608	0x800D3608	alignment confirmed by outgoing calls (4 cuts tie on data)	0
+.text	zSurface.cpp	zTimer.cpp	0x800D340C	0x800D340C	alignment only (3 cuts tie on data, 2 on calls)	0
+.text	zTimer.cpp	zUI.cpp	0x800D3608	0x800D3608	alignment confirmed by outgoing calls (2 cuts tie on data)	0
 .text	zUI.cpp	zUIFont.cpp	0x800D47E8	0x800D47E8	static initialiser ends unit	0
 .text	zUIFont.cpp	zVar.cpp	0x800D527C	0x800D527C	single cut by data references	0
 .bss	iCollide.cpp	iDebug.cpp	0x801DF548	0x801DF548	single aligned candidate	0

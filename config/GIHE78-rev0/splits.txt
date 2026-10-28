@@ -1387,6 +1387,10 @@ bink/src/sdk/decode/ngc/ngcfile.c:
 
 bink/src/sdk/decode/yuv.cpp:
 	.text       start:0x801184CC end:0x8011F78C
+	.data       start:0x801D1960 end:0x801DC240
+	.bss        start:0x8025C388 end:0x8025D388
+	.sdata      start:0x8025E738 end:0x8025E750
+	.sbss       start:0x8025F628 end:0x8025F650
 
 bink/src/sdk/decode/binkacd.c:
 	.text       start:0x8011F78C end:0x80120470
