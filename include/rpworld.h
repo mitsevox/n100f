@@ -89,6 +89,84 @@ struct RpWorld
     RxPipeline* pipeline;
 };
 
+typedef struct RpGeometry RpGeometry;
+typedef struct RpClump RpClump;
+typedef struct RpTriangle RpTriangle;
+
+typedef struct RpInterpolator RpInterpolator;
+struct RpInterpolator
+{
+    S32 flags;
+    S16 startMorphTarget;
+    S16 endMorphTarget;
+    F32 time;
+    F32 recipTime;
+    F32 position;
+};
+
+typedef struct RpMorphTarget RpMorphTarget;
+struct RpMorphTarget
+{
+    RpGeometry* parentGeom;
+    RwSphere boundingSphere;
+    RwV3d* verts;
+    RwV3d* normals;
+};
+
+struct RpGeometry
+{
+    RwObject object;
+    U32 flags;
+    U16 lockedSinceLastInst;
+    S16 refCount;
+    S32 numTriangles;
+    S32 numVertices;
+    S32 numMorphTargets;
+    S32 numTexCoordSets;
+    RpMaterialList matList;
+    RpTriangle* triangles;
+    RwRGBA* preLitLum;
+    RwTexCoords* texCoords[8];
+    RwSurfaceProperties ignoredSurfaceProps;
+    RpMeshHeader* mesh;
+    RwResEntry* repEntry;
+    RpMorphTarget* morphTarget;
+};
+
+typedef RpAtomic* (*RpAtomicCallBackRender)(RpAtomic* atomic);
+typedef RpAtomic* (*RpAtomicCallBack)(RpAtomic* atomic, void* data);
+
+struct RpAtomic
+{
+    RwObjectHasFrame object;
+    RwResEntry* repEntry;
+    RpGeometry* geometry;
+    RwSphere boundingSphere;
+    RwSphere worldBoundingSphere;
+    RpClump* clump;
+    RwLLLink inClumpLink;
+    RpAtomicCallBackRender renderCallBack;
+    RpInterpolator interpolator;
+    U16 renderFrame;
+    U16 pad;
+    RwLinkList llWorldSectorsInAtomic;
+    RxPipeline* pipeline;
+};
+
+struct RpClump
+{
+    RwObject object;
+    RwLinkList atomicList;
+    RwLLLink inWorldLink;
+    RpClump* (*callback)(RpClump* clump, void* data);
+    U16 renderFrame;
+    U16 pad;
+};
+
+#define RpAtomicGetFrame(_atomic) ((RwFrame*)rwObjectGetParent(_atomic))
+#define RpClumpGetFrame(_clump) ((RwFrame*)rwObjectGetParent(_clump))
+#define RpClumpSetFrame(_clump, _frame) (rwObjectSetParent(_clump, _frame), (_clump))
+
 typedef struct RpLight RpLight;
 struct RpLight
 {
@@ -107,6 +185,10 @@ extern "C" {
 #endif
 
 S32 RpLightDestroy(RpLight* light);
+
+S32 RpClumpDestroy(RpClump* clump);
+RpClump* RpClumpForAllAtomics(RpClump* clump, RpAtomicCallBack callback, void* pData);
+RpClump* RpClumpStreamRead(RwStream* stream);
 
 RpWorld* RpWorldAddCamera(RpWorld* world, RwCamera* camera);
 RpWorld* RpWorldRemoveCamera(RpWorld* world, RwCamera* camera);

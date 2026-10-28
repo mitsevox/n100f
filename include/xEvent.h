@@ -9,10 +9,14 @@ enum en_xEventTags
     eEventReset = 10,
     eEventToggle = 15,
     eEventStop = 19,
+    eEventDestroy = 22,
     eEventOn = 38,
     eEventOff = 39,
     eEventPress = 55,
     eEventUnpress = 56,
+    eEventHit = 58,
+    eEventCollisionOn = 83,
+    eEventCollisionOff = 84,
     eEventCollision_Visible_On = 85,
     eEventCollision_Visible_Off = 86,
     eEventAnimPlay = 195,
@@ -25,7 +29,10 @@ enum en_xEventTags
     eEventAnimPlayMaybe = 202,
     eEventShaggySwap = 209,
     eEventShaggyGrabbed = 232,
-    eEventShaggyThrown = 233
+    eEventShaggyThrown = 233,
+    eEventTranslucentOn = 252,
+    eEventTranslucentOff = 253,
+    eEventTranslucentToggle = 254
 };
 
 #endif

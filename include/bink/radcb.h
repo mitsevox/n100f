@@ -28,6 +28,15 @@ typedef struct RADCBHANDLER
     S32 count;
 } RADCBHANDLER;
 
+RADCBHANDLER* RADCB_allocate_handler(U32 hz);
+void RADCB_register_callback(RADCBHANDLER* h, RADCB* cb, RADCBFUNC timer, RADCBFUNC handler);
+S32 RADCB_unregister_2_callbacks(RADCBHANDLER* h1, RADCB* cb1, RADCBHANDLER* h2, RADCB* cb2, U32 flags);
+void RADCB_resume_handler(RADCBHANDLER* h);
+S32 RADCB_try_to_suspend_callback(RADCBHANDLER* h, RADCB* cb);
+void RADCB_suspend_callback(RADCBHANDLER* h, RADCB* cb);
+void RADCB_suspend_2_callbacks(RADCBHANDLER* h1, RADCB* cb1, RADCBHANDLER* h2, RADCB* cb2);
+void RADCB_resume_callback(RADCBHANDLER* h, RADCB* cb);
 void RADCB_free_handler(RADCBHANDLER* h);
+void RADCB_idle_on_callbacks(void);
 
 #endif
