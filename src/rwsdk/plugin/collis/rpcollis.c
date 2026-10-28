@@ -45,12 +45,12 @@ static void CollisionDataFree(RpCollisionData* data)
 
 static void* CollisionDataDestroy(void* object, S32 offset, S32 size)
 {
-    RpCollisionData* data = COLLISIONDATA(object, offset);
+    RpCollisionData** extData = &COLLISIONDATA(object, offset);
 
-    if (data)
+    if (*extData)
     {
-        CollisionDataFree(data);
-        COLLISIONDATA(object, offset) = NULL;
+        CollisionDataFree(*extData);
+        *extData = NULL;
     }
 
     return object;
@@ -74,8 +74,8 @@ static RwStream* CollisionDataStreamWrite(RwStream* stream, S32 length, const vo
                                           S32 offset, S32 size)
 {
     const RpCollisionData* data = COLLISIONDATA(object, offset);
-    S32 numTriangles;
-    const U16* map;
+    S32 numTri;
+    const U16* triIndex;
 
     if (!data)
     {
@@ -93,14 +93,14 @@ static RwStream* CollisionDataStreamWrite(RwStream* stream, S32 length, const vo
         return NULL;
     }
 
-    numTriangles = data->numTriangles;
-    map = data->triangleMap;
+    numTri = data->numTriangles;
+    triIndex = data->triangleMap;
 
-    while (numTriangles--)
+    while (numTri--)
     {
-        S32 index = *map++;
+        S32 i = *triIndex++;
 
-        if (!RwStreamWriteInt32(stream, &index, sizeof(S32)))
+        if (!RwStreamWriteInt32(stream, &i, sizeof(S32)))
         {
             return NULL;
         }
@@ -109,27 +109,27 @@ static RwStream* CollisionDataStreamWrite(RwStream* stream, S32 length, const vo
     return stream;
 }
 
-static RwStream* CollisionDataStreamRead(RwStream* stream, S32 length, void* object, S32 offset,
-                                         S32 size)
+static RwStream* CollisionDataStreamRead(RwStream* stream, S32 binaryLength, void* object,
+                                         S32 offset, S32 size)
 {
-    if (length)
+    if (binaryLength)
     {
-        S32 numLeafNodes;
-        S32 numTriangles;
-        U32 treeSize;
+        S32 numLeaves;
+        S32 numTris;
+        S32 treeSize;
         RpCollisionData* data;
         U32 dataSize;
-        S32 count;
-        U16* map;
+        S32 numTri;
+        U16* triIndex;
 
-        if (!RwStreamReadInt32(stream, &numLeafNodes, sizeof(S32)) ||
-            !RwStreamReadInt32(stream, &numTriangles, sizeof(S32)))
+        if (!RwStreamReadInt32(stream, &numLeaves, sizeof(S32)) ||
+            !RwStreamReadInt32(stream, &numTris, sizeof(S32)))
         {
             return NULL;
         }
 
-        treeSize = _rpCollBSPTreeMemGetSize(numLeafNodes);
-        dataSize = sizeof(RpCollisionData) + treeSize + numTriangles * sizeof(U16);
+        treeSize = _rpCollBSPTreeMemGetSize(numLeaves);
+        dataSize = sizeof(RpCollisionData) + treeSize + numTris * sizeof(U16);
         data = (RpCollisionData*)RwMalloc(dataSize);
 
         if (!data)
@@ -144,10 +144,10 @@ static RwStream* CollisionDataStreamRead(RwStream* stream, S32 length, void* obj
 
         data->flags = COLLISIONDATA_SINGLEBLOCK;
         data->tree = (RpCollBSPTree*)(data + 1);
-        data->numTriangles = numTriangles;
+        data->numTriangles = numTris;
         data->triangleMap = (U16*)((U8*)data->tree + treeSize);
 
-        _rpCollBSPTreeInit(data->tree, numLeafNodes);
+        _rpCollBSPTreeInit(data->tree, numLeaves);
 
         if (!_rpCollBSPTreeStreamRead(data->tree, stream))
         {
@@ -155,20 +155,20 @@ static RwStream* CollisionDataStreamRead(RwStream* stream, S32 length, void* obj
             return NULL;
         }
 
-        count = data->numTriangles;
-        map = data->triangleMap;
+        numTri = data->numTriangles;
+        triIndex = data->triangleMap;
 
-        while (count--)
+        while (numTri--)
         {
-            S32 index;
+            S32 i;
 
-            if (!RwStreamReadInt32(stream, &index, sizeof(S32)))
+            if (!RwStreamReadInt32(stream, &i, sizeof(S32)))
             {
                 RwFree(data);
                 return NULL;
             }
 
-            *map++ = index;
+            *triIndex++ = i;
         }
 
         COLLISIONDATA(object, offset) = data;
@@ -177,17 +177,17 @@ static RwStream* CollisionDataStreamRead(RwStream* stream, S32 length, void* obj
     return stream;
 }
 
-static S32 CollisionDataStreamGetSize(const void* object, S32 offset, S32 size)
+static S32 CollisionDataStreamGetSize(const void* object, S32 offsetInObject, S32 size)
 {
-    const RpCollisionData* data = COLLISIONDATA(object, offset);
+    const RpCollisionData* data = COLLISIONDATA(object, offsetInObject);
 
     if (data)
     {
-        S32 total = _rpCollBSPTreeStreamGetSize(data->tree) + 2 * sizeof(S32);
+        U32 binarySize = _rpCollBSPTreeStreamGetSize(data->tree) + 2 * sizeof(S32);
 
-        total += data->numTriangles * sizeof(S32);
+        binarySize += data->numTriangles * sizeof(S32);
 
-        return total;
+        return binarySize;
     }
 
     return 0;
@@ -195,64 +195,64 @@ static S32 CollisionDataStreamGetSize(const void* object, S32 offset, S32 size)
 
 static S32 CollisionWorldPluginAttach(void)
 {
-    S32 success;
+    S32 result;
 
     _rpCollisionGlobalsOffset =
         RwEngineRegisterPlugin(sizeof(void*), COLLIS_PLUGIN_ID, CollisionOpen, CollisionClose);
-    success = _rpCollisionGlobalsOffset >= 0;
+    result = _rpCollisionGlobalsOffset >= 0;
 
-    if (success)
+    if (result)
     {
         _rpCollisionWorldSectorDataOffset =
             RpWorldSectorRegisterPlugin(sizeof(RpCollisionData*), COLLIS_PLUGIN_ID,
                                         CollisionDataCreate, CollisionDataDestroy, NULL);
-        success = _rpCollisionWorldSectorDataOffset >= 0;
+        result = _rpCollisionWorldSectorDataOffset >= 0;
 
-        if (success)
+        if (result)
         {
-            success = RpWorldSectorRegisterPluginStream(COLLIS_PLUGIN_ID, CollisionDataStreamRead,
-                                                        CollisionDataStreamWrite,
-                                                        CollisionDataStreamGetSize) >= 0;
+            result = RpWorldSectorRegisterPluginStream(COLLIS_PLUGIN_ID, CollisionDataStreamRead,
+                                                       CollisionDataStreamWrite,
+                                                       CollisionDataStreamGetSize) >= 0;
         }
     }
 
-    return success;
+    return result;
 }
 
 static S32 CollisionGeometryPluginAttach(void)
 {
-    S32 success;
+    S32 result;
 
     _rpCollisionAtomicDataOffset =
         RpAtomicRegisterPlugin(sizeof(S32), COLLIS_PLUGIN_ID, CollisionAtomicInit, NULL, NULL);
-    success = _rpCollisionAtomicDataOffset >= 0;
+    result = _rpCollisionAtomicDataOffset >= 0;
 
-    if (success)
+    if (result)
     {
         _rpCollisionGeometryDataOffset =
             RpGeometryRegisterPlugin(sizeof(RpCollisionData*), COLLIS_PLUGIN_ID,
                                      CollisionDataCreate, CollisionDataDestroy, NULL);
-        success = _rpCollisionGeometryDataOffset >= 0;
+        result = _rpCollisionGeometryDataOffset >= 0;
 
-        if (success)
+        if (result)
         {
-            success = RpGeometryRegisterPluginStream(COLLIS_PLUGIN_ID, CollisionDataStreamRead,
-                                                     CollisionDataStreamWrite,
-                                                     CollisionDataStreamGetSize) >= 0;
+            result = RpGeometryRegisterPluginStream(COLLIS_PLUGIN_ID, CollisionDataStreamRead,
+                                                    CollisionDataStreamWrite,
+                                                    CollisionDataStreamGetSize) >= 0;
         }
     }
 
-    return success;
+    return result;
 }
 
 S32 RpCollisionPluginAttach(void)
 {
-    S32 success = CollisionWorldPluginAttach();
+    S32 result = CollisionWorldPluginAttach();
 
-    if (success)
+    if (result)
     {
-        success = CollisionGeometryPluginAttach();
+        result = CollisionGeometryPluginAttach();
     }
 
-    return success;
+    return result;
 }

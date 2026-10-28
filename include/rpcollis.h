@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 RpCollBSPTree* _rpCollBSPTreeInit(RpCollBSPTree* tree, S32 numLeafNodes);
-U32 _rpCollBSPTreeMemGetSize(S32 numLeafNodes);
+S32 _rpCollBSPTreeMemGetSize(S32 numLeafNodes);
 void _rpCollBSPTreeDestroy(RpCollBSPTree* tree);
 RpCollBSPTree* _rpCollBSPTreeStreamWrite(RpCollBSPTree* tree, RwStream* stream);
 RpCollBSPTree* _rpCollBSPTreeStreamRead(RpCollBSPTree* tree, RwStream* stream);
