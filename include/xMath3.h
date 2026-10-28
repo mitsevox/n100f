@@ -75,6 +75,32 @@ inline void xVec3Sub(xVec3* o, const xVec3* a, const xVec3* b)
     o->z = a->z - b->z;
 }
 
+inline void xVec3Copy(xVec3* o, const xVec3* v)
+{
+    o->x = v->x;
+    o->y = v->y;
+    o->z = v->z;
+}
+
+inline void xVec3Add(xVec3* o, const xVec3* a, const xVec3* b)
+{
+    o->x = a->x + b->x;
+    o->y = a->y + b->y;
+    o->z = a->z + b->z;
+}
+
+inline void xVec3SMul(xVec3* o, const xVec3* v, F32 s)
+{
+    o->x = v->x * s;
+    o->y = v->y * s;
+    o->z = v->z * s;
+}
+
+inline F32 xVec3Length2(const xVec3* vec)
+{
+    return vec->x * vec->x + vec->y * vec->y + vec->z * vec->z;
+}
+
 F32 xVec3Normalize(xVec3* o, const xVec3* v);
 
 inline F32 xVec3Dot(const xVec3* a, const xVec3* b)
@@ -93,8 +119,10 @@ inline void xVec3Cross(xVec3* o, const xVec3* a, const xVec3* b)
 }
 
 void xMat3x3RotY(xMat3x3* m, F32 t);
+void xMat3x3RotC(xMat3x3* m, F32 _x, F32 _y, F32 _z, F32 t);
 void xMat3x3Euler(xMat3x3* m, F32 yaw, F32 pitch, F32 roll);
 void xMat3x3RMulVec(xVec3* o, const xMat3x3* m, const xVec3* v);
+void xMat3x3GetEuler(const xMat3x3* m, xVec3* a);
 void xMat3x3LMulVec(xVec3* o, const xMat3x3* m, const xVec3* v);
 void xMat3x3LMulRotY(xMat3x3* o, const xMat3x3* m, F32 t);
 void xMat4x3MoveLocalRight(xMat4x3* m, F32 mag);
