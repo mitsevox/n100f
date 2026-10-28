@@ -80,7 +80,7 @@ zCamera.cpp	0x80045B50	0x80045C34	4	4	0	0	-	count-match
 zConditional.cpp	0x80045C34	0x80045EA8	5	5	0	0	-	count-match
 zCounter.cpp	0x80045EA8	0x800460E0	5	5	3	3	0x80045F74=zCounterLoad (name)	anchored
 zCutsceneMgr.cpp	0x800460E0	0x8004651C	8	10	1	0	0x80046100=zCutsceneMgrUpdate (strings+calls)	anchored
-zDispatcher.cpp	0x8004651C	0x80047670	12	14	2	1	0x8004651C=ZDSP_elcb_event (floats)	anchored
+zDispatcher.cpp	0x8004651C	0x80047670	12	14	2	1	0x8004651C=ZDSP_elcb_event (floats+calls)	anchored
 zEGenerator.cpp	0x80047670	0x80048094	9	11	1	0	0x80047F74=zEGenerator_Init (floats+calls)	anchored
 zEnt.cpp	0x80048094	0x80049488	25	21	10	6	0x80048094=zEntGetShadowParams (floats)	anchored
 zEntBubble.cpp	0x80049488	0x8004A508	11	12	3	0	0x800495DC=zEntBubble_Update (floats)	anchored
@@ -96,7 +96,7 @@ zEntTrigger.cpp	0x8007ACB8	0x8007B08C	5	5	1	0	0x8007AD2C=zEntTriggerUpdate (call
 zEntVillain.cpp	0x8007B08C	0x800A9F78	234	277	127	80	0x8007B5A0=VBON_choose_bonusItem (floats+calls)	anchored
 zEnv.cpp	0x800A9F78	0x800AA338	7	8	3	1	0x800A9F78=zEnvEventCB (calls)	anchored
 zFeet.cpp	0x800AA338	0x800ABD84	11	11	4	0	0x800AA3B4=DrawSkidMarkStrip (floats)	anchored
-zFMV.cpp	0x800ABD84	0x800ABE88	2	2	0	0	-	count-match
+zFMV.cpp	0x800ABD84	0x800ABE88	2	2	2	2	0x800ABD84=zFMVFileGetName (name)	anchored
 zFog.cpp	0x800ABE88	0x800AC010	5	5	2	2	0x800ABE8C=zFogEventCB (name)	anchored
 zFX.cpp	0x800AC010	0x800AC0BC	2	2	1	0	0x800AC03C=zFX_SceneEnter (strings+calls)	anchored
 zGame.cpp	0x800AC0BC	0x800ADC40	15	15	5	1	0x800AC8E8=zGameScreenTransition_UIRender (strings+floats)	anchored
@@ -112,7 +112,7 @@ zLightEffect.cpp	0x800BA800	0x800BAE00	22	23	2	0	0x800BA800=zLightEffectCauldron
 zLightning.cpp	0x800BAE00	0x800BBB1C	8	8	4	0	0x800BAE00=zLightningModifyEndpoints (floats)	anchored
 zLobMaster.cpp	0x800BBB1C	0x800BE608	19	24	4	0	0x800BBC20=LPRJ_debris_logix (floats)	anchored
 zMain.cpp	0x800BE608	0x800BF644	4	8	2	0	0x800BE608=zMainLoop (floats+calls)	anchored
-zMenu.cpp	0x800BF644	0x800BFD30	8	9	1	0	0x800BF698=zMenuLoop (strings+floats+calls)	anchored
+zMenu.cpp	0x800BF644	0x800BFD30	8	9	2	0	0x800BF64C=zMenuFMVPlay (calls)	anchored
 zMovePoint.cpp	0x800BFD30	0x800C0524	15	15	2	0	0x800BFED4=zMovePointFindNearest (floats)	anchored
 zMusic.cpp	0x800C0524	0x800C2EB0	8	8	2	0	0x800C05F8=zMusicPause (strings)	anchored
 zParCmd.cpp	0x800C2EB0	0x800C4BE0	32	32	8	4	0x800C30D8=xParCmdTexAnim_Update (name)	anchored

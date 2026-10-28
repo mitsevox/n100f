@@ -861,6 +861,7 @@ S32 RwIm3DEnd(void);
 S32 RwIm3DRenderPrimitive(RwPrimitiveType primType);
 S32 RwEngineRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor initCB,
                            RwPluginObjectDestructor termCB);
+S32 RwEngineGetPluginOffset(U32 pluginID);
 RwMatrix* RwMatrixUpdate(RwMatrix* matrix);
 RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance);
 RwFrame* RwFrameCreate();
