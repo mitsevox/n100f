@@ -142,7 +142,8 @@ The 8 zero bytes between `fft.c`'s `.rodata` and the tables (`0x801A8E18`-`0x801
 
 `bink/src/sdk/decode/ngc/ngcrgb.c` is a `NonMatching` reconstruction of Bink's YUV to RGB converters, which write the decoded planes into GameCube 4x4 tiles (RGBA8 tiles are 64 bytes, an AR plane then a GB plane; 16-bit tiles are 32 bytes). 18 of its 25 functions compile to the target byte for byte under ProDG 3.5 to 3.9.3: the 32-bit colour, mono and alpha converters, `YUV_16m_4x2`, `YUV_16mx2_4x2`, the eight empty `_odd` converters and `GetTiledRgbLoc`. The rest compile to the target's instructions with a different register allocation (`YUV_16_4x2_even`, `YUV_16x2_4x2_even`, `YUV_16a4_4x2_even`, `YUV_16a4x2_4x2_even`, `YUV_32ax2_4x2_even`) or a different setup schedule (`YUV_16a4m_4x2`, `YUV_16a4mx2_4x2`); the cause is not established. The register allocation fixes several details of the source:
 
-- Plane pointers are declared, loaded and stored in the order `u`, `v`, `y0`, `y1`, and each pixel pair computes its red, blue and green table offsets in that order.
+- Plane pointers are taken from `S` in the order `u`, `v`, `y0`, `y1`, with `a0` and `a1` first in the alpha converters, and stored back as `u`, `v`, `y0`, `y1`, `a0`, `a1`. In the exact converters the target fixes the order of the loads and stores and the declaration order of `u` and `v`, but not the order of the `*p++` reads in the loop, except in `YUV_16a4m_4x2` and `YUV_16a4mx2_4x2`, which read `a0`, `y0`, `a1`, `y1`. `YUV_16m_4x2` and `YUV_16mx2_4x2` take `y1` before `y0`.
+- Each pixel pair computes its red and blue table offsets before the green sum. Which of red and blue comes first is not fixed by the target.
 - The 16-bit converters take each luma halfword into a `U16` local and read a pixel as the low halfword of a `U32` table entry with a `(U16)` cast, which the target loads with `lhz` at offset 2.
 - `YUV_32m_4x2` loads all four `mono32` entries of a row before it writes any of them.
 
