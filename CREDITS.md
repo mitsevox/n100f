@@ -225,6 +225,10 @@ The Bink unit paths and boundaries in `config/GIHE78-rev0/splits.txt`, the 336 B
 - The other nine functions of the unit are this project's own reconstructions from the target; bfbb's file does not define them.
 - `RADMEMALLOC` and `RADMEMFREE` keep bfbb's parameter names (`size`, `mem`). The Bink compiler row cites Takuya Ooura's FFT package (`fft.tgz`, SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), which `src/bink/src/sdk/fft.c` follows ([Bink FFT](#bink-fft)), and `src/bink/src/sdk/dct.c` follows the Independent JPEG Group's software ([Bink DCT](#bink-dct)).
 
+## Bink SDK names
+
+The type and field rows of the Bink headers in `config/GIHE78-rev0/evidence.tsv` cite the struct and field names of RAD Game Tools' Bink SDK header as bfbb carries it (`src/bink/include/bink.h` at [`d8e8eac38dd617ee72161f4cb2da4498bc89aad6`](https://github.com/bfbbdecomp/bfbb/blob/d8e8eac38dd617ee72161f4cb2da4498bc89aad6/src/bink/include/bink.h)), as the project owner allowed. Only the names are used, to say which field each offset is; no RAD code or header text is copied, and the headers in `include/bink/` keep this project's own names.
+
 ## Bink FFT
 
 `src/bink/src/sdk/fft.c` is Takuya Ooura's general purpose FFT package (`fftsg.c`) as Bink builds it. It follows the current release, `fft.tgz` (SHA-256 `52bb637c70b971958ec79c9c8752b1df5ff0218a4db4510e60826e0cb79b5296`), with `bitrv2` and `bitrv2conj` from the same package's `fft4g.c`. `cftfsub`, `cftbsub`, `cftrec1`, `cftrec2`, `cftexp1`, `cftexp2` and `cftfx42` are reconstructed in the package's pre-2006 structure (the `cftrec1`/`cftrec2` recursion and `cftexp1`/`cftexp2`), which the current release replaced, and fitted to the target; no copy of an earlier release was available to check their text against.
