@@ -3,9 +3,33 @@
 
 #include "types.h"
 #include "xVec3.h"
+#include "xBase.h"
 
-struct _zParEmitter;
 struct xPar;
+
+// Partial: members up to color_death. The emitter shape union is left opaque.
+struct zParEmitterAsset : p2BaseAsset
+{
+    U8 emit_flags;
+    U8 emit_type;
+    U8 count;
+    U8 count_variation;
+    F32 interval;
+    U8 opaque_10[0x2C - 0x10];
+    U32 attachToID;
+    U32 parSysID;
+    xVec3 pos;
+    xVec3 vel;
+    F32 vel_angle_variation;
+    U8 color_birth[4];
+    U8 color_death[4];
+};
+
+// Partial: members up to tasset.
+struct _zParEmitter : xBase
+{
+    zParEmitterAsset* tasset;
+};
 
 struct _zParEmitterCustomSettings
 {
