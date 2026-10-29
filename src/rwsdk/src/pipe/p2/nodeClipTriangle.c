@@ -365,7 +365,6 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                         tri[1] = vertIndices[prev];
                         tri[2] = first;
 
-
                         indices->currentData =
                             (U8*)indices->data + indices->stride * (indices->numUsed - 3);
 
@@ -825,7 +824,6 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                         tri[0] = vertIndices[(start + 1) & 15];
                         tri[1] = vertIndices[prev];
                         tri[2] = first;
-
 
                         indices->currentData =
                             (U8*)indices->data + indices->stride * (indices->numUsed - 3);
