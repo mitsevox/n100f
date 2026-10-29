@@ -2,6 +2,7 @@
 #define XMODEL_H
 
 #include "types.h"
+#include "xMath3.h"
 #include "xVec3.h"
 #include <rwcore.h>
 
@@ -33,5 +34,10 @@ xModelInstance* xModelInstanceAlloc(RpAtomic* data, void* object, U16 flags, U8 
                                     U8* boneRemap);
 void xModelInstanceFree(xModelInstance* modelInst);
 void xModelInstanceAttach(xModelInstance* inst, xModelInstance* parent);
+
+inline xMat4x3* xModelGetFrame(xModelInstance* modelInst)
+{
+    return (xMat4x3*)modelInst->Mat;
+}
 
 #endif

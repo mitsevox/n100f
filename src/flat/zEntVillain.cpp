@@ -9,6 +9,8 @@
 #include "xMemMgr.h"
 #include "xordarray.h"
 #include "xScene.h"
+#include "xString.h"
+#include "xutil.h"
 #include "zEntPickup.h"
 #include "zEntPlayer.h"
 #include "zEntShaggy.h"
@@ -16,6 +18,7 @@
 #include "zGlobals.h"
 #include "zLaugh.h"
 #include "zLightning.h"
+#include "zMovePoint.h"
 #include "zParEmitter.h"
 #include "zScene.h"
 
@@ -212,12 +215,16 @@ static en_NPC_ANIMSTATES VANM_set(st_zEntVillain* ent, en_NPC_ANIMSTATES* best, 
                                   S32 sync);
 static en_NPC_ANIMSTATES VANM_randset(st_zEntVillain* ent, F32* wts,
                                       en_NPC_ANIMSTATES* choice_list, S32 cnt);
+static inline en_NPC_ANIMSTATES VANM_setone(st_zEntVillain* ent, en_NPC_ANIMSTATES anim);
+static inline en_NPC_ANIMSTATES VANM_randthree(st_zEntVillain* ent, en_NPC_ANIMSTATES a,
+                                               en_NPC_ANIMSTATES b, en_NPC_ANIMSTATES c);
 static xAnimTransition* VANM_findtran(st_zEntVillain* ent, xAnimTable* table, xAnimState* from,
                                       xAnimState* to, S32 autoslamit, xAnimTransition** newtran);
 static xAnimSingle* VANM_entSingle(const _zEnt* ent);
 static inline xAnimState* VANM_entState(const _zEnt* ent);
 static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum);
 static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter);
+static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos);
 
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt);
 static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
@@ -362,6 +369,9 @@ static st_ZVIL_NPCTYPE_LOOKUP g_npcTable[eEntVillainType_NoMore + 1] = {
     { 0 },
 };
 
+// Where the Mastermind stood when he last looked for a teleport point.
+static _xVec3 sMMPreTeleportPos;
+
 // Redbeard's swords.
 static st_REDBEARD_SWORD g_rbsword[4];
 
@@ -411,6 +421,16 @@ static st_BKAXE_DATA g_axfxpool[10] = { 0 };
 
 // Green Ghost quake balls.
 static st_BGG_QUAKEBALL g_quakepool[4] = { 0 };
+
+// Names of the Mastermind's teleport points: eight safe ones and four dangerous ones.
+static char* g_strz_mmtp[12] = {
+    "MM_TP_SAFE_A", "MM_TP_SAFE_B", "MM_TP_SAFE_C", "MM_TP_SAFE_D",
+    "MM_TP_SAFE_E", "MM_TP_SAFE_F", "MM_TP_SAFE_G", "MM_TP_SAFE_H",
+    "MM_TP_DNGR_A", "MM_TP_DNGR_B", "MM_TP_DNGR_C", "MM_TP_DNGR_D",
+};
+
+// The Mastermind's teleport points, found by name when he is prepared.
+static _zMovePoint* g_mmtp[12] = { 0 };
 
 // Mastermind flasks.
 static st_ZVMM_FLASK_DATA g_mmflask[10] = { 0 };
@@ -1313,6 +1333,292 @@ static S32 VILN_BMM_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
     return result;
 }
 
+// Handles the Mastermind's notices. On prepare, it marks the scene as his boss battle (4), lets him
+// attack, sets his hit points from his configuration (at least 1), sets his lob spin to one turn
+// and his hurt time to none, finds his twelve teleport points by name, and sets the first three
+// flag bits on his first two models and clears them on the next six. Then, like the standard
+// notice, it sets up his vertex tags on prepare and refreshes his precalculated data on precalc.
+static S32 VILN_BMM_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS_CONTEXT_DATA*)
+{
+    S32 i;
+    xModelInstance* minst = vil->model;
+    S32 idx = 0;
+
+    if (note == ZVIL_NOTE_PREPARE)
+    {
+        g_scene_is_a_boss_battle = 4;
+        vil->allow |= 0x8;
+        vil->hitpts = (vil->vilcfg.hitpts < 1) ? 1 : vil->vilcfg.hitpts;
+        vil->vec_lobSpin.x = 6.2831855f;
+        vil->vilcfg.tymref_list[ZVIL_TDUR_HURT] = -1.0f;
+    }
+
+    if (note == ZVIL_NOTE_PREPARE)
+    {
+        for (i = 0; i < 12; i++)
+        {
+            g_mmtp[i] = zMovePoint_From_xAssetID(xStrHash(g_strz_mmtp[i]));
+        }
+    }
+
+    if (note == ZVIL_NOTE_PREPARE)
+    {
+        while (minst)
+        {
+            switch (idx)
+            {
+            case 0:
+            case 1:
+                minst->Flags |= 0x1;
+                minst->Flags |= 0x2;
+                minst->Flags |= 0x4;
+                break;
+            case 2:
+            case 3:
+                minst->Flags &= (U16)~0x1;
+                minst->Flags &= (U16)~0x2;
+                minst->Flags &= (U16)~0x4;
+                break;
+            case 4:
+            case 5:
+                minst->Flags &= (U16)~0x1;
+                minst->Flags &= (U16)~0x2;
+                minst->Flags &= (U16)~0x4;
+                break;
+            case 6:
+            case 7:
+                minst->Flags &= (U16)~0x1;
+                minst->Flags &= (U16)~0x2;
+                minst->Flags &= (U16)~0x4;
+                break;
+            default:
+                break;
+            }
+
+            minst = minst->Next;
+            idx++;
+        }
+    }
+
+    switch (note)
+    {
+    case ZVIL_NOTE_PREPARE:
+        zVIL_tag_verts(vil);
+        break;
+    case ZVIL_NOTE_PRECALC:
+        if (vil->mode >= ZVIL_MODE_NORMAL) zVIL_precalc(vil, 0xF);
+        break;
+    case ZVIL_NOTE_OLDTIME:
+        break;
+    }
+
+    return 1;
+}
+
+// The Mastermind's respond step adds up the push-out vectors of his NPC, environment and static
+// collisions that hit an object; the sum is not used.
+static S32 VILN_BMM_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA*)
+{
+    _xVec3 vec_sum = { 0 };
+    _xCollis* colrec;
+    S32 i;
+
+    for (i = vil->collis->npc_sidx; i < vil->collis->npc_eidx; i++)
+    {
+        colrec = &vil->collis->colls[i];
+        if (colrec->optr)
+        {
+            xVec3Add(&vec_sum, &vec_sum, &colrec->depen);
+        }
+    }
+
+    for (i = vil->collis->env_sidx; i < vil->collis->env_eidx; i++)
+    {
+        colrec = &vil->collis->colls[i];
+        if (colrec->optr)
+        {
+            xVec3Add(&vec_sum, &vec_sum, &colrec->depen);
+        }
+    }
+
+    for (i = vil->collis->stat_sidx; i < vil->collis->stat_eidx; i++)
+    {
+        colrec = &vil->collis->colls[i];
+        if (colrec->optr)
+        {
+            xVec3Add(&vec_sum, &vec_sum, &colrec->depen);
+        }
+    }
+
+    return 1;
+}
+
+// Picks the Mastermind's animation for a goal and where he is in it. He is in battle mode when he
+// may teleport (allow bit 0x4) or attack from range (allow bit 0x10), and then idles, walks, acts
+// and taunts with his battle animations.
+static S32 VILN_BMM_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot)
+{
+    S32 battle_mode;
+
+    battle_mode = (vil->allow & 0x4) ? 1 : 0;
+    battle_mode |= (vil->allow & 0x10) ? 1 : 0;
+
+    switch (goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        VANM_setone(vil, ZVIL_ANIM_IDLE);
+        break;
+    case ZVIL_GOAL_IDLE:
+        if (battle_mode)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_IDLE);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_IDLE);
+        }
+        break;
+    case ZVIL_GOAL_ACTION:
+        if (battle_mode)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_TAUNT);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_FP_ACTION);
+        }
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        if (battle_mode)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_MOVE);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_FP_MOVE);
+        }
+        break;
+    case ZVIL_GOAL_PATROL:
+        if (battle_mode)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_MOVE);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_FP_MOVE);
+        }
+        break;
+    case ZVIL_GOAL_LEAP:
+        VANM_setone(vil, ZVIL_ANIM_MM_FP_JUMP);
+        break;
+    case ZVIL_GOAL_TELEPORT:
+        if (battle_mode)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_IDLE);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_IDLE);
+        }
+        break;
+    case ZVIL_GOAL_TAUNT:
+        if (battle_mode)
+        {
+            VANM_randthree(vil, ZVIL_ANIM_MM_BA_TAUNT, ZVIL_ANIM_MM_FP_TAUNT,
+                           ZVIL_ANIM_MM_BA_REACT);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_FP_TAUNT);
+        }
+        break;
+    case ZVIL_GOAL_ATTACKREADY:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_IDLE);
+        }
+        else if (gspot == ZVIL_GSPOT_MOVERIGHT)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_TURN);
+        }
+        break;
+    case ZVIL_GOAL_BLOCKHEAD:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_SHIELD_BEGIN);
+        }
+        else if (gspot == ZVIL_GSPOT_RESUME)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_SHIELD_LOOP);
+        }
+        else if (gspot == ZVIL_GSPOT_STATERECOVER)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_SHIELD_END);
+        }
+        break;
+    case ZVIL_GOAL_DAZED:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_STUNNED_BEGIN);
+        }
+        else if (gspot == ZVIL_GSPOT_RESUME)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_STUNNED_LOOP);
+        }
+        else if (gspot == ZVIL_GSPOT_STATERECOVER)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_STUNNED_END);
+        }
+        break;
+    case ZVIL_GOAL_LOBBING:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_ATTACK_BEGIN);
+        }
+        else if (gspot == ZVIL_GSPOT_ATTACKLINGER)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_ATTACK_LOOP);
+        }
+        else if (gspot == ZVIL_GSPOT_KICKATTACK)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_ATTACK);
+        }
+        break;
+    case ZVIL_GOAL_KNOCKBACK:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_KNOCKED_BEGIN);
+        }
+        else if (gspot == ZVIL_GSPOT_RESUME)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_KNOCKED_LOOP);
+        }
+        else if (gspot == ZVIL_GSPOT_STATERECOVER)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_KNOCKED_END);
+        }
+        break;
+    case ZVIL_GOAL_HURT:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_DEATH_BEGIN);
+        }
+        else if (gspot == ZVIL_GSPOT_HURT_ALTA)
+        {
+            VANM_setone(vil, ZVIL_ANIM_IDLE);
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        VANM_setone(vil, ZVIL_ANIM_MM_BA_DEATH);
+        break;
+    }
+
+    return 1;
+}
+
 // Per-frame update callback. Updates the villain's timers. If it is playing an animation and is
 // neither Shaggy nor a Witch, it compares its model's current animation state with the one it asked
 // for: if they differ it stops counting as playing and bit 0x100 of the model's flags is set,
@@ -1452,6 +1758,136 @@ static void zVIL_elcb_move(_xEnt* xe, _xScene* scn, F32 dt, _xEntFrame* frame)
     {
         zVIL_apply_move(ent, scn, dt, frame);
     }
+}
+
+// Picks the Mastermind's next teleport point. Unless forced, he picks none while the player is more
+// than 4 units away. For each point it measures the player's squared distance to the point and,
+// meant as the villain's own distance to it, the squared flat distance between the villain and a
+// zero vector, so the same value for every point; it takes the point farthest from the player
+// when that second value is above 1. The random choice then always replaces it: one time in five
+// a dangerous point (weights 2, 3, 3, 2), otherwise a safe one (weights 1, 2, 2, 1, 2, 1, 1, 2).
+// When forced with no point found, it falls back to his first navigation point and clears his
+// next one; when forced and the point is his next navigation point, that is cleared.
+static _zMovePoint* VNAV_find_telepoint(st_zEntVillain* vil, S32 force)
+{
+    _zMovePoint* da_tp = NULL;
+    S32 idx_best = -1;
+    S32 i;
+    F32 ds2_toScoob[12] = { 0 };
+    F32 ds2_toSelf[12] = { 0 };
+    _xVec3 vec_a = { 0 };
+    _xVec3 vec_b = { 0 };
+
+    if (!force && vil->precalc.ds2_VtoP > 16.0f)
+    {
+        return NULL;
+    }
+
+    for (i = 0; i < 12; i++)
+    {
+        if (g_mmtp[i] == NULL)
+        {
+            ds2_toScoob[i] = -1.0f;
+            ds2_toSelf[i] = -1.0f;
+            continue;
+        }
+
+        ds2_toSelf[i] = VSUP_ds2_toPos(vil, vec_a);
+
+        xVec3Copy(&vec_b, &xModelGetFrame(globals.player.ent.model)->pos);
+        xVec3Sub(&vec_b, &vec_b, zMovePointGetPos(g_mmtp[i]));
+        ds2_toScoob[i] = xVec3Length2(&vec_b);
+    }
+
+    for (i = 0; i < 12; i++)
+    {
+        if (ds2_toScoob[i] < 0.0f) continue;
+        if (ds2_toSelf[i] < 0.0f) continue;
+
+        if (idx_best < 0) idx_best = i;
+        if (ds2_toScoob[i] > ds2_toScoob[idx_best]) idx_best = i;
+    }
+
+    if (idx_best >= 0 && ds2_toSelf[idx_best] > 1.0f)
+    {
+        da_tp = g_mmtp[idx_best];
+    }
+
+    static S32 do_rand_select = 1;
+    if (do_rand_select)
+    {
+        S32 choice;
+        S32 dngrlist[4] = { 8, 9, 10, 11 };
+        S32 safelist[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+        F32 dngr_wt[4] = { 0.2f, 0.3f, 0.3f, 0.2f };
+        F32 safe_wt[12] = { 1.0f, 2.0f, 2.0f, 1.0f, 2.0f, 1.0f, 1.0f, 2.0f };
+
+        VSUP_wtadjust(safe_wt, 8, 1.0f);
+        if (xUtil_yesno(0.2f))
+        {
+            choice = VSUP_choose(dngrlist, dngr_wt, 4);
+            da_tp = g_mmtp[choice];
+        }
+        else
+        {
+            choice = VSUP_choose(safelist, safe_wt, 8);
+            da_tp = g_mmtp[choice];
+        }
+    }
+
+    if (da_tp == NULL && force)
+    {
+        for (i = 0; i < 12; i++)
+        {
+            if (g_mmtp[i]) break;
+        }
+
+        da_tp = vil->nav_mvptlist;
+        vil->nav_next = NULL;
+    }
+    else if (force && da_tp && da_tp == vil->nav_next)
+    {
+        vil->nav_next = NULL;
+    }
+
+    return da_tp;
+}
+
+// Gets the Mastermind ready to teleport: remembers where he stands, makes his next navigation
+// point his previous one, and looks for a teleport point. A point other than his next one becomes
+// his next one, and he teleports; otherwise he needs a navigation point. Either way his
+// navigation check timer restarts at its configured time, plus or minus 12.5 percent.
+static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force)
+{
+    S32 do_teleport = 0;
+    _zMovePoint* telepoint;
+
+    xVec3Copy(&sMMPreTeleportPos, &xModelGetFrame(vil->model)->pos);
+
+    if (vil->nav_next && vil->nav_next != vil->nav_prev)
+    {
+        vil->nav_prev = vil->nav_next;
+    }
+
+    telepoint = VNAV_find_telepoint(vil, force);
+    if (telepoint && telepoint != vil->nav_next)
+    {
+        vil->nav_next = telepoint;
+        do_teleport = 1;
+        vil->need_navpt = 0;
+        vil->tmr_list[ZVIL_TTIL_CHKFORNAV] =
+            vil->vilcfg.tymref_list[ZVIL_TTIL_CHKFORNAV] +
+            0.25f * (iurand() - 0.5f) * vil->vilcfg.tymref_list[ZVIL_TTIL_CHKFORNAV];
+    }
+    else
+    {
+        vil->need_navpt = 1;
+        vil->tmr_list[ZVIL_TTIL_CHKFORNAV] =
+            vil->vilcfg.tymref_list[ZVIL_TTIL_CHKFORNAV] +
+            0.25f * (iurand() - 0.5f) * vil->vilcfg.tymref_list[ZVIL_TTIL_CHKFORNAV];
+    }
+
+    return do_teleport;
 }
 
 // Passes a stimulus to the villain's type, unless it is on standby and its standby time has not
@@ -3445,6 +3881,15 @@ static inline en_NPC_ANIMSTATES VANM_setone(st_zEntVillain* ent, en_NPC_ANIMSTAT
     return VANM_set(ent, best, 2, 0);
 }
 
+// Plays one of three animations, picked at random, without weights, among those the villain's
+// animation table has.
+static inline en_NPC_ANIMSTATES VANM_randthree(st_zEntVillain* ent, en_NPC_ANIMSTATES a,
+                                               en_NPC_ANIMSTATES b, en_NPC_ANIMSTATES c)
+{
+    en_NPC_ANIMSTATES choice_list[3] = { a, b, c };
+    return VANM_randset(ent, NULL, choice_list, 3);
+}
+
 static inline en_NPC_ANIMSTATES VANM_hashToAnim(U32 hash)
 {
     en_NPC_ANIMSTATES anim = ZVIL_ANIM_UNKNOWN;
@@ -3885,7 +4330,7 @@ static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
     for (S32 i = 0; i < cnt; i++)
     {
         lo = hi;
-        if (wts != NULL)
+        if (wts)
         {
             hi += wts[i];
         }
@@ -3922,6 +4367,15 @@ static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
     {
         wts[i] *= fac;
     }
+}
+
+// Squared flat (x and z) distance from the entity to a position.
+static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
+{
+    _xVec3 delta = { 0 };
+
+    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
+    return delta.x * delta.x + delta.z * delta.z;
 }
 
 // Flips each component of out that points against the matching component of alter.
