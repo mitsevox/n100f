@@ -505,7 +505,7 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
             {
                 _xVec3 norm = { 0.0f, 0.0f, 0.0f };
                 S32 opts = (vil->abl_move & 0x1000) ? 8 : 12;
-                if (fabs(colrec->norm.y) <= 0.01f && vil->mode <= 3 &&
+                if (!(fabs(colrec->norm.y) > 0.01f) && vil->mode <= 3 &&
                     colrec->norm.x * colrec->norm.x + colrec->norm.z * colrec->norm.z > 0.0f)
                 {
                     norm.x = colrec->norm.x;
@@ -533,7 +533,7 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
             {
                 _xVec3 norm = { 0.0f, 0.0f, 0.0f };
                 S32 opts = (vil->abl_move & 0x1000) ? 8 : 12;
-                if (fabs(colrec->norm.y) <= 0.01f && vil->mode <= 3 &&
+                if (!(fabs(colrec->norm.y) > 0.01f) && vil->mode <= 3 &&
                     colrec->norm.x * colrec->norm.x + colrec->norm.z * colrec->norm.z > 0.0f)
                 {
                     norm.x = colrec->norm.x;
@@ -12693,8 +12693,8 @@ static S32 VWEP_extend_particles(st_zEntVillain* vil, F32 dt, _xVec3* target)
     _xVec3 normal = { 0 };
     _xMat3x3 mat = { 0 };
     _zParEmitterCustomSettings settings = { 0 };
-    S32 have_origin = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACKALT, &origin);
-    S32 have_alternate = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &alternate);
+    S32 have_origin = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &origin);
+    S32 have_alternate = VSUP_vertPos(vil, ZVIL_MDLVERT_WEAPON, &alternate);
     if (!have_origin && !have_alternate) origin = alternate;
     else if (have_origin && have_alternate && vil->asset->subtype == eEntVillainTypeKillerPlant)
     {
@@ -12709,8 +12709,8 @@ static S32 VWEP_extend_particles(st_zEntVillain* vil, F32 dt, _xVec3* target)
         origin.x += 1.5f * vil->precalc.sin_faceang;
         origin.z += 1.5f * vil->precalc.cos_faceang;
     }
-    F32 length = MAX(0.01f, MIN(vil->dst_extend, vil->spd_extend *
-                               MIN(vil->tmr_list[ZVIL_TDUR_EXTEND], vil->tmr_list[ZVIL_TYMR_CURGOAL])));
+    F32 length = MAX(0.01f, MIN(vil->spd_extend *
+                               MIN(vil->tmr_list[ZVIL_TDUR_EXTEND], vil->tmr_list[ZVIL_TYMR_CURGOAL]), vil->dst_extend));
     F32 slope = vil->wid_extend / vil->dst_extend;
     F32 facing = vil->frame->rot.angle;
     direction.x = sin(facing);
@@ -12759,8 +12759,8 @@ static void VEFX_plop_gum(st_zEntVillain* ent)
         if (!VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)i, &point)) continue;
         _xVec3 from = point;
         _xVec3 to = point;
-        if (point.y <= height) from.y = height;
-        else to.y = height;
+        if (point.y > height) to.y = height;
+        else from.y = height;
         if (from.y - to.y < 0.002f) continue;
         _xVec3 direction = { 0 };
         _xMat3x3 matrix = { 0 };
@@ -13075,7 +13075,7 @@ static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
         sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
         if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 25.0f);
-        break;
+        // The target continues into the at-rest sound check.
     case ZPRJ_EVNT_ATREST:
         if (!iSndIsPlaying(0, (U32)prj))
             xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 25.0f);
@@ -13461,8 +13461,23 @@ static S32 VPRJ_BRB_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
         prj->StateSet(ZPRJ_STATE_DEAD);
     }
-    else if ((prj->collis->colls[1].flags & 1) ||
-             prj->collis->env_sidx < prj->collis->env_eidx ||
+    else if (prj->collis->colls[1].flags & 1)
+    {
+        if (prj->flg_categ & 0x2000000)
+        {
+            prj->cat_data.arrow.amStuck = 2;
+            prj->pflags |= 4;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.z = 0.0f;
+            prj->frame->mode |= 4;
+        }
+        else
+        {
+            prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
+            prj->StateSet(ZPRJ_STATE_DEAD);
+        }
+    }
+    else if (prj->collis->env_sidx < prj->collis->env_eidx ||
              prj->collis->stat_sidx < prj->collis->stat_eidx ||
              prj->collis->dyn_sidx < prj->collis->dyn_eidx)
     {
