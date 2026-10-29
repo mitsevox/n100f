@@ -324,6 +324,8 @@ void xEntReset(_xEnt* ent)
 
     switch (ent->bound.type)
     {
+    case 0:
+        break;
     case 1:
         ent->bound.sph.center.x = ent->asset->pos.x;
         ent->bound.sph.center.y = ent->asset->pos.y;
@@ -1389,7 +1391,7 @@ void xModCollAddSample(_xEnt* xent, S64 elapsed)
     }
 }
 
-// The collision timer's report prints only in debug builds.
+// Collision-timer report for the collision debug mode; empty in this build.
 static void xModCollCB()
 {
 }
