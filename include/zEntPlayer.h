@@ -5,6 +5,20 @@
 #include "iModel.h"
 
 struct _zEntHangable;
+struct _zParEmitter;
+
+struct _tagPlayerFX
+{
+    _zParEmitter* emit_land[23];
+    _zParEmitter* emit_stop[23];
+    _zParEmitter* emit_scratch;
+    _zParEmitter* emit_digup[2];
+    F32 timer_stop;
+    F32 timer_scratch;
+    F32 timer_digup;
+};
+
+extern _tagPlayerFX gPlayerfx;
 struct _zPlatform;
 struct xSurface;
 

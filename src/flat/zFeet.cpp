@@ -19,7 +19,6 @@ extern void* lbl_8025EEC0;
 extern xBase* lbl_8025EEB8;
 extern xBase* lbl_8025EEBC;
 extern U32 lbl_8022C678[23];
-extern _zParEmitter* lbl_802290A0[];
 extern F32 lbl_801A4140[];
 extern void* lbl_8025EA48;
 struct _xRay3
@@ -33,11 +32,10 @@ struct _xRay3
 extern "C" U32 fn_800217E0(_xRay3*, void*);
 extern RwIm3DVertex lbl_8022C6D4[];
 extern void zSurfaceGetName(S32, char*);
-extern "C" xSurface* fn_800D2F34(const _xCollis*);
 extern "C" void fn_80021B9C(const char*, void (*)());
 void DrawSkidMarkStrip(_tagFeetSkidMark*, _tagSkidEdge*, U8, U8, U8);
 U32 zFeetStepCB(U32, xAnimActiveEffect*, xAnimSingle*, void*);
-extern "C" void fn_8001A198(xAnimTable*, U32 (*)(U32, xAnimActiveEffect*, xAnimSingle*, void*));
+void xAnimTableRemoveEffectByCB(xAnimTable*, U32 (*)(U32, xAnimActiveEffect*, xAnimSingle*, void*));
 
 // Draw each foot's strip once there are enough edges to form it.
 void zFeetRenderSkidMark(_tagFeetSkidMark* m)
@@ -199,7 +197,7 @@ U32 zFeetStepVillainCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
     iModelTagEval(ent->model->Data, &villain->tag_vert[foot->idx], ent->model->Mat, &info.pos);
 
     S32 surface_type = 0;
-    xSurface* surface = fn_800D2F34(&ent->collis->colls[0]);
+    xSurface* surface = zSurfaceGetSurface(&ent->collis->colls[0]);
     if (surface && surface->state == 0 && surface->moprops &&
         ((zSurfaceProps*)surface->moprops)->asset)
     {
@@ -228,7 +226,7 @@ U32 zFeetStepVillainCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
     info.rot[2] = (U8)(255.0f * (angles.z / 6.2831855f));
     zParEmitterEmitCustom((_zParEmitter*)lbl_8025EEBC, 0.0f, &info);
     info.custom_flags = 0x20;
-    zParEmitterEmitCustom(lbl_802290A0[surface_type], 0.033333335f, &info);
+    zParEmitterEmitCustom(gPlayerfx.emit_land[surface_type], 0.033333335f, &info);
     return 0;
 }
 
@@ -263,7 +261,7 @@ U32 zFeetStepCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
     info.pos.y = ent->model->Mat->pos.y + 0.05f;
 
     S32 surface_type = 0;
-    xSurface* surface = fn_800D2F34(&ent->collis->colls[0]);
+    xSurface* surface = zSurfaceGetSurface(&ent->collis->colls[0]);
     if (surface && surface->state == 0 && surface->moprops &&
         ((zSurfaceProps*)surface->moprops)->asset)
     {
@@ -294,7 +292,7 @@ U32 zFeetStepCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
         info.rot[2] = (U8)(255.0f * (angles.z / 6.2831855f));
         zParEmitterEmitCustom((_zParEmitter*)lbl_8025EEB8, 0.0f, &info);
         info.custom_flags = 0x20;
-        zParEmitterEmitCustom(lbl_802290A0[surface_type], 0.033333335f, &info);
+        zParEmitterEmitCustom(gPlayerfx.emit_land[surface_type], 0.033333335f, &info);
     }
     return 0;
 }
@@ -302,7 +300,7 @@ U32 zFeetStepCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
 // Remove the player footstep effect from the animation table.
 void zFeetExit(_xEnt*, xAnimTable* table)
 {
-    fn_8001A198(table, zFeetStepCB);
+    xAnimTableRemoveEffectByCB(table, zFeetStepCB);
 }
 
 // Resolve the surface sounds, footprint emitters and skid-mark texture.
