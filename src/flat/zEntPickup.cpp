@@ -447,8 +447,8 @@ S32 zPickup_Give(_zEntPickup* ent, zAssetPickup* p, U16 value)
 }
 
 // Moves a grabbed pickup from where it was grabbed to a point in front of the camera, by the
-// HUD: a key flies to its own slot in the key row, everything else to the left. The pickup's
-// effect shrinks on the way.
+// HUD: a key flies to its own slot in the key row, everything else to the left. The pickup
+// shrinks on the way.
 void zEntPickup_FlyToInterface(_zEntPickup* ent, F32)
 {
     F32 scale;
