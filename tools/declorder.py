@@ -33,9 +33,9 @@ import re
 import sys
 import tempfile
 try:
-    from tools.trial import DEFAULT_TARGET,Unit,trial
+    from tools.trial import DEFAULT_TARGET,Unit,shown,trial
 except ModuleNotFoundError:
-    from trial import DEFAULT_TARGET,Unit,trial
+    from trial import DEFAULT_TARGET,Unit,shown,trial
 
 SCALARS={'char','short','int','long','float','double','bool','unsigned','signed',
          'S8','U8','S16','U16','S32','U32','S64','U64','F32','F64',
@@ -312,7 +312,7 @@ def main(argv=None):
     else:search.exhaustive(candidates(segs))
     best,value=search.best()
     base=search.scores[tuple(tuple(range(len(s))) for s in segs)]
-    print('%s: %d orders tried, as written %.2f, best %.2f'%(args.symbol,len(search.scores),base,value))
+    print('%s: %d orders tried, as written %s, best %s'%(args.symbol,len(search.scores),shown(base),shown(value)))
     for seg,order in zip(segs,best):print('  '+', '.join(seg[k][1].name for k in order))
     if args.out:
         with open(args.out,'w') as f:f.write('\n'.join(apply(lines,segs,best)))

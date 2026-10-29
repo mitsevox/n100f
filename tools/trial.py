@@ -19,6 +19,7 @@ Needs a configured and built target (configure.py, then ninja), so that build.ni
 the target objects and the tools exist."""
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -118,6 +119,11 @@ def score(diff,symbol):
     return float(target.get('match_percent',0.0)),lines
 
 
+def shown(percent):
+    """`percent` to two places, rounded down so that only an identical function shows 100.00."""
+    return '%.2f'%(math.floor(percent*100)/100)
+
+
 def trial(unit,variant,symbol,objdiff=None,strict=False):
     """{'symbol', 'percent', 'compiled', 'log', 'diff'} for one variant."""
     with tempfile.TemporaryDirectory(prefix='trial-') as scratch:
@@ -143,7 +149,7 @@ def main(argv=None):
     if args.json:print(json.dumps(result))
     elif not result['compiled']:print(result['log'],file=sys.stderr)
     else:
-        print('%s %.2f'%(args.symbol,result['percent']))
+        print('%s %s'%(args.symbol,shown(result['percent'])))
         for target,ours,kind in result['diff'] if args.diff else ():
             print('  %-40s %-40s %s'%(target,ours,kind))
     if not result['compiled']:return 2
