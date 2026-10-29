@@ -3799,20 +3799,21 @@ static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
 // Works out the villain's per-frame facts about itself and the player (prec). flg_needinfo picks
 // what: 0x1 the distance (squared and plain), heading, direction and offset to the player and the
 // player's move info, whose sneak bits (0xFF00) are cleared in a boss battle and while the
-// ignore-sneak timer runs; whenever the player is not sneaking the timer restarts at 0.875 to
-// 1.125 of its length. 0x4 the heights of both bound centres over their feet. 0x8 the squared
-// flat distances to the anchor and guard positions and the cosine and sine of the heading. 0x2,
-// which implies 0x1, detection: a villain that can detect flags the player seen (0x1) inside its
-// detection range, which is (ds2_detect / 16) squared while the player sneaks, and between the
-// heights of its detection band; a seen player is then flagged in view (0x4) and in sight (0x8,
-// always with allow flag 0x200). The villain also flags a player within 1.1 (0x10), the lob
-// distance (0x20) and the extend distance (0x40). With misc flag 0x80000000 an unseen player is
-// still checked for view and sight, and a player outside the pursuit range around the anchor
-// (when that range is wider than the type's arrival distance) gets an intercept point on that
-// range, flagged 0x400 when it is farther from the villain than the arrival distance. Past the
-// normal mode the villain checks for a pitfall (flg_xtra 0x1). A player within 5 and less than 3
-// above or below is told the villain type and distance. flg_status records each part worked out,
-// and 0x80000000 once done.
+// ignore-sneak timer runs; outside a boss battle, whenever the player is not sneaking the timer
+// restarts at 0.875 to 1.125 of its length. 0x4 the heights of both bound centres over their
+// feet. 0x8 the squared flat distances to the anchor and guard positions and the cosine and sine
+// of the heading. 0x2, which implies 0x1, detection: a villain that can detect flags the player
+// seen (0x1) inside its detection range, which is (ds2_detect / 16) squared while the player
+// sneaks, and between the heights of its detection band; a seen player is then flagged in view
+// (0x4) and in sight (0x8, always with allow flag 0x200). A villain that can detect also flags a
+// player within 1.1 (0x10), the lob distance (0x20) and the extend distance (0x40). With misc
+// flag 0x80000000 an unseen player is still checked for view and sight, and a player outside the
+// pursuit range around the anchor (when that range is wider than the type's arrival distance)
+// gets an intercept point on that range, flagged 0x400 when it is farther from the villain than
+// the arrival distance. Past the normal mode the villain checks for a pitfall (flg_xtra 0x1).
+// When the distance in prec is under 5 and the height offset under 3 (both 0 without 0x1), the
+// player is told the villain type and the distance. flg_status records each part worked out, and
+// 0x80000000 once done.
 static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
 {
     st_ZVIL_PRECALC* prec;
@@ -6750,9 +6751,10 @@ static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 fl
 // Runs the villain's sound queue for a frame. A queued direct sound (VSND_LISTEND) with no sound
 // to play is dropped; any other entry forgets its direct sound. Each entry's delay counts down by
 // dt, and when it runs out the sound plays with the low 24 bits of its flags. The top four flag
-// bits then set the repeat count: 0x1 plays it once more, 0x2 counts the repeats down and
-// anything else ends it. An entry with repeats left waits its repeat delay again; the others are
-// freed. Returns how many entries are still queued after the sounds that played.
+// bits then set the repeat count: 0x1 sets it to 1, so the sound repeats until its slot is freed
+// elsewhere, 0x2 counts the repeats down and anything else ends it. An entry with repeats left
+// waits its repeat delay again; the others are freed. Returns how many entries played this frame
+// and stay queued.
 static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt)
 {
     st_NPC_SOUND_QUEUE* que;
@@ -6825,8 +6827,8 @@ static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt)
 // eighth. Flag 0x800 skips it while the effects channel is busy. Flags 0x1000, 0x2000 and 0x4000
 // pick volume 1, 0.9 or 0.8 and priority 150, 100 or 50 (otherwise 0.75 and 100); in a boss
 // battle the volume halves unless the villain has ability bit 0x1. With flag 0x200 it plays flat,
-// otherwise in 3D from the villain at half volume out to dist. The low two flag bits pick the
-// villain's sound channel. Returns the played sound's id, or 0.
+// otherwise in 3D at half volume out to dist. The sound's owner is the villain's address plus the
+// low two flag bits, so each villain has four sound channels; the 3D call passes it as the entity. Returns the played sound's id, or 0.
 static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplicit, S32 flg_vsnd,
                        F32 dist)
 {
