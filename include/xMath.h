@@ -7,6 +7,9 @@
 #define xabs(x) iabs(x)
 
 #define PI 3.1415927f
+#define ONEEIGHTY 180.0f
+
+#define DEG2RAD(x) ((PI) * (x) / (ONEEIGHTY))
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))

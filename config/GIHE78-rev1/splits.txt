@@ -1445,5 +1445,9 @@ rwsdk/src/pipe/p2/nodeSubmitTriangle.c:
 rwsdk/src/pipe/p2/p2core.c:
 	.text       start:0x80184894 end:0x80185324
 
+rwsdk/src/pipe/p2/p2renderstate.c:
+	.text       start:0x80188A14 end:0x80188ED4
+	.sdata2     start:0x80274B10 end:0x80274B18
+
 rwsdk/src/pipe/p2/gcn/im3dpipe.c:
 	.text       start:0x80189398 end:0x801895E8
