@@ -13,6 +13,9 @@
 #include "zScene.h"
 #include "zEntPickup.h"
 #include "zEntTrigger.h"
+#include "zEntButton.h"
+#include "zEntDestructObj.h"
+#include "xEvent.h"
 #include "xPad.h"
 #include "xSnd.h"
 #include "iSnd.h"
@@ -23,10 +26,13 @@
 #include "xScene.h"
 #include "xstransvc.h"
 #include "zFeet.h"
+#include "zGust.h"
+#include "xFFX.h"
 #include "iMath3.h"
 #include "iMath.h"
 
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -203,6 +209,16 @@ static U32 zEntPlayer_FXSpringCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnim
                                  void* object);
 static U32 zEntPlayer_FXOpenBrollyCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
                                      void* object);
+static void zEntPlayer_ButtonHBFX(_xEnt*, _zEntButton*);
+void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt);
+void zEntPlayer_Move(_xEnt* ent, _xScene* sc, F32 dt, _xEntFrame* frame);
+void zEntPlayer_Render(_zEnt* ent);
+S32 zEntPlayerEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
+static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata);
+void zEntPlayerReset(_xEnt* ent);
+static void zEntPlayer_FXSetup(_xEnt* ent, xAnimTable* table);
+static void zEntPlayer_ButtonBBFX(_xEnt* ent, _zEntButton*);
+static S32 DestructObjHBCallback(_zEnt* ent, _xCollis* coll);
 
 static xVec3 headcoll_oses[12] = {
     { 0.0f, 0.0f, 0.15f },  { 0.0f, 0.0f, 0.15f },   { 0.0f, 0.0f, 0.4f },  { 0.0f, 0.0f, 0.3f },
@@ -311,6 +327,8 @@ static xVec3 update_motion;
 static xVec3 req_motion;
 xVec3 vHangBefore;
 xVec3 vHangFirst;
+xVec3 vHangLast;
+zGustData gust_data;
 xMat4x3 gPlayerAbsMat;
 xMat4x3 rendermat;
 xVec3 floor_supp[4];
@@ -416,6 +434,16 @@ static void HeadcollUpdate(F32 dt)
     }
 }
 
+static inline F32 isin(F32 x)
+{
+    return sin(x);
+}
+
+static inline F32 icos(F32 x)
+{
+    return cos(x);
+}
+
 static void HeadbuttTest(_xCollis* coll, _xCollis* endcoll, F32 angle_cosine,
                          S32 (*headbuttCB)(_zEnt*, _xCollis*))
 {
@@ -431,8 +459,8 @@ static void HeadbuttTest(_xCollis* coll, _xCollis* endcoll, F32 angle_cosine,
     {
         return;
     }
-    dx = sin(ent->frame->rot.angle);
-    dz = cos(ent->frame->rot.angle);
+    dx = isin(ent->frame->rot.angle);
+    dz = icos(ent->frame->rot.angle);
     for (; coll < endcoll; coll++)
     {
         villent = (_zEnt*)coll->optr;
@@ -1223,6 +1251,222 @@ static inline void AddGroundStatesTransition(xAnimTable* table, xAnimTransition*
     xAnimTableAddTransition(table, tran, "Inactive_Magnify Inactive_Dizzy Inactive_BlowFeet Inactive_LookAround");
 }
 
+void ButtonStandOnCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+    _zEnt* bn;
+    U32 response;
+    U32 buttonState;
+
+    coll = &ent->collis->colls[0];
+    bn = (_zEnt*)coll->optr;
+    if (bn && bn->baseType == 0x18 && coll->norm.x == 0.0f && coll->norm.z == 0.0f)
+    {
+        response = zEntButton_Stand((_zEntButton*)bn);
+        buttonState = zEntButton_CheckState((_zEntButton*)coll->optr);
+        if (response == 1 && !buttonState)
+        {
+            zEntEvent((xBase*)coll->optr, eEventPress);
+        }
+    }
+}
+
+static S32 ButtonHBCallback(_zEnt* ent, _xCollis* coll)
+{
+    U32 headResponse;
+    U32 buttonState;
+
+    if (((xBase*)coll->optr)->baseType != 0x18)
+    {
+        return 0;
+    }
+    headResponse = zEntButton_Headbutt((_zEntButton*)coll->optr);
+    buttonState = zEntButton_CheckState((_zEntButton*)coll->optr);
+    if (headResponse == 4 && !buttonState)
+    {
+        if (!(globals.player.Inv_Specials & 0x800))
+        {
+            ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+            ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+            ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+            globals.player.HeadbuttHit = 1;
+            globals.player.DecelRunSpeed = 0.25f * globals.player.DecelRunSpeed;
+            return 0;
+        }
+        zEntEvent((xBase*)coll->optr, eEventPress);
+        zEntPlayer_ButtonHBFX(ent, (_zEntButton*)coll->optr);
+        ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+        ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+        ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+        globals.player.HeadbuttHit = 1;
+        globals.player.DecelRunSpeed = 0.25f * globals.player.DecelRunSpeed;
+    }
+    return 0;
+}
+
+void ButtonBBCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+    _xCollis* endcoll;
+    U32 bounceResponse;
+    U32 buttonState;
+
+    coll = &ent->collis->colls[ent->collis->dyn_sidx];
+    endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
+    if (((xBase*)coll->optr)->baseType == 0x18 && globals.player.Health &&
+        (ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xE)
+    {
+        for (; coll < endcoll; coll++)
+        {
+            if (coll->hdng.y < -0.866025f)
+            {
+                bounceResponse = zEntButton_ButtBounce((_zEntButton*)coll->optr);
+                buttonState = zEntButton_CheckState((_zEntButton*)coll->optr);
+                if ((bounceResponse == 2 || bounceResponse == 3) && !buttonState)
+                {
+                    zEntEvent((xBase*)coll->optr, eEventPress);
+                    zEntPlayer_ButtonBBFX(ent, (_zEntButton*)coll->optr);
+                    return;
+                }
+                if (coll->hdng.x == 0.0f && coll->hdng.z == 0.0f)
+                {
+                    ent->frame->vel.y = 0.0f;
+                }
+            }
+        }
+    }
+}
+
+static inline void ButtonHeadbuttCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+    _xCollis* endcoll;
+
+    coll = &ent->collis->colls[ent->collis->dyn_sidx];
+    endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
+    if (((xBase*)coll->optr)->baseType == 0x18)
+    {
+        HeadbuttTest(coll, endcoll, 0.1f, ButtonHBCallback);
+    }
+}
+
+void ButtonCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+
+    if (ent->collis->dyn_eidx > ent->collis->dyn_sidx)
+    {
+        coll = &ent->collis->colls[ent->collis->dyn_sidx];
+        if (coll->optr && ((xBase*)coll->optr)->baseType == 0x18)
+        {
+            if (globals.player.Inv_Specials & 0x800)
+            {
+                ButtonHeadbuttCheck(ent);
+            }
+            ButtonBBCheck(ent);
+            ButtonStandOnCheck(ent);
+        }
+    }
+}
+
+void DestructObjBBCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+    _xCollis* endcoll;
+    U32 bounceResponse;
+    U32 buttonState;
+
+    coll = &ent->collis->colls[ent->collis->dyn_sidx];
+    endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
+    if (globals.player.Health && (ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xE)
+    {
+        for (; coll < endcoll; coll++)
+        {
+            if (coll->hdng.y < -0.5f)
+            {
+                bounceResponse = zEntDestructObj_ButtBounce((_zEntDestructObj*)coll->optr);
+                buttonState = zEntDestructObj_CheckState((_zEntDestructObj*)coll->optr);
+                if (bounceResponse == 3 && buttonState != 2)
+                {
+                    zEntEvent((xBase*)coll->optr, eEventHit);
+                    ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+                    ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+                    ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+                    startBounce = ent->frame->mat.pos.y;
+                    zEntPlayerJumpStart(ent, &globals.player.s.Bounce);
+                    globals.player.Jump_CanDouble = 1;
+                    globals.player.Jump_CanFloat = 1;
+                    return;
+                }
+                if (coll->hdng.x == 0.0f && coll->hdng.z == 0.0f)
+                {
+                    ent->frame->vel.y = 0.0f;
+                }
+            }
+        }
+    }
+}
+
+static inline void DestructObjHeadbuttCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+    _xCollis* endcoll;
+
+    coll = &ent->collis->colls[ent->collis->dyn_sidx];
+    endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
+    HeadbuttTest(coll, endcoll, 0.1f, DestructObjHBCallback);
+}
+
+void DestructObjCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+
+    if (ent->collis->dyn_eidx > ent->collis->dyn_sidx)
+    {
+        coll = &ent->collis->colls[ent->collis->dyn_sidx];
+        if (coll->optr && ((xBase*)coll->optr)->baseType == 0x1B)
+        {
+            DestructObjHeadbuttCheck(ent);
+            DestructObjBBCheck(ent);
+        }
+    }
+}
+
+static S32 DestructObjHBCallback(_zEnt* ent, _xCollis* coll)
+{
+    U32 headResponse;
+    U32 dobjState;
+
+    if (((xBase*)coll->optr)->baseType != 0x1B)
+    {
+        return 0;
+    }
+    headResponse = zEntDestructObj_Headbutt((_zEntDestructObj*)coll->optr);
+    dobjState = zEntDestructObj_CheckState((_zEntDestructObj*)coll->optr);
+    if ((headResponse == 4 || headResponse == 5) && dobjState != 2)
+    {
+        if (!(globals.player.Inv_Specials & 0x800))
+        {
+            ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+            ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+            ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+            globals.player.HeadbuttHit = 1;
+            globals.player.DecelRunSpeed = 0.25f * globals.player.DecelRunSpeed;
+            return 0;
+        }
+        zEntEvent((xBase*)coll->optr, eEventHit);
+        ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+        ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+        ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+        if (dobjState != 1 || headResponse != 5)
+        {
+            globals.player.HeadbuttHit = 1;
+        }
+        globals.player.DecelRunSpeed = 0.25f * globals.player.DecelRunSpeed;
+    }
+    return 0;
+}
+
 xAnimTable* zEntPlayer_AnimTable()
 {
     xAnimTransition* tran;
@@ -1932,6 +2176,121 @@ xAnimTable* zEntPlayer_LampshadeAnimTable()
     xAnimTableNewTransition(table, "TurnOff", "Idle", LampDrawCheck, NULL, 0, 0, 0.0f, 10.0f, 1, 0, 0.0f, NULL);
     xAnimTableNewTransition(table, "TurnBackOn", "Idle", NULL, NULL, 0x10, 0, 0.0f, 10.0f, 1, 0, 0.0f, NULL);
     return table;
+}
+
+static _zParEmitter* zEntPlayerFindSurfaceEmitter(S32 type, char* prefix)
+{
+    char name[128];
+    char surface[128];
+    _zParEmitter* emitter;
+
+    strcpy(name, "PAREMIT_SD_");
+    strcat(name, prefix);
+    zSurfaceGetName(type, surface);
+    strcat(name, surface);
+    emitter = zParEmitterFind(xStrHash(name));
+    if (emitter && (emitter->emit_flags & 1))
+    {
+        emitter->emit_flags ^= 1;
+    }
+    return emitter;
+}
+
+static void zEntPlayerFindEmitters()
+{
+    S32 i;
+
+    memset(&gPlayerfx, 0, sizeof(_tagPlayerFX));
+    for (i = 0; i < 23; i++)
+    {
+        gPlayerfx.emit_land[i] = zEntPlayerFindSurfaceEmitter(i, "LAND_");
+        gPlayerfx.emit_stop[i] = zEntPlayerFindSurfaceEmitter(i, "STOP_");
+    }
+    gPlayerfx.emit_scratch = zParEmitterFind("PAREMIT_SD_FLEASCRATCH");
+    gPlayerfx.emit_digup[0] = zParEmitterFind("PAREMIT_SD_DIGUPDUST");
+    gPlayerfx.emit_digup[1] = zParEmitterFind("PAREMIT_SD_DIGUPDIRT");
+    sEmitterSprings = zParEmitterFind("PAREMIT_SPRING_THING");
+    sEmitterShockLeft = zParEmitterFind("PAREMIT_SD_SHOCKLEFT");
+    sEmitterShockRight = zParEmitterFind("PAREMIT_SD_SHOCKRIGHT");
+    sEmitterWaterSplash = zParEmitterFind("PAREMIT_SD_WATERSPLASH");
+    sEmitterBounceMiss = zParEmitterFind("PAREMIT_SD_BOUNCEMISS");
+    sEmitterSpringBoard = zParEmitterFind("PAREMIT_PLAT_SPRINGBOARD");
+    sEmitterBounceOnVillain = zParEmitterFind("PAREMIT_SD_BOUNCEONVILLAIN");
+    sEmitterHeadButt = zParEmitterFind("PAREMIT_SD_HEADBUTT");
+    sEmitterHeadButt2 = zParEmitterFind("PAREMIT_SD_HEADBUTT2");
+    sEmitterStars = zParEmitterFind("PAREMIT_STARS");
+    sSoundWaterSplash = xStrHash("scooby_splash");
+}
+
+void zEntPlayer_Init(_xEnt* ent, p2EntAsset* asset)
+{
+    xFFXRotMatchState* rms;
+    S32 i;
+
+    zEntInit((_zEnt*)ent, asset, 'PLYR');
+    ent->baseFlags |= 1;
+    ent->flags |= 1;
+    globals.player.Visible = 1;
+    globals.player.AutoMoveSpeed = 0;
+    ent->pflags &= 0xFB;
+    ent->collis->chk &= 0xFE;
+    ent->update = zEntPlayer_Update;
+    ent->move = zEntPlayer_Move;
+    ent->render = (void (*)(_xEnt*))zEntPlayer_Render;
+    ent->eventFunc = zEntPlayerEventCB;
+    if (ent->linkCount)
+    {
+        ent->link = (p2LinkAsset*)(asset + 1);
+    }
+    else
+    {
+        ent->link = NULL;
+    }
+
+    if (globals.sceneCur->baseCount[28])
+    {
+        xFFXAddEffect(ent, zGustUpdateEnt, &gust_data);
+    }
+
+    rms = xFFXRotMatchAlloc();
+    if (rms)
+    {
+        rms->max_decl = globals.player.s.RotMatchMaxAngle;
+        rms->tmatch = globals.player.s.RotMatchMatchTime;
+        rms->trelax = globals.player.s.RotMatchRelaxTime;
+        rms->tmr = 0.0f;
+        xFFXAddEffect(ent, PlayerRotMatchUpdateEnt, rms);
+    }
+
+    zEntPlayerFindEmitters();
+
+    zFeetInit(-1, ent, &sPlayerFeet[0], 0, ent->model->Anim->Table);
+    zFeetInit(-1, ent, &sPlayerFeet[1], 1, ent->model->Anim->Table);
+    zFeetInit(-1, ent, &sPlayerFeet[2], 2, ent->model->Anim->Table);
+    zFeetInit(-1, ent, &sPlayerFeet[3], 3, ent->model->Anim->Table);
+    zFeetInit(-1, ent, &sPlayerFeet[4], 4, ent->model->Anim->Table);
+    zFeetInit(-1, ent, &sPlayerFeet[5], 5, ent->model->Anim->Table);
+    zFeetInit(-1, ent, &sPlayerFeet[6], 6, ent->model->Anim->Table);
+    zFeetInit(-1, ent, &sPlayerFeet[7], 7, ent->model->Anim->Table);
+    zFeetInit(-1, ent, &sPlayerFeet[8], 8, ent->model->Anim->Table);
+    zFeetInit(-1, ent, &sPlayerFeet[9], 9, ent->model->Anim->Table);
+
+    zEntPlayer_FXSetup(ent, ent->model->Anim->Table);
+
+    sSnackDecrement = 0;
+    sDecrementSnackGateEnt = NULL;
+    sDecrementDelay = 0.0f;
+    sDecrementAmount = 2.0f;
+    sVONextSituation = NULL;
+    sVOTimer = 0.0f;
+
+    for (i = 0; i < 15; i++)
+    {
+        sPlayerInfo[i].elapsedTime = sPlayerInfo[i].delay;
+        sPlayerInfo[i].count = 0;
+    }
+
+    zEntPlayerReset(ent);
 }
 
 void zEntPlayer_Load(_xEnt* ent, xSerial* s)
@@ -3029,6 +3388,187 @@ void zEntPlayer_LoadCheckPoint()
     xCameraPickInitial(&globals.camera, globals.player.cp.initCamID);
 }
 
+void zEntPlayer_SNDInit()
+{
+    S32 i;
+    char tmp[256];
+
+    i = 0;
+    sPlayerSndfx.butt_id[i++] = xStrHash("sndfx_butt_smash1");
+    sPlayerSndfx.butt_id[i++] = xStrHash("sndfx_butt_smash2");
+    sPlayerSndfx.butt_id[i++] = xStrHash("sndfx_butt_smash3");
+    sPlayerSndfx.butt_pitch = iurand() * 359.0f;
+    sPlayerSndfx.butt_snd = rand() % 3;
+    i = 0;
+    sPlayerSndfx.head_id[i++] = xStrHash("sndfx_head_butt1");
+    sPlayerSndfx.head_id[i++] = xStrHash("sndfx_head_butt2");
+    sPlayerSndfx.head_id[i++] = xStrHash("sndfx_head_butt3");
+    sPlayerSndfx.head_pitch = iurand() * 359.0f;
+    sPlayerSndfx.head_snd = rand() % 3;
+    sPlayerSndfx.buttmiss_id = xStrHash("sndfx_butt_miss1");
+    i = 0;
+    sPlayerSndfx.skid_id[i++] = xStrHash("sndfx_skid1");
+    sPlayerSndfx.skid_id[i++] = xStrHash("sndfx_skid2");
+    sPlayerSndfx.skid_id[i++] = xStrHash("sndfx_skid3");
+    sPlayerSndfx.ammo_pitch = iurand() * 359.0f;
+    sPlayerSndfx.special_pitch = iurand() * 359.0f;
+    sPlayerSndfx.token_pitch = iurand() * 359.0f;
+    sPlayerSndfx.save_pitch = iurand() * 359.0f;
+    sPlayerSndfx.key_pitch = iurand() * 359.0f;
+    sPlayerSndfx.info_pitch = iurand() * 359.0f;
+    sPlayerSndfx.error_pitch = iurand() * 359.0f;
+    sPlayerSndfx.bite_pitch = iurand() * 359.0f;
+    sPlayerSndfx.snackcounter_pitch = iurand() * 359.0f;
+    sPlayerSndfx.ammo_id = xStrHash("sndfx_pu_ammo");
+    sPlayerSndfx.special_id = xStrHash("sndfx_pu_special");
+    sPlayerSndfx.token_id = xStrHash("sndfx_pu_token");
+    sPlayerSndfx.save_id = xStrHash("sndfx_pu_save");
+    sPlayerSndfx.info_id = xStrHash("sndfx_pu_info");
+    sPlayerSndfx.key_id = xStrHash("sndfx_pu_key");
+    sPlayerSndfx.error_id = xStrHash("sndfx_pu_error");
+    sPlayerSndfx.bite_id = xStrHash("sndfx_pu_bite");
+    sPlayerSndfx.snackcounter_id = xStrHash("sndfx_pu_counter");
+    sPlayerSndfx.van_id = xStrHash("sndfx_pu_van");
+    i = 0;
+    sPlayerSndfx.dig_id[i++] = xStrHash("scooby_one_30");
+    sPlayerSndfx.dig_id[i++] = xStrHash("scooby_one_29");
+    i = 0;
+    sPlayerSndfx.scare_id[i++] = xStrHash("Scooby_Help");
+    sPlayerSndfx.scare_id[i++] = xStrHash("Scooby_Oh_No");
+    i = 0;
+    sPlayerSndfx.danger_id[i++] = xStrHash("scooby_gulp_01");
+    sPlayerSndfx.danger_id[i++] = xStrHash("scooby_gulp_02");
+    sPlayerSndfx.danger_id[i++] = xStrHash("scooby_gulp_03");
+    sPlayerSndfx.danger_id[i++] = xStrHash("scooby_gulp_04");
+    sPlayerSndfx.danger_id[i++] = xStrHash("scooby_gulp_05");
+    sPlayerSndfx.danger_id[i++] = xStrHash("scooby_gulp_06");
+    sPlayerSndfx.danger_id[i++] = xStrHash("scooby_gulp_07");
+    sPlayerSndfx.danger_id[i++] = xStrHash("scooby_gulp_08");
+    sPlayerSndfx.danger_id[i++] = xStrHash("scooby_one_26");
+    i = 0;
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_excite_09");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_excite_10");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_bounce_01");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_bounce_02");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_bounce_03");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_bounce_09");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_bounce_10");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_bounce_15");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_bounce_16");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_bounce_18");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_bounce_19");
+    sPlayerSndfx.leap_id[i++] = xStrHash("scooby_bounce_20");
+    for (i = 0; i < 13; i++)
+    {
+        sprintf(tmp, "scooby_excite_%02d", i + 1);
+        sPlayerSndfx.excite_id[i] = xStrHash(tmp);
+    }
+    i = 0;
+    sPlayerSndfx.see_geronimo_id[i++] = xStrHash("scooby_one_42b");
+    i = 0;
+    sPlayerSndfx.see_shaggy_id[i++] = xStrHash("scooby_one_19a");
+    sPlayerSndfx.see_shaggy_id[i++] = xStrHash("scooby_one_19b");
+    sPlayerSndfx.see_shaggy_id[i++] = xStrHash("scooby_one_20a");
+    sPlayerSndfx.see_shaggy_id[i++] = xStrHash("scooby_one_20b");
+    sPlayerSndfx.see_shaggy_id[i++] = xStrHash("scooby_one_20c");
+    i = 0;
+    sPlayerSndfx.see_monster_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_monster_id[i++] = xStrHash("scooby_one_21a");
+    sPlayerSndfx.see_monster_id[i++] = xStrHash("scooby_one_21b");
+    sPlayerSndfx.see_monster_id[i++] = xStrHash("scooby_one_22a");
+    sPlayerSndfx.see_monster_id[i++] = xStrHash("scooby_one_22b");
+    i = 0;
+    sPlayerSndfx.see_holly_id[i++] = xStrHash("scooby_holly1a");
+    sPlayerSndfx.see_holly_id[i++] = xStrHash("scooby_holly1b");
+    sPlayerSndfx.see_holly_id[i++] = xStrHash("scooby_holly2");
+    i = 0;
+    sPlayerSndfx.see_groundskeeper_id[i++] = xStrHash("scooby_holly1a");
+    i = 0;
+    sPlayerSndfx.see_warpgate_id[i++] = xStrHash("scooby_one_25");
+    i = 0;
+    sPlayerSndfx.need_more_snacks_id[i++] = xStrHash("scooby_one_23a");
+    sPlayerSndfx.need_more_snacks_id[i++] = xStrHash("scooby_one_23b");
+    sPlayerSndfx.need_more_snacks_id[i++] = xStrHash("scooby_one_23c");
+    i = 0;
+    sPlayerSndfx.success_id[i++] = xStrHash("scooby_one_07");
+    i = 0;
+    sPlayerSndfx.see_token_id[i++] = xStrHash("scooby_one_24a");
+    sPlayerSndfx.see_token_id[i++] = xStrHash("scooby_one_24b");
+    sPlayerSndfx.see_token_id[i++] = xStrHash("scooby_one_24c");
+    i = 0;
+    sPlayerSndfx.see_crab_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_crab_id[i++] = xStrHash("scooby_one_31");
+    i = 0;
+    sPlayerSndfx.see_rat_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_rat_id[i++] = xStrHash("scooby_one_32");
+    sPlayerSndfx.see_rat_id[i++] = xStrHash("scooby_one_32b");
+    sPlayerSndfx.see_rat_id[i++] = xStrHash("scooby_one_32c");
+    i = 0;
+    sPlayerSndfx.see_gargoyle_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_gargoyle_id[i++] = xStrHash("scooby_one_41");
+    i = 0;
+    sPlayerSndfx.see_creeper_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_creeper_id[i++] = xStrHash("scooby_one_44");
+    i = 0;
+    sPlayerSndfx.see_ghost_diver_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_ghost_diver_id[i++] = xStrHash("scooby_one_45");
+    i = 0;
+    sPlayerSndfx.see_sea_creature_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_sea_creature_id[i++] = xStrHash("scooby_one_46");
+    i = 0;
+    sPlayerSndfx.see_headless_specter_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_headless_specter_id[i++] = xStrHash("scooby_one_47");
+    i = 0;
+    sPlayerSndfx.see_scarecrow_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_scarecrow_id[i++] = xStrHash("scooby_one_49");
+    sPlayerSndfx.see_scarecrow_id[i++] = xStrHash("scooby_one_49b");
+    i = 0;
+    sPlayerSndfx.see_space_kook_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_space_kook_id[i++] = xStrHash("scooby_one_50");
+    i = 0;
+    sPlayerSndfx.see_tar_monster_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_tar_monster_id[i++] = xStrHash("scooby_one_51");
+    sPlayerSndfx.see_tar_monster_id[i++] = xStrHash("scooby_one_51b");
+    sPlayerSndfx.see_tar_monster_id[i++] = xStrHash("scooby_one_51c");
+    i = 0;
+    sPlayerSndfx.see_witch_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_witch_id[i++] = xStrHash("scooby_one_52");
+    i = 0;
+    sPlayerSndfx.see_robot_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_robot_id[i++] = xStrHash("scooby_one_48");
+    i = 0;
+    sPlayerSndfx.see_wolfman_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_wolfman_id[i++] = xStrHash("scooby_one_53");
+    i = 0;
+    sPlayerSndfx.see_ghost_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_ghost_id[i++] = xStrHash("scooby_one_57a");
+    sPlayerSndfx.see_ghost_id[i++] = xStrHash("scooby_one_57b");
+    sPlayerSndfx.see_ghost_id[i++] = xStrHash("scooby_one_57c");
+    i = 0;
+    sPlayerSndfx.see_zombie_id[i++] = xStrHash("scooby_one_53c");
+    sPlayerSndfx.see_zombie_id[i++] = xStrHash("scooby_one_54");
+    i = 0;
+    sPlayerSndfx.sorry_id[i++] = xStrHash("scooby_one_14a");
+    sPlayerSndfx.sorry_id[i++] = xStrHash("scooby_one_14b");
+    sPlayerSndfx.sorry_id[i++] = xStrHash("scooby_one_15a");
+    sPlayerSndfx.sorry_id[i++] = xStrHash("scooby_one_14b");
+    i = 0;
+    sPlayerSndfx.collect_all_snacks_id[i++] = xStrHash("scooby_one_07");
+    i = 0;
+    sPlayerSndfx.eat_sandwich_id[i++] = xStrHash("scooby_one_09");
+    sPlayerSndfx.eat_sandwich_id[i++] = xStrHash("scooby_one_06b");
+    i = 0;
+    sPlayerSndfx.eat_turkey_id[i++] = xStrHash("scooby_one_10");
+    sPlayerSndfx.eat_turkey_id[i++] = xStrHash("scooby_one_06b");
+    i = 0;
+    sPlayerSndfx.eat_cake_id[i++] = xStrHash("scooby_one_11");
+    sPlayerSndfx.eat_cake_id[i++] = xStrHash("scooby_one_06b");
+    i = 0;
+    sPlayerSndfx.eat_snacks_id[i++] = xStrHash("scooby_one_03a");
+    sPlayerSndfx.eat_snacks_id[i++] = xStrHash("scooby_one_03b");
+    sPlayerSndfx.eat_snacks_id[i++] = xStrHash("scooby_one_03c");
+}
+
 void zEntPlayer_SNDBitePickup(_xEnt*)
 {
     F32 pitch;
@@ -3570,6 +4110,36 @@ static void zEntPlayer_FXUpdate(_xEnt* ent, F32 seconds)
     }
 }
 
+static void zEntPlayer_FXSetup(_xEnt* ent, xAnimTable* table)
+{
+    xAnimState* state;
+    S32 i;
+
+    state = xAnimTableGetState(table, "Inactive_SitFlea");
+    xAnimStateNewEffect(state, 1, 0.05f, 0.0f, zEntPlayer_FXScratchCB, 0);
+    gPlayerfx.timer_scratch = 0.0f;
+    state = xAnimTableGetState(table, "Fall_floatopen");
+    xAnimStateNewEffect(state, 1, 0.05f, 0.0f, zEntPlayer_FXOpenBrollyCB, 0);
+    state = xAnimTableGetState(table, "Action_dig");
+    xAnimStateNewEffect(state, 1, 0.05f, 0.0f, zEntPlayer_FXDigupCB, 0);
+    gPlayerfx.timer_digup = 0.0f;
+    state = xAnimTableGetState(table, "Jump_double");
+    xAnimStateNewEffect(state, 1, 0.0f, 0.0f, zEntPlayer_FXSpringCB, 0);
+    state = xAnimTableGetState(table, "RunToIdle_normal");
+    xAnimStateNewEffect(state, 1, 0.05f, 0.0f, zEntPlayer_SNDSkidCB, 0);
+    state = xAnimTableGetState(table, "RunToIdle_scared");
+    xAnimStateNewEffect(state, 1, 0.05f, 0.0f, zEntPlayer_SNDSkidCB, 0);
+    state = xAnimTableGetState(table, "RunToIdle_brave");
+    xAnimStateNewEffect(state, 1, 0.05f, 0.0f, zEntPlayer_SNDSkidCB, 0);
+    state = xAnimTableGetState(table, "RunToSkid");
+    xAnimStateNewEffect(state, 1, 0.05f, 0.0f, zEntPlayer_SNDSkidCB, 0);
+
+    for (i = 0; i < 5; i++)
+    {
+        zFeetInitSkidMark(&sPlayerSkidMark[i], 4);
+    }
+}
+
 static U32 zEntPlayer_FXScratchCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
                                   void* object)
 {
@@ -3652,6 +4222,62 @@ static U32 zEntPlayer_SNDSkidCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimS
     }
     zRumbleStart(0, SDR_ScreechingStop);
     return 0;
+}
+
+static void zEntPlayer_ButtonBBFX(_xEnt* ent, _zEntButton*)
+{
+    _zParEmitterCustomSettings info;
+
+    if (sEmitterBounceOnVillain)
+    {
+        info.custom_flags = 0x20;
+        info.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+        info.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y - 1.0f;
+        info.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+        switch (ent->bound.type)
+        {
+        case 0:
+            break;
+        case 1:
+            info.pos.x = ent->bound.sph.center.x;
+            info.pos.y = ent->bound.sph.center.y;
+            info.pos.z = ent->bound.sph.center.z;
+            break;
+        case 2:
+            info.pos.y += ent->bound.box.box.upper.y - ent->bound.box.box.lower.y;
+            break;
+        case 3:
+            info.pos.y += ent->bound.cyl.h;
+            break;
+        case 4:
+            break;
+        }
+        zParEmitterEmitCustom(sEmitterBounceOnVillain, 1.0f / 30.0f, &info);
+    }
+}
+
+static void zEntPlayer_ButtonHBFX(_xEnt*, _zEntButton*)
+{
+    xVec3 angles;
+    _xEnt* player_ent;
+    _zParEmitterCustomSettings info;
+
+    if (sEmitterHeadButt && sEmitterHeadButt2)
+    {
+        info.custom_flags = 0x20;
+        player_ent = &globals.player.ent;
+        info.pos.x = ((xMat4x3*)player_ent->model->Mat)->pos.x + ((xMat4x3*)player_ent->model->Mat)->at.x;
+        info.pos.y = 1.1f + ((xMat4x3*)player_ent->model->Mat)->pos.y;
+        info.pos.z = ((xMat4x3*)player_ent->model->Mat)->pos.z + ((xMat4x3*)player_ent->model->Mat)->at.z;
+        info.custom_flags |= 0x10000;
+        xMat3x3GetEuler((xMat3x3*)player_ent->model->Mat, &angles);
+        info.rot[0] = 255.0f * (angles.x / (2.0f * PI));
+        info.rot[1] = 0x40;
+        info.rot[2] = 255.0f * (angles.z / (2.0f * PI));
+        zParEmitterEmitCustom(sEmitterHeadButt, 1.0f / 30.0f, &info);
+        info.rot[0] += 0x40;
+        zParEmitterEmitCustom(sEmitterHeadButt2, 1.0f / 30.0f, &info);
+    }
 }
 
 void zEntPlayer_InitCutsceneModelHack()

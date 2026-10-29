@@ -109,5 +109,6 @@ U32 zSurfaceGetSticky(const xSurface* surf);
 U32 zSurfaceGetStandOn(const xSurface* surf);
 S32 zSurfaceGetSlickness(const xSurface* surf);
 void zSurfaceSetup(xSurface* s);
+void zSurfaceGetName(S32 type, char* buffer);
 
 #endif
