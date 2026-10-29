@@ -27,7 +27,12 @@ struct xModelInstance
     xVec3 Scale;
 };
 
+struct _xRect;
+
 void xModelPoolInit(U32 count, U32 numMatrices);
+void xModelSetMaterialAlpha(xModelInstance* modelInst, S32 alpha);
+void xModelRender2D(xModelInstance* modelInst, _xRect* sr, xVec3* from, xVec3* to, F32 fov);
+void xModelUpdate(xModelInstance* modelInst, F32 timeDelta);
 void xModelEval(xModelInstance* modelInst);
 void xModelRender(xModelInstance* modelInst);
 void xModelUpdate(xModelInstance* modelInst, F32 timeDelta);

@@ -32,5 +32,7 @@ void zEntEvent(xBase* from, xBase* to, U32 toEvent);
 void zEntEvent(xBase* from, U32 fromEvent, xBase* to, U32 toEvent, F32* toParam,
                xBase* toParamWidget, S32 forceEvent);
 void zEntAnimEvent(_zEnt* ent, U32 animEvent, F32* animParam);
+xModelInstance* zEntRecurseModelInfo(void* info, _xEnt* ent);
+void zEntEventAllOfType(U32 toEvent, U32 type);
 
 #endif
