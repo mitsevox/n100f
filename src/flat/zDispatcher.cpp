@@ -63,7 +63,6 @@ extern "C" U32 fn_800D5D74();
 void zGameStateSwitchEvent(S32);
 void zEntPlayer_StoreCheckPoint(F32*);
 
-// Only selected event cases are recovered so far.
 extern "C" S32 fn_8004651C(xBase*, xBase* to, U32 event, F32* param, xBase* widget)
 {
     switch (event)
