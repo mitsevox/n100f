@@ -1075,7 +1075,7 @@ struct _rwIm3DPoolStash
     RxPipeline* pipeline;
     RwPrimitiveType primType;
     RwImVertexIndex* indices;
-    S32 numIndices;
+    U32 numIndices;
 };
 
 // The vertices passed to RwIm3DTransform and the stash the pipelines run on.

@@ -373,17 +373,17 @@ static RxPipeline* _rwIm3DCreateGenericLineRenderPipeline(void)
         {
             RxPipelineNode* node;
 
-            pipeline = RxLockedPipeAddFragment(lpipe, NULL, RxNodeDefinitionGetImmRenderSetup(),
-                                               RxNodeDefinitionGetImmMangleLineIndices(),
-                                               RxNodeDefinitionGetClipLine(),
-                                               RxNodeDefinitionGetSubmitLine(), NULL);
+            lpipe = RxLockedPipeAddFragment(lpipe, NULL, RxNodeDefinitionGetImmRenderSetup(),
+                                            RxNodeDefinitionGetImmMangleLineIndices(),
+                                            RxNodeDefinitionGetClipLine(),
+                                            RxNodeDefinitionGetSubmitLine(), NULL);
 
-            node = RxPipelineFindNodeByName(pipeline, "ImmRenderSetup.csl", NULL, NULL);
+            node = RxPipelineFindNodeByName(lpipe, "ImmRenderSetup.csl", NULL, NULL);
 
             pipeline = RxLockedPipeUnlock(RxLockedPipeAddPath(
-                pipeline, RxPipelineNodeFindOutputByName(node, "ImmRenderSetupOutUnindexed"),
+                lpipe, RxPipelineNodeFindOutputByName(node, "ImmRenderSetupOutUnindexed"),
                 RxPipelineNodeFindInput(
-                    RxPipelineFindNodeByName(pipeline, "ImmMangleLineIndices.csl", NULL, NULL))));
+                    RxPipelineFindNodeByName(lpipe, "ImmMangleLineIndices.csl", NULL, NULL))));
 
             if (pipeline)
             {
