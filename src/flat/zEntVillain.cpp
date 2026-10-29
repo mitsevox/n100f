@@ -7,11 +7,14 @@
 #include "xEvent.h"
 #include "xFFX.h"
 #include "xMath.h"
+#include "xMathInlines.h"
 #include "xMemMgr.h"
 #include "xordarray.h"
 #include "xScene.h"
+#include "xSnd.h"
 #include "xString.h"
 #include "xutil.h"
+#include "xVec3Inlines.h"
 #include "zEntPickup.h"
 #include "zEntPlayer.h"
 #include "zEntShaggy.h"
@@ -228,6 +231,12 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum);
 static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter);
 static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos);
 static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir);
+static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt);
+static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir);
+static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent);
+static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand);
+static S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand);
+static S32 zVIL_chk_pitfall(st_zEntVillain* vil, S32 prev, F32 rand);
 static S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
 static S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil);
 static S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil);
@@ -244,6 +253,9 @@ static void zVIL_apply_move(st_zEntVillain* ent, _xScene* scn, F32 dt, _xEntFram
 static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt);
 static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS pid, void* vv);
 static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt);
+static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplicit, S32 flg_vsnd,
+                       F32 dist);
+static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt);
 static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo);
 static void VPRJ_zapTheAxe(zEntProjectile* prj, S32 cleanup);
@@ -265,6 +277,8 @@ static inline bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym);
 static inline void VPRJ_BMM_toss(zEntProjectile* prj, const _xVec3* pos_tgt);
 static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force);
 static S32 VNAV_get_nav(st_zEntVillain* ent);
+static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base);
+static inline U32 VANM_entStateType(const _zEnt* ent);
 static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil);
 static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3* pos_tgt,
                                _xVec3* vec_off, _xVec3* vec_spin, F32 arcness, F32 heavy);
@@ -3671,6 +3685,590 @@ static void zVIL_tag_verts(st_zEntVillain* ent)
 }
 
 
+// Counts a villain timer down by dt, stopping at -1.
+static inline void VTMR_countDown(F32* tmr, F32 dt)
+{
+    *tmr = (*tmr - dt < -1.0f) ? -1.0f : *tmr - dt;
+}
+
+// Runs the villain's timers for a frame. The standby, animation, generic, reload, navigation,
+// sound, voice and sneak timers always count down, and the goal timer counts up. The rest count
+// down only in the goals that use them: guarding the look timer and then the idle ones; idle the
+// boredom timer and then the bored ones; bored the fidget, navigation-check, navigation-delay and
+// quip timers; patrolling, mini-patrolling and following the navigation timers; talking the
+// fidget timer; looking, listening and investigating their own durations; taunting the taunt
+// duration; readying an attack the alert, taunt and next-chase timers; chasing the
+// navigation-check timer; lobbing and casting the extend and build-up timers and then the
+// post-attack window, which a close attack also counts; dazed, soaped and gummed their durations
+// with the fidget and recovery timers (gummed also the minimum-gum window); hurt the hurt
+// duration; dying the decay duration. Every count-down stops at -1.
+static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
+{
+    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_STDBY], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TYMR_MINANIMPLAY], dt);
+    ent->tmr_list[ZVIL_TYMR_CURGOAL] = (ent->tmr_list[ZVIL_TYMR_CURGOAL] + dt < -1.0f) ?
+                                           -1.0f :
+                                           ent->tmr_list[ZVIL_TYMR_CURGOAL] + dt;
+    VTMR_countDown(&ent->tmr_list[ZVIL_TYMR_GENERIC], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_LOBRELOAD], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_EXTRELOAD], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_NAVDELAY], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_ANIMSOUND], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_NEXTVOICE], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TWIN_IGNORESNEAK], dt);
+
+    switch (ent->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        break;
+    case ZVIL_GOAL_GUARD:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_LOOK], dt);
+    case ZVIL_GOAL_IDLE:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_BORED], dt);
+    case ZVIL_GOAL_BORED:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_CHKFORNAV], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_NAVDELAY], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_QUIP_OK], dt);
+        break;
+    case ZVIL_GOAL_PATROL:
+    case ZVIL_GOAL_MINIPATROL:
+    case ZVIL_GOAL_FOLLOW:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_CHKFORNAV], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_NAVDELAY], dt);
+        break;
+    case ZVIL_GOAL_TALK:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
+        break;
+    case ZVIL_GOAL_LOOKFORHERO:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_LOOK], dt);
+        break;
+    case ZVIL_GOAL_LISTEN:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_HEAR], dt);
+        break;
+    case ZVIL_GOAL_INVESTIGATE:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_SEARCH], dt);
+        break;
+    case ZVIL_GOAL_TAUNT:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_TAUNT], dt);
+        break;
+    case ZVIL_GOAL_ATTACKREADY:
+    case ZVIL_GOAL_BULLREADY:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_ALERT], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_TAUNT], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_NEXTCHASE], dt);
+        break;
+    case ZVIL_GOAL_CHASE:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_CHKFORNAV], dt);
+        break;
+    case ZVIL_GOAL_LOBBING:
+    case ZVIL_GOAL_SPELLCAST:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_EXTEND], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_BUILDUP], dt);
+    case ZVIL_GOAL_CQCATTACK:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TWIN_POSTATTACK], dt);
+        break;
+    case ZVIL_GOAL_DAZED:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_DAZED], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_RECOVERY], dt);
+        break;
+    case ZVIL_GOAL_GUMMED:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_GUM], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TWIN_MINGUM], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_RECOVERY], dt);
+        break;
+    case ZVIL_GOAL_SOAPED:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_SOAP], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_RECOVERY], dt);
+        break;
+    case ZVIL_GOAL_HURT:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_HURT], dt);
+        break;
+    case ZVIL_GOAL_DIE:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_DECAY], dt);
+        break;
+    }
+}
+
+// Works out the villain's per-frame facts about itself and the player (prec). flg_needinfo picks
+// what: 0x1 the distance (squared and plain), heading, direction and offset to the player and the
+// player's move info, whose sneak bits (0xFF00) are cleared in a boss battle and while the
+// ignore-sneak timer runs; whenever the player is not sneaking the timer restarts at 0.875 to
+// 1.125 of its length. 0x4 the heights of both bound centres over their feet. 0x8 the squared
+// flat distances to the anchor and guard positions and the cosine and sine of the heading. 0x2,
+// which implies 0x1, detection: a villain that can detect flags the player seen (0x1) inside its
+// detection range, which is (ds2_detect / 16) squared while the player sneaks, and between the
+// heights of its detection band; a seen player is then flagged in view (0x4) and in sight (0x8,
+// always with allow flag 0x200). The villain also flags a player within 1.1 (0x10), the lob
+// distance (0x20) and the extend distance (0x40). With misc flag 0x80000000 an unseen player is
+// still checked for view and sight, and a player outside the pursuit range around the anchor
+// (when that range is wider than the type's arrival distance) gets an intercept point on that
+// range, flagged 0x400 when it is farther from the villain than the arrival distance. Past the
+// normal mode the villain checks for a pitfall (flg_xtra 0x1). A player within 5 and less than 3
+// above or below is told the villain type and distance. flg_status records each part worked out,
+// and 0x80000000 once done.
+static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
+{
+    st_ZVIL_PRECALC* prec;
+    _xVec3 pos_vil = { 0 };
+    _xVec3 ctr_vil = { 0 };
+    _xVec3 pos_plyr = { 0 };
+    _xVec3 ctr_plyr = { 0 };
+    _xVec3 vec_tmp = { 0 };
+    F32 upr_detect;
+    F32 low_detect;
+    F32 tmp_detect_radiusSqr;
+    S32 was_pitfall;
+    S32 was_inlos;
+
+    if (flg_needinfo & 0x2)
+    {
+        flg_needinfo |= 0x1;
+    }
+
+    prec = &vil->precalc;
+    was_inlos = (prec->flg_plyr & 0x8) ? 1 : 0;
+    was_pitfall = (prec->flg_xtra & 0x1) ? 1 : 0;
+    memset(prec, 0, sizeof(st_ZVIL_PRECALC));
+
+    xVec3Copy(&pos_vil, xEntGetPos(vil));
+    xVec3Copy(&ctr_vil, xBoundCenter(&vil->bound));
+    xVec3Copy(&pos_plyr, xEntGetPos(&globals.player.ent));
+    xVec3Copy(&ctr_plyr, xBoundCenter(&globals.player.ent.bound));
+
+    if (flg_needinfo & 0x1)
+    {
+        prec->ds2_VtoP = VSUP_ds2_toEnt(vil, &globals.player.ent);
+        prec->dst_VtoP = xsqrt(prec->ds2_VtoP);
+        prec->ang_VtoP = VSUP_dir_toEnt(vil, &globals.player.ent, &prec->dir_VtoP);
+        xVec3Sub(&prec->vec_VtoP, &pos_plyr, &pos_vil);
+        prec->plyr_mvinf = zEntPlayer_MoveInfo();
+        if (g_scene_is_a_boss_battle)
+        {
+            prec->plyr_mvinf &= 0xFFFF00FF;
+        }
+        else if (!(prec->plyr_mvinf & 0xFF00))
+        {
+            vil->tmr_list[ZVIL_TWIN_IGNORESNEAK] =
+                VCFG_tymref(vil, ZVIL_TWIN_IGNORESNEAK) +
+                0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TWIN_IGNORESNEAK);
+        }
+        else if (!(vil->tmr_list[ZVIL_TWIN_IGNORESNEAK] <= 0.0f))
+        {
+            prec->plyr_mvinf &= 0xFFFF00FF;
+        }
+        prec->flg_status |= 0x1;
+    }
+
+    if (flg_needinfo & 0x4)
+    {
+        prec->dif_plyrCtr = ctr_plyr.y - pos_plyr.y;
+        prec->hyt_plyr = 2.0f * prec->dif_plyrCtr;
+        prec->dif_vilCtr = ctr_vil.y - pos_vil.y;
+        prec->hyt_vil = 2.0f * prec->dif_vilCtr;
+        prec->flg_status |= 0x4;
+    }
+
+    if (vil->mode > ZVIL_MODE_NORMAL)
+    {
+        if (zVIL_chk_pitfall(vil, was_pitfall, 0.25f))
+        {
+            prec->flg_xtra |= 0x1;
+        }
+    }
+
+    if (flg_needinfo & 0x8)
+    {
+        prec->ds2_anchor = VSUP_ds2_toPos(vil, vil->pos_pursue_home);
+        prec->ds2_grdpos = VSUP_ds2_toPos(vil, vil->pos_guard_home);
+        F32 ang_face = vil->frame->rot.angle;
+        prec->cos_faceang = cos(ang_face);
+        prec->sin_faceang = sin(ang_face);
+        prec->flg_status |= 0x8;
+    }
+
+    if (flg_needinfo & 0x2)
+    {
+        upr_detect = 0.5f * vil->hyt_detect + vil->hyt_dtctoff;
+        low_detect = upr_detect - vil->hyt_detect;
+        if (vil->vhf->query(vil, ZVIL_Q_CANDETECT))
+        {
+            tmp_detect_radiusSqr = vil->ds2_detect;
+            if (prec->plyr_mvinf & 0xFF00)
+            {
+                tmp_detect_radiusSqr = SQR(0.0625 * tmp_detect_radiusSqr);
+            }
+            if (prec->ds2_VtoP < tmp_detect_radiusSqr && prec->vec_VtoP.y < upr_detect &&
+                prec->vec_VtoP.y > low_detect)
+            {
+                prec->flg_plyr |= 0x1;
+                if (prec->ds2_VtoP < SQR(0.0625f * vil->ds2_detect))
+                {
+                    prec->flg_plyr |= 0x1;
+                }
+                if (VSUP_ent_inFOV(vil, &globals.player.ent))
+                {
+                    prec->flg_plyr |= 0x4;
+                }
+                if (vil->allow & 0x200)
+                {
+                    prec->flg_plyr |= 0x8;
+                }
+                else if (VSUP_ent_inLOS(vil, &globals.player.ent, was_inlos, 0.1f))
+                {
+                    prec->flg_plyr |= 0x8;
+                }
+            }
+            if (prec->dst_VtoP < 1.1f)
+            {
+                prec->flg_plyr |= 0x10;
+            }
+            if (prec->dst_VtoP < vil->dst_lob)
+            {
+                prec->flg_plyr |= 0x20;
+            }
+            if (prec->dst_VtoP < vil->dst_extend)
+            {
+                prec->flg_plyr |= 0x40;
+            }
+        }
+
+        if (vil->flg_misc & 0x80000000)
+        {
+            if (!(prec->flg_plyr & 0x1))
+            {
+                if (VSUP_ent_inFOV(vil, &globals.player.ent))
+                {
+                    prec->flg_plyr |= 0x4;
+                }
+                if (vil->allow & 0x200)
+                {
+                    prec->flg_plyr |= 0x8;
+                }
+                else if (VSUP_ent_inLOS(vil, &globals.player.ent, was_inlos, 0.1f))
+                {
+                    prec->flg_plyr |= 0x8;
+                }
+            }
+
+            xVec3Sub(&vec_tmp, &ctr_plyr, &vil->pos_pursue_home);
+            prec->ds2_plyrToAnchor = SQR(vec_tmp.x) + SQR(vec_tmp.z);
+            if (prec->ds2_plyrToAnchor > vil->ds2_pursue &&
+                vil->ds2_pursue > g_npcTable[vil->asset->subtype].ds2_atpos)
+            {
+                xVec3Normalize(&prec->pos_intercept, &vec_tmp);
+                xVec3SMulBy(&prec->pos_intercept, xsqrt(vil->ds2_pursue));
+                xVec3AddTo(&prec->pos_intercept, &vil->pos_pursue_home);
+                xVec3Sub(&vec_tmp, &pos_vil, &prec->pos_intercept);
+                if (g_npcTable[vil->asset->subtype].ds2_atpos < SQR(vec_tmp.x) + SQR(vec_tmp.z))
+                {
+                    prec->flg_plyr |= 0x400;
+                }
+            }
+        }
+        prec->flg_status |= 0x2;
+    }
+
+    if (prec->dst_VtoP < 5.0f && fabsf(prec->vec_VtoP.y) < 3.0f)
+    {
+        zEntPlayer_Notify(vil->asset->subtype, xVec3Length(&prec->vec_VtoP));
+    }
+
+    prec->flg_status |= 0x80000000;
+}
+
+// Turns the villain's move request (domove) into this frame's motion and then clears it. The
+// first of bits 0x40, 0x80, 0x100, 0x800 and 0x400 picks the turn: toward ang_moveto, toward
+// dir_moveto, by dlt_faceang, toward pos_moveto or toward dlt_moveto. The turn happens only with
+// bit 0x1, and only for a villain with move ability 0x1000 or 0x400 or whose current animation
+// has type bit 0x2000000; its rate is 0.85 to 1 times the turn speed (wiz_moveto with bit
+// 0x10000), a turn of more than half the field of view slows the step, and a turn also moves.
+// The step is the move speed for the frame (spd_moveto with bit 0x8000). Bits 0x2 and 0x8 move
+// in x and z along the new heading (half speed backwards with 0x20); 0x10 cancels the move.
+// Within a squared flat distance of 0.25 (0.1 for spiders) the villain moves a random share, up
+// to half, of the gap instead; the exact-snap branch for the smaller threshold is never reached.
+// Bit 0x4 moves toward the target height: all the way within a step, a full step within a flat
+// 0.25, otherwise the step times the slope (at most 1). Bit 0x20000000 turns straight to
+// ang_moveto and 0x40000000 puts the villain at pos_moveto. Bit 0x1000 sets the velocity to
+// vel_moveto and 0x4000 adds it to the velocity change. Unless move ability 0x1000 or 0x400 or
+// physics flag 0x4 is set or the villain is gummed or soaped, a step that rises less than 0.01
+// drops by 0.01. Move ability 0x2000 records the facing in ang_mdlface; ability 0x4000 and
+// domove bits 0x80000 and 0x40000 offset the facing by a quarter turn while the turn is worked
+// out and undo it when the villain turns.
+static void zVIL_apply_move(st_zEntVillain* ent, _xScene* scn, F32 dt, _xEntFrame* frame)
+{
+    F32 dy;
+    F32 rate;
+    F32 hrate;
+    _xVec3 npcpos = { 0 };
+    F32 ang_diff = 0.0f;
+    F32 ang_travel;
+    S32 apply_rot = 0;
+    S32 apply_move = 0;
+    S32 apply_veloc = 0;
+    S32 slowmove = 0;
+    F32 cos_ang;
+    F32 sin_ang;
+    F32 distSqr;
+    F32 ds2_outersnap;
+    F32 ds2_innersnap;
+    F32 slope;
+
+    xVec3Copy(&npcpos, &xModelGetFrame(ent->model)->pos);
+
+    if (ent->domove)
+    {
+        if (ent->abl_move & 0x2000)
+        {
+            ent->ang_mdlface = frame->rot.angle;
+        }
+        if (ent->abl_move & 0x4000)
+        {
+            frame->rot.angle -= PI / 2;
+        }
+        if (ent->domove & 0x80000)
+        {
+            frame->rot.angle += PI / 2;
+        }
+        else if (ent->domove & 0x40000)
+        {
+            frame->rot.angle -= PI / 2;
+        }
+
+        if (ent->domove & 0x40)
+        {
+            ang_diff = ent->ang_moveto - frame->rot.angle;
+            apply_rot = 1;
+        }
+        else if (ent->domove & 0x80)
+        {
+            ang_diff = xAngleClamp(atan2(ent->dir_moveto.x, ent->dir_moveto.z));
+            ang_diff -= frame->rot.angle;
+            apply_rot = 1;
+        }
+        else if (ent->domove & 0x100)
+        {
+            ang_diff = ent->dlt_faceang;
+            apply_rot = 1;
+        }
+        else if (ent->domove & 0x800)
+        {
+            ang_diff = xAngleClamp(
+                atan2(ent->pos_moveto.x - npcpos.x, ent->pos_moveto.z - npcpos.z));
+            ang_diff -= frame->rot.angle;
+            apply_rot = 1;
+        }
+        else if (ent->domove & 0x400)
+        {
+            ang_diff = xAngleClamp(atan2(ent->dlt_moveto.x, ent->dlt_moveto.z));
+            ang_diff -= frame->rot.angle;
+            apply_rot = 1;
+        }
+
+        if (!(ent->domove & 0x1)) apply_rot = 0;
+        if (ent->domove & 0x2) apply_move = 1;
+        if (ent->domove & 0x4) apply_move = 1;
+        if (ent->domove & 0x8) apply_move = 1;
+        if (ent->domove & 0x5000) apply_veloc = 1;
+
+        if (ent->domove & 0x20000000)
+        {
+            frame->drot.angle = ent->ang_moveto - frame->rot.angle;
+            frame->mode |= 0x20;
+            apply_rot = 0;
+        }
+        if (ent->domove & 0x40000000)
+        {
+            xVec3Copy(&frame->mat.pos, &ent->pos_moveto);
+            frame->mode |= 0x1;
+            apply_move = 0;
+        }
+
+        ang_travel = frame->rot.angle;
+        if (apply_rot && ((ent->abl_move & 0x1000) || (ent->abl_move & 0x400) ||
+                          (VANM_entStateType(ent) & 0x2000000)))
+        {
+            rate = 0.15f * iurand() + 0.85f;
+            if (ent->domove & 0x10000)
+            {
+                rate = dt * ent->wiz_moveto;
+            }
+            else
+            {
+                rate *= dt * ent->spd_turn;
+            }
+
+            if (ang_diff > PI) ang_diff -= 2 * PI;
+            if (ang_diff < -PI) ang_diff += 2 * PI;
+
+            if (ent->abl_move & 0x4000)
+            {
+                frame->rot.angle += PI / 2;
+            }
+            if (ent->domove & 0x80000)
+            {
+                frame->rot.angle -= PI / 2;
+            }
+            else if (ent->domove & 0x40000)
+            {
+                frame->rot.angle += PI / 2;
+            }
+
+            frame->drot.angle = rate * ang_diff;
+            frame->mode |= 0x20;
+            ang_travel += frame->drot.angle;
+            if (fabsf(ang_diff) > 0.5f * ent->fov_detect) slowmove = 1;
+            apply_move = 1;
+        }
+
+        if (ent->domove & 0x10) apply_move = 0;
+        if (ent->domove & 0x40000000) apply_move = 0;
+
+        if (apply_move)
+        {
+            rate = slowmove ? 0.4f * iurand() + 0.6f : 0.1f * iurand() + 0.9f;
+            if (ent->domove & 0x8000)
+            {
+                rate = ent->spd_moveto;
+            }
+            else
+            {
+                rate = VNAV_get_movespeed(ent, rate);
+            }
+            rate *= dt;
+
+            distSqr = SQR(ent->pos_moveto.x - npcpos.x) + SQR(ent->pos_moveto.z - npcpos.z);
+            if (distSqr < SQR(rate))
+            {
+                hrate = xsqrt(distSqr);
+            }
+            else
+            {
+                hrate = rate;
+            }
+
+            frame->dpos.x = 0.0f;
+            frame->dpos.y = 0.0f;
+            frame->dpos.z = 0.0f;
+
+            ds2_outersnap = 0.25f;
+            ds2_innersnap = 0.1f;
+            if (ent->asset->subtype == eEntVillainTypeSpider)
+            {
+                ds2_outersnap = 0.1f;
+                ds2_innersnap = 0.01f;
+            }
+
+            if (distSqr < ds2_outersnap)
+            {
+                frame->dpos.x = (ent->pos_moveto.x - npcpos.x) * (0.5f * iurand());
+                frame->dpos.z = (ent->pos_moveto.z - npcpos.z) * (0.5f * iurand());
+            }
+            else if (distSqr < ds2_innersnap)
+            {
+                frame->dpos.x = ent->pos_moveto.x - npcpos.x;
+                frame->dpos.z = ent->pos_moveto.z - npcpos.z;
+            }
+            else
+            {
+                cos_ang = cos(ang_travel);
+                sin_ang = sin(ang_travel);
+                if (ent->domove & 0x2)
+                {
+                    if (ent->domove & 0x20)
+                    {
+                        frame->dpos.x = 0.5f * -hrate * sin_ang;
+                    }
+                    else
+                    {
+                        frame->dpos.x = hrate * sin_ang;
+                    }
+                }
+                else
+                {
+                    frame->dpos.x = 0.0f;
+                }
+                if (ent->domove & 0x8)
+                {
+                    if (ent->domove & 0x20)
+                    {
+                        frame->dpos.z = 0.5f * -hrate * cos_ang;
+                    }
+                    else
+                    {
+                        frame->dpos.z = hrate * cos_ang;
+                    }
+                }
+                else
+                {
+                    frame->dpos.z = 0.0f;
+                }
+            }
+
+            if (ent->domove & 0x4)
+            {
+                dy = ent->pos_moveto.y - npcpos.y;
+                if (SQR(dy) < SQR(rate))
+                {
+                    frame->dpos.y = dy;
+                }
+                else if (distSqr < 0.0625f)
+                {
+                    if (dy < 0.0f)
+                    {
+                        frame->dpos.y = -1.0f * rate;
+                    }
+                    else
+                    {
+                        frame->dpos.y = rate;
+                    }
+                }
+                else
+                {
+                    slope = dy / xsqrt(distSqr);
+                    slope = CLAMP(slope, -1.0f, 1.0f);
+                    frame->dpos.y = rate * slope;
+                }
+            }
+            frame->mode |= 0x2;
+        }
+
+        if (apply_veloc)
+        {
+            if (ent->domove & 0x1000)
+            {
+                frame->vel.x = ent->vel_moveto.x;
+                frame->vel.y = ent->vel_moveto.y;
+                frame->vel.z = ent->vel_moveto.z;
+                frame->mode |= 0x4;
+            }
+            else if (ent->domove & 0x4000)
+            {
+                frame->dvel.x += ent->vel_moveto.x;
+                frame->dvel.y += ent->vel_moveto.y;
+                frame->dvel.z += ent->vel_moveto.z;
+                frame->mode |= 0x8;
+            }
+        }
+
+        if (!(ent->abl_move & 0x1000) && !(ent->abl_move & 0x400) &&
+            ent->goal != ZVIL_GOAL_GUMMED && ent->goal != ZVIL_GOAL_SOAPED &&
+            !(ent->pflags & 0x4) && frame->dpos.y < 0.01f)
+        {
+            frame->dpos.y -= 0.01f;
+            frame->mode |= 0x2;
+        }
+
+        ent->domove = 0;
+    }
+}
+
 // Copies the villain asset's settings into its config: speeds, detection and pursuit ranges
 // (squared), the field of view and turn speed in radians, lobbing and extender settings, and the
 // timer lengths, where the asset gives the dazed, taunt, gum, bubble, extend and reload times and
@@ -6069,6 +6667,14 @@ static inline xAnimState* VANM_entState(const _zEnt* ent)
     return state;
 }
 
+// The type bits (0x1E000000) of the user flags of the villain's current animation state, or 0 if
+// it has none.
+static inline U32 VANM_entStateType(const _zEnt* ent)
+{
+    xAnimState* state = VANM_entState(ent);
+    return state ? state->UserFlags & 0x1E000000 : 0;
+}
+
 // How far the villain's model is into its current animation, or 0 if it has none.
 static inline F32 VANM_entTime(const _zEnt* ent)
 {
@@ -6139,6 +6745,154 @@ static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 fl
     }
 
     return added;
+}
+
+// Runs the villain's sound queue for a frame. A queued direct sound (VSND_LISTEND) with no sound
+// to play is dropped; any other entry forgets its direct sound. Each entry's delay counts down by
+// dt, and when it runs out the sound plays with the low 24 bits of its flags. The top four flag
+// bits then set the repeat count: 0x1 plays it once more, 0x2 counts the repeats down and
+// anything else ends it. An entry with repeats left waits its repeat delay again; the others are
+// freed. Returns how many entries are still queued after the sounds that played.
+static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt)
+{
+    st_NPC_SOUND_QUEUE* que;
+    S32 i;
+    S32 cnt = 0;
+
+    for (i = 0; i < 4; i++)
+    {
+        que = &vil->snd_queue[i];
+        if (que->sndEvent == VSND_TYP_BOGUS)
+        {
+            continue;
+        }
+
+        if (que->sndEvent == VSND_LISTEND)
+        {
+            if (!que->sndDirect)
+            {
+                que->sndEvent = VSND_TYP_BOGUS;
+                continue;
+            }
+        }
+        else
+        {
+            que->sndDirect = 0;
+        }
+
+        que->tmr_delay -= dt;
+        if (que->tmr_delay > 0.0f)
+        {
+            continue;
+        }
+
+        VSND_goPlay(vil, que->sndEvent, que->sndDirect, que->flg_frolic & 0xFFFFFF, que->radius);
+
+        switch (que->flg_frolic & 0xF0000000)
+        {
+        case 0x10000000:
+            que->cnt_repeat = 1;
+            break;
+        case 0x20000000:
+            que->cnt_repeat--;
+            break;
+        default:
+            que->cnt_repeat = 0;
+            break;
+        }
+
+        if (que->cnt_repeat > 0)
+        {
+            que->tmr_delay = que->tym_repeatDelay;
+        }
+        else
+        {
+            que->sndEvent = VSND_TYP_BOGUS;
+        }
+
+        if (que->sndEvent != VSND_TYP_BOGUS)
+        {
+            cnt++;
+        }
+    }
+
+    return cnt;
+}
+
+// Plays a villain sound: the given sound, or one VSND_select_sound picks for the sound type.
+// Flag 0x8000 marks a voice line: it is skipped while the next-voice timer runs, and while the
+// voice channel is busy, when it restarts that timer at its configured length give or take an
+// eighth. Flag 0x800 skips it while the effects channel is busy. Flags 0x1000, 0x2000 and 0x4000
+// pick volume 1, 0.9 or 0.8 and priority 150, 100 or 50 (otherwise 0.75 and 100); in a boss
+// battle the volume halves unless the villain has ability bit 0x1. With flag 0x200 it plays flat,
+// otherwise in 3D from the villain at half volume out to dist. The low two flag bits pick the
+// villain's sound channel. Returns the played sound's id, or 0.
+static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplicit, S32 flg_vsnd,
+                       F32 dist)
+{
+    F32 vol;
+    U32 xsid = 0;
+    U32 owner;
+    U32 priority;
+    U32 aid_toplay;
+
+    aid_toplay = sndExplicit ? sndExplicit : VSND_select_sound(vil, sndEvent);
+
+    if (flg_vsnd & 0x8000 && !(vil->tmr_list[ZVIL_TTIL_NEXTVOICE] <= 0.0f))
+    {
+        return 0;
+    }
+
+    if (flg_vsnd & 0x8000 && VSND_chanIsBusy(vil, 1))
+    {
+        vil->tmr_list[ZVIL_TTIL_NEXTVOICE] =
+            VCFG_tymref(vil, ZVIL_TTIL_NEXTVOICE) +
+            0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TTIL_NEXTVOICE);
+        return 0;
+    }
+
+    if (flg_vsnd & 0x800 && VSND_chanIsBusy(vil, 3))
+    {
+        return 0;
+    }
+
+    if (flg_vsnd & 0x1000)
+    {
+        vol = 1.0f;
+        priority = 150;
+    }
+    else if (flg_vsnd & 0x2000)
+    {
+        vol = 0.9f;
+        priority = 100;
+    }
+    else if (flg_vsnd & 0x4000)
+    {
+        vol = 0.8f;
+        priority = 50;
+    }
+    else
+    {
+        vol = 0.75f;
+        priority = 100;
+    }
+
+    if (g_scene_is_a_boss_battle && !(vil->ability & 0x1))
+    {
+        vol *= 0.5f;
+    }
+
+    owner = (U32)vil + (flg_vsnd & 3);
+    if (aid_toplay && flg_vsnd & 0x200)
+    {
+        xsid = xSndPlay(aid_toplay, vol, vol, 0.0f, priority, 0x202, owner);
+    }
+    else if (aid_toplay)
+    {
+        xsid = xSndPlay3D(aid_toplay, 0.5f * vol, 0.0f, priority, 0x202, (_xEnt*)owner, dist);
+    }
+
+    return xsid;
 }
 
 // Finds a sound type's entry in g_sndProps (the VSND_LISTEND entry if it has none), hands it back
@@ -6529,7 +7283,7 @@ static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
     _xVec3 delta = { 0 };
     F32 ang;
 
-    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
+    xVec3Sub(&delta, &pos, xEntGetPos(ent));
     xVec3Normalize(&delta, &delta);
     ang = xAngleClamp(VSUP_ang_ofXZDir(delta));
     if (dir)
@@ -6546,6 +7300,76 @@ static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
 
     xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
     return delta.x * delta.x + delta.z * delta.z;
+}
+
+// Squared flat (x and z) distance from the villain to another entity's position.
+static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt)
+{
+    _xVec3 pos = { 0 };
+
+    xVec3Copy(&pos, xEntGetPos(tgt));
+    return VSUP_ds2_toPos(ent, pos);
+}
+
+// Heading from the entity to the centre of another entity's bound; see VSUP_dir_toPos.
+static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir)
+{
+    _xVec3 ctr = { 0 };
+
+    xVec3Copy(&ctr, xBoundCenter(&tgt->bound));
+    return VSUP_dir_toPos(ent, ctr, dir);
+}
+
+// Whether the entity's bound centre is within half the villain's field of view either side of
+// its heading. A villain with no field of view sees nothing.
+static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent)
+{
+    S32 result = 0;
+    F32 ang = VSUP_dir_toEnt(vil, ent, NULL);
+    F32 ang_face = vil->frame->rot.angle;
+
+    if (vil->fov_detect <= 0.0f)
+    {
+        result = 0;
+    }
+    else if (fabsf(ang_face - ang) < 0.5f * vil->fov_detect)
+    {
+        result = 1;
+    }
+    return result;
+}
+
+// Whether nothing in the scene blocks a ray from the villain's bound centre toward the entity's,
+// starting just outside the villain's bound and reaching no farther than its detection range.
+// The ray is cast only with chance rand; otherwise the previous answer (prev) stands.
+static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
+{
+    S32 result;
+
+    if (!xUtil_yesno(rand))
+    {
+        return prev;
+    }
+
+    _xRay3 r = { 0 };
+    _xVec3 mypos = { 0 };
+
+    xVec3Copy(&mypos, xBoundCenter(&vil->bound));
+    r.min_t = 0.001f + vil->bound.sph.r;
+    xVec3Sub(&r.dir, xBoundCenter(&ent->bound), &mypos);
+    r.max_t = xVec3Normalize(&r.dir, &r.dir);
+    r.max_t = MIN(xsqrt(vil->ds2_detect), r.max_t);
+    xVec3SMul(&r.origin, &r.dir, r.min_t);
+    xVec3AddTo(&r.origin, &mypos);
+    r.flags = 0x800;
+    result = !xRayHitsSceneFast(&r, globals.sceneCur);
+    return result;
+}
+
+// Line of sight from the villain to the entity; see VSUP_ent_inLOS_timz.
+static S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
+{
+    return VSUP_ent_inLOS_timz(vil, ent, prev, rand);
 }
 
 // Flips each component of out that points against the matching component of alter.
