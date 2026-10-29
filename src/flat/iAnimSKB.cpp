@@ -189,7 +189,8 @@ F32 iAnimDurationSKB(iAnimSKBHeader* data)
     return ((F32*)((iAnimSKBKey*)(data + 1) + data->KeyCount))[data->TimeCount - 1];
 }
 
-// Swaps the translation keys of two bones, moving the key runs between them.
+// Swaps the complete key runs (rotation and translation) of two bones, moving the runs between them, and
+// rebuilds the key offset table.
 void _iAnimSKBSwapTranslate(iAnimSKBHeader* data, U32 bonelo, U32 bonehi)
 {
     U32 i;
@@ -275,7 +276,8 @@ void _iAnimSKBSwapTranslate(iAnimSKBHeader* data, U32 bonelo, U32 bonehi)
     }
 }
 
-// Adds an offset to one bone's translation keys, growing the axis scales when a key would overflow 16 bits.
+// Adds an offset to one bone's translation keys. An axis scale grows when the largest offset value exceeds
+// the largest original value on that axis, and keys are clamped to +/-32767.
 void _iAnimSKBAdjustTranslate(iAnimSKBHeader* data, U32 bone, F32* tran)
 {
     S32 ipos;

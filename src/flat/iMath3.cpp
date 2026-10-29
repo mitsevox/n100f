@@ -511,8 +511,8 @@ static U32 ClipPlane(F32 denom, F32 numer, F32* t_in, F32* t_out)
     return (numer <= 0.0f);
 }
 
-// Clips a ray (origin r3 relative to the box centre, direction r5) against the six slabs of a box with
-// half-extents r4, narrowing t_in and t_out.
+// Clips a ray (origin r4 relative to the box centre, direction r5) against the six slabs of a box with
+// half-extents r3, narrowing t_in and t_out.
 static U32 ClipBox(const xVec3* r3, const xVec3* r4, const xVec3* r5, F32* t_in, F32* t_out)
 {
     return (ClipPlane(r5->x, -r4->x - r3->x, t_in, t_out) &&
