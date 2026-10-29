@@ -29,7 +29,7 @@ You need your own copy of the game disc. Keep disc images and extracted files ou
 
 To check every active target: `for id in $(python3 -c 'from tools.targets import build_targets; print(*build_targets())'); do python3 configure.py --version "$id" --dtk decomp-toolkit/target/release/dtk && ninja -f "build/$id/build.ninja"; done`.
 
-Pinned tool versions are in `configure.py`; the build structure is [dtk-template](https://github.com/encounter/dtk-template) at the revision named in `CREDITS.md`. Compiler profiles and their evidence are in [docs/compiler_profile/](docs/compiler_profile/README.md). For objdiff's source watcher, `python3 tools/activate_target.py --target <id>` makes that target the root workspace's view.
+Pinned tool versions are in `configure.py`; tools for trying one variant of a function, and the out-of-repository matching tools, are in [docs/matching_tools.md](docs/matching_tools.md); the build structure is [dtk-template](https://github.com/encounter/dtk-template) at the revision named in `CREDITS.md`. Compiler profiles and their evidence are in [docs/compiler_profile/](docs/compiler_profile/README.md). For objdiff's source watcher, `python3 tools/activate_target.py --target <id>` makes that target the root workspace's view.
 
 ## CI and the progress site
 
