@@ -1,12 +1,5 @@
 #include <rwcore.h>
 
-// RxRenderStateVector flags.
-#define RSV_FLAG_TEXTUREPERSPECTIVE 0x1
-#define RSV_FLAG_ZTEST 0x2
-#define RSV_FLAG_ZWRITE 0x4
-#define RSV_FLAG_VERTEXALPHA 0x8
-#define RSV_FLAG_STATE19 0x20
-
 // Render states this unit reads that the enum does not name.
 #define RSV_STATE_FOGTABLE ((RwRenderState)18)
 #define RSV_STATE_19 ((RwRenderState)19)

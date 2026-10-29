@@ -829,6 +829,60 @@ struct RxClusterDefinition
     char* attributeSet;
 };
 
+typedef enum RxClusterValidityReq
+{
+    rxCLREQ_DONTWANT = 0,
+    rxCLREQ_REQUIRED = 1,
+    rxCLREQ_OPTIONAL = 2,
+    rxCLUSTERVALIDITYREQFORCEENUMSIZEINT = 0x7FFFFFFF
+} RxClusterValidityReq;
+
+typedef enum RxClusterValid
+{
+    rxCLVALID_NOCHANGE = 0,
+    rxCLVALID_VALID = 1,
+    rxCLVALID_INVALID = 2,
+    rxCLUSTERVALIDFORCEENUMSIZEINT = 0x7FFFFFFF
+} RxClusterValid;
+
+typedef enum RxClusterForcePresent
+{
+    rxCLALLOWABSENT = 0,
+    rxCLFORCEPRESENT = 1,
+    rxCLUSTERFORCEPRESENTFORCEENUMSIZEINT = 0x7FFFFFFF
+} RxClusterForcePresent;
+
+typedef enum RxNodeDefEditable
+{
+    rxNODEDEFCONST = 0,
+    rxNODEDEFEDITABLE = 1,
+    rxNODEDEFEDITABLEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RxNodeDefEditable;
+
+typedef struct RxClusterRef RxClusterRef;
+struct RxClusterRef
+{
+    RxClusterDefinition* clusterDef;
+    RxClusterForcePresent forcePresent;
+    U32 reserved;
+};
+
+typedef struct RxOutputSpec RxOutputSpec;
+struct RxOutputSpec
+{
+    char* name;
+    RxClusterValid* outputClusters;
+    RxClusterValid allOtherClusters;
+};
+
+extern RxClusterDefinition RxClObjSpace3DVertices;
+extern RxClusterDefinition RxClCamSpace3DVertices;
+extern RxClusterDefinition RxClScrSpace2DVertices;
+extern RxClusterDefinition RxClInterpolants;
+extern RxClusterDefinition RxClMeshState;
+extern RxClusterDefinition RxClRenderState;
+extern RxClusterDefinition RxClIndices;
+
 typedef struct RxPipelineCluster RxPipelineCluster;
 struct RxPipelineCluster
 {
@@ -927,10 +981,10 @@ typedef struct RxIoSpec RxIoSpec;
 struct RxIoSpec
 {
     U32 numClustersOfInterest;
-    void* clustersOfInterest;
-    S32* inputRequirements;
+    RxClusterRef* clustersOfInterest;
+    RxClusterValidityReq* inputRequirements;
     U32 numOutputs;
-    void* outputs;
+    RxOutputSpec* outputs;
 };
 
 struct RxNodeDefinition
@@ -939,7 +993,7 @@ struct RxNodeDefinition
     RxNodeMethods nodeMethods;
     RxIoSpec io;
     U32 pipelineNodePrivateDataSize;
-    S32 editable;
+    RxNodeDefEditable editable;
     S32 InputPipesCnt;
 };
 
@@ -1002,6 +1056,80 @@ typedef RxPipeline RxLockedPipe;
 typedef U32* RxNodeOutput;
 typedef RxPipelineNode* RxNodeInput;
 
+// The pipeline being executed and the parameters its nodes receive.
+typedef struct RxExecContext RxExecContext;
+struct RxExecContext
+{
+    RxPipeline* pipeline;
+    void* unk4;
+    S32 exitCode;
+    U32 unkC;
+    RxPipelineNodeParam params;
+};
+
+extern RxExecContext _rxExecCtxGlobal;
+extern RxHeap* _rxHeapGlobal;
+
+RxPipelineNode* _rxEmbeddedPacketBetweenNodes(RxPipeline* pipeline, RxPipelineNode* nodeFrom,
+                                              U32 whichOutput);
+void _rxPacketDestroy(RxPacket* packet);
+
+// Cluster flags.
+#define CLUSTER_VALID 0x1U
+#define CLUSTER_EXTERNAL 0x2U
+#define CLUSTER_EXTERNALMODIFIABLE 0x4U
+#define CLUSTER_MODIFIED 0x8U
+
+// Takes the executing pipeline's embedded packet when it is waiting for the node.
+inline RxPacket* RxPacketFetch(RxPipelineNode* node)
+{
+    if (_rxExecCtxGlobal.pipeline->embeddedPacketState == rxPKST_PENDING)
+    {
+        _rxExecCtxGlobal.pipeline->embeddedPacketState = rxPKST_INUSE;
+        return _rxExecCtxGlobal.pipeline->embeddedPacket;
+    }
+
+    return NULL;
+}
+
+// The packet's cluster for a node cluster index, with its cursor at the start of its data, or NULL
+// where the packet has no such cluster.
+#define RxClusterLockRead(_packet, _index)                                                         \
+    ((S32)(_packet)->inputToClusterSlot[_index] == -1                                              \
+         ? NULL                                                                                    \
+         : ((_packet)->clusters[(_packet)->inputToClusterSlot[_index]].currentData =               \
+                (_packet)->clusters[(_packet)->inputToClusterSlot[_index]].data,                   \
+            &(_packet)->clusters[(_packet)->inputToClusterSlot[_index]]))
+
+// Passes the packet on through one of the node's outputs, then destroys the embedded packet if no
+// later node took it.
+#define RxPacketDispatch(_packet, _output, _self)                                                  \
+    {                                                                                              \
+        RxPipeline* _curpipe = _rxExecCtxGlobal.pipeline;                                          \
+                                                                                                   \
+        if (_rxExecCtxGlobal.exitCode)                                                             \
+        {                                                                                          \
+            RxPipelineNode* _nodeTo = _rxEmbeddedPacketBetweenNodes(_curpipe, (_self), (_output)); \
+                                                                                                   \
+            if (_nodeTo)                                                                           \
+            {                                                                                      \
+                U32 _result = _nodeTo->nodeDef->nodeMethods.nodeBody(_nodeTo,                       \
+                                                                     &_rxExecCtxGlobal.params);    \
+                                                                                                   \
+                if (!_result)                                                                      \
+                {                                                                                  \
+                    _rxExecCtxGlobal.exitCode = _result;                                           \
+                }                                                                                  \
+            }                                                                                      \
+        }                                                                                          \
+                                                                                                   \
+        if (_curpipe->embeddedPacketState > rxPKST_UNUSED)                                         \
+        {                                                                                          \
+            _curpipe->embeddedPacketState = rxPKST_INUSE;                                          \
+            _rxPacketDestroy(_curpipe->embeddedPacket);                                            \
+        }                                                                                          \
+    }
+
 typedef enum RwShadeMode
 {
     rwSHADEMODENASHADEMODE = 0,
@@ -1049,6 +1177,44 @@ struct RxRenderStateVector
     U8* FogTable;
 };
 
+// RxRenderStateVector flags.
+#define RSV_FLAG_TEXTUREPERSPECTIVE 0x1
+#define RSV_FLAG_ZTEST 0x2
+#define RSV_FLAG_ZWRITE 0x4
+#define RSV_FLAG_VERTEXALPHA 0x8
+#define RSV_FLAG_STATE19 0x20
+
+typedef struct RxCamSpace3DVertex RxCamSpace3DVertex;
+struct RxCamSpace3DVertex
+{
+    RwV3d cameraVertex;
+    U8 clipFlags;
+    U8 pad[3];
+    RwRGBAReal col;
+    F32 u;
+    F32 v;
+};
+
+typedef struct RxMeshStateVector RxMeshStateVector;
+struct RxMeshStateVector
+{
+    S32 Flags;
+    void* SourceObject;
+    RwMatrix Obj2World;
+    RwMatrix Obj2Cam;
+    RwSurfaceProperties SurfaceProperties;
+    RwTexture* Texture;
+    RwRGBA MatCol;
+    RxPipeline* Pipeline;
+    RwPrimitiveType PrimType;
+    U32 NumElements;
+    U32 NumVertices;
+    S32 ClipFlagsOr;
+    S32 ClipFlagsAnd;
+    void* SourceMesh;
+    void* DataObject;
+};
+
 // The immediate-mode 3D module's pipelines, one per primitive type.
 typedef struct rwIm3DRenderPipelines rwIm3DRenderPipelines;
 struct rwIm3DRenderPipelines
@@ -1068,9 +1234,9 @@ struct _rwIm3DPoolStash
     RwMatrix* ltm;
     U32 numVerts;
     RxObjSpace3DVertex* objVerts;
-    void* camVerts;
+    RxCamSpace3DVertex* camVerts;
     void* devVerts;
-    void* meshState;
+    RxMeshStateVector* meshState;
     RxRenderStateVector* renderState;
     RxPipeline* pipeline;
     RwPrimitiveType primType;
@@ -1169,6 +1335,7 @@ S32 _rwResHeapInit(void* mem, U32 size);
 S32 _rwResHeapClose(void* mem);
 void _rwResHeapFree(void* mem);
 void* _rwResHeapAlloc(void* mem, U32 size);
+S32 RwIm2DRenderPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices, S32 numVertices);
 S32 RwIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices,
                                  S32 numVertices, RwImVertexIndex* indices, S32 numIndices);
 
@@ -1277,7 +1444,6 @@ S32 _rwIm3DCreatePlatformTransformPipeline(RxPipeline** globalPipe);
 void _rwIm3DDestroyPlatformTransformPipeline(RxPipeline** globalPipe);
 void _rwIm3DDestroyPlatformRenderPipelines(rwIm3DRenderPipelines* globalPipes);
 S32 _rwIm3DCreatePlatformRenderPipelines(rwIm3DRenderPipelines* globalPipes);
-void _rxPacketDestroy(RxPacket* packet);
 void RxHeapFree(RxHeap* heap, void* block);
 void* RxHeapAlloc(RxHeap* heap, U32 size);
 void* RxHeapRealloc(RxHeap* heap, void* block, U32 newSize, S32 allowCopy);
