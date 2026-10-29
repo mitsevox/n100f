@@ -3812,8 +3812,8 @@ static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
 // gets an intercept point on that range, flagged 0x400 when it is farther from the villain than
 // the arrival distance. Past the normal mode the villain checks for a pitfall (flg_xtra 0x1).
 // When the distance in prec is under 5 and the height offset under 3 (both 0 without 0x1), the
-// player is told the villain type and the distance. flg_status records each part worked out, and
-// 0x80000000 once done.
+// player is told the villain type and the length of the offset. flg_status records each part
+// worked out, and 0x80000000 once done.
 static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
 {
     st_ZVIL_PRECALC* prec;
@@ -3988,9 +3988,10 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
 // first of bits 0x40, 0x80, 0x100, 0x800 and 0x400 picks the turn: toward ang_moveto, toward
 // dir_moveto, by dlt_faceang, toward pos_moveto or toward dlt_moveto. The turn happens only with
 // bit 0x1, and only for a villain with move ability 0x1000 or 0x400 or whose current animation
-// has type bit 0x2000000; its rate is 0.85 to 1 times the turn speed (wiz_moveto with bit
-// 0x10000), a turn of more than half the field of view slows the step, and a turn also moves.
-// The step is the move speed for the frame (spd_moveto with bit 0x8000). Bits 0x2 and 0x8 move
+// has type bit 0x2000000; its rate is dt times wiz_moveto with bit 0x10000, otherwise 0.85 to 1
+// times dt times the turn speed, and a turn also moves. The step is dt times spd_moveto with bit
+// 0x8000, otherwise dt times the move speed for a random 0.9 to 1 (0.6 to 1 after a turn of more
+// than half the field of view). Bits 0x2 and 0x8 move
 // in x and z along the new heading (half speed backwards with 0x20); 0x10 cancels the move.
 // Within a squared flat distance of 0.25 (0.1 for spiders) the villain moves a random share, up
 // to half, of the gap instead; the exact-snap branch for the smaller threshold is never reached.
@@ -7286,7 +7287,7 @@ static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
     _xVec3 delta = { 0 };
     F32 ang;
 
-    xVec3Sub(&delta, &pos, xEntGetPos(ent));
+    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
     xVec3Normalize(&delta, &delta);
     ang = xAngleClamp(VSUP_ang_ofXZDir(delta));
     if (dir)
