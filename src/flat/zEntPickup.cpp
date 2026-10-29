@@ -27,8 +27,6 @@
 #include "zScene.h"
 #include "zMusic.h"
 
-#define SQR(x) ((x) * (x))
-
 struct zUIAsset : p2EntAsset
 {
     U32 uiFlags;
