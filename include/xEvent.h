@@ -55,6 +55,7 @@ enum en_xEventTags
     eEventShaggyGrabbed = 232,
     eEventShaggyThrown = 233,
     eEventBossMMPushButton = 238,
+    eEventVilReport_DecayComplete = 239,
     eEventTranslucentOn = 252,
     eEventTranslucentOff = 253,
     eEventTranslucentToggle = 254,

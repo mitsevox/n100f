@@ -1145,9 +1145,9 @@ S32 zEntProjectile::LookForFloorRoof(_xScene*, F32)
 {
     S32 i;
     _xCollis* best = NULL;
-    _xCollis* cur_rec;
     _xCollis* ceil = &collis->colls[0];
     _xCollis* flor = &collis->colls[1];
+    _xCollis* cur_rec;
 
     if (!(ceil->flags & 1))
     {
