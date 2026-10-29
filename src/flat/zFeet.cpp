@@ -1,4 +1,5 @@
 #include "zFeet.h"
+#include "xDebug.h"
 #include "xMemMgr.h"
 #include "xAnim.h"
 #include "rwcore.h"
@@ -25,7 +26,6 @@ extern F32 lbl_801A4140[];
 extern void* lbl_8025EA48;
 extern RwIm3DVertex lbl_8022C6D4[];
 extern "C" U32 fn_800217E0(_xRay3*, void*);
-extern "C" void fn_80021B9C(const char*, void (*)());
 #define SKID_RASTER lbl_8025EEC0
 #define PAWPRINT_EMITTER lbl_8025EEB8
 #define FOOTPRINT_EMITTER lbl_8025EEBC
@@ -34,7 +34,6 @@ extern "C" void fn_80021B9C(const char*, void (*)());
 #define RAY_COLLIDE_DATA lbl_8025EA48
 #define STRIP_VERTS lbl_8022C6D4
 #define RAY_HITS_WORLD fn_800217E0
-#define REGISTER_DEBUG_CB fn_80021B9C
 #elif VERSION_GIHE78_REV1
 extern void* lbl_80270D58;
 extern xBase* lbl_80270D50;
@@ -44,7 +43,6 @@ extern F32 lbl_801A12A8[];
 extern void* lbl_802708E0;
 extern RwIm3DVertex lbl_8023CD84[];
 extern "C" U32 fn_8002191C(_xRay3*, void*);
-extern "C" void fn_80021CD8(const char*, void (*)());
 #define SKID_RASTER lbl_80270D58
 #define PAWPRINT_EMITTER lbl_80270D50
 #define FOOTPRINT_EMITTER lbl_80270D54
@@ -53,7 +51,6 @@ extern "C" void fn_80021CD8(const char*, void (*)());
 #define RAY_COLLIDE_DATA lbl_802708E0
 #define STRIP_VERTS lbl_8023CD84
 #define RAY_HITS_WORLD fn_8002191C
-#define REGISTER_DEBUG_CB fn_80021CD8
 #endif
 extern void zSurfaceGetName(S32, char*);
 void DrawSkidMarkStrip(_tagFeetSkidMark*, _tagSkidEdge*, U8, U8, U8);
@@ -346,5 +343,5 @@ void zFeetGetIDs()
     {
         SKID_RASTER = *(void**)texture;
     }
-    REGISTER_DEBUG_CB("Feet", zFeetDebugCB);
+    xDebugModeAdd("Feet", zFeetDebugCB);
 }
