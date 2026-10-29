@@ -1337,7 +1337,8 @@ static S32 VILN_BMM_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
 // attack, sets his hit points from his configuration (at least 1), sets his lob spin to one turn
 // and his hurt time to none, finds his twelve teleport points by name, and sets the first three
 // flag bits on his first two models and clears them on the next six. Then, like the standard
-// notice, it sets up his vertex tags on prepare and refreshes his precalculated data on precalc.
+// notice, it sets up his vertex tags on prepare and, on precalc, refreshes his precalculated data
+// once his mode is normal or later.
 static S32 VILN_BMM_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS_CONTEXT_DATA*)
 {
     S32 i;
@@ -1765,7 +1766,7 @@ static void zVIL_elcb_move(_xEnt* xe, _xScene* scn, F32 dt, _xEntFrame* frame)
 // meant as the villain's own distance to it, the squared flat distance between the villain and a
 // zero vector, so the same value for every point; it takes the point farthest from the player
 // when that second value is above 1. The random choice then always replaces it: one time in five
-// a dangerous point (weights 2, 3, 3, 2), otherwise a safe one (weights 1, 2, 2, 1, 2, 1, 1, 2).
+// a dangerous point (weights 0.2, 0.3, 0.3, 0.2), otherwise a safe one (weights 1, 2, 2, 1, 2, 1, 1, 2).
 // When forced with no point found, it falls back to his first navigation point and clears his
 // next one; when forced and the point is his next navigation point, that is cleared.
 static _zMovePoint* VNAV_find_telepoint(st_zEntVillain* vil, S32 force)
