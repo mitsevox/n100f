@@ -2322,7 +2322,7 @@ static S32 VILN_std_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
         if (vil->tgt_stat & 0x20) return 1;
         return (vil->tgt_stat & 0x4) != 0;
     }
-    return 0;
+    return 1;
 }
 
 // Reads one of the villain's flag groups from its subtype's settings; the allow group reads as 0.
@@ -4570,7 +4570,7 @@ static S32 VILN_shagM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_C
             resp->stim = ZVIL_STIM_TRANGOAL;
         }
         break;
-    case ZVIL_GOAL_TAUNT:
+    case ZVIL_GOAL_ACTION:
         if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
         {
             resp->trangoal = ZVIL_GOAL_IDLE;
@@ -4584,14 +4584,14 @@ static S32 VILN_shagM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_C
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
+                fn_8007BD98(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
             if (vil->ability & 8)
             {
                 F32 fade = vil->tmr_list[ZVIL_TDUR_DECAY];
-                if (fade < vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]) fade = vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+                fade = fade > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] ? fade : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
                 if (fade != 0.0f)
                 {
                     _zParEmitterCustomSettings info;
@@ -12207,7 +12207,7 @@ S32 zEntVillain_PlayAFXSound(st_zEntVillain* ent, zAnimFxSound* snd, U32* sid_pl
     if (ent->goal >= ZVIL_GOAL_AFTERLIFE && ent->goal < ZVIL_GOAL_GOONLINE &&
         ent->goaldflt != ZVIL_GOAL_AMBUSH)
     {
-        return 0;
+        return 1;
     }
 
     en_zEntVillainSubTypeID type = (en_zEntVillainSubTypeID)ent->asset->subtype;
