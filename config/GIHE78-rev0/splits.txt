@@ -1778,24 +1778,34 @@ rwsdk/src/pipe/p2/nodeCullTriangle.c:
 
 rwsdk/src/pipe/p2/nodeImmInstance.c:
 	.text       start:0x80181EC4 end:0x80182320
+	.data       start:0x801DE990 end:0x801DEA38
+	.sdata2     start:0x80262BF8 end:0x80262C08
 
 rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c:
 	.text       start:0x80182320 end:0x801827E4
+	.data       start:0x801DEA38 end:0x801DEAD0
+	.sdata      start:0x8025E830 end:0x8025E840
 
 rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c:
 	.text       start:0x801827E4 end:0x80182F34
+	.data       start:0x801DEAD0 end:0x801DEB68
+	.sdata      start:0x8025E840 end:0x8025E850
 
 rwsdk/src/pipe/p2/nodeImmRenderSetup.c:
 	.text       start:0x80182F34 end:0x80183340
+	.data       start:0x801DEB68 end:0x801DEC98
 
 rwsdk/src/pipe/p2/nodeImmStash.c:
 	.text       start:0x80183340 end:0x80183568
+	.data       start:0x801DEC98 end:0x801DED38
 
 rwsdk/src/pipe/p2/nodeSubmitLine.c:
 	.text       start:0x80183568 end:0x80183860
+	.data       start:0x801DED38 end:0x801DEDF0
 
 rwsdk/src/pipe/p2/nodeSubmitTriangle.c:
 	.text       start:0x80183860 end:0x80183B10
+	.data       start:0x801DEDF0 end:0x801DEEB0
 
 rwsdk/src/pipe/p2/nodeTransform.c:
 	.text       start:0x80183B10 end:0x80184918
