@@ -20,6 +20,7 @@
 #include "zEntDestructObj.h"
 #include "xEvent.h"
 #include "xPad.h"
+#include "xTRC.h"
 #include "xSnd.h"
 #include "iSnd.h"
 #include "xString.h"
@@ -54,15 +55,6 @@ struct st_zEntVillain;
 struct _zEntPickup;
 struct xSerial;
 struct xAnimActiveEffect;
-
-struct _tagTRCPadInfo
-{
-    S32 pad_init;
-    S32 id;
-    S32 state;
-};
-
-extern "C" _tagTRCPadInfo lbl_802289B8[4];
 
 struct zPlayerSituation
 {
@@ -197,6 +189,11 @@ static inline F32 xVec3Dist(const xVec3* a, const xVec3* b)
     F32 dz = a->z - b->z;
 
     return sqrtf(dx * dx + dy * dy + dz * dz);
+}
+
+static inline F32 xVec3Length(const xVec3* vec)
+{
+    return sqrtf(xVec3Length2(vec));
 }
 
 static inline void xEntSetTrig(_xEntCollis* coll, U16 idx)
@@ -1075,7 +1072,10 @@ move:
                 maxVelmag = globals.player.s.SpeedRun[1];
                 mag = mag >= globals.player.s.SpeedRun[3] ? globals.player.s.SpeedRun[1]
                     : mag <= globals.player.s.SpeedRun[2] ? globals.player.s.SpeedRun[0]
-                    : (mag - globals.player.s.SpeedRun[2]) / (globals.player.s.SpeedRun[3] - globals.player.s.SpeedRun[2]) * (globals.player.s.SpeedRun[1] - globals.player.s.SpeedRun[0]) + globals.player.s.SpeedRun[0];
+                    : (mag - globals.player.s.SpeedRun[2]) /
+                              (globals.player.s.SpeedRun[3] - globals.player.s.SpeedRun[2]) *
+                              (globals.player.s.SpeedRun[1] - globals.player.s.SpeedRun[0]) +
+                          globals.player.s.SpeedRun[0];
                 globals.player.DecelRun = globals.player.DecelRunSpeed = mag;
             }
             break;
@@ -1083,7 +1083,10 @@ move:
             maxVelmag = globals.player.s.SpeedHotsauce[1];
             mag = mag >= globals.player.s.SpeedHotsauce[3] ? globals.player.s.SpeedHotsauce[1]
                 : mag <= globals.player.s.SpeedHotsauce[2] ? globals.player.s.SpeedHotsauce[0]
-                : (mag - globals.player.s.SpeedHotsauce[2]) / (globals.player.s.SpeedHotsauce[3] - globals.player.s.SpeedHotsauce[2]) * (globals.player.s.SpeedHotsauce[1] - globals.player.s.SpeedHotsauce[0]) + globals.player.s.SpeedHotsauce[0];
+                : (mag - globals.player.s.SpeedHotsauce[2]) /
+                          (globals.player.s.SpeedHotsauce[3] - globals.player.s.SpeedHotsauce[2]) *
+                          (globals.player.s.SpeedHotsauce[1] - globals.player.s.SpeedHotsauce[0]) +
+                      globals.player.s.SpeedHotsauce[0];
             globals.player.DecelRun = globals.player.DecelRunSpeed = mag;
             break;
         case 0xA:
@@ -5120,9 +5123,6 @@ void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
     }
 }
 
-// Floor update: read the surface under the player (stickiness, friction, slickness and the skid slow-down on slick
-// floors), fit the floor normal from four rays cast down around the player, and start, hold or end a slide down a
-// steep slide surface.
 static inline void PlayerFloorNormal(xVec3* o, const xVec3* p)
 {
     xVec3 a;
@@ -5145,6 +5145,9 @@ static inline void xMat4x3Toworld(xVec3* o, const xMat4x3* m, const xVec3* v)
     xVec3Add(o, o, &m->pos);
 }
 
+// Floor update: read the surface under the player (stickiness, friction, slickness and the skid slow-down on slick
+// floors), fit the floor normal from four rays cast down around the player, and start, hold or end a slide down a
+// steep slide surface.
 void zEntPlayerFloorUpdate(_xEnt* p, _xScene* sc, F32 dt)
 {
     _xCollis* fcoll;
@@ -6501,7 +6504,9 @@ static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
             mat->pos.x += colls[k_XCOLLS_IDX_FLOOR].depen.x;
             mat->pos.y += colls[k_XCOLLS_IDX_FLOOR].depen.y;
             mat->pos.z += colls[k_XCOLLS_IDX_FLOOR].depen.z;
-            PlayerCollsWallsLoopTranslate(colls, colls[k_XCOLLS_IDX_FLOOR].depen.x, colls[k_XCOLLS_IDX_FLOOR].depen.y, colls[k_XCOLLS_IDX_FLOOR].depen.z);
+            PlayerCollsWallsLoopTranslate(colls, colls[k_XCOLLS_IDX_FLOOR].depen.x,
+                                          colls[k_XCOLLS_IDX_FLOOR].depen.y,
+                                          colls[k_XCOLLS_IDX_FLOOR].depen.z);
         }
         else
         {
