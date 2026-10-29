@@ -184,6 +184,14 @@ void zUI_Render(_xEnt* e)
         if (texture && texture->raster)
             RwRenderStateSet(rwRENDERSTATETEXTURERASTER, texture->raster);
         zUIAsset* asset = ent->sasset;
+        F32 u1 = asset->uva[0];
+        F32 v1 = asset->uva[1];
+        F32 u2 = asset->uvb[0];
+        F32 v2 = asset->uvb[1];
+        F32 u3 = asset->uvc[0];
+        F32 v3 = asset->uvc[1];
+        F32 u4 = asset->uvd[0];
+        F32 v4 = asset->uvd[1];
         F32 left = (640.0f * asset->pos.x) / 640.0f;
         F32 top = (480.0f * asset->pos.y) / 480.0f;
         F32 right = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
@@ -219,21 +227,23 @@ void zUI_Render(_xEnt* e)
         RwIm2DVertexSetScreenX(&Vertex[0], left);
         RwIm2DVertexSetScreenY(&Vertex[0], top);
         RwIm2DVertexSetScreenZ(&Vertex[0], z);
-        Vertex[0].u = asset->uva[0]; Vertex[0].v = asset->uva[1];
+        Vertex[0].u = u1; Vertex[0].v = v1;
         RwIm2DVertexSetScreenX(&Vertex[1], left);
         RwIm2DVertexSetScreenY(&Vertex[1], bottom);
         RwIm2DVertexSetScreenZ(&Vertex[1], z);
-        Vertex[1].u = asset->uvd[0]; Vertex[1].v = asset->uvd[1];
+        Vertex[1].u = u4; Vertex[1].v = v4;
         RwIm2DVertexSetScreenX(&Vertex[2], right);
         RwIm2DVertexSetScreenY(&Vertex[2], bottom);
         RwIm2DVertexSetScreenZ(&Vertex[2], z);
-        Vertex[2].u = asset->uvc[0]; Vertex[2].v = asset->uvc[1];
+        Vertex[2].u = u3; Vertex[2].v = v3;
         RwIm2DVertexSetScreenX(&Vertex[3], right);
         RwIm2DVertexSetScreenY(&Vertex[3], top);
         RwIm2DVertexSetScreenZ(&Vertex[3], z);
-        Vertex[3].u = asset->uvb[0]; Vertex[3].v = asset->uvb[1];
-        for (S32 i = 0; i < 4; ++i)
-            RwIm2DVertexSetIntRGBA(&Vertex[i], 255, 255, 255, 255);
+        Vertex[3].u = u2; Vertex[3].v = v2;
+        RwIm2DVertexSetIntRGBA(&Vertex[0], 255, 255, 255, 255);
+        RwIm2DVertexSetIntRGBA(&Vertex[1], 255, 255, 255, 255);
+        RwIm2DVertexSetIntRGBA(&Vertex[2], 255, 255, 255, 255);
+        RwIm2DVertexSetIntRGBA(&Vertex[3], 255, 255, 255, 255);
 
         zRenderState(SDRS_Default);
         RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)0);
