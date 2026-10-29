@@ -2191,8 +2191,8 @@ static S32 VILN_BMM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 // goals, and he queues his death sound when he enters the dying goal. On entering a goal he picks
 // its animation and sets it up: patrolling without a next navigation point asks for one;
 // teleporting hides him and turns off his collisions, zaps the player and shouts when he is
-// teleporting away from a blockhead, otherwise trash-talks, and while his allow bit 0x10 is set
-// he vanishes in particles with a sound; readying an attack, being blockheaded, dazed
+// teleporting away from a blockhead, otherwise trash-talks if his allow bit 0x10 is set, and
+// while that bit is set he vanishes in particles with a sound; readying an attack, being blockheaded, dazed
 // (vulnerable), knocked back (towards where the player stands), lobbing (lobs the reserved
 // flask, one per salvo), taunting and being hurt set their timers and sounds; being hurt costs
 // a hit point. Leaving the teleport goal shows him again in particles; leaving the dazed goal
