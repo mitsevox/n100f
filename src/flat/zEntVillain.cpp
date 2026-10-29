@@ -752,6 +752,46 @@ en_ZVILLAIN_BOUNCE_RESPONSE zEntVillain_Bounce(st_zEntVillain* ent)
     return stimctxt.res_buttbounce;
 }
 
+// Send a headbutt stimulus, including its direction and the player's approach strength.
+en_ZVILLAIN_HEADBUTT_RESPONSE zEntVillain_Headbutt(st_zEntVillain* ent, _xVec3* dir)
+{
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_HEADBUTT };
+    stimctxt.res_headbutt = ZVIL_HEADBUTT_NONE;
+    if (dir)
+    {
+        F32 magnitude = xVec3Normalize(&stimctxt.dir_headbutt, dir);
+        _xVec3 towardVil = { 0.0f, 0.0f, 0.0f };
+        xVec3SMul(&towardVil, &ent->precalc.dir_VtoP, -1.0f);
+        F32 facing = xVec3Dot(&towardVil, (_xVec3*)&globals.player.ent.model->Mat->at);
+        facing = MAX(0.0f, MIN(1.0f, facing));
+        stimctxt.mag_headbutt = MAX(0.0f, facing * magnitude);
+    }
+    zVIL_input_stim(ent, ZVIL_STIM_HEADBUTT, &stimctxt);
+    if (stimctxt.res_headbutt != ZVIL_HEADBUTT_NONE &&
+        stimctxt.res_headbutt != ZVIL_HEADBUTT_DAMAGE)
+    {
+        VPAR_emit_partype(ent, VPAR_EMIT_HEADBUTT, globals.update_dt);
+    }
+    if (ent->ability & 0x4)
+    {
+        zEntPlayer_Notify(31);
+    }
+    if (ent->goal == ZVIL_GOAL_DIE)
+    {
+        if ((ent->ability & 0x200000) && (g_npcTable[ent->asset->subtype].ability & 0x200000) &&
+            (g_npcTable[ent->asset->subtype].abl_vuln & 0x4))
+        {
+            g_stattally[ent->asset->subtype].cnt_killed++;
+            g_stattally[eEntVillainType_NoMore].cnt_killed++;
+        }
+        if (ent->allow & 0x800)
+        {
+            VBON_drop_bonusItem(ent);
+        }
+    }
+    return stimctxt.res_headbutt;
+}
+
 // Tells the villain something bumped into it and returns how its type responded.
 en_ZVILLAIN_BUMPED_RESPONSE zEntVillain_Bumped(st_zEntVillain* ent, const _xCollis* colrec)
 {
@@ -1523,6 +1563,123 @@ static S32 VILN_shagM_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
                              st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_notice(vil, note, resp);
+}
+
+// Shaggy villain type 5 responds to navigation, action and lifecycle stimuli.
+static S32 VILN_shagM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                               st_STIMULUS_CONTEXT_DATA* resp)
+{
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    switch (g_pgol = vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_MAKEREADY)
+        {
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+    case ZVIL_GOAL_DIE:
+        g_pstm = stim;
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_PATROL:
+    case ZVIL_GOAL_FOLLOW:
+    case ZVIL_GOAL_ACTION:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_KILLSELF:
+            vil->hitpts = 0;
+            resp->trangoal = ZVIL_GOAL_DIE;
+            resp->tranmode = ZVIL_MODE_DEATH;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOAFTERLIFE:
+            resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_DOACTION:
+            resp->trangoal = ZVIL_GOAL_ACTION;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GANGBOSSACTION:
+            resp->trangoal = ZVIL_GOAL_ACTION;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOPOS:
+            VOUT_dogoto_pos(vil, &stimctxt->gotopos, stimctxt->off_goto);
+            resp->trangoal = ZVIL_GOAL_FOLLOW;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOWIDGET:
+        case ZVIL_STIM_FOLLOWWIDGET:
+            if (stimctxt->widge && (vil->abl_move & 0x100))
+            {
+                S32 follow = stim == ZVIL_STIM_FOLLOWWIDGET;
+                S32 path = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, follow);
+                vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+                resp->trangoal = (follow && path) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        case ZVIL_STIM_STARTPATROL:
+            vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+            if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
+            resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_STOPPATROL:
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
+    }
+    return 1;
+}
+
+// Shaggy villain type 5 selects animations when entering his movement and action goals.
+static S32 VILN_shagM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    en_BEHAVIOUR_GOAL goal = (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
+                                 ? stimctxt->trangoal : vil->goal;
+    S32 result = 1;
+    if ((goal >= ZVIL_GOAL_AFTERLIFE && goal <= ZVIL_GOAL_GOONLINE) || goal == ZVIL_GOAL_DIE)
+    {
+        result = VILN_std_trangoal(vil, stimctxt, dt);
+    }
+    switch (g_pgol = goal)
+    {
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_ACTION:
+    case ZVIL_GOAL_FOLLOW:
+    case ZVIL_GOAL_PATROL:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_ENTERGOAL)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, goal, ZVIL_GSPOT_START);
+            if (goal == ZVIL_GOAL_PATROL && !vil->nav_next)
+            {
+                vil->need_navpt = 1;
+            }
+        }
+        break;
+    }
+    return result;
 }
 
 // Shaggy villain type 5 moves by goal: idle he turns to face the player, and he follows and
