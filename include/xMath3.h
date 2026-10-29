@@ -1,6 +1,8 @@
 #ifndef XMATH3_H
 #define XMATH3_H
 
+#include <math.h>
+
 #include "types.h"
 #include "xVec3.h"
 
@@ -123,6 +125,11 @@ inline void xVec3SMul(xVec3* o, const xVec3* v, F32 s)
 inline F32 xVec3Length2(const xVec3* vec)
 {
     return vec->x * vec->x + vec->y * vec->y + vec->z * vec->z;
+}
+
+inline F32 xVec3Length(const xVec3* vec)
+{
+    return sqrtf(xVec3Length2(vec));
 }
 
 F32 xVec3Normalize(xVec3* o, const xVec3* v);

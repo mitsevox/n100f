@@ -26,6 +26,7 @@
 #include "xMath.h"
 #include "xMathInlines.h"
 #include "xMath3.h"
+#include "iCollide.h"
 #include "xMovePoint.h"
 #include "xScene.h"
 #include "xEnv.h"
@@ -4431,6 +4432,207 @@ void zEntPlayerSurfDamageUpdate(_xEnt* p, _xScene* sc, F32 dt)
     }
 }
 
+// A springboard launch: the jump start with the impulse already worked out from the springboard's heights.
+static inline void PlayerSpringboardJump(_xEnt* ent, F32 impulse)
+{
+    startBounce = ent->frame->mat.pos.y;
+    globals.player.Jump_CurrGravity = globals.player.s.JumpGravity;
+    globals.player.Jump_HoldTimer = 0.0f;
+    globals.player.Jump_ChangeTimer = 0.3f;
+    if (ent->frame->vel.y > 0.0f && globals.player.JumpState == 2)
+    {
+        ent->frame->vel.y = impulse;
+    }
+    else
+    {
+        ent->frame->vel.y = impulse;
+    }
+    globals.player.JumpState = 2;
+    if ((ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xE ||
+        ent->model->Anim->Single->State->UserFlags & 0x100)
+    {
+        globals.player.Bounced = 1;
+    }
+}
+
+// Riding: let go of the platform the player stepped off, follow the platform under the feet (mounting a new one,
+// and remembering a chimney top), and launch the player off a springboard.
+void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
+{
+    _xEntDrive* drv;
+    _zPlatform* oplat;
+    _xCollis* coll;
+    _zPlatform* plat;
+    xSurface* surf;
+    F32* jmphs;
+    xVec3* jmpdir;
+    xAnimPlay* aplay;
+    xAnimSingle* asing;
+
+    drv = &globals.player.drv;
+
+    if (drv->odriver && !drv->os)
+    {
+        plat = (_zPlatform*)drv->odriver;
+        zEntEvent(plat, 0x21);
+        drv->odriver = NULL;
+        drv->otm = 0.0f;
+        if (plat->subType == 9)
+        {
+            zPlatform_Dismount(plat);
+        }
+        if (plat->passet->flags & 1)
+        {
+            zPlatform_Shake(plat, dt, 0.2f, 37.699112f);
+        }
+    }
+
+    coll = &p->collis->colls[0];
+    if (coll->flags & 1)
+    {
+        plat = (_zPlatform*)coll->optr;
+    }
+    else
+    {
+        plat = NULL;
+    }
+
+    if (plat && (plat->eventFunc == Shaggy2_EventCB || plat->eventFunc == Shaggy2Plat_EventCB))
+    {
+        globals.player.MountChimney = plat;
+        globals.player.MountChimOldY = plat->model->Mat->pos.y;
+    }
+    else
+    {
+        globals.player.MountChimney = NULL;
+    }
+
+    if (!plat)
+    {
+        if (drv->driver)
+        {
+            if (globals.player.JumpState != 0 && globals.player.JumpState != 1)
+            {
+                xEntDriveDismount(drv, 1.0f);
+            }
+            else
+            {
+                xEntDriveDismount(drv, 0.3f);
+            }
+        }
+        return;
+    }
+
+    surf = zSurfaceGetSurface(coll);
+    if (surf && !surf->state && zSurfaceGetDamageType(surf))
+    {
+        return;
+    }
+
+    if (plat != (_zPlatform*)drv->driver)
+    {
+        if (drv->driver)
+        {
+            xEntDriveDismount(drv, 0.3f);
+        }
+
+        if (plat->baseType != 6)
+        {
+            return;
+        }
+
+        if (plat->eventFunc == Shaggy2_EventCB || plat->eventFunc == Shaggy2Plat_EventCB)
+        {
+            zEntEvent(plat, 0x20);
+            return;
+        }
+
+        oplat = plat;
+
+        if (!(plat->plat_flags & 1))
+        {
+            return;
+        }
+
+        if (!gPlayerHitWater && plat != (_zPlatform*)drv->odriver)
+        {
+            zEntEvent(plat, 0x20);
+        }
+
+        if (oplat->subType != 10)
+        {
+            if (oplat->subType == 11)
+            {
+                xEntDriveMount(drv, oplat, 0.5f);
+            }
+            else
+            {
+                xEntDriveMount(drv, oplat, 0.15f);
+            }
+
+            if (oplat->subType == 9)
+            {
+                zPlatform_Mount(oplat);
+            }
+
+            if (oplat->passet->flags & 1)
+            {
+                zPlatform_Shake(oplat, dt, 0.2f, 37.699112f);
+            }
+        }
+    }
+    else
+    {
+        oplat = (_zPlatform*)drv->driver;
+    }
+
+    if (oplat->subType == 11 || oplat->subType == 9)
+    {
+        zEntPlayer_Notify(8);
+    }
+
+    if (oplat->subType == 10 && globals.player.Health)
+    {
+        if ((oplat->passet->flags & 2) && (globals.player.JumpState == 0 || globals.player.JumpState == 1))
+        {
+            return;
+        }
+
+        if (oplat->tmr <= 0.0f)
+        {
+            oplat->ctr = 0;
+        }
+        else if (oplat->ctr < 2)
+        {
+            oplat->ctr++;
+        }
+
+        jmphs = oplat->passet->sb.jmph;
+        jmpdir = &oplat->passet->sb.jmpdir;
+
+        PlayerSpringboardJump(p, CalcJumpImpulse_Smooth(globals.player.s.Gravity, globals.player.s.JumpGravity,
+                                                        MAX(MAX(jmphs[0], jmphs[1]), jmphs[2]), 0.3f,
+                                                        globals.player.s.GravSmooth));
+        xVec3SMul(&p->frame->vel, jmpdir, p->frame->vel.y);
+
+        globals.player.Jump_CanDouble = 0;
+        globals.player.Jump_CanFloat = 1;
+        globals.player.Jump_Springboard = oplat;
+        globals.player.Jump_SpringboardStart = 1;
+
+        aplay = oplat->model->Anim;
+        if (aplay)
+        {
+            asing = aplay->Single;
+            asing->Time = 0.0f;
+            asing->CurrentSpeed = 1.0f;
+        }
+
+        globals.player.Bounced = 2;
+        zEntPlayer_Notify(9);
+    }
+}
+
 void zEntPlayerExit(_xEnt* ent)
 {
     xAnimTableRemoveEffectByCB(ent->model->Anim->Table, zEntPlayer_FXScratchCB);
@@ -4666,6 +4868,273 @@ void zEntPlayerReset(_xEnt* ent)
     iColor_tag black = { 0, 0, 0, 255 };
     iColor_tag clear = { 0, 0, 0, 0 };
     xScrFxFade(&black, &clear, 1.0f, NULL, 0, 1);
+}
+
+// Collision of the player (data) with one dynamic or static object: the body bound and the head sphere are both
+// tested and the nearer hit is kept; a model-collision object then collects the model's triangle hits, otherwise
+// a side hit is pushed off sideways and a player sitting on a standable sphere is lifted out.
+static _xEnt* PlayerCollCheckOneEnt(_xEnt* ent, _xScene* sc, void* data)
+{
+    _xEnt* p;
+    _xCollis* coll;
+    U32 modl_coll;
+    U32 head_hit;
+    _xCollis coll2;
+    U8 ncolls;
+    U8 idx;
+    F32 rsum;
+    F32 dx;
+    F32 dy;
+    F32 dz;
+    F32 hsqr;
+
+    p = (_xEnt*)data;
+    modl_coll = 0;
+    head_hit = 0;
+
+    if (p->collis->idx >= 15)
+    {
+        return NULL;
+    }
+
+    if (!(ent->chkby & p->collType))
+    {
+        return ent;
+    }
+
+    if (ent->id == p->id)
+    {
+        return ent;
+    }
+
+    coll = &p->collis->colls[p->collis->idx];
+
+    if (ent->collLev == 5 && (p->collType & 0x18))
+    {
+        modl_coll = 1;
+    }
+
+    if (modl_coll)
+    {
+        coll->flags = 0;
+    }
+    else
+    {
+        coll->flags = 0x1F00;
+    }
+
+    xBoundHitsBound(&p->bound, &ent->bound, coll);
+
+    coll2.flags = 0x1F00;
+    coll2.optr = NULL;
+    coll2.dist = 1e19f;
+
+    _xSphere temp = p->bound.sph;
+    p->bound.sph = globals.player.head_sph;
+    xBoundHitsBound(&p->bound, &ent->bound, &coll2);
+    p->bound.sph = temp;
+
+    if (coll2.flags & 1)
+    {
+        if (!(coll->flags & 1) || !(coll->dist < coll2.dist))
+        {
+            *coll = coll2;
+            head_hit = 1;
+        }
+    }
+
+    if (coll->flags & 1)
+    {
+        if (modl_coll)
+        {
+            coll->flags = 0x1F00;
+            ncolls = iSphereHitsModel3(head_hit ? &globals.player.head_sph : &p->bound.sph, ent->model, coll,
+                                       15 - p->collis->idx, DEG2RAD(45));
+            for (idx = 0; idx < ncolls; idx++)
+            {
+                coll[idx].optr = ent;
+                p->collis->idx++;
+            }
+            return ent;
+        }
+
+        coll->oid = 0;
+        coll->optr = ent;
+        p->collis->idx++;
+
+        if (coll->flags & 0x10)
+        {
+            xVec3Sub(&coll->tohit, xBoundCenter(&ent->bound), xBoundCenter(&p->bound));
+            hsqr = xVec3Length(&coll->tohit);
+            xVec3SMul(&coll->depen, &coll->tohit, -0.35f * (1.0f / hsqr));
+            coll->depen.y = 0.0f;
+            hsqr = xVec3Length(&coll->depen);
+            xVec3SMul(&coll->hdng, &coll->depen, -1.0f / hsqr);
+            coll->dist = 0.7f - hsqr;
+            xVec3SMul(&coll->tohit, &coll->hdng, coll->dist);
+        }
+
+        if ((ent->pflags & 0x20) && ent->bound.type == 1 && p->bound.type == 1 && coll->hdng.y < -0.866025f)
+        {
+            rsum = p->bound.sph.r + ent->bound.sph.r;
+            dx = p->bound.sph.center.x - ent->bound.sph.center.x;
+            dy = p->bound.sph.center.y - ent->bound.sph.center.y;
+            dz = p->bound.sph.center.z - ent->bound.sph.center.z;
+            hsqr = rsum * rsum - (dx * dx + dz * dz);
+            if (hsqr >= 0.0f)
+            {
+                coll->depen.x = 0.0f;
+                coll->depen.y = sqrtf(hsqr) - dy;
+                coll->depen.z = 0.0f;
+                coll->dist = p->bound.sph.r - coll->depen.y;
+                coll->hdng.x = 0.0f;
+                coll->hdng.y = -1.0f;
+                coll->hdng.z = 0.0f;
+            }
+        }
+    }
+
+    return ent;
+}
+
+// Collision of the player (data) with one villain: a butt bounce or squish lands on the villain's top, otherwise
+// the bound tests (with the villain's second bound), a sideways push off a side hit, and a lift out when the player
+// sits on a villain flagged as standable.
+static _xEnt* PlayerCollCheckOneVillain(_xEnt* ent, _xScene* sc, void* data)
+{
+    _xEnt* p;
+    _xCollis* coll;
+    U32 modl_coll;
+    F32 playerOldRad;
+    st_zEntVillain* vill;
+    _xCollis coll2;
+    F32 rsum;
+    F32 dx;
+    F32 dy;
+    F32 dz;
+    F32 hsqr;
+
+    p = (_xEnt*)data;
+    modl_coll = 0;
+    if (p->collis->idx >= 15)
+    {
+        return NULL;
+    }
+
+    if (!(ent->chkby & p->collType))
+    {
+        return ent;
+    }
+
+    if (ent->id == p->id)
+    {
+        return ent;
+    }
+
+    coll = &p->collis->colls[p->collis->idx];
+    if (ent->collLev == 5 && (p->collType & 0x18))
+    {
+        modl_coll = 1;
+    }
+
+    if (modl_coll)
+    {
+        coll->flags = 0;
+    }
+    else
+    {
+        coll->flags = 0x1F00;
+    }
+
+    if (cchkButtbounce ||
+        (cchkSquish && (ent->subType == 0x16 || ent->subType == 0x18 || ent->subType == 0x15 || ent->subType == 0)))
+    {
+        if ((p->frame->oldpos.y >= ent->frame->mat.pos.y + ent->bound.sph.r ||
+             p->frame->oldpos.y >= ent->frame->oldpos.y + ent->bound.sph.r) &&
+            p->frame->mat.pos.y <= ent->frame->mat.pos.y + ent->bound.sph.r)
+        {
+            playerOldRad = p->bound.sph.r;
+            p->bound.sph.r *= 1.5f;
+            xBoundHitsBound(&p->bound, &ent->bound, coll);
+            p->bound.sph.r = playerOldRad;
+            if (coll->flags & 1)
+            {
+                coll->norm.x = 0.0f;
+                coll->norm.y = 1.0f;
+                coll->norm.z = 0.0f;
+                coll->depen.x = 0.0f;
+                coll->depen.y = ent->frame->mat.pos.y + ent->bound.sph.r - p->frame->mat.pos.y;
+                coll->depen.z = 0.0f;
+                coll->dist = p->bound.sph.r - coll->depen.y;
+                coll->hdng.x = 0.0f;
+                coll->hdng.y = -1.0f;
+                coll->hdng.z = 0.0f;
+                coll->tohit.x = coll->hdng.x * coll->dist;
+                coll->tohit.y = coll->hdng.y * coll->dist;
+                coll->tohit.z = coll->hdng.z * coll->dist;
+                coll->oid = ent->id;
+                coll->optr = ent;
+                p->collis->idx++;
+                return ent;
+            }
+        }
+    }
+
+    xBoundHitsBound(&p->bound, &ent->bound, coll);
+    vill = (st_zEntVillain*)ent;
+    if (vill->bound2.sph.r)
+    {
+        coll2.flags = 0x1F00;
+        coll2.optr = NULL;
+        coll2.dist = 1e19f;
+        xBoundHitsBound(&p->bound, &vill->bound2, &coll2);
+        if (coll2.flags & 1)
+        {
+            if (!(coll->flags & 1) || !(coll->dist < coll2.dist))
+            {
+                *coll = coll2;
+            }
+        }
+    }
+
+    if (coll->flags & 1)
+    {
+        coll->oid = 0;
+        coll->optr = ent;
+        p->collis->idx++;
+        if (coll->flags & 0x10)
+        {
+            xVec3Sub(&coll->tohit, xBoundCenter(&ent->bound), xBoundCenter(&p->bound));
+            hsqr = xVec3Length(&coll->tohit);
+            xVec3SMul(&coll->depen, &coll->tohit, -0.35f * (1.0f / hsqr));
+            coll->depen.y = 0.0f;
+            hsqr = xVec3Length(&coll->depen);
+            xVec3SMul(&coll->hdng, &coll->depen, -1.0f / hsqr);
+            coll->dist = 0.7f - hsqr;
+            xVec3SMul(&coll->tohit, &coll->hdng, coll->dist);
+        }
+
+        if ((ent->pflags & 0x20) && ent->bound.type == 1 && p->bound.type == 1 && coll->hdng.y < -0.866025f)
+        {
+            rsum = p->bound.sph.r + ent->bound.sph.r;
+            dx = p->bound.sph.center.x - ent->bound.sph.center.x;
+            dy = p->bound.sph.center.y - ent->bound.sph.center.y;
+            dz = p->bound.sph.center.z - ent->bound.sph.center.z;
+            hsqr = rsum * rsum - (dx * dx + dz * dz);
+            if (hsqr >= 0.0f)
+            {
+                coll->depen.x = 0.0f;
+                coll->depen.y = sqrtf(hsqr) - dy;
+                coll->depen.z = 0.0f;
+                coll->dist = p->bound.sph.r - coll->depen.y;
+                coll->hdng.x = 0.0f;
+                coll->hdng.y = -1.0f;
+                coll->hdng.z = 0.0f;
+            }
+        }
+    }
+
+    return ent;
 }
 
 static void PlayerCollsWallsTranslate(_xCollis* colls, F32 x, F32 y, F32 z)
