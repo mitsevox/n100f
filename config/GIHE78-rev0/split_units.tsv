@@ -89,12 +89,12 @@ zEntButton.cpp	0x8004A508	0x8004AAD4	12	13	0	0	-	count-match
 zEntDestructObj.cpp	0x8004AAD4	0x8004B0BC	10	12	1	0	0x8004B06C=zEntDestructObj_FindFX (strings)	anchored
 zEntHangable.cpp	0x8004B0BC	0x8004C83C	10	12	4	0	0x8004B21C=zEntHangable_SetShaggy (floats)	anchored
 zEntPickup.cpp	0x8004C83C	0x8004FD58	25	28	10	0	0x8004C9F8=zEntPickup_UpdateFlyToInterface (floats)	anchored
-zEntPlayer.cpp	0x8004FD58	0x800691A8	189	197	35	0	0x8004FF68=zEntPlayer_FXSpringCB (floats)	anchored
+zEntPlayer.cpp	0x8004FD58	0x800691A8	189	197	36	0	0x8004FF68=zEntPlayer_FXSpringCB (floats)	anchored
 zEntProjectile.cpp	0x800691A8	0x8006D624	46	56	5	0	0x800692F4=ZPRJ_solv_velvec (floats)	anchored
 zEntShaggy.cpp	0x8006D624	0x8007A8D0	133	136	33	0	0x8006D624=zEntShaggy_SceneReset (strings+calls)	anchored
 zEntSimpleObj.cpp	0x8007A8D0	0x8007ACB8	5	7	0	0	-	weak
 zEntTrigger.cpp	0x8007ACB8	0x8007B08C	5	5	1	0	0x8007AD2C=zEntTriggerUpdate (calls)	anchored
-zEntVillain.cpp	0x8007B08C	0x800A9F78	234	277	161	119	0x8007B5A0=VBON_choose_bonusItem (floats+calls)	anchored
+zEntVillain.cpp	0x8007B08C	0x800A9F78	234	277	166	124	0x8007B5A0=VBON_choose_bonusItem (floats+calls)	anchored
 zEnv.cpp	0x800A9F78	0x800AA338	7	8	4	1	0x800A9F78=zEnvEventCB (calls)	anchored
 zFeet.cpp	0x800AA338	0x800ABD84	11	11	4	0	0x800AA3B4=DrawSkidMarkStrip (floats)	anchored
 zFMV.cpp	0x800ABD84	0x800ABE88	2	2	2	2	0x800ABD84=zFMVFileGetName (name)	anchored
