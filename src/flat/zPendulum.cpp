@@ -3,7 +3,6 @@
 #include "zScene.h"
 
 void zEntEvent(xBase* to, U32 toEvent);
-extern "C" void fn_80026A1C(_xEntMotion* motion, xVec3* dpos);
 
 static void zPendulumTranslate(_xEnt* xent, xVec3* dpos);
 
@@ -120,7 +119,7 @@ static void zPendulumTranslate(_xEnt* xent, xVec3* dpos)
     _zPendulum* pend = (_zPendulum*)xent;
 
     xEntDefaultTranslate(xent, dpos);
-    fn_80026A1C(&pend->motion, dpos);
+    xEntMotionTranslate(&pend->motion, dpos);
 }
 
 // q1t and q3t are the times in the swing where the pendulum passes the bottom; it swooshes there.

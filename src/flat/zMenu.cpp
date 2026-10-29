@@ -29,21 +29,16 @@ extern "C" void fn_80021E50();
 extern "C" void fn_80021B20();
 extern "C" void fn_80021E30();
 extern "C" void fn_8004436C();
-extern "C" void fn_800CEB6C(F32);
-extern "C" void fn_8003D240(F32);
-extern "C" void fn_8002079C(_tagxCamFrame*, S32);
-extern "C" void fn_800CDDC0();
-extern "C" void fn_8001E860(_tagxCamFrame*, S32, F32);
+void xSndUpdate(F32 dt);
+void xSndStopAll();
+void xCameraBegin(_tagxCamFrame* cam, S32 clear);
+void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
 extern "C" void fn_8001E83C(_tagxCamFrame*);
 extern "C" void fn_8001E8A0(_tagxCamFrame*, F32);
 extern "C" U32 fn_800C9DB8();
-extern "C" void fn_800CF0A4();
 extern "C" void fn_800AA118(_zEnv*);
 extern "C" void fn_8001E798(_tagxCamFrame*);
 extern "C" void fn_800207E8(_tagxCamFrame*);
-extern "C" void fn_800D0120();
-extern "C" void fn_8003D2FC();
-extern "C" void fn_800D02D8(U32);
 extern "C" void fn_800207EC(_tagxCamFrame*, S32, S32);
 extern "C" void fn_8001E7C4(_tagxCamFrame*, _xEnv*);
 extern "C" U32 lbl_8025E890;
@@ -193,12 +188,12 @@ U32 zMenuLoop()
 
         fn_80016600();
         fn_80021E50();
-        fn_800CEB6C(time_elapsed);
+        zSceneUpdate(time_elapsed);
         globals.player.ent.update(&globals.player.ent, globals.sceneCur, time_elapsed);
-        fn_8003D240(time_elapsed);
+        xSndUpdate(time_elapsed);
         fn_8001E8A0(&globals.camera, time_elapsed);
-        fn_8002079C(&globals.camera, 1);
-        fn_800CDDC0();
+        xCameraBegin(&globals.camera, 1);
+        zSceneRender();
         xFontRender();
         fn_80021B20();
         fn_8004436C();
@@ -209,7 +204,7 @@ U32 zMenuLoop()
             iDebugScreenDump();
         }
 
-        fn_8001E860(&globals.camera, 1, time_elapsed);
+        xCameraEnd(&globals.camera, time_elapsed, 1);
 
         while ((lbl_8025E968 = VIGetRetraceCount()) - lbl_8025EF10 < 2)
         {
@@ -248,7 +243,7 @@ U32 zMenuLoop()
 
 void zMenuSetup()
 {
-    fn_800CF0A4();
+    zSceneSetup();
     zHud_Setup(globals.sceneCur);
     sAttractMode_timer = 30.0f;
     setupPlayer();
@@ -264,8 +259,8 @@ void zMenuExit()
     zMusicKill();
     fn_8001E798(&globals.camera);
     fn_800207E8(&globals.camera);
-    fn_800D0120();
-    fn_8003D2FC();
+    zSceneExit();
+    xSndStopAll();
     sInMenu = 0;
 }
 
@@ -275,7 +270,7 @@ void zMenuInit(U32 theSceneID)
     isrand(iTimeGet());
     iTimeGet();
     irand();
-    fn_800D02D8(theSceneID);
+    zSceneInit(theSceneID);
     zHud_Init();
     fn_800207EC(&globals.camera, 640, 480);
     fn_8001E7C4(&globals.camera, globals.sceneCur->env);

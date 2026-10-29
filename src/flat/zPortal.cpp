@@ -1,8 +1,8 @@
 #include "zPortal.h"
 #include "zGlobals.h"
+#include "zScene.h"
 #include "xserializer.h"
 
-extern "C" void fn_800CFF44(_zPortal* p);
 
 static inline void zPortalReset(_zPortal* portal)
 {
@@ -44,7 +44,7 @@ S32 zPortalEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
     case 16:
         if (globals.player.Health != 0)
         {
-            fn_800CFF44((_zPortal*)to);
+            zSceneSwitch((_zPortal*)to);
         }
         break;
     }

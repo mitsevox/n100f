@@ -8,9 +8,8 @@
 #include "xMemMgr.h"
 #include "xString.h"
 #include "xEvent.h"
+#include "xstransvc.h"
 
-extern "C" U32 fn_8003FE80(U32 type);
-extern "C" void* fn_8003FD50(U32 type, U32 idx, U32* size);
 
 static _zGust* gusts;
 static U16 ngusts;
@@ -333,7 +332,7 @@ void zGustSetup()
 
 void zGustInit()
 {
-    ngusts = fn_8003FE80('GUST');
+    ngusts = xSTAssetCountByType('GUST');
 
     if (ngusts)
     {
@@ -341,7 +340,7 @@ void zGustInit()
         for (U16 i = 0; i < ngusts; i++)
         {
             U32 size;
-            zGustAsset* asset = (zGustAsset*)fn_8003FD50('GUST', i, &size);
+            zGustAsset* asset = (zGustAsset*)xSTFindAssetByType('GUST', i, &size);
             zGustInit(&gusts[i], asset);
         }
     }

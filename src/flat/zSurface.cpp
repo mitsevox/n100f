@@ -8,8 +8,6 @@
 #include <math.h>
 #include <string.h>
 
-extern "C" U32 fn_8003FE80(U32 type);
-extern "C" void* fn_8003FD50(U32 type, U32 idx, U32* size);
 extern "C" void fn_80040F58(U16 num);
 extern "C" U16 fn_80040F08();
 extern "C" void fn_80040F10(xSurface* surf);
@@ -136,7 +134,7 @@ void zSurfaceGetName(S32 type, char* buffer)
 void zSurfaceInit()
 {
     U32 size;
-    U16 nsurfs = fn_8003FE80('SURF');
+    U16 nsurfs = xSTAssetCountByType('SURF');
 
     fn_80040F58(nsurfs);
 
@@ -150,7 +148,7 @@ void zSurfaceInit()
             zSurfaceProps* moprops = &zsps[i];
             surf->moprops = moprops;
 
-            zSurfAsset* asset = (zSurfAsset*)fn_8003FD50('SURF', i, &size);
+            zSurfAsset* asset = (zSurfAsset*)xSTFindAssetByType('SURF', i, &size);
             moprops->asset = asset;
 
             xBaseInit(surf, asset);
