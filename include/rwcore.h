@@ -1097,8 +1097,9 @@ struct RxExecContext
 
 extern RxExecContext _rxExecCtxGlobal;
 
-// The current camera's projection values, refreshed by the transform node for itself and the clip
-// nodes: the depth mapping, the clip planes and the frame buffer's size and offset as floats.
+// The current camera's projection values, refreshed by the transform and clip nodes before they
+// use them: the depth mapping, the clip planes, the frame buffer's size and offset as floats, and
+// the device's near and far screen z.
 typedef struct ClipInfo ClipInfo;
 struct ClipInfo
 {
@@ -1110,7 +1111,8 @@ struct ClipInfo
     F32 camHeight;
     F32 camOffsetX;
     F32 camOffsetY;
-    U8 unk20[8];
+    F32 nearScreenZ;
+    F32 farScreenZ;
 };
 
 extern ClipInfo gClipInfo;
