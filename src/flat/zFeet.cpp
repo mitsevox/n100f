@@ -31,18 +31,7 @@ struct _xRay3
     S32 flags;
 };
 extern "C" U32 fn_800217E0(_xRay3*, void*);
-struct SkidVertex
-{
-    xVec3 pos;
-    U8 opaque_0C[12];
-    RwRGBA color;
-    F32 u;
-    F32 v;
-};
-extern SkidVertex lbl_8022C6D4[];
-extern "C" void* RwIm3DTransform(SkidVertex*, U32, RwMatrix*, U32);
-extern "C" S32 RwIm3DRenderPrimitive(RwPrimitiveType);
-extern "C" S32 RwIm3DEnd();
+extern RwIm3DVertex lbl_8022C6D4[];
 extern void zSurfaceGetName(S32, char*);
 extern "C" xSurface* fn_800D2F34(const _xCollis*);
 extern "C" void fn_80021B9C(const char*, void (*)());
@@ -89,14 +78,14 @@ void DrawSkidMarkStrip(_tagFeetSkidMark* m, _tagSkidEdge* edges, U8 red, U8 gree
         for (S32 side = 0; side < 2; side++)
         {
             F32 width = side ? edge->width : -edge->width;
-            SkidVertex* vertex = &lbl_8022C6D4[vert_idx++];
-            vertex->pos.x = edge->centre.x + edge->local_x.x * width;
-            vertex->pos.y = edge->centre.y + edge->local_x.y * width + 0.2f;
-            vertex->pos.z = edge->centre.z + edge->local_x.z * width;
-            vertex->color.red = red;
-            vertex->color.green = green;
-            vertex->color.blue = blue;
-            vertex->color.alpha = alpha;
+            RwIm3DVertex* vertex = &lbl_8022C6D4[vert_idx++];
+            vertex->x = edge->centre.x + edge->local_x.x * width;
+            vertex->y = edge->centre.y + edge->local_x.y * width + 0.2f;
+            vertex->z = edge->centre.z + edge->local_x.z * width;
+            vertex->r = red;
+            vertex->g = green;
+            vertex->b = blue;
+            vertex->a = alpha;
             vertex->u = u;
             vertex->v = (F32)side;
             if (vert_idx >= 256)
