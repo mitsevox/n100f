@@ -3,7 +3,7 @@ import os
 import tempfile
 import unittest
 
-from tools.trial import mirror,relocate,score
+from tools.trial import mirror,relocate,score,shown
 
 
 def symbol(name,percent,target=0,instructions=()):
@@ -53,6 +53,13 @@ class Score(unittest.TestCase):
         self.assertEqual(score(self.diff([symbol('f',100.0)],[]),'f'),(0.0,[]))
         self.assertEqual(score(self.diff([symbol('f',0.0,None)],[symbol('f',0.0,None)]),'f'),(0.0,[]))
         self.assertEqual(score(self.diff([],[symbol('f',100.0)]),'f'),(0.0,[]))
+
+
+class Shown(unittest.TestCase):
+    def test_only_identical_shows_100(self):
+        self.assertEqual(shown(100.0),'100.00')
+        self.assertEqual(shown(99.99504),'99.99')
+        self.assertEqual(shown(72.5),'72.50')
 
 
 if __name__=='__main__':
