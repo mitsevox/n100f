@@ -26,6 +26,7 @@
 #include "zMovePoint.h"
 #include "zParEmitter.h"
 #include "zScene.h"
+#include "rpworld.h"
 
 #include <math.h>
 #include <string.h>
@@ -1222,6 +1223,194 @@ static S32 VILN_shark_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F3
     return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
 }
 
+// Expand the shark model's bounding spheres, then handle its usual preparation and precalculation.
+static S32 VILN_shark_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                             st_STIMULUS_CONTEXT_DATA*)
+{
+    vil->model->Data->worldBoundingSphere.radius = 10.0f;
+    vil->model->Data->boundingSphere.radius = 10.0f;
+    vil->model->Data->geometry->morphTarget->boundingSphere.radius = 10.0f;
+
+    switch (note)
+    {
+    case ZVIL_NOTE_PREPARE:
+        zVIL_tag_verts(vil);
+        break;
+    case ZVIL_NOTE_PRECALC:
+        if (vil->mode >= ZVIL_MODE_NORMAL) zVIL_precalc(vil, 0xF);
+        break;
+    case ZVIL_NOTE_OLDTIME:
+        break;
+    }
+    return 1;
+}
+
+// Advance the shark through startup and select an occasional idle fidget.
+static S32 VILN_shark_aware(st_zEntVillain* vil, _xScene*, F32,
+                            st_STIMULUS_CONTEXT_DATA* resp)
+{
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_BASEINIT:
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_STARTUP:
+        resp->trangoal = ZVIL_GOAL_GOONLINE;
+        resp->tranmode = ZVIL_MODE_READY;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_GOONLINE:
+        resp->trangoal = vil->goaldflt;
+        resp->tranmode = ZVIL_MODE_NORMAL;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    case ZVIL_GOAL_IDLE:
+        if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_FIDGET);
+            F32 delay = vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET];
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = delay + 0.25f * (iurand() - 0.5f) * delay;
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+        resp->tranmode = ZVIL_MODE_SHUTDOWN;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    default:
+        resp->trangoal = ZVIL_GOAL_IDLE;
+        resp->tranmode = ZVIL_MODE_NOCHANGE;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    }
+    return 1;
+}
+
+// Handle the shark's startup stimuli and the reactions it supports while idle.
+static S32 VILN_shark_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                               st_STIMULUS_CONTEXT_DATA* resp)
+{
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    switch (g_pgol = vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_MAKEREADY:
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        g_pstm = stim;
+        break;
+    case ZVIL_GOAL_IDLE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_KILLSELF:
+            vil->hitpts = 0;
+            resp->trangoal = ZVIL_GOAL_DIE;
+            resp->tranmode = ZVIL_MODE_DEATH;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOAFTERLIFE:
+            resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_SOAPED:
+        case ZVIL_STIM_GUMMED:
+            stimctxt->res_bubble = ZVIL_BUBBLE_BREAK;
+            break;
+        case ZVIL_STIM_HEADBUTT:
+            stimctxt->res_headbutt = ZVIL_HEADBUTT_NONE;
+            break;
+        case ZVIL_STIM_BOUNCED:
+            stimctxt->res_buttbounce = ZVIL_BOUNCE_NONE;
+            break;
+        case ZVIL_STIM_BUMPED:
+            stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        g_pstm = stim;
+        break;
+    }
+    return 1;
+}
+
+// Choose the shark's idle or fidget animation and disable collision during startup.
+static S32 VILN_shark_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal,
+                               en_ZVIL_GOAL_SPOT gspot)
+{
+    switch (goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_BASEINIT:
+    {
+        en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_IDLE, ZVIL_ANIM_IDLE };
+        VANM_set(vil, choices, 2, 0);
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    }
+    case ZVIL_GOAL_STARTUP:
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_GOONLINE:
+    case ZVIL_GOAL_DIE:
+    {
+        en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_IDLE, ZVIL_ANIM_IDLE };
+        VANM_set(vil, choices, 2, 0);
+        break;
+    }
+    case ZVIL_GOAL_IDLE:
+        if (gspot == ZVIL_GSPOT_FIDGET)
+        {
+            en_NPC_ANIMSTATES choices[4] = { ZVIL_ANIM_FIDGET_IDLE1, ZVIL_ANIM_FIDGET_IDLE2,
+                                             ZVIL_ANIM_FIDGET_BORED1, ZVIL_ANIM_FIDGET_BORED2 };
+            VANM_randset(vil, NULL, choices, 4);
+            vil->anim_playsync = 1;
+        }
+        else
+        {
+            en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_BORED, ZVIL_ANIM_IDLE };
+            VANM_randset(vil, NULL, choices, 2);
+        }
+        break;
+    }
+    return 1;
+}
+
 // The shark changes goals the standard way.
 static S32 VILN_shark_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
 {
@@ -1409,6 +1598,63 @@ static S32 VILN_gang_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32
                               xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// Fred's boss-action animation and model parts need special setup on preparation.
+static S32 VILN_gang_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                            st_STIMULUS_CONTEXT_DATA*)
+{
+    xModelInstance* model = vil->model;
+    S32 index = 0;
+    if (note == ZVIL_NOTE_PREPARE)
+    {
+        vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET] = 2.0f;
+    }
+    if (note == ZVIL_NOTE_PREPARE && vil->asset->subtype == eEntVillainTypeFred)
+    {
+        xAnimState* state = xAnimTableGetStateID(vil->model->Anim->Table,
+                                                  g_anamhash[ZVIL_ANIM_GANG_BOSSACTION]);
+        if (state)
+        {
+            state->Flags &= ~0x30;
+            state->Flags |= 0x10;
+        }
+    }
+    if (note == ZVIL_NOTE_PREPARE && vil->asset->subtype == eEntVillainTypeFred)
+    {
+        while (model)
+        {
+            switch (index)
+            {
+            case 0:
+                xSceneID2Name(globals.sceneCur, vil->id);
+                model->Flags |= 0x2;
+                model->Flags |= 0x1;
+                break;
+            case 1:
+                xSceneID2Name(globals.sceneCur, vil->id);
+                model->Flags &= ~0x1;
+                break;
+            default:
+                xSceneID2Name(globals.sceneCur, vil->id);
+                break;
+            }
+            model = model->Next;
+            index++;
+        }
+    }
+    switch (note)
+    {
+    case ZVIL_NOTE_PREPARE:
+        zVIL_tag_verts(vil);
+        break;
+    case ZVIL_NOTE_PRECALC:
+        if (vil->mode >= ZVIL_MODE_NORMAL) zVIL_precalc(vil, 0xF);
+        break;
+    case ZVIL_NOTE_OLDTIME:
+        break;
+    }
+    return 1;
 }
 
 // Fred, Daphne, Velma, Holly, the groundskeeper and the professor move by goal: idle or talking
