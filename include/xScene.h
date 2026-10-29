@@ -10,7 +10,6 @@ struct _xEnv;
 struct _xRay3;
 struct _xCollis;
 
-// Partial: members up to mempool.
 struct _xScene
 {
     U16 flags;
@@ -37,6 +36,9 @@ struct _xScene
     _xEnt** nact_ents;
     _xEnv* env;
     xMemPool mempool;
+    xBase* (*resolvID)(U32);
+    char* (*base2Name)(xBase*);
+    char* (*id2Name)(U32);
 };
 
 extern _xScene* g_xSceneCur;
