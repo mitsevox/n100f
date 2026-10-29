@@ -85,6 +85,7 @@ void zPendulum_Reset(_zPendulum* pend, _xScene* sc)
     pend->q3t *= aspen->period;
 }
 
+// q1t and q3t are the times in the swing where the pendulum passes the bottom; it swooshes there.
 void zPendulum_Update(_zPendulum* pend, _xScene* sc, F32 dt)
 {
     xEntUpdate(pend, sc, dt);
@@ -122,7 +123,6 @@ static void zPendulumTranslate(_xEnt* xent, xVec3* dpos)
     xEntMotionTranslate(&pend->motion, dpos);
 }
 
-// q1t and q3t are the times in the swing where the pendulum passes the bottom; it swooshes there.
 S32 zPendulumEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase*)
 {
     _zPendulum* pend = (_zPendulum*)to;
