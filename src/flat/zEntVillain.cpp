@@ -167,6 +167,31 @@ struct st_NPC_BONUS
     _zEntPickup* pickup;
 };
 
+struct zAnimFxSound
+{
+    U32 ID;
+    F32 vol;
+    F32 pitch;
+    U32 priority;
+    U32 flags;
+    F32 radius;
+};
+
+struct st_NPC_SOUND_RECORDS
+{
+    en_NPC_SOUND typ_sound;
+    char* nam_sound;
+    U32 aid_sound;
+};
+
+struct st_NPC_SOUND_ENTRY
+{
+    en_zEntVillainSubTypeID viltyp;
+    st_NPC_SOUND_RECORDS* sndList;
+};
+
+extern "C" st_NPC_SOUND_ENTRY lbl_801BCDA0[33];
+
 // How many of one villain type the player has gummed, soaped and beaten, and how many there are.
 struct st_NPC_TALLY_RECORD
 {
@@ -9933,6 +9958,47 @@ static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplic
     }
 
     return xsid;
+}
+
+// Resolve an animation effect's sound through the villain sound lists and play it.
+S32 zEntVillain_PlayAFXSound(st_zEntVillain* ent, zAnimFxSound* snd, U32* sid_played)
+{
+    if (ent->goal >= ZVIL_GOAL_AFTERLIFE && ent->goal < ZVIL_GOAL_GOONLINE &&
+        ent->goaldflt != ZVIL_GOAL_AMBUSH)
+    {
+        return 0;
+    }
+
+    en_zEntVillainSubTypeID type = (en_zEntVillainSubTypeID)ent->asset->subtype;
+    en_NPC_SOUND event = VSND_TYP_BOGUS;
+    st_NPC_SOUND_ENTRY* entry = lbl_801BCDA0;
+    while (entry->sndList)
+    {
+        if (entry->viltyp != type && entry->viltyp == eEntVillainType_Undefined)
+        {
+            entry++;
+            continue;
+        }
+        st_NPC_SOUND_RECORDS* record = entry->sndList;
+        while (record->typ_sound != VSND_LISTEND)
+        {
+            if (record->aid_sound == snd->ID)
+            {
+                event = record->typ_sound;
+                break;
+            }
+            record++;
+        }
+        if (entry->viltyp == type || event != VSND_TYP_BOGUS) break;
+        entry++;
+    }
+    st_NPC_SOUND_PROPERTIES* props = NULL;
+    S32 flags = VSND_findProps(event, &props);
+    F32 radius = g_npcTable[type].dst_noisy;
+    U32 played = event != VSND_TYP_BOGUS ? VSND_goPlay(ent, event, 0, flags, radius) :
+                                          VSND_goPlay(ent, VSND_LISTEND, snd->ID, flags, radius);
+    if (sid_played) *sid_played = played;
+    return 1;
 }
 
 // Finds a sound type's entry in g_sndProps (the VSND_LISTEND entry if it has none), hands it back
