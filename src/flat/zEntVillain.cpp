@@ -2193,10 +2193,11 @@ static S32 VILN_BMM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 // teleporting hides him and turns off his collisions, zaps the player and shouts when he is
 // teleporting away from a blockhead, otherwise trash-talks, and while his allow bit 0x10 is set
 // he vanishes in particles with a sound; readying an attack, being blockheaded, dazed
-// (vulnerable), knocked back (towards where the player stands), lobbing (lobs the reserved flask, one per salvo), taunting and being hurt set
-// their timers and sounds; being hurt costs a hit point. Leaving the teleport goal shows him
-// again in particles; leaving the dazed goal ends his vulnerability; leaving the knockback goal
-// stops his frame; leaving the lobbing goal drops the reserved flask.
+// (vulnerable), knocked back (towards where the player stands), lobbing (lobs the reserved
+// flask, one per salvo), taunting and being hurt set their timers and sounds; being hurt costs
+// a hit point. Leaving the teleport goal shows him again in particles; leaving the dazed goal
+// ends his vulnerability; leaving the knockback goal stops his frame; leaving the lobbing goal
+// drops the reserved flask.
 static S32 VILN_BMM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
 {
     en_BEHAVIOUR_GOAL procgoal;
@@ -2412,7 +2413,10 @@ static S32 VILN_BMM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 VCFG_tymref(vil, ZVIL_TDUR_DAZED) +
                 0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_DAZED);
             vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_DAZED];
-            vil->tmr_list[ZVIL_TTIL_RECOVERY] = (vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f < -1.0f) ? -1.0f : vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f;
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] =
+                (vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f < -1.0f)
+                    ? -1.0f
+                    : vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f;
             vil->abl_vuln |= 0x80;
             break;
         case ZVIL_STIM_EXITGOAL:
