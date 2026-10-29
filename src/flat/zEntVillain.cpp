@@ -16,6 +16,7 @@
 #include "xString.h"
 #include "xutil.h"
 #include "xVec3Inlines.h"
+#include "zEntBubble.h"
 #include "zEntPickup.h"
 #include "zEntPlayer.h"
 #include "zEntShaggy.h"
@@ -792,6 +793,48 @@ en_ZVILLAIN_HEADBUTT_RESPONSE zEntVillain_Headbutt(st_zEntVillain* ent, _xVec3* 
     return stimctxt.res_headbutt;
 }
 
+// Send the bubble's stimulus and play the effect associated with the villain's response.
+en_ZVILLAIN_BUBBLE_RESPONSE zEntVillain_Bubble(st_zEntVillain* ent, _zEntBubble* bub)
+{
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_NONE };
+    stimctxt.res_bubble = ZVIL_BUBBLE_NONE;
+    switch (bub->subType)
+    {
+    case 1:
+        stimctxt.stim = ZVIL_STIM_SOAPED;
+        stimctxt.bubble = bub;
+        zVIL_input_stim(ent, ZVIL_STIM_SOAPED, &stimctxt);
+        if (stimctxt.res_bubble == ZVIL_BUBBLE_BREAK)
+        {
+            VPAR_emit_partype(ent, VPAR_EMIT_POPSOAP, globals.update_dt);
+            VSND_queueSound(ent, VSND_TYP_SOAPSTOP);
+        }
+        else if (stimctxt.res_bubble != ZVIL_BUBBLE_NONE)
+        {
+            zLaughNotify(11);
+            VSND_queueSound(ent, VSND_TYP_SOAPBEGIN);
+        }
+        break;
+    case 0:
+        stimctxt.stim = ZVIL_STIM_GUMMED;
+        stimctxt.bubble = bub;
+        zVIL_input_stim(ent, ZVIL_STIM_GUMMED, &stimctxt);
+        if (stimctxt.res_bubble == ZVIL_BUBBLE_BREAK)
+        {
+            VPAR_emit_partype(ent, VPAR_EMIT_POPGUM, globals.update_dt);
+            VSND_queueSound(ent, VSND_TYP_GUMSTOP);
+        }
+        else if (stimctxt.res_bubble != ZVIL_BUBBLE_NONE)
+        {
+            zLaughNotify(10);
+            VSND_queueSound(ent, VSND_TYP_GUMBEGIN);
+        }
+        break;
+    }
+    if (ent->ability & 0x4) zEntPlayer_Notify(31);
+    return bub->subType == 0 ? ZVIL_BUBBLE_BREAK : stimctxt.res_bubble;
+}
+
 // Tells the villain something bumped into it and returns how its type responded.
 en_ZVILLAIN_BUMPED_RESPONSE zEntVillain_Bumped(st_zEntVillain* ent, const _xCollis* colrec)
 {
@@ -1348,6 +1391,15 @@ static S32 VILN_shark_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* st
     switch (g_pgol = vil->goal)
     {
     case ZVIL_GOAL_AFTERLIFE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_MAKEREADY:
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
     case ZVIL_GOAL_BASEINIT:
         switch (g_pstm = stim)
         {
@@ -1377,6 +1429,8 @@ static S32 VILN_shark_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* st
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
         case ZVIL_STIM_SOAPED:
+            stimctxt->res_bubble = ZVIL_BUBBLE_BREAK;
+            break;
         case ZVIL_STIM_GUMMED:
             stimctxt->res_bubble = ZVIL_BUBBLE_BREAK;
             break;
@@ -1412,7 +1466,8 @@ static S32 VILN_shark_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal,
         break;
     case ZVIL_GOAL_BASEINIT:
     {
-        en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_IDLE, ZVIL_ANIM_IDLE };
+        en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN, ZVIL_ANIM_IDLE };
+        choices[0] = ZVIL_ANIM_IDLE;
         VANM_set(vil, choices, 2, 0);
         vil->collis->chk = 0;
         vil->collis->pen = 0;
@@ -1427,23 +1482,35 @@ static S32 VILN_shark_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal,
         vil->penby = 0;
         break;
     case ZVIL_GOAL_GOONLINE:
+    {
+        en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN, ZVIL_ANIM_IDLE };
+        choices[0] = ZVIL_ANIM_IDLE;
+        VANM_set(vil, choices, 2, 0);
+        break;
+    }
     case ZVIL_GOAL_DIE:
     {
-        en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_IDLE, ZVIL_ANIM_IDLE };
+        en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN, ZVIL_ANIM_IDLE };
+        choices[0] = ZVIL_ANIM_IDLE;
         VANM_set(vil, choices, 2, 0);
         break;
     }
     case ZVIL_GOAL_IDLE:
         if (gspot == ZVIL_GSPOT_FIDGET)
         {
-            en_NPC_ANIMSTATES choices[4] = { ZVIL_ANIM_FIDGET_IDLE1, ZVIL_ANIM_FIDGET_IDLE2,
-                                             ZVIL_ANIM_FIDGET_BORED1, ZVIL_ANIM_FIDGET_BORED2 };
+            en_NPC_ANIMSTATES choices[4] = { ZVIL_ANIM_UNKNOWN };
+            choices[0] = ZVIL_ANIM_FIDGET_IDLE1;
+            choices[1] = ZVIL_ANIM_FIDGET_IDLE2;
+            choices[2] = ZVIL_ANIM_FIDGET_BORED1;
+            choices[3] = ZVIL_ANIM_FIDGET_BORED2;
             VANM_randset(vil, NULL, choices, 4);
             vil->anim_playsync = 1;
         }
         else
         {
-            en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_BORED, ZVIL_ANIM_IDLE };
+            en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN };
+            choices[0] = ZVIL_ANIM_BORED;
+            choices[1] = ZVIL_ANIM_IDLE;
             VANM_randset(vil, NULL, choices, 2);
         }
         break;
@@ -1664,18 +1731,36 @@ static S32 VILN_shagM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* st
     switch (g_pgol = goal)
     {
     case ZVIL_GOAL_IDLE:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_ENTERGOAL)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
+        }
+        break;
     case ZVIL_GOAL_ACTION:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_ENTERGOAL)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_ACTION, ZVIL_GSPOT_START);
+        }
+        break;
     case ZVIL_GOAL_FOLLOW:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_ENTERGOAL)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_FOLLOW, ZVIL_GSPOT_START);
+        }
+        break;
     case ZVIL_GOAL_PATROL:
         g_pstm = stim;
         if (stim == ZVIL_STIM_ENTERGOAL)
         {
             vil->anim_loopmult = 0.97f;
-            vil->vhf->pickanim(vil, goal, ZVIL_GSPOT_START);
-            if (goal == ZVIL_GOAL_PATROL && !vil->nav_next)
-            {
-                vil->need_navpt = 1;
-            }
+            vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, ZVIL_GSPOT_START);
+            if (!vil->nav_next) vil->need_navpt = 1;
         }
         break;
     }
