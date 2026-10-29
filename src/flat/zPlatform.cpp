@@ -15,7 +15,6 @@
 void xFFXShakeFree(xFFXShakeState* s);
 void xFFXShakeUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata);
 S16 xFFXAddEffect(_xEnt* ent, xFFX* effect);
-extern "C" void fn_80026A1C(_xEntMotion* motion, const xVec3* dpos);
 extern "C" void fn_8002E174(xVec3* out, const xMat3x3* mat, const xVec3* v);
 
 static _zParEmitter* sEmitTremble;
@@ -430,7 +429,7 @@ static void zPlatformTranslate(_xEnt* ent, xVec3* dpos)
 {
     _zPlatform* plat = (_zPlatform*)ent;
     xEntDefaultTranslate(ent, dpos);
-    fn_80026A1C(&plat->motion, dpos);
+    xEntMotionTranslate(&plat->motion, dpos);
 }
 
 // Apply scene events to platform motion, visibility, and animation.

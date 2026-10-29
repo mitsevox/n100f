@@ -259,4 +259,9 @@ void xQuatFromMat(xQuat* q, const xMat3x3* m);
 void xMath3Init();
 void xMath3Exit();
 
+inline void xMat3x3Rot(xMat3x3* m, const xVec3* a, F32 t)
+{
+    xMat3x3RotC(m, a->x, a->y, a->z, t);
+}
+
 #endif
