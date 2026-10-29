@@ -151,6 +151,7 @@ void xMat3x3RMulVec(xVec3* o, const xMat3x3* m, const xVec3* v);
 void xMat3x3GetEuler(const xMat3x3* m, xVec3* a);
 void xMat3x3LMulVec(xVec3* o, const xMat3x3* m, const xVec3* v);
 void xMat3x3LMulRotY(xMat3x3* o, const xMat3x3* m, F32 t);
+void xMat3x3RMulRotY(xMat3x3* o, const xMat3x3* m, F32 t);
 void xMat4x3MoveLocalRight(xMat4x3* m, F32 mag);
 void xMat4x3MoveLocalUp(xMat4x3* m, F32 mag);
 void xMat4x3MoveLocalAt(xMat4x3* m, F32 mag);

@@ -22,4 +22,7 @@ enum eGameMode
 
 extern eGameMode gGameMode;
 
+S32 zGameModeGet();
+S32 zGameStateGet();
+
 #endif
