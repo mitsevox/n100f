@@ -33,8 +33,7 @@ RxRenderStateVector* RxRenderStateVectorSetDefaultRenderStateVector(RxRenderStat
         {
             RwRGBA white = { 255, 255, 255, 255 };
 
-            rsvp->Flags
- = RSV_FLAG_TEXTUREPERSPECTIVE | RSV_FLAG_ZTEST | RSV_FLAG_ZWRITE;
+            rsvp->Flags = RSV_FLAG_TEXTUREPERSPECTIVE | RSV_FLAG_ZTEST | RSV_FLAG_ZWRITE;
             rsvp->ShadeMode = rwSHADEMODEGOURAUD;
             rsvp->SrcBlend = rwBLENDSRCALPHA;
             rsvp->DestBlend = rwBLENDINVSRCALPHA;

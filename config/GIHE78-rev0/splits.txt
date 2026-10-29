@@ -1759,7 +1759,9 @@ rwsdk/driver/gcn/dltextur.c:
 	.text       start:0x8017CF88 end:0x8017DBB8
 
 rwsdk/src/pipe/p2/baim3d.c:
-	.text       start:0x8017DE58 end:0x8017E5C8
+	.text       start:0x8017DE58 end:0x8017ED24
+	.data       start:0x801DE628 end:0x801DE698
+	.sbss       start:0x8025F898 end:0x8025F8A8
 
 rwsdk/src/pipe/p2/bapipe.c:
 	.text       start:0x8017ED24 end:0x8017EDA4
