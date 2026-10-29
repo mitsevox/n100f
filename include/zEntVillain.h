@@ -2,6 +2,7 @@
 #define ZENTVILLAIN_H
 
 #include "zEnt.h"
+#include "iModel.h"
 
 struct _zEntBubble;
 
@@ -21,6 +22,8 @@ struct st_zEntVillain : _zEnt
     U8 opaque_118[0x154 - 0x118];
     F32 spd_move;
     F32 spd_chase;
+    U8 opaque_15C[0x1B4 - 0x15C];
+    iModelTag tag_vert[12];
 };
 
 enum en_ZVILLAIN_BUBBLE_RESPONSE

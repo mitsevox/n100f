@@ -4,6 +4,22 @@
 #include "types.h"
 #include "xVec3.h"
 
+struct _xEnt;
+
+struct tagzFeet
+{
+    S32 total;
+    _xEnt* owner;
+    S16 entity_type;
+    S16 pitch;
+};
+
+struct _tagFoot
+{
+    tagzFeet* feet;
+    S32 idx;
+};
+
 struct _tagSkidEdge
 {
     _xVec3 centre;

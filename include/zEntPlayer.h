@@ -92,7 +92,9 @@ struct zPlayerGlobals
     _zEntHangable* HangEnt;
     _zEntHangable* HangEntLast;
     xVec3 HangPivot;
-    U8 opaque_2E8[0x3C8 - 0x2E8];
+    U8 opaque_2E8[0x308 - 0x2E8];
+    iModelTag HangPawTag[4];
+    U8 opaque_388[0x3C8 - 0x388];
     S32 Inv_Ammo[2];
     S32 Inv_AmmoMax[2];
     iModelTag BubbleTag;
