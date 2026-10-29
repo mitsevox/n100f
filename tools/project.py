@@ -507,6 +507,9 @@ def generate_build_ninja(
         name="download_tool",
         command=f"$python {download_tool} $tool $out --tag $tag",
         description="TOOL $out",
+        # Every target's build.ninja declares the same shared tools but keeps its own
+        # .ninja_log; download_tool.py keeps an existing tool at the same tag untouched.
+        restat=True,
     )
 
     decompctx = config.tools_dir / "decompctx.py"

@@ -124,6 +124,11 @@ def main() -> None:
 
     url = TOOLS[args.tool](args.tag)
     output = Path(args.output)
+    # Records the tag of the tool at output; a build.ninja that has no log entry
+    # for a tool another target's build already downloaded leaves it as it is.
+    stamp = output.with_name(output.name + ".tag")
+    if output.exists() and stamp.is_file() and stamp.read_text().strip() == args.tag:
+        return
 
     print(f"Downloading {url} to {output}")
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -146,6 +151,8 @@ def main() -> None:
             req, context=ssl.create_default_context(cafile=certifi.where())
         ) as response:
             download(url, response, output)
+
+    stamp.write_text(args.tag + "\n")
 
 
 if __name__ == "__main__":
