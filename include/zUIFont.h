@@ -3,7 +3,18 @@
 
 #include "zUI.h"
 
-struct zUIFontAsset;
+struct zUIFontAsset : zUIAsset
+{
+    U16 uiFontFlags;
+    U8 mode;
+    U8 fontID;
+    U32 textAssetID;
+    U8 bcolor[4];
+    U8 color[4];
+    U16 inset[4];
+    U16 space[2];
+    U16 cdim[2];
+};
 
 struct _zUIFont : _zUI
 {
