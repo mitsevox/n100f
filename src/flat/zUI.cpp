@@ -12,6 +12,7 @@
 #include <string.h>
 #include "zGlobals.h"
 #include "zGame.h"
+#include "zVar.h"
 #include <stdlib.h>
 
 struct zUIAsset : p2EntAsset
@@ -50,8 +51,7 @@ struct zSceneLevel
 
 extern "C" zSceneLevel lbl_801C8BCC[];
 extern "C" F32 lbl_8025E8C4;
-extern "C" void fn_800D77CC(U32 sceneID);
-extern "C" void fn_800CDB7C(xBase* (*callback)(xBase*, zScene*, void*), S32 type, void* data);
+void zSceneForAllBase(xBase* (*func)(xBase*, zScene*, void*), S32 baseType, void* data);
 void zUI_Render(_xEnt* ent);
 extern "C" void fn_800D47E8(_xEnt* ent);
 
@@ -103,7 +103,7 @@ S32 zUIEventCB(xBase*, xBase* to, U32 event, F32*, xBase*)
                     scene[1] = '0';
                     U32 sceneID = (U32(scene[0]) << 24) | (U32(scene[1]) << 16) |
                                   (U32(scene[2]) << 8) | U32(scene[3]);
-                    fn_800D77CC(sceneID);
+                    zVarSetArea(sceneID);
                 }
             }
         }
@@ -277,8 +277,8 @@ void zUIRenderAll()
 
     if (!sSortedCount)
     {
-        fn_800CDB7C(zUIRenderIteratorInsert, 0x20, 0);
-        fn_800CDB7C(zUIRenderIteratorInsert, 0x21, 0);
+        zSceneForAllBase(zUIRenderIteratorInsert, 0x20, 0);
+        zSceneForAllBase(zUIRenderIteratorInsert, 0x21, 0);
         if (sSortedCount > 1)
             qsort(sSorted, sSortedCount, sizeof(sSorted[0]), iRenderQSort_Face);
     }
