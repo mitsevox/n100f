@@ -397,6 +397,7 @@ RpClump* RpClumpForAllLights(RpClump* clump, RpLightCallBack callback, void* pDa
 RpClump* RpClumpRemoveLight(RpClump* clump, RpLight* light);
 RpClump* RpClumpRemoveCamera(RpClump* clump, RwCamera* camera);
 RpClump* RpClumpStreamRead(RwStream* stream);
+RpWorld* RpWorldStreamRead(RwStream* stream);
 
 RpWorld* RpWorldAddCamera(RpWorld* world, RwCamera* camera);
 RpWorld* RpWorldRemoveCamera(RpWorld* world, RwCamera* camera);

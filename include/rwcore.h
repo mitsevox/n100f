@@ -303,6 +303,7 @@ typedef enum RwFrustumTestResult
 #define rwID_CLUMP 0x10
 #define rwID_LIGHT 0x12
 #define rwID_UNICODESTRING 0x13
+#define rwID_TEXDICTIONARY 0x16
 #define rwID_ATOMIC 0x14
 #define rwID_GEOMETRYLIST 0x1A
 #define rwID_RIGHTTORENDER 0x1f
@@ -616,17 +617,29 @@ struct RwTexDictionary
     RwLLLink lInInstance;
 };
 
-// Partial: the name, mask and filtering members are not declared; the GameCube layout has
-// refCount at +0x54.
 typedef struct RwTexture RwTexture;
 struct RwTexture
 {
     RwRaster* raster;
     RwTexDictionary* dict;
     RwLLLink lInDictionary;
-    U8 unk10[0x44];
+    char name[32];
+    char mask[32];
+    U32 filterAddressing;
     S32 refCount;
 };
+
+#define rwTEXTUREFILTERMODEMASK 0x000000FF
+
+#define RwTextureAddRefMacro(_tex) (((_tex)->refCount++), (_tex))
+
+#define RwTextureSetFilterModeMacro(_tex, _filtering)                                              \
+    (((_tex)->filterAddressing = ((_tex)->filterAddressing & ~rwTEXTUREFILTERMODEMASK) |           \
+                                 (((U32)(_filtering)) & rwTEXTUREFILTERMODEMASK)),                 \
+     (_tex))
+
+#define RwTextureAddRef(_tex) RwTextureAddRefMacro(_tex)
+#define RwTextureSetFilterMode(_tex, _filtering) RwTextureSetFilterModeMacro(_tex, _filtering)
 
 typedef struct RwImage RwImage;
 struct RwImage
@@ -1671,6 +1684,9 @@ const RwPluginRegistry* _rwPluginRegistryDeInitObject(const RwPluginRegistry* re
 void _rwObjectHasFrameReleaseFrame(void* object);
 
 S32 RwTextureDestroy(RwTexture* texture);
+RwTexDictionary* RwTexDictionaryStreamRead(RwStream* stream);
+RwTexture* RwTexDictionaryRemoveTexture(RwTexture* texture);
+S32 RwTexDictionaryDestroy(RwTexDictionary* dict);
 RwTexture* RwTexDictionaryAddTexture(RwTexDictionary* dict, RwTexture* texture);
 RwTexDictionary* RwTexDictionaryGetCurrent(void);
 

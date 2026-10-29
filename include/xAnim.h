@@ -139,6 +139,13 @@ struct xAnimTable
 };
 
 void xAnimInit();
+xAnimFile* xAnimFileNewBilinear(void** rawData, char* name, U32 flags, xAnimFile** linkedList,
+                                U32 numX, U32 numY);
+void xAnimFileSetTime(xAnimFile* data, F32 duration, F32 timeOffset);
+void xAnimFileSetPhysics(xAnimFile* data, void* rawData);
+void xAnimFileSetPoses(xAnimFile* data, void* startPose, F32 startTime, void* endPose, F32 endTime);
+
+extern U32 gxAnimUseGrowAlloc;
 xAnimFile* xAnimFileNew(void* rawData, char* name, U32 flags, xAnimFile** linkedList);
 xAnimTable* xAnimTableNew(char* name, xAnimTable** linkedList);
 xAnimState* xAnimTableNewState(xAnimTable* table, char* name, U32 flags, U32 userFlags, F32 speed,

@@ -17,8 +17,16 @@ struct zScene : _xScene
     U8 opaque_60[0x6C - 0x60];
     U32 sceneID;
     _zPortal* pendingPortal;
-    U32 num_ents;
-    _zEnt** ents;
+    union
+    {
+        U32 num_ents;
+        U32 num_base;
+    };
+    union
+    {
+        xBase** base;
+        _zEnt** ents;
+    };
     U32 baseCount[43];
     xBase* baseList[43];
     U32 num_bubbles;
