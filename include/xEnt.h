@@ -195,6 +195,9 @@ struct _xEnt : xBase
     _xEntShadow* ent_shadow;
 };
 
+struct RpAtomic;
+
+xModelInstance* xEntLoadModel(_xEnt* ent, RpAtomic* imodel);
 void xEntCollide(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntApplyPhysics(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntMove(_xEnt* ent, _xScene* sc, F32 dt);
