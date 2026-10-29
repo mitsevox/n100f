@@ -1304,7 +1304,7 @@ static S32 ButtonHBCallback(_zEnt* ent, _xCollis* coll)
     return 0;
 }
 
-static inline void ButtonBounceCheck(_xEnt* ent)
+void ButtonBBCheck(_xEnt* ent)
 {
     _xCollis* coll;
     _xCollis* endcoll;
@@ -1350,7 +1350,7 @@ static inline void ButtonHeadbuttCheck(_xEnt* ent)
     }
 }
 
-void ButtonBBCheck(_xEnt* ent)
+void ButtonCheck(_xEnt* ent)
 {
     _xCollis* coll;
 
@@ -1363,13 +1363,13 @@ void ButtonBBCheck(_xEnt* ent)
             {
                 ButtonHeadbuttCheck(ent);
             }
-            ButtonBounceCheck(ent);
+            ButtonBBCheck(ent);
             ButtonStandOnCheck(ent);
         }
     }
 }
 
-static inline void DestructObjBounceCheck(_xEnt* ent)
+void DestructObjBBCheck(_xEnt* ent)
 {
     _xCollis* coll;
     _xCollis* endcoll;
@@ -1417,7 +1417,7 @@ static inline void DestructObjHeadbuttCheck(_xEnt* ent)
     HeadbuttTest(coll, endcoll, 0.1f, DestructObjHBCallback);
 }
 
-void DestructObjBBCheck(_xEnt* ent)
+void DestructObjCheck(_xEnt* ent)
 {
     _xCollis* coll;
 
@@ -1427,7 +1427,7 @@ void DestructObjBBCheck(_xEnt* ent)
         if (coll->optr && ((xBase*)coll->optr)->baseType == 0x1B)
         {
             DestructObjHeadbuttCheck(ent);
-            DestructObjBounceCheck(ent);
+            DestructObjBBCheck(ent);
         }
     }
 }
