@@ -251,8 +251,10 @@ S32 zEGeneratorEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
 }
 
 // Initialize the entity and its optional on animation.
-void zEGenerator_Init(zEGenerator* egen, p2EntAsset* asset)
+void zEGenerator_Init(void* object, void* assetData)
 {
+    zEGenerator* egen = (zEGenerator*)object;
+    p2EntAsset* asset = (p2EntAsset*)assetData;
     zEntInit(egen, asset, 'EGEN');
     zEGenAsset* zasset = (zEGenAsset*)asset;
     if (egen->linkCount)
