@@ -202,6 +202,7 @@ void xEntUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntReset(_xEnt* ent);
 void xEntSetNostepNormAngle(F32 angle);
 void xEntDriveInit(_xEntDrive* drv, _xEnt* driven);
+void xEntDriveUpdate(_xEntDrive* drv, _xScene* sc, F32 dt);
 U32 xEntIsVisible(_xEnt* ent);
 void xEntDefaultBoundUpdate(_xEnt* ent, xVec3* pos);
 void xEntSetMaterialMul(_xEnt* ent, F32 r, F32 g, F32 b);
