@@ -279,6 +279,14 @@ static void zVIL_apply_vilcfg(st_zEntVillain* ent, st_ZVIL_CONFIG_REFERENCE* cfg
 static void zVIL_apply_move(st_zEntVillain* ent, _xScene* scn, F32 dt, _xEntFrame* frame);
 static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt);
 static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS pid, void* vv);
+static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata);
+static void VCFG_readAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata);
+static S32 zVIL_elcb_event(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
+static void zVIL_elcb_update(_xEnt* ent, _xScene* scn, F32 dt);
+static void zVIL_elcb_bupdate(_xEnt* ent, _xVec3* pos);
+static void zVIL_elcb_move(_xEnt* ent, _xScene* scn, F32 dt, _xEntFrame* frame);
+static void VILN_KookRender(_xEnt* ent);
+void zEntVillain_InitDep(st_zEntVillain* ent, zScene* sc);
 static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt);
 static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplicit, S32 flg_vsnd,
                        F32 dist);
@@ -340,6 +348,177 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
 static S32 VILN_std_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* resp);
 static S32 VILN_std_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot);
+
+static S32 VILN_BBK_animtran(st_zEntVillain*, xAnimTransition*, xAnimSingle*);
+static S32 VILN_BBK_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BBK_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_BBK_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_BBK_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BBK_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_BBK_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_BBK_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BBK_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BBK_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BBK_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_BGG_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BGG_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_BGG_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_BGG_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BGG_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_BGG_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_BGG_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BGG_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BGG_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BGG_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_BMM_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BMM_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_BMM_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_BMM_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BMM_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_BMM_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_BMM_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BMM_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BMM_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BMM_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_BRB_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BRB_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_BRB_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_BRB_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BRB_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_BRB_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_BRB_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BRB_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BRB_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BRB_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_BRB_xtrarend(st_zEntVillain*);
+static S32 VILN_crit_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_crit_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_crit_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_crit_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_crit_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_crit_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_crit_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_crit_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_crit_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_crit_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_gang_animtran(st_zEntVillain*, xAnimTransition*, xAnimSingle*);
+static S32 VILN_gang_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_gang_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_gang_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_gang_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_gang_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_gang_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_gang_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_gang_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_gang_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_gang_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_kp_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_kp_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_shagM_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shagM_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_shagM_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_shagM_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shagM_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_shagM_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_shagM_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shagM_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shagM_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shagM_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_shag_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shag_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_shag_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_shag_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shag_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_shag_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_shag_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shag_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shag_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shag_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_sham_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_sham_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_sham_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_sham_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_sham_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_sham_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_sham_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_sham_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_sham_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_sham_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_shark_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shark_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_shark_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_shark_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shark_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_shark_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_shark_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shark_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shark_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shark_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_std_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_std_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_std_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_std_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_std_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_std_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_std_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_std_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_std_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_std_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+
+// Handler functions indexed by villain subtype; the final row is the sentinel.
+static st_ZVIL_NPC_HANDLERFUNCS g_npcFuncs[51] = {
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_shark_flag, VILN_shark_query, VILN_shark_sysevent, VILN_shark_notice, VILN_shark_aware, VILN_shark_stimulus, VILN_shark_trangoal, VILN_shark_calcmove, VILN_shark_respond, VILN_shark_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_kp_query, VILN_std_sysevent, VILN_std_notice, VILN_kp_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shagM_flag, VILN_shagM_query, VILN_shagM_sysevent, VILN_shagM_notice, VILN_shagM_aware, VILN_shagM_stimulus, VILN_shagM_trangoal, VILN_shagM_calcmove, VILN_shagM_respond, VILN_shagM_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, VILN_gang_animtran, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_BBK_flag, VILN_BBK_query, VILN_BBK_sysevent, VILN_BBK_notice, VILN_BBK_aware, VILN_BBK_stimulus, VILN_BBK_trangoal, VILN_BBK_calcmove, VILN_BBK_respond, VILN_BBK_pickanim, VILN_BBK_animtran, 0 },
+    { 1, VILN_BGG_flag, VILN_BGG_query, VILN_BGG_sysevent, VILN_BGG_notice, VILN_BGG_aware, VILN_BGG_stimulus, VILN_BGG_trangoal, VILN_BGG_calcmove, VILN_BGG_respond, VILN_BGG_pickanim, 0, 0 },
+    { 1, VILN_BRB_flag, VILN_BRB_query, VILN_BRB_sysevent, VILN_BRB_notice, VILN_BRB_aware, VILN_BRB_stimulus, VILN_BRB_trangoal, VILN_BRB_calcmove, VILN_BRB_respond, VILN_BRB_pickanim, 0, VILN_BRB_xtrarend },
+    { 1, VILN_BMM_flag, VILN_BMM_query, VILN_BMM_sysevent, VILN_BMM_notice, VILN_BMM_aware, VILN_BMM_stimulus, VILN_BMM_trangoal, VILN_BMM_calcmove, VILN_BMM_respond, VILN_BMM_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+};
 
 // Play flags and start delay of each villain sound type, ended by VSND_LISTEND.
 static st_NPC_SOUND_PROPERTIES g_sndProps[36] = {
@@ -690,6 +869,87 @@ st_zEntVillain* zEntVillain_MemPool(U32 npccnt)
     }
 
     return g_npcpool;
+}
+
+// Initialize a villain entity and select the handlers and settings for its subtype.
+void zEntVillain_Init(st_zEntVillain* ent, p2EntAsset* asset)
+{
+    zEntInit(ent, asset, 0x4E504320);
+    ent->eventFunc = zVIL_elcb_event;
+    ent->update = zVIL_elcb_update;
+    ent->bupdate = zVIL_elcb_bupdate;
+    ent->move = zVIL_elcb_move;
+    ent->bound2.type = 1;
+    if (ent->linkCount)
+        ent->link = (p2LinkAsset*)((p2EntVillainAsset*)(ent->asset + 1) + 1);
+    else
+        ent->link = NULL;
+    ent->vhf = &g_npcFuncs[ent->asset->subtype];
+    ent->vilcfg.asset = ent->asset;
+    ent->vilcfg.vilp2ass = (p2EntVillainAsset*)(ent->asset + 1);
+    VCFG_readParms(&ent->vilcfg);
+    VCFG_readAsset(&ent->vilcfg);
+    ent->ability = g_npcTable[ent->asset->subtype].ability;
+    ent->abl_atak = g_npcTable[ent->asset->subtype].abl_atak;
+    ent->abl_dtct = g_npcTable[ent->asset->subtype].abl_dtct;
+    ent->abl_move = g_npcTable[ent->asset->subtype].abl_move;
+    ent->abl_spyk = g_npcTable[ent->asset->subtype].abl_spyk;
+    ent->abl_vuln = g_npcTable[ent->asset->subtype].abl_vuln;
+    ent->chkby = ent->vhf->flags(ent, ZVIL_FGRP_CHKBY, ZVIL_GOAL_NONE);
+    ent->penby = ent->vhf->flags(ent, ZVIL_FGRP_PENBY, ZVIL_GOAL_NONE);
+    ent->collis->chk = ent->vhf->flags(ent, ZVIL_FGRP_CHK, ZVIL_GOAL_NONE);
+    ent->collis->pen = ent->vhf->flags(ent, ZVIL_FGRP_PEN, ZVIL_GOAL_NONE);
+    ent->pflags = ent->vhf->flags(ent, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+    ent->typ_person = g_npcTable[ent->asset->subtype].typ_person;
+    if (ent->flg_misc & 0x8)
+        VCFG_getParm(&ent->vilcfg, ZVIL_PARM_MDLSCL_BASE, &ent->asset->scale);
+    xEntReset(ent);
+    ent->frame->rot.axis = g_Y3;
+    ent->frame->rot.angle = ent->asset->ang.x;
+    ent->pos_guard_home = *xEntGetPos(ent);
+    xSceneID2Name(globals.sceneCur, ent->id);
+    if (ent->subType == eEntVillainTypeSpaceKook) ent->render = VILN_KookRender;
+}
+
+// Reset the villain's state and rebuild its scene-dependent configuration.
+extern "C" void fn_800A8CB8(st_zEntVillain* ent, zScene* sc)
+{
+    xEntReset(ent);
+    memset(&ent->vhf, 0, sizeof(st_zEntVillain) - sizeof(_zEnt));
+    ent->eventFunc = zVIL_elcb_event;
+    ent->update = zVIL_elcb_update;
+    ent->bupdate = zVIL_elcb_bupdate;
+    ent->move = zVIL_elcb_move;
+    ent->bound2.type = 1;
+    if (ent->linkCount)
+        ent->link = (p2LinkAsset*)((p2EntVillainAsset*)(ent->asset + 1) + 1);
+    else
+        ent->link = NULL;
+    ent->vhf = &g_npcFuncs[ent->asset->subtype];
+    ent->vilcfg.asset = ent->asset;
+    ent->vilcfg.vilp2ass = (p2EntVillainAsset*)(ent->asset + 1);
+    VCFG_readParms(&ent->vilcfg);
+    VCFG_readAsset(&ent->vilcfg);
+    ent->ability = g_npcTable[ent->asset->subtype].ability;
+    ent->abl_atak = g_npcTable[ent->asset->subtype].abl_atak;
+    ent->abl_dtct = g_npcTable[ent->asset->subtype].abl_dtct;
+    ent->abl_move = g_npcTable[ent->asset->subtype].abl_move;
+    ent->abl_spyk = g_npcTable[ent->asset->subtype].abl_spyk;
+    ent->abl_vuln = g_npcTable[ent->asset->subtype].abl_vuln;
+    ent->chkby = ent->vhf->flags(ent, ZVIL_FGRP_CHKBY, ZVIL_GOAL_NONE);
+    ent->penby = ent->vhf->flags(ent, ZVIL_FGRP_PENBY, ZVIL_GOAL_NONE);
+    ent->collis->chk = ent->vhf->flags(ent, ZVIL_FGRP_CHK, ZVIL_GOAL_NONE);
+    ent->collis->pen = ent->vhf->flags(ent, ZVIL_FGRP_PEN, ZVIL_GOAL_NONE);
+    ent->pflags = ent->vhf->flags(ent, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+    ent->typ_person = g_npcTable[ent->asset->subtype].typ_person;
+    if (ent->flg_misc & 0x8)
+        VCFG_getParm(&ent->vilcfg, ZVIL_PARM_MDLSCL_BASE, &ent->asset->scale);
+    xEntReset(ent);
+    ent->frame->rot.axis = g_Y3;
+    ent->frame->rot.angle = ent->asset->ang.x;
+    ent->pos_guard_home = *xEntGetPos(ent);
+    xSceneID2Name(globals.sceneCur, ent->id);
+    zEntVillain_InitDep(ent, sc);
 }
 
 // Returns the villain in slot npcidx of the pool.

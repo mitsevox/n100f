@@ -808,7 +808,7 @@ struct st_ZVIL_NPC_HANDLERFUNCS
     S32 (*aware)(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
     S32 (*stimulus)(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
     S32 (*trangoal)(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
-    S32 (*calcmove)(st_zEntVillain*, _xScene*, F32, _xEntFrame*);
+    S32 (*calcmove)(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
     S32 (*respond)(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
     S32 (*pickanim)(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
     S32 (*animtran)(st_zEntVillain*, xAnimTransition*, xAnimSingle*);
