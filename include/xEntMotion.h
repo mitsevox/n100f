@@ -69,11 +69,37 @@ struct _xEntPenData
     xMat4x3 omat;
 };
 
+struct _xMovePoint;
+
+// Partial: only the members through src are used here.
+struct _xEntMPData
+{
+    F32 curdist;
+    F32 speed;
+    _xMovePoint* dest;
+    _xMovePoint* src;
+};
+
+struct _xEntERData
+{
+    xVec3 a;
+    xVec3 b;
+    xVec3 dir;
+    F32 et;
+    F32 wet;
+    F32 rt;
+    F32 wrt;
+    F32 p;
+    F32 brt;
+    F32 ert;
+    S32 state;
+};
+
 #define k_XENTMOTION_STOPPED 0x4
 
 struct _xEnt;
 
-// Partial: only the mech and pen members of the union are declared. pen is the largest
+// Partial: only the mech, mp, er and pen members of the union are declared. pen is the largest
 // member, so sizeof(_xEntMotion) is its size.
 struct _xEntMotion
 {
@@ -88,6 +114,8 @@ struct _xEntMotion
     {
         _xEntMechData mech;
         _xEntPenData pen;
+        _xEntMPData mp;
+        _xEntERData er;
     };
     _xEnt* owner;
     _xEnt* target;

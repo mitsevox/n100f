@@ -12,15 +12,6 @@ typedef struct RpVertexNormal RpVertexNormal;
 typedef struct RwTexCoords RwTexCoords;
 typedef struct RpCollSector RpCollSector;
 typedef struct RpMeshHeader RpMeshHeader;
-typedef struct RxPipeline RxPipeline;
-
-// Partial: only pluginId and pluginData are declared.
-struct RxPipeline
-{
-    U8 unk0[0x2C];
-    U32 pluginId;
-    U32 pluginData;
-};
 
 struct RpMeshHeader
 {
@@ -190,6 +181,8 @@ typedef RpAtomic* (*RpAtomicCallBack)(RpAtomic* atomic, void* data);
 
 #define rpATOMICCOLLISIONTEST 0x01
 
+#define rpGEOMETRYNATIVE 0x01000000
+
 struct RpAtomic
 {
     RwObjectHasFrame object;
@@ -261,6 +254,14 @@ extern "C" {
 S32 RpLightDestroy(RpLight* light);
 S32 RpLightRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
                           RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RpLightRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                RwPluginDataChunkWriteCallBack writeCB,
+                                RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RpMaterialRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                             RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RpMaterialRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                   RwPluginDataChunkWriteCallBack writeCB,
+                                   RwPluginDataChunkGetSizeCallBack getSizeCB);
 
 RpGeometry* RpGeometryLock(RpGeometry* geometry, S32 lockMode);
 
@@ -271,6 +272,9 @@ S32 RpAtomicRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor con
 S32 RpAtomicRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
                                  RwPluginDataChunkWriteCallBack writeCB,
                                  RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RpAtomicSetStreamAlwaysCallBack(U32 pluginID, RwPluginDataChunkAlwaysCallBack alwaysCB);
+S32 RpAtomicSetStreamRightsCallBack(U32 pluginID, RwPluginDataChunkRightsCallBack rightsCB);
+S32 RpAtomicGetPluginOffset(U32 pluginID);
 S32 RpClumpRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
                           RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
 S32 RpGeometryRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
@@ -290,6 +294,8 @@ S32 RpWorldRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack read
                                 RwPluginDataChunkGetSizeCallBack getSizeCB);
 
 S32 RpClumpDestroy(RpClump* clump);
+RpClump* RpClumpAddAtomic(RpClump* clump, RpAtomic* atomic);
+RpClump* RpClumpRemoveAtomic(RpClump* clump, RpAtomic* atomic);
 RpClump* RpClumpForAllAtomics(RpClump* clump, RpAtomicCallBack callback, void* pData);
 RpClump* RpClumpForAllCameras(RpClump* clump, RwCameraCallBack callback, void* pData);
 RpClump* RpClumpForAllLights(RpClump* clump, RpLightCallBack callback, void* pData);
@@ -298,6 +304,28 @@ RpClump* RpClumpStreamRead(RwStream* stream);
 RpWorld* RpWorldAddCamera(RpWorld* world, RwCamera* camera);
 RpWorld* RpWorldRemoveCamera(RpWorld* world, RwCamera* camera);
 S32 RpWorldDestroy(RpWorld* world);
+
+RxPipeline* RpWorldSetDefaultSectorPipeline(RxPipeline* pipeline);
+RxPipeline* RpAtomicSetDefaultPipeline(RxPipeline* pipeline);
+void _rpWorldPipelineClose(void);
+S32 _rpWorldPipelineOpen(void);
+S32 _rpWorldPipeAttach(void);
+S32 _rpCreatePlatformMaterialPipelines(void);
+void _rpDestroyPlatformMaterialPipelines(void);
+S32 _rpCreatePlatformWorldSectorPipelines(void);
+void _rpDestroyPlatformWorldSectorPipelines(void);
+S32 _rpCreatePlatformAtomicPipelines(void);
+void _rpDestroyPlatformAtomicPipelines(void);
+
+RxNodeDefinition* RxNodeDefinitionGetLight(void);
+RxNodeDefinition* RxNodeDefinitionGetPostLight(void);
+RxNodeDefinition* RxNodeDefinitionGetAtomicInstance(void);
+RxNodeDefinition* RxNodeDefinitionGetAtomicEnumerateLights(void);
+RxNodeDefinition* RxNodeDefinitionGetMaterialScatter(void);
+RxNodeDefinition* RxNodeDefinitionGetWorldSectorInstance(void);
+RxNodeDefinition* RxNodeDefinitionGetWorldSectorEnumerateLights(void);
+RxNodeDefinition* RxNodeDefinitionGetGameCubeAtomicAllInOne(void);
+RxNodeDefinition* RxNodeDefinitionGetGameCubeWorldSectorAllInOne(void);
 
 #ifdef __cplusplus
 }

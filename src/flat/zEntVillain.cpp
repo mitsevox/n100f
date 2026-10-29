@@ -1,0 +1,4399 @@
+#include "zEntVillain.h"
+
+#include "iMath.h"
+#include "xAnim.h"
+#include "xBound.h"
+#include "xEvent.h"
+#include "xFFX.h"
+#include "xMath.h"
+#include "xMemMgr.h"
+#include "xordarray.h"
+#include "xScene.h"
+#include "xString.h"
+#include "xutil.h"
+#include "zEntPickup.h"
+#include "zEntPlayer.h"
+#include "zEntShaggy.h"
+#include "zEntProjectile.h"
+#include "zGlobals.h"
+#include "zLaugh.h"
+#include "zLightning.h"
+#include "zMovePoint.h"
+#include "zParEmitter.h"
+#include "zScene.h"
+
+#include <string.h>
+
+enum en_RBS_STAGE
+{
+    RBS_STAGE_PRELIGHT = 4000,
+    RBS_STAGE_OUTBOUND,
+    RBS_STAGE_INBOUND
+};
+
+// Redbeard's thrown sword.
+struct st_REDBEARD_SWORD : _xEnt
+{
+    S32 flg_stat;
+    en_RBS_STAGE stage;
+    U32 aid_mdlFile;
+    RpAtomic* mdlFile;
+    st_zEntVillain* rbvil;
+    xModelInstance* mdl_animsword;
+    _xEntFrame raw_frame;
+    _xEntCollis raw_collis;
+    _xEnt* ent_colchk[5];
+    F32 tym_age;
+    F32 dst_far;
+    F32 spd_fly;
+    _xVec3 dir_end;
+    _xVec3 pos_end;
+};
+
+enum en_BGG_PHASE
+{
+    BGG_PHAZ_UNKNOWN,
+    BGG_PHAZ_BUILDUP,
+    BGG_PHAZ_FLY,
+    BGG_PHAZ_FALL,
+    BGG_PHAZ_SHOCKWAVE
+};
+
+// A Green Ghost quake ball in flight.
+struct st_BGG_QUAKEBALL
+{
+    S32 flg_stat;
+    en_BGG_PHASE phase;
+    F32 rad_build;
+    F32 spd_flight;
+    _xVec3 pos_tgt;
+    F32 tym_flightMax;
+    F32 rad_shock;
+    F32 hyt_shock;
+    F32 tym_shock;
+};
+
+// The lightning around a thrown Black Knight axe.
+struct st_BKAXE_DATA
+{
+    S32 flg_stat;
+    _tagLightning* strk[8];
+    F32 rad_zap;
+    F32 dst_zapdrop;
+    F32 tym_zapdur;
+    _xVec3 planes;
+};
+
+enum en_ZVMM_FLASK_STAGE
+{
+    MAST_STAGE_UNKNOWN,
+    MAST_STAGE_TEASE,
+    MAST_STAGE_TOSS,
+    MAST_STAGE_AFTERMATH
+};
+
+enum en_ZVMM_FLASK_TYPE
+{
+    MAST_FLSK_FIRE,
+    MAST_FLSK_ACID,
+    MAST_FLSK_SMOG,
+    MAST_FLSK_NOMORE
+};
+
+// A flask thrown by the Mastermind.
+struct st_ZVMM_FLASK_DATA
+{
+    S32 flg_stat;
+    en_ZVMM_FLASK_STAGE stage;
+    en_ZVMM_FLASK_TYPE typ_flask;
+    _xVec3 pos_tgt;
+    F32 spd_flight;
+    F32 arcness;
+    F32 heavy;
+    F32 tym_aftermath;
+    F32 hyt_aftermath;
+    F32 rad_aftermath;
+};
+
+enum en_VPAR_EMITTER_ROLE
+{
+    VPAR_EMIT_BOGUS = -1,
+    VPAR_EMIT_WALLPRINT,
+    VPAR_EMIT_EXTATTACK,
+    VPAR_EMIT_SOAPY,
+    VPAR_EMIT_POPSOAP,
+    VPAR_EMIT_GUMMY,
+    VPAR_EMIT_POPGUM,
+    VPAR_EMIT_BUTTBOUNCE,
+    VPAR_EMIT_HEADBUTT,
+    VPAR_EMIT_STUN,
+    VPAR_EMIT_DYING,
+    VPAR_EMIT_DECAY,
+    VPAR_EMIT_POOF,
+    VPAR_EMIT_RESPAWN,
+    VPAR_EMIT_TELEPORT,
+    VPAR_EMIT_BORED,
+    VPAR_EMIT_GUARD,
+    VPAR_EMIT_QUESTMARK,
+    VPAR_EMIT_EXCLAIM
+};
+
+// One particle emitter a villain type uses, and the role it plays.
+struct st_zEntVillain_ParEmitRecord
+{
+    en_VPAR_EMITTER_ROLE emitrole;
+    en_zEntVillainSubTypeID viltype;
+    S32 priority;
+    U32 vilowner;
+    U32 emitterID;
+    _zParEmitter* emitctxt;
+    S32 flg_need;
+    S32 flg_omit;
+};
+
+
+// One bonus item a villain can drop; bit 0 of flg_info marks it as dropped.
+struct st_NPC_BONUS
+{
+    S32 flg_info;
+    _zEntPickup* pickup;
+};
+
+// How many of one villain type the player has gummed, soaped and beaten, and how many there are.
+struct st_NPC_TALLY_RECORD
+{
+    S32 cnt_hitgum;
+    S32 cnt_hitsoap;
+    S32 cnt_killed;
+    S32 cnt_mortals;
+};
+
+// Settings for one villain subtype.
+struct st_ZVIL_NPCTYPE_LOOKUP
+{
+    S32 enabled;
+    F32 decay;
+    F32 ds2_atpos;
+    F32 strength;
+    F32 inv_mass;
+    S32 dmg_give;
+    F32 dst_noisy;
+    F32 rad_bound;
+    _xVec3 vec_bndoff;
+    F32 rad_bound2;
+    _xVec3 vec_bnd2off;
+    S32 ability;
+    S32 abl_atak;
+    S32 abl_dtct;
+    S32 abl_move;
+    S32 abl_spyk;
+    S32 abl_vuln;
+    en_NPC_PERSONALITIES typ_person;
+    U8 flg_physics;
+    U8 pad[3];
+    U8 flg_chk;
+    U8 flg_pen;
+    U8 flg_chkby;
+    U8 flg_penby;
+};
+
+
+static xAnimTable* VANM_mktable_STD();
+static xAnimTable* VANM_mktable_GANG();
+static xAnimTable* VANM_mktable_SIMP();
+static xAnimTable* VANM_mktable_SHARK();
+static xAnimTable* VANM_mktable_SHAM();
+static xAnimTable* VANM_mktable_MM();
+static xAnimTable* VANM_mktable_RB();
+static xAnimTable* VANM_mktable_GG();
+static xAnimTable* VANM_mktable_BK();
+static U32 VANM_dotran(xAnimTransition* tran, xAnimSingle* single, st_zEntVillain* ent);
+static U32 VANM_didtran(xAnimTransition* tran, xAnimSingle* single, st_zEntVillain* ent);
+static U32 VANM_dodflt(xAnimTransition* tran, xAnimSingle* single, st_zEntVillain* ent);
+static U32 VANM_diddflt(xAnimTransition* tran, xAnimSingle* single, st_zEntVillain* ent);
+static en_NPC_ANIMSTATES VANM_set(st_zEntVillain* ent, en_NPC_ANIMSTATES* best, S32 cnt,
+                                  S32 sync);
+static en_NPC_ANIMSTATES VANM_randset(st_zEntVillain* ent, F32* wts,
+                                      en_NPC_ANIMSTATES* choice_list, S32 cnt);
+static inline en_NPC_ANIMSTATES VANM_setone(st_zEntVillain* ent, en_NPC_ANIMSTATES anim);
+static inline en_NPC_ANIMSTATES VANM_randthree(st_zEntVillain* ent, en_NPC_ANIMSTATES a,
+                                               en_NPC_ANIMSTATES b, en_NPC_ANIMSTATES c);
+static xAnimTransition* VANM_findtran(st_zEntVillain* ent, xAnimTable* table, xAnimState* from,
+                                      xAnimState* to, S32 autoslamit, xAnimTransition** newtran);
+static xAnimSingle* VANM_entSingle(const _zEnt* ent);
+static inline xAnimState* VANM_entState(const _zEnt* ent);
+static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum);
+static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter);
+static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos);
+
+static S32 VSUP_choose(S32* list, F32* wts, S32 cnt);
+static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
+
+static void zVIL_tag_verts(st_zEntVillain* ent);
+static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt);
+static void zVIL_apply_move(st_zEntVillain* ent, _xScene* scn, F32 dt, _xEntFrame* frame);
+static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt);
+static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS pid, void* vv);
+static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt);
+static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt);
+static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo);
+static void VPRJ_zapTheAxe(zEntProjectile* prj, S32 cleanup);
+static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal);
+static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser);
+static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser);
+static void VEFX_plop_gum(st_zEntVillain* ent);
+static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE emittype, F32 dt);
+static void VBON_drop_bonusItem(st_zEntVillain* vil);
+static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp);
+
+static S32 VILN_std_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                         en_BEHAVIOUR_GOAL goal);
+static S32 VILN_std_query(st_zEntVillain* vil, en_ZVIL_QUERY query);
+static S32 VILN_std_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                             xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp);
+static S32 VILN_std_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                           st_STIMULUS_CONTEXT_DATA* resp);
+static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt,
+                          st_STIMULUS_CONTEXT_DATA* resp);
+static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                             st_STIMULUS_CONTEXT_DATA* resp);
+static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt);
+static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
+static S32 VILN_std_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* resp);
+static S32 VILN_std_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot);
+
+// Per-subtype villain settings, indexed by the asset subtype (en_zEntVillainSubTypeID). Only the
+// members up to the bound offset have initial values.
+static st_ZVIL_NPCTYPE_LOOKUP g_npcTable[eEntVillainType_NoMore + 1] = {
+    // eEntVillainTypeBat
+    { 1, 1.0f, 0.3f, 1.0f, 2.0f, 1, 8.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeBlackKnight
+    { 1, -1.0f, 0.3f, -1.0f, 1.0f, 1, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeBuckMasters
+    { 1, 2.0f, 1.0f, 2.0f, 0.7f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeCreeper
+    { 1, 2.0f, 1.0f, 3.0f, 0.4f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeSeaCreature
+    { 1, 2.0f, 1.0f, 2.0f, 0.2f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeGargoyle
+    { 1, 2.0f, 1.0f, -1.0f, 0.5f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeGhost
+    { 1, 2.0f, 0.5f, 0.5f, 2.0f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeGhostDiver
+    { 1, 2.0f, 1.0f, 1.0f, 0.5f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeGreenGhost
+    { 1, 2.0f, 0.5f, -1.0f, 1.0f, 1, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeHeadlessSpecter
+    { 1, 2.0f, 1.0f, 0.3f, 1.0f, 1, 12.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypePhantom
+    { 1, -1.0f, 0.5f, 1.0f, 1.0f, 1, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeRedbeard
+    { 1, -1.0f, 0.5f, 1.0f, 1.0f, 1, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeRobot
+    { 1, 2.0f, 1.0f, 1.0f, 0.3f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeScarecrow
+    { 1, 2.0f, 1.0f, -0.5f, 0.7f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShark
+    { 1, -1.0f, 1.0f, 5.0f, 1.0f, 1, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeSpaceKook
+    { 1, 2.0f, 1.0f, -1.0f, 0.6f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeTarMonster
+    { 1, 2.0f, 1.0f, -1.0f, 0.3f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeWitch
+    { 1, -1.0f, 0.01f, -1.0f, 0.9f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeWitchDoctor
+    { 1, 2.0f, 1.0f, -1.0f, 0.7f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeWolfman
+    { 1, 2.0f, 1.0f, 0.5f, 0.7f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeZombie
+    { 1, 2.0f, 1.0f, 1.0f, 0.6f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeCrab
+    { 1, 1.0f, 0.5f, 0.2f, 1.0f, 1, 10.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeRat
+    { 1, 1.0f, 0.5f, 0.2f, 1.0f, 1, 12.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeFlyingFish
+    { 1, -1.0f, 0.5f, 0.2f, 1.0f, 1, 12.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeSpider
+    { 1, 1.0f, 0.5f, 0.2f, 1.0f, 1, 10.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeHand
+    { 1, 1.0f, 0.5f, 0.2f, 1.0f, 1, 10.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeKillerPlant
+    { 1, -1.0f, 0.5f, 0.2f, 1.0f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeBird
+    { 1, 1.0f, 0.5f, 0.2f, 1.0f, 1, 12.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy0
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy1
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy2
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy3
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy4
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy5
+    { 1, -1.0f, 0.4f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy6
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy7
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy8
+    { 1, -1.0f, 0.3f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeShaggy9
+    { 1, -1.0f, 1.0f, -1.0f, -1.0f, 0, 20.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeFred
+    { 1, -1.0f, 0.5f, -1.0f, -1.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeDaphne
+    { 1, -1.0f, 0.5f, -1.0f, -1.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainTypeVelma
+    { 1, -1.0f, 0.5f, -1.0f, -1.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainBossBlackKnight
+    { 1, 3.0f, 0.5f, 1.0f, 1.0f, 1, 100.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainBossGreenGhost
+    { 1, 3.0f, 0.3f, 1.0f, 1.0f, 1, 100.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainBossRedbeard
+    { 1, 3.0f, 0.5f, 1.0f, 1.0f, 1, 100.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainBossMastermind
+    { 1, 3.0f, 0.5f, 1.0f, 1.0f, 1, 100.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainCaptainMoody
+    { 1, 2.0f, 0.5f, 2.0f, 1.0f, 1, 25.0f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainCaveMan
+    { 1, 2.0f, 0.5f, 3.0f, 0.4f, 1, 15.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainHolly
+    { 1, -1.0f, 0.5f, 0.0f, 0.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainGroundsKeeper
+    { 1, -1.0f, 0.5f, 0.0f, 0.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainProfessor
+    { 1, -1.0f, 0.5f, 0.0f, 0.0f, 0, 90.5f, 0.7f, { 0.0f, 0.7f, 0.0f } },
+    // eEntVillainType_NoMore
+    { 0 },
+};
+
+// Where the Mastermind stood when he last looked for a teleport point.
+static _xVec3 sMMPreTeleportPos;
+
+// Redbeard's swords.
+static st_REDBEARD_SWORD g_rbsword[4];
+
+
+// Hash of each animation state name, filled in at startup; the index is en_NPC_ANIMSTATES.
+static U32 g_anamhash[ZVIL_ANIM_NOMORE] = { 0 };
+
+// Animation state names, indexed by en_NPC_ANIMSTATES.
+static char* g_animname[ZVIL_ANIM_NOMORE + 1] = {
+    "UNKNOWN", "Idle", "Idle_Fidget_1", "Idle_Fidget_2", "Bored", "Bored_Fidget_1",
+    "Bored_Fidget_2", "Move", "Fashion_Pose", "Turn", "Chase", "Action_OnceNoMove",
+    "Action_LoopAndMove", "Surprize", "Taunt", "Taunt_1", "Taunt_2", "Hear_Start", "Hear_Loop",
+    "Look_Start", "Look_Loop", "Investigate_Start", "Investigate", "AttackIdle", "Attack",
+    "Attack_1", "Attack_2", "Combo", "Combo_1", "Combo_2", "Lob_Attack", "Lob_Combo",
+    "Extend_Attack_Start", "Extend_Attack_Loop", "Extend_Combo", "Hit_By_Gum", "Gummed",
+    "Gummed_Resist", "Gummed_BreakFree", "Hit_When_Gummed", "Bounced_When_Gummed", "Hit_By_Soap",
+    "Soaped", "Soaped_Resist", "Soaped_BreakFree", "Hit_When_Soaped", "Bounced_When_Soaped",
+    "Dazed_Begin", "Dazed", "Dazed_Recovery", "Death", "Death_From_Above", "Death_From_Dazed",
+    "Death_Idle", "Jump_Begin", "Jump_Loop", "Jump_Land", "Fall_Loop", "Fall_Splat", "BK_ScaryIdle",
+    "BK_Walk", "BK_Turn", "BK_Patrol", "BK_PatrolFlip", "BK_Attack", "BK_Shock", "BK_ShockSkel",
+    "BK_Gloat", "BK_Gloat_1", "BK_Gloat_2", "BK_Death", "GG_Chase", "GG_ChaseLeft", "GG_ChaseRight",
+    "GG_AttackBuildBegin", "GG_AttackBuildLoop", "GG_Attack", "GG_Gloat", "GG_Gloat_1", "GG_Hit",
+    "GG_Hit_1", "GG_Hit_2", "RB_IdleWind", "RB_Walk", "RB_Turn", "RB_Chase", "RB_TauntFeel",
+    "RB_TauntThroat", "RB_TauntLaugh", "RB_AttackPunch", "RB_AttackThrow", "RB_AttackThrowWait",
+    "RB_AttackCatch", "RB_React", "RB_LookBegin", "RB_LookLoop", "RB_LookEnd", "RB_DeathLoop",
+    "MM_Foreplay_Move", "MM_Foreplay_Taunt", "MM_Foreplay_Action", "MM_Foreplay_JumpDown",
+    "MM_Battle_Idle", "MM_Battle_Move", "MM_Battle_Turn", "MM_Battle_Backstep", "MM_Battle_Taunt",
+    "MM_AngerReact", "MM_Battle_Attack_start", "MM_Battle_Attack_ready_loop", "MM_Battle_Attack",
+    "MM_Battle_Shield_start", "MM_Battle_Shield_loop", "MM_Battle_Shield_end",
+    "MM_Battle_Stunned_start", "MM_Battle_Stunned_loop", "MM_Battle_Stunned_end",
+    "MM_Battle_Knocked_begin", "MM_Battle_Knocked_loop", "MM_Battle_Knocked_recover",
+    "MM_Death_start", "MM_Death", "GANG_Idle_1", "GANG_Idle_2", "GANG_Idle_3", "GANG_IdleFidget",
+    "GANG_IdleFidget_1", "GANG_IdleFidget_2", "GANG_IdleFidget_3", "GANG_Turn", "GANG_Walk",
+    "GANG_Run", "GANG_RunChased", "GANG_Action", "GANG_BossAction", "GANG_Talk", "GANG_Talk_1",
+    "GANG_Talk_2", "GANG_Talk_3", "GANG_TalkAndTurn", "SHAM_Move", "SHAM_Taunt", "CRIT_Move",
+    "CRIT_BatSleep", "CRIT_SpiderDrop", "CRIT_Smashed", "SIMP_Action", NULL,
+};
+
+// The bonus items villains can drop.
+static st_NPC_BONUS g_npcBonus[11] = { 0 };
+
+// The player's tally per villain type; the last row holds the totals.
+static st_NPC_TALLY_RECORD g_stattally[eEntVillainType_NoMore + 1] = { 0 };
+
+// Lightning data of the thrown Black Knight axes.
+static st_BKAXE_DATA g_axfxpool[10] = { 0 };
+
+// Green Ghost quake balls.
+static st_BGG_QUAKEBALL g_quakepool[4] = { 0 };
+
+// Names of the Mastermind's teleport points: eight safe ones and four dangerous ones.
+static char* g_strz_mmtp[12] = {
+    "MM_TP_SAFE_A", "MM_TP_SAFE_B", "MM_TP_SAFE_C", "MM_TP_SAFE_D",
+    "MM_TP_SAFE_E", "MM_TP_SAFE_F", "MM_TP_SAFE_G", "MM_TP_SAFE_H",
+    "MM_TP_DNGR_A", "MM_TP_DNGR_B", "MM_TP_DNGR_C", "MM_TP_DNGR_D",
+};
+
+// The Mastermind's teleport points, found by name when he is prepared.
+static _zMovePoint* g_mmtp[12] = { 0 };
+
+// Mastermind flasks.
+static st_ZVMM_FLASK_DATA g_mmflask[10] = { 0 };
+
+// The particle emitters the scene's villains use.
+static st_XORDEREDARRAY g_emitlist = { 0 };
+
+// How many times the villain system has been started without being shut down.
+static S32 g_npcinit;
+
+// How many villains the scene has.
+static S32 g_npccnt;
+
+// All villains of the scene, in one block.
+static st_zEntVillain* g_npcpool;
+
+// Records of the particle emitters the villains use, how many are in use, and whether they
+// are set up.
+static st_zEntVillain_ParEmitRecord* g_emitpool;
+static S32 g_emitnext;
+static S32 g_emitready;
+
+// Which boss the current scene's battle is against (1 to 4), or 0 when it is not a boss battle.
+static S32 g_scene_is_a_boss_battle;
+
+// A block of scratch memory the villain system keeps from startup.
+static char* g_datablock;
+
+// Counts down one start of the villain system and returns how many remain.
+S32 zEntVillain_Shutdown()
+{
+    if (--g_npcinit == 0)
+    {
+        return g_npcinit;
+    }
+    return g_npcinit;
+}
+
+// Gets the villains ready for a new scene: discards the old villain block (filled with 0x33),
+// clears the emitter list and allocates a fresh, empty block of 32 emitter records.
+S32 zEntVillain_scenePrepare()
+{
+    zEntVillain_MemPool(0);
+    XOrdInit(&g_emitlist, 32);
+    g_emitpool = (st_zEntVillain_ParEmitRecord*)xMemAlloc(gActiveHeap, 32 * sizeof(st_zEntVillain_ParEmitRecord));
+    memset(g_emitpool, 0, 32 * sizeof(st_zEntVillain_ParEmitRecord));
+    g_emitnext = 0;
+    g_emitready = 0;
+    return 1;
+}
+
+// Discards the villain block (filled with 0x33) when a scene ends.
+S32 zEntVillain_sceneFinish()
+{
+    zEntVillain_MemPool(0);
+    return g_npcinit;
+}
+
+xAnimTable* zEntVillain_AnimTable_BlackKnight()
+{
+    return VANM_mktable_BK();
+}
+
+xAnimTable* zEntVillain_AnimTable_GreenGhost()
+{
+    return VANM_mktable_GG();
+}
+
+xAnimTable* zEntVillain_AnimTable_RedBeard()
+{
+    return VANM_mktable_RB();
+}
+
+xAnimTable* zEntVillain_AnimTable_MasterMind()
+{
+    return VANM_mktable_MM();
+}
+
+xAnimTable* zEntVillain_AnimTable_BossSham()
+{
+    return VANM_mktable_SHAM();
+}
+
+xAnimTable* zEntVillain_AnimTable_Shark()
+{
+    return VANM_mktable_SHARK();
+}
+
+xAnimTable* zEntVillain_AnimTable_Witch()
+{
+    xAnimTable* table = VANM_mktable_STD();
+    xAnimTableNewState(table, "Shaggy_hold", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    Shaggy5_WitchTransitions(table);
+    return table;
+}
+
+xAnimTable* zEntVillain_AnimTable_Simple()
+{
+    return VANM_mktable_SIMP();
+}
+
+xAnimTable* zEntVillain_AnimTable_Gang()
+{
+    return VANM_mktable_GANG();
+}
+
+xAnimTable* zEntVillain_AnimTable_Standard()
+{
+    return VANM_mktable_STD();
+}
+
+// Allocates a zeroed block for npccnt villains and returns it. With 0, fills the old block with
+// 0x33 bytes and forgets it.
+st_zEntVillain* zEntVillain_MemPool(U32 npccnt)
+{
+    if (npccnt)
+    {
+        g_npccnt = npccnt;
+        g_npcpool = (st_zEntVillain*)xMemAlloc(gActiveHeap, g_npccnt * sizeof(st_zEntVillain));
+        memset(g_npcpool, 0, npccnt * sizeof(st_zEntVillain));
+    }
+    else
+    {
+        if (g_npcpool && g_npccnt > 0)
+        {
+            memset(g_npcpool, 0x33, g_npccnt * sizeof(st_zEntVillain));
+        }
+        g_npccnt = 0;
+        g_npcpool = NULL;
+    }
+
+    return g_npcpool;
+}
+
+// Returns the villain in slot npcidx of the pool.
+st_zEntVillain* zEntVillain_NPCInst(U32 npcidx)
+{
+    return &g_npcpool[npcidx];
+}
+
+// Writes the villain's state to a saved game.
+void zEntVillain_Save(st_zEntVillain* ent, xSerial* xser)
+{
+    VSAV_save(ent, xser);
+}
+
+// Reads the villain's state from a saved game.
+void zEntVillain_Load(st_zEntVillain* ent, xSerial* xser)
+{
+    VSAV_load(ent, xser);
+}
+
+// Draws the extras of every villain: the gum blob on a gummed villain, and whatever its type
+// draws on top once it is active.
+void zEntVillain_BonusRender()
+{
+    S32 npccnt;
+    st_zEntVillain* vil;
+    S32 i;
+
+    npccnt = g_npccnt;
+    for (i = 0; i < npccnt; i++)
+    {
+        vil = &g_npcpool[i];
+
+        if (vil->goal == ZVIL_GOAL_GUMMED)
+        {
+            VEFX_plop_gum(vil);
+        }
+
+        if (vil->mode >= ZVIL_MODE_NORMAL && vil->vhf->xtrarend)
+        {
+            xSceneID2Name(globals.sceneCur, vil->id);
+            vil->vhf->xtrarend(vil);
+        }
+    }
+}
+
+// Tells the villain the player bounced on it and returns how its type responded. Bounce particles
+// go up unless the type ignored it or took damage; if it killed a villain that counts for the
+// tally, the tally goes up, and a villain that drops a bonus item drops it.
+en_ZVILLAIN_BOUNCE_RESPONSE zEntVillain_Bounce(st_zEntVillain* ent)
+{
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_BOUNCED };
+
+    stimctxt.res_buttbounce = ZVIL_BOUNCE_NONE;
+    zVIL_input_stim(ent, ZVIL_STIM_BOUNCED, &stimctxt);
+
+    if (stimctxt.res_buttbounce != ZVIL_BOUNCE_NONE && stimctxt.res_buttbounce != ZVIL_BOUNCE_DAMAGE)
+    {
+        VPAR_emit_partype(ent, VPAR_EMIT_BUTTBOUNCE, globals.update_dt);
+    }
+
+    if (ent->ability & 0x4)
+    {
+        zEntPlayer_Notify(31);
+    }
+
+    if (ent->goal == ZVIL_GOAL_DIE)
+    {
+        if ((ent->ability & 0x200000) && (g_npcTable[ent->asset->subtype].ability & 0x200000) &&
+            (g_npcTable[ent->asset->subtype].abl_vuln & 0x4))
+        {
+            g_stattally[ent->asset->subtype].cnt_killed++;
+            g_stattally[eEntVillainType_NoMore].cnt_killed++;
+        }
+
+        if (ent->allow & 0x800)
+        {
+            VBON_drop_bonusItem(ent);
+        }
+    }
+
+    return stimctxt.res_buttbounce;
+}
+
+// Tells the villain something bumped into it and returns how its type responded.
+en_ZVILLAIN_BUMPED_RESPONSE zEntVillain_Bumped(st_zEntVillain* ent, const _xCollis* colrec)
+{
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_BUMPED };
+
+    stimctxt.stim = ZVIL_STIM_BUMPED;
+    stimctxt.colrec = (_xCollis*)colrec;
+    stimctxt.res_bumped = ZVIL_BUMPED_NONE;
+    zVIL_input_stim(ent, ZVIL_STIM_BUMPED, &stimctxt);
+    return stimctxt.res_bumped;
+}
+
+// Called when the player is hurt; villains do nothing with it.
+void zEntVillain_HeroWasHurt()
+{
+}
+
+// Stuns the villain with the given strength (at least 0.1), and lets the laugh track know.
+void zEntVillain_Stun(st_zEntVillain* ent, F32 strength)
+{
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_STUNNING };
+
+    stimctxt.amt_stun = MAX(strength, 0.1f);
+    zVIL_input_stim(ent, ZVIL_STIM_STUNNING, &stimctxt);
+    zLaughNotify(12);
+}
+
+// Reads one of the villain's flag groups from its subtype's settings; the allow group reads as 0.
+static S32 VILN_std_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL)
+{
+    S32 result = 0;
+
+    switch (flaggroup)
+    {
+    case ZVIL_FGRP_PHYS:
+        result = g_npcTable[vil->asset->subtype].flg_physics;
+        break;
+    case ZVIL_FGRP_CHK:
+        result = g_npcTable[vil->asset->subtype].flg_chk;
+        break;
+    case ZVIL_FGRP_PEN:
+        result = g_npcTable[vil->asset->subtype].flg_pen;
+        break;
+    case ZVIL_FGRP_CHKBY:
+        result = g_npcTable[vil->asset->subtype].flg_chkby;
+        break;
+    case ZVIL_FGRP_PENBY:
+        result = g_npcTable[vil->asset->subtype].flg_penby;
+        break;
+    case ZVIL_FGRP_ABLE:
+        result = g_npcTable[vil->asset->subtype].ability;
+        break;
+    case ZVIL_FGRP_ATAK:
+        result = g_npcTable[vil->asset->subtype].abl_atak;
+        break;
+    case ZVIL_FGRP_DTCT:
+        result = g_npcTable[vil->asset->subtype].abl_dtct;
+        break;
+    case ZVIL_FGRP_MOVE:
+        result = g_npcTable[vil->asset->subtype].abl_move;
+        break;
+    case ZVIL_FGRP_SPYK:
+        result = g_npcTable[vil->asset->subtype].abl_spyk;
+        break;
+    case ZVIL_FGRP_VULN:
+        result = g_npcTable[vil->asset->subtype].abl_vuln;
+        break;
+    case ZVIL_FGRP_ALOW:
+        break;
+    }
+
+    return result;
+}
+
+
+// Handles the villain's notices: on prepare, sets up its model vertex tags; on precalc, refreshes
+// its precalculated data once it is in normal mode or later.
+static S32 VILN_std_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS_CONTEXT_DATA*)
+{
+    switch (note)
+    {
+    case ZVIL_NOTE_PREPARE:
+        zVIL_tag_verts(vil);
+        break;
+    case ZVIL_NOTE_PRECALC:
+        if (vil->mode >= ZVIL_MODE_NORMAL) zVIL_precalc(vil, 0xF);
+        break;
+    case ZVIL_NOTE_OLDTIME:
+        break;
+    }
+
+    return 1;
+}
+
+
+// When a soaped villain with ability bit 20 has bumped into something, it bounces its knockback
+// velocity off it. Nothing is returned.
+static S32 VILN_std_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA*)
+{
+    _xVec3 vec_accum = { 0.0f, 0.0f, 0.0f };
+    S32 yep = VSUP_accum_collide(vil, &vec_accum);
+
+    if (yep && vil->goal == ZVIL_GOAL_SOAPED && (vil->ability & 0x100000))
+    {
+        VSUP_cheap_reflect(&vil->vec_knocked, &vec_accum);
+    }
+}
+
+
+// Draws the villain's gum blob, when it has one.
+static S32 VILN_std_xtrarend(st_zEntVillain* vil)
+{
+    if (vil->mdl_gumBlob) xModelRender(vil->mdl_gumBlob);
+    return 1;
+}
+
+// Render callback: draws the entity with back faces culled, then turns culling off again.
+static void VILN_KookRender(_xEnt* ent)
+{
+    RwRenderStateSet(rwRENDERSTATECULLMODE, (void*)rwCULLMODECULLBACK);
+    xEntRender(ent);
+    RwRenderStateSet(rwRENDERSTATECULLMODE, (void*)rwCULLMODECULLNONE);
+}
+
+// The killer plant can attack only when bit 3 of its allow flags and bit 0 of its player flags
+// are set; any other question gets the standard answer.
+static S32 VILN_kp_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+    S32 result;
+
+    switch (query)
+    {
+    case ZVIL_Q_CANATTACK:
+        if (!(vil->allow & 0x8))
+        {
+            result = 0;
+        }
+        else if (!(prec->flg_plyr & 0x1))
+        {
+            result = 0;
+        }
+        else
+        {
+            result = 1;
+        }
+        break;
+    default:
+        result = VILN_std_query(vil, query);
+        break;
+    }
+
+    return result;
+}
+
+
+// Small creatures (bats, crabs, rats, flying fish, birds) read flag groups the standard way.
+static S32 VILN_crit_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                          en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// Small creatures (bats, crabs, rats, flying fish, birds) answer queries the standard way.
+static S32 VILN_crit_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) handle game events the standard way.
+static S32 VILN_crit_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                              xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) react to notices the standard way.
+static S32 VILN_crit_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                            st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_notice(vil, note, resp);
+}
+
+
+// Small creatures (bats, crabs, rats, flying fish, birds) sense the player the standard way.
+static S32 VILN_crit_aware(st_zEntVillain* vil, _xScene* scn, F32 dt,
+                           st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_aware(vil, scn, dt, resp);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) react to stimuli the standard way.
+static S32 VILN_crit_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                              st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_stimulus(vil, stimctxt, resp);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) change goals the standard way.
+static S32 VILN_crit_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    return VILN_std_trangoal(vil, stimctxt, dt);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) move the standard way.
+static S32 VILN_crit_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    return VILN_std_calcmove(vil, scn, dt, frame);
+}
+
+// Small creatures (bats, crabs, rats, flying fish, birds) respond to stimuli the standard way.
+static S32 VILN_crit_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_respond(vil, resp);
+}
+
+
+// Small creatures (bats, crabs, rats, flying fish, birds) pick animations the standard way.
+static S32 VILN_crit_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot)
+{
+    return VILN_std_pickanim(vil, goal, gspot);
+}
+
+// The shark reads flag groups the standard way.
+static S32 VILN_shark_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                           en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The shark answers queries the standard way.
+static S32 VILN_shark_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The shark handles game events the standard way.
+static S32 VILN_shark_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                               xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The shark changes goals the standard way.
+static S32 VILN_shark_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    return VILN_std_trangoal(vil, stimctxt, dt);
+}
+
+// The shark has nothing extra to do here; this always succeeds.
+static S32 VILN_shark_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*)
+{
+    return 1;
+}
+
+// The shark has nothing extra to do here; this always succeeds.
+static S32 VILN_shark_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// The Shaggy villain types other than Shaggy5 read flag groups the standard way.
+static S32 VILN_shag_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                          en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Shaggy villain types other than Shaggy5 answer queries the standard way.
+static S32 VILN_shag_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The Shaggy villain types other than Shaggy5 handle game events the standard way.
+static S32 VILN_shag_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                              xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The Shaggy villain types other than Shaggy5 react to notices the standard way.
+static S32 VILN_shag_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                            st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_notice(vil, note, resp);
+}
+
+
+// The Shaggy villain types other than Shaggy5 sense the player the standard way.
+static S32 VILN_shag_aware(st_zEntVillain* vil, _xScene* scn, F32 dt,
+                           st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_aware(vil, scn, dt, resp);
+}
+
+// The Shaggy villain types other than Shaggy5 react to stimuli the standard way.
+static S32 VILN_shag_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                              st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_stimulus(vil, stimctxt, resp);
+}
+
+// The Shaggy villain types other than Shaggy5 change goals the standard way.
+static S32 VILN_shag_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    return VILN_std_trangoal(vil, stimctxt, dt);
+}
+
+// The Shaggy villain types other than Shaggy5 move the standard way.
+static S32 VILN_shag_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    return VILN_std_calcmove(vil, scn, dt, frame);
+}
+
+// The Shaggy villain types other than Shaggy5 respond to stimuli the standard way.
+static S32 VILN_shag_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_respond(vil, resp);
+}
+
+
+// The Shaggy villain types other than Shaggy5 pick animations the standard way.
+static S32 VILN_shag_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot)
+{
+    return VILN_std_pickanim(vil, goal, gspot);
+}
+
+// Shaggy villain type 5 reads flag groups the standard way.
+static S32 VILN_shagM_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                           en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// Shaggy villain type 5 answers queries the standard way.
+static S32 VILN_shagM_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// Shaggy villain type 5 handles game events the standard way.
+static S32 VILN_shagM_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                               xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// Shaggy villain type 5 reacts to notices the standard way.
+static S32 VILN_shagM_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                             st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_notice(vil, note, resp);
+}
+
+
+// Shaggy villain type 5 has nothing extra to do here; this always succeeds.
+static S32 VILN_shagM_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// Shaggy villain type 5 asks for no particular animation and sets its play speed to 0.97.
+static S32 VILN_shagM_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT)
+{
+    vil->anim_playnext = ZVIL_ANIM_UNKNOWN;
+    vil->anim_playing = 0;
+    vil->anim_loopmult = 0.97f;
+    return 1;
+}
+
+
+// Fred, Daphne, Velma, Holly, the groundskeeper and the professor read flag groups the standard
+// way.
+static S32 VILN_gang_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                          en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// Fred, Daphne, Velma, Holly, the groundskeeper and the professor answer queries the standard way.
+static S32 VILN_gang_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// Fred, Daphne, Velma, Holly, the groundskeeper and the professor handle game events the standard
+// way.
+static S32 VILN_gang_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                              xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// Fred, Daphne, Velma, Holly, the groundskeeper and the professor have nothing extra to do here;
+// this always succeeds.
+static S32 VILN_gang_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// When Fred changes animation, his first model part gets flag bits 1 and 0 set, and his second
+// part has bit 0 set only while he plays the gang boss action.
+static S32 VILN_gang_animtran(st_zEntVillain* vil, xAnimTransition* tran, xAnimSingle*)
+{
+    xModelInstance* minst = vil->model;
+    S32 idx = 0;
+
+    if (vil->asset->subtype != eEntVillainTypeFred) return 1;
+
+    while (minst)
+    {
+        switch (idx)
+        {
+        case 0:
+            minst->Flags |= 0x2;
+            minst->Flags |= 0x1;
+            break;
+        case 1:
+            if (tran->Dest->ID == g_anamhash[ZVIL_ANIM_GANG_BOSSACTION])
+            {
+                minst->Flags |= 0x1;
+            }
+            else
+            {
+                minst->Flags &= ~0x1;
+            }
+            break;
+        }
+        minst = minst->Next;
+        idx++;
+    }
+
+    return 1;
+}
+
+
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights read flag groups
+// the standard way.
+static S32 VILN_sham_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
+                          en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights answer queries the
+// standard way.
+static S32 VILN_sham_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights handle game events
+// the standard way.
+static S32 VILN_sham_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                              xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights react to notices
+// the standard way.
+static S32 VILN_sham_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                            st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_notice(vil, note, resp);
+}
+
+
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights have nothing extra
+// to do here; this always succeeds.
+static S32 VILN_sham_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// The Black Knight boss reads flag groups the standard way.
+static S32 VILN_BBK_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Black Knight boss answers queries the standard way.
+static S32 VILN_BBK_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The Black Knight boss has nothing extra to do here; this always succeeds.
+static S32 VILN_BBK_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// When the Black Knight boss changes animation, his first model part has flag bit 0 cleared during
+// the shock skeleton animation and bits 1 and 0 set otherwise, and his second part the reverse.
+static S32 VILN_BBK_animtran(st_zEntVillain* vil, xAnimTransition* tran, xAnimSingle*)
+{
+    xModelInstance* minst = vil->model;
+    S32 idx;
+
+    idx = 0;
+    while (minst)
+    {
+        switch (idx)
+        {
+        case 0:
+            if (tran->Dest->ID == g_anamhash[ZVIL_ANIM_BK_SHOCKSKEL])
+            {
+                minst->Flags &= ~0x1;
+            }
+            else
+            {
+                minst->Flags |= 0x2;
+                minst->Flags |= 0x1;
+            }
+            break;
+        case 1:
+            if (tran->Dest->ID == g_anamhash[ZVIL_ANIM_BK_SHOCKSKEL])
+            {
+                minst->Flags |= 0x2;
+                minst->Flags |= 0x1;
+            }
+            else
+            {
+                minst->Flags &= ~0x1;
+            }
+            break;
+        }
+        minst = minst->Next;
+        idx++;
+    }
+
+    return 1;
+}
+
+
+// The Green Ghost boss reads flag groups the standard way.
+static S32 VILN_BGG_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Green Ghost boss answers queries the standard way.
+static S32 VILN_BGG_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The Green Ghost boss handles game events the standard way.
+static S32 VILN_BGG_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                             xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The Green Ghost boss has nothing extra to do here; this always succeeds.
+static S32 VILN_BGG_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// The Redbeard boss reads flag groups the standard way.
+static S32 VILN_BRB_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Redbeard boss answers queries the standard way.
+static S32 VILN_BRB_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    return VILN_std_query(vil, query);
+}
+
+// The Redbeard boss handles game events the standard way.
+static S32 VILN_BRB_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                             xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The Redbeard boss has nothing extra to do here; this always succeeds.
+static S32 VILN_BRB_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
+{
+    return 1;
+}
+
+// The Redbeard boss draws the model of his first sword when its status bit 2 is set.
+static S32 VILN_BRB_xtrarend(st_zEntVillain*)
+{
+    st_REDBEARD_SWORD* rbs = &g_rbsword[0];
+    if (rbs->flg_stat & 0x4) xModelRender(rbs->model);
+    return 1;
+}
+
+
+// The Mastermind boss reads flag groups the standard way.
+static S32 VILN_BMM_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL goal)
+{
+    return VILN_std_flag(vil, flaggroup, goal);
+}
+
+
+// The Mastermind boss answers whether the player is too close (within a squared distance of 9)
+// and whether he can attack (bit 3 of his allow flags); any other question gets the standard
+// answer.
+static S32 VILN_BMM_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+    S32 result;
+
+    switch (query)
+    {
+    case ZVIL_Q_PLYRTOOCLOSE:
+        if (prec->ds2_VtoP < 9.0f)
+        {
+            result = 1;
+        }
+        else
+        {
+            result = 0;
+        }
+        break;
+    case ZVIL_Q_CANATTACK:
+        if (vil->allow & 0x8)
+        {
+            result = 1;
+        }
+        else
+        {
+            result = 0;
+        }
+        break;
+    default:
+        result = VILN_std_query(vil, query);
+        break;
+    }
+
+    return result;
+}
+
+// The Mastermind boss turns the push-button event into the push-button stimulus, unless he is set
+// up with more than one hit point and is down to his last; other events are handled the standard
+// way.
+static S32 VILN_BMM_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                             xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    S32 result;
+
+    switch (toEvent)
+    {
+    case eEventBossMMPushButton:
+        if (vil->vilcfg.hitpts > 1)
+        {
+            if (vil->hitpts > 1)
+            {
+                resp->stim = ZVIL_STIM_MMPUSHBUTTON;
+            }
+        }
+        else
+        {
+            resp->stim = ZVIL_STIM_MMPUSHBUTTON;
+        }
+        result = 1;
+        break;
+    case eEventNPCDetectOn:
+    case eEventNPCDetectOff:
+    case eEventNPCChaseOn:
+    case eEventNPCChaseOff:
+    default:
+        result = VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+        break;
+    }
+
+    return result;
+}
+
+// Handles the Mastermind's notices. On prepare, it marks the scene as his boss battle (4), lets him
+// attack, sets his hit points from his configuration (at least 1), sets his lob spin to one turn
+// and his hurt time to none, finds his twelve teleport points by name, and sets the first three
+// flag bits on his first two models and clears them on the next six. Then, like the standard
+// notice, it sets up his vertex tags on prepare and, on precalc, refreshes his precalculated data
+// once his mode is normal or later.
+static S32 VILN_BMM_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS_CONTEXT_DATA*)
+{
+    S32 i;
+    xModelInstance* minst = vil->model;
+    S32 idx = 0;
+
+    if (note == ZVIL_NOTE_PREPARE)
+    {
+        g_scene_is_a_boss_battle = 4;
+        vil->allow |= 0x8;
+        vil->hitpts = (vil->vilcfg.hitpts < 1) ? 1 : vil->vilcfg.hitpts;
+        vil->vec_lobSpin.x = 6.2831855f;
+        vil->vilcfg.tymref_list[ZVIL_TDUR_HURT] = -1.0f;
+    }
+
+    if (note == ZVIL_NOTE_PREPARE)
+    {
+        for (i = 0; i < 12; i++)
+        {
+            g_mmtp[i] = zMovePoint_From_xAssetID(xStrHash(g_strz_mmtp[i]));
+        }
+    }
+
+    if (note == ZVIL_NOTE_PREPARE)
+    {
+        while (minst)
+        {
+            switch (idx)
+            {
+            case 0:
+            case 1:
+                minst->Flags |= 0x1;
+                minst->Flags |= 0x2;
+                minst->Flags |= 0x4;
+                break;
+            case 2:
+            case 3:
+                minst->Flags &= (U16)~0x1;
+                minst->Flags &= (U16)~0x2;
+                minst->Flags &= (U16)~0x4;
+                break;
+            case 4:
+            case 5:
+                minst->Flags &= (U16)~0x1;
+                minst->Flags &= (U16)~0x2;
+                minst->Flags &= (U16)~0x4;
+                break;
+            case 6:
+            case 7:
+                minst->Flags &= (U16)~0x1;
+                minst->Flags &= (U16)~0x2;
+                minst->Flags &= (U16)~0x4;
+                break;
+            default:
+                break;
+            }
+
+            minst = minst->Next;
+            idx++;
+        }
+    }
+
+    switch (note)
+    {
+    case ZVIL_NOTE_PREPARE:
+        zVIL_tag_verts(vil);
+        break;
+    case ZVIL_NOTE_PRECALC:
+        if (vil->mode >= ZVIL_MODE_NORMAL) zVIL_precalc(vil, 0xF);
+        break;
+    case ZVIL_NOTE_OLDTIME:
+        break;
+    }
+
+    return 1;
+}
+
+// The Mastermind's respond step adds up the push-out vectors of his NPC, environment and static
+// collisions that hit an object; the sum is not used.
+static S32 VILN_BMM_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA*)
+{
+    _xVec3 vec_sum = { 0 };
+    _xCollis* colrec;
+    S32 i;
+
+    for (i = vil->collis->npc_sidx; i < vil->collis->npc_eidx; i++)
+    {
+        colrec = &vil->collis->colls[i];
+        if (colrec->optr)
+        {
+            xVec3Add(&vec_sum, &vec_sum, &colrec->depen);
+        }
+    }
+
+    for (i = vil->collis->env_sidx; i < vil->collis->env_eidx; i++)
+    {
+        colrec = &vil->collis->colls[i];
+        if (colrec->optr)
+        {
+            xVec3Add(&vec_sum, &vec_sum, &colrec->depen);
+        }
+    }
+
+    for (i = vil->collis->stat_sidx; i < vil->collis->stat_eidx; i++)
+    {
+        colrec = &vil->collis->colls[i];
+        if (colrec->optr)
+        {
+            xVec3Add(&vec_sum, &vec_sum, &colrec->depen);
+        }
+    }
+
+    return 1;
+}
+
+// Picks the Mastermind's animation for a goal and where he is in it. He is in battle mode when he
+// may teleport (allow bit 0x4) or attack from range (allow bit 0x10), and then idles, walks, acts
+// and taunts with his battle animations.
+static S32 VILN_BMM_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot)
+{
+    S32 battle_mode;
+
+    battle_mode = (vil->allow & 0x4) ? 1 : 0;
+    battle_mode |= (vil->allow & 0x10) ? 1 : 0;
+
+    switch (goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        VANM_setone(vil, ZVIL_ANIM_IDLE);
+        break;
+    case ZVIL_GOAL_IDLE:
+        if (battle_mode)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_IDLE);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_IDLE);
+        }
+        break;
+    case ZVIL_GOAL_ACTION:
+        if (battle_mode)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_TAUNT);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_FP_ACTION);
+        }
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        if (battle_mode)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_MOVE);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_FP_MOVE);
+        }
+        break;
+    case ZVIL_GOAL_PATROL:
+        if (battle_mode)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_MOVE);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_FP_MOVE);
+        }
+        break;
+    case ZVIL_GOAL_LEAP:
+        VANM_setone(vil, ZVIL_ANIM_MM_FP_JUMP);
+        break;
+    case ZVIL_GOAL_TELEPORT:
+        if (battle_mode)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_IDLE);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_IDLE);
+        }
+        break;
+    case ZVIL_GOAL_TAUNT:
+        if (battle_mode)
+        {
+            VANM_randthree(vil, ZVIL_ANIM_MM_BA_TAUNT, ZVIL_ANIM_MM_FP_TAUNT,
+                           ZVIL_ANIM_MM_BA_REACT);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_FP_TAUNT);
+        }
+        break;
+    case ZVIL_GOAL_ATTACKREADY:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_IDLE);
+        }
+        else if (gspot == ZVIL_GSPOT_MOVERIGHT)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_TURN);
+        }
+        break;
+    case ZVIL_GOAL_BLOCKHEAD:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_SHIELD_BEGIN);
+        }
+        else if (gspot == ZVIL_GSPOT_RESUME)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_SHIELD_LOOP);
+        }
+        else if (gspot == ZVIL_GSPOT_STATERECOVER)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_SHIELD_END);
+        }
+        break;
+    case ZVIL_GOAL_DAZED:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_STUNNED_BEGIN);
+        }
+        else if (gspot == ZVIL_GSPOT_RESUME)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_STUNNED_LOOP);
+        }
+        else if (gspot == ZVIL_GSPOT_STATERECOVER)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_STUNNED_END);
+        }
+        break;
+    case ZVIL_GOAL_LOBBING:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_ATTACK_BEGIN);
+        }
+        else if (gspot == ZVIL_GSPOT_ATTACKLINGER)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_ATTACK_LOOP);
+        }
+        else if (gspot == ZVIL_GSPOT_KICKATTACK)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_ATTACK);
+        }
+        break;
+    case ZVIL_GOAL_KNOCKBACK:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_KNOCKED_BEGIN);
+        }
+        else if (gspot == ZVIL_GSPOT_RESUME)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_KNOCKED_LOOP);
+        }
+        else if (gspot == ZVIL_GSPOT_STATERECOVER)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_KNOCKED_END);
+        }
+        break;
+    case ZVIL_GOAL_HURT:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_MM_BA_DEATH_BEGIN);
+        }
+        else if (gspot == ZVIL_GSPOT_HURT_ALTA)
+        {
+            VANM_setone(vil, ZVIL_ANIM_IDLE);
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        VANM_setone(vil, ZVIL_ANIM_MM_BA_DEATH);
+        break;
+    }
+
+    return 1;
+}
+
+// Per-frame update callback. Updates the villain's timers. If it is playing an animation and is
+// neither Shaggy nor a Witch, it compares its model's current animation state with the one it asked
+// for: if they differ it stops counting as playing and bit 0x100 of the model's flags is set,
+// otherwise that bit is cleared; in every other case the bit is set. It then calls the type's
+// update query (the answer is not used), gives the type the precalc notice, lets it look at the
+// scene, runs the entity update (physics and movement when its flags allow them, force fields, and
+// collision when it has a collision record) and lets the type respond; when the precalc, aware or
+// respond step answers with a stimulus, the villain changes goal. Finally it sets the precalc status
+// to 0x40000000, reads the base model scale from its configuration, gives the type the old-time
+// notice, sets the status to 0x20000000 and processes its sound queue.
+static void zVIL_elcb_update(_xEnt* xe, _xScene* scn, F32 dt)
+{
+    st_STIMULUS_CONTEXT_DATA stimresp = { ZVIL_STIM_NONE };
+    st_zEntVillain* ent = (st_zEntVillain*)xe;
+
+    zVIL_upd_timers(ent, dt);
+
+    if (ent->anim_playing && !zEntIsShaggy(ent) && ent->subType != eEntVillainTypeWitch)
+    {
+        xAnimState* state = VANM_entState(ent);
+        if (state->ID != g_anamhash[ent->anim_playnext])
+        {
+            ent->anim_playing = 0;
+            ent->model->Flags |= 0x100;
+        }
+        else
+        {
+            ent->model->Flags &= (U16)~0x100;
+        }
+    }
+    else
+    {
+        ent->model->Flags |= 0x100;
+    }
+
+    ent->vhf->query(ent, ZVIL_Q_DOUPDATE);
+
+    memset(&stimresp, 0, sizeof(stimresp));
+    stimresp.stim = ZVIL_STIM_NONE;
+    ent->vhf->notice(ent, ZVIL_NOTE_PRECALC, &stimresp);
+    if (stimresp.stim)
+    {
+        zVIL_trangoal(ent, &stimresp, dt);
+    }
+
+    memset(&stimresp, 0, sizeof(stimresp));
+    stimresp.stim = ZVIL_STIM_NONE;
+    ent->vhf->aware(ent, scn, dt, &stimresp);
+    if (stimresp.stim)
+    {
+        zVIL_trangoal(ent, &stimresp, dt);
+    }
+
+    xEntBeginUpdate(ent, scn, dt);
+    if (ent->pflags & 0x2)
+    {
+        xEntApplyPhysics(ent, scn, dt);
+    }
+    if (ent->pflags & 0x1)
+    {
+        xEntMove(ent, scn, dt);
+    }
+    xFFXApply(ent, scn, dt);
+    if (ent->collis)
+    {
+        xEntCollide(ent, scn, dt);
+    }
+    xEntEndUpdate(ent, scn, dt);
+
+    memset(&stimresp, 0, sizeof(stimresp));
+    stimresp.stim = ZVIL_STIM_NONE;
+    ent->vhf->respond(ent, &stimresp);
+    if (stimresp.stim)
+    {
+        zVIL_trangoal(ent, &stimresp, dt);
+    }
+
+    ent->precalc.flg_status = 0x40000000;
+    VCFG_getParm(&ent->vilcfg, ZVIL_PARM_MDLSCL_BASE, &ent->model->Scale);
+
+    memset(&stimresp, 0, sizeof(stimresp));
+    stimresp.stim = ZVIL_STIM_NONE;
+    ent->vhf->notice(ent, ZVIL_NOTE_OLDTIME, &stimresp);
+
+    ent->precalc.flg_status = 0x20000000;
+    VSND_procQueue(ent, dt);
+}
+
+// Event callback: the villain's type handles the event, and if it answers with a stimulus, that
+// stimulus is passed on to the villain. Always returns 1.
+static S32 zVIL_elcb_event(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget)
+{
+    st_zEntVillain* ent = (st_zEntVillain*)to;
+    st_STIMULUS_CONTEXT_DATA npcresp = { ZVIL_STIM_NONE };
+
+    ent->vhf->sysevent(ent, from, toEvent, toParam, toParamWidget, &npcresp);
+    if (npcresp.stim)
+    {
+        zVIL_input_stim(ent, npcresp.stim, &npcresp);
+    }
+
+    return 1;
+}
+
+// Bound callback: centres the villain's collision sphere on the given position plus its type's
+// offset, turned with the model, and sets the radius from its type. The second sphere's radius is
+// always set from its type too; when it is above 0, that sphere's centre is placed the same way with
+// its own offset (its bound is not updated).
+static void zVIL_elcb_bupdate(_xEnt* xe, _xVec3* pos_bound)
+{
+    _xVec3 offset = { 0 };
+    st_zEntVillain* ent = (st_zEntVillain*)xe;
+
+    offset = g_npcTable[ent->asset->subtype].vec_bndoff;
+    xMat3x3RMulVec(&offset, (xMat3x3*)ent->model->Mat, &offset);
+    xVec3Add(&ent->bound.sph.center, &offset, pos_bound);
+    ent->bound.sph.r = g_npcTable[ent->asset->subtype].rad_bound;
+    xBoundUpdate(&ent->bound);
+
+    ent->bound2.sph.r = g_npcTable[ent->asset->subtype].rad_bound2;
+    if (ent->bound2.sph.r > 0.0f)
+    {
+        offset = g_npcTable[ent->asset->subtype].vec_bnd2off;
+        xMat3x3RMulVec(&offset, (xMat3x3*)ent->model->Mat, &offset);
+        xVec3Add(&ent->bound2.sph.center, &offset, pos_bound);
+    }
+}
+
+// Movement callback: the villain's type works out its move, then the villain makes it if it has a
+// move to make.
+static void zVIL_elcb_move(_xEnt* xe, _xScene* scn, F32 dt, _xEntFrame* frame)
+{
+    st_zEntVillain* ent = (st_zEntVillain*)xe;
+
+    ent->vhf->calcmove(ent, scn, dt, frame);
+    if (ent->domove)
+    {
+        zVIL_apply_move(ent, scn, dt, frame);
+    }
+}
+
+// Picks the Mastermind's next teleport point. Unless forced, he picks none while the player is more
+// than 4 units away. For each point it measures the player's squared distance to the point and,
+// meant as the villain's own distance to it, the squared flat distance between the villain and a
+// zero vector, so the same value for every point; it takes the point farthest from the player
+// when that second value is above 1. The random choice then always replaces it: one time in five
+// a dangerous point (weights 0.2, 0.3, 0.3, 0.2), otherwise a safe one (weights 1, 2, 2, 1, 2, 1, 1, 2).
+// When forced with no point found, it falls back to his first navigation point and clears his
+// next one; when forced and the point is his next navigation point, that is cleared.
+static _zMovePoint* VNAV_find_telepoint(st_zEntVillain* vil, S32 force)
+{
+    _zMovePoint* da_tp = NULL;
+    S32 idx_best = -1;
+    S32 i;
+    F32 ds2_toScoob[12] = { 0 };
+    F32 ds2_toSelf[12] = { 0 };
+    _xVec3 vec_a = { 0 };
+    _xVec3 vec_b = { 0 };
+
+    if (!force && vil->precalc.ds2_VtoP > 16.0f)
+    {
+        return NULL;
+    }
+
+    for (i = 0; i < 12; i++)
+    {
+        if (g_mmtp[i] == NULL)
+        {
+            ds2_toScoob[i] = -1.0f;
+            ds2_toSelf[i] = -1.0f;
+            continue;
+        }
+
+        ds2_toSelf[i] = VSUP_ds2_toPos(vil, vec_a);
+
+        xVec3Copy(&vec_b, &xModelGetFrame(globals.player.ent.model)->pos);
+        xVec3Sub(&vec_b, &vec_b, zMovePointGetPos(g_mmtp[i]));
+        ds2_toScoob[i] = xVec3Length2(&vec_b);
+    }
+
+    for (i = 0; i < 12; i++)
+    {
+        if (ds2_toScoob[i] < 0.0f) continue;
+        if (ds2_toSelf[i] < 0.0f) continue;
+
+        if (idx_best < 0) idx_best = i;
+        if (ds2_toScoob[i] > ds2_toScoob[idx_best]) idx_best = i;
+    }
+
+    if (idx_best >= 0 && ds2_toSelf[idx_best] > 1.0f)
+    {
+        da_tp = g_mmtp[idx_best];
+    }
+
+    static S32 do_rand_select = 1;
+    if (do_rand_select)
+    {
+        S32 choice;
+        S32 dngrlist[4] = { 8, 9, 10, 11 };
+        S32 safelist[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+        F32 dngr_wt[4] = { 0.2f, 0.3f, 0.3f, 0.2f };
+        F32 safe_wt[12] = { 1.0f, 2.0f, 2.0f, 1.0f, 2.0f, 1.0f, 1.0f, 2.0f };
+
+        VSUP_wtadjust(safe_wt, 8, 1.0f);
+        if (xUtil_yesno(0.2f))
+        {
+            choice = VSUP_choose(dngrlist, dngr_wt, 4);
+            da_tp = g_mmtp[choice];
+        }
+        else
+        {
+            choice = VSUP_choose(safelist, safe_wt, 8);
+            da_tp = g_mmtp[choice];
+        }
+    }
+
+    if (da_tp == NULL && force)
+    {
+        for (i = 0; i < 12; i++)
+        {
+            if (g_mmtp[i]) break;
+        }
+
+        da_tp = vil->nav_mvptlist;
+        vil->nav_next = NULL;
+    }
+    else if (force && da_tp && da_tp == vil->nav_next)
+    {
+        vil->nav_next = NULL;
+    }
+
+    return da_tp;
+}
+
+// Gets the Mastermind ready to teleport: remembers where he stands, makes his next navigation
+// point his previous one, and looks for a teleport point. A point other than his next one becomes
+// his next one, and he teleports; otherwise he needs a navigation point. Either way his
+// navigation check timer restarts at its configured time, plus or minus 12.5 percent.
+static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force)
+{
+    S32 do_teleport = 0;
+    _zMovePoint* telepoint;
+
+    xVec3Copy(&sMMPreTeleportPos, &xModelGetFrame(vil->model)->pos);
+
+    if (vil->nav_next && vil->nav_next != vil->nav_prev)
+    {
+        vil->nav_prev = vil->nav_next;
+    }
+
+    telepoint = VNAV_find_telepoint(vil, force);
+    if (telepoint && telepoint != vil->nav_next)
+    {
+        vil->nav_next = telepoint;
+        do_teleport = 1;
+        vil->need_navpt = 0;
+        vil->tmr_list[ZVIL_TTIL_CHKFORNAV] =
+            vil->vilcfg.tymref_list[ZVIL_TTIL_CHKFORNAV] +
+            0.25f * (iurand() - 0.5f) * vil->vilcfg.tymref_list[ZVIL_TTIL_CHKFORNAV];
+    }
+    else
+    {
+        vil->need_navpt = 1;
+        vil->tmr_list[ZVIL_TTIL_CHKFORNAV] =
+            vil->vilcfg.tymref_list[ZVIL_TTIL_CHKFORNAV] +
+            0.25f * (iurand() - 0.5f) * vil->vilcfg.tymref_list[ZVIL_TTIL_CHKFORNAV];
+    }
+
+    return do_teleport;
+}
+
+// Passes a stimulus to the villain's type, unless it is on standby and its standby time has not
+// run out. If the type answers with a stimulus of its own, the villain changes goal to suit it.
+static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt)
+{
+    st_STIMULUS_CONTEXT_DATA stimresp = { ZVIL_STIM_NONE };
+
+    if (!ent->standby || (ent->standby && ent->tmr_list[ZVIL_TDUR_STDBY] <= 0.0f))
+    {
+        stimresp = *stimctxt;
+        stimresp.stim = ZVIL_STIM_NONE;
+        ent->vhf->stimulus(ent, stimctxt, &stimresp);
+        if (stimresp.stim)
+        {
+            zVIL_trangoal(ent, &stimresp, globals.update_dt);
+        }
+    }
+}
+
+// Sets up a model tag for each of the villain's configured vertex positions that is not zero, and
+// marks it in flg_vert.
+static void zVIL_tag_verts(st_zEntVillain* ent)
+{
+    _xVec3* tmp_pos;
+    S32 i;
+
+    for (i = 0; i < 12; i++)
+    {
+        tmp_pos = &ent->vilcfg.pos_verts[i];
+        if (xVec3Length2(tmp_pos))
+        {
+            iModelTagSetup(&ent->tag_vert[i], ent->model->Data, tmp_pos->x, tmp_pos->y,
+                           tmp_pos->z);
+            ent->flg_vert |= 1 << i;
+            xSceneID2Name(globals.sceneCur, ent->id);
+        }
+        else
+        {
+            xSceneID2Name(globals.sceneCur, ent->id);
+        }
+    }
+}
+
+
+// Copies the villain asset's settings into its config: speeds, detection and pursuit ranges
+// (squared), the field of view and turn speed in radians, lobbing and extender settings, and the
+// timer lengths, where the asset gives the dazed, taunt, gum, bubble, extend and reload times and
+// the rest get fixed defaults (-1 for timers with no default).
+static void VCFG_readAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata)
+{
+    p2EntVillainAsset* rawass = cfgdata->vilp2ass;
+
+    cfgdata->hitpts = rawass->hitpoints;
+
+    cfgdata->fov_detect = 3.1415927f * rawass->activateFOV / 180.0f;
+    cfgdata->ds2_detect = rawass->activateRadius * rawass->activateRadius;
+    cfgdata->hyt_detect = rawass->detectHeight;
+    cfgdata->hyt_dtctoff = rawass->detectHeightOffset;
+    cfgdata->ds2_pursue = rawass->pursuitRange * rawass->pursuitRange;
+
+    cfgdata->spd_move = rawass->speedMovement;
+    cfgdata->spd_chase = rawass->speedPursue;
+    cfgdata->spd_turn = 3.1415927f * rawass->speedTurn / 180.0f;
+
+    cfgdata->spd_lob = rawass->lobSpeed;
+    cfgdata->dst_lob = rawass->lobRange;
+    cfgdata->cnt_lobSalvo = rawass->lobSalvo;
+    cfgdata->fac_lobarc = rawass->lobArcness;
+    cfgdata->fac_lobheavy = rawass->lobHeavy;
+
+    cfgdata->dst_extend = rawass->extenderRange;
+    cfgdata->wid_extend = rawass->extenderWidth;
+    cfgdata->spd_extend = rawass->extenderRate;
+
+    cfgdata->tymref_list[ZVIL_TTIL_FIDGET] = 8.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_BORED] = 20.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_TAUNT] = 5.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_CHKFORNAV] = 7.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_RECOVERY] = 100.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_NEXTCHASE] = 0.3f;
+    cfgdata->tymref_list[ZVIL_TTIL_ANIMSOUND] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_NEXTVOICE] = 5.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_QUIP_OK] = 10.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_STDBY] = 10.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_ALERT] = 2.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_TAUNT] = rawass->durGloatState;
+    cfgdata->tymref_list[ZVIL_TDUR_DAZED] = rawass->durDazedState;
+    cfgdata->tymref_list[ZVIL_TDUR_GUM] = rawass->durGummedState;
+    cfgdata->tymref_list[ZVIL_TDUR_SOAP] = rawass->durBubbleState;
+    cfgdata->tymref_list[ZVIL_TDUR_LOOK] = 3.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_HEAR] = 3.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_SEARCH] = 4.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_EXTEND] = rawass->extenderDuration;
+    cfgdata->tymref_list[ZVIL_TDUR_LOBRELOAD] = rawass->lobDurReload;
+    cfgdata->tymref_list[ZVIL_TDUR_EXTRELOAD] = rawass->extenderReloadTime;
+    cfgdata->tymref_list[ZVIL_TDUR_BUILDUP] = 3.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_HURT] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_DECAY] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TWIN_MINGUM] = 2.0f;
+    cfgdata->tymref_list[ZVIL_TWIN_POSTATTACK] = 0.2f;
+    cfgdata->tymref_list[ZVIL_TWIN_IGNORESNEAK] = 0.25f;
+    cfgdata->tymref_list[ZVIL_TYMR_MINANIMPLAY] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TYMR_CURGOAL] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TYMR_GENERIC] = -1.0f;
+}
+
+// Writes the villain's saved state as two bits: bit 0 when its goal is the afterlife or base
+// setup, bit 1 when it is active and its asset says it starts unborn (prebirth).
+static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser)
+{
+    S32 iv;
+    en_BEHAVIOUR_GOAL gol;
+
+    if (!(ent->baseFlags & 0x2))
+    {
+        return 0;
+    }
+
+    zEntSave(ent, xser);
+
+    iv = 0;
+    gol = ent->goal;
+    if (gol == ZVIL_GOAL_AFTERLIFE || gol == ZVIL_GOAL_BASEINIT)
+    {
+        iv |= 0x1;
+    }
+    else if (ent->mode > ZVIL_MODE_SHUTDOWN && ent->mode < ZVIL_MODE_DEATH)
+    {
+        switch (ent->vilcfg.vilp2ass->behaviorState)
+        {
+        case ZVIL_START_PREBIRTH:
+            iv |= 0x2;
+            break;
+        }
+    }
+
+    xser->Write_b2(iv);
+    return 1;
+}
+
+// Reads the villain's saved state back. Bit 0 shuts it down at base setup, hides it and stops
+// anything from colliding with it; bit 1 shuts it down at startup.
+static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser)
+{
+    S32 iv = 0;
+
+    if (!(ent->baseFlags & 0x2))
+    {
+        return 1;
+    }
+
+    zEntLoad(ent, xser);
+
+    xser->Read_b2(&iv);
+    if (iv & 0x1)
+    {
+        ent->goaldflt = ZVIL_GOAL_IDLE;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_BASEINIT);
+        ent->chkby = 0;
+        ent->penby = 0;
+        ent->flags &= ~0x1;
+    }
+    else if (iv & 0x2)
+    {
+        ent->goaldflt = ZVIL_GOAL_IDLE;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_STARTUP);
+    }
+
+    return 1;
+}
+
+// Keeps the Black Knight's axe's collision sphere (radius 0.75) on its position.
+static void VPRJ_BBK_bupdate(_xEnt* prjent, _xVec3* pos)
+{
+    prjent->bound.sph.center = *pos;
+    prjent->bound.sph.r = 0.75f;
+    xBoundUpdate(&prjent->bound);
+}
+
+// Sets up a thrown Black Knight axe: it keeps its own collision sphere, gets a collision delay,
+// lives at least 30 seconds and takes a free slot of the axe pool. Returns 1 if a slot was free.
+static S32 VPRJ_BBK_attach(zEntProjectile* prj)
+{
+    S32 i;
+
+    prj->bupdate = VPRJ_BBK_bupdate;
+    prj->cat_data.idx_cdat = ZPRJ_CDAT_BOUNCE;
+    prj->OrientSet(0);
+    prj->ColDelaySet(50.0f, 1);
+    prj->tym_maxlife = MAX(30.0f, prj->tym_maxlife);
+
+    for (i = 0; i < 10; i++)
+    {
+        if (!(g_axfxpool[i].flg_stat & 1))
+        {
+            memset(&g_axfxpool[i], 0, sizeof(st_BKAXE_DATA));
+            g_axfxpool[i].flg_stat |= 1;
+            prj->xtradata = &g_axfxpool[i];
+            break;
+        }
+    }
+
+    if (prj->xtradata)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+// Releases a Black Knight axe's pool slot, cleaning up its lightning first.
+static void VPRJ_BBK_detach(zEntProjectile* prj)
+{
+    st_BKAXE_DATA* axfx = (st_BKAXE_DATA*)prj->xtradata;
+
+    if (axfx)
+    {
+        VPRJ_zapTheAxe(prj, 1);
+        memset(axfx, 0, sizeof(st_BKAXE_DATA));
+        prj->xtradata = NULL;
+    }
+}
+
+// Moves a thrown Black Knight axe. In flight it falls under the bounce gravity and, when its
+// category flag 0x4000000 is set, turns by its flex matrix. At rest it keeps turning only while
+// it does not lie flat, and flag bit 2 of its lightning data is cleared once it stops. Returns 1.
+static S32 VPRJ_BBK_prjmove(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame)
+{
+    st_BKAXE_DATA* axfx = (st_BKAXE_DATA*)prj->xtradata;
+    st_ZPRJ_CAT_BOUNCEBALL* bounce = &prj->cat_data.bounce;
+
+    switch (bounce->atRest)
+    {
+    default:
+        frame->dvel.x = 0.0f;
+        frame->dvel.y = -(dt * bounce->acc_gravity);
+        frame->dvel.z = 0.0f;
+        frame->mode |= 0x8;
+
+        if (prj->flg_categ & 0x4000000)
+        {
+            xMat4x3RMul3x3(&frame->mat, &prj->common.mat_flex, &frame->mat);
+            prj->frame->mode |= 0x100;
+        }
+        break;
+    case 1:
+        if (frame->mat.at.y > -0.25f)
+        {
+            xMat4x3RMul3x3(&frame->mat, &prj->common.mat_flex, &frame->mat);
+            prj->frame->mode |= 0x100;
+        }
+
+        if ((axfx->flg_stat & 0x2) && !(prj->frame->mode & 0x100))
+        {
+            axfx->flg_stat &= ~0x2;
+        }
+        break;
+    }
+
+    return 1;
+}
+
+// Sets up a Green Ghost quake ball: it is drawn as an arrow, starts building up and takes a free
+// slot of the quake ball pool. Returns 1 if a slot was free.
+static S32 VPRJ_BGG_attach(zEntProjectile* prj)
+{
+    S32 i;
+
+    prj->cat_data.idx_cdat = ZPRJ_CDAT_ARROW;
+    prj->flags &= ~0x1;
+    prj->flg_prop &= ~0x8;
+
+    for (i = 0; i < 4; i++)
+    {
+        st_BGG_QUAKEBALL* quake = &g_quakepool[i];
+        if (!(quake->flg_stat & 1))
+        {
+            memset(quake, 0, sizeof(st_BGG_QUAKEBALL));
+            quake->flg_stat |= 1;
+            quake->phase = BGG_PHAZ_BUILDUP;
+            prj->xtradata = quake;
+            break;
+        }
+    }
+
+    return prj->xtradata ? 1 : 0;
+}
+
+// Releases a Green Ghost quake ball's pool slot.
+static void VPRJ_BGG_detach(zEntProjectile* prj)
+{
+    st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)prj->xtradata;
+
+    if (quake)
+    {
+        memset(quake, 0, sizeof(st_BGG_QUAKEBALL));
+        prj->xtradata = NULL;
+    }
+}
+
+// Sets up a Redbeard sword projectile and takes a free sword. Returns 1 if one was free.
+static S32 VPRJ_BRB_attach(zEntProjectile* prj)
+{
+    S32 i;
+
+    prj->cat_data.idx_cdat = ZPRJ_CDAT_ARROW;
+
+    for (i = 0; i < 4; i++)
+    {
+        st_REDBEARD_SWORD* sword = &g_rbsword[i];
+        if (!(sword->flg_stat & 1))
+        {
+            memset(sword, 0, sizeof(st_REDBEARD_SWORD));
+            sword->flg_stat |= 1;
+            prj->xtradata = sword;
+            break;
+        }
+    }
+
+    return prj->xtradata ? 1 : 0;
+}
+
+// Releases a Redbeard sword.
+static void VPRJ_BRB_detach(zEntProjectile* prj)
+{
+    st_REDBEARD_SWORD* sword = (st_REDBEARD_SWORD*)prj->xtradata;
+
+    if (sword)
+    {
+        memset(sword, 0, sizeof(st_REDBEARD_SWORD));
+        prj->xtradata = NULL;
+    }
+}
+
+// Redbeard sword projectiles take every event as handled.
+static S32 VPRJ_BRB_notify(zEntProjectile*, en_PROJECTILE_EVENT, void*)
+{
+    return 1;
+}
+
+// Keeps the Mastermind's flask's collision sphere (radius 0.5) on its position.
+static void VPRJ_BMM_bupdate(_xEnt* prjent, _xVec3* pos)
+{
+    prjent->bound.sph.center = *pos;
+    prjent->bound.sph.r = 0.5f;
+    xBoundUpdate(&prjent->bound);
+}
+
+// Sets up a thrown Mastermind flask: it keeps its own collision sphere and takes a free slot of
+// the flask pool. Returns 1 if a slot was free.
+static S32 VPRJ_BMM_attach(zEntProjectile* prj)
+{
+    S32 i;
+
+    prj->cat_data.idx_cdat = ZPRJ_CDAT_BOUNCE;
+    prj->bupdate = VPRJ_BMM_bupdate;
+    prj->OrientSet(0);
+
+    for (i = 0; i < 10; i++)
+    {
+        if (!(g_mmflask[i].flg_stat & 1))
+        {
+            memset(&g_mmflask[i], 0, sizeof(st_ZVMM_FLASK_DATA));
+            g_mmflask[i].flg_stat |= 1;
+            prj->xtradata = &g_mmflask[i];
+            break;
+        }
+    }
+
+    return prj->xtradata ? 1 : 0;
+}
+
+// Releases a Mastermind flask's pool slot.
+static void VPRJ_BMM_detach(zEntProjectile* prj)
+{
+    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
+
+    if (flask)
+    {
+        memset(flask, 0, sizeof(st_ZVMM_FLASK_DATA));
+        prj->xtradata = NULL;
+    }
+}
+
+// Keeps a Redbeard sword's collision sphere (radius 0.75) on its position.
+static void VWEP_rbs_bupdate(_xEnt* ent_rbs, _xVec3* pos)
+{
+    ent_rbs->bound.type = 1;
+    ent_rbs->bound.sph.r = 0.75f;
+    ent_rbs->bound.sph.center = *pos;
+    xBoundUpdate(&ent_rbs->bound);
+}
+
+
+// Builds the Black Knight's animation table: patrol, shock, attack and gloat states.
+static xAnimTable* VANM_mktable_BK()
+{
+    xAnimTable* table;
+    xAnimTransition* tmp_tran;
+    char* strptrz[32] = {NULL};
+    S32 i;
+
+    table = xAnimTableNew("Villain_BlackKnight", NULL);
+    xAnimTableNewState(table, "Idle", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_ScaryIdle", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_Walk", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_Turn", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_Patrol", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_PatrolFlip", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_Attack", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_Shock", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_ShockSkel", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_Gloat", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_Gloat_1", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_Gloat_2", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "BK_Death", 0, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    for (i = ZVIL_ANIM_BK_SCARYIDLE; i < ZVIL_ANIM_GG_CHASE; i++)
+    {
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, "Idle", g_animname[i], (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    strptrz[0] = "BK_ScaryIdle";
+    strptrz[1] = "BK_Patrol";
+    strptrz[2] = "BK_PatrolFlip";
+    strptrz[3] = "BK_Shock";
+    strptrz[4] = "BK_ShockSkel";
+    strptrz[5] = "BK_Gloat";
+    strptrz[6] = "BK_Gloat_1";
+    strptrz[7] = "BK_Gloat_2";
+    for (i = 0; i < 8; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_Turn", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_Walk", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    xAnimTableNewTransition(
+        table, "BK_Patrol", "BK_PatrolFlip", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    xAnimTableNewTransition(
+        table, "BK_PatrolFlip", "BK_Patrol", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    strptrz[0] = "BK_ScaryIdle";
+    strptrz[1] = "BK_Walk";
+    strptrz[2] = "BK_Turn";
+    strptrz[3] = "BK_Shock";
+    strptrz[4] = "BK_ShockSkel";
+    strptrz[5] = "BK_Gloat";
+    strptrz[6] = "BK_Gloat_1";
+    strptrz[7] = "BK_Gloat_2";
+    for (i = 0; i < 8; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_Patrol", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_PatrolFlip", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    strptrz[0] = "BK_ScaryIdle";
+    strptrz[1] = "BK_Walk";
+    strptrz[2] = "BK_Turn";
+    strptrz[3] = "BK_Patrol";
+    strptrz[4] = "BK_PatrolFlip";
+    strptrz[5] = "BK_Shock";
+    strptrz[6] = "BK_ShockSkel";
+    strptrz[7] = "BK_Gloat";
+    strptrz[8] = "BK_Gloat_1";
+    strptrz[9] = "BK_Gloat_2";
+    for (i = 0; i < 10; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_Attack", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    tmp_tran = xAnimTableNewTransition(
+        table, "BK_Shock", "BK_ShockSkel", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(
+        table, "BK_ShockSkel", "BK_Shock", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    tmp_tran->Flags |= 0x20;
+    strptrz[0] = "BK_ScaryIdle";
+    strptrz[1] = "BK_Walk";
+    strptrz[2] = "BK_Turn";
+    strptrz[3] = "BK_Patrol";
+    strptrz[4] = "BK_PatrolFlip";
+    strptrz[5] = "BK_Gloat";
+    strptrz[6] = "BK_Gloat_1";
+    strptrz[7] = "BK_Gloat_2";
+    for (i = 0; i < 8; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_ShockSkel", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_Shock", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    strptrz[0] = "BK_ScaryIdle";
+    strptrz[1] = "BK_Walk";
+    strptrz[2] = "BK_Turn";
+    strptrz[3] = "BK_Patrol";
+    strptrz[4] = "BK_PatrolFlip";
+    strptrz[5] = "BK_Shock";
+    strptrz[6] = "BK_ShockSkel";
+    strptrz[7] = "BK_Attack";
+    for (i = 0; i < 8; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_Gloat", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_Gloat_1", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_Gloat_2", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    strptrz[0] = "BK_ScaryIdle";
+    strptrz[1] = "BK_Walk";
+    strptrz[2] = "BK_Turn";
+    strptrz[3] = "BK_Patrol";
+    strptrz[4] = "BK_PatrolFlip";
+    strptrz[5] = "BK_Shock";
+    strptrz[6] = "BK_ShockSkel";
+    strptrz[7] = "BK_Gloat";
+    strptrz[8] = "BK_Gloat_1";
+    strptrz[9] = "BK_Gloat_2";
+    for (i = 0; i < 10; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "BK_Death", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+
+    return table;
+}
+
+// Builds the Green Ghost's animation table: chase, attack build-up, gloat and hit states.
+static xAnimTable* VANM_mktable_GG()
+{
+    xAnimTable* table;
+    char* strptrz[32] = {NULL};
+    S32 i;
+
+    table = xAnimTableNew("Villain_GreenGhost", NULL);
+    xAnimTableNewState(table, "Idle", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_Chase", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_ChaseLeft", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_ChaseRight", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_AttackBuildBegin", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_AttackBuildLoop", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_Attack", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_Gloat", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_Gloat_1", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_Hit", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_Hit_1", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GG_Hit_2", 0, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    for (i = ZVIL_ANIM_GG_CHASE; i < ZVIL_ANIM_RB_IDLEWIND; i++)
+    {
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, "Idle", g_animname[i], (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    }
+    xAnimTableNewTransition(
+        table, "GG_Chase", "GG_ChaseLeft", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "GG_Chase", "GG_ChaseRight", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "GG_ChaseLeft", "GG_Chase", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "GG_ChaseLeft", "GG_ChaseRight", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "GG_ChaseRight", "GG_Chase", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "GG_ChaseRight", "GG_ChaseLeft", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    strptrz[0] = "GG_Chase";
+    strptrz[1] = "GG_ChaseLeft";
+    strptrz[2] = "GG_ChaseRight";
+    strptrz[3] = "GG_Gloat";
+    strptrz[4] = "GG_Gloat_1";
+    strptrz[5] = "GG_Hit";
+    strptrz[6] = "GG_Hit_1";
+    strptrz[7] = "GG_Hit_2";
+    for (i = 0; i < 8; i++)
+    {
+        xAnimTableNewTransition(table, strptrz[i], "GG_AttackBuildBegin",
+                                (xAnimTransitionConditionalCallback)VANM_dotran,
+                                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                0.2f, NULL);
+    }
+    strptrz[0] = "GG_Chase";
+    strptrz[1] = "GG_ChaseLeft";
+    strptrz[2] = "GG_ChaseRight";
+    strptrz[3] = "GG_AttackBuildBegin";
+    strptrz[4] = "GG_AttackBuildLoop";
+    strptrz[5] = "GG_Attack";
+    strptrz[6] = "GG_Hit";
+    strptrz[7] = "GG_Hit_1";
+    strptrz[8] = "GG_Hit_2";
+    for (i = 0; i < 9; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "GG_Gloat", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "GG_Gloat_1", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    }
+    xAnimTableNewTransition(table, "GG_AttackBuildBegin", "GG_AttackBuildLoop",
+                            (xAnimTransitionConditionalCallback)VANM_dodflt,
+                            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 5, 0, 0.2f,
+                            NULL);
+    xAnimTableNewTransition(
+        table, "GG_AttackBuildLoop", "GG_Attack", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    strptrz[0] = "GG_Chase";
+    strptrz[1] = "GG_ChaseLeft";
+    strptrz[2] = "GG_ChaseRight";
+    strptrz[3] = "GG_AttackBuildBegin";
+    strptrz[4] = "GG_AttackBuildLoop";
+    strptrz[5] = "GG_Attack";
+    strptrz[6] = "GG_Gloat";
+    strptrz[7] = "GG_Gloat_1";
+    for (i = 0; i < 8; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "GG_Hit", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "GG_Hit_1", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "GG_Hit_2", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    }
+
+    return table;
+}
+
+// Builds Redbeard's animation table: walk, taunt, punch and throw attacks, look and death.
+static xAnimTable* VANM_mktable_RB()
+{
+    xAnimTable* table;
+    char* strptrz[32] = {NULL};
+    S32 i;
+
+    table = xAnimTableNew("Villain_RedBeard", NULL);
+    xAnimTableNewState(table, "Idle", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_IdleWind", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_Walk", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_Turn", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_Chase", 0x10, 0x2000006, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_TauntFeel", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_TauntThroat", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_TauntLaugh", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_AttackPunch", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_AttackThrow", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_AttackThrowWait", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_AttackCatch", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_React", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_LookBegin", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_LookLoop", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_LookEnd", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "RB_DeathLoop", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    for (i = ZVIL_ANIM_RB_IDLEWIND; i < ZVIL_ANIM_MM_FP_MOVE; i++)
+    {
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, "Idle", g_animname[i], (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        if (i != ZVIL_ANIM_RB_DEATH_LOOP)
+        {
+            xAnimTableNewTransition(table, g_animname[i], "RB_DeathLoop",
+                                    (xAnimTransitionConditionalCallback)VANM_dotran,
+                                    (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                    0.2f, NULL);
+        }
+    }
+    xAnimTableNewTransition(
+        table, "RB_IdleWind", "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "RB_IdleWind", "RB_Turn", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "RB_Turn", "RB_IdleWind", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "RB_Chase", "RB_Walk", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "RB_Walk", "RB_Chase", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    strptrz[0] = "RB_IdleWind";
+    strptrz[1] = "RB_Turn";
+    strptrz[2] = "RB_React";
+    strptrz[3] = "RB_TauntFeel";
+    strptrz[4] = "RB_TauntThroat";
+    strptrz[5] = "RB_TauntLaugh";
+    strptrz[6] = "RB_AttackPunch";
+    strptrz[7] = "RB_AttackThrowWait";
+    strptrz[8] = "RB_AttackThrow";
+    strptrz[9] = "RB_AttackPunch";
+    strptrz[10] = "RB_LookBegin";
+    strptrz[11] = "RB_LookLoop";
+    strptrz[12] = "RB_LookEnd";
+    for (i = 0; i < 13; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "RB_Chase", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "RB_Walk", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    }
+    strptrz[0] = "RB_IdleWind";
+    strptrz[1] = "RB_React";
+    strptrz[2] = "RB_AttackThrow";
+    strptrz[3] = "RB_AttackCatch";
+    strptrz[4] = "RB_AttackCatch";
+    strptrz[5] = "RB_AttackPunch";
+    strptrz[6] = "RB_LookBegin";
+    strptrz[7] = "RB_LookLoop";
+    strptrz[8] = "RB_LookEnd";
+    strptrz[9] = "RB_Chase";
+    strptrz[10] = "RB_Walk";
+    strptrz[11] = "RB_Turn";
+    for (i = 0; i < 12; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "RB_TauntFeel", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "RB_TauntThroat", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "RB_TauntLaugh", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    }
+    xAnimTableNewTransition(table, "RB_AttackThrow", "RB_AttackThrowWait",
+                            (xAnimTransitionConditionalCallback)VANM_dodflt,
+                            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 5, 0, 0.2f,
+                            NULL);
+    xAnimTableNewTransition(table, "RB_AttackThrowWait", "RB_AttackCatch",
+                            (xAnimTransitionConditionalCallback)VANM_dodflt,
+                            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.2f,
+                            NULL);
+    strptrz[0] = "RB_IdleWind";
+    strptrz[1] = "RB_React";
+    strptrz[2] = "RB_TauntFeel";
+    strptrz[3] = "RB_TauntThroat";
+    strptrz[4] = "RB_TauntLaugh";
+    strptrz[5] = "RB_AttackPunch";
+    strptrz[6] = "RB_LookBegin";
+    strptrz[7] = "RB_LookLoop";
+    strptrz[8] = "RB_LookEnd";
+    strptrz[9] = "RB_Chase";
+    strptrz[10] = "RB_Walk";
+    strptrz[11] = "RB_Turn";
+    for (i = 0; i < 12; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "RB_AttackThrow", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "RB_AttackCatch", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        xAnimTableNewTransition(table, strptrz[i], "RB_AttackThrowWait",
+                                (xAnimTransitionConditionalCallback)VANM_dotran,
+                                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                0.2f, NULL);
+    }
+    xAnimTableNewTransition(
+        table, "RB_LookBegin", "RB_LookLoop", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    xAnimTableNewTransition(
+        table, "RB_LookLoop", "RB_LookEnd", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.2f, NULL);
+    strptrz[0] = "RB_IdleWind";
+    strptrz[1] = "RB_React";
+    strptrz[2] = "RB_TauntFeel";
+    strptrz[3] = "RB_TauntThroat";
+    strptrz[4] = "RB_TauntLaugh";
+    strptrz[5] = "RB_AttackPunch";
+    strptrz[6] = "RB_AttackThrowWait";
+    strptrz[7] = "RB_AttackThrow";
+    strptrz[8] = "RB_AttackCatch";
+    strptrz[9] = "RB_Chase";
+    strptrz[10] = "RB_Turn";
+    strptrz[11] = "RB_Walk";
+    for (i = 0; i < 12; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "RB_LookBegin", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "RB_LookLoop", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "RB_LookEnd", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.2f, NULL);
+    }
+
+    return table;
+}
+
+// Builds the Mastermind's animation table: the opening ("foreplay") states and the boss battle.
+static xAnimTable* VANM_mktable_MM()
+{
+    xAnimTable* table;
+    char* strptrz[32] = {NULL};
+    S32 i;
+
+    table = xAnimTableNew("Villain_MasterMind", NULL);
+    xAnimTableNewState(table, "Idle", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Foreplay_Move", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Foreplay_Action", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Foreplay_Taunt", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Foreplay_JumpDown", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f,
+                       NULL);
+    xAnimTableNewState(table, "MM_Battle_Idle", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Battle_Move", 0x10, 0x2000006, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Battle_Backstep", 0x10, 0x2000006, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Battle_Turn", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Battle_Attack_start", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f,
+                       NULL);
+    xAnimTableNewState(table, "MM_Battle_Attack_ready_loop", 0x10, 0x2000001, 1.0f, NULL, NULL,
+                       0.0f, NULL);
+    xAnimTableNewState(table, "MM_Battle_Attack", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Battle_Shield_start", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f,
+                       NULL);
+    xAnimTableNewState(table, "MM_Battle_Shield_loop", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f,
+                       NULL);
+    xAnimTableNewState(table, "MM_Battle_Shield_end", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f,
+                       NULL);
+    xAnimTableNewState(table, "MM_Battle_Stunned_start", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f,
+                       NULL);
+    xAnimTableNewState(table, "MM_Battle_Stunned_loop", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f,
+                       NULL);
+    xAnimTableNewState(table, "MM_Battle_Stunned_end", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f,
+                       NULL);
+    xAnimTableNewState(table, "MM_Battle_Knocked_begin", 0x20, 6, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Battle_Knocked_loop", 0x10, 6, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Battle_Knocked_recover", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Battle_Taunt", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_AngerReact", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Death_start", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "MM_Death", 0, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    for (i = ZVIL_ANIM_MM_FP_MOVE; i < ZVIL_ANIM_GANG_ALTIDLE1; i++)
+    {
+        if (i < ZVIL_ANIM_MM_BA_IDLE)
+        {
+            xAnimTableNewTransition(
+                table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+                (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f, NULL);
+            xAnimTableNewTransition(
+                table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dotran,
+                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0, 0.1f, NULL);
+            xAnimTableNewTransition(
+                table, "Idle", g_animname[i], (xAnimTransitionConditionalCallback)VANM_dotran,
+                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0, 0.1f, NULL);
+        }
+        else if (i != ZVIL_ANIM_MM_BA_IDLE)
+        {
+            xAnimTableNewTransition(table, g_animname[i], "MM_Battle_Idle",
+                                    (xAnimTransitionConditionalCallback)VANM_dodflt,
+                                    (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0,
+                                    0, 0.1f, NULL);
+            xAnimTableNewTransition(table, g_animname[i], "MM_Battle_Idle",
+                                    (xAnimTransitionConditionalCallback)VANM_dotran,
+                                    (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0,
+                                    0.1f, NULL);
+            xAnimTableNewTransition(table, "MM_Battle_Idle", g_animname[i],
+                                    (xAnimTransitionConditionalCallback)VANM_dotran,
+                                    (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0,
+                                    0.1f, NULL);
+        }
+    }
+    strptrz[0] = "MM_Foreplay_Move";
+    strptrz[1] = "MM_Foreplay_Action";
+    for (i = 0; i < 2; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "MM_Foreplay_Taunt", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    strptrz[0] = "MM_Foreplay_Move";
+    strptrz[1] = "MM_Foreplay_Taunt";
+    for (i = 0; i < 2; i++)
+    {
+        xAnimTableNewTransition(table, strptrz[i], "MM_Foreplay_Action",
+                                (xAnimTransitionConditionalCallback)VANM_dotran,
+                                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                0.1f, NULL);
+    }
+    strptrz[0] = "MM_Foreplay_Action";
+    strptrz[1] = "MM_Foreplay_Taunt";
+    for (i = 0; i < 2; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "MM_Foreplay_Move", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    xAnimTableNewTransition(table, "MM_Foreplay_JumpDown", "MM_Battle_Idle",
+                            (xAnimTransitionConditionalCallback)VANM_dodflt,
+                            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f,
+                            NULL);
+    strptrz[0] = "MM_Foreplay_Action";
+    strptrz[1] = "MM_Foreplay_Taunt";
+    strptrz[2] = "MM_Foreplay_Move";
+    for (i = 0; i < 3; i++)
+    {
+        xAnimTableNewTransition(table, strptrz[i], "MM_Foreplay_JumpDown",
+                                (xAnimTransitionConditionalCallback)VANM_dotran,
+                                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                0.1f, NULL);
+    }
+    strptrz[0] = "Idle";
+    strptrz[1] = "MM_Foreplay_Move";
+    strptrz[2] = "MM_Foreplay_Taunt";
+    strptrz[3] = "MM_Foreplay_JumpDown";
+    for (i = 0; i < 4; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "MM_Battle_Idle", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "MM_Battle_Move", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    xAnimTableNewTransition(
+        table, "MM_Battle_Idle", "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f, NULL);
+    strptrz[0] = "MM_Battle_Turn";
+    strptrz[1] = "MM_Battle_Backstep";
+    strptrz[2] = "MM_Battle_Knocked_begin";
+    strptrz[3] = "MM_Battle_Knocked_loop";
+    strptrz[4] = "MM_Battle_Knocked_recover";
+    strptrz[5] = "MM_Battle_Shield_start";
+    strptrz[6] = "MM_Battle_Shield_loop";
+    strptrz[7] = "MM_Battle_Shield_end";
+    strptrz[8] = "MM_Battle_Stunned_start";
+    strptrz[9] = "MM_Battle_Stunned_loop";
+    strptrz[10] = "MM_Battle_Stunned_end";
+    strptrz[11] = "MM_Battle_Attack_start";
+    strptrz[12] = "MM_Battle_Attack_ready_loop";
+    strptrz[13] = "MM_Battle_Attack";
+    for (i = 0; i < 14; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "MM_Battle_Move", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    xAnimTableNewTransition(table, "MM_Battle_Move", "MM_Battle_Backstep",
+                            (xAnimTransitionConditionalCallback)VANM_dotran,
+                            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f,
+                            NULL);
+    xAnimTableNewTransition(table, "MM_Battle_Shield_start", "MM_Battle_Shield_loop",
+                            (xAnimTransitionConditionalCallback)VANM_dodflt,
+                            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f,
+                            NULL);
+    // Slot 0 is set twice and slot 10 never, so "MM_Battle_Move" is not added here and slot
+    // 10 keeps "MM_Battle_Stunned_end" from the list above.
+    strptrz[0] = "MM_Battle_Move";
+    strptrz[1] = "MM_Battle_Turn";
+    strptrz[2] = "MM_Battle_Backstep";
+    strptrz[3] = "MM_Foreplay_Taunt";
+    strptrz[4] = "MM_AngerReact";
+    strptrz[5] = "MM_Battle_Taunt";
+    strptrz[6] = "MM_Battle_Stunned_start";
+    strptrz[7] = "MM_Battle_Stunned_loop";
+    strptrz[8] = "MM_Battle_Stunned_end";
+    strptrz[9] = "MM_Battle_Attack_start";
+    strptrz[0] = "MM_Battle_Attack_ready_loop";
+    strptrz[11] = "MM_Battle_Attack";
+    for (i = 0; i < 12; i++)
+    {
+        xAnimTableNewTransition(table, strptrz[i], "MM_Battle_Shield_start",
+                                (xAnimTransitionConditionalCallback)VANM_dotran,
+                                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                0.1f, NULL);
+    }
+    strptrz[0] = "MM_Battle_Move";
+    strptrz[1] = "MM_Battle_Turn";
+    strptrz[2] = "MM_Battle_Backstep";
+    strptrz[3] = "MM_Battle_Knocked_begin";
+    strptrz[4] = "MM_Battle_Knocked_loop";
+    strptrz[5] = "MM_Battle_Knocked_recover";
+    strptrz[6] = "MM_Battle_Shield_start";
+    strptrz[7] = "MM_Battle_Shield_loop";
+    strptrz[8] = "MM_Battle_Shield_end";
+    strptrz[9] = "MM_Battle_Stunned_start";
+    strptrz[10] = "MM_Battle_Stunned_loop";
+    strptrz[11] = "MM_Battle_Stunned_end";
+    strptrz[12] = "MM_Battle_Attack_start";
+    strptrz[13] = "MM_Battle_Attack_ready_loop";
+    strptrz[14] = "MM_Battle_Attack";
+    for (i = 0; i < 15; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "MM_Battle_Taunt", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "MM_Foreplay_Taunt", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 9, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, strptrz[i], "MM_AngerReact", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 9, 0, 0.1f, NULL);
+    }
+    xAnimTableNewTransition(table, "MM_Battle_Attack_start", "MM_Battle_Attack_ready_loop",
+                            (xAnimTransitionConditionalCallback)VANM_dodflt,
+                            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 5, 0, 0.1f,
+                            NULL);
+    xAnimTableNewTransition(table, "MM_Battle_Attack", "MM_Battle_Idle",
+                            (xAnimTransitionConditionalCallback)VANM_dodflt,
+                            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 5, 0, 0.1f,
+                            NULL);
+    xAnimTableNewTransition(table, "MM_Battle_Attack_ready_loop", "MM_Battle_Attack",
+                            (xAnimTransitionConditionalCallback)VANM_dotran,
+                            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 9, 0, 0.1f,
+                            NULL);
+    strptrz[0] = "MM_Battle_Move";
+    strptrz[1] = "MM_Battle_Turn";
+    strptrz[2] = "MM_Battle_Backstep";
+    strptrz[3] = "MM_Foreplay_Taunt";
+    strptrz[4] = "MM_AngerReact";
+    strptrz[5] = "MM_Battle_Taunt";
+    strptrz[6] = "MM_Battle_Shield_start";
+    strptrz[7] = "MM_Battle_Shield_loop";
+    strptrz[8] = "MM_Battle_Shield_end";
+    strptrz[9] = "MM_Battle_Stunned_start";
+    strptrz[10] = "MM_Battle_Stunned_loop";
+    strptrz[11] = "MM_Battle_Stunned_end";
+    for (i = 0; i < 12; i++)
+    {
+        xAnimTableNewTransition(table, strptrz[i], "MM_Battle_Attack_start",
+                                (xAnimTransitionConditionalCallback)VANM_dotran,
+                                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                0.1f, NULL);
+    }
+    xAnimTableNewTransition(table, "MM_Battle_Stunned_start", "MM_Battle_Stunned_loop",
+                            (xAnimTransitionConditionalCallback)VANM_dodflt,
+                            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f,
+                            NULL);
+    strptrz[0] = "MM_Battle_Shield_start";
+    strptrz[1] = "MM_Battle_Shield_loop";
+    strptrz[2] = "MM_Battle_Shield_end";
+    strptrz[3] = "MM_Battle_Attack_start";
+    strptrz[4] = "MM_Battle_Attack_ready_loop";
+    strptrz[5] = "MM_Battle_Attack";
+    for (i = 0; i < 6; i++)
+    {
+        xAnimTableNewTransition(table, strptrz[i], "MM_Battle_Stunned_start",
+                                (xAnimTransitionConditionalCallback)VANM_dotran,
+                                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                0.1f, NULL);
+    }
+    xAnimTableNewTransition(table, "MM_Battle_Knocked_begin", "MM_Battle_Knocked_loop",
+                            (xAnimTransitionConditionalCallback)VANM_dodflt,
+                            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f,
+                            NULL);
+    strptrz[0] = "MM_Battle_Stunned_start";
+    strptrz[1] = "MM_Battle_Stunned_loop";
+    strptrz[2] = "MM_Battle_Stunned_end";
+    for (i = 0; i < 3; i++)
+    {
+        xAnimTableNewTransition(table, strptrz[i], "MM_Battle_Knocked_begin",
+                                (xAnimTransitionConditionalCallback)VANM_dotran,
+                                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                0.1f, NULL);
+        xAnimTableNewTransition(table, strptrz[i], "MM_Battle_Knocked_loop",
+                                (xAnimTransitionConditionalCallback)VANM_dotran,
+                                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                0.1f, NULL);
+    }
+    xAnimTableNewTransition(table, "MM_Battle_Knocked_loop", "MM_Battle_Knocked_recover",
+                            (xAnimTransitionConditionalCallback)VANM_dotran,
+                            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f,
+                            NULL);
+    strptrz[0] = "MM_Battle_Knocked_begin";
+    strptrz[1] = "MM_Battle_Knocked_loop";
+    strptrz[2] = "MM_Battle_Knocked_recover";
+    for (i = 0; i < 3; i++)
+    {
+        xAnimTableNewTransition(
+            table, strptrz[i], "MM_Death_start", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    xAnimTableNewTransition(
+        table, "MM_Death_start", "MM_Death", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+
+    return table;
+}
+
+// Builds the Sham boss's animation table: idle, move and taunt.
+static xAnimTable* VANM_mktable_SHAM()
+{
+    xAnimTable* table;
+    S32 i;
+
+    table = xAnimTableNew("Villain_BossSham", NULL);
+    xAnimTableNewState(table, "Idle", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "SHAM_Move", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "SHAM_Taunt", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    for (i = ZVIL_ANIM_SHAM_MOVE; i < ZVIL_ANIM_CRIT_MOVE; i++)
+    {
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, "Idle", g_animname[i], (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    xAnimTableNewTransition(
+        table, "SHAM_Taunt", "SHAM_Move", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 5, 0, 0.1f, NULL);
+    xAnimTableNewTransition(
+        table, "SHAM_Move", "SHAM_Taunt", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    xAnimTableNewTransition(
+        table, "SHAM_Taunt", "SHAM_Move", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+
+    return table;
+}
+
+// Builds the shark's animation table: idle and bored states with their fidgets.
+static xAnimTable* VANM_mktable_SHARK()
+{
+    xAnimTable* table;
+    xAnimTransition* tmp_tran;
+    S32 i;
+
+    table = xAnimTableNew("Villain_Shark", NULL);
+    xAnimTableNewState(table, "Idle", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Bored", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_Fidget_1", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_Fidget_2", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Bored_Fidget_1", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Bored_Fidget_2", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    for (i = ZVIL_ANIM_IDLE; i < ZVIL_ANIM_MOVE; i++)
+    {
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.0f, NULL);
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0, 0.0f, NULL);
+        xAnimTableNewTransition(
+            table, "Idle", g_animname[i], (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.0f, NULL);
+    }
+    tmp_tran = xAnimTableNewTransition(table, "Idle_Fidget_1 Idle_Fidget_2", "Idle",
+                                       (xAnimTransitionConditionalCallback)VANM_dodflt,
+                                       (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f,
+                                       2, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(table, "Idle_Fidget_1 Idle_Fidget_2", "Bored",
+                                       (xAnimTransitionConditionalCallback)VANM_dodflt,
+                                       (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f,
+                                       1, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(table, "Bored_Fidget_1 Bored_Fidget_2", "Bored",
+                                       (xAnimTransitionConditionalCallback)VANM_dodflt,
+                                       (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f,
+                                       2, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(table, "Bored_Fidget_1 Bored_Fidget_2", "Idle",
+                                       (xAnimTransitionConditionalCallback)VANM_dodflt,
+                                       (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f,
+                                       1, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(
+        table, "Idle", "Idle_Fidget_1", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 8, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(
+        table, "Idle", "Idle_Fidget_2", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 8, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(
+        table, "Idle", "Bored_Fidget_1", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 7, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(
+        table, "Idle", "Bored_Fidget_2", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 7, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(
+        table, "Bored", "Bored_Fidget_1", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 8, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(
+        table, "Bored", "Bored_Fidget_2", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 8, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(
+        table, "Bored", "Idle_Fidget_1", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 7, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+    tmp_tran = xAnimTableNewTransition(
+        table, "Bored", "Idle_Fidget_2", (xAnimTransitionConditionalCallback)VANM_dotran,
+        (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 7, 0, 0.0f, NULL);
+    tmp_tran->Flags |= 0x20;
+
+    return table;
+}
+
+// Builds the animation table for simple villains: idle and one action.
+static xAnimTable* VANM_mktable_SIMP()
+{
+    xAnimTable* table;
+    S32 i;
+
+    table = xAnimTableNew("Villain_Simple", NULL);
+    xAnimTableNewState(table, "Idle", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "SIMP_Action", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    for (i = ZVIL_ANIM_SIMP_ACTION; i < ZVIL_ANIM_NOMORE; i++)
+    {
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+            (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0, 0.1f, NULL);
+        xAnimTableNewTransition(
+            table, "Idle", g_animname[i], (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+
+    return table;
+}
+
+// Builds the gang's animation table: idles, fidgets, movement, actions and talking. Every state
+// returns to Idle through one shared default transition, collected in deftran and intranz.
+static xAnimTable* VANM_mktable_GANG()
+{
+    xAnimTable* table;
+    char* strptrz[32] = {NULL};
+    xAnimTransition* intranz[ZVIL_ANIM_NOMORE] = {NULL};
+    xAnimTransition* deftran[ZVIL_ANIM_NOMORE] = {NULL};
+    S32 i;
+    S32 j;
+
+    table = xAnimTableNew("Villain_Gang", NULL);
+    xAnimTableNewState(table, "Idle", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Idle_1", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Idle_2", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Idle_3", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_IdleFidget", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_IdleFidget_1", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_IdleFidget_2", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_IdleFidget_3", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Turn", 0x10, 0x2000000, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Walk", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Run", 0x10, 0x2000006, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_RunChased", 0x10, 0x2000006, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Action", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_BossAction", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Talk", 0x10, 0x2000000, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Talk_1", 0x10, 0x2000000, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Talk_2", 0x10, 0x2000000, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_Talk_3", 0x10, 0x2000000, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "GANG_TalkAndTurn", 0x10, 0x2000000, 1.0f, NULL, NULL, 0.0f, NULL);
+    for (i = ZVIL_ANIM_GANG_ALTIDLE1; i < ZVIL_ANIM_SHAM_MOVE; i++)
+    {
+        if (deftran[ZVIL_ANIM_IDLE] == NULL)
+        {
+            deftran[ZVIL_ANIM_IDLE] = xAnimTableNewTransition(
+                table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+                (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.5f, NULL);
+        }
+        else
+        {
+            xAnimTableAddTransition(table, deftran[ZVIL_ANIM_IDLE], g_animname[i]);
+        }
+        if (intranz[ZVIL_ANIM_IDLE] == NULL)
+        {
+            intranz[ZVIL_ANIM_IDLE] = xAnimTableNewTransition(
+                table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dotran,
+                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0, 0.5f, NULL);
+        }
+        else
+        {
+            xAnimTableAddTransition(table, intranz[ZVIL_ANIM_IDLE], g_animname[i]);
+        }
+        intranz[i] = xAnimTableNewTransition(
+            table, "Idle", g_animname[i], (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.5f, NULL);
+    }
+    xAnimTableNewTransition(
+        table, "GANG_IdleFidget_1", "GANG_Idle_1", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 5, 0, 0.5f, NULL);
+    xAnimTableNewTransition(
+        table, "GANG_IdleFidget_2", "GANG_Idle_2", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 5, 0, 0.5f, NULL);
+    xAnimTableNewTransition(
+        table, "GANG_IdleFidget_3", "GANG_Idle_3", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 5, 0, 0.5f, NULL);
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_ALTIDLE1], "GANG_Idle_2 GANG_Idle_3");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_ALTIDLE2], "GANG_Idle_1 GANG_Idle_3");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_ALTIDLE3], "GANG_Idle_1 GANG_Idle_2");
+    strptrz[0] = "GANG_Idle_1";
+    strptrz[1] = "GANG_Idle_2";
+    strptrz[2] = "GANG_Idle_3";
+    for (i = 0; i < 3; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_FIDGET], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_FIDGET1], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_FIDGET2], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_FIDGET3], strptrz[i]);
+    }
+    strptrz[0] = "GANG_IdleFidget";
+    strptrz[1] = "GANG_IdleFidget_1";
+    strptrz[2] = "GANG_IdleFidget_2";
+    strptrz[3] = "GANG_IdleFidget_3";
+    strptrz[4] = "GANG_Turn";
+    strptrz[5] = "GANG_Walk";
+    strptrz[6] = "GANG_Run";
+    strptrz[7] = "GANG_RunChased";
+    strptrz[8] = "GANG_Talk";
+    strptrz[9] = "GANG_Talk_1";
+    strptrz[10] = "GANG_Talk_2";
+    strptrz[11] = "GANG_Talk_3";
+    strptrz[12] = "GANG_TalkAndTurn";
+    for (i = 0; i < 13; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_ALTIDLE1], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_ALTIDLE2], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_ALTIDLE3], strptrz[i]);
+    }
+    strptrz[0] = "GANG_Idle_1";
+    strptrz[1] = "GANG_Idle_2";
+    strptrz[2] = "GANG_Idle_3";
+    strptrz[3] = "GANG_IdleFidget";
+    strptrz[4] = "GANG_IdleFidget_1";
+    strptrz[5] = "GANG_IdleFidget_2";
+    strptrz[6] = "GANG_IdleFidget_3";
+    strptrz[7] = "GANG_Turn";
+    strptrz[8] = "GANG_Walk";
+    strptrz[9] = "GANG_Run";
+    strptrz[10] = "GANG_RunChased";
+    strptrz[11] = "GANG_Talk";
+    strptrz[12] = "GANG_Talk_1";
+    strptrz[13] = "GANG_Talk_2";
+    strptrz[14] = "GANG_Talk_3";
+    strptrz[15] = "GANG_TalkAndTurn";
+    for (i = 0; i < 16; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_ACTION], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_BOSSACTION], strptrz[i]);
+    }
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_WALK], "GANG_Run GANG_RunChased");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_RUN], "GANG_Walk GANG_RunChased");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_RUNCHASED], "GANG_Walk GANG_Run");
+    strptrz[0] = "GANG_Idle_1";
+    strptrz[1] = "GANG_Idle_2";
+    strptrz[2] = "GANG_Idle_3";
+    strptrz[3] = "GANG_IdleFidget";
+    strptrz[4] = "GANG_IdleFidget_1";
+    strptrz[5] = "GANG_IdleFidget_2";
+    strptrz[6] = "GANG_IdleFidget_3";
+    strptrz[7] = "GANG_Action";
+    strptrz[8] = "GANG_BossAction";
+    strptrz[9] = "GANG_Talk";
+    strptrz[10] = "GANG_Talk_1";
+    strptrz[11] = "GANG_Talk_2";
+    strptrz[12] = "GANG_Talk_3";
+    strptrz[13] = "GANG_TalkAndTurn";
+    for (i = 0; i < 14; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_TURN], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_WALK], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_RUN], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_RUNCHASED], strptrz[i]);
+    }
+    strptrz[0] = "GANG_Talk";
+    strptrz[1] = "GANG_Talk_1";
+    strptrz[2] = "GANG_Talk_2";
+    strptrz[3] = "GANG_Talk_3";
+    strptrz[4] = "GANG_TalkAndTurn";
+    for (i = 0; i < 5; i++)
+    {
+        for (j = 0; j < 5; j++)
+        {
+            if (i != j)
+            {
+                xAnimTableNewTransition(
+                    table, strptrz[i], strptrz[j], (xAnimTransitionConditionalCallback)VANM_dotran,
+                    (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.5f, NULL);
+            }
+        }
+    }
+    // Slot 0 keeps "GANG_Talk" from the list above, and slot 2 is set twice, so
+    // "GANG_IdleFidget_1" is never added here.
+    strptrz[1] = "GANG_IdleFidget";
+    strptrz[2] = "GANG_IdleFidget_1";
+    strptrz[2] = "GANG_IdleFidget_2";
+    strptrz[3] = "GANG_IdleFidget_3";
+    strptrz[4] = "GANG_Turn";
+    strptrz[5] = "GANG_Walk";
+    strptrz[6] = "GANG_Run";
+    strptrz[7] = "GANG_RunChased";
+    strptrz[8] = "GANG_Idle_1";
+    strptrz[9] = "GANG_Idle_2";
+    strptrz[10] = "GANG_Idle_3";
+    for (i = 0; i < 11; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_TALK], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_TALK1], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_TALK2], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_TALK3], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GANG_TALKANDTURN], strptrz[i]);
+    }
+
+    return table;
+}
+
+// Builds the standard villain animation table, shared by most monsters: idles, movement,
+// senses (hear, look, investigate), attacks, taunts, the gum and soap reactions, daze and death.
+static xAnimTable* VANM_mktable_STD()
+{
+    xAnimTable* table;
+    char* strptrz[32] = {NULL};
+    xAnimTransition* intranz[ZVIL_ANIM_NOMORE] = {NULL};
+    xAnimTransition* deftran[ZVIL_ANIM_NOMORE] = {NULL};
+    S32 i;
+
+    table = xAnimTableNew("Villain_Standard", NULL);
+    xAnimTableNewState(table, "Idle", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Bored", 0x110, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_Fidget_1", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Idle_Fidget_2", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Bored_Fidget_1", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Bored_Fidget_2", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Fashion_Pose", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Move", 0x110, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Turn", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Chase", 0x110, 0x2000006, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Action_OnceNoMove", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Action_LoopAndMove", 0x110, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Surprize", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Taunt", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Taunt_1", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Taunt_2", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Hear_Start", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Hear_Loop", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Look_Start", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Look_Loop", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Investigate_Start", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Investigate", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "AttackIdle", 0x10, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Attack", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Attack_1", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Attack_2", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Combo", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Combo_1", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Combo_2", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Lob_Attack", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Lob_Combo", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Extend_Attack_Start", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Extend_Attack_Loop", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Extend_Combo", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Hit_By_Gum", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Gummed", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Gummed_Resist", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Gummed_BreakFree", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Hit_When_Gummed", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Bounced_When_Gummed", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Hit_By_Soap", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Soaped", 0x10, 0x4000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Soaped_Resist", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Soaped_BreakFree", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Hit_When_Soaped", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Bounced_When_Soaped", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Dazed_Begin", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Dazed", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Dazed_Recovery", 0x20, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Death", 0, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Death_From_Above", 0, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Death_From_Dazed", 0, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Death_Idle", 0x10, 1, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Jump_Begin", 0x20, 0x200000a, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Jump_Loop", 0x10, 0x200000a, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Jump_Land", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Fall_Loop", 0x20, 0x200000a, 1.0f, NULL, NULL, 0.0f, NULL);
+    xAnimTableNewState(table, "Fall_Splat", 0x20, 0x2000001, 1.0f, NULL, NULL, 0.0f, NULL);
+    for (i = ZVIL_ANIM_FIDGET_IDLE1; i < ZVIL_ANIM_BK_SCARYIDLE; i++)
+    {
+        if (deftran[ZVIL_ANIM_IDLE] == NULL)
+        {
+            deftran[ZVIL_ANIM_IDLE] = xAnimTableNewTransition(
+                table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+                (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f, NULL);
+        }
+        else
+        {
+            xAnimTableAddTransition(table, deftran[ZVIL_ANIM_IDLE], g_animname[i]);
+        }
+        if (intranz[ZVIL_ANIM_IDLE] == NULL)
+        {
+            intranz[ZVIL_ANIM_IDLE] = xAnimTableNewTransition(
+                table, g_animname[i], "Idle", (xAnimTransitionConditionalCallback)VANM_dotran,
+                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 5, 0, 0.1f, NULL);
+        }
+        else
+        {
+            xAnimTableAddTransition(table, intranz[ZVIL_ANIM_IDLE], g_animname[i]);
+        }
+        intranz[i] = xAnimTableNewTransition(
+            table, "Idle", g_animname[i], (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+    }
+    xAnimTableAddTransition(table, deftran[ZVIL_ANIM_IDLE], "Idle_Fidget_1 Idle_Fidget_2");
+    deftran[ZVIL_ANIM_BORED] = xAnimTableNewTransition(
+        table, "Bored_Fidget_1 Bored_Fidget_2", "Bored",
+        (xAnimTransitionConditionalCallback)VANM_dodflt, (xAnimTransitionCallback)VANM_diddflt,
+        0x10, 0, 0.0f, 0.0f, 15, 0, 0.1f, NULL);
+    strptrz[0] = "Idle";
+    strptrz[1] = "Bored";
+    for (i = 0; i < 2; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_FIDGET_IDLE1], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_FIDGET_IDLE2], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_FIDGET_BORED1], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_FIDGET_BORED2], strptrz[i]);
+    }
+    strptrz[0] = "Turn";
+    strptrz[1] = "Surprize";
+    strptrz[2] = "Investigate_Start";
+    strptrz[3] = "Investigate";
+    strptrz[4] = "Hear_Start";
+    strptrz[5] = "Hear_Loop";
+    strptrz[6] = "Look_Start";
+    strptrz[7] = "Look_Loop";
+    strptrz[8] = "Gummed";
+    strptrz[9] = "Soaped";
+    strptrz[10] = "Dazed";
+    strptrz[11] = "Dazed_Recovery";
+    strptrz[12] = "Attack";
+    strptrz[13] = "Attack_1";
+    strptrz[14] = "Attack_2";
+    strptrz[15] = "Lob_Attack";
+    strptrz[16] = "Extend_Attack_Loop";
+    strptrz[17] = "Combo";
+    strptrz[18] = "Combo_1";
+    strptrz[19] = "Combo_2";
+    strptrz[20] = "Taunt";
+    strptrz[21] = "Taunt_1";
+    strptrz[22] = "Taunt_2";
+    strptrz[23] = "Bored";
+    for (i = 0; i < 24; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_MOVE], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_CHASE], strptrz[i]);
+    }
+    strptrz[24] = "Move";
+    strptrz[25] = "Chase";
+    for (i = 0; i < 26; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_ACTION_NOMOVE], strptrz[i]);
+        xAnimTableNewTransition(
+            table, "Action_OnceNoMove", strptrz[i], (xAnimTransitionConditionalCallback)VANM_dotran,
+            (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_ACTION_MOVING], strptrz[i]);
+        xAnimTableNewTransition(table, "Action_LoopAndMove", strptrz[i],
+                                (xAnimTransitionConditionalCallback)VANM_dotran,
+                                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0,
+                                0.1f, NULL);
+    }
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_CHASE], "Move");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_MOVE], "Chase");
+    strptrz[0] = "Move";
+    strptrz[1] = "Surprize";
+    strptrz[2] = "Investigate_Start";
+    strptrz[3] = "Investigate";
+    strptrz[4] = "Hear_Start";
+    strptrz[5] = "Hear_Loop";
+    strptrz[6] = "Look_Start";
+    strptrz[7] = "Look_Loop";
+    strptrz[8] = "Gummed";
+    strptrz[9] = "Soaped";
+    strptrz[10] = "Dazed";
+    strptrz[11] = "Dazed_Recovery";
+    strptrz[12] = "Attack";
+    strptrz[13] = "Attack_1";
+    strptrz[14] = "Attack_2";
+    strptrz[15] = "Lob_Attack";
+    strptrz[16] = "Extend_Attack_Loop";
+    strptrz[17] = "Combo";
+    strptrz[18] = "Combo_1";
+    strptrz[19] = "Combo_2";
+    strptrz[20] = "Taunt";
+    strptrz[21] = "Taunt_1";
+    strptrz[22] = "Taunt_2";
+    strptrz[23] = "Bored";
+    strptrz[24] = "Move";
+    strptrz[25] = "Chase";
+    for (i = 0; i < 26; i++)
+    {
+        if (deftran[ZVIL_ANIM_TURN] == NULL)
+        {
+            deftran[ZVIL_ANIM_TURN] = xAnimTableNewTransition(
+                table, strptrz[i], "Turn", (xAnimTransitionConditionalCallback)VANM_dodflt,
+                (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f, NULL);
+        }
+        else
+        {
+            xAnimTableAddTransition(table, deftran[ZVIL_ANIM_TURN], strptrz[i]);
+        }
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_TURN], strptrz[i]);
+    }
+    strptrz[0] = "Attack";
+    strptrz[1] = "Attack_1";
+    strptrz[2] = "Attack_2";
+    strptrz[3] = "Combo";
+    strptrz[4] = "Combo_1";
+    strptrz[5] = "Combo_2";
+    strptrz[6] = "Lob_Attack";
+    strptrz[7] = "Extend_Attack_Loop";
+    for (i = 0; i < 8; i++)
+    {
+        if (deftran[ZVIL_ANIM_ATTACKIDLE] == NULL)
+        {
+            deftran[ZVIL_ANIM_ATTACKIDLE] = xAnimTableNewTransition(
+                table, strptrz[i], "AttackIdle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+                (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 0, 0, 0.1f, NULL);
+        }
+        else
+        {
+            xAnimTableAddTransition(table, deftran[ZVIL_ANIM_ATTACKIDLE], strptrz[i]);
+        }
+    }
+    deftran[ZVIL_ANIM_EXT_ATTACK_LOOP] = xAnimTableNewTransition(
+        table, "Extend_Attack_Start", "Extend_Attack_Loop",
+        (xAnimTransitionConditionalCallback)VANM_dodflt, (xAnimTransitionCallback)VANM_diddflt,
+        0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+    strptrz[0] = "Move";
+    strptrz[1] = "Turn";
+    strptrz[2] = "Chase";
+    strptrz[3] = "Surprize";
+    strptrz[4] = "AttackIdle";
+    strptrz[5] = "Taunt";
+    strptrz[6] = "Taunt_1";
+    strptrz[7] = "Taunt_2";
+    for (i = 0; i < 8; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_ATTACK], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_ATTACK1], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_ATTACK2], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_LOB_ATTACK], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_EXT_ATTACK_START], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_EXT_ATTACK_LOOP], strptrz[i]);
+    }
+    strptrz[0] = "Attack";
+    strptrz[1] = "Attack_1";
+    strptrz[2] = "Attack_2";
+    for (i = 0; i < 3; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_COMBO], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_COMBO1], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_COMBO2], strptrz[i]);
+    }
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_LOB_COMBO], "Lob_Attack");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_EXT_COMBO], "Extend_Attack_Loop");
+    strptrz[0] = "Move";
+    strptrz[1] = "Chase";
+    strptrz[2] = "Surprize";
+    strptrz[3] = "Soaped";
+    strptrz[4] = "Gummed";
+    strptrz[5] = "Hear_Start";
+    strptrz[6] = "Hear_Loop";
+    strptrz[7] = "Look_Start";
+    strptrz[8] = "Look_Loop";
+    strptrz[9] = "Investigate_Start";
+    strptrz[10] = "Investigate";
+    strptrz[11] = "Attack";
+    strptrz[12] = "Attack_1";
+    strptrz[13] = "Attack_2";
+    strptrz[14] = "Lob_Attack";
+    strptrz[15] = "Extend_Attack_Start";
+    strptrz[16] = "Extend_Attack_Loop";
+    strptrz[17] = "Combo";
+    strptrz[18] = "Combo_1";
+    strptrz[19] = "Combo_2";
+    strptrz[20] = "Lob_Combo";
+    strptrz[21] = "Extend_Combo";
+    strptrz[22] = "AttackIdle";
+    strptrz[23] = "Turn";
+    strptrz[24] = "Bored";
+    for (i = 0; i < 25; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_TAUNT], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_TAUNT1], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_TAUNT2], strptrz[i]);
+        if (i != 22)
+        {
+            xAnimTableAddTransition(table, intranz[ZVIL_ANIM_ATTACKIDLE], strptrz[i]);
+        }
+    }
+    deftran[ZVIL_ANIM_HEAR_LOOP] = xAnimTableNewTransition(
+        table, "Hear_Start", "Hear_Loop", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+    strptrz[0] = "Move";
+    strptrz[1] = "Bored";
+    strptrz[2] = "Turn";
+    strptrz[3] = "Chase";
+    strptrz[4] = "Gummed";
+    strptrz[5] = "Soaped";
+    strptrz[6] = "Dazed";
+    strptrz[7] = "Dazed_Recovery";
+    strptrz[8] = "Investigate_Start";
+    strptrz[9] = "Investigate";
+    strptrz[10] = "Look_Start";
+    strptrz[11] = "Look_Loop";
+    strptrz[12] = "Surprize";
+    for (i = 0; i < 13; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_HEAR_START], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_HEAR_LOOP], strptrz[i]);
+    }
+    deftran[ZVIL_ANIM_LOOK_LOOP] = xAnimTableNewTransition(
+        table, "Look_Start", "Look_Loop", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+    strptrz[0] = "Move";
+    strptrz[1] = "Bored";
+    strptrz[2] = "Turn";
+    strptrz[3] = "Chase";
+    strptrz[4] = "Gummed";
+    strptrz[5] = "Soaped";
+    strptrz[6] = "Dazed";
+    strptrz[7] = "Dazed_Recovery";
+    strptrz[8] = "Investigate_Start";
+    strptrz[9] = "Investigate";
+    strptrz[10] = "Hear_Start";
+    strptrz[11] = "Hear_Loop";
+    strptrz[12] = "Surprize";
+    for (i = 0; i < 13; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_LOOK_START], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_LOOK_LOOP], strptrz[i]);
+    }
+    strptrz[0] = "Move";
+    strptrz[1] = "Bored";
+    strptrz[2] = "Turn";
+    strptrz[3] = "Chase";
+    strptrz[4] = "Gummed";
+    strptrz[5] = "Soaped";
+    strptrz[6] = "Dazed";
+    strptrz[7] = "Dazed_Recovery";
+    strptrz[8] = "Investigate_Start";
+    strptrz[9] = "Investigate";
+    strptrz[10] = "Hear_Start";
+    strptrz[11] = "Hear_Loop";
+    strptrz[12] = "Look_Start";
+    strptrz[13] = "Look_Loop";
+    for (i = 0; i < 14; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_SURPRIZE], strptrz[i]);
+    }
+    deftran[ZVIL_ANIM_INVESTIGATE] = xAnimTableNewTransition(
+        table, "Investigate_Start", "Investigate", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+    strptrz[0] = "Move";
+    strptrz[1] = "Bored";
+    strptrz[2] = "Turn";
+    strptrz[3] = "Chase";
+    strptrz[4] = "Gummed";
+    strptrz[5] = "Soaped";
+    strptrz[6] = "Dazed";
+    // Slot 7 is skipped and keeps "Dazed_Recovery" from the list above.
+    strptrz[8] = "Dazed_Recovery";
+    strptrz[9] = "Hear_Start";
+    strptrz[10] = "Hear_Loop";
+    strptrz[11] = "Look_Start";
+    strptrz[12] = "Look_Loop";
+    strptrz[13] = "Surprize";
+    for (i = 0; i < 14; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_INVESTIGATE], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_INVESTIGATE_START], strptrz[i]);
+    }
+    strptrz[0] = "Hit_By_Soap";
+    strptrz[1] = "Soaped_Resist";
+    strptrz[2] = "Hit_When_Soaped";
+    strptrz[3] = "Bounced_When_Soaped";
+    for (i = 0; i < 4; i++)
+    {
+        if (deftran[ZVIL_ANIM_SOAPED] == NULL)
+        {
+            deftran[ZVIL_ANIM_SOAPED] = xAnimTableNewTransition(
+                table, strptrz[i], "Soaped", (xAnimTransitionConditionalCallback)VANM_dodflt,
+                (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+        }
+        else
+        {
+            xAnimTableAddTransition(table, deftran[ZVIL_ANIM_SOAPED], strptrz[i]);
+        }
+    }
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_SOAPED_RESIST], "Soaped");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_SOAPED_BREAKFREE], "Soaped");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_HIT_WHEN_SOAPED], "Soaped");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_BOUNCED_WHEN_SOAPED], "Soaped");
+    strptrz[0] = "Hit_By_Gum";
+    strptrz[1] = "Gummed_Resist";
+    strptrz[2] = "Hit_When_Gummed";
+    strptrz[3] = "Bounced_When_Gummed";
+    for (i = 0; i < 4; i++)
+    {
+        if (deftran[ZVIL_ANIM_GUMMED] == NULL)
+        {
+            deftran[ZVIL_ANIM_GUMMED] = xAnimTableNewTransition(
+                table, strptrz[i], "Gummed", (xAnimTransitionConditionalCallback)VANM_dodflt,
+                (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+        }
+        else
+        {
+            xAnimTableAddTransition(table, deftran[ZVIL_ANIM_GUMMED], strptrz[i]);
+        }
+    }
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GUMMED_RESIST], "Gummed");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GUMMED_BREAKFREE], "Gummed");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_HIT_WHEN_GUMMED], "Gummed");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_BOUNCED_WHEN_GUMMED], "Gummed");
+    strptrz[0] = "Move";
+    strptrz[1] = "Chase";
+    strptrz[2] = "Hear_Start";
+    strptrz[3] = "Hear_Loop";
+    strptrz[4] = "Look_Start";
+    strptrz[5] = "Look_Loop";
+    strptrz[6] = "Investigate_Start";
+    strptrz[7] = "Investigate";
+    strptrz[8] = "Surprize";
+    strptrz[9] = "Taunt";
+    strptrz[10] = "Taunt_1";
+    strptrz[11] = "Taunt_2";
+    strptrz[12] = "AttackIdle";
+    strptrz[13] = "Attack";
+    strptrz[14] = "Attack_1";
+    strptrz[15] = "Attack_2";
+    strptrz[16] = "Lob_Attack";
+    strptrz[17] = "Lob_Combo";
+    strptrz[18] = "Extend_Attack_Start";
+    strptrz[19] = "Extend_Attack_Loop";
+    strptrz[20] = "Extend_Combo";
+    strptrz[21] = "Combo";
+    strptrz[22] = "Combo_1";
+    strptrz[23] = "Combo_2";
+    strptrz[24] = "Dazed";
+    strptrz[25] = "Dazed_Begin";
+    strptrz[26] = "Dazed_Recovery";
+    strptrz[27] = "Bored";
+    for (i = 0; i < 28; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_HIT_BY_SOAP], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_BOUNCED_WHEN_SOAPED], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_SOAPED], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_HIT_BY_GUM], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_BOUNCED_WHEN_GUMMED], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_GUMMED], strptrz[i]);
+    }
+    deftran[ZVIL_ANIM_DAZED] = xAnimTableNewTransition(
+        table, "Dazed_Begin", "Dazed", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+    strptrz[0] = "Move";
+    strptrz[1] = "Turn";
+    strptrz[2] = "Chase";
+    strptrz[3] = "Hear_Start";
+    strptrz[4] = "Hear_Loop";
+    strptrz[5] = "Look_Start";
+    strptrz[6] = "Look_Loop";
+    strptrz[7] = "Investigate_Start";
+    strptrz[8] = "Investigate";
+    strptrz[9] = "Taunt";
+    strptrz[10] = "Taunt_1";
+    strptrz[11] = "Taunt_2";
+    strptrz[12] = "Surprize";
+    strptrz[13] = "Bored";
+    strptrz[14] = "Lob_Attack";
+    strptrz[15] = "Lob_Combo";
+    strptrz[16] = "Extend_Attack_Start";
+    strptrz[17] = "Extend_Attack_Loop";
+    strptrz[18] = "AttackIdle";
+    strptrz[19] = "Attack";
+    strptrz[20] = "Attack_1";
+    strptrz[21] = "Attack_2";
+    for (i = 0; i < 22; i++)
+    {
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_DAZED], strptrz[i]);
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_DAZED_BEGIN], strptrz[i]);
+    }
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_DAZED_RECOVER], "Dazed");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_DEATH_DAZED], "Dazed");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_DEATH], "Dazed");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_DEATH_ABOVE], "Dazed");
+    for (i = ZVIL_ANIM_FIDGET_IDLE1; i < ZVIL_ANIM_BK_SCARYIDLE; i++)
+    {
+        if (i != ZVIL_ANIM_DEATH)
+        {
+            xAnimTableNewTransition(
+                table, g_animname[i], "Death", (xAnimTransitionConditionalCallback)VANM_dotran,
+                (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 2, 0, 0.1f, NULL);
+        }
+        if (i != ZVIL_ANIM_DEATH_DAZED)
+        {
+            xAnimTableNewTransition(table, g_animname[i], "Death_From_Dazed",
+                                    (xAnimTransitionConditionalCallback)VANM_dotran,
+                                    (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 2, 0,
+                                    0.1f, NULL);
+        }
+        if (i != ZVIL_ANIM_DEATH_ABOVE)
+        {
+            xAnimTableNewTransition(table, g_animname[i], "Death_From_Above",
+                                    (xAnimTransitionConditionalCallback)VANM_dotran,
+                                    (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 2, 0,
+                                    0.1f, NULL);
+        }
+    }
+    strptrz[0] = "Death";
+    strptrz[1] = "Death_From_Dazed";
+    strptrz[2] = "Death_From_Above";
+    for (i = 0; i < 3; i++)
+    {
+        // The new transition is not kept in deftran, so each death state gets its own.
+        if (deftran[ZVIL_ANIM_DEATH_IDLE] == NULL)
+        {
+            xAnimTableNewTransition(
+                table, strptrz[i], "Death_Idle", (xAnimTransitionConditionalCallback)VANM_dodflt,
+                (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+        }
+        else
+        {
+            xAnimTableAddTransition(table, deftran[ZVIL_ANIM_DEATH_IDLE], strptrz[i]);
+        }
+        xAnimTableAddTransition(table, intranz[ZVIL_ANIM_DEATH_IDLE], strptrz[i]);
+    }
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_JUMP_BEGIN], "Fashion_Pose");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_JUMP_LOOP], "Fashion_Pose");
+    xAnimTableNewTransition(
+        table, "Jump_Begin", "Jump_Loop", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+    xAnimTableNewTransition(
+        table, "Jump_Loop", "Jump_Land", (xAnimTransitionConditionalCallback)VANM_dodflt,
+        (xAnimTransitionCallback)VANM_diddflt, 0x10, 0, 0.0f, 0.0f, 1, 0, 0.1f, NULL);
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_JUMP_LAND], "Jump_Loop");
+    xAnimTableAddTransition(table, intranz[ZVIL_ANIM_FALL_SPLAT], "Fall_Loop");
+
+    return table;
+}
+
+// Plays the given animation, falling back to Idle when the villain's table lacks it.
+static inline en_NPC_ANIMSTATES VANM_setone(st_zEntVillain* ent, en_NPC_ANIMSTATES anim)
+{
+    en_NPC_ANIMSTATES best[2] = { anim, ZVIL_ANIM_IDLE };
+    return VANM_set(ent, best, 2, 0);
+}
+
+// Plays one of three animations, picked at random, without weights, among those the villain's
+// animation table has.
+static inline en_NPC_ANIMSTATES VANM_randthree(st_zEntVillain* ent, en_NPC_ANIMSTATES a,
+                                               en_NPC_ANIMSTATES b, en_NPC_ANIMSTATES c)
+{
+    en_NPC_ANIMSTATES choice_list[3] = { a, b, c };
+    return VANM_randset(ent, NULL, choice_list, 3);
+}
+
+static inline en_NPC_ANIMSTATES VANM_hashToAnim(U32 hash)
+{
+    en_NPC_ANIMSTATES anim = ZVIL_ANIM_UNKNOWN;
+    for (S32 i = 0; i < ZVIL_ANIM_NOMORE; i++)
+    {
+        if (hash == g_anamhash[i])
+        {
+            anim = (en_NPC_ANIMSTATES)i;
+            break;
+        }
+    }
+    return anim;
+}
+
+// Length of an animation state (with no state given, the villain's current one), scaled by
+// mult; the unscaled length goes to tym when asked.
+static inline F32 VANM_duration(xAnimState* astate, st_zEntVillain* ent, F32 mult, F32* tym)
+{
+    F32 dur = 0.0f;
+    if (astate != NULL)
+    {
+        dur = astate->Data->Duration;
+    }
+    else if (ent != NULL)
+    {
+        xAnimSingle* single = VANM_entSingle(ent);
+        xAnimState* cur = single ? single->State : NULL;
+        if (cur != NULL)
+        {
+            dur = cur->Data->Duration;
+        }
+    }
+    if (tym != NULL)
+    {
+        *tym = dur;
+    }
+    dur *= mult;
+    return dur;
+}
+
+static U32 VANM_dotran(xAnimTransition* tran, xAnimSingle* single, st_zEntVillain* ent)
+{
+    U32 dotran = 0;
+
+    if (ent->anim_playnext == ZVIL_ANIM_UNKNOWN)
+    {
+        dotran = 0;
+    }
+    else if (ent->anim_playing)
+    {
+        dotran = 0;
+    }
+    else if (tran->Dest == NULL)
+    {
+        dotran = 0;
+    }
+    else if (tran->Dest->Name == NULL || tran->Dest->ID == 0)
+    {
+        dotran = 0;
+    }
+    else if (tran->Dest->ID == g_anamhash[ent->anim_playnext])
+    {
+        dotran = 1;
+        if (ent->anim_playsync)
+        {
+            tran->SrcTime = single->State->Data->Duration;
+            ent->tmr_list[ZVIL_TYMR_MINANIMPLAY] = single->State->Data->Duration;
+            ent->tmr_list[ZVIL_TYMR_MINANIMPLAY] =
+                (ent->tmr_list[ZVIL_TYMR_MINANIMPLAY] - (single->Time - 0.05f) < -1.0f)
+                    ? -1.0f
+                    : ent->tmr_list[ZVIL_TYMR_MINANIMPLAY] - (single->Time - 0.05f);
+        }
+
+        if (ent->vhf->animtran != NULL)
+        {
+            ent->vhf->animtran(ent, tran, single);
+        }
+    }
+
+    return dotran;
+}
+
+static U32 VANM_didtran(xAnimTransition* tran, xAnimSingle* single, st_zEntVillain* ent)
+{
+    F32 tym = 0.0f;
+
+    ent->anim_playing = 1;
+    ent->anim_playnext = VANM_hashToAnim(single->State->ID);
+    ent->tmr_list[ZVIL_TYMR_MINANIMPLAY] =
+        VANM_duration(single->State, ent, ent->anim_loopmult, &tym);
+    if (single->State->Flags & 0x10)
+    {
+        ent->anim_loopmult = 0.97f;
+    }
+    ent->anim_playsync = 0;
+
+    return 1;
+}
+
+static U32 VANM_dodflt(xAnimTransition* tran, xAnimSingle* single, st_zEntVillain* ent)
+{
+    return 1;
+}
+
+static U32 VANM_diddflt(xAnimTransition* tran, xAnimSingle* single, st_zEntVillain* ent)
+{
+    F32 tym = 0.0f;
+
+    ent->anim_playing = 1;
+    ent->anim_playnext = VANM_hashToAnim(single->State->ID);
+    ent->tmr_list[ZVIL_TYMR_MINANIMPLAY] =
+        VANM_duration(single->State, ent, ent->anim_loopmult, &tym);
+    if (single->State->Flags & 0x10)
+    {
+        ent->anim_loopmult = 0.97f;
+    }
+    ent->anim_playsync = 0;
+
+    return 1;
+}
+
+// Starts the transition from one state to another, making a temporary one when the table
+// has none.
+static inline void VANM_tranto(st_zEntVillain* ent, xAnimState* from, xAnimState* to)
+{
+    xAnimTable* table = ent->model->Anim->Table;
+    xAnimTransition* newtran = NULL;
+
+    if (from != NULL && to != NULL && from->ID != to->ID)
+    {
+        if (VANM_findtran(ent, table, from, to, 1, &newtran) == NULL && newtran != NULL)
+        {
+            xAnimPlayStartTransition(ent->model->Anim, newtran);
+        }
+    }
+}
+
+static en_NPC_ANIMSTATES VANM_set(st_zEntVillain* ent, en_NPC_ANIMSTATES* best, S32 cnt,
+                                  S32 sync)
+{
+    xAnimState* astate = NULL;
+    S32 i;
+
+    if (best == NULL)
+    {
+        return ent->anim_playnext;
+    }
+    if (cnt < 1)
+    {
+        return ent->anim_playnext;
+    }
+
+    xAnimSingle* single = VANM_entSingle(ent);
+    xAnimState* curstate = single ? single->State : NULL;
+
+    for (i = 0; i < cnt; i++)
+    {
+        astate = xAnimTableGetStateID(ent->model->Anim->Table, g_anamhash[best[i]]);
+        if (astate == NULL)
+        {
+            continue;
+        }
+        if (astate->UserFlags & 0x40000000)
+        {
+            astate = NULL;
+            continue;
+        }
+        if (astate != NULL)
+        {
+            if (ent->anim_playnext != best[i])
+            {
+                ent->anim_playnext = best[i];
+                ent->anim_playing = 0;
+                ent->anim_playsync = sync;
+                ent->anim_loopmult = 0.97f;
+                ent->tmr_list[ZVIL_TYMR_MINANIMPLAY] =
+                    VANM_duration(astate, ent, 0.97f, NULL);
+                break;
+            }
+            astate = NULL;
+            break;
+        }
+    }
+
+    if (curstate != NULL && astate != NULL && astate->ID != curstate->ID)
+    {
+        VANM_tranto(ent, curstate, astate);
+    }
+
+    return ent->anim_playnext;
+}
+
+static en_NPC_ANIMSTATES VANM_randset(st_zEntVillain* ent, F32* wts,
+                                      en_NPC_ANIMSTATES* choice_list, S32 cnt)
+{
+    en_NPC_ANIMSTATES fnl_anim;
+    S32 i;
+    xAnimState* chk_ast;
+    S32* act_list;
+    S32 use_anim;
+    F32* act_wts = NULL;
+    S32 act_cnt = 0;
+
+    if (choice_list == NULL)
+    {
+        return ent->anim_playnext;
+    }
+    if (cnt < 1)
+    {
+        return ent->anim_playnext;
+    }
+
+    act_list = (S32*)xMemPushTemp(cnt * sizeof(S32));
+    memset(act_list, 0, cnt * sizeof(S32));
+    if (wts != NULL)
+    {
+        act_wts = (F32*)xMemPushTemp(cnt * sizeof(F32));
+        memset(act_wts, 0, cnt * sizeof(F32));
+    }
+
+    for (i = 0; i < cnt; i++)
+    {
+        chk_ast = xAnimTableGetStateID(ent->model->Anim->Table, g_anamhash[choice_list[i]]);
+        if (chk_ast == NULL)
+        {
+            continue;
+        }
+        if (chk_ast->UserFlags & 0x40000000)
+        {
+            continue;
+        }
+        act_list[act_cnt] = choice_list[i];
+        if (act_wts != NULL)
+        {
+            act_wts[act_cnt] = wts[i];
+        }
+        act_cnt++;
+    }
+
+    if (act_cnt == 0)
+    {
+        fnl_anim = ent->anim_playnext;
+    }
+    else if (act_cnt == 1)
+    {
+        fnl_anim = VANM_setone(ent, (en_NPC_ANIMSTATES)act_list[0]);
+    }
+    else
+    {
+        if (act_wts != NULL)
+        {
+            VSUP_wtadjust(act_wts, act_cnt, 1.0f);
+        }
+        use_anim = VSUP_choose(act_list, act_wts, act_cnt);
+        fnl_anim = VANM_setone(ent, (en_NPC_ANIMSTATES)use_anim);
+    }
+
+    xMemPopTemp(act_list);
+    if (act_wts != NULL)
+    {
+        xMemPopTemp(act_wts);
+    }
+
+    return fnl_anim;
+}
+
+static xAnimTransition* VANM_findtran(st_zEntVillain* ent, xAnimTable* table, xAnimState* from,
+                                      xAnimState* to, S32 autoslamit, xAnimTransition** newtran)
+{
+    xAnimTransition* da_tran = NULL;
+    xAnimTransition* smack;
+    xAnimTransitionList* tmp_tranlist;
+    xAnimTransition* tmp_tran;
+
+    if (from == NULL || to == NULL)
+    {
+        return NULL;
+    }
+    if (from->ID == to->ID)
+    {
+        return NULL;
+    }
+
+    if (from->Default == NULL)
+    {
+        if (from->ID != g_anamhash[ZVIL_ANIM_IDLE])
+        {
+            xSceneID2Name(globals.sceneCur, ent->id);
+        }
+    }
+    else if (from->Default->T == NULL)
+    {
+        if (from->ID != g_anamhash[ZVIL_ANIM_IDLE])
+        {
+            xSceneID2Name(globals.sceneCur, ent->id);
+        }
+    }
+    else if (to->ID == from->Default->T->Dest->ID)
+    {
+        da_tran = from->Default->T;
+    }
+
+    if (da_tran == NULL)
+    {
+        tmp_tranlist = from->List;
+        while (tmp_tranlist != NULL)
+        {
+            tmp_tran = tmp_tranlist->T;
+            if (tmp_tran == NULL)
+            {
+                tmp_tranlist = tmp_tranlist->Next;
+                continue;
+            }
+            if (to->ID == tmp_tran->Dest->ID)
+            {
+                da_tran = tmp_tran;
+                break;
+            }
+            tmp_tranlist = tmp_tranlist->Next;
+        }
+    }
+
+    if (da_tran == NULL)
+    {
+        xSceneID2Name(globals.sceneCur, ent->id);
+        if (autoslamit && newtran != NULL)
+        {
+            smack = xAnimTempTransitionAlloc();
+            smack->Dest = to;
+            smack->Callback = NULL;
+            smack->SrcTime = 0.0f;
+            smack->DestTime = 0.0f;
+            smack->BlendRecip = 10.0f;
+            smack->BlendOffset = NULL;
+            *newtran = smack;
+        }
+    }
+
+    return da_tran;
+}
+
+static xAnimSingle* VANM_entSingle(const _zEnt* ent)
+{
+    if (ent->model == NULL)
+    {
+        return NULL;
+    }
+    if (ent->model->Anim == NULL)
+    {
+        return NULL;
+    }
+    return ent->model->Anim->Single;
+}
+
+// The animation state the villain's model is in, or NULL if it has none.
+static inline xAnimState* VANM_entState(const _zEnt* ent)
+{
+    xAnimSingle* single = VANM_entSingle(ent);
+    xAnimState* state = single ? single->State : NULL;
+    return state;
+}
+
+// Drops a bonus item at the villain, if its allow flags let it. Outside boss battles nothing drops
+// while a dropped bonus item that is still out is within 2 units of the villain.
+static void VBON_drop_bonusItem(st_zEntVillain* vil)
+{
+    S32 overlap = 0;
+    S32 skip_distchk = 0;
+    _xVec3 vec_tmp = { 0 };
+    S32 i;
+    st_NPC_BONUS* bon;
+
+    if (!(vil->allow & 0x800))
+    {
+        return;
+    }
+
+    if (g_scene_is_a_boss_battle)
+    {
+        skip_distchk = 1;
+    }
+
+    for (i = 0; i < 11; i++)
+    {
+        if (skip_distchk)
+        {
+            break;
+        }
+
+        bon = &g_npcBonus[i];
+        if (bon->pickup == NULL)
+        {
+            continue;
+        }
+        if (!(bon->flg_info & 0x1))
+        {
+            continue;
+        }
+        if (bon->pickup->state & 0x8)
+        {
+            continue;
+        }
+
+        xVec3Sub(&vec_tmp, xEntGetPos(bon->pickup), xEntGetPos(vil));
+        if (xVec3Length2(&vec_tmp) < 4.0f)
+        {
+            overlap = 1;
+            break;
+        }
+    }
+
+    if (overlap)
+    {
+        return;
+    }
+
+    bon = VBON_choose_bonusItem((en_zEntVillainSubTypeID)vil->asset->subtype);
+    if (bon == NULL)
+    {
+        return;
+    }
+
+    bon->flg_info |= 0x1;
+    bon->pickup->flg_opts |= 0x3;
+    bon->pickup->useThisEntPos = vil;
+    zEntPickup_MakeDroppable(bon->pickup, xBoundCenter(&vil->bound), NULL);
+    zEntPickup_Drop(bon->pickup);
+}
+
+static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
+{
+    S32 idx = 0;
+    F32 dlta = 1.0f / cnt;
+    F32 pt = iurand();
+    F32 lo;
+    F32 hi = 0.0f;
+
+    for (S32 i = 0; i < cnt; i++)
+    {
+        lo = hi;
+        if (wts)
+        {
+            hi += wts[i];
+        }
+        else
+        {
+            hi += dlta;
+        }
+        if (pt >= lo && pt <= hi)
+        {
+            idx = i;
+            break;
+        }
+    }
+
+    return list[idx];
+}
+
+static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
+{
+    F32 sum = 0.0f;
+    S32 i;
+
+    for (i = 0; i < cnt; i++)
+    {
+        if (wts[i] < 0.0f)
+        {
+            wts[i] = -wts[i];
+        }
+        sum += wts[i];
+    }
+
+    F32 fac = arbref / sum;
+    for (i = 0; i < cnt; i++)
+    {
+        wts[i] *= fac;
+    }
+}
+
+// Squared flat (x and z) distance from the entity to a position.
+static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
+{
+    _xVec3 delta = { 0 };
+
+    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
+    return delta.x * delta.x + delta.z * delta.z;
+}
+
+// Flips each component of out that points against the matching component of alter.
+static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
+{
+    if (alter->x < 0.0f && out->x > 0.0f)
+        out->x *= -1.0f;
+    else if (alter->x > 0.0f && out->x < 0.0f)
+        out->x *= -1.0f;
+
+    if (alter->y < 0.0f && out->y > 0.0f)
+        out->y *= -1.0f;
+    else if (alter->y > 0.0f && out->y < 0.0f)
+        out->y *= -1.0f;
+
+    if (alter->z < 0.0f && out->z > 0.0f)
+        out->z *= -1.0f;
+    else if (alter->z > 0.0f && out->z < 0.0f)
+        out->z *= -1.0f;
+}

@@ -45,7 +45,7 @@ All five `.ctors` initialisers end up inside emitted units: zEntPlayer, zEntShag
 
 ## Reproducing
 
-The PS2 ELF is in the private build image at `/orig/SLUS-20349/SLUS_203.49`. After a dtk split (`ninja` or `dtk dol split`), run:
+The PS2 ELF is private: the build image has it at `/orig/SLUS-20349/SLUS_203.49`, and a clone of the n100f-build repository at `orig/SLUS-20349/SLUS_203.49`. Use whichever you have. After a dtk split (`ninja` or `dtk dol split`), run:
 
 ```sh
 python3 tools/splits/recover.py --dol orig/GIHE78-rev0/sys/main.dol \
@@ -53,7 +53,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78-rev0/sys/main.dol \
   --splits units.txt --edges config/GIHE78-rev0/split_edges.tsv --units config/GIHE78-rev0/split_units.tsv
 ```
 
-`units.txt` is the unit part of `splits.txt`. The relocations, and so the output, are the same whichever split produced the objects. Relocations to symbols that `symbols.txt` names are resolved through `symbols.txt`, so renaming functions does not change the output. Adding an exact-body `function` row to `evidence.tsv` can: it adds a name anchor and call features. Re-run the tool when one lands and commit what changes. Names are looked up in `symbols.txt` before dtk's address-suffixed labels. A name that `symbols.txt` gives to more than one symbol, such as two file-local statics, resolves in the object that defines it, to the one of its addresses that lies inside that object's range for the section in `splits.txt`. (dtk gives a static that another object references an address suffix, so only statics referenced from their own object reach this.) The tool stops when an object references such a name without defining it, or when not exactly one of its addresses lies inside the defining object's range.
+`units.txt` is the unit part of `splits.txt`. The relocations, and so the output, are the same whichever split produced the objects. Relocations to symbols that `symbols.txt` names are resolved through `symbols.txt`, so renaming functions does not change the output. Adding an exact-body `function` row to `evidence.tsv` can: it adds a name anchor and call features. Re-run the tool when one lands and commit what changes: `python3 tools/splits/check_recover.py --target GIHE78-rev0 --write` runs it after a build (it looks for the ELF at the image path, then in an n100f-build clone beside this checkout; pass `--ps2-elf <path>` otherwise) and writes all three outputs, splicing the `flat/` units into `splits.txt`. CI runs the same tool without `--write` after each target build and fails when the committed files differ from what `recover.py` writes. Names are looked up in `symbols.txt` before dtk's address-suffixed labels. A name that `symbols.txt` gives to more than one symbol, such as two file-local statics, resolves in the object that defines it, to the one of its addresses that lies inside that object's range for the section in `splits.txt`. (dtk gives a static that another object references an address suffix, so only statics referenced from their own object reach this.) The tool stops when an object references such a name without defining it, or when not exactly one of its addresses lies inside the defining object's range.
 
 ## Limits
 
@@ -164,7 +164,7 @@ In `evidence.tsv` each unit has a `unit` row, each function a `function` row and
 
 # RenderWare units
 
-`splits.txt` also names 89 RenderWare units between `0x801372EC` and `0x8018E5C0`, from `tools/splits/rwmap.py`. GIHE78 links RenderWare 3.3.0.2: `RwEngineGetVersion` (`0x80169F10`) returns `0x33002`. There is no public RenderWare source to compile. 71 units are BfBB's RenderWare 3.5 units (`bfbbdecomp/bfbb` `d8e8eac`, GQPE78), placed by function size sequence: 63 in the main pass and 8 in the gaps it leaves. The other 18 are pipeline node objects that BfBB doesn't link, found from GIHE78's own node definitions. The input is `config/GIHE78-rev0/rwmap.json` and the report is `config/GIHE78-rev0/rw_units.tsv`, whose "method" column says which step placed each unit.
+`splits.txt` also names 89 RenderWare units between `0x801372EC` and `0x8018E5C0`, from `tools/splits/rwmap.py`. GIHE78 links RenderWare 3.3.0.2: `RwEngineGetVersion` (`0x80169F10`) returns `0x33002`. There is no public RenderWare source to compile. 71 units are BfBB's RenderWare 3.5 units (`bfbbdecomp/bfbb` `d8e8eac`, GQPE78), placed by function size sequence: 63 in the main pass and 8 in the gaps it leaves. The other 18 are pipeline node objects that BfBB doesn't link, found from GIHE78's own node definitions. The input is `config/GIHE78-rev0/rwmap.json` and the report is `config/GIHE78-rev0/rw_units.tsv`, whose "method" column says which step placed each unit. One more unit is split by hand: `rwsdk/src/pipe/p2/p2renderstate.c` (`0x8018B69C` to `0x8018BB5C`, with 8 bytes of `.sdata2` at `0x80262C48`), which BfBB has between `p2heap.c` and `p2resort.c` but the tool does not place; its reconstruction compiles to exactly that extent, and its `unit` row in `evidence.tsv` gives the evidence. It moves `p2heap.c`'s start back to `0x8018A644`, where the January 2001 prototype's heap helpers begin.
 
 | Library | Units |
 | --- | --- |

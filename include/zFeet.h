@@ -5,6 +5,7 @@
 #include "xVec3.h"
 
 struct _xEnt;
+struct xAnimTable;
 
 struct tagzFeet
 {
@@ -39,5 +40,8 @@ struct _tagFeetSkidMark
 
 void zFeetUpdateSkidMark(_tagFeetSkidMark* m, F32 seconds);
 void zFeetInitSkidMark(_tagFeetSkidMark* m, S32 total_feet);
+void zFeetInit(S32 ent_type, _xEnt* owner, tagzFeet* feet, S32 feet_subtype, xAnimTable* table);
+void zFeetAddSkidMark(_xEnt* ent, _tagFeetSkidMark* m, F32 seconds);
+void zFeetExit(_xEnt* ent, xAnimTable* table);
 
 #endif

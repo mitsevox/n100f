@@ -1325,7 +1325,7 @@ rwsdk/plugin/collis/ctbsp.c:
 	.text       start:0x8013AB54 end:0x8013B940
 
 rwsdk/plugin/collis/rpcollis.c:
-	.text       start:0x8013B940 end:0x8013BCD8
+	.text       start:0x8013B940 end:0x8013BE1C
 
 rwsdk/plugin/hanim/rphanim.c:
 	.text       start:0x8013D054 end:0x8013D300
@@ -1334,7 +1334,7 @@ rwsdk/plugin/matfx/multiTex.c:
 	.text       start:0x80142D88 end:0x80143760
 
 rwsdk/plugin/skin2/rpskin.c:
-	.text       start:0x80144374 end:0x80144E0C
+	.text       start:0x80144284 end:0x80144E8C
 
 rwsdk/world/babinwor.c:
 	.text       start:0x801472B8 end:0x801474F8
@@ -1444,6 +1444,10 @@ rwsdk/src/pipe/p2/nodeSubmitTriangle.c:
 
 rwsdk/src/pipe/p2/p2core.c:
 	.text       start:0x80184894 end:0x80185324
+
+rwsdk/src/pipe/p2/p2renderstate.c:
+	.text       start:0x80188A14 end:0x80188ED4
+	.sdata2     start:0x80274B10 end:0x80274B18
 
 rwsdk/src/pipe/p2/gcn/im3dpipe.c:
 	.text       start:0x80189398 end:0x801895E8

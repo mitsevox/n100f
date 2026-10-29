@@ -27,11 +27,13 @@ struct zParEmitterAsset : p2BaseAsset
 
 struct xParGroup;
 
-// Partial: members up to group.
+// Partial: members up to emit_pad.
 struct _zParEmitter : xBase
 {
     zParEmitterAsset* tasset;
     xParGroup* group;
+    U8 emit_flags;
+    U8 emit_pad[3];
 };
 
 struct _zParEmitterCustomSettings
@@ -57,6 +59,7 @@ struct _zParEmitterCustomSettings
 };
 
 _zParEmitter* zParEmitterFind(char* asset_name);
+_zParEmitter* zParEmitterFind(U32 asset_id);
 xPar* zParEmitterEmitCustom(_zParEmitter* p, F32 dt, _zParEmitterCustomSettings* info);
 
 #endif

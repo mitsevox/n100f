@@ -52,14 +52,27 @@ struct _xRot
     F32 angle;
 };
 
+struct _xIsect
+{
+    U32 flags;
+    F32 penned;
+    F32 contained;
+    F32 lapped;
+    xVec3 point;
+    xVec3 norm;
+    F32 dist;
+};
+
 typedef struct _xMat3x3 xMat3x3;
 typedef struct _xMat4x3 xMat4x3;
 typedef struct _xVec4 xVec4;
 typedef struct _xQuat xQuat;
 typedef struct _xSphere xSphere;
 typedef struct _xRot xRot;
+typedef struct _xIsect xIsect;
 
 extern const xMat4x3 g_I3;
+extern const xVec3 g_O3;
 extern const xVec3 g_Y3;
 extern const xVec3 g_NY3;
 
@@ -117,6 +130,16 @@ inline void xVec3Cross(xVec3* o, const xVec3* a, const xVec3* b)
     temp.x = a->y * b->z - b->y * a->z;
     temp.y = a->z * b->x - b->z * a->x;
     temp.z = a->x * b->y - b->x * a->y;
+    *o = temp;
+}
+
+inline void xVec3Lerp(xVec3* o, const xVec3* a, const xVec3* b, F32 t)
+{
+    xVec3 temp;
+
+    temp.x = a->x + (b->x - a->x) * t;
+    temp.y = a->y + (b->y - a->y) * t;
+    temp.z = a->z + (b->z - a->z) * t;
     *o = temp;
 }
 

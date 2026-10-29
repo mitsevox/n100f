@@ -1,6 +1,5 @@
 #include <rpworld.h>
 
-#define rpGEOMETRYNATIVE 0x01000000
 #define rpWORLDNATIVE 0x01000000
 
 // The object types _rpMeshSize distinguishes: a world and a geometry.

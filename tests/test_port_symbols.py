@@ -1,7 +1,7 @@
 """The instruction model of the symbol port (tools/port_symbols.py)."""
 import unittest
 
-from tools.port_symbols import is_address,walk,written
+from tools.port_symbols import Side,Symbol,is_address,walk,written
 
 
 def code(*words):
@@ -51,6 +51,37 @@ class Walk(unittest.TestCase):
         words=code(0x3D208020,0x38690010)
         out=walk(words,{},is_address,{words[1][0]})
         self.assertEqual([w for w,_ in out],[0x3D208020,0x38690010])
+
+
+class Adopt(unittest.TestCase):
+    def side(self):
+        # This side's toolkit split one function in two: 0xAC bytes, then a 4-byte one.
+        side=object.__new__(Side)
+        fn=lambda a,n:Symbol('fn_%08X = .text:0x%08X; // type:function size:0x%X'%(a,a,n))
+        side.functions={0x1000:(fn(0x1000,0xAC),[],b'short'),0x10AC:(fn(0x10AC,4),[],b'tail')}
+        side.code=lambda addr,size:([],b'whole' if (addr,size)==(0x1000,0xB0) else b'other')
+        return side
+
+    def other(self,size,digest):
+        return (Symbol('f = .text:0x2000; // type:function size:0x%X'%size),[],digest)
+
+    def test_a_longer_function_covering_the_split_pairs(self):
+        side=self.side()
+        self.assertTrue(side.adopt(0x1000,self.other(0xB0,b'whole')))
+        self.assertEqual(sorted(side.functions),[0x1000])
+
+    def test_different_contents_do_not_pair(self):
+        side=self.side()
+        self.assertFalse(side.adopt(0x1000,self.other(0xB0,b'elsewhere')))
+        self.assertEqual(sorted(side.functions),[0x1000,0x10AC])
+
+    def test_a_paired_function_is_not_swallowed(self):
+        side=self.side()
+        self.assertFalse(side.adopt(0x1000,self.other(0xB0,b'whole'),{0x10AC}))
+        self.assertEqual(sorted(side.functions),[0x1000,0x10AC])
+
+    def test_a_shorter_function_does_not_replace(self):
+        self.assertFalse(self.side().adopt(0x1000,self.other(0x80,b'whole')))
 
 
 if __name__=='__main__':

@@ -5,10 +5,10 @@
 #include "xEnt.h"
 #include "xMath3.h"
 #include "xLinkList.h"
+#include "zGust.h"
 
 struct zScene;
 struct zEntProjectile;
-struct _zGust;
 struct _xCollis;
 struct RpAtomic;
 struct zProjectileTypeAsset;
@@ -324,13 +324,6 @@ struct st_ZPRJ_AUTOCALC_INFO
         st_ZPRJ_SOLV_METHOD_B methb;
         st_ZPRJ_SOLV_METHOD_C methc;
     };
-};
-
-struct zGustData
-{
-    U32 gust_on;
-    _zGust* g[4];
-    F32 lerp[4];
 };
 
 struct zEntProjectile : _xEnt

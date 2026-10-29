@@ -26,7 +26,12 @@ struct RwLinkList
     RwLLLink link;
 };
 
+#define rwLLLinkGetData(linkvar, type, entry)                                                      \
+    ((type*)(((U8*)(linkvar)) - (S32)&((type*)0)->entry))
 #define rwLLLinkGetNext(linkvar) ((linkvar)->next)
+#define rwLLLinkInitialize(linkvar)                                                                \
+    ((linkvar)->prev = (RwLLLink*)NULL, (linkvar)->next = (RwLLLink*)NULL)
+#define rwLLLinkAttached(linkvar) ((linkvar)->next)
 #define rwLinkListInitialize(list)                                                                 \
     ((list)->link.next = ((RwLLLink*)(list)), (list)->link.prev = ((RwLLLink*)(list)))
 #define rwLinkListEmpty(list) (((list)->link.next) == (&(list)->link))
@@ -372,6 +377,28 @@ typedef enum RwRasterType
     rwRASTERTYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwRasterType;
 
+typedef enum RwRasterFormat
+{
+    rwRASTERFORMATDEFAULT = 0x0000,
+    rwRASTERFORMAT1555 = 0x0100,
+    rwRASTERFORMAT565 = 0x0200,
+    rwRASTERFORMAT4444 = 0x0300,
+    rwRASTERFORMATLUM8 = 0x0400,
+    rwRASTERFORMAT8888 = 0x0500,
+    rwRASTERFORMAT888 = 0x0600,
+    rwRASTERFORMAT16 = 0x0700,
+    rwRASTERFORMAT24 = 0x0800,
+    rwRASTERFORMAT32 = 0x0900,
+    rwRASTERFORMAT555 = 0x0a00,
+    rwRASTERFORMATAUTOMIPMAP = 0x1000,
+    rwRASTERFORMATPAL8 = 0x2000,
+    rwRASTERFORMATPAL4 = 0x4000,
+    rwRASTERFORMATMIPMAP = 0x8000,
+    rwRASTERFORMATPIXELFORMATMASK = 0x0f00,
+    rwRASTERFORMATMASK = 0xff00,
+    rwRASTERFORMATFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwRasterFormat;
+
 typedef enum RwRenderState
 {
     rwRENDERSTATENARENDERSTATE = 0,
@@ -403,6 +430,32 @@ typedef enum RwRenderState
     rwRENDERSTATESTENCILFUNCTIONWRITEMASK,
     rwRENDERSTATEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwRenderState;
+
+typedef enum RwBlendFunction
+{
+    rwBLENDNABLEND = 0,
+    rwBLENDZERO,
+    rwBLENDONE,
+    rwBLENDSRCCOLOR,
+    rwBLENDINVSRCCOLOR,
+    rwBLENDSRCALPHA,
+    rwBLENDINVSRCALPHA,
+    rwBLENDDESTALPHA,
+    rwBLENDINVDESTALPHA,
+    rwBLENDDESTCOLOR,
+    rwBLENDINVDESTCOLOR,
+    rwBLENDSRCALPHASAT,
+    rwBLENDFUNCTIONFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwBlendFunction;
+
+typedef enum RwCullMode
+{
+    rwCULLMODENACULLMODE = 0,
+    rwCULLMODECULLNONE,
+    rwCULLMODECULLBACK,
+    rwCULLMODECULLFRONT,
+    rwCULLMODEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwCullMode;
 
 #define rwObjectGetSubType(o) (((const RwObject*)(o))->subType)
 #define rwObjectGetFlags(o) (((const RwObject*)(o))->flags)
@@ -467,6 +520,31 @@ struct RwFileFunctions
     S32 (*rwfseek)(void* fptr, S32 offset, S32 origin);
     S32 (*rwfflush)(void* fptr);
     S32 (*rwftell)(void* fptr);
+};
+
+typedef S32 (*vecSprintfFunc)(char* buffer, const char* format, ...);
+typedef char* (*vecStrcpyFunc)(char* dest, const char* srce);
+typedef char* (*vecStrncpyFunc)(char* dest, const char* srce, U32 size);
+typedef char* (*vecStrncatFunc)(char* dest, const char* srce, U32 size);
+typedef S32 (*vecStrcmpFunc)(const char* string1, const char* string2);
+typedef U32 (*vecStrlenFunc)(const char* string);
+
+// Partial: this build's table is 0x40 bytes; only the members the target reaches at fixed
+// offsets are declared.
+typedef struct RwStringFunctions RwStringFunctions;
+struct RwStringFunctions
+{
+    vecSprintfFunc vecSprintf;
+    U8 unk4[0x4];
+    vecStrcpyFunc vecStrcpy;
+    vecStrncpyFunc vecStrncpy;
+    U8 unk10[0x4];
+    vecStrncatFunc vecStrncat;
+    U8 unk18[0xC];
+    vecStrcmpFunc vecStrcmp;
+    U8 unk28[0x4];
+    vecStrlenFunc vecStrlen;
+    U8 unk30[0x10];
 };
 
 typedef struct RwSurfaceProperties RwSurfaceProperties;
@@ -612,6 +690,62 @@ typedef U16 RwImVertexIndex;
         (vert)->emissiveColor.alpha = a;                                                           \
     } while (0)
 
+typedef struct RxObjSpace3DVertex RxObjSpace3DVertex;
+struct RxObjSpace3DVertex
+{
+    F32 x;
+    F32 y;
+    F32 z;
+    F32 nx;
+    F32 ny;
+    F32 nz;
+    U8 r;
+    U8 g;
+    U8 b;
+    U8 a;
+    F32 u;
+    F32 v;
+};
+
+typedef RxObjSpace3DVertex RxObjSpace3DLitVertex;
+typedef RxObjSpace3DLitVertex RwIm3DVertex;
+
+inline void RwIm3DVertexSetPos(RwIm3DVertex* vert, F32 x, F32 y, F32 z)
+{
+    vert->x = x;
+    vert->y = y;
+    vert->z = z;
+}
+
+inline void RwIm3DVertexSetU(RwIm3DVertex* vert, F32 u)
+{
+    vert->u = u;
+}
+
+inline void RwIm3DVertexSetV(RwIm3DVertex* vert, F32 v)
+{
+    vert->v = v;
+}
+
+inline void RwIm3DVertexSetRGBA(RwIm3DVertex* vert, U8 r, U8 g, U8 b, U8 a)
+{
+    vert->r = r;
+    vert->g = g;
+    vert->b = b;
+    vert->a = a;
+}
+
+enum RwIm3DTransformFlags
+{
+    rwIM3D_VERTEXUV = 1,
+    rwIM3D_ALLOPAQUE = 2,
+    rwIM3D_NOCLIP = 4,
+    rwIM3D_VERTEXXYZ = 8,
+    rwIM3D_VERTEXRGBA = 16,
+    rwIM3DTRANSFORMFLAGSFORCEENUMSIZEINT = 0x7FFFFFFF
+};
+typedef enum RwIm3DTransformFlags RwIm3DTransformFlags;
+
 typedef S32 (*RwStandardFunc)(void* pOut, void* pInOut, S32 nI);
 typedef S32 (*RwSystemFunc)(S32 nOption, void* pOut, void* pInOut, S32 nIn);
 typedef S32 (*RwRenderStateSetFunction)(RwRenderState nState, void* pParam);
@@ -643,6 +777,15 @@ struct RwDevice
     U8 unk28[0x10];
 };
 
+typedef enum RwEngineStatus
+{
+    rwENGINESTATUSIDLE = 0,
+    rwENGINESTATUSINITED = 1,
+    rwENGINESTATUSOPENED = 2,
+    rwENGINESTATUSSTARTED = 3,
+    rwENGINESTATUSFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwEngineStatus;
+
 // Partial: only the members reconstructed code reaches are declared.
 typedef struct RwGlobals RwGlobals;
 struct RwGlobals
@@ -656,22 +799,344 @@ struct RwGlobals
     RwStandardFunc stdFunc[29];
     RwLinkList dirtyFrameList;
     RwFileFunctions fileFuncs;
-    U8 unkF0[0x40];
+    RwStringFunctions stringFuncs;
     RwMemoryFunctions memoryFuncs;
     RwMemoryAllocFn memoryAlloc;
     RwMemoryFreeFn memoryFree;
-    U8 unk148[0xC];
+    void* metrics;
+    RwEngineStatus engineStatus;
+    U32 resArenaInitSize;
 };
 
 #define RWSRCGLOBAL(var) (((RwGlobals*)RwEngineInstance)->var)
 
-// Partial: the resource arena's globals, at resourcesModule.globalsOffset in the engine
-// instance. Only the arena size and the in-use entry list are reached.
+#define rwsprintf RWSRCGLOBAL(stringFuncs).vecSprintf
+#define rwstrcpy RWSRCGLOBAL(stringFuncs).vecStrcpy
+#define rwstrncpy RWSRCGLOBAL(stringFuncs).vecStrncpy
+#define rwstrncat RWSRCGLOBAL(stringFuncs).vecStrncat
+#define rwstrcmp RWSRCGLOBAL(stringFuncs).vecStrcmp
+#define rwstrlen RWSRCGLOBAL(stringFuncs).vecStrlen
+#define RwMalloc(_s) ((RWSRCGLOBAL(memoryFuncs).rwmalloc)((_s)))
+#define RwFree(_p) ((RWSRCGLOBAL(memoryFuncs).rwfree)((_p)))
+#define RwRealloc(_p, _s) ((RWSRCGLOBAL(memoryFuncs).rwrealloc)((_p), (_s)))
+
+typedef struct RxClusterDefinition RxClusterDefinition;
+struct RxClusterDefinition
+{
+    char* name;
+    U32 defaultStride;
+    U32 defaultAttributes;
+    char* attributeSet;
+};
+
+typedef struct RxPipelineCluster RxPipelineCluster;
+struct RxPipelineCluster
+{
+    RxClusterDefinition* clusterRef;
+    U32 creationAttributes;
+};
+
+typedef struct RxCluster RxCluster;
+struct RxCluster
+{
+    U16 flags;
+    U16 stride;
+    void* data;
+    void* currentData;
+    U32 numAlloced;
+    U32 numUsed;
+    RxPipelineCluster* clusterRef;
+    U32 attributes;
+};
+
+typedef struct RxPipeline RxPipeline;
+typedef struct RxPipelineNode RxPipelineNode;
+typedef struct RxNodeDefinition RxNodeDefinition;
+typedef struct RxPipelineNodeTopSortData RxPipelineNodeTopSortData;
+
+typedef struct RxPacket RxPacket;
+struct RxPacket
+{
+    U16 flags;
+    U16 numClusters;
+    RxPipeline* pipeline;
+    U32* inputToClusterSlot;
+    U32* slotsContinue;
+    RxPipelineCluster** slotClusterRefs;
+    RxCluster clusters[1];
+};
+
+typedef struct rxHeapFreeBlock rxHeapFreeBlock;
+typedef struct rxHeapBlockHeader rxHeapBlockHeader;
+
+struct rxHeapBlockHeader
+{
+    rxHeapBlockHeader* prev;
+    rxHeapBlockHeader* next;
+    U32 size;
+    rxHeapFreeBlock* freeEntry;
+    U32 pad[4];
+};
+
+struct rxHeapFreeBlock
+{
+    U32 size;
+    rxHeapBlockHeader* ptr;
+};
+
+typedef struct rxHeapSuperBlockDescriptor rxHeapSuperBlockDescriptor;
+struct rxHeapSuperBlockDescriptor
+{
+    void* start;
+    U32 size;
+    rxHeapSuperBlockDescriptor* next;
+};
+
+typedef struct RxHeap RxHeap;
+struct RxHeap
+{
+    U32 superBlockSize;
+    rxHeapSuperBlockDescriptor* head;
+    rxHeapBlockHeader* headBlock;
+    rxHeapFreeBlock* freeBlocks;
+    U32 entriesAlloced;
+    U32 entriesUsed;
+    S32 dirty;
+};
+
+typedef struct RxPipelineNodeParam RxPipelineNodeParam;
+struct RxPipelineNodeParam
+{
+    void* dataParam;
+    RxHeap* heap;
+};
+
+typedef struct RxNodeMethods RxNodeMethods;
+struct RxNodeMethods
+{
+    S32 (*nodeBody)(RxPipelineNode*, RxPipelineNodeParam*);
+    S32 (*nodeInit)(RxNodeDefinition*);
+    void (*nodeTerm)(RxNodeDefinition*);
+    S32 (*pipelineNodeInit)(RxPipelineNode*);
+    void (*pipelineNodeTerm)(RxPipelineNode*);
+    S32 (*pipelineNodeConfig)(RxPipelineNode*, RxPipeline*);
+    U32 (*configMsgHandler)(RxPipelineNode*, U32, U32, void*);
+};
+
+typedef struct RxIoSpec RxIoSpec;
+struct RxIoSpec
+{
+    U32 numClustersOfInterest;
+    void* clustersOfInterest;
+    S32* inputRequirements;
+    U32 numOutputs;
+    void* outputs;
+};
+
+struct RxNodeDefinition
+{
+    char* name;
+    RxNodeMethods nodeMethods;
+    RxIoSpec io;
+    U32 pipelineNodePrivateDataSize;
+    S32 editable;
+    S32 InputPipesCnt;
+};
+
+struct RxPipelineNode
+{
+    RxNodeDefinition* nodeDef;
+    U32 numOutputs;
+    U32* outputs;
+    RxPipelineCluster** slotClusterRefs;
+    U32* slotsContinue;
+    void* privateData;
+    U32* inputToClusterSlot;
+    RxPipelineNodeTopSortData* topSortData;
+    void* initializationData;
+    U32 initializationDataSize;
+};
+
+struct RxPipelineNodeTopSortData
+{
+    U32 numIns;
+    U32 numInsVisited;
+    void* req;
+};
+
+typedef enum rxEmbeddedPacketState
+{
+    rxPKST_PACKETLESS = 0,
+    rxPKST_UNUSED = 1,
+    rxPKST_INUSE = 2,
+    rxPKST_PENDING = 3,
+    rxEMBEDDEDPACKETSTATEFORCEENUMSIZEINT = 0x7FFFFFFF
+} rxEmbeddedPacketState;
+
+typedef struct RxPipelineRequiresCluster RxPipelineRequiresCluster;
+struct RxPipelineRequiresCluster
+{
+    RxClusterDefinition* clusterDef;
+    S32 rqdOrOpt;
+    U32 slotIndex;
+};
+
+struct RxPipeline
+{
+    S32 locked;
+    U32 numNodes;
+    RxPipelineNode* nodes;
+    U32 packetNumClusterSlots;
+    rxEmbeddedPacketState embeddedPacketState;
+    RxPacket* embeddedPacket;
+    U32 numInputRequirements;
+    RxPipelineRequiresCluster* inputRequirements;
+    void* superBlock;
+    U32 superBlockSize;
+    U32 entryPoint;
+    U32 pluginId;
+    U32 pluginData;
+};
+
+typedef RxPipeline RxLockedPipe;
+typedef U32* RxNodeOutput;
+typedef RxPipelineNode* RxNodeInput;
+
+typedef enum RwShadeMode
+{
+    rwSHADEMODENASHADEMODE = 0,
+    rwSHADEMODEFLAT = 1,
+    rwSHADEMODEGOURAUD = 2,
+    rwSHADEMODEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwShadeMode;
+
+typedef enum RwTextureAddressMode
+{
+    rwTEXTUREADDRESSNATEXTUREADDRESS = 0,
+    rwTEXTUREADDRESSWRAP = 1,
+    rwTEXTUREADDRESSMIRROR = 2,
+    rwTEXTUREADDRESSCLAMP = 3,
+    rwTEXTUREADDRESSBORDER = 4,
+    rwTEXTUREADDRESSMODEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwTextureAddressMode;
+
+typedef enum RwTextureFilterMode
+{
+    rwFILTERNAFILTERMODE = 0,
+    rwFILTERNEAREST = 1,
+    rwFILTERLINEAR = 2,
+    rwFILTERMIPNEAREST = 3,
+    rwFILTERMIPLINEAR = 4,
+    rwFILTERLINEARMIPNEAREST = 5,
+    rwFILTERLINEARMIPLINEAR = 6,
+    rwTEXTUREFILTERMODEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwTextureFilterMode;
+
+typedef struct RxRenderStateVector RxRenderStateVector;
+struct RxRenderStateVector
+{
+    U32 Flags;
+    RwShadeMode ShadeMode;
+    RwBlendFunction SrcBlend;
+    RwBlendFunction DestBlend;
+    RwRaster* TextureRaster;
+    RwTextureAddressMode AddressModeU;
+    RwTextureAddressMode AddressModeV;
+    RwTextureFilterMode FilterMode;
+    RwRGBA BorderColor;
+    RwFogType FogType;
+    RwRGBA FogColor;
+    U8* FogTable;
+};
+
+// The immediate-mode 3D module's pipelines, one per primitive type.
+typedef struct rwIm3DRenderPipelines rwIm3DRenderPipelines;
+struct rwIm3DRenderPipelines
+{
+    RxPipeline* triList;
+    RxPipeline* triFan;
+    RxPipeline* triStrip;
+    RxPipeline* lineList;
+    RxPipeline* polyLine;
+    RxPipeline* pointList;
+};
+
+typedef struct _rwIm3DPoolStash _rwIm3DPoolStash;
+struct _rwIm3DPoolStash
+{
+    U32 flags;
+    RwMatrix* ltm;
+    U32 numVerts;
+    RxObjSpace3DVertex* objVerts;
+    void* camVerts;
+    void* devVerts;
+    void* meshState;
+    RxRenderStateVector* renderState;
+    RxPipeline* pipeline;
+    RwPrimitiveType primType;
+    RwImVertexIndex* indices;
+    U32 numIndices;
+};
+
+// The vertices passed to RwIm3DTransform and the stash the pipelines run on.
+typedef struct rwIm3DPool rwIm3DPool;
+struct rwIm3DPool
+{
+    U16 numElements;
+    RwIm3DVertex* elements;
+    S32 stride;
+    _rwIm3DPoolStash stash;
+};
+
+// The immediate-mode 3D module's globals, at _rwIm3DModule.globalsOffset in the engine instance.
+typedef struct rwImmediGlobals rwImmediGlobals;
+struct rwImmediGlobals
+{
+    RxPipeline* genericIm3DTransformPipeline;
+    rwIm3DRenderPipelines genericIm3DRenderPipelines;
+    RxPipeline* curIm3DTransformPipeline;
+    rwIm3DRenderPipelines curIm3DRenderPipelines;
+    RxPipeline* platformIm3DTransformPipeline;
+    rwIm3DRenderPipelines platformIm3DRenderPipelines;
+    rwIm3DPool im3DPool;
+};
+
+// The pipeline module's globals, at _rxPipelineGlobalsOffset in the engine instance.
+typedef struct RxPipelineGlobals RxPipelineGlobals;
+struct RxPipelineGlobals
+{
+    RwFreeList* pipesFreeList;
+    RxRenderStateVector defaultRenderState;
+    void* unk34;
+    void* unk38;
+    U32 maxNodesPerPipeline;
+    RxPipeline* defaultAtomicPipeline;
+    RxPipeline* defaultSectorPipeline;
+    RxPipeline* defaultMaterialPipeline;
+    RxPipeline* genericAtomicPipeline;
+    RxPipeline* genericSectorPipeline;
+    RxPipeline* genericMaterialPipeline;
+    RxPipeline* platformAtomicPipeline;
+    RxPipeline* platformSectorPipeline;
+};
+
+extern S32 _rxPipelineGlobalsOffset;
+
+#define RXPIPELINEGLOBAL(var)                                                                      \
+    (((RxPipelineGlobals*)((U8*)RwEngineInstance + _rxPipelineGlobalsOffset))->var)
+
+// The resource arena's globals, at resourcesModule.globalsOffset in the engine instance. The
+// entries live on the two embedded lists: usedEntryList points at the one holding the entries
+// used since the last purge, unusedEntryList at the one holding the rest, and a purge swaps them.
 typedef struct RwResourcesGlobals RwResourcesGlobals;
 struct RwResourcesGlobals
 {
     U32 arenaSize;
-    U8 unk4[0x20];
+    S32 usedSize;
+    S32 reclaimedSize;
+    void* heap;
+    RwLinkList entryLists[2];
+    RwLinkList* unusedEntryList;
     RwLinkList* usedEntryList;
 };
 
@@ -697,7 +1162,13 @@ RwResEntry* RwResourcesAllocateResEntry(void* owner, RwResEntry** ownerRef, S32 
                                         RwResEntryDestroyNotify destroyNotify);
 S32 RwResourcesFreeResEntry(RwResEntry* entry);
 S32 RwResourcesGetArenaSize(void);
+S32 RwResourcesSetArenaSize(U32 size);
+S32 RwResourcesEmptyArena(void);
 void _rwResourcesPurge(void);
+S32 _rwResHeapInit(void* mem, U32 size);
+S32 _rwResHeapClose(void* mem);
+void _rwResHeapFree(void* mem);
+void* _rwResHeapAlloc(void* mem, U32 size);
 S32 RwIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices,
                                  S32 numVertices, RwImVertexIndex* indices, S32 numIndices);
 
@@ -720,8 +1191,17 @@ RwImage* RwImageFreePixels(RwImage* image);
 const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict,
                                                     RwTextureCallBack fpCallBack, void* pData);
 S32 RwRenderStateSet(RwRenderState state, void* value);
+S32 RwRenderStateGet(RwRenderState state, void* value);
+void* RwIm3DTransform(RwIm3DVertex* pVerts, U32 numVerts, RwMatrix* ltm, U32 flags);
+S32 RwIm3DEnd(void);
+S32 RwIm3DRenderIndexedPrimitive(RwPrimitiveType primType, RwImVertexIndex* indices,
+                                 S32 numIndices);
+S32 RwIm3DRenderPrimitive(RwPrimitiveType primType);
+RxPipeline* RwIm3DSetTransformPipeline(RxPipeline* pipeline);
+RxPipeline* RwIm3DSetRenderPipeline(RxPipeline* pipeline, RwPrimitiveType primType);
 S32 RwEngineRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor initCB,
                            RwPluginObjectDestructor termCB);
+S32 RwEngineGetPluginOffset(U32 pluginID);
 RwMatrix* RwMatrixUpdate(RwMatrix* matrix);
 RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance);
 RwFrame* RwFrameCreate();
@@ -740,6 +1220,10 @@ RwStream* RwStreamOpen(RwStreamType type, RwStreamAccessType accessType, const v
 S32 RwStreamClose(RwStream* stream, void* pData);
 U32 RwStreamRead(RwStream* stream, void* buffer, U32 length);
 RwStream* RwStreamWrite(RwStream* stream, const void* buffer, U32 length);
+S32 _rwStringStreamGetSize(const char* string);
+const char* _rwStringStreamWrite(const char* string, RwStream* stream);
+char* _rwStringStreamFindAndRead(char* string, RwStream* stream);
+U32 RwEngineGetVersion(void);
 RwStream* RwStreamSkip(RwStream* stream, U32 offset);
 RwStream* RwStreamReadChunkHeaderInfo(RwStream* stream, RwChunkHeaderInfo* chunkHeaderInfo);
 RwStream* _rwStreamWriteVersionedChunkHeader(RwStream* stream, S32 type, S32 size, U32 version,
@@ -756,6 +1240,54 @@ RwFreeList* RwFreeListCreate(S32 entrySize, S32 entriesPerBlock, S32 alignment);
 S32 RwFreeListDestroy(RwFreeList* freeList);
 S32 _rxPipelineClose(void);
 S32 _rxPipelineOpen(void);
+RxPipelineNode* PipelineNodeDestroy(RxPipelineNode* node, RxPipeline* pipeline);
+RxHeap* RxHeapGetGlobalHeap(void);
+RxPacket* RxPacketCreate(RxPipelineNode* node);
+RxCluster* RxClusterSetExternalData(RxCluster* cluster, void* data, U16 stride, U32 numElements);
+RxCluster* RxClusterSetData(RxCluster* cluster, void* data, U16 stride, U32 numElements);
+RxCluster* RxClusterInitializeData(RxCluster* cluster, U32 numElements, U16 stride);
+RxCluster* RxClusterResizeData(RxCluster* cluster, U32 numElements);
+RxCluster* RxClusterLockWrite(RxPacket* packet, U32 clusterIndex, RxPipelineNode* node);
+RxPipeline* RxPipelineExecute(RxPipeline* pipeline, void* data, S32 heapReset);
+RxPipeline* RxPipelineCreate(void);
+void _rxPipelineDestroy(RxPipeline* pipeline);
+RxLockedPipe* RxPipelineLock(RxPipeline* pipeline);
+RxLockedPipe* RxLockedPipeAddFragment(RxLockedPipe* pipeline, U32* firstIndex,
+                                      RxNodeDefinition* nodeDef0, ...);
+RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline);
+RxPipelineNode* RxPipelineFindNodeByName(RxPipeline* pipeline, const char* name,
+                                         RxPipelineNode* start, S32* nodeIndex);
+RxLockedPipe* RxLockedPipeAddPath(RxLockedPipe* pipeline, RxNodeOutput out, RxNodeInput in);
+RxNodeOutput RxPipelineNodeFindOutputByName(RxPipelineNode* node, const char* outputname);
+RxNodeInput RxPipelineNodeFindInput(RxPipelineNode* node);
+RxNodeDefinition* RxNodeDefinitionGetTransform(void);
+RxNodeDefinition* RxNodeDefinitionGetCullTriangle(void);
+RxNodeDefinition* RxNodeDefinitionGetClipTriangle(void);
+RxNodeDefinition* RxNodeDefinitionGetSubmitTriangle(void);
+RxNodeDefinition* RxNodeDefinitionGetImmInstance(void);
+RxNodeDefinition* RxNodeDefinitionGetImmStash(void);
+RxNodeDefinition* RxNodeDefinitionGetImmRenderSetup(void);
+RxNodeDefinition* RxNodeDefinitionGetImmMangleTriangleIndices(void);
+RxNodeDefinition* RxNodeDefinitionGetImmMangleLineIndices(void);
+RxNodeDefinition* RxNodeDefinitionGetClipLine(void);
+RxNodeDefinition* RxNodeDefinitionGetSubmitLine(void);
+RxNodeDefinition* RxNodeDefinitionGetGameCubeImmInstance(void);
+RxNodeDefinition* RxNodeDefinitionGetGameCubeSubmitNoLight(void);
+S32 _rwIm3DCreatePlatformTransformPipeline(RxPipeline** globalPipe);
+void _rwIm3DDestroyPlatformTransformPipeline(RxPipeline** globalPipe);
+void _rwIm3DDestroyPlatformRenderPipelines(rwIm3DRenderPipelines* globalPipes);
+S32 _rwIm3DCreatePlatformRenderPipelines(rwIm3DRenderPipelines* globalPipes);
+void _rxPacketDestroy(RxPacket* packet);
+void RxHeapFree(RxHeap* heap, void* block);
+void* RxHeapAlloc(RxHeap* heap, U32 size);
+void* RxHeapRealloc(RxHeap* heap, void* block, U32 newSize, S32 allowCopy);
+S32 _rxHeapReset(RxHeap* heap);
+void RxHeapDestroy(RxHeap* heap);
+RxHeap* RxHeapCreate(U32 size);
+RxRenderStateVector* RxRenderStateVectorSetDefaultRenderStateVector(RxRenderStateVector* rsvp);
+RxRenderStateVector* RxRenderStateVectorCreate(S32 current);
+void RxRenderStateVectorDestroy(RxRenderStateVector* rsvp);
+RxRenderStateVector* RxRenderStateVectorLoadDriverState(RxRenderStateVector* rsvp);
 RwFreeList* RwFreeListForAllUsed(RwFreeList* freeList, void (*callBack)(void* mem, void* data),
                                  void* data);
 
@@ -778,11 +1310,32 @@ const RwPluginRegistry* _rwPluginRegistryDeInitObject(const RwPluginRegistry* re
 void _rwObjectHasFrameReleaseFrame(void* object);
 
 S32 RwTextureDestroy(RwTexture* texture);
+RwTexture* RwTexDictionaryAddTexture(RwTexDictionary* dict, RwTexture* texture);
+RwTexDictionary* RwTexDictionaryGetCurrent(void);
 
 RwFrame* RwFrameUpdateObjects(RwFrame* frame);
 
 F32 _rwSqrt(F32 num);
 F32 _rwInvSqrt(F32 num);
+
+RwStream* RwStreamReadInt32(RwStream* stream, S32* ints, U32 numBytes);
+RwStream* RwStreamWriteInt32(RwStream* stream, const S32* ints, U32 numBytes);
+RwStream* RwStreamReadReal(RwStream* stream, F32* reals, U32 numBytes);
+RwStream* RwStreamWriteReal(RwStream* stream, const F32* reals, U32 numBytes);
+
+S32 RwFrameRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                          RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RwFrameRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                RwPluginDataChunkWriteCallBack writeCB,
+                                RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RwCameraRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                 RwPluginDataChunkWriteCallBack writeCB,
+                                 RwPluginDataChunkGetSizeCallBack getSizeCB);
+S32 RwTextureRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                            RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
+S32 RwTextureRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                  RwPluginDataChunkWriteCallBack writeCB,
+                                  RwPluginDataChunkGetSizeCallBack getSizeCB);
 
 #ifdef __cplusplus
 }

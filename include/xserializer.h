@@ -26,11 +26,15 @@ struct xSerial
     S32 Read(U32* buf);
     S32 Read(F32* buf);
     S32 Read_b1(S32* bits);
+    S32 Read_b2(S32* bits);
+    S32 Read_b7(U32* bits);
     S32 Write(U8 data);
     S32 Write(S16 data);
     S32 Write(U32 data);
     S32 Write(F32 data);
     S32 Write_b1(S32 bits);
+    S32 Write_b2(S32 bits);
+    S32 Write_b7(U32 bits);
 };
 
 S32 xSerialStartup(S32 count, st_SERIAL_PERCID_SIZE* sizeinfo);
