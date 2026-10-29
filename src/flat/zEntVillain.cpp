@@ -1408,12 +1408,17 @@ static S32 VILN_gang_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
 {
     S32 result = 1;
     en_NPC_STIMULUS stim = stimctxt->stim;
-    en_BEHAVIOUR_GOAL goal = (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
-                                 ? stimctxt->trangoal : vil->goal;
+    en_BEHAVIOUR_GOAL goal;
+    if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
+        goal = stimctxt->trangoal;
+    else
+        goal = vil->goal;
     if ((goal >= ZVIL_GOAL_AFTERLIFE && goal <= ZVIL_GOAL_GOONLINE) || goal == ZVIL_GOAL_DIE)
         result = VILN_std_trangoal(vil, stimctxt, dt);
     switch (g_pgol = goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_IDLE:
         g_pstm = stim;
         if (stim == ZVIL_STIM_ENTERGOAL)
@@ -1749,22 +1754,32 @@ static S32 VILN_sham_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
     en_NPC_STIMULUS stim = stimctxt->stim;
     switch (g_pgol = vil->goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_AFTERLIFE:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_MAKEREADY)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     case ZVIL_GOAL_BASEINIT:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_MAKEREADY)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     case ZVIL_GOAL_STARTUP:
@@ -1777,6 +1792,9 @@ static S32 VILN_sham_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
     case ZVIL_GOAL_TAUNT:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_KILLSELF:
             vil->hitpts = 0;
             resp->trangoal = ZVIL_GOAL_DIE;
@@ -1872,22 +1890,32 @@ static S32 VILN_BRB_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     en_NPC_STIMULUS stim = stimctxt->stim;
     switch (g_pgol = vil->goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_AFTERLIFE:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_MAKEREADY)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     case ZVIL_GOAL_BASEINIT:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_MAKEREADY)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     case ZVIL_GOAL_STARTUP:
@@ -1903,6 +1931,9 @@ static S32 VILN_BRB_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     case ZVIL_GOAL_SPELLCAST:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_KILLSELF:
             vil->hitpts = 0;
             resp->trangoal = ZVIL_GOAL_DIE;
@@ -2011,22 +2042,32 @@ static S32 VILN_BGG_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     en_NPC_STIMULUS stim = stimctxt->stim;
     switch (g_pgol = vil->goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_AFTERLIFE:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_MAKEREADY)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     case ZVIL_GOAL_BASEINIT:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_MAKEREADY)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     case ZVIL_GOAL_STARTUP:
@@ -2042,6 +2083,9 @@ static S32 VILN_BGG_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     case ZVIL_GOAL_SPELLCAST:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_KILLSELF:
             vil->hitpts = 0;
             resp->trangoal = ZVIL_GOAL_DIE;
@@ -2141,22 +2185,32 @@ static S32 VILN_BBK_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     en_NPC_STIMULUS stim = stimctxt->stim;
     switch (g_pgol = vil->goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_AFTERLIFE:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_MAKEREADY)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     case ZVIL_GOAL_BASEINIT:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_MAKEREADY)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     case ZVIL_GOAL_STARTUP:
@@ -2172,6 +2226,9 @@ static S32 VILN_BBK_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     case ZVIL_GOAL_LOBBING:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_KILLSELF:
             vil->hitpts = 0;
             resp->trangoal = ZVIL_GOAL_DIE;
@@ -2392,8 +2449,11 @@ static S32 VILN_sham_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
 {
     S32 result = 1;
     en_NPC_STIMULUS stim = stimctxt->stim;
-    en_BEHAVIOUR_GOAL goal = (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
-                                 ? stimctxt->trangoal : vil->goal;
+    en_BEHAVIOUR_GOAL goal;
+    if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
+        goal = stimctxt->trangoal;
+    else
+        goal = vil->goal;
     if ((goal >= ZVIL_GOAL_AFTERLIFE && goal <= ZVIL_GOAL_GOONLINE) || goal == ZVIL_GOAL_DIE)
         result = VILN_std_trangoal(vil, stimctxt, dt);
     g_pgol = goal;
@@ -2787,8 +2847,11 @@ static S32 VILN_BBK_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 {
     S32 result = 1;
     en_NPC_STIMULUS stim = stimctxt->stim;
-    en_BEHAVIOUR_GOAL goal = (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
-                                 ? stimctxt->trangoal : vil->goal;
+    en_BEHAVIOUR_GOAL goal;
+    if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
+        goal = stimctxt->trangoal;
+    else
+        goal = vil->goal;
     if (goal >= ZVIL_GOAL_AFTERLIFE && goal <= ZVIL_GOAL_GOONLINE)
         result = VILN_std_trangoal(vil, stimctxt, dt);
     else if (goal == ZVIL_GOAL_DIE)
@@ -2799,6 +2862,8 @@ static S32 VILN_BBK_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     }
     switch (g_pgol = goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_FOLLOW:
         g_pstm = stim;
         if (stim == ZVIL_STIM_ENTERGOAL)
@@ -3236,12 +3301,17 @@ static S32 VILN_BGG_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 {
     S32 result = 1;
     en_NPC_STIMULUS stim = stimctxt->stim;
-    en_BEHAVIOUR_GOAL goal = (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
-                                 ? stimctxt->trangoal : vil->goal;
+    en_BEHAVIOUR_GOAL goal;
+    if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
+        goal = stimctxt->trangoal;
+    else
+        goal = vil->goal;
     if ((goal >= ZVIL_GOAL_AFTERLIFE && goal <= ZVIL_GOAL_GOONLINE) || goal == ZVIL_GOAL_DIE)
         result = VILN_std_trangoal(vil, stimctxt, dt);
     switch (g_pgol = goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_IDLE:
         g_pstm = stim;
         if (stim == ZVIL_STIM_ENTERGOAL)
@@ -3831,12 +3901,17 @@ static S32 VILN_BRB_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 {
     S32 result = 1;
     en_NPC_STIMULUS stim = stimctxt->stim;
-    en_BEHAVIOUR_GOAL goal = (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
-                                 ? stimctxt->trangoal : vil->goal;
+    en_BEHAVIOUR_GOAL goal;
+    if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
+        goal = stimctxt->trangoal;
+    else
+        goal = vil->goal;
     if ((goal >= ZVIL_GOAL_AFTERLIFE && goal <= ZVIL_GOAL_GOONLINE) || goal == ZVIL_GOAL_DIE)
         result = VILN_std_trangoal(vil, stimctxt, dt);
     switch (g_pgol = goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_IDLE:
         g_pstm = stim;
         if (stim == ZVIL_STIM_ENTERGOAL)
