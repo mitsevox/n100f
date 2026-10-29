@@ -2,9 +2,9 @@
 #define ZFEET_H
 
 #include "types.h"
+#include "xVec3.h"
 
 struct _xEnt;
-struct _tagSkidEdge;
 struct xAnimTable;
 
 struct tagzFeet
@@ -13,6 +13,19 @@ struct tagzFeet
     _xEnt* owner;
     S16 entity_type;
     S16 pitch;
+};
+
+struct _tagFoot
+{
+    tagzFeet* feet;
+    S32 idx;
+};
+
+struct _tagSkidEdge
+{
+    _xVec3 centre;
+    _xVec3 local_x;
+    F32 width;
 };
 
 struct _tagFeetSkidMark
@@ -25,9 +38,9 @@ struct _tagFeetSkidMark
     F32 remove_timer;
 };
 
+void zFeetUpdateSkidMark(_tagFeetSkidMark* m, F32 seconds);
 void zFeetInitSkidMark(_tagFeetSkidMark* m, S32 total_feet);
 void zFeetInit(S32 ent_type, _xEnt* owner, tagzFeet* feet, S32 feet_subtype, xAnimTable* table);
-void zFeetUpdateSkidMark(_tagFeetSkidMark* m, F32 seconds);
 void zFeetAddSkidMark(_xEnt* ent, _tagFeetSkidMark* m, F32 seconds);
 void zFeetExit(_xEnt* ent, xAnimTable* table);
 

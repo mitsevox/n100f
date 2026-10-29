@@ -8,6 +8,7 @@
 struct xAnimTransition;
 struct xAnimTable;
 struct xAnimEffect;
+struct xAnimSingle;
 struct xAnimTransitionList;
 struct xModelInstance;
 
@@ -47,6 +48,21 @@ struct xAnimState
 
 struct xAnimActiveEffect;
 struct xAnimPlay;
+
+struct xAnimEffect
+{
+    xAnimEffect* Next;
+    U32 Flags;
+    F32 StartTime;
+    F32 EndTime;
+    U32 (*Callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*);
+};
+
+struct xAnimActiveEffect
+{
+    xAnimEffect* Effect;
+    U32 Handle;
+};
 
 struct xAnimSingle
 {
