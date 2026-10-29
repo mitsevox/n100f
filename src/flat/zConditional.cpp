@@ -1,27 +1,7 @@
 #include "zConditional.h"
 #include "xEvent.h"
 #include "zEnt.h"
-#include "version.h"
-
-struct zVarEntry
-{
-    U32 entry;
-    U32 varNameID;
-    char* varName;
-    U32 (*varCB)();
-};
-
-#if VERSION_GIHE78_REV0
-extern "C" zVarEntry lbl_801C8CB0[];
-extern "C" void fn_800D7C70(zVarEntry* table);
-#define VAR_TABLE lbl_801C8CB0
-#define VAR_INIT fn_800D7C70
-#elif VERSION_GIHE78_REV1
-extern "C" zVarEntry lbl_801D7670[];
-extern "C" void fn_800D7864(zVarEntry* table);
-#define VAR_TABLE lbl_801D7670
-#define VAR_INIT fn_800D7864
-#endif
+#include "zVar.h"
 
 // Set up the base, its event handler, and the variable table.
 void zConditionalInit(void* b, void* asset)
@@ -35,7 +15,7 @@ void zConditionalInit(void* b, void* asset)
         t->link = (p2LinkAsset*)(t->asset + 1);
     else
         t->link = NULL;
-    VAR_INIT(VAR_TABLE);
+    zVarInit(zVarEntryTable);
 }
 
 // Persist the base state; the condition has no additional runtime state.
@@ -56,8 +36,8 @@ U32 zConditional_Evaluate(_zConditional* c)
     zVarEntry* v = NULL;
     for (S32 i = 0; i < 107; ++i)
     {
-        if (VAR_TABLE[i].varNameID == c->asset->expr1)
-            v = &VAR_TABLE[i];
+        if (zVarEntryTable[i].varNameID == c->asset->expr1)
+            v = &zVarEntryTable[i];
     }
     if (!v)
         return 0;

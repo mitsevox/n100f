@@ -584,7 +584,7 @@ st_ZDISPATCH_DATA* zDispatcher_getInst(st_ZDISPATCH_DATA* pool, S32 idx)
     return &pool[idx];
 }
 
-extern "C" st_ZDISPATCH_DATA* fn_80047588(S32 cnt)
+st_ZDISPATCH_DATA* zDispatcher_memPool(S32 cnt)
 {
     st_ZDISPATCH_DATA* pool;
     st_ZDISPATCH_DEPOT* depot = &g_zdsp_depot;

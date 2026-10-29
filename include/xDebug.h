@@ -22,6 +22,7 @@ enum
 };
 
 void xDebugModeRegisterCallback(S32 mode, void (*func)());
+S32 xDebugModeAdd(char* debugModeName, void (*func)());
 void xprintf(const char* msg, ...);
 
 #endif

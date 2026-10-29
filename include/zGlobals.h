@@ -70,15 +70,17 @@ struct zGlobalGameStats
     U32 clues_tot;
 };
 
-// Partial: only the header and the matrix are declared. The GC object is 0xA0 bytes; the
-// PS2 copy is 0xB0 because its matrices are 16-byte aligned.
+// Partial: only the header, the matrix, the rotation and the field of view are declared. The GC
+// object is 0xA0 bytes; the PS2 copy is 0xB0 because its matrices are 16-byte aligned.
 struct _tagxCam : xBase
 {
     U32 valid_flags;
     S32 cam_type;
     U32 flags;
     xMat4x3 mat;
-    U8 opaque_5C[0x9C - 0x5C];
+    xQuat rot;
+    F32 fov;
+    U8 opaque_70[0x9C - 0x70];
     xCamAsset* asset;
 };
 
@@ -92,8 +94,7 @@ struct _tagxCamFrame
     U8 opaque_144[0x1F0 - 0x144];
 };
 
-// Partial: only camera, the pads, player, pickupTable, profile, cmgr, sceneCur, the fog state,
-// option_vibration and update_dt are declared. The members between them are left opaque.
+// Partial: the profiler names between cmgr and sceneCur are left opaque.
 struct zGlobals
 {
     _tagxCamFrame camera;
@@ -105,14 +106,18 @@ struct zGlobals
     _zCutsceneMgr* cmgr;
     U8 opaque_864[0xB64 - 0x864];
     zScene* sceneCur;
-    U8 opaque_B68[0xB90 - 0xB68];
+    zScene* scenePreload;
+    S32 sceneFirst;
+    char sceneStart[32];
     iFogParams fog;
     iFogParams fogA;
     iFogParams fogB;
     iTime fog_t0;
     iTime fog_t1;
     zGlobalGameStats stats;
-    U8 opaque_CC8[0x32F8 - 0xCC8];
+    zGlobalGameStats areaStats[30];
+    zGlobalGameStats levelStats[13];
+    zGlobalGameStats worldStats[4];
     S32 option_vibration;
     F32 update_dt;
 };

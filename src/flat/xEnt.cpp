@@ -3,6 +3,7 @@
 #include "xBound.h"
 #include "xDebug.h"
 #include "xEvent.h"
+#include "xFX.h"
 #include "xFFX.h"
 #include "xMath.h"
 #include "xMathInlines.h"
@@ -10,12 +11,19 @@
 #include "xMemMgr.h"
 #include "xPad.h"
 #include "xScene.h"
+#include "xShadow.h"
+#include "xstransvc.h"
 #include "xSurface.h"
 #include "iCollide.h"
 #include "iMath3.h"
 #include "iModel.h"
+#include "iShadow.h"
 #include "iTime.h"
 #include "zGlobals.h"
+#include "zGroup.h"
+#include "zLight.h"
+#include "zScene.h"
+#include "zSurface.h"
 
 #include <rwcore.h>
 #include <string.h>
@@ -48,6 +56,15 @@ void xModCollAddSample(_xEnt* xent, S64 elapsed);
 static inline F32 icos(F32 x)
 {
     return cos(x);
+}
+
+static inline F32 xVec3Dist2(const xVec3* a, const xVec3* b)
+{
+    F32 dx = a->x - b->x;
+    F32 dy = a->y - b->y;
+    F32 dz = a->z - b->z;
+
+    return dx * dx + dy * dy + dz * dz;
 }
 
 static F32 nsn_angle = DEG2RAD(30);
@@ -1176,6 +1193,244 @@ void xEntCollideWalls(_xEnt* p, _xScene* sc, F32 dt)
             }
 
             sidx++;
+        }
+    }
+}
+
+// Draws a visible, unculled entity: fades its material alpha in or out, applies the surface's
+// texture animation and UV scrolling, tints it by the asset's colour multipliers and lights it,
+// then restores the shared model state and draws the shadow of the player and NPCs.
+void xEntRender(_xEnt* ent)
+{
+    S32 we_altered_the_alpha_on_the_material;
+    S32 setMaterialTextureRestore;
+    S32 setPipeline;
+    RxPipeline* oldPipe;
+    S32 reset_material_colors;
+    F32 rad;
+
+    if (!ent->model || !xEntIsVisible(ent))
+    {
+        return;
+    }
+
+    if (iModelCull(ent->model->Data, ent->model->Mat))
+    {
+        return;
+    }
+
+    we_altered_the_alpha_on_the_material = 0;
+
+    if (ent->flags & 0x4)
+    {
+        if (ent->fade_tmr <= 0.0f)
+        {
+            ent->flags ^= 0x4;
+            ent->fade_tmr = 0.0f;
+        }
+
+        static S32 fadeout_type = -1;
+
+        if (fadeout_type == 0)
+        {
+            ent->material_alpha -= ent->asset->seeThruSpeed * sEntityTimePassed;
+
+            if (ent->asset->seeThru < 0.3f)
+            {
+                if (ent->material_alpha <= 0.0f)
+                {
+                    ent->material_alpha = 0.0f;
+                }
+            }
+            else if (ent->material_alpha <= 255.0f * ent->asset->seeThru)
+            {
+                ent->material_alpha = 255.0f * ent->asset->seeThru;
+            }
+        }
+        else if (fadeout_type == 1)
+        {
+            ent->material_alpha -= 2000.0f * sEntityTimePassed;
+
+            if (ent->material_alpha <= 0.0f)
+            {
+                ent->material_alpha = 0.0f;
+            }
+        }
+        else if (fadeout_type == 2)
+        {
+            ent->material_alpha -= 150.0f * sEntityTimePassed;
+
+            if (ent->material_alpha <= 0.0f)
+            {
+                ent->material_alpha = 0.0f;
+            }
+        }
+        else
+        {
+            ent->material_alpha -= ent->asset->seeThruSpeed * sEntityTimePassed;
+
+            if (ent->material_alpha <= 255.0f * ent->asset->seeThru)
+            {
+                ent->material_alpha = 255.0f * ent->asset->seeThru;
+            }
+        }
+
+        if (!globals.cmgr)
+        {
+            xModelSetMaterialAlpha(ent->model, (U8)ent->material_alpha);
+            we_altered_the_alpha_on_the_material = 1;
+        }
+    }
+    else if (ent->material_alpha < 255.0f)
+    {
+        ent->material_alpha += ent->asset->seeThruSpeed * sEntityTimePassed;
+
+        if (ent->material_alpha > 255.0f)
+        {
+            ent->material_alpha = 255.0f;
+        }
+
+        if (!globals.cmgr)
+        {
+            xModelSetMaterialAlpha(ent->model, (U8)ent->material_alpha);
+            we_altered_the_alpha_on_the_material = 1;
+        }
+    }
+
+    setMaterialTextureRestore = 0;
+    setPipeline = 0;
+
+    if (ent->surf)
+    {
+        zSurfaceProps* pp = (zSurfaceProps*)ent->surf->moprops;
+
+        if (pp)
+        {
+            if (pp->texanim_flags & 0x1)
+            {
+                _zGroup* g = (_zGroup*)zSceneFindObject(pp->texanim[0].group);
+
+                if (g)
+                {
+                    U32 texid = zGroupGetItem(g, pp->texanim[0].group_idx);
+                    RwTexture* texptr = (RwTexture*)xSTFindAsset(texid, NULL);
+
+                    if (texptr)
+                    {
+                        xModelSetMaterialTexture(ent->model, texptr);
+                        setMaterialTextureRestore = 1;
+                    }
+                }
+            }
+
+            if (pp->texanim_flags & 0x2)
+            {
+                _zGroup* g = (_zGroup*)zSceneFindObject(pp->texanim[1].group);
+
+                if (g)
+                {
+                    U32 texid = zGroupGetItem(g, pp->texanim[1].group_idx);
+                    RwTexture* texptr = (RwTexture*)xSTFindAsset(texid, NULL);
+
+                    if (texptr)
+                    {
+                        xFXanimUV2PSetTexture(texptr);
+                        setPipeline = 1;
+                    }
+                }
+            }
+            else if (pp->uvfx_flags & 0x2)
+            {
+                RwTexture* texptr = (RwTexture*)xSTFindAsset(pp->asset->matfx.dualmapID, NULL);
+
+                if (texptr)
+                {
+                    xFXanimUV2PSetTexture(texptr);
+                    setPipeline = 1;
+                }
+            }
+            else
+            {
+                xFXanimUV2PSetTexture(NULL);
+            }
+
+            if (pp->uvfx_flags & 0x3)
+            {
+                setPipeline = 1;
+                xFXanimUVSetTranslation(&pp->uvfx[0].trans);
+                xFXanimUV2PSetTranslation(&pp->uvfx[1].trans);
+                xFXanimUVSetScale(&pp->uvfx[0].scale);
+                xFXanimUV2PSetScale(&pp->uvfx[1].scale);
+                xFXanimUVSetAngle((1.0f / (ONEEIGHTY * PI)) * pp->uvfx[0].rot);
+                xFXanimUV2PSetAngle((1.0f / (ONEEIGHTY * PI)) * pp->uvfx[1].rot);
+            }
+
+            if (setPipeline)
+            {
+                oldPipe = ent->model->Data->pipeline;
+                xFXanimUVAtomicSetup(ent->model->Data);
+            }
+        }
+    }
+
+    reset_material_colors = 0;
+
+    if (ent->asset->redMult != 1.0f || ent->asset->greenMult != 1.0f || ent->asset->blueMult != 1.0f)
+    {
+        reset_material_colors = 1;
+        xModelMaterialMul(ent->model, ent->asset->redMult, ent->asset->greenMult, ent->asset->blueMult);
+    }
+
+    zLightAddLocal(ent);
+    xModelRender(ent->model);
+    zLightRemoveLocal();
+
+    if (reset_material_colors)
+    {
+        xModelResetMaterial(ent->model);
+    }
+
+    if (we_altered_the_alpha_on_the_material)
+    {
+        xModelSetMaterialAlpha(ent->model, 255);
+    }
+
+    if (setMaterialTextureRestore)
+    {
+        xModelSetMaterialTextureRestore(ent->model);
+    }
+
+    if (setPipeline)
+    {
+        ent->model->Data->pipeline = oldPipe;
+    }
+
+    if (ent->baseType == 2 || ent->baseType == 3)
+    {
+        xVec3* pos = (xVec3*)&ent->model->Mat->pos;
+        xVec3* campos = &globals.camera.hi_cam.mat.pos;
+
+        if (xVec3Dist2(pos, campos) < ShadowThreshold || ent->baseType == 3)
+        {
+            xShadowRender(ent);
+        }
+        else
+        {
+            rad = ent->bound.sph.r;
+
+            if (ent->baseType == 2)
+            {
+                switch (ent->subType)
+                {
+                case 0x2D:
+                case 6:
+                    rad *= 1.75f;
+                    break;
+                }
+            }
+
+            iShadowCollide(&ent->ishadow, ent, rad, 1.0f);
+            iShadowAdd(&ent->ishadow, 0x50);
         }
     }
 }
