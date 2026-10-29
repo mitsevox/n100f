@@ -60,14 +60,14 @@ static U32 sSortedCount;
 static F32 sTimer;
 static RwIm2DVertex Vertex[4];
 static RwImVertexIndex Index[6] = { 0, 1, 2, 0, 2, 3 };
-static U32 cKeyUIid1off;
-static U32 cKeyUIid2off;
-static U32 cKeyUIid3off;
-static U32 cKeyUIid4off;
-static U32 cKeyUIid1on;
-static U32 cKeyUIid2on;
-static U32 cKeyUIid3on;
-static U32 cKeyUIid4on;
+static U32 cKeyUIid1off = xStrHash("KEY OFF 1 UI");
+static U32 cKeyUIid2off = xStrHash("KEY OFF 2 UI");
+static U32 cKeyUIid3off = xStrHash("KEY OFF 3 UI");
+static U32 cKeyUIid4off = xStrHash("KEY OFF 4 UI");
+static U32 cKeyUIid1on = xStrHash("KEY ON 1 UI");
+static U32 cKeyUIid2on = xStrHash("KEY ON 2 UI");
+static U32 cKeyUIid3on = xStrHash("KEY ON 3 UI");
+static U32 cKeyUIid4on = xStrHash("KEY ON 4 UI");
 
 void zUI_Reset(_zUI* ent);
 
