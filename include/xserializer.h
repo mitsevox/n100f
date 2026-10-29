@@ -29,6 +29,7 @@ struct xSerial
     S32 Read(U32* buf);
     S32 Read(F32* buf);
     S32 Read_b1(S32* bits);
+    S32 Read_b1(U32* bits);
     S32 Read_b2(S32* bits);
     S32 Read_b7(U32* bits);
     S32 Write(U8 data);
