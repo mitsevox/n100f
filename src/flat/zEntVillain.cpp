@@ -27,6 +27,7 @@
 #include "zMovePoint.h"
 #include "zParEmitter.h"
 #include "zScene.h"
+#include "zSFX.h"
 #include "rpworld.h"
 
 #include <math.h>
@@ -287,6 +288,7 @@ static void zVIL_elcb_bupdate(_xEnt* ent, _xVec3* pos);
 static void zVIL_elcb_move(_xEnt* ent, _xScene* scn, F32 dt, _xEntFrame* frame);
 static void VILN_KookRender(_xEnt* ent);
 void zEntVillain_InitDep(st_zEntVillain* ent, zScene* sc);
+extern "C" void fn_8003CD24(U32 parentID);
 static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt);
 static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplicit, S32 flg_vsnd,
                        F32 dist);
@@ -2358,6 +2360,140 @@ static S32 VILN_gang_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32
                               xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// Handle gang conversation, navigation and lifecycle stimuli.
+static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                              st_STIMULUS_CONTEXT_DATA* resp)
+{
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    switch (g_pgol = vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_MAKEREADY)
+        {
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+    case ZVIL_GOAL_DIE:
+        g_pstm = stim;
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_PATROL:
+    case ZVIL_GOAL_FOLLOW:
+    case ZVIL_GOAL_TALK:
+    case ZVIL_GOAL_ACTION:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_KILLSELF:
+            vil->hitpts = 0;
+            resp->trangoal = ZVIL_GOAL_DIE;
+            resp->tranmode = ZVIL_MODE_DEATH;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOAFTERLIFE:
+            resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_HEADBUTT:
+            if (vil->ability & 0x4) stimctxt->res_headbutt = ZVIL_HEADBUTT_HITGANG;
+            break;
+        case ZVIL_STIM_STARTTALK:
+            if (!(vil->ability & 0x40000)) break;
+            if (vil->goal == ZVIL_GOAL_TALK)
+            {
+                zSFX* talk = stimctxt->talkSFX;
+                fn_8003CD24((U32)vil + 2);
+                vil->sfx_curTalk = talk;
+                if (talk && talk->asset && talk->asset->soundAssetID)
+                {
+                    st_NPC_SOUND_PROPERTIES* props = NULL;
+                    S32 flags = VSND_findProps(VSND_TYP_ZSFXTALK, &props);
+                    for (S32 i = 0; i < 4; i++)
+                    {
+                        vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
+                        vil->snd_queue[i].sndDirect = 0;
+                    }
+                    VSND_addQueueEntry(vil, (en_NPC_SOUND)0x8000, flags,
+                                       g_npcTable[vil->asset->subtype].dst_noisy,
+                                       props->tym_delayStart, -1.0f, 0,
+                                       talk->asset->soundAssetID);
+                }
+                vil->tmr_list[ZVIL_TYMR_GENERIC] = 0.5f;
+                if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+                {
+                    vil->anim_loopmult = 0.97f;
+                    vil->vhf->pickanim(vil, ZVIL_GOAL_TALK, ZVIL_GSPOT_FIDGET);
+                    vil->tmr_list[ZVIL_TTIL_FIDGET] = 4.0f + 4.0f * (0.25f * (iurand() - 0.5f));
+                }
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_TALK;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                resp->talkSFX = stimctxt->talkSFX;
+            }
+            break;
+        case ZVIL_STIM_STOPTALK:
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_DOACTION:
+            resp->trangoal = ZVIL_GOAL_ACTION;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GANGBOSSACTION:
+            resp->trangoal = ZVIL_GOAL_ACTION;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            resp->use_alt_action = 1;
+            break;
+        case ZVIL_STIM_GOTOPOS:
+            VOUT_dogoto_pos(vil, &stimctxt->gotopos, stimctxt->off_goto);
+            resp->trangoal = ZVIL_GOAL_FOLLOW;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOWIDGET:
+        case ZVIL_STIM_FOLLOWWIDGET:
+            if (stimctxt->widge && (vil->abl_move & 0x100))
+            {
+                S32 follow = stim == ZVIL_STIM_FOLLOWWIDGET;
+                S32 path = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, follow);
+                vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+                resp->trangoal = (follow && path) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        case ZVIL_STIM_STARTPATROL:
+            vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+            if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
+            resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_STOPPATROL:
+        case ZVIL_STIM_STARTGUARD:
+        case ZVIL_STIM_STOPGUARD:
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
+    }
+    return 1;
 }
 
 // Fred's boss-action animation and model parts need special setup on preparation.
