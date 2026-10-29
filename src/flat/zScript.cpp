@@ -4,7 +4,7 @@
 #include "zGlobals.h"
 #include "xPad.h"
 
-// state: 0 stopped, 1 running, 3 waiting for the X button (pad bit 0x40000).
+// state: 0 stopped, 1 running, 3 waiting for the Y button (pad bit 0x40000).
 static inline void zScriptExecuteEvents(_zScript* t, F32 start, F32 end)
 {
     t->more = 0;
