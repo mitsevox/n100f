@@ -24,4 +24,13 @@ enum _tagTRCState
 
 extern _tagTRCState gTrcDisk[2];
 
+struct _tagTRCPadInfo
+{
+    S32 pad_init;
+    S32 id;
+    S32 state;
+};
+
+extern "C" _tagTRCPadInfo lbl_802289B8[4];
+
 #endif

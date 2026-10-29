@@ -7,6 +7,8 @@
 
 struct _xEnt;
 struct _xEnv;
+struct _xRay3;
+struct _xCollis;
 
 // Partial: members up to mempool.
 struct _xScene
@@ -39,5 +41,6 @@ struct _xScene
 
 xBase* xSceneResolvID(_xScene* sc, U32 id);
 char* xSceneID2Name(_xScene* sc, U32 id);
+void xRayHitsScene(_xScene* sc, _xRay3* r, _xCollis* coll);
 
 #endif

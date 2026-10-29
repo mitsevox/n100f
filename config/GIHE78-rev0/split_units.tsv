@@ -105,7 +105,7 @@ zGameState.cpp	0x800AF8D8	0x800AFD6C	7	7	1	1	0x800AFA64=zGameStateSwitchEvent (n
 zGroup.cpp	0x800AFD6C	0x800AFF5C	7	7	1	0	0x800AFDBC=zGroupEventCB (calls)	anchored
 zGust.cpp	0x800AFF5C	0x800B07B4	9	9	5	3	0x800AFF5C=zGustUpdateFX (name)	anchored
 zHologram.cpp	0x800B07B4	0x800B09F0	3	4	0	0	-	count-match
-zHud.cpp	0x800B09F0	0x800B9808	57	58	19	2	0x800B0F3C=zHud_DrawText (floats)	anchored
+zHud.cpp	0x800B09F0	0x800B9808	57	58	17	0	0x800B0F3C=zHud_DrawText (floats)	anchored
 zLaugh.cpp	0x800B9808	0x800B9AB0	3	4	1	0	0x800B9A14=zLaughInit (strings)	anchored
 zLight.cpp	0x800B9AB0	0x800BA800	15	15	10	7	0x800B9AB0=zLightOn (name)	anchored
 zLightEffect.cpp	0x800BA800	0x800BAE00	22	23	2	0	0x800BA800=zLightEffectCauldron (floats)	anchored

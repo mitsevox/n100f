@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#include <math.h>
+
 struct _xVec2
 {
     F32 x;
@@ -20,10 +22,15 @@ struct _xRect
 typedef struct _xVec2 xVec2;
 typedef struct _xRect xRect;
 
-#ifdef __cplusplus
-#include "libc/math.h"
+inline F32 xVec2Dist(F32 x1, F32 y1, F32 x2, F32 y2)
+{
+    F32 x = x1 - x2;
+    F32 y = y1 - y2;
 
-inline void xVec2Normalize(xVec2* o, const xVec2* v)
+    return sqrtf(x * x + y * y);
+}
+
+inline F32 xVec2Normalize(xVec2* o, const xVec2* v)
 {
     F32 len2 = v->x * v->x + v->y * v->y;
 
@@ -33,6 +40,7 @@ inline void xVec2Normalize(xVec2* o, const xVec2* v)
         {
             *o = *v;
         }
+        return 1.0f;
     }
     else if (len2 == 0.0f)
     {
@@ -40,14 +48,16 @@ inline void xVec2Normalize(xVec2* o, const xVec2* v)
         {
             *o = *v;
         }
+        return 0.0f;
     }
     else
     {
-        F32 inv = 1.0f / sqrtf(len2);
+        F32 len = sqrtf(len2);
+        F32 inv = 1.0f / len;
         o->x = v->x * inv;
         o->y = v->y * inv;
+        return len;
     }
 }
-#endif
 
 #endif

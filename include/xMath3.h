@@ -77,6 +77,7 @@ typedef struct _xMat4x3 xMat4x3;
 typedef struct _xVec4 xVec4;
 typedef struct _xQuat xQuat;
 typedef struct _xSphere xSphere;
+typedef struct _xRay3 xRay3;
 typedef struct _xRot xRot;
 typedef struct _xIsect xIsect;
 
@@ -120,9 +121,23 @@ inline void xVec3SMul(xVec3* o, const xVec3* v, F32 s)
     o->z = v->z * s;
 }
 
+inline void xVec3SMulBy(xVec3* v, F32 s)
+{
+    v->x *= s;
+    v->y *= s;
+    v->z *= s;
+}
+
 inline F32 xVec3Length2(const xVec3* vec)
 {
     return vec->x * vec->x + vec->y * vec->y + vec->z * vec->z;
+}
+
+inline void xVec3AddTo(xVec3* o, const xVec3* v)
+{
+    o->x += v->x;
+    o->y += v->y;
+    o->z += v->z;
 }
 
 F32 xVec3Normalize(xVec3* o, const xVec3* v);
