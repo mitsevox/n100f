@@ -2107,7 +2107,7 @@ en_ZVILLAIN_HEADBUTT_RESPONSE zEntVillain_Headbutt(st_zEntVillain* ent, _xVec3* 
         _xVec3 towardVil = { 0.0f, 0.0f, 0.0f };
         xVec3SMul(&towardVil, &ent->precalc.dir_VtoP, -1.0f);
         F32 facing = xVec3Dot(&towardVil, (_xVec3*)&globals.player.ent.model->Mat->at);
-        facing = MAX(0.0f, MIN(1.0f, facing));
+        facing = MAX(0.0f, MIN(facing, 1.0f));
         stimctxt.mag_headbutt = MAX(0.0f, facing * magnitude);
     }
     zVIL_input_stim(ent, ZVIL_STIM_HEADBUTT, &stimctxt);
@@ -3558,7 +3558,7 @@ static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
                 zSFX* talk = stimctxt->talkSFX;
                 fn_8003CD24((U32)vil + 2);
                 vil->sfx_curTalk = talk;
-                if (talk && talk->asset && talk->asset->soundAssetID)
+                if (talk && talk->asset && talk->asset->id)
                 {
                     st_NPC_SOUND_PROPERTIES* props = NULL;
                     S32 flags = VSND_findProps(VSND_TYP_ZSFXTALK, &props);
