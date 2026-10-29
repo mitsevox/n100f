@@ -26,24 +26,7 @@
 #include "zParSys.h"
 #include "zScene.h"
 #include "zMusic.h"
-
-struct zUIAsset : p2EntAsset
-{
-    U32 uiFlags;
-    U16 dim[2];
-    U32 textureID;
-    F32 uva[2];
-    F32 uvb[2];
-    F32 uvc[2];
-    F32 uvd[2];
-};
-
-struct _zUI : _zEnt
-{
-    zUIAsset* sasset;
-    U32 uiFlags;
-    U32 uiButton;
-};
+#include "zUI.h"
 
 enum _tagGiveFXType
 {
