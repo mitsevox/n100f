@@ -1411,36 +1411,45 @@ rwsdk/driver/gcn/dlsprite.c:
 rwsdk/driver/gcn/dltexdic.c:
 	.text       start:0x8017AE7C end:0x8017B4A8
 
-rwsdk/src/pipe/p2/baim3d.c:
-	.text       start:0x8017BD10 end:0x8017C480
-
 rwsdk/src/pipe/p2/bapipe.c:
 	.text       start:0x8017CBE4 end:0x8017CC64
 	.sbss       start:0x80271758 end:0x80271760
 
 rwsdk/src/pipe/p2/nodeCullTriangle.c:
 	.text       start:0x8017F50C end:0x8017FD84
+	.data       start:0x801EF238 end:0x801EF330
+	.sdata      start:0x802706C8 end:0x802706D0
 
 rwsdk/src/pipe/p2/nodeImmInstance.c:
 	.text       start:0x8017FD84 end:0x801801E0
+	.data       start:0x801EF330 end:0x801EF3D8
+	.sdata2     start:0x80274AC0 end:0x80274AD0
 
 rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c:
 	.text       start:0x801801E0 end:0x801806A4
+	.data       start:0x801EF3D8 end:0x801EF470
+	.sdata      start:0x802706D0 end:0x802706E0
 
 rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c:
 	.text       start:0x801806A4 end:0x80180DF4
+	.data       start:0x801EF470 end:0x801EF508
+	.sdata      start:0x802706E0 end:0x802706F0
 
 rwsdk/src/pipe/p2/nodeImmRenderSetup.c:
 	.text       start:0x80180DF4 end:0x80181200
+	.data       start:0x801EF508 end:0x801EF638
 
 rwsdk/src/pipe/p2/nodeImmStash.c:
 	.text       start:0x80181200 end:0x80181428
+	.data       start:0x801EF638 end:0x801EF6D8
 
 rwsdk/src/pipe/p2/nodeSubmitLine.c:
 	.text       start:0x80181428 end:0x80181720
+	.data       start:0x801EF6D8 end:0x801EF790
 
 rwsdk/src/pipe/p2/nodeSubmitTriangle.c:
 	.text       start:0x80181720 end:0x801819D0
+	.data       start:0x801EF790 end:0x801EF850
 
 rwsdk/src/pipe/p2/p2core.c:
 	.text       start:0x80184894 end:0x80185324
