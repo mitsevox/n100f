@@ -1039,11 +1039,51 @@ struct RxPipelineNode
     U32 initializationDataSize;
 };
 
+typedef struct _rxReq rxReq;
+
 struct RxPipelineNodeTopSortData
 {
     U32 numIns;
     U32 numInsVisited;
-    void* req;
+    rxReq* req;
+};
+
+typedef struct rxReqEntry rxReqEntry;
+typedef struct rxScope rxScope;
+
+// The stretch of nodes along which one cluster stays in the same packet slot. Merged scopes are
+// chained through next; parent points from a merged scope back to the one it joined.
+struct rxScope
+{
+    rxReqEntry* entries;
+    rxScope* next;
+    rxScope* nextInList;
+    rxScope* parent;
+};
+
+// One cluster a node uses: whether the pipeline's input must or may supply it, how many of the
+// node's inputs still pass it in, the outputs it continues down (a bit per output) and its slot.
+struct rxReqEntry
+{
+    RxClusterDefinition* clusterDef;
+    RxClusterValidityReq rqdOrOpt;
+    U32 numRefs;
+    rxScope* scope;
+    rxReqEntry* nextInScope;
+    rxReq* req;
+    U32 outputMask;
+    U32 slot;
+    RxPipelineNode* node;
+};
+
+// The clusters one node uses, and the packet slots already taken by them (a bit per slot).
+struct _rxReq
+{
+    U32 numEntries;
+    U32 maxEntries;
+    U32 usedSlots;
+    rxReqEntry* entries;
+    RxPipelineNode* node;
 };
 
 typedef enum rxEmbeddedPacketState
@@ -1538,6 +1578,12 @@ RxLockedPipe* RxPipelineLock(RxPipeline* pipeline);
 RxLockedPipe* RxLockedPipeAddFragment(RxLockedPipe* pipeline, U32* firstIndex,
                                       RxNodeDefinition* nodeDef0, ...);
 RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline);
+U32 _rxChaseDependencies(RxPipeline* pipeline);
+void* StalacTiteAlloc(U32 size);
+void* StalacMiteAlloc(U32 size);
+U32 PipelineCalcNumUniqueClusters(RxPipeline* pipeline);
+void _rx_rxRadixExchangeSort(void* base, U32 numItems, U32 stride, U32 keyOffset, U32 minKey,
+                             U32 maxKey);
 RxPipelineNode* RxPipelineFindNodeByName(RxPipeline* pipeline, const char* name,
                                          RxPipelineNode* start, S32* nodeIndex);
 RxLockedPipe* RxLockedPipeAddPath(RxLockedPipe* pipeline, RxNodeOutput out, RxNodeInput in);

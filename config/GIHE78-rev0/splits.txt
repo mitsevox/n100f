@@ -1826,7 +1826,8 @@ rwsdk/src/pipe/p2/p2core.c:
 	.text       start:0x801869A8 end:0x80187438
 
 rwsdk/src/pipe/p2/p2define.c:
-	.text       start:0x801874A8 end:0x80189020
+	.text       start:0x80187438 end:0x80189020
+	.sdata      start:0x8025E858 end:0x8025E860
 
 rwsdk/src/pipe/p2/p2dep.c:
 	.text       start:0x80189020 end:0x8018A644
