@@ -172,100 +172,106 @@ void zUI_Render(_xEnt* e)
          ent->id == cKeyUIid3on || ent->id == cKeyUIid4on))
         return;
 
-    if (!(ent->uiFlags & 4))
+    if (ent->uiFlags & 4)
+    {
+        if (!xEntIsVisible(ent)) return;
+        if (ent->sasset->textureID)
+        {
+            RwTexture* texture = static_cast<RwTexture*>(xSTFindAsset(ent->sasset->textureID, 0));
+            if (texture && texture->raster)
+                RwRenderStateSet(rwRENDERSTATETEXTURERASTER, texture->raster);
+            zUIAsset* asset = ent->sasset;
+            F32 u1 = asset->uva[0];
+            F32 v1 = asset->uva[1];
+            F32 u2 = asset->uvb[0];
+            F32 v2 = asset->uvb[1];
+            F32 u3 = asset->uvc[0];
+            F32 v3 = asset->uvc[1];
+            F32 u4 = asset->uvd[0];
+            F32 v4 = asset->uvd[1];
+            F32 left = (640.0f * asset->pos.x) / 640.0f;
+            F32 top = (480.0f * asset->pos.y) / 480.0f;
+            F32 right = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
+            F32 bottom = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
+
+            static U32 mapID = xStrHash("paws_map");
+            static U32 cornerID = xStrHash("paws_corner");
+            static U32 tagID = xStrHash("sd_tag_map");
+            if (ent->sasset->textureID == mapID || ent->sasset->textureID == cornerID ||
+                ent->sasset->textureID == tagID)
+            {
+                F32 pulse = 1.0f + (F32)sin(15.0f * lbl_8025E8C4);
+                F32 dx = pulse * (0.05f * (right - left));
+                F32 dy = pulse * (0.05f * (bottom - top));
+                left -= dx;
+                right += dx;
+                top -= dy;
+                bottom += dy;
+            }
+
+            static U32 warpTokenID = xStrHash("warp token ui");
+            static U32 warpSnackID = xStrHash("warp snack ui");
+            if (ent->id == warpTokenID || ent->id == warpSnackID)
+            {
+                F32 wave = 0.5f * (F32)sin(5.0f * lbl_8025E8C4 + left);
+                F32 dx = wave * (right - left);
+                F32 center = (640.0f * ent->sasset->pos.x) / 640.0f;
+                left = center - dx;
+                right = center + dx;
+            }
+
+            F32 z = RwIm2DGetNearScreenZ();
+            RwIm2DVertexSetScreenX(&Vertex[0], left);
+            RwIm2DVertexSetScreenY(&Vertex[0], top);
+            RwIm2DVertexSetScreenZ(&Vertex[0], z);
+            Vertex[0].u = u1; Vertex[0].v = v1;
+            RwIm2DVertexSetScreenX(&Vertex[1], left);
+            RwIm2DVertexSetScreenY(&Vertex[1], bottom);
+            RwIm2DVertexSetScreenZ(&Vertex[1], z);
+            Vertex[1].u = u4; Vertex[1].v = v4;
+            RwIm2DVertexSetScreenX(&Vertex[2], right);
+            RwIm2DVertexSetScreenY(&Vertex[2], bottom);
+            RwIm2DVertexSetScreenZ(&Vertex[2], z);
+            Vertex[2].u = u3; Vertex[2].v = v3;
+            RwIm2DVertexSetScreenX(&Vertex[3], right);
+            RwIm2DVertexSetScreenY(&Vertex[3], top);
+            RwIm2DVertexSetScreenZ(&Vertex[3], z);
+            Vertex[3].u = u2; Vertex[3].v = v2;
+            RwIm2DVertexSetIntRGBA(&Vertex[0], 255, 255, 255, 255);
+            RwIm2DVertexSetIntRGBA(&Vertex[1], 255, 255, 255, 255);
+            RwIm2DVertexSetIntRGBA(&Vertex[2], 255, 255, 255, 255);
+            RwIm2DVertexSetIntRGBA(&Vertex[3], 255, 255, 255, 255);
+
+            zRenderState(SDRS_Default);
+            RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)0);
+            RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+            RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
+            RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)1);
+            RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)1);
+            RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)0);
+            RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vertex, 4, Index, 6);
+        }
+        else if (ent->model)
+        {
+            zUIAsset* asset = ent->sasset;
+            _xRect rect;
+            rect.x = (640.0f * asset->pos.x) / 640.0f;
+            rect.y = (480.0f * asset->pos.y) / 480.0f;
+            rect.w = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
+            rect.h = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
+            xVec3 relfrom = { 0.0f, 1.0f, 5.0f };
+            xVec3 relto = { 0.0f, 0.0f, 0.0f };
+            xVec3 from;
+            xVec3 to;
+            xVec3* pos = (xVec3*)&ent->model->Mat->pos;
+            xVec3Add(&from, &relfrom, pos);
+            xVec3Add(&to, &relto, pos);
+            xModelRender2D(ent->model, &rect, &from, &to, 1.5707964f);
+        }
+    }
+    else
     {
         xEntRender(ent);
-        return;
-    }
-    if (!xEntIsVisible(ent)) return;
-    if (ent->sasset->textureID)
-    {
-        RwTexture* texture = static_cast<RwTexture*>(xSTFindAsset(ent->sasset->textureID, 0));
-        if (texture && texture->raster)
-            RwRenderStateSet(rwRENDERSTATETEXTURERASTER, texture->raster);
-        zUIAsset* asset = ent->sasset;
-        F32 u1 = asset->uva[0];
-        F32 v1 = asset->uva[1];
-        F32 u2 = asset->uvb[0];
-        F32 v2 = asset->uvb[1];
-        F32 u3 = asset->uvc[0];
-        F32 v3 = asset->uvc[1];
-        F32 u4 = asset->uvd[0];
-        F32 v4 = asset->uvd[1];
-        F32 left = (640.0f * asset->pos.x) / 640.0f;
-        F32 top = (480.0f * asset->pos.y) / 480.0f;
-        F32 right = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
-        F32 bottom = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
-
-        static U32 mapID = xStrHash("paws_map");
-        static U32 cornerID = xStrHash("paws_corner");
-        static U32 tagID = xStrHash("sd_tag_map");
-        if (asset->textureID == mapID || asset->textureID == cornerID ||
-            asset->textureID == tagID)
-        {
-            F32 pulse = 1.0f + (F32)sin(15.0f * lbl_8025E8C4);
-            F32 dx = pulse * (0.05f * (right - left));
-            F32 dy = pulse * (0.05f * (bottom - top));
-            left -= dx;
-            right += dx;
-            top -= dy;
-            bottom += dy;
-        }
-
-        static U32 warpTokenID = xStrHash("warp token ui");
-        static U32 warpSnackID = xStrHash("warp snack ui");
-        if (ent->id == warpTokenID || ent->id == warpSnackID)
-        {
-            F32 wave = 0.5f * (F32)sin(5.0f * lbl_8025E8C4 + left);
-            F32 dx = wave * (right - left);
-            F32 center = (640.0f * asset->pos.x) / 640.0f;
-            left = center - dx;
-            right = center + dx;
-        }
-
-        F32 z = RwIm2DGetNearScreenZ();
-        RwIm2DVertexSetScreenX(&Vertex[0], left);
-        RwIm2DVertexSetScreenY(&Vertex[0], top);
-        RwIm2DVertexSetScreenZ(&Vertex[0], z);
-        Vertex[0].u = u1; Vertex[0].v = v1;
-        RwIm2DVertexSetScreenX(&Vertex[1], left);
-        RwIm2DVertexSetScreenY(&Vertex[1], bottom);
-        RwIm2DVertexSetScreenZ(&Vertex[1], z);
-        Vertex[1].u = u4; Vertex[1].v = v4;
-        RwIm2DVertexSetScreenX(&Vertex[2], right);
-        RwIm2DVertexSetScreenY(&Vertex[2], bottom);
-        RwIm2DVertexSetScreenZ(&Vertex[2], z);
-        Vertex[2].u = u3; Vertex[2].v = v3;
-        RwIm2DVertexSetScreenX(&Vertex[3], right);
-        RwIm2DVertexSetScreenY(&Vertex[3], top);
-        RwIm2DVertexSetScreenZ(&Vertex[3], z);
-        Vertex[3].u = u2; Vertex[3].v = v2;
-        RwIm2DVertexSetIntRGBA(&Vertex[0], 255, 255, 255, 255);
-        RwIm2DVertexSetIntRGBA(&Vertex[1], 255, 255, 255, 255);
-        RwIm2DVertexSetIntRGBA(&Vertex[2], 255, 255, 255, 255);
-        RwIm2DVertexSetIntRGBA(&Vertex[3], 255, 255, 255, 255);
-
-        zRenderState(SDRS_Default);
-        RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)0);
-        RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
-        RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)1);
-        RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)1);
-        RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)0);
-        RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vertex, 4, Index, 6);
-    }
-    else if (ent->model)
-    {
-        zUIAsset* asset = ent->sasset;
-        _xRect rect;
-        rect.x = (640.0f * asset->pos.x) / 640.0f;
-        rect.y = (480.0f * asset->pos.y) / 480.0f;
-        rect.w = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
-        rect.h = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
-        RwV3d& pos = ent->model->Mat->pos;
-        xVec3 from = { pos.x, pos.y + 1.0f, pos.z + 5.0f };
-        xVec3 to = { pos.x, pos.y, pos.z };
-        xModelRender2D(ent->model, &rect, &from, &to, 1.5707964f);
     }
 }
 
@@ -285,13 +291,12 @@ void zUIRenderAll()
 
     for (S32 i = 0; i < sSortedCount; ++i)
     {
-        _zUI* ent = sSorted[i];
-        if (!xEntIsVisible(ent)) continue;
-        if (ent->baseType == 0x20)
-            zUI_Render(ent);
+        if (!xEntIsVisible(sSorted[i])) continue;
+        if (sSorted[i]->baseType == 0x20)
+            zUI_Render(sSorted[i]);
         else if (!zGameIsPaused() ||
-                 !(static_cast<zUIFontAsset*>(ent->sasset)->uiFontFlags & 0x100))
-            fn_800D47E8(ent);
+                 !(static_cast<zUIFontAsset*>(sSorted[i]->sasset)->uiFontFlags & 0x100))
+            fn_800D47E8(sSorted[i]);
     }
 }
 
