@@ -5,8 +5,6 @@
 
 #include <rpworld.h>
 
-// Defined outside the reconstructed units: its .sbss slot between zFMV and zGame stays
-// unassigned (see evidence.tsv).
 extern U32 gFXSurfaceFlags;
 
 void zFX_SceneEnter(RpWorld* world);
