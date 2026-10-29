@@ -2,20 +2,11 @@
 #include "xEvent.h"
 #include "zEnt.h"
 #include "version.h"
-
-struct zVarEntry
-{
-    U32 entry;
-    U32 varNameID;
-    char* varName;
-    U32 (*varCB)();
-};
+#include "zVar.h"
 
 #if VERSION_GIHE78_REV0
-extern "C" zVarEntry lbl_801C8CB0[];
-extern "C" void fn_800D7C70(zVarEntry* table);
-#define VAR_TABLE lbl_801C8CB0
-#define VAR_INIT fn_800D7C70
+#define VAR_TABLE zVarEntryTable
+#define VAR_INIT zVarInit
 #elif VERSION_GIHE78_REV1
 extern "C" zVarEntry lbl_801D7670[];
 extern "C" void fn_800D7864(zVarEntry* table);
