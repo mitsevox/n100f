@@ -34,12 +34,6 @@ struct WorldModuleData
 #define SECTORTYPE_WORLDSECTOR -1
 #define SECTORTYPE_FREED -2
 
-// rpWORLDSINGLEMALLOC in a world's private flags: the world and its sectors are one block.
-#define WORLDPRIVATE_SINGLEMALLOC 0x01
-
-// rpWORLDTRISTRIP in a world's flags: build triangle strips.
-#define WORLD_TRISTRIP 0x01
-
 // The world plugin ids of the engine modules RpWorldPluginAttach registers.
 #define MATERIALMODULE_PLUGINID 0x501
 #define MESHMODULE_PLUGINID 0x502
@@ -325,8 +319,9 @@ static void* WorldClose(void* instance, S32 offset, S32 size)
 
 static void* WorldOpen(void* instance, S32 offset, S32 size)
 {
-    defaultSurfaceProps.ambient = 0.0f;
     worldModule.globalsOffset = offset;
+
+    defaultSurfaceProps.ambient = 0.0f;
     defaultSurfaceProps.diffuse = 0.0f;
     defaultSurfaceProps.specular = 0.0f;
 
@@ -556,7 +551,7 @@ static RpWorld* WorldBuildMeshAtomicSector(RpWorld* world, RpWorldSector* sector
                                         polygon->vertIndex[2]);
             }
 
-            if (world->flags & WORLD_TRISTRIP)
+            if (world->flags & rpWORLDTRISTRIP)
             {
                 mesh = _rpMeshOptimise(buildMesh, 1);
             }
@@ -667,7 +662,7 @@ RpWorld* RpWorldSectorGetWorld(const RpWorldSector* sector)
     {
         WorldListEntry* entry = rwLLLinkGetData(cur, WorldListEntry, link);
 
-        if (entry->world->object.privateFlags & WORLDPRIVATE_SINGLEMALLOC)
+        if (entry->world->object.privateFlags & rpWORLDSINGLEMALLOC)
         {
             if ((U8*)sector >= (U8*)entry->world &&
                 (U8*)sector < (U8*)entry->world + entry->size)
@@ -739,7 +734,7 @@ S32 RpWorldDestroy(RpWorld* world)
 
     _rpMaterialListDeinitialize(&world->matList);
 
-    if (world->object.privateFlags & WORLDPRIVATE_SINGLEMALLOC)
+    if (world->object.privateFlags & rpWORLDSINGLEMALLOC)
     {
         WorldSectorDeinstanceAll(world->rootSector);
         _rwPluginRegistryDeInitObject(&worldTKList, world);

@@ -1,11 +1,5 @@
 #include <rpworld.h>
 
-#define rpWORLDNATIVE 0x01000000
-
-// The object types _rpMeshSize distinguishes: a world and a geometry.
-#define MESHOWNER_WORLD 7
-#define MESHOWNER_GEOMETRY 8
-
 // The stream sizes of the mesh header and of each mesh and index in it.
 #define MESHHEADER_STREAMSIZE 12
 #define MESH_STREAMSIZE 8
@@ -16,9 +10,9 @@
 
 // A mesh header and a world or geometry that keeps its indices in the stream (not native).
 #define MESHINDICESSTREAMED(object)                                                         \
-    ((((const RwObject*)(object))->type == MESHOWNER_GEOMETRY &&                            \
+    ((((const RwObject*)(object))->type == GEOMETRY_OBJECTTYPE &&                           \
       !(((const RpGeometry*)(object))->flags & rpGEOMETRYNATIVE)) ||                        \
-     (((const RwObject*)(object))->type == MESHOWNER_WORLD &&                               \
+     (((const RwObject*)(object))->type == rpWORLD &&                                       \
       !(((const RpWorld*)(object))->flags & rpWORLDNATIVE)))
 
 typedef struct MeshGlobals MeshGlobals;
@@ -39,7 +33,7 @@ struct MeshStaticData
 #define MESHGLOBAL(var) (((MeshGlobals*)((U8*)RwEngineInstance + meshModule.globalsOffset))->var)
 
 RwModuleInfo meshModule;
-static MeshStaticData MeshStatic;
+static MeshStaticData MeshStatic = { NULL };
 
 RpMeshHeader* _rpMeshHeaderCreate(U32 size)
 {
@@ -322,7 +316,7 @@ RpMeshHeader* _rpMeshRead(RwStream* stream, const void* object, const RpMaterial
         return NULL;
     }
 
-    // The target allows 16 bytes for each mesh, 4 more than an RpMesh takes.
+    // The block holds the header, then 16 bytes for each mesh, then the indices.
     size = sizeof(RpMeshHeader) + header[1] * 16;
 
     if (MESHINDICESSTREAMED(object))
@@ -391,9 +385,9 @@ S32 _rpMeshSize(const RpMeshHeader* meshHeader, const void* object)
 {
     const RwObject* owner = (const RwObject*)object;
 
-    if ((owner->type == MESHOWNER_GEOMETRY &&
+    if ((owner->type == GEOMETRY_OBJECTTYPE &&
          (((const RpGeometry*)object)->flags & rpGEOMETRYNATIVE)) ||
-        (owner->type == MESHOWNER_WORLD && (((const RpWorld*)object)->flags & rpWORLDNATIVE)))
+        (owner->type == rpWORLD && (((const RpWorld*)object)->flags & rpWORLDNATIVE)))
     {
         return MESHHEADER_STREAMSIZE + meshHeader->numMeshes * MESH_STREAMSIZE;
     }

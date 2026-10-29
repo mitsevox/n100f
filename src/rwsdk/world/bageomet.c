@@ -5,20 +5,8 @@
 #define GEOMLOCK_POLYGONS 0x01
 #define GEOMLOCK_ALL 0xFFF
 
-// The geometry format flags RpGeometryCreate reads: triangle strips, prelight colors, normals,
-// one or two texture coordinate sets, the texture coordinate set count in bits 16 to 23 and
-// the native flags.
-#define GEOMETRY_TRISTRIP 0x01
-#define GEOMETRY_TEXTURED 0x04
-#define GEOMETRY_PRELIT 0x08
-#define GEOMETRY_NORMALS 0x10
-#define GEOMETRY_TEXTURED2 0x80
-#define GEOMETRY_FLAGSMASK 0xFF
+// The texture coordinate set count in bits 16 to 23 of a geometry's format.
 #define GEOMETRY_TEXCOORDSETSMASK 0x00FF0000
-#define GEOMETRY_NATIVEFLAGSMASK 0x0F000000
-
-// The object type of a geometry.
-#define GEOMETRY_OBJECTTYPE 8
 
 // One past the most vertices a geometry can have: 16-bit vertex indices address 0x10000.
 #define GEOMETRY_VERTEXLIMIT 0x10000
@@ -78,7 +66,7 @@ S32 RpGeometryAddMorphTargets(RpGeometry* geometry, S32 mtcount)
 
         morphTargetSize = sizeof(RpMorphTarget) + vertexSize;
 
-        if (geometry->flags & GEOMETRY_NORMALS)
+        if (geometry->flags & rpGEOMETRYNORMALS)
         {
             morphTargetSize += vertexSize;
         }
@@ -149,7 +137,7 @@ S32 RpGeometryAddMorphTargets(RpGeometry* geometry, S32 mtcount)
             morphTarget->verts = (RwV3d*)data;
             data += geometry->numVertices * sizeof(RwV3d);
 
-            if (geometry->flags & GEOMETRY_NORMALS)
+            if (geometry->flags & rpGEOMETRYNORMALS)
             {
                 morphTarget->normals = (RwV3d*)data;
                 data += geometry->numVertices * sizeof(RwV3d);
@@ -234,7 +222,7 @@ RpGeometry* RpGeometryUnlock(RpGeometry* geometry)
                                         triangle->vertIndex[1], triangle->vertIndex[2]);
             }
 
-            if (geometry->flags & GEOMETRY_TRISTRIP)
+            if (geometry->flags & rpGEOMETRYTRISTRIP)
             {
                 mesh = _rpMeshOptimise(buildMesh, 1);
             }
@@ -288,31 +276,31 @@ RpGeometry* RpGeometryCreate(S32 numVerts, S32 numTriangles, U32 format)
     {
         numTexCoordSets = (format & GEOMETRY_TEXCOORDSETSMASK) >> 16;
     }
-    else if (format & GEOMETRY_TEXTURED2)
+    else if (format & rpGEOMETRYTEXTURED2)
     {
         numTexCoordSets = 2;
     }
     else
     {
-        numTexCoordSets = (format & GEOMETRY_TEXTURED) >> 2;
+        numTexCoordSets = (format & rpGEOMETRYTEXTURED) >> 2;
     }
 
     if (numTexCoordSets == 1)
     {
-        texFlags = GEOMETRY_TEXTURED;
+        texFlags = rpGEOMETRYTEXTURED;
     }
     else
     {
-        texFlags = (numTexCoordSets > 1) ? GEOMETRY_TEXTURED2 : 0;
+        texFlags = (numTexCoordSets > 1) ? rpGEOMETRYTEXTURED2 : 0;
     }
 
     native = format & rpGEOMETRYNATIVE;
-    flags = (format & GEOMETRY_FLAGSMASK) & ~(GEOMETRY_TEXTURED | GEOMETRY_TEXTURED2);
+    flags = (format & rpGEOMETRYFLAGSMASK) & ~(rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2);
     flags |= texFlags;
 
     if (!native)
     {
-        if (flags & GEOMETRY_PRELIT)
+        if (flags & rpGEOMETRYPRELIT)
         {
             size += numVerts * sizeof(RwRGBA);
         }
@@ -349,7 +337,7 @@ RpGeometry* RpGeometryCreate(S32 numVerts, S32 numTriangles, U32 format)
     geometry->preLitLum = NULL;
     geometry->triangles = NULL;
     geometry->numTriangles = numTriangles;
-    geometry->flags = flags | (format & GEOMETRY_NATIVEFLAGSMASK);
+    geometry->flags = flags | (format & rpGEOMETRYNATIVEFLAGSMASK);
     geometry->numVertices = numVerts;
 
     if (!native)
@@ -357,7 +345,7 @@ RpGeometry* RpGeometryCreate(S32 numVerts, S32 numTriangles, U32 format)
         U8* data = (U8*)geometry + geometryTKList.sizeOfStruct;
         U32 i;
 
-        if ((flags & GEOMETRY_PRELIT) && numVerts)
+        if ((flags & rpGEOMETRYPRELIT) && numVerts)
         {
             geometry->preLitLum = (RwRGBA*)data;
             data += numVerts * sizeof(RwRGBA);
@@ -508,7 +496,7 @@ RpGeometry* RpGeometryStreamRead(RwStream* stream)
     {
         if (geometry->numVertices)
         {
-            if (data.format & GEOMETRY_PRELIT)
+            if (data.format & rpGEOMETRYPRELIT)
             {
                 U32 size = geometry->numVertices * sizeof(RwRGBA);
 

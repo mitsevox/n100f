@@ -77,6 +77,9 @@ struct RpPolygon
 
 #define rpWORLD 7
 
+// The object type of a geometry.
+#define GEOMETRY_OBJECTTYPE 8
+
 typedef struct RpPlaneSector RpPlaneSector;
 struct RpPlaneSector
 {
@@ -215,7 +218,18 @@ typedef RpAtomic* (*RpAtomicCallBack)(RpAtomic* atomic, void* data);
 #define rpATOMICCOLLISIONTEST 0x01
 #define rpATOMICRENDER 0x04
 
+#define rpGEOMETRYTRISTRIP 0x0001
+#define rpGEOMETRYTEXTURED 0x0004
+#define rpGEOMETRYPRELIT 0x0008
+#define rpGEOMETRYNORMALS 0x0010
+#define rpGEOMETRYTEXTURED2 0x0080
 #define rpGEOMETRYNATIVE 0x01000000
+#define rpGEOMETRYFLAGSMASK 0x00FF
+#define rpGEOMETRYNATIVEFLAGSMASK 0x0F000000
+
+#define rpWORLDTRISTRIP 0x01
+#define rpWORLDNATIVE 0x01000000
+#define rpWORLDSINGLEMALLOC 0x01
 
 struct RpAtomic
 {
