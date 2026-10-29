@@ -36,7 +36,16 @@ struct zAssetModelInst
     F32 RotPos[3][4];
 };
 
-extern _ShadowParams gShadowParams[27];
+// Shadow offset and radius per model type; 999 ends the list.
+_ShadowParams gShadowParams[27] = {
+    { 3, 0.2f, 1.25f },  { 4, -0.2f, 1.4f },  { 7, -0.4f, 1.4f },   { 9, 0.4f, 1.25f },
+    { 15, 0.0f, 1.5f },  { 17, 0.0f, 1.25f }, { 18, 0.0f, 1.5f },   { 19, 0.25f, 1.5f },
+    { 20, 1.0f, 1.75f }, { 21, 0.5f, 1.25f }, { 22, 0.0f, 1.25f },  { 24, 0.0f, 1.25f },
+    { 26, 0.0f, 1.75f }, { 46, 0.25f, 1.5f }, { 12, 0.0f, 1.5f },   { 28, 0.0f, 1.5f },
+    { 29, 0.0f, 1.5f },  { 30, 0.0f, 1.5f },  { 31, 0.0f, 1.5f },   { 32, 0.0f, 1.5f },
+    { 33, 0.0f, 1.5f },  { 34, 0.0f, 1.5f },  { 35, 0.0f, 1.5f },   { 36, 0.0f, 1.5f },
+    { 37, 0.0f, 1.5f },  { 999, 0.0f, 1.5f }, { 999, 0.0f, 1.5f },
+};
 
 // Set up an entity of the given asset type: its collision class and bound, its model and, from
 // its animation list, its animation table starting in the "idle" state.
@@ -218,21 +227,25 @@ void zEntInit(_zEnt* ent, p2EntAsset* asset, U32 type)
     xEntInitForType(ent);
 }
 
+// Set up the entity part of a game object.
 void zEntSetup(_zEnt* ent)
 {
     xEntSetup(ent);
 }
 
+// Save the entity state.
 void zEntSave(_zEnt* ent, xSerial* s)
 {
     xEntSave(ent, s);
 }
 
+// Restore the entity state.
 void zEntLoad(_zEnt* ent, xSerial* s)
 {
     xEntLoad(ent, s);
 }
 
+// Reset the entity part of a game object.
 void zEntReset(_zEnt* ent)
 {
     xEntReset(ent);
@@ -268,6 +281,7 @@ void zEntEventAllOfType(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam, U
     }
 }
 
+// Send an event to every scene object of one base type.
 void zEntEventAllOfType(U32 toEvent, U32 type)
 {
     zEntEventAllOfType(NULL, 0, toEvent, NULL, type);
@@ -285,21 +299,25 @@ void zEntEvent(char* to, U32 toEvent)
     }
 }
 
+// Send an event with no source, parameters or widget.
 void zEntEvent(xBase* to, U32 toEvent)
 {
     zEntEvent(NULL, 0, to, toEvent, NULL, NULL, 0);
 }
 
+// Send an event with parameters and no source.
 void zEntEvent(xBase* to, U32 toEvent, F32* toParam)
 {
     zEntEvent(NULL, 0, to, toEvent, toParam, NULL, 0);
 }
 
+// Send an event with parameters and a widget, no source.
 void zEntEvent(xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget)
 {
     zEntEvent(NULL, 0, to, toEvent, toParam, toParamWidget, 0);
 }
 
+// Send an event from one object to another without parameters.
 void zEntEvent(xBase* from, xBase* to, U32 toEvent)
 {
     zEntEvent(from, 0, to, toEvent, NULL, NULL, 0);
@@ -591,6 +609,7 @@ char* zParamGetString(zAssetModelParam* param, U32 size, char* tok, char* def)
     return def;
 }
 
+// Read an integer model parameter, or def when it is missing.
 S32 zParamGetInt(zAssetModelParam* param, U32 size, const char* tok, S32 def)
 {
     char* str = zParamGetString(param, size, (char*)tok, NULL);
@@ -601,6 +620,7 @@ S32 zParamGetInt(zAssetModelParam* param, U32 size, const char* tok, S32 def)
     return def;
 }
 
+// Read a float model parameter, or def when it is missing.
 F32 zParamGetFloat(zAssetModelParam* param, U32 size, const char* tok, F32 def)
 {
     char* str = zParamGetString(param, size, (char*)tok, NULL);

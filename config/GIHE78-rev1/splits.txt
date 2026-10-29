@@ -323,7 +323,7 @@ flat/zAnimList.cpp:
 	.sdata2     start:0x80272320 end:0x80272338
 
 flat/zAssetTypes.cpp:
-	.text       start:0x80045000 end:0x80045958
+	.text       start:0x80044FDC end:0x80045958
 	.rodata     start:0x80193250 end:0x80193300
 	.data       start:0x801C55E8 end:0x801C5F00
 	.sdata      start:0x80270340 end:0x80270348

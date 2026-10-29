@@ -213,11 +213,13 @@ void zAssetStartup()
     xSTStartup(assetTypeHandlers);
 }
 
+// Shut the asset streamer down.
 void zAssetShutdown()
 {
     xSTShutdown();
 }
 
+// Read a model asset into an atomic.
 static void* Model_Read(void*, U32, void* indata, U32 insize, U32* outsize)
 {
     RpAtomic* model = iModelFileNew(indata, insize);
@@ -225,6 +227,7 @@ static void* Model_Read(void*, U32, void* indata, U32 insize, U32* outsize)
     return model;
 }
 
+// Unload an atomic read by Model_Read.
 static void Model_Unload(void* userdata, U32)
 {
     if (userdata != NULL)
@@ -276,6 +279,7 @@ static void* BSP_Read(void*, U32 aid, void* indata, U32 insize, U32* outsize)
     return bsp;
 }
 
+// Free the scene environment's world.
 static void BSP_Unload(void*, U32)
 {
     xEnvFree(globals.sceneCur->env);
@@ -339,6 +343,7 @@ static void* RWTX_Read(void*, U32, void* indata, U32 insize, U32* outsize)
     return NULL;
 }
 
+// Destroy a texture read by RWTX_Read, whatever its reference count.
 static void TextureRW3_Unload(void* userdata, U32)
 {
     if (userdata != NULL)
@@ -348,6 +353,7 @@ static void TextureRW3_Unload(void* userdata, U32)
     }
 }
 
+// Placeholder animation effect; does nothing.
 static U32 dummyEffectCB(U32, xAnimActiveEffect*, xAnimSingle*, void*)
 {
     return 0;
@@ -399,6 +405,7 @@ static U32 soundEffectCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* 
     return sndhandle;
 }
 
+// Look an asset up by id for the anim-table builder.
 static void* FindAssetCB(U32 ID, char*)
 {
     U32 size;
@@ -552,10 +559,12 @@ static void* ATBL_Read(void*, U32 aid, void* indata, U32, U32* outsize)
     return table;
 }
 
+// Animations need no unload work.
 static void Anim_Unload(void*, U32)
 {
 }
 
+// Destroy a move point's spline.
 static void MovePoint_Unload(void* userdata, U32)
 {
     xMovePointSplineDestroy((xMovePoint*)userdata);

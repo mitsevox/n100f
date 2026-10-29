@@ -90,6 +90,7 @@ void zAnimListInit()
     }
 }
 
+// Forget the loaded lists.
 void zAnimListExit()
 {
     nals = 0;

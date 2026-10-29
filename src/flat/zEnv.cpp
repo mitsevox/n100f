@@ -30,6 +30,7 @@ void zEnvInit(void* env, void* easset)
     zEnvInit((_zEnv*)env, (p2EnvAsset*)easset);
 }
 
+// Set up the environment base and load its world, collision and effect BSPs.
 void zEnvInit(_zEnv* env, p2EnvAsset* easset)
 {
     U32 bufsize;
@@ -89,6 +90,7 @@ void zEnvInit(_zEnv* env, p2EnvAsset* easset)
     }
 }
 
+// Apply the asset's lighting to the scene environment.
 void zEnvSetup(_zEnv* env)
 {
     xBaseSetup(env);
@@ -144,11 +146,13 @@ void zEnvRender(_xEnv* env)
     xEnvRender(env);
 }
 
+// Save the environment base state.
 void zEnvSave(_zEnv* ent, xSerial* s)
 {
     xBaseSave(ent, s);
 }
 
+// Restore the environment base state.
 void zEnvLoad(_zEnv* ent, xSerial* s)
 {
     xBaseLoad(ent, s);

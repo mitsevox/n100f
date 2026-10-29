@@ -38,6 +38,7 @@ static zCutSceneNames zCutSceneNamesTable[14] = {
 S32 xCutscene_Destroy(xCutscene* csn);
 U32 zFMVPlay(char* filename, U32 buttons, F32 time);
 
+// Set up the base, the event handler and the links after the asset.
 void zCutsceneMgrInit(void* b, void* tasset)
 {
     _zCutsceneMgr* t = (_zCutsceneMgr*)b;
@@ -73,6 +74,7 @@ void zCutsceneMgrSave(_zCutsceneMgr*, xSerial* s)
     }
 }
 
+// Restore which cutscenes have been played.
 void zCutsceneMgrLoad(_zCutsceneMgr*, xSerial* s)
 {
     for (U32 i = 0; i < 14; i++)
@@ -81,6 +83,7 @@ void zCutsceneMgrLoad(_zCutsceneMgr*, xSerial* s)
     }
 }
 
+// Mark every cutscene as not played.
 void zCutSceneNamesTable_clearAll()
 {
     for (S32 i = 0; i < 14; i++)
@@ -143,6 +146,7 @@ S32 zCutsceneMgrEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
     return 1;
 }
 
+// Nothing to finish once a cutscene has loaded.
 void zCutsceneMgrFinishLoad(xBase* to)
 {
     _zCutsceneMgr* t = (_zCutsceneMgr*)to;
@@ -191,6 +195,7 @@ void zCutsceneMgrUpdate(xBase* to, _xScene*, F32)
     }
 }
 
+// Report whether cutscene number has been played.
 U32 zCutSceneNamesTable_getStatus(U32 number)
 {
     return zCutSceneNamesTable[number - 1].played ? 1 : 0;
