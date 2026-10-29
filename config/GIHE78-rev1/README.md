@@ -13,7 +13,7 @@ The following configuration inputs were copied from revision 0, each recorded in
 
 The relink also used the project's existing patched toolkit and entry-point handling in `tools/project.py`.
 
-The sibling's `extract` entry was omitted: this map does not name `CardData`. Compiler profiles have not been established for revision 1 by source matching.
+The sibling's `extract` entry was omitted from the initial map, which does not name `CardData`. Compiler profiles have not been established for revision 1 by source matching.
 
 The first relink failed its executable hash. The owner approved one symbol-name correction: the entry routine at `0x80016A00` has one `bl`, at `0x80016A48`, to the `.init` function at `0x80005304` (size `0x138`, exclusive end `0x8000543C`). That symbol is named `__start` after revision 0's startup function (itself an inferred name on revision 0), with origin `related`. Every other function retains its toolkit-supplied name. Besides neutral toolkit labels, dtk's built-in signatures supplied about 35 names (`GXInit`, `__GXInitGX`, the gTRK vectors and others), covered by the signature row in `evidence.tsv`. As described in revision 0's Baseline notes, mwld places `_rom_copy_info` and `_bss_init_info` in the section of the global `__start`; the name-only change produced a byte-identical relink. The relink proves the bytes, not the name. This proposed name requires independent accuracy review.
 
