@@ -59,6 +59,7 @@ struct _zParEmitterCustomSettings
 };
 
 _zParEmitter* zParEmitterFind(char* asset_name);
+_zParEmitter* zParEmitterFind(U32 asset_id);
 xPar* zParEmitterEmitCustom(_zParEmitter* p, F32 dt, _zParEmitterCustomSettings* info);
 
 #endif

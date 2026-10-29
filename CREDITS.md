@@ -19,7 +19,7 @@ Imported and reused source keeps its origin, pinned revision, license and local 
 - `xClimateInitAsset` stores `1` and `0` to `_tagRain::rain`, an `S32` in the DWARF, where bfbb writes `1.0f` and `0.0f`.
 - `xScrFxLetterbox` sets 16.0f where bfbb reads `sLetterBoxSize`, as the target does.
 
-`zEntPlayerJumpStart` in `src/flat/zEntPlayer.cpp` was written from the target and the SLUS-20349 DWARF, and coincides almost line for line, including its duplicate branch, with the function of the same name in bfbb's `zEntPlayer.cpp` at revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6` (CC0 1.0).
+`zEntPlayerJumpStart` in `src/flat/zEntPlayer.cpp` was written from the target and the SLUS-20349 DWARF, and coincides almost line for line, including its duplicate branch, with the function of the same name in bfbb's `zEntPlayer.cpp` at revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6` (CC0 1.0). The same file's `static inline` sine and cosine wrappers take the names `isin` and `icos` from bfbb's `iMath.h` at that revision; their one-line bodies are written for this project.
 
 `src/flat/iCamera.cpp`, `iEnv.cpp`, `xAnim.cpp`, `xMath3.cpp`, `xMovePoint.cpp` and `zSurface.cpp` take their function bodies the same way, from bfbb's `src/SB/Core/x/` (`iCamera`, `xAnim`, `xMath3`, `xMovePoint`), `src/SB/Core/gc/iEnv.cpp` and `src/SB/Game/zSurface.cpp` at the same revision (CC0 1.0). Local changes:
 
