@@ -31,7 +31,18 @@ struct p2EntMotionERData
     F32 ret_wait_tm;
 };
 
-// Partial: only the er and mech members of the union are declared, so sizeof(p2EntMotionAsset)
+struct p2EntMotionPenData
+{
+    U8 flags;
+    U8 plane;
+    U8 pad[2];
+    F32 len;
+    F32 range;
+    F32 period;
+    F32 phase;
+};
+
+// Partial: only the er, mech and pen members of the union are declared, so sizeof(p2EntMotionAsset)
 // is not its size.
 struct p2EntMotionAsset
 {
@@ -42,6 +53,7 @@ struct p2EntMotionAsset
     {
         p2EntMotionERData er;
         p2EntMotionMechData mech;
+        p2EntMotionPenData pen;
     };
 };
 
