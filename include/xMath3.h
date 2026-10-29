@@ -46,6 +46,15 @@ struct _xSphere
     F32 r;
 };
 
+struct _xRay3
+{
+    xVec3 origin;
+    xVec3 dir;
+    F32 min_t;
+    F32 max_t;
+    S32 flags;
+};
+
 struct _xRot
 {
     xVec3 axis;

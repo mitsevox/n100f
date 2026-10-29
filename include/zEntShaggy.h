@@ -83,6 +83,7 @@ S32 Shaggy2Plat_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase
 void Shaggy1_SetHangable(_zEnt* ent, _zEntHangable* hang);
 void Shaggy1_PlayerUpdate(_zEnt* shag, _xScene* sc, F32 dt);
 void Shaggy1_ChooseThrowTarget(_zEnt* ent);
+_zEnt* zEntShaggy_GetSwap(_zEnt* ent);
 void zEntShaggy_Init(st_zEntVillain* ent);
 void zEntShaggy_SceneStart(zScene* sc);
 void zEntShaggy_SceneReset();

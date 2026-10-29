@@ -1,7 +1,9 @@
 #include "zEntPlayer.h"
 #include "zGlobals.h"
 #include "zEntHangable.h"
+#include "zEntSimpleObj.h"
 #include "zEntShaggy.h"
+#include "zEntVillain.h"
 #include "zEntBubble.h"
 #include "zParEmitter.h"
 #include "zRumble.h"
@@ -24,6 +26,7 @@
 #include "xMath3.h"
 #include "xMovePoint.h"
 #include "xScene.h"
+#include "xEnv.h"
 #include "xstransvc.h"
 #include "zFeet.h"
 #include "zGust.h"
@@ -140,6 +143,8 @@ void xCameraSetTarget(_tagxCamFrame* cam, xMat4x3* target);
 void xCameraPickInitial(_tagxCamFrame* cam, U32 id);
 void xCameraSetController(_tagxCamFrame* cam, F32 x, F32 y, F32 dt);
 void zSceneGameStatsTally_snack(U32 quantity);
+void zSceneGameStatsTally_death();
+void xCameraTargetOnGround(S32 on_ground, F32 height);
 void zSceneGameStatsTally_scare();
 void zEntVillain_HeroWasHurt();
 void zEntEventAll(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam);
@@ -154,6 +159,10 @@ void xEntCollCheckNPCs(_xEnt* p, _xScene* sc, _xEnt* (*hitIt)(_xEnt*, _xScene*, 
 void xEntCollCheckDyns(_xEnt* p, _xScene* sc, _xEnt* (*hitIt)(_xEnt*, _xScene*, void*));
 void xEntCollCheckStats(_xEnt* p, _xScene* sc, _xEnt* (*hitIt)(_xEnt*, _xScene*, void*));
 S32 iSphereHitsEnv4(const xSphere* b, const _xEnv* env, const xMat3x3* mat, _xCollis* coll);
+U32 iRayHitsEnv(const _xRay3* r, const _xEnv* env, _xCollis* coll);
+U32 iRayHitsModel(const _xRay3* r, const xModelInstance* m, _xCollis* coll);
+U32 xSphereHitsBox(const xSphere* a, const _xBox* b, _xCollis* coll);
+void xLine3VecDist2(const xVec3* p1, const xVec3* p2, const xVec3* v, _xIsect* isect);
 static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt);
 static void PlayerCollisTranslate(_xCollis* c, F32 x, F32 y, F32 z);
 static _xEnt* PlayerCollCheckOneVillain(_xEnt* ent, _xScene* sc, void* data);
@@ -194,6 +203,8 @@ void zHud_showSnackSpecial();
 void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt);
 F32 CalcJumpImpulse_Smooth(F32 g, F32 j, F32 h, F32 Tgc, F32 Tgs);
 S32 Shaggy8_HBCallback(_zEnt* ent, _xCollis* coll);
+S32 Shaggy8_BBCallback(_zEnt* ent, _xCollis* coll);
+S32 Shaggy8_CallToPlayer();
 void iDrawSetFBMSK(U32 FBMSK);
 void iModelSetMaterialAlpha(RpAtomic* model, S32 alpha);
 void xAnimTableRemoveEffectByCB(xAnimTable* table,
@@ -208,6 +219,20 @@ static U32 zEntPlayer_FXSpringCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnim
 static U32 zEntPlayer_FXOpenBrollyCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
                                      void* object);
 static void zEntPlayer_ButtonHBFX(_xEnt*, _zEntButton*);
+static void EGeneratorCheck(_xEnt* ent, _xScene* sc, F32 dt);
+void zEntPlayerFloorUpdate(_xEnt* p, _xScene* sc, F32 dt);
+void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt);
+void zEntPlayerJumpUpdate(_xEnt* ent, _xScene* sc, F32 dt);
+void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt);
+void zEntPlayerSurfDamageUpdate(_xEnt* p, _xScene* sc, F32 dt);
+void zEntPlayerCollide(_xEnt* ent, _xScene* sc, F32 dt);
+void zEntPlayerCollTrigger(_xEnt* ent, _xScene* sc);
+static void PlayerHangCheck(_xEnt* ent, _xScene* sc);
+static void PlayerTeeterCheck(_xEnt* ent, _xScene* sc, F32 dt);
+static void PlayerDigUpdate(_xEnt* ent, F32 dt);
+void zEntPlayer_SituationDo();
+static void zEntPlayer_FXUpdate(_xEnt* ent, F32 seconds);
+static void zEntPlayer_SNDButtBounce(_xEnt* ent, S32 hit_villain);
 void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt);
 void zEntPlayer_Move(_xEnt* ent, _xScene* sc, F32 dt, _xEntFrame* frame);
 void zEntPlayer_Render(_zEnt* ent);
@@ -2337,6 +2362,891 @@ static void zEntPlayer_SnackDecrement(F32 dt)
     }
 }
 
+// Whether target lies within the cone of ent's facing direction (flat, in x and z) whose half-angle
+// has the cosine cosang.
+static inline S32 PlayerIsFacing(_xEnt* ent, _xEnt* target, F32 cosang)
+{
+    F32 ax = ent->frame->mat.at.x;
+    F32 az = ent->frame->mat.at.z;
+    F32 alen = sqrtf(ax * ax + az * az);
+    F32 dx = target->frame->mat.pos.x - ent->model->Mat->pos.x;
+    F32 dz = target->frame->mat.pos.z - ent->model->Mat->pos.z;
+    F32 dlen = sqrtf(dx * dx + dz * dz);
+
+    return ax * dx + az * dz > dlen * (cosang * alen);
+}
+
+// Per-frame player update: timers, health and death, movement in sub-steps with collision, Shaggy grabs,
+// villain bounces and bumps, bubble platforms, then the floor, jump and drive updates, hanging and digging.
+void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
+{
+    xAnimState* astate;
+
+    zEntPlayer_SnackDecrement(dt);
+
+    if (!globals.player.ControlOn || globals.cmgr)
+    {
+        globals.player.ControlOffTimer = 1.0f;
+    }
+
+    globals.player.Sneak = 0;
+    if ((globals.player.ControlOn && (globals.pad0->on & 0x2000)) ||
+        (!globals.player.ControlOn && globals.player.AutoMoveSpeed == 3))
+    {
+        if (!surfSticky)
+        {
+            if (globals.player.Inv_Specials & 0x40)
+            {
+                globals.player.Sneak = 3;
+                zLaughNotify(0);
+            }
+            else if (globals.player.Inv_Specials & 0x10)
+            {
+                globals.player.Sneak = ((globals.player.Inv_Specials >> 5) & 1) + 1;
+                zLaughNotify(0);
+            }
+        }
+    }
+
+    if (globals.player.ScareShaggy)
+    {
+        globals.player.ScareShaggy--;
+    }
+
+    astate = globals.player.ent.model->Anim->Single->State;
+    if (!strcmp(astate->Name, "SD0_Hold") || !strcmp(astate->Name, "SD0_HoldWalk") ||
+        !strcmp(astate->Name, "SD1_Hold") || !strcmp(astate->Name, "SD1_HoldWalk"))
+    {
+        if ((globals.pad0->pressed & 0x30000) ||
+            ((globals.pad0->pressed & 0xC0000) && !globals.player.cheat_mode))
+        {
+            if (!globals.player.Shaggy1.SetDown && !globals.player.Shaggy1.ThrowState)
+            {
+                zLaughNotify(14);
+                if (astate->Name[2] == '1')
+                {
+                    Shaggy1_ChooseThrowTarget(globals.player.Shaggy1.Grab);
+                }
+                else
+                {
+                    globals.player.Shaggy1.ThrowState = 3;
+                }
+            }
+        }
+    }
+
+    if (globals.player.Shaggy1.ThrowState == 2)
+    {
+        globals.player.Shaggy1.ThrowState = 3;
+    }
+
+    if (globals.player.ControlOn && !globals.pad0->on &&
+        abs(globals.pad0->analog1.x) <= globals.player.s.AnalogMin &&
+        abs(globals.pad0->analog1.y) <= globals.player.s.AnalogMin)
+    {
+        if (globals.player.ent.model->Anim->Single->State &&
+            (globals.player.ent.model->Anim->Single->State->UserFlags & 1))
+        {
+            globals.player.IdleMinorTimer += dt;
+            globals.player.IdleMajorTimer += dt;
+            if (!surfSticky)
+            {
+                globals.player.IdleSitTimer += dt;
+            }
+            if (globals.player.IdleMinorTimer == 0.0f)
+            {
+                globals.player.IdleMinorTimer = 0.0001f;
+            }
+        }
+    }
+    else
+    {
+        globals.player.IdleMinorTimer = 0.0f;
+        globals.player.IdleMajorTimer = -3.0f;
+        globals.player.IdleSitTimer = 0.0f;
+    }
+
+    if (globals.player.Inv_Specials & 0x40)
+    {
+        globals.player.WorldDisguise = 6;
+    }
+    else
+    {
+        globals.player.WorldDisguise = 5;
+    }
+
+    if (globals.player.HeadbuttTimer)
+    {
+        zLaughNotify(1);
+        globals.player.HeadbuttTimer += dt;
+        if (!globals.player.ControlOn || globals.player.HeadbuttTimer > globals.player.s.HeadbuttTimeMax ||
+            (globals.player.HeadbuttTimer > globals.player.s.HeadbuttTimeMin && !(globals.pad0->on & 0x80000)))
+        {
+            globals.player.HeadbuttTimer = 0.0f;
+        }
+        else
+        {
+            globals.player.HeadbuttVel += globals.player.s.HeadbuttAccel * dt;
+            if (globals.player.HeadbuttVel > globals.player.s.HeadbuttSpeedMax)
+            {
+                globals.player.HeadbuttVel = globals.player.s.HeadbuttSpeedMax;
+            }
+        }
+    }
+
+    for (U32 i = 0; i < 37; i++)
+    {
+        sPlayerInfo[i].elapsedTime += dt;
+    }
+
+    if (sVOTimer || sVONextSituation)
+    {
+        if (sVOTimer > 0.0f)
+        {
+            sVOTimer -= dt;
+            if (sVOTimer < 0.0f)
+            {
+                sVOTimer = 0.0f;
+            }
+        }
+        if (sVOTimer == 0.0f && sVONextSituation)
+        {
+            zEntPlayer_SituationDo();
+        }
+    }
+
+    if (globals.player.ScareTimer > 0.0f)
+    {
+        globals.player.ScareTimer -= dt;
+        if (globals.player.ScareTimer < 0.0f)
+        {
+            globals.player.ScareTimer = 0.0f;
+        }
+    }
+
+    if (globals.player.DamageTimer > 0.0f)
+    {
+        globals.player.DamageTimer -= dt;
+        if (globals.player.DamageTimer < 0.0f)
+        {
+            globals.player.DamageTimer = 0.0f;
+            globals.player.DamageSource = NULL;
+        }
+    }
+
+    if (globals.player.ControlOffTimer > 0.0f)
+    {
+        globals.player.ControlOffTimer -= dt;
+        if (globals.player.ControlOffTimer < 0.0f)
+        {
+            globals.player.ControlOffTimer = 0.0f;
+        }
+    }
+
+    if (globals.player.DamageTimer && globals.player.Health)
+    {
+        if (++globals.player.Transparent == 4)
+        {
+            globals.player.Transparent = -2;
+        }
+    }
+    else
+    {
+        globals.player.Transparent = 0;
+    }
+
+    if (globals.player.CowerTimer > 0.0f)
+    {
+        globals.player.CowerTimer -= dt;
+        if (globals.player.CowerTimer < 0.0f)
+        {
+            globals.player.CowerTimer = 0.0f;
+        }
+    }
+
+    if (globals.player.FallDeathTimer > 0.0f)
+    {
+        globals.player.FallDeathTimer -= dt;
+        if (globals.player.FallDeathTimer < 0.0f)
+        {
+            globals.player.FallDeathTimer = 0.0f;
+        }
+    }
+
+    if (globals.player.HelmetTimer > 0.0f)
+    {
+        globals.player.HelmetTimer -= dt;
+        if (globals.player.HelmetTimer < 0.0f)
+        {
+            globals.player.HelmetTimer = 0.0f;
+        }
+    }
+
+    PlayerFaceUpdate(dt);
+
+    iColor_tag black = { 0, 0, 0, 255 };
+    iColor_tag clear = { 0, 0, 0, 0 };
+
+    if (!globals.player.Health)
+    {
+        if (globals.player.DamageTimer >= 0.3f && !xScrFxIsFading())
+        {
+            xScrFxFade(&clear, &black, 0.3f, NULL, 1, 1);
+        }
+        if (globals.player.DamageTimer == 0.0f)
+        {
+            zSceneGameStatsTally_death();
+            zGameStateSwitch(2);
+            gPlayerHitWater = 0;
+            globals.player.Health = 3;
+            sPlayerWaterOffset = 0.0f;
+            gDeadScooby = 0;
+        }
+    }
+
+    PlayerHangCheck(ent, sc);
+    update_dt = dt;
+    xEntBeginUpdate(ent, sc, dt);
+
+    if (globals.player.ShockRadius)
+    {
+        globals.player.ShockRadius += 6.0f * dt;
+        if (globals.player.ShockRadius > 4.0f)
+        {
+            globals.player.ShockRadius = 4.0f;
+        }
+
+        U32 i;
+        F32 rad2 = globals.player.ShockRadius * globals.player.ShockRadius;
+        F32 radold2 = globals.player.ShockRadiusOld * globals.player.ShockRadiusOld;
+        F32 sdist2;
+        F32 sdistold2;
+        F32 ydist;
+        _xEnt* vill;
+
+        for (i = 0; i < sc->num_npcs; i++)
+        {
+            vill = sc->npcs[i];
+            sdist2 = (vill->frame->mat.pos.x - ent->frame->mat.pos.x) *
+                         (vill->frame->mat.pos.x - ent->frame->mat.pos.x) +
+                     (vill->frame->mat.pos.z - ent->frame->mat.pos.z) *
+                         (vill->frame->mat.pos.z - ent->frame->mat.pos.z);
+            sdistold2 = (vill->frame->oldpos.x - ent->frame->mat.pos.x) *
+                            (vill->frame->oldpos.x - ent->frame->mat.pos.x) +
+                        (vill->frame->oldpos.z - ent->frame->mat.pos.z) *
+                            (vill->frame->oldpos.z - ent->frame->mat.pos.z);
+            ydist = fabs(vill->frame->mat.pos.y - ent->frame->mat.pos.y);
+            if (((rad2 > sdist2 && radold2 <= sdist2) || (rad2 > sdistold2 && radold2 <= sdistold2)) &&
+                ydist < 0.5f)
+            {
+                zEntVillain_Stun((st_zEntVillain*)vill, (4.0f - sqrtf(rad2)) / 3.4f);
+            }
+        }
+
+        if (globals.player.ShockRadius == 4.0f)
+        {
+            globals.player.ShockRadius = 0.0f;
+        }
+        else
+        {
+            globals.player.ShockRadiusOld = globals.player.ShockRadius;
+        }
+    }
+
+    zEntBubble_EnableCollision();
+
+    S32 num_updates = 1;
+    if (!globals.player.HangEnt)
+    {
+        if (dt > 0.1f)
+        {
+            num_updates = 6;
+        }
+        else if (dt > 1.0f / 12)
+        {
+            num_updates = 5;
+        }
+        else if (dt > 1.0f / 15)
+        {
+            num_updates = 4;
+        }
+        else if (dt > 0.05f)
+        {
+            num_updates = 3;
+        }
+        else if (dt > 1.0f / 30)
+        {
+            num_updates = 2;
+        }
+    }
+
+    dt /= num_updates;
+
+    for (S32 updidx = 0; updidx < num_updates; updidx++)
+    {
+        xVec3 suboldpos = ent->frame->mat.pos;
+        xFFX* gust_fkt;
+        F32 ndotm;
+        F32 sett2;
+        F32 dy;
+        F32 s;
+        F32 sft;
+        F32 fg;
+        F32 m;
+
+        HeadcollUpdate(dt);
+        xEntApplyPhysics(ent, sc, dt);
+        xEntMove(ent, sc, dt);
+        xVec3Copy(&req_motion, &ent->frame->dpos);
+        xEntDriveUpdate(&globals.player.drv, sc, dt);
+
+        if (globals.player.MountChimney && globals.player.MountChimney->eventFunc == Shaggy2Plat_EventCB)
+        {
+            globals.player.ent.frame->mat.pos.y +=
+                globals.player.MountChimney->model->Mat->pos.y - globals.player.MountChimOldY;
+        }
+
+        if (globals.sceneCur->baseCount[28])
+        {
+            for (gust_fkt = ent->ffx; gust_fkt; gust_fkt = gust_fkt->next)
+            {
+                if (gust_fkt->doEffect == zGustUpdateEnt)
+                {
+                    if (globals.player.JumpState == 3 || surfSlickRatio)
+                    {
+                        xFFXTurnOn(gust_fkt);
+                    }
+                    else
+                    {
+                        xFFXTurnOff(gust_fkt);
+                        if (gust_data.gust_on)
+                        {
+                            memset(&gust_data, 0, sizeof(zGustData));
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            gust_data.gust_on = 0;
+        }
+
+        xFFXApply(ent, sc, dt);
+
+        xVec3 dpos;
+        xVec3Sub(&dpos, &ent->frame->mat.pos, &suboldpos);
+
+        if (!globals.player.cheat_mode && (globals.player.JumpState == 0 || globals.player.JumpState == 1) &&
+            !globals.player.FallDeathTimer)
+        {
+            ent->frame->mat.pos.y -= 0.5f * dt;
+            ndotm = globals.player.floor_norm.x * dpos.x + globals.player.floor_norm.z * dpos.z;
+            if (ndotm > 0.0f && (0.0f != req_motion.x || 0.0f != req_motion.z || surfSlickRatio))
+            {
+                globals.player.slope = -1;
+                m = sqrtf(ndotm);
+                ent->frame->mat.pos.y -= m;
+                sett2 = dpos.x * dpos.x + dpos.y * dpos.y + dpos.z * dpos.z;
+                dpos.y = dpos.y - 0.5f * dt - m;
+                s = sqrtf(sett2 / (dpos.x * dpos.x + dpos.y * dpos.y + dpos.z * dpos.z));
+                xVec3 tmp;
+                s = 0.25f * (s - 1.0f);
+                tmp.x = s * dpos.x;
+                tmp.y = s * dpos.y;
+                tmp.z = s * dpos.z;
+                xVec3Add(&ent->frame->mat.pos, &ent->frame->mat.pos, &tmp);
+            }
+            else if (ndotm < 0.0f)
+            {
+                globals.player.slope = 1;
+            }
+            else
+            {
+                globals.player.slope = 0;
+            }
+        }
+
+        if (lastFloorEnt)
+        {
+            fg = globals.player.SlipFadeTimer;
+            if (surfSlickRatio)
+            {
+                m = globals.player.floor_norm.x * globals.player.floor_norm.x +
+                    globals.player.floor_norm.z * globals.player.floor_norm.z;
+                ent->frame->mat.pos.x += 13.0f * dt * globals.player.floor_norm.x;
+                ent->frame->mat.pos.y -= 13.0f * dt * sqrtf(m);
+                ent->frame->mat.pos.z += 13.0f * dt * globals.player.floor_norm.z;
+            }
+            else if (fg > 0.0f)
+            {
+                sft = 30.0f * (fg / 0.8f * dt);
+                ent->frame->mat.pos.x += sft * lastFloorNorm.x;
+                ent->frame->mat.pos.z += sft * lastFloorNorm.z;
+            }
+        }
+
+        zEntPlayerCollide(ent, sc, dt);
+    }
+
+    dt = update_dt;
+    xVec3Sub(&update_motion, &ent->frame->mat.pos, &ent->frame->oldpos);
+
+    if (!globals.player.cheat_mode)
+    {
+        _xCollis bbc;
+        bbc.flags = 0;
+        _xBox bbox = *(_xBox*)&globals.sceneCur->env->geom->world->boundingBox;
+        bbox.upper.y += 10.0f;
+        xSphereHitsBox(&ent->bound.sph, &bbox, &bbc);
+        if (!(bbc.flags & 0x11))
+        {
+            zEntEvent(ent, 0x11);
+        }
+    }
+
+    if (!globals.player.cheat_mode)
+    {
+        _xRay3 ctr;
+        _xCollis ctc;
+        _xCollis* c;
+        _xCollis* cend;
+        _xEnt* cent;
+
+        xVec3Copy(&ctr.origin, &ent->frame->oldpos);
+        ctr.origin.y += 0.7f;
+        ctr.max_t = xVec3Normalize(&ctr.dir, &update_motion);
+        ctr.min_t = 0.0f;
+        ctr.flags = 0xC00;
+        ctc.flags = 0;
+        iRayHitsEnv(&ctr, globals.sceneCur->env, &ctc);
+        if (ctc.flags & 1)
+        {
+            xVec3Copy(&ent->frame->mat.pos, &ent->frame->oldpos);
+        }
+        else
+        {
+            cend = &ent->collis->colls[ent->collis->idx];
+            for (c = &ent->collis->colls[6]; c < cend; c++)
+            {
+                cent = (_xEnt*)c->optr;
+                if (cent && cent &&
+                    (cent->id == xStrHash("slipdeck01") || cent->id == xStrHash("slipdeck02") ||
+                     cent->id == xStrHash("slipdeck03") || cent->id == xStrHash("slipdeck04")))
+                {
+                    iRayHitsModel(&ctr, cent->model, &ctc);
+                    if (ctc.flags & 1)
+                    {
+                        xVec3Copy(&ent->frame->mat.pos, &ent->frame->oldpos);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    {
+        _xCollis* wcoll;
+        _xCollis* gcoll;
+        F32 hdotm;
+        xSurface* wsurf;
+
+        gcoll = &ent->collis->colls[6];
+        for (wcoll = &ent->collis->colls[2]; wcoll < gcoll; wcoll++)
+        {
+            if (wcoll->flags & 1)
+            {
+                hdotm = wcoll->hdng.x * req_motion.x + wcoll->hdng.z * req_motion.z;
+                wsurf = zSurfaceGetSurface(wcoll);
+                if (hdotm > 0.0f && wcoll->hdng.y < 0.0f && zSurfaceGetStep(wsurf))
+                {
+                    ent->frame->mat.pos.y += 1.5f * dt;
+                    ent->collis->colls[0] = *wcoll;
+                    wcoll->flags = 0;
+                }
+            }
+        }
+    }
+
+    zEntBubble_DisableCollision();
+    EGeneratorCheck(ent, sc, dt);
+    globals.player.HeadbuttHit = 0;
+    ButtonCheck(ent);
+    DestructObjCheck(ent);
+
+    if (globals.player.Shaggy1.GrabOn && ent->collis->npc_eidx > ent->collis->npc_sidx &&
+        (((_xEnt*)ent)->model->Anim->Single->State->UserFlags & 0x400))
+    {
+        _xCollis* coll;
+        _xCollis* endcoll;
+        _zEnt* shagent;
+
+        coll = &ent->collis->colls[ent->collis->npc_sidx];
+        endcoll = &ent->collis->colls[ent->collis->npc_eidx];
+        for (; coll < endcoll; coll++)
+        {
+            shagent = (_zEnt*)coll->optr;
+            if ((shagent->subType == 0x1C || shagent->subType == 0x1D) &&
+                fabs(shagent->model->Mat->pos.y - ent->model->Mat->pos.y) < 0.5f &&
+                PlayerIsFacing(ent, shagent, 0.86602f))
+            {
+                globals.player.Shaggy1.GrabTry = shagent;
+                break;
+            }
+        }
+    }
+
+    if (ent->collis->npc_eidx > ent->collis->npc_sidx && globals.player.Shaggy1.Grab &&
+        globals.player.Shaggy1.GrabOn && !zEntShaggy_GetSwap(globals.player.Shaggy1.Grab) &&
+        globals.player.Shaggy1.Grab->subType == 0x1C)
+    {
+        _xCollis* coll;
+        _xCollis* endcoll;
+        _zEnt* shagent;
+
+        shagent = globals.player.Shaggy1.Grab;
+        coll = &ent->collis->colls[ent->collis->npc_sidx];
+        endcoll = &ent->collis->colls[ent->collis->npc_eidx];
+        for (; coll < endcoll; coll++)
+        {
+            if (coll->optr == shagent && coll->hdng.y < -0.7071f)
+            {
+                ent->frame->mat.pos.x += 0.001f;
+                globals.player.Shaggy1.CatchYou = 1;
+                globals.player.Shaggy1.CatchHeight = ent->frame->oldpos.y - shagent->frame->mat.pos.y;
+                xVec3Copy(&ent->frame->mat.pos, &shagent->frame->mat.pos);
+                xVec3Copy((xVec3*)&ent->model->Mat->pos, (xVec3*)&shagent->model->Mat->pos);
+                break;
+            }
+        }
+    }
+
+    if (ent->collis->npc_eidx > ent->collis->npc_sidx)
+    {
+        _xCollis* coll;
+        _xCollis* endcoll;
+        S32 bounceResponse;
+        en_ZVILLAIN_BUMPED_RESPONSE bumpedResponse;
+        S32 took_damage;
+        U32 type;
+
+        coll = &ent->collis->colls[ent->collis->npc_sidx];
+        endcoll = &ent->collis->colls[ent->collis->npc_eidx];
+        type = ent->model->Anim->Single->State->UserFlags & 0x1E;
+        if (type == 0xC)
+        {
+            HeadbuttTest(coll, endcoll, 0.7071f, VillHBCallback);
+        }
+        else if (globals.player.Health &&
+                 (type == 0xE ||
+                  (type == 0xA && ent->frame->mat.pos.y < ent->frame->oldpos.y &&
+                   (((_xEnt*)coll->optr)->subType == 0x16 || ((_xEnt*)coll->optr)->subType == 0x18 ||
+                    ((_xEnt*)coll->optr)->subType == 0 || ((_xEnt*)coll->optr)->subType == 0x15 ||
+                    ((_xEnt*)coll->optr)->subType == 0x24))))
+        {
+            for (; coll < endcoll; coll++)
+            {
+                if (coll->hdng.y < -0.5f)
+                {
+                    bounceResponse = 0;
+                    if (((_xEnt*)coll->optr)->subType == 0x24)
+                    {
+                        if (Shaggy8_BBCallback((_zEnt*)ent, coll))
+                        {
+                            bounceResponse = 2;
+                        }
+                    }
+                    else
+                    {
+                        bounceResponse = zEntVillain_Bounce((st_zEntVillain*)coll->optr);
+                    }
+
+                    if (bounceResponse == 1 || bounceResponse == 2)
+                    {
+                        ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+                        ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+                        ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+                        startBounce = ent->frame->mat.pos.y;
+                        zEntPlayerJumpStart(ent, bounceResponse == 1 ? &globals.player.s.Bounce
+                                                                     : &globals.player.s.Spring);
+                        if (((_xEnt*)coll->optr)->subType == 0x16 || ((_xEnt*)coll->optr)->subType == 0x18 ||
+                            ((_xEnt*)coll->optr)->subType == 0x15 || ((_xEnt*)coll->optr)->subType == 0)
+                        {
+                            globals.player.Bounced = 1;
+                        }
+                        if (((_xEnt*)coll->optr)->subType == 0x24)
+                        {
+                            globals.player.Bounced = 2;
+                        }
+                        globals.player.Jump_CanDouble = 1;
+                        globals.player.Jump_CanFloat = 1;
+                        zRumbleStart(0, SDR_ButtbounceJump);
+                        zEntPlayer_SNDButtBounce(ent, 1);
+                        break;
+                    }
+                    else if (bounceResponse == 4 && 0.0f == coll->hdng.x && 0.0f == coll->hdng.z)
+                    {
+                        ent->frame->vel.y = 0.0f;
+                    }
+                }
+            }
+        }
+        else
+        {
+            took_damage = 0;
+            for (; coll < endcoll; coll++)
+            {
+                bumpedResponse = zEntVillain_Bumped((st_zEntVillain*)coll->optr, coll);
+                switch (bumpedResponse)
+                {
+                case ZVIL_BUMPED_GUM:
+                    if (coll->hdng.y < -0.5f)
+                    {
+                        startBounce = ent->frame->mat.pos.y;
+                        zEntPlayerJumpStart(ent, &globals.player.s.Spring);
+                        globals.player.Bounced = 2;
+                        globals.player.Jump_CanDouble = 1;
+                        globals.player.Jump_CanFloat = 1;
+                        zRumbleStart(0, SDR_ButtbounceJump);
+                    }
+                    break;
+                case ZVIL_BUMPED_DAMAGE:
+                    if (zEntPlayer_Damage((xBase*)coll->optr, 1) ? 1 : 0)
+                    {
+                        zRumbleStart(0, SDR_VillainCollideScare);
+                    }
+                    took_damage = 1;
+                    break;
+                case ZVIL_BUMPED_ATTACK:
+                    if (zEntPlayer_Damage((xBase*)coll->optr, 1) ? 1 : 0)
+                    {
+                        zRumbleStart(0, SDR_VillainCollideScare);
+                    }
+                    took_damage = 1;
+                    break;
+                }
+                if (took_damage)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    if (globals.player.Health && ent->collis->dyn_eidx > ent->collis->dyn_sidx)
+    {
+        _xCollis* coll;
+        _xCollis* endcoll;
+        _zEntBubble* bub;
+
+        coll = &ent->collis->colls[ent->collis->dyn_sidx];
+        endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
+        for (; coll < endcoll; coll++)
+        {
+            bub = (_zEntBubble*)coll->optr;
+            if (!bub)
+            {
+                continue;
+            }
+            if (bub->baseType == 0xF)
+            {
+                if (coll->hdng.y < -0.866025f)
+                {
+                    if (bub->subType == 0)
+                    {
+                        startBounce = ent->frame->mat.pos.y;
+                        zEntPlayerJumpStart(ent, &globals.player.s.Spring);
+                        globals.player.Jump_CanDouble = 1;
+                        globals.player.Jump_CanFloat = 1;
+                    }
+                    else if (bub->subType == 1 && bub->villain &&
+                             (ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xE)
+                    {
+                        zEntVillain_Bounce((st_zEntVillain*)bub->villain);
+                    }
+                    break;
+                }
+                if (bub->subType == 1 && bub->villain &&
+                    (ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xC)
+                {
+                    zEntVillain_Headbutt((st_zEntVillain*)bub->villain, &coll->hdng);
+                }
+            }
+        }
+    }
+
+    zEntPlayerFloorUpdate(ent, sc, dt);
+    PlayerTeeterCheck(ent, sc, dt);
+    zEntPlayerSurfDamageUpdate(ent, sc, dt);
+    zEntPlayerDriveUpdate(ent, sc, dt);
+    zEntPlayerJumpUpdate(ent, sc, dt);
+    zEntPlayerCollTrigger(ent, sc);
+
+    if (globals.player.RootUp.y != globals.player.RootUpTarget.y || globals.player.RootUp.y != 1.0f)
+    {
+        F32 mag;
+        F32 lerpspeed;
+
+        mag = (globals.player.RootUpTarget.x - globals.player.RootUp.x) *
+                  (globals.player.RootUpTarget.x - globals.player.RootUp.x) +
+              (globals.player.RootUpTarget.y - globals.player.RootUp.y) *
+                  (globals.player.RootUpTarget.y - globals.player.RootUp.y) +
+              (globals.player.RootUpTarget.z - globals.player.RootUp.z) *
+                  (globals.player.RootUpTarget.z - globals.player.RootUp.z);
+        if (globals.player.HangElapsed <= 0.25f)
+        {
+            lerpspeed = 0.07f;
+        }
+        else if (globals.player.HangElapsed >= 0.5f)
+        {
+            lerpspeed = 0.5f;
+        }
+        else
+        {
+            lerpspeed = 1.72f * (globals.player.HangElapsed - 0.25f);
+        }
+
+        if (mag < lerpspeed * lerpspeed)
+        {
+            xVec3Copy(&globals.player.RootUp, &globals.player.RootUpTarget);
+        }
+        else
+        {
+            mag = 1.0f / sqrtf(mag) * lerpspeed;
+            globals.player.RootUp.x += (globals.player.RootUpTarget.x - globals.player.RootUp.x) * mag;
+            globals.player.RootUp.y += (globals.player.RootUpTarget.y - globals.player.RootUp.y) * mag;
+            globals.player.RootUp.z += (globals.player.RootUpTarget.z - globals.player.RootUp.z) * mag;
+            xVec3Normalize(&globals.player.RootUp, &globals.player.RootUp);
+        }
+
+        if (isnan(globals.player.RootUp.y) || isnan(globals.player.RootUpTarget.y))
+        {
+            globals.player.RootUp.x = 0.0f;
+            globals.player.RootUp.y = 1.0f;
+            globals.player.RootUp.z = 0.0f;
+            globals.player.RootUpTarget.x = 0.0f;
+            globals.player.RootUpTarget.y = 1.0f;
+            globals.player.RootUpTarget.z = 0.0f;
+            globals.player.HangElapsed = 0.0f;
+        }
+    }
+
+    zEntPlayerVelUpdate(ent, sc, dt);
+    xEntEndUpdate(ent, sc, dt);
+
+    if (globals.player.HangEnt && globals.player.HangEnt != globals.player.HangEntLast)
+    {
+        xVec3Copy(&vHangLast, (xVec3*)&globals.player.ent.model->Mat->pos);
+        ent->frame->vel.x = 0.0f;
+        ent->frame->vel.y = 0.0f;
+        ent->frame->vel.z = 0.0f;
+    }
+
+    if (globals.player.HangEntLast != globals.player.HangEnt)
+    {
+        if (globals.player.HangEnt)
+        {
+            zEntEvent(globals.player.HangEnt, 0x20);
+            if (globals.player.HangEnt->follow)
+            {
+                zEntEvent(globals.player.HangEnt->follow, 0x20);
+            }
+        }
+        if (globals.player.HangEntLast)
+        {
+            zEntEvent(globals.player.HangEntLast, 0x21);
+            if (globals.player.HangEntLast->follow)
+            {
+                zEntEvent(globals.player.HangEntLast->follow, 0x21);
+            }
+        }
+    }
+    globals.player.HangEntLast = globals.player.HangEnt;
+
+    xVec3Sub(&lastDeltaPos, &ent->frame->mat.pos, &ent->frame->oldpos);
+
+    if (surfSlickRatio)
+    {
+        xVec3Copy(&lastFloorNorm, &globals.player.floor_norm);
+        lastFloorEnt = (_xEnt*)ent->collis->colls[0].optr;
+        if (lastFloorEnt && lastFloorEnt->id != xStrHash("slipdeck01") &&
+            lastFloorEnt->id != xStrHash("slipdeck02") && lastFloorEnt->id != xStrHash("slipdeck03") &&
+            lastFloorEnt->id != xStrHash("slipdeck04"))
+        {
+            lastFloorEnt = NULL;
+        }
+    }
+
+    if (globals.player.DigTimer)
+    {
+        PlayerDigUpdate(ent, dt);
+    }
+    else
+    {
+        U32 i;
+        zScene* zsc;
+        _zEntSimpleObj* simpent;
+        F32 parm[4];
+
+        globals.player.Diggable = NULL;
+        zsc = (zScene*)sc;
+        for (i = 0; i < zsc->num_stats; i++)
+        {
+            if (zsc->stats[i] && (zsc->stats[i]->baseFlags & 1) && xEntIsVisible(zsc->stats[i]))
+            {
+                simpent = (_zEntSimpleObj*)zsc->stats[i];
+                if (simpent->sflags & 1)
+                {
+                    if (xVec3Dist2(&globals.player.ent.bound.sph.center, (xVec3*)&simpent->model->Mat->pos) <
+                        (1.25f * globals.player.ent.bound.sph.r) * (1.25f * globals.player.ent.bound.sph.r))
+                    {
+                        globals.player.Diggable = simpent;
+                        if (!(simpent->sflags & 2))
+                        {
+                            zEntPlayer_Notify(0);
+                            parm[0] = 2.0f;
+                            zEntEvent(simpent, 0xC3, parm);
+                            simpent->sflags |= 2;
+                        }
+                    }
+                    else if (simpent->sflags & 2)
+                    {
+                        simpent->sflags ^= 2;
+                    }
+                }
+            }
+        }
+
+        if (!globals.player.Diggable && globals.player.JumpState == 0 && globals.player.ControlOn &&
+            (globals.pad0->pressed & 0x20000))
+        {
+            Shaggy8_CallToPlayer();
+        }
+    }
+
+    if (globals.player.Shaggy1.Grab)
+    {
+        Shaggy1_PlayerUpdate(globals.player.Shaggy1.Grab, sc, dt);
+    }
+
+    if (globals.player.JumpState == 0)
+    {
+        xCameraTargetOnGround(1, ent->frame->mat.pos.y);
+    }
+    else
+    {
+        xCameraTargetOnGround(0, 0.0f);
+    }
+
+    zEntPlayer_FXUpdate(ent, dt);
+
+    if (!globals.player.ControlOn && globals.player.ControlOnEvent)
+    {
+        globals.player.ControlOn = 1;
+        globals.player.ControlOnEvent = 0;
+    }
+}
+
 // Linear interpolation from a to b by t, written into o.
 static inline void LerpVec3(xVec3* o, const xVec3* a, const xVec3* b, F32 t)
 {
@@ -2962,6 +3872,34 @@ void zEntPlayerJumpStart(_xEnt* ent, zJumpParam* jump)
         ent->model->Anim->Single->State->UserFlags & 0x100)
     {
         globals.player.Bounced = 1;
+    }
+}
+
+// Flags the player as touching an electric arc when its bound sphere comes near the line between an active
+// generator's two ends, and damages it.
+static void EGeneratorCheck(_xEnt* ent, _xScene* sc, F32 dt)
+{
+    zScene* zsc = (zScene*)sc;
+    S32 i;
+    zEGenerator* egen;
+    _xIsect isect;
+
+    globals.player.earc_coll.flags &= ~1;
+    for (i = 0; i < (S32)zsc->baseCount[41]; i++)
+    {
+        egen = &((zEGenerator*)zsc->baseList[41])[i];
+        if (egen->flags & 1)
+        {
+            xLine3VecDist2(&egen->src_pos, &egen->dst_pos, &ent->bound.sph.center, &isect);
+            if (isect.dist < ent->bound.sph.r * ent->bound.sph.r + 0.1f * (2.0f * ent->bound.sph.r) + 0.1f * 0.1f)
+            {
+                globals.player.earc_coll.flags |= 1;
+                if (zEntPlayer_Damage(egen, 1) ? 1 : 0)
+                {
+                    globals.player.DamageTimer = 5.0f;
+                }
+            }
+        }
     }
 }
 
@@ -4146,6 +5084,30 @@ void zEntPlayer_LoadCheckPoint()
     xCameraSetTarget(&globals.camera, &globals.player.ent.frame->mat.pos);
     xCameraSetTarget(&globals.camera, (xMat4x3*)globals.player.ent.model->Mat);
     xCameraPickInitial(&globals.camera, globals.player.cp.initCamID);
+}
+
+// Plays the butt-bounce sound with a rising pitch, then picks a different one of the three bounce sounds
+// for next time. A miss plays the miss sound instead.
+static void zEntPlayer_SNDButtBounce(_xEnt* ent, S32 hit_villain)
+{
+    S16 choice;
+    F32 pitch;
+
+    sPlayerSndfx.butt_pitch = zPitchChange(sPlayerSndfx.butt_pitch, &pitch, 30, 1.5f);
+    if (hit_villain)
+    {
+        xSndPlay(sPlayerSndfx.butt_id[sPlayerSndfx.butt_snd], 0.5f, 0.5f, pitch, 0x80, 2, 0);
+        choice = sPlayerSndfx.butt_snd;
+        while (choice == sPlayerSndfx.butt_snd)
+        {
+            choice = rand() % 3;
+        }
+        sPlayerSndfx.butt_snd = choice;
+    }
+    else
+    {
+        xSndPlay(sPlayerSndfx.buttmiss_id, 0.5f, 0.5f, 0.0f, 0x80, 2, 0);
+    }
 }
 
 void zEntPlayer_SNDInit()

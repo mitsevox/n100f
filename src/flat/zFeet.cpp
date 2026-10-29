@@ -15,14 +15,6 @@
 #include <string.h>
 
 struct _xEnt;
-struct _xRay3
-{
-    xVec3 origin;
-    xVec3 dir;
-    F32 min_t;
-    F32 max_t;
-    S32 flags;
-};
 
 #if VERSION_GIHE78_REV0
 extern void* lbl_8025EEC0;
