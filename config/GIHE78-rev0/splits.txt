@@ -563,7 +563,7 @@ flat/zHud.cpp:
 	.bss        start:0x8022ECF0 end:0x80233698
 	.sdata      start:0x8025E558 end:0x8025E568
 	.sbss       start:0x8025EF98 end:0x8025EFE8
-	.sdata2     start:0x802613B0 end:0x802615A8
+	.sdata2     start:0x80261390 end:0x802615A8
 	.sbss2      start:0x80262CB0 end:0x80262CC8
 
 flat/zLaugh.cpp:
