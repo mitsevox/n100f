@@ -227,6 +227,13 @@ static inline xAnimState* VANM_entState(const _zEnt* ent);
 static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum);
 static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter);
 static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos);
+static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir);
+static S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
+static S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil);
+static S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil);
+static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
+static S32 VOUT_follow_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
+static S32 VOUT_chkdo_followArrived(st_zEntVillain* vil);
 
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt);
 static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
@@ -269,6 +276,7 @@ static void VWEP_mm_zapPlayer(st_zEntVillain* vil);
 static inline void VEFX_mm_teleportHide(F32 dt);
 static inline void VEFX_mm_teleportShow(st_zEntVillain* vil, F32 dt);
 static inline void VSUP_haltFrame(st_zEntVillain* vil);
+static inline void VSUP_haltEntFrame(const _xEntFrame* frame);
 
 static S32 VILN_std_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
                          en_BEHAVIOUR_GOAL goal);
@@ -814,6 +822,232 @@ static S32 VILN_std_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
 }
 
 
+// The standard movement step, by goal:
+// - lifeless or starting up: the frame stops;
+// - idle or bored: the frame stops if move ability bit 0x8000 is set;
+// - action: with that bit set, the villain's move target is one unit below where he stands, at
+//   speed 1;
+// - ambush: he patrols if he has a path point, otherwise heads for the player; his target height
+//   bobs by 0.25 dt sin(time in the goal), his speed is 6, his frame stops, and with a path point
+//   he checks for arrival;
+// - follow, patrol, chase: the shared helpers;
+// - mini patrol: he heads for his anchor if he has one, otherwise for his guard spot;
+// - look for the player: he turns to his listening heading;
+// - listen, attack, lob, taunt: he turns to face the player, and when readying an attack only if
+//   precalc plyr_mvinf bits 0xFF00 are clear;
+// - soaped: while flg_misc bit 0x100000 is set and his knockback velocity's squared length is over
+//   0.01, that velocity shrinks to 0.99 each frame and he moves with it; otherwise it is cleared
+//   and his target height bobs by 0.5 dt sin(5 times the time in the goal);
+// - gummed: with move ability bit 0x100000 and both a next and a previous path point, he creeps
+//   to the next point and on arrival takes the following one and sends an arrive event;
+// - dying: with ability bit 0x80000 and flg_misc bit 0x100000, he moves at half his bowling
+//   direction.
+static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    _zMovePoint* nav_tmp;
+    _zMovePoint* nav_old;
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+    F32 dy;
+    F32 dist;
+    _xVec3 entpos = { 0 };
+
+    entpos = *xEntGetPos(vil);
+
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        VSUP_haltEntFrame(frame);
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_BORED:
+        if (vil->abl_move & 0x8000)
+        {
+            VSUP_haltEntFrame(frame);
+        }
+        break;
+    case ZVIL_GOAL_ACTION:
+        if (vil->abl_move & 0x8000)
+        {
+            vil->pos_moveto = *xEntGetPos(vil);
+            vil->pos_moveto.y -= 1.0f;
+            vil->spd_moveto = 1.0f;
+            vil->domove |= 0x8000;
+            vil->domove |= 0x800;
+            vil->domove |= 0x4;
+            vil->domove |= 0x80000000;
+        }
+        break;
+    case ZVIL_GOAL_AMBUSH:
+        if (vil->nav_next)
+        {
+            VOUT_patrol_move(vil, scn, dt, frame);
+        }
+        else
+        {
+            xVec3Copy(&vil->pos_moveto, xEntGetPos(&globals.player.ent));
+            vil->domove |= 0x800;
+            vil->domove |= 0xA;
+            vil->domove |= 0x80000000;
+        }
+
+        vil->pos_moveto.y += 0.25f * dt * (F32)sin(vil->tmr_list[ZVIL_TYMR_CURGOAL]);
+        vil->domove |= 0x4;
+        vil->spd_moveto = 6.0f;
+        vil->domove |= 0x8000;
+        VSUP_haltEntFrame(frame);
+
+        if (vil->nav_next)
+        {
+            VOUT_chkdo_patrolArrived(vil);
+        }
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        VOUT_follow_move(vil, scn, dt, frame);
+        VOUT_chkdo_followArrived(vil);
+        break;
+    case ZVIL_GOAL_PATROL:
+        VOUT_patrol_move(vil, scn, dt, frame);
+        VOUT_chkdo_patrolArrived(vil);
+        break;
+    case ZVIL_GOAL_MINIPATROL:
+        if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+        {
+            xVec3Copy(&vil->pos_moveto, &vil->pos_pursue_home);
+        }
+        else
+        {
+            xVec3Copy(&vil->pos_moveto, &vil->pos_guard_home);
+        }
+        vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
+        if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+        {
+            vil->domove |= 0x4;
+        }
+        vil->domove |= 0x800;
+        vil->domove |= 0x1;
+        vil->domove |= 0xA;
+        vil->domove |= 0x80000000;
+        VOUT_chkdo_minipatrolArrived(vil);
+        break;
+    case ZVIL_GOAL_LOOKFORHERO:
+        vil->ang_moveto = vil->ang_listen;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_LISTEN:
+        vil->ang_moveto = prec->ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_ATTACKREADY:
+        if (!(prec->plyr_mvinf & 0xFF00))
+        {
+            vil->ang_moveto = prec->ang_VtoP;
+            vil->domove |= 0x40;
+            vil->domove |= 0x1;
+            vil->domove |= 0x10;
+            vil->domove |= 0x80000000;
+        }
+        break;
+    case ZVIL_GOAL_CHASE:
+        VOUT_chase_move(vil, scn, dt, frame);
+        break;
+    case ZVIL_GOAL_CQCATTACK:
+    case ZVIL_GOAL_LOBBING:
+        vil->ang_moveto = prec->ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_TAUNT:
+        vil->ang_moveto = prec->ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_SOAPED:
+        if (vil->flg_misc & 0x100000 && xVec3Length2(&vil->vec_knocked) > 0.01f)
+        {
+            xVec3SMulBy(&vil->vec_knocked, 0.99f);
+            xVec3Copy(&vil->vel_moveto, &vil->vec_knocked);
+            vil->domove |= 0x1000;
+            vil->domove |= 0x80000000;
+        }
+        else
+        {
+            xVec3SMulBy(&vil->vec_knocked, 0.0f);
+            vil->pos_moveto.y += 0.5f * dt * (F32)sin(5.0f * vil->tmr_list[ZVIL_TYMR_CURGOAL]);
+            vil->domove |= 0x800;
+            vil->domove |= 0x4;
+            vil->domove |= 0x80000000;
+        }
+        break;
+    case ZVIL_GOAL_GUMMED:
+        if (!(vil->abl_move & 0x100000))
+        {
+            break;
+        }
+        if (!vil->nav_next)
+        {
+            break;
+        }
+        if (!vil->nav_prev)
+        {
+            break;
+        }
+
+        xVec3Copy(&vil->pos_moveto, zMovePointGetPos(vil->nav_next));
+        dist = VSUP_ds2_toPos(vil, vil->pos_moveto);
+        vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
+
+        if (vil->abl_move & 0x400)
+        {
+            vil->domove |= 0x4;
+            dy = SQR(vil->pos_moveto.y - entpos.y);
+            dist = MAX(dist, dy);
+        }
+
+        vil->domove |= 0x800;
+        vil->domove |= 0x1;
+        vil->domove |= 0xA;
+        vil->domove |= 0x80000000;
+
+        if (dist < g_npcTable[vil->asset->subtype].ds2_atpos)
+        {
+            nav_old = vil->nav_next;
+            nav_tmp = NULL;
+            zMovePointGetNext(vil->nav_next, vil->nav_prev, &nav_tmp, NULL);
+            if (vil->nav_next)
+            {
+                vil->nav_prev = vil->nav_next;
+            }
+            vil->nav_next = nav_tmp;
+            zEntEvent(vil, nav_old, eEventArrive);
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        if (vil->ability & 0x80000 && vil->flg_misc & 0x100000)
+        {
+            xVec3SMul(&vil->vel_moveto, &vil->dir_bowling, 0.5f);
+            vil->domove |= 0x1000;
+            vil->domove |= 0x80000000;
+        }
+        break;
+    }
+
+    return 1;
+}
+
+
 // When a soaped villain with ability bit 20 has bumped into something, it bounces its knockback
 // velocity off it. Nothing is returned.
 static S32 VILN_std_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA*)
@@ -1078,6 +1312,41 @@ static S32 VILN_shagM_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
     return VILN_std_notice(vil, note, resp);
 }
 
+// Shaggy villain type 5 moves by goal: idle he turns to face the player, and he follows and
+// patrols like other villains.
+static S32 VILN_shagM_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        break;
+    case ZVIL_GOAL_IDLE:
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_ACTION:
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        VOUT_follow_move(vil, scn, dt, frame);
+        VOUT_chkdo_followArrived(vil);
+        break;
+    case ZVIL_GOAL_PATROL:
+        VOUT_patrol_move(vil, scn, dt, frame);
+        VOUT_chkdo_patrolArrived(vil);
+        break;
+    case ZVIL_GOAL_DIE:
+        break;
+    }
+
+    return 1;
+}
+
 
 // Shaggy villain type 5 has nothing extra to do here; this always succeeds.
 static S32 VILN_shagM_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
@@ -1116,6 +1385,48 @@ static S32 VILN_gang_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32
                               xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// Fred, Daphne, Velma, Holly, the groundskeeper and the professor move by goal: idle or talking
+// they turn to face the player, and they follow and patrol like villains.
+static S32 VILN_gang_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        break;
+    case ZVIL_GOAL_IDLE:
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_TALK:
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_ACTION:
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        VOUT_follow_move(vil, scn, dt, frame);
+        VOUT_chkdo_followArrived(vil);
+        break;
+    case ZVIL_GOAL_PATROL:
+        VOUT_patrol_move(vil, scn, dt, frame);
+        VOUT_chkdo_patrolArrived(vil);
+        break;
+    case ZVIL_GOAL_DIE:
+        break;
+    }
+
+    return 1;
 }
 
 // Fred, Daphne, Velma, Holly, the groundskeeper and the professor have nothing extra to do here;
@@ -1193,6 +1504,40 @@ static S32 VILN_sham_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
     return VILN_std_notice(vil, note, resp);
 }
 
+// The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights move by goal: idle
+// or taunting they turn to face the player, and they follow and patrol like other villains.
+static S32 VILN_sham_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_TAUNT:
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        VOUT_follow_move(vil, scn, dt, frame);
+        VOUT_chkdo_followArrived(vil);
+        break;
+    case ZVIL_GOAL_PATROL:
+        VOUT_patrol_move(vil, scn, dt, frame);
+        VOUT_chkdo_patrolArrived(vil);
+        break;
+    case ZVIL_GOAL_DIE:
+        break;
+    }
+
+    return 1;
+}
+
 
 // The Black Knight, Green Ghost, Phantom and Redbeard outside their boss fights have nothing extra
 // to do here; this always succeeds.
@@ -1212,6 +1557,53 @@ static S32 VILN_BBK_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_
 static S32 VILN_BBK_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
 {
     return VILN_std_query(vil, query);
+}
+
+// The Black Knight boss moves by goal: idle, readying an attack, lobbing or taunting he turns to
+// face the player, and he follows and patrols like other villains. Hurt or dying he keeps turning:
+// to a fixed heading of 1.5 pi plus 0.2 once his hit points are gone, otherwise to his last
+// heading.
+static S32 VILN_BBK_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_ATTACKREADY:
+    case ZVIL_GOAL_LOBBING:
+    case ZVIL_GOAL_TAUNT:
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        VOUT_follow_move(vil, scn, dt, frame);
+        VOUT_chkdo_followArrived(vil);
+        break;
+    case ZVIL_GOAL_PATROL:
+        VOUT_patrol_move(vil, scn, dt, frame);
+        VOUT_chkdo_patrolArrived(vil);
+        break;
+    case ZVIL_GOAL_HURT:
+    case ZVIL_GOAL_DIE:
+        if (vil->hitpts <= 0)
+        {
+            vil->ang_moveto = 1.5f * PI + 0.2f;
+        }
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    }
+
+    return 1;
 }
 
 // The Black Knight boss has nothing extra to do here; this always succeeds.
@@ -1283,6 +1675,89 @@ static S32 VILN_BGG_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
     return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
 }
 
+// The Green Ghost boss moves by goal: idle, lobbing or taunting he turns to face the player. He
+// follows and patrols like other villains, with domove bit 0x80000 set when his move target is on
+// the +x side of him and 0x40000 otherwise. Hurt or dying, his move target circles his vortex
+// point: the angle turns pi per second, the radius shrinks to 0.95 each frame, and once his hit
+// points are zero the vortex point sinks 0.6 per second.
+static S32 VILN_BGG_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    F32 dx;
+    _xVec3 entpos = { 0 };
+
+    entpos = *xEntGetPos(vil);
+
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_LOBBING:
+    case ZVIL_GOAL_TAUNT:
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        VOUT_follow_move(vil, scn, dt, frame);
+        dx = vil->pos_moveto.x - entpos.x;
+        vil->domove &= ~0xC0000;
+        if (dx > 0.0f)
+        {
+            vil->domove |= 0x80000;
+        }
+        else
+        {
+            vil->domove |= 0x40000;
+        }
+        VOUT_chkdo_followArrived(vil);
+        break;
+    case ZVIL_GOAL_PATROL:
+        VOUT_patrol_move(vil, scn, dt, frame);
+        dx = vil->pos_moveto.x - entpos.x;
+        vil->domove &= ~0xC0000;
+        if (dx > 0.0f)
+        {
+            vil->domove |= 0x80000;
+        }
+        else
+        {
+            vil->domove |= 0x40000;
+        }
+        VOUT_chkdo_patrolArrived(vil);
+        break;
+    case ZVIL_GOAL_HURT:
+    case ZVIL_GOAL_DIE:
+    {
+        _xVec3 vecoff = { 0 };
+
+        vecoff.x = sin(vil->ang_spiral);
+        vecoff.z = cos(vil->ang_spiral);
+        xVec3SMulBy(&vecoff, vil->rad_spiral);
+        xVec3Add(&vil->pos_moveto, &vil->pos_vortex, &vecoff);
+        vil->domove |= 0x800;
+        vil->domove |= 0x40000000;
+        vil->domove |= 0xA;
+        vil->domove |= 0x80000000;
+
+        vil->ang_spiral = xAngleClamp(vil->ang_spiral + PI * dt);
+        vil->rad_spiral *= 0.95f;
+        if (!vil->hitpts)
+        {
+            vil->pos_vortex.y -= 0.6f * dt;
+        }
+        break;
+    }
+    }
+
+    return 1;
+}
+
 // The Green Ghost boss has nothing extra to do here; this always succeeds.
 static S32 VILN_BGG_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
 {
@@ -1307,6 +1782,57 @@ static S32 VILN_BRB_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
                              xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// The Redbeard boss moves by goal: idle, casting or taunting his move target is the fixed point
+// (-0.5, 0, 0) and his heading is toward the player (domove bit 0x10 is not set), and he follows
+// and patrols like other villains.
+static S32 VILN_BRB_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    _xVec3 pos_hardwired = { -0.5f, 0.0f, 0.0f };
+
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        break;
+    case ZVIL_GOAL_IDLE:
+        xVec3Copy(&vil->pos_moveto, &pos_hardwired);
+        vil->domove |= 0x800;
+        vil->domove |= 0x40000000;
+        vil->domove |= 0xA;
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_SPELLCAST:
+    case ZVIL_GOAL_TAUNT:
+        xVec3Copy(&vil->pos_moveto, &pos_hardwired);
+        vil->domove |= 0x800;
+        vil->domove |= 0x40000000;
+        vil->domove |= 0xA;
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        VOUT_follow_move(vil, scn, dt, frame);
+        VOUT_chkdo_followArrived(vil);
+        break;
+    case ZVIL_GOAL_PATROL:
+        VOUT_patrol_move(vil, scn, dt, frame);
+        VOUT_chkdo_patrolArrived(vil);
+        break;
+    case ZVIL_GOAL_HURT:
+    case ZVIL_GOAL_DIE:
+        break;
+    }
+
+    return 1;
 }
 
 // The Redbeard boss has nothing extra to do here; this always succeeds.
@@ -2526,6 +3052,107 @@ static S32 VILN_BMM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     return result;
 }
 
+// The Mastermind's movement step, by goal. Idle or taunting, he turns to face the player only if
+// allow bit 0x10 is set; dazed, readying an attack or lobbing, he always does. He follows and
+// patrols like other villains. Leaping, his move target is his next path point; teleporting, it is
+// too and he also faces the player. As a blockhead he faces the player. Knocked back, while the
+// knocked animation plays he is carried to his bowling spot at speed 5 and his target height
+// changes by 0.35 dt sin(2 pi (1 - t)), t being his time in the goal over 1.5 s capped at 1;
+// otherwise his frame stops.
+static S32 VILN_BMM_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
+{
+    F32 fv;
+
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+    case ZVIL_GOAL_ACTION:
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_TAUNT:
+        if (!(vil->allow & 0x10))
+        {
+            break;
+        }
+    case ZVIL_GOAL_DAZED:
+    case ZVIL_GOAL_ATTACKREADY:
+    case ZVIL_GOAL_LOBBING:
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        VOUT_follow_move(vil, scn, dt, frame);
+        VOUT_chkdo_followArrived(vil);
+        break;
+    case ZVIL_GOAL_PATROL:
+        VOUT_patrol_move(vil, scn, dt, frame);
+        VOUT_chkdo_patrolArrived(vil);
+        break;
+    case ZVIL_GOAL_LEAP:
+        xVec3Copy(&vil->pos_moveto, zMovePointGetPos(vil->nav_next));
+        vil->domove |= 0x800;
+        vil->domove |= 0xA;
+        vil->domove |= 0x4;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_TELEPORT:
+        xVec3Copy(&vil->pos_moveto, zMovePointGetPos(vil->nav_next));
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x800;
+        vil->domove |= 0xA;
+        vil->domove |= 0x4;
+        vil->domove |= 0x40;
+        vil->domove |= 0x40000000;
+        vil->domove |= 0x20000000;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_BLOCKHEAD:
+        vil->ang_moveto = vil->precalc.ang_VtoP;
+        vil->domove |= 0x40;
+        vil->domove |= 0x1;
+        vil->domove |= 0x10;
+        vil->domove |= 0x20000000;
+        vil->domove |= 0x80000000;
+        break;
+    case ZVIL_GOAL_KNOCKBACK:
+        if (vil->anim_playnext == ZVIL_ANIM_MM_BA_KNOCKED_BEGIN ||
+            vil->anim_playnext == ZVIL_ANIM_MM_BA_KNOCKED_LOOP)
+        {
+            xVec3Copy(&vil->pos_moveto, &vil->pos_bowling);
+            vil->spd_moveto = 5.0f;
+
+            fv = vil->tmr_list[ZVIL_TYMR_CURGOAL] / 1.5f;
+            fv = 1.0f - MIN(fv, 1.0f);
+            fv *= 2 * PI;
+            fv = sin(fv);
+            vil->pos_moveto.y += 0.35f * dt * fv;
+
+            vil->domove |= 0x8000;
+            vil->domove |= 0x4;
+            vil->domove |= 0x800;
+            vil->domove |= 0xA;
+            vil->domove |= 0x20;
+            vil->domove |= 0x80000000;
+        }
+        else
+        {
+            VSUP_haltFrame(vil);
+        }
+        break;
+    case ZVIL_GOAL_HURT:
+    case ZVIL_GOAL_DIE:
+        break;
+    }
+
+    return 1;
+}
+
 // The Mastermind's respond step adds up the push-out vectors of his NPC, environment and static
 // collisions that hit an object; the sum is not used.
 static S32 VILN_BMM_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA*)
@@ -3405,6 +4032,20 @@ static inline void VSUP_haltFrame(st_zEntVillain* vil)
     vil->frame->vel.y = 0.0f;
     vil->frame->vel.z = 0.0f;
     vil->frame->mode |= 0xC;
+}
+
+// Stops a movement frame: clears its velocity and its velocity change and sets mode bits 0x4 and
+// 0x8.
+static inline void VSUP_haltEntFrame(const _xEntFrame* frame)
+{
+    _xEntFrame* frm = (_xEntFrame*)frame;
+    frm->dvel.x = 0.0f;
+    frm->dvel.y = 0.0f;
+    frm->dvel.z = 0.0f;
+    frm->vel.x = 0.0f;
+    frm->vel.y = 0.0f;
+    frm->vel.z = 0.0f;
+    frm->mode |= 0xC;
 }
 
 // Readies a reserved projectile to be lobbed at the player's bound centre, with the villain's lob
@@ -5608,6 +6249,223 @@ static void VBON_drop_bonusItem(st_zEntVillain* vil)
     zEntPickup_Drop(bon->pickup);
 }
 
+// Heads the villain for his next path point: sets his move target to the point, his heading and
+// direction toward it, domove bit 0x4 if move ability bit 0x1000 or 0x400 is set, and domove bits
+// 0x800, 0x1, 0xA and 0x80000000. Without a next point it only looks up his name (nothing is done
+// with it) and returns 0; otherwise it returns 1.
+static S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
+{
+    if (!vil->nav_next)
+    {
+        xSceneID2Name(globals.sceneCur, vil->id);
+        return 0;
+    }
+
+    xVec3Copy(&vil->pos_moveto, zMovePointGetPos(vil->nav_next));
+    vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        vil->domove |= 0x4;
+    }
+
+    vil->domove |= 0x800;
+    vil->domove |= 0x1;
+    vil->domove |= 0xA;
+    vil->domove |= 0x80000000;
+    return 1;
+}
+
+// Checks whether the villain has reached his move target: his squared flat distance to it, or the
+// squared height difference if that is larger and move ability bit 0x1000 or 0x400 is set, must
+// not exceed his type's squared arrival distance. On arrival his position becomes his guard spot
+// unless flg_misc bit 0x40000000 is set, he gets the point's wait time on his path delay timer,
+// asks for a new path point, sets his path-check timer to -1 and sends the point an arrive event.
+// Returns 1 on arrival, 0 otherwise.
+static S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil)
+{
+    _xVec3 entpos = { 0 };
+    F32 dy;
+    F32 dist = VSUP_ds2_toPos(vil, vil->pos_moveto);
+
+    entpos = *xEntGetPos(vil);
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        dy = SQR(vil->pos_moveto.y - entpos.y);
+        dist = MAX(dist, dy);
+    }
+
+    if (dist > g_npcTable[vil->asset->subtype].ds2_atpos)
+    {
+        return 0;
+    }
+
+    if (!(vil->flg_misc & 0x40000000))
+    {
+        xVec3Copy(&vil->pos_guard_home, xEntGetPos(vil));
+    }
+
+    vil->tmr_list[ZVIL_TDUR_NAVDELAY] = zMovePointGetDelay(vil->nav_next);
+    vil->need_navpt = 1;
+    vil->tmr_list[ZVIL_TTIL_CHKFORNAV] = -1.0f;
+    zEntEvent(vil, vil->nav_next, eEventArrive);
+    return 1;
+}
+
+// Checks whether the villain has reached his mini patrol target: the larger of his squared flat
+// distance to it and (if move ability bit 0x1000 or 0x400 is set) the squared height difference
+// must not exceed his type's squared arrival distance plus his squared stand-off. On arrival it
+// clears flg_misc bit 0x80000000 if he has an anchor, otherwise bit 0x40000000. Returns 1 on
+// arrival, 0 otherwise.
+static S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil)
+{
+    F32 dy = 0.0f;
+    _xVec3 entpos = { 0 };
+    S32 amthere = 0;
+    F32 ds2;
+
+    entpos = *xEntGetPos(vil);
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        dy = SQR(vil->pos_moveto.y - entpos.y);
+    }
+
+    ds2 = VSUP_ds2_toPos(vil, vil->pos_moveto);
+    if (MAX(ds2, dy) > vil->ds2_goto_keepaway + g_npcTable[vil->asset->subtype].ds2_atpos)
+    {
+        return amthere;
+    }
+
+    if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+    {
+        vil->flg_misc &= ~0x80000000;
+    }
+    else
+    {
+        vil->flg_misc &= ~0x40000000;
+    }
+
+    amthere = 1;
+    return amthere;
+}
+
+// Heads the villain for what he follows: the spot he was sent to (flg_misc bit 0x10000000), the
+// entity he trails (bit 0x20000000), or else his next path point. It sets his heading and
+// direction toward it and the same domove bits as a patrol move. With none of the three it returns
+// 0; otherwise 1.
+static S32 VOUT_follow_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
+{
+    if (!vil->nav_next && !(vil->flg_misc & 0x10000000) && !(vil->flg_misc & 0x20000000))
+    {
+        return 0;
+    }
+
+    if (vil->flg_misc & 0x10000000)
+    {
+        xVec3Copy(&vil->pos_moveto, &vil->pos_goto);
+    }
+    else if (vil->flg_misc & 0x20000000)
+    {
+        xVec3Copy(&vil->pos_moveto, &xModelGetFrame(vil->tgt_follow->model)->pos);
+    }
+    else
+    {
+        xVec3Copy(&vil->pos_moveto, zMovePointGetPos(vil->nav_next));
+    }
+
+    vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        vil->domove |= 0x4;
+    }
+
+    vil->domove |= 0x800;
+    vil->domove |= 0x1;
+    vil->domove |= 0xA;
+    vil->domove |= 0x80000000;
+    return 1;
+}
+
+// Checks whether the villain has reached what he follows, as a patrol arrival does but with his
+// squared stand-off added to the arrival distance. On arrival his position becomes his guard spot
+// unless flg_misc bit 0x40000000 is set. If he was sent to a spot or trails an entity, the
+// stand-off and those two flg_misc bits are cleared along with allow bit 0x1; otherwise he waits
+// at the path point as on patrol. Returns 1 on arrival, 0 otherwise.
+static S32 VOUT_chkdo_followArrived(st_zEntVillain* vil)
+{
+    _xVec3 entpos = { 0 };
+    F32 dy;
+    F32 dist = VSUP_ds2_toPos(vil, vil->pos_moveto);
+
+    entpos = *xEntGetPos(vil);
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        dy = SQR(vil->pos_moveto.y - entpos.y);
+        dist = MAX(dist, dy);
+    }
+
+    if (dist > vil->ds2_goto_keepaway + g_npcTable[vil->asset->subtype].ds2_atpos)
+    {
+        return 0;
+    }
+
+    if (!(vil->flg_misc & 0x40000000))
+    {
+        xVec3Copy(&vil->pos_guard_home, xEntGetPos(vil));
+    }
+
+    if (vil->flg_misc & 0x10000000 || vil->flg_misc & 0x20000000)
+    {
+        vil->ds2_goto_keepaway = 0.0f;
+        vil->flg_misc &= ~0x10000000;
+        vil->flg_misc &= ~0x20000000;
+        vil->allow &= ~0x1;
+    }
+    else
+    {
+        vil->tmr_list[ZVIL_TDUR_NAVDELAY] = zMovePointGetDelay(vil->nav_next);
+        vil->need_navpt = 1;
+        vil->tmr_list[ZVIL_TTIL_CHKFORNAV] = -1.0f;
+        zEntEvent(vil, vil->nav_next, eEventArrive);
+    }
+    return 1;
+}
+
+// Heads the villain for the player: his move target is the player's intercept point if precalc
+// flg_plyr bit 0x400 is set, otherwise the centre of the player's bound. His heading is the one
+// toward the player, and it sets domove bits 0x800, 0x1, 0xA, 0x4 (if move ability bit 0x1000 or
+// 0x400 is set) and 0x80000000. Returns 1.
+static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
+{
+    if (vil->precalc.flg_plyr & 0x400)
+    {
+        xVec3Copy(&vil->pos_moveto, &vil->precalc.pos_intercept);
+    }
+    else
+    {
+        xVec3Copy(&vil->pos_moveto, xBoundCenter(&globals.player.ent.bound));
+    }
+
+    VSUP_ds2_toPos(vil, vil->pos_moveto);
+    vil->ang_moveto = vil->precalc.ang_VtoP;
+
+    vil->domove |= 0x800;
+    vil->domove |= 0x1;
+    vil->domove |= 0xA;
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        vil->domove |= 0x4;
+    }
+
+    vil->domove |= 0x80000000;
+    return 1;
+}
+
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
 {
     S32 idx = 0;
@@ -5656,6 +6514,29 @@ static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
     {
         wts[i] *= fac;
     }
+}
+
+// Heading (around the y axis) of a direction, from its x and z.
+static inline F32 VSUP_ang_ofXZDir(_xVec3 dir)
+{
+    return atan2(dir.x, dir.z);
+}
+
+// Heading (around the y axis) from the entity to a position. If dir is given, it gets the unit
+// direction to the position.
+static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
+{
+    _xVec3 delta = { 0 };
+    F32 ang;
+
+    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
+    xVec3Normalize(&delta, &delta);
+    ang = xAngleClamp(VSUP_ang_ofXZDir(delta));
+    if (dir)
+    {
+        xVec3Normalize(dir, &delta);
+    }
+    return ang;
 }
 
 // Squared flat (x and z) distance from the entity to a position.
