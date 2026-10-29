@@ -18,6 +18,7 @@ enum en_xEventTags
     eEventPause = 23,
     eEventPlay = 24,
     eEventPlayMaybe = 26,
+    eEventArrive = 31,
     eEventMount = 32,
     eEventDismount = 33,
     eEventPickup = 35,
