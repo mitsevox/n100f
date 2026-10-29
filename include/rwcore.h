@@ -1642,6 +1642,7 @@ RwTexture* RwTexDictionaryAddTexture(RwTexDictionary* dict, RwTexture* texture);
 RwTexDictionary* RwTexDictionaryGetCurrent(void);
 
 RwFrame* RwFrameUpdateObjects(RwFrame* frame);
+RwFrame* RwFrameTransform(RwFrame* frame, const RwMatrix* m, RwOpCombineType combine);
 
 F32 _rwSqrt(F32 num);
 F32 _rwInvSqrt(F32 num);

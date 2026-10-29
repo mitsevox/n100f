@@ -461,9 +461,13 @@ config.libs: List[Dict[str, Any]] = [
     GameLib(
         "game",
         [
+            Object(NonMatching, "flat/iAnimSKB.cpp"),
             Object(NonMatching, "flat/iCamera.cpp"),
             Object(NonMatching, "flat/iEnv.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/iLight.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMath.cpp"),
+            Object(NonMatching, "flat/iMath3.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/iMemMgr.cpp"),
             Object(NonMatching, "flat/iModel.cpp"),
             Object(NonMatching, "flat/isavegame.cpp"),
             Object(NonMatching, "flat/iTime.cpp"),
