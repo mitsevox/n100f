@@ -1,25 +1,8 @@
 #include <rwcore.h>
 #include <string.h>
 
-// Cluster flags.
-#define CLUSTER_VALID 0x1U
-#define CLUSTER_EXTERNAL 0x2U
-#define CLUSTER_EXTERNALMODIFIABLE 0x4U
-#define CLUSTER_MODIFIED 0x8U
-
 // Each node has room for this many outputs after the pipeline's node array.
 #define NODE_MAXOUTPUTS 32
-
-// The pipeline being executed and the parameters its nodes receive.
-typedef struct RxExecContext RxExecContext;
-struct RxExecContext
-{
-    RxPipeline* pipeline;
-    void* unk4;
-    S32 exitCode;
-    U32 unkC;
-    RxPipelineNodeParam params;
-};
 
 RxExecContext _rxExecCtxGlobal;
 RxHeap* _rxHeapGlobal;
