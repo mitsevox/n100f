@@ -27,6 +27,7 @@
 #include "xMathInlines.h"
 #include "xMath3.h"
 #include "iCollide.h"
+#include "xCollide.h"
 #include "xMovePoint.h"
 #include "xScene.h"
 #include "xEnv.h"
@@ -5539,6 +5540,350 @@ static void PlayerCollsAllTranslate(_xCollis* colls, F32 x, F32 y, F32 z)
         if (c->dist < 1e19f && (c->depen.x != 0.0f || c->depen.y != 0.0f || c->depen.z != 0.0f))
         {
             PlayerCollisTranslate(c, x, y, z);
+        }
+    }
+}
+
+static inline void PlayerCollsWallsLoopTranslate(_xCollis* colls, F32 x, F32 y, F32 z)
+{
+    _xCollis* cend;
+    _xCollis* c;
+
+    cend = colls + 6;
+    for (c = colls + 2; c < cend; c++)
+    {
+        if (c->dist < 1e19f && (c->depen.x != 0.0f || c->depen.y != 0.0f || c->depen.z != 0.0f))
+        {
+            PlayerCollisTranslate(c, x, y, z);
+        }
+    }
+}
+
+static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
+{
+    _xCollis* colls;
+    _xMat4x3* mat;
+    _xCollis* c;
+    _xCollis* cend;
+    U8 idx;
+    _xCollis* curr;
+    _xCollis* coll;
+    F32 h_dot_n;
+    F32 depen_len;
+    _xEnt* cent;
+    xSurface* surf;
+    xSurface* sfloor;
+    _xCollis* cceil;
+    S32 num_walls;
+    _xCollis* first_wall;
+    _xCollis* inside_wall;
+    _xCollis* cfront;
+    _xCollis* crear;
+    F32 dx;
+    F32 dz;
+    _xCollis* cleft;
+    _xCollis* cright;
+
+    colls = p->collis->colls;
+    mat = (_xMat4x3*)p->frame;
+
+    cend = &colls[p->collis->idx];
+    for (c = &colls[k_XCOLLS_IDX_COUNT]; c < cend; c++)
+    {
+        idx = xCollideGetCollsIdx(&c->tohit, (xMat3x3*)mat);
+        curr = &colls[idx];
+        if (c->dist < curr->dist)
+        {
+            *curr = *c;
+        }
+    }
+
+    if (p->pflags & 0x80)
+    {
+        coll = &p->collis->colls[k_XCOLLS_IDX_FLOOR];
+        if ((coll->flags & 1) && coll->dist < 0.7f)
+        {
+            h_dot_n = xVec3Dot(&coll->hdng, &coll->norm);
+            if (h_dot_n > 0.0f)
+            {
+                xVec3SMul(&coll->norm, &coll->norm, -1.0f);
+                h_dot_n = -h_dot_n;
+            }
+
+            if (fabsf(acos(xVec3Dot(&coll->norm, &update_motion))) < PI / 4)
+            {
+                depen_len = h_dot_n * coll->dist + 0.7f;
+                if (depen_len < 0.0f || depen_len > 0.7f)
+                {
+                    depen_len = CLAMP(depen_len, 0.0f, 0.7f);
+                }
+                xVec3SMul(&coll->depen, &coll->norm, depen_len);
+            }
+        }
+    }
+
+    cend = &colls[k_XCOLLS_IDX_COUNT];
+    for (c = colls; c < cend; c++)
+    {
+        cent = (_xEnt*)c->optr;
+        if (cent)
+        {
+            if (!(cent->penby & p->collType) || !(p->collis->pen & cent->collType))
+            {
+                c->depen.x = 0.0f;
+                c->depen.y = 0.0f;
+                c->depen.z = 0.0f;
+            }
+            else if (globals.player.DamageTimer > 0.0f && (surf = zSurfaceGetSurface(c)) &&
+                     !surf->state && zSurfaceGetDamageType(surf) &&
+                     zSurfaceGetDamagePassthrough(surf))
+            {
+                c->depen.x = 0.0f;
+                c->depen.y = 0.0f;
+                c->depen.z = 0.0f;
+            }
+            else if (cent->baseType == 2)
+            {
+                if (c == &colls[k_XCOLLS_IDX_FLOOR])
+                {
+                    c->depen.y = 0.0f;
+                }
+                else if (c != &colls[k_XCOLLS_IDX_FRONT])
+                {
+                    c->depen.x = 0.0f;
+                    c->depen.y = 0.0f;
+                    c->depen.z = 0.0f;
+                }
+            }
+        }
+    }
+
+    sfloor = zSurfaceGetSurface(&colls[k_XCOLLS_IDX_FLOOR]);
+    if (p->frame->vel.y > 0.0f)
+    {
+        colls[k_XCOLLS_IDX_FLOOR].flags &= ~1;
+    }
+
+    if ((colls[k_XCOLLS_IDX_FLOOR].flags & 1) && colls[k_XCOLLS_IDX_FLOOR].dist < 0.7f)
+    {
+        if (sfloor && (!zSurfaceGetStandOn(sfloor) || globals.player.Slide == 1 ||
+                       globals.player.Slide == 3))
+        {
+            mat->pos.x += colls[k_XCOLLS_IDX_FLOOR].depen.x;
+            mat->pos.y += colls[k_XCOLLS_IDX_FLOOR].depen.y;
+            mat->pos.z += colls[k_XCOLLS_IDX_FLOOR].depen.z;
+            PlayerCollsWallsLoopTranslate(colls, colls[k_XCOLLS_IDX_FLOOR].depen.x, colls[k_XCOLLS_IDX_FLOOR].depen.y, colls[k_XCOLLS_IDX_FLOOR].depen.z);
+        }
+        else
+        {
+            mat->pos.y += colls[k_XCOLLS_IDX_FLOOR].depen.y;
+            PlayerCollsWallsLoopTranslate(colls, 0.0f, colls[k_XCOLLS_IDX_FLOOR].depen.y, 0.0f);
+        }
+    }
+    else
+    {
+        cceil = &colls[k_XCOLLS_IDX_CEIL];
+        if ((cceil->flags & 1) && cceil->dist < 0.7f)
+        {
+            if (cceil->hdng.y < icos(DEG2RAD(30)))
+            {
+                mat->pos.x += cceil->depen.x;
+                mat->pos.y += cceil->depen.y;
+                mat->pos.z += cceil->depen.z;
+                PlayerCollsWallsLoopTranslate(colls, cceil->depen.x, cceil->depen.y, cceil->depen.z);
+            }
+            else
+            {
+                mat->pos.y += cceil->depen.y;
+                PlayerCollsWallsLoopTranslate(colls, 0.0f, cceil->depen.y, 0.0f);
+                p->frame->vel.y = 0.0f;
+            }
+        }
+    }
+
+    num_walls = 0;
+    first_wall = NULL;
+    inside_wall = NULL;
+    cend = &colls[k_XCOLLS_IDX_COUNT];
+    for (c = &colls[k_XCOLLS_IDX_FRONT]; c < cend; c++)
+    {
+        if (c->flags & 0x10)
+        {
+            inside_wall = c;
+        }
+        if (c->flags & 1)
+        {
+            if (c->optr)
+            {
+                num_walls++;
+                if (!first_wall)
+                {
+                    first_wall = c;
+                }
+            }
+            else
+            {
+                num_walls++;
+                if (!first_wall)
+                {
+                    first_wall = c;
+                }
+            }
+        }
+    }
+
+    if (inside_wall)
+    {
+        inside_wall->flags &= ~1;
+    }
+
+    if (num_walls == 0)
+    {
+        return;
+    }
+
+    if (num_walls == 1)
+    {
+        mat->pos.x += first_wall->depen.x;
+        mat->pos.z += first_wall->depen.z;
+        return;
+    }
+
+    cfront = &colls[k_XCOLLS_IDX_FRONT];
+    crear = &colls[k_XCOLLS_IDX_REAR];
+    if ((cfront->flags & 1) && cfront->dist < 0.7f)
+    {
+        if (cfront->optr)
+        {
+            if ((crear->flags & 1) && crear->dist < 0.7f)
+            {
+                if (crear->optr)
+                {
+                    dx = 0.5f * (crear->depen.x + cfront->depen.x);
+                    dz = 0.5f * (crear->depen.z + cfront->depen.z);
+                    mat->pos.x += dx;
+                    mat->pos.z += dz;
+                    PlayerCollsWallsTranslate(colls, dx, 0.0f, dz);
+                }
+                else
+                {
+                    mat->pos.x += crear->depen.x;
+                    mat->pos.z += crear->depen.z;
+                    PlayerCollsWallsTranslate(colls, crear->depen.x, 0.0f, crear->depen.z);
+                }
+            }
+            else
+            {
+                mat->pos.x += cfront->depen.x;
+                mat->pos.z += cfront->depen.z;
+                PlayerCollsWallsTranslate(colls, cfront->depen.x, 0.0f, cfront->depen.z);
+            }
+        }
+        else
+        {
+            if ((crear->flags & 1) && crear->dist < 0.7f)
+            {
+                if (crear->optr)
+                {
+                    mat->pos.x += cfront->depen.x;
+                    mat->pos.z += cfront->depen.z;
+                    PlayerCollsWallsTranslate(colls, cfront->depen.x, 0.0f, cfront->depen.z);
+                }
+                else
+                {
+                    dx = 0.5f * (crear->depen.x + cfront->depen.x);
+                    dz = 0.5f * (crear->depen.z + cfront->depen.z);
+                    mat->pos.x += dx;
+                    mat->pos.z += dz;
+                    PlayerCollsWallsTranslate(colls, dx, 0.0f, dz);
+                }
+            }
+            else
+            {
+                mat->pos.x += cfront->depen.x;
+                mat->pos.z += cfront->depen.z;
+                PlayerCollsWallsTranslate(colls, cfront->depen.x, 0.0f, cfront->depen.z);
+            }
+        }
+    }
+    else if ((crear->flags & 1) && crear->dist < 0.7f)
+    {
+        if (crear->optr)
+        {
+            mat->pos.x += crear->depen.x;
+            mat->pos.z += crear->depen.z;
+            PlayerCollsWallsTranslate(colls, crear->depen.x, 0.0f, crear->depen.z);
+        }
+        else
+        {
+            mat->pos.x += crear->depen.x;
+            mat->pos.z += crear->depen.z;
+            PlayerCollsWallsTranslate(colls, crear->depen.x, 0.0f, crear->depen.z);
+        }
+    }
+
+    cleft = &colls[k_XCOLLS_IDX_LEFT];
+    cright = &colls[k_XCOLLS_IDX_RIGHT];
+    if ((cleft->flags & 1) && cleft->dist < 0.7f)
+    {
+        if (cleft->optr)
+        {
+            if ((cright->flags & 1) && cright->dist < 0.7f)
+            {
+                if (cright->optr)
+                {
+                    dx = 0.5f * (cright->depen.x + cleft->depen.x);
+                    dz = 0.5f * (cright->depen.z + cleft->depen.z);
+                    mat->pos.x += dx;
+                    mat->pos.z += dz;
+                }
+                else
+                {
+                    mat->pos.x += cright->depen.x;
+                    mat->pos.z += cright->depen.z;
+                }
+            }
+            else
+            {
+                mat->pos.x += cleft->depen.x;
+                mat->pos.z += cleft->depen.z;
+            }
+        }
+        else
+        {
+            if ((cright->flags & 1) && cright->dist < 0.7f)
+            {
+                if (cright->optr)
+                {
+                    mat->pos.x += cleft->depen.x;
+                    mat->pos.z += cleft->depen.z;
+                }
+                else
+                {
+                    dx = 0.5f * (cright->depen.x + cleft->depen.x);
+                    dz = 0.5f * (cright->depen.z + cleft->depen.z);
+                    mat->pos.x += dx;
+                    mat->pos.z += dz;
+                }
+            }
+            else
+            {
+                mat->pos.x += cleft->depen.x;
+                mat->pos.z += cleft->depen.z;
+            }
+        }
+    }
+    else if ((cright->flags & 1) && cright->dist < 0.7f)
+    {
+        if (cright->optr)
+        {
+            mat->pos.x += cright->depen.x;
+            mat->pos.z += cright->depen.z;
+        }
+        else
+        {
+            mat->pos.x += cright->depen.x;
+            mat->pos.z += cright->depen.z;
         }
     }
 }
