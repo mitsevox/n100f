@@ -501,6 +501,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zAssetTypes.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zCamera.cpp"),
             Object(NonMatching, "flat/zConditional.cpp"),
+            Object(NonMatching, "flat/zDispatcher.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zCounter.cpp"),
             Object(NonMatching, "flat/zCutsceneMgr.cpp"),
             Object(NonMatching, "flat/zEGenerator.cpp"),
