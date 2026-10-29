@@ -201,7 +201,7 @@ RxPacket* RxPacketCreate(RxPipelineNode* node)
     return packet;
 }
 
-RxCluster* RxClusterSetExternalData(RxCluster* cluster, void* data, U16 stride, U32 numElements)
+RxCluster* RxClusterSetExternalData(RxCluster* cluster, void* data, S32 stride, S32 numElements)
 {
     if (cluster->data && !(cluster->flags & CLUSTER_EXTERNAL) && cluster->data != data)
     {
