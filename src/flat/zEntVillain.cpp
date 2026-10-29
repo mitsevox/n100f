@@ -328,6 +328,7 @@ static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal);
 static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser);
 static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser);
 static void VEFX_plop_gum(st_zEntVillain* ent);
+static void VPAR_emit_extattack(st_zEntVillain*, _xVec3*, _xVec3*, F32, F32, F32);
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE emittype, F32 dt);
 static void VBON_drop_bonusItem(st_zEntVillain* vil);
 static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp);
@@ -8112,6 +8113,70 @@ static void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt)
     }
     rbs->bound.sph.r = 0.75f;
     xEntEndCollide(rbs, globals.sceneCur, dt);
+}
+
+// Aim the extended attack from its tagged vertex and emit its trail.
+static S32 VWEP_extend_particles(st_zEntVillain* vil, F32 dt, _xVec3* target)
+{
+    _xVec3 origin = { 0 };
+    _xVec3 alternate = { 0 };
+    _xVec3 direction = { 0 };
+    _xVec3 delta = { 0 };
+    _xVec3 normal = { 0 };
+    _xMat3x3 mat = { 0 };
+    _zParEmitterCustomSettings settings = { 0 };
+    S32 have_origin = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACKALT, &origin);
+    S32 have_alternate = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &alternate);
+    if (!have_origin && !have_alternate) origin = alternate;
+    else if (have_origin && have_alternate && vil->asset->subtype == eEntVillainTypeKillerPlant)
+    {
+        xVec3AddTo(&origin, &alternate);
+        xVec3SMul(&origin, &origin, 0.5f);
+    }
+    if (!have_origin)
+    {
+        xSceneID2Name(globals.sceneCur, vil->id);
+        origin = *xBoundCenter(&vil->bound);
+        origin.y += 0.4f;
+        origin.x += 1.5f * vil->precalc.sin_faceang;
+        origin.z += 1.5f * vil->precalc.cos_faceang;
+    }
+    F32 length = MAX(0.01f, MIN(vil->dst_extend, vil->spd_extend *
+                               MIN(vil->tmr_list[ZVIL_TDUR_EXTEND], vil->tmr_list[ZVIL_TYMR_CURGOAL])));
+    F32 slope = vil->wid_extend / vil->dst_extend;
+    F32 facing = vil->frame->rot.angle;
+    direction.x = sin(facing);
+    direction.z = cos(facing);
+    if (target)
+    {
+        xVec3Sub(&delta, target, &origin);
+        xVec3Normalize(&normal, &delta);
+        F32 pitch = asin(normal.y);
+        if (vil->asset->subtype == eEntVillainTypeKillerPlant) pitch = 0.0f;
+        else pitch = MAX(-0.25f, MIN(pitch, 0.25f));
+        xMat3x3Euler(&mat, 0.0f, pitch, 0.0f);
+        xMat3x3LMulVec(&direction, &mat, &g_Z3);
+        xMat3x3Euler(&mat, -facing, 0.0f, 0.0f);
+        xMat3x3LMulVec(&direction, &mat, &direction);
+    }
+    if (vil->asset->subtype == eEntVillainTypeKillerPlant)
+    {
+        if (sPlantCloudEmitter)
+        {
+            settings.pos.x = vil->model->Mat->pos.x;
+            settings.pos.y = vil->model->Mat->pos.y;
+            settings.pos.z = vil->model->Mat->pos.z;
+            settings.pos.y += 1.6f;
+            settings.pos.x += 0.25f * vil->model->Mat->at.x;
+            settings.pos.z += 0.25f * vil->model->Mat->at.z;
+            xVec3Normalize(&normal, &direction);
+            settings.custom_flags = 0x60;
+            xVec3SMul(&settings.vel, &normal, 1.0f + 0.25f * iurand());
+            zParEmitterEmitCustom(sPlantCloudEmitter, dt, &settings);
+        }
+    }
+    else VPAR_emit_extattack(vil, &origin, &direction, length, slope, dt);
+    return 0;
 }
 
 // Draw gum strands from marked vertices to the villain's model height.
