@@ -13,35 +13,121 @@
 #include <string.h>
 #include <math.h>
 
-// Search the current scene's emitter assets by ID.
-_zParEmitter* zParEmitterFind(U32 asset_id)
+S32 zParEmitterEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*);
+
+// Set up the emitter from its asset and find its attach target, particle system and volume.
+void zParEmitterInit(xBase* b, zParEmitterAsset* tasset)
 {
-    zScene* s = globals.sceneCur;
-    if (!s)
-        return NULL;
-    _zParEmitter* pe = (_zParEmitter*)s->baseList[38];
-    for (S32 i = 0; i < (S32)s->baseCount[38]; ++i, ++pe)
-        if (pe->tasset->id == asset_id)
-            return pe;
-    return NULL;
+    _zParEmitter* t = (_zParEmitter*)b;
+    xBaseInit(t, tasset);
+    t->eventFunc = zParEmitterEventCB;
+    t->tasset = tasset;
+    t->link = t->linkCount ? (p2LinkAsset*)(tasset + 1) : NULL;
+    t->emit_flags = tasset->emit_flags;
+    t->emit_interval_current = tasset->interval;
+    if (tasset->attachToID && tasset->emit_type == 9)
+    {
+        _xEnt* ent = (_xEnt*)zSceneFindObject(tasset->attachToID);
+        iModelTagSetup(&t->tag, ent->model->Data, tasset->e_offsetp.offset.x,
+                       tasset->e_offsetp.offset.y, tasset->e_offsetp.offset.z);
+    }
+    t->attachTo = tasset->attachToID ? zSceneFindObject(tasset->attachToID) : NULL;
+    t->parSys = tasset->parSysID ? zSceneFindObject(tasset->parSysID) : NULL;
+    t->emit_volume = tasset->emit_type == 6 ? zSceneFindObject(tasset->e_volume.emit_volumeID) : NULL;
 }
 
-// Names use the same hash as asset IDs.
-_zParEmitter* zParEmitterFind(char* asset_name)
+// Cache the particle group after the particle system has been set up.
+void zParEmitterSetup(_zParEmitter* t)
 {
-    return zParEmitterFind(xStrHash(asset_name));
+    if (t->parSys)
+        t->group = ((zParSys*)t->parSys)->group;
 }
 
-// Emit only while the game is running and this emitter is enabled.
-void zParEmitterUpdate(xBase* to, _xScene*, F32 dt)
+// Handle reset, on, off and single-emission events.
+S32 zParEmitterEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
 {
-    _zParEmitter* pe = (_zParEmitter*)to;
-    if (!zGameIsPaused() && (pe->emit_flags & 1))
-        zParEmitterEmit(pe, dt);
+    _zParEmitter* t = (_zParEmitter*)to;
+    switch (toEvent)
+    {
+    case eEventReset:
+        xBaseReset(t, t->tasset);
+        t->emit_flags = t->tasset->emit_flags;
+        t->emit_interval_current = t->tasset->interval;
+        break;
+    case eEventOn:
+        t->emit_flags |= 1;
+        break;
+    case eEventOff:
+        if (t->emit_flags & 1)
+            t->emit_flags ^= 1;
+        break;
+    case 250:
+    {
+        _zParEmitterCustomSettings fake_settings;
+        memset(&fake_settings, 0, sizeof(fake_settings));
+        zParEmitterEmitCustom(t, 1.0f / 30.0f, &fake_settings);
+        break;
+    }
+    }
+    return 1;
+}
+
+// Place particles on a sphere and point their velocity along the selected direction.
+static void zParEmitterEmitSphereEdge(xPar* p, zParEmitterAsset* a, F32 dt, S32 subtype)
+{
+    xVec3 dirvec = { 0.0f, 0.0f, 1.0f };
+    xVec3 offset = { 0.0f, 0.0f, 0.0f };
+    xMat3x3 mat_rot = {};
+
+    p->m_vel = a->vel;
+    xVec3SMul(&p->m_vel, &p->m_vel, dt);
+    switch (subtype)
+    {
+    case 7:
+    {
+        F32 roll = 6.2831855f * iurand();
+        F32 pitch = 6.2831855f * iurand();
+        F32 yaw = 6.2831855f * iurand();
+        xMat3x3Euler(&mat_rot, yaw, pitch, roll);
+        break;
+    }
+    case 10:
+    {
+        F32 pitch = 3.1415927f * iurand();
+        F32 yaw = 6.2831855f * iurand();
+        xMat3x3Euler(&mat_rot, yaw, pitch, 0.0f);
+        break;
+    }
+    case 11:
+    {
+        F32 roll = 6.2831855f * iurand();
+        F32 pitch = 3.1415927f * iurand() + 3.1415927f;
+        F32 yaw = 6.2831855f * iurand();
+        xMat3x3Euler(&mat_rot, yaw, pitch, roll);
+        break;
+    }
+    }
+    xMat3x3LMulVec(&dirvec, &mat_rot, &dirvec);
+    F32 magnitude = sqrtf(xVec3Length2(&p->m_vel));
+    xVec3SMul(&p->m_vel, &dirvec, magnitude);
+    xVec3SMul(&offset, &dirvec, a->e_sphere.radius);
+    xVec3Add(&p->m_pos, &p->m_pos, &offset);
+    if (a->vel_angle_variation != 0.0f)
+    {
+        xMat3x3 variation = {};
+        F32 ang[3];
+        F32 cone = a->vel_angle_variation;
+        ang[0] = cone * (iurand() - 0.5f);
+        ang[1] = cone * (iurand() - 0.5f);
+        ang[2] = cone * (iurand() - 0.5f);
+        xMat3x3Euler(&variation, ang[0], ang[1], ang[2]);
+        xMat3x3LMulVec(&p->m_vel, &variation, &p->m_vel);
+    }
 }
 
 static _zParEmitterCustomSettings sSaveEmmiterSettings;
 
+// Emit once with the flagged settings overridden, restoring the saved settings when asked.
 xPar* zParEmitterEmitCustom(_zParEmitter* p, F32 dt, _zParEmitterCustomSettings* info)
 {
     U32 flags = info->custom_flags;
@@ -132,110 +218,29 @@ xPar* zParEmitterEmitCustom(_zParEmitter* p, F32 dt, _zParEmitterCustomSettings*
     return emitted_par;
 }
 
-// Place particles on a sphere and point their velocity along the selected direction.
-static void zParEmitterEmitSphereEdge(xPar* p, zParEmitterAsset* a, F32 dt, S32 subtype)
+// Emit only while the game is running and this emitter is enabled.
+void zParEmitterUpdate(xBase* to, _xScene*, F32 dt)
 {
-    xVec3 dirvec = { 0.0f, 0.0f, 1.0f };
-    xVec3 offset = { 0.0f, 0.0f, 0.0f };
-    xMat3x3 mat_rot = {};
-
-    p->m_vel = a->vel;
-    xVec3SMul(&p->m_vel, &p->m_vel, dt);
-    switch (subtype)
-    {
-    case 7:
-    {
-        F32 roll = 6.2831855f * iurand();
-        F32 pitch = 6.2831855f * iurand();
-        F32 yaw = 6.2831855f * iurand();
-        xMat3x3Euler(&mat_rot, yaw, pitch, roll);
-        break;
-    }
-    case 10:
-    {
-        F32 pitch = 3.1415927f * iurand();
-        F32 yaw = 6.2831855f * iurand();
-        xMat3x3Euler(&mat_rot, yaw, pitch, 0.0f);
-        break;
-    }
-    case 11:
-    {
-        F32 roll = 6.2831855f * iurand();
-        F32 pitch = 3.1415927f * iurand() + 3.1415927f;
-        F32 yaw = 6.2831855f * iurand();
-        xMat3x3Euler(&mat_rot, yaw, pitch, roll);
-        break;
-    }
-    }
-    xMat3x3LMulVec(&dirvec, &mat_rot, &dirvec);
-    F32 magnitude = sqrtf(xVec3Length2(&p->m_vel));
-    xVec3SMul(&p->m_vel, &dirvec, magnitude);
-    xVec3SMul(&offset, &dirvec, a->e_sphere.radius);
-    xVec3Add(&p->m_pos, &p->m_pos, &offset);
-    if (a->vel_angle_variation != 0.0f)
-    {
-        xMat3x3 variation = {};
-        F32 ang[3];
-        F32 cone = a->vel_angle_variation;
-        ang[0] = cone * (iurand() - 0.5f);
-        ang[1] = cone * (iurand() - 0.5f);
-        ang[2] = cone * (iurand() - 0.5f);
-        xMat3x3Euler(&variation, ang[0], ang[1], ang[2]);
-        xMat3x3LMulVec(&p->m_vel, &variation, &p->m_vel);
-    }
+    _zParEmitter* pe = (_zParEmitter*)to;
+    if (!zGameIsPaused() && (pe->emit_flags & 1))
+        zParEmitterEmit(pe, dt);
 }
 
-S32 zParEmitterEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
+// Search the current scene's emitter assets by ID.
+_zParEmitter* zParEmitterFind(U32 asset_id)
 {
-    _zParEmitter* t = (_zParEmitter*)to;
-    switch (toEvent)
-    {
-    case eEventReset:
-        xBaseReset(t, t->tasset);
-        t->emit_flags = t->tasset->emit_flags;
-        t->emit_interval_current = t->tasset->interval;
-        break;
-    case eEventOn:
-        t->emit_flags |= 1;
-        break;
-    case eEventOff:
-        if (t->emit_flags & 1)
-            t->emit_flags ^= 1;
-        break;
-    case 250:
-    {
-        _zParEmitterCustomSettings fake_settings;
-        memset(&fake_settings, 0, sizeof(fake_settings));
-        zParEmitterEmitCustom(t, 1.0f / 30.0f, &fake_settings);
-        break;
-    }
-    }
-    return 1;
+    zScene* s = globals.sceneCur;
+    if (!s)
+        return NULL;
+    _zParEmitter* pe = (_zParEmitter*)s->baseList[38];
+    for (S32 i = 0; i < (S32)s->baseCount[38]; ++i, ++pe)
+        if (pe->tasset->id == asset_id)
+            return pe;
+    return NULL;
 }
 
-// Cache the particle group after the particle system has been set up.
-void zParEmitterSetup(_zParEmitter* t)
+// Names use the same hash as asset IDs.
+_zParEmitter* zParEmitterFind(char* asset_name)
 {
-    if (t->parSys)
-        t->group = ((zParSys*)t->parSys)->group;
-}
-
-void zParEmitterInit(xBase* b, zParEmitterAsset* tasset)
-{
-    _zParEmitter* t = (_zParEmitter*)b;
-    xBaseInit(t, tasset);
-    t->eventFunc = zParEmitterEventCB;
-    t->tasset = tasset;
-    t->link = t->linkCount ? (p2LinkAsset*)(tasset + 1) : NULL;
-    t->emit_flags = tasset->emit_flags;
-    t->emit_interval_current = tasset->interval;
-    if (tasset->attachToID && tasset->emit_type == 9)
-    {
-        _xEnt* ent = (_xEnt*)zSceneFindObject(tasset->attachToID);
-        iModelTagSetup(&t->tag, ent->model->Data, tasset->e_offsetp.offset.x,
-                       tasset->e_offsetp.offset.y, tasset->e_offsetp.offset.z);
-    }
-    t->attachTo = tasset->attachToID ? zSceneFindObject(tasset->attachToID) : NULL;
-    t->parSys = tasset->parSysID ? zSceneFindObject(tasset->parSysID) : NULL;
-    t->emit_volume = tasset->emit_type == 6 ? zSceneFindObject(tasset->e_volume.emit_volumeID) : NULL;
+    return zParEmitterFind(xStrHash(asset_name));
 }
