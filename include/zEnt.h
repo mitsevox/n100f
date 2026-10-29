@@ -13,6 +13,8 @@ struct _zEnt : _xEnt
 void zEntInit(_zEnt* ent, p2EntAsset* asset, U32 type);
 void zEntLoad(_zEnt* ent, xSerial* s);
 void zEntSave(_zEnt* ent, xSerial* s);
+void zEntReset(_zEnt* ent);
+void zEntSetup(_zEnt* ent);
 struct zAssetModelParam
 {
     U32 HashID;
@@ -22,6 +24,7 @@ struct zAssetModelParam
 
 char* zParamGetString(zAssetModelParam* param, U32 size, char* tok, char* def);
 S32 zParamGetInt(zAssetModelParam* param, U32 size, const char* tok, S32 def);
+void zEntEvent(char* to, U32 toEvent);
 void zEntEvent(xBase* to, U32 toEvent);
 void zEntEvent(xBase* to, U32 toEvent, F32* toParam);
 void zEntEvent(xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
