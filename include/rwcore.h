@@ -310,6 +310,14 @@ typedef enum RwFrustumTestResult
 #define rwLIBRARYBASEVERSION 0x31000
 #define rwLIBRARYCURRENTVERSION 0x33002
 
+typedef enum RwOpCombineType
+{
+    rwCOMBINEREPLACE = 0,
+    rwCOMBINEPRECONCAT,
+    rwCOMBINEPOSTCONCAT,
+    rwOPCOMBINETYPEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwOpCombineType;
+
 #define rwMATRIXTYPEORTHONORMAL 0x00000003
 #define rwMATRIXINTERNALIDENTITY 0x00020000
 
@@ -1380,6 +1388,7 @@ RwFrame* RwFrameGetRoot(const RwFrame* frame);
 RwMatrix* RwFrameGetLTM(RwFrame* frame);
 S32 RwFrameDestroyHierarchy(RwFrame* frame);
 RwMatrix* RwMatrixMultiply(RwMatrix* matrixOut, const RwMatrix* MatrixIn1, const RwMatrix* matrixIn2);
+RwMatrix* RwMatrixTransform(RwMatrix* matrix, const RwMatrix* transform, RwOpCombineType combineOp);
 RwV3d* RwV3dTransformPoints(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
                             const RwMatrix* matrix);
 RwFrustumTestResult RwCameraFrustumTestSphere(const RwCamera* camera, const RwSphere* sphere);
@@ -1410,7 +1419,7 @@ S32 _rxPipelineOpen(void);
 RxPipelineNode* PipelineNodeDestroy(RxPipelineNode* node, RxPipeline* pipeline);
 RxHeap* RxHeapGetGlobalHeap(void);
 RxPacket* RxPacketCreate(RxPipelineNode* node);
-RxCluster* RxClusterSetExternalData(RxCluster* cluster, void* data, U16 stride, U32 numElements);
+RxCluster* RxClusterSetExternalData(RxCluster* cluster, void* data, S32 stride, S32 numElements);
 RxCluster* RxClusterSetData(RxCluster* cluster, void* data, U16 stride, U32 numElements);
 RxCluster* RxClusterInitializeData(RxCluster* cluster, U32 numElements, U16 stride);
 RxCluster* RxClusterResizeData(RxCluster* cluster, U32 numElements);

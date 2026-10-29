@@ -931,7 +931,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/pipe/p2/nodeClipLine.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/nodeClipTriangle.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/nodeCullTriangle.c"),
-            Object(NonMatching, "rwsdk/src/pipe/p2/nodeImmInstance.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/nodeImmInstance.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/nodeImmRenderSetup.c"),
