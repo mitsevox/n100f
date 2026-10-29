@@ -3592,10 +3592,11 @@ static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset,
     return do_std_nav;
 }
 
-// Sets the villain's pursuit home from the widget it protects: a move point's position or an
-// entity's. Any other kind of widget is dropped (its and the villain's names are looked up and
-// not used) and the keep-away distance is cleared. With no anchor the villain's own position
-// becomes home and the keep-away distance is cleared. Returns 1 if it protects an entity, else 0.
+// Sets the villain's pursuit home from the widget it protects. A protected entity's position
+// becomes home. A move point's position is stored but then replaced, as with no widget: the
+// villain's own position becomes home and the keep-away distance is cleared. Any other kind of
+// widget is dropped (its and the villain's names are looked up and not used) before that.
+// Always returns 1.
 static S32 VOUT_apply_anchor(st_zEntVillain* vil)
 {
     S32 have_anchor = 0;
@@ -3741,7 +3742,7 @@ static S32 VNAV_get_nav(st_zEntVillain* ent)
 }
 
 // Navigation line-of-sight test: whether nothing in the scene blocks a ray from mypos to the move
-// point, starting just outside the villain's (usrdata) bound and stopping that far short of it.
+// point, starting just outside the villain's (usrdata) bound and ending at the point.
 static S32 VNAV_chklos_timz(void* usrdata, _xVec3* mypos, const _zMovePoint* mvpt)
 {
     S32 result;
@@ -3761,9 +3762,10 @@ static S32 VNAV_chklos_timz(void* usrdata, _xVec3* mypos, const _zMovePoint* mvp
 // The villain's move speed for the frame, base times the speed that fits its current animation:
 // 5 flat for an animation with type bit 0x4000000, the move speed while gummed with move ability
 // 0x100000, five times base for a move type of 10, the chase speed for 6, and the move speed for
-// 4, where the boss Black Knight gets 2/3, 1/3 or none of his extra chase speed back as his hit
-// points fall to 2, 3 and 4. An idle animation (1) keeps base and anything else gives 0. With misc
-// flags 0x2 (move), 0x4 (chase) and 0x1 (idle) the animation's playback speed follows.
+// 4, where the boss Black Knight adds the gap between his chase and move speeds, times 0.66,
+// 0.33 or 0 at 2, 3 and 4 hit points (in full otherwise). An idle animation (1) keeps base and
+// anything else gives 0. With misc flags 0x2 (move), 0x4 (chase) and 0x1 (idle) the animation's
+// playback speed follows.
 static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base)
 {
     F32 rate = base;
