@@ -49,7 +49,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xLinkList.cpp	xMath.cpp	0x8002C86C	0x8002C86C	alignment only (4 cuts tie on data)	0
 .text	xMath.cpp	xMath3.cpp	0x8002CF48	0x8002CF48	alignment only (3 cuts tie on data)	0
 .text	xMath3.cpp	xMemMgr.cpp	0x8002F920	0x8002F920	single cut by data references	0
-.text	xMemMgr.cpp	xModel.cpp	0x800300A8	0x800301A4	open: 7 unassigned functions (1 joined by references)	0
+.text	xMemMgr.cpp	xModel.cpp	0x800300A8	0x800300A8	closed by references (1 functions joined; was open: 1 unassigned functions)	0
 .text	xModel.cpp	xMorph.cpp	0x80030F28	0x80030F28	single cut by data references	0
 .text	xMorph.cpp	xMovePoint.cpp	0x80031310	0x80031310	alignment only (3 cuts tie on data)	0
 .text	xMovePoint.cpp	xordarray.cpp	0x800317D4	0x800317D4	alignment only (5 cuts tie on data)	0
@@ -304,7 +304,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	xFFX.cpp	xFX.cpp	0x8025EA78	0x8025EA80	open: 2 items between aligned candidates	0
 .sbss	xFX.cpp	xhipio.cpp	0x8025EAB0	0x8025EAB0	single aligned candidate	0
 .sbss	xhipio.cpp	xMemMgr.cpp	0x8025EAB8	-	open: 1 items loaded by unassigned functions; a side left unsplit	0
-.sbss	xMemMgr.cpp	xModel.cpp	-	0x8025EAC0	single aligned candidate; 2 in-range loads by functions outside the written units; a side left unsplit	2
+.sbss	xMemMgr.cpp	xModel.cpp	-	0x8025EAC0	single aligned candidate; a side left unsplit	0
 .sbss	xModel.cpp	xPad.cpp	0x8025EAD0	0x8025EAD0	single aligned candidate	0
 .sbss	xPad.cpp	xPar.cpp	0x8025EAD8	0x8025EAD8	single aligned candidate	0
 .sbss	xPar.cpp	xParGroup.cpp	0x8025EAE0	0x8025EAE0	single aligned candidate	0

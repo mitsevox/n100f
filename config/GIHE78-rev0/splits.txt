@@ -244,7 +244,7 @@ flat/xMemMgr.cpp:
 	.bss        start:0x801FFC00 end:0x801FFE08
 
 flat/xModel.cpp:
-	.text       start:0x800301A4 end:0x80030F28
+	.text       start:0x800300A8 end:0x80030F28
 	.data       start:0x801AEE38 end:0x801AEE78
 	.sbss       start:0x8025EAC0 end:0x8025EAD0
 	.sdata2     start:0x80260048 end:0x802600D0

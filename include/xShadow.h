@@ -5,6 +5,8 @@
 
 struct _xEnt;
 
+extern F32 ShadowThreshold;
+
 void xShadowSetWorld(RpWorld* world);
 void xShadowRender(_xEnt* ent);
 

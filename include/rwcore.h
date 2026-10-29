@@ -318,6 +318,23 @@ typedef enum RwOpCombineType
     rwOPCOMBINETYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwOpCombineType;
 
+typedef enum RwVideoModeFlag
+{
+    rwVIDEOMODEEXCLUSIVE = 0x1,
+    rwVIDEOMODEINTERLACE = 0x2,
+    rwVIDEOMODEFFINTERLACE = 0x4,
+    rwVIDEOMODEFLAGFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwVideoModeFlag;
+
+typedef struct RwVideoMode RwVideoMode;
+struct RwVideoMode
+{
+    S32 width;
+    S32 height;
+    S32 depth;
+    RwVideoModeFlag flags;
+};
+
 #define rwMATRIXTYPEORTHONORMAL 0x00000003
 #define rwMATRIXINTERNALIDENTITY 0x00020000
 
@@ -624,7 +641,9 @@ struct RwTexture
     RwRaster* raster;
     RwTexDictionary* dict;
     RwLLLink lInDictionary;
-    U8 unk10[0x44];
+    char name[32];
+    char mask[32];
+    U32 filterAddressing;
     S32 refCount;
 };
 
@@ -1527,6 +1546,7 @@ RwCamera* RwCameraShowRaster(RwCamera* camera, void* pDev, U32 flags);
 RwCamera* RwCameraSetNearClipPlane(RwCamera* camera, F32 nearClip);
 RwCamera* RwCameraSetFarClipPlane(RwCamera* camera, F32 farClip);
 RwCamera* RwCameraSetViewWindow(RwCamera* camera, const RwV2d* viewWindow);
+RwCamera* RwCameraSetViewOffset(RwCamera* camera, const RwV2d* offset);
 S32 RwCameraRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
                            RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
 void _rwObjectHasFrameSetFrame(void* object, RwFrame* frame);
@@ -1575,6 +1595,8 @@ S32 _rwStringStreamGetSize(const char* string);
 const char* _rwStringStreamWrite(const char* string, RwStream* stream);
 char* _rwStringStreamFindAndRead(char* string, RwStream* stream);
 U32 RwEngineGetVersion(void);
+S32 RwEngineGetCurrentVideoMode(void);
+RwVideoMode* RwEngineGetVideoModeInfo(RwVideoMode* modeinfo, S32 modeIndex);
 RwStream* RwStreamSkip(RwStream* stream, U32 offset);
 RwStream* RwStreamReadChunkHeaderInfo(RwStream* stream, RwChunkHeaderInfo* chunkHeaderInfo);
 RwStream* _rwStreamWriteVersionedChunkHeader(RwStream* stream, S32 type, S32 size, U32 version,
@@ -1676,6 +1698,7 @@ RwTexDictionary* RwTexDictionaryGetCurrent(void);
 
 RwFrame* RwFrameUpdateObjects(RwFrame* frame);
 RwFrame* RwFrameTransform(RwFrame* frame, const RwMatrix* m, RwOpCombineType combine);
+RwFrame* RwFrameRotate(RwFrame* frame, const RwV3d* axis, F32 angle, RwOpCombineType combine);
 
 F32 _rwSqrt(F32 num);
 F32 _rwInvSqrt(F32 num);

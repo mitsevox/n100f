@@ -160,7 +160,23 @@ void xAnimPlaySetState(xAnimSingle* single, xAnimState* state, F32 startTime);
 void xAnimPlaySetup(xAnimPlay* play, void* object, xAnimTable* table, xModelInstance* modelInst);
 xAnimPlay* xAnimPoolAlloc(xMemPool* pool, void* object, xAnimTable* table,
                           xModelInstance* modelInst);
+void xAnimPoolFree(xAnimPlay* play);
+void xAnimPlayEval(xAnimPlay* play);
+void xAnimPlayUpdate(xAnimPlay* play, F32 timeDelta);
 void xAnimPlayStartTransition(xAnimPlay* play, xAnimTransition* transition);
+void xAnimPlayChooseTransition(xAnimPlay* play);
 xAnimTransition* xAnimTempTransitionAlloc();
+
+// The file time for a play time: reversed files run backwards, and ping-pong files run
+// backwards in their second half.
+inline F32 xAnimFileRawTime(xAnimFile* data, F32 time)
+{
+    if ((data->FileFlags & 0x1000) || ((data->FileFlags & 0x2000) && time > data->Duration * 0.5f))
+    {
+        return data->TimeOffset + data->Duration - time;
+    }
+
+    return data->TimeOffset + time;
+}
 
 #endif
