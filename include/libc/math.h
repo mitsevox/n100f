@@ -70,6 +70,7 @@ static inline int __fpclassifyd(double x)
 #define signbit(x) ((int)(__HI(x) & 0x80000000))
 
 
+double acos(double x);
 double atan(double x);
 double atan2(double y, double x);
 double copysign(double x, double y);

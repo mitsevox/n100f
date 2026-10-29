@@ -14,6 +14,7 @@
 #include "xBound.h"
 #include "zScene.h"
 #include "zEntPickup.h"
+#include "zPlatform.h"
 #include "zEntTrigger.h"
 #include "zEntButton.h"
 #include "zEntDestructObj.h"
@@ -23,6 +24,7 @@
 #include "iSnd.h"
 #include "xString.h"
 #include "xMath.h"
+#include "xMathInlines.h"
 #include "xMath3.h"
 #include "xMovePoint.h"
 #include "xScene.h"
@@ -201,7 +203,7 @@ void zHudShowAllSnacksArea();
 void zHud_showSnack();
 void zHud_showSnackSpecial();
 void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt);
-F32 CalcJumpImpulse_Smooth(F32 g, F32 j, F32 h, F32 Tgc, F32 Tgs);
+static F32 CalcJumpImpulse_Smooth(F32 g, F32 j, F32 h, F32 Tgc, F32 Tgs);
 S32 Shaggy8_HBCallback(_zEnt* ent, _xCollis* coll);
 S32 Shaggy8_BBCallback(_zEnt* ent, _xCollis* coll);
 S32 Shaggy8_CallToPlayer();
@@ -3847,6 +3849,69 @@ void zEntPlayer_GiveHotsauce(U32 value)
     }
 }
 
+// Launch speed for a jump that peaks at height h. Gravity starts at j, blends over Tgs seconds into g
+// once Tgc seconds have passed, so the rise is up to three phases: constant j, the blend (a cubic in time)
+// and constant g. Solves for the time the peak falls in each phase and returns the matching speed.
+static F32 CalcJumpImpulse_Smooth(F32 g, F32 j, F32 h, F32 Tgc, F32 Tgs)
+{
+    F32 Tmfound;
+    F32 Tf;
+    F32 Tm[3];
+    F32 Ts;
+    F32 Kc;
+    F32 AF;
+    F32 D;
+    F32 Kbf;
+    F32 B;
+    F32 A;
+    F32 AS;
+    U32 solcnt;
+    U32 i;
+
+    AS = -j / 2.0f;
+    A = (j - g) / (6.0f * Tgs);
+    B = (g * Tgc - j * Tgc - j * Tgs) / (2.0f * Tgs);
+    Kc = -(j * Tgc + 3.0f * A * SQ(Tgc) + 2.0f * B * Tgc);
+    D = AS * SQ(Tgc) - A * (Tgc * SQ(Tgc)) - B * SQ(Tgc) - Kc * Tgc;
+    AF = -g / 2.0f;
+    Kbf = 3.0f * A * SQ(Tgc + Tgs) + 2.0f * B * (Tgc + Tgs) + g * (Tgc + Tgs);
+    Tmfound = 0.0f;
+
+    Tf = D + (A * ((Tgc + Tgs) * SQ(Tgc + Tgs)) + B * SQ(Tgc + Tgs)) - AF * SQ(Tgc + Tgs) - Kbf * (Tgc + Tgs);
+    Ts = sqrtf((Tmfound - h) / AS);
+    Tf = sqrtf((Tf - h) / AF);
+    solcnt = xMathSolveCubic(-2.0f * A, -B, 0.0f, D - h, &Tm[0], &Tm[1], &Tm[2]);
+
+    if (Ts <= Tgc && Ts >= 0.0f)
+    {
+        return -Tmfound - 2.0f * AS * Ts;
+    }
+
+    if (Tf >= Tgc + Tgs)
+    {
+        return -(Kbf + Kc) - 2.0f * AF * Tf;
+    }
+
+    Tmfound = -1.0f;
+    for (i = 0; i < solcnt; i++)
+    {
+        if (Tm[i] >= Tgc && Tm[i] <= Tgc + Tgs)
+        {
+            if (Tmfound < 0.0f || Tm[i] < Tmfound)
+            {
+                Tmfound = Tm[i];
+            }
+        }
+    }
+
+    if (Tmfound != -1.0f)
+    {
+        return -Kc - 2.0f * B * Tmfound - 3.0f * A * SQ(Tmfound);
+    }
+
+    return 1.0f;
+}
+
 void CalcJumpImpulse(zJumpParam* param)
 {
     param->ImpulseVel = CalcJumpImpulse_Smooth(globals.player.s.Gravity, globals.player.s.JumpGravity,
@@ -3872,6 +3937,178 @@ void zEntPlayerJumpStart(_xEnt* ent, zJumpParam* jump)
         ent->model->Anim->Single->State->UserFlags & 0x100)
     {
         globals.player.Bounced = 1;
+    }
+}
+
+// Butt-smash landing: a burst of bounce-miss particles where the floor was hit, a rumble and the miss sound.
+static inline void PlayerButtSmashLandFX(_xEnt* ent, _xCollis* cfloor)
+{
+    if (sEmitterBounceMiss)
+    {
+        _zParEmitterCustomSettings info;
+        S32 i;
+
+        info.custom_flags = 0x20;
+        info.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x + cfloor->dist * cfloor->tohit.x;
+        info.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y + cfloor->dist * cfloor->tohit.y;
+        info.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z + cfloor->dist * cfloor->tohit.z;
+        for (i = 0; i < 25; i++)
+        {
+            zParEmitterEmitCustom(sEmitterBounceMiss, 1.0f, &info);
+        }
+    }
+    zRumbleStart(0, SDR_Buttbounce);
+    zEntPlayer_SNDButtBounce(ent, 0);
+}
+
+// Springboard launch: a burst of particles at the springboard's centre.
+static inline void PlayerSpringboardFX(_zPlatform* plat)
+{
+    if (sEmitterSpringBoard)
+    {
+        _zParEmitterCustomSettings info;
+        S32 i;
+
+        info.custom_flags = 0x20;
+        info.pos = *xBoundCenter(&plat->bound);
+        for (i = 0; i < 25; i++)
+        {
+            zParEmitterEmitCustom(sEmitterSpringBoard, 1.0f / 30.0f, &info);
+        }
+    }
+}
+
+// Jump state machine: hold and gravity-change timers, landing (and the butt-smash landing), rising and falling,
+// springboard launches, then gravity and the float special.
+void zEntPlayerJumpUpdate(_xEnt* ent, _xScene* sc, F32 dt)
+{
+    _xCollis* cfloor;
+    F32 lerp;
+
+    globals.player.LastJumpState = globals.player.JumpState;
+    if (globals.player.JumpState == 4)
+    {
+        return;
+    }
+
+    if (globals.player.JumpState == 5)
+    {
+        ent->frame->vel.y = -globals.player.s.ButtsmashSpeed;
+    }
+
+    if (globals.player.Jump_HoldTimer)
+    {
+        globals.player.Jump_HoldTimer -= dt;
+        if (globals.player.Jump_HoldTimer <= 0.0f)
+        {
+            globals.player.Jump_HoldTimer = 0.0f;
+        }
+        else if (!globals.player.ControlOn || !(globals.pad0->on & 0x10000))
+        {
+            globals.player.Jump_HoldTimer = 0.0f;
+            globals.player.Jump_ChangeTimer = 0.0f;
+            globals.player.Jump_CurrGravity = globals.player.s.Gravity;
+        }
+    }
+
+    if (globals.player.Jump_ChangeTimer)
+    {
+        globals.player.Jump_ChangeTimer -= dt;
+        if (0.0f == globals.player.Jump_ChangeTimer)
+        {
+            globals.player.Jump_ChangeTimer = 0.0000001f;
+        }
+        if (globals.player.Jump_ChangeTimer <= -globals.player.s.GravSmooth)
+        {
+            globals.player.Jump_HoldTimer = 0.0f;
+            globals.player.Jump_ChangeTimer = 0.0f;
+            globals.player.Jump_CurrGravity = globals.player.s.Gravity;
+        }
+        else if (globals.player.Jump_ChangeTimer < 0.0f)
+        {
+            lerp = -globals.player.Jump_ChangeTimer / globals.player.s.GravSmooth;
+            globals.player.Jump_CurrGravity =
+                (1.0f - lerp) * globals.player.s.JumpGravity + lerp * globals.player.s.Gravity;
+        }
+    }
+
+    cfloor = &ent->collis->colls[0];
+    if (cfloor->flags & 1 && !(cfloor->optr && ((xBase*)cfloor->optr)->baseType == 2) &&
+        ent->frame->vel.y <= 0.0f)
+    {
+        if (globals.player.JumpState != 0)
+        {
+            if (globals.player.JumpState == 5)
+            {
+                PlayerButtSmashLandFX(ent, cfloor);
+            }
+            globals.player.JumpState = 0;
+            globals.player.Jump_CanDouble = 1;
+            globals.player.Jump_CanFloat = 1;
+            globals.player.Jump_Springboard = NULL;
+            globals.player.Jump_SpringboardStart = 0;
+        }
+    }
+    else
+    {
+        if (globals.player.JumpState == 0)
+        {
+            globals.player.JumpState = 1;
+            globals.player.JumpTimer = 0.0f;
+        }
+        else if (globals.player.JumpState == 1)
+        {
+            globals.player.JumpTimer += dt;
+            if (globals.player.JumpTimer >= 0.25f)
+            {
+                globals.player.JumpState = 2;
+            }
+        }
+        else if (globals.player.JumpState == 2)
+        {
+            if (ent->frame->vel.y < 16.0f && globals.player.Jump_SpringboardStart)
+            {
+                PlayerSpringboardFX(globals.player.Jump_Springboard);
+                globals.player.Jump_SpringboardStart = 0;
+                if (0.0f == globals.player.Jump_Springboard->passet->sb.jmpdir.x &&
+                    0.0f == globals.player.Jump_Springboard->passet->sb.jmpdir.z)
+                {
+                    globals.player.Jump_CanDouble = 1;
+                }
+            }
+        }
+
+        if (globals.player.JumpState == 3)
+        {
+            ent->frame->vel.x *= 0.96f;
+            ent->frame->vel.z *= 0.96f;
+        }
+    }
+
+    if (globals.player.Jump_CurrGravity)
+    {
+        if (globals.player.JumpState == 2 || globals.player.JumpState == 1)
+        {
+            ent->frame->vel.y -= globals.player.Jump_CurrGravity * dt;
+        }
+        if (globals.player.JumpState == 2 || globals.player.JumpState == 3)
+        {
+            if (globals.player.Inv_Specials & 0x1000 && globals.player.ControlOn &&
+                globals.pad0->on & 0x10000 && globals.player.Jump_CanFloat && !globals.player.Jump_CanDouble &&
+                (ent->frame->vel.y <= -globals.player.s.FloatSpeed || gust_data.gust_on))
+            {
+                zLaughNotify(4);
+                globals.player.JumpState = 3;
+            }
+            if (globals.player.JumpState == 3)
+            {
+                ent->frame->vel.y = -globals.player.s.FloatSpeed;
+                if (!globals.player.ControlOn || !(globals.pad0->on & 0x10000))
+                {
+                    globals.player.JumpState = 2;
+                }
+            }
+        }
     }
 }
 
@@ -4893,6 +5130,131 @@ S32 zEntPlayerEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* 
     return 1;
 }
 
+// When the player hangs from a hangable entity, its end follows the player, takes the swing velocity and
+// turns with the player's spin.
+static inline void PlayerHangableFollow(_zEntHangable* hang, _xEnt* ent, F32 dt)
+{
+    if (hang && hang->baseType == 0x17)
+    {
+        hang->endpos.x = ent->frame->mat.pos.x;
+        hang->endpos.y = ent->frame->mat.pos.y + ent->bound.sph.r;
+        hang->endpos.z = ent->frame->mat.pos.z;
+        hang->vel.x = globals.player.HangVel.x;
+        hang->vel.y = globals.player.HangVel.y;
+        hang->vel.z = globals.player.HangVel.z;
+        if (ent->frame->mode & 0x20)
+        {
+            hang->spin += ent->frame->drot.angle;
+        }
+        zEntHangable_SetMatrix(hang, dt);
+    }
+}
+
+// Swinging on a hangable: lets go when the hangable is disabled or the hang animation has ended; otherwise
+// pushes the swing with the stick (mag, angle), keeps the player on the rope's length around the pivot,
+// damps the swing, eases in the grab, and moves the hangable's end with the player.
+static void PlayerHangUpdate(_xEnt* ent, F32 mag, F32 angle, F32 dt)
+{
+    xAnimState* astate;
+    F32 removedot;
+    xVec3 unitHang;
+    F32 px;
+    F32 py;
+    F32 pz;
+    F32 ax;
+    F32 ay;
+    F32 az;
+
+    zEntHangable_FollowUpdate(globals.player.HangEnt);
+    astate = ent->model->Anim->Single->State;
+    if (globals.player.HangEnt->enabled <= 0 || !(astate->UserFlags & 0x20000))
+    {
+        globals.player.HangEnt->grabTimer = globals.player.HangEnt->hangInfo->grabDelay;
+        globals.player.HangEnt = NULL;
+        globals.player.RootUpTarget.x = 0.0f;
+        globals.player.RootUpTarget.y = 1.0f;
+        globals.player.RootUpTarget.z = 0.0f;
+        globals.player.HangElapsed = 0.0f;
+        globals.player.Jump_CanDouble = 1;
+        globals.player.Jump_CanFloat = 1;
+        ent->frame->vel.y = globals.player.HangVel.y;
+        return;
+    }
+
+    px = ((xMat4x3*)ent->model->Mat)->pos.x;
+    py = ((xMat4x3*)ent->model->Mat)->pos.y;
+    pz = ((xMat4x3*)ent->model->Mat)->pos.z;
+    py += ent->bound.sph.r;
+
+    ax = mag * isin(angle);
+    ay = -globals.player.HangEnt->hangInfo->gravity;
+    az = mag * icos(angle);
+    if (globals.player.HangEnt->hangInfo->flags & 1)
+    {
+        F32 mag;
+
+        ax *= 1.2f;
+        az *= 1.2f;
+        removedot = ax * globals.player.HangEnt->swingplane.x + az * globals.player.HangEnt->swingplane.z;
+        ax -= removedot * globals.player.HangEnt->swingplane.x;
+        az -= removedot * globals.player.HangEnt->swingplane.z;
+        mag = ax * ax + az * az;
+        if (mag > 1.0f)
+        {
+            mag = 1.0f / mag;
+            ax *= mag;
+            az *= mag;
+        }
+    }
+    ax *= globals.player.HangEnt->hangInfo->accel;
+    az *= globals.player.HangEnt->hangInfo->accel;
+
+    unitHang.x = px - globals.player.HangPivot.x;
+    unitHang.y = py - globals.player.HangPivot.y;
+    unitHang.z = pz - globals.player.HangPivot.z;
+    xVec3Normalize(&unitHang, &unitHang);
+
+    removedot = unitHang.x * ax + unitHang.y * ay + unitHang.z * az;
+    ax -= removedot * unitHang.x;
+    globals.player.HangVel.x += ax * dt;
+    ay -= removedot * unitHang.y;
+    globals.player.HangVel.y += ay * dt;
+    az -= removedot * unitHang.z;
+    globals.player.HangVel.z += az * dt;
+
+    removedot = unitHang.x * globals.player.HangVel.x + unitHang.y * globals.player.HangVel.y +
+                unitHang.z * globals.player.HangVel.z;
+    globals.player.HangVel.x -= removedot * unitHang.x;
+    globals.player.HangVel.y -= removedot * unitHang.y;
+    globals.player.HangVel.z -= removedot * unitHang.z;
+
+    xVec3SMul(&globals.player.HangVel, &globals.player.HangVel, 1.0f - globals.player.HangEnt->hangInfo->decay);
+    px += globals.player.HangVel.x * dt;
+    py += globals.player.HangVel.y * dt;
+    pz += globals.player.HangVel.z * dt;
+
+    unitHang.x = px - globals.player.HangPivot.x;
+    unitHang.y = py - globals.player.HangPivot.y;
+    unitHang.z = pz - globals.player.HangPivot.z;
+    xVec3Normalize(&unitHang, &unitHang);
+
+    globals.player.RootUpTarget = unitHang;
+    xVec3SMul(&globals.player.RootUpTarget, &globals.player.RootUpTarget, -1.0f);
+    globals.player.HangElapsed += dt;
+
+    xVec3SMul(&unitHang, &unitHang, globals.player.HangLength);
+    xVec3Add(&ent->frame->mat.pos, &globals.player.HangPivot, &unitHang);
+    ent->frame->mat.pos.y -= ent->bound.sph.r;
+    ent->frame->mode |= 1;
+
+    if (globals.player.HangStartLerp < 1.0f)
+    {
+        globals.player.HangStartLerp = MIN(1.0f, globals.player.HangStartLerp + 5.0f * dt);
+    }
+
+    PlayerHangableFollow(globals.player.HangEnt, ent, dt);
+}
+
 static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
 {
     U32 i;
@@ -5048,6 +5410,114 @@ static void PlayerDigUpdate(_xEnt* ent, F32 dt)
         digDelta = 0.0f;
     }
     globals.player.DigTimer = digDelta;
+}
+
+// Tilts the player's up vector (RootUpTarget) toward the floor normal while standing on a surface that
+// asks for it, within the maximum tilt; otherwise, when not hanging, relaxes it back to straight up.
+static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata)
+{
+    xVec3* eup;
+    xVec3* fup;
+    S32 grounded;
+    xSurface* surf;
+    S32 hit_it;
+    _xCollis* coll;
+    xFFXRotMatchState* rms;
+
+    rms = (xFFXRotMatchState*)fdata;
+    if (ent->collis && ent->frame)
+    {
+        coll = &ent->collis->colls[0];
+        grounded = coll->flags & 1;
+        surf = zSurfaceGetSurface(coll);
+        hit_it = grounded && surf && !surf->state && zSurfaceGetMatchOrient(surf);
+        if (hit_it)
+        {
+            xVec3 nfup;
+            xVec3 neup;
+            F32 fdecl;
+            F32 edecl;
+            xVec3 raxis;
+            F32 rang;
+            F32 dang;
+            xMat4x3 rot;
+
+            if (!rms->lgrounded)
+            {
+                rms->tmr = 0.0f;
+            }
+
+            fup = &globals.player.floor_norm;
+            eup = &globals.player.RootUpTarget;
+            xVec3Normalize(&nfup, fup);
+            xVec3Normalize(&neup, eup);
+            fdecl = acos(nfup.y);
+            edecl = acos(neup.y);
+            if (edecl < rms->max_decl || fdecl < rms->max_decl)
+            {
+                xVec3Cross(&raxis, eup, fup);
+                xVec3Normalize(&raxis, &raxis);
+                dang = acos(xVec3Dot(&nfup, &neup));
+                if (dang)
+                {
+                    rang = dt / rms->tmatch;
+                    rang = MIN(1.0f, rang);
+                    if (fdecl >= rms->max_decl)
+                    {
+                        rang = MIN(rang, (rms->max_decl - edecl) / (fdecl - edecl));
+                    }
+                    if (rang)
+                    {
+                        rang *= dang;
+                        rang -= 0.001f;
+                        xMat4x3Rot(&rot, &raxis, rang, &((xMat4x3*)ent->model->Mat)->pos);
+                        xMat3x3RMulVec(eup, (xMat3x3*)&rot, &neup);
+                        globals.player.HangElapsed = 0.0f;
+                    }
+                }
+            }
+        }
+        else if (!globals.player.HangEnt)
+        {
+            if (rms->lgrounded)
+            {
+                rms->tmr = -0.1f;
+            }
+            if (rms->tmr > 0.0f)
+            {
+                xVec3 neup;
+                xVec3 raxis;
+                F32 rang;
+                F32 dang;
+                xMat4x3 rot;
+
+                eup = &globals.player.RootUpTarget;
+                xVec3Normalize(&neup, eup);
+                raxis.x = -neup.z;
+                raxis.y = 0.0f;
+                raxis.z = neup.x;
+                dang = acos(neup.y);
+                if (dang)
+                {
+                    rang = MIN(1.0f, dt / rms->trelax);
+                    xMat4x3Rot(&rot, &raxis, rang * dang, &((xMat4x3*)ent->model->Mat)->pos);
+                    xMat3x3RMulVec(eup, (xMat3x3*)&rot, &neup);
+                    globals.player.HangElapsed = 0.0f;
+                }
+            }
+        }
+
+        if ((F32)fabs(globals.player.RootUpTarget.y - 1.0f) < 0.00001f)
+        {
+            globals.player.RootUpTarget.y = 1.0f;
+            globals.player.RootUpTarget.x = 0.0f;
+            globals.player.RootUpTarget.z = 0.0f;
+            globals.player.HangElapsed = 0.0f;
+        }
+
+        rms->tmr += dt;
+        rms->lgrounded = hit_it;
+    }
 }
 
 void zEntPlayer_StoreCheckPoint(F32* toParam)
