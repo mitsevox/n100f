@@ -18,16 +18,10 @@
 #include "zEntPlayer.h"
 #include "zGlobals.h"
 #include "zParEmitter.h"
+#include "zEntSimpleObj.h"
 #include "zScene.h"
 
 struct _zUI;
-struct p2SimpleObjAsset;
-
-struct _zEntSimpleObj : _zEnt
-{
-    p2SimpleObjAsset* sasset;
-    U32 sflags;
-};
 
 struct _tagKeyShake
 {

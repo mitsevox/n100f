@@ -24,5 +24,6 @@ extern eGameMode gGameMode;
 
 S32 zGameModeGet();
 S32 zGameStateGet();
+void zGameStateSwitch(S32 theNewState);
 
 #endif
