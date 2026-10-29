@@ -17,6 +17,7 @@
 #include "xstransvc.h"
 #include "xutil.h"
 #include "xVec3Inlines.h"
+#include "zEntBubble.h"
 #include "zEntPickup.h"
 #include "zEntPlayer.h"
 #include "zEntShaggy.h"
@@ -29,6 +30,7 @@
 #include "zParEmitter.h"
 #include "zScene.h"
 #include "zSFX.h"
+#include "rpworld.h"
 
 #include <math.h>
 #include <string.h>
@@ -276,6 +278,26 @@ struct st_ZVIL_NPCTYPE_LOOKUP
     U8 flg_penby;
 };
 
+// Scene and entity IDs for villains that should not drop bonus items.
+struct st_ZVIL_BONUS_EXCLUSION
+{
+    U32 scene;
+    U32 id;
+};
+
+static st_ZVIL_BONUS_EXCLUSION g_bonusExclusions[] = {
+    { 0x43303036, 0x449DB5F4 }, { 0x4F303031, 0xE8EA9736 },
+    { 0x4F303031, 0x120782D1 }, { 0x4F303031, 0xBD63DC69 },
+    { 0x4F303031, 0xD93EE089 }, { 0x57303233, 0x7BCB3A79 },
+    { 0x57303233, 0xECF98FF8 }, { 0x57303233, 0x7BCB3A7A },
+    { 0x57303233, 0x7BCB3A7B }, { 0x57303233, 0x7BCB3A7C },
+    { 0x57303233, 0x7BCB3A7D }, { 0x57303233, 0xECF98FF9 },
+    { 0x57303233, 0xECF98FFA }, { 0x57303233, 0x3B9E586B },
+    { 0x57303233, 0xECF98FFB }, { 0x57303233, 0xECF98FFC },
+    { 0x57303233, 0x7BCB3A7E }, { 0x57303233, 0x7BCB3A7F },
+    { 0x57303233, 0x7BCB3A80 }, { 0, 0 },
+};
+
 
 static xAnimTable* VANM_mktable_STD();
 static xAnimTable* VANM_mktable_GANG();
@@ -326,9 +348,36 @@ static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
 
 static void zVIL_tag_verts(st_zEntVillain* ent);
 static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt);
+static void zVIL_apply_vilcfg(st_zEntVillain* ent, st_ZVIL_CONFIG_REFERENCE* cfg);
 static void zVIL_apply_move(st_zEntVillain* ent, _xScene* scn, F32 dt, _xEntFrame* frame);
 static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt);
 static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS pid, void* vv);
+static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata);
+static void VCFG_readAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata);
+static S32 zVIL_elcb_event(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
+static void zVIL_elcb_update(_xEnt* ent, _xScene* scn, F32 dt);
+static void zVIL_elcb_bupdate(_xEnt* ent, _xVec3* pos);
+static void zVIL_elcb_move(_xEnt* ent, _xScene* scn, F32 dt, _xEntFrame* frame);
+static void VILN_KookRender(_xEnt* ent);
+void zEntVillain_InitDep(st_zEntVillain* ent, zScene* sc);
+static void zVIL_setup_npcTable();
+static S32 VPRJ_BBK_attach(zEntProjectile* prj);
+static void VPRJ_BBK_detach(zEntProjectile* prj);
+static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BBK_prjmove(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
+static S32 VPRJ_BGG_attach(zEntProjectile* prj);
+static void VPRJ_BGG_detach(zEntProjectile* prj);
+static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
+static S32 VPRJ_BRB_attach(zEntProjectile* prj);
+static void VPRJ_BRB_detach(zEntProjectile* prj);
+static S32 VPRJ_BRB_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BRB_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
+static S32 VPRJ_BMM_attach(zEntProjectile* prj);
+static void VPRJ_BMM_detach(zEntProjectile* prj);
+static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
 static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt);
 static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplicit, S32 flg_vsnd,
                        F32 dist);
@@ -502,6 +551,166 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
     }
     return hit_something;
 }
+static S32 VILN_BBK_animtran(st_zEntVillain*, xAnimTransition*, xAnimSingle*);
+static S32 VILN_BBK_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BBK_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_BBK_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_BBK_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BBK_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_BBK_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_BBK_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BBK_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BBK_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BBK_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_BGG_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BGG_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_BGG_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_BGG_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BGG_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_BGG_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_BGG_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BGG_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BGG_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BGG_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_BMM_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BMM_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_BMM_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_BMM_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BMM_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_BMM_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_BMM_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BMM_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BMM_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BMM_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_BRB_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BRB_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_BRB_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_BRB_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BRB_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_BRB_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_BRB_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BRB_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BRB_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_BRB_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_BRB_xtrarend(st_zEntVillain*);
+static S32 VILN_crit_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_crit_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_crit_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_crit_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_crit_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_crit_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_crit_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_crit_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_crit_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_crit_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_gang_animtran(st_zEntVillain*, xAnimTransition*, xAnimSingle*);
+static S32 VILN_gang_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_gang_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_gang_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_gang_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_gang_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_gang_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_gang_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_gang_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_gang_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_gang_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_kp_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_kp_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_shagM_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shagM_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_shagM_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_shagM_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shagM_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_shagM_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_shagM_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shagM_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shagM_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shagM_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_shag_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shag_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_shag_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_shag_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shag_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_shag_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_shag_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shag_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shag_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shag_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_sham_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_sham_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_sham_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_sham_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_sham_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_sham_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_sham_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_sham_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_sham_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_sham_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+static S32 VILN_shark_aware(st_zEntVillain*, _xScene*, F32, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shark_calcmove(st_zEntVillain*, _xScene*, F32, const _xEntFrame*);
+static S32 VILN_shark_flag(st_zEntVillain*, en_ZVIL_FLAG_GROUPS, en_BEHAVIOUR_GOAL);
+static S32 VILN_shark_notice(st_zEntVillain*, en_ZVIL_NOTICE, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shark_pickanim(st_zEntVillain*, en_BEHAVIOUR_GOAL, en_ZVIL_GOAL_SPOT);
+static S32 VILN_shark_query(st_zEntVillain*, en_ZVIL_QUERY);
+static S32 VILN_shark_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shark_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shark_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
+static S32 VILN_shark_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
+
+// Handler functions indexed by villain subtype; the final row is the sentinel.
+static st_ZVIL_NPC_HANDLERFUNCS g_npcFuncs[51] = {
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_shark_flag, VILN_shark_query, VILN_shark_sysevent, VILN_shark_notice, VILN_shark_aware, VILN_shark_stimulus, VILN_shark_trangoal, VILN_shark_calcmove, VILN_shark_respond, VILN_shark_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_kp_query, VILN_std_sysevent, VILN_std_notice, VILN_kp_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shagM_flag, VILN_shagM_query, VILN_shagM_sysevent, VILN_shagM_notice, VILN_shagM_aware, VILN_shagM_stimulus, VILN_shagM_trangoal, VILN_shagM_calcmove, VILN_shagM_respond, VILN_shagM_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, VILN_gang_animtran, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_BBK_flag, VILN_BBK_query, VILN_BBK_sysevent, VILN_BBK_notice, VILN_BBK_aware, VILN_BBK_stimulus, VILN_BBK_trangoal, VILN_BBK_calcmove, VILN_BBK_respond, VILN_BBK_pickanim, VILN_BBK_animtran, 0 },
+    { 1, VILN_BGG_flag, VILN_BGG_query, VILN_BGG_sysevent, VILN_BGG_notice, VILN_BGG_aware, VILN_BGG_stimulus, VILN_BGG_trangoal, VILN_BGG_calcmove, VILN_BGG_respond, VILN_BGG_pickanim, 0, 0 },
+    { 1, VILN_BRB_flag, VILN_BRB_query, VILN_BRB_sysevent, VILN_BRB_notice, VILN_BRB_aware, VILN_BRB_stimulus, VILN_BRB_trangoal, VILN_BRB_calcmove, VILN_BRB_respond, VILN_BRB_pickanim, 0, VILN_BRB_xtrarend },
+    { 1, VILN_BMM_flag, VILN_BMM_query, VILN_BMM_sysevent, VILN_BMM_notice, VILN_BMM_aware, VILN_BMM_stimulus, VILN_BMM_trangoal, VILN_BMM_calcmove, VILN_BMM_respond, VILN_BMM_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+};
 
 // Play flags and start delay of each villain sound type, ended by VSND_LISTEND.
 static st_NPC_SOUND_PROPERTIES g_sndProps[36] = {
@@ -820,6 +1029,686 @@ static S32 g_scene_is_a_boss_battle;
 // A block of scratch memory the villain system keeps from startup.
 static char* g_datablock;
 
+// Start the villain system once and register its four boss projectile categories.
+// Fill each subtype's behavior flags and supply standard handlers where no handler set exists.
+static void zVIL_setup_npcTable()
+{
+    en_NPC_PERSONALITIES personality = ZVIL_PERSON_NORMAL;
+    U32 ability, abl_atak, abl_dtct, abl_move, abl_spyk, abl_vuln;
+    U32 physics, chk, pen, chkby, penby;
+    for (S32 i = 0; i < eEntVillainType_NoMore; i++)
+    {
+        switch (i)
+        {
+        case eEntVillainTypeBat:
+        {
+            ability = 0x22804A;
+            abl_atak = 0x10003;
+            abl_dtct = 0x80;
+            abl_move = 0xC031BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x3F9E7;
+            personality = ZVIL_PERSON_WIMP;
+            physics = 0x1B;
+            chk = 0x10;
+            pen = 0x10;
+            chkby = 0x10;
+            penby = 0x10;
+            break;
+        }
+        case eEntVillainTypeBlackKnight:
+        {
+            ability = 0x20014B;
+            abl_atak = 0x40001;
+            abl_dtct = 0x1;
+            abl_move = 0x2137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x9;
+            personality = ZVIL_PERSON_AGGRESSIVE;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeBuckMasters:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeCreeper:
+        {
+            ability = 0x281FCA;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeSeaCreature:
+        {
+            ability = 0x281FCA;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeGargoyle:
+        {
+            ability = 0x2A1F4A;
+            abl_atak = 0x40001;
+            abl_dtct = 0x800000B1;
+            abl_move = 0x31BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x1F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1B;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeGhost:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x10003;
+            abl_dtct = 0x80;
+            abl_move = 0x4313F;
+            abl_spyk = 0x0;
+            abl_vuln = 0x61;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1B;
+            chk = 0x2E;
+            pen = 0x0;
+            chkby = 0x1C;
+            penby = 0x0;
+            break;
+        }
+        case eEntVillainTypeGhostDiver:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x20001;
+            abl_dtct = 0x80;
+            abl_move = 0x213F;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeGreenGhost:
+        {
+            ability = 0x20014B;
+            abl_atak = 0x40001;
+            abl_dtct = 0x1;
+            abl_move = 0x43137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x9;
+            personality = ZVIL_PERSON_AGGRESSIVE;
+            physics = 0x1B;
+            chk = 0x2E;
+            pen = 0x0;
+            chkby = 0x1C;
+            penby = 0x0;
+            break;
+        }
+        case eEntVillainTypeHeadlessSpecter:
+        {
+            ability = 0x299F4A;
+            abl_atak = 0x20001;
+            abl_dtct = 0x80;
+            abl_move = 0x213F;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypePhantom:
+        {
+            ability = 0x2001C3;
+            abl_atak = 0x40001;
+            abl_dtct = 0x1;
+            abl_move = 0x137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x109;
+            personality = ZVIL_PERSON_AGGRESSIVE;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeRedbeard:
+        {
+            ability = 0x20014B;
+            abl_atak = 0x80001;
+            abl_dtct = 0x1;
+            abl_move = 0x2137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x9;
+            personality = ZVIL_PERSON_AGGRESSIVE;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeRobot:
+        {
+            ability = 0x281FCA;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x8001F8E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeScarecrow:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x20001;
+            abl_dtct = 0x80;
+            abl_move = 0x213F;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeShark:
+        {
+            ability = 0x20000A;
+            abl_atak = 0x0;
+            abl_dtct = 0x0;
+            abl_move = 0x0;
+            abl_spyk = 0x0;
+            abl_vuln = 0x0;
+            personality = ZVIL_PERSON_WIMP;
+            physics = 0x0;
+            chk = 0x20;
+            pen = 0x20;
+            chkby = 0x0;
+            penby = 0x0;
+            break;
+        }
+        case eEntVillainTypeSpaceKook:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x80001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeTarMonster:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x40001;
+            abl_dtct = 0xB1;
+            abl_move = 0x29BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x4005F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeWitch:
+        {
+            ability = 0x2A1F4A;
+            abl_atak = 0x80001;
+            abl_dtct = 0x800000B1;
+            abl_move = 0x31BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x1F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1B;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeWitchDoctor:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x40001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeWolfman:
+        {
+            ability = 0x20014A;
+            abl_atak = 0x20001;
+            abl_dtct = 0x80;
+            abl_move = 0x213F;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeZombie:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeCrab:
+        {
+            ability = 0x2080CA;
+            abl_atak = 0x0;
+            abl_dtct = 0x80;
+            abl_move = 0x613F;
+            abl_spyk = 0x0;
+            abl_vuln = 0x40107;
+            personality = ZVIL_PERSON_WIMP;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeRat:
+        {
+            ability = 0x20804A;
+            abl_atak = 0x0;
+            abl_dtct = 0x80;
+            abl_move = 0x20213F;
+            abl_spyk = 0x0;
+            abl_vuln = 0x601E7;
+            personality = ZVIL_PERSON_WIMP;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeFlyingFish:
+        {
+            ability = 0x20804A;
+            abl_atak = 0x0;
+            abl_dtct = 0x80;
+            abl_move = 0x10253F;
+            abl_spyk = 0x0;
+            abl_vuln = 0x201E7;
+            personality = ZVIL_PERSON_WIMP;
+            physics = 0x1B;
+            chk = 0x10;
+            pen = 0x10;
+            chkby = 0x10;
+            penby = 0x10;
+            break;
+        }
+        case eEntVillainTypeSpider:
+        {
+            ability = 0x22804A;
+            abl_atak = 0x0;
+            abl_dtct = 0x80;
+            abl_move = 0xA13F;
+            abl_spyk = 0x0;
+            abl_vuln = 0x601E3;
+            personality = ZVIL_PERSON_WIMP;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeHand:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x31BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x0;
+            personality = ZVIL_PERSON_WIMP;
+            physics = 0x1B;
+            chk = 0x2E;
+            pen = 0x0;
+            chkby = 0x1C;
+            penby = 0x0;
+            break;
+        }
+        case eEntVillainTypeKillerPlant:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x80001;
+            abl_dtct = 0x81;
+            abl_move = 0x2012;
+            abl_spyk = 0x0;
+            abl_vuln = 0x0;
+            personality = ZVIL_PERSON_WIMP;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeBird:
+        {
+            ability = 0x22804A;
+            abl_atak = 0x10003;
+            abl_dtct = 0x80;
+            abl_move = 0x40313F;
+            abl_spyk = 0x0;
+            abl_vuln = 0x1F807;
+            personality = ZVIL_PERSON_WIMP;
+            physics = 0x1B;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainTypeShaggy0:
+        case eEntVillainTypeShaggy1:
+        case eEntVillainTypeShaggy2:
+        case eEntVillainTypeShaggy3:
+        case eEntVillainTypeShaggy4:
+        case eEntVillainTypeShaggy5:
+        case eEntVillainTypeShaggy6:
+        case eEntVillainTypeShaggy7:
+        case eEntVillainTypeShaggy8:
+        case eEntVillainTypeShaggy9:
+        case eEntVillainTypeFred:
+        case eEntVillainTypeDaphne:
+        case eEntVillainTypeVelma:
+        case eEntVillainHolly:
+        case eEntVillainGroundsKeeper:
+        case eEntVillainProfessor:
+        {
+            ability = 0x48004;
+            abl_atak = 0x0;
+            abl_dtct = 0x1;
+            abl_move = 0x2137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x0;
+            personality = ZVIL_PERSON_SCOOBYGANG;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainBossBlackKnight:
+        {
+            ability = 0x20014B;
+            abl_atak = 0x40001;
+            abl_dtct = 0x1;
+            abl_move = 0x2137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x9;
+            if (personality == ZVIL_PERSON_NORMAL) personality = ZVIL_PERSON_BOSS;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainBossGreenGhost:
+        {
+            ability = 0x20014B;
+            abl_atak = 0x40001;
+            abl_dtct = 0x1;
+            abl_move = 0x43137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x9;
+            if (personality == ZVIL_PERSON_NORMAL) personality = ZVIL_PERSON_BOSS;
+            physics = 0x1B;
+            chk = 0x2E;
+            pen = 0x0;
+            chkby = 0x1C;
+            penby = 0x0;
+            break;
+        }
+        case eEntVillainBossRedbeard:
+        {
+            ability = 0x20014B;
+            abl_atak = 0x80001;
+            abl_dtct = 0x1;
+            abl_move = 0x2137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x9;
+            if (personality == ZVIL_PERSON_NORMAL) personality = ZVIL_PERSON_BOSS;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainBossMastermind:
+        {
+            ability = 0x2001C3;
+            abl_atak = 0x40001;
+            abl_dtct = 0x1;
+            abl_move = 0x137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x109;
+            if (personality == ZVIL_PERSON_NORMAL) personality = ZVIL_PERSON_BOSS;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        case eEntVillainCaptainMoody:
+        {
+            ability = 0x281F4A;
+            abl_atak = 0x10001;
+            abl_dtct = 0xB1;
+            abl_move = 0x431BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x1F987;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1B;
+            chk = 0x2E;
+            pen = 0x8;
+            chkby = 0x1C;
+            penby = 0x8;
+            break;
+        }
+        case eEntVillainCaveMan:
+        {
+            ability = 0x281FCA;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        default:
+        {
+            ability = 0x81F40;
+            abl_atak = 0x0;
+            abl_dtct = 0x80;
+            abl_move = 0x2;
+            abl_spyk = 0x40;
+            abl_vuln = 0x1F800;
+            personality = ZVIL_PERSON_NORMAL;
+            physics = 0x1F;
+            chk = 0x2E;
+            pen = 0x6E;
+            chkby = 0x1C;
+            penby = 0x1C;
+            break;
+        }
+        }
+        if (abl_move & 0x40000) pen &= ~0x40;
+        if (abl_move & 0x400) pen &= ~0x20;
+        st_ZVIL_NPCTYPE_LOOKUP* type = &g_npcTable[i];
+        type->typ_person = personality;
+        type->flg_physics = physics;
+        type->flg_chk = chk;
+        type->flg_pen = pen;
+        type->flg_chkby = chkby;
+        type->flg_penby = penby;
+        type->ability = ability;
+        type->abl_atak = abl_atak;
+        type->abl_dtct = abl_dtct;
+        type->abl_move = abl_move;
+        type->abl_spyk = abl_spyk;
+        type->abl_vuln = abl_vuln;
+        st_ZVIL_NPC_HANDLERFUNCS* handlers = &g_npcFuncs[i];
+        if (!(handlers->flg_funcs & 0x1))
+        {
+            handlers->flg_funcs |= 0x2;
+            handlers->flags = VILN_std_flag;
+            handlers->query = VILN_std_query;
+            handlers->sysevent = VILN_std_sysevent;
+            handlers->notice = VILN_std_notice;
+            handlers->aware = VILN_std_aware;
+            handlers->stimulus = VILN_std_stimulus;
+            handlers->trangoal = VILN_std_trangoal;
+            handlers->calcmove = VILN_std_calcmove;
+            handlers->respond = VILN_std_respond;
+            handlers->pickanim = VILN_std_pickanim;
+        }
+    }
+}
+
+
+S32 zEntVillain_Startup()
+{
+    if (g_npcinit++) return g_npcinit;
+    g_datablock = (char*)xMemAlloc(gActiveHeap, 0x20000);
+    memset(g_datablock, 0, 0x20000);
+
+    S32 i = 0;
+    while (g_npcTable[i].enabled) i++;
+    i = 0;
+    while (g_npcFuncs[i].flg_funcs & 0x1) i++;
+    i = 0;
+    while (g_animname[i]) i++;
+    for (i = 0; i < ZVIL_ANIM_NOMORE; i++) g_anamhash[i] = xStrHash(g_animname[i]);
+    zVIL_setup_npcTable();
+    for (i = 0; i < ZVIL_ANIM_NOMORE; i++) g_anamhash[i] = xStrHash(g_animname[i]);
+
+    st_ZPRJ_CATEGORY_FUNCS bk = { 1, VPRJ_BBK_attach, VPRJ_BBK_detach, VPRJ_BBK_logix,
+                                   VPRJ_BBK_prjmove, VPRJ_BBK_notify, NULL,
+                                   zEntProjectile_gen_aimer, NULL, NULL };
+    st_ZPRJ_CATEGORY_FUNCS gg = { 1, VPRJ_BGG_attach, VPRJ_BGG_detach, VPRJ_BGG_logix,
+                                   NULL, VPRJ_BGG_notify, NULL, zEntProjectile_gen_aimer,
+                                   NULL, NULL };
+    st_ZPRJ_CATEGORY_FUNCS rb = { 1, VPRJ_BRB_attach, VPRJ_BRB_detach, VPRJ_BRB_logix,
+                                   NULL, VPRJ_BRB_notify, NULL, zEntProjectile_gen_aimer,
+                                   NULL, NULL };
+    st_ZPRJ_CATEGORY_FUNCS mm = { 1, VPRJ_BMM_attach, VPRJ_BMM_detach, VPRJ_BMM_logix,
+                                   NULL, VPRJ_BMM_notify, NULL, zEntProjectile_gen_aimer,
+                                   NULL, NULL };
+    st_ZPRJ_CATEGORY_PROPS bkprops = { 0x3D, 3, 0x3F, 0, 0, 0 };
+    st_ZPRJ_CATEGORY_PROPS ggprops = { 0x30000031, 3, 0x3F, 0x3F, 0, 0 };
+    st_ZPRJ_CATEGORY_PROPS rbprops = { 0x3D, 3, 0x14, 0x3F, 0, 0 };
+    st_ZPRJ_CATEGORY_PROPS mmprops = { 0x3000003D, 3, 0x3F, 0x3F, 0, 0 };
+    zEntProjectile_addCat(ZPRJ_CAT_BKAXE, &bk);
+    zEntProjectile_addProps(ZPRJ_CAT_BKAXE, &bkprops);
+    zEntProjectile_addCat(ZPRJ_CAT_GGSHOCK, &gg);
+    zEntProjectile_addProps(ZPRJ_CAT_GGSHOCK, &ggprops);
+    zEntProjectile_addCat(ZPRJ_CAT_RBSWORD, &rb);
+    zEntProjectile_addProps(ZPRJ_CAT_RBSWORD, &rbprops);
+    zEntProjectile_addCat(ZPRJ_CAT_MMFLASK, &mm);
+    zEntProjectile_addProps(ZPRJ_CAT_MMFLASK, &mmprops);
+    return g_npcinit;
+}
+
 // Counts down one start of the villain system and returns how many remain.
 S32 zEntVillain_Shutdown()
 {
@@ -926,6 +1815,87 @@ st_zEntVillain* zEntVillain_MemPool(U32 npccnt)
     return g_npcpool;
 }
 
+// Initialize a villain entity and select the handlers and settings for its subtype.
+void zEntVillain_Init(st_zEntVillain* ent, p2EntAsset* asset)
+{
+    zEntInit(ent, asset, 0x4E504320);
+    ent->eventFunc = zVIL_elcb_event;
+    ent->update = zVIL_elcb_update;
+    ent->bupdate = zVIL_elcb_bupdate;
+    ent->move = zVIL_elcb_move;
+    ent->bound2.type = 1;
+    if (ent->linkCount)
+        ent->link = (p2LinkAsset*)((p2EntVillainAsset*)(ent->asset + 1) + 1);
+    else
+        ent->link = NULL;
+    ent->vhf = &g_npcFuncs[ent->asset->subtype];
+    ent->vilcfg.asset = ent->asset;
+    ent->vilcfg.vilp2ass = (p2EntVillainAsset*)(ent->asset + 1);
+    VCFG_readParms(&ent->vilcfg);
+    VCFG_readAsset(&ent->vilcfg);
+    ent->ability = g_npcTable[ent->asset->subtype].ability;
+    ent->abl_atak = g_npcTable[ent->asset->subtype].abl_atak;
+    ent->abl_dtct = g_npcTable[ent->asset->subtype].abl_dtct;
+    ent->abl_move = g_npcTable[ent->asset->subtype].abl_move;
+    ent->abl_spyk = g_npcTable[ent->asset->subtype].abl_spyk;
+    ent->abl_vuln = g_npcTable[ent->asset->subtype].abl_vuln;
+    ent->chkby = ent->vhf->flags(ent, ZVIL_FGRP_CHKBY, ZVIL_GOAL_NONE);
+    ent->penby = ent->vhf->flags(ent, ZVIL_FGRP_PENBY, ZVIL_GOAL_NONE);
+    ent->collis->chk = ent->vhf->flags(ent, ZVIL_FGRP_CHK, ZVIL_GOAL_NONE);
+    ent->collis->pen = ent->vhf->flags(ent, ZVIL_FGRP_PEN, ZVIL_GOAL_NONE);
+    ent->pflags = ent->vhf->flags(ent, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+    ent->typ_person = g_npcTable[ent->asset->subtype].typ_person;
+    if (ent->flg_misc & 0x8)
+        VCFG_getParm(&ent->vilcfg, ZVIL_PARM_MDLSCL_BASE, &ent->asset->scale);
+    xEntReset(ent);
+    ent->frame->rot.axis = g_Y3;
+    ent->frame->rot.angle = ent->asset->ang.x;
+    ent->pos_guard_home = *xEntGetPos(ent);
+    xSceneID2Name(globals.sceneCur, ent->id);
+    if (ent->subType == eEntVillainTypeSpaceKook) ent->render = VILN_KookRender;
+}
+
+// Reset the villain's state and rebuild its scene-dependent configuration.
+extern "C" void fn_800A8CB8(st_zEntVillain* ent, zScene* sc)
+{
+    xEntReset(ent);
+    memset(&ent->vhf, 0, sizeof(st_zEntVillain) - sizeof(_zEnt));
+    ent->eventFunc = zVIL_elcb_event;
+    ent->update = zVIL_elcb_update;
+    ent->bupdate = zVIL_elcb_bupdate;
+    ent->move = zVIL_elcb_move;
+    ent->bound2.type = 1;
+    if (ent->linkCount)
+        ent->link = (p2LinkAsset*)((p2EntVillainAsset*)(ent->asset + 1) + 1);
+    else
+        ent->link = NULL;
+    ent->vhf = &g_npcFuncs[ent->asset->subtype];
+    ent->vilcfg.asset = ent->asset;
+    ent->vilcfg.vilp2ass = (p2EntVillainAsset*)(ent->asset + 1);
+    VCFG_readParms(&ent->vilcfg);
+    VCFG_readAsset(&ent->vilcfg);
+    ent->ability = g_npcTable[ent->asset->subtype].ability;
+    ent->abl_atak = g_npcTable[ent->asset->subtype].abl_atak;
+    ent->abl_dtct = g_npcTable[ent->asset->subtype].abl_dtct;
+    ent->abl_move = g_npcTable[ent->asset->subtype].abl_move;
+    ent->abl_spyk = g_npcTable[ent->asset->subtype].abl_spyk;
+    ent->abl_vuln = g_npcTable[ent->asset->subtype].abl_vuln;
+    ent->chkby = ent->vhf->flags(ent, ZVIL_FGRP_CHKBY, ZVIL_GOAL_NONE);
+    ent->penby = ent->vhf->flags(ent, ZVIL_FGRP_PENBY, ZVIL_GOAL_NONE);
+    ent->collis->chk = ent->vhf->flags(ent, ZVIL_FGRP_CHK, ZVIL_GOAL_NONE);
+    ent->collis->pen = ent->vhf->flags(ent, ZVIL_FGRP_PEN, ZVIL_GOAL_NONE);
+    ent->pflags = ent->vhf->flags(ent, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+    ent->typ_person = g_npcTable[ent->asset->subtype].typ_person;
+    if (ent->flg_misc & 0x8)
+        VCFG_getParm(&ent->vilcfg, ZVIL_PARM_MDLSCL_BASE, &ent->asset->scale);
+    xEntReset(ent);
+    ent->frame->rot.axis = g_Y3;
+    ent->frame->rot.angle = ent->asset->ang.x;
+    ent->pos_guard_home = *xEntGetPos(ent);
+    xSceneID2Name(globals.sceneCur, ent->id);
+    zEntVillain_InitDep(ent, sc);
+}
+
 // Returns the villain in slot npcidx of the pool.
 st_zEntVillain* zEntVillain_NPCInst(U32 npcidx)
 {
@@ -936,6 +1906,123 @@ st_zEntVillain* zEntVillain_NPCInst(U32 npcidx)
 void zEntVillain_Save(st_zEntVillain* ent, xSerial* xser)
 {
     VSAV_save(ent, xser);
+}
+
+// Finish setting up the villain after the scene and its move points are available.
+void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
+{
+    ent->nav_mvptlist = NULL;
+    ent->nav_prev = NULL;
+    ent->nav_next = NULL;
+    if (ent->vilcfg.vilp2ass->pathAssetID)
+    {
+        ent->nav_mvptlist = zMovePoint_From_xAssetID(ent->vilcfg.vilp2ass->pathAssetID);
+    }
+    zVIL_apply_vilcfg(ent, &ent->vilcfg);
+
+    if (ent->ability & 0x2)
+    {
+        ent->allow |= 0x800;
+    }
+    if (ent->ability & 0x2)
+    {
+        if (ent->asset->subtype == eEntVillainTypeFlyingFish)
+        {
+            ent->allow &= ~0x800;
+        }
+        else
+        {
+            st_ZVIL_BONUS_EXCLUSION* exclusion = g_bonusExclusions;
+            while (exclusion->scene)
+            {
+                if (exclusion->scene == globals.sceneCur->sceneID &&
+                    (!exclusion->id || exclusion->id == ent->id))
+                {
+                    ent->allow &= ~0x800;
+                    break;
+                }
+                exclusion++;
+            }
+        }
+    }
+
+    xAnimPlaySetState(ent->model->Anim->Single, ent->model->Anim->Table->StateList, 0.0f);
+    ent->anim_playing = 1;
+    ent->anim_playsync = 0;
+    en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN, ZVIL_ANIM_IDLE };
+    choices[0] = ZVIL_ANIM_IDLE;
+    VANM_set(ent, choices, 2, 0);
+    ent->vhf->notice(ent, ZVIL_NOTE_PREPARE, NULL);
+
+    switch (ent->vilcfg.vilp2ass->behaviorState)
+    {
+    case ZVIL_START_PREBIRTH:
+        ent->goaldflt = ZVIL_GOAL_IDLE;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_BASEINIT);
+        ent->chkby = 0;
+        ent->penby = 0;
+        ent->flags &= ~0x1;
+        break;
+    case ZVIL_START_AMBUSH:
+        ent->goaldflt = ZVIL_GOAL_AMBUSH;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_BASEINIT);
+        ent->pflags = 0;
+        ent->collis->chk = 0;
+        ent->collis->pen = 0;
+        ent->chkby = 0;
+        ent->penby = 0;
+        ent->flags &= ~0x1;
+        break;
+    case ZVIL_START_SLEEPING:
+        ent->goaldflt = ZVIL_GOAL_BORED;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_STARTUP);
+        break;
+    case ZVIL_START_DEFAULT:
+        ent->goaldflt = ZVIL_GOAL_IDLE;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_STARTUP);
+        break;
+    default:
+        ent->goaldflt = ZVIL_GOAL_IDLE;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_STARTUP);
+        break;
+    }
+
+    S32 spawnmask = 0;
+    S32 difficulty = 0;
+    S32 spawn = 1;
+    VCFG_getParm(&ent->vilcfg, ZVIL_PARM_MINDIFFICULTY, &difficulty);
+    VCFG_getParm(&ent->vilcfg, ZVIL_PARM_SPAWNMASK, &spawnmask);
+    if (difficulty < 0)
+    {
+        spawn = 0;
+        xSceneID2Name(globals.sceneCur, ent->id);
+    }
+    if ((spawnmask & globals.player.Inv_Specials) != spawnmask) spawn = 0;
+    if (!spawn) VGOL_set(ent, ZVIL_GOAL_BASEINIT);
+
+    if ((ent->asset->flags & 0x1) && ent->mode != ZVIL_MODE_SHUTDOWN)
+        ent->flags |= 0x1;
+    else
+        ent->flags &= ~0x1;
+
+    ent->nav_prev = NULL;
+    ent->nav_next = NULL;
+    if (ent->nav_mvptlist) ent->need_navpt = 1;
+    ent->flg_misc &= ~0xC0000000;
+    ent->tgt_stat = 0;
+    if (zEntIsShaggy(ent))
+    {
+        zEntShaggy_Init(ent);
+        st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_TRANGOAL };
+        stimctxt.trangoal = ent->goaldflt;
+        stimctxt.tranmode = ZVIL_MODE_NORMAL;
+        zVIL_trangoal(ent, &stimctxt, globals.update_dt);
+    }
 }
 
 // Reads the villain's state from a saved game.
@@ -1008,6 +2095,88 @@ en_ZVILLAIN_BOUNCE_RESPONSE zEntVillain_Bounce(st_zEntVillain* ent)
     return stimctxt.res_buttbounce;
 }
 
+// Send a headbutt stimulus, including its direction and the player's approach strength.
+en_ZVILLAIN_HEADBUTT_RESPONSE zEntVillain_Headbutt(st_zEntVillain* ent, _xVec3* dir)
+{
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_HEADBUTT };
+    stimctxt.res_headbutt = ZVIL_HEADBUTT_NONE;
+    if (dir)
+    {
+        F32 magnitude = xVec3Normalize(&stimctxt.dir_headbutt, dir);
+        _xVec3 towardVil = { 0.0f, 0.0f, 0.0f };
+        xVec3SMul(&towardVil, &ent->precalc.dir_VtoP, -1.0f);
+        F32 facing = xVec3Dot(&towardVil, (_xVec3*)&globals.player.ent.model->Mat->at);
+        facing = MAX(0.0f, MIN(1.0f, facing));
+        stimctxt.mag_headbutt = MAX(0.0f, facing * magnitude);
+    }
+    zVIL_input_stim(ent, ZVIL_STIM_HEADBUTT, &stimctxt);
+    if (stimctxt.res_headbutt != ZVIL_HEADBUTT_NONE &&
+        stimctxt.res_headbutt != ZVIL_HEADBUTT_DAMAGE)
+    {
+        VPAR_emit_partype(ent, VPAR_EMIT_HEADBUTT, globals.update_dt);
+    }
+    if (ent->ability & 0x4)
+    {
+        zEntPlayer_Notify(31);
+    }
+    if (ent->goal == ZVIL_GOAL_DIE)
+    {
+        if ((ent->ability & 0x200000) && (g_npcTable[ent->asset->subtype].ability & 0x200000) &&
+            (g_npcTable[ent->asset->subtype].abl_vuln & 0x4))
+        {
+            g_stattally[ent->asset->subtype].cnt_killed++;
+            g_stattally[eEntVillainType_NoMore].cnt_killed++;
+        }
+        if (ent->allow & 0x800)
+        {
+            VBON_drop_bonusItem(ent);
+        }
+    }
+    return stimctxt.res_headbutt;
+}
+
+// Send the bubble's stimulus and play the effect associated with the villain's response.
+en_ZVILLAIN_BUBBLE_RESPONSE zEntVillain_Bubble(st_zEntVillain* ent, _zEntBubble* bub)
+{
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_NONE };
+    stimctxt.res_bubble = ZVIL_BUBBLE_NONE;
+    switch (bub->subType)
+    {
+    case 1:
+        stimctxt.stim = ZVIL_STIM_SOAPED;
+        stimctxt.bubble = bub;
+        zVIL_input_stim(ent, ZVIL_STIM_SOAPED, &stimctxt);
+        if (stimctxt.res_bubble == ZVIL_BUBBLE_BREAK)
+        {
+            VPAR_emit_partype(ent, VPAR_EMIT_POPSOAP, globals.update_dt);
+            VSND_queueSound(ent, VSND_TYP_SOAPSTOP);
+        }
+        else if (stimctxt.res_bubble != ZVIL_BUBBLE_NONE)
+        {
+            zLaughNotify(11);
+            VSND_queueSound(ent, VSND_TYP_SOAPBEGIN);
+        }
+        break;
+    case 0:
+        stimctxt.stim = ZVIL_STIM_GUMMED;
+        stimctxt.bubble = bub;
+        zVIL_input_stim(ent, ZVIL_STIM_GUMMED, &stimctxt);
+        if (stimctxt.res_bubble == ZVIL_BUBBLE_BREAK)
+        {
+            VPAR_emit_partype(ent, VPAR_EMIT_POPGUM, globals.update_dt);
+            VSND_queueSound(ent, VSND_TYP_GUMSTOP);
+        }
+        else if (stimctxt.res_bubble != ZVIL_BUBBLE_NONE)
+        {
+            zLaughNotify(10);
+            VSND_queueSound(ent, VSND_TYP_GUMBEGIN);
+        }
+        break;
+    }
+    if (ent->ability & 0x4) zEntPlayer_Notify(31);
+    return bub->subType == 0 ? ZVIL_BUBBLE_BREAK : stimctxt.res_bubble;
+}
+
 // Tells the villain something bumped into it and returns how its type responded.
 en_ZVILLAIN_BUMPED_RESPONSE zEntVillain_Bumped(st_zEntVillain* ent, const _xCollis* colrec)
 {
@@ -1033,6 +2202,126 @@ void zEntVillain_Stun(st_zEntVillain* ent, F32 strength)
     stimctxt.amt_stun = MAX(strength, 0.1f);
     zVIL_input_stim(ent, ZVIL_STIM_STUNNING, &stimctxt);
     zLaughNotify(12);
+}
+
+// Answer the standard villain's movement, detection and player-awareness queries.
+static S32 VILN_std_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+    switch (query)
+    {
+    case ZVIL_Q_DOUPDATE:
+        return 1;
+    case ZVIL_Q_ALIVE:
+        return vil->mode >= ZVIL_MODE_NORMAL;
+    case ZVIL_Q_ASLEEP:
+        return vil->goal == ZVIL_GOAL_BORED && (vil->ability & 0x20000);
+    case ZVIL_Q_PITFALL:
+    case ZVIL_Q_RUNAWAY:
+        return 0;
+    case ZVIL_Q_HAVEANCHOR:
+        if (vil->ability & 0x1) return 0;
+        if (!(vil->allow & 0x80) || !(vil->allow & 0x40)) return 0;
+        return (vil->flg_misc & 0x80000000) != 0;
+    case ZVIL_Q_HAVEGUARDPOS:
+        if (vil->ability & 0x1) return 0;
+        return (vil->flg_misc & 0x40000000) != 0;
+    case ZVIL_Q_DOFOLLOW:
+        if (vil->ability & 0x1) return 0;
+        if (!(vil->abl_move & 0x1) || !(vil->abl_move & 0x100)) return 0;
+        if (vil->flg_misc & 0x10000000) return 1;
+        if (vil->flg_misc & 0x20000000) return 1;
+        return 0;
+    case ZVIL_Q_NEEDNAV:
+        if (!vil->vhf->query(vil, ZVIL_Q_CANPATROL)) return 0;
+        if (!vil->need_navpt) return 0;
+        if (vil->nav_next && !(vil->tmr_list[ZVIL_TTIL_CHKFORNAV] <= 0.0f)) return 0;
+        return 1;
+    case ZVIL_Q_HAVENAV:
+        return !vil->need_navpt && vil->nav_next && zMovePointIsOn(vil->nav_next);
+    case ZVIL_Q_CANGUARD:
+        return (vil->abl_move & 0x10) && (vil->allow & 0x2);
+    case ZVIL_Q_CANPATROL:
+        if (!(vil->allow & 0x1) || !(vil->abl_move & 0x20) || !(vil->abl_move & 0x4)) return 0;
+        if (!(vil->tmr_list[ZVIL_TDUR_NAVDELAY] <= 0.0f) || !vil->nav_mvptlist) return 0;
+        return 1;
+    case ZVIL_Q_CANCHASE:
+        if (!vil->vhf->query(vil, ZVIL_Q_CANDETECT)) return 0;
+        if (!(vil->abl_move & 0x1) || !(vil->abl_move & 0x80) || !(vil->allow & 0x10)) return 0;
+        return 1;
+    case ZVIL_Q_CANPURSUE:
+        if (vil->ability & 0x1) return 0;
+        if (g_scene_is_a_boss_battle > 2) return 1;
+        if (!vil->vhf->query(vil, ZVIL_Q_CANCHASE)) return 0;
+        if (!vil->vhf->query(vil, ZVIL_Q_PLYRSEEN)) return 0;
+        if ((prec->flg_xtra & 0x1) && !(vil->abl_move & 0x1000) && !(vil->abl_move & 0x400)) return 0;
+        if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+        {
+            if (prec->ds2_anchor < vil->ds2_pursue) return 1;
+            if (prec->ds2_plyrToAnchor < vil->ds2_pursue) return 1;
+            if (prec->flg_plyr & 0x400) return 1;
+            return 0;
+        }
+        return 1;
+    case ZVIL_Q_CANATTACK:
+        if ((vil->ability & 0x1) && (vil->allow & 0x8)) return 1;
+        if (!(vil->allow & 0x8)) return 0;
+        if (!vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR)) return 0;
+        if (!(prec->flg_plyr & 0x1)) return 0;
+        if ((vil->abl_move & 0x80) && !(prec->flg_plyr & 0x8)) return 0;
+        if (!(prec->flg_plyr & 0x4)) return 0;
+        if (!vil->vhf->query(vil, ZVIL_Q_CANDETECT)) return 0;
+        if (vil->asset->subtype == eEntVillainTypeSpaceKook &&
+            !(fabsf(vil->frame->rot.angle - prec->ang_VtoP) <= 0.34f)) return 0;
+        return 1;
+    case ZVIL_Q_CANDETECT:
+        return (vil->abl_dtct & 0x1) && (vil->allow & 0x4);
+    case ZVIL_Q_PLYRTOOCLOSE:
+        return 0;
+    case ZVIL_Q_PLYRNEAR:
+        if (vil->ability & 0x1) return 1;
+        if (!(prec->plyr_mvinf & 0x100) && (prec->flg_plyr & 0x1)) return 1;
+        return (prec->flg_plyr & 0x1) != 0;
+    case ZVIL_Q_PLYRINFOV:
+        return (prec->flg_plyr & 0x4) != 0;
+    case ZVIL_Q_PLYRINLOS:
+        return (prec->flg_plyr & 0x8) != 0;
+    case ZVIL_Q_CANSEEPLYR:
+        if (vil->ability & 0x1) return 1;
+        if (!vil->vhf->query(vil, ZVIL_Q_CANDETECT)) return 0;
+        if (g_scene_is_a_boss_battle > 2 && (prec->flg_plyr & 0x8)) return 1;
+        if (!(vil->abl_dtct & 0x10)) return 0;
+        if (!(prec->flg_plyr & 0x1) || !(prec->flg_plyr & 0x4) || !(prec->flg_plyr & 0x8)) return 0;
+        if (vil->vhf->query(vil, ZVIL_Q_ASLEEP)) return 0;
+        if (prec->plyr_mvinf & 0x800) return 0;
+        if (prec->plyr_mvinf & 0x1000) return 0;
+        if ((prec->plyr_mvinf & 0x400) && !(prec->flg_plyr & 0x1)) return 0;
+        return 1;
+    case ZVIL_Q_CANHEARPLYR:
+        if (vil->ability & 0x1) return 1;
+        if (!vil->vhf->query(vil, ZVIL_Q_CANDETECT)) return 0;
+        if (g_scene_is_a_boss_battle > 2) return 0;
+        if (!(vil->abl_dtct & 0x20) || !(prec->flg_plyr & 0x1)) return 0;
+        if (prec->plyr_mvinf & 0x400) return 0;
+        if (prec->plyr_mvinf & 0x800) return 0;
+        if (prec->plyr_mvinf & 0x1000) return 0;
+        return 1;
+    case ZVIL_Q_PLYRSEEN:
+        if (vil->ability & 0x1) return 1;
+        if (g_scene_is_a_boss_battle > 2) return 1;
+        if (!(prec->flg_plyr & 0x1) || !(vil->tgt_stat & 0x20)) return 0;
+        if (!(prec->flg_plyr & 0x8) || !(vil->tgt_stat & 0x8)) return 0;
+        if (prec->plyr_mvinf & 0x800) return 0;
+        if (prec->plyr_mvinf & 0x1000) return 0;
+        if ((prec->plyr_mvinf & 0x400) && !(prec->flg_plyr & 0x1)) return 0;
+        return 1;
+    case ZVIL_Q_PLYRHEARD:
+        if (vil->ability & 0x1) return 1;
+        if (g_scene_is_a_boss_battle > 2) return 1;
+        if (vil->tgt_stat & 0x20) return 1;
+        return (vil->tgt_stat & 0x4) != 0;
+    }
+    return 0;
 }
 
 // Reads one of the villain's flag groups from its subtype's settings; the allow group reads as 0.
@@ -1479,6 +2768,218 @@ static S32 VILN_shark_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F3
     return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
 }
 
+// Expand the shark model's bounding spheres, then handle its usual preparation and precalculation.
+static S32 VILN_shark_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                             st_STIMULUS_CONTEXT_DATA*)
+{
+    vil->model->Data->worldBoundingSphere.radius = 10.0f;
+    vil->model->Data->boundingSphere.radius = 10.0f;
+    vil->model->Data->geometry->morphTarget->boundingSphere.radius = 10.0f;
+
+    switch (note)
+    {
+    case ZVIL_NOTE_PREPARE:
+        zVIL_tag_verts(vil);
+        break;
+    case ZVIL_NOTE_PRECALC:
+        if (vil->mode >= ZVIL_MODE_NORMAL) zVIL_precalc(vil, 0xF);
+        break;
+    case ZVIL_NOTE_OLDTIME:
+        break;
+    }
+    return 1;
+}
+
+// Advance the shark through startup and select an occasional idle fidget.
+static S32 VILN_shark_aware(st_zEntVillain* vil, _xScene*, F32,
+                            st_STIMULUS_CONTEXT_DATA* resp)
+{
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_BASEINIT:
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_STARTUP:
+        resp->trangoal = ZVIL_GOAL_GOONLINE;
+        resp->tranmode = ZVIL_MODE_READY;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_GOONLINE:
+        resp->trangoal = vil->goaldflt;
+        resp->tranmode = ZVIL_MODE_NORMAL;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    case ZVIL_GOAL_IDLE:
+        if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_FIDGET);
+            F32 delay = vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET];
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = delay + 0.25f * (iurand() - 0.5f) * delay;
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+        resp->tranmode = ZVIL_MODE_SHUTDOWN;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    default:
+        resp->trangoal = ZVIL_GOAL_IDLE;
+        resp->tranmode = ZVIL_MODE_NOCHANGE;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    }
+    return 1;
+}
+
+// Handle the shark's startup stimuli and the reactions it supports while idle.
+static S32 VILN_shark_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                               st_STIMULUS_CONTEXT_DATA* resp)
+{
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    switch (g_pgol = vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_MAKEREADY:
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_BASEINIT:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_MAKEREADY:
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        g_pstm = stim;
+        break;
+    case ZVIL_GOAL_IDLE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_KILLSELF:
+            vil->hitpts = 0;
+            resp->trangoal = ZVIL_GOAL_DIE;
+            resp->tranmode = ZVIL_MODE_DEATH;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOAFTERLIFE:
+            resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_SOAPED:
+            stimctxt->res_bubble = ZVIL_BUBBLE_BREAK;
+            break;
+        case ZVIL_STIM_GUMMED:
+            stimctxt->res_bubble = ZVIL_BUBBLE_BREAK;
+            break;
+        case ZVIL_STIM_HEADBUTT:
+            stimctxt->res_headbutt = ZVIL_HEADBUTT_NONE;
+            break;
+        case ZVIL_STIM_BOUNCED:
+            stimctxt->res_buttbounce = ZVIL_BOUNCE_NONE;
+            break;
+        case ZVIL_STIM_BUMPED:
+            stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        g_pstm = stim;
+        break;
+    }
+    return 1;
+}
+
+// Choose the shark's idle or fidget animation and disable collision during startup.
+static S32 VILN_shark_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal,
+                               en_ZVIL_GOAL_SPOT gspot)
+{
+    switch (goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_BASEINIT:
+    {
+        en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN, ZVIL_ANIM_IDLE };
+        choices[0] = ZVIL_ANIM_IDLE;
+        VANM_set(vil, choices, 2, 0);
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    }
+    case ZVIL_GOAL_STARTUP:
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_GOONLINE:
+    {
+        en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN, ZVIL_ANIM_IDLE };
+        choices[0] = ZVIL_ANIM_IDLE;
+        VANM_set(vil, choices, 2, 0);
+        break;
+    }
+    case ZVIL_GOAL_DIE:
+    {
+        en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN, ZVIL_ANIM_IDLE };
+        choices[0] = ZVIL_ANIM_IDLE;
+        VANM_set(vil, choices, 2, 0);
+        break;
+    }
+    case ZVIL_GOAL_IDLE:
+        if (gspot == ZVIL_GSPOT_FIDGET)
+        {
+            en_NPC_ANIMSTATES choices[4] = { ZVIL_ANIM_UNKNOWN };
+            choices[0] = ZVIL_ANIM_FIDGET_IDLE1;
+            choices[1] = ZVIL_ANIM_FIDGET_IDLE2;
+            choices[2] = ZVIL_ANIM_FIDGET_BORED1;
+            choices[3] = ZVIL_ANIM_FIDGET_BORED2;
+            VANM_randset(vil, NULL, choices, 4);
+            vil->anim_playsync = 1;
+        }
+        else
+        {
+            en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN };
+            choices[0] = ZVIL_ANIM_BORED;
+            choices[1] = ZVIL_ANIM_IDLE;
+            VANM_randset(vil, NULL, choices, 2);
+        }
+        break;
+    }
+    return 1;
+}
+
 // The shark changes goals the standard way.
 static S32 VILN_shark_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
 {
@@ -1591,6 +3092,141 @@ static S32 VILN_shagM_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
                              st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_notice(vil, note, resp);
+}
+
+// Shaggy villain type 5 responds to navigation, action and lifecycle stimuli.
+static S32 VILN_shagM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                               st_STIMULUS_CONTEXT_DATA* resp)
+{
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    switch (g_pgol = vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_MAKEREADY)
+        {
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+    case ZVIL_GOAL_DIE:
+        g_pstm = stim;
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_PATROL:
+    case ZVIL_GOAL_FOLLOW:
+    case ZVIL_GOAL_ACTION:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_KILLSELF:
+            vil->hitpts = 0;
+            resp->trangoal = ZVIL_GOAL_DIE;
+            resp->tranmode = ZVIL_MODE_DEATH;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOAFTERLIFE:
+            resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_DOACTION:
+            resp->trangoal = ZVIL_GOAL_ACTION;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GANGBOSSACTION:
+            resp->trangoal = ZVIL_GOAL_ACTION;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOPOS:
+            VOUT_dogoto_pos(vil, &stimctxt->gotopos, stimctxt->off_goto);
+            resp->trangoal = ZVIL_GOAL_FOLLOW;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOWIDGET:
+        case ZVIL_STIM_FOLLOWWIDGET:
+            if (stimctxt->widge && (vil->abl_move & 0x100))
+            {
+                S32 follow = stim == ZVIL_STIM_FOLLOWWIDGET;
+                S32 path = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, follow);
+                vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+                resp->trangoal = (follow && path) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        case ZVIL_STIM_STARTPATROL:
+            vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+            if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
+            resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_STOPPATROL:
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
+    }
+    return 1;
+}
+
+// Shaggy villain type 5 selects animations when entering his movement and action goals.
+static S32 VILN_shagM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    en_BEHAVIOUR_GOAL goal = (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
+                                 ? stimctxt->trangoal : vil->goal;
+    S32 result = 1;
+    if ((goal >= ZVIL_GOAL_AFTERLIFE && goal <= ZVIL_GOAL_GOONLINE) || goal == ZVIL_GOAL_DIE)
+    {
+        result = VILN_std_trangoal(vil, stimctxt, dt);
+    }
+    switch (g_pgol = goal)
+    {
+    case ZVIL_GOAL_IDLE:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_ENTERGOAL)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
+        }
+        break;
+    case ZVIL_GOAL_ACTION:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_ENTERGOAL)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_ACTION, ZVIL_GSPOT_START);
+        }
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_ENTERGOAL)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_FOLLOW, ZVIL_GSPOT_START);
+        }
+        break;
+    case ZVIL_GOAL_PATROL:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_ENTERGOAL)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, ZVIL_GSPOT_START);
+            if (!vil->nav_next) vil->need_navpt = 1;
+        }
+        break;
+    }
+    return result;
 }
 
 // Shaggy villain type 5 moves by goal: idle he turns to face the player, and he follows and
@@ -1869,6 +3505,197 @@ static S32 VILN_gang_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32
                               xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
 {
     return VILN_std_sysevent(vil, from, toEvent, toParam, toParamWidget, resp);
+}
+
+// Handle gang conversation, navigation and lifecycle stimuli.
+static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                              st_STIMULUS_CONTEXT_DATA* resp)
+{
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    switch (g_pgol = vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+        g_pstm = stim;
+        if (stim == ZVIL_STIM_MAKEREADY)
+        {
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+    case ZVIL_GOAL_DIE:
+        g_pstm = stim;
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_PATROL:
+    case ZVIL_GOAL_FOLLOW:
+    case ZVIL_GOAL_TALK:
+    case ZVIL_GOAL_ACTION:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_KILLSELF:
+            vil->hitpts = 0;
+            resp->trangoal = ZVIL_GOAL_DIE;
+            resp->tranmode = ZVIL_MODE_DEATH;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOAFTERLIFE:
+            resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_HEADBUTT:
+            if (vil->ability & 0x4) stimctxt->res_headbutt = ZVIL_HEADBUTT_HITGANG;
+            break;
+        case ZVIL_STIM_STARTTALK:
+            if (!(vil->ability & 0x40000)) break;
+            if (vil->goal == ZVIL_GOAL_TALK)
+            {
+                zSFX* talk = stimctxt->talkSFX;
+                fn_8003CD24((U32)vil + 2);
+                vil->sfx_curTalk = talk;
+                if (talk && talk->asset && talk->asset->soundAssetID)
+                {
+                    st_NPC_SOUND_PROPERTIES* props = NULL;
+                    S32 flags = VSND_findProps(VSND_TYP_ZSFXTALK, &props);
+                    for (S32 i = 0; i < 4; i++)
+                    {
+                        vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
+                        vil->snd_queue[i].sndDirect = 0;
+                    }
+                    VSND_addQueueEntry(vil, (en_NPC_SOUND)0x8000, flags,
+                                       g_npcTable[vil->asset->subtype].dst_noisy,
+                                       props->tym_delayStart, -1.0f, 0,
+                                       talk->asset->soundAssetID);
+                }
+                vil->tmr_list[ZVIL_TYMR_GENERIC] = 0.5f;
+                if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+                {
+                    vil->anim_loopmult = 0.97f;
+                    vil->vhf->pickanim(vil, ZVIL_GOAL_TALK, ZVIL_GSPOT_FIDGET);
+                    vil->tmr_list[ZVIL_TTIL_FIDGET] = 4.0f + 4.0f * (0.25f * (iurand() - 0.5f));
+                }
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_TALK;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                resp->talkSFX = stimctxt->talkSFX;
+            }
+            break;
+        case ZVIL_STIM_STOPTALK:
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_DOACTION:
+            resp->trangoal = ZVIL_GOAL_ACTION;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GANGBOSSACTION:
+            resp->trangoal = ZVIL_GOAL_ACTION;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            resp->use_alt_action = 1;
+            break;
+        case ZVIL_STIM_GOTOPOS:
+            VOUT_dogoto_pos(vil, &stimctxt->gotopos, stimctxt->off_goto);
+            resp->trangoal = ZVIL_GOAL_FOLLOW;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOWIDGET:
+        case ZVIL_STIM_FOLLOWWIDGET:
+            if (stimctxt->widge && (vil->abl_move & 0x100))
+            {
+                S32 follow = stim == ZVIL_STIM_FOLLOWWIDGET;
+                S32 path = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, follow);
+                vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+                resp->trangoal = (follow && path) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        case ZVIL_STIM_STARTPATROL:
+            vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+            if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
+            resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_STOPPATROL:
+        case ZVIL_STIM_STARTGUARD:
+        case ZVIL_STIM_STOPGUARD:
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
+    }
+    return 1;
+}
+
+// Fred's boss-action animation and model parts need special setup on preparation.
+static S32 VILN_gang_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
+                            st_STIMULUS_CONTEXT_DATA*)
+{
+    xModelInstance* model = vil->model;
+    S32 index = 0;
+    if (note == ZVIL_NOTE_PREPARE)
+    {
+        vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET] = 2.0f;
+    }
+    if (note == ZVIL_NOTE_PREPARE && vil->asset->subtype == eEntVillainTypeFred)
+    {
+        xAnimState* state = xAnimTableGetStateID(vil->model->Anim->Table,
+                                                  g_anamhash[ZVIL_ANIM_GANG_BOSSACTION]);
+        if (state)
+        {
+            state->Flags &= ~0x30;
+            state->Flags |= 0x10;
+        }
+    }
+    if (note == ZVIL_NOTE_PREPARE && vil->asset->subtype == eEntVillainTypeFred)
+    {
+        while (model)
+        {
+            switch (index)
+            {
+            case 0:
+                xSceneID2Name(globals.sceneCur, vil->id);
+                model->Flags |= 0x2;
+                model->Flags |= 0x1;
+                break;
+            case 1:
+                xSceneID2Name(globals.sceneCur, vil->id);
+                model->Flags &= ~0x1;
+                break;
+            default:
+                xSceneID2Name(globals.sceneCur, vil->id);
+                break;
+            }
+            model = model->Next;
+            index++;
+        }
+    }
+    switch (note)
+    {
+    case ZVIL_NOTE_PREPARE:
+        zVIL_tag_verts(vil);
+        break;
+    case ZVIL_NOTE_PRECALC:
+        if (vil->mode >= ZVIL_MODE_NORMAL) zVIL_precalc(vil, 0xF);
+        break;
+    case ZVIL_NOTE_OLDTIME:
+        break;
+    }
+    return 1;
 }
 
 // Fred, Daphne, Velma, Holly, the groundskeeper and the professor move by goal: idle or talking
