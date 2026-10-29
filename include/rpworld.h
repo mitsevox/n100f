@@ -222,7 +222,10 @@ typedef RpAtomic* (*RpAtomicCallBack)(RpAtomic* atomic, void* data);
 #define rpGEOMETRYTEXTURED 0x0004
 #define rpGEOMETRYPRELIT 0x0008
 #define rpGEOMETRYNORMALS 0x0010
+#define rpGEOMETRYMODULATEMATERIALCOLOR 0x0040
 #define rpGEOMETRYTEXTURED2 0x0080
+
+#define rpGEOMETRYLOCKTEXCOORDS1 0x0010
 #define rpGEOMETRYNATIVE 0x01000000
 #define rpGEOMETRYFLAGSMASK 0x00FF
 #define rpGEOMETRYNATIVEFLAGSMASK 0x0F000000
@@ -319,6 +322,8 @@ typedef enum RpLightType
 #define RpLightSetFrame(_light, _frame) (_rwObjectHasFrameSetFrame((_light), (_frame)), (_light))
 #define RpLightSetFlags(_light, _flags) ((((RwObject*)(_light))->flags = (U8)(_flags)), (_light))
 
+#define RpAtomicGetGeometry(_atomic) ((_atomic)->geometry)
+
 enum RpLightFlag
 {
     rpLIGHTLIGHTATOMICS = 0x01,
@@ -352,6 +357,9 @@ S32 RpMaterialRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack r
 
 RpGeometry* RpGeometryLock(RpGeometry* geometry, S32 lockMode);
 RpGeometry* RpGeometryUnlock(RpGeometry* geometry);
+RpGeometry* RpGeometryForAllMaterials(RpGeometry* geometry, RpMaterialCallBack fpCallBack,
+                                      void* pData);
+RpMaterial* RpMaterialSetTexture(RpMaterial* material, RwTexture* texture);
 S32 RpGeometryDestroy(RpGeometry* geometry);
 void _rpGeometryAddRef(RpGeometry* geometry);
 RpGeometry* RpGeometryStreamRead(RwStream* stream);
@@ -397,6 +405,7 @@ RpClump* RpClumpForAllLights(RpClump* clump, RpLightCallBack callback, void* pDa
 RpClump* RpClumpRemoveLight(RpClump* clump, RpLight* light);
 RpClump* RpClumpRemoveCamera(RpClump* clump, RwCamera* camera);
 RpClump* RpClumpStreamRead(RwStream* stream);
+RpWorld* RpWorldStreamRead(RwStream* stream);
 
 RpWorld* RpWorldAddCamera(RpWorld* world, RwCamera* camera);
 RpWorld* RpWorldRemoveCamera(RpWorld* world, RwCamera* camera);

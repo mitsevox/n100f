@@ -108,7 +108,6 @@ struct xAnimTransition
     U16* BlendOffset;
 };
 
-// Partial: members up to ModelInst.
 struct xAnimPlay
 {
     xAnimPlay* Next;
@@ -123,6 +122,7 @@ struct xAnimPlay
     F32 Yaw;
     xMemPool* Pool;
     xModelInstance* ModelInst;
+    U32 pad2;
 };
 
 typedef U32 (*xAnimTransitionConditionalCallback)(xAnimTransition*, xAnimSingle*, void*);
@@ -139,6 +139,13 @@ struct xAnimTable
 };
 
 void xAnimInit();
+xAnimFile* xAnimFileNewBilinear(void** rawData, char* name, U32 flags, xAnimFile** linkedList,
+                                U32 numX, U32 numY);
+void xAnimFileSetTime(xAnimFile* data, F32 duration, F32 timeOffset);
+void xAnimFileSetPhysics(xAnimFile* data, void* rawData);
+void xAnimFileSetPoses(xAnimFile* data, void* startPose, F32 startTime, void* endPose, F32 endTime);
+
+extern U32 gxAnimUseGrowAlloc;
 xAnimFile* xAnimFileNew(void* rawData, char* name, U32 flags, xAnimFile** linkedList);
 xAnimTable* xAnimTableNew(char* name, xAnimTable** linkedList);
 xAnimState* xAnimTableNewState(xAnimTable* table, char* name, U32 flags, U32 userFlags, F32 speed,
@@ -160,7 +167,23 @@ void xAnimPlaySetState(xAnimSingle* single, xAnimState* state, F32 startTime);
 void xAnimPlaySetup(xAnimPlay* play, void* object, xAnimTable* table, xModelInstance* modelInst);
 xAnimPlay* xAnimPoolAlloc(xMemPool* pool, void* object, xAnimTable* table,
                           xModelInstance* modelInst);
+void xAnimPoolFree(xAnimPlay* play);
+void xAnimPlayEval(xAnimPlay* play);
+void xAnimPlayUpdate(xAnimPlay* play, F32 timeDelta);
 void xAnimPlayStartTransition(xAnimPlay* play, xAnimTransition* transition);
+void xAnimPlayChooseTransition(xAnimPlay* play);
 xAnimTransition* xAnimTempTransitionAlloc();
+
+// The file time for a play time: reversed files run backwards, and ping-pong files run
+// backwards in their second half.
+inline F32 xAnimFileRawTime(xAnimFile* data, F32 time)
+{
+    if ((data->FileFlags & 0x1000) || ((data->FileFlags & 0x2000) && time > data->Duration * 0.5f))
+    {
+        return data->TimeOffset + data->Duration - time;
+    }
+
+    return data->TimeOffset + time;
+}
 
 #endif

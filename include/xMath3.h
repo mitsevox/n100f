@@ -198,6 +198,11 @@ inline void xMat3x3Identity(xMat3x3* m)
     xMat3x3Copy(m, (const xMat3x3*)&g_I3);
 }
 
+inline void xMat4x3Identity(xMat4x3* m)
+{
+    xMat4x3Copy(m, &g_I3);
+}
+
 inline void xQuatCopy(xQuat* o, const xQuat* q)
 {
     o->s = q->s;
@@ -258,5 +263,10 @@ F32 xQuatNormalize(xQuat* o, const xQuat* q);
 void xQuatFromMat(xQuat* q, const xMat3x3* m);
 void xMath3Init();
 void xMath3Exit();
+
+inline void xMat3x3Rot(xMat3x3* m, const xVec3* a, F32 t)
+{
+    xMat3x3RotC(m, a->x, a->y, a->z, t);
+}
 
 #endif

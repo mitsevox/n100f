@@ -3,6 +3,13 @@
 
 #include "xMath3.h"
 
+#define XENTMOTION_TYPE_ER 0
+#define XENTMOTION_TYPE_ORB 1
+#define XENTMOTION_TYPE_SPL 2
+#define XENTMOTION_TYPE_MP 3
+#define XENTMOTION_TYPE_MECH 4
+#define XENTMOTION_TYPE_PEN 5
+
 struct p2EntMotionMechData
 {
     U8 type;
@@ -31,8 +38,37 @@ struct p2EntMotionERData
     F32 ret_wait_tm;
 };
 
-// Partial: only the er and mech members of the union are declared, so sizeof(p2EntMotionAsset)
-// is not its size.
+struct p2EntMotionOrbitData
+{
+    xVec3 center;
+    F32 w;
+    F32 h;
+    F32 period;
+};
+
+struct p2EntMotionSplineData
+{
+    S32 unknown;
+};
+
+struct p2EntMotionMPData
+{
+    U32 flags;
+    U32 mp_id;
+    F32 speed;
+};
+
+struct p2EntMotionPenData
+{
+    U8 flags;
+    U8 plane;
+    U8 pad[2];
+    F32 len;
+    F32 range;
+    F32 period;
+    F32 phase;
+};
+
 struct p2EntMotionAsset
 {
     U8 type;
@@ -41,7 +77,11 @@ struct p2EntMotionAsset
     union
     {
         p2EntMotionERData er;
+        p2EntMotionOrbitData orb;
+        p2EntMotionSplineData spl;
+        p2EntMotionMPData mp;
         p2EntMotionMechData mech;
+        p2EntMotionPenData pen;
     };
 };
 
@@ -70,14 +110,34 @@ struct _xEntPenData
 };
 
 struct _xMovePoint;
+struct xSpline3;
 
-// Partial: only the members through src are used here.
 struct _xEntMPData
 {
     F32 curdist;
     F32 speed;
     _xMovePoint* dest;
     _xMovePoint* src;
+    xSpline3* spl;
+    F32 dist;
+    U32 padalign;
+    xQuat aquat;
+    xQuat bquat;
+};
+
+struct _xEntOrbitData
+{
+    xVec3 orig;
+    xVec3 c;
+    F32 a;
+    F32 b;
+    F32 p;
+    F32 w;
+};
+
+struct _xEntSplineData
+{
+    S32 unknown;
 };
 
 struct _xEntERData
@@ -99,8 +159,6 @@ struct _xEntERData
 
 struct _xEnt;
 
-// Partial: only the mech, mp, er and pen members of the union are declared. pen is the largest
-// member, so sizeof(_xEntMotion) is its size.
 struct _xEntMotion
 {
     p2EntMotionAsset* asset;
@@ -112,10 +170,12 @@ struct _xEntMotion
     F32 d;
     union
     {
+        _xEntERData er;
+        _xEntOrbitData orb;
+        _xEntSplineData spl;
+        _xEntMPData mp;
         _xEntMechData mech;
         _xEntPenData pen;
-        _xEntMPData mp;
-        _xEntERData er;
     };
     _xEnt* owner;
     _xEnt* target;
@@ -125,11 +185,13 @@ struct _xScene;
 struct _xEntFrame;
 
 void xEntMotionInit(_xEntMotion* motion, _xEnt* owner, p2EntMotionAsset* asset);
-void xEntMotionReset(_xEntMotion* motion, _xScene* sc);
 void xEntMotionSetup(_xEntMotion* motion, _xScene* sc);
+void xEntMotionReset(_xEntMotion* motion, _xScene* sc);
 void xEntMotionMove(_xEntMotion* motion, _xScene* sc, F32 dt, _xEntFrame* frame);
 void xEntMechForward(_xEntMotion* motion);
 void xEntMechReverse(_xEntMotion* motion);
+void xEntMotionTranslate(_xEntMotion* motion, const xVec3* dpos);
+void xEntMotionDebugInit(U16 num_xems);
 void xEntMotionDebugExit();
 
 inline void xEntMotionRun(_xEntMotion* motion)
@@ -145,6 +207,11 @@ inline void xEntMotionStop(_xEntMotion* motion)
 inline U32 xEntMotionIsStopped(const _xEntMotion* motion)
 {
     return motion->flags & k_XENTMOTION_STOPPED;
+}
+
+inline void xEntMPSetSpeed(_xEntMotion* motion, F32 speed)
+{
+    motion->mp.speed = (0.0f > speed) ? 0.0f : speed;
 }
 
 #endif

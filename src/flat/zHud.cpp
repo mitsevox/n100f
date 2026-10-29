@@ -25,8 +25,6 @@
 #include "zRenderState.h"
 #include "zScene.h"
 
-void fn_80030494(U32 renderStyle, F32 alpha);
-
 static S32 sShakeSnackCounter;
 static F32 widthAspect;
 static F32 heightAspect;
@@ -482,7 +480,7 @@ void zHudElementsCB_GameStatsRender()
                     xModelSetMaterialAlpha(item->model,
                                            item->hframe.color.a);
                     memcpy(item->model->Mat, &frame, sizeof(xMat4x3));
-                    fn_80030494(item->renderStyle,
+                    xModelSetRender2DStyle(item->renderStyle,
                                 item->hframe.color.a);
                     xModelRender2D(item->model, &r, &from, &to, PI / 2);
                 }
@@ -862,7 +860,7 @@ void zHudElementsCB_HealthbarRender()
             xModelSetMaterialAlpha(item->model,
                                    item->hframe.color.a);
             memcpy(item->model->Mat, &frame, sizeof(xMat4x3));
-            fn_80030494(item->renderStyle, item->hframe.color.a);
+            xModelSetRender2DStyle(item->renderStyle, item->hframe.color.a);
             xModelRender2D(item->model, &r, &from, &to, PI / 2);
         }
     }
@@ -1184,7 +1182,7 @@ void zHudElementsCB_GumpackRender()
 
     if (globals.player.Inv_Specials & 1)
     {
-        fn_80030494(item->renderStyle, item->hframe.color.a);
+        xModelSetRender2DStyle(item->renderStyle, item->hframe.color.a);
         xModelRender2D(item->model, &r, &from, &to, PI / 2);
     }
 
@@ -1443,7 +1441,7 @@ void zHudElementsCB_SoapboxRender()
 
         if (globals.player.Inv_Specials & 2)
         {
-            fn_80030494(item->renderStyle, item->hframe.color.a);
+            xModelSetRender2DStyle(item->renderStyle, item->hframe.color.a);
             xModelRender2D(item->model, &r, &from, &to, PI / 2);
         }
 
@@ -1720,7 +1718,7 @@ void zHudElementsCB_SoapRender()
     frame.flags = 0;
     xModelSetMaterialAlpha(sHudSoapArray[0].model, sHudSoapArray[0].hframe.color.a);
     memcpy(sHudSoapArray[0].model->Mat, &frame, sizeof(xMat4x3));
-    fn_80030494(sHudSoapArray[0].renderStyle, sHudSoapArray[0].hframe.color.a);
+    xModelSetRender2DStyle(sHudSoapArray[0].renderStyle, sHudSoapArray[0].hframe.color.a);
     xModelRender2D(sHudSoapArray[0].model, &r, &from, &to, PI / 2);
 
     for (i = 1; i < 6; i++)
@@ -1747,7 +1745,7 @@ void zHudElementsCB_SoapRender()
             RwRGBA colsoap = { 158, 215, 224, 0 };
             colsoap.alpha = item->hframe.color.a;
             item->model->Data->geometry->matList.materials[0]->color = colsoap;
-            fn_80030494(item->renderStyle, item->hframe.color.a);
+            xModelSetRender2DStyle(item->renderStyle, item->hframe.color.a);
             xModelRender2D(item->model, &r, &from, &to, PI / 2);
         }
     }
@@ -2110,7 +2108,7 @@ void zHudElementsCB_GumRender()
                 frame.pos.z = 0.0f;
                 xModelSetMaterialAlpha(item->model, item->hframe.color.a);
                 memcpy(item->model->Mat, &frame, sizeof(xMat4x3));
-                fn_80030494(item->renderStyle, item->hframe.color.a);
+                xModelSetRender2DStyle(item->renderStyle, item->hframe.color.a);
                 xModelRender2D(item->model, &r, &from, &to, PI / 2);
             }
         }
@@ -2415,7 +2413,7 @@ void zHudElementsCB_SnacksRender()
     frame.flags = 0;
     xModelSetMaterialAlpha(sHudSnackArray[0].model, sHudSnackArray[0].hframe.color.a);
     memcpy(sHudSnackArray[0].model->Mat, &frame, sizeof(xMat4x3));
-    fn_80030494(sHudSnackArray[0].renderStyle, sHudSnackArray[0].hframe.color.a);
+    xModelSetRender2DStyle(sHudSnackArray[0].renderStyle, sHudSnackArray[0].hframe.color.a);
     xModelRender2D(sHudSnackArray[0].model, &r, &from, &to, PI / 2);
 }
 
@@ -2788,7 +2786,7 @@ void zHudElementsCB_PlayerStatusRender()
             frame.pos.z = 0.0f;
             xModelSetMaterialAlpha(item->model, item->hframe.color.a);
             memcpy(item->model->Mat, &frame, sizeof(xMat4x3));
-            fn_80030494(item->renderStyle, item->hframe.color.a);
+            xModelSetRender2DStyle(item->renderStyle, item->hframe.color.a);
             xModelRender2D(item->model, &r, &from, &to, PI / 2);
         }
     }

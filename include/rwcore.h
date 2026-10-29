@@ -304,6 +304,7 @@ typedef enum RwFrustumTestResult
 #define rwID_LIGHT 0x12
 #define rwID_UNICODESTRING 0x13
 #define rwID_ATOMIC 0x14
+#define rwID_TEXDICTIONARY 0x16
 #define rwID_GEOMETRYLIST 0x1A
 #define rwID_RIGHTTORENDER 0x1f
 
@@ -317,6 +318,23 @@ typedef enum RwOpCombineType
     rwCOMBINEPOSTCONCAT,
     rwOPCOMBINETYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwOpCombineType;
+
+typedef enum RwVideoModeFlag
+{
+    rwVIDEOMODEEXCLUSIVE = 0x1,
+    rwVIDEOMODEINTERLACE = 0x2,
+    rwVIDEOMODEFFINTERLACE = 0x4,
+    rwVIDEOMODEFLAGFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwVideoModeFlag;
+
+typedef struct RwVideoMode RwVideoMode;
+struct RwVideoMode
+{
+    S32 width;
+    S32 height;
+    S32 depth;
+    RwVideoModeFlag flags;
+};
 
 #define rwMATRIXTYPEORTHONORMAL 0x00000003
 #define rwMATRIXINTERNALIDENTITY 0x00020000
@@ -616,17 +634,29 @@ struct RwTexDictionary
     RwLLLink lInInstance;
 };
 
-// Partial: the name, mask and filtering members are not declared; the GameCube layout has
-// refCount at +0x54.
 typedef struct RwTexture RwTexture;
 struct RwTexture
 {
     RwRaster* raster;
     RwTexDictionary* dict;
     RwLLLink lInDictionary;
-    U8 unk10[0x44];
+    char name[32];
+    char mask[32];
+    U32 filterAddressing;
     S32 refCount;
 };
+
+#define rwTEXTUREFILTERMODEMASK 0x000000FF
+
+#define RwTextureAddRefMacro(_tex) (((_tex)->refCount++), (_tex))
+
+#define RwTextureSetFilterModeMacro(_tex, _filtering)                                              \
+    (((_tex)->filterAddressing = ((_tex)->filterAddressing & ~rwTEXTUREFILTERMODEMASK) |           \
+                                 (((U32)(_filtering)) & rwTEXTUREFILTERMODEMASK)),                 \
+     (_tex))
+
+#define RwTextureAddRef(_tex) RwTextureAddRefMacro(_tex)
+#define RwTextureSetFilterMode(_tex, _filtering) RwTextureSetFilterModeMacro(_tex, _filtering)
 
 typedef struct RwImage RwImage;
 struct RwImage
@@ -1527,6 +1557,7 @@ RwCamera* RwCameraShowRaster(RwCamera* camera, void* pDev, U32 flags);
 RwCamera* RwCameraSetNearClipPlane(RwCamera* camera, F32 nearClip);
 RwCamera* RwCameraSetFarClipPlane(RwCamera* camera, F32 farClip);
 RwCamera* RwCameraSetViewWindow(RwCamera* camera, const RwV2d* viewWindow);
+RwCamera* RwCameraSetViewOffset(RwCamera* camera, const RwV2d* offset);
 S32 RwCameraRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
                            RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
 void _rwObjectHasFrameSetFrame(void* object, RwFrame* frame);
@@ -1575,6 +1606,8 @@ S32 _rwStringStreamGetSize(const char* string);
 const char* _rwStringStreamWrite(const char* string, RwStream* stream);
 char* _rwStringStreamFindAndRead(char* string, RwStream* stream);
 U32 RwEngineGetVersion(void);
+S32 RwEngineGetCurrentVideoMode(void);
+RwVideoMode* RwEngineGetVideoModeInfo(RwVideoMode* modeinfo, S32 modeIndex);
 RwStream* RwStreamSkip(RwStream* stream, U32 offset);
 RwStream* RwStreamReadChunkHeaderInfo(RwStream* stream, RwChunkHeaderInfo* chunkHeaderInfo);
 RwStream* _rwStreamWriteVersionedChunkHeader(RwStream* stream, S32 type, S32 size, U32 version,
@@ -1671,11 +1704,15 @@ const RwPluginRegistry* _rwPluginRegistryDeInitObject(const RwPluginRegistry* re
 void _rwObjectHasFrameReleaseFrame(void* object);
 
 S32 RwTextureDestroy(RwTexture* texture);
+RwTexDictionary* RwTexDictionaryStreamRead(RwStream* stream);
+RwTexture* RwTexDictionaryRemoveTexture(RwTexture* texture);
+S32 RwTexDictionaryDestroy(RwTexDictionary* dict);
 RwTexture* RwTexDictionaryAddTexture(RwTexDictionary* dict, RwTexture* texture);
 RwTexDictionary* RwTexDictionaryGetCurrent(void);
 
 RwFrame* RwFrameUpdateObjects(RwFrame* frame);
 RwFrame* RwFrameTransform(RwFrame* frame, const RwMatrix* m, RwOpCombineType combine);
+RwFrame* RwFrameRotate(RwFrame* frame, const RwV3d* axis, F32 angle, RwOpCombineType combine);
 
 F32 _rwSqrt(F32 num);
 F32 _rwInvSqrt(F32 num);
