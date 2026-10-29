@@ -82,7 +82,7 @@ RxPipelineNode* RxPipelineFindNodeByName(RxPipeline* pipeline, const char* name,
     return NULL;
 }
 
-static U32 PipelineNodeIndex(RxPipeline* pipeline, RxPipelineNode* node)
+static inline U32 PipelineNodeIndex(RxPipeline* pipeline, RxPipelineNode* node)
 {
     U32 nodeIndex = node - pipeline->nodes;
 
