@@ -13075,7 +13075,7 @@ static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
         sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
         if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 25.0f);
-        // The target continues into the at-rest sound check.
+        // Fall through to retry if the first sound did not start.
     case ZPRJ_EVNT_ATREST:
         if (!iSndIsPlaying(0, (U32)prj))
             xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 25.0f);
