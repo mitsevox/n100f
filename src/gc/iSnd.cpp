@@ -1162,7 +1162,7 @@ U32 iSndPlay(xSndVoiceInfo* vp)
     return iSndPlaySound(vp);
 }
 
-U8 iSndGetStereo()
+U32 iSndGetStereo()
 {
     return OSGetSoundMode() == OS_SOUND_MODE_STEREO;
 }

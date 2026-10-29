@@ -82,7 +82,7 @@ void iSndUpdate(F32 dt);
 U32 iSndFindFreeVoice(U32 priority, U32 flags);
 
 U32 iSndPlay(xSndVoiceInfo* vp);
-U8 iSndGetStereo();
+U32 iSndGetStereo();
 void iSndStereo(U32 stereo);
 
 void iSndWaitForDeadSounds();
