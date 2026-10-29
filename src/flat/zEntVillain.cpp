@@ -1,6 +1,7 @@
 #include "zEntVillain.h"
 
 #include "iMath.h"
+#include "iModel.h"
 #include "iSnd.h"
 #include "xAnim.h"
 #include "xBound.h"
@@ -233,10 +234,13 @@ static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos);
 static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir);
 static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt);
 static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir);
+static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent,
+                               en_NPC_QUADRANT* qdrant);
 static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent);
 static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand);
 static S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand);
 static S32 zVIL_chk_pitfall(st_zEntVillain* vil, S32 prev, F32 rand);
+static inline S32 VSUP_vertPos(const st_zEntVillain* vil, en_ZVIL_MODEL_VERTEX vert, _xVec3* pos);
 static S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
 static S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil);
 static S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil);
@@ -279,7 +283,12 @@ static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force);
 static S32 VNAV_get_nav(st_zEntVillain* ent);
 static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base);
 static inline U32 VANM_entStateType(const _zEnt* ent);
+static inline U32 VANM_entMoveType(const _zEnt* ent);
+static inline void VANM_setSpeed(st_zEntVillain* ent, F32 spd, _xVec3 sanim);
 static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil);
+static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off);
+static S32 VWEP_lobInitArcing(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
+                              _xVec3* vec_spin, F32 arcness, F32 heavy);
 static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3* pos_tgt,
                                _xVec3* vec_off, _xVec3* vec_spin, F32 arcness, F32 heavy);
 static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup);
@@ -3512,6 +3521,328 @@ static void zVIL_elcb_move(_xEnt* xe, _xScene* scn, F32 dt, _xEntFrame* frame)
     }
 }
 
+// Sends the villain to a widget, dst_offset short of it, and returns whether it should use its
+// normal path navigation. Movement is allowed, the next navigation point becomes the previous one
+// and is cleared, and misc flag 0x20000000 (follow) or 0x10000000 (go to) is set, the other
+// cleared, along with 0x40000000 and 0x80000000. A move point to follow becomes the next
+// navigation point (normal navigation, both flags cleared); one to go to gives its position. An
+// entity to follow becomes the follow target; one to go to gives its position.
+static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset, S32 follow)
+{
+    S32 do_std_nav = 0;
+
+    vil->allow |= 1;
+    if (vil->nav_next)
+    {
+        vil->nav_prev = vil->nav_next;
+    }
+    vil->nav_next = NULL;
+    vil->need_navpt = 0;
+
+    if (follow)
+    {
+        vil->flg_misc |= 0x20000000;
+        vil->flg_misc &= ~0x10000000;
+    }
+    else
+    {
+        vil->flg_misc &= ~0x20000000;
+        vil->flg_misc |= 0x10000000;
+    }
+    vil->flg_misc &= ~0x40000000;
+    vil->flg_misc &= ~0x80000000;
+    vil->ds2_goto_keepaway = dst_offset * dst_offset;
+
+    switch (widge->baseType)
+    {
+    case 13:
+        if (follow)
+        {
+            vil->nav_next = (_zMovePoint*)widge;
+            do_std_nav = 1;
+            vil->flg_misc &= ~0x10000000;
+            vil->flg_misc &= ~0x20000000;
+        }
+        else
+        {
+            xVec3Copy(&vil->pos_goto, zMovePointGetPos((_zMovePoint*)widge));
+        }
+        break;
+    case 2:
+    case 3:
+    case 4:
+    case 6:
+    case 8:
+    case 11:
+    case 12:
+    case 18:
+    case 23:
+    case 24:
+    case 27:
+        if (follow)
+        {
+            vil->tgt_follow = (_xEnt*)widge;
+        }
+        else
+        {
+            xVec3Copy(&vil->pos_goto, &xModelGetFrame(((_xEnt*)widge)->model)->pos);
+        }
+        break;
+    }
+    return do_std_nav;
+}
+
+// Sets the villain's pursuit home from the widget it protects: a move point's position or an
+// entity's. Any other kind of widget is dropped (its and the villain's names are looked up and
+// not used) and the keep-away distance is cleared. With no anchor the villain's own position
+// becomes home and the keep-away distance is cleared. Returns 1 if it protects an entity, else 0.
+static S32 VOUT_apply_anchor(st_zEntVillain* vil)
+{
+    S32 have_anchor = 0;
+
+    if (vil->tgt_protect)
+    {
+        switch (vil->tgt_protect->baseType)
+        {
+        case 13:
+            xVec3Copy(&vil->pos_pursue_home, zMovePointGetPos((_zMovePoint*)vil->tgt_protect));
+            break;
+        case 2:
+        case 3:
+        case 4:
+        case 6:
+        case 8:
+        case 11:
+        case 12:
+        case 18:
+        case 23:
+        case 24:
+        case 27:
+            have_anchor = 1;
+            xVec3Copy(&vil->pos_pursue_home, &xModelGetFrame(vil->tgt_protect->model)->pos);
+            break;
+        default:
+            xSceneID2Name(globals.sceneCur, vil->id);
+            xSceneID2Name(globals.sceneCur, vil->tgt_protect->id);
+            vil->tgt_protect = NULL;
+            have_anchor = 0;
+            vil->ds2_goto_keepaway = 0.0f;
+            break;
+        }
+    }
+
+    if (!have_anchor)
+    {
+        have_anchor = 1;
+        xVec3Copy(&vil->pos_pursue_home, &xModelGetFrame(vil->model)->pos);
+        vil->ds2_goto_keepaway = 0.0f;
+    }
+    return have_anchor;
+}
+
+// Headbutt response for a villain with spikes: none unless spike ability bit 0x1 is set.
+// Otherwise the player's quadrant around the villain picks the first spike bit to test: front 0x2,
+// back 0x4, left 0x8, right 0x10; that bit or any later one in this list gives
+// ZVIL_HEADBUTT_DAMAGE.
+static en_ZVILLAIN_HEADBUTT_RESPONSE VOUT_spikey_header(st_zEntVillain* ent)
+{
+    en_NPC_QUADRANT quad = ZVIL_QUAD_UNKNOWN;
+    en_ZVILLAIN_HEADBUTT_RESPONSE result = ZVIL_HEADBUTT_NONE;
+
+    if (!(ent->abl_spyk & 1))
+    {
+        return ZVIL_HEADBUTT_NONE;
+    }
+
+    VSUP_ent_AOI(ent, &globals.player.ent, &quad);
+    switch (quad)
+    {
+    case ZVIL_QUAD_FRONT:
+        if (ent->abl_spyk & 2)
+        {
+            result = ZVIL_HEADBUTT_DAMAGE;
+        }
+    case ZVIL_QUAD_BACK:
+        if (ent->abl_spyk & 4)
+        {
+            result = ZVIL_HEADBUTT_DAMAGE;
+        }
+    case ZVIL_QUAD_LEFT:
+        if (ent->abl_spyk & 8)
+        {
+            result = ZVIL_HEADBUTT_DAMAGE;
+        }
+    case ZVIL_QUAD_RIGHT:
+        if (ent->abl_spyk & 0x10)
+        {
+            result = ZVIL_HEADBUTT_DAMAGE;
+        }
+    }
+    return result;
+}
+
+// Picks the villain's next navigation point and returns whether it has one. It restarts the
+// check-for-nav timer, and picks none while the nav delay runs; otherwise, with no previous point
+// it starts at its first point (when that point is on), and from there follows the path from its
+// current point (or its previous one). A new point also clears need_navpt and records the
+// distance to it from the previous point, or from the villain when the point is on a spline.
+static S32 VNAV_get_nav(st_zEntVillain* ent)
+{
+    _zMovePoint* nav_tmp = NULL;
+
+    ent->tmr_list[ZVIL_TTIL_CHKFORNAV] = ent->vilcfg.tymref_list[ZVIL_TTIL_CHKFORNAV];
+    if (!(ent->tmr_list[ZVIL_TDUR_NAVDELAY] <= 0.0f))
+    {
+        nav_tmp = NULL;
+    }
+    else if (ent->nav_prev == NULL)
+    {
+        if (zMovePointIsOn(ent->nav_mvptlist))
+        {
+            ent->nav_prev = ent->nav_mvptlist;
+            nav_tmp = ent->nav_mvptlist;
+        }
+        else
+        {
+            nav_tmp = NULL;
+        }
+    }
+    else if (ent->nav_prev && ent->nav_next)
+    {
+        zMovePointGetNext(ent->nav_next, ent->nav_prev, &nav_tmp, NULL);
+    }
+    else if (ent->nav_prev)
+    {
+        zMovePointGetNext(ent->nav_prev, NULL, &nav_tmp, NULL);
+    }
+
+    if (nav_tmp)
+    {
+        ent->need_navpt = 0;
+        _xVec3 vec_trav = { 0 };
+        if (ent->nav_prev)
+        {
+            xVec3Sub(&vec_trav, zMovePointGetPos(nav_tmp), zMovePointGetPos(ent->nav_prev));
+            ent->dst_navTween = xVec3Length(&vec_trav);
+        }
+        else if (nav_tmp->spl)
+        {
+            xVec3Sub(&vec_trav, zMovePointGetPos(nav_tmp), (_xVec3*)&ent->model->Mat->pos);
+            ent->dst_navTween = xVec3Length(&vec_trav);
+        }
+    }
+
+    if (ent->nav_next)
+    {
+        ent->nav_prev = ent->nav_next;
+    }
+    ent->nav_next = nav_tmp;
+    return ent->nav_next ? 1 : 0;
+}
+
+// Navigation line-of-sight test: whether nothing in the scene blocks a ray from mypos to the move
+// point, starting just outside the villain's (usrdata) bound and stopping that far short of it.
+static S32 VNAV_chklos_timz(void* usrdata, _xVec3* mypos, const _zMovePoint* mvpt)
+{
+    S32 result;
+    _xRay3 r;
+
+    r.min_t = 0.001f + ((st_zEntVillain*)usrdata)->bound.sph.r;
+    xVec3Sub(&r.dir, zMovePointGetPos(mvpt), mypos);
+    r.max_t = xVec3Normalize(&r.dir, &r.dir);
+    xVec3SMul(&r.origin, &r.dir, r.min_t);
+    xVec3AddTo(&r.origin, mypos);
+    r.max_t -= r.min_t;
+    r.flags = 0x800;
+    result = !xRayHitsSceneFast(&r, globals.sceneCur);
+    return result;
+}
+
+// The villain's move speed for the frame, base times the speed that fits its current animation:
+// 5 flat for an animation with type bit 0x4000000, the move speed while gummed with move ability
+// 0x100000, five times base for a move type of 10, the chase speed for 6, and the move speed for
+// 4, where the boss Black Knight gets 2/3, 1/3 or none of his extra chase speed back as his hit
+// points fall to 2, 3 and 4. An idle animation (1) keeps base and anything else gives 0. With misc
+// flags 0x2 (move), 0x4 (chase) and 0x1 (idle) the animation's playback speed follows.
+static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base)
+{
+    F32 rate = base;
+    F32 fv;
+
+    if (VANM_entStateType(ent) & 0x4000000)
+    {
+        rate = 5.0f;
+    }
+    else if (ent->goal == ZVIL_GOAL_GUMMED && (ent->abl_move & 0x100000))
+    {
+        rate *= ent->spd_move;
+        if (ent->flg_misc & 0x2)
+        {
+            VANM_setSpeed(ent, rate, ent->sanim_move);
+        }
+    }
+    else if (VANM_entMoveType(ent) == 10)
+    {
+        rate *= 5.0f;
+    }
+    else if (VANM_entMoveType(ent) == 6)
+    {
+        rate *= ent->spd_chase;
+        if (ent->flg_misc & 0x4)
+        {
+            VANM_setSpeed(ent, rate, ent->sanim_chase);
+        }
+    }
+    else if (VANM_entMoveType(ent) == 4)
+    {
+        if (ent->asset->subtype == eEntVillainBossBlackKnight)
+        {
+            fv = fabsf(ent->spd_chase - ent->spd_move);
+            switch (ent->hitpts)
+            {
+            case 0:
+            case 1:
+                break;
+            case 2:
+                fv *= 0.66f;
+                break;
+            case 3:
+                fv *= 0.33f;
+                break;
+            case 4:
+                fv *= 0.0f;
+                break;
+            }
+            rate *= ent->spd_move + fv;
+        }
+        else
+        {
+            rate *= ent->spd_move;
+        }
+        if (ent->flg_misc & 0x2)
+        {
+            VANM_setSpeed(ent, rate, ent->sanim_move);
+        }
+    }
+    else if (VANM_entMoveType(ent) == 1)
+    {
+        if (ent->flg_misc & 0x1 && ent->anim_playing && !(ent->sanim_idle.x < 0.001f))
+        {
+            xAnimSingle* single = VANM_entSingle(ent);
+            if (single)
+            {
+                single->CurrentSpeed = ent->sanim_idle.x;
+            }
+        }
+    }
+    else
+    {
+        rate = 0.0f;
+    }
+
+    return rate;
+}
+
 // Picks the Mastermind's next teleport point. Unless forced, he picks none while the player is more
 // than 4 units away. For each point it measures the player's squared distance to the point and,
 // meant as the villain's own distance to it, the squared flat distance between the villain and a
@@ -4271,6 +4602,63 @@ static void zVIL_apply_move(st_zEntVillain* ent, _xScene* scn, F32 dt, _xEntFram
     }
 }
 
+// Whether the villain stands before a drop: with chance rand (otherwise prev stands) it casts a
+// ray from its eyeball vertex (its bound centre without one) toward a point 1.5 bound radii ahead
+// and 3.5 radii below, offset sideways by 0.3 of the model's right axis, and if that ray hits
+// nothing it is a pit; otherwise a second ray goes toward the point offset to the other side. The
+// bound radius is set to 0 while the rays are cast and restored after.
+static S32 zVIL_chk_pitfall(st_zEntVillain* vil, S32 prev, F32 rand)
+{
+    S32 ispit;
+    F32 sbr;
+    _xRay3 ray_los = { 0 };
+    _xVec3 vilpos = { 0 };
+    _xVec3 tgt = { 0 };
+    _xVec3 xos = { 0 };
+
+    if (!xUtil_yesno(rand))
+    {
+        return prev;
+    }
+
+    sbr = vil->bound.sph.r;
+    vil->bound.sph.r = 0.0f;
+
+    if (!VSUP_vertPos(vil, ZVIL_MDLVERT_LOSEYEBALL, &vilpos))
+    {
+        xVec3Copy(&vilpos, xBoundCenter(&vil->bound));
+    }
+
+    xVec3SMul(&tgt, (_xVec3*)&vil->model->Mat->at, 1.5f * sbr);
+    tgt.y -= 3.5f * sbr;
+    xVec3AddTo(&tgt, (_xVec3*)&vil->model->Mat->pos);
+    xVec3SMul(&xos, (_xVec3*)&vil->model->Mat->right, 0.3f);
+
+    ray_los.min_t = 0.001f;
+    ray_los.flags = 0x800;
+
+    xVec3AddTo(&tgt, &xos);
+    xVec3Sub(&ray_los.dir, &tgt, &vilpos);
+    ray_los.max_t = xVec3Normalize(&ray_los.dir, &ray_los.dir);
+    xVec3SMul(&ray_los.origin, &ray_los.dir, ray_los.min_t);
+    xVec3AddTo(&ray_los.origin, &vilpos);
+    ispit = !xRayHitsSceneFast(&ray_los, globals.sceneCur);
+
+    if (!ispit)
+    {
+        xVec3Sub(&tgt, &tgt, &xos);
+        xVec3Sub(&tgt, &tgt, &xos);
+        xVec3Sub(&ray_los.dir, &tgt, &vilpos);
+        ray_los.max_t = xVec3Normalize(&ray_los.dir, &ray_los.dir);
+        xVec3SMul(&ray_los.origin, &ray_los.dir, ray_los.min_t);
+        xVec3AddTo(&ray_los.origin, &vilpos);
+        ispit = !xRayHitsSceneFast(&ray_los, globals.sceneCur);
+    }
+
+    vil->bound.sph.r = sbr;
+    return ispit;
+}
+
 // Copies the villain asset's settings into its config: speeds, detection and pursuit ranges
 // (squared), the field of view and turn speed in radians, lobbing and extender settings, and the
 // timer lengths, where the asset gives the dazed, taunt, gum, bubble, extend and reload times and
@@ -4398,6 +4786,290 @@ static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser)
         VGOL_set(ent, ZVIL_GOAL_STARTUP);
     }
 
+    return 1;
+}
+
+// Aims the villain's reserved projectile as a gravity ball from his attack vertex, or else from
+// half a unit ahead of and above his bound centre (looking up his name, unused); the boss Black
+// Knight throws from 2 units up and 1.5 to his left of that. It goes toward pos_tgt plus vec_off
+// (when given) at his lob speed, with an arc of arcness and gravity of heavy (1 and 1.5 when not
+// above 0), spins with vec_spin when given and cannot collide for 0.4 seconds. Returns whether
+// the aim worked.
+static S32 VWEP_lobInitArcing(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
+                              _xVec3* vec_spin, F32 arcness, F32 heavy)
+{
+    S32 result = 1;
+    zEntProjectile* prj = vil->prj_reserved;
+    _xVec3 pos_launch = { 0 };
+    ST_CAT_AIMDATA aiminf = { ZPRJ_CAIM_GRAVBALL };
+    _xVec3 tmp_vec = { 0 };
+    S32 rc;
+
+    prj->ColDelaySet(0.4f, 1);
+    rc = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &pos_launch);
+    if (!rc)
+    {
+        xSceneID2Name(globals.sceneCur, vil->id);
+        xVec3Copy(&pos_launch, xBoundCenter(&vil->bound));
+        xVec3SMul(&tmp_vec, (_xVec3*)&vil->model->Mat->at, 0.5f);
+        tmp_vec.y += 0.5f;
+        xVec3AddTo(&pos_launch, &tmp_vec);
+    }
+    if (vil->asset->subtype == eEntVillainBossBlackKnight)
+    {
+        xVec3SMul(&tmp_vec, (_xVec3*)&vil->model->Mat->up, 2.0f);
+        xVec3AddTo(&pos_launch, &tmp_vec);
+        xVec3SMul(&tmp_vec, (_xVec3*)&vil->model->Mat->right, -1.5f);
+        xVec3AddTo(&pos_launch, &tmp_vec);
+    }
+
+    aiminf.spd_base = vil->spd_lob;
+    xVec3Copy(&aiminf.dir_base, (_xVec3*)&vil->model->Mat->at);
+    xVec3Copy(&aiminf.grav.pos_src, &pos_launch);
+    if (vec_off)
+    {
+        xVec3Add(&aiminf.grav.pos_tgt, pos_tgt, vec_off);
+    }
+    else
+    {
+        xVec3Copy(&aiminf.grav.pos_tgt, pos_tgt);
+    }
+    if (arcness <= 0.0f)
+    {
+        aiminf.grav.fac_arcness = 1.0f;
+    }
+    else
+    {
+        aiminf.grav.fac_arcness = arcness;
+    }
+    if (heavy <= 0.0f)
+    {
+        aiminf.grav.acc_gravity = 1.5f;
+    }
+    else
+    {
+        aiminf.grav.acc_gravity = heavy;
+    }
+
+    if (vec_spin)
+    {
+        prj->FlexMatSet(vec_spin, globals.update_dt);
+        prj->flg_categ |= 0x4000000;
+    }
+    else
+    {
+        prj->flg_categ &= ~0x4000000;
+    }
+    rc = prj->AimAtTarget(&aiminf, 1);
+    if (!rc)
+    {
+        result = 0;
+    }
+    return result;
+}
+
+// Readies the Black Knight's reserved axe to throw: it is aimed as an arcing throw (see
+// VWEP_lobInitArcing), turned a quarter circle about z and then about y to face away from
+// pos_tgt, and spins with vec_spin when given. Its lightning reaches his extend distance, drops
+// by his extend width and lasts his extend speed in time; its planes are 46, his lob distance and
+// -268.5. It lives until 10000 units squared away. Always returns 1.
+static S32 VWEP_lobInitBKAxe(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
+                             _xVec3* vec_spin, F32 arcness, F32 heavy)
+{
+    zEntProjectile* prj = vil->prj_reserved;
+    _xVec3 vec_initrot = { 0.0f, 0.0f, PI / 2 };
+    _xMat3x3 mat_rot = { 0 };
+    _xVec3 vec_tmp = { 0 };
+    _xVec3 ang = { 0 };
+    st_BKAXE_DATA* axfx = (st_BKAXE_DATA*)prj->xtradata;
+
+    VWEP_lobInitArcing(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
+    xMat3x3Euler(&mat_rot, &vec_initrot);
+    xMat4x3RMul3x3(&prj->frame->mat, &mat_rot, &prj->frame->mat);
+    xVec3Sub(&vec_tmp, (_xVec3*)&prj->frame->mat.pos, pos_tgt);
+    ang.y = xAngleClamp(atan2(vec_tmp.x, vec_tmp.z));
+    xMat3x3Euler(&mat_rot, &ang);
+    xMat4x3RMul3x3(&prj->frame->mat, &mat_rot, &prj->frame->mat);
+    prj->frame->mode |= 0x101;
+    prj->SyncFrame(1);
+
+    axfx->rad_zap = vil->dst_extend;
+    axfx->dst_zapdrop = vil->wid_extend;
+    axfx->tym_zapdur = vil->spd_extend;
+    axfx->planes.y = vil->dst_lob;
+    axfx->planes.z = -268.5f;
+    axfx->planes.x = 46.0f;
+    if (vec_spin)
+    {
+        prj->FlexMatSet(vec_spin, globals.update_dt);
+        prj->flg_categ |= 0x4000000;
+    }
+    else
+    {
+        prj->flg_categ &= ~0x4000000;
+    }
+    prj->ds2_maxlife = 10000.0f;
+    return 1;
+}
+
+// Readies the Green Ghost's reserved quake ball to throw, aimed like an arrow (see
+// VWEP_lobInitArrow). It falls with a gravity of heavy (1.5 when not above 0). The ball builds to
+// his lob distance, flies at his lob speed (at least 0.2), and its shockwave reaches his extend
+// distance, as high as his extend width, for his extend speed in time. Always returns 1.
+static S32 VWEP_lobInitGGQuaker(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
+                                _xVec3* vec_spin, F32 arcness, F32 heavy)
+{
+    zEntProjectile* prj = vil->prj_reserved;
+    st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)prj->xtradata;
+
+    VWEP_lobInitArrow(vil, pos_tgt, vec_off);
+    if (heavy <= 0.0f)
+    {
+        prj->cat_data.arrow.acc_gravity = 1.5f;
+    }
+    else
+    {
+        prj->cat_data.arrow.acc_gravity = heavy;
+    }
+
+    quake->rad_build = vil->dst_lob;
+    quake->spd_flight = MAX(vil->spd_lob, 0.2f);
+    quake->hyt_shock = vil->wid_extend;
+    quake->rad_shock = vil->dst_extend;
+    quake->tym_shock = vil->spd_extend;
+    return 1;
+}
+
+// Aims the villain's reserved projectile like an arrow from his attack vertex, or else from half
+// a unit ahead of and above his bound centre (looking up his name, unused), toward pos_tgt plus
+// vec_off (when given), at his lob speed. It cannot collide for the first 0.4 seconds. Always
+// returns 1.
+static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off)
+{
+    zEntProjectile* prj = vil->prj_reserved;
+    _xVec3 pos_launch = { 0 };
+    ST_CAT_AIMDATA aiminf = { ZPRJ_CAIM_ARROW };
+    _xVec3 tmp_vec = { 0 };
+    S32 rc;
+
+    prj->ColDelaySet(0.4f, 1);
+    rc = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &pos_launch);
+    if (!rc)
+    {
+        xSceneID2Name(globals.sceneCur, vil->id);
+        xVec3Copy(&pos_launch, xBoundCenter(&vil->bound));
+        xVec3SMul(&tmp_vec, (_xVec3*)&vil->model->Mat->at, 0.5f);
+        tmp_vec.y += 0.5f;
+        xVec3AddTo(&pos_launch, &tmp_vec);
+    }
+
+    aiminf.spd_base = vil->spd_lob;
+    xVec3Copy(&aiminf.dir_base, (_xVec3*)&vil->model->Mat->at);
+    xVec3Copy(&aiminf.arrow.pos_src, &pos_launch);
+    if (vec_off)
+    {
+        xVec3Add(&aiminf.arrow.pos_tgt, pos_tgt, vec_off);
+    }
+    else
+    {
+        xVec3Copy(&aiminf.arrow.pos_tgt, pos_tgt);
+    }
+    prj->AimAtTarget(&aiminf, 1);
+    return 1;
+}
+
+// Readies Redbeard's reserved sword to throw: it starts at his sword handle vertex, or else his
+// attack, weapon or eye vertex, or else his bound centre, turned half a circle about z. It flies
+// his extend distance toward the player at two fifths of that distance per second (with the
+// constant 1.999999), and its end point is that far along the direction to the player. Always
+// returns 1.
+static S32 VWEP_lobInitRBSword(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
+                               _xVec3* vec_spin, F32 arcness, F32 heavy)
+{
+    zEntProjectile* prj = vil->prj_reserved;
+    S32 rc;
+    _xVec3 tmp_vec = { 0 };
+    st_REDBEARD_SWORD* sword = (st_REDBEARD_SWORD*)prj->xtradata;
+
+    rc = VSUP_vertPos(vil, ZVIL_MDLVERT_SWORDHANDLE, &tmp_vec);
+    if (!rc)
+    {
+        rc = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &tmp_vec);
+    }
+    if (!rc)
+    {
+        rc = VSUP_vertPos(vil, ZVIL_MDLVERT_WEAPON, &tmp_vec);
+    }
+    if (!rc)
+    {
+        rc = VSUP_vertPos(vil, ZVIL_MDLVERT_LOSEYEBALL, &tmp_vec);
+    }
+    if (!rc)
+    {
+        xVec3Copy(&tmp_vec, xBoundCenter(&vil->bound));
+    }
+
+    xVec3Copy((_xVec3*)&prj->frame->mat.pos, &tmp_vec);
+    xMat3x3Euler((xMat3x3*)&prj->frame->mat, 0.0f, 0.0f, PI);
+    prj->frame->mode |= 0x101;
+    prj->SyncFrame(1);
+
+    sword->dst_far = vil->dst_extend;
+    sword->spd_fly = (1.999999f * vil->dst_extend) / 5.0f;
+    xVec3Copy(&sword->dir_end, &vil->precalc.dir_VtoP);
+    xVec3SMul(&sword->pos_end, &sword->dir_end, sword->dst_far);
+    return 1;
+}
+
+// Readies the Mastermind's reserved flask to throw: it starts at his attack vertex (when tagged),
+// tipped 45 degrees about z, and spins with vec_spin when given. The flask enters the tease stage
+// with a flight speed of his lob speed (at least 0.2), its aftermath time, height and radius all
+// his extend width, and an arc of arcness and weight of heavy, which default to 1 and 1.5 when not
+// above 0. Always returns 1.
+static S32 VWEP_lobInitMMFlask(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
+                               _xVec3* vec_spin, F32 arcness, F32 heavy)
+{
+    zEntProjectile* prj = vil->prj_reserved;
+    _xMat3x3 mat_rot = { 0 };
+    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
+    static _xVec3 vec_initwobble = { 0.0f, 0.0f, PI / 4 };
+
+    VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, (_xVec3*)&prj->frame->mat.pos);
+    xMat3x3Euler(&mat_rot, &vec_initwobble);
+    xMat4x3RMul3x3(&prj->frame->mat, &mat_rot, &prj->frame->mat);
+    prj->frame->mode |= 0x101;
+    prj->SyncFrame(1);
+    if (vec_spin)
+    {
+        prj->FlexMatSet((xVec3*)vec_spin, globals.update_dt);
+        prj->flg_categ |= 0x4000000;
+    }
+    else
+    {
+        prj->flg_categ &= ~0x4000000;
+    }
+
+    flask->stage = MAST_STAGE_TEASE;
+    flask->spd_flight = MAX(vil->spd_lob, 0.2f);
+    flask->hyt_aftermath = vil->wid_extend;
+    flask->tym_aftermath = vil->wid_extend;
+    flask->rad_aftermath = vil->wid_extend;
+    if (arcness <= 0.0f)
+    {
+        flask->arcness = 1.0f;
+    }
+    else
+    {
+        flask->arcness = arcness;
+    }
+    if (heavy <= 0.0f)
+    {
+        flask->heavy = 1.5f;
+    }
+    else
+    {
+        flask->heavy = heavy;
+    }
     return 1;
 }
 
@@ -6677,6 +7349,39 @@ static inline U32 VANM_entStateType(const _zEnt* ent)
     return state ? state->UserFlags & 0x1E000000 : 0;
 }
 
+// The move kind bits (0x1E) of the user flags of the villain's current animation state, or 0 if
+// it has none: 1 idle, 4 move, 6 chase, 10 a fixed fast move.
+static inline U32 VANM_entMoveType(const _zEnt* ent)
+{
+    xAnimState* state = VANM_entState(ent);
+    return state ? state->UserFlags & 0x1E : 0;
+}
+
+// While an animation plays, sets its playback speed to spd over the animation's own speed
+// (sanim.x, ignored under 0.001), kept between sanim.y and sanim.z.
+static inline void VANM_setSpeed(st_zEntVillain* ent, F32 spd, _xVec3 sanim)
+{
+    F32 fv;
+    xAnimSingle* single;
+
+    if (!ent->anim_playing)
+    {
+        return;
+    }
+    if (sanim.x < 0.001f)
+    {
+        return;
+    }
+
+    fv = spd / sanim.x;
+    fv = CLAMP(fv, sanim.y, sanim.z);
+    single = VANM_entSingle(ent);
+    if (single)
+    {
+        single->CurrentSpeed = fv;
+    }
+}
+
 // How far the villain's model is into its current animation, or 0 if it has none.
 static inline F32 VANM_entTime(const _zEnt* ent)
 {
@@ -7343,6 +8048,38 @@ static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent)
     return result;
 }
 
+// Heading from the villain's facing to the entity, clamped. If qdrant is given, it gets the
+// entity's quadrant: front within 45 degrees either side of the facing, then right, back and
+// left. The left test repeats the front range's bounds, so left is never given and qdrant stays
+// as it was for an angle there.
+static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent, en_NPC_QUADRANT* qdrant)
+{
+    F32 ang_diff = VSUP_dir_toEnt(vil, ent, NULL) - vil->frame->rot.angle;
+    F32 ang_aoi;
+
+    if (qdrant)
+    {
+        ang_aoi = xAngleClamp(ang_diff + PI / 4);
+        if (ang_aoi > 0.0f && ang_aoi <= PI / 2)
+        {
+            *qdrant = ZVIL_QUAD_FRONT;
+        }
+        else if (ang_aoi > PI / 2 && ang_aoi <= PI)
+        {
+            *qdrant = ZVIL_QUAD_RIGHT;
+        }
+        else if (ang_aoi > PI && ang_aoi < 3 * PI / 2)
+        {
+            *qdrant = ZVIL_QUAD_BACK;
+        }
+        else if (ang_aoi > 0.0f && ang_aoi < PI / 2)
+        {
+            *qdrant = ZVIL_QUAD_LEFT;
+        }
+    }
+    return xAngleClamp(ang_diff);
+}
+
 // Whether nothing in the scene blocks a ray from the villain's bound centre toward the entity's,
 // starting just outside the villain's bound and reaching no farther than its detection range.
 // The ray is cast only with chance rand; otherwise the previous answer (prev) stands.
@@ -7368,6 +8105,19 @@ static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 
     r.flags = 0x800;
     result = !xRayHitsSceneFast(&r, globals.sceneCur);
     return result;
+}
+
+// Puts the world position of one of the villain's model vertices in pos and returns 1, or returns 0
+// when that vertex is not set up.
+static inline S32 VSUP_vertPos(const st_zEntVillain* vil, en_ZVIL_MODEL_VERTEX vert, _xVec3* pos)
+{
+    if (!(vil->flg_vert & (1 << vert)))
+    {
+        return 0;
+    }
+
+    iModelTagEval(vil->model->Data, (iModelTag*)&vil->tag_vert[vert], vil->model->Mat, pos);
+    return 1;
 }
 
 // Line of sight from the villain to the entity; see VSUP_ent_inLOS_timz.
