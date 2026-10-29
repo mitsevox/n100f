@@ -2348,8 +2348,7 @@ static void zEntPlayer_SnackDecrement(F32 dt)
     }
 }
 
-// Writes each component straight to o, so o is evaluated once and no temporary is
-// stored (xVec3Lerp in xMath3.h builds a temporary).
+// Linear interpolation from a to b by t, written into o.
 static inline void LerpVec3(xVec3* o, const xVec3* a, const xVec3* b, F32 t)
 {
     o->x = a->x + (b->x - a->x) * t;
@@ -2450,215 +2449,215 @@ void zEntPlayer_Render(_zEnt* ent)
     }
 
     {
-    xModelInstance* minst = ent->model;
-    U32 index = 0;
-    xAnimSingle* asingle = ent->model->Anim->Single;
-    xVec3 pos0;
-    xVec3 pos1;
-    while (minst)
-    {
-        switch (index)
+        xModelInstance* minst = ent->model;
+        U32 index = 0;
+        xAnimSingle* asingle = ent->model->Anim->Single;
+        xVec3 pos0;
+        xVec3 pos1;
+        while (minst)
         {
-        case 2:
-            if (((asingle->State->UserFlags & 0x1E) == 0xC && (globals.player.Inv_Specials & 0x800)) ||
-                !strcmp(asingle->State->Name, "Powerup_helmet"))
+            switch (index)
             {
-                globals.player.HelmetTimer = 0.3f;
-                if (minst->Flags & 2)
+            case 2:
+                if (((asingle->State->UserFlags & 0x1E) == 0xC && (globals.player.Inv_Specials & 0x800)) ||
+                    !strcmp(asingle->State->Name, "Powerup_helmet"))
                 {
-                    minst->Flags |= 1;
+                    globals.player.HelmetTimer = 0.3f;
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
+                }
+                else if (0.0f == globals.player.HelmetTimer)
+                {
+                    minst->Flags &= ~3;
+                }
+                break;
+            case 3:
+                if ((asingle->State->UserFlags & 0x1E) == 2 && globals.player.WorldDisguise != 6)
+                {
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
                 }
                 else
                 {
-                    minst->Flags |= 2;
+                    minst->Flags &= ~3;
                 }
-            }
-            else if (0.0f == globals.player.HelmetTimer)
-            {
-                minst->Flags &= ~3;
-            }
-            break;
-        case 3:
-            if ((asingle->State->UserFlags & 0x1E) == 2 && globals.player.WorldDisguise != 6)
-            {
-                if (minst->Flags & 2)
+                break;
+            case 4:
+                if (!xStricmp(asingle->State->Name, "Action_dig"))
                 {
-                    minst->Flags |= 1;
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
                 }
                 else
                 {
-                    minst->Flags |= 2;
+                    minst->Flags &= ~3;
                 }
-            }
-            else
-            {
-                minst->Flags &= ~3;
-            }
-            break;
-        case 4:
-            if (!xStricmp(asingle->State->Name, "Action_dig"))
-            {
-                if (minst->Flags & 2)
+                break;
+            case 5:
+                if (globals.player.WorldDisguise == 5 &&
+                    (!xStricmp(asingle->State->Name, "Idle_lampshade") ||
+                     !xStricmp(asingle->State->Name, "Idle_blackknight") ||
+                     !xStricmp(asingle->State->Name, "IdleToLampshade") ||
+                     !xStricmp(asingle->State->Name, "LampshadeToSneak") ||
+                     !xStricmp(asingle->State->Name, "SneakToLampshade") ||
+                     !xStricmp(asingle->State->Name, "Powerup_lamp")))
                 {
-                    minst->Flags |= 1;
+                    if (minst->BoneCount <= 10)
+                    {
+                        minst->Flags &= (U16)~8;
+                        minst->Flags |= 0x20;
+                        minst->BoneIndex = 0;
+                    }
+                    if (minst->Anim)
+                    {
+                        minst->Flags |= 4;
+                    }
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
                 }
                 else
                 {
-                    minst->Flags |= 2;
+                    minst->Flags &= ~7;
                 }
-            }
-            else
-            {
-                minst->Flags &= ~3;
-            }
-            break;
-        case 5:
-            if (globals.player.WorldDisguise == 5 &&
-                (!xStricmp(asingle->State->Name, "Idle_lampshade") ||
-                 !xStricmp(asingle->State->Name, "Idle_blackknight") ||
-                 !xStricmp(asingle->State->Name, "IdleToLampshade") ||
-                 !xStricmp(asingle->State->Name, "LampshadeToSneak") ||
-                 !xStricmp(asingle->State->Name, "SneakToLampshade") ||
-                 !xStricmp(asingle->State->Name, "Powerup_lamp")))
-            {
-                if (minst->BoneCount <= 10)
+                break;
+            case 6:
+                if (globals.player.WorldDisguise == 6 &&
+                    (!xStricmp(asingle->State->Name, "Idle_lampshade") ||
+                     !xStricmp(asingle->State->Name, "Idle_blackknight") ||
+                     !xStricmp(asingle->State->Name, "Walk_blackknight")))
                 {
-                    minst->Flags &= (U16)~8;
-                    minst->Flags |= 0x20;
-                    minst->BoneIndex = 0;
-                }
-                if (minst->Anim)
-                {
-                    minst->Flags |= 4;
-                }
-                if (minst->Flags & 2)
-                {
-                    minst->Flags |= 1;
+                    if (minst->Flags & 2)
+                    {
+                        ent->model->Flags &= ~1;
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
                 }
                 else
                 {
-                    minst->Flags |= 2;
+                    ent->model->Flags |= 1;
+                    minst->Flags &= ~7;
                 }
-            }
-            else
-            {
-                minst->Flags &= ~7;
-            }
-            break;
-        case 6:
-            if (globals.player.WorldDisguise == 6 &&
-                (!xStricmp(asingle->State->Name, "Idle_lampshade") ||
-                 !xStricmp(asingle->State->Name, "Idle_blackknight") ||
-                 !xStricmp(asingle->State->Name, "Walk_blackknight")))
-            {
-                if (minst->Flags & 2)
+                break;
+            case 7:
+                if (surfSticky && (globals.player.Inv_Specials & 0x4))
                 {
-                    ent->model->Flags &= ~1;
-                    minst->Flags |= 1;
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
                 }
                 else
                 {
-                    minst->Flags |= 2;
+                    minst->Flags &= ~7;
                 }
-            }
-            else
-            {
-                ent->model->Flags |= 1;
-                minst->Flags &= ~7;
-            }
-            break;
-        case 7:
-            if (surfSticky && (globals.player.Inv_Specials & 0x4))
-            {
-                if (minst->Flags & 2)
+                break;
+            case 8:
+                if (!strcmp(asingle->State->Name, "Powerup_plunger") ||
+                    (globals.player.Slide == 2 &&
+                     (!strcmp(asingle->State->Name, "Land_normal") || !strcmp(asingle->State->Name, "Land_walk") ||
+                      !strcmp(asingle->State->Name, "Land_walkidle") ||
+                      !strcmp(asingle->State->Name, "Land_running") ||
+                      !strcmp(asingle->State->Name, "Walk_plunger") ||
+                      !strcmp(asingle->State->Name, "Idle_plunger"))))
                 {
-                    minst->Flags |= 1;
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
                 }
                 else
                 {
-                    minst->Flags |= 2;
+                    minst->Flags &= ~3;
                 }
-            }
-            else
-            {
-                minst->Flags &= ~7;
-            }
-            break;
-        case 8:
-            if (!strcmp(asingle->State->Name, "Powerup_plunger") ||
-                (globals.player.Slide == 2 &&
-                 (!strcmp(asingle->State->Name, "Land_normal") || !strcmp(asingle->State->Name, "Land_walk") ||
-                  !strcmp(asingle->State->Name, "Land_walkidle") ||
-                  !strcmp(asingle->State->Name, "Land_running") ||
-                  !strcmp(asingle->State->Name, "Walk_plunger") ||
-                  !strcmp(asingle->State->Name, "Idle_plunger"))))
-            {
-                if (minst->Flags & 2)
+                break;
+            case 9:
+                if (!xStricmp(asingle->State->Name, "Fall_floatup") ||
+                    !xStricmp(asingle->State->Name, "Fall_floatdown") ||
+                    !xStricmp(asingle->State->Name, "Fall_floatopen"))
                 {
+                    if (!(minst->Flags & 1) && minst->Anim)
+                    {
+                        minst->Anim->Single->Time = 0.0f;
+                        minst->Anim->Single->CurrentSpeed = minst->Anim->Single->State->Speed;
+                    }
                     minst->Flags |= 1;
+                    memcpy(minst->Mat, ent->model->Mat, sizeof(xMat3x3));
+                    iModelTagEval(ent->model->Data, &globals.player.HangPawTag[0], ent->model->Mat, &pos0);
+                    iModelTagEval(ent->model->Data, &globals.player.HangPawTag[1], ent->model->Mat, &pos1);
+                    LerpVec3((xVec3*)&minst->Mat->pos, &pos0, &pos1, 0.5f);
+                    xMat3x3RMulRotY((xMat3x3*)minst->Mat, (xMat3x3*)minst->Mat, umbrellaFudgeRot);
+                    minst->Mat->pos.y += umbrellaFudgeY;
+                    minst->Mat->pos.x += umbrellaFudgeX * minst->Mat->right.x;
+                    minst->Mat->pos.z += umbrellaFudgeX * minst->Mat->right.z;
                 }
                 else
                 {
-                    minst->Flags |= 2;
+                    minst->Flags &= ~1;
                 }
-            }
-            else
-            {
-                minst->Flags &= ~3;
-            }
-            break;
-        case 9:
-            if (!xStricmp(asingle->State->Name, "Fall_floatup") ||
-                !xStricmp(asingle->State->Name, "Fall_floatdown") ||
-                !xStricmp(asingle->State->Name, "Fall_floatopen"))
-            {
-                if (!(minst->Flags & 1) && minst->Anim)
-                {
-                    minst->Anim->Single->Time = 0.0f;
-                    minst->Anim->Single->CurrentSpeed = minst->Anim->Single->State->Speed;
-                }
-                minst->Flags |= 1;
-                memcpy(minst->Mat, ent->model->Mat, sizeof(xMat3x3));
-                iModelTagEval(ent->model->Data, &globals.player.HangPawTag[0], ent->model->Mat, &pos0);
-                iModelTagEval(ent->model->Data, &globals.player.HangPawTag[1], ent->model->Mat, &pos1);
-                LerpVec3((xVec3*)&minst->Mat->pos, &pos0, &pos1, 0.5f);
-                xMat3x3RMulRotY((xMat3x3*)minst->Mat, (xMat3x3*)minst->Mat, umbrellaFudgeRot);
-                minst->Mat->pos.y += umbrellaFudgeY;
-                minst->Mat->pos.x += umbrellaFudgeX * minst->Mat->right.x;
-                minst->Mat->pos.z += umbrellaFudgeX * minst->Mat->right.z;
-            }
-            else
-            {
+                break;
+            case 10:
+                minst->Flags &= (U16)~8;
+                minst->Flags |= 0x20;
                 minst->Flags &= ~1;
-            }
-            break;
-        case 10:
-            minst->Flags &= (U16)~8;
-            minst->Flags |= 0x20;
-            minst->Flags &= ~1;
-            break;
-        case 11:
-            if (!strcmp(asingle->State->Name, "Inactive_Magnify") && asingle->Time > 0.55f &&
-                asingle->Time < 221.0f / 30.0f)
-            {
-                if (minst->Flags & 2)
+                break;
+            case 11:
+                if (!strcmp(asingle->State->Name, "Inactive_Magnify") && asingle->Time > 0.55f &&
+                    asingle->Time < 221.0f / 30.0f)
                 {
-                    minst->Flags |= 1;
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
                 }
                 else
                 {
-                    minst->Flags |= 2;
+                    minst->Flags &= ~3;
                 }
+                break;
             }
-            else
-            {
-                minst->Flags &= ~3;
-            }
-            break;
+            minst = minst->Next;
+            index++;
         }
-        minst = minst->Next;
-        index++;
-    }
     }
 
     S32 player_trans = 80;
