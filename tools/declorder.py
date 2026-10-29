@@ -283,7 +283,7 @@ def main(argv=None):
     parser.add_argument('--line',type=int,help='line of the definition, when the name is overloaded')
     parser.add_argument('--block',type=int,default=0,help='block of the function to reorder, 0 = the body (see --list)')
     parser.add_argument('--pod',action='append',default=[],help='type with trivial construction and destruction')
-    parser.add_argument('--max',type=int,default=5040,help='largest number of orders tried exhaustively')
+    parser.add_argument('--max',type=int,default=120,help='largest number of orders tried exhaustively')
     parser.add_argument('--jobs','-j',type=int,default=os.cpu_count() or 1)
     parser.add_argument('--target',default=DEFAULT_TARGET)
     parser.add_argument('--objdiff',help='objdiff-cli binary')

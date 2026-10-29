@@ -19,7 +19,7 @@ Check: the verdict (identical or not) of every function of all 317 source units 
 
 ## Declaration order: `tools/declorder.py`
 
-On CodeWarrior the order of local declarations decides how the register allocator numbers, and so ranks, the locals. This tool tries the orders of a function's local declarations through `trial.py` and reports the best. It moves only declarations whose order cannot change what the code does: one per line in the run that opens a block, of pointer, scalar or `--pod` type, with an initializer that calls and assigns nothing and reads none of the other moved locals. Anything else in the run stays put and splits it. Up to `--max` (5040) orders are tried exhaustively, the reverse first; above that, a deterministic local search moves one declaration at a time while the score improves.
+On CodeWarrior the order of local declarations decides how the register allocator numbers, and so ranks, the locals. This tool tries the orders of a function's local declarations through `trial.py` and reports the best. It moves only declarations whose order cannot change what the code does: one per line in the run that opens a block, of pointer, scalar or `--pod` type, with an initializer that calls and assigns nothing and reads none of the other moved locals. Anything else in the run stays put and splits it. Up to `--max` (120) orders are tried exhaustively, the reverse first; above that, a deterministic local search moves one declaration at a time while the score improves.
 
 ```sh
 python3 tools/declorder.py src/flat/zEntShaggy.cpp zEntShaggy_SceneStart__FP6zScene --list
@@ -28,7 +28,7 @@ python3 tools/declorder.py src/flat/zEntShaggy.cpp zEntShaggy_SceneStart__FP6zSc
 
 `--block N` picks an inner block, `--line` an overload, `--name` the spelling of a definition the symbol does not give. `--out` writes the best order to a file for review; the tool never edits the source.
 
-Check: KNOWN_ANSWER
+Check: a known answer. In four matched functions the declarations were shuffled (seed 7); three of them then no longer matched, so the order matters on GC/1.3.2. From each shuffled copy the search got back to a byte-identical function: `iModelTagInternal` (8 locals, 51 orders, 3 s), `PlayerDigUpdate` (6 locals, 16 orders, 12 s) and `zEntPlayerSurfDamageUpdate` (6 locals, all 720 orders exhaustively, 510 s, at the score of the original source). That run scored with `--strict`. The order it finds can differ from the original where several orders compile alike; it is a hint to weigh against the DWARF and the code around it. Cost grows with the unit's compile time (about 3 to 6 s per order for zEntPlayer on 4 cores), which is why the exhaustive limit is low and the local search does the rest.
 
 ## Out-of-repository tools
 
