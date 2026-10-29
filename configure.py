@@ -475,6 +475,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xBase.cpp"),
             Object(NonMatching, "flat/xbinio.cpp"),
             Object(NonMatching, "flat/xClimate.cpp"),
+            Object(NonMatching, "flat/xEnt.cpp"),
             Object(NonMatching, "flat/xEntMotion.cpp"),
             Object(NonMatching, "flat/xEnv.cpp"),
             Object(NonMatching, "flat/xFFX.cpp"),

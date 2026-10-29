@@ -24,6 +24,7 @@ struct _tagxPad
 };
 
 extern _tagxPad mPad[4];
+extern _tagxPad* gDebugPad;
 
 S32 xPadUpdate(S32 idx, F32 time_passed);
 
