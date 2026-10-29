@@ -9,6 +9,7 @@
 #include "iTime.h"
 
 struct zScene;
+struct zAssetPickupTable;
 struct _zCutsceneMgr;
 struct _tagxPad;
 struct xCamAsset;
@@ -47,15 +48,16 @@ struct _tagxCamFrame
     U8 opaque_144[0x1F0 - 0x144];
 };
 
-// Partial: only camera, the pads, player, cmgr, sceneCur, the fog state and update_dt are
-// declared. The members between them are left opaque.
+// Partial: only camera, the pads, player, pickupTable, profile, cmgr, sceneCur, the fog state
+// and update_dt are declared. The members between them are left opaque.
 struct zGlobals
 {
     _tagxCamFrame camera;
     _tagxPad* pad0;
     _tagxPad* pad1;
     zPlayerGlobals player;
-    U8 opaque_4D0[0x860 - 0x1F8 - sizeof(zPlayerGlobals)];
+    zAssetPickupTable* pickupTable;
+    S32 profile;
     _zCutsceneMgr* cmgr;
     U8 opaque_864[0xB64 - 0x864];
     zScene* sceneCur;
