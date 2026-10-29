@@ -68,7 +68,42 @@ struct st_XSAVEGAME_DATA
     st_ISGSESSION* isgsess;
 };
 
+enum en_XSGASYNC_STATUS
+{
+    XSG_ASTAT_NOOP = 0,
+    XSG_ASTAT_INPROG = 1,
+    XSG_ASTAT_SUCCESS = 2,
+    XSG_ASTAT_FAILED = 3
+};
+
+enum en_XSG_WHYFAIL
+{
+    XSG_WHYERR_NONE,
+    XSG_WHYERR_NOCARD,
+    XSG_WHYERR_NOROOM,
+    XSG_WHYERR_DAMAGE,
+    XSG_WHYERR_CARDYANKED,
+    XSG_WHYERR_OTHER,
+    XSG_WHYERR_NOMORE
+};
+
 S32 xSGShutdown();
+st_XSAVEGAME_DATA* xSGInit(en_SAVEGAME_MODE mode);
+S32 xSGDone(st_XSAVEGAME_DATA* xsgdata);
+S32 xSGTgtCount(st_XSAVEGAME_DATA* xsgdata, S32* max);
+S32 xSGTgtPhysSlotIdx(st_XSAVEGAME_DATA* xsgdata, S32 tidx);
+S32 xSGTgtIsFormat(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* badEncode);
+S32 xSGTgtSelect(st_XSAVEGAME_DATA* xsgdata, S32 tidx);
+void xSGGameSet(st_XSAVEGAME_DATA* xsgdata, S32 gidx);
+char* xSGGameModDate(st_XSAVEGAME_DATA* xsgdata, S32 gidx);
+char* xSGGameLabel(st_XSAVEGAME_DATA* xsgdata, S32 gidx);
+S32 xSGGameThumIndex(st_XSAVEGAME_DATA* xsgdata, S32 gidx);
+S32 xSGSetup(st_XSAVEGAME_DATA* xsgdata);
+S32 xSGSetup(st_XSAVEGAME_DATA* xsgdata, S32 gidx, char* label, S32 thumIdx, iTime playtime);
+S32 xSGProcess(st_XSAVEGAME_DATA* xsgdata);
+S32 xSGWrapup(st_XSAVEGAME_DATA* xsgdata);
+en_XSGASYNC_STATUS xSGAsyncStatus(st_XSAVEGAME_DATA* xsgdata, S32 block, en_XSG_WHYFAIL* whyFail,
+                                  char* errmsg);
 S32 xSGTgtFormatTgt(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* canRecover);
 S32 xSGTgtHasGameDir(st_XSAVEGAME_DATA* xsgdata, S32 tidx);
 S32 xSGTgtHaveRoom(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32 fsize, S32 slotidx, S32* bytesNeeded,

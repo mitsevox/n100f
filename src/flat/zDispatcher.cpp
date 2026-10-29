@@ -57,7 +57,7 @@ extern "C" void fn_800D77D4();
 extern "C" void fn_800D77B4();
 extern "C" void fn_800CD268(S32);
 extern "C" void fn_800CD254();
-extern "C" void fn_800C9B14(U32, F32*);
+void zSaveLoad_DispatchCB(U32 dispatchEvent, F32* toParam);
 extern "C" void fn_800BF64C(char*, U32, F32);
 extern "C" U32 fn_800D5D74();
 void zGameStateSwitchEvent(S32);
@@ -206,7 +206,7 @@ extern "C" S32 fn_8004651C(xBase*, xBase* to, U32 event, F32* param, xBase* widg
     case 0xab:
     case 0xac:
     case 0xad:
-        fn_800C9B14(event, param);
+        zSaveLoad_DispatchCB(event, param);
         break;
     case 0xc2:
         zEntPlayer_StoreCheckPoint(param);

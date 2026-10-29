@@ -36,7 +36,7 @@ void xCameraBegin(_tagxCamFrame* cam, S32 clear);
 void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
 extern "C" void fn_8001E83C(_tagxCamFrame*);
 extern "C" void fn_8001E8A0(_tagxCamFrame*, F32);
-extern "C" U32 fn_800C9DB8();
+U32 zSaveLoad_LoadLoop();
 extern "C" void fn_8001E798(_tagxCamFrame*);
 extern "C" void fn_800207E8(_tagxCamFrame*);
 extern "C" void fn_800207EC(_tagxCamFrame*, S32, S32);
@@ -218,7 +218,7 @@ U32 zMenuLoop()
         if (gGameMode == eGameMode_Load)
         {
             F32 elapsed = (F32)iTimeGet() - time_last;
-            s = fn_800C9DB8();
+            s = zSaveLoad_LoadLoop();
             if (s == '0000')
             {
                 s = 0;
