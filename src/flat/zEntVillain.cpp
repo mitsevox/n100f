@@ -832,14 +832,14 @@ static S32 VILN_std_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
 //   he checks for arrival;
 // - follow, patrol, chase: the shared helpers;
 // - mini patrol: he heads for his anchor if he has one, otherwise for his guard spot;
-// - look for the player: he turns to his listening heading;
-// - listen, attack, lob, taunt: he turns to face the player, and when readying an attack only if
-//   precalc plyr_mvinf bits 0xFF00 are clear;
+// - listen: he turns to his listening heading;
+// - surprised, attack, lob, taunt: he turns to face the player, and when readying an attack only
+//   if precalc plyr_mvinf bits 0xFF00 are clear;
 // - soaped: while flg_misc bit 0x100000 is set and his knockback velocity's squared length is over
 //   0.01, that velocity shrinks to 0.99 each frame and he moves with it; otherwise it is cleared
 //   and his target height bobs by 0.5 dt sin(5 times the time in the goal);
-// - gummed: with move ability bit 0x100000 and both a next and a previous path point, he creeps
-//   to the next point and on arrival takes the following one and sends an arrive event;
+// - gummed: with move ability bit 0x100000 and both a next and a previous path point, he heads
+//   for the next point and on arrival takes the following one and sends an arrive event;
 // - dying: with ability bit 0x80000 and flg_misc bit 0x100000, he moves at half his bowling
 //   direction.
 static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
@@ -932,14 +932,14 @@ static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _x
         vil->domove |= 0x80000000;
         VOUT_chkdo_minipatrolArrived(vil);
         break;
-    case ZVIL_GOAL_LOOKFORHERO:
+    case ZVIL_GOAL_LISTEN:
         vil->ang_moveto = vil->ang_listen;
         vil->domove |= 0x40;
         vil->domove |= 0x1;
         vil->domove |= 0x10;
         vil->domove |= 0x80000000;
         break;
-    case ZVIL_GOAL_LISTEN:
+    case ZVIL_GOAL_SURPRIZE:
         vil->ang_moveto = prec->ang_VtoP;
         vil->domove |= 0x40;
         vil->domove |= 0x1;
@@ -6320,8 +6320,8 @@ static S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil)
 // arrival, 0 otherwise.
 static S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil)
 {
-    F32 dy = 0.0f;
     _xVec3 entpos = { 0 };
+    F32 dy = 0.0f;
     S32 amthere = 0;
     F32 ds2;
 
