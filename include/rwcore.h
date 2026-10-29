@@ -363,7 +363,27 @@ typedef enum RwOpCombineType
         (o)->z += (((a)->z) * ((s)));                                                              \
     } while (0)
 
+#define RwV3dSubMacro(o, a, b)                                                                     \
+    do                                                                                             \
+    {                                                                                              \
+        (o)->x = (((a)->x) - ((b)->x));                                                            \
+        (o)->y = (((a)->y) - ((b)->y));                                                            \
+        (o)->z = (((a)->z) - ((b)->z));                                                            \
+    } while (0)
+
+#define RwV3dDotProductMacro(a, b)                                                                 \
+    ((((((((a)->x) * ((b)->x))) + ((((a)->y) * ((b)->y))))) + ((((a)->z) * ((b)->z)))))
+
+#define RwV3dCrossProductMacro(o, a, b)                                                            \
+    do                                                                                             \
+    {                                                                                              \
+        (o)->x = (((((a)->y) * ((b)->z))) - ((((a)->z) * ((b)->y))));                              \
+        (o)->y = (((((a)->z) * ((b)->x))) - ((((a)->x) * ((b)->z))));                              \
+        (o)->z = (((((a)->x) * ((b)->y))) - ((((a)->y) * ((b)->x))));                              \
+    } while (0)
+
 #define RwCameraGetCurrentCamera() ((RwCamera*)RWSRCGLOBAL(curCamera))
+#define RwCameraGetProjection(_camera) ((_camera)->projectionType)
 
 typedef enum RwCameraClearMode
 {
@@ -1076,6 +1096,24 @@ struct RxExecContext
 };
 
 extern RxExecContext _rxExecCtxGlobal;
+
+// The current camera's projection values, refreshed by the transform node for itself and the clip
+// nodes: the depth mapping, the clip planes and the frame buffer's size and offset as floats.
+typedef struct ClipInfo ClipInfo;
+struct ClipInfo
+{
+    F32 zScale;
+    F32 zShift;
+    F32 nearClip;
+    F32 farClip;
+    F32 camWidth;
+    F32 camHeight;
+    F32 camOffsetX;
+    F32 camOffsetY;
+    U8 unk20[8];
+};
+
+extern ClipInfo gClipInfo;
 extern RxHeap* _rxHeapGlobal;
 
 RxPipelineNode* _rxEmbeddedPacketBetweenNodes(RxPipeline* pipeline, RxPipelineNode* nodeFrom,
