@@ -13,6 +13,9 @@
 #include "zScene.h"
 #include "zEntPickup.h"
 #include "zEntTrigger.h"
+#include "zEntButton.h"
+#include "zEntDestructObj.h"
+#include "xEvent.h"
 #include "xPad.h"
 #include "xSnd.h"
 #include "iSnd.h"
@@ -203,6 +206,9 @@ static U32 zEntPlayer_FXSpringCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnim
                                  void* object);
 static U32 zEntPlayer_FXOpenBrollyCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single,
                                      void* object);
+static void zEntPlayer_ButtonHBFX(_xEnt*, _zEntButton*);
+static void zEntPlayer_ButtonBBFX(_xEnt* ent, _zEntButton*);
+static S32 DestructObjHBCallback(_zEnt* ent, _xCollis* coll);
 
 static xVec3 headcoll_oses[12] = {
     { 0.0f, 0.0f, 0.15f },  { 0.0f, 0.0f, 0.15f },   { 0.0f, 0.0f, 0.4f },  { 0.0f, 0.0f, 0.3f },
@@ -416,6 +422,16 @@ static void HeadcollUpdate(F32 dt)
     }
 }
 
+static inline F32 isin(F32 x)
+{
+    return sin(x);
+}
+
+static inline F32 icos(F32 x)
+{
+    return cos(x);
+}
+
 static void HeadbuttTest(_xCollis* coll, _xCollis* endcoll, F32 angle_cosine,
                          S32 (*headbuttCB)(_zEnt*, _xCollis*))
 {
@@ -431,8 +447,8 @@ static void HeadbuttTest(_xCollis* coll, _xCollis* endcoll, F32 angle_cosine,
     {
         return;
     }
-    dx = sin(ent->frame->rot.angle);
-    dz = cos(ent->frame->rot.angle);
+    dx = isin(ent->frame->rot.angle);
+    dz = icos(ent->frame->rot.angle);
     for (; coll < endcoll; coll++)
     {
         villent = (_zEnt*)coll->optr;
@@ -1221,6 +1237,222 @@ static inline void AddGroundStatesTransition(xAnimTable* table, xAnimTransition*
     xAnimTableAddTransition(table, tran, "Inactive_SitStart Inactive_SitLoop Inactive_SitEnd Inactive_SitEndSlow Idle_LookLeft Idle_LookRight");
     xAnimTableAddTransition(table, tran, "Inactive_SitFlea Inactive_SitSniff Inactive_SitHungry Inactive_SitLookLeft Inactive_SniffAir Inactive_SniffGround");
     xAnimTableAddTransition(table, tran, "Inactive_Magnify Inactive_Dizzy Inactive_BlowFeet Inactive_LookAround");
+}
+
+void ButtonStandOnCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+    _zEnt* bn;
+    U32 response;
+    U32 buttonState;
+
+    coll = &ent->collis->colls[0];
+    bn = (_zEnt*)coll->optr;
+    if (bn && bn->baseType == 0x18 && coll->norm.x == 0.0f && coll->norm.z == 0.0f)
+    {
+        response = zEntButton_Stand((_zEntButton*)bn);
+        buttonState = zEntButton_CheckState((_zEntButton*)coll->optr);
+        if (response == 1 && !buttonState)
+        {
+            zEntEvent((xBase*)coll->optr, eEventPress);
+        }
+    }
+}
+
+static S32 ButtonHBCallback(_zEnt* ent, _xCollis* coll)
+{
+    U32 headResponse;
+    U32 buttonState;
+
+    if (((xBase*)coll->optr)->baseType != 0x18)
+    {
+        return 0;
+    }
+    headResponse = zEntButton_Headbutt((_zEntButton*)coll->optr);
+    buttonState = zEntButton_CheckState((_zEntButton*)coll->optr);
+    if (headResponse == 4 && !buttonState)
+    {
+        if (!(globals.player.Inv_Specials & 0x800))
+        {
+            ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+            ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+            ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+            globals.player.HeadbuttHit = 1;
+            globals.player.DecelRunSpeed = 0.25f * globals.player.DecelRunSpeed;
+            return 0;
+        }
+        zEntEvent((xBase*)coll->optr, eEventPress);
+        zEntPlayer_ButtonHBFX(ent, (_zEntButton*)coll->optr);
+        ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+        ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+        ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+        globals.player.HeadbuttHit = 1;
+        globals.player.DecelRunSpeed = 0.25f * globals.player.DecelRunSpeed;
+    }
+    return 0;
+}
+
+static inline void ButtonBounceCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+    _xCollis* endcoll;
+    U32 bounceResponse;
+    U32 buttonState;
+
+    coll = &ent->collis->colls[ent->collis->dyn_sidx];
+    endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
+    if (((xBase*)coll->optr)->baseType == 0x18 && globals.player.Health &&
+        (ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xE)
+    {
+        for (; coll < endcoll; coll++)
+        {
+            if (coll->hdng.y < -0.866025f)
+            {
+                bounceResponse = zEntButton_ButtBounce((_zEntButton*)coll->optr);
+                buttonState = zEntButton_CheckState((_zEntButton*)coll->optr);
+                if ((bounceResponse == 2 || bounceResponse == 3) && !buttonState)
+                {
+                    zEntEvent((xBase*)coll->optr, eEventPress);
+                    zEntPlayer_ButtonBBFX(ent, (_zEntButton*)coll->optr);
+                    return;
+                }
+                if (coll->hdng.x == 0.0f && coll->hdng.z == 0.0f)
+                {
+                    ent->frame->vel.y = 0.0f;
+                }
+            }
+        }
+    }
+}
+
+static inline void ButtonHeadbuttCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+    _xCollis* endcoll;
+
+    coll = &ent->collis->colls[ent->collis->dyn_sidx];
+    endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
+    if (((xBase*)coll->optr)->baseType == 0x18)
+    {
+        HeadbuttTest(coll, endcoll, 0.1f, ButtonHBCallback);
+    }
+}
+
+void ButtonBBCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+
+    if (ent->collis->dyn_eidx > ent->collis->dyn_sidx)
+    {
+        coll = &ent->collis->colls[ent->collis->dyn_sidx];
+        if (coll->optr && ((xBase*)coll->optr)->baseType == 0x18)
+        {
+            if (globals.player.Inv_Specials & 0x800)
+            {
+                ButtonHeadbuttCheck(ent);
+            }
+            ButtonBounceCheck(ent);
+            ButtonStandOnCheck(ent);
+        }
+    }
+}
+
+static inline void DestructObjBounceCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+    _xCollis* endcoll;
+    U32 bounceResponse;
+    U32 buttonState;
+
+    coll = &ent->collis->colls[ent->collis->dyn_sidx];
+    endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
+    if (globals.player.Health && (ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xE)
+    {
+        for (; coll < endcoll; coll++)
+        {
+            if (coll->hdng.y < -0.5f)
+            {
+                bounceResponse = zEntDestructObj_ButtBounce((_zEntDestructObj*)coll->optr);
+                buttonState = zEntDestructObj_CheckState((_zEntDestructObj*)coll->optr);
+                if (bounceResponse == 3 && buttonState != 2)
+                {
+                    zEntEvent((xBase*)coll->optr, eEventHit);
+                    ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+                    ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+                    ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+                    startBounce = ent->frame->mat.pos.y;
+                    zEntPlayerJumpStart(ent, &globals.player.s.Bounce);
+                    globals.player.Jump_CanDouble = 1;
+                    globals.player.Jump_CanFloat = 1;
+                    return;
+                }
+                if (coll->hdng.x == 0.0f && coll->hdng.z == 0.0f)
+                {
+                    ent->frame->vel.y = 0.0f;
+                }
+            }
+        }
+    }
+}
+
+static inline void DestructObjHeadbuttCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+    _xCollis* endcoll;
+
+    coll = &ent->collis->colls[ent->collis->dyn_sidx];
+    endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
+    HeadbuttTest(coll, endcoll, 0.1f, DestructObjHBCallback);
+}
+
+void DestructObjBBCheck(_xEnt* ent)
+{
+    _xCollis* coll;
+
+    if (ent->collis->dyn_eidx > ent->collis->dyn_sidx)
+    {
+        coll = &ent->collis->colls[ent->collis->dyn_sidx];
+        if (coll->optr && ((xBase*)coll->optr)->baseType == 0x1B)
+        {
+            DestructObjHeadbuttCheck(ent);
+            DestructObjBounceCheck(ent);
+        }
+    }
+}
+
+static S32 DestructObjHBCallback(_zEnt* ent, _xCollis* coll)
+{
+    U32 headResponse;
+    U32 dobjState;
+
+    if (((xBase*)coll->optr)->baseType != 0x1B)
+    {
+        return 0;
+    }
+    headResponse = zEntDestructObj_Headbutt((_zEntDestructObj*)coll->optr);
+    dobjState = zEntDestructObj_CheckState((_zEntDestructObj*)coll->optr);
+    if ((headResponse == 4 || headResponse == 5) && dobjState != 2)
+    {
+        if (!(globals.player.Inv_Specials & 0x800))
+        {
+            ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+            ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+            ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+            globals.player.HeadbuttHit = 1;
+            globals.player.DecelRunSpeed = 0.25f * globals.player.DecelRunSpeed;
+            return 0;
+        }
+        zEntEvent((xBase*)coll->optr, eEventHit);
+        ent->frame->mat.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+        ent->frame->mat.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y;
+        ent->frame->mat.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+        if (dobjState != 1 || headResponse != 5)
+        {
+            globals.player.HeadbuttHit = 1;
+        }
+        globals.player.DecelRunSpeed = 0.25f * globals.player.DecelRunSpeed;
+    }
+    return 0;
 }
 
 xAnimTable* zEntPlayer_AnimTable()
@@ -3652,6 +3884,62 @@ static U32 zEntPlayer_SNDSkidCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimS
     }
     zRumbleStart(0, SDR_ScreechingStop);
     return 0;
+}
+
+static void zEntPlayer_ButtonBBFX(_xEnt* ent, _zEntButton*)
+{
+    _zParEmitterCustomSettings info;
+
+    if (sEmitterBounceOnVillain)
+    {
+        info.custom_flags = 0x20;
+        info.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x;
+        info.pos.y = ((xMat4x3*)ent->model->Mat)->pos.y - 1.0f;
+        info.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z;
+        switch (ent->bound.type)
+        {
+        case 0:
+            break;
+        case 1:
+            info.pos.x = ent->bound.sph.center.x;
+            info.pos.y = ent->bound.sph.center.y;
+            info.pos.z = ent->bound.sph.center.z;
+            break;
+        case 2:
+            info.pos.y += ent->bound.box.box.upper.y - ent->bound.box.box.lower.y;
+            break;
+        case 3:
+            info.pos.y += ent->bound.cyl.h;
+            break;
+        case 4:
+            break;
+        }
+        zParEmitterEmitCustom(sEmitterBounceOnVillain, 1.0f / 30.0f, &info);
+    }
+}
+
+static void zEntPlayer_ButtonHBFX(_xEnt*, _zEntButton*)
+{
+    xVec3 angles;
+    _xEnt* player_ent;
+    _zParEmitterCustomSettings info;
+
+    if (sEmitterHeadButt && sEmitterHeadButt2)
+    {
+        info.custom_flags = 0x20;
+        player_ent = &globals.player.ent;
+        info.pos.x = ((xMat4x3*)player_ent->model->Mat)->pos.x + ((xMat4x3*)player_ent->model->Mat)->at.x;
+        info.pos.y = 1.1f + ((xMat4x3*)player_ent->model->Mat)->pos.y;
+        info.pos.z = ((xMat4x3*)player_ent->model->Mat)->pos.z + ((xMat4x3*)player_ent->model->Mat)->at.z;
+        info.custom_flags |= 0x10000;
+        xMat3x3GetEuler((xMat3x3*)player_ent->model->Mat, &angles);
+        info.rot[0] = 255.0f * (angles.x / (2.0f * PI));
+        info.rot[1] = 0x40;
+        info.rot[2] = 255.0f * (angles.z / (2.0f * PI));
+        zParEmitterEmitCustom(sEmitterHeadButt, 1.0f / 30.0f, &info);
+        info.rot[0] += 0x40;
+        zParEmitterEmitCustom(sEmitterHeadButt2, 1.0f / 30.0f, &info);
+    }
 }
 
 void zEntPlayer_InitCutsceneModelHack()
