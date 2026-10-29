@@ -776,6 +776,11 @@ void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
         ent->mode = ZVIL_MODE_SHUTDOWN;
         VGOL_set(ent, ZVIL_GOAL_STARTUP);
         break;
+    case ZVIL_START_DEFAULT:
+        ent->goaldflt = ZVIL_GOAL_IDLE;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_STARTUP);
+        break;
     default:
         ent->goaldflt = ZVIL_GOAL_IDLE;
         ent->mode = ZVIL_MODE_SHUTDOWN;
