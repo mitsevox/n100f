@@ -4466,7 +4466,7 @@ static S32 VILN_sham_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
             if (vil->ability & 8)
             {
                 F32 fade = vil->tmr_list[ZVIL_TDUR_DECAY];
-                if (fade < vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]) fade = vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+                fade = fade > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] ? fade : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
                 if (fade != 0.0f)
                 {
                     _zParEmitterCustomSettings info;
@@ -4989,7 +4989,7 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if (vil->ability & 8)
             {
                 F32 fade = vil->tmr_list[ZVIL_TDUR_DECAY];
-                if (fade < vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]) fade = vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+                fade = fade > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] ? fade : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
                 if (fade != 0.0f)
                 {
                     _zParEmitterCustomSettings info;
@@ -5443,7 +5443,7 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if (vil->ability & 8)
             {
                 F32 fade = vil->tmr_list[ZVIL_TDUR_DECAY];
-                if (fade < vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]) fade = vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+                fade = fade > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] ? fade : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
                 if (fade != 0.0f)
                 {
                     _zParEmitterCustomSettings info;
@@ -5961,7 +5961,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if (vil->ability & 8)
             {
                 F32 fade = vil->tmr_list[ZVIL_TDUR_DECAY];
-                if (fade < vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]) fade = vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+                fade = fade > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] ? fade : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
                 if (fade != 0.0f)
                 {
                     _zParEmitterCustomSettings info;
