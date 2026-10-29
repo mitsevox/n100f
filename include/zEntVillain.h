@@ -666,6 +666,13 @@ struct st_ZVIL_PRECALC
     _xVec3 pos_intercept;
 };
 
+struct st_NPC_SOUND_PROPERTIES
+{
+    en_NPC_SOUND sndEvent;
+    S32 flg_vsnd;
+    F32 tym_delayStart;
+};
+
 struct st_NPC_SOUND_QUEUE
 {
     en_NPC_SOUND sndEvent;
