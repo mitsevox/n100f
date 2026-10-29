@@ -54,8 +54,8 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeImmStash.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeSubmitLine.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeSubmitTriangle.c` | 2 of 2 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/pipe/p2/nodeTransform.c` | 2 of 4 | `TransformNodeParallel` and `TransformNodePerspective` (98.3% each: the packet, stride and clip-flag accumulator registers and the order of the x and y loads) |
 | `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 2 of 4 | `ParallelCullProcessPacket` (98.5%: the triangle index is computed as N + (2N - 3) and the loop registers differ) and `PerspectiveCullProcessPacket` (94.6%: its area tests schedule the loads and products differently) |
+| `rwsdk/src/pipe/p2/nodeTransform.c` | 2 of 4 | `TransformNodeParallel` and `TransformNodePerspective` (98.3% each: the packet, stride and clip-flag accumulator registers and the order of the x and y loads) |
 | `rwsdk/src/pipe/p2/nodeImmInstance.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c` | 1 of 2 | `_ImmMangleLineIndicesNode` (96.9%: the doubled line count is recomputed for `RxClusterSetData` and `numUsed`, where the source's two `numLines * 2` share one register) |
 | `rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c` | 1 of 2 | `_ImmMangleTriangleIndicesNode` (87.6%: its locals take other saved registers, and the strip rewrite's source index is scheduled differently) |
