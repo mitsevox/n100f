@@ -9,8 +9,8 @@
 #include "version.h"
 
 #if VERSION_GIHE78_REV0
-extern "C" U32 fn_800C9738(U32);
-#define FONT_SLOT_EMPTY fn_800C9738
+U32 zSaveLoad_slotIsEmpty(U32 i);
+#define FONT_SLOT_EMPTY zSaveLoad_slotIsEmpty
 #define FONT_UPDATE fn_800D4C5C
 #define FONT_EVENT fn_800D4B0C
 #define UI_RESET zUI_Reset
