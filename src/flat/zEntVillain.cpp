@@ -205,6 +205,26 @@ struct st_ZVIL_NPCTYPE_LOOKUP
     U8 flg_penby;
 };
 
+// Scene and entity IDs for villains that should not drop bonus items.
+struct st_ZVIL_BONUS_EXCLUSION
+{
+    U32 scene;
+    U32 id;
+};
+
+static st_ZVIL_BONUS_EXCLUSION g_bonusExclusions[] = {
+    { 0x43303036, 0x449DB5F4 }, { 0x4F303031, 0xE8EA9736 },
+    { 0x4F303031, 0x120782D1 }, { 0x4F303031, 0xBD63DC69 },
+    { 0x4F303031, 0xD93EE089 }, { 0x57303233, 0x7BCB3A79 },
+    { 0x57303233, 0xECF98FF8 }, { 0x57303233, 0x7BCB3A7A },
+    { 0x57303233, 0x7BCB3A7B }, { 0x57303233, 0x7BCB3A7C },
+    { 0x57303233, 0x7BCB3A7D }, { 0x57303233, 0xECF98FF9 },
+    { 0x57303233, 0xECF98FFA }, { 0x57303233, 0x3B9E586B },
+    { 0x57303233, 0xECF98FFB }, { 0x57303233, 0xECF98FFC },
+    { 0x57303233, 0x7BCB3A7E }, { 0x57303233, 0x7BCB3A7F },
+    { 0x57303233, 0x7BCB3A80 }, { 0, 0 },
+};
+
 
 static xAnimTable* VANM_mktable_STD();
 static xAnimTable* VANM_mktable_GANG();
@@ -255,6 +275,7 @@ static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
 
 static void zVIL_tag_verts(st_zEntVillain* ent);
 static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt);
+static void zVIL_apply_vilcfg(st_zEntVillain* ent, st_ZVIL_CONFIG_REFERENCE* cfg);
 static void zVIL_apply_move(st_zEntVillain* ent, _xScene* scn, F32 dt, _xEntFrame* frame);
 static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt);
 static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS pid, void* vv);
@@ -681,6 +702,118 @@ st_zEntVillain* zEntVillain_NPCInst(U32 npcidx)
 void zEntVillain_Save(st_zEntVillain* ent, xSerial* xser)
 {
     VSAV_save(ent, xser);
+}
+
+// Finish setting up the villain after the scene and its move points are available.
+void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
+{
+    ent->nav_mvptlist = NULL;
+    ent->nav_prev = NULL;
+    ent->nav_next = NULL;
+    if (ent->vilcfg.vilp2ass->pathAssetID)
+    {
+        ent->nav_mvptlist = zMovePoint_From_xAssetID(ent->vilcfg.vilp2ass->pathAssetID);
+    }
+    zVIL_apply_vilcfg(ent, &ent->vilcfg);
+
+    if (ent->ability & 0x2)
+    {
+        ent->allow |= 0x800;
+    }
+    if (ent->ability & 0x2)
+    {
+        if (ent->asset->subtype == eEntVillainTypeFlyingFish)
+        {
+            ent->allow &= ~0x800;
+        }
+        else
+        {
+            st_ZVIL_BONUS_EXCLUSION* exclusion = g_bonusExclusions;
+            while (exclusion->scene)
+            {
+                if (exclusion->scene == globals.sceneCur->sceneID &&
+                    (!exclusion->id || exclusion->id == ent->id))
+                {
+                    ent->allow &= ~0x800;
+                    break;
+                }
+                exclusion++;
+            }
+        }
+    }
+
+    xAnimPlaySetState(ent->model->Anim->Single, ent->model->Anim->Table->StateList, 0.0f);
+    ent->anim_playing = 1;
+    ent->anim_playsync = 0;
+    en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN, ZVIL_ANIM_IDLE };
+    choices[0] = ZVIL_ANIM_IDLE;
+    VANM_set(ent, choices, 2, 0);
+    ent->vhf->notice(ent, ZVIL_NOTE_PREPARE, NULL);
+
+    switch (ent->vilcfg.vilp2ass->behaviorState)
+    {
+    case ZVIL_START_PREBIRTH:
+        ent->goaldflt = ZVIL_GOAL_IDLE;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_BASEINIT);
+        ent->chkby = 0;
+        ent->penby = 0;
+        ent->flags &= ~0x1;
+        break;
+    case ZVIL_START_AMBUSH:
+        ent->goaldflt = ZVIL_GOAL_AMBUSH;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_BASEINIT);
+        ent->pflags = 0;
+        ent->collis->chk = 0;
+        ent->collis->pen = 0;
+        ent->chkby = 0;
+        ent->penby = 0;
+        ent->flags &= ~0x1;
+        break;
+    case ZVIL_START_SLEEPING:
+        ent->goaldflt = ZVIL_GOAL_BORED;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_STARTUP);
+        break;
+    default:
+        ent->goaldflt = ZVIL_GOAL_IDLE;
+        ent->mode = ZVIL_MODE_SHUTDOWN;
+        VGOL_set(ent, ZVIL_GOAL_STARTUP);
+        break;
+    }
+
+    S32 spawnmask = 0;
+    S32 difficulty = 0;
+    S32 spawn = 1;
+    VCFG_getParm(&ent->vilcfg, ZVIL_PARM_MINDIFFICULTY, &difficulty);
+    VCFG_getParm(&ent->vilcfg, ZVIL_PARM_SPAWNMASK, &spawnmask);
+    if (difficulty < 0)
+    {
+        spawn = 0;
+        xSceneID2Name(globals.sceneCur, ent->id);
+    }
+    if ((spawnmask & globals.player.Inv_Specials) != spawnmask) spawn = 0;
+    if (!spawn) VGOL_set(ent, ZVIL_GOAL_BASEINIT);
+
+    if ((ent->asset->flags & 0x1) && ent->mode != ZVIL_MODE_SHUTDOWN)
+        ent->flags |= 0x1;
+    else
+        ent->flags &= ~0x1;
+
+    ent->nav_prev = NULL;
+    ent->nav_next = NULL;
+    if (ent->nav_mvptlist) ent->need_navpt = 1;
+    ent->flg_misc &= ~0xC0000000;
+    ent->tgt_stat = 0;
+    if (zEntIsShaggy(ent))
+    {
+        zEntShaggy_Init(ent);
+        st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_TRANGOAL };
+        stimctxt.trangoal = ent->goaldflt;
+        stimctxt.tranmode = ZVIL_MODE_NORMAL;
+        zVIL_trangoal(ent, &stimctxt, globals.update_dt);
+    }
 }
 
 // Reads the villain's state from a saved game.
