@@ -1260,6 +1260,126 @@ void zEntVillain_Stun(st_zEntVillain* ent, F32 strength)
     zLaughNotify(12);
 }
 
+// Answer the standard villain's movement, detection and player-awareness queries.
+static S32 VILN_std_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
+{
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+    switch (query)
+    {
+    case ZVIL_Q_DOUPDATE:
+        return 1;
+    case ZVIL_Q_ALIVE:
+        return vil->mode >= ZVIL_MODE_NORMAL;
+    case ZVIL_Q_ASLEEP:
+        return vil->goal == ZVIL_GOAL_BORED && (vil->ability & 0x20000);
+    case ZVIL_Q_PITFALL:
+    case ZVIL_Q_RUNAWAY:
+        return 0;
+    case ZVIL_Q_HAVEANCHOR:
+        if (vil->ability & 0x1) return 0;
+        if (!(vil->allow & 0x80) || !(vil->allow & 0x40)) return 0;
+        return (vil->flg_misc & 0x80000000) != 0;
+    case ZVIL_Q_HAVEGUARDPOS:
+        if (vil->ability & 0x1) return 0;
+        return (vil->flg_misc & 0x40000000) != 0;
+    case ZVIL_Q_DOFOLLOW:
+        if (vil->ability & 0x1) return 0;
+        if (!(vil->abl_move & 0x1) || !(vil->abl_move & 0x100)) return 0;
+        if (vil->flg_misc & 0x10000000) return 1;
+        if (vil->flg_misc & 0x20000000) return 1;
+        return 0;
+    case ZVIL_Q_NEEDNAV:
+        if (!vil->vhf->query(vil, ZVIL_Q_CANPATROL)) return 0;
+        if (!vil->need_navpt) return 0;
+        if (vil->nav_next && !(vil->tmr_list[ZVIL_TTIL_CHKFORNAV] <= 0.0f)) return 0;
+        return 1;
+    case ZVIL_Q_HAVENAV:
+        return !vil->need_navpt && vil->nav_next && zMovePointIsOn(vil->nav_next);
+    case ZVIL_Q_CANGUARD:
+        return (vil->abl_move & 0x10) && (vil->allow & 0x2);
+    case ZVIL_Q_CANPATROL:
+        if (!(vil->allow & 0x1) || !(vil->abl_move & 0x20) || !(vil->abl_move & 0x4)) return 0;
+        if (!(vil->tmr_list[ZVIL_TDUR_NAVDELAY] <= 0.0f) || !vil->nav_mvptlist) return 0;
+        return 1;
+    case ZVIL_Q_CANCHASE:
+        if (!vil->vhf->query(vil, ZVIL_Q_CANDETECT)) return 0;
+        if (!(vil->abl_move & 0x1) || !(vil->abl_move & 0x80) || !(vil->allow & 0x10)) return 0;
+        return 1;
+    case ZVIL_Q_CANPURSUE:
+        if (vil->ability & 0x1) return 0;
+        if (g_scene_is_a_boss_battle > 2) return 1;
+        if (!vil->vhf->query(vil, ZVIL_Q_CANCHASE)) return 0;
+        if (!vil->vhf->query(vil, ZVIL_Q_PLYRSEEN)) return 0;
+        if ((prec->flg_xtra & 0x1) && !(vil->abl_move & 0x1000) && !(vil->abl_move & 0x400)) return 0;
+        if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+        {
+            if (prec->ds2_anchor < vil->ds2_pursue) return 1;
+            if (prec->ds2_plyrToAnchor < vil->ds2_pursue) return 1;
+            if (prec->flg_plyr & 0x400) return 1;
+            return 0;
+        }
+        return 1;
+    case ZVIL_Q_CANATTACK:
+        if ((vil->ability & 0x1) && (vil->allow & 0x8)) return 1;
+        if (!(vil->allow & 0x8)) return 0;
+        if (!vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR)) return 0;
+        if (!(prec->flg_plyr & 0x1)) return 0;
+        if ((vil->abl_move & 0x80) && !(prec->flg_plyr & 0x8)) return 0;
+        if (!(prec->flg_plyr & 0x4)) return 0;
+        if (!vil->vhf->query(vil, ZVIL_Q_CANDETECT)) return 0;
+        if (vil->asset->subtype == eEntVillainTypeSpaceKook &&
+            !(fabsf(vil->frame->rot.angle - prec->ang_VtoP) <= 0.34f)) return 0;
+        return 1;
+    case ZVIL_Q_CANDETECT:
+        return (vil->abl_dtct & 0x1) && (vil->allow & 0x4);
+    case ZVIL_Q_PLYRTOOCLOSE:
+        return 0;
+    case ZVIL_Q_PLYRNEAR:
+        if (vil->ability & 0x1) return 1;
+        if (!(prec->plyr_mvinf & 0x100) && (prec->flg_plyr & 0x1)) return 1;
+        return (prec->flg_plyr & 0x1) != 0;
+    case ZVIL_Q_PLYRINFOV:
+        return (prec->flg_plyr & 0x4) != 0;
+    case ZVIL_Q_PLYRINLOS:
+        return (prec->flg_plyr & 0x8) != 0;
+    case ZVIL_Q_CANSEEPLYR:
+        if (vil->ability & 0x1) return 1;
+        if (!vil->vhf->query(vil, ZVIL_Q_CANDETECT)) return 0;
+        if (g_scene_is_a_boss_battle > 2 && (prec->flg_plyr & 0x8)) return 1;
+        if (!(vil->abl_dtct & 0x10)) return 0;
+        if (!(prec->flg_plyr & 0x1) || !(prec->flg_plyr & 0x4) || !(prec->flg_plyr & 0x8)) return 0;
+        if (vil->vhf->query(vil, ZVIL_Q_ASLEEP)) return 0;
+        if (prec->plyr_mvinf & 0x800) return 0;
+        if (prec->plyr_mvinf & 0x1000) return 0;
+        if ((prec->plyr_mvinf & 0x400) && !(prec->flg_plyr & 0x1)) return 0;
+        return 1;
+    case ZVIL_Q_CANHEARPLYR:
+        if (vil->ability & 0x1) return 1;
+        if (!vil->vhf->query(vil, ZVIL_Q_CANDETECT)) return 0;
+        if (g_scene_is_a_boss_battle > 2) return 0;
+        if (!(vil->abl_dtct & 0x20) || !(prec->flg_plyr & 0x1)) return 0;
+        if (prec->plyr_mvinf & 0x400) return 0;
+        if (prec->plyr_mvinf & 0x800) return 0;
+        if (prec->plyr_mvinf & 0x1000) return 0;
+        return 1;
+    case ZVIL_Q_PLYRSEEN:
+        if (vil->ability & 0x1) return 1;
+        if (g_scene_is_a_boss_battle > 2) return 1;
+        if (!(prec->flg_plyr & 0x1) || !(vil->tgt_stat & 0x20)) return 0;
+        if (!(prec->flg_plyr & 0x8) || !(vil->tgt_stat & 0x8)) return 0;
+        if (prec->plyr_mvinf & 0x800) return 0;
+        if (prec->plyr_mvinf & 0x1000) return 0;
+        if ((prec->plyr_mvinf & 0x400) && !(prec->flg_plyr & 0x1)) return 0;
+        return 1;
+    case ZVIL_Q_PLYRHEARD:
+        if (vil->ability & 0x1) return 1;
+        if (g_scene_is_a_boss_battle > 2) return 1;
+        if (vil->tgt_stat & 0x20) return 1;
+        return (vil->tgt_stat & 0x4) != 0;
+    }
+    return 0;
+}
+
 // Reads one of the villain's flag groups from its subtype's settings; the allow group reads as 0.
 static S32 VILN_std_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL)
 {
