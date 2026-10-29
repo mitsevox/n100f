@@ -7863,6 +7863,94 @@ static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*
     return 1;
 }
 
+// Fetch a villain configuration value in the caller's requested storage.
+static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS pid, void* vv)
+{
+    S32 found = 1;
+    switch (pid)
+    {
+    case ZVIL_PARM_MDLSCL_BASE: *(_xVec3*)vv = cfgdata->scl_modelBase; break;
+    case ZVIL_PARM_SANIM_IDLE: *(_xVec3*)vv = cfgdata->sanim_idle; break;
+    case ZVIL_PARM_SANIM_MOVE: *(_xVec3*)vv = cfgdata->sanim_move; break;
+    case ZVIL_PARM_SANIM_CHASE: *(_xVec3*)vv = cfgdata->sanim_chase; break;
+    case ZVIL_PARM_WANDER_ARC: *(F32*)vv = cfgdata->ang_wander; break;
+    case ZVIL_PARM_HIT_POINTS: *(S32*)vv = cfgdata->hitpts; break;
+    case ZVIL_PARM_BUBBLED_TIME: *(F32*)vv = cfgdata->tymref_list[ZVIL_TDUR_SOAP]; break;
+    case ZVIL_PARM_GUMMED_TIME: *(F32*)vv = cfgdata->tymref_list[ZVIL_TDUR_GUM]; break;
+    case ZVIL_PARM_DAZED_TIME: *(F32*)vv = cfgdata->tymref_list[ZVIL_TDUR_DAZED]; break;
+    case ZVIL_PARM_EXTEND_RANGE: *(F32*)vv = cfgdata->dst_extend; break;
+    case ZVIL_PARM_EXTEND_RATE: *(F32*)vv = cfgdata->spd_extend; break;
+    case ZVIL_PARM_EXTEND_WIDTH: *(F32*)vv = cfgdata->wid_extend; break;
+    case ZVIL_PARM_EXTEND_TIME: *(F32*)vv = cfgdata->tymref_list[ZVIL_TDUR_EXTEND]; break;
+    case ZVIL_PARM_FOV_ANGLE: *(F32*)vv = cfgdata->fov_detect; break;
+    case ZVIL_PARM_GLOAT_TIME: *(F32*)vv = cfgdata->tymref_list[ZVIL_TDUR_TAUNT]; break;
+    case ZVIL_PARM_LOB_RANGE: *(F32*)vv = cfgdata->dst_lob; break;
+    case ZVIL_PARM_LOB_SPEED: *(F32*)vv = cfgdata->spd_lob; break;
+    case ZVIL_PARM_LOB_SALVO: *(S32*)vv = cfgdata->cnt_lobSalvo; break;
+    case ZVIL_PARM_LOB_PRJTYPE:
+    {
+        U32 type;
+        switch (cfgdata->asset->subtype)
+        {
+        case eEntVillainTypeGargoyle: type = xStrHash("_PRJ_VWEP_GARGOYLE"); break;
+        case eEntVillainTypeTarMonster: type = xStrHash("_PRJ_VWEP_TARMONSTER"); break;
+        case eEntVillainTypeWitchDoctor: type = xStrHash("_PRJ_VWEP_WITCHDOCTOR"); break;
+        case eEntVillainBossBlackKnight: type = xStrHash("_PRJ_VWEP_BLACKKNIGHT"); break;
+        case eEntVillainBossGreenGhost: type = xStrHash("_PRJ_VWEP_GREENGHOST"); break;
+        case eEntVillainBossRedbeard: type = xStrHash("_PRJ_VWEP_REDBEARD"); break;
+        case eEntVillainBossMastermind: type = xStrHash("_PRJ_VWEP_MASTERMIND"); break;
+        default: type = 0; break;
+        }
+        *(U32*)vv = type;
+        break;
+    }
+    case ZVIL_PARM_LOB_ARC: *(F32*)vv = cfgdata->fac_lobarc; break;
+    case ZVIL_PARM_LOB_HEAVY: *(F32*)vv = cfgdata->fac_lobheavy; break;
+    case ZVIL_PARM_DETECT_RADIUS: *(F32*)vv = cfgdata->ds2_detect; break;
+    case ZVIL_PARM_DETECT_HEIGHT: *(F32*)vv = cfgdata->hyt_detect; break;
+    case ZVIL_PARM_DETECT_HYTOFF: *(F32*)vv = cfgdata->hyt_dtctoff; break;
+    case ZVIL_PARM_PURSUE_RADIUS: *(F32*)vv = cfgdata->ds2_pursue; break;
+    case ZVIL_PARM_MOVE_RATE: *(F32*)vv = cfgdata->spd_move; break;
+    case ZVIL_PARM_CHASE_RATE: *(F32*)vv = cfgdata->spd_chase; break;
+    case ZVIL_PARM_TURN_RATE: *(F32*)vv = cfgdata->spd_turn; break;
+    case ZVIL_PARM_SPAWNMASK: *(S32*)vv = cfgdata->msk_condspawn; break;
+    case ZVIL_PARM_MINDIFFICULTY: *(S32*)vv = cfgdata->minDifficulty; break;
+    case ZVIL_PARM_DMG_BEGTIME: *(F32*)vv = cfgdata->tym_attack_begin; break;
+    case ZVIL_PARM_DMG_ENDTIME: *(F32*)vv = cfgdata->tym_attack_end; break;
+    default: found = 0; break;
+    }
+    return found;
+}
+
+// Change the goal and notify linked objects of the corresponding behavior.
+static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal)
+{
+    ent->goal = goal;
+    if (ent->linkCount)
+    {
+        switch (ent->goal)
+        {
+        case ZVIL_GOAL_IDLE: zEntEvent(ent, 0xB3); break;
+        case ZVIL_GOAL_BORED:
+            if (ent->vhf->query(ent, ZVIL_Q_ASLEEP)) zEntEvent(ent, 0xB4);
+            break;
+        case ZVIL_GOAL_GUARD: zEntEvent(ent, 0xB5); break;
+        case ZVIL_GOAL_PATROL: zEntEvent(ent, 0xB6); break;
+        case ZVIL_GOAL_DAZED: zEntEvent(ent, 0xB7); break;
+        case ZVIL_GOAL_LOOKFORHERO: zEntEvent(ent, 0xB8); break;
+        case ZVIL_GOAL_LISTEN: zEntEvent(ent, 0xB9); break;
+        case ZVIL_GOAL_INVESTIGATE: zEntEvent(ent, 0xBA); break;
+        case ZVIL_GOAL_CHASE: zEntEvent(ent, 0xBB); break;
+        case ZVIL_GOAL_CQCATTACK:
+        case ZVIL_GOAL_LOBBING:
+        case ZVIL_GOAL_SPELLCAST: zEntEvent(ent, 0xBC); break;
+        case ZVIL_GOAL_MINIPATROL: zEntEvent(ent, 0xBD); break;
+        default: break;
+        }
+    }
+    return ent->goal;
+}
+
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
 {
     S32 idx = 0;
