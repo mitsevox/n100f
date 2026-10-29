@@ -368,14 +368,20 @@ def main():
     symbols=Symbols(ROOT/'config'/args.target/'symbols.txt')
     dol=Dol(ROOT/'orig'/args.target/'sys'/'main.dol')
     splits=read_splits(ROOT/'config'/args.target/'splits.txt')
-    targets={u['name']:Elf(ROOT/u['target_path']) for u in units
-             if u.get('target_path') and (ROOT/u['target_path']).exists()}
+    # A unit objdiff.json lists whose object the build did not write would pass unchecked.
+    missing=[p for u in units for p in (u.get('target_path'),u.get('base_path')) if p and not (ROOT/p).exists()]
+    if missing:
+        print(f'{args.target}: objdiff.json names objects the build did not write; build the target first:')
+        for p in missing:
+            print('    '+p)
+        return 1
+    targets={u['name']:Elf(ROOT/u['target_path']) for u in units if u.get('target_path')}
     exports=exported(targets,symbols,splits)
     checked=skipped=failed=0
     for unit in units:
         if args.unit and unit['name'] not in args.unit:
             continue
-        if unit['name'] not in targets or not unit.get('base_path') or not (ROOT/unit['base_path']).exists():
+        if unit['name'] not in targets or not unit.get('base_path'):
             continue
         check=Unit(Elf(ROOT/unit['base_path']),targets[unit['name']],symbols,dol,exports,
                    splits.get(unit['name'].split('/',1)[-1]))
@@ -399,6 +405,9 @@ def main():
                 for f in sorted(findings,key=lambda f:int(f[3:f.index(':')],16)):
                     print('    '+f)
     print(f'{args.target}: {checked} exact functions checked, {failed} disagree; {skipped} not exact, skipped')
+    if not checked:
+        print(f'{args.target}: no exact function was checked; a unit name or the build is wrong')
+        return 1
     return 1 if failed else 0
 
 

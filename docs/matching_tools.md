@@ -39,7 +39,9 @@ python3 tools/literal_check.py --target GIHE78-rev0
 python3 tools/literal_check.py --target GIHE78-rev0 --unit main/flat/zHud
 ```
 
-Check: on `main` at `50ba9ac` it checks 2,813 exact functions on GIHE78-rev0 and 2,081 on GIHE78-rev1, and found 13 that objdiff scores 100% while they disagree: six zEntPlayer animation checks loading `surfSlickTimer` and 0.0f in swapped order, `JumpCB` storing `startJump` and `startDouble` in swapped order, a `ZLOB_elcb_event` jump table with cases 35 and 36 swapped, and seven calls in five zGame and zPlatform functions through `fn_` placeholders that `symbols.txt` has since named. Putting `1.59155f` back into zHud's status-angle setup reproduces the four findings of the #187 review.
+It also fails when `objdiff.json` names an object the build did not write, or when it checks no function at all, so a broken build or a mistyped `--unit` cannot pass silently. Symbols that neither `symbols.txt` nor a target object places (a local static the split left unnamed) can only be checked for consistency within their unit: each must reach one address, and no two the same one.
+
+Check: on `main` at `50ba9ac` it checks 2,813 exact functions on GIHE78-rev0 and 2,081 on GIHE78-rev1 (2,149 after the rev1 catch-up, `3da1502`), and found 13 that objdiff scores 100% while they disagree: six zEntPlayer animation checks loading `surfSlickTimer` and 0.0f in swapped order, `JumpCB` storing `startJump` and `startDouble` in swapped order, a `ZLOB_elcb_event` jump table with cases 35 and 36 swapped, and seven calls in five zGame and zPlatform functions through `fn_` placeholders that `symbols.txt` has since named. Putting `1.59155f` back into zHud's status-angle setup reproduces the four findings of the #187 review.
 
 ## Out-of-repository tools
 
