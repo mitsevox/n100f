@@ -6828,7 +6828,8 @@ static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt)
 // pick volume 1, 0.9 or 0.8 and priority 150, 100 or 50 (otherwise 0.75 and 100); in a boss
 // battle the volume halves unless the villain has ability bit 0x1. With flag 0x200 it plays flat,
 // otherwise in 3D at half volume out to dist. The sound's owner is the villain's address plus the
-// low two flag bits, so each villain has four sound channels; the 3D call passes it as the entity. Returns the played sound's id, or 0.
+// low two flag bits, so each villain has four sound channels; the 3D call passes it as the
+// entity. Returns the played sound's id, or 0.
 static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplicit, S32 flg_vsnd,
                        F32 dist)
 {
