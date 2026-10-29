@@ -49,7 +49,7 @@ void xCameraBegin(_tagxCamFrame* cam, S32 clear);
 extern "C" void fn_800056F8(xVec3*);
 void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
 extern "C" void fn_8001E83C(_tagxCamFrame*);
-extern "C" S32 fn_800C9BBC();
+U32 zSaveLoad_SaveLoop();
 extern "C" void fn_800B74D8();
 extern "C" void fn_8001692C(F32);
 void xCameraPickInitial(_tagxCamFrame* cam, _tagxCam* c);
@@ -373,7 +373,7 @@ void zGameLoop()
         }
         else if (gGameMode == eGameMode_Save)
         {
-            S32 saved = fn_800C9BBC();
+            S32 saved = zSaveLoad_SaveLoop();
             lbl_8025EEF0 = iTimeGet();
             lbl_8025EF08 = iTimeGet();
             if (saved)
