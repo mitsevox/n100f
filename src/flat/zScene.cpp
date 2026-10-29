@@ -1793,7 +1793,7 @@ void zSceneUpdate(F32 elapsedSec)
 
         for (i = 0; i < (S32)s->baseCount[32]; i++)
         {
-            if (((xBase*)&ui[i])->baseFlags & 0x4)
+            if (ui[i].baseFlags & 0x4)
             {
                 zUI_PreUpdate(&ui[i], s, elapsedSec);
             }
@@ -1806,7 +1806,7 @@ void zSceneUpdate(F32 elapsedSec)
 
         for (i = 0; i < (S32)s->baseCount[33]; i++)
         {
-            if (((xBase*)&ui[i])->baseFlags & 0x4)
+            if (ui[i].baseFlags & 0x4)
             {
                 zUIFont_PreUpdate(&ui[i], s, elapsedSec);
             }
@@ -2613,16 +2613,16 @@ S32 zRayHitsPlayer(_xRay3* r)
 // 15%, plus 2% for beating the Mastermind. Any progress at all counts as at least 1%.
 U32 zSceneCalcProgress()
 {
-    U32 totals;
-    S32 i;
-    U32 killedHolly = 0;
-    F32 mtokPercent;
-    U32 mtokCnt;
-    F32 snackPercent;
-    U32 snackCnt;
-    F32 roomPercent;
-    U32 pupCnt = 0;
     F32 pupPercent;
+    U32 pupCnt = 0;
+    F32 roomPercent;
+    U32 snackCnt;
+    F32 snackPercent;
+    U32 mtokCnt;
+    F32 mtokPercent;
+    U32 killedHolly = 0;
+    S32 i;
+    U32 totals;
 
     for (i = 0; i < 15; i++)
     {
