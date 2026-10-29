@@ -4,6 +4,7 @@
 #include "xBase.h"
 
 struct xCutscene;
+struct zCutsceneZbufferHack;
 struct xSerial;
 struct _xScene;
 
@@ -22,7 +23,7 @@ struct _zCutsceneMgr : xBase
     zCutsceneMgrAsset* tasset;
     xCutscene* csn;
     U32 stop;
-    U32 pad1C;
+    zCutsceneZbufferHack* zhack;
     U32 state;
 };
 

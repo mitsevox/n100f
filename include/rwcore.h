@@ -303,8 +303,8 @@ typedef enum RwFrustumTestResult
 #define rwID_CLUMP 0x10
 #define rwID_LIGHT 0x12
 #define rwID_UNICODESTRING 0x13
-#define rwID_TEXDICTIONARY 0x16
 #define rwID_ATOMIC 0x14
+#define rwID_TEXDICTIONARY 0x16
 #define rwID_GEOMETRYLIST 0x1A
 #define rwID_RIGHTTORENDER 0x1f
 

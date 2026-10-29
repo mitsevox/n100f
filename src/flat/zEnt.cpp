@@ -36,7 +36,7 @@ struct zAssetModelInst
     F32 RotPos[3][4];
 };
 
-// Shadow offset and radius per model type; 999 ends the list.
+// Shadow offset and radius per model type; the last two entries are unused (type 999).
 _ShadowParams gShadowParams[27] = {
     { 3, 0.2f, 1.25f },  { 4, -0.2f, 1.4f },  { 7, -0.4f, 1.4f },   { 9, 0.4f, 1.25f },
     { 15, 0.0f, 1.5f },  { 17, 0.0f, 1.25f }, { 18, 0.0f, 1.5f },   { 19, 0.25f, 1.5f },

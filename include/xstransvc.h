@@ -18,8 +18,6 @@ struct st_xST_XASSETINFO
 };
 
 S32 xSTGetAssetInfoByType(U32 type, S32 idx, st_xST_XASSETINFO* ainfo);
-void* xSTFindAssetByType(U32 type, S32 idx, U32* size);
-S32 xSTAssetCountByType(U32 type);
 
 struct st_PACKER_ASSETTYPE;
 S32 xSTStartup(st_PACKER_ASSETTYPE* handlers);
