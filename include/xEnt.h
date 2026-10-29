@@ -195,6 +195,30 @@ struct _xEnt : xBase
     _xEntShadow* ent_shadow;
 };
 
+struct xSerial;
+struct RpAtomic;
+
+void xEntSetTimePassed(F32 sec);
+void xEntSceneInit();
+void xEntSceneExit();
+void xEntInit(_xEnt* ent, p2EntAsset* asset);
+void xEntInitForType(_xEnt* ent);
+void xEntSetup(_xEnt* ent);
+void xEntSave(_xEnt* ent, xSerial* s);
+void xEntLoad(_xEnt* ent, xSerial* s);
+xModelInstance* xEntLoadModel(_xEnt* ent, RpAtomic* imodel);
+void xEntDefaultTranslate(_xEnt* ent, xVec3* dpos);
+void xEntCollCheckStats(_xEnt* p, _xScene* sc, _xEnt* (*hitIt)(_xEnt*, _xScene*, void*));
+void xEntCollCheckDyns(_xEnt* p, _xScene* sc, _xEnt* (*hitIt)(_xEnt*, _xScene*, void*));
+void xEntCollCheckNPCs(_xEnt* p, _xScene* sc, _xEnt* (*hitIt)(_xEnt*, _xScene*, void*));
+void xEntBeginCollCheckTrigs(_xEnt* ent);
+void xEntEndCollCheckTrigs(_xEnt* ent);
+_xEnt* xEntCollCheckOneEntNoDepen(_xEnt* ent, _xScene* sc, void* data);
+_xEnt* xEntCollCheckOneTrigNoDepen(_xEnt* ent, _xScene* sc, void* data);
+void xEntCollideFloor(_xEnt* p, _xScene* sc, F32 dt);
+void xEntCollideCeiling(_xEnt* p, _xScene* sc, F32 dt);
+void xEntCollideWalls(_xEnt* p, _xScene* sc, F32 dt);
+_xBox* xEntGetAllEntsBox();
 void xEntCollide(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntApplyPhysics(_xEnt* ent, _xScene* sc, F32 dt);
 void xEntMove(_xEnt* ent, _xScene* sc, F32 dt);
@@ -216,6 +240,11 @@ void xEntEndUpdate(_xEnt* ent, _xScene* sc, F32 dt);
 inline void xEntShow(_xEnt* ent)
 {
     ent->flags |= 0x1;
+}
+
+inline void xEntAddToPos(_xEnt* ent, const xVec3* v)
+{
+    xVec3AddTo(&ent->frame->mat.pos, v);
 }
 
 inline xVec3* xEntGetPos(const _xEnt* ent)

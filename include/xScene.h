@@ -37,7 +37,17 @@ struct _xScene
     xMemPool mempool;
 };
 
+struct _xRay3;
+struct _xCollis;
+
+extern _xScene* g_xSceneCur;
+
 xBase* xSceneResolvID(_xScene* sc, U32 id);
 char* xSceneID2Name(_xScene* sc, U32 id);
+void xSceneForAllNPCs(_xScene* sc, _xEnt* (*func)(_xEnt*, _xScene*, void*), void* data);
+void xSceneForAllDynamics(_xScene* sc, _xEnt* (*func)(_xEnt*, _xScene*, void*), void* data);
+void xSceneForAllStatics(_xScene* sc, _xEnt* (*func)(_xEnt*, _xScene*, void*), void* data);
+void xSceneForAllTriggers(_xScene* sc, _xEnt* (*func)(_xEnt*, _xScene*, void*), void* data);
+void xRayHitsScene(_xScene* sc, _xRay3* r, _xCollis* coll);
 
 #endif

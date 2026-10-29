@@ -124,6 +124,13 @@ inline void xVec3SMul(xVec3* o, const xVec3* v, F32 s)
     o->z = v->z * s;
 }
 
+inline void xVec3SMulBy(xVec3* v, F32 s)
+{
+    v->x *= s;
+    v->y *= s;
+    v->z *= s;
+}
+
 inline void xVec3AddTo(xVec3* o, const xVec3* v)
 {
     o->x += v->x;
@@ -170,6 +177,19 @@ inline void xVec3Lerp(xVec3* o, const xVec3* a, const xVec3* b, F32 t)
 inline void xMat3x3Copy(xMat3x3* o, const xMat3x3* m)
 {
     memcpy(o, m, sizeof(xMat3x3));
+}
+
+inline void xMat4x3Copy(xMat4x3* o, const xMat4x3* m)
+{
+    memcpy(o, m, sizeof(xMat4x3));
+}
+
+inline void xRotCopy(xRot* o, const xRot* r)
+{
+    o->axis.x = r->axis.x;
+    o->axis.y = r->axis.y;
+    o->axis.z = r->axis.z;
+    o->angle = r->angle;
 }
 
 inline void xMat3x3Identity(xMat3x3* m)

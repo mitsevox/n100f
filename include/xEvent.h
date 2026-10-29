@@ -49,6 +49,7 @@ enum en_xEventTags
     eEventSwingerFollow = 206,
     eEventShaggyMount = 207,
     eEventShaggySwap = 209,
+    eEventDrivenby = 216,
     eEventFollowTarget = 217,
     eEventStartMoving = 226,
     eEventStopMoving = 227,

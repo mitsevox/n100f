@@ -30,6 +30,7 @@ struct xModelInstance
 void xModelPoolInit(U32 count, U32 numMatrices);
 void xModelEval(xModelInstance* modelInst);
 void xModelRender(xModelInstance* modelInst);
+void xModelUpdate(xModelInstance* modelInst, F32 timeDelta);
 xModelInstance* xModelInstanceAlloc(RpAtomic* data, void* object, U16 flags, U8 boneIndex,
                                     U8* boneRemap);
 void xModelInstanceFree(xModelInstance* modelInst);
