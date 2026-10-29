@@ -11,6 +11,19 @@
 struct zScene;
 struct _zCutsceneMgr;
 struct _tagxPad;
+struct xCamAsset;
+
+// Partial statistics used when starting a game.
+struct zGlobalGameStats
+{
+    F32 gameTime;
+    U8 opaque_04[0xA8 - 0x04];
+    U32 tokens;
+    U32 tokens_tot;
+    U32 snacks;
+    U32 snacks_tot;
+    U8 opaque_B8[0xD0 - 0xB8];
+};
 
 // Partial: only the header and the matrix are declared. The GC object is 0xA0 bytes; the
 // PS2 copy is 0xB0 because its matrices are 16-byte aligned.
@@ -20,7 +33,8 @@ struct _tagxCam : xBase
     S32 cam_type;
     U32 flags;
     xMat4x3 mat;
-    U8 opaque_5C[0xA0 - 0x5C];
+    U8 opaque_5C[0x9C - 0x5C];
+    xCamAsset* asset;
 };
 
 // Partial: only the RenderWare camera and the two cameras are declared. The GC object is
@@ -51,7 +65,8 @@ struct zGlobals
     iFogParams fogB;
     iTime fog_t0;
     iTime fog_t1;
-    U8 opaque_BF8[0x32FC - 0xBF8];
+    zGlobalGameStats stats;
+    U8 opaque_CC8[0x32FC - 0xCC8];
     F32 update_dt;
 };
 
