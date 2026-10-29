@@ -159,6 +159,46 @@ struct st_zEntVillain_ParEmitRecord
     S32 flg_omit;
 };
 
+struct st_zEntVillain_ParEmitInfo
+{
+    char* emitname;
+    en_VPAR_EMITTER_ROLE emitrole;
+    en_zEntVillainSubTypeID viltype;
+    S32 flg_need;
+    S32 flg_omit;
+};
+
+#define ANY_VILLAIN ((en_zEntVillainSubTypeID)-1)
+static st_zEntVillain_ParEmitInfo g_emitinfo[32] = {
+    { "VilPar_Kook_Attack", VPAR_EMIT_EXTATTACK, eEntVillainTypeSpaceKook, 0, 0 },
+    { "VilPar_Witch_Attack", VPAR_EMIT_EXTATTACK, eEntVillainTypeWitch, 0, 0 },
+    { "VilPar_Plant_Attack", VPAR_EMIT_EXTATTACK, eEntVillainTypeKillerPlant, 0, 0 },
+    { "VilPar_GreenGhost_Attack", VPAR_EMIT_EXTATTACK, eEntVillainBossGreenGhost, 0, 0 },
+    { "ParEmit_Vil_Sleeping", VPAR_EMIT_BORED, ANY_VILLAIN, 0x20000, 0 },
+    { "ParEmit_Vil_Bored", VPAR_EMIT_BORED, ANY_VILLAIN, 0, 0x20000 },
+    { "ParEmit_Vil_Bored", VPAR_EMIT_GUARD, ANY_VILLAIN, 2, 0 },
+    { "ParEmit_Vil_Question", VPAR_EMIT_QUESTMARK, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_Surprize", VPAR_EMIT_EXCLAIM, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_Soapy", VPAR_EMIT_SOAPY, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_PopSoap", VPAR_EMIT_POPSOAP, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_Gummy", VPAR_EMIT_GUMMY, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_PopGum", VPAR_EMIT_POPGUM, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_SD_BounceOnVillain", VPAR_EMIT_BUTTBOUNCE, ANY_VILLAIN, 2, 0 },
+    { "ParEmit_SD_Headbutt", VPAR_EMIT_HEADBUTT, ANY_VILLAIN, 2, 0 },
+    { "ParEmit_SD_Headbutt2", VPAR_EMIT_HEADBUTT, ANY_VILLAIN, 2, 0 },
+    { "ParEmit_Vil_Stunned", VPAR_EMIT_STUN, ANY_VILLAIN, 2, 0 },
+    { "ParEmit_Vil_Teleport", VPAR_EMIT_TELEPORT, eEntVillainBossMastermind, 0, 0 },
+    { "ParEmit_Vil_Dying", VPAR_EMIT_DYING, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_Decay", VPAR_EMIT_DECAY, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_DecayRobot", VPAR_EMIT_DECAY, eEntVillainTypeRobot, 0, 0 },
+    { "ParEmit_Vil_KookRespawn", VPAR_EMIT_RESPAWN, eEntVillainTypeSpaceKook, 0, 0 },
+    { "ParEmit_Vil_HoloDecay", VPAR_EMIT_DECAY, ANY_VILLAIN, 8, 0 },
+    { "ParEmit_Vil_HoloPoof", VPAR_EMIT_POOF, ANY_VILLAIN, 8, 0 },
+    { "ParEmit_Vil_HoloDots", VPAR_EMIT_POOF, ANY_VILLAIN, 8, 0 },
+    { NULL, VPAR_EMIT_WALLPRINT, (en_zEntVillainSubTypeID)0, 0, 0 },
+};
+#undef ANY_VILLAIN
+
 
 // One bonus item a villain can drop; bit 0 of flg_info marks it as dropped.
 struct st_NPC_BONUS
@@ -537,6 +577,25 @@ static _zMovePoint* g_mmtp[12] = { 0 };
 static st_ZVMM_FLASK_DATA g_mmflask[10] = { 0 };
 static _tagLightning* sKnightLightning[5];
 static _tagLightning* sMastermindLightning[5];
+static _xVec3 sGreenShockPosition;
+static _zParEmitter* sGreenShockEmitter;
+static _zParEmitter* sHoloPoofEmitter;
+static _zParEmitter* sHoloDotsEmitter;
+static _zParEmitter* sGreenBallEmitter;
+static _zParEmitter* sGreenBallSmackEmitter;
+static _zParEmitter* sGreenHurtEmitter;
+static _zParEmitter* sGreenVortexEmitter1;
+static _zParEmitter* sGreenVortexEmitter2;
+static _zParEmitter* sGreenVortexEmitter3;
+static _zParEmitter* sWitchDyingEmitter;
+static _zParEmitter* sPlantCloudEmitter;
+static _zParEmitter* sMMRedFlaskEmitter;
+static _zParEmitter* sMMGreenFlaskEmitter;
+static _zParEmitter* sMMBlackFlaskEmitter;
+static _zParEmitter* sMMShowEmitter;
+static _zParEmitter* sMMHideEmitter;
+static _zParEmitter* sRBWallEmitter;
+static _zParEmitterCustomSettings sExtSettings = { 0 };
 
 // The particle emitters the scene's villains use.
 static st_XORDEREDARRAY g_emitlist = { 0 };
@@ -7868,6 +7927,190 @@ static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*
 
     vil->domove |= 0x80000000;
     return 1;
+}
+
+// Emit particles along a villain's extended attack.
+static void VPAR_emit_extattack(st_zEntVillain* ent, _xVec3* origin, _xVec3* aimdir,
+                                F32 length, F32 slope, F32 dt)
+{
+    F32 along = 0.0f;
+    for (S32 i = 0; i < g_emitlist.cnt; i++)
+    {
+        st_zEntVillain_ParEmitRecord* rec = (st_zEntVillain_ParEmitRecord*)g_emitlist.list[i];
+        if (!rec->emitctxt || rec->emitrole != VPAR_EMIT_EXTATTACK ||
+            (rec->viltype != (en_zEntVillainSubTypeID)-1 && rec->viltype != ent->asset->subtype) ||
+            (rec->flg_need & ent->flg_misc) != rec->flg_need || (rec->flg_omit & ent->flg_misc))
+            continue;
+
+        F32 step = length / 25.0f;
+        sExtSettings.custom_flags = 0x2FE1;
+        sExtSettings.life = 0.75f;
+        sExtSettings.count = 1;
+        sExtSettings.color_birth[0] = sExtSettings.color_birth[1] = sExtSettings.color_birth[2] = 0xAA;
+        sExtSettings.color_birth[3] = 255;
+        sExtSettings.color_death[0] = sExtSettings.color_death[1] =
+            sExtSettings.color_death[2] = sExtSettings.color_death[3] = 0x11;
+        for (S32 j = 0; j < 25; j++)
+        {
+            along += step;
+            F32 size = slope * along * (1.0f + (1.0f - iurand()));
+            sExtSettings.size_birth = size;
+            sExtSettings.size_birth_variation = 0.25f * size;
+            sExtSettings.size_death = 0.25f * size;
+            xVec3SMul(&sExtSettings.pos, aimdir, along);
+            xVec3AddTo(&sExtSettings.pos, origin);
+            xVec3SMul(&sExtSettings.vel, aimdir, -ent->spd_extend);
+            zParEmitterEmitCustom(rec->emitctxt, dt, &sExtSettings);
+        }
+    }
+}
+
+// Find the particle emitters used by villains in this scene.
+static void VPAR_readyize_emitters()
+{
+    st_zEntVillain_ParEmitInfo* info = g_emitinfo;
+    while (info->emitname)
+    {
+        U32 id = xStrHash(info->emitname);
+        en_VPAR_EMITTER_ROLE role = info->emitrole;
+        en_zEntVillainSubTypeID type = info->viltype;
+        S32 need = info->flg_need;
+        S32 omit = info->flg_omit;
+        info++;
+        xBase* object = zSceneFindObject(id);
+        if (object && object->baseType == 0x26)
+        {
+            st_zEntVillain_ParEmitRecord* rec = NULL;
+            if (g_emitnext < 32) rec = &g_emitpool[g_emitnext++];
+            if (rec)
+            {
+                rec->emitrole = role;
+                rec->viltype = type;
+                rec->vilowner = 0;
+                rec->emitterID = id;
+                rec->emitctxt = (_zParEmitter*)object;
+                rec->flg_need = need;
+                rec->flg_omit = omit;
+                XOrdAppend(&g_emitlist, rec);
+            }
+        }
+    }
+    g_emitready = 1;
+    sHoloPoofEmitter = zParEmitterFind("ParEmit_Vil_HoloPoof");
+    sHoloDotsEmitter = zParEmitterFind("ParEmit_Vil_HoloDots");
+    sGreenBallEmitter = zParEmitterFind("GREENBALL EMITTER");
+    sGreenBallSmackEmitter = zParEmitterFind("GREENBALL SMACK EMITTER");
+    sGreenShockEmitter = zParEmitterFind("GREENBALL SHOCKWAVE EMITTER");
+    sGreenHurtEmitter = zParEmitterFind("VORTEX EMITTER GG HURT");
+    sGreenVortexEmitter1 = zParEmitterFind("VORTEX EMITTER 1");
+    sGreenVortexEmitter2 = zParEmitterFind("VORTEX EMITTER 2");
+    sGreenVortexEmitter3 = zParEmitterFind("VORTEX EMITTER 3");
+    sWitchDyingEmitter = zParEmitterFind("PAREMIT_WITCH_DYING");
+    sPlantCloudEmitter = zParEmitterFind("PAREMIT_KILLERPLANT_CLOUD");
+    sMMRedFlaskEmitter = zParEmitterFind("PAREMIT_MM_REDFLASK");
+    sMMGreenFlaskEmitter = zParEmitterFind("PAREMIT_MM_GREENFLASK");
+    sMMBlackFlaskEmitter = zParEmitterFind("PAREMIT_MM_BLACKFLASK");
+    sMMShowEmitter = zParEmitterFind("PAREMIT_MM_TELEPORT_SHOW");
+    sMMHideEmitter = zParEmitterFind("PAREMIT_MM_TELEPORT_HIDE");
+    sRBWallEmitter = zParEmitterFind("RB STOPPING WALL EMITTER");
+}
+
+// Emit the Green Ghost shockwave and test whether the player lies outside its ring.
+static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt)
+{
+    st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)prj->xtradata;
+    _zParEmitterCustomSettings info = { 0 };
+    _xVec3 delta = { 0 };
+    _xVec3 playerpos = { 0 };
+    _xVec3 pos = { 0 };
+    F32 radius;
+    F32 inner;
+    F32 player_radius;
+    F32 dist2;
+
+    if (quake->tym_shock < 0.1f) return 0;
+    radius = quake->rad_shock * (prj->tmr_curstate / quake->tym_shock);
+    inner = 0.85f * radius;
+    pos = *xEntGetPos(prj);
+    playerpos = *xEntGetPos(&globals.player.ent);
+    xVec3Sub(&delta, &playerpos, &pos);
+    player_radius = globals.player.ent.bound.sph.r;
+    info.custom_flags = 0x20020;
+    info.xzcircle_radius = radius;
+    info.pos = sGreenShockPosition;
+    zParEmitterEmitCustom(sGreenShockEmitter, dt, &info);
+
+    dist2 = xVec3Length2(&delta);
+    if (dist2 > SQR(radius + player_radius)) return 1;
+    if (playerpos.y - player_radius > pos.y + 0.5f * quake->hyt_shock) return 1;
+    if (playerpos.y + player_radius < pos.y - 0.5f * quake->hyt_shock) return 1;
+    if (inner > player_radius && dist2 < SQR(inner - player_radius)) return 1;
+    return 0;
+}
+
+// Replace or clear the lightning emitted by a Black Knight axe.
+static void VPRJ_zapTheAxe(zEntProjectile* prj, S32 cleanup)
+{
+    st_BKAXE_DATA* axe = (st_BKAXE_DATA*)prj->xtradata;
+    S32 i;
+    for (i = 0; i < 8; i++)
+    {
+        if (axe->strk[i])
+        {
+            zLightningKill(axe->strk[i]);
+            axe->strk[i] = NULL;
+        }
+    }
+    if (cleanup) return;
+
+    _xVec3 end = *xEntGetPos(prj);
+    end.y += 50.0f;
+    _tagLightningAdd line = { eLT_Line };
+    line.start = xEntGetPos(prj);
+    line.end = &end;
+    line.time = axe->tym_zapdur;
+    line.total_points = 16;
+    line.thickness = 0.25f;
+    line.r = line.g = line.b = 255;
+    line.rand_radius = 5.0f;
+    line.flags = 0x34;
+    axe->strk[0] = zLightningAdd(&line);
+
+    _tagLightningAdd ring = { eLT_Line };
+    ring.start = xEntGetPos(prj);
+    ring.end = &end;
+    ring.time = axe->tym_zapdur;
+    ring.total_points = 16;
+    ring.thickness = 0.16f;
+    ring.r = ring.g = 80;
+    ring.b = 255;
+    ring.rand_radius = 3.0f;
+    ring.setup_degrees = 20.0f + 90.0f * iurand();
+    ring.move_degrees = 180.0f + 360.0f * iurand();
+    if (irand() & 1) ring.move_degrees = -ring.move_degrees;
+    ring.rot_radius = 0.5f;
+    ring.flags = 0x3C;
+    axe->strk[1] = zLightningAdd(&ring);
+
+    _xVec3 start = *xEntGetPos(prj);
+    start.y += 1.0f;
+    for (i = 2; i <= 4; i++)
+    {
+        end = *xEntGetPos(prj);
+        end.x += axe->rad_zap * (2.0f * (iurand() - 0.5f));
+        end.z += axe->rad_zap * (2.0f * (iurand() - 0.5f));
+        end.y -= axe->dst_zapdrop;
+        _tagLightningAdd ground = { eLT_Line };
+        ground.start = &start;
+        ground.end = &end;
+        ground.time = axe->tym_zapdur;
+        ground.total_points = 16;
+        ground.thickness = 0.25f;
+        ground.r = ground.g = ground.b = 255;
+        ground.rand_radius = 5.0f;
+        ground.flags = 0x34;
+        axe->strk[i] = zLightningAdd(&ground);
+    }
 }
 
 // Advance a Redbeard projectile and react to its collisions.
