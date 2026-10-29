@@ -33,6 +33,7 @@ struct _zLight : xBase
 };
 
 extern void (*sEffectInitFuncs[18])(_zLight*);
+extern void (*sEffectFuncs[18])(_zLight*, F32);
 
 void zLightOn(_zLight* zl, S32 on);
 void zLightSetVolume(_zVolume* vol);
@@ -43,5 +44,11 @@ void zLightRemoveLocal();
 S32 zLightEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b);
 void zLightDestroyAll();
 void zLightResolveLinks();
+void zLightInit(xBase* b, zLightAsset* tasset);
+void zLightInit(void* b, void* tasset);
+void zLightResetAll(struct _xEnv* env);
+void zLightUpdate(xBase* to, struct _xScene* sc, F32 dt);
+void zLightLoad(_zLight* ent, struct xSerial* s);
+void zLightSave(_zLight* ent, struct xSerial* s);
 
 #endif
