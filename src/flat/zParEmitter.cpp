@@ -2,6 +2,8 @@
 
 #include "xEnt.h"
 #include "xEvent.h"
+#include "xPar.h"
+#include "iMath.h"
 #include "xModel.h"
 #include "xString.h"
 #include "zGame.h"
@@ -9,6 +11,7 @@
 #include "zParSys.h"
 #include "zScene.h"
 #include <string.h>
+#include <math.h>
 
 // Search the current scene's emitter assets by ID.
 _zParEmitter* zParEmitterFind(U32 asset_id)
@@ -127,6 +130,59 @@ xPar* zParEmitterEmitCustom(_zParEmitter* p, F32 dt, _zParEmitterCustomSettings*
         pe->e_circle.radius = s->xzcircle_radius;
     }
     return emitted_par;
+}
+
+// Place particles on a sphere and point their velocity along the selected direction.
+static void zParEmitterEmitSphereEdge(xPar* p, zParEmitterAsset* a, F32 dt, S32 subtype)
+{
+    xVec3 dirvec = { 0.0f, 0.0f, 1.0f };
+    xVec3 offset = { 0.0f, 0.0f, 0.0f };
+    xMat3x3 mat_rot = {};
+
+    p->m_vel = a->vel;
+    xVec3SMul(&p->m_vel, &p->m_vel, dt);
+    switch (subtype)
+    {
+    case 7:
+    {
+        F32 roll = 6.2831855f * iurand();
+        F32 pitch = 6.2831855f * iurand();
+        F32 yaw = 6.2831855f * iurand();
+        xMat3x3Euler(&mat_rot, yaw, pitch, roll);
+        break;
+    }
+    case 10:
+    {
+        F32 pitch = 3.1415927f * iurand();
+        F32 yaw = 6.2831855f * iurand();
+        xMat3x3Euler(&mat_rot, yaw, pitch, 0.0f);
+        break;
+    }
+    case 11:
+    {
+        F32 roll = 6.2831855f * iurand();
+        F32 pitch = 3.1415927f * iurand() + 3.1415927f;
+        F32 yaw = 6.2831855f * iurand();
+        xMat3x3Euler(&mat_rot, yaw, pitch, roll);
+        break;
+    }
+    }
+    xMat3x3LMulVec(&dirvec, &mat_rot, &dirvec);
+    F32 magnitude = sqrtf(xVec3Length2(&p->m_vel));
+    xVec3SMul(&p->m_vel, &dirvec, magnitude);
+    xVec3SMul(&offset, &dirvec, a->e_sphere.radius);
+    xVec3Add(&p->m_pos, &p->m_pos, &offset);
+    if (a->vel_angle_variation != 0.0f)
+    {
+        xMat3x3 variation = {};
+        F32 ang[3];
+        F32 cone = a->vel_angle_variation;
+        ang[0] = cone * (iurand() - 0.5f);
+        ang[1] = cone * (iurand() - 0.5f);
+        ang[2] = cone * (iurand() - 0.5f);
+        xMat3x3Euler(&variation, ang[0], ang[1], ang[2]);
+        xMat3x3LMulVec(&p->m_vel, &variation, &p->m_vel);
+    }
 }
 
 S32 zParEmitterEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)

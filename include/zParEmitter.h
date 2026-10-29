@@ -23,6 +23,7 @@ struct zParEmitterAsset : p2BaseAsset
         struct { xVec3 offset; } e_offsetp;
         struct { U32 emit_volumeID; } e_volume;
         struct { F32 radius; } e_circle;
+        struct { F32 radius; } e_sphere;
     };
     U32 attachToID;
     U32 parSysID;
