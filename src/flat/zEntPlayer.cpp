@@ -1268,22 +1268,32 @@ static S32 GetHeadcollAnimState()
     return state->ID == fallRun ? 11 : 0;
 }
 
+static inline void HeadcollLerp(xVec3* o, const xVec3* a, F32 t, const xVec3* b, F32 s)
+{
+    xVec3 ta;
+    xVec3 tb;
+
+    xVec3SMul(&ta, a, t);
+    xVec3SMul(&tb, b, s);
+    xVec3Add(o, &ta, &tb);
+}
+
 static void HeadcollUpdate(F32 dt)
 {
-    S32 anim = GetHeadcollAnimState();
+    S32 headcoll_animto = GetHeadcollAnimState();
 
-    if (anim != headcoll_anim)
+    if (headcoll_animto != headcoll_anim)
     {
         headcoll_fromos = headcoll_os;
-        if (anim)
+        if (headcoll_animto)
         {
-            headcoll_bltime = headcoll_bltimes[anim];
+            headcoll_bltime = headcoll_bltimes[headcoll_animto];
         }
         else
         {
             headcoll_bltime = headcoll_bltimes[headcoll_anim];
         }
-        headcoll_anim = anim;
+        headcoll_anim = headcoll_animto;
         headcoll_tmr = headcoll_bltime;
     }
     if (headcoll_tmr > 0.0f)
@@ -1296,10 +1306,10 @@ static void HeadcollUpdate(F32 dt)
         }
         else
         {
-            F32 lerp = headcoll_tmr / headcoll_bltime;
-            headcoll_os.x = headcoll_fromos.x * lerp + headcoll_oses[headcoll_anim].x * (1.0f - lerp);
-            headcoll_os.y = headcoll_fromos.y * lerp + headcoll_oses[headcoll_anim].y * (1.0f - lerp);
-            headcoll_os.z = headcoll_fromos.z * lerp + headcoll_oses[headcoll_anim].z * (1.0f - lerp);
+            F32 t = headcoll_tmr / headcoll_bltime;
+            F32 s = 1.0f - t;
+
+            HeadcollLerp(&headcoll_os, &headcoll_fromos, t, &headcoll_oses[headcoll_anim], s);
         }
     }
 }
@@ -1669,10 +1679,10 @@ static U32 ActiveCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 
 static U32 JumpCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 {
-    return (globals.player.Slide != 1 || globals.player.SlideTimer >= 0.5f ||
-            (globals.player.ent.collis->colls[0].optr &&
-             ((xBase*)globals.player.ent.collis->colls[0].optr)->baseType == 6 &&
-             ((_xEnt*)globals.player.ent.collis->colls[0].optr)->subType == 11)) &&
+    _xCollis* flc = &globals.player.ent.collis->colls[0];
+
+    return !(globals.player.Slide == 1 && globals.player.SlideTimer < 0.5f &&
+             !(flc->optr && ((xBase*)flc->optr)->baseType == 6 && ((_xEnt*)flc->optr)->subType == 11)) &&
            globals.player.Slide != 3 && (!surfSticky || globals.player.Inv_Specials & 0x4) &&
            globals.player.ControlOn && globals.pad0->pressed & 0x10000;
 }
@@ -1743,17 +1753,13 @@ static U32 ButtSmashLandCB(xAnimTransition* tran, xAnimSingle* anim, void* param
         if (sEmitterStars)
         {
             S32 i;
+            _xEnt* ent = &globals.player.ent;
+            _xCollis* c = &ent->collis->colls[0];
 
             g_info.custom_flags = 0x205E1;
-            g_info.pos.x = ((xMat4x3*)globals.player.ent.model->Mat)->pos.x +
-                           globals.player.ent.collis->colls[0].dist *
-                               globals.player.ent.collis->colls[0].tohit.x;
-            g_info.pos.y = 0.5f + (((xMat4x3*)globals.player.ent.model->Mat)->pos.y +
-                                   globals.player.ent.collis->colls[0].dist *
-                                       globals.player.ent.collis->colls[0].tohit.y);
-            g_info.pos.z = ((xMat4x3*)globals.player.ent.model->Mat)->pos.z +
-                           globals.player.ent.collis->colls[0].dist *
-                               globals.player.ent.collis->colls[0].tohit.z;
+            g_info.pos.x = ((xMat4x3*)ent->model->Mat)->pos.x + c->dist * c->tohit.x;
+            g_info.pos.y = 0.5f + (((xMat4x3*)ent->model->Mat)->pos.y + c->dist * c->tohit.y);
+            g_info.pos.z = ((xMat4x3*)ent->model->Mat)->pos.z + c->dist * c->tohit.z;
             g_info.size_birth = 0.0f;
             g_info.size_death = 0.5f;
             g_info.color_death[0] = 0x40;
@@ -1986,6 +1992,7 @@ static U32 HangCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
     F32 scoobAngle;
     F32 hangAngle;
     xVec3 targetPos;
+    _zEnt* ent = &globals.player.ent;
 
     globals.player.HangEnt = globals.player.HangFound;
     globals.player.HangPivot = globals.player.HangFound->pivot;
@@ -2007,18 +2014,18 @@ static U32 HangCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
     targetPos.y += globals.player.HangFound->pivot.y;
     targetPos.z += globals.player.HangFound->pivot.z;
 
-    vHangBefore = ((xMat4x3*)globals.player.ent.model->Mat)->pos;
-    ((xMat4x3*)globals.player.ent.model->Mat)->pos.x = targetPos.x;
-    ((xMat4x3*)globals.player.ent.model->Mat)->pos.y = targetPos.y - globals.player.ent.bound.sph.r;
-    ((xMat4x3*)globals.player.ent.model->Mat)->pos.z = targetPos.z;
-    vHangFirst = ((xMat4x3*)globals.player.ent.model->Mat)->pos;
+    vHangBefore = ((xMat4x3*)ent->model->Mat)->pos;
+    ((xMat4x3*)ent->model->Mat)->pos.x = targetPos.x;
+    ((xMat4x3*)ent->model->Mat)->pos.y = targetPos.y - ent->bound.sph.r;
+    ((xMat4x3*)ent->model->Mat)->pos.z = targetPos.z;
+    vHangFirst = ((xMat4x3*)ent->model->Mat)->pos;
 
     if (globals.player.HangEnt->shaggy)
     {
         spinAngle = xAngleClamp(atan2(((xMat4x3*)globals.player.HangEnt->shaggy->model->Mat)->at.x,
                                       ((xMat4x3*)globals.player.HangEnt->shaggy->model->Mat)->at.z));
-        scoobAngle = xAngleClamp(atan2(((xMat4x3*)globals.player.ent.model->Mat)->at.x,
-                                       ((xMat4x3*)globals.player.ent.model->Mat)->at.z));
+        scoobAngle = xAngleClamp(atan2(((xMat4x3*)ent->model->Mat)->at.x,
+                                       ((xMat4x3*)ent->model->Mat)->at.z));
         hangAngle = scoobAngle - spinAngle;
         if (hangAngle < 0.0f)
         {
@@ -3200,7 +3207,7 @@ static void zEntPlayer_SnackDecrement(F32 dt)
 
 // Whether target lies within the cone of ent's facing direction (flat, in x and z) whose half-angle
 // has the cosine cosang.
-static inline S32 PlayerIsFacing(_xEnt* ent, _xEnt* target, F32 cosang)
+static inline U32 PlayerIsFacing(_xEnt* ent, _xEnt* target, F32 cosang)
 {
     F32 ax = ent->frame->mat.at.x;
     F32 az = ent->frame->mat.at.z;
@@ -3429,7 +3436,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         {
             xScrFxFade(&clear, &black, 0.3f, NULL, 1, 1);
         }
-        if (globals.player.DamageTimer == 0.0f)
+        if (!globals.player.DamageTimer)
         {
             zSceneGameStatsTally_death();
             zGameStateSwitch(2);
@@ -3723,7 +3730,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         {
             shagent = (_zEnt*)coll->optr;
             if ((shagent->subType == 0x1C || shagent->subType == 0x1D) &&
-                fabs(shagent->model->Mat->pos.y - ent->model->Mat->pos.y) < 0.5f &&
+                (F32)fabs(shagent->model->Mat->pos.y - ent->model->Mat->pos.y) < 0.5f &&
                 PlayerIsFacing(ent, shagent, 0.86602f))
             {
                 globals.player.Shaggy1.GrabTry = shagent;
@@ -3922,13 +3929,10 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
     {
         F32 mag;
         F32 lerpspeed;
+        xVec3 delta;
 
-        mag = (globals.player.RootUpTarget.x - globals.player.RootUp.x) *
-                  (globals.player.RootUpTarget.x - globals.player.RootUp.x) +
-              (globals.player.RootUpTarget.y - globals.player.RootUp.y) *
-                  (globals.player.RootUpTarget.y - globals.player.RootUp.y) +
-              (globals.player.RootUpTarget.z - globals.player.RootUp.z) *
-                  (globals.player.RootUpTarget.z - globals.player.RootUp.z);
+        xVec3Sub(&delta, &globals.player.RootUpTarget, &globals.player.RootUp);
+        mag = xVec3Length2(&delta);
         if (globals.player.HangElapsed <= 0.25f)
         {
             lerpspeed = 0.07f;
@@ -3949,9 +3953,8 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         else
         {
             mag = 1.0f / sqrtf(mag) * lerpspeed;
-            globals.player.RootUp.x += (globals.player.RootUpTarget.x - globals.player.RootUp.x) * mag;
-            globals.player.RootUp.y += (globals.player.RootUpTarget.y - globals.player.RootUp.y) * mag;
-            globals.player.RootUp.z += (globals.player.RootUpTarget.z - globals.player.RootUp.z) * mag;
+            xVec3SMulBy(&delta, mag);
+            xVec3AddTo(&globals.player.RootUp, &delta);
             xVec3Normalize(&globals.player.RootUp, &globals.player.RootUp);
         }
 
@@ -7251,6 +7254,19 @@ static void PlayerHangUpdate(_xEnt* ent, F32 mag, F32 angle, F32 dt)
     PlayerHangableFollow(globals.player.HangEnt, ent, dt);
 }
 
+static inline U32 PlayerHangInReach(const xVec3* hang, const xVec3* pos)
+{
+    xVec3 dpos;
+    F32 dot;
+
+    xVec3Sub(&dpos, hang, pos);
+    dot = xVec3Dot(&dpos, &gPlayerAbsMat.right);
+    dpos.x -= dot * gPlayerAbsMat.right.x;
+    dpos.y -= dot * gPlayerAbsMat.right.y;
+    dpos.z -= dot * gPlayerAbsMat.right.z;
+    return xVec3Length2(&dpos) < 2.25f && fabsf(dot) < 0.65f;
+}
+
 static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
 {
     U32 i;
@@ -7258,9 +7274,9 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
     F32 closedist;
     _zEntHangable* hangclose;
     _zEntHangable* hangme;
-    xVec3 oldpos;
     F32 d1;
     F32 d2;
+    xVec3 center;
 
     globals.player.HangFound = NULL;
     if (globals.player.HangEnt)
@@ -7281,6 +7297,7 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
             {
                 closedist = dist2;
                 hangclose = hangme;
+                center = ent->bound.sph.center;
             }
         }
     }
@@ -7290,23 +7307,13 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
         return;
     }
 
-    oldpos = ent->frame->oldpos;
+    xVec3 oldpos = ent->frame->oldpos;
     oldpos.y += ent->bound.sph.r;
-    d1 = xVec3Dist(&hangclose->pivot, &oldpos);
-    d2 = xVec3Dist(&hangclose->pivot, &ent->bound.sph.center);
-    d1 -= hangclose->hangInfo->leverArm;
-    d2 -= hangclose->hangInfo->leverArm;
+    d1 = xVec3Dist(&hangclose->pivot, &oldpos) - hangclose->hangInfo->leverArm;
+    d2 = xVec3Dist(&hangclose->pivot, &center) - hangclose->hangInfo->leverArm;
     sphereresult = d1 * d2 <= 0.0f || fabsf(d2) < 0.15f;
 
-    xVec3 dpos;
-    F32 dot;
-
-    xVec3Sub(&dpos, &hangclose->endpos, &ent->bound.sph.center);
-    dot = xVec3Dot(&dpos, &gPlayerAbsMat.right);
-    dpos.x -= dot * gPlayerAbsMat.right.x;
-    dpos.y -= dot * gPlayerAbsMat.right.y;
-    dpos.z -= dot * gPlayerAbsMat.right.z;
-    if (xVec3Length2(&dpos) < 2.25f && fabsf(dot) < 0.65f && sphereresult)
+    if (PlayerHangInReach(&hangclose->endpos, &center) && sphereresult)
     {
         globals.player.HangFound = hangclose;
     }
