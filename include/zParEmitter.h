@@ -9,7 +9,7 @@
 struct xPar;
 struct _xScene;
 
-// The emitter shape union is left opaque.
+// Shapes other than the offset point and volume are left opaque.
 struct zParEmitterAsset : p2BaseAsset
 {
     U8 emit_flags;
@@ -17,7 +17,13 @@ struct zParEmitterAsset : p2BaseAsset
     U8 count;
     U8 count_variation;
     F32 interval;
-    U8 opaque_10[0x2C - 0x10];
+    union
+    {
+        U8 opaque_10[0x2C - 0x10];
+        struct { xVec3 offset; } e_offsetp;
+        struct { U32 emit_volumeID; } e_volume;
+        struct { F32 radius; } e_circle;
+    };
     U32 attachToID;
     U32 parSysID;
     xVec3 pos;
