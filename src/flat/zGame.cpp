@@ -25,11 +25,6 @@
 #include <stdio.h>
 #include <string.h>
 
-extern "C" S32 fn_800BF644();
-extern "C" S32 fn_800AFD54();
-extern "C" S32 fn_800AFD5C();
-extern "C" void fn_800AF8D8(S32);
-extern "C" void fn_800AF978(S32);
 void zEntEvent(char*, U32);
 void xPadDestroyRumbleChain(S32 idx);
 void xSndStopAll();
@@ -67,7 +62,6 @@ void zFX_SceneEnter(RpWorld*);
 void xCameraSetTarget(_tagxCamFrame*, xVec3*);
 void xCameraSetTarget(_tagxCamFrame*, xMat4x3*);
 void zEntEventAll(xBase*, U32, U32, F32*);
-extern "C" void fn_800AFD4C(S32);
 extern "C" RpWorld* RpWorldCreate(const RwBBox*);
 extern "C" F32 RwIm2DGetNearScreenZ();
 extern "C" void fn_80021E50();
@@ -176,7 +170,7 @@ void zGameScreenTransition_UIRender(F32 x1, F32 y1, F32 x2, F32 y2, S32 tex)
 // Update and draw the loading screen, including the current scene's title.
 void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba)
 {
-    if (fn_800BF644())
+    if (zMenuIsFirstBoot())
         return;
 
     RwRGBA back_col = { 0, 0, 0, 255 };
@@ -250,7 +244,7 @@ void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba)
 // Forward a loading-screen update when the menu flag permits it.
 void zGameScreenTransitionUpdate(F32 percentComplete, char* msg)
 {
-    if (!fn_800BF644())
+    if (!zMenuIsFirstBoot())
     {
         zGameScreenTransitionUpdate(percentComplete, msg, NULL);
     }
@@ -259,7 +253,7 @@ void zGameScreenTransitionUpdate(F32 percentComplete, char* msg)
 // Create the temporary scene used to display loading progress.
 void zGameScreenTransitionBegin()
 {
-    fn_800AFD4C(0);
+    zGameSetOstrich(eGameOstrich_Loading);
     lbl_8025EF14 = iCameraCreate(640, 480);
     if (lbl_8025EF14)
     {
@@ -288,15 +282,15 @@ void zGameScreenTransitionBegin()
 // Enter the pause menu when the current state and camera allow it.
 void zGamePauseIfPossible()
 {
-    if (fn_800AFD54() != 2 || zMenuRunning() || fn_800AFD5C() == 6 ||
-        fn_800AFD5C() == 4)
+    if (zGameGetOstrich() != 2 || zMenuRunning() || zGameModeGet() == 6 ||
+        zGameModeGet() == 4)
         return;
     if (xStrHash("NICK CAM 2") == globals.camera.hi_cam.asset->id)
         return;
     if (gGameMode != eGameMode_Pause)
     {
-        fn_800AF8D8(7);
-        fn_800AF978(0);
+        zGameModeSwitch(eGameMode_Pause);
+        zGameStateSwitch(0);
         iPadStopRumble(globals.pad0);
         zEntEvent("techbutton6_click", 0x18);
     }
@@ -318,7 +312,7 @@ S32 zGameIsPaused()
 void zGameLoop()
 {
     S32 ostrich_delay = 10;
-    fn_800AF978(1);
+    zGameStateSwitch(1);
     lbl_8025EEF0 = iTimeGet() - (U64)((F32)OS_TIMER_CLOCK / 60.0f);
     if (globals.cmgr)
         fn_8004623C(globals.cmgr);
@@ -371,7 +365,7 @@ void zGameLoop()
         if (ostrich_delay > 0)
             --ostrich_delay;
         else
-            fn_800AFD4C(2);
+            zGameSetOstrich(eGameOstrich_InScene);
         if (gGameMode == eGameMode_Game)
         {
             if (lbl_8025E528 != 1 && lbl_8025E528 != 3 && lbl_8025E528 != 4)
@@ -482,8 +476,8 @@ void zGameUpdateMode()
                 {
                     if (gGameMode != eGameMode_Pause)
                     {
-                        fn_800AF8D8(7);
-                        fn_800AF978(0);
+                        zGameModeSwitch(eGameMode_Pause);
+                        zGameStateSwitch(0);
                         iPadStopRumble(globals.pad0);
                         zEntEvent("techbutton6_click", 0x18);
                     }
@@ -541,12 +535,12 @@ void zGameUpdateMode()
         }
         lbl_8025EEDC = 0;
         lbl_8025EEF0 = iTimeGet() - (U64)((F32)OS_TIMER_CLOCK / 60.0f);
-        fn_800AF978(1);
+        zGameStateSwitch(1);
     }
     else if (lbl_8025E528 == 2)
     {
         zSceneReset();
-        fn_800AF978(1);
+        zGameStateSwitch(1);
     }
     else if (lbl_8025E528 == 3)
     {
@@ -562,7 +556,7 @@ void zGameUpdateMode()
             if (lbl_8025EEE8 <= 0.0f)
             {
                 lbl_8025EEE8 = 0.0f;
-                fn_800AF978(7);
+                zGameStateSwitch(7);
             }
         }
     }
