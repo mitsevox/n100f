@@ -1418,6 +1418,7 @@ S32 RwEngineRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor ini
                            RwPluginObjectDestructor termCB);
 S32 RwEngineGetPluginOffset(U32 pluginID);
 RwMatrix* RwMatrixUpdate(RwMatrix* matrix);
+RwMatrix* RwMatrixScale(RwMatrix* matrix, const RwV3d* scale, RwOpCombineType combineOp);
 RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance);
 RwFrame* RwFrameCreate();
 S32 RwFrameDestroy(RwFrame* frame);
