@@ -124,13 +124,6 @@ inline void xVec3SMul(xVec3* o, const xVec3* v, F32 s)
     o->z = v->z * s;
 }
 
-inline void xVec3SMulBy(xVec3* v, F32 s)
-{
-    v->x *= s;
-    v->y *= s;
-    v->z *= s;
-}
-
 inline void xVec3AddTo(xVec3* o, const xVec3* v)
 {
     o->x += v->x;

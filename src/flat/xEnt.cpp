@@ -287,9 +287,9 @@ void xEntReset(_xEnt* ent)
 
     xMat3x3Euler((xMat3x3*)&frame, ent->asset->ang.x, ent->asset->ang.y, ent->asset->ang.z);
 
-    xVec3SMulBy(&frame.right, ent->asset->scale.x);
-    xVec3SMulBy(&frame.up, ent->asset->scale.y);
-    xVec3SMulBy(&frame.at, ent->asset->scale.z);
+    xVec3SMul(&frame.right, &frame.right, ent->asset->scale.x);
+    xVec3SMul(&frame.up, &frame.up, ent->asset->scale.y);
+    xVec3SMul(&frame.at, &frame.at, ent->asset->scale.z);
     xVec3Copy(&frame.pos, &ent->asset->pos);
 
     frame.flags = 0;
@@ -587,17 +587,17 @@ void xEntApplyPhysics(_xEnt* ent, _xScene* sc, F32 dt)
     if (ent->pflags & 0x10 && sc->flags & 0x2)
     {
         F32 tfric = -(sc->friction * dt - 1.0f);
-        xVec3SMulBy(&ent->frame->vel, tfric);
+        xVec3SMul(&ent->frame->vel, &ent->frame->vel, tfric);
     }
 
     if (ent->pflags & 0x8 && sc->flags & 0x4)
     {
         F32 tdrag = -(sc->drag * dt - 1.0f);
-        xVec3SMulBy(&ent->frame->vel, tdrag);
+        xVec3SMul(&ent->frame->vel, &ent->frame->vel, tdrag);
     }
 
     xVec3Add(&dposvel, &ent->frame->vel, &ent->frame->oldvel);
-    xVec3SMulBy(&dposvel, 0.5f * dt);
+    xVec3SMul(&dposvel, &dposvel, 0.5f * dt);
 
     // Limit a falling step to 0.63 units per 30th of a second.
     if (dposvel.y < 0.0f)
@@ -606,7 +606,7 @@ void xEntApplyPhysics(_xEnt* ent, _xScene* sc, F32 dt)
 
         if (scale < 1.0f)
         {
-            xVec3SMulBy(&dposvel, scale);
+            xVec3SMul(&dposvel, &dposvel, scale);
         }
     }
 
