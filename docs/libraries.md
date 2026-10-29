@@ -24,7 +24,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 
 ### Reconstructed RenderWare sources
 
-`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` (text-only, all 7 functions), `baworobj.c` (all 48 functions and its `.sbss`), `babinary.c` (all 14 functions and its jump table in `.data`), `batypehf.c` (text-only, both functions), `basync.c` (text-only, all 7 functions), `baraster.c` (all 11 functions, its `.data` and its `.sbss`), `bapipe.c` (all 4 functions and its `.sbss`), `baimras.c` (text-only, all 3 functions), `bapipew.c` (text-only, all 5 functions; GIHE78-rev0), `wrldpipe.c` (text-only, all 6 functions; GIHE78-rev0) and `p2renderstate.c` (all 4 functions and its `.sdata2`; GIHE78-rev0) are linked as Matching objects; the other units stay NonMatching (data is not split, or functions remain). 412 functions compile to the target bytes with every relocation resolving to the target's symbol:
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` (text-only, all 7 functions), `baworobj.c` (all 48 functions and its `.sbss`), `babinary.c` (all 14 functions and its jump table in `.data`), `batypehf.c` (text-only, both functions), `basync.c` (text-only, all 7 functions), `baraster.c` (all 11 functions, its `.data` and its `.sbss`), `bapipe.c` (all 4 functions and its `.sbss`), `baimras.c` (text-only, all 3 functions), `bapipew.c` (text-only, all 5 functions; GIHE78-rev0), `wrldpipe.c` (text-only, all 6 functions; GIHE78-rev0), `p2renderstate.c` (all 4 functions and its `.sdata2`; GIHE78-rev0), `baim3d.c` (all 9 functions, its `.data` strings and its `.sbss`; GIHE78-rev0) and `gcn/im3dpipe.c` (text-only, all 4 functions; GIHE78-rev0) are linked as Matching objects; the other units stay NonMatching (data is not split, or functions remain). 425 functions compile to the target bytes with every relocation resolving to the target's symbol:
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |
@@ -42,11 +42,13 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/baraster.c` | 11 of 11 | (Matching; ends at `_rwRasterOpen`, `0x8016DD04`) |
 | `rwsdk/src/baimras.c` | 3 of 3 | (Matching) |
 | `rwsdk/src/basync.c` | 7 of 7 | (Matching; starts at `SyncObject`, `0x8016E9E4`) |
+| `rwsdk/src/pipe/p2/baim3d.c` | 9 of 9 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/bapipe.c` | 4 of 4 | (Matching) |
 | `rwsdk/src/pipe/p2/p2core.c` | 11 of 13 | `PipelineNodeDestroy` (99.8%: the output fix-up loop's counters take other registers) and `RxClusterInitializeData` (99.3%: the target restores the saved registers before the link register); its data is not split |
 | `rwsdk/src/pipe/p2/p2heap.c` | 7 of 8 | `RxHeapRealloc` (99.6%: the rounded size and the inlined shrink path's size difference take each other's registers); its message string is not split |
 | `rwsdk/src/pipe/p2/p2renderstate.c` | 4 of 4 | (Matching on GIHE78-rev0; split by hand) |
 | `rwsdk/src/pipe/p2/p2resort.c` | 1 of 2 | `_rx_rxRadixExchangeSort` (98.6%: the inlined insertion sort's sentinel search takes other registers) |
+| `rwsdk/src/pipe/p2/gcn/im3dpipe.c` | 4 of 4 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/pipe/p2/bapipew.c` | 5 of 5 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/pipe/p2/gcn/wrldpipe.c` | 6 of 6 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/batextur.c` | 13 of 27 | 14 others |

@@ -317,12 +317,8 @@ void _rpDestroyPlatformWorldSectorPipelines(void);
 S32 _rpCreatePlatformAtomicPipelines(void);
 void _rpDestroyPlatformAtomicPipelines(void);
 
-RxNodeDefinition* RxNodeDefinitionGetTransform(void);
-RxNodeDefinition* RxNodeDefinitionGetCullTriangle(void);
 RxNodeDefinition* RxNodeDefinitionGetLight(void);
 RxNodeDefinition* RxNodeDefinitionGetPostLight(void);
-RxNodeDefinition* RxNodeDefinitionGetClipTriangle(void);
-RxNodeDefinition* RxNodeDefinitionGetSubmitTriangle(void);
 RxNodeDefinition* RxNodeDefinitionGetAtomicInstance(void);
 RxNodeDefinition* RxNodeDefinitionGetAtomicEnumerateLights(void);
 RxNodeDefinition* RxNodeDefinitionGetMaterialScatter(void);

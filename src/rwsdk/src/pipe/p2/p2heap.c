@@ -18,7 +18,6 @@ static rxHeapFreeBlock* _rxHeapFreeBlocksNewEntry(RxHeap* heap)
     rxHeapFreeBlock* freeBlocks = heap->freeBlocks;
     U32 numUsed = heap->entriesUsed;
 
-
     if (heap->entriesAlloced <= numUsed)
     {
         freeBlocks = (rxHeapFreeBlock*)RwRealloc(
@@ -227,9 +226,6 @@ static void* _rxHeapAllocFrom(RxHeap* heap, rxHeapFreeBlock* freeBlock, U32 size
     return header + 1;
 }
 
-void RxHeapFree(RxHeap* heap, void* block);
-void* RxHeapAlloc(RxHeap* heap, U32 size);
-
 static void* _rxHeapReallocLarger(RxHeap* heap, void* block, U32 newSize,
                                   rxHeapBlockHeader* header, U32 sizeDelta)
 {
@@ -432,7 +428,6 @@ void* RxHeapAlloc(RxHeap* heap, U32 size)
         heap->dirty = TRUE;
 
         return _rxHeapAllocFrom(heap, header->freeEntry, size);
-
     }
 
     {
@@ -465,7 +460,6 @@ void* RxHeapRealloc(RxHeap* heap, void* block, U32 newSize, S32 allowCopy)
 
     return _rxHeapRealloc(heap, block, newSize);
 }
-
 
 S32 _rxHeapReset(RxHeap* heap)
 {

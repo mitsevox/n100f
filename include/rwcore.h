@@ -999,6 +999,8 @@ struct RxPipeline
 };
 
 typedef RxPipeline RxLockedPipe;
+typedef U32* RxNodeOutput;
+typedef RxPipelineNode* RxNodeInput;
 
 typedef enum RwShadeMode
 {
@@ -1045,6 +1047,58 @@ struct RxRenderStateVector
     RwFogType FogType;
     RwRGBA FogColor;
     U8* FogTable;
+};
+
+// The immediate-mode 3D module's pipelines, one per primitive type.
+typedef struct rwIm3DRenderPipelines rwIm3DRenderPipelines;
+struct rwIm3DRenderPipelines
+{
+    RxPipeline* triList;
+    RxPipeline* triFan;
+    RxPipeline* triStrip;
+    RxPipeline* lineList;
+    RxPipeline* polyLine;
+    RxPipeline* pointList;
+};
+
+typedef struct _rwIm3DPoolStash _rwIm3DPoolStash;
+struct _rwIm3DPoolStash
+{
+    U32 flags;
+    RwMatrix* ltm;
+    U32 numVerts;
+    RxObjSpace3DVertex* objVerts;
+    void* camVerts;
+    void* devVerts;
+    void* meshState;
+    RxRenderStateVector* renderState;
+    RxPipeline* pipeline;
+    RwPrimitiveType primType;
+    RwImVertexIndex* indices;
+    U32 numIndices;
+};
+
+// The vertices passed to RwIm3DTransform and the stash the pipelines run on.
+typedef struct rwIm3DPool rwIm3DPool;
+struct rwIm3DPool
+{
+    U16 numElements;
+    RwIm3DVertex* elements;
+    S32 stride;
+    _rwIm3DPoolStash stash;
+};
+
+// The immediate-mode 3D module's globals, at _rwIm3DModule.globalsOffset in the engine instance.
+typedef struct rwImmediGlobals rwImmediGlobals;
+struct rwImmediGlobals
+{
+    RxPipeline* genericIm3DTransformPipeline;
+    rwIm3DRenderPipelines genericIm3DRenderPipelines;
+    RxPipeline* curIm3DTransformPipeline;
+    rwIm3DRenderPipelines curIm3DRenderPipelines;
+    RxPipeline* platformIm3DTransformPipeline;
+    rwIm3DRenderPipelines platformIm3DRenderPipelines;
+    rwIm3DPool im3DPool;
 };
 
 // The pipeline module's globals, at _rxPipelineGlobalsOffset in the engine instance.
@@ -1140,7 +1194,11 @@ S32 RwRenderStateSet(RwRenderState state, void* value);
 S32 RwRenderStateGet(RwRenderState state, void* value);
 void* RwIm3DTransform(RwIm3DVertex* pVerts, U32 numVerts, RwMatrix* ltm, U32 flags);
 S32 RwIm3DEnd(void);
+S32 RwIm3DRenderIndexedPrimitive(RwPrimitiveType primType, RwImVertexIndex* indices,
+                                 S32 numIndices);
 S32 RwIm3DRenderPrimitive(RwPrimitiveType primType);
+RxPipeline* RwIm3DSetTransformPipeline(RxPipeline* pipeline);
+RxPipeline* RwIm3DSetRenderPipeline(RxPipeline* pipeline, RwPrimitiveType primType);
 S32 RwEngineRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor initCB,
                            RwPluginObjectDestructor termCB);
 S32 RwEngineGetPluginOffset(U32 pluginID);
@@ -1197,6 +1255,28 @@ RxLockedPipe* RxPipelineLock(RxPipeline* pipeline);
 RxLockedPipe* RxLockedPipeAddFragment(RxLockedPipe* pipeline, U32* firstIndex,
                                       RxNodeDefinition* nodeDef0, ...);
 RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline);
+RxPipelineNode* RxPipelineFindNodeByName(RxPipeline* pipeline, const char* name,
+                                         RxPipelineNode* start, S32* nodeIndex);
+RxLockedPipe* RxLockedPipeAddPath(RxLockedPipe* pipeline, RxNodeOutput out, RxNodeInput in);
+RxNodeOutput RxPipelineNodeFindOutputByName(RxPipelineNode* node, const char* outputname);
+RxNodeInput RxPipelineNodeFindInput(RxPipelineNode* node);
+RxNodeDefinition* RxNodeDefinitionGetTransform(void);
+RxNodeDefinition* RxNodeDefinitionGetCullTriangle(void);
+RxNodeDefinition* RxNodeDefinitionGetClipTriangle(void);
+RxNodeDefinition* RxNodeDefinitionGetSubmitTriangle(void);
+RxNodeDefinition* RxNodeDefinitionGetImmInstance(void);
+RxNodeDefinition* RxNodeDefinitionGetImmStash(void);
+RxNodeDefinition* RxNodeDefinitionGetImmRenderSetup(void);
+RxNodeDefinition* RxNodeDefinitionGetImmMangleTriangleIndices(void);
+RxNodeDefinition* RxNodeDefinitionGetImmMangleLineIndices(void);
+RxNodeDefinition* RxNodeDefinitionGetClipLine(void);
+RxNodeDefinition* RxNodeDefinitionGetSubmitLine(void);
+RxNodeDefinition* RxNodeDefinitionGetGameCubeImmInstance(void);
+RxNodeDefinition* RxNodeDefinitionGetGameCubeSubmitNoLight(void);
+S32 _rwIm3DCreatePlatformTransformPipeline(RxPipeline** globalPipe);
+void _rwIm3DDestroyPlatformTransformPipeline(RxPipeline** globalPipe);
+void _rwIm3DDestroyPlatformRenderPipelines(rwIm3DRenderPipelines* globalPipes);
+S32 _rwIm3DCreatePlatformRenderPipelines(rwIm3DRenderPipelines* globalPipes);
 void _rxPacketDestroy(RxPacket* packet);
 void RxHeapFree(RxHeap* heap, void* block);
 void* RxHeapAlloc(RxHeap* heap, U32 size);
