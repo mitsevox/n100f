@@ -388,7 +388,7 @@ static inline F32 icos(F32 x)
     return cos(x);
 }
 
-static inline void DampenControls(F32* angle, F32* mag, F32 x, F32 y)
+static void DampenControls(F32* angle, F32* mag, F32 x, F32 y)
 {
     if (x > -globals.player.s.AnalogMin && x < globals.player.s.AnalogMin)
     {
