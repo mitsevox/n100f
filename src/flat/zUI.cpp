@@ -5,6 +5,9 @@
 #include "xScrFx.h"
 #include "xstransvc.h"
 #include "rwcore.h"
+#include "xMath2.h"
+#include "zRenderState.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include "zGlobals.h"
@@ -46,6 +49,7 @@ struct zSceneLevel
 };
 
 extern "C" zSceneLevel lbl_801C8BCC[];
+extern "C" F32 lbl_8025E8C4;
 extern "C" void fn_800D77CC(U32 sceneID);
 extern "C" void fn_800CDB7C(xBase* (*callback)(xBase*, zScene*, void*), S32 type, void* data);
 void zUI_Render(_xEnt* ent);
@@ -54,6 +58,8 @@ extern "C" void fn_800D47E8(_xEnt* ent);
 static _zUI* sSorted[768];
 static U32 sSortedCount;
 static F32 sTimer;
+static RwIm2DVertex Vertex[4];
+static RwImVertexIndex Index[6] = { 0, 1, 2, 0, 2, 3 };
 static U32 cKeyUIid1off;
 static U32 cKeyUIid2off;
 static U32 cKeyUIid3off;
@@ -155,7 +161,7 @@ xBase* zUIRenderIteratorInsert(xBase* b, zScene*, void*)
     return b;
 }
 
-// Partial: textured quad and model rendering are not yet reconstructed.
+// Partial: textured-quad and model drawing behavior needs further reconstruction.
 void zUI_Render(_xEnt* e)
 {
     _zUI* ent = static_cast<_zUI*>(e);
@@ -177,11 +183,79 @@ void zUI_Render(_xEnt* e)
         RwTexture* texture = static_cast<RwTexture*>(xSTFindAsset(ent->sasset->textureID, 0));
         if (texture && texture->raster)
             RwRenderStateSet(rwRENDERSTATETEXTURERASTER, texture->raster);
-        // Draw the textured quad.
+        zUIAsset* asset = ent->sasset;
+        F32 left = (640.0f * asset->pos.x) / 640.0f;
+        F32 top = (480.0f * asset->pos.y) / 480.0f;
+        F32 right = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
+        F32 bottom = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
+
+        static U32 mapID = xStrHash("paws_map");
+        static U32 cornerID = xStrHash("paws_corner");
+        static U32 tagID = xStrHash("sd_tag_map");
+        if (asset->textureID == mapID || asset->textureID == cornerID ||
+            asset->textureID == tagID)
+        {
+            F32 pulse = 1.0f + (F32)sin(15.0f * lbl_8025E8C4);
+            F32 dx = pulse * (0.05f * (right - left));
+            F32 dy = pulse * (0.05f * (bottom - top));
+            left -= dx;
+            right += dx;
+            top -= dy;
+            bottom += dy;
+        }
+
+        static U32 warpTokenID = xStrHash("warp token ui");
+        static U32 warpSnackID = xStrHash("warp snack ui");
+        if (ent->id == warpTokenID || ent->id == warpSnackID)
+        {
+            F32 wave = 0.5f * (F32)sin(5.0f * lbl_8025E8C4 + left);
+            F32 dx = wave * (right - left);
+            F32 center = (640.0f * asset->pos.x) / 640.0f;
+            left = center - dx;
+            right = center + dx;
+        }
+
+        F32 z = RwIm2DGetNearScreenZ();
+        RwIm2DVertexSetScreenX(&Vertex[0], left);
+        RwIm2DVertexSetScreenY(&Vertex[0], top);
+        RwIm2DVertexSetScreenZ(&Vertex[0], z);
+        Vertex[0].u = asset->uva[0]; Vertex[0].v = asset->uva[1];
+        RwIm2DVertexSetScreenX(&Vertex[1], left);
+        RwIm2DVertexSetScreenY(&Vertex[1], bottom);
+        RwIm2DVertexSetScreenZ(&Vertex[1], z);
+        Vertex[1].u = asset->uvd[0]; Vertex[1].v = asset->uvd[1];
+        RwIm2DVertexSetScreenX(&Vertex[2], right);
+        RwIm2DVertexSetScreenY(&Vertex[2], bottom);
+        RwIm2DVertexSetScreenZ(&Vertex[2], z);
+        Vertex[2].u = asset->uvc[0]; Vertex[2].v = asset->uvc[1];
+        RwIm2DVertexSetScreenX(&Vertex[3], right);
+        RwIm2DVertexSetScreenY(&Vertex[3], top);
+        RwIm2DVertexSetScreenZ(&Vertex[3], z);
+        Vertex[3].u = asset->uvb[0]; Vertex[3].v = asset->uvb[1];
+        for (S32 i = 0; i < 4; ++i)
+            RwIm2DVertexSetIntRGBA(&Vertex[i], 255, 255, 255, 255);
+
+        zRenderState(SDRS_Default);
+        RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)0);
+        RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
+        RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)1);
+        RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)1);
+        RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)0);
+        RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vertex, 4, Index, 6);
     }
     else if (ent->model)
     {
-        // Draw the UI model.
+        zUIAsset* asset = ent->sasset;
+        _xRect rect;
+        rect.x = (640.0f * asset->pos.x) / 640.0f;
+        rect.y = (480.0f * asset->pos.y) / 480.0f;
+        rect.w = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
+        rect.h = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
+        RwV3d& pos = ent->model->Mat->pos;
+        xVec3 from = { pos.x, pos.y + 1.0f, pos.z + 5.0f };
+        xVec3 to = { pos.x, pos.y, pos.z };
+        xModelRender2D(ent->model, &rect, &from, &to, 1.5707964f);
     }
 }
 

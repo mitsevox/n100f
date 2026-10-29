@@ -105,3 +105,5 @@ data	0x80270F9C	0x80270FA0	cKeyUIid1on	related	provisional	provisional	Initializ
 data	0x80270FA0	0x80270FA4	cKeyUIid2on	related	provisional	provisional	Initializer at 0x800D41B4-0x800D4214 hashes the corresponding KEY OFF/ON UI string into this word; SLUS-20349 DWARF lists the corresponding cKeyUIid2on static.
 data	0x80270FA4	0x80270FA8	cKeyUIid3on	related	provisional	provisional	Initializer at 0x800D41B4-0x800D4214 hashes the corresponding KEY OFF/ON UI string into this word; SLUS-20349 DWARF lists the corresponding cKeyUIid3on static.
 data	0x80270FA8	0x80270FAC	cKeyUIid4on	related	provisional	provisional	Initializer at 0x800D41B4-0x800D4214 hashes the corresponding KEY OFF/ON UI string into this word; SLUS-20349 DWARF lists the corresponding cKeyUIid4on static.
+data	0x80249628	0x80249698	Vertex	related	provisional	provisional	The target zUI renderer writes four 0x1C-byte vertices here before its indexed draw; SLUS-20349 DWARF lists Vertex[4].
+data	0x801D7580	0x801D758C	Index	related	provisional	provisional	Target data contains six halfwords 0, 1, 2, 0, 2, 3 used for the indexed UI draw; SLUS-20349 DWARF lists Index[6].
