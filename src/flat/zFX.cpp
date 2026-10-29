@@ -1,9 +1,9 @@
 #include "iFX.h"
+#include "xFX.h"
 #include "xString.h"
 #include "zScene.h"
 
 extern "C" {
-void fn_8002A5F4(RwTexture*);
 void fn_8002AC2C(RpWorld*);
 void fn_8002AC30(RpWorld*);
 }
@@ -11,7 +11,7 @@ void fn_8002AC30(RpWorld*);
 // Set up scene effects and warping for the tide or tree entity.
 void zFX_SceneEnter(RpWorld* world)
 {
-    fn_8002A5F4(NULL);
+    xFXanimUV2PSetTexture(NULL);
     fn_8002AC30(world);
 
     iFXWarbModes mode = IFX_WARB_WATER_WAVE;
