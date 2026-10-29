@@ -11,6 +11,7 @@
 #include "zSurface.h"
 #include "xSnd.h"
 #include "zGlobals.h"
+#include "zMenu.h"
 #include <string.h>
 
 struct _xEnt;
@@ -20,11 +21,33 @@ extern xBase* lbl_8025EEBC;
 extern U32 lbl_8022C678[23];
 extern _zParEmitter* lbl_802290A0[];
 extern F32 lbl_801A4140[];
+extern void* lbl_8025EA48;
+struct _xRay3
+{
+    xVec3 origin;
+    xVec3 dir;
+    F32 min_t;
+    F32 max_t;
+    S32 flags;
+};
+extern "C" U32 fn_800217E0(_xRay3*, void*);
+struct SkidVertex
+{
+    xVec3 pos;
+    U8 opaque_0C[12];
+    RwRGBA color;
+    F32 u;
+    F32 v;
+};
+extern SkidVertex lbl_8022C6D4[];
+extern "C" void* RwIm3DTransform(SkidVertex*, U32, RwMatrix*, U32);
+extern "C" S32 RwIm3DRenderPrimitive(RwPrimitiveType);
+extern "C" S32 RwIm3DEnd();
 extern void zSurfaceGetName(S32, char*);
 extern "C" xSurface* fn_800D2F34(const _xCollis*);
 extern "C" void fn_80021B9C(const char*, void (*)());
-extern void DrawSkidMarkStrip(_tagFeetSkidMark*, _tagSkidEdge*, U8, U8, U8);
-extern U32 zFeetStepCB(U32, xAnimActiveEffect*, xAnimSingle*, void*);
+void DrawSkidMarkStrip(_tagFeetSkidMark*, _tagSkidEdge*, U8, U8, U8);
+U32 zFeetStepCB(U32, xAnimActiveEffect*, xAnimSingle*, void*);
 extern "C" void fn_8001A198(xAnimTable*, U32 (*)(U32, xAnimActiveEffect*, xAnimSingle*, void*));
 
 // Draw each foot's strip once there are enough edges to form it.
@@ -37,6 +60,61 @@ void zFeetRenderSkidMark(_tagFeetSkidMark* m)
         {
             DrawSkidMarkStrip(m, m->edge[i], 20, 18, 3);
         }
+    }
+}
+
+// Turn the sampled edges into a textured triangle strip.
+void DrawSkidMarkStrip(_tagFeetSkidMark* m, _tagSkidEdge* edges, U8 red, U8 green, U8 blue)
+{
+    U32 vert_idx = 0;
+    S32 i = m->first_idx;
+    do
+    {
+        _tagSkidEdge* edge = &edges[i];
+        F32 u;
+        if (i == m->first_idx)
+        {
+            u = 0.0f;
+        }
+        else if (i == m->total_edges - 1)
+        {
+            u = 1.0f;
+        }
+        else
+        {
+            u = (i & 1) ? 0.2f : 0.4f;
+        }
+
+        U8 alpha = (i == m->first_idx) ? (U8)(m->remove_timer * 128.0f) : 128;
+        for (S32 side = 0; side < 2; side++)
+        {
+            F32 width = side ? edge->width : -edge->width;
+            SkidVertex* vertex = &lbl_8022C6D4[vert_idx++];
+            vertex->pos.x = edge->centre.x + edge->local_x.x * width;
+            vertex->pos.y = edge->centre.y + edge->local_x.y * width + 0.2f;
+            vertex->pos.z = edge->centre.z + edge->local_x.z * width;
+            vertex->color.red = red;
+            vertex->color.green = green;
+            vertex->color.blue = blue;
+            vertex->color.alpha = alpha;
+            vertex->u = u;
+            vertex->v = (F32)side;
+            if (vert_idx >= 256)
+            {
+                break;
+            }
+        }
+        if (vert_idx >= 256)
+        {
+            break;
+        }
+        i++;
+    } while (i < m->total_edges);
+
+    if (RwIm3DTransform(lbl_8022C6D4, vert_idx, 0, 0x19))
+    {
+        RwIm3DRenderPrimitive(rwPRIMTYPETRISTRIP);
+        RwIm3DEnd();
     }
 }
 
@@ -162,6 +240,73 @@ U32 zFeetStepVillainCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
     zParEmitterEmitCustom((_zParEmitter*)lbl_8025EEBC, 0.0f, &info);
     info.custom_flags = 0x20;
     zParEmitterEmitCustom(lbl_802290A0[surface_type], 0.033333335f, &info);
+    return 0;
+}
+
+// Play a player footstep and leave a paw print when a downward ray reaches the ground.
+U32 zFeetStepCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
+{
+    if (zMenuRunning())
+    {
+        return 0;
+    }
+
+    _tagFoot* foot = (_tagFoot*)(active->Effect + 1);
+    tagzFeet* feet = foot->feet;
+    _xEnt* ent = feet->owner;
+    if (!xEntIsVisible(ent))
+    {
+        return 0;
+    }
+
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x10020;
+    iModelTagEval(ent->model->Data, &globals.player.HangPawTag[foot->idx], ent->model->Mat, &info.pos);
+
+    _xRay3 ray;
+    ray.origin = info.pos;
+    ray.origin.y = ent->model->Mat->pos.y + 0.05f;
+    ray.dir.x = 0.0f;
+    ray.dir.y = -0.1f;
+    ray.dir.z = 0.0f;
+    ray.flags = 0;
+    S32 collided_with_ground = fn_800217E0(&ray, lbl_8025EA48) != 0;
+    info.pos.y = ent->model->Mat->pos.y + 0.05f;
+
+    S32 surface_type = 0;
+    xSurface* surface = fn_800D2F34(&ent->collis->colls[0]);
+    if (surface && surface->state == 0 && surface->moprops &&
+        ((zSurfaceProps*)surface->moprops)->asset)
+    {
+        surface_type = ((zSurfaceProps*)surface->moprops)->asset->surf_type;
+    }
+    if (surface_type == 22)
+    {
+        return 0;
+    }
+
+    if (lbl_8022C678[surface_type])
+    {
+        F32 pitch;
+        feet->pitch = zPitchChange(feet->pitch, &pitch, 45, 3.0f);
+        if (xSndPlay3D(lbl_8022C678[surface_type], 0.25f, pitch, 0, 2, &info.pos, 25.0f) == 0xFFFFFFFF)
+        {
+            lbl_8022C678[surface_type] = 0;
+        }
+    }
+
+    if (collided_with_ground && !(&ent->collis->colls[0] && ent->collis->colls[0].optr) &&
+        globals.player.JumpState == 0)
+    {
+        xVec3 angles;
+        xMat3x3GetEuler((xMat3x3*)ent->model->Mat, &angles);
+        info.rot[0] = (U8)(255.0f * (angles.x / 6.2831855f));
+        info.rot[1] = (U8)(255.0f * (angles.y / 6.2831855f));
+        info.rot[2] = (U8)(255.0f * (angles.z / 6.2831855f));
+        zParEmitterEmitCustom((_zParEmitter*)lbl_8025EEB8, 0.0f, &info);
+        info.custom_flags = 0x20;
+        zParEmitterEmitCustom(lbl_802290A0[surface_type], 0.033333335f, &info);
+    }
     return 0;
 }
 
