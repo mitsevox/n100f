@@ -50,7 +50,7 @@ xLinkList.cpp	0x8002C774	0x8002C86C	5	5	0	0	-	count-match
 xMath.cpp	0x8002C86C	0x8002CF48	6	6	2	0	0x8002C900=xMathSolveCubic (floats)	anchored
 xMath3.cpp	0x8002CF48	0x8002F920	32	33	17	14	0x8002CF48=xQuatMul (name)	anchored
 xMemMgr.cpp	0x8002F920	0x800300A8	14	16	2	2	0x8002F920=xMemPoolFree (name)	anchored
-xModel.cpp	0x800301A4	0x80030F28	12	19	2	0	0x800301A4=xModelRender2D (floats)	anchored
+xModel.cpp	0x800300A8	0x80030F28	19	19	4	2	0x800300A8=xModel_SceneExit (name)	anchored
 xMorph.cpp	0x80030F28	0x80031310	3	3	3	3	0x80030F28=xMorphSeqDuration (name)	anchored
 xMovePoint.cpp	0x80031310	0x800317D4	9	9	3	2	0x80031478=xMovePointSplineDestroy (name)	anchored
 xordarray.cpp	0x800317D4	0x80031AC8	6	6	4	3	0x8003189C=XOrdLookup (name)	anchored

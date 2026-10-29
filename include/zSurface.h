@@ -98,6 +98,7 @@ struct zSurfaceProps
 void zSurfaceRegisterMapper(U32 assetId);
 void zSurfaceExit();
 xSurface* zSurfaceGetSurface(const _xCollis* coll);
+xSurface* zSurfaceGetSurface(U32 mat_id);
 U32 zSurfaceGetSlide(const xSurface* surf);
 U32 zSurfaceGetStep(const xSurface* surf);
 F32 zSurfaceGetSlideStartAngle(const xSurface* surf);
