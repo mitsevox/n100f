@@ -70,15 +70,17 @@ struct zGlobalGameStats
     U32 clues_tot;
 };
 
-// Partial: only the header and the matrix are declared. The GC object is 0xA0 bytes; the
-// PS2 copy is 0xB0 because its matrices are 16-byte aligned.
+// Partial: only the header, the matrix, the rotation and the field of view are declared. The GC
+// object is 0xA0 bytes; the PS2 copy is 0xB0 because its matrices are 16-byte aligned.
 struct _tagxCam : xBase
 {
     U32 valid_flags;
     S32 cam_type;
     U32 flags;
     xMat4x3 mat;
-    U8 opaque_5C[0x9C - 0x5C];
+    xQuat rot;
+    F32 fov;
+    U8 opaque_70[0x9C - 0x70];
     xCamAsset* asset;
 };
 

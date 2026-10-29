@@ -198,6 +198,11 @@ inline void xMat3x3Identity(xMat3x3* m)
     xMat3x3Copy(m, (const xMat3x3*)&g_I3);
 }
 
+inline void xMat4x3Identity(xMat4x3* m)
+{
+    xMat4x3Copy(m, &g_I3);
+}
+
 inline void xQuatCopy(xQuat* o, const xQuat* q)
 {
     o->s = q->s;

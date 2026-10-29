@@ -27,8 +27,17 @@ struct xModelInstance
     xVec3 Scale;
 };
 
-struct _xRect;
+struct xModelPool
+{
+    xModelPool* Next;
+    U32 NumMatrices;
+    xModelInstance* List;
+};
 
+struct _xRect;
+struct RpWorld;
+
+void xModelInit();
 void xModelPoolInit(U32 count, U32 numMatrices);
 void xModelSetMaterialAlpha(xModelInstance* modelInst, S32 alpha);
 void xModelResetMaterial(xModelInstance* modelInst);
@@ -39,11 +48,14 @@ void xModelRender2D(xModelInstance* modelInst, _xRect* sr, xVec3* from, xVec3* t
 void xModelUpdate(xModelInstance* modelInst, F32 timeDelta);
 void xModelEval(xModelInstance* modelInst);
 void xModelRender(xModelInstance* modelInst);
-void xModelUpdate(xModelInstance* modelInst, F32 timeDelta);
 xModelInstance* xModelInstanceAlloc(RpAtomic* data, void* object, U16 flags, U8 boneIndex,
                                     U8* boneRemap);
 void xModelInstanceFree(xModelInstance* modelInst);
 void xModelInstanceAttach(xModelInstance* inst, xModelInstance* parent);
+void xModelRenderSingle(xModelInstance* modelInst);
+void xModelSetRender2DStyle(U32 renderStyle, F32 alpha);
+void xModel_SceneEnter(RpWorld* world);
+void xModel_SceneExit(RpWorld* world);
 
 inline xMat4x3* xModelGetFrame(xModelInstance* modelInst)
 {

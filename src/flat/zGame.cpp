@@ -16,6 +16,7 @@
 #include "iPad.h"
 #include "xTRC.h"
 #include "xEnv.h"
+#include "xModel.h"
 #include "zEntShaggy.h"
 #include "zHud.h"
 #include "zPortal.h"
@@ -40,7 +41,6 @@ extern "C" void fn_800D02D8(U32);
 extern "C" void fn_800207EC(void*, S32, S32);
 extern "C" void fn_8001E7C4(void*, _xEnv*);
 extern "C" void fn_800CF0A4();
-extern "C" void fn_800300CC(RpWorld*);
 extern "C" U32 fn_8003FE80(U32);
 extern "C" p2EntAsset* fn_8003FD50(U32, U32, U32*);
 void zEntPlayer_Init(_xEnt*, p2EntAsset*);
@@ -407,7 +407,7 @@ void zGameSetup()
 {
     fn_800CF0A4();
     RpWorld* world = globals.sceneCur->env->geom->world;
-    fn_800300CC(world);
+    xModel_SceneEnter(world);
     zFX_SceneEnter(world);
     p2EntAsset* asset = fn_8003FD50('PLYR', fn_8003FE80('PLYR') - 1, NULL);
     asset->baseType = 3;

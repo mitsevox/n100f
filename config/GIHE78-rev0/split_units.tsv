@@ -50,7 +50,7 @@ xLinkList.cpp	0x8002C774	0x8002C86C	5	5	0	0	-	count-match
 xMath.cpp	0x8002C86C	0x8002CF48	6	6	2	0	0x8002C900=xMathSolveCubic (floats)	anchored
 xMath3.cpp	0x8002CF48	0x8002F920	32	33	17	14	0x8002CF48=xQuatMul (name)	anchored
 xMemMgr.cpp	0x8002F920	0x800300A8	14	16	2	2	0x8002F920=xMemPoolFree (name)	anchored
-xModel.cpp	0x800301A4	0x80030F28	12	19	2	0	0x800301A4=xModelRender2D (floats)	anchored
+xModel.cpp	0x800300A8	0x80030F28	19	19	4	2	0x800300A8=xModel_SceneExit (name)	anchored
 xMorph.cpp	0x80030F28	0x80031310	3	3	3	3	0x80030F28=xMorphSeqDuration (name)	anchored
 xMovePoint.cpp	0x80031310	0x800317D4	9	9	3	2	0x80031478=xMovePointSplineDestroy (name)	anchored
 xordarray.cpp	0x800317D4	0x80031AC8	6	6	4	3	0x8003189C=XOrdLookup (name)	anchored
@@ -99,7 +99,7 @@ zFeet.cpp	0x800AA338	0x800ABD84	11	11	4	0	0x800AA3B4=DrawSkidMarkStrip (floats)	
 zFMV.cpp	0x800ABD84	0x800ABE88	2	2	2	2	0x800ABD84=zFMVFileGetName (name)	anchored
 zFog.cpp	0x800ABE88	0x800AC010	5	5	2	2	0x800ABE8C=zFogEventCB (name)	anchored
 zFX.cpp	0x800AC010	0x800AC0BC	2	2	1	0	0x800AC03C=zFX_SceneEnter (strings+calls)	anchored
-zGame.cpp	0x800AC0BC	0x800ADC40	15	15	10	6	0x800AC860=zGameScreenTransitionEnd (name)	anchored
+zGame.cpp	0x800AC0BC	0x800ADC40	15	15	11	6	0x800AC860=zGameScreenTransitionEnd (name)	anchored
 zGameExtras.cpp	0x800ADC40	0x800AF8D8	11	11	4	0	0x800ADCB8=UpdateFireworks (strings+floats)	anchored
 zGameState.cpp	0x800AF8D8	0x800AFD6C	7	7	1	1	0x800AFA64=zGameStateSwitchEvent (name)	anchored
 zGroup.cpp	0x800AFD6C	0x800AFF5C	7	7	1	0	0x800AFDBC=zGroupEventCB (calls)	anchored
