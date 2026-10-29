@@ -18,5 +18,6 @@
 
 F32 xAngleClamp(F32 a);
 U32 xMathSolveQuadratic(F32 a, F32 b, F32 c, F32* x1, F32* x2);
+U32 xMathSolveCubic(F32 a, F32 b, F32 c, F32 d, F32* x1, F32* x2, F32* x3);
 
 #endif
