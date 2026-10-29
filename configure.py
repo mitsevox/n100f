@@ -516,6 +516,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zLightning.cpp"),
             Object(NonMatching, "flat/zLobMaster.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zMusic.cpp"),
+            Object(NonMatching, "flat/zParEmitter.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zParSys.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zPitchChange.cpp"),
             Object(NonMatching, "flat/zPlatform.cpp"),
