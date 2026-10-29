@@ -397,6 +397,7 @@ static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop
 static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 flg_vsnd, F32 radius,
                               F32 delay, F32 repeatDelay, S32 repeatCount, U32 useThisSound);
 static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
+extern "C" void fn_8007BD98(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan);
 static inline F32 VANM_entTime(const _zEnt* ent);
 static inline F32 VCFG_tymref(st_zEntVillain* vil, S32 which);
@@ -4347,7 +4348,7 @@ static S32 VILN_BBK_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 0);
                 vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
                 resp->trangoal = ZVIL_GOAL_FOLLOW;
-                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
                 resp->stim = ZVIL_STIM_TRANGOAL;
             }
             break;
@@ -4357,7 +4358,7 @@ static S32 VILN_BBK_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 std_mvpt_nav = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 1);
                 vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
                 resp->trangoal = std_mvpt_nav ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
-                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
                 resp->stim = ZVIL_STIM_TRANGOAL;
             }
             break;
@@ -4365,22 +4366,22 @@ static S32 VILN_BBK_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
             if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
             resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
         case ZVIL_STIM_STOPPATROL:
             resp->trangoal = ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
         case ZVIL_STIM_STARTGUARD:
             resp->trangoal = ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
         case ZVIL_STIM_STOPGUARD:
             resp->trangoal = ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
         }
@@ -4458,7 +4459,7 @@ static S32 VILN_sham_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
+                fn_8007BD98(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
@@ -4981,7 +4982,7 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
+                fn_8007BD98(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
@@ -5435,7 +5436,7 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
+                fn_8007BD98(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
@@ -5912,7 +5913,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                 vil->vhf->pickanim(vil, ZVIL_GOAL_SPELLCAST, ZVIL_GSPOT_STATERECOVER);
                 vil->tmr_list[ZVIL_TTIL_RECOVERY] = 32000000.0f;
             }
-            if (vil->flinch)
+            if (vil->goodattack)
             {
                 resp->trangoal = ZVIL_GOAL_TAUNT;
                 resp->tranmode = ZVIL_MODE_NOCHANGE;
@@ -5953,7 +5954,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
+                fn_8007BD98(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
@@ -6140,7 +6141,7 @@ static S32 VILN_BRB_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
         {
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, goal, ZVIL_GSPOT_START);
-            vil->flinch = 0;
+            vil->goodattack = 0;
             vil->tmr_list[ZVIL_TDUR_EXTEND] = 5.0f;
             vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_EXTEND];
             vil->tmr_list[ZVIL_TTIL_RECOVERY] -= 1.0f;
@@ -6150,7 +6151,7 @@ static S32 VILN_BRB_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
         }
         else if (stim == ZVIL_STIM_EXITGOAL)
         {
-            vil->flinch = 0;
+            vil->goodattack = 0;
             F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_EXTRELOAD];
             vil->tmr_list[ZVIL_TDUR_EXTRELOAD] = duration + 0.25f * (iurand() - 0.5f) * duration;
             if (vil->allow & 8) zEntEvent(vil, vil, 177);
