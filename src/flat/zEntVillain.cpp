@@ -286,7 +286,8 @@ static inline U32 VANM_entStateType(const _zEnt* ent);
 static inline U32 VANM_entMoveType(const _zEnt* ent);
 static inline void VANM_setSpeed(st_zEntVillain* ent, F32 spd, _xVec3 sanim);
 static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil);
-static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off);
+static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
+                                    _xVec3* vec_spin, F32 arcness, F32 heavy);
 static S32 VWEP_lobInitArcing(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
                               _xVec3* vec_spin, F32 arcness, F32 heavy);
 static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3* pos_tgt,
@@ -3521,77 +3522,6 @@ static void zVIL_elcb_move(_xEnt* xe, _xScene* scn, F32 dt, _xEntFrame* frame)
     }
 }
 
-// Sends the villain to a widget, dst_offset short of it, and returns whether it should use its
-// normal path navigation. Movement is allowed, the next navigation point becomes the previous one
-// and is cleared, and misc flag 0x20000000 (follow) or 0x10000000 (go to) is set, the other
-// cleared, along with 0x40000000 and 0x80000000. A move point to follow becomes the next
-// navigation point (normal navigation, both flags cleared); one to go to gives its position. An
-// entity to follow becomes the follow target; one to go to gives its position.
-static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset, S32 follow)
-{
-    S32 do_std_nav = 0;
-
-    vil->allow |= 1;
-    if (vil->nav_next)
-    {
-        vil->nav_prev = vil->nav_next;
-    }
-    vil->nav_next = NULL;
-    vil->need_navpt = 0;
-
-    if (follow)
-    {
-        vil->flg_misc |= 0x20000000;
-        vil->flg_misc &= ~0x10000000;
-    }
-    else
-    {
-        vil->flg_misc &= ~0x20000000;
-        vil->flg_misc |= 0x10000000;
-    }
-    vil->flg_misc &= ~0x40000000;
-    vil->flg_misc &= ~0x80000000;
-    vil->ds2_goto_keepaway = dst_offset * dst_offset;
-
-    switch (widge->baseType)
-    {
-    case 13:
-        if (follow)
-        {
-            vil->nav_next = (_zMovePoint*)widge;
-            do_std_nav = 1;
-            vil->flg_misc &= ~0x10000000;
-            vil->flg_misc &= ~0x20000000;
-        }
-        else
-        {
-            xVec3Copy(&vil->pos_goto, zMovePointGetPos((_zMovePoint*)widge));
-        }
-        break;
-    case 2:
-    case 3:
-    case 4:
-    case 6:
-    case 8:
-    case 11:
-    case 12:
-    case 18:
-    case 23:
-    case 24:
-    case 27:
-        if (follow)
-        {
-            vil->tgt_follow = (_xEnt*)widge;
-        }
-        else
-        {
-            xVec3Copy(&vil->pos_goto, &xModelGetFrame(((_xEnt*)widge)->model)->pos);
-        }
-        break;
-    }
-    return do_std_nav;
-}
-
 // Sets the villain's pursuit home from the widget it protects. A protected entity's position
 // becomes home. A move point's position is stored but then replaced, as with no widget: the
 // villain's own position becomes home and the keep-away distance is cleared. Any other kind of
@@ -4871,10 +4801,11 @@ static S32 VWEP_lobInitArcing(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_
 }
 
 // Readies the Black Knight's reserved axe to throw: it is aimed as an arcing throw (see
-// VWEP_lobInitArcing), turned a quarter circle about z and then about y to face away from
-// pos_tgt, and spins with vec_spin when given. Its lightning reaches his extend distance, drops
-// by his extend width and lasts his extend speed in time; its planes are 46, his lob distance and
-// -268.5. It lives until 10000 units squared away. Always returns 1.
+// VWEP_lobInitArcing), rolled a quarter circle (about z), then pitched (about x) by the clamped
+// heading from pos_tgt to the axe (atan2 of the x and z differences), and spins with vec_spin when
+// given. Its lightning reaches his extend distance, drops by his extend width and lasts his extend
+// speed in time; its planes are 46, his lob distance and -268.5. It lives until 10000 units
+// squared away. Always returns 1.
 static S32 VWEP_lobInitBKAxe(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
                              _xVec3* vec_spin, F32 arcness, F32 heavy)
 {
@@ -4924,7 +4855,7 @@ static S32 VWEP_lobInitGGQuaker(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* ve
     zEntProjectile* prj = vil->prj_reserved;
     st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)prj->xtradata;
 
-    VWEP_lobInitArrow(vil, pos_tgt, vec_off);
+    VWEP_lobInitArrow(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
     if (heavy <= 0.0f)
     {
         prj->cat_data.arrow.acc_gravity = 1.5f;
@@ -4946,7 +4877,8 @@ static S32 VWEP_lobInitGGQuaker(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* ve
 // a unit ahead of and above his bound centre (looking up his name, unused), toward pos_tgt plus
 // vec_off (when given), at his lob speed. It cannot collide for the first 0.4 seconds. Always
 // returns 1.
-static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off)
+static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
+                                    _xVec3* vec_spin, F32 arcness, F32 heavy)
 {
     zEntProjectile* prj = vil->prj_reserved;
     _xVec3 pos_launch = { 0 };
@@ -5043,7 +4975,7 @@ static S32 VWEP_lobInitMMFlask(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec
     prj->SyncFrame(1);
     if (vec_spin)
     {
-        prj->FlexMatSet((xVec3*)vec_spin, globals.update_dt);
+        prj->FlexMatSet(vec_spin, globals.update_dt);
         prj->flg_categ |= 0x4000000;
     }
     else
@@ -7360,7 +7292,7 @@ static inline U32 VANM_entMoveType(const _zEnt* ent)
 }
 
 // While an animation plays, sets its playback speed to spd over the animation's own speed
-// (sanim.x, ignored under 0.001), kept between sanim.y and sanim.z.
+// (sanim.x), kept between sanim.y and sanim.z; does nothing when sanim.x is under 0.001.
 static inline void VANM_setSpeed(st_zEntVillain* ent, F32 spd, _xVec3 sanim)
 {
     F32 fv;
