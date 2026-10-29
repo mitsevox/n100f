@@ -1808,7 +1808,11 @@ rwsdk/src/pipe/p2/p2dep.c:
 	.text       start:0x80189020 end:0x8018A644
 
 rwsdk/src/pipe/p2/p2heap.c:
-	.text       start:0x8018AA7C end:0x8018B69C
+	.text       start:0x8018A644 end:0x8018B69C
+
+rwsdk/src/pipe/p2/p2renderstate.c:
+	.text       start:0x8018B69C end:0x8018BB5C
+	.sdata2     start:0x80262C48 end:0x80262C50
 
 rwsdk/src/pipe/p2/p2resort.c:
 	.text       start:0x8018BB5C end:0x8018C010
