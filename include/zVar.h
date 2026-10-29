@@ -27,7 +27,7 @@ void zVarInit(zVarEntry* table);
 void zVarNewGame();
 void zVarSave(xSerial* s);
 void zVarLoad(xSerial* s);
-void zVarSetSnackGateValue(U32 value);
+void zVarSetSnackGateValue(U32 amount);
 void zVarSetArea(U32 sceneID);
 void zVarDefeatMasterMind();
 void zVarUnlockF001();

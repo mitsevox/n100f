@@ -185,7 +185,7 @@ U32 zVarEntryCB_eVarCin11();
 U32 zVarEntryCB_eVarCin12();
 U32 zVarEntryCB_eVarCin13();
 U32 zVarEntryCB_eVarCin14();
-char* zVarGameSlotInfo(S32 i);
+inline char* zVarGameSlotInfo(S32 i);
 
 char txt[64];
 S32 sVarMagicInit;
@@ -611,7 +611,7 @@ U32 zVarEntryCB_VibrationOn()
 
 // The save slot's display name: "Empty", or the name zSaveLoad_BuildName builds. The date and
 // 12-hour time it formats first go unused.
-char* zVarGameSlotInfo(S32 i)
+inline char* zVarGameSlotInfo(S32 i)
 {
     char date[32] = {};
     char time[32] = {};
