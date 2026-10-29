@@ -14,5 +14,6 @@ struct _xEnv
 };
 
 void xEnvRender(_xEnv* env);
+void xEnvFree(_xEnv* env);
 
 #endif

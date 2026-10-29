@@ -1,4 +1,5 @@
 #include "zMenu.h"
+#include "zEnv.h"
 #include "zGameState.h"
 #include "zGlobals.h"
 #include "zScene.h"
@@ -36,7 +37,6 @@ void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
 extern "C" void fn_8001E83C(_tagxCamFrame*);
 extern "C" void fn_8001E8A0(_tagxCamFrame*, F32);
 extern "C" U32 fn_800C9DB8();
-extern "C" void fn_800AA118(_zEnv*);
 extern "C" void fn_8001E798(_tagxCamFrame*);
 extern "C" void fn_800207E8(_tagxCamFrame*);
 extern "C" void fn_800207EC(_tagxCamFrame*, S32, S32);
@@ -247,7 +247,7 @@ void zMenuSetup()
     zHud_Setup(globals.sceneCur);
     sAttractMode_timer = 30.0f;
     setupPlayer();
-    fn_800AA118(gCurEnv);
+    zEnvStartingCamera(gCurEnv);
     fn_8001E8A0(&globals.camera, -1.0f);
     zEntEventAll(NULL, 0, 0x57, NULL);
     zEntEventAll(NULL, 0, 0x59, NULL);

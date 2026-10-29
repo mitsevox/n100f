@@ -36,5 +36,21 @@ void xBaseInit(xBase* xb, p2BaseAsset* asset);
 void xBaseSave(xBase* ent, xSerial* s);
 void xBaseLoad(xBase* ent, xSerial* s);
 void xBaseReset(xBase* xb, p2BaseAsset* asset);
+void xBaseSetup(xBase* xb);
+
+inline U32 xBaseIsEnabled(xBase* xb)
+{
+    return xb->baseFlags & 0x1;
+}
+
+inline void xBaseEnable(xBase* xb)
+{
+    xb->baseFlags |= 0x1;
+}
+
+inline void xBaseDisable(xBase* xb)
+{
+    xb->baseFlags &= ~0x1;
+}
 
 #endif

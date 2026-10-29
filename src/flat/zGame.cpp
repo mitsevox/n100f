@@ -1,4 +1,6 @@
 #include "types.h"
+#include "zEnv.h"
+#include "zCutsceneMgr.h"
 #include "iCamera.h"
 #include "rpworld.h"
 #include "zGameExtras.h"
@@ -35,9 +37,7 @@ extern "C" void fn_800207EC(void*, S32, S32);
 extern "C" void fn_8001E7C4(void*, _xEnv*);
 void zEntPlayer_Init(_xEnt*, p2EntAsset*);
 extern "C" void fn_80048E54(S32, S32);
-extern "C" void fn_800AA118(_zEnv*);
 extern "C" void fn_8001E8A0(_tagxCamFrame*, F32);
-extern "C" void fn_8004623C(_zCutsceneMgr*);
 extern "C" void fn_80014A34(S32);
 extern "C" void fn_80016600();
 extern "C" void fn_800165E0();
@@ -315,7 +315,7 @@ void zGameLoop()
     zGameStateSwitch(1);
     lbl_8025EEF0 = iTimeGet() - (U64)((F32)OS_TIMER_CLOCK / 60.0f);
     if (globals.cmgr)
-        fn_8004623C(globals.cmgr);
+        zCutsceneMgrFinishLoad(globals.cmgr);
     fn_80014A34(0);
     do
     {
@@ -417,7 +417,7 @@ void zGameSetup()
     }
     fn_80048E54(0xC2, 30);
     zEntShaggy_SceneStart(globals.sceneCur);
-    fn_800AA118(gCurEnv);
+    zEnvStartingCamera(gCurEnv);
     fn_8001E8A0(&globals.camera, -1.0f);
     zSceneLoad(globals.sceneCur, NULL);
     zMusicNotify(0);
@@ -508,7 +508,7 @@ void zGameUpdateMode()
             zGameInit(sceneID);
             zGameSetup();
             if (globals.cmgr)
-                fn_8004623C(globals.cmgr);
+                zCutsceneMgrFinishLoad(globals.cmgr);
         }
         else if (lbl_8025EED8)
         {
