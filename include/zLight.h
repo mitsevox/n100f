@@ -6,6 +6,7 @@
 #include "iLight.h"
 
 struct _zVolume;
+struct _xEnt;
 
 struct zLightAsset : p2BaseAsset
 {
@@ -37,6 +38,8 @@ void zLightOn(_zLight* zl, S32 on);
 void zLightSetVolume(_zVolume* vol);
 void zLightRemoveLocalEnv();
 void zLightAddLocalEnv();
+void zLightAddLocal(_xEnt* ent);
+void zLightRemoveLocal();
 S32 zLightEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b);
 void zLightDestroyAll();
 void zLightResolveLinks();
