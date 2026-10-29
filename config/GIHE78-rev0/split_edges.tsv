@@ -100,7 +100,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zFog.cpp	zFX.cpp	0x800AC010	0x800AC010	alignment only (2 cuts tie on data)	0
 .text	zFX.cpp	zGame.cpp	0x800AC0BC	0x800AC0BC	single cut by data references	1
 .text	zGame.cpp	zGameExtras.cpp	0x800ADC40	0x800ADC40	single cut by data references	2
-.text	zGameExtras.cpp	zGameState.cpp	0x800AF8D8	0x800AF8D8	alignment only (2 cuts tie on data)	0
+.text	zGameExtras.cpp	zGameState.cpp	0x800AF8D8	0x800AF8D8	single cut by data references	0
 .text	zGameState.cpp	zGroup.cpp	0x800AFD6C	0x800AFD6C	alignment only (5 cuts tie on data)	0
 .text	zGroup.cpp	zGust.cpp	0x800AFF5C	0x800AFF5C	alignment only (4 cuts tie on data)	0
 .text	zGust.cpp	zHologram.cpp	0x800B07B4	0x800B07B4	single cut by data references	0

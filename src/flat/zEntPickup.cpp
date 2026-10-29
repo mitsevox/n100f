@@ -10,6 +10,7 @@
 #include "xMath.h"
 #include "xMath3.h"
 #include "xModel.h"
+#include "xPad.h"
 #include "xPar.h"
 #include "xParGroup.h"
 #include "xserializer.h"
@@ -24,6 +25,7 @@
 #include "zGameExtras.h"
 #include "zParSys.h"
 #include "zScene.h"
+#include "zMusic.h"
 
 struct zUIAsset : p2EntAsset
 {
@@ -79,6 +81,22 @@ void zEntPlayer_GiveClue(U32 quantity);
 void zEntPlayer_GiveChance(U32 quantity);
 void zEntPlayer_GiveHealth(U32 quantity);
 void zEntPlayer_GiveHotsauce(U32 value);
+void zEntPlayer_GiveKey(U32 quantity);
+void zEntPlayer_SNDBitePickup(_xEnt* ent);
+void zEntPlayer_SNDInfoPickup(_xEnt* ent);
+void zEntPlayer_SNDKeyPickup(_xEnt* ent);
+void zEntPlayer_SNDSavePickup(_xEnt* ent);
+void zEntPlayer_SNDSpecialPickup(_xEnt* ent);
+void zEntPlayer_SNDAmmoPickup(_xEnt* ent);
+void zEntPlayer_SNDTokenPickup(_xEnt* ent);
+void zEntPlayer_SNDErrorPickup(_xEnt* ent);
+void zEntPlayer_SNDSnackCounter(_xEnt* ent);
+void zSceneGameStatsTally_clue();
+void zGameStateSwitchEvent(S32 event);
+void zVarSetSnackGateValue(U32 amount);
+void zHud_ShakeSnackCounter();
+
+extern _zEntPickup* sDecrementSnackGateEnt;
 
 extern _zParEmitter* sEmitDust;
 
@@ -118,8 +136,60 @@ static _zParEmitter* sEmitWarpGate;
 static _zParEmitter* sEmitMiniVanPuff;
 static _zCounter* keyCounter;
 
+static _xEntFrame gPickupFrame;
+static _xEntCollis gPickupCollis;
+
 static void zEntPickup_hideWarpGateInfo();
 static void zEntPickup_resetKeyShake();
+static void zEntPickup_PlaySound(_zEntPickup* ent);
+static void zEntPickup_shakeKeyIcon();
+static void zEntPickup_UpdateFX(_zEntPickup* ent, _xScene*, F32 dt);
+
+// A dropped pickup falls under gravity until it lands on something, then rests (state 1).
+static void PickupFallPhysics(_zEntPickup* ent, _xScene* sc, F32 dt)
+{
+    gPickupFrame.mat = *(xMat4x3*)ent->model->Mat;
+    gPickupFrame.mat.pos.y -= 0.8f;
+    gPickupFrame.oldpos = gPickupFrame.mat.pos;
+
+    gPickupCollis.chk = 0x22;
+    gPickupCollis.pen = 0x22;
+
+    ent->vel.y -= 15.0f * dt;
+
+    if (ent->vel.y < -20.0f)
+    {
+        ent->vel.y = -20.0f;
+    }
+
+    gPickupFrame.mat.pos.x += ent->vel.x * dt;
+    gPickupFrame.mat.pos.y += ent->vel.y * dt;
+    gPickupFrame.mat.pos.z += ent->vel.z * dt;
+
+    if (!(ent->state & 0x80) || ent->vel.y < 0.0f)
+    {
+        ent->frame = &gPickupFrame;
+        ent->collis = &gPickupCollis;
+
+        xEntCollide(ent, sc, dt);
+
+        ent->frame = NULL;
+        ent->collis = NULL;
+    }
+
+    gPickupFrame.mat.pos.y += 0.8f;
+
+    *(xMat4x3*)ent->model->Mat = gPickupFrame.mat;
+
+    if ((gPickupCollis.colls[0].flags & 0x1) && ent->vel.y < 0.0f)
+    {
+        ent->vel.x = 0.0f;
+        ent->vel.y = 0.0f;
+        ent->vel.z = 0.0f;
+        ent->state &= ~0x3f;
+        ent->state |= 0x1;
+    }
+}
 
 void zEntPickupInit(void* ent, void* asset)
 {
@@ -517,6 +587,536 @@ void zEntPickup_FlyToInterface(_zEntPickup* ent, F32)
     ent->vel.z = 0.0f;
 }
 
+// Per-frame pickup logic. The state's low six bits pick the behaviour: 1 resting, 2 falling,
+// 4 flying to the HUD, 0x20 spinning after a clue or save point, 8 collected (waiting to respawn).
+void zEntPickup_Update(_zEntPickup* ent, _xScene* sc, F32 dt)
+{
+    F32 distsqr;
+    F32 distsqr2;
+    xBase* b;
+    F32 duration;
+    xQuat* q0;
+    xVec3* t0;
+    xVec3* facept;
+    F32 dist;
+    F32 rot_sec;
+    F32 spin_time;
+
+    if (ent->state & 0x8)
+    {
+        if (!(ent->p->pickupFlags & 0x1))
+        {
+            return;
+        }
+
+        if (ent->timer > 0.0f)
+        {
+            ent->timer -= dt;
+
+            if (ent->timer <= 0.0f)
+            {
+                ent->timer = 0.5f;
+                ent->state = (ent->state & ~0x3f) | 0x1;
+                ent->flags |= 0x1;
+            }
+            else
+            {
+                return;
+            }
+        }
+        else
+        {
+            return;
+        }
+    }
+
+    if (!xEntIsVisible(ent))
+    {
+        if (ent->fx_par && !(ent->flyflags & 0x2))
+        {
+            ent->flyflags |= 0x2;
+            xVec3Copy(&ent->fx_par->m_pos, (xVec3*)&ent->model->Mat->pos);
+            ent->fx_par->m_pos.y += 10000.0f;
+        }
+
+        return;
+    }
+
+    if ((ent->state & 0x40) && !(ent->state & 0x4) && !(ent->state & 0x20) &&
+        globals.player.Health)
+    {
+        ent->fx_scale = 1.0f;
+
+        if (ent->timer > 0.0f)
+        {
+            ent->timer -= dt;
+
+            if (ent->timer <= 0.0f)
+            {
+                ent->timer = 0.0f;
+            }
+        }
+        else
+        {
+            distsqr = SQR(globals.player.ent.bound.sph.center.x - ent->model->Mat->pos.x) +
+                      SQR(globals.player.ent.bound.sph.center.y - ent->model->Mat->pos.y) +
+                      SQR(globals.player.ent.bound.sph.center.z - ent->model->Mat->pos.z);
+            distsqr2 = SQR(globals.player.head_sph.center.x - ent->model->Mat->pos.x) +
+                       SQR(globals.player.ent.bound.sph.center.y - ent->model->Mat->pos.y) +
+                       SQR(globals.player.head_sph.center.z - ent->model->Mat->pos.z);
+
+            if (ent->p->pickupType == 1 && ent->p->pickupIndex == 8)
+            {
+                if (!globals.sceneCur->pendingPortal &&
+                    (distsqr <= SQR(2.5f * globals.player.ent.bound.sph.r) ||
+                     distsqr2 <= SQR(2.5f * globals.player.ent.bound.sph.r)))
+                {
+                    if (zHudShowWarpGateInfo == -1)
+                    {
+                        zHudShowWarpGateInfo = ent->p->quantity;
+                        zEntEvent("MNU4 WARP PROMPT", eEventVisible);
+                        zEntEvent("MNU4 WARP NAME", eEventVisible);
+                        zWarpPointTable[((p2EntPickupAsset*)(ent->asset + 1))->pickupValue].status = 1;
+                        xSndPlay(xStrHash("warpgate_activate"), 0.5f, 0.5f, 0.0f, 0x7f, 0, 0);
+                        xSndPlay3D(xStrHash("warpgate_idle_loop"), 0.5f, 0.5f, 0x7f, 0x200, ent, 20.0f);
+                        zEntPlayer_Notify(0xe);
+                    }
+
+                    if (globals.pad0 && (globals.pad0->pressed & 0x20000))
+                    {
+                        b = zSceneFindObject(xStrHash("SELECT X UIF"));
+
+                        if (b)
+                        {
+                            zEntPickup_hideWarpGateInfo();
+                            zGameStateSwitchEvent(0x9b);
+                            zEntEvent(b, 0x51);
+                            zEntEvent(b, 0x4f);
+                        }
+                    }
+                }
+                else
+                {
+                    zEntPickup_hideWarpGateInfo();
+                }
+            }
+            else if (ent->p->pickupType == 1 && ent->p->pickupIndex == 9)
+            {
+                if (!sDecrementSnackGateEnt)
+                {
+                    if (distsqr <= SQR(2.5f * globals.player.ent.bound.sph.r) ||
+                        distsqr2 <= SQR(2.5f * globals.player.ent.bound.sph.r))
+                    {
+                        if (ent->snackGateInfoDisplayed == -1)
+                        {
+                            ent->snackGateInfoDisplayed =
+                                ((p2EntPickupAsset*)(ent->asset + 1))->pickupValue;
+                            zVarSetSnackGateValue(ent->snackGateInfoDisplayed);
+                            zEntEvent("MNU4 SNACKGATE PROMPT", eEventUIFocusOn);
+                        }
+
+                        if (zPickup_Give(ent, ent->p,
+                                         ((p2EntPickupAsset*)(ent->asset + 1))->pickupValue))
+                        {
+                            if (ent->p->pickupType == 1)
+                            {
+                                switch (ent->p->pickupIndex)
+                                {
+                                case 0:
+                                case 1:
+                                case 2:
+                                case 3:
+                                case 4:
+                                case 5:
+                                case 6:
+                                    break;
+                                case 7:
+                                    zSceneGameStatsTally_clue();
+                                    break;
+                                }
+                            }
+
+                            xVec3Copy(&ent->grab_pos, (xVec3*)&ent->model->Mat->pos);
+                            ent->timer = 0.0f;
+                            ent->vel.x = 0.0f;
+                            ent->vel.y = 0.0f;
+                            ent->vel.z = 0.0f;
+                        }
+                        else if (ent->shake_timer <= 0.0f)
+                        {
+                            xVec3Copy(&ent->shake_pos, (xVec3*)&ent->model->Mat->pos);
+                            ent->shake_timer = 3.0f;
+                            xSndPlay(xStrHash("snackgate_error1"), 0.5f, 0.5f, 0.0f, 0x7f, 0, 0);
+                            xSndPlay(xStrHash("snackgate_spin3"), 0.5f, 0.5f, 0.0f, 0x7f, 0x200, 0);
+                            zEntPlayer_Notify(0xf);
+                            zHud_showSnack();
+                        }
+                    }
+                    else
+                    {
+                        zEntPickup_hideSnackGateInfo(ent);
+                    }
+                }
+            }
+            else if (ent->p->pickupType == 1 && ent->p->pickupIndex == 7)
+            {
+                if (distsqr <= SQR(1.5f * globals.player.ent.bound.sph.r) ||
+                    distsqr2 <= SQR(1.5f * globals.player.ent.bound.sph.r))
+                {
+                    zEntPickup_GiveFX(ent);
+                    ent->state = (ent->state & ~0x3f) | 0x20;
+                    zEntPickup_PlaySound(ent);
+
+                    if (ent->p->pickupType == 1)
+                    {
+                        switch (ent->p->pickupIndex)
+                        {
+                        case 0:
+                        case 1:
+                        case 2:
+                        case 3:
+                        case 4:
+                        case 5:
+                        case 6:
+                            break;
+                        case 7:
+                            zSceneGameStatsTally_clue();
+                            break;
+                        }
+                    }
+
+                    ent->timer = 10.0f;
+                    ent->vel.x = 0.0f;
+                    ent->vel.y = 0.0f;
+                    ent->vel.z = 0.0f;
+                    zEntEvent(ent, ent, eEventPickup);
+                }
+            }
+            else if (ent->p->pickupType == 1 && ent->p->pickupIndex == 6)
+            {
+                if (distsqr <= SQR(1.5f * globals.player.ent.bound.sph.r) ||
+                    distsqr2 <= SQR(1.5f * globals.player.ent.bound.sph.r))
+                {
+                    zEntPickup_GiveFX(ent);
+                    ent->state = (ent->state & ~0x3f) | 0x20;
+
+                    if (ent->p->pickupType == 1)
+                    {
+                        switch (ent->p->pickupIndex)
+                        {
+                        case 0:
+                        case 1:
+                        case 2:
+                        case 3:
+                        case 4:
+                        case 5:
+                        case 6:
+                            break;
+                        case 7:
+                            zSceneGameStatsTally_clue();
+                            break;
+                        }
+                    }
+
+                    ent->timer = 20.0f;
+                    ent->vel.x = 0.0f;
+                    ent->vel.y = 0.0f;
+                    ent->vel.z = 0.0f;
+                    zEntEvent(ent, ent, eEventPickup);
+                    zGameStateSwitchEvent(0x99);
+                }
+            }
+            else if (distsqr <= SQR(1.5f * globals.player.ent.bound.sph.r) ||
+                     distsqr2 <= SQR(1.5f * globals.player.ent.bound.sph.r))
+            {
+                if (ent->p->pickupType == 1 &&
+                    (ent->p->pickupIndex == 0 || ent->p->pickupIndex == 4))
+                {
+                    ent->state = (ent->state & ~0x3f) | 0x4;
+                    zEntPickup_PlaySound(ent);
+                    zHud_showSnack();
+                    xVec3Copy(&ent->grab_pos, (xVec3*)&ent->model->Mat->pos);
+                    ent->timer = 0.4f;
+                    ent->vel.x = 0.0f;
+                    ent->vel.y = 0.0f;
+                    ent->vel.z = 0.0f;
+                    ent->flyflags |= 0x1;
+
+                    if (zGameExtraIsValentines())
+                    {
+                        _zParEmitterCustomSettings info;
+
+                        info.custom_flags = 0x20;
+                        xVec3Copy(&info.pos, (xVec3*)&ent->model->Mat->pos);
+                        zParEmitterEmitCustom(sEmitLoveHart, 1.0f / 30.0f, &info);
+                    }
+                    else if (zGameExtraIsShirazBday())
+                    {
+                        _zParEmitterCustomSettings info;
+
+                        info.custom_flags = 0x20;
+                        xVec3Copy(&info.pos, (xVec3*)&ent->model->Mat->pos);
+                        zParEmitterEmitCustom(sEmitAkmalDaisy, 1.0f / 30.0f, &info);
+                    }
+                    else if (zGameExtraIsAnnaBday())
+                    {
+                        _zParEmitterCustomSettings info;
+
+                        info.custom_flags = 0x20;
+                        xVec3Copy(&info.pos, (xVec3*)&ent->model->Mat->pos);
+                        zParEmitterEmitCustom(sEmitLoveHart, 1.0f / 30.0f, &info);
+                    }
+                    else if (ent->p->pickupIndex == 0)
+                    {
+                        _zParEmitterCustomSettings info;
+
+                        info.custom_flags = 0x20;
+                        xVec3Copy(&info.pos, (xVec3*)&ent->model->Mat->pos);
+                        zParEmitterEmitCustom(sEmitGrabCrumb, 1.0f / 30.0f, &info);
+                    }
+                }
+                else
+                {
+                    sKeyCounterEnabledBeforeGive = 0;
+
+                    if (keyCounter && (keyCounter->baseFlags & 0x1))
+                    {
+                        sKeyCounterEnabledBeforeGive = 1;
+                    }
+
+                    if (zPickup_Give(ent, ent->p,
+                                     ((p2EntPickupAsset*)(ent->asset + 1))->pickupValue))
+                    {
+                        ent->state = (ent->state & ~0x3f) | 0x4;
+                        zEntPickup_PlaySound(ent);
+
+                        if (ent->p->pickupType == 1)
+                        {
+                            switch (ent->p->pickupIndex)
+                            {
+                            case 0:
+                            case 1:
+                            case 2:
+                            case 3:
+                            case 4:
+                            case 5:
+                            case 6:
+                                break;
+                            case 7:
+                                zSceneGameStatsTally_clue();
+                                break;
+                            }
+                        }
+
+                        xVec3Copy(&ent->grab_pos, (xVec3*)&ent->model->Mat->pos);
+
+                        if (ent->p->pickupIndex == 5 && keyCounter && sKeyCounterEnabledBeforeGive)
+                        {
+                            ent->timer = 0.4f;
+                            ent->vel.x = 0.0f;
+                            ent->vel.y = 0.0f;
+                            ent->vel.z = 0.0f;
+                            ent->flyflags |= 0x1;
+                        }
+                        else
+                        {
+                            ent->timer = 3.0f;
+                            ent->vel.x = 0.0f;
+                            ent->vel.y = 15.0f;
+                            ent->vel.z = 0.0f;
+                            ent->flyflags = 0;
+                            zEntPlayer_GiveKey(ent->p->quantity);
+                        }
+
+                        zEntEvent(ent, ent, eEventPickup);
+                    }
+                    else if (ent->shake_timer <= 0.0f)
+                    {
+                        zEntPlayer_SNDErrorPickup(ent);
+                        xVec3Copy(&ent->shake_pos, (xVec3*)&ent->model->Mat->pos);
+                        ent->shake_timer = 3.0f;
+                    }
+                }
+            }
+            else if (distsqr <= SQR(8.0f * globals.player.ent.bound.sph.r) ||
+                     distsqr2 <= SQR(8.0f * globals.player.ent.bound.sph.r))
+            {
+                if (ent->p->pickupType == 4)
+                {
+                    zEntPlayer_Notify(3);
+                }
+            }
+        }
+    }
+
+    if (ent->anim)
+    {
+        duration = iAnimDuration(ent->anim);
+        ent->animTime += dt;
+
+        if (ent->animTime >= duration)
+        {
+            ent->animTime -= duration;
+        }
+
+        q0 = (xQuat*)giAnimScratch;
+        t0 = (xVec3*)(q0 + 65);
+        iAnimEval(ent->anim, ent->animTime, 0, t0, q0);
+        iModelAnimMatrices(ent->model->Data, q0, t0, &ent->model->Mat[1]);
+    }
+
+    if (ent->shake_timer)
+    {
+        ent->shake_timer -= dt;
+
+        if (ent->shake_timer < 0.0f)
+        {
+            xVec3Copy((xVec3*)&ent->model->Mat->pos, &ent->shake_pos);
+            ent->shake_timer = 0.0f;
+        }
+        else
+        {
+            xMat3x3RMulRotY((xMat3x3*)ent->model->Mat, (xMat3x3*)ent->model->Mat,
+                            18.849556f * dt * (ent->shake_timer / 3.0f));
+        }
+    }
+
+    if (!ent->anim)
+    {
+        if (ent->p->pickupType == 1 && ent->p->pickupIndex == 8)
+        {
+            xVec3 lookpt;
+            xVec3 lookvec;
+
+            facept = (xVec3*)&globals.player.ent.model->Mat->pos;
+            dist = 0.0f;
+            lookpt.x = facept->x;
+            lookpt.y = 1.0f + facept->y;
+            lookpt.z = facept->z;
+
+            if (zWarpPointTable[((p2EntPickupAsset*)(ent->asset + 1))->pickupValue].status)
+            {
+                xVec3Sub(&lookvec, &lookpt, (xVec3*)&ent->model->Mat->pos);
+                dist = xMat3x3LookVec((xMat3x3*)ent->model->Mat, &lookvec);
+            }
+
+            if (zWarpPointTable[((p2EntPickupAsset*)(ent->asset + 1))->pickupValue].status &&
+                sEmitWarpGate && dist < 7.5f)
+            {
+                _zParEmitterCustomSettings info;
+
+                info.custom_flags = 0x20;
+                xVec3Copy(&info.pos, (xVec3*)&ent->model->Mat->pos);
+                zParEmitterEmitCustom(sEmitWarpGate, dt, &info);
+            }
+        }
+        else
+        {
+            xMat3x3RMulRotY((xMat3x3*)ent->model->Mat, (xMat3x3*)ent->model->Mat, PI * dt);
+        }
+    }
+
+    switch (ent->state & 0x3f)
+    {
+    case 1:
+        if (ent->followTarget)
+        {
+            xVec3* pos = xEntGetPos((_xEnt*)ent->followTarget);
+
+            if (pos)
+            {
+                xVec3Copy((xVec3*)&ent->model->Mat->pos, pos);
+                xVec3Add((xVec3*)&ent->model->Mat->pos, (xVec3*)&ent->model->Mat->pos, &ent->followOffset);
+            }
+        }
+
+        ent->fx_scale = 1.0f;
+        zEntPickup_UpdateFX(ent, sc, dt);
+        break;
+    case 2:
+        PickupFallPhysics(ent, sc, dt);
+        break;
+    case 0x20:
+        if (globals.player.ControlOn)
+        {
+            ent->timer -= dt;
+        }
+
+        if (ent->timer <= 0.0f)
+        {
+            ent->state = (ent->state & ~0x3f) | 0x1;
+        }
+        else
+        {
+            if (ent->p->pickupType == 1 && ent->p->pickupIndex == 7)
+            {
+                rot_sec = 1080.0f;
+                spin_time = 10.0f;
+            }
+            else
+            {
+                rot_sec = 720.0f;
+                spin_time = 20.0f;
+            }
+
+            xMat3x3RMulRotY((xMat3x3*)ent->model->Mat, (xMat3x3*)ent->model->Mat,
+                            PI * rot_sec / 180.0f * dt * (ent->timer / spin_time));
+        }
+
+        zEntPickup_UpdateFX(ent, sc, dt);
+        break;
+    case 4:
+        ent->timer -= dt;
+
+        if (ent->timer <= 0.0f)
+        {
+            if (ent->p->pickupType == 1)
+            {
+                if (ent->p->pickupIndex == 0 || ent->p->pickupIndex == 4)
+                {
+                    zHud_ShakeSnackCounter();
+
+                    if (zPickup_Give(ent, ent->p,
+                                     ((p2EntPickupAsset*)(ent->asset + 1))->pickupValue))
+                    {
+                        zEntPlayer_SNDSnackCounter(ent);
+                        zEntEvent(ent, ent, eEventPickup);
+                    }
+                }
+                else if (ent->p->pickupIndex == 5 && keyCounter && sKeyCounterEnabledBeforeGive)
+                {
+                    zEntPlayer_GiveKey(ent->p->quantity);
+                    zEntPlayer_SNDSnackCounter(ent);
+
+                    zEntPickup_shakeKeyIcon();
+                    zEntPickup_ShowKeyCnt(keyCounter->asset->count - keyCounter->count,
+                                          keyCounter->asset->count);
+                }
+            }
+
+            ent->state = (ent->state & ~0x3f) | 0x8;
+            ent->flags &= ~0x1;
+            ent->timer = 10.0f;
+            ent->model->Mat->pos.x = ent->asset->pos.x;
+            ent->model->Mat->pos.y = ent->asset->pos.y;
+            ent->model->Mat->pos.z = ent->asset->pos.z;
+        }
+        else
+        {
+            ent->model->Mat->pos.x += ent->vel.x * dt;
+            ent->model->Mat->pos.y += ent->vel.y * dt;
+            ent->model->Mat->pos.z += ent->vel.z * dt;
+        }
+        break;
+    }
+
+    if (sKeysOffTimer > -10.0f && sKeysOffTimer < 0.0f)
+    {
+        sKeysOffTimer = -10.1f;
+        zEntEvent("ALL KEYS GROUP", eEventInvisible);
+    }
+}
+
 void zEntPickup_hideSnackGateInfo(_zEntPickup* ent)
 {
     if (ent->snackGateInfoDisplayed != -1)
@@ -558,6 +1158,35 @@ static void zEntPickup_resetKeyShake()
     }
 
     sKeyCounterEnabledBeforeGive = 0;
+}
+
+// Starts the shake of the HUD icon of the key just collected (key n of the counter is icon
+// "KEY ON n UI"); zEntPickup_UpdateFlyToInterface runs the shake.
+static inline void zEntPickup_shakeKeyIcon()
+{
+    char s[64];
+    S32 key;
+    xBase* ui;
+    S32 i;
+
+    if (keyCounter)
+    {
+        key = keyCounter->asset->count - keyCounter->count;
+        sprintf(s, "KEY ON %d UI", key);
+        ui = zSceneFindObject(xStrHash(s));
+
+        if (ui)
+        {
+            if (key - 1 >= 0 && key - 1 < 4)
+            {
+                i = key - 1;
+                sKeyShake[i].shake_timer = 1.0f;
+                sKeyShake[i].ui = (_zUI*)ui;
+                sKeyShake[i].orig_pos = sKeyShake[i].ui->sasset->pos;
+                sKeyShake[i].shake_it = 10.0f;
+            }
+        }
+    }
 }
 
 static void zEntPickup_hideWarpGateInfo()
@@ -848,6 +1477,49 @@ static void zEntPickup_UpdateFX(_zEntPickup* ent, _xScene*, F32 dt)
             ent->fx_timer = 0.0f;
             ent->fx_emit = NULL;
         }
+    }
+}
+
+// Plays the player's pickup sound for this pickup's type and index.
+static void zEntPickup_PlaySound(_zEntPickup* ent)
+{
+    if (ent->p->pickupType == 1)
+    {
+        switch (ent->p->pickupIndex)
+        {
+        case 0:
+        case 1:
+        case 3:
+        case 4:
+            zEntPlayer_SNDBitePickup(ent);
+            break;
+        case 7:
+            zEntPlayer_SNDInfoPickup(ent);
+            break;
+        case 5:
+            zEntPlayer_SNDKeyPickup(ent);
+            break;
+        case 6:
+            zEntPlayer_SNDSavePickup(ent);
+            break;
+        case 2:
+        default:
+            zEntPlayer_SNDSpecialPickup(ent);
+            break;
+        }
+    }
+    else if (ent->p->pickupType == 2)
+    {
+        zEntPlayer_SNDSpecialPickup(ent);
+        zMusicNotify(2);
+    }
+    else if (ent->p->pickupType == 3 || ent->p->pickupType == 5)
+    {
+        zEntPlayer_SNDAmmoPickup(ent);
+    }
+    else
+    {
+        zEntPlayer_SNDTokenPickup(ent);
     }
 }
 
