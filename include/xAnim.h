@@ -108,7 +108,6 @@ struct xAnimTransition
     U16* BlendOffset;
 };
 
-// Partial: members up to ModelInst.
 struct xAnimPlay
 {
     xAnimPlay* Next;
@@ -123,6 +122,7 @@ struct xAnimPlay
     F32 Yaw;
     xMemPool* Pool;
     xModelInstance* ModelInst;
+    U32 pad2;
 };
 
 typedef U32 (*xAnimTransitionConditionalCallback)(xAnimTransition*, xAnimSingle*, void*);
