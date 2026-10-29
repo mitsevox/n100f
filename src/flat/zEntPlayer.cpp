@@ -4290,6 +4290,354 @@ void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
     }
 }
 
+// Floor update: read the surface under the player (stickiness, friction, slickness and the skid slow-down on slick
+// floors), fit the floor normal from four rays cast down around the player, and start, hold or end a slide down a
+// steep slide surface.
+static inline void PlayerFloorNormal(xVec3* o, const xVec3* p)
+{
+    xVec3 a;
+    xVec3 b;
+    xVec3 c;
+    xVec3 n1;
+    xVec3 n2;
+
+    xVec3Sub(&a, &p[1], &p[0]);
+    xVec3Sub(&b, &p[2], &p[0]);
+    xVec3Sub(&c, &p[3], &p[0]);
+    xVec3Cross(&n1, &a, &b);
+    xVec3Cross(&n2, &b, &c);
+    xVec3Add(o, &n1, &n2);
+}
+
+static inline void xMat4x3Toworld(xVec3* o, const xMat4x3* m, const xVec3* v)
+{
+    xMat3x3RMulVec(o, (const xMat3x3*)m, v);
+    xVec3Add(o, o, &m->pos);
+}
+
+void zEntPlayerFloorUpdate(_xEnt* p, _xScene* sc, F32 dt)
+{
+    _xCollis* fcoll;
+    xSurface* fsurf;
+    xVec3* vel;
+    F32 velmag;
+    F32 decelmag;
+    F32 slickLerp;
+    xVec3* fnorm;
+    _xRay3 ray;
+    _xCollis rcoll;
+    _xEnt* fent;
+    S32 i;
+    F32 dave;
+    F32 dmin;
+    F32 dmax;
+    xVec3 D;
+    xVec3 X;
+    _xMat3x3 N_to_Up;
+    xVec3 D_flat;
+    F32 ddotm;
+    F32 dz;
+    F32 s;
+    static xVec3 lorigins[4] = {
+        { -0.3f, 0.0f, 0.3f },
+        { 0.3f, 0.0f, 0.3f },
+        { 0.3f, 0.0f, -0.3f },
+        { -0.3f, 0.0f, -0.3f },
+    };
+
+    fcoll = &p->collis->colls[0];
+    fsurf = zSurfaceGetSurface(fcoll);
+    globals.player.floor_surf = fsurf;
+
+    surfSlickTimer -= dt;
+    if (surfSlickTimer < 0.0f)
+    {
+        surfSlickTimer = 0.0f;
+    }
+
+    surfSticky = 0;
+    surfSlickRatio = 0.0f;
+
+    if (globals.player.CanSlip)
+    {
+        if ((globals.player.JumpState == 0 || globals.player.JumpState == 1) && fsurf && !fsurf->state)
+        {
+            surfSticky = zSurfaceGetSticky(fsurf);
+        }
+
+        if (fsurf && !fsurf->state)
+        {
+            surfFriction = zSurfaceGetFriction(fsurf);
+            surfSlickness = zSurfaceGetSlickness(fsurf);
+            surfDamping = zSurfaceGetDamping(fsurf, minVelmag);
+            surfSlipTimer = 0.00001f;
+        }
+        else
+        {
+            surfFriction = 1.0f;
+            surfDamping = minVelmag;
+            if (globals.player.JumpState)
+            {
+                surfSlipTimer = 0.0f;
+            }
+            if (surfSlipTimer)
+            {
+                surfSlipTimer += dt;
+                if (surfSlipTimer >= 0.75f)
+                {
+                    surfSlipTimer = 0.0f;
+                }
+            }
+            if (!surfSlipTimer)
+            {
+                surfSlickness = 1;
+            }
+        }
+
+        if (surfSlickness != 1)
+        {
+            if (surfSlickness > 1)
+            {
+                surfSlickRatio = 150.0f / surfSlickness;
+            }
+            else
+            {
+                surfSlickRatio = 1.0f;
+            }
+            surfSlickTimer = 0.1f;
+        }
+        else
+        {
+            surfSlickRatio = 0.0f;
+        }
+
+        vel = &p->frame->vel;
+        if (lastSlickness != surfSlickness)
+        {
+            if (surfSlickness == 1)
+            {
+                if (lastFloorEnt)
+                {
+                    globals.player.SlipFadeTimer = 0.8f;
+                }
+                else
+                {
+                    vel->x = 0.0f;
+                    vel->z = 0.0f;
+                }
+            }
+            else
+            {
+                s = 1.0f / dt;
+                dz = lastDeltaPos.z * s;
+                vel->x = lastDeltaPos.x * s;
+                vel->z = dz;
+            }
+        }
+
+        if (surfSlickRatio)
+        {
+            velmag = vel->x * vel->x + vel->z * vel->z;
+            if (surfMaxSpeed)
+            {
+                if (velmag > surfMaxSpeed * surfMaxSpeed)
+                {
+                    s = surfMaxSpeed / sqrtf(velmag);
+                    vel->x *= s;
+                    vel->z *= s;
+                }
+            }
+            else
+            {
+                if (xStricmp(p->model->Anim->Single->State->Name, "Skid"))
+                {
+                    decelmag = surfDecelIdle * dt;
+                }
+                else
+                {
+                    decelmag = surfDecelSkid * dt;
+                }
+                slickLerp = (4.0f / 3.0f) * surfSlipTimer;
+                decelmag = (1.0f - slickLerp) * decelmag + 20.0f * slickLerp * decelmag;
+                velmag = sqrtf(velmag);
+                if (velmag <= decelmag)
+                {
+                    vel->x = 0.0f;
+                    vel->z = 0.0f;
+                }
+                else
+                {
+                    s = (velmag - decelmag) / velmag;
+                    vel->x *= s;
+                    vel->z *= s;
+                }
+            }
+        }
+        else if (globals.player.SlipFadeTimer > 0.0f)
+        {
+            globals.player.SlipFadeTimer -= dt;
+            if (globals.player.SlipFadeTimer < 0.0f)
+            {
+                globals.player.SlipFadeTimer = 0.0f;
+            }
+        }
+
+        lastSlickness = surfSlickness;
+    }
+
+    fnorm = &fcoll->norm;
+    if (fcoll->flags & 1)
+    {
+        xVec3Copy(&globals.player.floor_norm, fnorm);
+    }
+    else
+    {
+        xVec3Copy(&globals.player.floor_norm, &g_Y3);
+        xVec3Copy(&ray.origin, xBoundCenter(&p->bound));
+        ray.dir.x = 0.0f;
+        ray.dir.y = -1.0f;
+        ray.dir.z = 0.0f;
+        ray.max_t = 10.0f;
+        ray.flags = 0x800;
+        rcoll.flags = 0;
+        rcoll.optr = NULL;
+        rcoll.dist = 1e19f;
+        xRayHitsScene(globals.sceneCur, &ray, &rcoll);
+        fcoll->dist = rcoll.dist;
+    }
+
+    ray.dir.x = 0.0f;
+    ray.dir.y = -1.0f;
+    ray.dir.z = 0.0f;
+    ray.min_t = -0.7f;
+    ray.max_t = 1.0f;
+    ray.flags = 0xC00;
+    dave = 0.0f;
+    fent = (_xEnt*)fcoll->optr;
+    for (i = 0; i < 4; i++)
+    {
+        xMat4x3Toworld(&ray.origin, &p->frame->mat, &lorigins[i]);
+        rcoll.flags = 0;
+        rcoll.optr = NULL;
+        rcoll.dist = 1e19f;
+        if (fent)
+        {
+            if (fent->collLev == 5)
+            {
+                iRayHitsModel(&ray, fent->model, &rcoll);
+            }
+            else
+            {
+                xRayHitsBound(&ray, &fent->bound, &rcoll);
+            }
+        }
+        else
+        {
+            iRayHitsEnv(&ray, globals.sceneCur->env, &rcoll);
+        }
+        xVec3Copy(&floor_supp[i], &ray.origin);
+        floor_dist[i] = rcoll.dist;
+        if (rcoll.flags & 1)
+        {
+            dave += rcoll.dist;
+        }
+    }
+
+    dave *= 0.25f;
+    dmin = dave - 0.17320508f;
+    dmax = 0.17320508f + dave;
+    for (i = 0; i < 4; i++)
+    {
+        floor_supp[i].y -= MAX(dmin, MIN(floor_dist[i], dmax));
+    }
+
+    PlayerFloorNormal(&globals.player.floor_norm, floor_supp);
+    xVec3Normalize(&globals.player.floor_norm, &globals.player.floor_norm);
+
+    if (globals.player.Slide == 1 || globals.player.Slide == 2)
+    {
+        vel = &p->frame->vel;
+        if (((fcoll->flags & 1) &&
+             (fnorm->y > (F32)cos(surfSlideStop) || (fsurf && (fsurf->state || !zSurfaceGetSlide(fsurf))))) ||
+            vel->y > 0.0f || surfSlickRatio != 0.0f)
+        {
+            if (!(globals.player.Inv_Specials & 8))
+            {
+                p->pflags &= (U8)~0x80;
+                globals.player.SlideTimer = 2.15f;
+            }
+            if (surfSlickRatio)
+            {
+                globals.player.SlideTimer = 0.0f;
+            }
+            globals.player.Slide = 0;
+        }
+    }
+    else if ((fcoll->flags & 1) && fnorm->y < (F32)cos(zSurfaceGetSlideStartAngle(fsurf)) && fsurf &&
+             !fsurf->state && zSurfaceGetSlide(fsurf))
+    {
+        if ((globals.player.Inv_Specials & 8) &&
+            !(fcoll->optr && ((_xEnt*)fcoll->optr)->baseType == 6 && ((_xEnt*)fcoll->optr)->subType == 0xB))
+        {
+            globals.player.Slide = 2;
+        }
+        else
+        {
+            D.x = -fnorm->z;
+            D.y = 0.0f;
+            D.z = fnorm->x;
+            xVec3Normalize(&D, &D);
+            xVec3Cross(&X, fnorm, &D);
+            xVec3Normalize(&X, &X);
+            xMat3x3RotC(&N_to_Up, D.x, D.y, D.z, acos(fnorm->y));
+            xMat3x3RMulVec(&D_flat, &N_to_Up, &X);
+            ddotm = D_flat.x * req_motion.x + D_flat.z * req_motion.z;
+            if (ddotm < 0.0f && (globals.player.LastJumpState == 0 || globals.player.LastJumpState == 1))
+            {
+                globals.player.Slide = 3;
+                s = ddotm / sqrtf(D_flat.x * D_flat.x + D_flat.z * D_flat.z);
+                dz = D_flat.x * s;
+                s *= D_flat.z;
+                p->frame->mat.pos.x -= dz;
+                p->frame->mat.pos.z -= s;
+                if (update_motion.y > 0.0f)
+                {
+                    p->frame->mat.pos.y = p->frame->oldpos.y;
+                }
+            }
+            else
+            {
+                globals.player.Slide = 1;
+                surfSlideStart = zSurfaceGetSlideStartAngle(fsurf);
+                surfSlideStop = zSurfaceGetSlideStopAngle(fsurf);
+                p->pflags |= 0x80;
+                s = 0.5f / update_dt;
+                p->frame->vel.x += req_motion.x * s;
+                p->frame->vel.z += req_motion.z * s;
+                p->frame->vel.y = -4.0f;
+            }
+            globals.player.SlideTimer = 0.0f;
+        }
+    }
+    else
+    {
+        globals.player.Slide = 0;
+    }
+
+    if (globals.player.Slide == 1)
+    {
+        globals.player.SlideTimer += dt;
+    }
+    else if (globals.player.Slide == 0 && globals.player.SlideTimer > 0.0f)
+    {
+        globals.player.SlideTimer -= dt;
+        if (globals.player.SlideTimer < 0.0f)
+        {
+            globals.player.SlideTimer = 0.0f;
+        }
+    }
+}
+
 static U32 PlayerDepenQuery(_xEnt* ent, _xEnt* other, _xScene* sc, F32 dt, _xCollis* coll)
 {
     zSurfaceProps* prop;

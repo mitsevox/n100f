@@ -39,5 +39,6 @@ struct _xScene
 
 xBase* xSceneResolvID(_xScene* sc, U32 id);
 char* xSceneID2Name(_xScene* sc, U32 id);
+void xRayHitsScene(_xScene* sc, _xRay3* r, _xCollis* coll);
 
 #endif

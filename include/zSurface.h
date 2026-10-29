@@ -108,6 +108,8 @@ U32 zSurfaceGetDamagePassthrough(const xSurface* surf);
 U32 zSurfaceGetSticky(const xSurface* surf);
 U32 zSurfaceGetStandOn(const xSurface* surf);
 S32 zSurfaceGetSlickness(const xSurface* surf);
+F32 zSurfaceGetFriction(const xSurface* surf);
+F32 zSurfaceGetDamping(const xSurface* surf, F32 min_vel);
 void zSurfaceSetup(xSurface* s);
 void zSurfaceGetName(S32 type, char* buffer);
 
