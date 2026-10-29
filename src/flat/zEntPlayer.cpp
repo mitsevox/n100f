@@ -162,7 +162,7 @@ S32 iSphereHitsEnv4(const xSphere* b, const _xEnv* env, const xMat3x3* mat, _xCo
 U32 iRayHitsEnv(const _xRay3* r, const _xEnv* env, _xCollis* coll);
 U32 iRayHitsModel(const _xRay3* r, const xModelInstance* m, _xCollis* coll);
 U32 xSphereHitsBox(const xSphere* a, const _xBox* b, _xCollis* coll);
-F32 xLine3VecDist2(const xVec3* p1, const xVec3* p2, const xVec3* v, _xIsect* isect);
+void xLine3VecDist2(const xVec3* p1, const xVec3* p2, const xVec3* v, _xIsect* isect);
 static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt);
 static void PlayerCollisTranslate(_xCollis* c, F32 x, F32 y, F32 z);
 static _xEnt* PlayerCollCheckOneVillain(_xEnt* ent, _xScene* sc, void* data);
