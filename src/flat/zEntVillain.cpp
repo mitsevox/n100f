@@ -14,6 +14,7 @@
 #include "xScene.h"
 #include "xSnd.h"
 #include "xString.h"
+#include "xstransvc.h"
 #include "xutil.h"
 #include "xVec3Inlines.h"
 #include "zEntPickup.h"
@@ -31,6 +32,9 @@
 #include <string.h>
 
 S32 zEntPlayer_Damage(xBase* src, U32 damage, _xVec3* direction);
+extern "C" void fn_8003CD24(U32 owner);
+extern "C" void fn_8001D700(const _xBound*, const xModelInstance*, _xCollis*, U8, F32);
+extern "C" void fn_80021E18(U32* color);
 
 enum en_RBS_STAGE
 {
@@ -207,6 +211,21 @@ struct st_NPC_BONUS
     _zEntPickup* pickup;
 };
 
+struct st_NPC_SOUND_RECORDS
+{
+    en_NPC_SOUND typ_sound;
+    char* nam_sound;
+    U32 aid_sound;
+};
+
+struct st_NPC_SOUND_ENTRY
+{
+    en_zEntVillainSubTypeID viltyp;
+    st_NPC_SOUND_RECORDS* sndList;
+};
+
+extern "C" st_NPC_SOUND_ENTRY lbl_801BCDA0[33];
+
 // How many of one villain type the player has gummed, soaped and beaten, and how many there are.
 struct st_NPC_TALLY_RECORD
 {
@@ -333,10 +352,15 @@ static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3
                                     _xVec3* vec_spin, F32 arcness, F32 heavy);
 static S32 VWEP_lobInitArcing(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
                               _xVec3* vec_spin, F32 arcness, F32 heavy);
+static S32 VWEP_lobInitBKAxe(st_zEntVillain*, _xVec3*, _xVec3*, _xVec3*, F32, F32);
+static S32 VWEP_lobInitGGQuaker(st_zEntVillain*, _xVec3*, _xVec3*, _xVec3*, F32, F32);
+static S32 VWEP_lobInitRBSword(st_zEntVillain*, _xVec3*, _xVec3*, _xVec3*, F32, F32);
+static S32 VWEP_lobInitMMFlask(st_zEntVillain*, _xVec3*, _xVec3*, _xVec3*, F32, F32);
 static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3* pos_tgt,
                                _xVec3* vec_off, _xVec3* vec_spin, F32 arcness, F32 heavy);
 static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup);
 static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup);
+static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bot_radius);
 static inline S32 VWEP_lobAtPlayer(zEntProjectile* prj, st_zEntVillain* vil);
 static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset, S32 follow);
 static inline void VOUT_dogoto_pos(st_zEntVillain* vil, const _xVec3* pos, F32 dst_offset);
@@ -579,8 +603,10 @@ static _tagLightning* sKnightLightning[5];
 static _tagLightning* sMastermindLightning[5];
 static _xVec3 sGreenShockPosition;
 static _zParEmitter* sGreenShockEmitter;
-static _zParEmitter* sHoloPoofEmitter;
-static _zParEmitter* sHoloDotsEmitter;
+extern "C" {
+_zParEmitter* lbl_8025EE18;
+_zParEmitter* lbl_8025EE1C;
+}
 static _zParEmitter* sGreenBallEmitter;
 static _zParEmitter* sGreenBallSmackEmitter;
 static _zParEmitter* sGreenHurtEmitter;
@@ -596,6 +622,55 @@ static _zParEmitter* sMMShowEmitter;
 static _zParEmitter* sMMHideEmitter;
 static _zParEmitter* sRBWallEmitter;
 static _zParEmitterCustomSettings sExtSettings = { 0 };
+
+extern "C" U8 lbl_801C5180[50][4] = {
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+};
+extern "C" U8 lbl_801C5248[50][4] = {
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+};
+extern "C" U8 lbl_801C5310[50][4] = {
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+};
+extern "C" U8 lbl_801C53D8[50][4] = {
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+};
 
 // The particle emitters the scene's villains use.
 static st_XORDEREDARRAY g_emitlist = { 0 };
@@ -4787,6 +4862,77 @@ static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser)
     return 1;
 }
 
+// Aim and activate a reserved projectile for the villain.
+static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3* pos_tgt,
+                               _xVec3* vec_off, _xVec3* vec_spin, F32 arcness, F32 heavy)
+{
+    S32 result = 0;
+    if (!prj) return 0;
+
+    zEntProjectile* reserved = vil->prj_reserved;
+    switch (reserved->cat_proj)
+    {
+    case ZPRJ_CAT_ARROW:
+    {
+        _xVec3 pos_launch = { 0 };
+        ST_CAT_AIMDATA aim = { ZPRJ_CAIM_ARROW };
+        _xVec3 offset = { 0 };
+        reserved->ColDelaySet(0.4f, 1);
+        if (!VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &pos_launch))
+        {
+            xSceneID2Name(globals.sceneCur, vil->id);
+            pos_launch = *xBoundCenter(&vil->bound);
+            xVec3SMul(&offset, (_xVec3*)&vil->model->Mat->at, 0.5f);
+            offset.y += 0.5f;
+            xVec3AddTo(&pos_launch, &offset);
+        }
+        aim.spd_base = vil->spd_lob;
+        aim.dir_base = *(_xVec3*)&vil->model->Mat->at;
+        aim.arrow.pos_src = pos_launch;
+        if (vec_off) xVec3Add(&aim.arrow.pos_tgt, pos_tgt, vec_off);
+        else aim.arrow.pos_tgt = *pos_tgt;
+        result = reserved->AimAtTarget(&aim, 1);
+        prj->flg_prop |= 0x30000014;
+        break;
+    }
+    case ZPRJ_CAT_GRAVBALL:
+    case ZPRJ_CAT_BOUNCEBALL:
+        result = VWEP_lobInitArcing(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
+        prj->flg_prop |= 0x30000014;
+        if (vil->asset->subtype == eEntVillainTypeGargoyle ||
+            vil->asset->subtype == eEntVillainTypeTarMonster)
+            prj->flags &= ~1;
+        break;
+    case ZPRJ_CAT_BKAXE:
+        result = VWEP_lobInitBKAxe(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
+        break;
+    case ZPRJ_CAT_GGSHOCK:
+        result = VWEP_lobInitGGQuaker(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
+        break;
+    case ZPRJ_CAT_RBSWORD:
+        result = VWEP_lobInitRBSword(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
+        break;
+    case ZPRJ_CAT_MMFLASK:
+        result = VWEP_lobInitMMFlask(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
+        break;
+    default: break;
+    }
+
+    if (result)
+    {
+        prj->StateSet(ZPRJ_STATE_ACTIVE);
+        if (prj->cat_proj != ZPRJ_CAT_GGSHOCK && prj->cat_proj != ZPRJ_CAT_MMFLASK)
+            prj->SendEvent(ZPRJ_EVNT_LAUNCH);
+    }
+    else
+    {
+        prj->Abort();
+    }
+    if (prj->cat_proj != ZPRJ_CAT_GGSHOCK && prj->cat_proj != ZPRJ_CAT_MMFLASK)
+        vil->prj_reserved = NULL;
+    return 1;
+}
+
 // Aims the villain's reserved projectile as a gravity ball from his attack vertex, or else from
 // half a unit ahead of and above his bound centre (looking up his name, unused); the boss Black
 // Knight throws from 2 units up and 1.5 to his left of that. It goes toward pos_tgt plus vec_off
@@ -7929,6 +8075,536 @@ static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*
     return 1;
 }
 
+// Checks the player and the four tracked ropes while the sword is in flight.
+static void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt)
+{
+    _xCollis coll = { 0 };
+    xEntBeginCollide(rbs, globals.sceneCur, dt);
+    if (rbs->ent_colchk[0])
+    {
+        xBoundHitsBound(&rbs->bound, &rbs->ent_colchk[0]->bound, &coll);
+        if (coll.flags & 1) VWEP_mm_zapPlayer(rbs->rbvil);
+    }
+    rbs->bound.sph.r = 1.5f;
+    for (S32 i = 1; i < 5; i++)
+    {
+        _xEnt* ent = rbs->ent_colchk[i];
+        coll.flags = 0;
+        if (!ent) continue;
+        if (!xEntIsVisible(ent))
+        {
+            rbs->ent_colchk[i] = NULL;
+            continue;
+        }
+        coll.optr = ent;
+        coll.oid = ent->id;
+        xBoundHitsBound(&rbs->bound, &ent->bound, &coll);
+        if (coll.flags & 1)
+        {
+            coll.flags = 0;
+            fn_8001D700(&rbs->bound, ent->model, &coll, 1, 0.7853982f);
+            if (coll.flags & 1)
+            {
+                zEntEvent(rbs->rbvil, 0, ent, eEventDestroy, NULL, NULL, 0);
+                rbs->ent_colchk[i] = NULL;
+            }
+        }
+    }
+    rbs->bound.sph.r = 0.75f;
+    xEntEndCollide(rbs, globals.sceneCur, dt);
+}
+
+// Draw gum strands from marked vertices to the villain's model height.
+static void VEFX_plop_gum(st_zEntVillain* ent)
+{
+    void** texture = (void**)xSTFindAsset(xStrHash("GUM-FLOOR"), NULL);
+    if (texture) RwRenderStateSet(rwRENDERSTATETEXTURERASTER, *texture);
+    F32 height = xEntGetPos(ent)->y;
+    for (S32 i = 0; i <= 4; i++)
+    {
+        _xVec3 point = { 0 };
+        if (!VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)i, &point)) continue;
+        _xVec3 from = point;
+        _xVec3 to = point;
+        if (point.y <= height) from.y = height;
+        else to.y = height;
+        if (from.y - to.y < 0.002f) continue;
+        _xVec3 direction = { 0 };
+        _xMat3x3 matrix = { 0 };
+        xVec3Sub(&direction, &to, &from);
+        xMat3x3LookVec(&matrix, &direction);
+        SuperVillainGumDraw(&from, &to, 0.1f, 0.35f);
+    }
+}
+
+// Test the attack, alternate attack and weapon vertices against the player's bound.
+static S32 VWEP_swipe(st_zEntVillain* vil)
+{
+    _xCollis coll = { 0 };
+    _xBound bound = { 0 };
+    S32 hit = 0;
+    if (vil->precalc.ds2_VtoP > 2.2f) return 0;
+
+    coll.oid = globals.player.ent.id;
+    coll.optr = &globals.player.ent;
+    bound.type = 1;
+    bound.qcd = globals.player.ent.bound.qcd;
+    U32 color = 0x800000FF;
+    fn_80021E18(&color);
+    if (VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &bound.sph.center))
+    {
+        bound.sph.r = 0.2f;
+        xBoundHitsBound(&bound, &globals.player.ent.bound, &coll);
+        if (coll.flags & 1) hit = 1;
+    }
+    if (!hit && VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACKALT, &bound.sph.center))
+    {
+        bound.sph.r = 0.2f;
+        xBoundHitsBound(&bound, &globals.player.ent.bound, &coll);
+        if (coll.flags & 1) hit = 1;
+    }
+    if (!hit && VSUP_vertPos(vil, ZVIL_MDLVERT_WEAPON, &bound.sph.center))
+    {
+        bound.sph.r = 0.3f;
+        xBoundHitsBound(&bound, &globals.player.ent.bound, &coll);
+        if (coll.flags & 1) hit = 1;
+    }
+    if (hit) xSceneID2Name(globals.sceneCur, vil->id);
+    return hit;
+}
+
+// Pick a loaded sound of the requested type for this villain.
+static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
+{
+    S32 choices[32] = { 0 };
+    F32 weights[32] = { 0 };
+    S32 count = 0;
+    U32 chosen = 0;
+    st_NPC_SOUND_ENTRY* entry = lbl_801BCDA0;
+
+    while (entry->sndList)
+    {
+        F32 weight;
+        if (entry->viltyp == vil->asset->subtype)
+            weight = 2.0f;
+        else if (entry->viltyp == (en_zEntVillainSubTypeID)-1)
+            weight = 1.0f;
+        else
+        {
+            entry++;
+            continue;
+        }
+        st_NPC_SOUND_RECORDS* record = entry->sndList;
+        while (record->typ_sound != VSND_LISTEND && count < 32)
+        {
+            if (record->typ_sound == sndEvent && record->aid_sound)
+            {
+                weights[count] = weight;
+                choices[count++] = record->aid_sound;
+            }
+            record++;
+        }
+        if (entry->viltyp == vil->asset->subtype || count >= 32) break;
+        entry++;
+    }
+    if (count > 0)
+    {
+        VSUP_wtadjust(weights, count, 1.0f);
+        chosen = VSUP_choose(choices, weights, count);
+        xSTAssetName(chosen);
+    }
+    return chosen;
+}
+
+// Prepare a Redbeard sword entity and its collision targets.
+static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* vil)
+{
+    static char* collision_names[5] = { "ScoobyDoo!", "Rope01", "Rope02", "Rope03", "Rope04" };
+    _xVec3 pos = { 0 };
+    _xMat4x3 mat = { 0 };
+
+    if (rbs->flg_stat & 1)
+    {
+        xModelInstanceFree(rbs->model);
+        rbs->model = NULL;
+        rbs->flg_stat &= ~1;
+    }
+    memset(rbs, 0, sizeof(st_REDBEARD_SWORD));
+    rbs->flg_stat |= 1;
+    rbs->rbvil = vil;
+
+    xModelInstance* model = vil->model;
+    S32 index = 0;
+    while (model && !rbs->mdl_animsword)
+    {
+        if (index == 1) rbs->mdl_animsword = model;
+        model = model->Next;
+        index++;
+    }
+    rbs->aid_mdlFile = xStrHash("weprb_sword");
+    rbs->mdlFile = (RpAtomic*)xSTFindAsset(rbs->aid_mdlFile, NULL);
+    rbs->model = xModelInstanceAlloc(rbs->mdlFile, rbs, 0, 0, NULL);
+    rbs->frame = &rbs->raw_frame;
+    rbs->collis = &rbs->raw_collis;
+    pos = *xEntGetPos(vil);
+    xMat3x3Euler((xMat3x3*)&mat, 0.0f, 0.0f, 0.0f);
+    mat.pos = pos;
+    rbs->bound.type = 1;
+    rbs->bound.sph.r = 0.75f;
+    rbs->bound.sph.center = pos;
+    xBoundUpdate(&rbs->bound);
+    memcpy(rbs->model->Mat, &mat, sizeof(mat));
+    rbs->frame->rot.axis = g_Y3;
+    rbs->frame->rot.angle = 0.0f;
+    rbs->frame->vel = g_O3;
+    rbs->bupdate = VWEP_rbs_bupdate;
+    rbs->ent_colchk[0] = &globals.player.ent;
+    for (index = 1; index < 5; index++)
+    {
+        rbs->ent_colchk[index] = (_xEnt*)zSceneFindObject(xStrHash(collision_names[index]));
+        if (rbs->ent_colchk[index] && rbs->ent_colchk[index]->baseType != 0x1B)
+            rbs->ent_colchk[index] = NULL;
+    }
+    rbs->flg_stat |= 2;
+}
+
+// Emit hologram particles and flicker the villain while its hologram flag is set.
+extern "C" void fn_800837D4(st_zEntVillain* vil, F32 dt)
+{
+    if (!(vil->flg_misc & 8)) return;
+
+    F32 time = vil->tmr_list[ZVIL_TDUR_DECAY];
+    if (time <= vil->tmr_list[ZVIL_TYMR_MINANIMPLAY])
+        time = vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+    if (time != 0.0f)
+    {
+        U32 type = vil->asset->subtype;
+        _zParEmitterCustomSettings info;
+        info.custom_flags = 0x5A0;
+        info.pos = *xBoundCenter(&vil->bound);
+        info.color_birth[0] = lbl_801C5180[type][0];
+        info.color_birth[1] = lbl_801C5180[type][1];
+        info.color_birth[2] = lbl_801C5180[type][2];
+        info.color_birth[3] = 0;
+        info.color_death[0] = lbl_801C5248[type][0];
+        info.color_death[1] = lbl_801C5248[type][1];
+        info.color_death[2] = lbl_801C5248[type][2];
+        info.color_death[3] = 0;
+        info.size_death = 0.5f * vil->bound.sph.r;
+        zParEmitterEmitCustom(lbl_8025EE18, dt, &info);
+
+        type = vil->asset->subtype;
+        info.custom_flags = 0x201A0;
+        info.color_birth[0] = lbl_801C5310[type][0];
+        info.color_birth[1] = lbl_801C5310[type][1];
+        info.color_birth[2] = lbl_801C5310[type][2];
+        info.color_birth[3] = 255;
+        info.color_death[0] = lbl_801C53D8[type][0];
+        info.color_death[1] = lbl_801C53D8[type][1];
+        info.color_death[2] = lbl_801C53D8[type][2];
+        info.color_death[3] = 0;
+        info.xzcircle_radius = vil->bound.sph.r;
+        zParEmitterEmitCustom(lbl_8025EE1C, dt, &info);
+    }
+    if (xUtil_yesno(time)) vil->flags |= 1;
+    else vil->flags &= ~1;
+}
+
+// Notify the Mastermind projectile's owner and play its sounds.
+static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*)
+{
+    st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
+    U32 sound;
+    switch (event)
+    {
+    case ZPRJ_EVNT_LAUNCH:
+        sound = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
+        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        break;
+    case ZPRJ_EVNT_INFLIGHT:
+        if (!iSndIsPlaying(0, (U32)prj))
+        {
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        break;
+    case ZPRJ_EVNT_DETONATE:
+        fn_8003CD24((U32)prj);
+        sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
+        if (sound)
+        {
+            xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 40.0f);
+        }
+        break;
+    case ZPRJ_EVNT_HITPLYR:
+    {
+        st_STIMULUS_CONTEXT_DATA stim = { ZVIL_STIM_NONE };
+        st_STIMULUS_CONTEXT_DATA resp = { ZVIL_STIM_NONE };
+        stim.stim = ZVIL_STIM_DOTAUNT;
+        if (!vil->standby || vil->tmr_list[ZVIL_TDUR_STDBY] <= 0.0f)
+        {
+            vil->vhf->stimulus(vil, &stim, &resp);
+            if (resp.stim != ZVIL_STIM_NONE) zVIL_trangoal(vil, &resp, globals.update_dt);
+        }
+        sound = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
+        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        break;
+    }
+    case ZPRJ_EVNT_TRANSTATE:
+    case ZPRJ_EVNT_DEATH:
+        if (prj->state != ZPRJ_STATE_ACTIVE) fn_8003CD24((U32)prj);
+        break;
+    default: break;
+    }
+    return 1;
+}
+
+// Notify a projectile's owner and release its reservation when the projectile ends.
+static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*)
+{
+    st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
+    S32 audible = !(vil->flg_misc & 1);
+    U32 sound;
+    switch (event)
+    {
+    case ZPRJ_EVNT_LAUNCH:
+        if (audible)
+        {
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        return 1;
+    case ZPRJ_EVNT_INFLIGHT:
+        if (audible && !iSndIsPlaying(0, (U32)prj))
+        {
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        return 1;
+    case ZPRJ_EVNT_DETONATE:
+        if (audible)
+        {
+            fn_8003CD24((U32)prj);
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        return 1;
+    case ZPRJ_EVNT_HITPLYR:
+    {
+        st_STIMULUS_CONTEXT_DATA stim = { ZVIL_STIM_NONE };
+        st_STIMULUS_CONTEXT_DATA resp = { ZVIL_STIM_NONE };
+        stim.stim = ZVIL_STIM_DOTAUNT;
+        if (!vil->standby || vil->tmr_list[ZVIL_TDUR_STDBY] <= 0.0f)
+        {
+            vil->vhf->stimulus(vil, &stim, &resp);
+            if (resp.stim != ZVIL_STIM_NONE) zVIL_trangoal(vil, &resp, globals.update_dt);
+        }
+        if (audible)
+        {
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        return 1;
+    }
+    case ZPRJ_EVNT_TRANSTATE:
+        if (prj->state != ZPRJ_STATE_ACTIVE) fn_8003CD24((U32)prj);
+        return 1;
+    case ZPRJ_EVNT_ABORT:
+    case ZPRJ_EVNT_SELFDESTRUCT:
+    case ZPRJ_EVNT_DEATH:
+        fn_8003CD24((U32)prj);
+        if (vil->prj_reserved == prj) vil->prj_reserved = NULL;
+        return 1;
+    default: return 0;
+    }
+}
+
+// Notify the Black Knight axe's owner and play its projectile and shock sounds.
+static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*)
+{
+    st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
+    U32 sound;
+    switch (event)
+    {
+    case ZPRJ_EVNT_LAUNCH:
+        sound = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
+        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        break;
+    case ZPRJ_EVNT_INFLIGHT:
+        if (!iSndIsPlaying(0, (U32)prj))
+        {
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        break;
+    case ZPRJ_EVNT_STARTRESTING:
+        fn_8003CD24((U32)prj);
+        sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
+        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 25.0f);
+        break;
+    case ZPRJ_EVNT_ATREST:
+        if (!iSndIsPlaying(0, (U32)prj))
+            xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 25.0f);
+        break;
+    case ZPRJ_EVNT_HITPLYR:
+    {
+        st_STIMULUS_CONTEXT_DATA stim = { ZVIL_STIM_NONE };
+        st_STIMULUS_CONTEXT_DATA resp = { ZVIL_STIM_NONE };
+        stim.stim = ZVIL_STIM_DOTAUNT;
+        if (!vil->standby || vil->tmr_list[ZVIL_TDUR_STDBY] <= 0.0f)
+        {
+            vil->vhf->stimulus(vil, &stim, &resp);
+            if (resp.stim != ZVIL_STIM_NONE) zVIL_trangoal(vil, &resp, globals.update_dt);
+        }
+        sound = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
+        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        break;
+    }
+    case ZPRJ_EVNT_TRANSTATE:
+    case ZPRJ_EVNT_DEATH:
+        if (prj->state != ZPRJ_STATE_ACTIVE) fn_8003CD24((U32)prj);
+        break;
+    default: break;
+    }
+    return 1;
+}
+
+// Notify the Green Ghost projectile's owner and play projectile sounds.
+static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*)
+{
+    st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
+    U32 sound;
+    switch (event)
+    {
+    case ZPRJ_EVNT_HITPLYR:
+    {
+        st_STIMULUS_CONTEXT_DATA stim = { ZVIL_STIM_NONE };
+        st_STIMULUS_CONTEXT_DATA resp = { ZVIL_STIM_NONE };
+        stim.stim = ZVIL_STIM_DOTAUNT;
+        if (!vil->standby || vil->tmr_list[ZVIL_TDUR_STDBY] <= 0.0f)
+        {
+            vil->vhf->stimulus(vil, &stim, &resp);
+            if (resp.stim != ZVIL_STIM_NONE) zVIL_trangoal(vil, &resp, globals.update_dt);
+        }
+        break;
+    }
+    case ZPRJ_EVNT_LAUNCH:
+        sound = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
+        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        break;
+    case ZPRJ_EVNT_INFLIGHT:
+    case ZPRJ_EVNT_DETONATE:
+    case ZPRJ_EVNT_VIL_AFTERMATH:
+        if (!iSndIsPlaying(0, (U32)prj))
+        {
+            en_NPC_SOUND which = event == ZPRJ_EVNT_INFLIGHT ? VSND_TYP_PRJ_FLIGHT :
+                                 event == ZPRJ_EVNT_DETONATE ? VSND_TYP_PRJ_EXPLODE :
+                                 VSND_TYP_PRJ_SPLAT;
+            sound = VSND_select_sound(vil, which);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        break;
+    case ZPRJ_EVNT_TRANSTATE:
+    case ZPRJ_EVNT_ABORT:
+    case ZPRJ_EVNT_SELFDESTRUCT:
+    case ZPRJ_EVNT_DEATH:
+        if (prj->state != ZPRJ_STATE_ACTIVE) fn_8003CD24((U32)prj);
+        break;
+    default: break;
+    }
+    return 1;
+}
+
+// Emit a villain particle role at its bound, head, or marked model vertices.
+static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F32 dt)
+{
+    _zParEmitterCustomSettings info = { 0 };
+    _xVec3 center = *xBoundCenter(&ent->bound);
+    _xVec3 head = { 0 };
+    if (!VSUP_vertPos(ent, ZVIL_MDLVERT_DMG_BOUNCE, &head))
+    {
+        head = *xEntGetPos(ent);
+        head.y += ent->precalc.hyt_vil;
+    }
+    head.y += 0.1f;
+
+    S32 emit = 0;
+    for (S32 i = 0; i < g_emitlist.cnt; i++)
+    {
+        st_zEntVillain_ParEmitRecord* rec = (st_zEntVillain_ParEmitRecord*)g_emitlist.list[i];
+        if (!rec->emitctxt || rec->emitrole != role ||
+            (rec->viltype != (en_zEntVillainSubTypeID)-1 && rec->viltype != ent->asset->subtype) ||
+            (rec->flg_need & ent->flg_misc) != rec->flg_need || (rec->flg_omit & ent->flg_misc))
+            continue;
+        info.custom_flags = 0;
+        switch (role)
+        {
+        case VPAR_EMIT_EXTATTACK:
+        case VPAR_EMIT_POOF:
+        case VPAR_EMIT_TELEPORT:
+            emit = 0;
+            break;
+        case VPAR_EMIT_GUMMY:
+            info.custom_flags = 0x20;
+            for (S32 vert = 0; vert <= 4; vert++)
+                if (VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)vert, &info.pos))
+                    zParEmitterEmitCustom(rec->emitctxt, dt, &info);
+            emit = 0;
+            break;
+        case VPAR_EMIT_HEADBUTT:
+        {
+            xMat4x3* playerframe = (xMat4x3*)globals.player.ent.model->Mat;
+            _xVec3 angles = { 0 };
+            F32 emitdt = dt;
+            info.pos.x = playerframe->pos.x + playerframe->at.x;
+            info.pos.y = playerframe->pos.y + 1.1f;
+            info.pos.z = playerframe->pos.z + playerframe->at.z;
+            info.custom_flags = 0x10020;
+            xMat3x3GetEuler((xMat3x3*)playerframe, &angles);
+            info.rot[0] = (U8)(S32)(255.0f * (angles.x / (2.0f * PI)));
+            info.rot[1] = 0x40;
+            info.rot[2] = (U8)(S32)(255.0f * (angles.z / (2.0f * PI)));
+            if (rec->emitterID == xStrHash("ParEmit_SD_Headbutt2"))
+                info.rot[0] += 0x40;
+            else
+                emitdt = 0.0f;
+            zParEmitterEmitCustom(rec->emitctxt, emitdt, &info);
+            emit = 0;
+            break;
+        }
+        case VPAR_EMIT_BORED:
+        case VPAR_EMIT_GUARD:
+            info.pos = head;
+            info.custom_flags = 0x20;
+            if (rec->emitterID == xStrHash("ParEmit_Vil_Bored"))
+            {
+                info.color_birth[3] = 0;
+                info.color_death[3] = 0;
+                info.custom_flags |= 0x180;
+            }
+            emit = 1;
+            break;
+        case VPAR_EMIT_QUESTMARK:
+        case VPAR_EMIT_EXCLAIM:
+            if (g_scene_is_a_boss_battle) break;
+        case VPAR_EMIT_BUTTBOUNCE:
+        case VPAR_EMIT_STUN:
+            info.pos = head;
+            info.custom_flags = 0x20;
+            emit = 1;
+            break;
+        default:
+            info.pos = center;
+            info.custom_flags = 0x20;
+            emit = 1;
+            break;
+        }
+        if (emit) zParEmitterEmitCustom(rec->emitctxt, dt, &info);
+    }
+}
+
 // Emit particles along a villain's extended attack.
 static void VPAR_emit_extattack(st_zEntVillain* ent, _xVec3* origin, _xVec3* aimdir,
                                 F32 length, F32 slope, F32 dt)
@@ -7996,8 +8672,8 @@ static void VPAR_readyize_emitters()
         }
     }
     g_emitready = 1;
-    sHoloPoofEmitter = zParEmitterFind("ParEmit_Vil_HoloPoof");
-    sHoloDotsEmitter = zParEmitterFind("ParEmit_Vil_HoloDots");
+    lbl_8025EE18 = zParEmitterFind("ParEmit_Vil_HoloPoof");
+    lbl_8025EE1C = zParEmitterFind("ParEmit_Vil_HoloDots");
     sGreenBallEmitter = zParEmitterFind("GREENBALL EMITTER");
     sGreenBallSmackEmitter = zParEmitterFind("GREENBALL SMACK EMITTER");
     sGreenShockEmitter = zParEmitterFind("GREENBALL SHOCKWAVE EMITTER");
