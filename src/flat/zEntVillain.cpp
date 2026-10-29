@@ -30,6 +30,8 @@
 #include <math.h>
 #include <string.h>
 
+S32 zEntPlayer_Damage(xBase* src, U32 damage, _xVec3* direction);
+
 enum en_RBS_STAGE
 {
     RBS_STAGE_PRELIGHT = 4000,
@@ -286,6 +288,7 @@ static inline U32 VANM_entStateType(const _zEnt* ent);
 static inline U32 VANM_entMoveType(const _zEnt* ent);
 static inline void VANM_setSpeed(st_zEntVillain* ent, F32 spd, _xVec3 sanim);
 static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil);
+static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
 static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
                                     _xVec3* vec_spin, F32 arcness, F32 heavy);
 static S32 VWEP_lobInitArcing(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
@@ -293,10 +296,12 @@ static S32 VWEP_lobInitArcing(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_
 static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3* pos_tgt,
                                _xVec3* vec_off, _xVec3* vec_spin, F32 arcness, F32 heavy);
 static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup);
+static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup);
 static inline S32 VWEP_lobAtPlayer(zEntProjectile* prj, st_zEntVillain* vil);
 static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset, S32 follow);
 static inline void VOUT_dogoto_pos(st_zEntVillain* vil, const _xVec3* pos, F32 dst_offset);
 static void VWEP_mm_zapPlayer(st_zEntVillain* vil);
+static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs);
 static inline void VEFX_mm_teleportHide(F32 dt);
 static inline void VEFX_mm_teleportShow(st_zEntVillain* vil, F32 dt);
 static inline void VSUP_haltFrame(st_zEntVillain* vil);
@@ -530,6 +535,8 @@ static _zMovePoint* g_mmtp[12] = { 0 };
 
 // Mastermind flasks.
 static st_ZVMM_FLASK_DATA g_mmflask[10] = { 0 };
+static _tagLightning* sKnightLightning[5];
+static _tagLightning* sMastermindLightning[5];
 
 // The particle emitters the scene's villains use.
 static st_XORDEREDARRAY g_emitlist = { 0 };
@@ -7861,6 +7868,318 @@ static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*
 
     vil->domove |= 0x80000000;
     return 1;
+}
+
+// Advance a Redbeard projectile and react to its collisions.
+static S32 VPRJ_BRB_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
+{
+    if (prj->cat_data.arrow.amStuck)
+        prj->SendEvent(ZPRJ_EVNT_ATREST, dt);
+    else
+        prj->SendEvent(ZPRJ_EVNT_INFLIGHT, dt);
+
+    if (prj->tmr_alive > prj->tym_maxlife)
+    {
+        prj->StateSet(ZPRJ_STATE_DEAD);
+        return 1;
+    }
+
+    if (prj->plyr_colrec->flags & 1)
+    {
+        if (prj->flg_prop & 0x10) zEntPlayer_Damage(prj, 1);
+        if (prj->flg_categ & 0x1000000)
+        {
+            if (!prj->cat_data.arrow.amStuck)
+            {
+                prj->cat_data.arrow.amStuck = 1;
+                prj->cat_data.arrow.ent_stuck = &globals.player.ent;
+                xVec3Sub(&prj->cat_data.arrow.pos_stuck, xEntGetPos(&globals.player.ent),
+                         xEntGetPos(prj));
+                xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+                prj->OrientSet(0x10000000);
+            }
+        }
+        else
+        {
+            prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
+            prj->StateSet(ZPRJ_STATE_DEAD);
+        }
+    }
+    else if (prj->collis->colls[0].flags & 1)
+    {
+        prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
+        prj->StateSet(ZPRJ_STATE_DEAD);
+    }
+    else if ((prj->collis->colls[1].flags & 1) ||
+             prj->collis->env_sidx < prj->collis->env_eidx ||
+             prj->collis->stat_sidx < prj->collis->stat_eidx ||
+             prj->collis->dyn_sidx < prj->collis->dyn_eidx)
+    {
+        if (prj->flg_categ & 0x2000000)
+        {
+            prj->cat_data.arrow.amStuck = 2;
+            prj->pflags |= 4;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.z = 0.0f;
+            prj->frame->mode |= 4;
+        }
+        else if (prj->flg_categ & 0x1000000)
+        {
+            prj->cat_data.arrow.amStuck = 1;
+            prj->pflags |= 4;
+            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->mode |= 4;
+            prj->OrientSet(0);
+        }
+        else
+        {
+            prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
+            prj->StateSet(ZPRJ_STATE_DEAD);
+        }
+    }
+    return 1;
+}
+
+// Advance a thrown Black Knight axe and its resting lightning.
+static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
+{
+    st_BKAXE_DATA* axe = (st_BKAXE_DATA*)prj->xtradata;
+    if (prj->cat_data.bounce.atRest)
+        prj->SendEvent(ZPRJ_EVNT_ATREST, dt);
+    else
+        prj->SendEvent(ZPRJ_EVNT_INFLIGHT, dt);
+
+    _xVec3 pos = *xEntGetPos(prj);
+    if (prj->tmr_alive >= prj->tym_maxlife)
+    {
+        prj->SendEvent(ZPRJ_EVNT_SELFDESTRUCT);
+        prj->StateSet(ZPRJ_STATE_DEAD);
+        return 1;
+    }
+
+    if (pos.z > axe->planes.z || pos.y < axe->planes.x)
+    {
+        prj->ColDelaySet(-1.0f, 0);
+        prj->flg_pen = 0x7E;
+    }
+    else
+    {
+        prj->ColDelaySet(5.0f, 0);
+    }
+    if (pos.y < axe->planes.y) prj->StateSet(ZPRJ_STATE_DEAD);
+
+    if (prj->plyr_colrec->flags & 1)
+    {
+        if (prj->flg_prop & 0x10) zEntPlayer_Damage(prj, 1);
+        prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
+        prj->StateSet(ZPRJ_STATE_DEAD);
+    }
+    else if (prj->cat_data.bounce.atRest == 1 || (prj->collis->colls[0].flags & 1))
+    {
+        if (!prj->cat_data.bounce.atRest)
+        {
+            prj->SendEvent(ZPRJ_EVNT_STARTRESTING);
+            prj->tmr_curstate = 0.0f;
+            prj->cat_data.bounce.atRest = 1;
+            prj->cat_data.bounce.acc_gravity = 0.0f;
+            VPRJ_zapTheAxe(prj, 0);
+            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
+            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->mode |= 0xC;
+            axe->flg_stat |= 2;
+        }
+    }
+    if (prj->cat_data.bounce.atRest == 1 && prj->tmr_curstate > axe->tym_zapdur)
+    {
+        prj->SendEvent(ZPRJ_EVNT_DETONATE);
+        prj->StateSet(ZPRJ_STATE_DEAD);
+    }
+    return 1;
+}
+
+// Start Redbeard's sword from a tagged point on his model.
+static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs)
+{
+    rbs->tym_age = 0.0f;
+    rbs->dst_far = rbs->rbvil->dst_extend;
+    rbs->spd_fly = 1.99999f * rbs->rbvil->dst_extend / 5.0f;
+    rbs->dir_end = rbs->rbvil->precalc.dir_VtoP;
+    xVec3SMul(&rbs->pos_end, &rbs->dir_end, rbs->dst_far);
+    xMat3x3Euler((xMat3x3*)&rbs->frame->mat, 0.0f, 0.0f, 0.0f);
+    if (!VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_SWORDHANDLE, &rbs->frame->mat.pos) &&
+        !VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_ATTACK, &rbs->frame->mat.pos) &&
+        !VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_WEAPON, &rbs->frame->mat.pos) &&
+        !VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_LOSEYEBALL, &rbs->frame->mat.pos))
+    {
+        rbs->frame->mat.pos = *xBoundCenter(&rbs->rbvil->bound);
+    }
+    memcpy(rbs->model->Mat, &rbs->frame->mat, sizeof(xMat4x3));
+    rbs->bound.sph.center = rbs->frame->mat.pos;
+    rbs->mdl_animsword->Flags &= ~1;
+    rbs->model->Flags |= 1;
+    rbs->flg_stat |= 4;
+}
+
+// Replace or clear the lightning between the Mastermind and the player.
+static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup)
+{
+    S32 i;
+    for (i = 0; i < 5; i++)
+    {
+        if (sMastermindLightning[i])
+        {
+            zLightningKill(sMastermindLightning[i]);
+            sMastermindLightning[i] = NULL;
+        }
+    }
+    if (cleanup) return;
+
+    _tagLightningAdd add = { eLT_Line };
+    add.start = xBoundCenter(&vil->bound);
+    add.end = xBoundCenter(&globals.player.ent.bound);
+    add.time = 0.2f;
+    add.total_points = 16;
+    add.thickness = 0.15f;
+    add.r = add.g = add.b = 255;
+    add.rand_radius = 5.0f;
+    add.flags = 0x34;
+    sMastermindLightning[0] = zLightningAdd(&add);
+
+    add.type = eLT_Rotating;
+    add.total_points = 16;
+    add.thickness = 0.1f;
+    add.r = add.g = 80;
+    add.b = 255;
+    add.rand_radius = 3.0f;
+    add.setup_degrees = 20.0f + 90.0f * iurand();
+    add.move_degrees = 180.0f + 360.0f * iurand();
+    if (irand() & 1) add.move_degrees = -add.move_degrees;
+    add.rot_radius = 0.5f;
+    add.flags = 0x3C;
+    sMastermindLightning[1] = zLightningAdd(&add);
+}
+
+// Replace or clear the lightning around the Black Knight.
+static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
+{
+    _tagLightningAdd add = { eLT_Line };
+    _xVec3 end = { 0 };
+    S32 i;
+
+    for (i = 0; i < 5; i++)
+    {
+        if (sKnightLightning[i])
+        {
+            zLightningKill(sKnightLightning[i]);
+            sKnightLightning[i] = NULL;
+        }
+    }
+    if (cleanup) return;
+
+    end = *xBoundCenter(&vil->bound);
+    end.y += 20.0f;
+    add.start = xBoundCenter(&vil->bound);
+    add.end = &end;
+    add.time = vil->tmr_list[ZVIL_TDUR_HURT];
+    if (add.time <= vil->tmr_list[ZVIL_TYMR_MINANIMPLAY])
+        add.time = vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+    add.type = eLT_Line;
+    add.total_points = 16;
+    add.thickness = 1.25f;
+    add.r = add.g = add.b = 255;
+    add.rand_radius = 5.0f;
+    add.flags = 0x34;
+    sKnightLightning[0] = zLightningAdd(&add);
+
+    add.type = eLT_Rotating;
+    add.total_points = 16;
+    add.thickness = 0.6f;
+    add.r = add.g = 80;
+    add.b = 255;
+    add.rand_radius = 4.0f;
+    add.setup_degrees = 20.0f + 90.0f * iurand();
+    add.move_degrees = 1280.0f + 12360.0f * iurand();
+    if (irand() & 1) add.move_degrees = -add.move_degrees;
+    add.rot_radius = 0.5f;
+    add.flags = 0x3C;
+    sKnightLightning[1] = zLightningAdd(&add);
+}
+
+// Queue a sound with the villain type's noise radius and the sound's configured delay.
+extern "C" void fn_8007BD98(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
+{
+    st_NPC_SOUND_PROPERTIES* sprop = NULL;
+    S32 flags = VSND_findProps(sndEvent, &sprop);
+    if (sndEvent != VSND_TYP_HOLOFADE) flags &= 0x0FFFFFFF;
+    VSND_addQueueEntry(vil, sndEvent, flags, g_npcTable[vil->asset->subtype].dst_noisy,
+                       sprop->tym_delayStart, -1.0f, 0, 0);
+}
+
+// Damage the player using the villain type's configured damage.
+static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
+{
+    _xVec3 dir = { 0 };
+    _xVec3 facing = { 0 };
+    _xVec3 impulse = vil->precalc.dir_VtoP;
+    F32 angle;
+    F32 scale;
+    F32 dot;
+
+    VSUP_dir_toEnt(vil, &globals.player.ent, &dir);
+    angle = vil->frame->rot.angle;
+    facing.x = sin(angle);
+    facing.y = 0.0f;
+    facing.z = cos(angle);
+    dot = xVec3Dot(&dir, &facing);
+    scale = MAX(0.2f, dot) * g_npcTable[vil->asset->subtype].strength;
+    impulse.x *= scale;
+    impulse.y *= scale;
+    zEntPlayer_Damage(vil, MAX(0, g_npcTable[vil->asset->subtype].dmg_give), NULL);
+}
+
+// Reserve a projectile in the category used by this villain.
+static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil)
+{
+    en_ZPRJ_CATEGORY cat;
+    en_ZVMM_FLASK_TYPE flask_type = MAST_FLSK_SMOG;
+    zEntProjectile* prj;
+
+    switch (vil->asset->subtype)
+    {
+    case eEntVillainTypeGargoyle:
+    case eEntVillainTypeTarMonster: cat = ZPRJ_CAT_GRAVBALL; break;
+    case eEntVillainTypeWitchDoctor: cat = ZPRJ_CAT_ARROW; break;
+    case eEntVillainBossBlackKnight: cat = ZPRJ_CAT_BKAXE; break;
+    case eEntVillainBossGreenGhost: cat = ZPRJ_CAT_GGSHOCK; break;
+    case eEntVillainBossRedbeard: cat = ZPRJ_CAT_RBSWORD; break;
+    case eEntVillainBossMastermind:
+    {
+        S32 choices[3] = { MAST_FLSK_SMOG, MAST_FLSK_ACID, MAST_FLSK_FIRE };
+        cat = ZPRJ_CAT_MMFLASK;
+        switch (vil->hitpts)
+        {
+        case 4: flask_type = MAST_FLSK_SMOG; break;
+        case 3: flask_type = MAST_FLSK_ACID; break;
+        case 2: flask_type = MAST_FLSK_FIRE; break;
+        case 1: flask_type = (en_ZVMM_FLASK_TYPE)VSUP_choose(choices, NULL, 3); break;
+        default: flask_type = MAST_FLSK_SMOG; break;
+        }
+        break;
+    }
+    default:
+        xSceneID2Name(globals.sceneCur, vil->id);
+        cat = ZPRJ_CAT_ARROW;
+        break;
+    }
+
+    cat = zEntProjectile_catFromPrjType(vil->prjTypeID, cat);
+    prj = zEntProjectile_acquire(cat, vil->prjTypeID);
+    if (!prj) return NULL;
+    if (cat == ZPRJ_CAT_MMFLASK) ((st_ZVMM_FLASK_DATA*)prj->xtradata)->typ_flask = flask_type;
+    prj->owner = vil;
+    prj->ownerContext = NULL;
+    prj->ownerNotify = VWEP_prjOwnerNotify;
+    return prj;
 }
 
 // Fetch a villain configuration value in the caller's requested storage.
