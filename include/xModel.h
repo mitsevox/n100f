@@ -35,6 +35,7 @@ void xModelRender2D(xModelInstance* modelInst, _xRect* sr, xVec3* from, xVec3* t
 void xModelUpdate(xModelInstance* modelInst, F32 timeDelta);
 void xModelEval(xModelInstance* modelInst);
 void xModelRender(xModelInstance* modelInst);
+void xModelUpdate(xModelInstance* modelInst, F32 timeDelta);
 xModelInstance* xModelInstanceAlloc(RpAtomic* data, void* object, U16 flags, U8 boneIndex,
                                     U8* boneRemap);
 void xModelInstanceFree(xModelInstance* modelInst);

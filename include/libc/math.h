@@ -71,6 +71,7 @@ static inline int __fpclassifyd(double x)
 
 
 double acos(double x);
+double asin(double x);
 double atan(double x);
 double atan2(double y, double x);
 double copysign(double x, double y);

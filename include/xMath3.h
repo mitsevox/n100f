@@ -4,6 +4,8 @@
 #include "types.h"
 #include "xVec3.h"
 
+#include <string.h>
+
 struct _xMat3x3
 {
     xVec3 right;
@@ -84,7 +86,9 @@ typedef struct _xIsect xIsect;
 extern const xMat4x3 g_I3;
 extern const xVec3 g_O3;
 extern const xVec3 g_Y3;
+extern const xVec3 g_Z3;
 extern const xVec3 g_NY3;
+extern const xQuat g_IQ;
 
 inline void xVec3Init(xVec3* v, F32 _x, F32 _y, F32 _z)
 {
@@ -128,6 +132,11 @@ inline void xVec3SMulBy(xVec3* v, F32 s)
     v->z *= s;
 }
 
+inline void xVec3Inv(xVec3* o, const xVec3* v)
+{
+    xVec3SMul(o, v, -1.0f);
+}
+
 inline F32 xVec3Length2(const xVec3* vec)
 {
     return vec->x * vec->x + vec->y * vec->y + vec->z * vec->z;
@@ -149,12 +158,11 @@ inline F32 xVec3Dot(const xVec3* a, const xVec3* b)
 
 inline void xVec3Cross(xVec3* o, const xVec3* a, const xVec3* b)
 {
-    xVec3 temp;
+    F32 x = a->y * b->z - b->y * a->z;
+    F32 y = a->z * b->x - b->z * a->x;
+    F32 z = a->x * b->y - b->x * a->y;
 
-    temp.x = a->y * b->z - b->y * a->z;
-    temp.y = a->z * b->x - b->z * a->x;
-    temp.z = a->x * b->y - b->x * a->y;
-    *o = temp;
+    xVec3Init(o, x, y, z);
 }
 
 inline void xVec3Lerp(xVec3* o, const xVec3* a, const xVec3* b, F32 t)
@@ -165,6 +173,57 @@ inline void xVec3Lerp(xVec3* o, const xVec3* a, const xVec3* b, F32 t)
     temp.y = a->y + (b->y - a->y) * t;
     temp.z = a->z + (b->z - a->z) * t;
     *o = temp;
+}
+
+inline void xMat3x3Copy(xMat3x3* o, const xMat3x3* m)
+{
+    memcpy(o, m, sizeof(xMat3x3));
+}
+
+inline void xMat4x3Copy(xMat4x3* o, const xMat4x3* m)
+{
+    memcpy(o, m, sizeof(xMat4x3));
+}
+
+inline void xRotCopy(xRot* o, const xRot* r)
+{
+    o->axis.x = r->axis.x;
+    o->axis.y = r->axis.y;
+    o->axis.z = r->axis.z;
+    o->angle = r->angle;
+}
+
+inline void xMat3x3Identity(xMat3x3* m)
+{
+    xMat3x3Copy(m, (const xMat3x3*)&g_I3);
+}
+
+inline void xQuatCopy(xQuat* o, const xQuat* q)
+{
+    o->s = q->s;
+    xVec3Copy(&o->v, &q->v);
+}
+
+inline F32 xQuatDot(const xQuat* a, const xQuat* b)
+{
+    return a->v.x * b->v.x + a->v.y * b->v.y + a->v.z * b->v.z + a->s * b->s;
+}
+
+inline F32 xQuatLength2(const xQuat* q)
+{
+    return xQuatDot(q, q);
+}
+
+inline void xQuatSMul(xQuat* o, const xQuat* q, F32 t)
+{
+    o->s = q->s * t;
+    xVec3SMul(&o->v, &q->v, t);
+}
+
+inline void xQuatAdd(xQuat* o, const xQuat* a, const xQuat* b)
+{
+    o->s = a->s + b->s;
+    xVec3Add(&o->v, &a->v, &b->v);
 }
 
 void xMat3x3RotY(xMat3x3* m, F32 t);
@@ -184,5 +243,20 @@ void xMat4x3Mul(xMat4x3* o, const xMat4x3* a, const xMat4x3* b);
 void xMat4x3Rot(xMat4x3* m, const xVec3* a, F32 t, const xVec3* p);
 F32 xMat3x3LookVec(xMat3x3* m, const xVec3* at);
 void xMat4x3RMul3x3(xMat4x3* o, const xMat3x3* m3x3, const xMat4x3* m);
+void xMat4x3LMul3x3(xMat4x3* o, const xMat4x3* m, const xMat3x3* m3x3);
+void xMat4x3Orthonormalize(xMat4x3* o, const xMat4x3* m);
+void xMat3x3Tolocal(xVec3* o, const xMat3x3* m, const xVec3* v);
+void xMat3x3Mul(xMat3x3* o, const xMat3x3* a, const xMat3x3* b);
+void xMat3x3Transpose(xMat3x3* o, const xMat3x3* m);
+void xMat3x3GetScale(const xMat3x3* m, xVec3* s);
+void xMat3x3Normalize(xMat3x3* o, const xMat3x3* m);
+void xLine3VecDist2(const xVec3* p1, const xVec3* p2, const xVec3* v, xIsect* isx);
+F32 xVec3LengthFast(F32 x, F32 y, F32 z);
+void xQuatMul(xQuat* o, const xQuat* a, const xQuat* b);
+void xQuatSlerp(xQuat* o, const xQuat* a, const xQuat* b, F32 t);
+F32 xQuatNormalize(xQuat* o, const xQuat* q);
+void xQuatFromMat(xQuat* q, const xMat3x3* m);
+void xMath3Init();
+void xMath3Exit();
 
 #endif

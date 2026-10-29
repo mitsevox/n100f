@@ -4373,7 +4373,7 @@ void zEntPlayer_Render(_zEnt* ent)
                 break;
             case 11:
                 if (!strcmp(asingle->State->Name, "Inactive_Magnify") && asingle->Time > 0.55f &&
-                    asingle->Time < 221.0f / 30.0f)
+                    asingle->Time < 221.0f * (1.0f / 30.0f))
                 {
                     if (minst->Flags & 2)
                     {
