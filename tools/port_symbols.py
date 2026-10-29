@@ -227,10 +227,11 @@ class Side:
                     is_address,self.dol.code_refs)
         return walked,hashlib.sha1(struct.pack('>%dI'%len(walked),*[w for w,_ in walked])).digest()
 
-    def adopt(self,addr,other):
+    def adopt(self,addr,other,paired=frozenset()):
         """Pair `other` (a function of the other side) with the code at `addr` when its masked
         instructions are the same there: the toolkit merged it into a neighbour on this side, or split
-        it, so that a longer `other` covers this side's function and the ones after it."""
+        it, so that a longer `other` covers this side's function and the ones after it, none of
+        them already `paired`."""
         size=other[0].size
         if addr in self.functions:
             have=self.functions[addr][0]
@@ -238,7 +239,9 @@ class Side:
             if have is None or size<=have.size:return False
         found=self.code(addr,size)
         if not found or found[1]!=other[2]:return False
-        for x in [x for x in self.functions if addr<x<addr+size]:del self.functions[x]
+        covered=[x for x in self.functions if addr<x<addr+size]
+        if any(x in paired for x in covered):return False
+        for x in covered:del self.functions[x]
         self.functions[addr]=(None,)+found
         return True
 
@@ -279,13 +282,13 @@ def pair_functions(a,b):
         for x,c in votes.items():
             if x not in fmap and len(c)==1:
                 y=next(iter(c))
-                if y not in fmap.values() and (y in b.functions or b.adopt(y,a.functions[x])):fmap[x]=y
+                if y not in fmap.values() and (y in b.functions or b.adopt(y,a.functions[x],set(fmap.values()))):fmap[x]=y
         # A function the sibling's toolkit merged into the one before it sits at the same offset.
         sa=sorted(a.functions)
         for p,x in zip(sa,sa[1:]):
             if p in fmap and x not in fmap:
                 y=fmap[p]+x-p
-                if y not in fmap.values() and b.adopt(y,a.functions[x]):fmap[x]=y
+                if y not in fmap.values() and b.adopt(y,a.functions[x],set(fmap.values())):fmap[x]=y
         fmap=monotonic(fmap.items())
         if len(fmap)==before and not added:break
     return fmap
