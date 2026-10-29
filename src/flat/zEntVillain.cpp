@@ -4,10 +4,12 @@
 #include "xAnim.h"
 #include "xBound.h"
 #include "xEvent.h"
+#include "xFFX.h"
 #include "xMath.h"
 #include "xMemMgr.h"
 #include "xordarray.h"
 #include "xScene.h"
+#include "zEntPickup.h"
 #include "zEntPlayer.h"
 #include "zEntShaggy.h"
 #include "zEntProjectile.h"
@@ -147,6 +149,13 @@ struct st_zEntVillain_ParEmitRecord
 };
 
 
+// One bonus item a villain can drop; bit 0 of flg_info marks it as dropped.
+struct st_NPC_BONUS
+{
+    S32 flg_info;
+    _zEntPickup* pickup;
+};
+
 // How many of one villain type the player has gummed, soaped and beaten, and how many there are.
 struct st_NPC_TALLY_RECORD
 {
@@ -206,6 +215,7 @@ static en_NPC_ANIMSTATES VANM_randset(st_zEntVillain* ent, F32* wts,
 static xAnimTransition* VANM_findtran(st_zEntVillain* ent, xAnimTable* table, xAnimState* from,
                                       xAnimState* to, S32 autoslamit, xAnimTransition** newtran);
 static xAnimSingle* VANM_entSingle(const _zEnt* ent);
+static inline xAnimState* VANM_entState(const _zEnt* ent);
 static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum);
 static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter);
 
@@ -214,6 +224,10 @@ static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
 
 static void zVIL_tag_verts(st_zEntVillain* ent);
 static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt);
+static void zVIL_apply_move(st_zEntVillain* ent, _xScene* scn, F32 dt, _xEntFrame* frame);
+static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt);
+static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS pid, void* vv);
+static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt);
 static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt);
 static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo);
 static void VPRJ_zapTheAxe(zEntProjectile* prj, S32 cleanup);
@@ -223,6 +237,7 @@ static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser);
 static void VEFX_plop_gum(st_zEntVillain* ent);
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE emittype, F32 dt);
 static void VBON_drop_bonusItem(st_zEntVillain* vil);
+static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp);
 
 static S32 VILN_std_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup,
                          en_BEHAVIOUR_GOAL goal);
@@ -385,6 +400,9 @@ static char* g_animname[ZVIL_ANIM_NOMORE + 1] = {
     "CRIT_BatSleep", "CRIT_SpiderDrop", "CRIT_Smashed", "SIMP_Action", NULL,
 };
 
+// The bonus items villains can drop.
+static st_NPC_BONUS g_npcBonus[11] = { 0 };
+
 // The player's tally per villain type; the last row holds the totals.
 static st_NPC_TALLY_RECORD g_stattally[eEntVillainType_NoMore + 1] = { 0 };
 
@@ -414,6 +432,9 @@ static st_zEntVillain* g_npcpool;
 static st_zEntVillain_ParEmitRecord* g_emitpool;
 static S32 g_emitnext;
 static S32 g_emitready;
+
+// Whether the current scene is a boss battle.
+static S32 g_scene_is_a_boss_battle;
 
 // A block of scratch memory the villain system keeps from startup.
 static char* g_datablock;
@@ -1292,6 +1313,145 @@ static S32 VILN_BMM_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
     return result;
 }
 
+// Per-frame update callback. Updates the villain's timers. If it is playing an animation and is
+// neither Shaggy nor a Witch, it compares its model's current animation state with the one it asked
+// for: if they differ it stops counting as playing and bit 0x100 of the model's flags is set,
+// otherwise that bit is cleared; in every other case the bit is set. It then calls the type's
+// update query (the answer is not used), gives the type the precalc notice, lets it look at the
+// scene, runs the entity update (physics and movement when its flags allow them, force fields, and
+// collision when it has a collision record) and lets the type respond; when the precalc, aware or
+// respond step answers with a stimulus, the villain changes goal. Finally it sets the precalc status
+// to 0x40000000, reads the base model scale from its configuration, gives the type the old-time
+// notice, sets the status to 0x20000000 and processes its sound queue.
+static void zVIL_elcb_update(_xEnt* xe, _xScene* scn, F32 dt)
+{
+    st_STIMULUS_CONTEXT_DATA stimresp = { ZVIL_STIM_NONE };
+    st_zEntVillain* ent = (st_zEntVillain*)xe;
+
+    zVIL_upd_timers(ent, dt);
+
+    if (ent->anim_playing && !zEntIsShaggy(ent) && ent->subType != eEntVillainTypeWitch)
+    {
+        xAnimState* state = VANM_entState(ent);
+        if (state->ID != g_anamhash[ent->anim_playnext])
+        {
+            ent->anim_playing = 0;
+            ent->model->Flags |= 0x100;
+        }
+        else
+        {
+            ent->model->Flags &= (U16)~0x100;
+        }
+    }
+    else
+    {
+        ent->model->Flags |= 0x100;
+    }
+
+    ent->vhf->query(ent, ZVIL_Q_DOUPDATE);
+
+    memset(&stimresp, 0, sizeof(stimresp));
+    stimresp.stim = ZVIL_STIM_NONE;
+    ent->vhf->notice(ent, ZVIL_NOTE_PRECALC, &stimresp);
+    if (stimresp.stim)
+    {
+        zVIL_trangoal(ent, &stimresp, dt);
+    }
+
+    memset(&stimresp, 0, sizeof(stimresp));
+    stimresp.stim = ZVIL_STIM_NONE;
+    ent->vhf->aware(ent, scn, dt, &stimresp);
+    if (stimresp.stim)
+    {
+        zVIL_trangoal(ent, &stimresp, dt);
+    }
+
+    xEntBeginUpdate(ent, scn, dt);
+    if (ent->pflags & 0x2)
+    {
+        xEntApplyPhysics(ent, scn, dt);
+    }
+    if (ent->pflags & 0x1)
+    {
+        xEntMove(ent, scn, dt);
+    }
+    xFFXApply(ent, scn, dt);
+    if (ent->collis)
+    {
+        xEntCollide(ent, scn, dt);
+    }
+    xEntEndUpdate(ent, scn, dt);
+
+    memset(&stimresp, 0, sizeof(stimresp));
+    stimresp.stim = ZVIL_STIM_NONE;
+    ent->vhf->respond(ent, &stimresp);
+    if (stimresp.stim)
+    {
+        zVIL_trangoal(ent, &stimresp, dt);
+    }
+
+    ent->precalc.flg_status = 0x40000000;
+    VCFG_getParm(&ent->vilcfg, ZVIL_PARM_MDLSCL_BASE, &ent->model->Scale);
+
+    memset(&stimresp, 0, sizeof(stimresp));
+    stimresp.stim = ZVIL_STIM_NONE;
+    ent->vhf->notice(ent, ZVIL_NOTE_OLDTIME, &stimresp);
+
+    ent->precalc.flg_status = 0x20000000;
+    VSND_procQueue(ent, dt);
+}
+
+// Event callback: the villain's type handles the event, and if it answers with a stimulus, that
+// stimulus is passed on to the villain. Always returns 1.
+static S32 zVIL_elcb_event(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget)
+{
+    st_zEntVillain* ent = (st_zEntVillain*)to;
+    st_STIMULUS_CONTEXT_DATA npcresp = { ZVIL_STIM_NONE };
+
+    ent->vhf->sysevent(ent, from, toEvent, toParam, toParamWidget, &npcresp);
+    if (npcresp.stim)
+    {
+        zVIL_input_stim(ent, npcresp.stim, &npcresp);
+    }
+
+    return 1;
+}
+
+// Bound callback: centres the villain's collision sphere on the given position plus its type's
+// offset, turned with the model, and sets the radius from its type. If the type has a second
+// sphere (a radius above 0), that one is placed the same way with its own offset.
+static void zVIL_elcb_bupdate(_xEnt* xe, _xVec3* pos_bound)
+{
+    _xVec3 offset = { 0 };
+    st_zEntVillain* ent = (st_zEntVillain*)xe;
+
+    offset = g_npcTable[ent->asset->subtype].vec_bndoff;
+    xMat3x3RMulVec(&offset, (xMat3x3*)ent->model->Mat, &offset);
+    xVec3Add(&ent->bound.sph.center, &offset, pos_bound);
+    ent->bound.sph.r = g_npcTable[ent->asset->subtype].rad_bound;
+    xBoundUpdate(&ent->bound);
+
+    ent->bound2.sph.r = g_npcTable[ent->asset->subtype].rad_bound2;
+    if (ent->bound2.sph.r > 0.0f)
+    {
+        offset = g_npcTable[ent->asset->subtype].vec_bnd2off;
+        xMat3x3RMulVec(&offset, (xMat3x3*)ent->model->Mat, &offset);
+        xVec3Add(&ent->bound2.sph.center, &offset, pos_bound);
+    }
+}
+
+// Movement callback: the villain's type works out its move, then the villain makes it if it has a
+// move to make.
+static void zVIL_elcb_move(_xEnt* xe, _xScene* scn, F32 dt, _xEntFrame* frame)
+{
+    st_zEntVillain* ent = (st_zEntVillain*)xe;
+
+    ent->vhf->calcmove(ent, scn, dt, frame);
+    if (ent->domove)
+    {
+        zVIL_apply_move(ent, scn, dt, frame);
+    }
+}
 
 // Passes a stimulus to the villain's type, unless it is on standby and its standby time has not
 // run out. If the type answers with a stimulus of its own, the villain changes goal to suit it.
@@ -1335,6 +1495,69 @@ static void zVIL_tag_verts(st_zEntVillain* ent)
     }
 }
 
+
+// Copies the villain asset's settings into its config: speeds, detection and pursuit ranges
+// (squared), the field of view and turn speed in radians, lobbing and extender settings, and the
+// timer lengths, where the asset gives the dazed, taunt, gum, bubble, extend and reload times and
+// the rest get fixed defaults (-1 for timers with no default).
+static void VCFG_readAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata)
+{
+    p2EntVillainAsset* rawass = cfgdata->vilp2ass;
+
+    cfgdata->hitpts = rawass->hitpoints;
+
+    cfgdata->fov_detect = 3.1415927f * rawass->activateFOV / 180.0f;
+    cfgdata->ds2_detect = rawass->activateRadius * rawass->activateRadius;
+    cfgdata->hyt_detect = rawass->detectHeight;
+    cfgdata->hyt_dtctoff = rawass->detectHeightOffset;
+    cfgdata->ds2_pursue = rawass->pursuitRange * rawass->pursuitRange;
+
+    cfgdata->spd_move = rawass->speedMovement;
+    cfgdata->spd_chase = rawass->speedPursue;
+    cfgdata->spd_turn = 3.1415927f * rawass->speedTurn / 180.0f;
+
+    cfgdata->spd_lob = rawass->lobSpeed;
+    cfgdata->dst_lob = rawass->lobRange;
+    cfgdata->cnt_lobSalvo = rawass->lobSalvo;
+    cfgdata->fac_lobarc = rawass->lobArcness;
+    cfgdata->fac_lobheavy = rawass->lobHeavy;
+
+    cfgdata->dst_extend = rawass->extenderRange;
+    cfgdata->wid_extend = rawass->extenderWidth;
+    cfgdata->spd_extend = rawass->extenderRate;
+
+    cfgdata->tymref_list[ZVIL_TTIL_FIDGET] = 8.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_BORED] = 20.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_TAUNT] = 5.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_CHKFORNAV] = 7.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_RECOVERY] = 100.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_NEXTCHASE] = 0.3f;
+    cfgdata->tymref_list[ZVIL_TTIL_ANIMSOUND] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_NEXTVOICE] = 5.0f;
+    cfgdata->tymref_list[ZVIL_TTIL_QUIP_OK] = 10.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_STDBY] = 10.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_ALERT] = 2.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_TAUNT] = rawass->durGloatState;
+    cfgdata->tymref_list[ZVIL_TDUR_DAZED] = rawass->durDazedState;
+    cfgdata->tymref_list[ZVIL_TDUR_GUM] = rawass->durGummedState;
+    cfgdata->tymref_list[ZVIL_TDUR_SOAP] = rawass->durBubbleState;
+    cfgdata->tymref_list[ZVIL_TDUR_LOOK] = 3.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_HEAR] = 3.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_SEARCH] = 4.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_EXTEND] = rawass->extenderDuration;
+    cfgdata->tymref_list[ZVIL_TDUR_LOBRELOAD] = rawass->lobDurReload;
+    cfgdata->tymref_list[ZVIL_TDUR_EXTRELOAD] = rawass->extenderReloadTime;
+    cfgdata->tymref_list[ZVIL_TDUR_BUILDUP] = 3.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_HURT] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_DECAY] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TWIN_MINGUM] = 2.0f;
+    cfgdata->tymref_list[ZVIL_TWIN_POSTATTACK] = 0.2f;
+    cfgdata->tymref_list[ZVIL_TWIN_IGNORESNEAK] = 0.25f;
+    cfgdata->tymref_list[ZVIL_TYMR_MINANIMPLAY] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TYMR_CURGOAL] = -1.0f;
+    cfgdata->tymref_list[ZVIL_TYMR_GENERIC] = -1.0f;
+}
 
 // Writes the villain's saved state as two bits: bit 0 when its goal is the afterlife or base
 // setup, bit 1 when it is active and its asset says it starts unborn (prebirth).
@@ -3573,6 +3796,81 @@ static xAnimSingle* VANM_entSingle(const _zEnt* ent)
         return NULL;
     }
     return ent->model->Anim->Single;
+}
+
+// The animation state the villain's model is in, or NULL if it has none.
+static inline xAnimState* VANM_entState(const _zEnt* ent)
+{
+    xAnimSingle* single = VANM_entSingle(ent);
+    xAnimState* state = single ? single->State : NULL;
+    return state;
+}
+
+// Drops a bonus item at the villain, if its allow flags let it. Outside boss battles nothing drops
+// while a dropped bonus item that is still out is within 2 units of the villain.
+static void VBON_drop_bonusItem(st_zEntVillain* vil)
+{
+    S32 overlap = 0;
+    S32 skip_distchk = 0;
+    _xVec3 vec_tmp = { 0 };
+    S32 i;
+    st_NPC_BONUS* bon;
+
+    if (!(vil->allow & 0x800))
+    {
+        return;
+    }
+
+    if (g_scene_is_a_boss_battle)
+    {
+        skip_distchk = 1;
+    }
+
+    for (i = 0; i < 11; i++)
+    {
+        if (skip_distchk)
+        {
+            break;
+        }
+
+        bon = &g_npcBonus[i];
+        if (bon->pickup == NULL)
+        {
+            continue;
+        }
+        if (!(bon->flg_info & 0x1))
+        {
+            continue;
+        }
+        if (bon->pickup->state & 0x8)
+        {
+            continue;
+        }
+
+        xVec3Sub(&vec_tmp, xEntGetPos(bon->pickup), xEntGetPos(vil));
+        if (xVec3Length2(&vec_tmp) < 4.0f)
+        {
+            overlap = 1;
+            break;
+        }
+    }
+
+    if (overlap)
+    {
+        return;
+    }
+
+    bon = VBON_choose_bonusItem((en_zEntVillainSubTypeID)vil->asset->subtype);
+    if (bon == NULL)
+    {
+        return;
+    }
+
+    bon->flg_info |= 0x1;
+    bon->pickup->flg_opts |= 0x3;
+    bon->pickup->useThisEntPos = vil;
+    zEntPickup_MakeDroppable(bon->pickup, xBoundCenter(&vil->bound), NULL);
+    zEntPickup_Drop(bon->pickup);
 }
 
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
