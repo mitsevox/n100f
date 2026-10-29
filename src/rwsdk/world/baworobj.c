@@ -24,27 +24,6 @@ struct WorldObjectExt
 
 #define WORLDEXTFROMOBJECT(type, object, offset) ((type*)((U8*)(object) + (offset)))
 
-// Links an atomic into a sector it touches: one link in the sector's atomic list, one in the
-// atomic's sector list.
-typedef struct WorldTie WorldTie;
-struct WorldTie
-{
-    RwLLLink sectorLink;
-    RpAtomic* atomic;
-    RwLLLink atomicLink;
-    RpWorldSector* sector;
-};
-
-// Links a light into a sector it reaches, the same way.
-typedef struct LightTie LightTie;
-struct LightTie
-{
-    RwLLLink sectorLink;
-    RpLight* light;
-    RwLLLink lightLink;
-    RpWorldSector* sector;
-};
-
 // The world object module's data in the engine instance.
 typedef struct WorldObjModuleData WorldObjModuleData;
 struct WorldObjModuleData

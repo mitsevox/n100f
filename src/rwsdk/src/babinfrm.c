@@ -1,12 +1,5 @@
 #include <rwcore.h>
 
-typedef struct rwFrameList rwFrameList;
-struct rwFrameList
-{
-    RwFrame** frames;
-    S32 numFrames;
-};
-
 extern RwPluginRegistry frameTKList;
 
 rwFrameList* _rwFrameListDeinitialize(rwFrameList* frameList)

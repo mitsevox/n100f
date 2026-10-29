@@ -363,6 +363,14 @@ typedef enum RwOpCombineType
         (o)->z += (((a)->z) * ((s)));                                                              \
     } while (0)
 
+#define RwV3dAddMacro(o, a, b)                                                                     \
+    do                                                                                             \
+    {                                                                                              \
+        (o)->x = (((a)->x) + ((b)->x));                                                            \
+        (o)->y = (((a)->y) + ((b)->y));                                                            \
+        (o)->z = (((a)->z) + ((b)->z));                                                            \
+    } while (0)
+
 #define RwV3dSubMacro(o, a, b)                                                                     \
     do                                                                                             \
     {                                                                                              \
@@ -485,8 +493,18 @@ typedef enum RwCullMode
     rwCULLMODEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwCullMode;
 
+#define rwObjectInitialize(o, t, s)                                                                \
+    do                                                                                             \
+    {                                                                                              \
+        ((RwObject*)(o))->type = (U8)(t);                                                          \
+        ((RwObject*)(o))->subType = (U8)(s);                                                       \
+        ((RwObject*)(o))->flags = 0;                                                               \
+        ((RwObject*)(o))->privateFlags = 0;                                                        \
+        ((RwObject*)(o))->parent = NULL;                                                           \
+    } while (0)
 #define rwObjectGetSubType(o) (((const RwObject*)(o))->subType)
 #define rwObjectGetFlags(o) (((const RwObject*)(o))->flags)
+#define rwObjectSetFlags(o, f) (((RwObject*)(o))->flags) = (U8)(f)
 #define rwObjectTestFlags(o, f) ((((const RwObject*)(o))->flags) & (U8)(f))
 #define rwObjectGetParent(object) (((const RwObject*)(object))->parent)
 #define rwObjectSetParent(c, p) (((RwObject*)(c))->parent) = (void*)(p)
@@ -516,6 +534,13 @@ struct RwError
 {
     S32 pluginID;
     S32 errorCode;
+};
+
+typedef struct rwFrameList rwFrameList;
+struct rwFrameList
+{
+    RwFrame** frames;
+    S32 numFrames;
 };
 
 typedef struct RwModuleInfo RwModuleInfo;
@@ -1533,12 +1558,15 @@ RwFrame* RwFrameForAllChildren(RwFrame* frame, RwFrameCallBack callBack, void* d
 RwFrame* RwFrameForAllObjects(RwFrame* frame, RwObjectCallBack callBack, void* data);
 RwFrame* RwFrameGetRoot(const RwFrame* frame);
 RwMatrix* RwFrameGetLTM(RwFrame* frame);
+S32 RwFrameDirty(const RwFrame* frame);
 S32 RwFrameDestroyHierarchy(RwFrame* frame);
 RwMatrix* RwMatrixMultiply(RwMatrix* matrixOut, const RwMatrix* MatrixIn1, const RwMatrix* matrixIn2);
 RwMatrix* RwMatrixTransform(RwMatrix* matrix, const RwMatrix* transform, RwOpCombineType combineOp);
 RwV3d* RwV3dTransformPoints(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
                             const RwMatrix* matrix);
 RwFrustumTestResult RwCameraFrustumTestSphere(const RwCamera* camera, const RwSphere* sphere);
+RwBBox* RwBBoxInitialize(RwBBox* boundBox, const RwV3d* vertex);
+RwBBox* RwBBoxAddPoint(RwBBox* boundBox, const RwV3d* vertex);
 RwStream* RwStreamOpen(RwStreamType type, RwStreamAccessType accessType, const void* pData);
 S32 RwStreamClose(RwStream* stream, void* pData);
 U32 RwStreamRead(RwStream* stream, void* buffer, U32 length);
@@ -1553,6 +1581,7 @@ RwStream* _rwStreamWriteVersionedChunkHeader(RwStream* stream, S32 type, S32 siz
                                              U32 buildNum);
 void* RwMemLittleEndian32(void* mem, U32 size);
 void* RwMemNative32(void* mem, U32 size);
+void* RwMemFloat32ToReal(void* mem, U32 size);
 S32 RwStreamFindChunk(RwStream* stream, U32 type, U32* lengthOut, U32* versionOut);
 S32 _rwFrameSyncDirty(void);
 
@@ -1633,6 +1662,10 @@ S32 _rwPluginRegistryAddPlgnStrmRightsCB(RwPluginRegistry* reg, U32 pluginID,
                                          RwPluginDataChunkRightsCallBack rightsCB);
 S32 _rwPluginRegistryGetPluginOffset(const RwPluginRegistry* reg, U32 pluginID);
 const RwPluginRegistry* _rwPluginRegistryInitObject(const RwPluginRegistry* reg, void* object);
+const RwPluginRegistry* _rwPluginRegistryReadDataChunks(const RwPluginRegistry* reg,
+                                                        RwStream* stream, void* object);
+const RwPluginRegistry* _rwPluginRegistryInvokeRights(const RwPluginRegistry* reg, U32 id,
+                                                      void* obj, U32 extraData);
 const RwPluginRegistry* _rwPluginRegistryDeInitObject(const RwPluginRegistry* reg, void* object);
 
 void _rwObjectHasFrameReleaseFrame(void* object);
@@ -1648,6 +1681,9 @@ F32 _rwSqrt(F32 num);
 F32 _rwInvSqrt(F32 num);
 
 RwStream* RwStreamReadInt32(RwStream* stream, S32* ints, U32 numBytes);
+RwCamera* RwCameraStreamRead(RwStream* stream);
+rwFrameList* _rwFrameListDeinitialize(rwFrameList* frameList);
+rwFrameList* _rwFrameListStreamRead(RwStream* stream, rwFrameList* frameList);
 RwStream* RwStreamWriteInt32(RwStream* stream, const S32* ints, U32 numBytes);
 RwStream* RwStreamReadReal(RwStream* stream, F32* reals, U32 numBytes);
 RwStream* RwStreamWriteReal(RwStream* stream, const F32* reals, U32 numBytes);

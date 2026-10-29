@@ -10,10 +10,6 @@
 #include <math.h>
 #include <string.h>
 
-extern "C" {
-void fn_8014B368(RpGeometry* geometry);
-}
-
 _xEnt* warbEnt;
 static xVec3* vbuf;
 static xVec3* nbuf;
@@ -207,6 +203,6 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
         }
         }
 
-        fn_8014B368(geom);
+        RpGeometryUnlock(geom);
     }
 }
