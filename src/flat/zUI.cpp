@@ -332,7 +332,7 @@ void zUI_PreUpdate(_zUI* ent, _xScene*, F32)
 {
     ent->uiButton = 0;
     if (!globals.pad0 || !globals.pad0->pressed || !(ent->uiFlags & 8) ||
-        !(ent->uiFlags & 3))
+        (!(ent->uiFlags & 2) && !(ent->uiFlags & 1)))
         return;
 
     if (globals.pad0->pressed & 0x10) ent->uiButton |= 0x10;
