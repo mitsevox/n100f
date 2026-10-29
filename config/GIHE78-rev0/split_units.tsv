@@ -93,7 +93,7 @@ zEntProjectile.cpp	0x800691A8	0x8006D624	46	56	5	0	0x800692F4=ZPRJ_solv_velvec (
 zEntShaggy.cpp	0x8006D624	0x8007A8D0	133	136	33	0	0x8006D624=zEntShaggy_SceneReset (strings+calls)	anchored
 zEntSimpleObj.cpp	0x8007A8D0	0x8007ACB8	5	7	0	0	-	weak
 zEntTrigger.cpp	0x8007ACB8	0x8007B08C	5	5	1	0	0x8007AD2C=zEntTriggerUpdate (calls)	anchored
-zEntVillain.cpp	0x8007B08C	0x800A9F78	234	277	150	105	0x8007B5A0=VBON_choose_bonusItem (floats+calls)	anchored
+zEntVillain.cpp	0x8007B08C	0x800A9F78	234	277	155	111	0x8007B5A0=VBON_choose_bonusItem (floats+calls)	anchored
 zEnv.cpp	0x800A9F78	0x800AA338	7	8	3	1	0x800A9F78=zEnvEventCB (calls)	anchored
 zFeet.cpp	0x800AA338	0x800ABD84	11	11	4	0	0x800AA3B4=DrawSkidMarkStrip (floats)	anchored
 zFMV.cpp	0x800ABD84	0x800ABE88	2	2	2	2	0x800ABD84=zFMVFileGetName (name)	anchored
