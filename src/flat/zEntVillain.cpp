@@ -12906,9 +12906,8 @@ extern "C" void fn_800837D4(st_zEntVillain* vil, F32 dt)
 {
     if (!(vil->flg_misc & 8)) return;
 
-    F32 time = vil->tmr_list[ZVIL_TDUR_DECAY];
-    if (time <= vil->tmr_list[ZVIL_TYMR_MINANIMPLAY])
-        time = vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+    F32 time = vil->tmr_list[ZVIL_TDUR_DECAY] > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]
+                   ? vil->tmr_list[ZVIL_TDUR_DECAY] : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
     if (time != 0.0f)
     {
         U32 type = vil->asset->subtype;
@@ -13632,9 +13631,8 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
     end.y += 20.0f;
     add.start = xBoundCenter(&vil->bound);
     add.end = &end;
-    add.time = vil->tmr_list[ZVIL_TDUR_HURT];
-    if (add.time <= vil->tmr_list[ZVIL_TYMR_MINANIMPLAY])
-        add.time = vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+    add.time = vil->tmr_list[ZVIL_TDUR_HURT] > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]
+                   ? vil->tmr_list[ZVIL_TDUR_HURT] : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
     add.type = eLT_Line;
     add.total_points = 16;
     add.thickness = 1.25f;
