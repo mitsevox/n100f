@@ -77,10 +77,10 @@ zActionLine.cpp	0x80044C44	0x80044E20	3	4	2	1	0x80044D50=zActionLineUpdate (name
 zAnimList.cpp	0x80044E20	0x80045174	5	5	1	0	0x80044EB8=zAnimListInit (strings+floats+calls)	anchored
 zAssetTypes.cpp	0x800451F8	0x80045B50	13	15	2	1	0x800451F8=ATBL_Read (strings+floats+calls)	anchored
 zCamera.cpp	0x80045B50	0x80045C34	4	4	0	0	-	count-match
-zConditional.cpp	0x80045C34	0x80045EA8	5	5	0	0	-	count-match
+zConditional.cpp	0x80045C34	0x80045EA8	5	5	1	0	0x80045E38=zConditionalInit (calls)	anchored
 zCounter.cpp	0x80045EA8	0x800460E0	5	5	3	3	0x80045F74=zCounterLoad (name)	anchored
 zCutsceneMgr.cpp	0x800460E0	0x8004651C	8	10	1	0	0x80046100=zCutsceneMgrUpdate (strings+calls)	anchored
-zDispatcher.cpp	0x8004651C	0x80047670	12	14	2	1	0x8004651C=ZDSP_elcb_event (floats+calls)	anchored
+zDispatcher.cpp	0x8004651C	0x80047670	12	14	3	1	0x8004651C=ZDSP_elcb_event (floats+calls)	anchored
 zEGenerator.cpp	0x80047670	0x80048094	9	11	1	0	0x80047F74=zEGenerator_Init (floats+calls)	anchored
 zEnt.cpp	0x80048094	0x80049488	25	21	11	7	0x80048094=zEntGetShadowParams (floats)	anchored
 zEntBubble.cpp	0x80049488	0x8004A508	11	12	3	0	0x800495DC=zEntBubble_Update (floats)	anchored
@@ -99,7 +99,7 @@ zFeet.cpp	0x800AA338	0x800ABD84	11	11	4	0	0x800AA3B4=DrawSkidMarkStrip (floats)	
 zFMV.cpp	0x800ABD84	0x800ABE88	2	2	2	2	0x800ABD84=zFMVFileGetName (name)	anchored
 zFog.cpp	0x800ABE88	0x800AC010	5	5	2	2	0x800ABE8C=zFogEventCB (name)	anchored
 zFX.cpp	0x800AC010	0x800AC0BC	2	2	1	0	0x800AC03C=zFX_SceneEnter (strings+calls)	anchored
-zGame.cpp	0x800AC0BC	0x800ADC40	15	15	11	6	0x800AC860=zGameScreenTransitionEnd (name)	anchored
+zGame.cpp	0x800AC0BC	0x800ADC40	15	15	12	6	0x800AC100=zGameCheats (calls)	anchored
 zGameExtras.cpp	0x800ADC40	0x800AF8D8	11	11	4	0	0x800ADCB8=UpdateFireworks (strings+floats)	anchored
 zGameState.cpp	0x800AF8D8	0x800AFD6C	7	7	1	1	0x800AFA64=zGameStateSwitchEvent (name)	anchored
 zGroup.cpp	0x800AFD6C	0x800AFF5C	7	7	1	0	0x800AFDBC=zGroupEventCB (calls)	anchored
@@ -132,4 +132,4 @@ zSurface.cpp	0x800D229C	0x800D340C	23	23	14	12	0x800D229C=zSurfaceGetName (strin
 zTimer.cpp	0x800D340C	0x800D3608	5	5	2	2	0x800D3504=zTimerLoad (name)	anchored
 zUI.cpp	0x800D3608	0x800D47E8	13	12	4	1	0x800D3608=zUIEventCB (strings+calls)	anchored
 zUIFont.cpp	0x800D47E8	0x800D527C	7	8	3	0	0x800D4B0C=zUIFontEventCB (strings+calls)	anchored
-zVar.cpp	0x800D527C	0x800D7E00	161	155	5	2	0x800D6100=zVMCB_AreaStatsTokens (strings+calls)	anchored
+zVar.cpp	0x800D527C	0x800D7E00	161	155	154	154	0x800D527C=zVarEntryCB_eVarCin14 (name)	anchored
