@@ -422,7 +422,7 @@ void zPlatform_Dismount(_zPlatform* ent)
 {
 }
 
-// Clear the entity's active and collision flags and set an asset flag.
+// Clear the entity's visible and collision flags and set an asset flag.
 void zPlatform_MakeDiggable(_zPlatform* plat)
 {
     plat->flags &= (U8)~1;

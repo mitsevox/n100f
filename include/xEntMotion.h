@@ -99,7 +99,7 @@ struct _xEntERData
 
 struct _xEnt;
 
-// Partial: only the mech and pen members of the union are declared. pen is the largest
+// Partial: only the mech, mp, er and pen members of the union are declared. pen is the largest
 // member, so sizeof(_xEntMotion) is its size.
 struct _xEntMotion
 {
