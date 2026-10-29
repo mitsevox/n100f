@@ -48,5 +48,6 @@ void xSceneForAllDynamics(_xScene* sc, _xEnt* (*func)(_xEnt*, _xScene*, void*), 
 void xSceneForAllStatics(_xScene* sc, _xEnt* (*func)(_xEnt*, _xScene*, void*), void* data);
 void xSceneForAllTriggers(_xScene* sc, _xEnt* (*func)(_xEnt*, _xScene*, void*), void* data);
 void xRayHitsScene(_xScene* sc, _xRay3* r, _xCollis* coll);
+U32 xRayHitsSceneFast(const _xRay3* r, const _xScene* sc);
 
 #endif

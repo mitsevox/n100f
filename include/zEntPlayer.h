@@ -237,5 +237,6 @@ struct zPlayerGlobals
 U32 zEntPlayer_MoveInfo();
 S32 zEntPlayer_Damage(xBase* src, U32 damage);
 void zEntPlayer_Notify(S32 situation);
+void zEntPlayer_Notify(S32 characterSubType, F32);
 
 #endif
