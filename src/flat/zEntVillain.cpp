@@ -433,7 +433,7 @@ static st_zEntVillain_ParEmitRecord* g_emitpool;
 static S32 g_emitnext;
 static S32 g_emitready;
 
-// Whether the current scene is a boss battle.
+// Which boss the current scene's battle is against (1 to 4), or 0 when it is not a boss battle.
 static S32 g_scene_is_a_boss_battle;
 
 // A block of scratch memory the villain system keeps from startup.
@@ -1418,8 +1418,9 @@ static S32 zVIL_elcb_event(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
 }
 
 // Bound callback: centres the villain's collision sphere on the given position plus its type's
-// offset, turned with the model, and sets the radius from its type. If the type has a second
-// sphere (a radius above 0), that one is placed the same way with its own offset.
+// offset, turned with the model, and sets the radius from its type. The second sphere's radius is
+// always set from its type too; when it is above 0, that sphere's centre is placed the same way with
+// its own offset (its bound is not updated).
 static void zVIL_elcb_bupdate(_xEnt* xe, _xVec3* pos_bound)
 {
     _xVec3 offset = { 0 };
