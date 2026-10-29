@@ -515,7 +515,7 @@ static S32 g_npccnt;
 // All villains of the scene, in one block.
 static st_zEntVillain* g_npcpool;
 
-// The goal and the stimulus a villain type's stimulus step is handling.
+// The goal and the stimulus a villain type's stimulus or goal-change step is handling.
 static en_BEHAVIOUR_GOAL g_pgol;
 static en_NPC_STIMULUS g_pstm;
 
@@ -1911,8 +1911,8 @@ static S32 VILN_BMM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
 // goes to the afterlife, acts on the push of a button, is hurt by a hurt-boss stimulus, breaks
 // soap and gum bubbles (laughing), takes damage from headbutts and bumps, is dazed by a bounce,
 // lobs a flask at an attack order when he may attack and has one, taunts when he can, and goes
-// to a position or a widget, patrols or idles when told to. Dazed, a headbutt knocks him back
-// and a bounce or soap or gum bubble does nothing to him.
+// to a position or a widget, patrols or idles when told to. Dazed, a headbutt knocks him back,
+// soap and gum bubbles still break (without the laugh) and a bounce does nothing.
 static S32 VILN_BMM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
                              st_STIMULUS_CONTEXT_DATA* resp)
 {
@@ -2187,11 +2187,11 @@ static S32 VILN_BMM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     return 1;
 }
 
-// The Mastermind's goal changes. The standard handler takes the lifeless and starting-up goals
-// (and his dying laugh when he enters the dying goal). On entering a goal he picks its animation
-// and sets it up: patrolling without a next navigation point asks for one; teleporting hides him
-// and turns off his collisions, zaps the player and shouts if the player hurt him, otherwise
-// trash-talks, and while his allow bit 0x10 is set he vanishes in particles with a sound;
+// The Mastermind's goal changes. The standard handler takes the lifeless, starting-up and dying
+// goals, and he queues his death sound when he enters the dying goal. On entering a goal he picks
+// its animation and sets it up: patrolling without a next navigation point asks for one;
+// teleporting hides him and turns off his collisions, zaps the player and shouts when he is
+// teleporting away from a blockhead, otherwise trash-talks, and while his allow bit 0x10 is set he vanishes in particles with a sound;
 // readying an attack, being blockheaded, dazed (vulnerable), knocked back (towards where the
 // player stands), lobbing (lobs the reserved flask, one per salvo), taunting and being hurt set
 // their timers and sounds; being hurt costs a hit point. Leaving the teleport goal shows him
