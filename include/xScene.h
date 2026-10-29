@@ -3,11 +3,12 @@
 
 #include "types.h"
 #include "xBase.h"
+#include "xMemMgr.h"
 
 struct _xEnt;
 struct _xEnv;
 
-// Partial: members up to env.
+// Partial: members up to mempool.
 struct _xScene
 {
     U16 flags;
@@ -33,6 +34,7 @@ struct _xScene
     _xEnt** act_ents;
     _xEnt** nact_ents;
     _xEnv* env;
+    xMemPool mempool;
 };
 
 xBase* xSceneResolvID(_xScene* sc, U32 id);
