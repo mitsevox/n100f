@@ -79,8 +79,6 @@ void xCameraSetTarget(_tagxCamFrame*, xVec3*);
 void xCameraSetTarget(_tagxCamFrame*, xMat4x3*);
 void zEntEventAll(xBase*, U32, U32, F32*);
 extern "C" void fn_800AFD4C(S32);
-extern "C" RpLight* RpLightCreate(RpLightType);
-extern "C" RpLight* RpLightSetColor(RpLight*, const RwRGBAReal*);
 extern "C" RpWorld* RpWorldCreate(const RwBBox*);
 extern "C" F32 RwIm2DGetNearScreenZ();
 extern "C" void fn_80021E50();
