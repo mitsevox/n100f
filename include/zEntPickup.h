@@ -68,12 +68,15 @@ struct zEntPickupWarpPoint
 };
 
 void zEntPickup_SceneUpdate(F32 dt);
+void zEntPickup_ShowKeyCnt(U32 collected, U32 total);
 void zEntPickupResetWarps();
 void zEntPickupCheat_allWarps();
 void zEntPickup_UnlockSnackGate(_xEnt* ent);
 U32 zEntPickup_lastSnackInArea();
+void zEntPickup_UpdateFlyToInterface(_zEntPickup* ent, U32 pcount, F32 dt);
 U32 zEntPickup_WarpIsOpen(U32 index);
 void enableWarpPoint(U32 index);
+void zEntPickup_GiveFX(_zEntPickup* ent);
 void zEntPickup_Drop(_zEntPickup* ent);
 void zEntPickup_MakeDroppable(_zEntPickup* ent, _xVec3* pos, xBase* parent);
 void zEntPickup_Load(_zEntPickup* ent, xSerial* s);
@@ -81,6 +84,8 @@ void zEntPickup_Save(_zEntPickup* ent, xSerial* s);
 void zEntPickup_Reset(_zEntPickup* ent);
 void zEntPickup_hideSnackGateInfo(_zEntPickup* ent);
 void zEntPickup_Update(_zEntPickup* ent, _xScene* sc, F32 dt);
+void zEntPickup_FlyToInterface(_zEntPickup* ent, F32 dt);
+S32 zPickup_Give(_zEntPickup* ent, zAssetPickup* p, U16 value);
 S32 zEntPickupEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
 void zEntPickup_Setup();
 void zEntPickup_Setup(_zEntPickup* p);

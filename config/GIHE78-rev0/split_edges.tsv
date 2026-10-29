@@ -29,7 +29,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xAnim.cpp	xBase.cpp	0x8001C088	0x8001C088	alignment only (2 cuts tie on data)	0
 .text	xBase.cpp	xbinio.cpp	0x8001C184	0x8001C184	single cut by data references	0
 .text	xbinio.cpp	xBound.cpp	0x8001D1F8	0x8001D1F8	alignment only (3 cuts tie on data)	0
-.text	xBound.cpp	xCamera.cpp	0x8001D9A0	0x8001D9A0	alignment only (6 cuts tie on data)	0
+.text	xBound.cpp	xCamera.cpp	0x8001D9A0	0x8001D9A0	alignment only (5 cuts tie on data)	0
 .text	xCamera.cpp	xClimate.cpp	0x8002086C	0x8002086C	alignment only (4 cuts tie on data)	0
 .text	xClimate.cpp	xCollide.cpp	0x80020F08	0x80020F08	single cut by data references	1
 .text	xCollide.cpp	xCollideFast.cpp	0x80021620	0x80021620	alignment only (5 cuts tie on data)	0

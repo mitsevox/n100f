@@ -27,6 +27,7 @@ struct xParGroup
 
 void xParGroupAnimate(xParGroup* ps, F32 dt);
 void xParGroupKillAllParticles(xParGroup* ps);
+void xParGroupKillPar(xParGroup* ps, xPar* p);
 void xParGroupSetActive(xParGroup* ps, U32 isActive);
 void xParGroupUnregister(xParGroup* ps);
 void xParGroupRegister(xParGroup* ps);
