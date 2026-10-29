@@ -403,7 +403,7 @@ static S32 ZLOB_elcb_event(xBase* from, xBase* xb, U32 toEvent, F32*, xBase*)
             lob->flg_suitcase |= 1;
             do_fromWidge = 1;
             break;
-        case 36:
+        case 35:
             LCFG_getParam(&((st_LOBMASTER_DATA*)from)->cfg, ZLOB_PARM_POS_LAUNCH, &lob->pos_altLaunch);
             lob->flg_suitcase = 0;
             lob->flg_suitcase |= 1;
@@ -431,7 +431,7 @@ static S32 ZLOB_elcb_event(xBase* from, xBase* xb, U32 toEvent, F32*, xBase*)
         case 32:
         case 33:
         case 34:
-        case 35:
+        case 36:
         case 37:
             xSceneID2Name(globals.sceneCur, from->id);
             break;
