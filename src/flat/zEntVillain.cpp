@@ -289,6 +289,24 @@ static void zVIL_elcb_move(_xEnt* ent, _xScene* scn, F32 dt, _xEntFrame* frame);
 static void VILN_KookRender(_xEnt* ent);
 void zEntVillain_InitDep(st_zEntVillain* ent, zScene* sc);
 extern "C" void fn_8003CD24(U32 parentID);
+static void zVIL_setup_npcTable();
+static S32 VPRJ_BBK_attach(zEntProjectile* prj);
+static void VPRJ_BBK_detach(zEntProjectile* prj);
+static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BBK_prjmove(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
+static S32 VPRJ_BGG_attach(zEntProjectile* prj);
+static void VPRJ_BGG_detach(zEntProjectile* prj);
+static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
+static S32 VPRJ_BRB_attach(zEntProjectile* prj);
+static void VPRJ_BRB_detach(zEntProjectile* prj);
+static S32 VPRJ_BRB_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BRB_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
+static S32 VPRJ_BMM_attach(zEntProjectile* prj);
+static void VPRJ_BMM_detach(zEntProjectile* prj);
+static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
 static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt);
 static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplicit, S32 flg_vsnd,
                        F32 dist);
@@ -766,6 +784,50 @@ static S32 g_scene_is_a_boss_battle;
 
 // A block of scratch memory the villain system keeps from startup.
 static char* g_datablock;
+
+// Start the villain system once and register its four boss projectile categories.
+S32 zEntVillain_Startup()
+{
+    if (g_npcinit++) return g_npcinit;
+    g_datablock = (char*)xMemAlloc(gActiveHeap, 0x20000);
+    memset(g_datablock, 0, 0x20000);
+
+    S32 i = 0;
+    while (g_npcTable[i].enabled) i++;
+    i = 0;
+    while (g_npcFuncs[i].flg_funcs & 0x1) i++;
+    i = 0;
+    while (g_animname[i]) i++;
+    for (i = 0; i < ZVIL_ANIM_NOMORE; i++) g_anamhash[i] = xStrHash(g_animname[i]);
+    zVIL_setup_npcTable();
+    for (i = 0; i < ZVIL_ANIM_NOMORE; i++) g_anamhash[i] = xStrHash(g_animname[i]);
+
+    st_ZPRJ_CATEGORY_FUNCS bk = { 1, VPRJ_BBK_attach, VPRJ_BBK_detach, VPRJ_BBK_logix,
+                                   VPRJ_BBK_prjmove, VPRJ_BBK_notify, NULL,
+                                   zEntProjectile_gen_aimer, NULL, NULL };
+    st_ZPRJ_CATEGORY_FUNCS gg = { 1, VPRJ_BGG_attach, VPRJ_BGG_detach, VPRJ_BGG_logix,
+                                   NULL, VPRJ_BGG_notify, NULL, zEntProjectile_gen_aimer,
+                                   NULL, NULL };
+    st_ZPRJ_CATEGORY_FUNCS rb = { 1, VPRJ_BRB_attach, VPRJ_BRB_detach, VPRJ_BRB_logix,
+                                   NULL, VPRJ_BRB_notify, NULL, zEntProjectile_gen_aimer,
+                                   NULL, NULL };
+    st_ZPRJ_CATEGORY_FUNCS mm = { 1, VPRJ_BMM_attach, VPRJ_BMM_detach, VPRJ_BMM_logix,
+                                   NULL, VPRJ_BMM_notify, NULL, zEntProjectile_gen_aimer,
+                                   NULL, NULL };
+    st_ZPRJ_CATEGORY_PROPS bkprops = { 0x3D, 3, 0x3F, 0, 0, 0 };
+    st_ZPRJ_CATEGORY_PROPS ggprops = { 0x30000031, 3, 0x3F, 0x3F, 0, 0 };
+    st_ZPRJ_CATEGORY_PROPS rbprops = { 0x3D, 3, 0x14, 0x3F, 0, 0 };
+    st_ZPRJ_CATEGORY_PROPS mmprops = { 0x3000003D, 3, 0x3F, 0x3F, 0, 0 };
+    zEntProjectile_addCat(ZPRJ_CAT_BKAXE, &bk);
+    zEntProjectile_addProps(ZPRJ_CAT_BKAXE, &bkprops);
+    zEntProjectile_addCat(ZPRJ_CAT_GGSHOCK, &gg);
+    zEntProjectile_addProps(ZPRJ_CAT_GGSHOCK, &ggprops);
+    zEntProjectile_addCat(ZPRJ_CAT_RBSWORD, &rb);
+    zEntProjectile_addProps(ZPRJ_CAT_RBSWORD, &rbprops);
+    zEntProjectile_addCat(ZPRJ_CAT_MMFLASK, &mm);
+    zEntProjectile_addProps(ZPRJ_CAT_MMFLASK, &mmprops);
+    return g_npcinit;
+}
 
 // Counts down one start of the villain system and returns how many remain.
 S32 zEntVillain_Shutdown()
