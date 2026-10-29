@@ -10221,6 +10221,83 @@ S32 zEntVillain_PlayAFXSound(st_zEntVillain* ent, zAnimFxSound* snd, U32* sid_pl
     return 1;
 }
 
+// Select an available bonus using the player's supplies and the scene's drop rules.
+static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp)
+{
+    S32 list[11] = { 0 };
+    F32 wts[11] = { 0 };
+    _xVec3 farfar = { 0.0f, 0.0f, 0.0f };
+    S32 cnt = 0;
+    S32 soap_always = 0;
+    U32 area = globals.sceneCur->sceneID & 0xff000000;
+    S32 wt_ramp = area == 0x50000000 || area == 0x42000000 || area == 0x53000000;
+    if (g_scene_is_a_boss_battle)
+    {
+        if (g_scene_is_a_boss_battle != 4 && !xUtil_yesno(0.8f)) return NULL;
+    }
+    else if (vtyp == 0 && area == 0x50000000)
+        soap_always = 1;
+    else if (!xUtil_yesno(wt_ramp ? 0.8f : 0.4f))
+        return NULL;
+
+    F32 rat = (F32)globals.player.Inv_Ammo[0] / (F32)globals.player.Inv_AmmoMax[0];
+    F32 gum_weight = rat < 0.2f ? 1.5f : (rat > 0.8f ? 0.5f : 1.0f);
+    rat = (F32)globals.player.Inv_Ammo[1] / (F32)globals.player.Inv_AmmoMax[1];
+    F32 soap_weight = rat < 0.2f ? 1.5f : (rat > 0.8f ? 0.5f : 1.0f);
+    F32 food_weight = globals.player.Health == 1 ? 2.0f : (globals.player.Health == 4 ? 0.5f : 1.0f);
+    if (soap_always) { gum_weight = 0.0f; soap_weight = 100.0f; food_weight = 0.0f; }
+    else if (g_scene_is_a_boss_battle) { gum_weight = soap_weight = food_weight = 1.0f; }
+    else if (wt_ramp) { gum_weight *= 4.0f; soap_weight *= 4.0f; food_weight *= 0.25f; }
+
+    for (S32 i = 0; i < 11; i++)
+    {
+        st_NPC_BONUS* bon = &g_npcBonus[i];
+        if (!bon->pickup) continue;
+        if (soap_always && !(bon->flg_info & 0x20000)) continue;
+        if ((bon->flg_info & 0x10000) && (!globals.player.Inv_AmmoMax[0] || globals.player.Inv_Ammo[0] == globals.player.Inv_AmmoMax[0])) continue;
+        if ((bon->flg_info & 0x20000) && (!globals.player.Inv_AmmoMax[1] || globals.player.Inv_Ammo[1] == globals.player.Inv_AmmoMax[1])) continue;
+        if ((bon->flg_info & 0x40000) && globals.player.Health == 5) continue;
+        if ((bon->flg_info & 1) && (bon->pickup->state & 8))
+        {
+            bon->flg_info &= ~1;
+            zEntPickup_Reset(bon->pickup);
+            zEntPickup_MakeDroppable(bon->pickup, &farfar, NULL);
+        }
+        if (bon->flg_info & 1) continue;
+        gum_weight *= 4.0f;
+        soap_weight *= 4.0f;
+        food_weight *= 0.25f;
+        F32 weight;
+        switch (i)
+        {
+        case 0: weight = food_weight; break;
+        case 1: if (!(globals.player.Inv_Specials & 4)) continue; weight = food_weight + 0.25f; break;
+        case 2: if (!(globals.player.Inv_Specials & 0x1000)) continue; weight = food_weight + 0.75f; break;
+        case 3: if (!(globals.player.Inv_Specials & 0x200)) continue; weight = food_weight + 0.5f; break;
+        case 4: if (!(globals.player.Inv_Specials & 0x20)) continue; weight = food_weight + 1.0f; break;
+        case 5: case 6: case 7: if (!(globals.player.Inv_Specials & 2)) continue; weight = soap_weight; break;
+        default: if (!(globals.player.Inv_Specials & 1)) continue; weight = gum_weight; break;
+        }
+        list[cnt] = i;
+        wts[cnt++] = weight;
+    }
+    if (cnt < 1) return NULL;
+    F32 sum = 0.0f;
+    for (S32 i = 0; i < cnt; i++) { if (wts[i] < 0.0f) wts[i] = -wts[i]; sum += wts[i]; }
+    F32 scale = 1.0f / sum;
+    for (S32 i = 0; i < cnt; i++) wts[i] *= scale;
+    F32 pt = iurand();
+    F32 hi = 0.0f;
+    S32 choice = 0;
+    for (S32 i = 0; i < cnt; i++)
+    {
+        F32 lo = hi;
+        hi += wts[i];
+        if (pt >= lo && pt <= hi) { choice = i; break; }
+    }
+    return &g_npcBonus[list[choice]];
+}
+
 // Finds a sound type's entry in g_sndProps (the VSND_LISTEND entry if it has none), hands it back
 // through sprop_caller when that is given, and returns its play flags.
 static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop_caller)
