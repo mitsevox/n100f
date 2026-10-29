@@ -28,6 +28,13 @@
 #include "zFeet.h"
 #include "zGust.h"
 #include "xFFX.h"
+#include "xShadow.h"
+#include "xModel.h"
+#include "zLight.h"
+#include "zGame.h"
+#include "zGameState.h"
+#include "xScrFx.h"
+#include "iAnimSKB.h"
 #include "iMath3.h"
 #include "iMath.h"
 
@@ -187,6 +194,8 @@ void zHud_showSnackSpecial();
 void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt);
 F32 CalcJumpImpulse_Smooth(F32 g, F32 j, F32 h, F32 Tgc, F32 Tgs);
 S32 Shaggy8_HBCallback(_zEnt* ent, _xCollis* coll);
+void iDrawSetFBMSK(U32 FBMSK);
+void iModelSetMaterialAlpha(RpAtomic* model, S32 alpha);
 void xAnimTableRemoveEffectByCB(xAnimTable* table,
                                 U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*));
 static U32 zEntPlayer_SNDSkidCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* single, void* object);
@@ -206,6 +215,7 @@ S32 zEntPlayerEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* 
 static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata);
 void zEntPlayerReset(_xEnt* ent);
 static void zEntPlayer_FXSetup(_xEnt* ent, xAnimTable* table);
+void zEntPlayer_SNDInit();
 static void zEntPlayer_ButtonBBFX(_xEnt* ent, _zEntButton*);
 static S32 DestructObjHBCallback(_zEnt* ent, _xCollis* coll);
 
@@ -2327,6 +2337,368 @@ static void zEntPlayer_SnackDecrement(F32 dt)
     }
 }
 
+// Linear interpolation from a to b by t, written into o.
+static inline void LerpVec3(xVec3* o, const xVec3* a, const xVec3* b, F32 t)
+{
+    o->x = a->x + (b->x - a->x) * t;
+    o->y = a->y + (b->y - a->y) * t;
+    o->z = a->z + (b->z - a->z) * t;
+}
+
+void zEntPlayer_Render(_zEnt* ent)
+{
+    if (!globals.player.Visible)
+    {
+        return;
+    }
+
+    F32 rootZadjust = 0.0f;
+    RwMatrix rootOldMat = *ent->model->Mat;
+    xAnimSingle* asingle = ent->model->Anim->Single;
+    xAnimSingle* ablend = asingle->Blend;
+    if (!strcmp(asingle->State->Name, "SD0_SetDown") || !strcmp(asingle->State->Name, "SD1_SetDown"))
+    {
+        if (asingle->Time >= 0.85f)
+        {
+            rootZadjust = -0.6f;
+        }
+        else if (asingle->Time > 0.65f)
+        {
+            rootZadjust = -0.6f * (asingle->Time - 0.65f) / (0.85f - 0.65f);
+        }
+    }
+    else if (ablend->State &&
+             (!strcmp(ablend->State->Name, "SD0_SetDown") || !strcmp(ablend->State->Name, "SD1_SetDown")))
+    {
+        rootZadjust = -0.6f * (1.0f - asingle->BlendFactor * asingle->Tran->BlendRecip);
+    }
+
+    if (rootZadjust)
+    {
+        xVec3 rootZvec = { 0.0f, 0.0f, rootZadjust };
+
+        xMat3x3RMulVec(&rootZvec, (xMat3x3*)ent->model->Mat, &rootZvec);
+        ent->model->Mat->pos.x += rootZvec.x;
+        ent->model->Mat->pos.z += rootZvec.z;
+    }
+
+    if (1.0f != globals.player.RootUp.y)
+    {
+        xMat4x3 tmpMat;
+
+        tmpMat.up = globals.player.RootUp;
+        xVec3Cross(&tmpMat.right, &tmpMat.up, (xVec3*)&ent->model->Mat->at);
+        xVec3Normalize(&tmpMat.right, &tmpMat.right);
+        xVec3Cross(&tmpMat.at, &tmpMat.right, &tmpMat.up);
+        tmpMat.pos.x = 0.0f;
+        if (globals.player.HangEnt)
+        {
+            tmpMat.pos.y = -ent->bound.sph.r;
+        }
+        else
+        {
+            tmpMat.pos.y = 0.0f;
+        }
+        tmpMat.pos.z = 0.0f;
+        xMat3x3RMulVec(&tmpMat.pos, (xMat3x3*)&tmpMat, &tmpMat.pos);
+        tmpMat.pos.x += ent->model->Mat->pos.x;
+        if (globals.player.HangEnt)
+        {
+            tmpMat.pos.y += ent->model->Mat->pos.y + ent->bound.sph.r;
+        }
+        else
+        {
+            tmpMat.pos.y += ent->model->Mat->pos.y;
+        }
+        tmpMat.pos.z += ent->model->Mat->pos.z;
+        if (globals.player.HangEnt && globals.player.HangStartLerp < 1.0f)
+        {
+            tmpMat.pos.x = globals.player.HangStartPos.x +
+                           globals.player.HangStartLerp * (tmpMat.pos.x - globals.player.HangStartPos.x);
+            tmpMat.pos.y = globals.player.HangStartPos.y +
+                           globals.player.HangStartLerp * (tmpMat.pos.y - globals.player.HangStartPos.y);
+            tmpMat.pos.z = globals.player.HangStartPos.z +
+                           globals.player.HangStartLerp * (tmpMat.pos.z - globals.player.HangStartPos.z);
+        }
+        tmpMat.flags = 0;
+        *(xMat4x3*)ent->model->Mat = tmpMat;
+        rendermat = tmpMat;
+    }
+    else
+    {
+        rendermat = *(xMat4x3*)ent->model->Mat;
+    }
+
+    if (1.0f != globals.player.RootUp.y || rootZadjust)
+    {
+        for (xModelInstance* minst = ent->model->Next; minst; minst = minst->Next)
+        {
+            *(xMat4x3*)minst->Mat = *(xMat4x3*)ent->model->Mat;
+        }
+    }
+
+    {
+        xModelInstance* minst = ent->model;
+        U32 index = 0;
+        xAnimSingle* asingle = ent->model->Anim->Single;
+        xVec3 pos0;
+        xVec3 pos1;
+        while (minst)
+        {
+            switch (index)
+            {
+            case 2:
+                if (((asingle->State->UserFlags & 0x1E) == 0xC && (globals.player.Inv_Specials & 0x800)) ||
+                    !strcmp(asingle->State->Name, "Powerup_helmet"))
+                {
+                    globals.player.HelmetTimer = 0.3f;
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
+                }
+                else if (0.0f == globals.player.HelmetTimer)
+                {
+                    minst->Flags &= ~3;
+                }
+                break;
+            case 3:
+                if ((asingle->State->UserFlags & 0x1E) == 2 && globals.player.WorldDisguise != 6)
+                {
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
+                }
+                else
+                {
+                    minst->Flags &= ~3;
+                }
+                break;
+            case 4:
+                if (!xStricmp(asingle->State->Name, "Action_dig"))
+                {
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
+                }
+                else
+                {
+                    minst->Flags &= ~3;
+                }
+                break;
+            case 5:
+                if (globals.player.WorldDisguise == 5 &&
+                    (!xStricmp(asingle->State->Name, "Idle_lampshade") ||
+                     !xStricmp(asingle->State->Name, "Idle_blackknight") ||
+                     !xStricmp(asingle->State->Name, "IdleToLampshade") ||
+                     !xStricmp(asingle->State->Name, "LampshadeToSneak") ||
+                     !xStricmp(asingle->State->Name, "SneakToLampshade") ||
+                     !xStricmp(asingle->State->Name, "Powerup_lamp")))
+                {
+                    if (minst->BoneCount <= 10)
+                    {
+                        minst->Flags &= (U16)~8;
+                        minst->Flags |= 0x20;
+                        minst->BoneIndex = 0;
+                    }
+                    if (minst->Anim)
+                    {
+                        minst->Flags |= 4;
+                    }
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
+                }
+                else
+                {
+                    minst->Flags &= ~7;
+                }
+                break;
+            case 6:
+                if (globals.player.WorldDisguise == 6 &&
+                    (!xStricmp(asingle->State->Name, "Idle_lampshade") ||
+                     !xStricmp(asingle->State->Name, "Idle_blackknight") ||
+                     !xStricmp(asingle->State->Name, "Walk_blackknight")))
+                {
+                    if (minst->Flags & 2)
+                    {
+                        ent->model->Flags &= ~1;
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
+                }
+                else
+                {
+                    ent->model->Flags |= 1;
+                    minst->Flags &= ~7;
+                }
+                break;
+            case 7:
+                if (surfSticky && (globals.player.Inv_Specials & 0x4))
+                {
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
+                }
+                else
+                {
+                    minst->Flags &= ~7;
+                }
+                break;
+            case 8:
+                if (!strcmp(asingle->State->Name, "Powerup_plunger") ||
+                    (globals.player.Slide == 2 &&
+                     (!strcmp(asingle->State->Name, "Land_normal") || !strcmp(asingle->State->Name, "Land_walk") ||
+                      !strcmp(asingle->State->Name, "Land_walkidle") ||
+                      !strcmp(asingle->State->Name, "Land_running") ||
+                      !strcmp(asingle->State->Name, "Walk_plunger") ||
+                      !strcmp(asingle->State->Name, "Idle_plunger"))))
+                {
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
+                }
+                else
+                {
+                    minst->Flags &= ~3;
+                }
+                break;
+            case 9:
+                if (!xStricmp(asingle->State->Name, "Fall_floatup") ||
+                    !xStricmp(asingle->State->Name, "Fall_floatdown") ||
+                    !xStricmp(asingle->State->Name, "Fall_floatopen"))
+                {
+                    if (!(minst->Flags & 1) && minst->Anim)
+                    {
+                        minst->Anim->Single->Time = 0.0f;
+                        minst->Anim->Single->CurrentSpeed = minst->Anim->Single->State->Speed;
+                    }
+                    minst->Flags |= 1;
+                    memcpy(minst->Mat, ent->model->Mat, sizeof(xMat3x3));
+                    iModelTagEval(ent->model->Data, &globals.player.HangPawTag[0], ent->model->Mat, &pos0);
+                    iModelTagEval(ent->model->Data, &globals.player.HangPawTag[1], ent->model->Mat, &pos1);
+                    LerpVec3((xVec3*)&minst->Mat->pos, &pos0, &pos1, 0.5f);
+                    xMat3x3RMulRotY((xMat3x3*)minst->Mat, (xMat3x3*)minst->Mat, umbrellaFudgeRot);
+                    minst->Mat->pos.y += umbrellaFudgeY;
+                    minst->Mat->pos.x += umbrellaFudgeX * minst->Mat->right.x;
+                    minst->Mat->pos.z += umbrellaFudgeX * minst->Mat->right.z;
+                }
+                else
+                {
+                    minst->Flags &= ~1;
+                }
+                break;
+            case 10:
+                minst->Flags &= (U16)~8;
+                minst->Flags |= 0x20;
+                minst->Flags &= ~1;
+                break;
+            case 11:
+                if (!strcmp(asingle->State->Name, "Inactive_Magnify") && asingle->Time > 0.55f &&
+                    asingle->Time < 221.0f / 30.0f)
+                {
+                    if (minst->Flags & 2)
+                    {
+                        minst->Flags |= 1;
+                    }
+                    else
+                    {
+                        minst->Flags |= 2;
+                    }
+                }
+                else
+                {
+                    minst->Flags &= ~3;
+                }
+                break;
+            }
+            minst = minst->Next;
+            index++;
+        }
+    }
+
+    S32 player_trans = 80;
+    if (globals.player.s.TakeDamage && gPlayerHitWater)
+    {
+        globals.player.Transparent = 1;
+        player_trans = 255.0f - 0.5f * (255.0f * sPlayerWaterOffset);
+        if (player_trans < 0)
+        {
+            player_trans = 0;
+        }
+        sPlayerWaterOffset += 2.0f * sTimeElapsed;
+        for (xModelInstance* minst = globals.player.ent.model; minst; minst = minst->Next)
+        {
+            if (minst->Flags & 1)
+            {
+                globals.player.ent.frame->mat.pos.x = minst->Mat->pos.x = gPlayerWaterPos.x;
+                globals.player.ent.frame->mat.pos.y = minst->Mat->pos.y = gPlayerWaterPos.y - sPlayerWaterOffset;
+                globals.player.ent.frame->mat.pos.z = minst->Mat->pos.z = gPlayerWaterPos.z;
+            }
+        }
+    }
+
+    if (globals.player.Transparent > 0)
+    {
+        if (!iModelCull(ent->model->Data, ent->model->Mat))
+        {
+            zLightAddLocal(ent);
+            xShadowRender(ent);
+            iDrawSetFBMSK(-1);
+            xModelRender(ent->model);
+            iDrawSetFBMSK(0);
+            for (xModelInstance* minst = globals.player.ent.model; minst; minst = minst->Next)
+            {
+                if (minst->Flags & 1)
+                {
+                    iModelSetMaterialAlpha(minst->Data, player_trans);
+                    iModelRender(minst->Data, minst->Mat);
+                    iModelSetMaterialAlpha(minst->Data, 255);
+                }
+            }
+            zLightRemoveLocal();
+        }
+    }
+    else
+    {
+        xEntRender(&globals.player.ent);
+    }
+
+    *ent->model->Mat = rootOldMat;
+}
+
 void zEntPlayer_Move(_xEnt* ent, _xScene* sc, F32 dt, _xEntFrame* frame)
 {
     S32 px;
@@ -2894,6 +3266,233 @@ void zEntPlayerExit(_xEnt* ent)
     zFeetExit(ent, ent->model->Anim->Table);
 }
 
+void zEntPlayerReset(_xEnt* ent)
+{
+    xModelInstance* tongue;
+    U32 tongueIdx;
+    U32 tngV;
+    U32 widx;
+    U32 wnum;
+    U32 numV;
+    iModelTag tmpTag;
+    xAnimState* curr;
+    xModelInstance* minst;
+    U32 index;
+
+    _iAnimSKBFixTransPop(
+        xAnimTableGetState(ent->model->Anim->Table, "RunToIdle_normal")->Data->RawData[0],
+        xAnimTableGetState(ent->model->Anim->Table, "Idle_normal")->Data->RawData[0], 0);
+    _iAnimSKBFixTransPop(xAnimTableGetState(ent->model->Anim->Table, "SkidToIdle")->Data->RawData[0],
+                         xAnimTableGetState(ent->model->Anim->Table, "Idle_normal")->Data->RawData[0], 0);
+
+    if (zGameModeGet() != eGameMode_Game ||
+        (zGameStateGet() != 5 && zGameStateGet() != 1 && zGameStateGet() != 4))
+    {
+        if (globals.player.Inv_Ammo[0] < globals.player.s.AmmoSceneGum)
+        {
+            globals.player.Inv_Ammo[0] = globals.player.s.AmmoSceneGum;
+        }
+        if (globals.player.Inv_Ammo[1] < globals.player.s.AmmoSceneSoap)
+        {
+            globals.player.Inv_Ammo[1] = globals.player.s.AmmoSceneSoap;
+        }
+
+        if (zGameModeGet() == eGameMode_Game && zGameStateGet() == 2)
+        {
+            globals.player.Health = 3;
+            gPlayerHitWater = 0;
+            sPlayerWaterOffset = 0.0f;
+            gDeadScooby = 0;
+        }
+        else
+        {
+            globals.player.Health = 3;
+            globals.player.Inv_Chances = 3;
+            globals.player.Inv_ScoobySnacks = 0;
+            globals.player.Inv_Specials = globals.player.s.Initial_Specials;
+            globals.player.Inv_Mtokens[0] = 0;
+            gPlayerHitWater = 0;
+            sPlayerWaterOffset = 0.0f;
+            gDeadScooby = 0;
+            globals.player.Inv_Ammo[0] = globals.player.s.AmmoSceneGum;
+            globals.player.Inv_Ammo[1] = globals.player.s.AmmoSceneSoap;
+            globals.player.Inv_Key = 0;
+            globals.player.Inv_Clue = 0;
+        }
+    }
+
+    globals.player.ControlOn = 1;
+    globals.player.ControlOnEvent = 0;
+    globals.player.Speed = 0;
+    globals.player.Sneak = 0;
+    globals.player.Teeter = 0;
+    globals.player.CanSlip = globals.sceneCur->baseCount[26];
+    globals.player.Slide = 0;
+    globals.player.SlideTimer = 0.0f;
+    globals.player.Stepping = 0;
+    globals.player.JumpState = 0;
+    globals.player.LastJumpState = 0;
+    globals.player.IdleMinorTimer = 0.0f;
+    globals.player.IdleMajorTimer = 0.0f;
+    globals.player.IdleSitTimer = 0.0f;
+    globals.player.cheat_mode = 0;
+    globals.player.FireTarget = NULL;
+    globals.player.HeadbuttHit = 0;
+    globals.player.LeanLerp = 1.0f;
+    globals.player.ScareTimer = 0.0f;
+    globals.player.DamageTimer = 0.0f;
+    globals.player.ControlOffTimer = 0.0f;
+    globals.player.HelmetTimer = 0.0f;
+    globals.player.Bounced = 0;
+    globals.player.FallDeathTimer = 0.0f;
+    globals.player.Diggable = NULL;
+    globals.player.Shaggy8Call = NULL;
+    globals.player.Visible = 1;
+    globals.player.AutoMoveSpeed = 0;
+    globals.player.Shaggy1.SetDown = 0;
+    globals.player.Shaggy1.GrabOn = 1;
+    globals.player.Face_ScareTimer = 0.0f;
+    globals.player.Face_EventTimer = 0.0f;
+    globals.player.Face_PantTimer = 0.0f;
+    globals.player.SpecialReceived = 0;
+    globals.player.Jump_CanFloat = 1;
+    globals.player.Jump_CanDouble = 1;
+    globals.player.DamageSource = NULL;
+    globals.player.Jump_Springboard = NULL;
+    globals.player.Jump_SpringboardStart = 0;
+    gPlayerHitWater = 0;
+    sPlayerWaterOffset = 0.0f;
+    gDeadScooby = 0;
+
+    ent->collis->depenq = PlayerDepenQuery;
+    ent->bupdate = PlayerBoundUpdate;
+    surfSlickRatio = 0.0f;
+    surfSlickTimer = 0.0f;
+    globals.player.floor_surf = NULL;
+    globals.player.floor_norm = g_Y3;
+    ent->collis->chk = 0x2E;
+    xEntReset(ent);
+    ent->frame->rot.axis = g_Y3;
+    ent->frame->rot.angle = ent->asset->ang.x;
+    xEntDriveInit(&globals.player.drv, ent);
+    globals.player.drv.flags = 1;
+
+    xCameraSetTarget(&globals.camera, xEntGetPos(&globals.player.ent));
+    xCameraSetTarget(&globals.camera, xEntGetFrame(&globals.player.ent));
+    memcpy(&gPlayerAbsMat, &globals.camera.hi_cam.mat, sizeof(xMat4x3));
+
+    globals.player.Jump_CurrGravity = globals.player.s.Gravity;
+
+    iModelTagSetup(&globals.player.BubbleTag, globals.player.ent.model->Next->Data, 0.0f, 1.334f, 0.475f);
+    iModelTagSetup(&globals.player.HangPawTag[0], globals.player.ent.model->Data, 0.12f, 0.015f, 0.175f);
+    iModelTagSetup(&globals.player.HangPawTag[1], globals.player.ent.model->Data, -0.12f, 0.015f, 0.195f);
+    iModelTagSetup(&globals.player.HangPawTag[2], globals.player.ent.model->Data, 0.2f, 0.018f, -0.62f);
+    iModelTagSetup(&globals.player.HangPawTag[3], globals.player.ent.model->Data, -0.2f, 0.018f, -0.62f);
+    globals.player.HangPawOffset = 1.5f;
+    iModelTagSetup(&globals.player.center_tag, globals.player.ent.model->Data, 0.0f, 0.465f, 0.099f);
+    iModelTagSetup(&globals.player.head_tag, globals.player.ent.model->Next->Data, 0.0f, 1.251f, 0.293f);
+
+    globals.player.TongueFlags[0] = 0;
+    globals.player.TongueFlags[1] = 0;
+    tongue = globals.player.ent.model;
+    tongueIdx = 0;
+    while (tongue)
+    {
+        if (tongueIdx == 10)
+        {
+            numV = iModelVertCount(tongue->Data);
+            for (tngV = 0; tngV < numV; tngV++)
+            {
+                iModelTagIndex(&tmpTag, tongue->Data, tngV);
+                for (widx = 0; widx < 4; widx++)
+                {
+                    if (tmpTag.wt[widx])
+                    {
+                        wnum = (U8)(tmpTag.matidx >> (widx * 8));
+                        globals.player.TongueFlags[wnum >> 5] |= 1 << (wnum & 0x1F);
+                    }
+                }
+            }
+            break;
+        }
+        tongue = tongue->Next;
+        tongueIdx++;
+    }
+
+    for (curr = globals.player.ent.model->Anim->Table->StateList; curr; curr = curr->Next)
+    {
+        if (curr->UserFlags & 0x40)
+        {
+            if (curr->Data->NumAnims[0] != 3 || curr->Data->NumAnims[1] != 1)
+            {
+                curr->UserFlags &= ~0x40;
+            }
+        }
+    }
+
+    minst = globals.player.ent.model;
+    index = 0;
+    while (minst)
+    {
+        if (index >= 2)
+        {
+            minst->Flags &= ~3;
+        }
+        minst = minst->Next;
+        index++;
+    }
+
+    globals.player.RootUp.x = 0.0f;
+    globals.player.RootUp.y = 1.0f;
+    globals.player.RootUp.z = 0.0f;
+    globals.player.RootUpTarget.x = 0.0f;
+    globals.player.RootUpTarget.y = 1.0f;
+    globals.player.RootUpTarget.z = 0.0f;
+    globals.player.HangElapsed = 0.0f;
+    globals.player.WorldDisguise = 5;
+    globals.player.HangEnt = NULL;
+    globals.player.HangEntLast = NULL;
+    globals.player.Shaggy1.Grab = NULL;
+    globals.player.Shaggy1.GrabTry = NULL;
+    globals.player.Shaggy1.GrabTimer = 0.0f;
+    globals.player.Shaggy1.HangTarget = NULL;
+    globals.player.Shaggy1.ThrowTimer = -1.0f;
+    globals.player.Shaggy1.ThrowTgt = NULL;
+
+    xEntBeginCollide(&globals.player.ent, globals.sceneCur, 0.0f);
+    xEntSetNostepNormAngle(surfSlideStart);
+
+    curVelmag = 0.0f;
+    curVelangle = 0.0f;
+    surfSlickness = 1;
+    surfFriction = 1.0f;
+    surfDamping = minVelmag;
+    lastSlickness = 1;
+    surfSticky = 0;
+
+    zEntPlayer_SNDInit();
+
+    sVONextSituation = NULL;
+    sVOTimer = 0.0f;
+    for (index = 0; index < 15; index++)
+    {
+        sPlayerInfo[index].elapsedTime = sPlayerInfo[index].delay;
+        sPlayerInfo[index].count = 0;
+    }
+
+    xAnimPlaySetState(ent->model->Anim->Single, ent->model->Anim->Table->StateList, 0.0f);
+
+    if (globals.sceneCur->sceneID == 'MNU3')
+    {
+        globals.player.ControlOn = 0;
+        globals.player.ControlOnEvent = 0;
+    }
+
+    iColor_tag black = { 0, 0, 0, 255 };
+    iColor_tag clear = { 0, 0, 0, 0 };
+    xScrFxFade(&black, &clear, 1.0f, NULL, 0, 1);
+}
+
 static void PlayerCollsWallsTranslate(_xCollis* colls, F32 x, F32 y, F32 z)
 {
     _xCollis* c;
@@ -3182,6 +3781,178 @@ static xVec3* GetPosVec(xBase* target)
         break;
     }
     return pos;
+}
+
+S32 zEntPlayerEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget)
+{
+    _zEnt* z;
+    char* astatename;
+
+    switch (toEvent)
+    {
+    case 0x111:
+        zEntPlayer_Notify(1);
+        break;
+    case 0x112:
+        break;
+    case 0x113:
+        zEntPlayer_Notify(8);
+        break;
+    case 0x114:
+        break;
+    case 0x115:
+        break;
+    case 0x116:
+        zEntPlayer_Notify(2);
+        break;
+    case 0x117:
+        break;
+    case 0x118:
+        zEntPlayer_Notify(3);
+        break;
+    case 0x119:
+        break;
+    case 0x11A:
+        break;
+    case 0x11B:
+        zEntPlayer_Notify(10);
+        break;
+    case 0x11C:
+        zEntPlayer_Notify(5);
+        break;
+    case 0x11D:
+        break;
+    case 8:
+        globals.player.ControlOn = 0;
+        globals.player.ControlOnEvent = 0;
+        globals.player.ControlOffTimer = 1.0f;
+        globals.player.AutoMoveSpeed = 0;
+        xScrFxLetterbox(1);
+        break;
+    case 9:
+        globals.player.ControlOnEvent = 1;
+        globals.player.AutoMoveSpeed = 0;
+        xScrFxLetterbox(0);
+        break;
+    case 0x36:
+        globals.player.Health++;
+        if (globals.player.Health > 5)
+        {
+            globals.player.Health = 5;
+        }
+        break;
+    case 0x34:
+        globals.player.Inv_Chances++;
+        if (globals.player.Inv_Chances > 99)
+        {
+            globals.player.Inv_Chances = 99;
+        }
+        break;
+    case 0x35:
+        globals.player.Inv_ScoobySnacks++;
+        zSceneGameStatsTally_snack(1);
+        if (zEntPickup_lastSnackInArea())
+        {
+            zHudShowAllSnacksArea();
+        }
+        break;
+    case 0x25:
+        if (globals.player.Health)
+        {
+            globals.player.DamageTimer = 0.0f;
+            zEntPlayer_Damage(from, globals.player.Health);
+        }
+        break;
+    case 0x33:
+        break;
+    case 0x11:
+        z = (_zEnt*)to;
+        if (z->asset)
+        {
+            z->frame->mat.pos = z->asset->pos;
+            *(xVec3*)&z->model->Mat->pos = z->asset->pos;
+            z->frame->vel = g_O3;
+            z->frame->rot.axis = g_Y3;
+            z->frame->rot.angle = 0.0f;
+        }
+        break;
+    case 0x5D:
+        astatename = ((_zEnt*)to)->model->Anim->Single->State->Name;
+        if (xStricmp(astatename, "Fall_losechance") && xStricmp(astatename, "Fall_losedrop"))
+        {
+            globals.player.FallDeathTimer = 1.2f;
+            globals.player.Health = 0;
+            globals.player.DamageTimer = 15.0f;
+            globals.camera.hi_cam.flags |= 2;
+            if (globals.player.s.TakeDamage)
+            {
+                gDeadScooby = 1;
+                gDeadScoobyPos = *(xVec3*)&globals.player.ent.model->Mat->pos;
+            }
+            globals.player.ent.frame->vel.x = 0.0f;
+            globals.player.ent.frame->vel.z = 0.0f;
+        }
+        break;
+    case 3:
+        globals.player.Visible = 1;
+        break;
+    case 4:
+        globals.player.Visible = 0;
+        break;
+    case 0xCD:
+        if (!globals.player.ControlOn && toParamWidget)
+        {
+            globals.player.AutoMoveDist = toParam[0];
+            globals.player.AutoMoveSpeed = (U32)toParam[1] + 1;
+            globals.player.AutoMoveTarget = *GetPosVec(toParamWidget);
+            globals.player.AutoMoveObject = toParamWidget;
+            if (globals.player.AutoMoveSpeed > 3 || globals.player.AutoMoveSpeed < 1)
+            {
+                globals.player.AutoMoveSpeed = 1;
+            }
+        }
+        break;
+    case 0xDA:
+        if (!globals.player.ControlOn && toParamWidget)
+        {
+            globals.player.AutoMoveSpeed = 4;
+            globals.player.AutoMoveTarget = *GetPosVec(toParamWidget);
+            globals.player.AutoMoveObject = toParamWidget;
+        }
+        break;
+    case 0x29:
+        globals.player.AutoMoveSpeed = 0;
+        break;
+    case 0xE5:
+        globals.player.Shaggy1.SetDown = 1;
+        break;
+    case 0xE6:
+        globals.player.Shaggy1.GrabOn = 1;
+        break;
+    case 0xE7:
+        globals.player.Shaggy1.GrabOn = 0;
+        break;
+    case 0xDD:
+        globals.player.Shaggy1.ThrowTgt = toParamWidget;
+        globals.player.Shaggy1.ThrowTgtAngle = toParam[0] ? toParam[0] : 45.0f;
+        globals.player.Shaggy1.ThrowTgtPeak = toParam[1] ? toParam[1] : 6.0f;
+        globals.player.Shaggy1.ThrowTgtOffset = toParam[2];
+        break;
+    case 0x12C:
+        zRumbleStart(0, SDR_Test);
+        break;
+    case 0x12D:
+        zRumbleStart(0, SDR_EventLight);
+        break;
+    case 0x12E:
+        zRumbleStart(0, SDR_EventMedium);
+        break;
+    case 0x12F:
+        zRumbleStart(0, SDR_EventHeavy);
+        break;
+    }
+
+    return 1;
 }
 
 static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
