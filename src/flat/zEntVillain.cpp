@@ -12922,7 +12922,7 @@ extern "C" void fn_800837D4(st_zEntVillain* vil, F32 dt)
         info.color_death[1] = lbl_801C5248[type][1];
         info.color_death[2] = lbl_801C5248[type][2];
         info.color_death[3] = 0;
-        info.size_death = 0.5f * vil->bound.sph.r;
+        info.size_death = 5.0f * vil->bound.sph.r;
         zParEmitterEmitCustom(lbl_8025EE18, dt, &info);
 
         type = vil->asset->subtype;
