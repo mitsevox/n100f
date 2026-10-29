@@ -13,8 +13,8 @@ extern "C" U32 fn_800C9738(U32);
 #define FONT_SLOT_EMPTY fn_800C9738
 #define FONT_UPDATE fn_800D4C5C
 #define FONT_EVENT fn_800D4B0C
-#define UI_RESET fn_800D4480
-#define UI_EVENT fn_800D3608
+#define UI_RESET zUI_Reset
+#define UI_EVENT zUIEventCB
 #define FONT_RENDER fn_800D47E8
 #define UI_INIT zUI_Init
 #define FONT_WIGGLE lbl_8025E8C0
@@ -30,16 +30,18 @@ extern "C" U32 fn_800C9538(U32);
 #define FONT_WIGGLE lbl_80270758
 #endif
 
-extern "C" void UI_RESET(_zUI*);
 extern "C" F32 FONT_WIGGLE;
 void xFontBoxSetInset(xFontBox*, F32, F32, F32, F32);
 void xFontBoxSetBackdrop(xFontBox*, iColor_tag);
 #if VERSION_GIHE78_REV0
 void zUI_Init(_zUI*, p2EntAsset*);
+void zUI_Reset(_zUI*);
+S32 zUIEventCB(xBase*, xBase*, U32, F32*, xBase*);
 #elif VERSION_GIHE78_REV1
 extern "C" void fn_800D4108(_zUI*, p2EntAsset*);
+extern "C" void fn_800D4074(_zUI*);
+extern "C" S32 fn_800D31FC(xBase*, xBase*, U32, F32*, xBase*);
 #endif
-extern "C" S32 UI_EVENT(xBase*, xBase*, U32, F32*, xBase*);
 
 // Draw the font asset's processed text in its configured box.
 extern "C" void FONT_RENDER(_xEnt* base)
