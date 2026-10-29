@@ -64,7 +64,6 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
             RwImVertexIndex idx1;
             RwImVertexIndex idx2;
             RwImVertexIndex firstNewVert;
-
             U8 clipFlagsOr;
             U8 clipFlagsAnd;
             U32 numNewTris;
@@ -99,7 +98,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (indices->numUsed + 24 > indices->numAlloced)
                     {
                         result = (NULL != RxClusterResizeData(indices, indices->numAlloced
-                                                                           + (numTris - i + 24)));
+                                                                           + (numTris - i) + 24));
                         if (!result)
                         {
                             goto failed;
@@ -111,7 +110,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (camVerts->numUsed + 12 > camVerts->numAlloced)
                     {
                         result = (NULL != RxClusterResizeData(camVerts, camVerts->numAlloced
-                                                                            + (numTris - i + 12)));
+                                                                            + (numTris - i) + 12));
                         if (!result)
                         {
                             goto failed;
@@ -121,7 +120,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (devVerts->numUsed + 12 > devVerts->numAlloced)
                     {
                         result = (NULL != RxClusterResizeData(devVerts, devVerts->numAlloced
-                                                                            + (numTris - i + 12)));
+                                                                            + (numTris - i) + 12));
                         if (!result)
                         {
                             goto failed;
@@ -131,12 +130,11 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (interpolants && interpolants->numUsed + 12 > interpolants->numAlloced)
                     {
                         RxCluster* cluster;
-
                         U32 numElements;
 
-                        numElements = interpolants->numAlloced + (numTris - i + 12);
+                        numElements = interpolants->numAlloced + (numTris - i) + 12;
 
-                        if (!interpolants->numAlloced)
+                        if (interpolants->numAlloced == 0)
                         {
                             cluster = RxClusterInitializeData(interpolants, numElements, 0xC);
                         }
@@ -158,10 +156,10 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     tri = (RwImVertexIndex*)indices->currentData;
 
                     start = 0;
-                    end = 3;
                     vertIndices[0] = idx0;
                     vertIndices[1] = idx1;
                     vertIndices[2] = idx2;
+                    end = 3;
 
                     if (clipFlagsOr & 0x30)
                     {
@@ -264,9 +262,9 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                         if (vertClipFlags & 0x3F)
                         {
                             RwIm2DVertex* devVert;
-                            F32 recipZ;
                             F32 x;
                             F32 y;
+                            F32 recipZ;
 
                             recipZ = 1.0f / camVert->cameraVertex.z;
                             x = camVert->cameraVertex.x;
@@ -325,8 +323,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 
                     if (!(rsvp->ShadeMode & rwSHADEMODEGOURAUD))
                     {
-                        while (first != idx2 && first < firstNewVert
-)
+                        while (first != idx2 && first < firstNewVert)
                         {
                             vertIndices[end] = vertIndices[start];
                             end = (end + 1) & 15;
@@ -359,24 +356,29 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                         S32 prev;
                         S32 next;
 
-                        prev = (start + 2) & 15;
-                        next = (prev + 1) & 15;
+                        next = (start + 2) & 15;
+                        prev = next;
+                        next = (next + 1) & 15;
 
                         numNewTris = 1;
                         tri[0] = vertIndices[(start + 1) & 15];
                         tri[1] = vertIndices[prev];
                         tri[2] = first;
 
+
                         indices->currentData =
                             (U8*)indices->data + indices->stride * (indices->numUsed - 3);
 
                         while (next != end)
                         {
+                            RwImVertexIndex* newTri;
+
                             indices->currentData = (U8*)indices->currentData + stride * 3;
                             numNewTris++;
-                            ((RwImVertexIndex*)indices->currentData)[0] = vertIndices[prev];
-                            ((RwImVertexIndex*)indices->currentData)[1] = vertIndices[next];
-                            ((RwImVertexIndex*)indices->currentData)[2] = first;
+                            newTri = (RwImVertexIndex*)indices->currentData;
+                            newTri[0] = vertIndices[prev];
+                            newTri[1] = vertIndices[next];
+                            newTri[2] = first;
                             prev = next;
                             next = (next + 1) & 15;
                         }
@@ -397,11 +399,11 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                 RwImVertexIndex* last;
                 U32 numNewVerts;
 
+                numNewVerts = camVerts->numUsed - numVerts;
                 src = (RwImVertexIndex*)((U8*)indices->data
                                          + indices->stride * ((numTris - 1) * 3));
                 last = (RwImVertexIndex*)((U8*)indices->data
                                           + indices->stride * (indices->numUsed - 3));
-                numNewVerts = camVerts->numUsed - numVerts;
                 numTris--;
                 i--;
 
@@ -523,7 +525,6 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
             RwImVertexIndex idx1;
             RwImVertexIndex idx2;
             RwImVertexIndex firstNewVert;
-
             U8 clipFlagsOr;
             U8 clipFlagsAnd;
             U32 numNewTris;
@@ -558,7 +559,7 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (indices->numUsed + 24 > indices->numAlloced)
                     {
                         result = (NULL != RxClusterResizeData(indices, indices->numAlloced
-                                                                           + (numTris - i + 24)));
+                                                                           + (numTris - i) + 24));
                         if (!result)
                         {
                             goto failed;
@@ -570,7 +571,7 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (camVerts->numUsed + 12 > camVerts->numAlloced)
                     {
                         result = (NULL != RxClusterResizeData(camVerts, camVerts->numAlloced
-                                                                            + (numTris - i + 12)));
+                                                                            + (numTris - i) + 12));
                         if (!result)
                         {
                             goto failed;
@@ -580,7 +581,7 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (devVerts->numUsed + 12 > devVerts->numAlloced)
                     {
                         result = (NULL != RxClusterResizeData(devVerts, devVerts->numAlloced
-                                                                            + (numTris - i + 12)));
+                                                                            + (numTris - i) + 12));
                         if (!result)
                         {
                             goto failed;
@@ -590,12 +591,11 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (interpolants && interpolants->numUsed + 12 > interpolants->numAlloced)
                     {
                         RxCluster* cluster;
-
                         U32 numElements;
 
-                        numElements = interpolants->numAlloced + (numTris - i + 12);
+                        numElements = interpolants->numAlloced + (numTris - i) + 12;
 
-                        if (!interpolants->numAlloced)
+                        if (interpolants->numAlloced == 0)
                         {
                             cluster = RxClusterInitializeData(interpolants, numElements, 0xC);
                         }
@@ -617,10 +617,10 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     tri = (RwImVertexIndex*)indices->currentData;
 
                     start = 0;
-                    end = 3;
                     vertIndices[0] = idx0;
                     vertIndices[1] = idx1;
                     vertIndices[2] = idx2;
+                    end = 3;
 
                     if (clipFlagsOr & 0x30)
                     {
@@ -723,9 +723,9 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                         if (vertClipFlags & 0x3F)
                         {
                             RwIm2DVertex* devVert;
-                            F32 z;
                             F32 x;
                             F32 y;
+                            F32 z;
 
                             z = camVert->cameraVertex.z;
                             x = camVert->cameraVertex.x;
@@ -784,8 +784,7 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 
                     if (!(rsvp->ShadeMode & rwSHADEMODEGOURAUD))
                     {
-                        while (first != idx2 && first < firstNewVert
-)
+                        while (first != idx2 && first < firstNewVert)
                         {
                             vertIndices[end] = vertIndices[start];
                             end = (end + 1) & 15;
@@ -818,24 +817,29 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                         S32 prev;
                         S32 next;
 
-                        prev = (start + 2) & 15;
-                        next = (prev + 1) & 15;
+                        next = (start + 2) & 15;
+                        prev = next;
+                        next = (next + 1) & 15;
 
                         numNewTris = 1;
                         tri[0] = vertIndices[(start + 1) & 15];
                         tri[1] = vertIndices[prev];
                         tri[2] = first;
 
+
                         indices->currentData =
                             (U8*)indices->data + indices->stride * (indices->numUsed - 3);
 
                         while (next != end)
                         {
+                            RwImVertexIndex* newTri;
+
                             indices->currentData = (U8*)indices->currentData + stride * 3;
                             numNewTris++;
-                            ((RwImVertexIndex*)indices->currentData)[0] = vertIndices[prev];
-                            ((RwImVertexIndex*)indices->currentData)[1] = vertIndices[next];
-                            ((RwImVertexIndex*)indices->currentData)[2] = first;
+                            newTri = (RwImVertexIndex*)indices->currentData;
+                            newTri[0] = vertIndices[prev];
+                            newTri[1] = vertIndices[next];
+                            newTri[2] = first;
                             prev = next;
                             next = (next + 1) & 15;
                         }
@@ -856,11 +860,11 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                 RwImVertexIndex* last;
                 U32 numNewVerts;
 
+                numNewVerts = camVerts->numUsed - numVerts;
                 src = (RwImVertexIndex*)((U8*)indices->data
                                          + indices->stride * ((numTris - 1) * 3));
                 last = (RwImVertexIndex*)((U8*)indices->data
                                           + indices->stride * (indices->numUsed - 3));
-                numNewVerts = camVerts->numUsed - numVerts;
                 numTris--;
                 i--;
 

@@ -82,7 +82,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (camVerts->numUsed + 12 > camVerts->numAlloced)
                     {
                         result = (NULL != RxClusterResizeData(camVerts, camVerts->numAlloced
-                                                                            + (numLines - i + 12)));
+                                                                            + (numLines - i) + 12));
                         if (!result)
                         {
                             goto failed;
@@ -92,7 +92,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (devVerts->numUsed + 12 > devVerts->numAlloced)
                     {
                         result = (NULL != RxClusterResizeData(devVerts, devVerts->numAlloced
-                                                                            + (numLines - i + 12)));
+                                                                            + (numLines - i) + 12));
                         if (!result)
                         {
                             goto failed;
@@ -102,9 +102,9 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     line = (RwImVertexIndex*)indices->currentData;
 
                     start = 0;
-                    end = 2;
                     vertIndices[0] = idx0;
                     vertIndices[1] = idx1;
+                    end = 2;
 
                     if (clipFlagsOr & 0x30)
                     {
@@ -195,9 +195,9 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                         if (vertClipFlags & 0x3F)
                         {
                             RwIm2DVertex* devVert;
-                            F32 recipZ;
                             F32 x;
                             F32 y;
+                            F32 recipZ;
 
                             recipZ = 1.0f / camVert->cameraVertex.z;
                             x = camVert->cameraVertex.x;
@@ -290,8 +290,13 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     }
 
                     keep = TRUE;
-                    line[0] = vertIndices[start];
-                    line[1] = vertIndices[(start + 1) & 15];
+                    {
+                        S32 next;
+
+                        next = (start + 1) & 15;
+                        line[0] = vertIndices[start];
+                        line[1] = vertIndices[next];
+                    }
                 }
             }
             else
@@ -426,7 +431,7 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (camVerts->numUsed + 12 > camVerts->numAlloced)
                     {
                         result = (NULL != RxClusterResizeData(camVerts, camVerts->numAlloced
-                                                                            + (numLines - i + 12)));
+                                                                            + (numLines - i) + 12));
                         if (!result)
                         {
                             goto failed;
@@ -436,7 +441,7 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     if (devVerts->numUsed + 12 > devVerts->numAlloced)
                     {
                         result = (NULL != RxClusterResizeData(devVerts, devVerts->numAlloced
-                                                                            + (numLines - i + 12)));
+                                                                            + (numLines - i) + 12));
                         if (!result)
                         {
                             goto failed;
@@ -446,9 +451,9 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     line = (RwImVertexIndex*)indices->currentData;
 
                     start = 0;
-                    end = 2;
                     vertIndices[0] = idx0;
                     vertIndices[1] = idx1;
+                    end = 2;
 
                     if (clipFlagsOr & 0x30)
                     {
@@ -539,9 +544,9 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                         if (vertClipFlags & 0x3F)
                         {
                             RwIm2DVertex* devVert;
-                            F32 z;
                             F32 x;
                             F32 y;
+                            F32 z;
 
                             z = camVert->cameraVertex.z;
                             x = camVert->cameraVertex.x;
@@ -634,8 +639,13 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     }
 
                     keep = TRUE;
-                    line[0] = vertIndices[start];
-                    line[1] = vertIndices[(start + 1) & 15];
+                    {
+                        S32 next;
+
+                        next = (start + 1) & 15;
+                        line[0] = vertIndices[start];
+                        line[1] = vertIndices[next];
+                    }
                 }
             }
             else

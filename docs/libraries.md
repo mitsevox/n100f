@@ -54,8 +54,8 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeImmStash.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeSubmitLine.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeSubmitTriangle.c` | 2 of 2 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/pipe/p2/nodeClipLine.c` | 2 of 4 | `PerspectiveClipProcessPacket` (96.1%) and `ParallelClipProcessPacket` (96.1%): the loop registers differ, the resize size is summed as numAlloced + ((numLines - i) + 12), and the ring start is reloaded between the two index stores |
-| `rwsdk/src/pipe/p2/nodeClipTriangle.c` | 2 of 4 | `PerspectiveClipProcessPacket` (95.7%) and `ParallelClipProcessPacket` (95.7%): the target keeps the node and packet in stack slots, the loop registers differ and the interpolant Init/Resize test branches the other way |
+| `rwsdk/src/pipe/p2/nodeClipLine.c` | 2 of 4 | `PerspectiveClipProcessPacket` (98.4%) and `ParallelClipProcessPacket` (98.4%): the saved registers of the loop counter, the result flag, the doubled stride and the keep flag differ, and the set-up schedules i = 0 and the line count load differently |
+| `rwsdk/src/pipe/p2/nodeClipTriangle.c` | 2 of 4 | `PerspectiveClipProcessPacket` (99.8%) and `ParallelClipProcessPacket` (99.8%): the loop counter, the new-triangle count and the first new vertex take each other's saved registers |
 | `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 2 of 4 | `ParallelCullProcessPacket` (98.5%: the triangle index is computed as N + (2N - 3) and the loop registers differ) and `PerspectiveCullProcessPacket` (94.6%: its area tests schedule the loads and products differently) |
 | `rwsdk/src/pipe/p2/nodeTransform.c` | 2 of 4 | `TransformNodeParallel` and `TransformNodePerspective` (98.3% each: the packet, stride and clip-flag accumulator registers and the order of the x and y loads) |
 | `rwsdk/src/pipe/p2/nodeImmInstance.c` | 2 of 2 | (Matching on GIHE78-rev0) |

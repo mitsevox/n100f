@@ -1244,59 +1244,59 @@ struct RxCamSpace3DVertex
 };
 
 // Makes the vertex where an edge crosses one clip plane: the new camera-space and screen vertices,
-// from the edge's two end vertices.
-typedef void (*RwClipVertexFunc)(RxCamSpace3DVertex* newCamVert, RxCamSpace3DVertex* camVert0,
-                                 RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                 RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+// from the edge's two end vertices. Returns the edge parameter of the crossing.
+typedef F32 (*RwClipVertexFunc)(RxCamSpace3DVertex* newCamVert, RxCamSpace3DVertex* camVert0,
+                                RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
 
-void _rwGeneratePerspClippedVertexZLO(RxCamSpace3DVertex* newCamVert,
-                                      RxCamSpace3DVertex* camVert0,
-                                      RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                      RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGeneratePerspClippedVertexZHI(RxCamSpace3DVertex* newCamVert,
-                                      RxCamSpace3DVertex* camVert0,
-                                      RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                      RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGeneratePerspClippedVertexYLO(RxCamSpace3DVertex* newCamVert,
-                                      RxCamSpace3DVertex* camVert0,
-                                      RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                      RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGeneratePerspClippedVertexYHI(RxCamSpace3DVertex* newCamVert,
-                                      RxCamSpace3DVertex* camVert0,
-                                      RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                      RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGeneratePerspClippedVertexXLO(RxCamSpace3DVertex* newCamVert,
-                                      RxCamSpace3DVertex* camVert0,
-                                      RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                      RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGeneratePerspClippedVertexXHI(RxCamSpace3DVertex* newCamVert,
-                                      RxCamSpace3DVertex* camVert0,
-                                      RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                      RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGenerateParallelZLOClippedVertex(RxCamSpace3DVertex* newCamVert,
-                                         RxCamSpace3DVertex* camVert0,
-                                         RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                         RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGenerateParallelZHIClippedVertex(RxCamSpace3DVertex* newCamVert,
-                                         RxCamSpace3DVertex* camVert0,
-                                         RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                         RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGenerateParallelYLOClippedVertex(RxCamSpace3DVertex* newCamVert,
-                                         RxCamSpace3DVertex* camVert0,
-                                         RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                         RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGenerateParallelYHIClippedVertex(RxCamSpace3DVertex* newCamVert,
-                                         RxCamSpace3DVertex* camVert0,
-                                         RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                         RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGenerateParallelXLOClippedVertex(RxCamSpace3DVertex* newCamVert,
-                                         RxCamSpace3DVertex* camVert0,
-                                         RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                         RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
-void _rwGenerateParallelXHIClippedVertex(RxCamSpace3DVertex* newCamVert,
-                                         RxCamSpace3DVertex* camVert0,
-                                         RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
-                                         RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGeneratePerspClippedVertexZLO(RxCamSpace3DVertex* newCamVert,
+                                     RxCamSpace3DVertex* camVert0,
+                                     RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                     RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGeneratePerspClippedVertexZHI(RxCamSpace3DVertex* newCamVert,
+                                     RxCamSpace3DVertex* camVert0,
+                                     RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                     RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGeneratePerspClippedVertexYLO(RxCamSpace3DVertex* newCamVert,
+                                     RxCamSpace3DVertex* camVert0,
+                                     RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                     RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGeneratePerspClippedVertexYHI(RxCamSpace3DVertex* newCamVert,
+                                     RxCamSpace3DVertex* camVert0,
+                                     RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                     RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGeneratePerspClippedVertexXLO(RxCamSpace3DVertex* newCamVert,
+                                     RxCamSpace3DVertex* camVert0,
+                                     RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                     RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGeneratePerspClippedVertexXHI(RxCamSpace3DVertex* newCamVert,
+                                     RxCamSpace3DVertex* camVert0,
+                                     RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                     RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGenerateParallelZLOClippedVertex(RxCamSpace3DVertex* newCamVert,
+                                        RxCamSpace3DVertex* camVert0,
+                                        RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                        RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGenerateParallelZHIClippedVertex(RxCamSpace3DVertex* newCamVert,
+                                        RxCamSpace3DVertex* camVert0,
+                                        RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                        RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGenerateParallelYLOClippedVertex(RxCamSpace3DVertex* newCamVert,
+                                        RxCamSpace3DVertex* camVert0,
+                                        RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                        RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGenerateParallelYHIClippedVertex(RxCamSpace3DVertex* newCamVert,
+                                        RxCamSpace3DVertex* camVert0,
+                                        RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                        RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGenerateParallelXLOClippedVertex(RxCamSpace3DVertex* newCamVert,
+                                        RxCamSpace3DVertex* camVert0,
+                                        RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                        RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
+F32 _rwGenerateParallelXHIClippedVertex(RxCamSpace3DVertex* newCamVert,
+                                        RxCamSpace3DVertex* camVert0,
+                                        RxCamSpace3DVertex* camVert1, RwIm2DVertex* newDevVert,
+                                        RwIm2DVertex* devVert0, RwIm2DVertex* devVert1);
 
 // Clip the polygon held in vertIndices[*start] up to vertIndices[*end] (a ring of 16 entries)
 // against one plane, appending the new vertices to the clusters; both return the polygon's new
