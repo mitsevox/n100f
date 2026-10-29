@@ -243,6 +243,16 @@ typedef enum RpLightType
 } RpLightType;
 
 #define RpLightGetType(_light) ((RpLightType)rwObjectGetSubType((_light)))
+#define RpLightGetFrame(_light) ((RwFrame*)rwObjectGetParent((_light)))
+#define RpLightSetFrame(_light, _frame) (_rwObjectHasFrameSetFrame((_light), (_frame)), (_light))
+#define RpLightSetFlags(_light, _flags) ((((RwObject*)(_light))->flags = (U8)(_flags)), (_light))
+
+enum RpLightFlag
+{
+    rpLIGHTLIGHTATOMICS = 0x01,
+    rpLIGHTLIGHTWORLD = 0x02,
+    rpLIGHTFLAGFORCEENUMSIZEINT = 0x7FFFFFFF
+};
 
 typedef RwCamera* (*RwCameraCallBack)(RwCamera* camera, void* data);
 typedef RpLight* (*RpLightCallBack)(RpLight* light, void* data);
@@ -251,7 +261,11 @@ typedef RpLight* (*RpLightCallBack)(RpLight* light, void* data);
 extern "C" {
 #endif
 
+RpLight* RpLightCreate(S32 type);
 S32 RpLightDestroy(RpLight* light);
+RpLight* RpLightSetRadius(RpLight* light, F32 radius);
+RpLight* RpLightSetColor(RpLight* light, const RwRGBAReal* color);
+RpLight* RpLightSetConeAngle(RpLight* light, F32 angle);
 S32 RpLightRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
                           RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
 S32 RpLightRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
@@ -303,6 +317,8 @@ RpClump* RpClumpStreamRead(RwStream* stream);
 
 RpWorld* RpWorldAddCamera(RpWorld* world, RwCamera* camera);
 RpWorld* RpWorldRemoveCamera(RpWorld* world, RwCamera* camera);
+RpWorld* RpWorldAddLight(RpWorld* world, RpLight* light);
+RpWorld* RpWorldRemoveLight(RpWorld* world, RpLight* light);
 S32 RpWorldDestroy(RpWorld* world);
 
 RxPipeline* RpWorldSetDefaultSectorPipeline(RxPipeline* pipeline);

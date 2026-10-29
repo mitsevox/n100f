@@ -4,6 +4,13 @@
 #include "types.h"
 #include "xMath3.h"
 
+struct iAnimSKBKey
+{
+    U16 TimeIndex;
+    S16 Quat[4];
+    S16 Tran[3];
+};
+
 struct iAnimSKBHeader
 {
     U32 Magic;

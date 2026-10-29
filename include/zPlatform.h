@@ -64,6 +64,9 @@ struct _zPlatform : _zEnt
 struct _xScene;
 
 void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt);
+void zPlatform_Mount(_zPlatform* plat);
+void zPlatform_Dismount(_zPlatform*);
+void zPlatform_Shake(_zPlatform* plat, F32, F32 ampl, F32 freq);
 S32 zPlatformEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
 
 #endif

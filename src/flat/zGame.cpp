@@ -14,6 +14,7 @@
 #include "iMath.h"
 #include "zLaugh.h"
 #include "iPad.h"
+#include "xTRC.h"
 #include "xEnv.h"
 #include "zEntShaggy.h"
 #include "zPortal.h"
@@ -78,8 +79,6 @@ void xCameraSetTarget(_tagxCamFrame*, xVec3*);
 void xCameraSetTarget(_tagxCamFrame*, xMat4x3*);
 void zEntEventAll(xBase*, U32, U32, F32*);
 extern "C" void fn_800AFD4C(S32);
-extern "C" RpLight* RpLightCreate(RpLightType);
-extern "C" RpLight* RpLightSetColor(RpLight*, const RwRGBAReal*);
 extern "C" RpWorld* RpWorldCreate(const RwBBox*);
 extern "C" F32 RwIm2DGetNearScreenZ();
 extern "C" void fn_80021E50();
@@ -91,14 +90,6 @@ extern "C" char* fn_800CDA0C(U32);
 extern "C" S32 fn_800CDAA4(U32);
 extern "C" void fn_800B0F3C(char*, S32, S32, S32, F32, F32, F32, F32, F32);
 void xFontRender();
-struct _tagTRCPadInfo
-{
-    S32 pad_init;
-    S32 id;
-    S32 state;
-};
-
-extern "C" _tagTRCPadInfo lbl_802289B8[4];
 extern "C" RwCamera* lbl_8025EF14;
 extern "C" RpWorld* lbl_8025EF18;
 extern "C" RpLight* lbl_8025EF1C;

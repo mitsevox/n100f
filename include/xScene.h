@@ -7,6 +7,8 @@
 
 struct _xEnt;
 struct _xEnv;
+struct _xRay3;
+struct _xCollis;
 
 // Partial: members up to mempool.
 struct _xScene
@@ -36,9 +38,6 @@ struct _xScene
     _xEnv* env;
     xMemPool mempool;
 };
-
-struct _xRay3;
-struct _xCollis;
 
 extern _xScene* g_xSceneCur;
 

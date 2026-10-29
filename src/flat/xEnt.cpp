@@ -6,6 +6,7 @@
 #include "xFFX.h"
 #include "xMath.h"
 #include "xMathInlines.h"
+#include "xVec3Inlines.h"
 #include "xMemMgr.h"
 #include "xPad.h"
 #include "xScene.h"

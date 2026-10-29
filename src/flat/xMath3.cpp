@@ -32,6 +32,12 @@ static inline F32 xasin(F32 x)
     return asin(x);
 }
 
+static inline void xMat4x3Toworld(xVec3* o, const xMat4x3* m, const xVec3* v)
+{
+    xMat3x3RMulVec(o, (const xMat3x3*)m, v);
+    xVec3AddTo(o, &m->pos);
+}
+
 void xMath3Init()
 {
     iMath3Init();

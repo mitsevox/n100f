@@ -16,7 +16,23 @@ struct xMemPool
     U32 Total;
 };
 
+struct xMemArea_tag
+{
+    U32 addr;
+    U32 size;
+    U32 flags;
+};
+
+struct xMemInfo_tag
+{
+    xMemArea_tag system;
+    xMemArea_tag stack;
+    xMemArea_tag DRAM;
+    xMemArea_tag SRAM;
+};
+
 extern U32 gActiveHeap;
+extern xMemInfo_tag gMemInfo;
 
 void* xMemAlloc(U32 heapID, U32 size);
 void* xMemPoolAlloc(xMemPool* pool);
