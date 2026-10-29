@@ -379,7 +379,8 @@ void zUI_Save(_zUI* ent, xSerial* s)
 void zUI_Init(_zUI* ent, p2EntAsset* asset)
 {
     zEntInit(ent, asset, 'UI  ');
-    ent->sasset = static_cast<zUIAsset*>(asset);
+    zUIAsset* sasset = static_cast<zUIAsset*>(asset);
+    ent->sasset = sasset;
     ent->pflags = 0;
     ent->penby |= 0x10;
     ent->chkby = 0;
@@ -387,9 +388,9 @@ void zUI_Init(_zUI* ent, p2EntAsset* asset)
     ent->move = 0;
     ent->eventFunc = zUIEventCB;
     if (ent->linkCount)
-        ent->link = (p2LinkAsset*)(ent->sasset + 1);
+        ent->link = (p2LinkAsset*)(sasset + 1);
     ent->eventFunc = zUIEventCB;
-    ent->uiFlags = ent->sasset->uiFlags;
+    ent->uiFlags = sasset->uiFlags;
     if (ent->uiFlags & 4) ent->render = 0;
     zEntReset(ent);
     sSortedCount = 0;
