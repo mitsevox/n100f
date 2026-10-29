@@ -1389,7 +1389,7 @@ static U32 TeeterCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 
 static U32 SlipperyCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 {
-    return globals.player.Speed == 0 && globals.player.Slide == 0 && surfSlickTimer != 0.0f;
+    return globals.player.Speed == 0 && globals.player.Slide == 0 && surfSlickTimer;
 }
 
 static U32 HotsauceCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
@@ -1403,7 +1403,7 @@ static inline U32 MoveSurfaceCheck(xAnimTransition* tran, xAnimSingle* anim, voi
     {
         return tran->UserFlags & 0x20;
     }
-    if (surfSlickTimer != 0.0f)
+    if (surfSlickTimer)
     {
         return tran->UserFlags & 0x10;
     }
@@ -1471,7 +1471,7 @@ static U32 WalkPlungeCheck(xAnimTransition* tran, xAnimSingle* anim, void* param
 
 static U32 IdleCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 {
-    return (globals.player.Speed == 0 && globals.player.Slide == 0 && surfSlickTimer == 0.0f &&
+    return (globals.player.Speed == 0 && globals.player.Slide == 0 && !surfSlickTimer &&
             !globals.player.Teeter) &&
            HealthCheck(tran, anim, param_3);
 }
@@ -1680,7 +1680,7 @@ static U32 JumpCheck(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 static U32 JumpCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 {
     zEntPlayerJumpStart(&globals.player.ent, &globals.player.s.Jump);
-    startDouble = startJump = globals.player.ent.frame->mat.pos.y;
+    startJump = startDouble = globals.player.ent.frame->mat.pos.y;
     return 0;
 }
 

@@ -17,6 +17,7 @@
 #include "xTRC.h"
 #include "xEnv.h"
 #include "zEntShaggy.h"
+#include "zHud.h"
 #include "zPortal.h"
 #include <dolphin/os.h>
 #include <dolphin/vi.h>
@@ -38,8 +39,6 @@ extern "C" void fn_800D0120();
 extern "C" void fn_800D02D8(U32);
 extern "C" void fn_800207EC(void*, S32, S32);
 extern "C" void fn_8001E7C4(void*, _xEnv*);
-extern "C" void fn_800B96F8();
-extern "C" void fn_800B969C(zScene*);
 extern "C" void fn_800CF0A4();
 extern "C" void fn_800300CC(RpWorld*);
 extern "C" U32 fn_8003FE80(U32);
@@ -475,8 +474,8 @@ void zGameInit(U32 theSceneID)
     globals.stats.tokens_tot = 0;
     globals.stats.snacks = 0;
     globals.stats.snacks_tot = 0;
-    fn_800B96F8();
-    fn_800B969C(globals.sceneCur);
+    zHud_Init();
+    zHud_Setup(globals.sceneCur);
 }
 
 // Process gameplay state changes, including the transition through a portal.

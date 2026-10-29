@@ -15,12 +15,7 @@
 void xFFXShakeFree(xFFXShakeState* s);
 void xFFXShakeUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata);
 S16 xFFXAddEffect(_xEnt* ent, xFFX* effect);
-extern "C" void fn_80048FA8(_zEnt* ent);
-extern "C" void fn_80049008(_zEnt* ent);
-extern "C" void fn_80024948(_xEnt* ent, xVec3* dpos);
 extern "C" void fn_80026A1C(_xEntMotion* motion, const xVec3* dpos);
-extern "C" void fn_80024E14(_xEnt* ent, RpAtomic* model);
-extern "C" xAnimFile* fn_8001B7FC(void* data, char* name, U32 flags, xAnimFile** list);
 extern "C" void fn_8002E174(xVec3* out, const xMat3x3* mat, const xVec3* v);
 
 static _zParEmitter* sEmitTremble;
@@ -72,7 +67,7 @@ void zPlatform_Init(_zPlatform* plat, p2EntAsset* asset)
         void* buf = xSTFindAsset(passet->ba.bustModelID, &size);
         if (buf)
         {
-            fn_80024E14(plat, (RpAtomic*)buf);
+            xEntLoadModel(plat, (RpAtomic*)buf);
             plat->bm = plat->model;
         }
         else
@@ -87,7 +82,7 @@ void zPlatform_Init(_zPlatform* plat, p2EntAsset* asset)
         void* buf = xSTFindAsset(passet->sb.animID[0], &size);
         if (buf)
         {
-            xAnimFile* afile = fn_8001B7FC(buf, "", 0, NULL);
+            xAnimFile* afile = xAnimFileNew(buf, "", 0, NULL);
             plat->atbl = xAnimTableNew("", NULL);
             xAnimTableNewState(plat->atbl, "Idle", 0, 0, 1.0f, NULL, NULL, 0.0f, NULL);
             xAnimTableAddFile(plat->atbl, afile, "Idle");
@@ -100,7 +95,7 @@ void zPlatform_Init(_zPlatform* plat, p2EntAsset* asset)
 // Set up motion and find the emitters used by breakaway platforms.
 void zPlatform_Setup(_zPlatform* plat, _xScene* sc)
 {
-    fn_80049008(plat);
+    zEntSetup(plat);
     xEntMotionSetup(&plat->motion, sc);
     sEmitTremble = zParEmitterFind("PAREMIT_PLAT_TREMBLE");
     sEmitBreakaway = zParEmitterFind("PAREMIT_PLAT_BREAKAWAY");
@@ -121,7 +116,7 @@ void zPlatform_Load(_zPlatform* ent, xSerial* s)
 // Restore a platform's motion and subtype-specific state.
 void zPlatform_Reset(_zPlatform* plat, _xScene* sc)
 {
-    fn_80048FA8(plat);
+    zEntReset(plat);
     xEntMotionReset(&plat->motion, sc);
     plat->plat_flags = 1;
 
@@ -434,7 +429,7 @@ void zPlatform_MakeDiggable(_zPlatform* plat)
 static void zPlatformTranslate(_xEnt* ent, xVec3* dpos)
 {
     _zPlatform* plat = (_zPlatform*)ent;
-    fn_80024948(ent, dpos);
+    xEntDefaultTranslate(ent, dpos);
     fn_80026A1C(&plat->motion, dpos);
 }
 

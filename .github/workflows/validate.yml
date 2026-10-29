@@ -138,6 +138,11 @@ jobs:
         # committed flat/ units, split_units.tsv and split_edges.tsv must be what it writes now.
         # The failure message gives the command that updates them.
         run: python3 tools/splits/check_recover.py --target "$TARGET_ID" --ps2-elf /orig/SLUS-20349/SLUS_203.49
+      - name: Check exact functions' constants
+        # objdiff scores a relocation by its symbol's name, so an exact function can load a wrong
+        # pool literal, or two values in swapped order, while the unit links the original assembly.
+        # Every relocation of every exact function must reach the original's address or value.
+        run: python3 tools/literal_check.py --target "$TARGET_ID"
       - name: List measuring tools
         id: tools
         # Every event: the tools the published provenance names, verified against what the image

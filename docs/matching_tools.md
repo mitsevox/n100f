@@ -30,6 +30,17 @@ python3 tools/declorder.py src/flat/zEntShaggy.cpp zEntShaggy_SceneStart__FP6zSc
 
 Check: a known answer. In four matched functions the declarations were shuffled (seed 7); three of them then no longer matched, so the order matters on GC/1.3.2. From each shuffled copy the search got back to a byte-identical function: `iModelTagInternal` (8 locals, 51 orders, 3 s), `PlayerDigUpdate` (6 locals, 16 orders, 12 s) and `zEntPlayerSurfDamageUpdate` (6 locals, all 720 orders exhaustively, 510 s, at the score of the original source). That run scored with `--strict`. The order it finds can differ from the original where several orders compile alike; it is a hint to weigh against the DWARF and the code around it. Cost grows with the unit's compile time (about 3 to 6 s per order for zEntPlayer on 4 cores), which is why the exhaustive limit is low and the local search does the rest.
 
+## Constants and references: `tools/literal_check.py`
+
+objdiff, and so `trial.py` and the progress report, pair a relocation by its symbol's name. An exact function can therefore load a wrong pool literal (`1.59155f` where the target holds 5/π), two values in swapped order, a swapped jump-table entry or a call through a stale `fn_` placeholder, and still score 100%; while the unit is `NonMatching` the link uses the original assembly and the executable stays byte-identical. This tool takes every function whose code equals the target's with the relocated fields masked and checks where each relocation lands: a name `symbols.txt` gives must have the target's address, and an anonymous literal or table must hold the original executable's bytes there (pointers inside resolved). CI runs it for every target after the build and fails on any disagreement.
+
+```sh
+python3 tools/literal_check.py --target GIHE78-rev0
+python3 tools/literal_check.py --target GIHE78-rev0 --unit main/flat/zHud
+```
+
+Check: on `main` at `50ba9ac` it checks 2,813 exact functions on GIHE78-rev0 and 2,081 on GIHE78-rev1, and found 13 that objdiff scores 100% while they disagree: six zEntPlayer animation checks loading `surfSlickTimer` and 0.0f in swapped order, `JumpCB` storing `startJump` and `startDouble` in swapped order, a `ZLOB_elcb_event` jump table with cases 35 and 36 swapped, and seven calls in five zGame and zPlatform functions through `fn_` placeholders that `symbols.txt` has since named. Putting `1.59155f` back into zHud's status-angle setup reproduces the four findings of the #187 review.
+
 ## Out-of-repository tools
 
 These are installed on the machine that uses them, pinned to the revision below, and never copied into this repository. Their output (dumps, drafts) contains the game's code and stays local.
