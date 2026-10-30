@@ -37,26 +37,23 @@
 #include <string.h>
 
 // Functions that have no name yet keep their address labels, which differ between the targets:
-// three villain functions with no name in any related build, and three from other units.
+// three villain functions with no name in any related build, and two from other units.
 #if VERSION_GIHE78_REV0
 #define VIL_QUEUE_PROPSOUND fn_8007BD98
 #define VIL_HOLO_FLICKER fn_800837D4
 #define VIL_RESET fn_800A8CB8
-#define FN_8001D700 fn_8001D700
 #define FN_80021E18 fn_80021E18
 #define FN_8003CD24 fn_8003CD24
 #elif VERSION_GIHE78_REV1
 #define VIL_QUEUE_PROPSOUND fn_8007BBA0
 #define VIL_HOLO_FLICKER fn_800835DC
 #define VIL_RESET fn_800A8AC0
-#define FN_8001D700 fn_8001D83C
 #define FN_80021E18 fn_80021FA0
 #define FN_8003CD24 fn_8003CD40
 #endif
 
 S32 zEntPlayer_Damage(xBase* src, U32 damage, _xVec3* direction);
 extern "C" void FN_8003CD24(U32 owner);
-extern "C" void FN_8001D700(const _xBound*, const xModelInstance*, _xCollis*, U8, F32);
 extern "C" void FN_80021E18(U32* color);
 
 enum en_RBS_STAGE
@@ -946,10 +943,8 @@ static _tagLightning* sKnightLightning[5];
 static _tagLightning* sMastermindLightning[5];
 static _xVec3 sGreenShockPosition;
 static _zParEmitter* sGreenShockEmitter;
-extern "C" {
 static _zParEmitter* sEmitHoloPoof;
 static _zParEmitter* sEmitHoloDots;
-}
 static _zParEmitter* sGreenBallEmitter;
 static _zParEmitter* sGreenBallSmackEmitter;
 static _zParEmitter* sGreenHurtEmitter;
@@ -12579,45 +12574,6 @@ static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*
 
     vil->domove |= 0x80000000;
     return 1;
-}
-
-// Checks the player and the four tracked ropes while the sword is in flight.
-static void VWEP_rbs_chkCollide(st_REDBEARD_SWORD* rbs, F32 dt)
-{
-    _xCollis colrec = { 0 };
-    xEntBeginCollide(rbs, globals.sceneCur, dt);
-    if (rbs->ent_colchk[0])
-    {
-        xBoundHitsBound(&rbs->bound, &rbs->ent_colchk[0]->bound, &colrec);
-        if (colrec.flags & 1) VWEP_mm_zapPlayer(rbs->rbvil);
-    }
-    rbs->bound.sph.r = 1.5f;
-    for (S32 i = 1; i < 5; i++)
-    {
-        _xEnt* tgt = rbs->ent_colchk[i];
-        colrec.flags = 0;
-        if (!tgt) continue;
-        if (!xEntIsVisible(tgt))
-        {
-            rbs->ent_colchk[i] = NULL;
-            continue;
-        }
-        colrec.optr = tgt;
-        colrec.oid = tgt->id;
-        xBoundHitsBound(&rbs->bound, &tgt->bound, &colrec);
-        if (colrec.flags & 1)
-        {
-            colrec.flags = 0;
-            FN_8001D700(&rbs->bound, tgt->model, &colrec, 1, 0.7853982f);
-            if (colrec.flags & 1)
-            {
-                zEntEvent(rbs->rbvil, 0, tgt, eEventDestroy, NULL, NULL, 0);
-                rbs->ent_colchk[i] = NULL;
-            }
-        }
-    }
-    rbs->bound.sph.r = 0.75f;
-    xEntEndCollide(rbs, globals.sceneCur, dt);
 }
 
 // Aim the extended attack from its tagged vertex and emit its trail.
