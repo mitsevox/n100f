@@ -169,7 +169,7 @@ S32 RwEngineClose(void)
 }
 
 // Moves the engine globals into their own allocation and opens the device on them.
-static S32 EngineOpenDevice(RwDevice* device, RwEngineOpenParams* initParams)
+static S32 EngineOpen(RwDevice* device, RwEngineOpenParams* initParams)
 {
     RwGlobals* globals;
 
@@ -233,7 +233,7 @@ S32 RwEngineOpen(RwEngineOpenParams* initParams)
 
             if (result)
             {
-                result = EngineOpenDevice(device, initParams);
+                result = EngineOpen(device, initParams);
 
                 if (result)
                 {

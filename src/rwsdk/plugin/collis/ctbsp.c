@@ -10,6 +10,7 @@ struct nodeInfo
 // Node types: a leaf is 1, a branch is 2. A branch node's own type field is the
 // byte offset of its split axis inside an RwV3d.
 #define LEAF_NODE 1
+#define BRANCH_NODE 2
 #define AXIS_COMPONENT(vec, axis) (*(F32*)((U8*)&(vec) + (axis)))
 
 RpCollBSPTree* _rpCollBSPTreeInit(RpCollBSPTree* tree, S32 numLeafNodes)
@@ -48,17 +49,18 @@ void _rpCollBSPTreeDestroy(RpCollBSPTree* tree)
 
 RpCollBSPTree* _rpCollBSPTreeStreamWrite(RpCollBSPTree* tree, RwStream* stream)
 {
-    U32 count = tree->numLeafNodes - 1;
+    U32 numBranches = tree->numLeafNodes - 1;
     RpCollBSPBranchNode* branch = tree->branchNodes;
     RpCollBSPLeafNode* leaf;
+    U32 numLeaves;
 
-    while (count--)
+    while (numBranches--)
     {
         U32 types = ((U32)branch->type << 16) | (branch->leftType << 8) | branch->rightType;
-        U32 nodes = ((U32)branch->leftNode << 16) | branch->rightNode;
+        U32 indices = ((U32)branch->leftNode << 16) | branch->rightNode;
 
         if (!RwStreamWriteInt32(stream, (S32*)&types, sizeof(types)) ||
-            !RwStreamWriteInt32(stream, (S32*)&nodes, sizeof(nodes)) ||
+            !RwStreamWriteInt32(stream, (S32*)&indices, sizeof(indices)) ||
             !RwStreamWriteReal(stream, &branch->leftValue, sizeof(branch->leftValue)) ||
             !RwStreamWriteReal(stream, &branch->rightValue, sizeof(branch->rightValue)))
         {
@@ -68,14 +70,14 @@ RpCollBSPTree* _rpCollBSPTreeStreamWrite(RpCollBSPTree* tree, RwStream* stream)
         branch++;
     }
 
-    count = tree->numLeafNodes;
+    numLeaves = tree->numLeafNodes;
     leaf = tree->leafNodes;
 
-    while (count--)
+    while (numLeaves--)
     {
-        U32 polygons = ((U32)leaf->numPolygons << 16) | leaf->firstPolygon;
+        U32 data = ((U32)leaf->numPolygons << 16) | leaf->firstPolygon;
 
-        if (!RwStreamWriteInt32(stream, (S32*)&polygons, sizeof(polygons)))
+        if (!RwStreamWriteInt32(stream, (S32*)&data, sizeof(data)))
         {
             return NULL;
         }
@@ -88,17 +90,18 @@ RpCollBSPTree* _rpCollBSPTreeStreamWrite(RpCollBSPTree* tree, RwStream* stream)
 
 RpCollBSPTree* _rpCollBSPTreeStreamRead(RpCollBSPTree* tree, RwStream* stream)
 {
-    U32 count = tree->numLeafNodes - 1;
+    U32 numBranches = tree->numLeafNodes - 1;
     RpCollBSPBranchNode* branch = tree->branchNodes;
     RpCollBSPLeafNode* leaf;
+    U32 numLeaves;
 
-    while (count--)
+    while (numBranches--)
     {
         U32 types;
-        U32 nodes;
+        U32 indices;
 
         if (!RwStreamReadInt32(stream, (S32*)&types, sizeof(types)) ||
-            !RwStreamReadInt32(stream, (S32*)&nodes, sizeof(nodes)) ||
+            !RwStreamReadInt32(stream, (S32*)&indices, sizeof(indices)) ||
             !RwStreamReadReal(stream, &branch->leftValue, sizeof(branch->leftValue)) ||
             !RwStreamReadReal(stream, &branch->rightValue, sizeof(branch->rightValue)))
         {
@@ -108,27 +111,27 @@ RpCollBSPTree* _rpCollBSPTreeStreamRead(RpCollBSPTree* tree, RwStream* stream)
         branch->type = types >> 16;
         branch->leftType = types >> 8;
         branch->rightType = types;
-        branch->leftNode = nodes >> 16;
-        branch->rightNode = nodes;
+        branch->leftNode = indices >> 16;
+        branch->rightNode = indices;
 
         branch++;
     }
 
-    count = tree->numLeafNodes;
+    numLeaves = tree->numLeafNodes;
     leaf = tree->leafNodes;
 
-    while (count--)
+    while (numLeaves--)
     {
-        U32 polygons;
+        U32 data;
 
-        if (!RwStreamReadInt32(stream, (S32*)&polygons, sizeof(polygons)))
+        if (!RwStreamReadInt32(stream, (S32*)&data, sizeof(data)))
         {
             _rpCollBSPTreeDestroy(tree);
             return NULL;
         }
 
-        leaf->numPolygons = polygons >> 16;
-        leaf->firstPolygon = polygons;
+        leaf->numPolygons = data >> 16;
+        leaf->firstPolygon = data;
 
         leaf++;
     }
@@ -138,8 +141,10 @@ RpCollBSPTree* _rpCollBSPTreeStreamRead(RpCollBSPTree* tree, RwStream* stream)
 
 S32 _rpCollBSPTreeStreamGetSize(RpCollBSPTree* tree)
 {
-    return (tree->numLeafNodes - 1) * sizeof(RpCollBSPBranchNode) +
-           tree->numLeafNodes * sizeof(RpCollBSPLeafNode);
+    S32 size = (tree->numLeafNodes - 1) * sizeof(RpCollBSPBranchNode) +
+               tree->numLeafNodes * sizeof(RpCollBSPLeafNode);
+
+    return size;
 }
 
 // Point where the line crosses the plane at value along the split axis, stepping
@@ -185,7 +190,7 @@ RpCollBSPTree* _rpCollBSPTreeForAllLineLeafNodeIntersections(RpCollBSPTree* tree
     RpCollBSPBranchNode* branch;
     RpCollBSPLeafNode* leaf;
 
-    node.type = (tree->branchNodes != NULL) + LEAF_NODE;
+    node.type = tree->branchNodes ? BRANCH_NODE : LEAF_NODE;
     node.index = 0;
     currLine = *line;
 
@@ -365,7 +370,7 @@ RpCollBSPTree* _rpCollBSPTreeForAllBoxLeafNodeIntersections(RpCollBSPTree* tree,
     S32 nStack = 0;
 
     node.index = 0;
-    node.type = (tree->branchNodes != NULL) + LEAF_NODE;
+    node.type = tree->branchNodes ? BRANCH_NODE : LEAF_NODE;
 
     while (nStack >= 0)
     {
