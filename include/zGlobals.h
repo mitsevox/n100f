@@ -94,7 +94,6 @@ struct _tagxCamFrame
     U8 opaque_144[0x1F0 - 0x144];
 };
 
-// Partial: the profiler names between cmgr and sceneCur are left opaque.
 struct zGlobals
 {
     _tagxCamFrame camera;
@@ -104,7 +103,7 @@ struct zGlobals
     zAssetPickupTable* pickupTable;
     S32 profile;
     _zCutsceneMgr* cmgr;
-    U8 opaque_864[0xB64 - 0x864];
+    char profFunc[6][128];
     zScene* sceneCur;
     zScene* scenePreload;
     S32 sceneFirst;
