@@ -1,5 +1,24 @@
 #include <rpworld.h>
 #include <math.h>
+#include <string.h>
+
+// The first version whose light chunk holds the cone's minus cosine; older chunks hold its tangent.
+#define LIGHT_MINUSCOSVERSION 0x30300
+
+// The private flag set when a light's red, green and blue are equal.
+#define LIGHT_PRIVATENOCHROMA 0x01
+
+// A light's stream chunk.
+typedef struct LightChunkInfo LightChunkInfo;
+struct LightChunkInfo
+{
+    F32 radius;
+    F32 red;
+    F32 green;
+    F32 blue;
+    F32 minusCosAngle;
+    U32 typeAndFlags;
+};
 
 typedef struct LightModuleData LightModuleData;
 struct LightModuleData
@@ -76,6 +95,85 @@ S32 RpLightRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack read
                                 RwPluginDataChunkGetSizeCallBack getSizeCB)
 {
     return _rwPluginRegistryAddPluginStream(&lightTKList, pluginID, readCB, writeCB, getSizeCB);
+}
+
+RpLight* RpLightStreamRead(RwStream* stream)
+{
+    U32 size;
+    U32 version;
+
+    if (!RwStreamFindChunk(stream, rwID_STRUCT, &size, &version))
+    {
+        return NULL;
+    }
+
+    if (version >= rwLIBRARYBASEVERSION && version <= rwLIBRARYCURRENTVERSION)
+    {
+        LightChunkInfo info;
+        RpLight* light;
+
+        memset(&info, 0, sizeof(info));
+
+        if (RwStreamRead(stream, &info, size) != size)
+        {
+            return NULL;
+        }
+
+        RwMemNative32(&info, sizeof(info));
+
+        light = RpLightCreate((info.typeAndFlags >> 16) & 0xFF);
+        if (!light)
+        {
+            return NULL;
+        }
+
+        RwMemFloat32ToReal(&info.radius, sizeof(info.radius));
+        RwMemFloat32ToReal(&info.red, sizeof(info.red));
+        RwMemFloat32ToReal(&info.green, sizeof(info.green));
+        RwMemFloat32ToReal(&info.blue, sizeof(info.blue));
+        RwMemFloat32ToReal(&info.minusCosAngle, sizeof(info.minusCosAngle));
+
+        light->radius = info.radius;
+        light->color.red = info.red;
+        light->color.green = info.green;
+        light->color.blue = info.blue;
+
+        if (version < LIGHT_MINUSCOSVERSION)
+        {
+            light->minusCosAngle =
+                -_rwSqrt(1.0f / (1.0f + info.minusCosAngle * info.minusCosAngle));
+        }
+        else
+        {
+            light->minusCosAngle = info.minusCosAngle;
+        }
+
+        if (light->color.red == light->color.green && light->color.red == light->color.blue)
+        {
+            light->object.object.privateFlags = LIGHT_PRIVATENOCHROMA;
+        }
+        else
+        {
+            light->object.object.privateFlags = 0;
+        }
+
+        light->object.object.flags = info.typeAndFlags;
+
+        if (!_rwPluginRegistryReadDataChunks(&lightTKList, stream, light))
+        {
+            return NULL;
+        }
+
+        return light;
+    }
+    else
+    {
+        RwError err;
+        err.pluginID = 2;
+        err.errorCode = _rwerror(0x80000004);
+        RwErrorSet(&err);
+        return NULL;
+    }
 }
 
 S32 RpLightDestroy(RpLight* light)
