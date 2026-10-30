@@ -256,6 +256,9 @@ extern "C" void fn_800BE8B0(xIniFile* ini)
 
 extern "C" void fn_800BF1D4()
 {
+    RwCamera* camera;
+    xFontBox* box;
+
     fn_80016218();
     fn_8002FB54(zMainMemLvlChkCB);
     memset(&globals, 0, sizeof(globals));
@@ -314,12 +317,12 @@ extern "C" void fn_800BF1D4()
     fn_80043E78();
 
     iColor_tag color = {255, 230, 0, 200};
-    RwCamera* camera = iCameraCreate(640, 480);
+    camera = iCameraCreate(640, 480);
     RwRGBA clear = lbl_80262CC8;
     RwCameraClear(camera, &clear, 3);
     RwCameraBeginUpdate(camera);
     char text[] = "Game and Software, excluding Scooby-Doo materials, (C) 2002 THQ Inc. Used under exclusive license by THQ Inc.\n\n\nDeveloped by Heavy Iron Studios_. Heavy Iron Studios, THQ and their respective logos are trademarks and/or registered trademarks of THQ Inc. All Rights Reserved.\n\n\nLICENSED BY NINTENDO";
-    xFontBox* box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 1, color);
+    box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 1, color);
     xFontBoxSetJustification(box, 0x40);
     xFontBoxSetDrawSize(box, 17.0f, 22.6f);
     xFontBoxSetDrawSpacing(box, 15.5f, 22.6f);
