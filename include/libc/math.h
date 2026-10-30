@@ -115,8 +115,9 @@ extern inline float sqrtf(float x)
 
 extern inline double fabs(double x) { return __fabs(x); }
 extern inline float fabsf(float x) { return ::fabs(x); }
-#else
-// The C units (the MSL math units and RenderWare) inline the double sqrt.
+#endif
+
+// The C units (the MSL math units and RenderWare) and xSpline's ArcLength3 inline the double sqrt.
 static inline double sqrt(double x)
 {
     if (x > 0.0) {
@@ -133,6 +134,5 @@ static inline double sqrt(double x)
     }
     return INFINITY;
 }
-#endif
 
 #endif
