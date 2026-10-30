@@ -412,6 +412,8 @@ RpWorld* RpWorldRemoveCamera(RpWorld* world, RwCamera* camera);
 RpWorld* RpWorldAddLight(RpWorld* world, RpLight* light);
 RpWorld* RpWorldRemoveLight(RpWorld* world, RpLight* light);
 S32 RpWorldDestroy(RpWorld* world);
+RpWorld* RpWorldRender(RpWorld* world);
+void _rpWorldSetSurfaceProperties(RpWorld* world, const RwSurfaceProperties* surfaceProps);
 
 extern RwPluginRegistry sectorTKList;
 

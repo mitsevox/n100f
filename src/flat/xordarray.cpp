@@ -1,4 +1,30 @@
 #include "xordarray.h"
+#include "xMath.h"
+#include "xMemMgr.h"
+
+// The warning level sits at 95% of capacity, one below it when that rounds to full.
+void XOrdInit(st_XORDEREDARRAY* array, S32 max)
+{
+    S32 cnt;
+
+    array->list = (void**)xMemAlloc(gActiveHeap, max << 2);
+    array->cnt = 0;
+    array->max = max;
+    array->warnlvl = 0.95f * max;
+    if (array->warnlvl == array->max)
+    {
+        cnt = array->max - 1;
+        array->warnlvl = MAX(0, cnt);
+    }
+}
+
+void XOrdDone(st_XORDEREDARRAY* array)
+{
+    array->list = NULL;
+    array->cnt = 0;
+    array->max = 0;
+    array->warnlvl = 0;
+}
 
 void XOrdAppend(st_XORDEREDARRAY* array, void* elt)
 {
@@ -60,4 +86,41 @@ S32 XOrdLookup(st_XORDEREDARRAY* array, const void* key, S32 (*test)(const void*
     }
 
     return da_idx;
+}
+
+// Shell sort with the 3h+1 gap sequence. Each pass starts one past the gap and stops shifting
+// at index h, so the first slots of a pass are never compared; the target does the same.
+void XOrdSort(st_XORDEREDARRAY* array, S32 (*test)(const void*, void*))
+{
+    void** list = array->list;
+    S32 num = array->cnt;
+    S32 i;
+    S32 j;
+    S32 h = 1;
+    void* v;
+
+    while (h <= num)
+    {
+        h = h * 3 + 1;
+    }
+
+    while (h != 1)
+    {
+        h /= 3;
+        for (i = h + 1; i < num; i++)
+        {
+            v = list[i];
+            j = i;
+            while (test(list[j - h], v) > 0)
+            {
+                list[j] = list[j - h];
+                j -= h;
+                if (j <= h)
+                {
+                    break;
+                }
+            }
+            list[j] = v;
+        }
+    }
 }

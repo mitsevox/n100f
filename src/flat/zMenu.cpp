@@ -7,6 +7,7 @@
 #include "zMusic.h"
 #include "zHud.h"
 #include "iColor.h"
+#include "iScrFX.h"
 #include "iMath.h"
 #include "iTime.h"
 #include "xEnt.h"
@@ -24,7 +25,6 @@ void zEntEventAll(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam);
 void xFontRender();
 void iDebugScreenDump();
 U32 fn_800443F8();
-extern "C" void fn_80014A34(S32);
 extern "C" void fn_80016600();
 extern "C" void fn_80021E50();
 extern "C" void fn_80021B20();
@@ -106,7 +106,7 @@ U32 zMenuLoop()
             switch (zGameStateGet())
             {
             case 0:
-                fn_80014A34(1);
+                iScrFxSetBlackoutFrames(1);
                 zGameStateSwitch(3);
                 xScrFxFade(&clear, &black, 0.0f, NULL, 1, 0);
                 break;

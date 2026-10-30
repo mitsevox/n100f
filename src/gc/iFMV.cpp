@@ -1,5 +1,6 @@
 #include "iFile.h"
 #include "iPad.h"
+#include "iScrFX.h"
 #include "xPad.h"
 #include "xMath.h"
 #include "xSnd.h"
@@ -24,7 +25,6 @@
 extern "C" {
 extern GXRenderModeObj* _RwDlRenderMode;
 
-void fn_80014A34(S32);
 void fn_800167F0();
 void fn_80016600();
 S32 fn_800443F8();
@@ -261,7 +261,7 @@ static void PlayFMV(char* fname, U32 buttons, F32 time)
         RwCameraShowRaster(cam, NULL, 1);
     }
 
-    fn_80014A34(0);
+    iScrFxSetBlackoutFrames(0);
     iPadStopRumble(globals.pad0);
     fn_800167F0();
 

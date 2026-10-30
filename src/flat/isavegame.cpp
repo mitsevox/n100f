@@ -1,4 +1,5 @@
 #include "isavegame.h"
+#include "iFile.h"
 
 #include <dolphin/card.h>
 #include <dolphin/os.h>
@@ -49,12 +50,49 @@ struct TPLPalette
 
 extern "C" void fn_80016768();
 
+static S32 g_isginit;
 static TPLPalette* g_rawicon;
 static TPLPalette* g_rawbanr;
 static U32 g_iconsize;
 static U32 g_banrsize;
 
+static st_ISGSESSION g_isgdata_MAIN = { 0 };
+
 S32 iSG_mcidx2slot(S32 mcidx, S32* slot, S32* present);
+
+// The card in this slot was removed: it is no longer the active target and its state is
+// cleared.
+static void iSG_cb_unmount(s32 chan, s32 result)
+{
+    st_ISGSESSION* session = &g_isgdata_MAIN;
+    if (chan == session->slot)
+    {
+        session->slot = -1;
+    }
+    memset(&session->mcdata[chan], 0, sizeof(st_ISG_MEMCARD_DATA));
+}
+
+static S32 iSG_mc_unmount(S32 slot)
+{
+    S32 rc = 0;
+    S32 result;
+
+    do
+    {
+        result = CARDUnmount(slot);
+    } while (result == CARD_RESULT_BUSY);
+
+    if (result == CARD_RESULT_READY)
+    {
+        rc = 1;
+    }
+    else if (result == CARD_RESULT_NOCARD)
+    {
+        rc = 1;
+    }
+
+    return rc;
+}
 
 static S32 iSG_tpl_unpack(TPLPalette* tpl)
 {
@@ -236,6 +274,11 @@ S32 iSG_mcidx2slot(S32 mcidx, S32* slot, S32* present)
     return ret;
 }
 
+en_ASYNC_OPSTAT iSGPollStatus(st_ISGSESSION* isgdata, en_ASYNC_OPCODE* curop, S32 block)
+{
+    return isgdata->as_opstat;
+}
+
 en_ASYNC_OPERR iSGOpError(st_ISGSESSION* isgdata, char* errmsg)
 {
     static char* errmsgs[ISG_OPERR_NOMORE + 1] = {
@@ -278,6 +321,12 @@ en_ASYNC_OPERR iSGOpError(st_ISGSESSION* isgdata, char* errmsg)
     }
     errmsg[0x7F] = NULL;
     return isgdata->as_operr;
+}
+
+// The GameCube needs no game directory setup.
+S32 iSGSetupGameDir(st_ISGSESSION* isgdata, const char* dname, S32 force_iconfix)
+{
+    return 1;
 }
 
 void iSGMakeTimeStamp(char* str)
@@ -327,6 +376,31 @@ S32 iSGTgtCount(st_ISGSESSION* isgdata, S32* max)
     return ret;
 }
 
+// Unmounts every mounted card and clears the session.
+void iSGSessionEnd(st_ISGSESSION* isgdata)
+{
+    fn_80016768();
+    for (S32 i = 0; i < ISG_NUM_SLOTS; i++)
+    {
+        if (isgdata->mcdata[i].unk_0)
+        {
+            iSG_mc_unmount(i);
+            isgdata->mcdata[i].unk_0 = 0;
+        }
+    }
+
+    memset(isgdata, 0, sizeof(st_ISGSESSION));
+}
+
+// Both arguments are ignored on this platform.
+st_ISGSESSION* iSGSessionBegin(void* cltdata, void (*chgfunc)(void*, en_CHGCODE))
+{
+    fn_80016768();
+    memset(&g_isgdata_MAIN, 0, sizeof(st_ISGSESSION));
+    g_isgdata_MAIN.slot = -1;
+    return &g_isgdata_MAIN;
+}
+
 static void iSG_discard_icondata()
 {
     OSFreeToHeap(__OSCurrHeap, g_rawicon);
@@ -341,4 +415,34 @@ S32 iSGShutdown()
 {
     iSG_discard_icondata();
     return 1;
+}
+
+static S32 iSG_start_your_engines()
+{
+    CARDInit();
+    return 1;
+}
+
+// Loads the save file's icon and banner textures.
+static S32 iSG_load_icondata()
+{
+    g_rawicon = (TPLPalette*)iFileLoad("/SD2GCIcon.tpl", NULL, &g_iconsize);
+    g_rawbanr = (TPLPalette*)iFileLoad("/SD2GCBanner.tpl", NULL, &g_banrsize);
+    iSG_tpl_unpack(g_rawicon);
+    iSG_tpl_unpack(g_rawbanr);
+
+    return g_rawicon && (S32)g_iconsize && g_rawbanr && (S32)g_banrsize ? 1 : 0;
+}
+
+// Only the first call starts the card library; every call returns the call count.
+S32 iSGStartup()
+{
+    if (g_isginit++ != 0)
+    {
+        return g_isginit;
+    }
+
+    iSG_start_your_engines();
+    iSG_load_icondata();
+    return g_isginit;
 }

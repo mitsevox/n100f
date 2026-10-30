@@ -4,6 +4,7 @@
 #include "zEnv.h"
 #include "zCutsceneMgr.h"
 #include "iCamera.h"
+#include "iScrFX.h"
 #include "rpworld.h"
 #include "zGameExtras.h"
 #include "zGameState.h"
@@ -40,7 +41,6 @@ extern "C" void fn_8001E7C4(void*, _xEnv*);
 void zEntPlayer_Init(_xEnt*, p2EntAsset*);
 extern "C" void fn_80048E54(S32, S32);
 extern "C" void fn_8001E8A0(_tagxCamFrame*, F32);
-extern "C" void fn_80014A34(S32);
 extern "C" void fn_80016600();
 extern "C" void fn_800AC100(F32);
 void xSndSetFrame(xVec3* right, xVec3* up, xVec3* at, xVec3* pos, F32 radius);
@@ -316,7 +316,7 @@ void zGameLoop()
     lbl_8025EEF0 = iTimeGet() - (U64)((F32)OS_TIMER_CLOCK / 60.0f);
     if (globals.cmgr)
         zCutsceneMgrFinishLoad(globals.cmgr);
-    fn_80014A34(0);
+    iScrFxSetBlackoutFrames(0);
     do
     {
         lbl_8025EEF8 = iTimeGet();
@@ -380,7 +380,7 @@ void zGameLoop()
                 fn_800B74D8();
         }
     } while (1);
-    fn_80014A34(3);
+    iScrFxSetBlackoutFrames(3);
 }
 
 // Prepare the player and scene after loading, then start their game services.

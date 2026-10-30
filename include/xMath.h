@@ -17,6 +17,9 @@
 #define xlerp(a, b, t) ((a) + (t) * ((b) - (a)))
 #define SQR(x) ((x) * (x))
 
+void xMathInit();
+void xMathExit();
+F32 xDangleClamp(F32 a);
 F32 xAngleClamp(F32 a);
 U32 xMathSolveQuadratic(F32 a, F32 b, F32 c, F32* x1, F32* x2);
 U32 xMathSolveCubic(F32 a, F32 b, F32 c, F32 d, F32* x1, F32* x2, F32* x3);

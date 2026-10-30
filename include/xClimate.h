@@ -46,7 +46,10 @@ struct p2EnvAsset : p2BaseAsset
     U32 bspMapperFXID;
 };
 
+void xClimateInit(_tagClimate* climate);
 void xClimateInitAsset(_tagClimate* climate, p2EnvAsset* easset);
+void xClimateUpdate(_tagClimate* climate, F32 seconds);
+void xClimateGetRealWindDir(_tagClimate* climate, xVec3* vec);
 void xClimateSetSnow(F32 stre);
 void xClimateSetRain(F32 stre);
 

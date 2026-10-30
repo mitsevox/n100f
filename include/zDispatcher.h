@@ -12,6 +12,8 @@ struct st_ZDISPATCH_DATA : xBase
     S32 placeholder;
 };
 
+void zDispatcher_Startup();
+void zDispatcher_Shutdown();
 void zDispatcher_scenePrepare();
 void zDispatcher_sceneFinish();
 st_ZDISPATCH_DATA* zDispatcher_memPool(S32 cnt);

@@ -17,7 +17,7 @@ enum IFILE_READSECTOR_STATUS
     IFILE_RDSTAT_EXPIRED
 };
 
-// Partial: only the members this code uses are named. The GC object is 0xF0 bytes.
+// Partial: only the members this code uses are named. The GC object is 0xEC bytes.
 struct tag_iFile
 {
     U32 flags;
@@ -27,14 +27,19 @@ struct tag_iFile
     S32 unkC4;
     U8 opaque_C8[0xE8 - 0xC8];
     S32 offset;
-    U8 opaque_EC[0xF0 - 0xEC];
 };
 
 struct tag_xFile
 {
     char relname[16];
     tag_iFile ps;
+    void* user_data;
 };
+
+inline void xFileSetUserData(tag_xFile* file, void* userdata)
+{
+    file->user_data = userdata;
+}
 
 #define IFILE_OPEN_READ 0x1
 #define IFILE_OPEN_WRITE 0x2

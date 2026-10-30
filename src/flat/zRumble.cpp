@@ -1,6 +1,6 @@
 #include "zRumble.h"
+#include "xPad.h"
 
-extern "C" S32 fn_80031AC8(S32 pad_id, S32 type, F32 time, S32 replace, U32 fxflags);
 
 void zRumbleStartDistance(S32 pad_id, F32 real_dist, F32 max_dist)
 {
@@ -18,7 +18,7 @@ void zRumbleStartDistance(S32 pad_id, F32 real_dist, F32 max_dist)
     rumble_it = 0.35f * (1.0f - real_dist / max_dist);
     if (rumble_it > 0.0f)
     {
-        fn_80031AC8(pad_id, 6, rumble_it, 1, 1);
+        xPadAddRumble(pad_id, eRumble_Medium, rumble_it, 1, 1);
     }
 }
 
@@ -27,53 +27,53 @@ void zRumbleStart(S32 pad_id, _tagSDRumbleType rumble_type)
     switch (rumble_type)
     {
     case SDR_Headbutt:
-        fn_80031AC8(pad_id, 5, 0.2f, 1, 0);
+        xPadAddRumble(pad_id, eRumble_MediumHi, 0.2f, 1, 0);
         break;
     case SDR_ButtbounceJump:
-        fn_80031AC8(pad_id, 6, 0.15f, 1, 0);
+        xPadAddRumble(pad_id, eRumble_Medium, 0.15f, 1, 0);
         break;
     case SDR_Buttbounce:
-        fn_80031AC8(pad_id, 6, 0.15f, 1, 0);
+        xPadAddRumble(pad_id, eRumble_Medium, 0.15f, 1, 0);
         break;
     case SDR_VillainCollideScare:
     case SDR_GotScared:
-        fn_80031AC8(pad_id, 8, 0.15f, 1, 0);
+        xPadAddRumble(pad_id, eRumble_Heavy, 0.15f, 1, 0);
         break;
     case SDR_FleaScratch:
-        fn_80031AC8(pad_id, 4, 1.5f, 1, 1);
+        xPadAddRumble(pad_id, eRumble_Light, 1.5f, 1, 1);
         break;
     case SDR_ScreechingStop:
-        fn_80031AC8(pad_id, 2, 0.5f, 1, 1);
+        xPadAddRumble(pad_id, eRumble_VeryLight, 0.5f, 1, 1);
         break;
     case SDR_Digging:
-        fn_80031AC8(pad_id, 6, 0.1f, 1, 0);
-        fn_80031AC8(pad_id, 0, 0.15f, 0, 0);
-        fn_80031AC8(pad_id, 6, 0.1f, 0, 0);
-        fn_80031AC8(pad_id, 0, 0.15f, 0, 0);
-        fn_80031AC8(pad_id, 6, 0.1f, 0, 1);
+        xPadAddRumble(pad_id, eRumble_Medium, 0.1f, 1, 0);
+        xPadAddRumble(pad_id, eRumble_Off, 0.15f, 0, 0);
+        xPadAddRumble(pad_id, eRumble_Medium, 0.1f, 0, 0);
+        xPadAddRumble(pad_id, eRumble_Off, 0.15f, 0, 0);
+        xPadAddRumble(pad_id, eRumble_Medium, 0.1f, 0, 1);
         break;
     case SDR_WebDestroyed:
-        fn_80031AC8(pad_id, 2, 0.1f, 1, 0);
+        xPadAddRumble(pad_id, eRumble_VeryLight, 0.1f, 1, 0);
         break;
     case SDR_XploDestroyedObj:
-        fn_80031AC8(pad_id, 6, 0.1f, 1, 0);
-        fn_80031AC8(pad_id, 8, 0.1f, 0, 1);
+        xPadAddRumble(pad_id, eRumble_Medium, 0.1f, 1, 0);
+        xPadAddRumble(pad_id, eRumble_Heavy, 0.1f, 0, 1);
         break;
     case SDR_DustDestroyedObj:
-        fn_80031AC8(pad_id, 4, 0.05f, 1, 0);
-        fn_80031AC8(pad_id, 6, 0.15f, 0, 1);
+        xPadAddRumble(pad_id, eRumble_Light, 0.05f, 1, 0);
+        xPadAddRumble(pad_id, eRumble_Medium, 0.15f, 0, 1);
         break;
     case SDR_Test:
-        fn_80031AC8(pad_id, 3, 0.5f, 1, 1);
+        xPadAddRumble(pad_id, eRumble_LightHi, 0.5f, 1, 1);
         break;
     case SDR_EventLight:
-        fn_80031AC8(pad_id, 4, 0.35f, 1, 1);
+        xPadAddRumble(pad_id, eRumble_Light, 0.35f, 1, 1);
         break;
     case SDR_EventMedium:
-        fn_80031AC8(pad_id, 6, 0.35f, 1, 1);
+        xPadAddRumble(pad_id, eRumble_Medium, 0.35f, 1, 1);
         break;
     case SDR_EventHeavy:
-        fn_80031AC8(pad_id, 8, 0.35f, 1, 1);
+        xPadAddRumble(pad_id, eRumble_Heavy, 0.35f, 1, 1);
         break;
     case SDR_FireworkBang:
         break;
