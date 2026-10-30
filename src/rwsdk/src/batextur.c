@@ -3,12 +3,14 @@
 typedef S32 (*TextureMipmapNameFn)(char* name, char* maskName, U8 mipLevel, S32 format);
 typedef RwRaster* (*TextureBuildMipmapsFn)(RwRaster* raster, RwImage* image);
 
-// The texture module's data in the engine instance. Partial: only the members reconstructed
-// code reaches are declared.
+// The texture module's data in the engine instance. Partial: the words at +0x20 and +0x24 are
+// not declared.
 typedef struct TextureModuleData TextureModuleData;
 struct TextureModuleData
 {
-    U8 unk0[0x10];
+    RwLinkList texDictList;
+    RwFreeList* textureFreeList;
+    RwFreeList* texDictFreeList;
     RwTexDictionary* currentDict;
     RwTextureCallBackRead readFn;
     S32 mipmapping;
@@ -24,7 +26,14 @@ struct TextureModuleData
 #define TEXTUREFROMDICTLINK(link) \
     ((RwTexture*)((U8*)(link) - (S32)&((RwTexture*)0)->lInDictionary))
 
+// The object type of a texture dictionary.
+#define TEXDICTIONARY_OBJECTTYPE 6
+
+// The longest texture or mask name, with its terminator.
+#define TEXTURE_NAMESIZE 32
+
 RwPluginRegistry textureTKList = { sizeof(RwTexture), sizeof(RwTexture) };
+RwPluginRegistry texDictTKList = { sizeof(RwTexDictionary), sizeof(RwTexDictionary) };
 static RwModuleInfo textureModule;
 
 RwTexture* TextureDefaultMipmapRead(const char* name, const char* maskName);
@@ -71,6 +80,42 @@ S32 RwTextureGetAutoMipmapping(void)
     return TEXTURE_DATA(autoMipmapping);
 }
 
+RwTexDictionary* RwTexDictionaryCreate(void)
+{
+    RwTexDictionary* dict =
+        (RwTexDictionary*)RWSRCGLOBAL(memoryAlloc)(TEXTURE_DATA(texDictFreeList));
+
+    if (!dict)
+    {
+        return NULL;
+    }
+
+    rwObjectInitialize(dict, TEXDICTIONARY_OBJECTTYPE, 0);
+    rwLinkListAddLLLink(&TEXTURE_DATA(texDictList), &dict->lInInstance);
+    rwLinkListInitialize(&dict->texturesInDict);
+
+    _rwPluginRegistryInitObject(&texDictTKList, dict);
+
+    return dict;
+}
+
+S32 RwTexDictionaryDestroy(RwTexDictionary* dict)
+{
+    if (TEXTURE_DATA(currentDict) == dict)
+    {
+        TEXTURE_DATA(currentDict) = NULL;
+    }
+
+    RwTexDictionaryForAllTextures(dict, (RwTextureCallBack)RwTextureDestroy, NULL);
+
+    _rwPluginRegistryDeInitObject(&texDictTKList, dict);
+    rwLinkListRemoveLLLink(&dict->lInInstance);
+
+    RWSRCGLOBAL(memoryFree)(TEXTURE_DATA(texDictFreeList), dict);
+
+    return 1;
+}
+
 const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict,
                                                     RwTextureCallBack fpCallBack, void* pData)
 {
@@ -91,6 +136,90 @@ const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict
     }
 
     return dict;
+}
+
+RwTexture* RwTextureCreate(RwRaster* raster)
+{
+    RwTexture* texture = (RwTexture*)RWSRCGLOBAL(memoryAlloc)(TEXTURE_DATA(textureFreeList));
+
+    if (texture)
+    {
+        texture->dict = NULL;
+        texture->name[0] = '\0';
+        texture->mask[0] = '\0';
+        texture->raster = raster;
+        texture->refCount = 1;
+        texture->filterAddressing = 0;
+        RwTextureSetAddressing(texture, rwTEXTUREADDRESSWRAP);
+        RwTextureSetFilterMode(texture, rwFILTERNEAREST);
+
+        _rwPluginRegistryInitObject(&textureTKList, texture);
+    }
+
+    return texture;
+}
+
+S32 RwTextureDestroy(RwTexture* texture)
+{
+    texture->refCount--;
+
+    if (texture->refCount <= 0)
+    {
+        texture->refCount++;
+
+        _rwPluginRegistryDeInitObject(&textureTKList, texture);
+
+        if (texture->dict)
+        {
+            rwLinkListRemoveLLLink(&texture->lInDictionary);
+        }
+
+        if (texture->raster)
+        {
+            RwRasterDestroy(texture->raster);
+            texture->raster = NULL;
+        }
+
+        texture->refCount--;
+
+        RWSRCGLOBAL(memoryFree)(TEXTURE_DATA(textureFreeList), texture);
+    }
+
+    return 1;
+}
+
+RwTexture* RwTextureSetName(RwTexture* texture, const char* name)
+{
+    rwstrncpy(texture->name, name, TEXTURE_NAMESIZE);
+
+    if (rwstrlen(name) >= TEXTURE_NAMESIZE)
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000001E, name, TEXTURE_NAMESIZE, TEXTURE_NAMESIZE - 1,
+                                 name[TEXTURE_NAMESIZE - 1]);
+        RwErrorSet(&err);
+        texture->name[TEXTURE_NAMESIZE - 1] = '\0';
+    }
+
+    return texture;
+}
+
+RwTexture* RwTextureSetMaskName(RwTexture* texture, const char* maskName)
+{
+    rwstrncpy(texture->mask, maskName, TEXTURE_NAMESIZE);
+
+    if (rwstrlen(maskName) >= TEXTURE_NAMESIZE)
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000001E, maskName, TEXTURE_NAMESIZE, TEXTURE_NAMESIZE - 1,
+                                 maskName[TEXTURE_NAMESIZE - 1]);
+        RwErrorSet(&err);
+        texture->mask[TEXTURE_NAMESIZE - 1] = '\0';
+    }
+
+    return texture;
 }
 
 RwTexture* RwTexDictionaryAddTexture(RwTexDictionary* dict, RwTexture* texture)
