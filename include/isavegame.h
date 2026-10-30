@@ -46,6 +46,21 @@ enum en_NAMEGEN_TYPE
     ISG_NGTYP_ICONTHUM
 };
 
+enum en_ASYNC_OPCODE
+{
+    ISG_OPER_NOOP,
+    ISG_OPER_INIT,
+    ISG_OPER_SAVE,
+    ISG_OPER_LOAD
+};
+
+enum en_ASYNC_OPSTAT
+{
+    ISG_OPSTAT_FAILURE = -1,
+    ISG_OPSTAT_INPROG,
+    ISG_OPSTAT_SUCCESS
+};
+
 // One memory card slot. The GameCube layout differs from the PS2 class of this name.
 struct st_ISG_MEMCARD_DATA
 {
@@ -67,18 +82,20 @@ struct st_ISG_MEMCARD_DATA
 struct st_ISGSESSION
 {
     st_ISG_MEMCARD_DATA mcdata[ISG_NUM_SLOTS];
-    S32 unk_260;
+    S32 slot;
     S32 unk_264;
     en_ASYNC_OPERR as_operr;
-    S32 unk_26C;
+    en_ASYNC_OPSTAT as_opstat;
     S32 unk_270;
     S32 unk_274;
-    S32 unk_278;
-    S32 unk_27C;
 };
 
 S32 iSGStartup();
 S32 iSGShutdown();
+st_ISGSESSION* iSGSessionBegin(void* cltdata, void (*chgfunc)(void*, en_CHGCODE));
+void iSGSessionEnd(st_ISGSESSION* isgdata);
+en_ASYNC_OPSTAT iSGPollStatus(st_ISGSESSION* isgdata, en_ASYNC_OPCODE* curop, S32 block);
+S32 iSGSetupGameDir(st_ISGSESSION* isgdata, const char* dname, S32 force_iconfix);
 char* iSGMakeName(en_NAMEGEN_TYPE type, const char* base, S32 idx);
 void iSGMakeTimeStamp(char* str);
 en_ASYNC_OPERR iSGOpError(st_ISGSESSION* isgdata, char* errmsg);

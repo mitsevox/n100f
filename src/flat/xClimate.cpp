@@ -1,9 +1,23 @@
 #include "xClimate.h"
 #include "xMath3.h"
+#include "xString.h"
+#include "zParEmitter.h"
 
 #include <string.h>
 
 static _tagClimate* sClimate;
+
+static void UpdateRain(_tagClimate* climate, F32 seconds);
+
+// Finds both weather emitters and switches them off until a scene asks for rain or snow.
+void xClimateInit(_tagClimate* climate)
+{
+    climate->rain.strength = 0.0f;
+    climate->rain.rain_emitter = zParEmitterFind(xStrHash("PAREMIT_RAIN"));
+    climate->rain.rain_emitter->emit_flags &= 0xFE;
+    climate->rain.snow_emitter = zParEmitterFind(xStrHash("PAREMIT_SNOW"));
+    climate->rain.snow_emitter->emit_flags &= 0xFE;
+}
 
 static inline void xClimateVecFromAngle(F32 angleDegrees, xVec3* vec)
 {
@@ -51,4 +65,17 @@ void xClimateSetRain(F32 stre)
 {
     sClimate->rain.rain = 1;
     sClimate->rain.strength = stre;
+}
+
+void xClimateUpdate(_tagClimate* climate, F32 seconds)
+{
+    UpdateRain(climate, seconds);
+}
+
+// The wind blows along the ground: its direction scaled by its strength, with no height.
+void xClimateGetRealWindDir(_tagClimate* climate, xVec3* vec)
+{
+    vec->x = climate->wind.dir.x * climate->wind.strength;
+    vec->y = 0.0f;
+    vec->z = climate->wind.dir.z * climate->wind.strength;
 }

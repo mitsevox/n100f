@@ -16,6 +16,7 @@
 #include "iCamera.h"
 #include "iFile.h"
 #include "xPad.h"
+#include "zDispatcher.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -26,13 +27,10 @@ extern "C" void fn_80044714();
 extern xIniFile* xIniParse(char*, S32);
 extern void xIniDestroy(xIniFile*);
 extern "C" st_SERIAL_PERCID_SIZE g_xser_sizeinfo[];
-extern "C" void fn_8004766C();
 extern void zAssetStartup();
 extern void xFontInit();
 extern void xScrFxInit();
 extern void xParMgrInit();
-extern "C" _tagxPad* fn_800322F0(S32);
-extern void xPadRumbleEnable(S32, S32);
 extern S32 xSGStartup();
 extern void zEntProjectile_Startup();
 extern void zLobMaster_Startup();
@@ -44,7 +42,6 @@ extern S32 zEntVillain_Shutdown();
 extern void zLobMaster_Shutdown();
 extern void zEntProjectile_Shutdown();
 extern void zAssetShutdown();
-extern "C" void fn_80047668();
 extern S32 xSGShutdown();
 
 S32 xMemPushBase();
@@ -295,15 +292,15 @@ extern "C" void main()
     iFuncProfileParse("scooby.elf", globals.profile);
     xUtilStartup();
     xSerialStartup(128, g_xser_sizeinfo);
-    fn_8004766C();
+    zDispatcher_Startup();
     zAssetStartup();
     xFontInit();
     xScrFxInit();
     xParMgrInit();
     globals.option_vibration = 1;
     printf("---PAD ENABLE\n");
-    globals.pad0 = fn_800322F0(0);
-    globals.pad1 = gDebugPad = fn_800322F0(1);
+    globals.pad0 = xPadEnable(0);
+    globals.pad1 = gDebugPad = xPadEnable(1);
     xPadRumbleEnable(0, globals.option_vibration);
     xSGStartup();
     zEntProjectile_Startup();
@@ -341,7 +338,7 @@ extern "C" void main()
     zLobMaster_Shutdown();
     zEntProjectile_Shutdown();
     zAssetShutdown();
-    fn_80047668();
+    zDispatcher_Shutdown();
     xSGShutdown();
     xSerialShutdown();
     xUtilShutdown();

@@ -22,7 +22,14 @@ struct xSurface : xBase
     void* moprops;
 };
 
+struct xSerial;
+
+void xSurfaceInit(U16 num_surfs);
 void xSurfaceExit();
+void xSurfaceSave(xSurface* ent, xSerial* s);
+void xSurfaceLoad(xSurface* ent, xSerial* s);
+void xSurfaceReset(xSurface* ent);
+U16 xSurfaceGetNumSurfaces();
 xSurface* xSurfaceGetByIdx(U16 n);
 
 #endif

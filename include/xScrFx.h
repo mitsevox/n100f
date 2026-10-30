@@ -4,6 +4,8 @@
 #include "types.h"
 #include "iColor.h"
 
+void xScrFxInit();
+void DrawScreenSizeRectangle();
 S32 xScrFxIsLetterbox();
 void xScrFxLetterbox(S32 enable);
 void xScrFxFade(iColor_tag* base, iColor_tag* dest, F32 seconds, void (*callback)(), S32 hold, S32);

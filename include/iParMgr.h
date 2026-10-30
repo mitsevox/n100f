@@ -12,5 +12,8 @@ void iParMgrRenderParSys_Static(void* data, xParGroup* ps);
 void iParMgrRenderParSys_Ground(void* data, xParGroup* ps);
 void iParMgrRenderParSys_QuadStreak(void* data, xParGroup* ps);
 void iParMgrRenderParSys_InvStreak(void* data, xParGroup* ps);
+void iParMgrRender();
+void iParMgrUpdate(F32 elapsedTime);
+void iParMgrInit();
 
 #endif

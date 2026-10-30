@@ -4,6 +4,7 @@
 #include "iTime.h"
 #include "xEvent.h"
 #include "xPad.h"
+#include "xParMgr.h"
 #include "xSnd.h"
 #include "xString.h"
 #include "xutil.h"
@@ -58,7 +59,6 @@ extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* files, S3
 extern "C" void fn_80021B20();
 extern "C" void fn_80021E30();
 extern "C" void fn_80021E50();
-extern "C" void fn_80032D48(F32 dt);
 extern "C" void fn_8001E83C(_tagxCamFrame* cam);
 extern "C" void fn_8001E8A0(_tagxCamFrame* cam, F32 dt);
 extern "C" void fn_8004436C();
@@ -1936,7 +1936,7 @@ void zSaveLoad_Tick()
         xPadUpdate(1, time_elapsed);
     }
     fn_80021E50();
-    fn_80032D48(time_elapsed);
+    xParMgrUpdate(time_elapsed);
     zSceneUpdate(time_elapsed);
     xSndSetFrame(&globals.camera.hi_cam.mat.right, &globals.camera.hi_cam.mat.up,
                 &globals.camera.hi_cam.mat.at, &globals.camera.hi_cam.mat.pos, 25.0f);

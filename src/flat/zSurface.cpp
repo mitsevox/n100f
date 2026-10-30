@@ -8,11 +8,6 @@
 #include <math.h>
 #include <string.h>
 
-extern "C" void fn_80040F58(U16 num);
-extern "C" U16 fn_80040F08();
-extern "C" void fn_80040F10(xSurface* surf);
-extern "C" void fn_80040F14(xSurface* ent, xSerial* s);
-extern "C" void fn_80040F34(xSurface* ent, xSerial* s);
 extern "C" U32 lbl_8025E9F8;
 
 struct zMaterialMapEntry
@@ -136,7 +131,7 @@ void zSurfaceInit()
     U32 size;
     U16 nsurfs = xSTAssetCountByType('SURF');
 
-    fn_80040F58(nsurfs);
+    xSurfaceInit(nsurfs);
 
     if (nsurfs)
     {
@@ -370,7 +365,7 @@ static S32 zSurfaceEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase* 
         }
         break;
     case 10:
-        fn_80040F10(t);
+        xSurfaceReset(t);
         t->friction = ((zSurfaceProps*)t->moprops)->asset->friction;
         t->state = 0;
         break;
@@ -530,7 +525,7 @@ xSurface* zSurfaceGetSurface(U32 mat_id)
                 zMaterialMapEntry* entry = (zMaterialMapEntry*)(mapper + 1) + i;
                 if (entry->materialIndex == mat_id)
                 {
-                    U16 nsurfs = fn_80040F08();
+                    U16 nsurfs = xSurfaceGetNumSurfaces();
                     for (U16 j = 0; j < nsurfs; j++)
                     {
                         xSurface* surf = xSurfaceGetByIdx(j);
@@ -654,12 +649,12 @@ U32 zSurfaceGetDamagePassthrough(const xSurface* surf)
 
 void zSurfaceLoad(xSurface* ent, xSerial* s)
 {
-    fn_80040F14(ent, s);
+    xSurfaceLoad(ent, s);
 }
 
 void zSurfaceSave(xSurface* ent, xSerial* s)
 {
-    fn_80040F34(ent, s);
+    xSurfaceSave(ent, s);
 }
 
 F32 zSurfaceGetDamping(const xSurface* surf, F32 min_vel)

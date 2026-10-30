@@ -1,7 +1,9 @@
 #include "iSystem.h"
 #include "iFile.h"
 #include "iTime.h"
+#include "xMath.h"
 #include "xMemMgr.h"
+#include "xPad.h"
 #include "xSnd.h"
 
 #include <dolphin/os.h>
@@ -20,8 +22,6 @@ S32 RwEngineClose();
 S32 RwEngineTerm();
 
 void fn_80021B1C();
-void fn_8002CF00();
-void fn_80031CA4();
 }
 
 extern char* months[];
@@ -153,10 +153,10 @@ void iFuncProfileParse(char* elfPath, S32 profile)
 void iSystemExit()
 {
     fn_80021B1C();
-    fn_8002CF00();
+    xMathExit();
     RenderWareExit();
     xSndExit();
-    fn_80031CA4();
+    xPadKill();
     iFileExit();
     iTimeExit();
     xMemExit();

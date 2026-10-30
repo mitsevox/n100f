@@ -4,15 +4,18 @@
 #include "types.h"
 #include "iEnv.h"
 
-// Partial: geom only. The embedded iEnv after it is left opaque. The GC object is 0x28
-// bytes (zSceneInit allocates that much); the PS2 copy is 0x40 because its iEnv is
-// 16-byte aligned.
+// The GC object is 0x28 bytes (zSceneInit allocates that much); the PS2 copy is 0x40
+// because its iEnv is 16-byte aligned. geom points at ienv for a world loaded with type 0.
 struct _xEnv
 {
     iEnv* geom;
-    U8 opaque_4[0x28 - 0x4];
+    iEnv ienv;
 };
 
+extern _xEnv* gCurXEnv;
+
+void xEnvLoadBsp(_xEnv* env, const void* data, U32 datasize, S32 dataType);
+void xEnvSetup(_xEnv* env);
 void xEnvRender(_xEnv* env);
 void xEnvFree(_xEnv* env);
 
