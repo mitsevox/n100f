@@ -12,6 +12,7 @@
 #include "xString.h"
 #include "xFont.h"
 #include "iCamera.h"
+#include "iFile.h"
 #include "xPad.h"
 #include <string.h>
 #include <stdio.h>
@@ -20,7 +21,6 @@ extern void CalcJumpImpulse(zJumpParam* param);
 extern "C" void fn_80016218();
 extern "C" void fn_8002FB54(void (*)());
 extern "C" void fn_80044714();
-extern "C" U32* fn_8000AA80(char*, U32*, U32*);
 extern xIniFile* xIniParse(char*, S32);
 extern void xIniDestroy(xIniFile*);
 extern "C" void fn_800162D4(char*);
@@ -266,7 +266,7 @@ extern "C" void main()
     fn_80044714();
 
     U32 size;
-    U32* data = fn_8000AA80("SD2.INI", 0, &size);
+    U32* data = iFileLoad("SD2.INI", 0, &size);
     if (data)
     {
         xIniFile* ini = xIniParse((char*)data, size);

@@ -39,16 +39,19 @@ flat/iDebug.cpp:
 	.sbss       start:0x8025E890 end:0x8025E898
 
 flat/iDraw.cpp:
-	.text       start:0x80009CC0 end:0x80009CCC
-
-flat/iEnv.cpp:
-	.text       start:0x80009CCC end:0x8000A408
-	.sdata      start:0x8025E3E8 end:0x8025E3F8
-	.sbss       start:0x8025E898 end:0x8025E8A8
+	.text       start:0x80009CC0 end:0x8000A0D4
 	.sdata2     start:0x8025F960 end:0x8025F978
 
-flat/iFMV.cpp:
-	.text       start:0x8000AA80 end:0x8000AB3C
+flat/iEnv.cpp:
+	.text       start:0x8000A0D4 end:0x8000A49C
+	.sdata      start:0x8025E3E8 end:0x8025E3F8
+	.sbss       start:0x8025E898 end:0x8025E8A8
+	.sdata2     start:0x8025F978 end:0x8025F980
+
+flat/iFile.cpp:
+	.text       start:0x8000A49C end:0x8000AB58
+	.bss        start:0x801DF648 end:0x801E06D8
+	.sbss       start:0x8025E8A8 end:0x8025E8B8
 
 flat/iFont.cpp:
 	.text       start:0x8000AB58 end:0x8000B9C4
@@ -178,11 +181,11 @@ flat/xEnt.cpp:
 	.sdata2     start:0x8025FD08 end:0x8025FE50
 
 flat/xEntDrive.cpp:
-	.text       start:0x800258F4 end:0x80026158
+	.text       start:0x800258F4 end:0x80025F04
 	.sdata2     start:0x8025FE50 end:0x8025FE58
 
 flat/xEntMotion.cpp:
-	.text       start:0x80026158 end:0x80028D18
+	.text       start:0x80025F04 end:0x80028D18
 	.rodata     start:0x80193118 end:0x80193698
 	.data       start:0x801AE880 end:0x801AE8A0
 	.sdata      start:0x8025E428 end:0x8025E430
