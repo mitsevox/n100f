@@ -33,13 +33,14 @@ flat/iCollideFast.cpp:
 	.sbss       start:0x80270728 end:0x80270730
 
 flat/iDraw.cpp:
-	.text       start:0x80009A40 end:0x80009A4C
+	.text       start:0x80009A40 end:0x80009E54
+	.sdata2     start:0x80271820 end:0x80271838
 
 flat/iEnv.cpp:
-	.text       start:0x80009A4C end:0x8000A188
+	.text       start:0x80009E54 end:0x8000A21C
 	.sdata      start:0x80270288 end:0x80270298
 	.sbss       start:0x80270730 end:0x80270740
-	.sdata2     start:0x80271820 end:0x80271838
+	.sdata2     start:0x80271838 end:0x80271840
 
 flat/iLight.cpp:
 	.text       start:0x8000B9A8 end:0x8000BCF8
@@ -152,11 +153,11 @@ flat/xEnt.cpp:
 	.sdata2     start:0x80271BC0 end:0x80271D08
 
 flat/xEntDrive.cpp:
-	.text       start:0x80025A7C end:0x800262E0
+	.text       start:0x80025A7C end:0x8002608C
 	.sdata2     start:0x80271D08 end:0x80271D10
 
 flat/xEntMotion.cpp:
-	.text       start:0x800262E0 end:0x80028EA0
+	.text       start:0x8002608C end:0x80028EA0
 	.rodata     start:0x80190398 end:0x80190918
 	.data       start:0x801BD240 end:0x801BD260
 	.sdata      start:0x802702C8 end:0x802702D0
