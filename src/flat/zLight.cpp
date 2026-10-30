@@ -9,15 +9,6 @@
 #include "zGame.h"
 #include <string.h>
 
-extern "C" void fn_80032EDC(_tagPartition* part, xVec3* insert_pos, S32* x, S32* y, S32* z);
-extern "C" void fn_80032DEC(_tagPartition* p, S32 step, S32* xi, S32* yi, S32* zi, S32 xmid, S32 ymid, S32 zmid,
-                            S32* xend, S32* yend, S32* zend);
-extern "C" _tagPartSpace* fn_80032F6C(_tagPartition* p, S32 true_idx);
-extern "C" S32 fn_80032F7C(_tagPartition* part, void* data, S32 old_idx, xVec3* current_pos);
-extern "C" S32 fn_80033100(_tagPartition* part, void* insert_data, xVec3* insert_pos);
-extern "C" void fn_80033288(_tagPartition* part, _xEnv* env, S32 x_spaces, S32 y_spaces, S32 z_spaces);
-extern "C" void fn_80033440(_tagPartition* part, _zVolume* volume, S32 x_spaces, S32 y_spaces, S32 z_spaces);
-extern "C" void fn_80032ED8(_tagPartition* part, char* name);
 extern "C" void fn_8003C81C(xVec3* pos, xVec3* vec, F32 strength);
 
 static _zLight* sLight[32];
@@ -100,14 +91,14 @@ void zLightResetAll(_xEnv* env)
 
     if (sPartitionVolume)
     {
-        fn_80033440(&sLightPart, sPartitionVolume, 10, 1, 10);
+        xPartitionVolume(&sLightPart, sPartitionVolume, 10, 1, 10);
     }
     else
     {
-        fn_80033288(&sLightPart, env, 10, 1, 10);
+        xPartitionWorld(&sLightPart, env, 10, 1, 10);
     }
 
-    fn_80032ED8(&sLightPart, "Lighting");
+    xPartitionDump(&sLightPart, "Lighting");
 }
 
 void zLightInit(void* b, void* tasset)
@@ -160,14 +151,14 @@ void zLightAddLocal(_xEnt* ent)
         }
     }
 
-    fn_80032EDC(&sLightPart, pos, &vx, NULL, &vz);
-    fn_80032DEC(&sLightPart, 2, &xstart, NULL, &zstart, vx, 0, vz, &xend, NULL, &zend);
+    xPartitionGetVirtualIdx(&sLightPart, pos, &vx, NULL, &vz);
+    xPartitionGetLoop(&sLightPart, 2, &xstart, NULL, &zstart, vx, 0, vz, &xend, NULL, &zend);
 
     for (zi = zstart; zi <= zend; zi++)
     {
         for (xi = xstart; xi <= xend; xi++)
         {
-            _tagPartSpace* space = fn_80032F6C(&sLightPart, xPartitionGetTrueIdx(&sLightPart, xi, 0, zi));
+            _tagPartSpace* space = xPartitionGetSpace(&sLightPart, xPartitionGetTrueIdx(&sLightPart, xi, 0, zi));
             if (space->total <= 0)
             {
                 continue;
@@ -352,7 +343,7 @@ void zLightInit(xBase* b, zLightAsset* tasset)
             t->reg = NULL;
         }
 
-        t->true_idx = fn_80033100(&sLightPart, t, &t->light.sph.center);
+        t->true_idx = xPartitionInsert(&sLightPart, t, &t->light.sph.center);
     }
 }
 
@@ -405,7 +396,7 @@ void zLightUpdate(xBase* to, _xScene*, F32 dt)
         pos.y += 1.0f;
         iLightSetPos(&t->light, &pos);
         t->light.sph.center = pos;
-        t->true_idx = fn_80032F7C(&sLightPart, t, t->true_idx, &pos);
+        t->true_idx = xPartitionUpdate(&sLightPart, t, t->true_idx, &pos);
     }
 
     if (sEffectFuncs[t->effect_idx])
