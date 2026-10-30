@@ -144,8 +144,6 @@ typedef struct RwFrame RwFrame;
 typedef struct RwRaster RwRaster;
 typedef struct RwStream RwStream;
 
-#define rwRASTERGAMMACORRECTED 0x01
-
 struct RwRaster
 {
     RwRaster* parent;
@@ -512,6 +510,34 @@ typedef enum RwRasterFormat
     rwRASTERFORMATMASK = 0xff00,
     rwRASTERFORMATFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwRasterFormat;
+
+#define RwRasterGetFormat(_raster) ((((_raster)->cFormat) & (rwRASTERFORMATMASK >> 8)) << 8)
+
+typedef enum RwRasterLockMode
+{
+    rwRASTERLOCKWRITE = 0x01,
+    rwRASTERLOCKREAD = 0x02,
+    rwRASTERLOCKNOFETCH = 0x04,
+    rwRASTERLOCKRAW = 0x08,
+    rwRASTERLOCKMODEFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwRasterLockMode;
+
+#define rwRASTERLOCKREADWRITE (rwRASTERLOCKREAD | rwRASTERLOCKWRITE)
+
+typedef enum RwRasterPrivateFlag
+{
+    rwRASTERGAMMACORRECTED = 0x01,
+    rwRASTERPIXELLOCKEDREAD = 0x02,
+    rwRASTERPIXELLOCKEDWRITE = 0x04,
+    rwRASTERPALETTELOCKEDREAD = 0x08,
+    rwRASTERPALETTELOCKEDWRITE = 0x10,
+    rwRASTERPIXELLOCKEDRAW = 0x20,
+    rwRASTERPRIVATEFLAGFORCEENUMSIZEINT = 0x7FFFFFFF
+} RwRasterPrivateFlag;
+
+#define rwRASTERPIXELLOCKED (rwRASTERPIXELLOCKEDREAD | rwRASTERPIXELLOCKEDWRITE)
+#define rwRASTERPALETTELOCKED (rwRASTERPALETTELOCKEDREAD | rwRASTERPALETTELOCKEDWRITE)
+#define rwRASTERLOCKED (rwRASTERPIXELLOCKED | rwRASTERPALETTELOCKED)
 
 typedef enum RwRenderState
 {
@@ -1709,6 +1735,10 @@ S32 RwFreeListDestroy(RwFreeList* freeList);
 void* _rwFreeListAllocReal(RwFreeList* freeList);
 RwFreeList* _rwFreeListFreeReal(RwFreeList* freeList, void* pData);
 U32 _rwGetNumEngineInstances(void);
+U8* RwRasterLock(RwRaster* raster, U8 level, S32 lockMode);
+U8* RwRasterLockPalette(RwRaster* raster, S32 lockMode);
+RwRaster* RwRasterUnlock(RwRaster* raster);
+RwRaster* RwRasterUnlockPalette(RwRaster* raster);
 S32 RwEngineOpen(RwEngineOpenParams* initParams);
 S32 RwEngineStart(void);
 S32 RwEngineStop(void);

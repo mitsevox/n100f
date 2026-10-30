@@ -11,10 +11,6 @@
 #define STDFUNC_RASTERUNLOCKPALETTE 24
 #define STDFUNC_RASTERGETMIPLEVELS 28
 
-#define rwRASTERPALETTELOCKEDREAD 0x08
-#define rwRASTERPALETTELOCKEDWRITE 0x10
-#define rwRASTERPALETTELOCKED (rwRASTERPALETTELOCKEDREAD | rwRASTERPALETTELOCKEDWRITE)
-
 // The raster module's data in the engine instance. emptyRaster is a raster with no pixels that
 // _rwRasterOpen sets up and points unk0 at.
 typedef struct RasterModuleData RasterModuleData;
