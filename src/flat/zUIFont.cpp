@@ -8,25 +8,21 @@
 #include "zVar.h"
 #include "version.h"
 
-#if VERSION_GIHE78_REV0
 U32 zSaveLoad_slotIsEmpty(U32 i);
 #define FONT_SLOT_EMPTY zSaveLoad_slotIsEmpty
+#define UI_RESET zUI_Reset
+#define UI_EVENT zUIEventCB
+#define UI_INIT zUI_Init
+
+#if VERSION_GIHE78_REV0
 #define FONT_UPDATE fn_800D4C5C
 #define FONT_EVENT fn_800D4B0C
-#define UI_RESET zUI_Reset
-#define UI_EVENT zUIEventCB
 #define FONT_RENDER fn_800D47E8
-#define UI_INIT zUI_Init
 #define FONT_WIGGLE lbl_8025E8C0
 #elif VERSION_GIHE78_REV1
-U32 zSaveLoad_slotIsEmpty(U32 i);
-#define FONT_SLOT_EMPTY zSaveLoad_slotIsEmpty
 #define FONT_UPDATE fn_800D4850
 #define FONT_EVENT fn_800D4700
-#define UI_RESET zUI_Reset
-#define UI_EVENT zUIEventCB
 #define FONT_RENDER fn_800D43DC
-#define UI_INIT zUI_Init
 #define FONT_WIGGLE lbl_80270758
 #endif
 
