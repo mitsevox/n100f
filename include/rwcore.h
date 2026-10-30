@@ -207,7 +207,6 @@ typedef enum RwCameraProjection
     rwCAMERAPROJECTIONFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwCameraProjection;
 
-// Partial: the frustum bounding box and corners after frustumPlanes are not declared.
 struct RwCamera
 {
     RwObjectHasFrame object;
@@ -229,7 +228,7 @@ struct RwCamera
     U16 pad;
     RwFrustumPlane frustumPlanes[6];
     RwBBox frustumBoundBox;
-    U8 unk128[0x60];
+    RwV3d frustumCorners[8];
 };
 
 struct RwFrame
@@ -278,6 +277,53 @@ typedef enum RwStreamAccessType
     rwSTREAMAPPEND,
     rwSTREAMACCESSTYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwStreamAccessType;
+
+typedef struct RwStreamMemory RwStreamMemory;
+struct RwStreamMemory
+{
+    U32 position;
+    U32 nSize;
+    U8* memBlock;
+};
+
+typedef union RwStreamFile RwStreamFile;
+union RwStreamFile
+{
+    void* fpFile;
+    const void* constfpFile;
+};
+
+typedef S32 (*rwCustomStreamFnClose)(void* data);
+typedef U32 (*rwCustomStreamFnRead)(void* data, void* buffer, U32 length);
+typedef S32 (*rwCustomStreamFnWrite)(void* data, const void* buffer, U32 length);
+typedef S32 (*rwCustomStreamFnSkip)(void* data, U32 offset);
+
+typedef struct RwStreamCustom RwStreamCustom;
+struct RwStreamCustom
+{
+    rwCustomStreamFnClose sfnclose;
+    rwCustomStreamFnRead sfnread;
+    rwCustomStreamFnWrite sfnwrite;
+    rwCustomStreamFnSkip sfnskip;
+    void* data;
+};
+
+typedef union RwStreamUnion RwStreamUnion;
+union RwStreamUnion
+{
+    RwStreamMemory memory;
+    RwStreamFile file;
+    RwStreamCustom custom;
+};
+
+struct RwStream
+{
+    RwStreamType type;
+    RwStreamAccessType accessType;
+    S32 position;
+    RwStreamUnion Type;
+    S32 rwOwned;
+};
 
 typedef enum RwFrustumTestResult
 {
@@ -1557,6 +1603,7 @@ RwCamera* RwCameraShowRaster(RwCamera* camera, void* pDev, U32 flags);
 RwCamera* RwCameraSetNearClipPlane(RwCamera* camera, F32 nearClip);
 RwCamera* RwCameraSetFarClipPlane(RwCamera* camera, F32 farClip);
 RwCamera* RwCameraSetViewWindow(RwCamera* camera, const RwV2d* viewWindow);
+RwCamera* RwCameraSetProjection(RwCamera* camera, RwCameraProjection projection);
 RwCamera* RwCameraSetViewOffset(RwCamera* camera, const RwV2d* offset);
 S32 RwCameraRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
                            RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
@@ -1593,9 +1640,15 @@ S32 RwFrameDirty(const RwFrame* frame);
 S32 RwFrameDestroyHierarchy(RwFrame* frame);
 RwMatrix* RwMatrixMultiply(RwMatrix* matrixOut, const RwMatrix* MatrixIn1, const RwMatrix* matrixIn2);
 RwMatrix* RwMatrixTransform(RwMatrix* matrix, const RwMatrix* transform, RwOpCombineType combineOp);
+RwMatrix* RwMatrixRotate(RwMatrix* matrix, const RwV3d* axis, F32 angle, RwOpCombineType combineOp);
+RwMatrix* RwMatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMatrix);
+F32 _rwMatrixDeterminant(const RwMatrix* matrix);
+F32 _rwMatrixOrthogonalError(const RwMatrix* matrix);
+F32 _rwMatrixNormalError(const RwMatrix* matrix);
 RwV3d* RwV3dTransformPoints(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
                             const RwMatrix* matrix);
 RwFrustumTestResult RwCameraFrustumTestSphere(const RwCamera* camera, const RwSphere* sphere);
+RwBBox* RwBBoxCalculate(RwBBox* boundBox, const RwV3d* verts, S32 numVerts);
 RwBBox* RwBBoxInitialize(RwBBox* boundBox, const RwV3d* vertex);
 RwBBox* RwBBoxAddPoint(RwBBox* boundBox, const RwV3d* vertex);
 RwStream* RwStreamOpen(RwStreamType type, RwStreamAccessType accessType, const void* pData);
@@ -1616,6 +1669,8 @@ void* RwMemLittleEndian32(void* mem, U32 size);
 void* RwMemNative32(void* mem, U32 size);
 void* RwMemFloat32ToReal(void* mem, U32 size);
 S32 RwStreamFindChunk(RwStream* stream, U32 type, U32* lengthOut, U32* versionOut);
+S32 _rwStreamReadChunkHeader(RwStream* stream, U32* type, U32* length, U32* version,
+                             U32* buildNum);
 S32 _rwFrameSyncDirty(void);
 
 RwError* RwErrorSet(RwError* code);
@@ -1623,6 +1678,9 @@ S32 _rwerror(S32 code, ...);
 
 RwFreeList* RwFreeListCreate(S32 entrySize, S32 entriesPerBlock, S32 alignment);
 S32 RwFreeListDestroy(RwFreeList* freeList);
+void* _rwFreeListAllocReal(RwFreeList* freeList);
+RwFreeList* _rwFreeListFreeReal(RwFreeList* freeList, void* pData);
+U32 _rwGetNumEngineInstances(void);
 S32 _rxPipelineClose(void);
 S32 _rxPipelineOpen(void);
 RxPipelineNode* PipelineNodeDestroy(RxPipelineNode* node, RxPipeline* pipeline);
@@ -1699,6 +1757,11 @@ const RwPluginRegistry* _rwPluginRegistryReadDataChunks(const RwPluginRegistry* 
                                                         RwStream* stream, void* object);
 const RwPluginRegistry* _rwPluginRegistryInvokeRights(const RwPluginRegistry* reg, U32 id,
                                                       void* obj, U32 extraData);
+S32 _rwPluginRegistryGetSize(const RwPluginRegistry* reg, const void* object);
+const RwPluginRegistry* _rwPluginRegistryWriteDataChunks(const RwPluginRegistry* reg,
+                                                         RwStream* stream, const void* object);
+const RwPluginRegistry* _rwPluginRegistrySkipDataChunks(const RwPluginRegistry* reg,
+                                                        RwStream* stream);
 const RwPluginRegistry* _rwPluginRegistryDeInitObject(const RwPluginRegistry* reg, void* object);
 
 void _rwObjectHasFrameReleaseFrame(void* object);
@@ -1711,6 +1774,8 @@ RwTexture* RwTexDictionaryAddTexture(RwTexDictionary* dict, RwTexture* texture);
 RwTexDictionary* RwTexDictionaryGetCurrent(void);
 
 RwFrame* RwFrameUpdateObjects(RwFrame* frame);
+RwFrame* RwFrameAddChild(RwFrame* parent, RwFrame* child);
+RwFrame* RwFrameRemoveChild(RwFrame* child);
 RwFrame* RwFrameTransform(RwFrame* frame, const RwMatrix* m, RwOpCombineType combine);
 RwFrame* RwFrameRotate(RwFrame* frame, const RwV3d* axis, F32 angle, RwOpCombineType combine);
 

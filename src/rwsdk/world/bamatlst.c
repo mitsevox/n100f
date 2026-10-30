@@ -1,5 +1,30 @@
 #include <rpworld.h>
 
+RpMaterialList* _rpMaterialListDeinitialize(RpMaterialList* matList)
+{
+    RpMaterial** materials = matList->materials;
+
+    if (materials)
+    {
+        S32 numMaterials = matList->numMaterials;
+        S32 i;
+
+        for (i = 0; i < numMaterials; i++)
+        {
+            RpMaterialDestroy(materials[i]);
+            materials[i] = NULL;
+        }
+
+        RwFree(materials);
+        matList->materials = NULL;
+    }
+
+    matList->numMaterials = 0;
+    matList->space = 0;
+
+    return matList;
+}
+
 RpMaterialList* _rpMaterialListInitialize(RpMaterialList* matList)
 {
     matList->space = 0;
