@@ -20,7 +20,7 @@ extern void CalcJumpImpulse(zJumpParam* param);
 extern "C" void fn_80016218();
 extern "C" void fn_8002FB54(void (*)());
 extern "C" void fn_80044714();
-extern "C" char* fn_8000AA80(char*, S32, S32*);
+extern "C" U32* fn_8000AA80(char*, U32*, U32*);
 extern xIniFile* xIniParse(char*, S32);
 extern void xIniDestroy(xIniFile*);
 extern "C" void fn_800162D4(char*);
@@ -262,11 +262,11 @@ extern "C" void fn_800BF1D4()
     globals.sceneFirst = 1;
     fn_80044714();
 
-    S32 size;
-    char* data = fn_8000AA80("SD2.INI", 0, &size);
+    U32 size;
+    U32* data = fn_8000AA80("SD2.INI", 0, &size);
     if (data)
     {
-        xIniFile* ini = xIniParse(data, size);
+        xIniFile* ini = xIniParse((char*)data, size);
         char* path = xIniGetString(ini, "PATH", 0);
         if (path)
             fn_800162D4(path);
