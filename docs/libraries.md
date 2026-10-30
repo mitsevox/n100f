@@ -24,7 +24,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 
 ### Reconstructed RenderWare sources
 
-`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` (text-only, all 7 functions), `baworobj.c` (all 48 functions and its `.sbss`), `babinary.c` (all 14 functions and its jump table in `.data`), `batypehf.c` (text-only, both functions), `basync.c` (text-only, all 7 functions), `baraster.c` (all 11 functions, its `.data` and its `.sbss`), `bapipe.c` (all 4 functions and its `.sbss`), `baimras.c` (text-only, all 3 functions), `bapipew.c` (text-only, all 5 functions; GIHE78-rev0), `wrldpipe.c` (text-only, all 6 functions; GIHE78-rev0), `p2renderstate.c` (all 4 functions and its `.sdata2`; GIHE78-rev0), `baim3d.c` (all 9 functions, its `.data` strings and its `.sbss`; GIHE78-rev0), `gcn/im3dpipe.c` (text-only, all 4 functions; GIHE78-rev0) and the Im3D nodes `nodeImmRenderSetup.c`, `nodeImmStash.c`, `nodeSubmitLine.c` and `nodeSubmitTriangle.c` (both functions and the node `.data` each; GIHE78-rev0) and `nodeImmInstance.c` (both functions, its `.data` and its `.sdata2`; GIHE78-rev0) are linked as Matching objects; the other units stay NonMatching (data is not split, or functions remain). 534 functions compile to the target bytes with every relocation resolving to the target's symbol:
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` (text-only, all 7 functions), `baworobj.c` (all 48 functions and its `.sbss`), `babinary.c` (all 14 functions and its jump table in `.data`), `batypehf.c` (text-only, both functions), `basync.c` (text-only, all 7 functions), `baraster.c` (all 11 functions, its `.data` and its `.sbss`), `bapipe.c` (all 4 functions and its `.sbss`), `baimras.c` (text-only, all 3 functions), `bapipew.c` (text-only, all 5 functions; GIHE78-rev0), `wrldpipe.c` (text-only, all 6 functions; GIHE78-rev0), `p2renderstate.c` (all 4 functions and its `.sdata2`; GIHE78-rev0), `baim3d.c` (all 9 functions, its `.data` strings and its `.sbss`; GIHE78-rev0), `gcn/im3dpipe.c` (text-only, all 4 functions; GIHE78-rev0) and the Im3D nodes `nodeImmRenderSetup.c`, `nodeImmStash.c`, `nodeSubmitLine.c` and `nodeSubmitTriangle.c` (both functions and the node `.data` each; GIHE78-rev0) and `nodeImmInstance.c` (both functions, its `.data` and its `.sdata2`; GIHE78-rev0) are linked as Matching objects; the other units stay NonMatching (data is not split, or functions remain). 549 functions compile to the target bytes with every relocation resolving to the target's symbol:
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |
@@ -64,13 +64,13 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c` | 1 of 2 | `_ImmMangleTriangleIndicesNode` (87.6%: its locals take other saved registers, and the strip rewrite's source index is scheduled differently) |
 | `rwsdk/world/pipe/p2/bapipew.c` | 5 of 5 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/pipe/p2/gcn/wrldpipe.c` | 6 of 6 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/batextur.c` | 13 of 27 | 14 others |
+| `rwsdk/src/batextur.c` | 18 of 27 | `RwTextureDestroy` (93.3%: the target loads the return value 1 before reading the reference count as well as at the end) and 8 others, not written yet |
 | `rwsdk/src/plcore/batkbin.c` | 8 of 8 | |
-| `rwsdk/src/plcore/bamatrix.c` | 3 of 9 | 6 others |
+| `rwsdk/src/plcore/bamatrix.c` | 6 of 9 | `_rwMatrixOpen` and `RwMatrixOptimize`, which inline `_rwMatrixSetMultFn` and the matrix checks that sit before the split, and `RwMatrixRotateOneMinusCosineSine`, not written yet |
 | `rwsdk/src/plcore/bastream.c` | 4 of 5 | `RwStreamWrite` (99.9%: the operands of the file-write length compare are the other way round) |
 | `rwsdk/src/babinfrm.c` | 3 of 3 | |
-| `rwsdk/src/babintex.c` | 2 of 9 | 7 others |
-| `rwsdk/src/baimage.c` | 4 of 16 | 12 others |
+| `rwsdk/src/babintex.c` | 7 of 9 | `_rwStringStreamFindAndRead` (99.0%: register choice in the inlined string readers) and `RwTextureStreamRead` (83.6%: the target keeps the inlined readers' NULL test and allocation path for its name buffers) |
+| `rwsdk/src/baimage.c` | 6 of 16 | `RwImageMakeMask` (97.4%) and `RwImageCopy` (97.9%), register choice; `RwImageAllocatePixels` (83.0%: the target compares the depth unsigned and computes the palette size without a branch); 7 others, not written yet |
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/world/basector.c` | 6 of 6 | |

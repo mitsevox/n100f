@@ -350,6 +350,7 @@ typedef enum RwFrustumTestResult
 #define rwID_LIGHT 0x12
 #define rwID_UNICODESTRING 0x13
 #define rwID_ATOMIC 0x14
+#define rwID_TEXTURENATIVE 0x15
 #define rwID_TEXDICTIONARY 0x16
 #define rwID_GEOMETRYLIST 0x1A
 #define rwID_RIGHTTORENDER 0x1f
@@ -693,6 +694,9 @@ struct RwTexture
 };
 
 #define rwTEXTUREFILTERMODEMASK 0x000000FF
+#define rwTEXTUREADDRESSINGUMASK 0x00000F00
+#define rwTEXTUREADDRESSINGVMASK 0x0000F000
+#define rwTEXTUREADDRESSINGMASK (rwTEXTUREADDRESSINGUMASK | rwTEXTUREADDRESSINGVMASK)
 
 #define RwTextureAddRefMacro(_tex) (((_tex)->refCount++), (_tex))
 
@@ -701,7 +705,15 @@ struct RwTexture
                                  (((U32)(_filtering)) & rwTEXTUREFILTERMODEMASK)),                 \
      (_tex))
 
+#define RwTextureSetAddressingMacro(_tex, _addressing)                                             \
+    (((_tex)->filterAddressing =                                                                   \
+          ((_tex)->filterAddressing & ~rwTEXTUREADDRESSINGMASK) |                                  \
+          (((((U32)(_addressing)) << 8) & rwTEXTUREADDRESSINGUMASK) |                              \
+           ((((U32)(_addressing)) << 12) & rwTEXTUREADDRESSINGVMASK))),                            \
+     (_tex))
+
 #define RwTextureAddRef(_tex) RwTextureAddRefMacro(_tex)
+#define RwTextureSetAddressing(_tex, _addressing) RwTextureSetAddressingMacro(_tex, _addressing)
 #define RwTextureSetFilterMode(_tex, _filtering) RwTextureSetFilterModeMacro(_tex, _filtering)
 
 typedef struct RwImage RwImage;
@@ -1641,6 +1653,9 @@ S32 RwFrameDestroyHierarchy(RwFrame* frame);
 RwMatrix* RwMatrixMultiply(RwMatrix* matrixOut, const RwMatrix* MatrixIn1, const RwMatrix* matrixIn2);
 RwMatrix* RwMatrixTransform(RwMatrix* matrix, const RwMatrix* transform, RwOpCombineType combineOp);
 RwMatrix* RwMatrixRotate(RwMatrix* matrix, const RwV3d* axis, F32 angle, RwOpCombineType combineOp);
+RwMatrix* RwMatrixRotateOneMinusCosineSine(RwMatrix* matrix, const RwV3d* unitAxis,
+                                           F32 oneMinusCosine, F32 sine,
+                                           RwOpCombineType combineOp);
 RwMatrix* RwMatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMatrix);
 F32 _rwMatrixDeterminant(const RwMatrix* matrix);
 F32 _rwMatrixOrthogonalError(const RwMatrix* matrix);
@@ -1766,7 +1781,19 @@ const RwPluginRegistry* _rwPluginRegistryDeInitObject(const RwPluginRegistry* re
 
 void _rwObjectHasFrameReleaseFrame(void* object);
 
+RwTexture* RwTextureCreate(RwRaster* raster);
 S32 RwTextureDestroy(RwTexture* texture);
+RwTexture* RwTextureSetName(RwTexture* texture, const char* name);
+RwTexture* RwTextureSetMaskName(RwTexture* texture, const char* maskName);
+RwTexDictionary* RwTexDictionaryCreate(void);
+S32 RwTextureSetMipmapping(S32 enable);
+S32 RwTextureGetMipmapping(void);
+S32 RwTextureSetAutoMipmapping(S32 enable);
+S32 RwTextureGetAutoMipmapping(void);
+RwTexture* RwTextureRead(const char* name, const char* maskName);
+U32 RwTextureStreamGetSize(const RwTexture* texture);
+const RwTexture* RwTextureStreamWrite(const RwTexture* texture, RwStream* stream);
+RwTexture* RwTextureStreamRead(RwStream* stream);
 RwTexDictionary* RwTexDictionaryStreamRead(RwStream* stream);
 RwTexture* RwTexDictionaryRemoveTexture(RwTexture* texture);
 S32 RwTexDictionaryDestroy(RwTexDictionary* dict);
