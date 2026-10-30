@@ -5,15 +5,14 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	iCollide.cpp	iCollideFast.cpp	0x80009424	0x80009424	alignment only (3 cuts tie on data)	0
 .text	iCollideFast.cpp	iDebug.cpp	0x80009A20	0x80009A20	alignment only (2 cuts tie on data)	1
 .text	iDebug.cpp	iDraw.cpp	0x80009CC0	0x80009CC0	alignment only (4 cuts tie on data)	1
-.text	iDraw.cpp	iEnv.cpp	0x80009CCC	0x80009CCC	closed by references (1 functions joined; was open: 1 unassigned functions)	4
-.text	iEnv.cpp	iFile.cpp	0x8000A408	0x8000A408	alignment only (7 cuts tie on data); iFile.cpp left unsplit	0
-.text	iFile.cpp	iFMV.cpp	0x8000A5A4	0x8000AA80	open: 8 unassigned functions; iFile.cpp left unsplit	0
-.text	iFMV.cpp	iFont.cpp	0x8000AB3C	0x8000AB58	open: 2 unassigned functions	0
+.text	iDraw.cpp	iEnv.cpp	0x8000A0D4	0x8000A0D4	single cut by data references	5
+.text	iEnv.cpp	iFile.cpp	0x8000A49C	0x8000A49C	alignment only (8 cuts tie on data)	0
+.text	iFile.cpp	iFont.cpp	0x8000AB58	0x8000AB58	single cut by data references	0
 .text	iFont.cpp	iFX.cpp	0x8000B9C4	0x8000B9C4	alignment only (2 cuts tie on data); 1 functions joined by .sdata2 literals; iFX.cpp left unsplit	0
 .text	iFX.cpp	iLight.cpp	0x8000B9C4	0x8000B9C4	single cut by data references; iFX.cpp left unsplit	1
 .text	iLight.cpp	iMath.cpp	0x8000BD14	0x8000BD14	alignment only (5 cuts tie on data)	0
 .text	iMath.cpp	iMath3.cpp	0x8000BDC0	0x8000BDC0	alignment only (3 cuts tie on data)	0
-.text	iMath3.cpp	iMemMgr.cpp	0x8000DA6C	0x8000DA6C	alignment only (4 cuts tie on data)	3
+.text	iMath3.cpp	iMemMgr.cpp	0x8000DA6C	0x8000DA6C	alignment only (3 cuts tie on data)	3
 .text	iMemMgr.cpp	iModel.cpp	0x8000DBA4	0x8000DBA4	single cut by data references	0
 .text	iModel.cpp	iMorph.cpp	0x8000EBC0	0x8000EBC0	single cut by call references (5 cuts tie on data)	0
 .text	iMorph.cpp	iPad.cpp	0x8000F5AC	0x8000F5AC	alignment only (2 cuts tie on data); iPad.cpp left unsplit	0
@@ -38,7 +37,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xDebug.cpp	xDraw.cpp	0x80021C60	0x80021E30	open: 5 unassigned functions; xDebug.cpp left unsplit; xDraw.cpp left unsplit	0
 .text	xDraw.cpp	xEnt.cpp	0x80021E70	0x80021E70	alignment only (3 cuts tie on data); xDraw.cpp left unsplit	0
 .text	xEnt.cpp	xEntDrive.cpp	0x800258F4	0x800258F4	single cut by data references	0
-.text	xEntDrive.cpp	xEntMotion.cpp	0x80026158	0x80026158	single cut by data references	0
+.text	xEntDrive.cpp	xEntMotion.cpp	0x80025F04	0x80025F04	single cut by data references	3
 .text	xEntMotion.cpp	xEnv.cpp	0x80028D18	0x80028D18	single cut by data references	0
 .text	xEnv.cpp	xFFX.cpp	0x80028DFC	0x80028DFC	single cut by data references	0
 .text	xFFX.cpp	xFilter.cpp	0x80029458	0x80029458	single cut by data references	0
@@ -134,7 +133,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	zUI.cpp	zUIFont.cpp	0x800D47E8	0x800D47E8	static initialiser ends unit	0
 .text	zUIFont.cpp	zVar.cpp	0x800D527C	0x800D527C	single cut by data references	0
 .bss	iCollide.cpp	iDebug.cpp	0x801DF548	0x801DF548	single aligned candidate	0
-.bss	iDebug.cpp	iFont.cpp	0x801DF648	0x801E06D8	open: 2 items loaded by unassigned functions	0
+.bss	iDebug.cpp	iFile.cpp	0x801DF648	0x801DF648	single aligned candidate	0
+.bss	iFile.cpp	iFont.cpp	0x801E06D8	0x801E06D8	single aligned candidate	0
 .bss	iFont.cpp	iModel.cpp	0x801E1498	0x801E1498	single aligned candidate	0
 .bss	iModel.cpp	iParMgr.cpp	0x801E1898	0x801E6B98	open: 2 items loaded by unassigned functions	0
 .bss	iParMgr.cpp	isavegame.cpp	0x801E6D60	0x801E6D60	single aligned candidate	0
@@ -285,7 +285,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	iCollide.cpp	iCollideFast.cpp	0x8025E888	0x8025E888	single aligned candidate	0
 .sbss	iCollideFast.cpp	iDebug.cpp	0x8025E890	0x8025E890	single aligned candidate	0
 .sbss	iDebug.cpp	iEnv.cpp	0x8025E898	0x8025E898	single aligned candidate	0
-.sbss	iEnv.cpp	iFont.cpp	0x8025E8A8	0x8025E8B8	open: 4 items loaded by unassigned functions	0
+.sbss	iEnv.cpp	iFile.cpp	0x8025E8A8	0x8025E8A8	single aligned candidate	0
+.sbss	iFile.cpp	iFont.cpp	0x8025E8B8	0x8025E8B8	single aligned candidate	0
 .sbss	iFont.cpp	iLight.cpp	0x8025E8D8	0x8025E8D8	single aligned candidate; 1 in-range loads by functions outside the written units	1
 .sbss	iLight.cpp	iMath.cpp	0x8025E8E0	0x8025E8E0	single aligned candidate	0
 .sbss	iMath.cpp	iMemMgr.cpp	0x8025E8E8	0x8025E8E8	single aligned candidate	0
@@ -398,9 +399,9 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata	zScene.cpp	zSurface.cpp	0x8025E5B8	0x8025E5B8	single aligned candidate	0
 .sdata2	iAnimSKB.cpp	iCamera.cpp	0x8025F900	0x8025F900	single aligned candidate	0
 .sdata2	iCamera.cpp	iCollide.cpp	0x8025F938	0x8025F938	single aligned candidate	0
-.sdata2	iCollide.cpp	iEnv.cpp	0x8025F960	0x8025F960	single aligned candidate	0
-.sdata2	iEnv.cpp	iFile.cpp	0x8025F978	-	single aligned candidate; a side left unsplit	0
-.sdata2	iFile.cpp	iFont.cpp	-	0x8025F980	single aligned candidate; a side left unsplit	0
+.sdata2	iCollide.cpp	iDraw.cpp	0x8025F960	0x8025F960	single aligned candidate	0
+.sdata2	iDraw.cpp	iEnv.cpp	0x8025F978	0x8025F978	single aligned candidate	0
+.sdata2	iEnv.cpp	iFont.cpp	0x8025F980	0x8025F980	single aligned candidate	0
 .sdata2	iFont.cpp	iLight.cpp	0x8025F9D0	0x8025F9D0	single aligned candidate	0
 .sdata2	iLight.cpp	iMath.cpp	0x8025F9D8	0x8025F9D8	single aligned candidate	0
 .sdata2	iMath.cpp	iMath3.cpp	0x8025F9E8	0x8025F9E8	single aligned candidate	0
