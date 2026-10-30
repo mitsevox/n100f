@@ -5,6 +5,7 @@
 #include "xMath.h"
 #include "xMath3.h"
 #include "xSnd.h"
+#include "xstransvc.h"
 #include "xTRC.h"
 
 #include <dolphin/ai.h>
@@ -18,18 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct st_xST_XASSETINFO
-{
-    U32 aid;
-    U32 sector;
-    U32 plus_offset;
-    U32 size;
-    void* mempos;
-};
-
 extern "C" {
-char* fn_8003F904(U32 aid);
-S32 fn_8003FBB4(U32 aid, st_xST_XASSETINFO* ainfo);
 U32 fn_8000A5F8(tag_xFile* file, void* buf, U32 size, void (*callback)(tag_xFile*));
 void fn_80016600();
 void fn_800443AC();
@@ -1276,7 +1266,7 @@ void iSndLoadSounds(void* data)
 
     iSndSoundInfo* sounds = bank->sounds;
     sinfo_array[sinfo_array_max].bank = bank;
-    char* name = fn_8003F904(bank->sounds[0].assetID);
+    char* name = xST_xAssetID_HIPFullPath(bank->sounds[0].assetID);
     tag_xFile* file = &sinfo_array[sinfo_array_max].file;
     iFileOpen(name, 0, file);
     iFileSeek(file, 0, IFILE_SEEK_SET);
@@ -1285,7 +1275,7 @@ void iSndLoadSounds(void* data)
     for (i = 0; i < bank->num_sounds; i++)
     {
         st_xST_XASSETINFO ainfo;
-        fn_8003FBB4(sounds[i].assetID, &ainfo);
+        xSTGetAssetInfo(sounds[i].assetID, &ainfo);
         U32 offset = ainfo.plus_offset + ((ainfo.sector - file->ps.fileInfo.startAddr) << 5);
         U32 end = ainfo.size + offset;
         if (lowest > offset)
@@ -1305,7 +1295,7 @@ void iSndLoadSounds(void* data)
     for (i = 0; i < bank->num_streams; i++)
     {
         st_xST_XASSETINFO ainfo;
-        fn_8003FBB4(sounds[i + bank->num_sounds].assetID, &ainfo);
+        xSTGetAssetInfo(sounds[i + bank->num_sounds].assetID, &ainfo);
         if (sinfo_array_max < 2)
         {
             sounds[i + bank->num_sounds].dsp.sa =
