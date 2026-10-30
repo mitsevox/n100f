@@ -26,6 +26,7 @@ struct xPar
     F32 m_cvel[4];
 };
 
+void xParInit(xPar* p);
 void xParFree(xPar* par);
 xPar* xParAlloc();
 

@@ -25,7 +25,14 @@ struct xParGroup
     xParCmdTex* m_cmdTex;
 };
 
+#define XPARGROUP_UNK1 0x1
+#define XPARGROUP_ALLOCPARS 0x2
+#define XPARGROUP_NOAGING 0x4
+#define XPARGROUP_NOBACK2LIFE 0x8
+#define XPARGROUP_NOSTEAL 0x10
+
 void xParGroupAnimate(xParGroup* ps, F32 dt);
+xPar* xParGroupAddPar(xParGroup* ps);
 void xParGroupKillAllParticles(xParGroup* ps);
 void xParGroupKillPar(xParGroup* ps, xPar* p);
 void xParGroupSetActive(xParGroup* ps, U32 isActive);

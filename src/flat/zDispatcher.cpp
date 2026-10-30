@@ -40,9 +40,9 @@ struct st_ZDISPATCH_CONTEXT
 void zDispatcher_Init(st_ZDISPATCH_DATA*, p2BaseAsset*);
 extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT*);
 extern "C" void fn_80032254(S32, S32);
-extern "C" void fn_8003D408(F32, F32);
-extern "C" void fn_8003D3F4(F32, F32);
-extern "C" void fn_8003D3E0(F32, F32);
+void xSndSetMasterVol(F32 left, F32 right);
+void xSndSetStreamVol(F32 left, F32 right);
+void xSndSetFXVol(F32 left, F32 right);
 extern "C" S32 fn_800D7AEC();
 extern "C" S32 fn_800D7810();
 extern "C" S32 fn_800D7AA0();
@@ -359,7 +359,7 @@ extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context)
         {
             volume = 1.0f;
         }
-        fn_8003D408(volume, volume);
+        xSndSetMasterVol(volume, volume);
         if (result)
         {
             *result = fn_800D7AA0();
@@ -377,7 +377,7 @@ extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context)
         {
             volume = 1.0f;
         }
-        fn_8003D408(volume, volume);
+        xSndSetMasterVol(volume, volume);
         if (result)
         {
             *result = fn_800D7AA0();
@@ -395,7 +395,7 @@ extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context)
         {
             volume = 1.0f;
         }
-        fn_8003D408(volume, volume);
+        xSndSetMasterVol(volume, volume);
         if (result)
         {
             *result = fn_800D7AA0();
@@ -416,7 +416,7 @@ extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context)
         {
             volume = 1.0f;
         }
-        fn_8003D3F4(volume, volume);
+        xSndSetStreamVol(volume, volume);
         if (result)
         {
             *result = fn_800D7A54();
@@ -434,7 +434,7 @@ extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context)
         {
             volume = 1.0f;
         }
-        fn_8003D3F4(volume, volume);
+        xSndSetStreamVol(volume, volume);
         if (result)
         {
             *result = fn_800D7A54();
@@ -452,7 +452,7 @@ extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context)
         {
             volume = 1.0f;
         }
-        fn_8003D3F4(volume, volume);
+        xSndSetStreamVol(volume, volume);
         if (result)
         {
             *result = fn_800D7A54();
@@ -473,7 +473,7 @@ extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context)
         {
             volume = 1.0f;
         }
-        fn_8003D3E0(volume, volume);
+        xSndSetFXVol(volume, volume);
         if (result)
         {
             *result = fn_800D7A08();
@@ -491,7 +491,7 @@ extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context)
         {
             volume = 1.0f;
         }
-        fn_8003D3E0(volume, volume);
+        xSndSetFXVol(volume, volume);
         if (result)
         {
             *result = fn_800D7A08();
@@ -509,7 +509,7 @@ extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context)
         {
             volume = 1.0f;
         }
-        fn_8003D3E0(volume, volume);
+        xSndSetFXVol(volume, volume);
         if (result)
         {
             *result = fn_800D7A08();

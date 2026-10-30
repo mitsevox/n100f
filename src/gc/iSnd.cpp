@@ -20,7 +20,6 @@
 #include <string.h>
 
 extern "C" {
-U32 fn_8000A5F8(tag_xFile* file, void* buf, U32 size, void (*callback)(tag_xFile*));
 void fn_80016600();
 void fn_800443AC();
 U32 fn_800443F8();
@@ -1355,7 +1354,7 @@ void iSndLoadSounds(void* data)
             SoundFlags |= 0x1;
             U32 dest = aram + done;
             iFileSeek(file, lowest + done, IFILE_SEEK_SET);
-            fn_8000A5F8(file, stream_buffer, size, sndloadcb);
+            iFileReadAsync(file, stream_buffer, size, sndloadcb);
             while (SoundFlags != 0)
             {
                 fn_80016600();

@@ -54,6 +54,20 @@ extern xSndGlobals gSnd;
 
 struct _xEnt;
 
+void xSndInit();
+void xSndSuspend();
+void xSndResume();
+void xSndSetMasterVol(F32 left, F32 right);
+void xSndSetStreamVol(F32 left, F32 right);
+void xSndSetFXVol(F32 left, F32 right);
+void xSndPauseAll(U32 pause_effects, U32 pause_streams);
+void xSndStopAll();
+void xSndUpdate(F32 time_elapsed);
+void xSndExit();
+void xSndSetFrame(xVec3* right, xVec3* up, xVec3* at, xVec3* pos, F32 radius);
+void xSndSetFrameFar(xVec3* pos);
+void xSndParentDied(U32 pid);
+void xSndStopChildren(U32 pid);
 void xSndStop(U32 snd);
 void xSndPause(U32 snd, U32 pause);
 U32 xSndPlay3D(U32 id, F32 vol, F32 pitch, U32 priority, U32 flags, xVec3* pos, F32 radius);

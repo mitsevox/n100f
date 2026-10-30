@@ -42,5 +42,10 @@ void* xMemPoolAlloc(xMemPool* pool);
 void xMemPoolFree(xMemPool* pool, void* data);
 void* xMemPushTemp(U32 size);
 void xMemPopTemp(void* addr);
+void xMemExit();
+S32 xMemPushBase();
+S32 xMemPopBase(S32 depth);
+S32 xMemGetBase();
+void xMemRegisterBaseNotifyFunc(void (*func)());
 
 #endif

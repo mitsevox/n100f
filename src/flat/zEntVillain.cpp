@@ -37,23 +37,21 @@
 #include <string.h>
 
 // Functions that have no name yet keep their address labels, which differ between the targets:
-// three villain functions with no name in any related build, and two from other units.
+// three villain functions with no name in any related build, and one from another unit.
 #if VERSION_GIHE78_REV0
 #define VIL_QUEUE_PROPSOUND fn_8007BD98
 #define VIL_HOLO_FLICKER fn_800837D4
 #define VIL_RESET fn_800A8CB8
 #define FN_80021E18 fn_80021E18
-#define FN_8003CD24 fn_8003CD24
 #elif VERSION_GIHE78_REV1
 #define VIL_QUEUE_PROPSOUND fn_8007BBA0
 #define VIL_HOLO_FLICKER fn_800835DC
 #define VIL_RESET fn_800A8AC0
 #define FN_80021E18 fn_80021FA0
-#define FN_8003CD24 fn_8003CD40
 #endif
 
 S32 zEntPlayer_Damage(xBase* src, U32 damage, _xVec3* direction);
-extern "C" void FN_8003CD24(U32 owner);
+void xSndStopChildren(U32 pid);
 extern "C" void FN_80021E18(U32* color);
 
 enum en_RBS_STAGE
@@ -3352,7 +3350,7 @@ static S32 VILN_gang_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
             }
             else if (sfx)
             {
-                FN_8003CD24((U32)vil + 2);
+                xSndStopChildren((U32)vil + 2);
                 vil->sfx_curTalk = sfx;
                 if (sfx->asset && sfx->asset->id)
                 {
@@ -3383,7 +3381,7 @@ static S32 VILN_gang_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
         }
         else if (stim == ZVIL_STIM_EXITGOAL && vil->sfx_curTalk)
         {
-            FN_8003CD24((U32)vil + 2);
+            xSndStopChildren((U32)vil + 2);
             vil->sfx_curTalk = NULL;
         }
         break;
@@ -3568,7 +3566,7 @@ static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
             if (vil->goal == ZVIL_GOAL_TALK)
             {
                 zSFX* talk = stimctxt->talkSFX;
-                FN_8003CD24((U32)vil + 2);
+                xSndStopChildren((U32)vil + 2);
                 vil->sfx_curTalk = talk;
                 if (talk && talk->asset && talk->asset->id)
                 {
@@ -5128,7 +5126,7 @@ static S32 VILN_BBK_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
         else if (stim == ZVIL_STIM_EXITGOAL)
         {
             VEFX_zapTheKnight(vil, 1);
-            FN_8003CD24((U32)vil + 1);
+            xSndStopChildren((U32)vil + 1);
         }
         break;
     }
@@ -6178,7 +6176,7 @@ static S32 VILN_BRB_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             g_rbsword[0].mdl_animsword->Flags |= 1;
             g_rbsword[0].model->Flags &= (U16)~1;
             g_rbsword[0].flg_stat &= ~4;
-            FN_8003CD24((U32)&g_rbsword[0]);
+            xSndStopChildren((U32)&g_rbsword[0]);
         }
         break;
     case ZVIL_GOAL_TAUNT:
@@ -12832,7 +12830,7 @@ static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
         }
         break;
     case ZPRJ_EVNT_DETONATE:
-        FN_8003CD24((U32)prj);
+        xSndStopChildren((U32)prj);
         sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
         if (sound)
         {
@@ -12856,7 +12854,7 @@ static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
     }
     case ZPRJ_EVNT_TRANSTATE:
     case ZPRJ_EVNT_DEATH:
-        if (prj->state != ZPRJ_STATE_ACTIVE) FN_8003CD24((U32)prj);
+        if (prj->state != ZPRJ_STATE_ACTIVE) xSndStopChildren((U32)prj);
         break;
     default: break;
     }
@@ -12888,7 +12886,7 @@ static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, v
     case ZPRJ_EVNT_DETONATE:
         if (audible)
         {
-            FN_8003CD24((U32)prj);
+            xSndStopChildren((U32)prj);
             sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
             if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
@@ -12911,12 +12909,12 @@ static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, v
         return 1;
     }
     case ZPRJ_EVNT_TRANSTATE:
-        if (prj->state != ZPRJ_STATE_ACTIVE) FN_8003CD24((U32)prj);
+        if (prj->state != ZPRJ_STATE_ACTIVE) xSndStopChildren((U32)prj);
         return 1;
     case ZPRJ_EVNT_ABORT:
     case ZPRJ_EVNT_SELFDESTRUCT:
     case ZPRJ_EVNT_DEATH:
-        FN_8003CD24((U32)prj);
+        xSndStopChildren((U32)prj);
         if (vil->prj_reserved == prj) vil->prj_reserved = NULL;
         return 1;
     default: return 0;
@@ -12942,7 +12940,7 @@ static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
         }
         break;
     case ZPRJ_EVNT_STARTRESTING:
-        FN_8003CD24((U32)prj);
+        xSndStopChildren((U32)prj);
         sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
         if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 25.0f);
@@ -12967,7 +12965,7 @@ static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
     }
     case ZPRJ_EVNT_TRANSTATE:
     case ZPRJ_EVNT_DEATH:
-        if (prj->state != ZPRJ_STATE_ACTIVE) FN_8003CD24((U32)prj);
+        if (prj->state != ZPRJ_STATE_ACTIVE) xSndStopChildren((U32)prj);
         break;
     default: break;
     }
@@ -13013,7 +13011,7 @@ static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
     case ZPRJ_EVNT_ABORT:
     case ZPRJ_EVNT_SELFDESTRUCT:
     case ZPRJ_EVNT_DEATH:
-        if (prj->state != ZPRJ_STATE_ACTIVE) FN_8003CD24((U32)prj);
+        if (prj->state != ZPRJ_STATE_ACTIVE) xSndStopChildren((U32)prj);
         break;
     default: break;
     }
