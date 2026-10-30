@@ -436,6 +436,7 @@ S32 _rpClumpRegisterExtensions(void);
 S32 _rpTieDestroy(WorldTie* tie);
 S32 _rpLightTieDestroy(LightTie* tie);
 RpMaterialList* _rpMaterialListInitialize(RpMaterialList* matList);
+S32 RpMaterialDestroy(RpMaterial* material);
 RpMaterialList* _rpMaterialListDeinitialize(RpMaterialList* matList);
 RpBuildMesh* _rpBuildMeshCreate(U32 bufferSize);
 S32 _rpBuildMeshDestroy(RpBuildMesh* mesh);

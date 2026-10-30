@@ -84,6 +84,17 @@ int printf(const char* format, ...);
 int sprintf(char* s, const char* format, ...);
 int vprintf(const char* format, va_list arg);
 
+FILE* fopen(const char* name, const char* mode);
+int fclose(FILE* file);
+size_t fread(void* buffer, size_t memb_size, size_t num_memb, FILE* file);
+size_t fwrite(const void* buffer, size_t memb_size, size_t num_memb, FILE* file);
+char* fgets(char* string, int count, FILE* file);
+int fputs(const char* string, FILE* file);
+int feof(FILE* file);
+int fseek(FILE* file, long offset, int mode);
+int fflush(FILE* file);
+long ftell(FILE* file);
+
 #ifdef __cplusplus
 }
 #endif

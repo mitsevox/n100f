@@ -24,21 +24,21 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 
 ### Reconstructed RenderWare sources
 
-`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` (text-only, all 7 functions), `baworobj.c` (all 48 functions and its `.sbss`), `babinary.c` (all 14 functions and its jump table in `.data`), `batypehf.c` (text-only, both functions), `basync.c` (text-only, all 7 functions), `baraster.c` (all 11 functions, its `.data` and its `.sbss`), `bapipe.c` (all 4 functions and its `.sbss`), `baimras.c` (text-only, all 3 functions), `bapipew.c` (text-only, all 5 functions; GIHE78-rev0), `wrldpipe.c` (text-only, all 6 functions; GIHE78-rev0), `p2renderstate.c` (all 4 functions and its `.sdata2`; GIHE78-rev0), `baim3d.c` (all 9 functions, its `.data` strings and its `.sbss`; GIHE78-rev0), `gcn/im3dpipe.c` (text-only, all 4 functions; GIHE78-rev0) and the Im3D nodes `nodeImmRenderSetup.c`, `nodeImmStash.c`, `nodeSubmitLine.c` and `nodeSubmitTriangle.c` (both functions and the node `.data` each; GIHE78-rev0) and `nodeImmInstance.c` (both functions, its `.data` and its `.sdata2`; GIHE78-rev0) are linked as Matching objects; the other units stay NonMatching (data is not split, or functions remain). 461 functions compile to the target bytes with every relocation resolving to the target's symbol:
+`src/rwsdk/` holds sources written for this project from the target's own disassembly; no Criterion RenderWare source was used. Names follow the rules above. `baimmedi.c` (text-only, all 7 functions), `baworobj.c` (all 48 functions and its `.sbss`), `babinary.c` (all 14 functions and its jump table in `.data`), `batypehf.c` (text-only, both functions), `basync.c` (text-only, all 7 functions), `baraster.c` (all 11 functions, its `.data` and its `.sbss`), `bapipe.c` (all 4 functions and its `.sbss`), `baimras.c` (text-only, all 3 functions), `bapipew.c` (text-only, all 5 functions; GIHE78-rev0), `wrldpipe.c` (text-only, all 6 functions; GIHE78-rev0), `p2renderstate.c` (all 4 functions and its `.sdata2`; GIHE78-rev0), `baim3d.c` (all 9 functions, its `.data` strings and its `.sbss`; GIHE78-rev0), `gcn/im3dpipe.c` (text-only, all 4 functions; GIHE78-rev0) and the Im3D nodes `nodeImmRenderSetup.c`, `nodeImmStash.c`, `nodeSubmitLine.c` and `nodeSubmitTriangle.c` (both functions and the node `.data` each; GIHE78-rev0) and `nodeImmInstance.c` (both functions, its `.data` and its `.sdata2`; GIHE78-rev0) are linked as Matching objects; the other units stay NonMatching (data is not split, or functions remain). 534 functions compile to the target bytes with every relocation resolving to the target's symbol:
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |
 | `rwsdk/src/plcore/bavector.c` | 11 of 12 | `_rwVectorOpen` (97%: the stack slots of the two inlined table builders' locals, and one load per table loop scheduled before the store instead of after it) |
 | `rwsdk/src/plcore/rwstring.c` | 5 of 5 | (end edge open: bfbb's unit has 7 functions) |
 | `rwsdk/src/plcore/baerr.c` | 3 of 3 | |
-| `rwsdk/src/plcore/bafsys.c` | 3 of 4 | `_rwFileSystemOpen`, not written yet: it stores MSL stdio functions, which were address labels when the unit was imported and are now named (`fopen`, `fread`, `fgets`, `fputs`, `feof`) |
+| `rwsdk/src/plcore/bafsys.c` | 4 of 4 | |
 | `rwsdk/src/plcore/resmem.c` | 4 of 4 | |
 | `rwsdk/src/plcore/baresour.c` | 6 of 7 | `RwResourcesAllocateResEntry` (98%: the first eviction path keeps the entry in `r3` before copying it to `r30`) |
 | `rwsdk/src/plcore/baimmedi.c` | 7 of 7 | (Matching) |
-| `rwsdk/src/plcore/batkreg.c` | 7 of 9 | `_rwPluginRegistryClose` (unnamed callee), `_rwPluginRegistryAddPlugin` |
-| `rwsdk/src/badevice.c` | 6 of 13 | 7 others |
-| `rwsdk/src/baframe.c` | 11 of 20 | 9 others |
-| `rwsdk/src/bacamera.c` | 11 of 18 | 7 others, including `CameraSync` (unnamed callees) |
+| `rwsdk/src/plcore/batkreg.c` | 9 of 9 | |
+| `rwsdk/src/badevice.c` | 9 of 13 | `RwEngineStop`, `RwEngineStart` and `RwEngineOpen`, not written yet, and `RwEngineTerm`, which calls the unnamed 4-byte function at `0x80163A8C` |
+| `rwsdk/src/baframe.c` | 19 of 20 | `rwFrameDestroyRecurse` (91.3%: GC/1.3.2 stops inlining the recursion one level later than the target, which calls `FrameDestroyRecurseDeInitLeaf` there) |
+| `rwsdk/src/bacamera.c` | 18 of 18 | (the four camera builders `CameraSync` calls, `0x801683DC` to `0x801694EC`, are still in an auto unit before it) |
 | `rwsdk/src/baraster.c` | 11 of 11 | (Matching; ends at `_rwRasterOpen`, `0x8016DD04`) |
 | `rwsdk/src/baimras.c` | 3 of 3 | (Matching) |
 | `rwsdk/src/basync.c` | 7 of 7 | (Matching; starts at `SyncObject`, `0x8016E9E4`) |
@@ -65,22 +65,22 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/bapipew.c` | 5 of 5 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/pipe/p2/gcn/wrldpipe.c` | 6 of 6 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/batextur.c` | 13 of 27 | 14 others |
-| `rwsdk/src/plcore/batkbin.c` | 3 of 8 | 5 others |
+| `rwsdk/src/plcore/batkbin.c` | 8 of 8 | |
 | `rwsdk/src/plcore/bamatrix.c` | 3 of 9 | 6 others |
-| `rwsdk/src/plcore/bastream.c` | 1 of 5 | `RwStreamRead`, `RwStreamWrite`, `RwStreamSkip`, `RwStreamClose` |
-| `rwsdk/src/babinfrm.c` | 2 of 3 | `_rwFrameListStreamRead` |
+| `rwsdk/src/plcore/bastream.c` | 4 of 5 | `RwStreamWrite` (99.9%: the operands of the file-write length compare are the other way round) |
+| `rwsdk/src/babinfrm.c` | 3 of 3 | |
 | `rwsdk/src/babintex.c` | 2 of 9 | 7 others |
 | `rwsdk/src/baimage.c` | 4 of 16 | 12 others |
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/world/basector.c` | 6 of 6 | |
 | `rwsdk/world/bamateri.c` | 7 of 8 | `_rpLightOpen` at `0x8014CFC8`, which opens the light module and probably belongs to `balight.c` ([RenderWare limits](splits.md#limits-2)) |
-| `rwsdk/world/balight.c` | 10 of 12 | `RpLightGetConeAngle`, `RpLightStreamRead` |
+| `rwsdk/world/balight.c` | 11 of 12 | `RpLightGetConeAngle`, not written yet (it inlines an arc cosine) |
 | `rwsdk/world/baclump.c` | 35 of 38 | `GeometryListStreamRead` (97.4%: the list's return is placed after the loop branch), `ClumpAtomicStreamRead` (91.1%: the two chunk structs take each other's stack slots) and `RpClumpStreamRead` (99.4%: the target keeps a second chunk version word) |
 | `rwsdk/world/bageomet.c` | 9 of 12 | `RpGeometryCreate` (98.3%: the target keeps the format's two masks apart), `RpGeometryDestroy` (94.3%: the target loads its result at entry) and `RpGeometryStreamRead` (99.8%: the morph loop's two zeroes); starts at `_rpGeometryOpen`, `0x8014AFC4`, three functions before the size-sequence placement |
 | `rwsdk/world/baworld.c` | 21 of 25 | `WorldSectorRender`, `RpWorldUnlock`, `RpWorldDestroy` and `RpWorldCreate` (94-99%: saved registers and store order) |
 | `rwsdk/world/baworobj.c` | 48 of 48 | (Matching; starts at `WorldObjectOpen`, `0x8015275C`) |
-| `rwsdk/world/bamatlst.c` | 3 of 5 | `_rpMaterialListDeinitialize`, `_rpMaterialListStreamRead` |
+| `rwsdk/world/bamatlst.c` | 4 of 5 | `_rpMaterialListStreamRead` |
 | `rwsdk/world/bamesh.c` | 11 of 11 | (data open: `meshModule` and `MeshStatic` not split) |
 | `rwsdk/world/babinwor.c` | 6 of 6 | (data and end edge open: unsplit code after the unit writes and reads its `.sbss`) |
 | `rwsdk/world/pipe/p2/gcn/vtxfmt.c` | 11 of 11 | (data and both edges open: `.bss` and `.sbss` not split; `fn_8015D314` before it fits bfbb's `_rwDlVtxFmtSetup`) |
