@@ -450,8 +450,6 @@ extern "C" U8 gVillainPoofColorBirth[50][4];
 extern "C" U8 gVillainPoofColorDeath[50][4];
 extern "C" U8 gVillainDotsColorBirth[50][4];
 extern "C" U8 gVillainDotsColorDeath[50][4];
-extern "C" _zParEmitter* sEmitHoloPoof;
-extern "C" _zParEmitter* sEmitHoloDots;
 static inline S32 VWEP_lobAtPlayer(zEntProjectile* prj, st_zEntVillain* vil);
 static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset, S32 follow);
 static inline void VOUT_dogoto_pos(st_zEntVillain* vil, const _xVec3* pos, F32 dst_offset);
@@ -949,8 +947,8 @@ static _tagLightning* sMastermindLightning[5];
 static _xVec3 sGreenShockPosition;
 static _zParEmitter* sGreenShockEmitter;
 extern "C" {
-_zParEmitter* sEmitHoloPoof;
-_zParEmitter* sEmitHoloDots;
+static _zParEmitter* sEmitHoloPoof;
+static _zParEmitter* sEmitHoloDots;
 }
 static _zParEmitter* sGreenBallEmitter;
 static _zParEmitter* sGreenBallSmackEmitter;
@@ -5817,6 +5815,25 @@ static S32 VILN_BGG_respond(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*)
     return 1;
 }
 
+// Spins the flying sword 25.132742 radians (8 pi) per second about x and moves it along its end
+// direction at its flight speed, outward before 2.5 seconds of age and back afterwards.
+static void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt)
+{
+    _xMat3x3 mat_rot = { 0 };
+    _xVec3 vec_rot = { 25.132742f, 0.0f, 0.0f };
+    _xVec3 vec_tmp = { 0.0f, 0.0f, 0.0f };
+
+    xVec3SMul(&vec_rot, &vec_rot, dt);
+    xMat3x3Euler(&mat_rot, &vec_rot);
+    if (rbs->tym_age < 2.5f) xVec3SMul(&vec_tmp, &rbs->dir_end, dt * rbs->spd_fly);
+    else xVec3SMul(&vec_tmp, &rbs->dir_end, -dt * rbs->spd_fly);
+    xEntBeginUpdate(rbs, globals.sceneCur, dt);
+    xMat4x3RMul3x3(&rbs->frame->mat, &mat_rot, &rbs->frame->mat);
+    xVec3Add((_xVec3*)&rbs->frame->mat.pos, (_xVec3*)&rbs->frame->mat.pos, &vec_tmp);
+    xEntMotionToMatrix(rbs, rbs->frame);
+    xEntEndUpdate(rbs, globals.sceneCur, dt);
+}
+
 // Update Redbeard's navigation, sword movement and fade-out.
 static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
 {
@@ -5906,18 +5923,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         sword->tym_age += dt;
         if (sword->tym_age > 2.5f) sword->flg_stat |= 8;
         else sword->flg_stat &= ~8;
-        _xMat3x3 rotation = { 0 };
-        _xVec3 angles = { 25.132742f, 0.0f, 0.0f };
-        _xVec3 travel = { 0.0f, 0.0f, 0.0f };
-        xVec3SMul(&angles, &angles, dt);
-        xMat3x3Euler(&rotation, &angles);
-        if (sword->tym_age < 2.5f) xVec3SMul(&travel, &sword->dir_end, dt * sword->spd_fly);
-        else xVec3SMul(&travel, &sword->dir_end, -dt * sword->spd_fly);
-        xEntBeginUpdate(sword, globals.sceneCur, dt);
-        xMat4x3RMul3x3(&sword->frame->mat, &rotation, &sword->frame->mat);
-        xVec3Add((_xVec3*)&sword->frame->mat.pos, (_xVec3*)&sword->frame->mat.pos, &travel);
-        xEntMotionToMatrix(sword, sword->frame);
-        xEntEndUpdate(sword, globals.sceneCur, dt);
+        VWEP_rbs_flight(sword, dt);
         if (!iSndIsPlaying(0, (U32)sword))
         {
             U32 snd = VSND_select_sound(sword->rbvil, VSND_TYP_PRJ_FLIGHT);
@@ -13587,28 +13593,6 @@ extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
     if (sndEvent != VSND_TYP_HOLOFADE) flags &= 0x0FFFFFFF;
     VSND_addQueueEntry(vil, sndEvent, flags, g_npcTable[vil->asset->subtype].dst_noisy,
                        sprop->tym_delayStart, -1.0f, 0, 0);
-}
-
-// Damage the player using the villain type's configured damage.
-static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
-{
-    _xVec3 dir = { 0 };
-    _xVec3 facing = { 0 };
-    _xVec3 impulse = vil->precalc.dir_VtoP;
-    F32 angle;
-    F32 scale;
-    F32 dot;
-
-    VSUP_dir_toEnt(vil, &globals.player.ent, &dir);
-    angle = vil->frame->rot.angle;
-    facing.x = sin(angle);
-    facing.y = 0.0f;
-    facing.z = cos(angle);
-    dot = xVec3Dot(&dir, &facing);
-    scale = MAX(0.2f, dot) * g_npcTable[vil->asset->subtype].strength;
-    impulse.x *= scale;
-    impulse.y *= scale;
-    zEntPlayer_Damage(vil, MAX(0, g_npcTable[vil->asset->subtype].dmg_give), NULL);
 }
 
 // Reserve a projectile in the category used by this villain.
