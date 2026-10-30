@@ -459,8 +459,9 @@ void xSpline3_ArcInit(xSpline3* spl, U32 sample)
     }
 }
 
-// Maps arc length s to the spline parameter through the sampled arc-length table, refines it by
-// bisection, evaluates the point (or derivative) there and returns the parameter.
+// Maps arc length s to the spline parameter through the sampled arc-length table: bisects the
+// sample interval `iterations` times, interpolates linearly, evaluates the point (or derivative)
+// there and returns the parameter.
 static F32 ArcEvalIterate(xSpline3* spl, F32 s, U32 deriv, xVec3* o, U32 iterations)
 {
     xCoef3 tempCoef;
