@@ -31,14 +31,33 @@
 #include "zScene.h"
 #include "zSFX.h"
 #include "rpworld.h"
+#include "version.h"
 
 #include <math.h>
 #include <string.h>
 
+// Functions that have no name yet keep their address labels, which differ between the targets:
+// three villain functions with no name in any related build, and three from other units.
+#if VERSION_GIHE78_REV0
+#define VIL_QUEUE_PROPSOUND fn_8007BD98
+#define VIL_HOLO_FLICKER fn_800837D4
+#define VIL_RESET fn_800A8CB8
+#define FN_8001D700 fn_8001D700
+#define FN_80021E18 fn_80021E18
+#define FN_8003CD24 fn_8003CD24
+#elif VERSION_GIHE78_REV1
+#define VIL_QUEUE_PROPSOUND fn_8007BBA0
+#define VIL_HOLO_FLICKER fn_800835DC
+#define VIL_RESET fn_800A8AC0
+#define FN_8001D700 fn_8001D83C
+#define FN_80021E18 fn_80021FA0
+#define FN_8003CD24 fn_8003CD40
+#endif
+
 S32 zEntPlayer_Damage(xBase* src, U32 damage, _xVec3* direction);
-extern "C" void fn_8003CD24(U32 owner);
-extern "C" void fn_8001D700(const _xBound*, const xModelInstance*, _xCollis*, U8, F32);
-extern "C" void fn_80021E18(U32* color);
+extern "C" void FN_8003CD24(U32 owner);
+extern "C" void FN_8001D700(const _xBound*, const xModelInstance*, _xCollis*, U8, F32);
+extern "C" void FN_80021E18(U32* color);
 
 enum en_RBS_STAGE
 {
@@ -238,7 +257,7 @@ struct st_NPC_SOUND_ENTRY
     st_NPC_SOUND_RECORDS* sndList;
 };
 
-extern "C" st_NPC_SOUND_ENTRY lbl_801BCDA0[33];
+extern "C" st_NPC_SOUND_ENTRY g_npcJukeBox[33];
 
 // How many of one villain type the player has gummed, soaped and beaten, and how many there are.
 struct st_NPC_TALLY_RECORD
@@ -397,7 +416,7 @@ static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop
 static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 flg_vsnd, F32 radius,
                               F32 delay, F32 repeatDelay, S32 repeatCount, U32 useThisSound);
 static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
-extern "C" void fn_8007BD98(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
+extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan);
 static inline F32 VANM_entTime(const _zEnt* ent);
 static inline F32 VCFG_tymref(st_zEntVillain* vil, S32 which);
@@ -425,14 +444,14 @@ static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3*
 static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup);
 static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup);
 static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bot_radius);
-static void VWEP_rbs_flight(st_REDBEARD_SWORD* sword, F32 dt);
+static void VWEP_rbs_chkCollide(st_REDBEARD_SWORD* rbs, F32 dt);
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* sword, st_zEntVillain* vil);
-extern "C" U8 lbl_801C5180[50][4];
-extern "C" U8 lbl_801C5248[50][4];
-extern "C" U8 lbl_801C5310[50][4];
-extern "C" U8 lbl_801C53D8[50][4];
-extern "C" _zParEmitter* lbl_8025EE18;
-extern "C" _zParEmitter* lbl_8025EE1C;
+extern "C" U8 gVillainPoofColorBirth[50][4];
+extern "C" U8 gVillainPoofColorDeath[50][4];
+extern "C" U8 gVillainDotsColorBirth[50][4];
+extern "C" U8 gVillainDotsColorDeath[50][4];
+extern "C" _zParEmitter* sEmitHoloPoof;
+extern "C" _zParEmitter* sEmitHoloDots;
 static inline S32 VWEP_lobAtPlayer(zEntProjectile* prj, st_zEntVillain* vil);
 static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset, S32 follow);
 static inline void VOUT_dogoto_pos(st_zEntVillain* vil, const _xVec3* pos, F32 dst_offset);
@@ -930,8 +949,8 @@ static _tagLightning* sMastermindLightning[5];
 static _xVec3 sGreenShockPosition;
 static _zParEmitter* sGreenShockEmitter;
 extern "C" {
-_zParEmitter* lbl_8025EE18;
-_zParEmitter* lbl_8025EE1C;
+_zParEmitter* sEmitHoloPoof;
+_zParEmitter* sEmitHoloDots;
 }
 static _zParEmitter* sGreenBallEmitter;
 static _zParEmitter* sGreenBallSmackEmitter;
@@ -949,7 +968,7 @@ static _zParEmitter* sMMHideEmitter;
 static _zParEmitter* sRBWallEmitter;
 static _zParEmitterCustomSettings sExtSettings = { 0 };
 
-extern "C" U8 lbl_801C5180[50][4] = {
+extern "C" U8 gVillainPoofColorBirth[50][4] = {
     { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
     { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
     { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
@@ -961,7 +980,7 @@ extern "C" U8 lbl_801C5180[50][4] = {
     { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
     { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
 };
-extern "C" U8 lbl_801C5248[50][4] = {
+extern "C" U8 gVillainPoofColorDeath[50][4] = {
     { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
     { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
     { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
@@ -973,7 +992,7 @@ extern "C" U8 lbl_801C5248[50][4] = {
     { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
     { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
 };
-extern "C" U8 lbl_801C5310[50][4] = {
+extern "C" U8 gVillainDotsColorBirth[50][4] = {
     { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
     { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
     { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
@@ -985,7 +1004,7 @@ extern "C" U8 lbl_801C5310[50][4] = {
     { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
     { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
 };
-extern "C" U8 lbl_801C53D8[50][4] = {
+extern "C" U8 gVillainDotsColorDeath[50][4] = {
     { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
     { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
     { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
@@ -1857,7 +1876,7 @@ void zEntVillain_Init(st_zEntVillain* ent, p2EntAsset* asset)
 }
 
 // Reset the villain's state and rebuild its scene-dependent configuration.
-extern "C" void fn_800A8CB8(st_zEntVillain* ent, zScene* sc)
+extern "C" void VIL_RESET(st_zEntVillain* ent, zScene* sc)
 {
     xEntReset(ent);
     memset(&ent->vhf, 0, sizeof(st_zEntVillain) - sizeof(_zEnt));
@@ -2139,7 +2158,7 @@ en_ZVILLAIN_HEADBUTT_RESPONSE zEntVillain_Headbutt(st_zEntVillain* ent, _xVec3* 
 // Send the bubble's stimulus and play the effect associated with the villain's response.
 en_ZVILLAIN_BUBBLE_RESPONSE zEntVillain_Bubble(st_zEntVillain* ent, _zEntBubble* bub)
 {
-    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_NONE };
+    st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_GUMMED };
     stimctxt.res_bubble = ZVIL_BUBBLE_NONE;
     switch (bub->subType)
     {
@@ -3340,7 +3359,7 @@ static S32 VILN_gang_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
             }
             else if (sfx)
             {
-                fn_8003CD24((U32)vil + 2);
+                FN_8003CD24((U32)vil + 2);
                 vil->sfx_curTalk = sfx;
                 if (sfx->asset && sfx->asset->id)
                 {
@@ -3371,7 +3390,7 @@ static S32 VILN_gang_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
         }
         else if (stim == ZVIL_STIM_EXITGOAL && vil->sfx_curTalk)
         {
-            fn_8003CD24((U32)vil + 2);
+            FN_8003CD24((U32)vil + 2);
             vil->sfx_curTalk = NULL;
         }
         break;
@@ -3556,7 +3575,7 @@ static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
             if (vil->goal == ZVIL_GOAL_TALK)
             {
                 zSFX* talk = stimctxt->talkSFX;
-                fn_8003CD24((U32)vil + 2);
+                FN_8003CD24((U32)vil + 2);
                 vil->sfx_curTalk = talk;
                 if (talk && talk->asset && talk->asset->id)
                 {
@@ -4459,7 +4478,7 @@ static S32 VILN_sham_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                fn_8007BD98(vil, VSND_TYP_HOLOFADE);
+                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
@@ -4474,24 +4493,24 @@ static S32 VILN_sham_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
                     info.custom_flags = 0x5a0;
                     for (S32 i = 0; i < 3; i++)
                     {
-                        info.color_birth[i] = lbl_801C5180[subtype][i];
-                        info.color_death[i] = lbl_801C5248[subtype][i];
+                        info.color_birth[i] = gVillainPoofColorBirth[subtype][i];
+                        info.color_death[i] = gVillainPoofColorDeath[subtype][i];
                     }
                     info.color_birth[3] = 0;
                     info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
-                    zParEmitterEmitCustom(lbl_8025EE18, dt, &info);
+                    zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
                     for (S32 i = 0; i < 3; i++)
                     {
-                        info.color_birth[i] = lbl_801C5310[subtype][i];
-                        info.color_death[i] = lbl_801C53D8[subtype][i];
+                        info.color_birth[i] = gVillainDotsColorBirth[subtype][i];
+                        info.color_death[i] = gVillainDotsColorDeath[subtype][i];
                     }
                     info.color_birth[3] = 255;
                     info.color_death[3] = 0;
                     info.custom_flags = 0x201a0;
                     info.xzcircle_radius = vil->bound.sph.r;
-                    zParEmitterEmitCustom(lbl_8025EE1C, dt, &info);
+                    zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
                 }
                 if (xUtil_yesno(fade)) vil->flags |= 1;
                 else vil->flags &= (U8)~1;
@@ -4584,7 +4603,7 @@ static S32 VILN_shagM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_C
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                fn_8007BD98(vil, VSND_TYP_HOLOFADE);
+                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
@@ -4599,24 +4618,24 @@ static S32 VILN_shagM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_C
                     info.custom_flags = 0x5a0;
                     for (S32 i = 0; i < 3; i++)
                     {
-                        info.color_birth[i] = lbl_801C5180[subtype][i];
-                        info.color_death[i] = lbl_801C5248[subtype][i];
+                        info.color_birth[i] = gVillainPoofColorBirth[subtype][i];
+                        info.color_death[i] = gVillainPoofColorDeath[subtype][i];
                     }
                     info.color_birth[3] = 0;
                     info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
-                    zParEmitterEmitCustom(lbl_8025EE18, dt, &info);
+                    zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
                     for (S32 i = 0; i < 3; i++)
                     {
-                        info.color_birth[i] = lbl_801C5310[subtype][i];
-                        info.color_death[i] = lbl_801C53D8[subtype][i];
+                        info.color_birth[i] = gVillainDotsColorBirth[subtype][i];
+                        info.color_death[i] = gVillainDotsColorDeath[subtype][i];
                     }
                     info.color_birth[3] = 255;
                     info.color_death[3] = 0;
                     info.custom_flags = 0x201a0;
                     info.xzcircle_radius = vil->bound.sph.r;
-                    zParEmitterEmitCustom(lbl_8025EE1C, dt, &info);
+                    zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
                 }
                 if (xUtil_yesno(fade)) vil->flags |= 1;
                 else vil->flags &= (U8)~1;
@@ -4982,7 +5001,7 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                fn_8007BD98(vil, VSND_TYP_HOLOFADE);
+                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
@@ -4997,24 +5016,24 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                     info.custom_flags = 0x5a0;
                     for (S32 i = 0; i < 3; i++)
                     {
-                        info.color_birth[i] = lbl_801C5180[subtype][i];
-                        info.color_death[i] = lbl_801C5248[subtype][i];
+                        info.color_birth[i] = gVillainPoofColorBirth[subtype][i];
+                        info.color_death[i] = gVillainPoofColorDeath[subtype][i];
                     }
                     info.color_birth[3] = 0;
                     info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
-                    zParEmitterEmitCustom(lbl_8025EE18, dt, &info);
+                    zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
                     for (S32 i = 0; i < 3; i++)
                     {
-                        info.color_birth[i] = lbl_801C5310[subtype][i];
-                        info.color_death[i] = lbl_801C53D8[subtype][i];
+                        info.color_birth[i] = gVillainDotsColorBirth[subtype][i];
+                        info.color_death[i] = gVillainDotsColorDeath[subtype][i];
                     }
                     info.color_birth[3] = 255;
                     info.color_death[3] = 0;
                     info.custom_flags = 0x201a0;
                     info.xzcircle_radius = vil->bound.sph.r;
-                    zParEmitterEmitCustom(lbl_8025EE1C, dt, &info);
+                    zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
                 }
                 if (xUtil_yesno(fade)) vil->flags |= 1;
                 else vil->flags &= (U8)~1;
@@ -5116,7 +5135,7 @@ static S32 VILN_BBK_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
         else if (stim == ZVIL_STIM_EXITGOAL)
         {
             VEFX_zapTheKnight(vil, 1);
-            fn_8003CD24((U32)vil + 1);
+            FN_8003CD24((U32)vil + 1);
         }
         break;
     }
@@ -5436,7 +5455,7 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                fn_8007BD98(vil, VSND_TYP_HOLOFADE);
+                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
@@ -5451,24 +5470,24 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                     info.custom_flags = 0x5a0;
                     for (S32 i = 0; i < 3; i++)
                     {
-                        info.color_birth[i] = lbl_801C5180[subtype][i];
-                        info.color_death[i] = lbl_801C5248[subtype][i];
+                        info.color_birth[i] = gVillainPoofColorBirth[subtype][i];
+                        info.color_death[i] = gVillainPoofColorDeath[subtype][i];
                     }
                     info.color_birth[3] = 0;
                     info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
-                    zParEmitterEmitCustom(lbl_8025EE18, dt, &info);
+                    zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
                     for (S32 i = 0; i < 3; i++)
                     {
-                        info.color_birth[i] = lbl_801C5310[subtype][i];
-                        info.color_death[i] = lbl_801C53D8[subtype][i];
+                        info.color_birth[i] = gVillainDotsColorBirth[subtype][i];
+                        info.color_death[i] = gVillainDotsColorDeath[subtype][i];
                     }
                     info.color_birth[3] = 255;
                     info.color_death[3] = 0;
                     info.custom_flags = 0x201a0;
                     info.xzcircle_radius = vil->bound.sph.r;
-                    zParEmitterEmitCustom(lbl_8025EE1C, dt, &info);
+                    zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
                 }
                 if (xUtil_yesno(fade)) vil->flags |= 1;
                 else vil->flags &= (U8)~1;
@@ -5904,7 +5923,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             U32 snd = VSND_select_sound(sword->rbvil, VSND_TYP_PRJ_FLIGHT);
             if (snd) xSndPlay3D(snd, 0.5f, 0.0f, 128, 0x202, (_xEnt*)sword, 25.0f);
         }
-        VWEP_rbs_flight(sword, dt);
+        VWEP_rbs_chkCollide(sword, dt);
         if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
         {
             if (vil->tmr_list[ZVIL_TTIL_RECOVERY] <= 0.0f)
@@ -5954,7 +5973,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                fn_8007BD98(vil, VSND_TYP_HOLOFADE);
+                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
@@ -5969,24 +5988,24 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                     info.custom_flags = 0x5a0;
                     for (S32 i = 0; i < 3; i++)
                     {
-                        info.color_birth[i] = lbl_801C5180[subtype][i];
-                        info.color_death[i] = lbl_801C5248[subtype][i];
+                        info.color_birth[i] = gVillainPoofColorBirth[subtype][i];
+                        info.color_death[i] = gVillainPoofColorDeath[subtype][i];
                     }
                     info.color_birth[3] = 0;
                     info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
-                    zParEmitterEmitCustom(lbl_8025EE18, dt, &info);
+                    zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
                     for (S32 i = 0; i < 3; i++)
                     {
-                        info.color_birth[i] = lbl_801C5310[subtype][i];
-                        info.color_death[i] = lbl_801C53D8[subtype][i];
+                        info.color_birth[i] = gVillainDotsColorBirth[subtype][i];
+                        info.color_death[i] = gVillainDotsColorDeath[subtype][i];
                     }
                     info.color_birth[3] = 255;
                     info.color_death[3] = 0;
                     info.custom_flags = 0x201a0;
                     info.xzcircle_radius = vil->bound.sph.r;
-                    zParEmitterEmitCustom(lbl_8025EE1C, dt, &info);
+                    zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
                 }
                 if (xUtil_yesno(fade)) vil->flags |= 1;
                 else vil->flags &= (U8)~1;
@@ -6158,7 +6177,7 @@ static S32 VILN_BRB_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             g_rbsword[0].mdl_animsword->Flags |= 1;
             g_rbsword[0].model->Flags &= (U16)~1;
             g_rbsword[0].flg_stat &= ~4;
-            fn_8003CD24((U32)&g_rbsword[0]);
+            FN_8003CD24((U32)&g_rbsword[0]);
         }
         break;
     case ZVIL_GOAL_TAUNT:
@@ -7826,40 +7845,6 @@ static S32 VILN_BMM_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVI
     return 1;
 }
 
-// Exit the old goal and enter the new one through the villain's handler, clearing queued sounds.
-static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
-{
-    S32 result = 1;
-    st_STIMULUS_CONTEXT_DATA exitctxt = { ZVIL_STIM_NONE };
-
-    if (stimctxt->stim == ZVIL_STIM_TRANGOAL && stimctxt->trangoal != ent->goal)
-    {
-        if (stimctxt->tranmode != 0)
-        {
-            ent->mode = stimctxt->tranmode;
-        }
-        for (S32 i = 0; i < 4; i++)
-        {
-            ent->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
-            ent->snd_queue[i].sndDirect = 0;
-        }
-        exitctxt.stim = ZVIL_STIM_EXITGOAL;
-        exitctxt.trangoal = ent->goal;
-        if (!ent->vhf->trangoal(ent, &exitctxt, dt))
-        {
-            result = 0;
-        }
-        stimctxt->stim = ZVIL_STIM_ENTERGOAL;
-        if (!ent->vhf->trangoal(ent, stimctxt, dt))
-        {
-            result = 0;
-        }
-        VGOL_set(ent, stimctxt->trangoal);
-        ent->tmr_list[ZVIL_TYMR_CURGOAL] = 0.0f;
-    }
-    return result;
-}
-
 // Per-frame update callback. Updates the villain's timers. If it is playing an animation and is
 // neither Shaggy nor a Witch, it compares its model's current animation state with the one it asked
 // for: if they differ it stops counting as playing and bit 0x100 of the model's flags is set,
@@ -7999,60 +7984,6 @@ static void zVIL_elcb_move(_xEnt* xe, _xScene* scn, F32 dt, _xEntFrame* frame)
     {
         zVIL_apply_move(ent, scn, dt, frame);
     }
-}
-
-// Set a movement destination from a move point or an entity widget.
-static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset, S32 follow)
-{
-    S32 nav = 0;
-    vil->allow |= 1;
-    if (vil->nav_next)
-    {
-        vil->nav_prev = vil->nav_next;
-    }
-    vil->nav_next = NULL;
-    vil->need_navpt = 0;
-    if (follow)
-    {
-        vil->flg_misc |= 0x20000000;
-        vil->flg_misc &= ~0x10000000;
-    }
-    else
-    {
-        vil->flg_misc &= ~0x20000000;
-        vil->flg_misc |= 0x10000000;
-    }
-    vil->flg_misc &= ~0x40000000;
-    vil->flg_misc &= ~0x80000000;
-    vil->ds2_goto_keepaway = dst_offset * dst_offset;
-    switch (widge->baseType)
-    {
-    case 13:
-        if (follow)
-        {
-            vil->nav_next = (_zMovePoint*)widge;
-            nav = 1;
-            vil->flg_misc &= ~0x10000000;
-            vil->flg_misc &= ~0x20000000;
-        }
-        else
-        {
-            xVec3Copy(&vil->pos_goto, zMovePointGetPos((_zMovePoint*)widge));
-        }
-        break;
-    case 2: case 3: case 4: case 6: case 8: case 11: case 12:
-    case 18: case 23: case 24: case 27:
-        if (follow)
-        {
-            vil->tgt_follow = (_xEnt*)widge;
-        }
-        else
-        {
-            xVec3Copy(&vil->pos_goto, (_xVec3*)&((_xEnt*)widge)->model->Mat->pos);
-        }
-        break;
-    }
-    return nav;
 }
 
 // Sets the villain's pursuit home from the widget it protects. A protected entity's position
@@ -12212,7 +12143,7 @@ S32 zEntVillain_PlayAFXSound(st_zEntVillain* ent, zAnimFxSound* snd, U32* sid_pl
 
     en_zEntVillainSubTypeID type = (en_zEntVillainSubTypeID)ent->asset->subtype;
     en_NPC_SOUND event = VSND_TYP_BOGUS;
-    st_NPC_SOUND_ENTRY* entry = lbl_801BCDA0;
+    st_NPC_SOUND_ENTRY* entry = g_npcJukeBox;
     while (entry->sndList)
     {
         if (entry->viltyp != type && entry->viltyp == eEntVillainType_Undefined)
@@ -12645,36 +12576,36 @@ static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*
 }
 
 // Checks the player and the four tracked ropes while the sword is in flight.
-static void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt)
+static void VWEP_rbs_chkCollide(st_REDBEARD_SWORD* rbs, F32 dt)
 {
-    _xCollis coll = { 0 };
+    _xCollis colrec = { 0 };
     xEntBeginCollide(rbs, globals.sceneCur, dt);
     if (rbs->ent_colchk[0])
     {
-        xBoundHitsBound(&rbs->bound, &rbs->ent_colchk[0]->bound, &coll);
-        if (coll.flags & 1) VWEP_mm_zapPlayer(rbs->rbvil);
+        xBoundHitsBound(&rbs->bound, &rbs->ent_colchk[0]->bound, &colrec);
+        if (colrec.flags & 1) VWEP_mm_zapPlayer(rbs->rbvil);
     }
     rbs->bound.sph.r = 1.5f;
     for (S32 i = 1; i < 5; i++)
     {
-        _xEnt* ent = rbs->ent_colchk[i];
-        coll.flags = 0;
-        if (!ent) continue;
-        if (!xEntIsVisible(ent))
+        _xEnt* tgt = rbs->ent_colchk[i];
+        colrec.flags = 0;
+        if (!tgt) continue;
+        if (!xEntIsVisible(tgt))
         {
             rbs->ent_colchk[i] = NULL;
             continue;
         }
-        coll.optr = ent;
-        coll.oid = ent->id;
-        xBoundHitsBound(&rbs->bound, &ent->bound, &coll);
-        if (coll.flags & 1)
+        colrec.optr = tgt;
+        colrec.oid = tgt->id;
+        xBoundHitsBound(&rbs->bound, &tgt->bound, &colrec);
+        if (colrec.flags & 1)
         {
-            coll.flags = 0;
-            fn_8001D700(&rbs->bound, ent->model, &coll, 1, 0.7853982f);
-            if (coll.flags & 1)
+            colrec.flags = 0;
+            FN_8001D700(&rbs->bound, tgt->model, &colrec, 1, 0.7853982f);
+            if (colrec.flags & 1)
             {
-                zEntEvent(rbs->rbvil, 0, ent, eEventDestroy, NULL, NULL, 0);
+                zEntEvent(rbs->rbvil, 0, tgt, eEventDestroy, NULL, NULL, 0);
                 rbs->ent_colchk[i] = NULL;
             }
         }
@@ -12747,31 +12678,9 @@ static S32 VWEP_extend_particles(st_zEntVillain* vil, F32 dt, _xVec3* target)
     return 0;
 }
 
-// Draw gum strands from marked vertices to the villain's model height.
-static void VEFX_plop_gum(st_zEntVillain* ent)
-{
-    void** texture = (void**)xSTFindAsset(xStrHash("GUM-FLOOR"), NULL);
-    if (texture) RwRenderStateSet(rwRENDERSTATETEXTURERASTER, *texture);
-    F32 height = xEntGetPos(ent)->y;
-    for (S32 i = 0; i <= 4; i++)
-    {
-        _xVec3 point = { 0 };
-        if (!VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)i, &point)) continue;
-        _xVec3 from = point;
-        _xVec3 to = point;
-        if (point.y > height) to.y = height;
-        else from.y = height;
-        if (from.y - to.y < 0.002f) continue;
-        _xVec3 direction = { 0 };
-        _xMat3x3 matrix = { 0 };
-        xVec3Sub(&direction, &to, &from);
-        xMat3x3LookVec(&matrix, &direction);
-        SuperVillainGumDraw(&from, &to, 0.1f, 0.35f);
-    }
-}
-
-// Test the attack, alternate attack and weapon vertices against the player's bound.
-static S32 VWEP_swipe(st_zEntVillain* vil)
+// Test the attack, alternate attack and weapon vertices against the player's bound. The F32
+// argument (the caller's dt) is not used.
+static S32 VWEP_swipe(st_zEntVillain* vil, F32)
 {
     _xCollis coll = { 0 };
     _xBound bound = { 0 };
@@ -12783,7 +12692,7 @@ static S32 VWEP_swipe(st_zEntVillain* vil)
     bound.type = 1;
     bound.qcd = globals.player.ent.bound.qcd;
     U32 color = 0x800000FF;
-    fn_80021E18(&color);
+    FN_80021E18(&color);
     if (VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &bound.sph.center))
     {
         bound.sph.r = 0.2f;
@@ -12813,7 +12722,7 @@ static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
     F32 weights[32] = { 0 };
     S32 count = 0;
     U32 chosen = 0;
-    st_NPC_SOUND_ENTRY* entry = lbl_801BCDA0;
+    st_NPC_SOUND_ENTRY* entry = g_npcJukeBox;
 
     while (entry->sndList)
     {
@@ -12902,7 +12811,7 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* vil)
 }
 
 // Emit hologram particles and flicker the villain while its hologram flag is set.
-extern "C" void fn_800837D4(st_zEntVillain* vil, F32 dt)
+extern "C" void VIL_HOLO_FLICKER(st_zEntVillain* vil, F32 dt)
 {
     if (!(vil->flg_misc & 8)) return;
 
@@ -12914,29 +12823,29 @@ extern "C" void fn_800837D4(st_zEntVillain* vil, F32 dt)
         _zParEmitterCustomSettings info;
         info.custom_flags = 0x5A0;
         info.pos = *xBoundCenter(&vil->bound);
-        info.color_birth[0] = lbl_801C5180[type][0];
-        info.color_birth[1] = lbl_801C5180[type][1];
-        info.color_birth[2] = lbl_801C5180[type][2];
+        info.color_birth[0] = gVillainPoofColorBirth[type][0];
+        info.color_birth[1] = gVillainPoofColorBirth[type][1];
+        info.color_birth[2] = gVillainPoofColorBirth[type][2];
         info.color_birth[3] = 0;
-        info.color_death[0] = lbl_801C5248[type][0];
-        info.color_death[1] = lbl_801C5248[type][1];
-        info.color_death[2] = lbl_801C5248[type][2];
+        info.color_death[0] = gVillainPoofColorDeath[type][0];
+        info.color_death[1] = gVillainPoofColorDeath[type][1];
+        info.color_death[2] = gVillainPoofColorDeath[type][2];
         info.color_death[3] = 0;
         info.size_death = 5.0f * vil->bound.sph.r;
-        zParEmitterEmitCustom(lbl_8025EE18, dt, &info);
+        zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
 
         type = vil->asset->subtype;
         info.custom_flags = 0x201A0;
-        info.color_birth[0] = lbl_801C5310[type][0];
-        info.color_birth[1] = lbl_801C5310[type][1];
-        info.color_birth[2] = lbl_801C5310[type][2];
+        info.color_birth[0] = gVillainDotsColorBirth[type][0];
+        info.color_birth[1] = gVillainDotsColorBirth[type][1];
+        info.color_birth[2] = gVillainDotsColorBirth[type][2];
         info.color_birth[3] = 255;
-        info.color_death[0] = lbl_801C53D8[type][0];
-        info.color_death[1] = lbl_801C53D8[type][1];
-        info.color_death[2] = lbl_801C53D8[type][2];
+        info.color_death[0] = gVillainDotsColorDeath[type][0];
+        info.color_death[1] = gVillainDotsColorDeath[type][1];
+        info.color_death[2] = gVillainDotsColorDeath[type][2];
         info.color_death[3] = 0;
         info.xzcircle_radius = vil->bound.sph.r;
-        zParEmitterEmitCustom(lbl_8025EE1C, dt, &info);
+        zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
     }
     if (xUtil_yesno(time)) vil->flags |= 1;
     else vil->flags &= ~1;
@@ -12961,7 +12870,7 @@ static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
         }
         break;
     case ZPRJ_EVNT_DETONATE:
-        fn_8003CD24((U32)prj);
+        FN_8003CD24((U32)prj);
         sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
         if (sound)
         {
@@ -12985,7 +12894,7 @@ static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
     }
     case ZPRJ_EVNT_TRANSTATE:
     case ZPRJ_EVNT_DEATH:
-        if (prj->state != ZPRJ_STATE_ACTIVE) fn_8003CD24((U32)prj);
+        if (prj->state != ZPRJ_STATE_ACTIVE) FN_8003CD24((U32)prj);
         break;
     default: break;
     }
@@ -13017,7 +12926,7 @@ static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, v
     case ZPRJ_EVNT_DETONATE:
         if (audible)
         {
-            fn_8003CD24((U32)prj);
+            FN_8003CD24((U32)prj);
             sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
             if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
@@ -13040,12 +12949,12 @@ static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, v
         return 1;
     }
     case ZPRJ_EVNT_TRANSTATE:
-        if (prj->state != ZPRJ_STATE_ACTIVE) fn_8003CD24((U32)prj);
+        if (prj->state != ZPRJ_STATE_ACTIVE) FN_8003CD24((U32)prj);
         return 1;
     case ZPRJ_EVNT_ABORT:
     case ZPRJ_EVNT_SELFDESTRUCT:
     case ZPRJ_EVNT_DEATH:
-        fn_8003CD24((U32)prj);
+        FN_8003CD24((U32)prj);
         if (vil->prj_reserved == prj) vil->prj_reserved = NULL;
         return 1;
     default: return 0;
@@ -13071,7 +12980,7 @@ static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
         }
         break;
     case ZPRJ_EVNT_STARTRESTING:
-        fn_8003CD24((U32)prj);
+        FN_8003CD24((U32)prj);
         sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
         if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 25.0f);
@@ -13096,7 +13005,7 @@ static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
     }
     case ZPRJ_EVNT_TRANSTATE:
     case ZPRJ_EVNT_DEATH:
-        if (prj->state != ZPRJ_STATE_ACTIVE) fn_8003CD24((U32)prj);
+        if (prj->state != ZPRJ_STATE_ACTIVE) FN_8003CD24((U32)prj);
         break;
     default: break;
     }
@@ -13142,7 +13051,7 @@ static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
     case ZPRJ_EVNT_ABORT:
     case ZPRJ_EVNT_SELFDESTRUCT:
     case ZPRJ_EVNT_DEATH:
-        if (prj->state != ZPRJ_STATE_ACTIVE) fn_8003CD24((U32)prj);
+        if (prj->state != ZPRJ_STATE_ACTIVE) FN_8003CD24((U32)prj);
         break;
     default: break;
     }
@@ -13304,8 +13213,8 @@ static void VPAR_readyize_emitters()
         }
     }
     g_emitready = 1;
-    lbl_8025EE18 = zParEmitterFind("ParEmit_Vil_HoloPoof");
-    lbl_8025EE1C = zParEmitterFind("ParEmit_Vil_HoloDots");
+    sEmitHoloPoof = zParEmitterFind("ParEmit_Vil_HoloPoof");
+    sEmitHoloDots = zParEmitterFind("ParEmit_Vil_HoloDots");
     sGreenBallEmitter = zParEmitterFind("GREENBALL EMITTER");
     sGreenBallSmackEmitter = zParEmitterFind("GREENBALL SMACK EMITTER");
     sGreenShockEmitter = zParEmitterFind("GREENBALL SHOCKWAVE EMITTER");
@@ -13671,7 +13580,7 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
 }
 
 // Queue a sound with the villain type's noise radius and the sound's configured delay.
-extern "C" void fn_8007BD98(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
+extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
     S32 flags = VSND_findProps(sndEvent, &sprop);
@@ -13804,35 +13713,6 @@ static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS
     default: found = 0; break;
     }
     return found;
-}
-
-// Change the goal and notify linked objects of the corresponding behavior.
-static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal)
-{
-    ent->goal = goal;
-    if (ent->linkCount)
-    {
-        switch (ent->goal)
-        {
-        case ZVIL_GOAL_IDLE: zEntEvent(ent, 0xB3); break;
-        case ZVIL_GOAL_BORED:
-            if (ent->vhf->query(ent, ZVIL_Q_ASLEEP)) zEntEvent(ent, 0xB4);
-            break;
-        case ZVIL_GOAL_GUARD: zEntEvent(ent, 0xB5); break;
-        case ZVIL_GOAL_PATROL: zEntEvent(ent, 0xB6); break;
-        case ZVIL_GOAL_DAZED: zEntEvent(ent, 0xB7); break;
-        case ZVIL_GOAL_LOOKFORHERO: zEntEvent(ent, 0xB8); break;
-        case ZVIL_GOAL_LISTEN: zEntEvent(ent, 0xB9); break;
-        case ZVIL_GOAL_INVESTIGATE: zEntEvent(ent, 0xBA); break;
-        case ZVIL_GOAL_CHASE: zEntEvent(ent, 0xBB); break;
-        case ZVIL_GOAL_CQCATTACK:
-        case ZVIL_GOAL_LOBBING:
-        case ZVIL_GOAL_SPELLCAST: zEntEvent(ent, 0xBC); break;
-        case ZVIL_GOAL_MINIPATROL: zEntEvent(ent, 0xBD); break;
-        default: break;
-        }
-    }
-    return ent->goal;
 }
 
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
