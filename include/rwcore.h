@@ -252,6 +252,13 @@ struct RwSphere
     F32 radius;
 };
 
+typedef struct RwLine RwLine;
+struct RwLine
+{
+    RwV3d start;
+    RwV3d end;
+};
+
 typedef struct RwMemory RwMemory;
 struct RwMemory
 {
@@ -381,6 +388,12 @@ struct RwVideoMode
     S32 height;
     S32 depth;
     RwVideoModeFlag flags;
+};
+
+typedef struct RwEngineOpenParams RwEngineOpenParams;
+struct RwEngineOpenParams
+{
+    void* displayID;
 };
 
 #define rwMATRIXTYPEORTHONORMAL 0x00000003
@@ -1696,6 +1709,13 @@ S32 RwFreeListDestroy(RwFreeList* freeList);
 void* _rwFreeListAllocReal(RwFreeList* freeList);
 RwFreeList* _rwFreeListFreeReal(RwFreeList* freeList, void* pData);
 U32 _rwGetNumEngineInstances(void);
+S32 RwEngineOpen(RwEngineOpenParams* initParams);
+S32 RwEngineStart(void);
+S32 RwEngineStop(void);
+S32 RwEngineTerm(void);
+RwDevice* _rwDeviceGetHandle(void);
+S32 _rwPluginRegistryClose(void);
+void _rwFileSystemClose(void);
 S32 _rxPipelineClose(void);
 S32 _rxPipelineOpen(void);
 RxPipelineNode* PipelineNodeDestroy(RxPipelineNode* node, RxPipeline* pipeline);
