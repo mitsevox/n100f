@@ -12,6 +12,7 @@
 #include "xString.h"
 #include "xFont.h"
 #include "iCamera.h"
+#include "iFile.h"
 #include "xPad.h"
 #include <string.h>
 #include <stdio.h>
@@ -20,12 +21,11 @@ extern void CalcJumpImpulse(zJumpParam* param);
 extern "C" void fn_80016218();
 extern "C" void fn_8002FB54(void (*)());
 extern "C" void fn_80044714();
-extern "C" U32* fn_8000AA80(char*, U32*, U32*);
 extern xIniFile* xIniParse(char*, S32);
 extern void xIniDestroy(xIniFile*);
 extern "C" void fn_800162D4(char*);
 extern "C" void fn_800162D0(char*, S32);
-extern "C" st_SERIAL_PERCID_SIZE lbl_801C7048[];
+extern "C" st_SERIAL_PERCID_SIZE g_xser_sizeinfo[];
 extern "C" void fn_8004766C();
 extern void zAssetStartup();
 extern void xFontInit();
@@ -59,7 +59,7 @@ extern "C" void fn_800443AC();
 void zEntPlayer_InitCutsceneModelHack();
 extern "C" void fn_80016924(F32);
 extern "C" void fn_80016920(U32);
-extern "C" S32 lbl_8025E570;
+extern "C" S32 sShowMenuOnBoot;
 
 F32 xSTLoadStep(U32);
 void iShadowInit();
@@ -110,7 +110,7 @@ void zMainLoop()
         zSceneStats_Clear();
         zCutSceneNamesTable_clearAll();
         zEntPickupResetWarps();
-        if (lbl_8025E570)
+        if (sShowMenuOnBoot)
         {
             zMenuInit(menuModeID);
             zMenuSetup();
@@ -119,7 +119,7 @@ void zMainLoop()
         }
         else
         {
-            lbl_8025E570 = 1;
+            sShowMenuOnBoot = 1;
             zGameModeSwitch(eGameMode_Game);
             zGameStateSwitch(0);
         }
@@ -151,7 +151,7 @@ void zMainMemLvlChkCB()
 }
 
 // Load the player tuning values and initial equipment from the INI file.
-extern "C" void fn_800BE8B0(xIniFile* ini)
+void zMainParseINIGlobals(xIniFile* ini)
 {
     static F32 fbuf_SpeedSneak[16] = { 0.5f, 1.5f, 0.0f, 1.0f };
     static F32 fbuf_SpeedWalk[16] = { 2.0f, 4.0f, 0.0f, 1.0f };
@@ -251,10 +251,10 @@ extern "C" void fn_800BE8B0(xIniFile* ini)
     globals.player.s.Initial_Specials |= xIniGetInt(ini, "eSPECIAL_Umbrella", 0) << 12;
     globals.player.s.Initial_Specials |= xIniGetInt(ini, "eSPECIAL_Shovel", 0) << 13;
     globals.player.s.Initial_Specials |= xIniGetInt(ini, "eSPECIAL_LightningBoltStun", 0) << 14;
-    lbl_8025E570 = xIniGetInt(ini, "ShowMenuOnBoot", 1);
+    sShowMenuOnBoot = xIniGetInt(ini, "ShowMenuOnBoot", 1);
 }
 
-extern "C" void fn_800BF1D4()
+extern "C" void main()
 {
     RwCamera* camera;
     xFontBox* box;
@@ -266,7 +266,7 @@ extern "C" void fn_800BF1D4()
     fn_80044714();
 
     U32 size;
-    U32* data = fn_8000AA80("SD2.INI", 0, &size);
+    U32* data = iFileLoad("SD2.INI", 0, &size);
     if (data)
     {
         xIniFile* ini = xIniParse((char*)data, size);
@@ -293,13 +293,13 @@ extern "C" void fn_800BF1D4()
         globals.profFunc[4][127] = 0;
         strncpy(globals.profFunc[5], xIniGetString(ini, "ProfFuncDown", ""), 128);
         globals.profFunc[5][127] = 0;
-        fn_800BE8B0(ini);
+        zMainParseINIGlobals(ini);
         xIniDestroy(ini);
     }
 
     fn_800162D0("scooby.elf", globals.profile);
     xUtilStartup();
-    xSerialStartup(128, lbl_801C7048);
+    xSerialStartup(128, g_xser_sizeinfo);
     fn_8004766C();
     zAssetStartup();
     xFontInit();

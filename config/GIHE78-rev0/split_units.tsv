@@ -5,10 +5,9 @@ iCamera.cpp	0x80006CC4	0x80007738	13	13	3	3	0x800072D4=iCameraSetNearFarClip (na
 iCollide.cpp	0x80007738	0x80009424	18	19	2	1	0x8000885C=sphereHitsModel3CB (name)	anchored
 iCollideFast.cpp	0x80009424	0x80009A20	6	6	0	0	-	count-match
 iDebug.cpp	0x80009A20	0x80009CC0	1	1	1	0	0x80009A20=iDebugScreenDump (strings+calls)	anchored
-iDraw.cpp	0x80009CC0	0x80009CCC	3	4	0	0	-	count-match
-iEnv.cpp	0x80009CCC	0x8000A408	10	9	3	3	0x8000A0D4=iEnvEndRenderFX (name)	anchored
-iFile.cpp	0x8000A408	0x8000A5A4	5	16	0	0	-	weak
-iFMV.cpp	0x8000AA80	0x8000AB3C	1	1	0	0	-	count-match
+iDraw.cpp	0x80009CC0	0x8000A0D4	5	4	1	1	0x8000A080=iDrawSetFBMSK (name)	anchored
+iEnv.cpp	0x8000A0D4	0x8000A49C	9	9	3	3	0x8000A0D4=iEnvEndRenderFX (name)	anchored
+iFile.cpp	0x8000A49C	0x8000AB58	15	16	1	1	0x8000AB40=iFileInit (name)	anchored
 iFont.cpp	0x8000AB58	0x8000B9C4	9	8	2	0	0x8000AB58=iFontInit (strings)	anchored
 iFX.cpp	0x8000B9C4	0x8000B9C4	0	7	0	0	-	weak
 iLight.cpp	0x8000B9C4	0x8000BD14	9	9	2	2	0x8000B9C4=iLightEnv (name)	anchored
@@ -38,8 +37,8 @@ xCutscene.cpp	0x80021B10	0x80021B18	1	13	1	1	0x80021B10=xCutscene_Destroy (name)
 xDebug.cpp	0x80021B18	0x80021C60	6	8	0	0	-	weak
 xDraw.cpp	0x80021E30	0x80021E70	2	5	0	0	-	weak
 xEnt.cpp	0x80021E70	0x800258F4	41	47	22	18	0x80021EB4=xModCollCB (name)	anchored
-xEntDrive.cpp	0x800258F4	0x80026158	5	4	1	0	0x800258F4=xEntDriveUpdate (floats+calls)	anchored
-xEntMotion.cpp	0x80026158	0x80028D18	14	21	8	3	0x80026158=xEntMotionDebugWrite (strings+floats)	anchored
+xEntDrive.cpp	0x800258F4	0x80025F04	4	4	1	0	0x800258F4=xEntDriveUpdate (floats+calls)	anchored
+xEntMotion.cpp	0x80025F04	0x80028D18	15	21	9	4	0x80025F04=xEntMotionDebugDraw (name)	anchored
 xEnv.cpp	0x80028D18	0x80028DFC	4	4	3	3	0x80028D18=xEnvRender (name)	anchored
 xFFX.cpp	0x80028DFC	0x80029458	14	14	4	4	0x80028DFC=xFFXRotMatchAlloc (name)	anchored
 xFilter.cpp	0x80029458	0x800294E8	4	4	4	0	0x80029458=xFilterCurvedInterp4 (floats)	anchored

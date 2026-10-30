@@ -612,7 +612,10 @@ def main():
     # A cut k (A owns ..k) is scored by the references that land on the wrong side
     # of the best data cut in each section: a function on B's side loading A's
     # data, or the reverse.  .sdata2 literals are unit-local, so they decide most
-    # edges.  Moving an anchor across the cut costs three references.
+    # edges.  Moving a fingerprint anchor across the cut costs three references;
+    # a name anchor (an exact body) never moves, since loads of shared globals can
+    # outweigh it.
+    pinned = set(named.values())
     callers = collections.defaultdict(set)
     for f, ts in func_targets.items():
         for t in ts:
@@ -662,6 +665,7 @@ def main():
                        if g in span and g not in window and (f <= k) != (g <= k))
 
         ks = range(max(wlo - 1, tstart[A]), min(whi, core[B][1] - 1) + 1)
+        ks = [k for k in ks if not any(f in pinned and (f <= k) != (f <= core[A][1]) for f in window)] or ks
         forced = [k for k in ks if k in sinit]
         scores = {k: crossings(k) for k in (forced or ks)}
         best = min(scores.values())
