@@ -9,8 +9,8 @@
 #define LIGHT_PRIVATENOCHROMA 0x01
 
 // A light's stream chunk.
-typedef struct LightChunkInfo LightChunkInfo;
-struct LightChunkInfo
+typedef struct RpLightChunkInfo RpLightChunkInfo;
+struct RpLightChunkInfo
 {
     F32 radius;
     F32 red;
@@ -109,7 +109,7 @@ RpLight* RpLightStreamRead(RwStream* stream)
 
     if (version >= rwLIBRARYBASEVERSION && version <= rwLIBRARYCURRENTVERSION)
     {
-        LightChunkInfo info;
+        RpLightChunkInfo info;
         RpLight* light;
 
         memset(&info, 0, sizeof(info));

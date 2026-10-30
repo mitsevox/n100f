@@ -39,7 +39,7 @@ void CameraBuildParallelClipPlanes(RwCamera* camera);
 void CameraBuildParallelViewMatrix(RwCamera* camera);
 
 // Maps the camera's near and far planes onto the device's Z range.
-static void CameraUpdateZShiftScale(RwCamera* camera)
+static void rwCameraUpdateZShiftScale(RwCamera* camera)
 {
     F32 nearScreenZ = RwIm2DGetNearScreenZ();
     F32 farScreenZ = RwIm2DGetFarScreenZ();
@@ -173,7 +173,7 @@ RwCamera* RwCameraSetNearClipPlane(RwCamera* camera, F32 nearClip)
     RwFrame* frame;
 
     camera->nearPlane = nearClip;
-    CameraUpdateZShiftScale(camera);
+    rwCameraUpdateZShiftScale(camera);
 
     frame = RwCameraGetFrame(camera);
     if (frame)
@@ -189,7 +189,7 @@ RwCamera* RwCameraSetFarClipPlane(RwCamera* camera, F32 farClip)
     RwFrame* frame;
 
     camera->farPlane = farClip;
-    CameraUpdateZShiftScale(camera);
+    rwCameraUpdateZShiftScale(camera);
 
     frame = RwCameraGetFrame(camera);
     if (frame)
@@ -264,7 +264,7 @@ RwCamera* RwCameraSetProjection(RwCamera* camera, RwCameraProjection projection)
             RwFrameUpdateObjects(frame);
         }
 
-        CameraUpdateZShiftScale(camera);
+        rwCameraUpdateZShiftScale(camera);
 
         return camera;
     }
@@ -336,7 +336,7 @@ RwCamera* RwCameraCreate()
     camera->zBuffer = NULL;
     camera->projectionType = rwPERSPECTIVE;
 
-    CameraUpdateZShiftScale(camera);
+    rwCameraUpdateZShiftScale(camera);
 
     camera->viewMatrix.flags = 0;
 

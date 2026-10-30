@@ -14,7 +14,8 @@ static S32 engineInstancesOpened;
 static RwGlobals staticGlobals;
 
 // Passes a system request to the device and raises an error naming the request if it fails.
-static S32 DeviceSystemRequest(RwDevice* device, S32 requestID, void* pOut, void* pInOut, S32 nIn)
+static S32 _rwDeviceSystemRequest(RwDevice* device, S32 requestID, void* pOut, void* pInOut,
+                                  S32 nIn)
 {
     S32 result = device->fpSystem(requestID, pOut, pInOut, nIn);
 
@@ -64,8 +65,8 @@ S32 RwEngineGetPluginOffset(U32 pluginID)
 
 RwVideoMode* RwEngineGetVideoModeInfo(RwVideoMode* modeinfo, S32 modeIndex)
 {
-    if (!DeviceSystemRequest(&RWSRCGLOBAL(dOpenDevice), DEVICESYSTEMGETMODEINFO, modeinfo, NULL,
-                             modeIndex))
+    if (!_rwDeviceSystemRequest(&RWSRCGLOBAL(dOpenDevice), DEVICESYSTEMGETMODEINFO, modeinfo,
+                                NULL, modeIndex))
     {
         modeinfo = NULL;
     }
@@ -77,7 +78,8 @@ S32 RwEngineGetCurrentVideoMode(void)
 {
     S32 currentMode;
 
-    if (DeviceSystemRequest(&RWSRCGLOBAL(dOpenDevice), DEVICESYSTEMGETMODE, &currentMode, NULL, 0))
+    if (_rwDeviceSystemRequest(&RWSRCGLOBAL(dOpenDevice), DEVICESYSTEMGETMODE, &currentMode, NULL,
+                               0))
     {
         return currentMode;
     }
@@ -87,7 +89,8 @@ S32 RwEngineGetCurrentVideoMode(void)
 
 S32 RwEngineClose(void)
 {
-    S32 result = DeviceSystemRequest(&RWSRCGLOBAL(dOpenDevice), DEVICESYSTEMCLOSE, NULL, NULL, 0);
+    S32 result =
+        _rwDeviceSystemRequest(&RWSRCGLOBAL(dOpenDevice), DEVICESYSTEMCLOSE, NULL, NULL, 0);
 
     if (result)
     {
