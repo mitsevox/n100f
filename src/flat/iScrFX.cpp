@@ -74,8 +74,8 @@ void iScrFxDrawFade(RwCamera* pCamera, iColor_tag* col)
     RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRISTRIP, v, 4, indices, 4);
 }
 
-// Draws black bars y_offset pixels tall across the top and bottom of the screen. Only the last
-// vertex receives the near-plane depth; the target writes it four times.
+// Draws black bars y_offset pixels tall across the top and bottom of the screen. Every depth
+// store goes to the last vertex, so the other three keep whatever depth the stack held.
 void iScrFxDrawLetterbox(RwCamera* pCamera, S32 y_offset)
 {
     U16 indices[4] = { 0, 1, 2, 3 };

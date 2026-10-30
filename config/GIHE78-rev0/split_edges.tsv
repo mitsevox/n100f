@@ -3,7 +3,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	iAnimSKB.cpp	iCamera.cpp	0x80006CC4	0x80006CC4	single cut by data references	0
 .text	iCamera.cpp	iCollide.cpp	0x80007738	0x80007738	alignment only (3 cuts tie on data)	0
 .text	iCollide.cpp	iCollideFast.cpp	0x80009424	0x80009424	alignment only (3 cuts tie on data)	0
-.text	iCollideFast.cpp	iDebug.cpp	0x80009A20	0x80009A20	alignment only (2 cuts tie on data)	1
+.text	iCollideFast.cpp	iDebug.cpp	0x80009A20	0x80009A20	single cut by data references	1
 .text	iDebug.cpp	iDraw.cpp	0x80009CC0	0x80009CC0	alignment only (4 cuts tie on data)	1
 .text	iDraw.cpp	iEnv.cpp	0x8000A0D4	0x8000A0D4	single cut by data references	5
 .text	iEnv.cpp	iFile.cpp	0x8000A49C	0x8000A49C	alignment only (8 cuts tie on data)	0

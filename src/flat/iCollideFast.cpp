@@ -12,15 +12,15 @@ void iCollideFastInit(_xScene* sc)
 }
 
 // The fast ray tests only ask whether anything is hit, so the first triangle ends the walk.
-RpCollisionTriangle* rayHitsModelFastCB(RpIntersection* isx, RpCollisionTriangle* tri, F32 dist,
-                                        void* data)
+static RpCollisionTriangle* rayHitsModelFastCB(RpIntersection* isx, RpCollisionTriangle* tri,
+                                               F32 dist, void* data)
 {
     hitzhit = 1;
     return NULL;
 }
 
-RpCollisionTriangle* rayHitsEnvFastCB(RpIntersection* isx, RpWorldSector* sector,
-                                      RpCollisionTriangle* tri, F32 dist, void* data)
+static RpCollisionTriangle* rayHitsEnvFastCB(RpIntersection* isx, RpWorldSector* sector,
+                                             RpCollisionTriangle* tri, F32 dist, void* data)
 {
     hitzhit = 1;
     return NULL;
