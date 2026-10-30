@@ -2,7 +2,7 @@
 #include "zEnt.h"
 
 extern "C" S32 lbl_8025E510;
-extern "C" void fn_8003D358(U32, U32);
+void xSndPauseAll(U32 pause_effects, U32 pause_streams);
 
 S32 gGameState = 6;
 eGameMode gGameMode;
@@ -49,12 +49,12 @@ void zGameModeSwitch(eGameMode modeNew)
     if ((modeOld == eGameMode_Game && modeNew == eGameMode_Pause) ||
         (modeOld == eGameMode_Game && modeNew == eGameMode_Save))
     {
-        fn_8003D358(1, 1);
+        xSndPauseAll(1, 1);
     }
     else if ((modeOld == eGameMode_Save || modeOld == eGameMode_Pause || modeOld == eGameMode_Load) &&
              modeNew == eGameMode_Game)
     {
-        fn_8003D358(0, 0);
+        xSndPauseAll(0, 0);
     }
 
     gGameMode = modeNew;

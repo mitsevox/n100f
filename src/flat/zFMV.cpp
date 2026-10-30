@@ -59,8 +59,8 @@ static zFMVFile zFMVFileTable[eFMVFileCount] =
 extern "C" {
 U32 lbl_8025EEC8;
 }
-extern "C" void fn_8003D49C();
-extern "C" void fn_8003D41C();
+void xSndSuspend();
+void xSndResume();
 U32 iFMVPlay(char* filename, U32 buttons, F32 time);
 
 // Play a movie and set a flag after Credits2 in scene s005.
@@ -69,9 +69,9 @@ U32 zFMVPlay(char* filename, U32 buttons, F32 time)
     U32 ret;
     char c[64];
     sprintf(c, "%s/%s%s", "FMV", filename, ".bik");
-    fn_8003D49C();
+    xSndSuspend();
     ret = iFMVPlay(c, buttons, time);
-    fn_8003D41C();
+    xSndResume();
     if (xStricmp(filename, "Credits2") == 0 &&
         globals.sceneCur->sceneID == zSceneIDFromName("s005"))
     {

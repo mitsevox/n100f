@@ -1,4 +1,6 @@
 #include "types.h"
+#include "iTime.h"
+#include "iSystem.h"
 #include "zEnv.h"
 #include "zCutsceneMgr.h"
 #include "iCamera.h"
@@ -40,10 +42,9 @@ extern "C" void fn_80048E54(S32, S32);
 extern "C" void fn_8001E8A0(_tagxCamFrame*, F32);
 extern "C" void fn_80014A34(S32);
 extern "C" void fn_80016600();
-extern "C" void fn_800165E0();
 extern "C" void fn_800AC100(F32);
-extern "C" void fn_8003CE34(xVec3*, xVec3*, xVec3*, xVec3*, F32);
-extern "C" void fn_8003CE10(xVec3*);
+void xSndSetFrame(xVec3* right, xVec3* up, xVec3* at, xVec3* pos, F32 radius);
+void xSndSetFrameFar(xVec3* pos);
 extern "C" void fn_800B94C0(zScene*, F32);
 void xCameraBegin(_tagxCamFrame* cam, S32 clear);
 extern "C" void fn_800056F8(xVec3*);
@@ -51,7 +52,6 @@ void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
 extern "C" void fn_8001E83C(_tagxCamFrame*);
 U32 zSaveLoad_SaveLoop();
 extern "C" void fn_800B74D8();
-extern "C" void fn_8001692C(F32);
 void xCameraPickInitial(_tagxCamFrame* cam, _tagxCam* c);
 void zEntPlayer_StoreCheckPoint(F32*);
 void zGameInit(U32);
@@ -340,8 +340,8 @@ void zGameLoop()
         if (!paused)
             globals.player.ent.update(&globals.player.ent, globals.sceneCur, lbl_8025EEEC);
         xMat4x3* mat = &globals.camera.hi_cam.mat;
-        fn_8003CE34(&mat->pos, &mat->at, &mat->up, &mat->right, 25.0f);
-        fn_8003CE10((xVec3*)&globals.player.ent.model->Mat->pos);
+        xSndSetFrame(&mat->pos, &mat->at, &mat->up, &mat->right, 25.0f);
+        xSndSetFrameFar((xVec3*)&globals.player.ent.model->Mat->pos);
         xSndUpdate(lbl_8025EEEC);
         fn_800B94C0(globals.sceneCur, lbl_8025EEEC);
         fn_8001E8A0(&globals.camera, lbl_8025EEEC);
@@ -355,7 +355,7 @@ void zGameLoop()
         xCameraEnd(&globals.camera, lbl_8025EEEC, 1);
         iEnvEndRenderFX(NULL);
         while ((lbl_8025E968 = VIGetRetraceCount()) - lbl_8025EF10 < 2)
-            fn_800165E0();
+            iVSync();
         lbl_8025EF10 = lbl_8025E968;
         fn_8001E83C(&globals.camera);
         zLaughUpdate(lbl_8025EEEC);
@@ -467,7 +467,7 @@ void zGameUpdateMode()
 
     if (lbl_8025E528 == 1)
     {
-        fn_8001692C(lbl_8025EEEC);
+        iTimeGameAdvance(lbl_8025EEEC);
         if (globals.pad0->pressed & 1)
         {
             if (globals.player.ControlOn && !globals.cmgr)
@@ -504,7 +504,7 @@ void zGameUpdateMode()
             zGameExit();
             S32 delay = sceneID == 'S006' ? 120 : 30;
             while (delay-- > 0)
-                fn_800165E0();
+                iVSync();
             zGameInit(sceneID);
             zGameSetup();
             if (globals.cmgr)

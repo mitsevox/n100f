@@ -1,4 +1,6 @@
 #include "types.h"
+#include "iTime.h"
+#include "iSystem.h"
 #include "zGlobals.h"
 #include "xutil.h"
 #include "xserializer.h"
@@ -19,12 +21,10 @@
 
 extern void CalcJumpImpulse(zJumpParam* param);
 extern "C" void fn_80016218();
-extern "C" void fn_8002FB54(void (*)());
+void xMemRegisterBaseNotifyFunc(void (*func)());
 extern "C" void fn_80044714();
 extern xIniFile* xIniParse(char*, S32);
 extern void xIniDestroy(xIniFile*);
-extern "C" void fn_800162D4(char*);
-extern "C" void fn_800162D0(char*, S32);
 extern "C" st_SERIAL_PERCID_SIZE g_xser_sizeinfo[];
 extern "C" void fn_8004766C();
 extern void zAssetStartup();
@@ -33,22 +33,19 @@ extern void xScrFxInit();
 extern void xParMgrInit();
 extern "C" _tagxPad* fn_800322F0(S32);
 extern void xPadRumbleEnable(S32, S32);
-extern "C" void fn_80038CF8();
+extern S32 xSGStartup();
 extern void zEntProjectile_Startup();
 extern void zLobMaster_Startup();
 extern S32 zEntVillain_Startup();
 extern "C" void fn_80043E78();
 extern "C" RwRGBA lbl_80262CC8;
 extern void xFontBoxSetInset(xFontBox*, F32, F32, F32, F32);
-extern "C" void fn_800165E0();
 extern S32 zEntVillain_Shutdown();
 extern void zLobMaster_Shutdown();
 extern void zEntProjectile_Shutdown();
 extern void zAssetShutdown();
 extern "C" void fn_80047668();
 extern S32 xSGShutdown();
-extern "C" void fn_8003AC90();
-extern "C" void fn_800161C0();
 
 S32 xMemPushBase();
 S32 xMemGetBase();
@@ -57,8 +54,6 @@ S32 xSTQueueSceneAssets(U32);
 extern "C" void fn_80016600();
 extern "C" void fn_800443AC();
 void zEntPlayer_InitCutsceneModelHack();
-extern "C" void fn_80016924(F32);
-extern "C" void fn_80016920(U32);
 extern "C" S32 sShowMenuOnBoot;
 
 F32 xSTLoadStep(U32);
@@ -126,18 +121,18 @@ void zMainLoop()
         if (!newGameSceneID)
         {
             zVarNewGame();
-            fn_80016924(0.0f);
+            iTimeSetGame(0.0f);
             gameSceneID = (globals.sceneStart[0] << 24) | (globals.sceneStart[1] << 16) |
                           (globals.sceneStart[2] << 8) | globals.sceneStart[3];
         }
         else
         {
             gameSceneID = newGameSceneID;
-            fn_80016924(0.0f);
+            iTimeSetGame(0.0f);
         }
         zGameInit(gameSceneID);
         zGameSetup();
-        fn_80016920(gameSceneID);
+        iProfileClear(gameSceneID);
         zGameLoop();
         zGameExit();
     }
@@ -260,7 +255,7 @@ extern "C" void main()
     xFontBox* box;
 
     fn_80016218();
-    fn_8002FB54(zMainMemLvlChkCB);
+    xMemRegisterBaseNotifyFunc(zMainMemLvlChkCB);
     memset(&globals, 0, sizeof(globals));
     globals.sceneFirst = 1;
     fn_80044714();
@@ -272,7 +267,7 @@ extern "C" void main()
         xIniFile* ini = xIniParse((char*)data, size);
         char* path = xIniGetString(ini, "PATH", 0);
         if (path)
-            fn_800162D4(path);
+            iFileSetPath(path);
         char* boot = xIniGetString(ini, "BOOT", 0);
         if (boot)
         {
@@ -297,7 +292,7 @@ extern "C" void main()
         xIniDestroy(ini);
     }
 
-    fn_800162D0("scooby.elf", globals.profile);
+    iFuncProfileParse("scooby.elf", globals.profile);
     xUtilStartup();
     xSerialStartup(128, g_xser_sizeinfo);
     fn_8004766C();
@@ -310,7 +305,7 @@ extern "C" void main()
     globals.pad0 = fn_800322F0(0);
     globals.pad1 = gDebugPad = fn_800322F0(1);
     xPadRumbleEnable(0, globals.option_vibration);
-    fn_80038CF8();
+    xSGStartup();
     zEntProjectile_Startup();
     zLobMaster_Startup();
     zEntVillain_Startup();
@@ -338,7 +333,7 @@ extern "C" void main()
     do
     {
         fn_80016600();
-        fn_800165E0();
+        iVSync();
     } while (count-- > 0);
     printf("----ENTERING MAIN LOOP\n");
     zMainLoop();
@@ -348,7 +343,7 @@ extern "C" void main()
     zAssetShutdown();
     fn_80047668();
     xSGShutdown();
-    fn_8003AC90();
+    xSerialShutdown();
     xUtilShutdown();
-    fn_800161C0();
+    iSystemExit();
 }

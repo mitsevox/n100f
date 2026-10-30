@@ -1,4 +1,9 @@
 #include "xpkrsvc.h"
+#include "xhipio.h"
+
+#include <string.h>
+
+struct RwResEntry;
 
 static st_PACKER_READ_DATA* PKR_ReadInit(void* userdata, char* pkgfile, U32 opts, S32* cltver,
                                          st_PACKER_ASSETTYPE* typelist);
@@ -38,6 +43,12 @@ static st_PACKER_READ_FUNCS g_pkr_read_funcmap = { 1,
                                                    PKR_getPackTimestamp };
 static st_PACKER_READ_DATA g_readdatainst[8] = {};
 
+static st_HIPLOADFUNCS* g_hiprf;
+static S32 pkr_sector_size;
+static S32 g_packinit;
+
+static S32 PKR_LoadStep_Async();
+
 st_PACKER_READ_FUNCS* PKRGetReadFuncs(S32 apiver)
 {
     switch (apiver)
@@ -47,6 +58,115 @@ st_PACKER_READ_FUNCS* PKRGetReadFuncs(S32 apiver)
     default:
         return NULL;
     }
+}
+
+S32 PKRStartup()
+{
+    if (g_packinit++ == 0)
+    {
+        g_hiprf = get_HIPLFuncs();
+        pkr_sector_size = 32;
+    }
+    return g_packinit;
+}
+
+S32 PKRShutdown()
+{
+    return --g_packinit;
+}
+
+S32 PKRLoadStep(S32)
+{
+    return PKR_LoadStep_Async();
+}
+
+// Layers are not loaded one at a time on this platform.
+static S32 PKR_LoadLayer(st_PACKER_READ_DATA* pr, en_LAYER_TYPE layer)
+{
+    return 0;
+}
+
+static void* PKR_LoadAsset(st_PACKER_READ_DATA* pr, U32 aid, const char*, void*)
+{
+    st_PACKER_ATOC_NODE* assnode = NULL;
+    S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
+
+    if (!(idx < 0))
+    {
+        assnode = (st_PACKER_ATOC_NODE*)pr->asstoc.list[idx];
+    }
+
+    return assnode != NULL ? assnode->memloc : NULL;
+}
+
+static U32 PKR_getPackTimestamp(st_PACKER_READ_DATA* pr)
+{
+    return pr->time_made;
+}
+
+static char* PKR_AssetName(st_PACKER_READ_DATA* pr, U32 aid)
+{
+    char* name = NULL;
+    S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
+
+    if (idx >= 0)
+    {
+        name = ((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->name;
+    }
+
+    return name;
+}
+
+static U32 PKR_GetBaseSector(st_PACKER_READ_DATA* pr)
+{
+    return pr->base_sector;
+}
+
+static S32 PKR_GetAssetInfo(st_PACKER_READ_DATA* pr, U32 aid, st_PKR_ASSET_TOCINFO* tocainfo)
+{
+    memset(tocainfo, 0, sizeof(st_PKR_ASSET_TOCINFO));
+    S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
+    if (idx >= 0)
+    {
+        st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)pr->asstoc.list[idx];
+        tocainfo->aid = aid;
+        tocainfo->sector = pr->base_sector + assnode->d_off / pkr_sector_size;
+        tocainfo->plus_offset = assnode->d_off % pkr_sector_size;
+        tocainfo->size = assnode->d_size;
+        tocainfo->mempos = assnode->memloc;
+    }
+    return idx >= 0 ? 1 : 0;
+}
+
+static S32 PKR_GetAssetInfoByType(st_PACKER_READ_DATA* pr, U32 type, S32 idx,
+                                  st_PKR_ASSET_TOCINFO* tocainfo)
+{
+    memset(tocainfo, 0, sizeof(st_PKR_ASSET_TOCINFO));
+    if (idx < 0)
+    {
+        idx = 0;
+    }
+
+    S32 typeidx = PKR_typeHdlr_idx(pr, type);
+    if (typeidx < 0)
+    {
+        return 0;
+    }
+
+    st_XORDEREDARRAY* tmplist = &pr->typelist[typeidx];
+    if (idx >= tmplist->cnt)
+    {
+        return 0;
+    }
+
+    st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)tmplist->list[idx];
+    tocainfo->aid = assnode->aid;
+    tocainfo->sector = pr->base_sector + assnode->d_off / pkr_sector_size;
+    tocainfo->plus_offset = assnode->d_off % pkr_sector_size;
+    tocainfo->size = assnode->d_size;
+    tocainfo->mempos = assnode->memloc;
+
+    return 1;
 }
 
 static U32 PKR_GetAssetSize(st_PACKER_READ_DATA* pr, U32 aid)
@@ -178,6 +298,28 @@ static S32 OrdTest_R_AssetID(const void* vkey, void* vitem)
         rc = 0;
     }
     return rc;
+}
+
+static S32 OrdTest_R_Asset(const void* vkey, void* vitem)
+{
+    S32 rc;
+    if (*(U32*)vkey < *(U32*)vitem)
+    {
+        rc = -1;
+    }
+    else if (*(U32*)vkey > *(U32*)vitem)
+    {
+        rc = 1;
+    }
+    else
+    {
+        rc = 0;
+    }
+    return rc;
+}
+
+static void PKR_special_loadbuf_killed(RwResEntry*)
+{
 }
 
 static inline S32 PKR_typeHdlr_idx(st_PACKER_READ_DATA* pr, U32 type)

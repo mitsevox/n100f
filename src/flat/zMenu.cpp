@@ -1,4 +1,5 @@
 #include "zMenu.h"
+#include "iSystem.h"
 #include "zEnv.h"
 #include "zGameState.h"
 #include "zGlobals.h"
@@ -25,7 +26,6 @@ void iDebugScreenDump();
 U32 fn_800443F8();
 extern "C" void fn_80014A34(S32);
 extern "C" void fn_80016600();
-extern "C" void fn_800165E0();
 extern "C" void fn_80021E50();
 extern "C" void fn_80021B20();
 extern "C" void fn_80021E30();
@@ -208,7 +208,7 @@ U32 zMenuLoop()
 
         while ((lbl_8025E968 = VIGetRetraceCount()) - lbl_8025EF10 < 2)
         {
-            fn_800165E0();
+            iVSync();
         }
         lbl_8025EF10 = lbl_8025E968;
 

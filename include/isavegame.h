@@ -31,6 +31,13 @@ enum en_ASYNC_OPERR
     ISG_OPERR_NOMORE
 };
 
+enum en_CHGCODE
+{
+    ISG_CHG_NONE,
+    ISG_CHG_TARGET,
+    ISG_CHG_GAMELIST
+};
+
 enum en_NAMEGEN_TYPE
 {
     ISG_NGTYP_GAMEDIR,
@@ -70,6 +77,7 @@ struct st_ISGSESSION
     S32 unk_27C;
 };
 
+S32 iSGStartup();
 S32 iSGShutdown();
 char* iSGMakeName(en_NAMEGEN_TYPE type, const char* base, S32 idx);
 void iSGMakeTimeStamp(char* str);

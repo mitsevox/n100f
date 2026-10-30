@@ -4,6 +4,39 @@
 #include "types.h"
 #include "iColor.h"
 
+struct RwTexture;
+struct RwRaster;
+
+struct iFontSpacing
+{
+    U8 ox;
+    U8 dx;
+};
+
+struct iFontInfo
+{
+    RwTexture* texture;
+    RwRaster* raster;
+};
+
+struct xFontInfo
+{
+    U16 id;
+    U16 flags;
+    U16 char_width;
+    U16 char_height;
+    F32 oo_tex_width;
+    F32 oo_tex_height;
+    F32 u;
+    F32 v;
+    U16 layout;
+    U16 pad;
+    U8 lookup[128];
+    iFontSpacing pspc[128];
+    char* characters;
+    iFontInfo ps;
+};
+
 struct xFontBox
 {
     S32 flags;
@@ -35,5 +68,13 @@ void xFontBoxSetDrawSize(xFontBox* box, F32 draw_width, F32 draw_height);
 void xFontBoxSetDrawSpacing(xFontBox* box, F32 x_spacing, F32 y_spacing);
 void xFontBoxSetColor(xFontBox* box, iColor_tag color);
 char* xFontBoxRender(xFontBox* box);
+void xFontBoxSetBackdrop(xFontBox* box, iColor_tag color);
+void xFontBoxSetInset(xFontBox* box, F32 inset_left, F32 inset_right, F32 inset_top,
+                      F32 inset_bottom);
+void xFontBoxSetFont(xFontBox* box, U32 id);
+void xFontRender();
+void xFontInit();
+
+void iFontInit();
 
 #endif

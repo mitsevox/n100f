@@ -59,8 +59,6 @@ extern "C" void fn_80021B20();
 extern "C" void fn_80021E30();
 extern "C" void fn_80021E50();
 extern "C" void fn_80032D48(F32 dt);
-extern "C" void fn_8003CE10(void* listener);
-extern "C" void fn_8003CE34(void* right, void* up, void* at, void* pos, F32 range);
 extern "C" void fn_8001E83C(_tagxCamFrame* cam);
 extern "C" void fn_8001E8A0(_tagxCamFrame* cam, F32 dt);
 extern "C" void fn_8004436C();
@@ -1940,9 +1938,9 @@ void zSaveLoad_Tick()
     fn_80021E50();
     fn_80032D48(time_elapsed);
     zSceneUpdate(time_elapsed);
-    fn_8003CE34(&globals.camera.hi_cam.mat.right, &globals.camera.hi_cam.mat.up,
+    xSndSetFrame(&globals.camera.hi_cam.mat.right, &globals.camera.hi_cam.mat.up,
                 &globals.camera.hi_cam.mat.at, &globals.camera.hi_cam.mat.pos, 25.0f);
-    fn_8003CE10(&globals.player.ent.model->Mat->pos);
+    xSndSetFrameFar((xVec3*)&globals.player.ent.model->Mat->pos);
     xSndUpdate(time_elapsed);
     fn_8001E8A0(&globals.camera, time_elapsed);
     xCameraBegin(&globals.camera, 1);
