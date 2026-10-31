@@ -11,6 +11,12 @@ Sections:
 	.sdata2     type:rodata align:32
 	.sbss2      type:bss align:8
 
+flat/zVolume.cpp:
+	.text       start:0x80005600 end:0x80005C94
+	.bss        start:0x801EFB60 end:0x801EFEA8
+	.sbss       start:0x80270700 end:0x80270710
+	.sdata2     start:0x80271780 end:0x80271788
+
 flat/iAnimSKB.cpp:
 	.text       start:0x80005C94 end:0x80006CE4
 	.rodata     start:0x8018B8C0 end:0x8018B8E8
@@ -73,10 +79,15 @@ flat/iMorph.cpp:
 	.sbss       start:0x802707A0 end:0x802707B8
 	.sdata2     start:0x802718F0 end:0x80271900
 
+flat/iPad.cpp:
+	.text       start:0x8000F590 end:0x8000FB24
+	.data       start:0x801BBE00 end:0x801BBE30
+	.sdata2     start:0x80271900 end:0x80271920
+
 flat/iParMgr.cpp:
-	.text       start:0x8000FB24 end:0x80011B14
+	.text       start:0x8000FB24 end:0x80011B58
 	.data       start:0x801BBE30 end:0x801BBE58
-	.bss        start:0x801F7438 end:0x801F7600
+	.bss        start:0x801F2138 end:0x801F7600
 	.sdata2     start:0x80271920 end:0x80271950
 
 flat/isavegame.cpp:
@@ -142,6 +153,14 @@ flat/xCollide.cpp:
 flat/xCollideFast.cpp:
 	.text       start:0x8002175C end:0x80021C4C
 	.sdata2     start:0x80271B90 end:0x80271BA8
+
+flat/xCutscene.cpp:
+	.text       start:0x80021C4C end:0x80021C58
+
+flat/xDebug.cpp:
+	.text       start:0x80021C58 end:0x80021DEC
+	.data       start:0x801BD138 end:0x801BD218
+	.bss        start:0x8020ECE8 end:0x8020EE58
 
 flat/xEnt.cpp:
 	.text       start:0x80021FF8 end:0x80025A7C
@@ -324,7 +343,7 @@ flat/zAnimList.cpp:
 	.sdata2     start:0x80272320 end:0x80272338
 
 flat/zAssetTypes.cpp:
-	.text       start:0x80044FDC end:0x80045958
+	.text       start:0x80044F7C end:0x80045958
 	.rodata     start:0x80193250 end:0x80193300
 	.data       start:0x801C55E8 end:0x801C5F00
 	.sdata      start:0x80270340 end:0x80270348
@@ -424,6 +443,10 @@ flat/zEntShaggy.cpp:
 	.sdata      start:0x802703A0 end:0x802703B0
 	.sbss       start:0x80270C78 end:0x80270CB0
 	.sdata2     start:0x802728F8 end:0x80272B08
+
+flat/zEntSimpleObj.cpp:
+	.text       start:0x8007A6D8 end:0x8007AAC0
+	.sdata2     start:0x80272B08 end:0x80272B10
 
 flat/zEntTrigger.cpp:
 	.text       start:0x8007AAC0 end:0x8007AE94
@@ -1052,6 +1075,9 @@ dolphin/exi/EXIUart.c: comment:8
 	.text       start:0x800FB1F8 end:0x800FB468
 	.sbss       start:0x80271270 end:0x80271280
 
+dolphin/gx/GXGeometry.c: comment:8
+	.text       start:0x800FE394 end:0x800FE5E4
+
 dolphin/gx/GXFrameBuf.c: comment:8
 	.text       start:0x800FE5E4 end:0x800FF078
 	.data       start:0x801DD290 end:0x801DD380
@@ -1320,7 +1346,8 @@ dolphin/card/CARDNet.c: comment:8
 	.sdata      start:0x80270618 end:0x80270620
 
 rwsdk/plugin/collis/ctgeom.c:
-	.text       start:0x801379E4 end:0x80138C24
+	.text       start:0x8013760C end:0x80138C24
+	.sdata2     start:0x802746A0 end:0x802746B0
 
 rwsdk/plugin/collis/ctbsp.c:
 	.text       start:0x8013AB54 end:0x8013B940
@@ -1328,23 +1355,71 @@ rwsdk/plugin/collis/ctbsp.c:
 rwsdk/plugin/collis/rpcollis.c:
 	.text       start:0x8013B940 end:0x8013BE1C
 
+rwsdk/plugin/hanim/stdkey.c:
+	.text       start:0x8013BE1C end:0x8013CE38
+
 rwsdk/plugin/hanim/rphanim.c:
-	.text       start:0x8013D054 end:0x8013D300
+	.text       start:0x8013CE38 end:0x8013D9FC
+
+rwsdk/plugin/matfx/rpmatfx.c:
+	.text       start:0x8013F298 end:0x8013FB00
+
+rwsdk/plugin/matfx/gcn/effectPipesGcn.c:
+	.text       start:0x80140CF4 end:0x80140DA8
+
+rwsdk/plugin/matfx/gcn/multiTexGcnData.c:
+	.text       start:0x80141274 end:0x80141978
+
+rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c:
+	.text       start:0x80141978 end:0x80141F20
+
+rwsdk/plugin/matfx/gcn/multiTexGcn.c:
+	.text       start:0x80142D20 end:0x80142D88
 
 rwsdk/plugin/matfx/multiTex.c:
 	.text       start:0x80142D88 end:0x80143760
 
+rwsdk/plugin/matfx/multiTexEffect.c:
+	.text       start:0x80143760 end:0x80143CC4
+
 rwsdk/plugin/skin2/rpskin.c:
 	.text       start:0x80144284 end:0x80144E8C
 
+rwsdk/plugin/skin2/gcn/skingcn.c:
+	.text       start:0x80144E8C end:0x801452CC
+
+rwsdk/plugin/skin2/gcn/skinstream.c:
+	.text       start:0x80145E24 end:0x80145FD4
+
+rwsdk/plugin/skin2/gcn/skingcng.c:
+	.text       start:0x80145FD4 end:0x80146084
+
 rwsdk/world/babinwor.c:
-	.text       start:0x801472B8 end:0x801474F8
+	.text       start:0x801472B8 end:0x80148710
+
+rwsdk/world/baclump.c:
+	.text       start:0x80148710 end:0x80149190
 
 rwsdk/world/balight.c:
 	.text       start:0x8014C810 end:0x8014CFFC
 
+rwsdk/world/bamateri.c:
+	.text       start:0x8014D0B8 end:0x8014D6A4
+
+rwsdk/world/bamatlst.c:
+	.text       start:0x8014D6A4 end:0x8014D750
+
+rwsdk/world/bamesh.c:
+	.text       start:0x8014E590 end:0x8014E838
+
+rwsdk/world/bameshop.c:
+	.text       start:0x801502B8 end:0x80150FE8
+
 rwsdk/world/basector.c:
 	.text       start:0x80150FE8 end:0x801510C4
+
+rwsdk/world/baworld.c:
+	.text       start:0x801524D8 end:0x8015275C
 
 rwsdk/world/baworobj.c:
 	.text       start:0x8015275C end:0x80154264
@@ -1355,6 +1430,9 @@ rwsdk/world/pipe/p2/bapipew.c:
 
 rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c:
 	.text       start:0x80154714 end:0x80154994
+
+rwsdk/world/pipe/p2/nodeAtomicInstance.c:
+	.text       start:0x80155188 end:0x80155B48
 
 rwsdk/world/pipe/p2/nodeMaterialScatter.c:
 	.text       start:0x80157068 end:0x801571AC
@@ -1368,8 +1446,36 @@ rwsdk/world/pipe/p2/nodePostLight.c:
 rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c:
 	.text       start:0x80157860 end:0x80157A1C
 
+rwsdk/world/pipe/p2/nodeWorldSectorInstance.c:
+	.text       start:0x80157F78 end:0x8015881C
+
+rwsdk/world/pipe/p2/gcn/gcpipe.c:
+	.text       start:0x8015881C end:0x80158F70
+
+rwsdk/world/pipe/p2/gcn/vtxfmt.c:
+	.text       start:0x8015CE88 end:0x8015D09C
+
 rwsdk/world/pipe/p2/gcn/wrldpipe.c:
-	.text       start:0x8015D37C end:0x8015D570
+	.text       start:0x8015D350 end:0x8015D570
+
+rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c:
+	.text       start:0x8015DE5C end:0x8015E35C
+
+rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c:
+	.text       start:0x8015E35C end:0x8015E688
+
+rwsdk/world/pipe/p2/gcn/gclights.c:
+	.text       start:0x8015EC18 end:0x8015EDD8
+
+rwsdk/world/pipe/p2/gcn/native.c:
+	.text       start:0x8015F724 end:0x8015F974
+
+rwsdk/tool/slerp/rtslerp.c:
+	.text       start:0x8015F974 end:0x8015FE10
+
+rwsdk/src/plcore/bacolor.c:
+	.text       start:0x80160890 end:0x801608B8
+	.sbss       start:0x80271628 end:0x80271630
 
 rwsdk/src/plcore/baerr.c:
 	.text       start:0x801608F4 end:0x801609D0
@@ -1380,17 +1486,59 @@ rwsdk/src/plcore/bafsys.c:
 rwsdk/src/plcore/baimmedi.c:
 	.text       start:0x80160AF8 end:0x80160C20
 
+rwsdk/src/plcore/bamatrix.c:
+	.text       start:0x80160C20 end:0x80160E7C
+
+rwsdk/src/plcore/bamemory.c:
+	.text       start:0x80163118 end:0x801634A0
+
 rwsdk/src/plcore/baresour.c:
 	.text       start:0x80163618 end:0x80163D2C
+
+rwsdk/src/plcore/bastream.c:
+	.text       start:0x80163D2C end:0x80163DA4
 
 rwsdk/src/plcore/batkbin.c:
 	.text       start:0x801647F8 end:0x80164DA8
 
+rwsdk/src/plcore/batkreg.c:
+	.text       start:0x80164DA8 end:0x8016533C
+
+rwsdk/src/plcore/bavector.c:
+	.text       start:0x8016582C end:0x80165D08
+
+rwsdk/src/plcore/resmem.c:
+	.text       start:0x80165E28 end:0x80165F38
+
 rwsdk/src/plcore/rwstring.c:
-	.text       start:0x80166020 end:0x8016619C
+	.text       start:0x80166020 end:0x801662D0
+
+rwsdk/os/gcn/osintf.c:
+	.text       start:0x801662D0 end:0x80166328
+
+rwsdk/src/babbox.c:
+	.text       start:0x80166328 end:0x8016649C
+
+rwsdk/src/babincam.c:
+	.text       start:0x8016649C end:0x8016667C
 
 rwsdk/src/babinfrm.c:
 	.text       start:0x8016667C end:0x80166A54
+
+rwsdk/src/babintex.c:
+	.text       start:0x80166A54 end:0x80166A94
+
+rwsdk/src/bacamera.c:
+	.text       start:0x8016792C end:0x80168CEC
+
+rwsdk/src/badevice.c:
+	.text       start:0x80169390 end:0x801693C0
+
+rwsdk/src/baframe.c:
+	.text       start:0x80169F00 end:0x8016A8B0
+
+rwsdk/src/baimage.c:
+	.text       start:0x8016BC8C end:0x8016C520
 
 rwsdk/src/baimras.c:
 	.text       start:0x8016C520 end:0x8016C6A4
@@ -1400,20 +1548,47 @@ rwsdk/src/baraster.c:
 	.data       start:0x801EE618 end:0x801EE630
 	.sbss       start:0x80271690 end:0x80271698
 
+rwsdk/src/baresamp.c:
+	.text       start:0x8016CC14 end:0x8016D460
+
 rwsdk/src/basync.c:
 	.text       start:0x8016D5CC end:0x8016DFD4
+
+rwsdk/src/batextur.c:
+	.text       start:0x8016DFD4 end:0x8016E358
 
 rwsdk/src/batypehf.c:
 	.text       start:0x80170048 end:0x801700E4
 
+rwsdk/driver/common/palquant.c:
+	.text       start:0x801700E4 end:0x80171624
+
 rwsdk/driver/gcn/dl2drend.c:
-	.text       start:0x80172ACC end:0x80173E5C
+	.text       start:0x801727C8 end:0x80173E5C
+
+rwsdk/driver/gcn/dlconvrt.c:
+	.text       start:0x801755A8 end:0x801759DC
+
+rwsdk/driver/gcn/dldevice.c:
+	.text       start:0x80176F80 end:0x80177160
+
+rwsdk/driver/gcn/dlraster.c:
+	.text       start:0x80177160 end:0x801777F4
+
+rwsdk/driver/gcn/dlrendst.c:
+	.text       start:0x80178B60 end:0x80179734
 
 rwsdk/driver/gcn/dlsprite.c:
 	.text       start:0x8017A1FC end:0x8017AE7C
 
 rwsdk/driver/gcn/dltexdic.c:
 	.text       start:0x8017AE7C end:0x8017B4A8
+
+rwsdk/driver/gcn/dltextur.c:
+	.text       start:0x8017B4A8 end:0x8017B54C
+
+rwsdk/driver/gcn/dltoken.c:
+	.text       start:0x8017BA70 end:0x8017BAFC
 
 rwsdk/src/pipe/p2/bapipe.c:
 	.text       start:0x8017CBE4 end:0x8017CC64
@@ -1455,12 +1630,33 @@ rwsdk/src/pipe/p2/nodeSubmitTriangle.c:
 	.text       start:0x80181720 end:0x801819D0
 	.data       start:0x801EF790 end:0x801EF850
 
+rwsdk/src/pipe/p2/p2altmdl.c:
+	.text       start:0x80182968 end:0x80182B3C
+
+rwsdk/src/pipe/p2/p2clpcom.c:
+	.text       start:0x80182B3C end:0x80184894
+
 rwsdk/src/pipe/p2/p2core.c:
 	.text       start:0x80184894 end:0x80185324
+
+rwsdk/src/pipe/p2/p2dep.c:
+	.text       start:0x80187DB0 end:0x80187E30
+
+rwsdk/src/pipe/p2/p2heap.c:
+	.text       start:0x8018884C end:0x80188A14
 
 rwsdk/src/pipe/p2/p2renderstate.c:
 	.text       start:0x80188A14 end:0x80188ED4
 	.sdata2     start:0x80274B10 end:0x80274B18
 
+rwsdk/src/pipe/p2/p2resort.c:
+	.text       start:0x80188ED4 end:0x80189090
+
 rwsdk/src/pipe/p2/gcn/im3dpipe.c:
 	.text       start:0x80189398 end:0x801895E8
+
+rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c:
+	.text       start:0x801895E8 end:0x80189604
+
+rwsdk/tool/intsec/rtintsec.c:
+	.text       start:0x8018A128 end:0x8018A8C0
