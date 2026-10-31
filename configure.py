@@ -523,6 +523,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xstransvc.cpp"),
             Object(NonMatching, "flat/xString.cpp"),
             Object(NonMatching, "flat/xSurface.cpp"),
+            Object(NonMatching, "flat/xTRC.cpp"),
             Object(NonMatching, "flat/xutil.cpp"),
             Object(NonMatching, "flat/zActionLine.cpp"),
             Object(NonMatching, "flat/zAnimList.cpp"),

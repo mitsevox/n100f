@@ -11,6 +11,8 @@ Method (docs/splits.md has the reasoning and limits):
   3. Cut .text between neighbouring units, then cut each data section between
      consecutive units at an 8-byte-aligned symbol boundary, choosing the cuts
      with the fewest references that would cross them.
+  4. Write a unit when its function count fits its PS2 unit's, or when a `unit` row in
+     evidence.tsv claims exactly the .text extent step 3 gave it.
 
 Inputs are the target DOL, the PS2 ELF, the DWARF function export in
 references/, symbols.txt, evidence.tsv and the objects of a dtk split (for relocations).
@@ -419,6 +421,18 @@ def exact_bodies(rows):
             and OWN_SOURCE_MARKER not in r[7]}
 
 
+CLAIM_EDGES = ('exact', 'provisional')  # an `open` edge says the true edge lies elsewhere
+
+
+def claimed_units(rows, prefix):
+    """Unit -> (start, end) for the `unit` rows whose subject is a `prefix` path: a person's claim
+    of the unit's .text extent, which the evidence column has to support (config/README.md). A row
+    with an `open` edge claims no extent."""
+    return {r[3][len(prefix):]: (int(r[1], 16), int(r[2], 16)) for r in rows
+            if r[0] == 'unit' and r[3].startswith(prefix) and r[1] != '-' and r[2] != '-'
+            and r[5] in CLAIM_EDGES and r[6] in CLAIM_EDGES}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--dol', required=True)
@@ -476,7 +490,9 @@ def main():
     # Functions whose bodies evidence.tsv establishes exactly (an exact BfBB body, say).
     # Positional names are left out: they were read off an earlier alignment. That includes
     # an exact body written for this project, whose name the body does not carry.
-    exact = exact_bodies(csv.reader(open(args.evidence, encoding='utf-8'), delimiter='\t'))
+    rows = list(csv.reader(open(args.evidence, encoding='utf-8'), delimiter='\t'))
+    exact = exact_bodies(rows)
+    claims = claimed_units(rows, args.prefix)
     gc_feats = {j: gc_features(dol, r2, f[0], f[1], func_targets[j]) for j, f in enumerate(funcs)}
     ps2_feats = {i: ps2.features(f[0], f[1]) for i, f in enumerate(ps2.funcs)}
     # Calls are features too: a GC call to an exact-body function, and a PS2 jal to
@@ -742,6 +758,12 @@ def main():
 
     ps2_count = collections.Counter(ps2.funcs[i][3] for i in shared)
 
+    # A unit the rules below leave weak is still written when a `unit` row in evidence.tsv
+    # claims exactly the extent this run gives it: the size rule cannot tell GC-only code in a
+    # unit (xTRC.cpp's memory-card messages) from a misalignment, and the row's evidence can.
+    def text_extent(u):
+        return funcs[tstart[u]][0], funcs[tend[u]][0] + funcs[tend[u]][1]
+
     def status(u):
         n, ref = tend[u] - tstart[u] + 1, ps2_count[u]
         if n <= 0:
@@ -750,6 +772,8 @@ def main():
             return 'anchored'
         if not anchored[u] and abs(n - ref) <= 1:
             return 'count-match'
+        if claims.get(u) == text_extent(u):
+            return 'claimed'
         return 'weak'
 
     # MW pools .sdata2 literals per unit, so a function that no emitted unit holds
