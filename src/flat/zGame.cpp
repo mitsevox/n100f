@@ -1,4 +1,5 @@
 #include "types.h"
+#include "xDraw.h"
 #include "iTime.h"
 #include "iSystem.h"
 #include "zEnv.h"
@@ -42,7 +43,7 @@ void xSndSetFrame(xVec3* right, xVec3* up, xVec3* at, xVec3* pos, F32 radius);
 void xSndSetFrameFar(xVec3* pos);
 extern "C" void fn_800B94C0(zScene*, F32);
 void xCameraBegin(_tagxCamFrame* cam, S32 clear);
-extern "C" void fn_800056F8(xVec3*);
+void zVolume_OccludePrecalc(xVec3* camPos);
 void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
 U32 zSaveLoad_SaveLoop();
 extern "C" void fn_800B74D8();
@@ -58,9 +59,6 @@ void xCameraSetTarget(_tagxCamFrame*, xMat4x3*);
 void zEntEventAll(xBase*, U32, U32, F32*);
 extern "C" RpWorld* RpWorldCreate(const RwBBox*);
 extern "C" F32 RwIm2DGetNearScreenZ();
-extern "C" void fn_80021E50();
-extern "C" void fn_80021B20();
-extern "C" void fn_80021E30();
 extern "C" void fn_8004436C();
 extern "C" void fn_800B0F3C(char*, S32, S32, S32, F32, F32, F32, F32, F32);
 void xFontRender();
@@ -83,7 +81,6 @@ extern "C" S32 lbl_8025E528;
 extern "C" S32 lbl_8025E510;
 extern "C" U32 lbl_8025EEDC;
 extern "C" F32 lbl_8025EEE8;
-struct iColor_tag { U8 r, g, b, a; };
 extern "C" iColor_tag lbl_8025E514;
 extern "C" iColor_tag lbl_8025E518;
 void xScrFxFade(iColor_tag*, iColor_tag*, F32, void (*)(), S32, S32);
@@ -174,7 +171,7 @@ void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba)
         back_col.alpha = rgba[3];
     }
     xPadUpdate(0, 1.0f);
-    fn_80021E50();
+    xDrawBegin();
     if (lbl_8025EF14)
     {
         RwCameraClear(lbl_8025EF14, &back_col, 3);
@@ -224,8 +221,8 @@ void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba)
     ++lbl_8025EF20;
     fn_8004436C();
     xFontRender();
-    fn_80021B20();
-    fn_80021E30();
+    xDebugUpdate();
+    xDrawEnd();
     if (lbl_8025EF14)
     {
         RwCameraEndUpdate(lbl_8025EF14);
@@ -325,7 +322,7 @@ void zGameLoop()
         globals.update_dt = lbl_8025EEEC;
         fn_800AC100(lbl_8025EEEC);
         zGameExtras(lbl_8025EEEC);
-        fn_80021E50();
+        xDrawBegin();
         S32 paused = zGameIsPaused();
         zSceneUpdate(lbl_8025EEEC);
         zEntShaggy_UpdateDep();
@@ -339,11 +336,11 @@ void zGameLoop()
         xCameraUpdate(&globals.camera, lbl_8025EEEC);
         zScene_UpdateFlyToInterface(lbl_8025EEEC);
         xCameraBegin(&globals.camera, 1);
-        fn_800056F8(&mat->pos);
+        zVolume_OccludePrecalc(&mat->pos);
         zSceneRender();
         fn_8004436C();
-        fn_80021B20();
-        fn_80021E30();
+        xDebugUpdate();
+        xDrawEnd();
         xCameraEnd(&globals.camera, lbl_8025EEEC, 1);
         iEnvEndRenderFX(NULL);
         while ((lbl_8025E968 = VIGetRetraceCount()) - lbl_8025EF10 < 2)

@@ -1,4 +1,6 @@
 #include "xsavegame.h"
+#include "xDraw.h"
+#include "xDebug.h"
 #include "iDebug.h"
 #include "iEnv.h"
 #include "iSnd.h"
@@ -56,9 +58,6 @@ extern "C" void fn_80016698(S32 reset);
 // The memory card's file counts, from the save-game layer.
 extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree);
 // The per-frame helpers the front-end loops share.
-extern "C" void fn_80021B20();
-extern "C" void fn_80021E30();
-extern "C" void fn_80021E50();
 extern "C" void fn_8004436C();
 
 extern "C" U32 lbl_8025E9F8;
@@ -1932,7 +1931,7 @@ void zSaveLoad_Tick()
     {
         xPadUpdate(1, time_elapsed);
     }
-    fn_80021E50();
+    xDrawBegin();
     xParMgrUpdate(time_elapsed);
     zSceneUpdate(time_elapsed);
     xSndSetFrame(&globals.camera.hi_cam.mat.right, &globals.camera.hi_cam.mat.up,
@@ -1942,9 +1941,9 @@ void zSaveLoad_Tick()
     xCameraUpdate(&globals.camera, time_elapsed);
     xCameraBegin(&globals.camera, 1);
     zSceneRender();
-    fn_80021B20();
+    xDebugUpdate();
     fn_8004436C();
-    fn_80021E30();
+    xDrawEnd();
     if (gScreenDump)
     {
         iDebugScreenDump();

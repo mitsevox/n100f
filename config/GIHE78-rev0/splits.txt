@@ -11,6 +11,12 @@ Sections:
 	.sdata2     type:rodata align:8
 	.sbss2      type:bss align:16
 
+flat/zVolume.cpp:
+	.text       start:0x800055E0 end:0x80005C74
+	.bss        start:0x801DF1C0 end:0x801DF508
+	.sbss       start:0x8025E860 end:0x8025E870
+	.sdata2     start:0x8025F8C0 end:0x8025F8C8
+
 flat/iAnimSKB.cpp:
 	.text       start:0x80005C74 end:0x80006CC4
 	.rodata     start:0x8018E600 end:0x8018E628
@@ -92,10 +98,15 @@ flat/iMorph.cpp:
 	.sbss       start:0x8025E908 end:0x8025E920
 	.sdata2     start:0x8025FA38 end:0x8025FA48
 
+flat/iPad.cpp:
+	.text       start:0x8000F5AC end:0x8000FB40
+	.data       start:0x801AD440 end:0x801AD470
+	.sdata2     start:0x8025FA48 end:0x8025FA68
+
 flat/iParMgr.cpp:
-	.text       start:0x8000FB40 end:0x80011B30
+	.text       start:0x8000FB40 end:0x80011B74
 	.data       start:0x801AD470 end:0x801AD498
-	.bss        start:0x801E6B98 end:0x801E6D60
+	.bss        start:0x801E1898 end:0x801E6D60
 	.sdata2     start:0x8025FA68 end:0x8025FA98
 
 flat/isavegame.cpp:
@@ -119,8 +130,13 @@ flat/iShadow.cpp:
 	.sdata2     start:0x8025FAE8 end:0x8025FB30
 
 flat/iSystem.cpp:
-	.text       start:0x80015F60 end:0x80016600
+	.text       start:0x80015168 end:0x80016900
 	.rodata     start:0x80192C60 end:0x80192CE0
+	.data       start:0x801AD940 end:0x801AD9C0
+	.bss        start:0x801FE3B8 end:0x801FE3E8
+	.sdata      start:0x8025E3F8 end:0x8025E400
+	.sbss       start:0x8025E968 end:0x8025E998
+	.sdata2     start:0x8025FB78 end:0x8025FB88
 
 flat/iTime.cpp:
 	.text       start:0x80016900 end:0x80016A30
@@ -170,6 +186,18 @@ flat/xCollide.cpp:
 flat/xCollideFast.cpp:
 	.text       start:0x80021620 end:0x80021B10
 	.sdata2     start:0x8025FCD8 end:0x8025FCF0
+
+flat/xCutscene.cpp:
+	.text       start:0x80021B10 end:0x80021B1C
+
+flat/xDebug.cpp:
+	.text       start:0x80021B1C end:0x80021CB0
+	.data       start:0x801AE778 end:0x801AE858
+	.bss        start:0x801FE448 end:0x801FE5B8
+
+flat/xDraw.cpp:
+	.text       start:0x80021CB0 end:0x80021E70
+	.sdata      start:0x8025E410 end:0x8025E418
 
 flat/xEnt.cpp:
 	.text       start:0x80021E70 end:0x800258F4
@@ -362,6 +390,7 @@ flat/xTRC.cpp:
 	.text       start:0x80040FCC end:0x80044780
 	.rodata     start:0x80193F60 end:0x801960D8
 	.data       start:0x801B6610 end:0x801B6798
+	.bss        start:0x802289B8 end:0x802289E8
 	.sbss       start:0x8025EBE0 end:0x8025EBF8
 	.sdata2     start:0x80260310 end:0x802603A8
 	.sbss2      start:0x80262C70 end:0x80262C80
@@ -387,7 +416,7 @@ flat/zAnimList.cpp:
 	.sdata2     start:0x80260460 end:0x80260478
 
 flat/zAssetTypes.cpp:
-	.text       start:0x800451D4 end:0x80045B50
+	.text       start:0x80045174 end:0x80045B50
 	.rodata     start:0x801960E8 end:0x80196198
 	.data       start:0x801B6C28 end:0x801B7540
 	.sdata      start:0x8025E4A0 end:0x8025E4A8
@@ -487,6 +516,10 @@ flat/zEntShaggy.cpp:
 	.sdata      start:0x8025E500 end:0x8025E510
 	.sbss       start:0x8025EDE0 end:0x8025EE18
 	.sdata2     start:0x80260A38 end:0x80260C48
+
+flat/zEntSimpleObj.cpp:
+	.text       start:0x8007A8D0 end:0x8007ACB8
+	.sdata2     start:0x80260C48 end:0x80260C50
 
 flat/zEntTrigger.cpp:
 	.text       start:0x8007ACB8 end:0x8007B08C

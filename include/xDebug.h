@@ -15,12 +15,16 @@ enum
     DM_GRAPH,
     DM_GUI,
     DM_PAR,
+    DM_FADE,
     DM_RENDER,
     DM_MEM,
     DM_VRAM,
     DM_PAD
 };
 
+void xDebugExit();
+void xDebugUpdate();
+void xDebugInit();
 void xDebugModeRegisterCallback(S32 mode, void (*func)());
 S32 xDebugModeAdd(char* debugModeName, void (*func)());
 void xprintf(const char* msg, ...);

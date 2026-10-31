@@ -353,6 +353,12 @@ cflags_game_nodeferred = [
     "-inline auto" if f == "-inline auto,deferred" else f for f in cflags_game
 ]
 
+# Game flags with only explicitly inline functions inlined: iSystem.cpp calls its own small
+# functions out of line (see the compiler row in evidence.tsv).
+cflags_game_noauto = [
+    "-inline deferred" if f == "-inline auto,deferred" else f for f in cflags_game
+]
+
 # Same release as the game compiler. Every mwld from GC/1.0 to 2.6 relinks the baseline
 # identically, so the target does not independently establish the linker version.
 config.linker_version = "GC/1.3.2"
@@ -482,11 +488,12 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMemMgr.cpp"),
             Object(NonMatching, "flat/iModel.cpp"),
             Object(NonMatching, "flat/iMorph.cpp"),
+            Object(NonMatching, "flat/iPad.cpp"),
             Object(NonMatching, "flat/iParMgr.cpp"),
             Object(NonMatching, "flat/isavegame.cpp"),
             Object(NonMatching, "flat/iScrFX.cpp"),
             Object(NonMatching, "flat/iShadow.cpp"),
-            Object(NonMatching, "flat/iSystem.cpp"),
+            Object(NonMatching, "flat/iSystem.cpp", cflags=cflags_game_noauto),
             Object(MatchingFor("GIHE78-rev0"), "flat/iTime.cpp"),
             Object(NonMatching, "flat/xAnim.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xBase.cpp"),
@@ -496,6 +503,9 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xClimate.cpp"),
             Object(NonMatching, "flat/xCollide.cpp"),
             Object(NonMatching, "flat/xCollideFast.cpp"),
+            Object(NonMatching, "flat/xCutscene.cpp"),
+            Object(NonMatching, "flat/xDebug.cpp"),
+            Object(NonMatching, "flat/xDraw.cpp"),
             Object(NonMatching, "flat/xEnt.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEntDrive.cpp"),
             Object(NonMatching, "flat/xEntMotion.cpp"),
@@ -552,6 +562,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zEntTrigger.cpp"),
             Object(NonMatching, "flat/zEntProjectile.cpp"),
             Object(NonMatching, "flat/zEntShaggy.cpp"),
+            Object(NonMatching, "flat/zEntSimpleObj.cpp"),
             Object(NonMatching, "flat/zEntVillain.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEnv.cpp"),
             Object(NonMatching, "flat/zFeet.cpp"),
@@ -592,6 +603,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zUIFont.cpp"),
             Object(NonMatching, "flat/zUI.cpp"),
             Object(NonMatching, "flat/zVar.cpp"),
+            Object(NonMatching, "flat/zVolume.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "gc/iAnim.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "gc/iMix.c"),
             Object(NonMatching, "gc/ngcrad3d.c"),

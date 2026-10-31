@@ -818,6 +818,45 @@ def main():
         tclass[key] += f'; {n} functions joined by .sdata2 literals'
         tconf[key] = scorer[key](min(tend[key[0]], tstart[key[1]] - 1))
 
+    # A `unit` row may also claim functions that no written unit holds: unassigned ones, or
+    # ones in a weak unit (at its ends, so the weak unit only shrinks).  The claim must cover
+    # whole functions.  This places GC units that the alignment cannot reach, such as one
+    # linked out of alphabetical order or one whose functions the size rule leaves weak; the
+    # row's evidence column has to show what the run could not.  A claim never takes a function
+    # from a written unit: those claims are reported and skipped.
+    free = {f for f in range(len(game)) if unit_of.get(f) is None or status(unit_of[f]) == 'weak'}
+    for u, (s, e) in sorted(claims.items(), key=lambda kv: kv[1]):
+        if u in tstart and tstart[u] <= tend[u] and text_extent(u) == (s, e):
+            continue
+        fs = [k for k, j in enumerate(game) if s <= funcs[j][0] < e]
+        if (not fs or funcs[game[fs[0]]][0] != s or funcs[game[fs[-1]]][0] + funcs[game[fs[-1]]][1] != e
+                or any(f not in free and unit_of.get(f) != u for f in fs)):
+            print(f'check: claim {u} 0x{s:08X}-0x{e:08X} does not cover whole free functions; not applied',
+                  file=sys.stderr)
+            continue
+        emptied = set()
+        for f in fs:
+            w = unit_of.get(f)
+            if w is not None and w != u:
+                if f == tstart[w]:
+                    tstart[w] += 1
+                elif f == tend[w]:
+                    tend[w] -= 1
+                else:
+                    raise SystemExit(f'claim {u} splits weak unit {w}')
+                if tstart[w] > tend[w]:
+                    emptied.add(w)
+            unit_of[f] = u
+        tstart[u], tend[u] = fs[0], fs[-1]
+        for w in emptied:
+            order.remove(w)
+        if u not in order:
+            order.insert(next((k for k, w in enumerate(order) if tstart[w] > fs[-1]), len(order)), u)
+        k = order.index(u)
+        for key in ((order[k - 1], u) if k else None, (u, order[k + 1]) if k + 1 < len(order) else None):
+            if key:
+                tclass[key], tconf[key] = 'claimed by a unit row in evidence.tsv', 0
+
     users = {d: {unit_of.get(f) for f in fs} for d, fs in data_users.items()}
 
     def aligned(d):
