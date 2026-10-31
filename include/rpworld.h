@@ -478,6 +478,7 @@ void _rpWorldPipelineClose(void);
 S32 _rpWorldPipelineOpen(void);
 S32 _rpWorldPipeAttach(void);
 S32 _rxWorldDevicePluginAttach(void);
+S32 _rpDlVtxFmtPluginAttach(void);
 S32 _rpCreatePlatformMaterialPipelines(void);
 void _rpDestroyPlatformMaterialPipelines(void);
 S32 _rpCreatePlatformWorldSectorPipelines(void);

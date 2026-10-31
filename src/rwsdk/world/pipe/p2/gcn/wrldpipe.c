@@ -2,6 +2,12 @@
 
 #define WORLD_PLUGIN_ID 2
 
+// Attaches the GameCube world device plugins: the vertex format plugin.
+S32 _rxWorldDevicePluginAttach(void)
+{
+    return _rpDlVtxFmtPluginAttach() != 0;
+}
+
 S32 _rpCreatePlatformMaterialPipelines(void)
 {
     return TRUE;
