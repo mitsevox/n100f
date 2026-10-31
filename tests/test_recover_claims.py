@@ -1,6 +1,6 @@
 """tools/splits/recover.py writes a unit its size rule leaves weak when a `unit` row in
 evidence.tsv claims that unit's .text extent. Only rows for the tool's own path prefix
-with both addresses count; the unit key drops the prefix, as split_units.tsv names it.
+with both addresses and no `open` edge count; the unit key drops the prefix, as split_units.tsv names it.
 
     python3 -m unittest tests/test_recover_claims.py
 """
@@ -17,6 +17,7 @@ ROWS = [
     ["unit", "0x80040FCC", "0x80044780", "flat/xTRC.cpp", "inferred", "provisional", "provisional", "..."],
     ["unit", "0x800D7E00", "0x800D84A0", "gc/iAnim.cpp", "inferred", "exact", "exact", "..."],
     ["unit", "0x80001000", "-", "flat/open.cpp", "inferred", "open", "-", "..."],
+    ["unit", "0x80002000", "0x80002100", "flat/edge.cpp", "inferred", "provisional", "open", "..."],
     ["unit-anchor", "0x80044478", "-", "flat/xTRCPad.cpp", "related", "-", "-", "..."],
     ["function", "0x80044714", "0x80044780", "flat/xTRCInit.cpp", "target", "exact", "exact", "..."],
 ]

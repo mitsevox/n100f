@@ -13,9 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// The GC build adds the Nintendo memory-card and disc messages to this file (the PS2 file has
-// only xTRCPad and xTRCInit). The functions are defined in the reverse of their address order,
-// as GC/1.3.2 emits them; the memory-card ones keep their dtk labels, since no build names them.
+// The GameCube system messages: the memory-card dialogs and the pad and disc messages.
 
 // One memory-card message: what it says (a case of fn_80041548), the card and slot it names
 // and the counts the space messages print. Index 0 is the start-up check's, 1 zSaveLoad's.
@@ -47,7 +45,7 @@ void zGamePauseIfPossible();
 extern F32 gFontWiggleTime;
 
 extern "C" {
-// The save-game layer's card state queries, which no evidence names yet.
+// The save-game layer's card state queries.
 S32 fn_800132C4(st_ISGSESSION* session, S32 repair, S32* files, S32* repaired);
 S32 fn_800138EC(st_ISGSESSION* session, const char* dname, const char* fname);
 void fn_80013C64(st_ISGSESSION* session, S32 tidx, S32* blockSize, S32* freeFiles);
@@ -67,11 +65,6 @@ U32 lbl_8025EBE0;
 xFontBox* lbl_8025EBE4;
 U32 lbl_8025EBE8;
 }
-
-// gTrcDisk (xTRC.h) holds the disc state the disc layer last reported and whether it is being
-// identified now. The SLUS-20349 DWARF puts it in this file, but recover.py leaves its .sbss
-// slot (0x8025EBD8) out of the unit because the unassigned 0x80016900 also loads it, so it
-// stays declared only until that slot is assigned.
 
 extern "C" {
 

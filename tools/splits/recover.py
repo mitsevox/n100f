@@ -421,11 +421,16 @@ def exact_bodies(rows):
             and OWN_SOURCE_MARKER not in r[7]}
 
 
+CLAIM_EDGES = ('exact', 'provisional')  # an `open` edge says the true edge lies elsewhere
+
+
 def claimed_units(rows, prefix):
     """Unit -> (start, end) for the `unit` rows whose subject is a `prefix` path: a person's claim
-    of the unit's .text extent, which the evidence column has to support (config/README.md)."""
+    of the unit's .text extent, which the evidence column has to support (config/README.md). A row
+    with an `open` edge claims no extent."""
     return {r[3][len(prefix):]: (int(r[1], 16), int(r[2], 16)) for r in rows
-            if r[0] == 'unit' and r[3].startswith(prefix) and r[1] != '-' and r[2] != '-'}
+            if r[0] == 'unit' and r[3].startswith(prefix) and r[1] != '-' and r[2] != '-'
+            and r[5] in CLAIM_EDGES and r[6] in CLAIM_EDGES}
 
 
 def main():
