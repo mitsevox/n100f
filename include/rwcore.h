@@ -1721,6 +1721,11 @@ F32 _rwMatrixOrthogonalError(const RwMatrix* matrix);
 F32 _rwMatrixNormalError(const RwMatrix* matrix);
 RwV3d* RwV3dTransformPoints(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
                             const RwMatrix* matrix);
+RwV3d* RwV3dTransformVectors(RwV3d* vectorsOut, const RwV3d* vectorsIn, S32 numPoints,
+                             const RwMatrix* matrix);
+void _rwV3dNormalize(RwV3d* out, const RwV3d* in);
+RwMatrix* RwMatrixCreate(void);
+S32 RwMatrixDestroy(RwMatrix* mpMat);
 RwFrustumTestResult RwCameraFrustumTestSphere(const RwCamera* camera, const RwSphere* sphere);
 RwBBox* RwBBoxCalculate(RwBBox* boundBox, const RwV3d* verts, S32 numVerts);
 RwBBox* RwBBoxInitialize(RwBBox* boundBox, const RwV3d* vertex);
