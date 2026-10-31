@@ -74,10 +74,11 @@ extern "C" RwMatrix* RwMatrixInvert(RwMatrix* matrixOut, const RwMatrix* matrixI
 extern "C" RwMatrix* RwMatrixTranslate(RwMatrix* matrix, const RwV3d* translation,
                                        RwOpCombineType combineOp);
 extern "C" F32 RwV3dLength(const RwV3d* in);
-extern "C" void fn_8013A360(RpWorld* world, RpIntersection* intersection,
-                            RpCollisionTriangle* (*callBack)(RpIntersection*, RpWorldSector*,
-                                                             RpCollisionTriangle*, F32, void*),
-                            void* data);
+extern "C" RpWorld* RpCollisionWorldForAllIntersections(
+    RpWorld* world, RpIntersection* intersection,
+    RpCollisionTriangle* (*callBack)(RpIntersection*, RpWorldSector*, RpCollisionTriangle*, F32,
+                                     void*),
+    void* data);
 extern "C" void fn_80178A3C(RwRaster* raster);
 extern "C" void fn_80021DD0(U8 r, U8 g, U8 b, U8 a);
 
@@ -957,7 +958,7 @@ static S32 ShadowRender(RwCamera* shadowCamera, RwRaster* shadowRaster, RpWorld*
 
     RwRenderStateGet(rwRENDERSTATEFOGENABLE, &fogstate);
     RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);
-    fn_8013A360(world, shadowZone, ShadowRenderTriangleCB, &param);
+    RpCollisionWorldForAllIntersections(world, shadowZone, ShadowRenderTriangleCB, &param);
     if (Im3DBufferPos)
     {
         if (RwIm3DTransform(Im3DBuffer, Im3DBufferPos, NULL,
