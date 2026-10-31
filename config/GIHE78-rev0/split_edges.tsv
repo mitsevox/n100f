@@ -60,7 +60,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xParMgr.cpp	xPartition.cpp	0x80032DEC	0x80032DEC	alignment only (6 cuts tie on data)	0
 .text	xPartition.cpp	xpkrsvc.cpp	0x8003361C	0x8003361C	alignment only (4 cuts tie on data, 2 on calls)	0
 .text	xpkrsvc.cpp	xQuickCull.cpp	0x80035854	0x80035854	closed by references (1 functions joined; was open: 1 unassigned functions)	2
-.text	xQuickCull.cpp	xsavegame.cpp	0x80036908	0x80036908	single cut by call references (5 cuts tie on data)	0
+.text	xQuickCull.cpp	xsavegame.cpp	0x80036908	0x80036908	single cut by data references	0
 .text	xsavegame.cpp	xScene.cpp	0x80038D48	0x80038D48	alignment only (9 cuts tie on data)	0
 .text	xScene.cpp	xScrFx.cpp	0x800394B4	0x800394B4	alignment only (8 cuts tie on data)	0
 .text	xScrFx.cpp	xserializer.cpp	0x80039C90	0x80039C90	single cut by data references	1

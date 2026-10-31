@@ -45,12 +45,6 @@ void zGamePauseIfPossible();
 extern F32 gFontWiggleTime;
 
 extern "C" {
-// The save-game layer's card state queries.
-S32 fn_800132C4(st_ISGSESSION* session, S32 repair, S32* files, S32* repaired);
-S32 fn_800138EC(st_ISGSESSION* session, const char* dname, const char* fname);
-void fn_80013C64(st_ISGSESSION* session, S32 tidx, S32* blockSize, S32* freeFiles);
-U32 fn_80013D3C(st_ISGSESSION* session, S32 tidx, S32 refresh);
-S32 fn_80014310(st_ISGSESSION* session, S32 card);
 void fn_80016600();
 void fn_80016698(S32 reset);
 // The localized device, slot and card names.
@@ -750,7 +744,7 @@ extern "C" S32 fn_80043730(S32 card)
     {
         S32 message = 0;
         iSGTgtSetActive(session, slot);
-        U32 state = fn_80013D3C(session, slot, 0);
+        U32 state = iSGTgtState(session, slot, NULL);
         if (state & 0x1000000)
         {
             message = 26;
@@ -863,7 +857,7 @@ extern "C" S32 fn_80043050(S32 card, S32* formatted)
     else
     {
         iSGTgtSetActive(session, slot);
-        U32 state = fn_80013D3C(session, slot, 0);
+        U32 state = iSGTgtState(session, slot, NULL);
         if (!(state & 4) || (state & 0x8000000))
         {
             slot = -1;
@@ -877,7 +871,7 @@ extern "C" S32 fn_80043050(S32 card, S32* formatted)
     else
     {
         iSGTgtSetActive(session, slot);
-        U32 state = fn_80013D3C(session, slot, 0);
+        U32 state = iSGTgtState(session, slot, NULL);
         U32 market = state & 0x4000000;
         S32 hook = 2;
         watch.session = session;
@@ -1764,7 +1758,7 @@ extern "C" S32 fn_80041310(S32 card, S32 mode)
         return 0;
     }
     iSGTgtSetActive(session, slot);
-    state = fn_80013D3C(session, slot, 0);
+    state = iSGTgtState(session, slot, NULL);
     if (state & 0x1000000)
     {
         message = 26;
@@ -1895,7 +1889,7 @@ extern "C" S32 fn_80040FCC(S32 card, S32 game)
     else
     {
         iSGTgtSetActive(session, slot);
-        U32 state = fn_80013D3C(session, slot, 0);
+        U32 state = iSGTgtState(session, slot, NULL);
         if (state & 0x1000000)
         {
             result = -1;
