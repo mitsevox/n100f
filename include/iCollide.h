@@ -9,7 +9,9 @@ struct xModelInstance;
 struct _xCollis;
 struct _xRay3;
 struct _xEnv;
+struct _xScene;
 
+void iCollideInit(_xScene* sc);
 void iBoxForModelLocal(_xBox* o, const xModelInstance* m);
 void iBoxForModel(_xBox* o, const xModelInstance* m);
 U32 iRayHitsModel(const _xRay3* r, const xModelInstance* m, _xCollis* coll);

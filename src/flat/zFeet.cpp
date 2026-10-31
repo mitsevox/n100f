@@ -1,6 +1,7 @@
 #include "zFeet.h"
 #include "xDebug.h"
 #include "xEnv.h"
+#include "xCollideFast.h"
 #include "xMemMgr.h"
 #include "xAnim.h"
 #include "rwcore.h"
@@ -25,7 +26,6 @@ extern xBase* lbl_8025EEBC;
 extern U32 lbl_8022C678[23];
 extern F32 lbl_801A4140[];
 extern RwIm3DVertex lbl_8022C6D4[];
-extern "C" U32 fn_800217E0(_xRay3*, void*);
 #define SKID_RASTER lbl_8025EEC0
 #define PAWPRINT_EMITTER lbl_8025EEB8
 #define FOOTPRINT_EMITTER lbl_8025EEBC
@@ -33,7 +33,6 @@ extern "C" U32 fn_800217E0(_xRay3*, void*);
 #define SKID_WIDTHS lbl_801A4140
 #define RAY_COLLIDE_DATA gCurXEnv
 #define STRIP_VERTS lbl_8022C6D4
-#define RAY_HITS_WORLD fn_800217E0
 #elif VERSION_GIHE78_REV1
 extern void* lbl_80270D58;
 extern xBase* lbl_80270D50;
@@ -41,7 +40,6 @@ extern xBase* lbl_80270D54;
 extern U32 lbl_8023CD28[23];
 extern F32 lbl_801A12A8[];
 extern RwIm3DVertex lbl_8023CD84[];
-extern "C" U32 fn_8002191C(_xRay3*, void*);
 #define SKID_RASTER lbl_80270D58
 #define PAWPRINT_EMITTER lbl_80270D50
 #define FOOTPRINT_EMITTER lbl_80270D54
@@ -49,7 +47,6 @@ extern "C" U32 fn_8002191C(_xRay3*, void*);
 #define SKID_WIDTHS lbl_801A12A8
 #define RAY_COLLIDE_DATA gCurXEnv
 #define STRIP_VERTS lbl_8023CD84
-#define RAY_HITS_WORLD fn_8002191C
 #endif
 extern void zSurfaceGetName(S32, char*);
 void DrawSkidMarkStrip(_tagFeetSkidMark*, _tagSkidEdge*, U8, U8, U8);
@@ -276,7 +273,7 @@ U32 zFeetStepCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
     ray.dir.y = -0.1f;
     ray.dir.z = 0.0f;
     ray.flags = 0;
-    S32 collided_with_ground = RAY_HITS_WORLD(&ray, RAY_COLLIDE_DATA) != 0;
+    S32 collided_with_ground = xRayHitsEnvFast(&ray, RAY_COLLIDE_DATA) != 0;
     info.pos.y = ent->model->Mat->pos.y + 0.05f;
 
     S32 surface_type = 0;

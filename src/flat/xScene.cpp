@@ -5,6 +5,7 @@
 #include "xBound.h"
 #include "xQuickCull.h"
 #include "iCollide.h"
+#include "xCollideFast.h"
 
 struct _xEnv;
 struct xSerial;
@@ -12,10 +13,7 @@ struct xSerial;
 void xAnimTempTransitionInit(U32 count);
 void xAnimPoolInit(xMemPool* pool, U32 count, U32 singles, U32 blendFlags, U32 effectMax);
 void xCollideInit(_xScene* sc);
-void xCollideFastInit(_xScene* sc);
 void xEnvSetup(_xEnv* env);
-// xCollideFast.cpp: whether the ray crosses the bound.
-extern "C" U32 fn_80021800(const _xRay3* r, const _xBound* b);
 
 // Allocates the scene's entity lists and sets up the animation, model and collision pools.
 // The model pools grow with the scene's NPC, dynamic and static counts.
@@ -232,7 +230,7 @@ void xRayHitsCameraScene(_xScene* sc, _xRay3* r, void (*camera_func)(_xEnt*))
     {
         _xEnt* ent = sc->stats[i];
         if ((ent->moreFlags & 1) && xQuickCullIsects(&qcr, &ent->bound.qcd) &&
-            fn_80021800(r, &ent->bound))
+            xRayHitsBoundFast(r, &ent->bound))
         {
             camera_func(ent);
         }
@@ -242,7 +240,7 @@ void xRayHitsCameraScene(_xScene* sc, _xRay3* r, void (*camera_func)(_xEnt*))
     {
         _xEnt* ent = sc->dyns[i];
         if ((ent->moreFlags & 1) && xQuickCullIsects(&qcr, &ent->bound.qcd) &&
-            fn_80021800(r, &ent->bound))
+            xRayHitsBoundFast(r, &ent->bound))
         {
             camera_func(ent);
         }
