@@ -353,10 +353,10 @@ cflags_game_nodeferred = [
     "-inline auto" if f == "-inline auto,deferred" else f for f in cflags_game
 ]
 
-# Game flags with only explicitly inline functions inlined: iSystem.cpp calls its own small
-# functions out of line (see the compiler row in evidence.tsv).
-cflags_game_noauto = [
-    "-inline deferred" if f == "-inline auto,deferred" else f for f in cflags_game
+# Game flags with inlining off: iSystem.cpp calls its own small functions, and its inline
+# RwFileFunctions copy, out of line (see the compiler row in evidence.tsv).
+cflags_game_noinline = [
+    "-inline off,deferred" if f == "-inline auto,deferred" else f for f in cflags_game
 ]
 
 # Same release as the game compiler. Every mwld from GC/1.0 to 2.6 relinks the baseline
@@ -493,7 +493,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/isavegame.cpp"),
             Object(NonMatching, "flat/iScrFX.cpp"),
             Object(NonMatching, "flat/iShadow.cpp"),
-            Object(NonMatching, "flat/iSystem.cpp", cflags=cflags_game_noauto),
+            Object(NonMatching, "flat/iSystem.cpp", cflags=cflags_game_noinline),
             Object(MatchingFor("GIHE78-rev0"), "flat/iTime.cpp"),
             Object(NonMatching, "flat/xAnim.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xBase.cpp"),

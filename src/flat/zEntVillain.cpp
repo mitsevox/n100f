@@ -44,12 +44,10 @@
 #define VIL_QUEUE_PROPSOUND fn_8007BD98
 #define VIL_HOLO_FLICKER fn_800837D4
 #define VIL_RESET fn_800A8CB8
-#define VIL_SET_DRAW_COLOR(color) xDrawSetColor(*(iColor_tag*)(color))
 #elif VERSION_GIHE78_REV1
 #define VIL_QUEUE_PROPSOUND fn_8007BBA0
 #define VIL_HOLO_FLICKER fn_800835DC
 #define VIL_RESET fn_800A8AC0
-#define VIL_SET_DRAW_COLOR(color) fn_80021FA0(color)
 extern "C" void fn_80021FA0(U32* color);
 #endif
 
@@ -12653,8 +12651,13 @@ static S32 VWEP_swipe(st_zEntVillain* vil, F32)
     coll.optr = &globals.player.ent;
     bound.type = 1;
     bound.qcd = globals.player.ent.bound.qcd;
+#if VERSION_GIHE78_REV0
+    iColor_tag color = { 0x80, 0x00, 0x00, 0xFF };
+    xDrawSetColor(color);
+#elif VERSION_GIHE78_REV1
     U32 color = 0x800000FF;
-    VIL_SET_DRAW_COLOR(&color);
+    fn_80021FA0(&color);
+#endif
     if (VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &bound.sph.center))
     {
         bound.sph.r = 0.2f;
