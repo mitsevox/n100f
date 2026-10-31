@@ -1,7 +1,7 @@
 """The instruction model of the symbol port (tools/port_symbols.py)."""
 import unittest
 
-from tools.port_symbols import Side,Symbol,is_address,walk,written
+from tools.port_symbols import Side,Symbol,is_address,trimmed,walk,written
 
 
 def code(*words):
@@ -82,6 +82,24 @@ class Adopt(unittest.TestCase):
 
     def test_a_shorter_function_does_not_replace(self):
         self.assertFalse(self.side().adopt(0x1000,self.other(0x80,b'whole')))
+
+
+class Trimmed(unittest.TestCase):
+    # Functions at 0x100, 0x140, 0x180 and 0x1C0 up to 0x200; on the sibling everything from 0x140
+    # sits 0x20 later, and the first function changed.
+    edges=[0x140,0x180,0x1C0]
+    @staticmethod
+    def carry(s,e):return (s+0x20,e+0x20) if s>=0x140 else 'changed'
+
+    def test_the_longest_run_that_maps_is_kept(self):
+        self.assertEqual(trimmed(0x100,0x200,self.edges,self.carry),(0x140,0x200,0x160,0x220))
+
+    def test_a_run_from_the_start_counts_too(self):
+        carry=lambda s,e:(s,e) if e<=0x180 else 'changed'
+        self.assertEqual(trimmed(0x100,0x200,self.edges,carry),(0x100,0x180,0x100,0x180))
+
+    def test_nothing_maps(self):
+        self.assertIsNone(trimmed(0x100,0x200,self.edges,lambda s,e:'changed'))
 
 
 if __name__=='__main__':

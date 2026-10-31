@@ -25,7 +25,9 @@ pairs found by position alone that the tool cannot show equal, which are not (no
 
 A unit's section range is ported only when both edges map, the range has the same length on both
 sides, and every symbol in it maps with the range's shift and the same contents; any other unit
-is left out of the sibling, with the reason in the report. The pairing establishes sameness of
+is left out of the sibling, with the reason in the report. The exception is a unit with only a
+.text range: when the longest run of its functions from either end of the range ports by those
+rules, that run is its range on the sibling, and the report says so. The pairing establishes sameness of
 contents, not that a name or boundary is right on either target: every ported name keeps
 whatever evidence its origin target recorded."""
 import argparse
@@ -450,6 +452,17 @@ def merge(toolkit,ported):
     return [l for t,_,l in lines if 'type:label' not in l or (t,l.split(' ',1)[0]) not in named]
 
 
+def trimmed(start,end,edges,carry):
+    """The longest run of whole symbols at either end of a range, cut at one of `edges`, that
+    `carry(start, end)` maps (it returns the sibling's (start, end), or a reason), as
+    (start, end, sibling start, sibling end), or None."""
+    best=None
+    for cut in [(x,end) for x in edges]+[(start,x) for x in edges]:
+        got=carry(*cut)
+        if isinstance(got,tuple) and (best is None or cut[1]-cut[0]>best[1]-best[0]):best=cut+got
+    return best
+
+
 def port_splits(a,b,smap,refs):
     """Each unit's section ranges on the sibling, or the reason the unit is left out. A range's
     start is the sibling address of the symbol at its start; its end is the sibling address of the
@@ -498,24 +511,38 @@ def port_splits(a,b,smap,refs):
                 p=max(base,key=lambda s:s.addr);y=smap[id(p)]+addr-p.addr
                 if pointers_agree(section,p.addr,smap[id(p)],addr-p.addr+4 if not end else addr-p.addr):return y
         return None
+    def carry(section,start,end):
+        """(start, end) on the sibling, or why the range does not carry over."""
+        s1,e1=where(section,start,False),where(section,end,True)
+        if s1 is None or e1 is None:return '%s edge does not map'%section
+        if e1-s1!=end-start:return '%s range is 0x%X bytes here, 0x%X on the source'%(section,e1-s1,end-start)
+        inside=[s for s in a.symbols if s.section==section and start<=s.addr<end]
+        moved=[s.name for s in inside if id(s) not in smap or smap[id(s)]-s.addr!=s1-start]
+        if moved:return '%s symbols unmapped or shifted: %s'%(section,' '.join(moved))
+        changed=[s.name for s in inside if s.kind!='label' and not equal_at(a,b,s,smap[id(s)])]
+        if changed:return '%s contents not shown equal: %s'%(section,' '.join(changed))
+        # Uninitialized data has no bytes to compare: every reference into the range from paired
+        # code or mapped data must land at the range's shift, so sizes and order agree.
+        if a.in_bss(start):
+            off=[r for r in refs if start<=r<end and set(refs[r])!={s1-start}]
+            if off:return '%s references shift differently at 0x%08X'%(section,min(off))
+        return s1,e1
     out=[];left=[]
     for name,attrs,ranges in units:
         new=[];why=None;partial=[]
         for section,start,end,rest in ranges:
-            s1,e1=where(section,start,False),where(section,end,True)
-            if s1 is None or e1 is None:why='%s edge does not map'%section;break
-            if e1-s1!=end-start:why='%s range is 0x%X bytes here, 0x%X on the source'%(section,e1-s1,end-start);break
-            inside=[s for s in a.symbols if s.section==section and start<=s.addr<end]
-            moved=[s.name for s in inside if id(s) not in smap or smap[id(s)]-s.addr!=s1-start]
-            if moved:why='%s symbols unmapped or shifted: %s'%(section,' '.join(moved));break
-            changed=[s.name for s in inside if s.kind!='label' and not equal_at(a,b,s,smap[id(s)])]
-            if changed:why='%s contents not shown equal: %s'%(section,' '.join(changed));break
-            # Uninitialized data has no bytes to compare: every reference into the range from paired
-            # code or mapped data must land at the range's shift, so sizes and order agree.
-            if a.in_bss(start):
-                off=[r for r in refs if start<=r<end and set(refs[r])!={s1-start}]
-                if off:why='%s references shift differently at 0x%08X'%(section,min(off));break
-            new.append((section,s1,e1,rest))
+            got=carry(section,start,end)
+            # A code-only unit whose range changed at one end carries the functions that did not,
+            # so the shared source keeps measuring them; the toolkit assigns the others on the
+            # sibling, and the unit cannot link there (tools/link_candidates.py).
+            if not isinstance(got,tuple) and len(ranges)==1 and section=='.text':
+                edges=sorted({s.addr for s in real_a.get('.text',[]) if start<s.addr<end})
+                cut=trimmed(start,end,edges,lambda s,e:carry('.text',s,e))
+                if cut:
+                    partial.append('%s 0x%08X-0x%08X of 0x%08X-0x%08X carried; %s'%(section,cut[0],cut[1],start,end,got))
+                    got=cut[2:]
+            if not isinstance(got,tuple):why=got;break
+            new.append((section,got[0],got[1],rest))
         if why:left.append((name,why));continue
         out.append((name,attrs,new,partial))
     # Units must keep their order and not overlap on the sibling.
@@ -568,7 +595,7 @@ def main():
         report.append(('symbol',s.name,'0x%08X'%s.addr,'0x%08X'%t,'same contents'))
     lines=merge(b.symbols,ported)
     units,left=port_splits(a,b,smap,refs)
-    report+=[('unit',name,'-','-','ported') for name,_,_,_ in units]
+    report+=[('unit',name,'-','-','ported in part: '+'; '.join(partial) if partial else 'ported') for name,_,_,partial in units]
     report+=[('unit',name,'-','-','left out: '+why) for name,why in left]
     fn=[s for s in a.symbols if s.kind=='function'];other=[s for s in a.symbols if s.kind!='function']
     same={(r[1],r[2]) for r in report if r[0]=='symbol' and r[4]=='same contents'}
