@@ -59,7 +59,7 @@ extern S32 lbl_8025F870;
 extern char* months[];
 extern char* dotw[];
 
-static S32 RenderWareInit();
+static U32 RenderWareInit();
 static S32 RenderWareExit();
 static RwTexture* TextureRead(const char* name, const char* maskName);
 
@@ -258,7 +258,7 @@ static U32 RWAttachPlugins()
 }
 
 // Returns true on failure. Textures are then read from the loaded assets (see TextureRead).
-static S32 RenderWareInit()
+static U32 RenderWareInit()
 {
     RwEngineOpenParams params;
 
@@ -311,7 +311,8 @@ static S32 RenderWareExit()
 }
 
 // RenderWare's texture reader: textures come from the scene's loaded .rw3 assets, not files.
-// A paletted texture (depth below 8) is refused unless the driver converted it (format 14).
+// A raster under 8 bits per pixel is refused unless the word at +0xC of its driver extension
+// is 14.
 static RwTexture* TextureRead(const char* name, const char* maskName)
 {
     char buf[256];

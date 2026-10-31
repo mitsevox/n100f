@@ -20,7 +20,7 @@ void iDrawSetFBMSK(U32 FBMSK)
     }
 }
 
-// Draws up to 64 camera-facing quads of one texture, width by height, centred on the points and
+// Draws count camera-facing quads of one texture, width by height, centred on the points and
 // pulled a quarter unit towards the camera. Each quad is two triangles of the vertex list.
 void iDrawBillboards(xVec3* pts, U32 count, RwRaster* raster, F32 width, F32 height)
 {

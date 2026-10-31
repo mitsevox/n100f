@@ -94,8 +94,9 @@ void iShadowAdd(iShadowCache* cache, U8 alpha)
 
 // Fits the entity's shadow quad to the ground below it: casts a ray down from the entity, sets
 // the quad's corners just above the hit, and tilts the quad to the ground's slope (at most 30
-// degrees). The quad is radius wide, and ecc stretches it along the entity's facing; a round
-// shadow (ecc 1) only needs refitting when the entity moves, a stretched one also when it turns.
+// degrees). The quad spans twice radius, and ecc stretches it along the entity's right axis; a
+// round shadow (ecc 1) only needs refitting when the entity moves, a stretched one also when it
+// turns.
 void iShadowCollide(iShadowCache* cache, _xEnt* ent, F32 radius, F32 ecc)
 {
     F32 height;
