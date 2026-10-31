@@ -1725,7 +1725,8 @@ RwV3d* RwV3dTransformVectors(RwV3d* vectorsOut, const RwV3d* vectorsIn, S32 numP
                              const RwMatrix* matrix);
 void _rwV3dNormalize(RwV3d* out, const RwV3d* in);
 RwMatrix* RwMatrixCreate(void);
-S32 RwMatrixDestroy(RwMatrix* mpMat);
+S32 RwMatrixDestroy(RwMatrix* matrix);
+S32 RwEngineSetMatrixTolerances(const RwMatrixTolerance* const tolerance);
 RwFrustumTestResult RwCameraFrustumTestSphere(const RwCamera* camera, const RwSphere* sphere);
 RwBBox* RwBBoxCalculate(RwBBox* boundBox, const RwV3d* verts, S32 numVerts);
 RwBBox* RwBBoxInitialize(RwBBox* boundBox, const RwV3d* vertex);

@@ -34,7 +34,7 @@ static RwModuleInfo matrixModule;
 
 static const RwMatrixTolerance defaultTolerance = { 0.01f, 0.01f, 0.01f };
 
-void MatrixMultiply(RwMatrix* dstMatrix, const RwMatrix* matA, const RwMatrix* matB)
+static void MatrixMultiply(RwMatrix* dstMatrix, const RwMatrix* matA, const RwMatrix* matB)
 {
     dstMatrix->right.x = matA->right.x * matB->right.x + matA->right.y * matB->up.x +
                          matA->right.z * matB->at.x;
@@ -59,7 +59,7 @@ void MatrixMultiply(RwMatrix* dstMatrix, const RwMatrix* matA, const RwMatrix* m
                        matA->pos.z * matB->at.z + matB->pos.z;
 }
 
-RwMatrix* MatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMatrix)
+static RwMatrix* MatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMatrix)
 {
     RwV3d pos;
     RwV3d at;
@@ -168,14 +168,14 @@ RwMatrix* MatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMatrix)
     return dstMatrix;
 }
 
-S32 _rwMatrixSetMultFn(MatrixMultiplyFunc multMat)
+S32 _rwMatrixSetMultFn(MatrixMultiplyFunc multiplyFunc)
 {
-    if (!multMat)
+    if (!multiplyFunc)
     {
-        multMat = MatrixMultiply;
+        multiplyFunc = MatrixMultiply;
     }
 
-    MATRIX_DATA(multiplyFunc) = multMat;
+    MATRIX_DATA(multiplyFunc) = multiplyFunc;
 
     return 1;
 }
@@ -218,7 +218,6 @@ void* _rwMatrixClose(void* instance, S32 offset, S32 size)
     return instance;
 }
 
-S32 RwEngineSetMatrixTolerances(const RwMatrixTolerance* const tolerance);
 
 void* _rwMatrixOpen(void* instance, S32 offset, S32 size)
 {
@@ -590,9 +589,9 @@ RwMatrix* RwMatrixTransform(RwMatrix* matrix, const RwMatrix* transform, RwOpCom
     return matrix;
 }
 
-S32 RwMatrixDestroy(RwMatrix* mpMat)
+S32 RwMatrixDestroy(RwMatrix* matrix)
 {
-    RWSRCGLOBAL(memoryFree)(MATRIX_DATA(freeList), mpMat);
+    RWSRCGLOBAL(memoryFree)(MATRIX_DATA(freeList), matrix);
 
     return 1;
 }

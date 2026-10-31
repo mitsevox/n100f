@@ -3,10 +3,6 @@
 // The light node: adds each light's contribution to the camera-space vertex colors of a mesh, in
 // object space. The colors are in the 0-255 range.
 
-// RpLightSetColor sets this private flag when the light's red, green and blue are equal, so one
-// product serves all three channels.
-#define LIGHT_GREY 0x01
-
 // The node's cluster slots.
 #define LIGHTCL_MESHSTATE 0
 #define LIGHTCL_OBJVERTS 1
@@ -220,7 +216,7 @@ static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight
         numVerts = camVerts->numUsed;
     }
 
-    if (light->object.object.privateFlags & LIGHT_GREY)
+    if (light->object.object.privateFlags & LIGHT_PRIVATENOCHROMA)
     {
         F32 amount = LIGHT_COLORSCALE * light->color.red * surfaceProps->ambient;
         S32 i;
@@ -289,7 +285,7 @@ static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, RpL
         dir.y = -1.0f * dir.y;
         dir.z = -1.0f * dir.z;
 
-        if (light->object.object.privateFlags & LIGHT_GREY)
+        if (light->object.object.privateFlags & LIGHT_PRIVATENOCHROMA)
         {
             F32 scale = LIGHT_COLORSCALE * light->color.red * surfaceProps->diffuse;
             S32 i;
@@ -368,7 +364,7 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* 
 
     LIGHT_POSITION(&pos);
 
-    if (light->object.object.privateFlags & LIGHT_GREY)
+    if (light->object.object.privateFlags & LIGHT_PRIVATENOCHROMA)
     {
         F32 scale = LIGHT_COLORSCALE * light->color.red * surfaceProps->diffuse;
 
@@ -472,7 +468,7 @@ static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* l
         invRadius = 1.0f / light->radius;
     }
 
-    if (light->object.object.privateFlags & LIGHT_GREY)
+    if (light->object.object.privateFlags & LIGHT_PRIVATENOCHROMA)
     {
         F32 scale = LIGHT_COLORSCALE * light->color.red * surfaceProps->diffuse;
 
@@ -584,7 +580,7 @@ static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, RpLigh
         invRadius = 1.0f / light->radius;
     }
 
-    if (light->object.object.privateFlags & LIGHT_GREY)
+    if (light->object.object.privateFlags & LIGHT_PRIVATENOCHROMA)
     {
         F32 scale = LIGHT_COLORSCALE * light->color.red * surfaceProps->diffuse;
 
