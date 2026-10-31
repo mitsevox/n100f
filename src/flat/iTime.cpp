@@ -1,5 +1,7 @@
 #include "iTime.h"
 
+#include "xTRC.h"
+
 #include <dolphin/os.h>
 
 static iTime sStartupTime;
@@ -43,4 +45,16 @@ void iTimeSetGame(F32 time)
 // The profiler does nothing on this platform.
 void iProfileClear(U32 sceneID)
 {
+}
+
+// The last disc state the disc layer reported (see xTRCDisk).
+_tagTRCState iTRCGetDiskState()
+{
+    return gTrcDisk[0];
+}
+
+// Whether the disc has been identified since the last check started.
+U8 iTRCDiskIdentified()
+{
+    return gTrcDisk[1] == TRC_DiskIdentified;
 }
