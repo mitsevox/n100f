@@ -683,8 +683,9 @@ U32 iRayHitsEnv(const xRay3* r, const _xEnv* env, _xCollis* coll)
 
     if (r->flags & 0x400)
     {
-        xVec3SMul((xVec3*)&isx.t.line.start, &r->dir, r->min_t);
-        xVec3Add((xVec3*)&isx.t.line.start, &r->origin, (xVec3*)&isx.t.line.start);
+        xVec3 ofs;
+        xVec3SMul(&ofs, &r->dir, r->min_t);
+        xVec3Add((xVec3*)&isx.t.line.start, &r->origin, &ofs);
     }
     else
     {
@@ -770,8 +771,9 @@ U32 iRayHitsCamEnv(const xRay3* r, const _xEnv* env, _xCollis* coll)
 
     if (r->flags & 0x400)
     {
-        xVec3SMul((xVec3*)&isx.t.line.start, &r->dir, r->min_t);
-        xVec3Add((xVec3*)&isx.t.line.start, &r->origin, (xVec3*)&isx.t.line.start);
+        xVec3 ofs;
+        xVec3SMul(&ofs, &r->dir, r->min_t);
+        xVec3Add((xVec3*)&isx.t.line.start, &r->origin, &ofs);
     }
     else
     {
@@ -862,8 +864,9 @@ U32 iRayHitsModel(const xRay3* r, const xModelInstance* m, _xCollis* coll)
 
     if (r->flags & 0x400)
     {
-        xVec3SMul((xVec3*)&isx.t.line.start, &r->dir, r->min_t);
-        xVec3Add((xVec3*)&isx.t.line.start, &r->origin, (xVec3*)&isx.t.line.start);
+        xVec3 ofs;
+        xVec3SMul(&ofs, &r->dir, r->min_t);
+        xVec3Add((xVec3*)&isx.t.line.start, &r->origin, &ofs);
     }
     else
     {
