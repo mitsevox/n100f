@@ -81,6 +81,15 @@ struct RpSector
     S32 type;
 };
 
+// A node of a world sector's collision tree. A node with the plane bit in cType splits on
+// the axis in cType at the coordinate of vertex; its own polygons start at start.
+struct RpCollSector
+{
+    U8 cType;
+    U8 vertex;
+    U8 start;
+};
+
 struct RpPolygon
 {
     U16 matIndex;
@@ -431,6 +440,8 @@ extern RwPluginRegistry sectorTKList;
 
 RpWorldSector* RpWorldSectorRender(RpWorldSector* worldSector);
 RpWorld* RpWorldForAllWorldSectors(RpWorld* world, RpWorldSectorCallBack fpCallBack, void* pData);
+RpAtomic* RpAtomicForAllWorldSectors(RpAtomic* atomic, RpWorldSectorCallBack callback,
+                                     void* pData);
 void* _rpMaterialOpen(void* instance, S32 offset, S32 size);
 void* _rpMaterialClose(void* instance, S32 offset, S32 size);
 void* _rpMeshOpen(void* instance, S32 offset, S32 size);
@@ -478,6 +489,7 @@ void _rpWorldPipelineClose(void);
 S32 _rpWorldPipelineOpen(void);
 S32 _rpWorldPipeAttach(void);
 S32 _rxWorldDevicePluginAttach(void);
+S32 _rpDlVtxFmtPluginAttach(void);
 S32 _rpCreatePlatformMaterialPipelines(void);
 void _rpDestroyPlatformMaterialPipelines(void);
 S32 _rpCreatePlatformWorldSectorPipelines(void);

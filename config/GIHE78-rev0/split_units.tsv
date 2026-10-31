@@ -2,7 +2,7 @@ unit	text_start	text_end	gc_functions	ps2_functions	anchors	name_anchors	first_a
 iAnim.cpp	0x80005AFC	0x80005C34	3	5	0	0	-	weak
 iAnimSKB.cpp	0x80005C74	0x80006CC4	6	6	2	1	0x80005C74=_iAnimSKBFlip180 (floats)	anchored
 iCamera.cpp	0x80006CC4	0x80007738	13	13	3	3	0x800072D4=iCameraSetNearFarClip (name)	anchored
-iCollide.cpp	0x80007738	0x80009424	18	19	2	1	0x8000885C=sphereHitsModel3CB (name)	anchored
+iCollide.cpp	0x80007738	0x80009424	18	19	3	1	0x8000811C=iSphereHitsModel3 (calls)	anchored
 iCollideFast.cpp	0x80009424	0x80009A20	6	6	1	1	0x80009A1C=iCollideFastInit (name)	anchored
 iDebug.cpp	0x80009A20	0x80009CC0	1	1	1	0	0x80009A20=iDebugScreenDump (strings+calls)	anchored
 iDraw.cpp	0x80009CC0	0x8000A0D4	5	4	1	1	0x8000A080=iDrawSetFBMSK (name)	anchored
