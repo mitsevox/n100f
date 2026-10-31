@@ -35,6 +35,7 @@
 #include "zVolume.h"
 #include "xSurface.h"
 #include "zEnt.h"
+#include "iDraw.h"
 #include "iSnd.h"
 #include "zSurface.h"
 #include "xEntMotion.h"
@@ -160,7 +161,6 @@ void DrawScreenSizeRectangle();
 void zEntPickup_RenderList(_zEntPickup* plist, U32 pcount);
 extern _tagFeetSkidMark sPlayerSkidMark[5];
 extern "C" void fn_800167F0();
-extern "C" void fn_80009CCC(xVec3* pts, S32 count, U32 id, F32 start_width, F32 end_width);
 void iEnvRenderFXBlend(iEnv* env);
 
 // A per-scene override of how far an entity counts from the camera when the see-through
@@ -2191,7 +2191,7 @@ void zSceneRender()
 
         if (asset)
         {
-            fn_80009CCC(pts, 14, *(U32*)asset, 1.5f, 1.5f);
+            iDrawBillboards(pts, 14, ((RwTexture*)asset)->raster, 1.5f, 1.5f);
         }
     }
     else if (globals.sceneCur->sceneID == zSceneIDFromName("e004"))
@@ -2210,7 +2210,7 @@ void zSceneRender()
 
         if (asset)
         {
-            fn_80009CCC(pts, 15, *(U32*)asset, 3.6f, 3.6f);
+            iDrawBillboards(pts, 15, ((RwTexture*)asset)->raster, 3.6f, 3.6f);
         }
     }
     else if (globals.sceneCur->sceneID == zSceneIDFromName("p003"))
@@ -2230,8 +2230,8 @@ void zSceneRender()
 
         if (asset)
         {
-            fn_80009CCC(pts1, 5, *(U32*)asset, 1.2f, 1.2f);
-            fn_80009CCC(pts2, 4, *(U32*)asset, 2.3f, 2.3f);
+            iDrawBillboards(pts1, 5, ((RwTexture*)asset)->raster, 1.2f, 1.2f);
+            iDrawBillboards(pts2, 4, ((RwTexture*)asset)->raster, 2.3f, 2.3f);
         }
     }
     else if (globals.sceneCur->sceneID == zSceneIDFromName("p005"))
@@ -2245,7 +2245,7 @@ void zSceneRender()
 
         if (asset)
         {
-            fn_80009CCC(pts, 3, *(U32*)asset, 2.5f, 2.5f);
+            iDrawBillboards(pts, 3, ((RwTexture*)asset)->raster, 2.5f, 2.5f);
         }
     }
 
