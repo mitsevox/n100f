@@ -2,8 +2,29 @@
 #include "iCamera.h"
 #include "xMemMgr.h"
 
+#include <dolphin/gx.h>
+
+// The GameCube RenderWare driver keeps its current render state in one block; bytes 0x3C and
+// 0x3D are the two reference values its alpha-test modes pass to GXSetAlphaCompare.
+struct RwGcnRenderStateCache
+{
+    U8 unk0[0x3C];
+    U8 alphaRef0;
+    U8 alphaRef1;
+    U8 unk3E[2];
+};
+
+extern "C" RwGcnRenderStateCache lbl_8025E348;
+extern "C" void RwGameCubeSetAlphaCompare(S32 mode);
+
+static U32 sFXBlendEnabled = 1;
+static U32 sFXBlendWorldEnabled = 1;
+static U8 sFXBlendAlphaRef = 0xFF;
+static U8 sFXBlendFlags = 2;
+
 static S32 sBeginDrawFX;
 static iEnv* lastEnv;
+static U32 sFXBlendAdditive;
 
 static void iEnvSetBSP(iEnv* env, S32 envDataType, RpWorld* bsp)
 {
@@ -104,6 +125,60 @@ void iEnvRenderFX(iEnv*)
         RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
         RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
         RpWorldRender(env->fx);
+    }
+}
+
+// Draws the last rendered level's effects world translucent: alpha or additive blending, depth
+// tested but not written, with an optional alpha test. The depth states and the driver's alpha
+// test are restored afterwards.
+void iEnvRenderFXBlend(iEnv*)
+{
+    iEnv* env;
+
+    if (!sFXBlendEnabled)
+    {
+        return;
+    }
+
+    env = lastEnv;
+
+    if (sFXBlendWorldEnabled && env->fx && globalCamera)
+    {
+        if (sFXBlendAdditive)
+        {
+            RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+            RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
+        }
+        else
+        {
+            RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+            RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
+        }
+
+        RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
+        RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
+
+        if (sFXBlendFlags & 2)
+        {
+            RwGameCubeSetAlphaCompare(4);
+            GXSetAlphaCompare(GX_GEQUAL, 0, GX_AOP_AND, GX_LEQUAL, sFXBlendAlphaRef);
+            GXSetZCompLoc(GX_FALSE);
+        }
+        else
+        {
+            lbl_8025E348.alphaRef0 = 0;
+            lbl_8025E348.alphaRef1 = sFXBlendAlphaRef;
+            RwGameCubeSetAlphaCompare(3);
+        }
+
+        RpWorldRender(env->fx);
+
+        lbl_8025E348.alphaRef0 = 0;
+        lbl_8025E348.alphaRef1 = 0;
+        RwGameCubeSetAlphaCompare(1);
+
+        RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
+        RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)TRUE);
     }
 }
 

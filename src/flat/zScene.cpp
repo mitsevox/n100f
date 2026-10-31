@@ -161,7 +161,7 @@ void zEntPickup_RenderList(_zEntPickup* plist, U32 pcount);
 extern _tagFeetSkidMark sPlayerSkidMark[5];
 extern "C" void fn_800167F0();
 extern "C" void fn_80009CCC(xVec3* pts, S32 count, U32 id, F32 start_width, F32 end_width);
-extern "C" void fn_8000A138(iEnv* env);
+void iEnvRenderFXBlend(iEnv* env);
 
 // A per-scene override of how far an entity counts from the camera when the see-through
 // entities are sorted for drawing.
@@ -2255,7 +2255,7 @@ void zSceneRender()
         iEnvBeginRenderFX(NULL);
         xCameraBegin(&globals.camera, 0);
         zLightAddLocalEnv();
-        fn_8000A138(NULL);
+        iEnvRenderFXBlend(NULL);
         zLightRemoveLocalEnv();
     }
 
