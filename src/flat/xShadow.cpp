@@ -8,6 +8,7 @@
 #include "xScene.h"
 #include "iCollide.h"
 #include "iModel.h"
+#include "iParMgr.h"
 #include "zEnt.h"
 #include "zGlobals.h"
 #include "zMenu.h"
@@ -51,24 +52,6 @@ struct _ProjectionParam
     S32 fade;
     U32 numIm3DBatch;
 };
-
-// The renderer's shared vertex buffer (iParMgr); the shadow batches reuse its vertices.
-struct tagiRenderInput
-{
-    U16* m_index;
-    RxObjSpace3DVertex* m_vertex;
-    F32* m_vertexTZ;
-    U32 m_mode;
-    S32 m_vertexType;
-    S32 m_vertexTypeSize;
-    S32 m_indexCount;
-    S32 m_vertexCount;
-    xMat4x3 m_camViewMatrix;
-    xVec4 m_camViewR;
-    xVec4 m_camViewU;
-};
-
-extern tagiRenderInput gRenderBuffer;
 
 extern "C" RwMatrix* RwMatrixInvert(RwMatrix* matrixOut, const RwMatrix* matrixIn);
 extern "C" RwMatrix* RwMatrixTranslate(RwMatrix* matrix, const RwV3d* translation,

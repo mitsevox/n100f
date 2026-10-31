@@ -22,7 +22,6 @@
 #include <stdio.h>
 
 extern void CalcJumpImpulse(zJumpParam* param);
-extern "C" void fn_80016218();
 void xMemRegisterBaseNotifyFunc(void (*func)());
 extern xIniFile* xIniParse(char*, S32);
 extern void xIniDestroy(xIniFile*);
@@ -251,7 +250,7 @@ extern "C" void main()
     RwCamera* camera;
     xFontBox* box;
 
-    fn_80016218();
+    iSystemInit();
     xMemRegisterBaseNotifyFunc(zMainMemLvlChkCB);
     memset(&globals, 0, sizeof(globals));
     globals.sceneFirst = 1;

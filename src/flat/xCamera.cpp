@@ -8,6 +8,7 @@
 #include "xScene.h"
 #include "xstransvc.h"
 #include "iCamera.h"
+#include "iCollide.h"
 #include "zGlobals.h"
 #include "zScene.h"
 #include "zGame.h"
@@ -29,7 +30,6 @@ void xScrFxUpdate(RwCamera* cam, F32 seconds);
 void iCameraUpdateFog(RwCamera* cam, iTime t);
 
 extern "C" void fn_80038D48(_xScene* sc, xRay3* r, void (*cb)(_xEnt*));
-extern "C" U32 fn_80007BB4(const xRay3* r, const _xEnv* env, _xCollis* coll);
 extern "C" void fn_8001F8C0(_tagxCamFrame* cam, _tagxCam* c, F32 seconds);
 
 extern S32 gDeadScooby;
@@ -782,7 +782,7 @@ _tagxCam* xCameraShoulderState(_tagxCamFrame* cam, F32 seconds)
         ray.min_t = 0.1f;
         ray.flags = 0xC00;
         memset(&collis_env, 0, sizeof(_xCollis));
-        fn_80007BB4(&ray, cam->env, &collis_env);
+        iRayHitsCamEnv(&ray, cam->env, &collis_env);
 
         if ((collis_env.flags & 0x1) && collis_env.dist < 1e19f)
         {

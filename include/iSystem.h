@@ -10,6 +10,7 @@ U32 iGetCurrFormattedDate(char* str);
 void iVSync();
 void iFuncProfileDump();
 void iFuncProfileParse(char* elfPath, S32 profile);
+void iSystemInit();
 void iSystemExit();
 
 #endif

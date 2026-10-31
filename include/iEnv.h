@@ -26,6 +26,7 @@ void iEnvLightingBasics(iEnv* env, p2EnvAsset* asset);
 void iEnvRender(iEnv* env);
 S32 iEnvBeginRenderFX(iEnv* env);
 void iEnvRenderFX(iEnv* env);
+void iEnvRenderFXBlend(iEnv* env);
 void iEnvEndRenderFX(iEnv* env);
 
 #endif

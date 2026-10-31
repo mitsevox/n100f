@@ -1,4 +1,5 @@
 #include "zMenu.h"
+#include "iDebug.h"
 #include "iSystem.h"
 #include "zEnv.h"
 #include "zGameState.h"
@@ -23,7 +24,6 @@ void setupPlayer();
 void zEntEvent(xBase* to, U32 toEvent);
 void zEntEventAll(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam);
 void xFontRender();
-void iDebugScreenDump();
 U32 fn_800443F8();
 extern "C" void fn_80016600();
 extern "C" void fn_80021E50();
@@ -35,7 +35,6 @@ void xSndStopAll();
 void xCameraBegin(_tagxCamFrame* cam, S32 clear);
 void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
 U32 zSaveLoad_LoadLoop();
-extern "C" U32 lbl_8025E890;
 extern "C" U32 lbl_8025E968;
 extern "C" U32 lbl_8025EF10;
 extern "C" U32 lbl_8025E9F8;
@@ -193,7 +192,7 @@ U32 zMenuLoop()
         fn_8004436C();
         fn_80021E30();
 
-        if (lbl_8025E890)
+        if (gScreenDump)
         {
             iDebugScreenDump();
         }
