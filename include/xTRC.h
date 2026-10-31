@@ -24,6 +24,9 @@ enum _tagTRCState
 
 extern _tagTRCState gTrcDisk[2];
 
+void xTRCInit();
+void xTRCDisk(_tagTRCState state);
+
 struct _tagTRCPadInfo
 {
     S32 pad_init;

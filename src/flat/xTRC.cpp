@@ -75,10 +75,8 @@ U32 lbl_8025EBE8;
 
 extern "C" {
 
-void fn_80044714();
 S32 fn_80044478(_tagTRCState state);
 void fn_80044458(S32 pad_id, S32 state);
-void fn_8004442C(_tagTRCState state);
 S32 fn_800443F8();
 void fn_800443AC();
 void fn_8004436C();
@@ -112,7 +110,7 @@ S32 fn_80040FCC(S32 card, S32 game);
 #define TRC_GREEN "000210068"
 
 // xTRCInit: the pad records number their pads, and the disc state starts unknown.
-extern "C" void fn_80044714()
+void xTRCInit()
 {
     memset(lbl_802289B8, 0, sizeof(lbl_802289B8));
     for (S32 i = 0; i < 4; i++)
@@ -239,7 +237,7 @@ extern "C" void fn_80044458(S32 pad_id, S32 state)
 
 // The disc layer reports here: while the disc is being identified only the second word
 // changes, so the last real state survives the check.
-extern "C" void fn_8004442C(_tagTRCState state)
+void xTRCDisk(_tagTRCState state)
 {
     if (state != TRC_DiskNotIdentified)
     {
