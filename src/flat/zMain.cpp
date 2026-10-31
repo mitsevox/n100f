@@ -8,6 +8,7 @@
 #include "zGameState.h"
 #include "zScene.h"
 #include "zCutsceneMgr.h"
+#include "xTRC.h"
 #include "zEntPickup.h"
 #include "zVar.h"
 #include "xIni.h"
@@ -23,7 +24,6 @@
 extern void CalcJumpImpulse(zJumpParam* param);
 extern "C" void fn_80016218();
 void xMemRegisterBaseNotifyFunc(void (*func)());
-extern "C" void fn_80044714();
 extern xIniFile* xIniParse(char*, S32);
 extern void xIniDestroy(xIniFile*);
 extern "C" st_SERIAL_PERCID_SIZE g_xser_sizeinfo[];
@@ -255,7 +255,7 @@ extern "C" void main()
     xMemRegisterBaseNotifyFunc(zMainMemLvlChkCB);
     memset(&globals, 0, sizeof(globals));
     globals.sceneFirst = 1;
-    fn_80044714();
+    xTRCInit();
 
     U32 size;
     U32* data = iFileLoad("SD2.INI", 0, &size);
