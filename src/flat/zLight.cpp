@@ -6,10 +6,9 @@
 #include "xEnt.h"
 #include "xMemMgr.h"
 #include "xPartition.h"
+#include "xShadow.h"
 #include "zGame.h"
 #include <string.h>
-
-extern "C" void fn_8003C81C(xVec3* pos, xVec3* vec, F32 strength);
 
 static _zLight* sLight[32];
 static S32 sLightTotal;
@@ -273,7 +272,7 @@ void zLightAddLocal(_xEnt* ent)
 
     if (ent->ent_shadow)
     {
-        fn_8003C81C(&ent->ent_shadow->pos, &ent->ent_shadow->vec, 1.0f);
+        xShadowSetLight(&ent->ent_shadow->pos, &ent->ent_shadow->vec, 1.0f);
     }
 }
 

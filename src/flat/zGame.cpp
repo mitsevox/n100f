@@ -34,13 +34,8 @@ void zEntEvent(char*, U32);
 void xPadDestroyRumbleChain(S32 idx);
 void xSndStopAll();
 void xSndUpdate(F32 time_elapsed);
-extern "C" void fn_8001E798(void*);
-extern "C" void fn_800207E8(void*);
-extern "C" void fn_800207EC(void*, S32, S32);
-extern "C" void fn_8001E7C4(void*, _xEnv*);
 void zEntPlayer_Init(_xEnt*, p2EntAsset*);
 extern "C" void fn_80048E54(S32, S32);
-extern "C" void fn_8001E8A0(_tagxCamFrame*, F32);
 extern "C" void fn_80016600();
 extern "C" void fn_800AC100(F32);
 void xSndSetFrame(xVec3* right, xVec3* up, xVec3* at, xVec3* pos, F32 radius);
@@ -49,7 +44,6 @@ extern "C" void fn_800B94C0(zScene*, F32);
 void xCameraBegin(_tagxCamFrame* cam, S32 clear);
 extern "C" void fn_800056F8(xVec3*);
 void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
-extern "C" void fn_8001E83C(_tagxCamFrame*);
 U32 zSaveLoad_SaveLoop();
 extern "C" void fn_800B74D8();
 void xCameraPickInitial(_tagxCamFrame* cam, _tagxCam* c);
@@ -95,8 +89,6 @@ extern "C" iColor_tag lbl_8025E518;
 void xScrFxFade(iColor_tag*, iColor_tag*, F32, void (*)(), S32, S32);
 extern "C" RwIm2DVertex lbl_8022EAD8[4];
 extern "C" RwImVertexIndex lbl_801C5BF8[];
-// Only the asset identifier is needed here.
-struct xCamAsset : p2BaseAsset {};
 void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba);
 
 // Test whether the active camera uses the special NICK CAM 2 asset.
@@ -344,7 +336,7 @@ void zGameLoop()
         xSndSetFrameFar((xVec3*)&globals.player.ent.model->Mat->pos);
         xSndUpdate(lbl_8025EEEC);
         fn_800B94C0(globals.sceneCur, lbl_8025EEEC);
-        fn_8001E8A0(&globals.camera, lbl_8025EEEC);
+        xCameraUpdate(&globals.camera, lbl_8025EEEC);
         zScene_UpdateFlyToInterface(lbl_8025EEEC);
         xCameraBegin(&globals.camera, 1);
         fn_800056F8(&mat->pos);
@@ -357,7 +349,7 @@ void zGameLoop()
         while ((lbl_8025E968 = VIGetRetraceCount()) - lbl_8025EF10 < 2)
             iVSync();
         lbl_8025EF10 = lbl_8025E968;
-        fn_8001E83C(&globals.camera);
+        xCameraShowRaster(&globals.camera);
         zLaughUpdate(lbl_8025EEEC);
         zMusicUpdate(lbl_8025EEEC);
         zGameUpdateMode();
@@ -418,7 +410,7 @@ void zGameSetup()
     fn_80048E54(0xC2, 30);
     zEntShaggy_SceneStart(globals.sceneCur);
     zEnvStartingCamera(gCurEnv);
-    fn_8001E8A0(&globals.camera, -1.0f);
+    xCameraUpdate(&globals.camera, -1.0f);
     zSceneLoad(globals.sceneCur, NULL);
     zMusicNotify(0);
     zEntEventAll(NULL, 0, 0x57, NULL);
@@ -434,8 +426,8 @@ void zGameExit()
     zMusicKill();
     xSndStopAll();
     xSndUpdate(0.0f);
-    fn_8001E798(&globals);
-    fn_800207E8(&globals);
+    xCameraRemoveEnv(&globals.camera);
+    xCameraDestroy(&globals.camera);
     zSceneExit();
 }
 
@@ -446,8 +438,8 @@ void zGameInit(U32 theSceneID)
     iTimeGet();
     irand();
     zSceneInit(theSceneID);
-    fn_800207EC(&globals.camera, 640, 480);
-    fn_8001E7C4(&globals.camera, globals.sceneCur->env);
+    xCameraCreate(&globals.camera, 640, 480);
+    xCameraAssignEnv(&globals.camera, globals.sceneCur->env);
     zLaughInit();
     zMusicInit();
     globals.stats.gameTime = 0.0f;

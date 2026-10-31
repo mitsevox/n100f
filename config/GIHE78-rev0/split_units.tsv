@@ -29,7 +29,7 @@ xAnim.cpp	0x80016A30	0x8001C088	38	39	11	5	0x80016CA8=xAnimPoolAlloc (name)	anch
 xBase.cpp	0x8001C088	0x8001C184	5	5	3	3	0x8001C0A0=xBaseLoad (name)	anchored
 xbinio.cpp	0x8001C184	0x8001D1F8	22	26	13	13	0x8001C25C=BFD_read (name)	anchored
 xBound.cpp	0x8001D1F8	0x8001D9A0	7	7	0	0	-	count-match
-xCamera.cpp	0x8001D9A0	0x8002086C	29	32	7	3	0x8001D9A0=xCameraGetCurMatrix (name)	anchored
+xCamera.cpp	0x8001D9A0	0x8002086C	29	32	5	0	0x8001DB00=xCameraNext (floats+calls)	anchored
 xClimate.cpp	0x8002086C	0x80020F08	7	7	5	3	0x800208B8=UpdateRain (strings+floats)	anchored
 xCollide.cpp	0x80020F08	0x80021620	5	5	0	0	-	count-match
 xCollideFast.cpp	0x80021620	0x80021B10	4	4	1	0	0x80021800=xRayHitsBoundFast (floats+calls)	anchored
@@ -94,7 +94,7 @@ zEntShaggy.cpp	0x8006D624	0x8007A8D0	133	136	33	0	0x8006D624=zEntShaggy_SceneRes
 zEntSimpleObj.cpp	0x8007A8D0	0x8007ACB8	5	7	0	0	-	weak
 zEntTrigger.cpp	0x8007ACB8	0x8007B08C	5	5	1	0	0x8007AD2C=zEntTriggerUpdate (calls)	anchored
 zEntVillain.cpp	0x8007B08C	0x800A9F78	234	277	166	124	0x8007B5A0=VBON_choose_bonusItem (floats+calls)	anchored
-zEnv.cpp	0x800A9F78	0x800AA338	7	8	4	1	0x800A9F78=zEnvEventCB (calls)	anchored
+zEnv.cpp	0x800A9F78	0x800AA338	7	8	3	1	0x800A9F78=zEnvEventCB (calls)	anchored
 zFeet.cpp	0x800AA338	0x800ABD84	11	11	4	0	0x800AA3B4=DrawSkidMarkStrip (floats)	anchored
 zFMV.cpp	0x800ABD84	0x800ABE88	2	2	2	2	0x800ABD84=zFMVFileGetName (name)	anchored
 zFog.cpp	0x800ABE88	0x800AC010	5	5	2	2	0x800ABE8C=zFogEventCB (name)	anchored
