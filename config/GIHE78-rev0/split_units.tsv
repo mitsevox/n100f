@@ -2,7 +2,7 @@ unit	text_start	text_end	gc_functions	ps2_functions	anchors	name_anchors	first_a
 iAnim.cpp	0x80005AFC	0x80005C34	3	5	0	0	-	weak
 iAnimSKB.cpp	0x80005C74	0x80006CC4	6	6	2	1	0x80005C74=_iAnimSKBFlip180 (floats)	anchored
 iCamera.cpp	0x80006CC4	0x80007738	13	13	3	3	0x800072D4=iCameraSetNearFarClip (name)	anchored
-iCollide.cpp	0x80007738	0x80009424	18	19	2	1	0x8000885C=sphereHitsModel3CB (name)	anchored
+iCollide.cpp	0x80007738	0x80009424	18	19	3	1	0x8000811C=iSphereHitsModel3 (calls)	anchored
 iCollideFast.cpp	0x80009424	0x80009A20	6	6	1	1	0x80009A1C=iCollideFastInit (name)	anchored
 iDebug.cpp	0x80009A20	0x80009CC0	1	1	1	0	0x80009A20=iDebugScreenDump (strings+calls)	anchored
 iDraw.cpp	0x80009CC0	0x8000A0D4	5	4	1	1	0x8000A080=iDrawSetFBMSK (name)	anchored
@@ -71,7 +71,7 @@ xSpline.cpp	0x8003D680	0x8003F904	11	13	2	1	0x8003DB84=xSpline3_EvalArcApprox (n
 xstransvc.cpp	0x8003F904	0x80040978	14	17	4	3	0x8003F9F8=xSTGetAssetInfoByType (name)	anchored
 xString.cpp	0x80040978	0x80040EE4	6	6	1	1	0x80040B38=xStrupr (name)	anchored
 xSurface.cpp	0x80040EE4	0x80040FCC	7	7	1	1	0x80040EE4=xSurfaceGetByIdx (name)	anchored
-xTRC.cpp	0x80040FCC	0x80044780	30	2	1	0	0x80044478=xTRCPad (floats)	weak
+xTRC.cpp	0x80040FCC	0x80044780	30	2	1	0	0x80044478=xTRCPad (floats)	claimed
 xutil.cpp	0x80044780	0x80044C44	7	11	4	4	0x80044780=xUtil_yesno (name)	anchored
 zActionLine.cpp	0x80044C44	0x80044E20	3	4	2	1	0x80044D50=zActionLineUpdate (name)	anchored
 zAnimList.cpp	0x80044E20	0x80045174	5	5	1	0	0x80044EB8=zAnimListInit (strings+floats+calls)	anchored

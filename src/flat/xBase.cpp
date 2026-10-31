@@ -10,6 +10,10 @@ void xBaseInit(xBase* xb, p2BaseAsset* asset)
     xb->baseFlags |= 0x4;
 }
 
+void xBaseSetup(xBase* xb)
+{
+}
+
 void xBaseSave(xBase* ent, xSerial* s)
 {
     if (ent->baseFlags & 0x1)
@@ -35,4 +39,11 @@ void xBaseLoad(xBase* ent, xSerial* s)
     {
         ent->baseFlags &= ~0x1;
     }
+}
+
+// Restores the asset's base flags; bit 4 stays set.
+void xBaseReset(xBase* xb, p2BaseAsset* asset)
+{
+    xb->baseFlags = asset->baseFlags;
+    xb->baseFlags |= 0x4;
 }

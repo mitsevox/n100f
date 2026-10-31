@@ -9,7 +9,12 @@ struct xIniValue
     char* val;
 };
 
-struct xIniSection;
+struct xIniSection
+{
+    char* sec;
+    S32 first;
+    S32 count;
+};
 
 struct xIniFile
 {
@@ -22,6 +27,8 @@ struct xIniFile
     char pathname[256];
 };
 
+xIniFile* xIniParse(char* buf, S32 len);
+void xIniDestroy(xIniFile* ini);
 char* xIniGetString(xIniFile* ini, char* tok, char* def);
 F32 xIniGetFloat(xIniFile* ini, char* tok, F32 def);
 S32 xIniGetInt(xIniFile* ini, char* tok, S32 def);

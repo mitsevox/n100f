@@ -2,9 +2,30 @@
 #define RPHANIM_H
 
 #include <rpworld.h>
+#include <rtquat.h>
 
 typedef struct RpHAnimAnimation RpHAnimAnimation;
 typedef struct RpHAnimHierarchy RpHAnimHierarchy;
+
+struct RpHAnimAnimation
+{
+    void* interpInfo;
+    S32 numFrames;
+    S32 flags;
+    F32 duration;
+    void* pFrames;
+};
+
+// The standard keyframe: a rotation and a translation at a time, linked to the previous
+// keyframe of the same node.
+typedef struct HAnimStdKey HAnimStdKey;
+struct HAnimStdKey
+{
+    HAnimStdKey* prev;
+    F32 time;
+    RtQuat rotation;
+    RwV3d translation;
+};
 
 typedef struct RpHAnimNodeInfo RpHAnimNodeInfo;
 struct RpHAnimNodeInfo
@@ -56,10 +77,20 @@ typedef enum RpHAnimHierarchyFlag
 extern "C" {
 #endif
 
+void RpHAnimStdKeyFrameToMatrix(void* matrix, void* voidIFrame);
+void RpHAnimStdKeyFrameInterpolate(void* voidOut, void* voidIn1, void* voidIn2, F32 time);
+void RpHAnimStdKeyFrameBlend(void* voidOut, void* voidIn1, void* voidIn2, F32 alpha);
+RpHAnimAnimation* RpHAnimStdKeyFrameStreamRead(RwStream* stream, RpHAnimAnimation* animation);
+S32 RpHAnimStdKeyFrameStreamWrite(RpHAnimAnimation* animation, RwStream* stream);
+S32 RpHAnimStdKeyFrameStreamGetSize(RpHAnimAnimation* animation);
+void RpHAnimStdKeyFrameMulRecip(void* voidFrame, void* voidStart);
+void RpHAnimStdKeyFrameAdd(void* voidOut, void* voidIn1, void* voidIn2);
 RpHAnimHierarchy* RpHAnimHierarchyCreate(S32 numNodes, U32* nodeFlags, S32* nodeIDs,
                                          RpHAnimHierarchyFlag flags, S32 maxKeyFrameSize);
+RpHAnimHierarchy* RpHAnimHierarchyDestroy(RpHAnimHierarchy* hierarchy);
 S32 RpHAnimFrameSetHierarchy(RwFrame* frame, RpHAnimHierarchy* hierarchy);
 RpHAnimHierarchy* RpHAnimFrameGetHierarchy(RwFrame* frame);
+S32 RpHAnimPluginAttach(void);
 
 #ifdef __cplusplus
 }

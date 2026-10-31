@@ -358,6 +358,14 @@ flat/xSurface.cpp:
 	.text       start:0x80040EE4 end:0x80040FCC
 	.sbss       start:0x8025EBD0 end:0x8025EBD8
 
+flat/xTRC.cpp:
+	.text       start:0x80040FCC end:0x80044780
+	.rodata     start:0x80193F60 end:0x801960D8
+	.data       start:0x801B6610 end:0x801B6798
+	.sbss       start:0x8025EBE0 end:0x8025EBF8
+	.sdata2     start:0x80260310 end:0x802603A8
+	.sbss2      start:0x80262C70 end:0x80262C80
+
 flat/xutil.cpp:
 	.text       start:0x80044780 end:0x80044C44
 	.data       start:0x801B6798 end:0x801B6BD8
@@ -1550,7 +1558,8 @@ dolphin/card/CARDNet.c: comment:8
 	.sdata      start:0x8025E778 end:0x8025E780
 
 rwsdk/plugin/collis/ctgeom.c:
-	.text       start:0x801376C4 end:0x80138904
+	.text       start:0x801372EC end:0x80138904
+	.sdata2     start:0x802627D8 end:0x802627E8
 
 rwsdk/plugin/collis/ctworld.c:
 	.text       start:0x80138904 end:0x8013AA64
@@ -1571,13 +1580,16 @@ rwsdk/plugin/matfx/rpmatfx.c:
 	.text       start:0x8013D90C end:0x8013FA64
 
 rwsdk/plugin/matfx/gcn/effectPipesGcn.c:
-	.text       start:0x80140010 end:0x80140D40
+	.text       start:0x8013FA64 end:0x80140D40
 
 rwsdk/plugin/matfx/gcn/multiTexGcnData.c:
 	.text       start:0x80140D40 end:0x80141910
 
 rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c:
-	.text       start:0x80141910 end:0x80141F98
+	.text       start:0x80141910 end:0x80142C2C
+
+rwsdk/plugin/matfx/gcn/multiTexGcn.c:
+	.text       start:0x80142C2C end:0x80142C94
 
 rwsdk/plugin/matfx/multiTex.c:
 	.text       start:0x80142C94 end:0x8014366C
@@ -1589,7 +1601,7 @@ rwsdk/plugin/skin2/rpskin.c:
 	.text       start:0x80144154 end:0x80144D5C
 
 rwsdk/plugin/skin2/gcn/skingcn.c:
-	.text       start:0x8014519C end:0x80145A48
+	.text       start:0x80144D5C end:0x80145A48
 
 rwsdk/plugin/skin2/gcn/skinstream.c:
 	.text       start:0x80145A48 end:0x80145E08
@@ -1645,7 +1657,7 @@ rwsdk/world/pipe/p2/nodeAtomicInstance.c:
 	.text       start:0x80154994 end:0x80155B68
 
 rwsdk/world/pipe/p2/nodeLight.c:
-	.text       start:0x80155B68 end:0x80155E34
+	.text       start:0x80155B68 end:0x80157088
 
 rwsdk/world/pipe/p2/nodeMaterialScatter.c:
 	.text       start:0x80157088 end:0x801571CC
@@ -1663,16 +1675,19 @@ rwsdk/world/pipe/p2/gcn/gcpipe.c:
 	.text       start:0x8015885C end:0x80159380
 
 rwsdk/world/pipe/p2/gcn/vtxfmt.c:
-	.text       start:0x8015D4D4 end:0x8015D818
+	.text       start:0x8015D314 end:0x8015D830
 
 rwsdk/world/pipe/p2/gcn/wrldpipe.c:
-	.text       start:0x8015D85C end:0x8015DA50
+	.text       start:0x8015D830 end:0x8015DA50
 
 rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c:
 	.text       start:0x8015DA50 end:0x8015E7E8
 
 rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c:
 	.text       start:0x8015E7E8 end:0x8015ED40
+
+rwsdk/world/pipe/p2/gcn/gclights.c:
+	.text       start:0x8015F0A4 end:0x8015F51C
 
 rwsdk/world/pipe/p2/gcn/native.c:
 	.text       start:0x8015F51C end:0x8015FEA4
@@ -1683,6 +1698,10 @@ rwsdk/tool/slerp/rtslerp.c:
 rwsdk/src/plcore/babinary.c:
 	.text       start:0x80160340 end:0x80160F60
 	.data       start:0x801DDB60 end:0x801DDBCC
+
+rwsdk/src/plcore/bacolor.c:
+	.text       start:0x80160F60 end:0x80160F88
+	.sbss       start:0x8025F778 end:0x8025F780
 
 rwsdk/src/plcore/baerr.c:
 	.text       start:0x80160F88 end:0x8016109C
@@ -1755,6 +1774,9 @@ rwsdk/src/baraster.c:
 	.data       start:0x801DDC78 end:0x801DDC90
 	.sbss       start:0x8025F7E0 end:0x8025F7E8
 
+rwsdk/src/baresamp.c:
+	.text       start:0x8016DD04 end:0x8016E9E4
+
 rwsdk/src/basync.c:
 	.text       start:0x8016E9E4 end:0x8016F3EC
 
@@ -1768,25 +1790,31 @@ rwsdk/driver/common/palquant.c:
 	.text       start:0x801714EC end:0x80173D28
 
 rwsdk/driver/gcn/dl2drend.c:
-	.text       start:0x8017402C end:0x801753BC
+	.text       start:0x80173D28 end:0x801753BC
 
 rwsdk/driver/gcn/dlconvrt.c:
 	.text       start:0x801753BC end:0x80177334
 
 rwsdk/driver/gcn/dldevice.c:
-	.text       start:0x80177E54 end:0x80178A3C
+	.text       start:0x80177334 end:0x80178B04
 
 rwsdk/driver/gcn/dlraster.c:
-	.text       start:0x80178B04 end:0x801797E0
+	.text       start:0x80178B04 end:0x8017A658
+
+rwsdk/driver/gcn/dlrendst.c:
+	.text       start:0x8017A658 end:0x8017B22C
 
 rwsdk/driver/gcn/dlsprite.c:
-	.text       start:0x8017BCDC end:0x8017C95C
+	.text       start:0x8017B22C end:0x8017C95C
 
 rwsdk/driver/gcn/dltexdic.c:
 	.text       start:0x8017C95C end:0x8017CF88
 
 rwsdk/driver/gcn/dltextur.c:
 	.text       start:0x8017CF88 end:0x8017DBB8
+
+rwsdk/driver/gcn/dltoken.c:
+	.text       start:0x8017DBB8 end:0x8017DC44
 
 rwsdk/src/pipe/p2/baim3d.c:
 	.text       start:0x8017DE58 end:0x8017ED24
@@ -1883,3 +1911,6 @@ rwsdk/src/pipe/p2/gcn/im3dpipe.c:
 
 rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c:
 	.text       start:0x8018C260 end:0x8018CE90
+
+rwsdk/tool/intsec/rtintsec.c:
+	.text       start:0x8018CE90 end:0x8018E5B0

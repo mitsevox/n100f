@@ -1,7 +1,5 @@
 #include <rpcollis.h>
 
-#define COLLIS_PLUGIN_ID 0x11D
-
 // RpCollisionData.flags: the tree and the triangle map share the data's own allocation.
 #define COLLISIONDATA_SINGLEBLOCK 0x1
 
@@ -13,7 +11,6 @@ S32 _rpCollisionWorldSectorDataOffset;
 
 // The plugin's word in the engine instance, cleared when the plugin opens.
 #define COLLISIONENGINEDATA() (*(void**)((U8*)RwEngineInstance + _rpCollisionGlobalsOffset))
-#define COLLISIONDATA(object, offset) (*(RpCollisionData**)((U8*)(object) + (offset)))
 
 static void* CollisionOpen(void* instance, S32 offset, S32 size)
 {

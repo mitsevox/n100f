@@ -27,6 +27,10 @@ int tolower(int c);
 
 inline int isalpha(int c) { return (int)(__ctype_map[(unsigned char)c] & __letter); }
 inline int isdigit(int c) { return (int)(__ctype_map[(unsigned char)c] & __digit); }
+inline int isprint(int c)
+{
+    return (int)(__ctype_map[(unsigned char)c] & (__letter | __digit | __punctuation | __space_char));
+}
 inline int isspace(int c) { return (int)(__ctype_map[(unsigned char)c] & __whitespace); }
 inline int isupper(int c) { return (int)(__ctype_map[(unsigned char)c] & __upper_case); }
 inline int isxdigit(int c) { return (int)(__ctype_map[(unsigned char)c] & __hex_digit); }
