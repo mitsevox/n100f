@@ -10,8 +10,6 @@
 void iPadStartRumble(_tagxPad* pad, _tagxRumble* rumble);
 
 // iPad.cpp has no source yet; these are its rumble effect step and its pad read.
-extern "C" void fn_8000F600(_tagxPad* p, _tagxRumble* r, F32 time_passed);
-extern "C" S32 fn_8000F604(_tagxPad* pad, U32* on);
 // zScene.cpp
 extern "C" U32 fn_800CD24C();
 extern "C" S32 fn_800CD170();
@@ -154,13 +152,13 @@ S32 xPadUpdate(S32 idx, F32 time_passed)
             }
             else
             {
-                fn_8000F600(p, r, time_passed);
+                iPadRumbleFx(p, r, time_passed);
                 break;
             }
         }
     }
 
-    if (!fn_8000F604(p, &new_on))
+    if (!iPadUpdate(p, &new_on))
     {
         return 1;
     }

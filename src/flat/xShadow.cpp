@@ -1,4 +1,5 @@
 #include "xShadow.h"
+#include "xDraw.h"
 #include "xMath.h"
 #include "xMath3.h"
 #include "xMemMgr.h"
@@ -63,7 +64,6 @@ extern "C" RpWorld* RpCollisionWorldForAllIntersections(
                                      void*),
     void* data);
 extern "C" void fn_80178A3C(RwRaster* raster);
-extern "C" void fn_80021DD0(U8 r, U8 g, U8 b, U8 a);
 
 static S32 ShadowRender(RwCamera* shadowCamera, RwRaster* shadowRaster, RpWorld* world,
                         RpIntersection* shadowZone, F32 shadowFactor, F32 fadeDist);
@@ -271,7 +271,7 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
             if (crec[i].optr)
             {
                 hit_ent++;
-                fn_80021DD0(255, 0, 0, 255);
+                xDrawSetColor(255, 0, 0, 255);
                 if (crec[i].dist < ent_dist)
                 {
                     ent_dist = crec[i].dist;
@@ -291,7 +291,7 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
             }
             else
             {
-                fn_80021DD0(0, 255, 0, 255);
+                xDrawSetColor(0, 255, 0, 255);
                 hit_env++;
                 if (crec[i].dist < env_dist)
                 {
@@ -499,7 +499,7 @@ void xShadowReceiveShadow(_xEnt* ent)
         {
             geom = model->Data->geometry;
             iModelVertEval(model->Data, 0, geom->numVertices, model->Mat, NULL, xvert);
-            fn_80021DD0(0, 0, 255, 255);
+            xDrawSetColor(0, 0, 255, 255);
 
             tri = geom->triangles;
             for (i = 0; i < (U32)geom->numTriangles; i++, tri++)

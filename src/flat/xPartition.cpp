@@ -7,7 +7,7 @@
 
 #include <string.h>
 
-extern "C" _xBound* fn_80005AFC(_zVolume* volume);
+_xBound* zVolumeGetBound(_zVolume* vol);
 
 static inline _xBox* xEnvGetBBox(_xEnv* env)
 {
@@ -238,7 +238,7 @@ void xPartitionVolume(_tagPartition* part, _zVolume* volume, S32 x_spaces, S32 y
     _xBound* xb;
 
     memset(part, 0, sizeof(_tagPartition));
-    xb = fn_80005AFC(volume);
+    xb = zVolumeGetBound(volume);
     bb = &xb->box.box;
     part->min = bb->lower;
     part->max = bb->upper;

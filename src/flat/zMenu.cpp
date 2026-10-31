@@ -1,4 +1,6 @@
 #include "zMenu.h"
+#include "xDraw.h"
+#include "xDebug.h"
 #include "iDebug.h"
 #include "iSystem.h"
 #include "zEnv.h"
@@ -26,9 +28,6 @@ void zEntEventAll(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam);
 void xFontRender();
 U32 fn_800443F8();
 extern "C" void fn_80016600();
-extern "C" void fn_80021E50();
-extern "C" void fn_80021B20();
-extern "C" void fn_80021E30();
 extern "C" void fn_8004436C();
 void xSndUpdate(F32 dt);
 void xSndStopAll();
@@ -180,7 +179,7 @@ U32 zMenuLoop()
         }
 
         fn_80016600();
-        fn_80021E50();
+        xDrawBegin();
         zSceneUpdate(time_elapsed);
         globals.player.ent.update(&globals.player.ent, globals.sceneCur, time_elapsed);
         xSndUpdate(time_elapsed);
@@ -188,9 +187,9 @@ U32 zMenuLoop()
         xCameraBegin(&globals.camera, 1);
         zSceneRender();
         xFontRender();
-        fn_80021B20();
+        xDebugUpdate();
         fn_8004436C();
-        fn_80021E30();
+        xDrawEnd();
 
         if (gScreenDump)
         {

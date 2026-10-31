@@ -42,6 +42,7 @@ enum en_xEventTags
     eEventUIFocusOn_Select = 94,
     eEventUIFocusOff_Unselect = 95,
     eEventDispatcher_SetSaveState_Saving = 153,
+    eEventDigup = 164,
     eEventDispatcher_SLBack = 168,
     eEventDispatcher_SLCancel = 169,
     eEventDispatcher_SLRetry = 170,
@@ -71,7 +72,9 @@ enum en_xEventTags
     eEventTranslucentOn = 252,
     eEventTranslucentOff = 253,
     eEventTranslucentToggle = 254,
-    eEventDisableGroupContents = 262
+    eEventDisableGroupContents = 262,
+    eEventOccludeOn = 264,
+    eEventOccludeOff = 265
 };
 
 #endif

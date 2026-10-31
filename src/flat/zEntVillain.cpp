@@ -5,6 +5,7 @@
 #include "iSnd.h"
 #include "xAnim.h"
 #include "xBound.h"
+#include "xDraw.h"
 #include "xEvent.h"
 #include "xFFX.h"
 #include "xMath.h"
@@ -37,22 +38,21 @@
 #include <string.h>
 
 // Functions that have no name yet keep their address labels, which differ between the targets:
-// three villain functions with no name in any related build, and one from another unit.
+// three villain functions with no name in any related build. xDraw's colour setter is named on
+// rev0 and keeps its rev1 label until the rev1 names catch up.
 #if VERSION_GIHE78_REV0
 #define VIL_QUEUE_PROPSOUND fn_8007BD98
 #define VIL_HOLO_FLICKER fn_800837D4
 #define VIL_RESET fn_800A8CB8
-#define FN_80021E18 fn_80021E18
 #elif VERSION_GIHE78_REV1
 #define VIL_QUEUE_PROPSOUND fn_8007BBA0
 #define VIL_HOLO_FLICKER fn_800835DC
 #define VIL_RESET fn_800A8AC0
-#define FN_80021E18 fn_80021FA0
+extern "C" void fn_80021FA0(U32* color);
 #endif
 
 S32 zEntPlayer_Damage(xBase* src, U32 damage, _xVec3* direction);
 void xSndStopChildren(U32 pid);
-extern "C" void FN_80021E18(U32* color);
 
 enum en_RBS_STAGE
 {
@@ -12651,8 +12651,13 @@ static S32 VWEP_swipe(st_zEntVillain* vil, F32)
     coll.optr = &globals.player.ent;
     bound.type = 1;
     bound.qcd = globals.player.ent.bound.qcd;
+#if VERSION_GIHE78_REV0
+    iColor_tag color = { 0x80, 0x00, 0x00, 0xFF };
+    xDrawSetColor(color);
+#elif VERSION_GIHE78_REV1
     U32 color = 0x800000FF;
-    FN_80021E18(&color);
+    fn_80021FA0(&color);
+#endif
     if (VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &bound.sph.center))
     {
         bound.sph.r = 0.2f;
