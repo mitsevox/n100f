@@ -807,6 +807,12 @@ config.libs: List[Dict[str, Any]] = [
         ],
     ),
     DolphinLib(
+        "odenotstub",
+        [
+            Object(MatchingFor("GIHE78-rev0"), "dolphin/odenotstub/odenotstub.c"),
+        ],
+    ),
+    DolphinLib(
         "os",
         [
             Object(MatchingFor("GIHE78-rev0"), "dolphin/os/OS.c"),
@@ -969,10 +975,14 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/nodeWorldSectorInstance.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/gcpipe.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/instance/geominst.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/instance/instancegeom.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/instance/instanceworld.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/vtxfmt.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/wrldpipe.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/instance/ibuffer.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/gclights.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/native.c"),
         ],

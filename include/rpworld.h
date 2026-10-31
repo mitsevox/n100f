@@ -240,6 +240,7 @@ typedef RpAtomic* (*RpAtomicCallBack)(RpAtomic* atomic, void* data);
 #define rpATOMICRENDER 0x04
 
 #define rpGEOMETRYTRISTRIP 0x0001
+#define rpGEOMETRYPOSITIONS 0x0002
 #define rpGEOMETRYTEXTURED 0x0004
 #define rpGEOMETRYPRELIT 0x0008
 #define rpGEOMETRYNORMALS 0x0010
@@ -510,6 +511,64 @@ RxNodeDefinition* RxNodeDefinitionGetWorldSectorInstance(void);
 RxNodeDefinition* RxNodeDefinitionGetWorldSectorEnumerateLights(void);
 RxNodeDefinition* RxNodeDefinitionGetGameCubeAtomicAllInOne(void);
 RxNodeDefinition* RxNodeDefinitionGetGameCubeWorldSectorAllInOne(void);
+
+// A compressed normal: three signed bytes scaled by 128, and a pad byte.
+struct RpVertexNormal
+{
+    S8 x;
+    S8 y;
+    S8 z;
+    U8 pad;
+};
+
+// A GameCube vertex format: a GX component type per vertex attribute (position, normal, the
+// eight texture coordinate sets and the prelight color), a flags byte and a fraction per
+// attribute, shared by reference count. vtxfmt.c owns the default; the instancing code reads
+// it when a geometry or sector has none.
+typedef struct RpGameCubeVtxFmt RpGameCubeVtxFmt;
+struct RpGameCubeVtxFmt
+{
+    U8 compType[11];
+    U8 flags;
+    U8 frac[10];
+    U16 refCount;
+};
+
+// RpGameCubeVtxFmt flags: the instanced attributes are interleaved in one buffer.
+#define VTXFMT_INTERLEAVED 0x02
+
+extern RpGameCubeVtxFmt _RpDlVtxFmtDefault;
+
+// The instanced vertex arrays of a GameCube geometry or sector: the stride of each attribute
+// and where its array starts. The leading bytes and the gap before the pointers are not
+// established.
+typedef struct GCNVertexArrays GCNVertexArrays;
+struct GCNVertexArrays
+{
+    U8 unk0[6];
+    U8 posStride;
+    U8 nrmStride;
+    U8 clrStride;
+    U8 texStride[8];
+    U8 unk11[7];
+    void* pos;
+    void* nrm;
+    void* clr;
+    void* tex[8];
+};
+
+S32 _rwGCNVtxFmtInstPos3D(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* src,
+                          S32 numVerts, U8 stride);
+S32 _rwGCNVtxFmtInstNrm(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* src,
+                        S32 numVerts, U8 stride);
+S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVertexNormal* src,
+                           S32 numVerts, U8 stride);
+S32 _rwGCNVtxFmtInstClr(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwRGBA* src,
+                        S32 numVerts, U8 stride);
+S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
+                        const RwTexCoords* src, S32 numVerts, U8 stride);
+
+S32 RpWorldSectorGetNumVertices(const RpWorldSector* sector);
 
 // The mesh module's globals in each engine instance, shared by the mesh code and the mesh
 // optimiser.

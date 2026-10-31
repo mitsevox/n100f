@@ -575,3 +575,15 @@ u32 __OSGetDIConfig(void)
 {
     return (__DIRegs[DI_CONFIG_IDX] & DI_CONFIG_CONFIG_MASK);
 }
+
+// The function forms of the address conversions, which the debug os.h declares and the CARD
+// library calls. The parentheses keep the release macros from expanding.
+void*(OSPhysicalToCached)(u32 paddr)
+{
+    return (void*)(paddr + OS_BASE_CACHED);
+}
+
+u32(OSCachedToPhysical)(void* caddr)
+{
+    return (u32)((u8*)caddr - OS_BASE_CACHED);
+}

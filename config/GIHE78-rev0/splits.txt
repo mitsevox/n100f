@@ -1309,8 +1309,11 @@ dolphin/mtx/mtx44.c: comment:8
 	.text       start:0x80103280 end:0x80103318
 	.sdata2     start:0x80262770 end:0x80262780
 
+dolphin/odenotstub/odenotstub.c: comment:8
+	.text       start:0x80103318 end:0x80103320
+
 dolphin/os/OS.c: comment:8
-	.text       start:0x80103320 end:0x80103C58
+	.text       start:0x80103320 end:0x80103C68
 	.data       start:0x801CCD80 end:0x801CCF40
 	.bss        start:0x8025B1A0 end:0x8025B1F0
 	.sbss       start:0x8025F428 end:0x8025F450
@@ -1713,6 +1716,15 @@ rwsdk/world/pipe/p2/nodeWorldSectorInstance.c:
 rwsdk/world/pipe/p2/gcn/gcpipe.c:
 	.text       start:0x8015885C end:0x80159380
 
+rwsdk/world/pipe/p2/gcn/instance/geominst.c:
+	.text       start:0x80159380 end:0x8015CB3C
+
+rwsdk/world/pipe/p2/gcn/instance/instancegeom.c:
+	.text       start:0x8015CB3C end:0x8015CF28
+
+rwsdk/world/pipe/p2/gcn/instance/instanceworld.c:
+	.text       start:0x8015CF28 end:0x8015D314
+
 rwsdk/world/pipe/p2/gcn/vtxfmt.c:
 	.text       start:0x8015D314 end:0x8015D830
 
@@ -1724,6 +1736,9 @@ rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c:
 
 rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c:
 	.text       start:0x8015E7E8 end:0x8015ED40
+
+rwsdk/world/pipe/p2/gcn/instance/ibuffer.c:
+	.text       start:0x8015ED40 end:0x8015F0A4
 
 rwsdk/world/pipe/p2/gcn/gclights.c:
 	.text       start:0x8015F0A4 end:0x8015F51C
@@ -1853,7 +1868,7 @@ rwsdk/driver/gcn/dltextur.c:
 	.text       start:0x8017CF88 end:0x8017DBB8
 
 rwsdk/driver/gcn/dltoken.c:
-	.text       start:0x8017DBB8 end:0x8017DC44
+	.text       start:0x8017DBB8 end:0x8017DE58
 
 rwsdk/src/pipe/p2/baim3d.c:
 	.text       start:0x8017DE58 end:0x8017ED24

@@ -2,20 +2,10 @@
 
 #define VTXFMT_PLUGIN_ID 0x511
 
-// A GameCube vertex format: a component type and a fraction per vertex attribute, shared by
-// reference count.
-typedef struct RpGameCubeVtxFmt RpGameCubeVtxFmt;
-struct RpGameCubeVtxFmt
-{
-    U8 compType[12];
-    U8 frac[10];
-    U16 refCount;
-};
-
 RpGameCubeVtxFmt* RpGameCubeVtxFmtInit(RpGameCubeVtxFmt* vtxFmt);
 void RpGameCubeVtxFmtDestroy(RpGameCubeVtxFmt* vtxFmt);
 
-static RpGameCubeVtxFmt _RpDlVtxFmtDefault;
+RpGameCubeVtxFmt _RpDlVtxFmtDefault;
 S32 _rpDlGeomVtxFmtOffset;
 S32 _rpDlWorldVtxFmtOffset;
 static RwModuleInfo _RpVtxFmtModule;
@@ -108,7 +98,7 @@ RpGameCubeVtxFmt* RpGameCubeVtxFmtInit(RpGameCubeVtxFmt* vtxFmt)
     vtxFmt->compType[8] = 4;
     vtxFmt->compType[9] = 4;
     vtxFmt->compType[10] = 5;
-    vtxFmt->compType[11] = 1;
+    vtxFmt->flags = 1;
     vtxFmt->frac[0] = 0;
     vtxFmt->frac[2] = 0;
     vtxFmt->frac[3] = 0;
