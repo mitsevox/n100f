@@ -44,7 +44,7 @@ extern "C" void fn_800300A4();
 
 // Bit 0x100 makes the heap grow down from the top of its area. The alignment is 1 << bits 9-13;
 // bit 0x10000 keeps the block headers in a separate table.
-static inline void xMemInitHeap(xMemHeap_tag* heap, U32 base, U32 size, U32 flags)
+inline void xMemInitHeap(xMemHeap_tag* heap, U32 base, U32 size, U32 flags)
 {
     U32 old_base = base;
     U32 align = 1 << ((flags >> 9) & 0x1F);

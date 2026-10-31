@@ -1068,7 +1068,7 @@ void xParCmdTexAnim_Update(zParCmd* c, xParGroup* ps, F32 dt)
 
 // Grass: particles within two units of the player shrink toward a tenth of their size; others
 // grow back to full size.
-static void xParCmdCustom_Grass_Update(xParGroup* ps, F32 dt)
+void xParCmdCustom_Grass_Update(zParCmd*, xParGroup* ps, F32 dt)
 {
     xVec3* pos = (xVec3*)&globals.player.ent.model->Mat->pos;
 
@@ -1132,7 +1132,7 @@ void xParCmdCustom_Update(zParCmd* c, xParGroup* ps, F32 dt)
         }
         break;
     case 10:
-        xParCmdCustom_Grass_Update(ps, dt);
+        xParCmdCustom_Grass_Update(c, ps, dt);
         break;
     }
 }
