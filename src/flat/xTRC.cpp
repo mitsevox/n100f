@@ -52,7 +52,7 @@ S32 fn_800132C4(st_ISGSESSION* session, S32 repair, S32* files, S32* repaired);
 S32 fn_800138EC(st_ISGSESSION* session, const char* dname, const char* fname);
 void fn_80013C64(st_ISGSESSION* session, S32 tidx, S32* blockSize, S32* freeFiles);
 U32 fn_80013D3C(st_ISGSESSION* session, S32 tidx, S32 refresh);
-U32 fn_80014310(st_ISGSESSION* session, S32 card);
+S32 fn_80014310(st_ISGSESSION* session, S32 card);
 void fn_80016600();
 void fn_80016698(S32 reset);
 // The localized device, slot and card names.
@@ -66,6 +66,14 @@ TRCCardMessage lbl_801B6610[2] = {};
 U32 lbl_8025EBE0;
 xFontBox* lbl_8025EBE4;
 U32 lbl_8025EBE8;
+}
+
+// gTrcDisk (xTRC.h) holds the disc state the disc layer last reported and whether it is being
+// identified now. The SLUS-20349 DWARF puts it in this file, but recover.py leaves its .sbss
+// slot (0x8025EBD8) out of the unit because the unassigned 0x80016900 also loads it, so it
+// stays declared only until that slot is assigned.
+
+extern "C" {
 
 void fn_80044714();
 S32 fn_80044478(_tagTRCState state);
@@ -248,7 +256,7 @@ extern "C" void fn_8004442C(_tagTRCState state)
 // disc, read error, fatal error).
 extern "C" S32 fn_800443F8()
 {
-    switch (gTrcDisk[1])
+    switch (gTrcDisk[0])
     {
     case TRC_DiskTrayOpen:
     case TRC_DiskNoDisk:
@@ -266,20 +274,14 @@ extern "C" S32 fn_800443F8()
 extern "C" void fn_800443AC()
 {
     lbl_8025EBE8 = 1;
-    if (!fn_80044478((_tagTRCState)lbl_802289B8[0].state))
-    {
-        fn_80044478(gTrcDisk[1]);
-    }
+    fn_80044478((_tagTRCState)lbl_802289B8[0].state) || fn_80044478(gTrcDisk[0]);
     lbl_8025EBE8 = 0;
 }
 
 // Draws the pad message, or else the disc message, into the current frame.
 extern "C" void fn_8004436C()
 {
-    if (!fn_80044478((_tagTRCState)lbl_802289B8[0].state))
-    {
-        fn_80044478(gTrcDisk[1]);
-    }
+    fn_80044478((_tagTRCState)lbl_802289B8[0].state) || fn_80044478(gTrcDisk[0]);
 }
 
 // The start-up memory-card check that main runs: the cards in both slots are checked for
@@ -577,29 +579,6 @@ extern "C" S32 fn_80043E18(S32 card, st_ISGSESSION* session)
     return 2;
 }
 
-// Finds the slot index of a card in the session: -1 when the card is not in it.
-static inline S32 TRCCardSlot(st_ISGSESSION* session, S32 card)
-{
-    S32 slot = -1;
-    S32 count = iSGTgtCount(session, NULL);
-    if (count >= 1)
-    {
-        if (count == 2)
-        {
-            slot = card;
-        }
-        else
-        {
-            S32 phys = iSGTgtPhysSlotIdx(session, 0);
-            if (phys == card)
-            {
-                slot = 0;
-            }
-        }
-    }
-    return slot;
-}
-
 // Checks that a card is in the slot; a card that is not ready says why.
 extern "C" S32 fn_80043BA4(S32 card)
 {
@@ -613,21 +592,25 @@ extern "C" S32 fn_80043BA4(S32 card)
         fn_80041CE8(0, card, card);
         fn_80041CC4(0, 24);
         fn_80041548(0, text);
-        const char* options[4] = { "Continue Without Saving", "Retry" };
-        switch (fn_80041D90(text, options, NULL, NULL))
+        const char* options[4] = {};
+        options[0] = "Continue Without Saving";
+        options[1] = "Retry";
+        S32 choice = fn_80041D90(text, options, NULL, NULL);
+        if (choice == -1)
         {
-        case -1:
             result = 4;
-            break;
-        case 0:
+        }
+        else if (choice == 0)
+        {
             result = 3;
-            break;
-        case 1:
+        }
+        else if (choice == 1)
+        {
             result = 4;
-            break;
-        default:
+        }
+        else
+        {
             result = 3;
-            break;
         }
     }
     else if ((state & 1) && !(state & 2))
@@ -642,21 +625,25 @@ extern "C" S32 fn_80043BA4(S32 card)
             fn_80041CE8(0, card, card);
             fn_80041CC4(0, 27);
             fn_80041548(0, text);
-            const char* options[4] = { "Continue Without Saving", "Retry" };
-            switch (fn_80041D90(text, options, NULL, NULL))
+            const char* options[4] = {};
+            options[0] = "Continue Without Saving";
+            options[1] = "Retry";
+            S32 choice = fn_80041D90(text, options, NULL, NULL);
+            if (choice == -1)
             {
-            case -1:
                 result = 4;
-                break;
-            case 0:
+            }
+            else if (choice == 0)
+            {
                 result = 3;
-                break;
-            case 1:
+            }
+            else if (choice == 1)
+            {
                 result = 4;
-                break;
-            default:
+            }
+            else
+            {
                 result = 3;
-                break;
             }
         }
     }
@@ -670,8 +657,8 @@ extern "C" S32 fn_80043940()
     S32 result;
     char text[512] = { 0 };
     st_ISGSESSION* session = iSGSessionBegin(NULL, NULL);
-    U32 stateA = fn_80014310(session, 0);
-    U32 stateB = fn_80014310(session, 1);
+    S32 stateA = fn_80014310(session, 0);
+    S32 stateB = fn_80014310(session, 1);
 
     if ((stateA & 1) || (stateB & 1))
     {
@@ -682,21 +669,25 @@ extern "C" S32 fn_80043940()
         fn_80041CE8(0, 0, 0);
         fn_80041CC4(0, 25);
         fn_80041548(0, text);
-        const char* options[4] = { "Continue Without Saving", "Retry" };
-        switch (fn_80041D90(text, options, NULL, NULL))
+        const char* options[4] = {};
+        options[0] = "Continue Without Saving";
+        options[1] = "Retry";
+        S32 choice = fn_80041D90(text, options, NULL, NULL);
+        if (choice == -1)
         {
-        case -1:
             result = 4;
-            break;
-        case 0:
+        }
+        else if (choice == 0)
+        {
             result = 3;
-            break;
-        case 1:
+        }
+        else if (choice == 1)
+        {
             result = 4;
-            break;
-        default:
+        }
+        else
+        {
             result = 3;
-            break;
         }
     }
     else if (iSGTgtCount(session, NULL) > 0)
@@ -708,21 +699,25 @@ extern "C" S32 fn_80043940()
         fn_80041CE8(0, 0, 0);
         fn_80041CC4(0, 25);
         fn_80041548(0, text);
-        const char* options[4] = { "Continue Without Saving", "Retry" };
-        switch (fn_80041D90(text, options, NULL, NULL))
+        const char* options[4] = {};
+        options[0] = "Continue Without Saving";
+        options[1] = "Retry";
+        S32 choice = fn_80041D90(text, options, NULL, NULL);
+        if (choice == -1)
         {
-        case -1:
             result = 4;
-            break;
-        case 0:
+        }
+        else if (choice == 0)
+        {
             result = 3;
-            break;
-        case 1:
+        }
+        else if (choice == 1)
+        {
             result = 4;
-            break;
-        default:
+        }
+        else
+        {
             result = 3;
-            break;
         }
     }
     iSGSessionEnd(session);
@@ -792,7 +787,9 @@ extern "C" S32 fn_80043730(S32 card)
                 fn_80041CE8(0, slot, card);
                 fn_80041CC4(0, message);
                 fn_80041548(0, text);
-                const char* options[4] = { "Continue Without Saving", "Retry" };
+                const char* options[4] = {};
+                options[0] = "Continue Without Saving";
+                options[1] = "Retry";
                 S32 choice = fn_80041D90(text, options, NULL, NULL);
                 if (choice == 1)
                 {
@@ -931,7 +928,9 @@ extern "C" S32 fn_80043050(S32 card, S32* formatted)
                 fn_80041CE8(0, slot, card);
                 fn_80041CC4(0, 18);
                 fn_80041548(0, text);
-                const char* confirm[4] = { "No", "Yes" };
+                const char* confirm[4] = {};
+                confirm[0] = "No";
+                confirm[1] = "Yes";
                 S32 choice = fn_80041D90(text, confirm, fn_80043E20, &watch);
                 if (choice == -1)
                 {
@@ -977,12 +976,16 @@ extern "C" S32 fn_80043050(S32 card, S32* formatted)
                     fn_80041548(0, text);
                     if (ok)
                     {
-                        const char* done[4] = { NULL, "Continue" };
+                        const char* done[4] = {};
+                        done[0] = NULL;
+                        done[1] = "Continue";
                         choice = fn_80041D90(text, done, fn_80043E20, &watch);
                     }
                     else
                     {
-                        const char* done[4] = { NULL, "Continue" };
+                        const char* done[4] = {};
+                        done[0] = NULL;
+                        done[1] = "Continue";
                         choice = fn_80041D90(text, done, NULL, NULL);
                     }
                     if (choice == -1)
@@ -1080,7 +1083,9 @@ extern "C" S32 fn_80042A48(S32 card)
                 fn_80041CE8(0, slot, card);
                 fn_80041CC4(0, 10);
                 fn_80041548(0, text);
-                const char* confirm[4] = { "No", "Yes" };
+                const char* confirm[4] = {};
+                confirm[0] = "No";
+                confirm[1] = "Yes";
                 switch (fn_80041D90(text, confirm, fn_80043E20, &watch))
                 {
                 case -1:
@@ -1112,7 +1117,9 @@ extern "C" S32 fn_80042A48(S32 card)
                         fn_80041CC4(0, 12);
                     }
                     fn_80041548(0, text);
-                    const char* done[4] = { NULL, "Continue" };
+                    const char* done[4] = {};
+                    done[0] = NULL;
+                    done[1] = "Continue";
                     if (fn_80041D90(text, done, fn_80043E20, &watch) == -1)
                     {
                         result = 4;
