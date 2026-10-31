@@ -12,8 +12,10 @@ which, outside its own ranges, resolves to a name the sibling's symbols.txt defi
 functions' instructions (branch targets, small-data offsets, `lis` pairs that form an address) and
 from the address words of its data. A reference into the middle of another unit's function (a
 label such as OSContext's `__RAS_` edges) holds the unit back as well, because the linker resolves
-it only when the sibling map names that label. The origin target's original must be at its
-config.yml path.
+it only when the sibling map names that label. So does a toolkit label (`fn_`, `lbl_`) that the
+unit's source spells and the sibling map lacks, such as a variable the source defines under the
+origin's address while the sibling's other units reference the sibling's. The origin target's original must be
+at its config.yml path.
 
 This is a necessary condition, not proof: `--write` only proposes the declarations, and the
 sibling's build check (`main.dol: OK`) decides. A widened unit that fails the build goes back to
@@ -95,6 +97,12 @@ def unresolved(side,names,ranges,defined):
     return sorted(missing)
 
 
+def relabelled(source,names):
+    """The toolkit labels (`fn_`, `lbl_`) a unit's source text spells that `names` lacks: the
+    source defines or references each under the origin's address, not the sibling's."""
+    return sorted({n for n in re.findall(r'\b(?:fn|lbl)_[0-9A-F]{8}\b',source) if n not in names})
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('source');parser.add_argument('target')
@@ -106,12 +114,15 @@ def main():
     ranges={n:r for n,_,r in splits(side.splits_path)[1]}
     _,sym_b,split_b=config(args.target)
     carried={n for n,_,_ in splits(split_b)[1]}
-    defined={s.name for s in symbols(sym_b) if not AUTO.match(s.name)}
+    every={s.name for s in symbols(sym_b)}
+    defined={n for n in every if not AUTO.match(n)}
     ready=[];out=[]
     for row,unit,ids in todo:
         if unit not in carried:out.append('%s: not carried over to %s'%(unit,args.target));continue
         missing=unresolved(side,names,ranges[unit],defined)
         if missing:out.append('%s: references names %s does not define: %s'%(unit,args.target,', '.join(missing)));continue
+        labels=relabelled((ROOT/'src'/unit).read_text(errors='replace'),every)
+        if labels:out.append('%s: source spells toolkit labels %s does not define: %s'%(unit,args.target,', '.join(labels)));continue
         ready.append((row,ids));out.append('%s: candidate'%unit)
     print('\n'.join(out))
     print('%d of %d units declared for %s but not %s are candidates'%(len(ready),len(todo),args.source,args.target))

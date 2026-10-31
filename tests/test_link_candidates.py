@@ -1,7 +1,7 @@
 """Choosing and widening link candidates (tools/link_candidates.py)."""
 import unittest
 
-from tools.link_candidates import Names,pending,widen
+from tools.link_candidates import Names,pending,relabelled,widen
 from tools.port_symbols import Symbol
 
 CONFIGURE='''Matching = True
@@ -49,6 +49,16 @@ class Naming(unittest.TestCase):
 
     def test_nothing_there(self):
         self.assertEqual(self.names(0x80000000),[])
+
+
+class Labels(unittest.TestCase):
+    source='U32 lbl_80003000;\nvoid g() { fn_80001000(); lbl_80003000 = 1; }\n// alt_lbl_80009999 is not one\n'
+
+    def test_a_label_the_sibling_lacks_holds_the_unit_back(self):
+        self.assertEqual(relabelled(self.source,{'fn_80001000'}),['lbl_80003000'])
+
+    def test_labels_the_sibling_defines_do_not(self):
+        self.assertEqual(relabelled(self.source,{'fn_80001000','lbl_80003000'}),[])
 
 
 if __name__=='__main__':
