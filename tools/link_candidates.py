@@ -7,7 +7,8 @@
                                                                   to name <to id>
 
 A candidate is a unit whose configure.py declaration is MatchingFor(...) naming <from id> but not
-<to id>, which the sibling's splits.txt carries over (tools/port_symbols.py), and every reference of
+<to id>, which the sibling's splits.txt carries over whole (tools/port_symbols.py; a unit carried
+in part keeps only some of its functions there), and every reference of
 which, outside its own ranges, resolves to a name the sibling's symbols.txt defines: from its
 functions' instructions (branch targets, small-data offsets, `lis` pairs that form an address) and
 from the address words of its data. A reference into the middle of another unit's function (a
@@ -113,12 +114,14 @@ def main():
     side=Side(args.source);names=Names(side.symbols)
     ranges={n:r for n,_,r in splits(side.splits_path)[1]}
     _,sym_b,split_b=config(args.target)
-    carried={n for n,_,_ in splits(split_b)[1]}
+    carried={n:r for n,_,r in splits(split_b)[1]}
+    size=lambda r:sorted((sec,e-s) for sec,s,e,_ in r)
     every={s.name for s in symbols(sym_b)}
     defined={n for n in every if not AUTO.match(n)}
     ready=[];out=[]
     for row,unit,ids in todo:
         if unit not in carried:out.append('%s: not carried over to %s'%(unit,args.target));continue
+        if size(carried[unit])!=size(ranges[unit]):out.append('%s: carried over to %s in part'%(unit,args.target));continue
         missing=unresolved(side,names,ranges[unit],defined)
         if missing:out.append('%s: references names %s does not define: %s'%(unit,args.target,', '.join(missing)));continue
         labels=relabelled((ROOT/'src'/unit).read_text(errors='replace'),every)
