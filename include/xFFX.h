@@ -46,6 +46,8 @@ xFFX* xFFXAlloc();
 void xFFXTurnOn(xFFX* f);
 void xFFXTurnOff(xFFX* f);
 xFFXShakeState* xFFXShakeAlloc();
+void xFFXShakeFree(xFFXShakeState* s);
+void xFFXShakeUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata);
 xFFXRotMatchState* xFFXRotMatchAlloc();
 
 #endif

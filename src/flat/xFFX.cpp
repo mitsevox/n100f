@@ -2,6 +2,8 @@
 #include "xEnt.h"
 #include "xMemMgr.h"
 
+#include <math.h>
+
 static U32 psize;
 static xFFX* pool;
 static xFFX* alist;
@@ -92,6 +94,57 @@ void xFFXApply(_xEnt* ent, _xScene* sc, F32 dt)
     {
         xFFXApplyOne(ent->ffx, ent, sc, dt);
     }
+}
+
+static inline void xFFXFree(xFFX* f)
+{
+    f->next = alist;
+    alist = f;
+}
+
+static inline void xFFXRemoveEffectByFData(_xEnt* ent, void* fdata)
+{
+    xFFX** link = &ent->ffx;
+    while (*link != NULL)
+    {
+        xFFX* f = *link;
+        if (f->fdata == fdata)
+        {
+            ent->num_ffx--;
+            xFFXFree(*link);
+            *link = f->next;
+            return;
+        }
+        link = &f->next;
+    }
+}
+
+// Shakes the entity along disp with a decaying sine. Once the duration is over it stops at the
+// next zero crossing and frees itself.
+void xFFXShakeUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata)
+{
+    xFFXShakeState* ss = (xFFXShakeState*)fdata;
+    F32 tnext = ss->tmr + dt;
+    F32 mag = exp(ss->alpha * tnext);
+    mag = sin(ss->freq * tnext) * mag;
+
+    if (ss->tmr == 0.0f)
+    {
+        ss->lval = 0.0f;
+    }
+    else if (ss->tmr >= ss->dur && ss->lval * mag < 0.0f)
+    {
+        xFFXRemoveEffectByFData(ent, fdata);
+        xFFXShakeFree(ss);
+        return;
+    }
+
+    F32 d = mag - ss->lval;
+    ent->frame->mat.pos.x += ss->disp.x * d;
+    ent->frame->mat.pos.y += ss->disp.y * d;
+    ent->frame->mat.pos.z += ss->disp.z * d;
+    ss->lval = mag;
+    ss->tmr = tnext;
 }
 
 void xFFXShakePoolInit(U32 num)

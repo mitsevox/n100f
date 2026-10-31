@@ -1,9 +1,16 @@
 #include "xMemMgr.h"
 #include "iMemMgr.h"
 
-#include <stdlib.h>
+#include "xDebug.h"
 
-struct xMemBlock_tag;
+#include <stdlib.h>
+#include <string.h>
+
+struct xMemBlock_tag
+{
+    U32 addr;
+    U32 size;
+};
 
 struct xHeapState_tag
 {
@@ -32,9 +39,100 @@ xMemHeap_tag gxHeap[3];
 U32 gActiveHeap;
 static void (*sMemBaseNotifyFunc)();
 
+// The empty debug-mode callback that xMemInit registers; it follows xMemInit and has no known name.
+extern "C" void fn_800300A4();
+
+// Bit 0x100 makes the heap grow down from the top of its area. The alignment is 1 << bits 9-13;
+// bit 0x10000 keeps the block headers in a separate table.
+static inline void xMemInitHeap(xMemHeap_tag* heap, U32 base, U32 size, U32 flags)
+{
+    U32 old_base = base;
+    U32 align = 1 << ((flags >> 9) & 0x1F);
+    if (flags & 0x100)
+    {
+        base = base & -align;
+        size -= old_base - base;
+    }
+    else
+    {
+        base = (base + align - 1) & -align;
+        size -= base - old_base;
+    }
+
+    heap->state_idx = 0;
+    heap->hard_base = base;
+    heap->size = size;
+    heap->flags = flags;
+    heap->lastblk = NULL;
+    xHeapState_tag* sp = &heap->state[heap->state_idx];
+    sp->curr = base;
+    sp->blk_ct = 0;
+    heap->max_blks = -1;
+    heap->blk = NULL;
+    heap->opp_heap[0] = -1;
+    heap->opp_heap[1] = -1;
+}
+
+// Heap 0 grows up from the start of game memory; heaps 1 and 2 grow down from its end.
+void xMemInit()
+{
+    iMemInit();
+    xMemInitHeap(&gxHeap[0], gMemInfo.DRAM.addr, gMemInfo.DRAM.size, 0x8826);
+    xMemInitHeap(&gxHeap[1], gMemInfo.DRAM.addr + gMemInfo.DRAM.size, gMemInfo.DRAM.size, 0x8925);
+    xMemInitHeap(&gxHeap[2], gMemInfo.DRAM.addr + gMemInfo.DRAM.size, gMemInfo.DRAM.size, 0x892A);
+    gxHeap[0].opp_heap[0] = 1;
+    gxHeap[0].opp_heap[1] = 2;
+    gxHeap[1].opp_heap[0] = 0;
+    gxHeap[1].opp_heap[1] = 2;
+    gxHeap[2].opp_heap[0] = 0;
+    gxHeap[2].opp_heap[1] = 1;
+    gActiveHeap = 0;
+    xDebugModeRegisterCallback(11, fn_800300A4);
+}
+
 void xMemExit()
 {
     iMemExit();
+}
+
+#define XMEM_ALIGN(x, align) (((x) + (align) - 1) & -(align))
+
+// Grows the heap's last block in place by size bytes, cleared, and returns the new part.
+void* xMemGrowAlloc(U32 heapID, U32 size)
+{
+    void* memptr;
+    xHeapState_tag* sp;
+    xMemBlock_tag* hdr;
+    xMemHeap_tag* heap = &gxHeap[heapID];
+    U32 oldalignsize;
+    U32 align;
+
+    hdr = heap->lastblk;
+    align = 1 << ((heap->flags >> 9) & 0x1F);
+    sp = &heap->state[heap->state_idx];
+    oldalignsize = XMEM_ALIGN(hdr->size, align);
+    align = XMEM_ALIGN(hdr->size + size, align) - oldalignsize;
+    if (sp->used + align > heap->size)
+    {
+        return NULL;
+    }
+
+    if (heap->flags & 0x100)
+    {
+        memptr = (void*)(hdr->addr - size);
+        hdr->addr = (U32)memptr;
+        sp->curr -= align;
+    }
+    else
+    {
+        sp->curr += align;
+        memptr = (void*)(hdr->addr + hdr->size);
+    }
+
+    sp->used += align;
+    hdr->size += size;
+    memset(memptr, 0, size);
+    return memptr;
 }
 
 void* xMemPushTemp(U32 size)

@@ -1,5 +1,9 @@
 #include "xSnd.h"
 #include "xMath3.h"
+#include "xEnt.h"
+#include "xModel.h"
+#include "zGlobals.h"
+#include "zScene.h"
 
 xSndGlobals gSnd;
 
@@ -117,6 +121,113 @@ void xSndUpdate(F32 time_elapsed)
 void xSndExit()
 {
     iSndExit();
+}
+
+// Plays a sound on a free voice and returns its handle: -1 when the sound is not loaded, -2 when
+// no voice is free and 0 when it fails to start. Sound IDs from 0x1000 up are streams. In s005 one
+// sound is swapped for another when that one is loaded.
+U32 xSndPlay(U32 id, F32 volL, F32 volR, F32 pitch, U32 priority, U32 flags, U32 parentID)
+{
+    if (id == 0x91D67287 && globals.sceneCur->sceneID == zSceneIDFromName("s005") &&
+        iSndLookup(0xFE619D7B) != NULL)
+    {
+        id = 0xFE619D7B;
+    }
+
+    iSndFileInfo* info = iSndLookup(id);
+    if (info == NULL)
+    {
+        return -1;
+    }
+
+    U32 vflags;
+    flags &= 0x700;
+    vflags = flags | 4;
+    if ((S32)info->ID >= 0x1000)
+    {
+        vflags = flags | 2;
+    }
+
+    U32 idx = iSndFindFreeVoice(priority, vflags);
+    if (idx == 0xFFFFFFFE)
+    {
+        return -2;
+    }
+
+    xSndVoiceInfo* vp = &gSnd.voice[idx];
+    vp->priority = priority;
+    vp->pitch = pitch;
+    vp->vol = (volL > volR) ? volL : volR;
+    vp->sample_rate = info->info.dsp.sample_rate;
+    vp->assetID = id;
+    vp->internalID = info->ID;
+    vp->parentID = parentID;
+    vp->parentPos = NULL;
+    vp->sndID = ++gSnd.SndCount;
+    vp->flags = vflags;
+    vp->flags |= 1;
+    vp->deadct = 0;
+    if (!iSndPlay(vp))
+    {
+        vp->flags &= ~1;
+        return 0;
+    }
+    return vp->sndID;
+}
+
+// Plays a sound that follows the entity. A radius of 0 or less means it carries 1000 units.
+U32 xSndPlay3D(U32 id, F32 vol, F32 pitch, U32 priority, U32 flags, _xEnt* parent, F32 radius)
+{
+    if (parent == NULL)
+    {
+        return -2;
+    }
+
+    iSndFileInfo* info = iSndLookup(id);
+    if (info == NULL)
+    {
+        return -1;
+    }
+
+    U32 vflags;
+    flags &= 0x700;
+    vflags = flags | 4;
+    if ((S32)info->ID >= 0x1000)
+    {
+        vflags = flags | 2;
+    }
+
+    U32 idx = iSndFindFreeVoice(priority, vflags);
+    if (idx == 0xFFFFFFFE)
+    {
+        return -2;
+    }
+
+    xSndVoiceInfo* vp = &gSnd.voice[idx];
+    vp->priority = priority;
+    vp->pitch = pitch;
+    vp->vol = vol;
+    vp->sample_rate = info->info.dsp.sample_rate;
+    vp->assetID = id;
+    vp->internalID = info->ID;
+    vp->sndID = ++gSnd.SndCount;
+    vp->flags = vflags;
+    vp->flags |= 1;
+    vp->deadct = 0;
+    vp->parentID = (U32)parent;
+    vp->parentPos = NULL;
+    vp->pos = *(xVec3*)&((_xEnt*)((U32)parent & ~3))->model->Mat->pos;
+    if (radius <= 0.0f)
+    {
+        vp->radius2 = 1000000.0f;
+    }
+    else
+    {
+        vp->radius2 = radius * radius;
+    }
+    vp->flags |= 0x18;
+    iSndPlay(vp);
+    return vp->sndID;
 }
 
 // The GameCube build does not play sounds placed at a bare position.

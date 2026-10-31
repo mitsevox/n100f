@@ -2,6 +2,9 @@
 #include "xAnim.h"
 #include "xEnt.h"
 #include "xModel.h"
+#include "xBound.h"
+#include "xQuickCull.h"
+#include "iCollide.h"
 
 struct _xEnv;
 struct xSerial;
@@ -11,6 +14,8 @@ void xAnimPoolInit(xMemPool* pool, U32 count, U32 singles, U32 blendFlags, U32 e
 void xCollideInit(_xScene* sc);
 void xCollideFastInit(_xScene* sc);
 void xEnvSetup(_xEnv* env);
+// xCollideFast.cpp: whether the ray crosses the bound.
+extern "C" U32 fn_80021800(const _xRay3* r, const _xBound* b);
 
 // Allocates the scene's entity lists and sets up the animation, model and collision pools.
 // The model pools grow with the scene's NPC, dynamic and static counts.
@@ -146,6 +151,100 @@ void xSceneForAllNPCs(_xScene* sc, _xEnt* (*func)(_xEnt*, _xScene*, void*), void
         if (!func(sc->npcs[i], sc, data))
         {
             break;
+        }
+    }
+}
+
+// Finds the nearest static, dynamic or NPC entity, or the level geometry, that the ray hits.
+void xRayHitsScene(_xScene* sc, _xRay3* r, _xCollis* coll)
+{
+    xQCData q;
+    _xCollis c;
+    U16 i;
+
+    xQuickCullForRay(&q, r);
+    coll->dist = 1e19f;
+
+    for (i = 0; i < sc->num_stats; i++)
+    {
+        _xEnt* ent = sc->stats[i];
+        xRayHitsBound(r, &q, &ent->bound, &c);
+        if ((c.flags & 1) && c.dist < coll->dist)
+        {
+            coll->dist = c.dist;
+            coll->oid = ent->id;
+            coll->optr = ent;
+        }
+    }
+
+    for (i = 0; i < sc->num_dyns; i++)
+    {
+        _xEnt* ent = sc->dyns[i];
+        xRayHitsBound(r, &q, &ent->bound, &c);
+        if ((c.flags & 1) && c.dist < coll->dist)
+        {
+            coll->dist = c.dist;
+            coll->oid = ent->id;
+            coll->optr = ent;
+        }
+    }
+
+    for (i = 0; i < sc->num_npcs; i++)
+    {
+        _xEnt* ent = sc->npcs[i];
+        xRayHitsBound(r, &q, &ent->bound, &c);
+        if ((c.flags & 1) && c.dist < coll->dist)
+        {
+            coll->dist = c.dist;
+            coll->oid = ent->id;
+            coll->optr = ent;
+        }
+    }
+
+    iRayHitsEnv(r, sc->env, &c);
+    if (c.dist < coll->dist)
+    {
+        coll->dist = c.dist;
+        coll->oid = c.oid;
+        coll->optr = NULL;
+    }
+
+    if (coll->dist < 1e19f)
+    {
+        coll->flags |= 1;
+    }
+    else
+    {
+        coll->flags &= ~1;
+    }
+}
+
+// Calls camera_func for every static and dynamic entity with moreFlags bit 1 whose bound the ray
+// crosses; the camera uses it to find what stands between it and the player.
+void xRayHitsCameraScene(_xScene* sc, _xRay3* r, void (*camera_func)(_xEnt*))
+{
+    xQCData qcr;
+    U16 i;
+
+    xQuickCullForRay(&qcr, r);
+
+    for (i = 0; i < sc->num_stats; i++)
+    {
+        _xEnt* ent = sc->stats[i];
+        if ((ent->moreFlags & 1) && xQuickCullIsects(&qcr, &ent->bound.qcd) &&
+            fn_80021800(r, &ent->bound))
+        {
+            camera_func(ent);
+        }
+    }
+
+    for (i = 0; i < sc->num_dyns; i++)
+    {
+        _xEnt* ent = sc->dyns[i];
+        if ((ent->moreFlags & 1) && xQuickCullIsects(&qcr, &ent->bound.qcd) &&
+            fn_80021800(r, &ent->bound))
+        {
+            camera_func(ent);
         }
     }
 }
