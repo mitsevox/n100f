@@ -353,6 +353,19 @@ cflags_game_nodeferred = [
     "-inline auto" if f == "-inline auto,deferred" else f for f in cflags_game
 ]
 
+# Game flags without automatic inlining: only functions declared inline are inlined, and functions
+# are still emitted in reverse source order (xpkrsvc; see the compiler row in evidence.tsv).
+# GC/1.3.2 compiles `-inline deferred` and `-inline on,deferred` to identical objects.
+cflags_game_inlineonly = [
+    "-inline deferred" if f == "-inline auto,deferred" else f for f in cflags_game
+]
+
+# Game flags with no inlining at all, emitted in reverse source order (iSystem; see the compiler
+# row in evidence.tsv). Plain `-inline off` gives the same bodies in forward order.
+cflags_game_noinline = [
+    "-inline off,deferred" if f == "-inline auto,deferred" else f for f in cflags_game
+]
+
 # Same release as the game compiler. Every mwld from GC/1.0 to 2.6 relinks the baseline
 # identically, so the target does not independently establish the linker version.
 config.linker_version = "GC/1.3.2"
@@ -487,7 +500,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/isavegame.cpp"),
             Object(NonMatching, "flat/iScrFX.cpp"),
             Object(NonMatching, "flat/iShadow.cpp"),
-            Object(NonMatching, "flat/iSystem.cpp"),
+            Object(NonMatching, "flat/iSystem.cpp", cflags=cflags_game_noinline),
             Object(MatchingFor("GIHE78-rev0"), "flat/iTime.cpp"),
             Object(NonMatching, "flat/xAnim.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xBase.cpp"),
@@ -523,7 +536,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xParGroup.cpp"),
             Object(NonMatching, "flat/xParMgr.cpp"),
             Object(NonMatching, "flat/xPartition.cpp"),
-            Object(NonMatching, "flat/xpkrsvc.cpp"),
+            Object(NonMatching, "flat/xpkrsvc.cpp", cflags=cflags_game_inlineonly),
             Object(NonMatching, "flat/xQuickCull.cpp"),
             Object(NonMatching, "flat/xsavegame.cpp"),
             Object(NonMatching, "flat/xScene.cpp"),
