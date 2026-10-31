@@ -487,6 +487,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/iMath3.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMemMgr.cpp"),
             Object(NonMatching, "flat/iModel.cpp"),
+            Object(NonMatching, "flat/iMorph.cpp"),
             Object(NonMatching, "flat/isavegame.cpp"),
             Object(NonMatching, "flat/iScrFX.cpp"),
             Object(NonMatching, "flat/iSystem.cpp", cflags=cflags_game_noauto),
