@@ -60,6 +60,17 @@ struct xFontBox
     iColor_tag backdrop_color;
 };
 
+// The pen position while a box draws; draw is clear while words are only being measured.
+struct xFontGlobals_t
+{
+    F32 dpx;
+    F32 dpy;
+    U32 draw;
+    F32 aspect_ratio;
+};
+
+extern xFontGlobals_t gFontGlobals;
+
 xFontBox* xFontBoxCreate(F32 x, F32 y, F32 w, F32 h, U32 id, iColor_tag color);
 void xFontBoxDestroy(xFontBox* box);
 void xFontBoxSetText(xFontBox* box, char* text);

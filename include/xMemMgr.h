@@ -34,6 +34,7 @@ struct xMemInfo_tag
 extern U32 gActiveHeap;
 extern xMemInfo_tag gMemInfo;
 
+void xMemInit();
 void* xMemAlloc(U32 heapID, U32 size);
 void* xMemGrowAlloc(U32 heapID, U32 size);
 void xMemPoolSetup(xMemPool* pool, void* buffer, U32 nextOffset, U32 flags,
