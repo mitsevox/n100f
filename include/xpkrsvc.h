@@ -68,6 +68,17 @@ struct st_PACKER_ATOC_NODE
     char name[32];
 };
 
+struct st_PACKER_LTOC_NODE
+{
+    en_LAYER_TYPE laytyp;
+    st_XORDEREDARRAY assref;
+    S32 flg_ldstat;
+    S32 danglecnt;
+    U32 chksum;
+    S32 laysize;
+    char* laymem;
+};
+
 struct st_PACKER_READ_DATA
 {
     st_PACKER_ASSETTYPE* types;
