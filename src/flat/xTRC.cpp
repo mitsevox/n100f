@@ -114,8 +114,8 @@ void xTRCInit()
 }
 
 // Draws the message for a pad or disc state over the screen and pauses the game. A missing
-// controller counts only in play. Returns 0 for a state with no message (and for a missing
-// controller outside play), else 1.
+// controller counts only in play. Returns 0 for a state outside the switch (and for a missing
+// controller outside play), else 1, including TRC_Unknown, which draws no text.
 extern "C" S32 fn_80044478(_tagTRCState state)
 {
     RwCamera* camera;
