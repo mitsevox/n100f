@@ -642,7 +642,8 @@ static S32 iSG_isSpaceForFile(st_ISG_MEMCARD_DATA* mcdata, S32 fsize, const char
     {
         if (needFile != NULL)
         {
-            *needFile = *needFile - 1 & ~(*needFile - 1 >> 0x1F);
+            S32 left = *needFile - 1;
+            *needFile = 0 > left ? 0 : left;
         }
         if (len <= mcdata->unk_B0.length + byteNotUsed)
         {
@@ -1186,8 +1187,8 @@ static S32 iSG_fileKosher(st_ISG_MEMCARD_DATA* mcdata, const char* fname, S32 de
 }
 
 // Looks for the first save file without the game's signature. first receives its index and
-// deleted the index of the first one removed when delbad is set; a pass with delbad set
-// checks again and returns whether a bad file is still there.
+// deleted the index of the first one removed when delbad is set. Returns 1 when no file lacks
+// the signature (checked again after the deletions when delbad is set).
 extern "C" S32 fn_800132C4(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted)
 {
     S32 rc = 1;
@@ -1561,9 +1562,9 @@ static S32 iSG_mc_exists(S32 slot)
 
 static S32 g_legalSectSize[] = { 0x2000, 0, -1 };
 
-// The tgtidx'th card's state as flags: 1 present, 2 and 8 formatted and usable, 4 needs a
-// format, 0x1000000 damaged or absent, 0x2000000 I/O error, 0x4000000 wrong encoding and
-// 0x8000000 an unsupported sector size.
+// The tgtidx'th card's state as flags: 1 present, 4 a usable card (with 2 and 8 when it is
+// formatted; 4 without 2 means it needs a format), 0x1000000 damaged or absent, 0x2000000 I/O
+// error, 0x4000000 wrong encoding and 0x8000000 an unsupported sector size.
 U32 iSGTgtState(st_ISGSESSION* isgdata, S32 tgtidx, const char* dpath)
 {
     S32 isSectSizeValid = 0;

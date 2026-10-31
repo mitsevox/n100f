@@ -166,9 +166,9 @@ S32 xSGTgtFormatTgt(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* canRecover)
 }
 
 // Passes the card's sector size and free file entries through from the card layer.
-extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* files, S32* filesNeeded)
+extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree)
 {
-    fn_80013C64(xsgdata->isgsess, tidx, files, filesNeeded);
+    fn_80013C64(xsgdata->isgsess, tidx, sectorSize, filesFree);
 }
 
 S32 xSGTgtSelect(st_XSAVEGAME_DATA* xsgdata, S32 tidx)
