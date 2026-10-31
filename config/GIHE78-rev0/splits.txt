@@ -1561,11 +1561,14 @@ rwsdk/plugin/collis/ctbsp.c:
 rwsdk/plugin/collis/rpcollis.c:
 	.text       start:0x8013B850 end:0x8013BD2C
 
+rwsdk/plugin/hanim/stdkey.c:
+	.text       start:0x8013BD2C end:0x8013CD48
+
 rwsdk/plugin/hanim/rphanim.c:
-	.text       start:0x8013CF64 end:0x8013D210
+	.text       start:0x8013CD48 end:0x8013D90C
 
 rwsdk/plugin/matfx/rpmatfx.c:
-	.text       start:0x8013EF40 end:0x8013FA64
+	.text       start:0x8013D90C end:0x8013FA64
 
 rwsdk/plugin/matfx/gcn/effectPipesGcn.c:
 	.text       start:0x80140010 end:0x80140D40
@@ -1588,12 +1591,18 @@ rwsdk/plugin/skin2/rpskin.c:
 rwsdk/plugin/skin2/gcn/skingcn.c:
 	.text       start:0x8014519C end:0x80145A48
 
+rwsdk/plugin/skin2/gcn/skinstream.c:
+	.text       start:0x80145A48 end:0x80145E08
+
+rwsdk/plugin/skin2/gcn/skingcng.c:
+	.text       start:0x80145E08 end:0x80145EB8
+
 rwsdk/plugin/userdata/rpusrdat.c:
 	.text       start:0x80145EB8 end:0x8014707C
 	.sbss       start:0x8025F6B0 end:0x8025F6F0
 
 rwsdk/world/babinwor.c:
-	.text       start:0x8014707C end:0x801472BC
+	.text       start:0x8014707C end:0x801484D4
 
 rwsdk/world/baclump.c:
 	.text       start:0x801484D4 end:0x8014AFC4
@@ -1605,7 +1614,7 @@ rwsdk/world/balight.c:
 	.text       start:0x8014C7DC end:0x8014CFC8
 
 rwsdk/world/bamateri.c:
-	.text       start:0x8014CFC8 end:0x8014D2BC
+	.text       start:0x8014CFC8 end:0x8014D674
 
 rwsdk/world/bamatlst.c:
 	.text       start:0x8014D674 end:0x8014DD4C
@@ -1614,7 +1623,7 @@ rwsdk/world/bamesh.c:
 	.text       start:0x8014DD4C end:0x8014E7A4
 
 rwsdk/world/bameshop.c:
-	.text       start:0x8014E950 end:0x80150F5C
+	.text       start:0x8014E7A4 end:0x80150F5C
 
 rwsdk/world/basector.c:
 	.text       start:0x80150F5C end:0x80151038
@@ -1665,12 +1674,18 @@ rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c:
 rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c:
 	.text       start:0x8015E7E8 end:0x8015ED40
 
+rwsdk/world/pipe/p2/gcn/native.c:
+	.text       start:0x8015F51C end:0x8015FEA4
+
+rwsdk/tool/slerp/rtslerp.c:
+	.text       start:0x8015FEA4 end:0x80160340
+
 rwsdk/src/plcore/babinary.c:
 	.text       start:0x80160340 end:0x80160F60
 	.data       start:0x801DDB60 end:0x801DDBCC
 
 rwsdk/src/plcore/baerr.c:
-	.text       start:0x80160FC0 end:0x8016109C
+	.text       start:0x80160F88 end:0x8016109C
 
 rwsdk/src/plcore/bafsys.c:
 	.text       start:0x8016109C end:0x801611C4
@@ -1679,19 +1694,22 @@ rwsdk/src/plcore/baimmedi.c:
 	.text       start:0x801611C4 end:0x801612EC
 
 rwsdk/src/plcore/bamatrix.c:
-	.text       start:0x80161B70 end:0x8016274C
+	.text       start:0x801612EC end:0x8016351C
+
+rwsdk/src/plcore/bamemory.c:
+	.text       start:0x8016351C end:0x80163B14
 
 rwsdk/src/plcore/baresour.c:
-	.text       start:0x80163C60 end:0x80164374
+	.text       start:0x80163B14 end:0x80164374
 
 rwsdk/src/plcore/bastream.c:
-	.text       start:0x801643EC end:0x80164A94
+	.text       start:0x80164374 end:0x80164D48
 
 rwsdk/src/plcore/batkbin.c:
 	.text       start:0x80164D48 end:0x801652F8
 
 rwsdk/src/plcore/batkreg.c:
-	.text       start:0x80165344 end:0x801658F8
+	.text       start:0x801652F8 end:0x801658F8
 
 rwsdk/src/plcore/bavector.c:
 	.text       start:0x801658F8 end:0x801662AC
@@ -1700,7 +1718,16 @@ rwsdk/src/plcore/resmem.c:
 	.text       start:0x801662AC end:0x801664F8
 
 rwsdk/src/plcore/rwstring.c:
-	.text       start:0x801664F8 end:0x80166674
+	.text       start:0x801664F8 end:0x801667A8
+
+rwsdk/os/gcn/osintf.c:
+	.text       start:0x801667A8 end:0x80166800
+
+rwsdk/src/babbox.c:
+	.text       start:0x80166800 end:0x80166974
+
+rwsdk/src/babincam.c:
+	.text       start:0x80166974 end:0x80166B54
 
 rwsdk/src/babinfrm.c:
 	.text       start:0x80166B54 end:0x80166F2C
@@ -1709,16 +1736,16 @@ rwsdk/src/babintex.c:
 	.text       start:0x80166F2C end:0x801683DC
 
 rwsdk/src/bacamera.c:
-	.text       start:0x801694EC end:0x80169E98
+	.text       start:0x801683DC end:0x80169E98
 
 rwsdk/src/badevice.c:
-	.text       start:0x80169E98 end:0x8016A68C
+	.text       start:0x80169E98 end:0x8016A9D8
 
 rwsdk/src/baframe.c:
-	.text       start:0x8016AA68 end:0x8016B6C4
+	.text       start:0x8016A9D8 end:0x8016B6C4
 
 rwsdk/src/baimage.c:
-	.text       start:0x8016B928 end:0x8016D498
+	.text       start:0x8016B6C4 end:0x8016D610
 
 rwsdk/src/baimras.c:
 	.text       start:0x8016D610 end:0x8016D794
@@ -1732,13 +1759,13 @@ rwsdk/src/basync.c:
 	.text       start:0x8016E9E4 end:0x8016F3EC
 
 rwsdk/src/batextur.c:
-	.text       start:0x8016F3EC end:0x80170FD8
+	.text       start:0x8016F3EC end:0x80171450
 
 rwsdk/src/batypehf.c:
 	.text       start:0x80171450 end:0x801714EC
 
 rwsdk/driver/common/palquant.c:
-	.text       start:0x80171514 end:0x80173D28
+	.text       start:0x801714EC end:0x80173D28
 
 rwsdk/driver/gcn/dl2drend.c:
 	.text       start:0x8017402C end:0x801753BC
@@ -1824,6 +1851,12 @@ rwsdk/src/pipe/p2/nodeTransform.c:
 	.text       start:0x80183B10 end:0x80184918
 	.data       start:0x801DEEB0 end:0x801DEF98
 	.sdata2     start:0x80262C08 end:0x80262C28
+
+rwsdk/src/pipe/p2/p2altmdl.c:
+	.text       start:0x80184918 end:0x80184C50
+
+rwsdk/src/pipe/p2/p2clpcom.c:
+	.text       start:0x80184C50 end:0x801869A8
 
 rwsdk/src/pipe/p2/p2core.c:
 	.text       start:0x801869A8 end:0x80187438
