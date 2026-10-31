@@ -477,6 +477,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/iCamera.cpp"),
             Object(NonMatching, "flat/iCollide.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/iCollideFast.cpp"),
+            Object(NonMatching, "flat/iDebug.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/iDraw.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/iEnv.cpp"),
             Object(NonMatching, "flat/iFile.cpp"),

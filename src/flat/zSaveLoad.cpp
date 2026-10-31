@@ -1,4 +1,5 @@
 #include "xsavegame.h"
+#include "iDebug.h"
 #include "iEnv.h"
 #include "iSnd.h"
 #include "iTime.h"
@@ -32,7 +33,6 @@ void zEntPlayer_SNDSavePickup(_xEnt* ent);
 void zEntPlayer_SNDVan(_xEnt* ent);
 void xCameraBegin(_tagxCamFrame* cam, S32 clear);
 void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
-void iDebugScreenDump();
 void xSndUpdate(F32 dt);
 S32 xSerial_svgame_register(st_XSAVEGAME_DATA* sgctxt, en_SAVEGAME_MODE mode);
 
@@ -62,7 +62,6 @@ extern "C" void fn_80021E50();
 extern "C" void fn_8004436C();
 
 extern "C" U32 lbl_8025E9F8;
-extern "C" U32 lbl_8025E890;
 
 zSaveLoadGame zSaveLoadGameTable[3];
 
@@ -1946,7 +1945,7 @@ void zSaveLoad_Tick()
     fn_80021B20();
     fn_8004436C();
     fn_80021E30();
-    if (lbl_8025E890)
+    if (gScreenDump)
     {
         iDebugScreenDump();
     }
