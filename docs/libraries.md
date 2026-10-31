@@ -14,9 +14,9 @@ The library block holds MetroTRK, the Metrowerks runtime, the MSL C library and 
 | `DolphinLib` | `dolphin/<library>` | GC/1.2.5n | `cflags_sdk` | `sdk` |
 | `BinkLib` | `binkngc` | ProDG/3.5 | `cflags_bink` | `bink` |
 | `CardLib` | `card` (`dolphin/card/`) | GC/1.2.5n | `cflags_card` | `sdk` |
-| `RWLib` | `rpcollis`, `rphanim`, `rpmatfx`, `rpskin`, `rpusrdat`, `rpworld`, `rwcore` (`rwsdk/`) | GC/1.3.2 | `cflags_rw` | `renderware` |
+| `RWLib` | `rpcollis`, `rphanim`, `rpmatfx`, `rpskin`, `rpusrdat`, `rpworld`, `rtslerp`, `rwcore` (`rwsdk/`) | GC/1.3.2 | `cflags_rw` | `renderware` |
 
-The 89 RenderWare units in `config/GIHE78-rev0/rw_units.tsv`, and `rwsdk/src/pipe/p2/p2renderstate.c`, split by hand ([splits](splits.md#renderware-units)), are listed in `configure.py`, one `RWLib` per library, NonMatching unless named below. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated; `RWLib` uses GC/1.3.2, the game's release. `cflags_rw` sets the established settings: `-O4`, `-char signed`, no contraction (expressed as `-fp_contract off`) and no `-use_lmw_stmw on`. `-lang=c` and `-common off` are carried over from `docs/compiler_profile/rw.flags`; they are not established, because the probe stimuli have no globals and do not test the language mode, and they are to be confirmed when RenderWare data is split. The rest are the base flags, which are not established either ([compiler profile](compiler_profile/README.md#renderware)). The probe covered `rwcore` only; the 23 exact `rpworld` functions below now support the same profile for the world library, and the other plugins take it on the assumption that one build produced the whole SDK. Never use leaked RenderWare source for them.
+The 101 RenderWare units, the 89 in `config/GIHE78-rev0/rw_units.tsv` and 12 split by hand (`rwsdk/src/pipe/p2/p2renderstate.c` and the round 24 [hand splits](splits.md#hand-splits)), are listed in `configure.py`, one `RWLib` per library, NonMatching unless named below. Their compiler is GC/1.3 or GC/1.3.2, with 1.3 and 1.3.2 not separated; `RWLib` uses GC/1.3.2, the game's release. `cflags_rw` sets the established settings: `-O4`, `-char signed`, no contraction (expressed as `-fp_contract off`) and no `-use_lmw_stmw on`. `-lang=c` and `-common off` are carried over from `docs/compiler_profile/rw.flags`; they are not established, because the probe stimuli have no globals and do not test the language mode, and they are to be confirmed when RenderWare data is split. The rest are the base flags, which are not established either ([compiler profile](compiler_profile/README.md#renderware)). The probe covered `rwcore` only; the 23 exact `rpworld` functions below now support the same profile for the world library, and the other plugins take it on the assumption that one build produced the whole SDK. Never use leaked RenderWare source for them.
 
 ### RenderWare SDK names and headers
 
@@ -29,16 +29,16 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | Unit | Exact | Not yet |
 | --- | --- | --- |
 | `rwsdk/src/plcore/bavector.c` | 11 of 12 | `_rwVectorOpen` (97%: the stack slots of the two inlined table builders' locals, and one load per table loop scheduled before the store instead of after it) |
-| `rwsdk/src/plcore/rwstring.c` | 5 of 5 | (end edge open: bfbb's unit has 7 functions) |
-| `rwsdk/src/plcore/baerr.c` | 3 of 3 | |
+| `rwsdk/src/plcore/rwstring.c` | 5 of 7 | |
+| `rwsdk/src/plcore/baerr.c` | 3 of 4 | |
 | `rwsdk/src/plcore/bafsys.c` | 4 of 4 | |
 | `rwsdk/src/plcore/resmem.c` | 4 of 4 | |
-| `rwsdk/src/plcore/baresour.c` | 6 of 7 | `RwResourcesAllocateResEntry` (98%: the first eviction path keeps the entry in `r3` before copying it to `r30`) |
+| `rwsdk/src/plcore/baresour.c` | 6 of 8 | `RwResourcesAllocateResEntry` (98%: the first eviction path keeps the entry in `r3` before copying it to `r30`) |
 | `rwsdk/src/plcore/baimmedi.c` | 7 of 7 | (Matching) |
-| `rwsdk/src/plcore/batkreg.c` | 9 of 9 | |
-| `rwsdk/src/badevice.c` | 13 of 13 | (data open: `engineTKList` in `.data`, `staticGlobals` in `.bss` and `engineInstancesOpened` in `.sbss` are not split) |
-| `rwsdk/src/baframe.c` | 19 of 20 | `rwFrameDestroyRecurse` (91.3%: GC/1.3.2 stops inlining the recursion one level later than the target, which calls `FrameDestroyRecurseDeInitLeaf` there) |
-| `rwsdk/src/bacamera.c` | 18 of 18 | (the four camera builders `CameraSync` calls, `0x801683DC` to `0x801694EC`, are still in an auto unit before it) |
+| `rwsdk/src/plcore/batkreg.c` | 9 of 10 | |
+| `rwsdk/src/badevice.c` | 13 of 14 | (data open: `engineTKList` in `.data`, `staticGlobals` in `.bss` and `engineInstancesOpened` in `.sbss` are not split) |
+| `rwsdk/src/baframe.c` | 19 of 21 | `rwFrameDestroyRecurse` (91.3%: GC/1.3.2 stops inlining the recursion one level later than the target, which calls `FrameDestroyRecurseDeInitLeaf` there) |
+| `rwsdk/src/bacamera.c` | 18 of 22 | (starts at `0x801683DC`, with the four camera builders `CameraSync` calls) |
 | `rwsdk/src/baraster.c` | 11 of 11 | (Matching; ends at `_rwRasterOpen`, `0x8016DD04`) |
 | `rwsdk/src/baimras.c` | 3 of 3 | (Matching) |
 | `rwsdk/src/basync.c` | 7 of 7 | (Matching; starts at `SyncObject`, `0x8016E9E4`) |
@@ -64,17 +64,17 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c` | 1 of 2 | `_ImmMangleTriangleIndicesNode` (87.6%: its locals take other saved registers, and the strip rewrite's source index is scheduled differently) |
 | `rwsdk/world/pipe/p2/bapipew.c` | 5 of 5 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/pipe/p2/gcn/wrldpipe.c` | 6 of 6 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/batextur.c` | 18 of 27 | `RwTextureDestroy` (93.3%: the target loads the return value 1 before reading the reference count as well as at the end) and 8 others, not written yet |
+| `rwsdk/src/batextur.c` | 18 of 29 | `RwTextureDestroy` (93.3%: the target loads the return value 1 before reading the reference count as well as at the end) and 8 others, not written yet |
 | `rwsdk/src/plcore/batkbin.c` | 8 of 8 | |
-| `rwsdk/src/plcore/bamatrix.c` | 6 of 9 | `_rwMatrixOpen` and `RwMatrixOptimize`, which inline `_rwMatrixSetMultFn` and the matrix checks that sit before the split, and `RwMatrixRotateOneMinusCosineSine`, not written yet |
-| `rwsdk/src/plcore/bastream.c` | 4 of 5 | `RwStreamWrite` (99.9%: the operands of the file-write length compare are the other way round) |
+| `rwsdk/src/plcore/bamatrix.c` | 6 of 21 | `_rwMatrixOpen`, `RwMatrixOptimize`, `RwMatrixRotateOneMinusCosineSine` and the functions the hand split added, not written yet |
+| `rwsdk/src/plcore/bastream.c` | 4 of 7 | `RwStreamWrite` (99.9%: the operands of the file-write length compare are the other way round) |
 | `rwsdk/src/babinfrm.c` | 3 of 3 | |
 | `rwsdk/src/babintex.c` | 7 of 9 | `_rwStringStreamFindAndRead` (99.0%: register choice in the inlined string readers) and `RwTextureStreamRead` (83.6%: the target keeps the inlined readers' NULL test and allocation path for its name buffers) |
-| `rwsdk/src/baimage.c` | 6 of 16 | `RwImageMakeMask` (97.4%) and `RwImageCopy` (97.9%), register choice; `RwImageAllocatePixels` (83.0%: the target compares the depth unsigned and computes the palette size without a branch); 7 others, not written yet |
+| `rwsdk/src/baimage.c` | 6 of 18 | `RwImageMakeMask` (97.4%) and `RwImageCopy` (97.9%), register choice; `RwImageAllocatePixels` (83.0%: the target compares the depth unsigned and computes the palette size without a branch); 7 others, not written yet |
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/world/basector.c` | 6 of 6 | |
-| `rwsdk/world/bamateri.c` | 7 of 8 | `_rpLightOpen` at `0x8014CFC8`, which opens the light module and probably belongs to `balight.c` ([RenderWare limits](splits.md#limits-2)) |
+| `rwsdk/world/bamateri.c` | 7 of 9 | `_rpLightOpen` at `0x8014CFC8`, which opens the light module and probably belongs to `balight.c` ([RenderWare limits](splits.md#limits-2)) |
 | `rwsdk/world/balight.c` | 11 of 12 | `RpLightGetConeAngle`, not written yet (it inlines an arc cosine) |
 | `rwsdk/world/baclump.c` | 35 of 38 | `GeometryListStreamRead` (97.4%: the list's return is placed after the loop branch), `ClumpAtomicStreamRead` (91.1%: the two chunk structs take each other's stack slots) and `RpClumpStreamRead` (99.4%: the target keeps a second chunk version word) |
 | `rwsdk/world/bageomet.c` | 9 of 12 | `RpGeometryCreate` (98.3%: the target keeps the format's two masks apart), `RpGeometryDestroy` (94.3%: the target loads its result at entry) and `RpGeometryStreamRead` (99.8%: the morph loop's two zeroes); starts at `_rpGeometryOpen`, `0x8014AFC4`, three functions before the size-sequence placement |
@@ -83,9 +83,9 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/bamatlst.c` | 4 of 5 | `_rpMaterialListStreamRead` (97.4%: the list, the stream and the material take other saved registers) |
 | `rwsdk/world/bamesh.c` | 11 of 11 | (data open: `meshModule` and `MeshStatic` not split) |
 | `rwsdk/world/bameshop.c` | 5 of 11 | `SortPolygonsInTriListMesh` (97.0%) and `TriStripMeshGenerate` (98.4%), register choice; `TriStripBinEntryArrayCreate` (88.1%: the target reloads the entry pointer inside the three inlined edge searches), `TriStripFollow` (90.0%) and `TriStripStripTris` (93.4%), where the target evaluates the edge tests into temporaries, and `TriStripJoin` (89.3%: the target reloads the joined strip's count and pointer per index); data open (`.data` and `.sdata2` not split) |
-| `rwsdk/world/babinwor.c` | 6 of 6 | (data and end edge open: unsplit code after the unit writes and reads its `.sbss`) |
+| `rwsdk/world/babinwor.c` | 6 of 11 | the five functions the hand split added (the world and sector stream readers and the module open and close), not written yet; data open (`.sbss` not split) |
 | `rwsdk/world/pipe/p2/gcn/vtxfmt.c` | 11 of 11 | (data and both edges open: `.bss` and `.sbss` not split; `fn_8015D314` before it fits bfbb's `_rwDlVtxFmtSetup`) |
-| `rwsdk/plugin/matfx/rpmatfx.c` | 23 of 23 | (data open: `.sdata2` and `MatFXInfo` not split; the MatFX open and stream code before it is unsplit) |
+| `rwsdk/plugin/matfx/rpmatfx.c` | 23 of 48 | the MatFX open, close, material and stream functions the hand split added, not written yet; data open (`.sdata2` and `MatFXInfo` not split) |
 | `rwsdk/plugin/matfx/multiTex.c` | 15 of 17 | `MultiTextureCopy` (99.4%) and `MultiTextureStreamRead` (99.0%): the inlined create helper's size, platform entry and texture count take each other's registers |
 | `rwsdk/plugin/matfx/multiTexEffect.c` | 12 of 14 | `RpMTEffectDestroy` (99.4%: the target forms the platform entry's address with `mulli` into other registers) and `RpMTEffectFind` (98.4%: the dictionary walk's cursor and effect take each other's registers, and the target has one more `mr`) |
 | `rwsdk/plugin/skin2/rpskin.c` | 26 of 26 | (data open: `_rpSkinGlobals` not split; the skin code after it reads it; starts at `SkinOpen`, `0x80144154`, since `SkinCreate` is inlined; ends after `RpSkinAtomicSetType`, `0x80144D5C`, an edge the unsplit code after it abuts) |

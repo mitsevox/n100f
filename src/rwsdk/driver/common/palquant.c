@@ -29,23 +29,23 @@ struct PalQuantLeaf
 typedef struct PalQuantBranch PalQuantBranch;
 struct PalQuantBranch
 {
-    PalQuantBranch* dir[16];
+    PalQuantBranch* child[16];
 };
 
 typedef struct PalQuantBox PalQuantBox;
 struct PalQuantBox
 {
-    RwRGBA col0;
-    RwRGBA col1;
+    RwRGBA lower;
+    RwRGBA upper;
 };
 
 typedef struct PalQuant PalQuant;
 struct PalQuant
 {
-    PalQuantBox* Mcube;
-    F32* Mvv;
+    PalQuantBox* boxes;
+    F32* variances;
     PalQuantBranch* root;
-    RwFreeList* cubefreelist;
+    RwFreeList* nodeFreeList;
 };
 
 // Spreads the five bits of a channel's top five bits over the five levels of the tree.
@@ -72,7 +72,7 @@ static void InitBranch(PalQuantBranch* branch)
 
     for (i = 0; i < 16; i++)
     {
-        branch->dir[i] = NULL;
+        branch->child[i] = NULL;
     }
 }
 
@@ -89,21 +89,21 @@ static PalQuantLeaf* AllocateToLeaf(PalQuant* pq, PalQuantBranch* root, U32 cell
         return (PalQuantLeaf*)root;
     }
 
-    if (!root->dir[cellIndex & 15])
+    if (!root->child[cellIndex & 15])
     {
-        root->dir[cellIndex & 15] = CreateCube(pq->cubefreelist);
+        root->child[cellIndex & 15] = CreateCube(pq->nodeFreeList);
 
         if (depth == 1)
         {
-            InitLeaf((PalQuantLeaf*)root->dir[cellIndex & 15]);
+            InitLeaf((PalQuantLeaf*)root->child[cellIndex & 15]);
         }
         else
         {
-            InitBranch(root->dir[cellIndex & 15]);
+            InitBranch(root->child[cellIndex & 15]);
         }
     }
 
-    return AllocateToLeaf(pq, root->dir[cellIndex & 15], cellIndex >> 4, depth - 1);
+    return AllocateToLeaf(pq, root->child[cellIndex & 15], cellIndex >> 4, depth - 1);
 }
 
 // Adds an image's colours to the tree with the given weight.
@@ -193,17 +193,17 @@ static void assignindex(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuan
     if (root)
     {
         S32 width = 1 << depth;
-        S32 dr = origin->red - region->col1.red;
-        S32 dg = origin->green - region->col1.green;
-        S32 db = origin->blue - region->col1.blue;
-        S32 da = origin->alpha - region->col1.alpha;
+        S32 dr = origin->red - region->upper.red;
+        S32 dg = origin->green - region->upper.green;
+        S32 db = origin->blue - region->upper.blue;
+        S32 da = origin->alpha - region->upper.alpha;
 
         if (dr < 0 && dg < 0 && db < 0 && da < 0)
         {
-            S32 dR = region->col0.red - origin->red;
-            S32 dG = region->col0.green - origin->green;
-            S32 dB = region->col0.blue - origin->blue;
-            S32 dA = region->col0.alpha - origin->alpha;
+            S32 dR = region->lower.red - origin->red;
+            S32 dG = region->lower.green - origin->green;
+            S32 dB = region->lower.blue - origin->blue;
+            S32 dA = region->lower.alpha - origin->alpha;
 
             if (dR < width && dG < width && dB < width && dA < width)
             {
@@ -224,7 +224,7 @@ static void assignindex(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuan
                         corner.green = origin->green + (((i >> 2) & 1) << (depth - 1));
                         corner.blue = origin->blue + (((i >> 1) & 1) << (depth - 1));
                         corner.alpha = origin->alpha + ((i & 1) << (depth - 1));
-                        assignindex(root->dir[i], &corner, depth - 1, region, palIndex);
+                        assignindex(root->child[i], &corner, depth - 1, region, palIndex);
                     }
                 }
             }
@@ -239,17 +239,17 @@ static void addvolume(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuantB
     if (root)
     {
         S32 width = 1 << depth;
-        S32 dr = origin->red - region->col1.red;
-        S32 dg = origin->green - region->col1.green;
-        S32 db = origin->blue - region->col1.blue;
-        S32 da = origin->alpha - region->col1.alpha;
+        S32 dr = origin->red - region->upper.red;
+        S32 dg = origin->green - region->upper.green;
+        S32 db = origin->blue - region->upper.blue;
+        S32 da = origin->alpha - region->upper.alpha;
 
         if (dr < 0 && dg < 0 && db < 0 && da < 0)
         {
-            S32 dR = region->col0.red - origin->red;
-            S32 dG = region->col0.green - origin->green;
-            S32 dB = region->col0.blue - origin->blue;
-            S32 dA = region->col0.alpha - origin->alpha;
+            S32 dR = region->lower.red - origin->red;
+            S32 dG = region->lower.green - origin->green;
+            S32 dB = region->lower.blue - origin->blue;
+            S32 dA = region->lower.alpha - origin->alpha;
 
             if (dR < width && dG < width && dB < width && dA < width)
             {
@@ -277,7 +277,7 @@ static void addvolume(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuantB
                         corner.green = origin->green + (((i >> 2) & 1) << (depth - 1));
                         corner.blue = origin->blue + (((i >> 1) & 1) << (depth - 1));
                         corner.alpha = origin->alpha + ((i & 1) << (depth - 1));
-                        addvolume(root->dir[i], &corner, depth - 1, region, volume);
+                        addvolume(root->child[i], &corner, depth - 1, region, volume);
                     }
                 }
             }
@@ -286,7 +286,7 @@ static void addvolume(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuantB
 }
 
 // Sums the leaves inside a box into volume.
-static void BoxVolume(PalQuantBranch* root, PalQuantBox* region, PalQuantLeaf* volume)
+static void nVol(PalQuantBranch* root, PalQuantBox* region, PalQuantLeaf* volume)
 {
     RwRGBA origin;
 
@@ -319,7 +319,7 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
     switch (dir)
     {
     case 1:
-        for (i = set->col0.red; i < set->col1.red; i++)
+        for (i = set->lower.red; i < set->upper.red; i++)
         {
             F32 restWeight;
             F32 restRed;
@@ -327,8 +327,8 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
             F32 restBlue;
             F32 restAlpha;
 
-            sub.col1.red = i;
-            BoxVolume(root, &sub, &half);
+            sub.upper.red = i;
+            nVol(root, &sub, &half);
             restWeight = whole->weight - half.weight;
             restRed = whole->red - half.red;
             restGreen = whole->green - half.green;
@@ -357,7 +357,7 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
         }
         break;
     case 2:
-        for (i = set->col0.green; i < set->col1.green; i++)
+        for (i = set->lower.green; i < set->upper.green; i++)
         {
             F32 restWeight;
             F32 restRed;
@@ -365,8 +365,8 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
             F32 restBlue;
             F32 restAlpha;
 
-            sub.col1.green = i;
-            BoxVolume(root, &sub, &half);
+            sub.upper.green = i;
+            nVol(root, &sub, &half);
             restWeight = whole->weight - half.weight;
             restRed = whole->red - half.red;
             restGreen = whole->green - half.green;
@@ -395,7 +395,7 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
         }
         break;
     case 3:
-        for (i = set->col0.blue; i < set->col1.blue; i++)
+        for (i = set->lower.blue; i < set->upper.blue; i++)
         {
             F32 restWeight;
             F32 restRed;
@@ -403,8 +403,8 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
             F32 restBlue;
             F32 restAlpha;
 
-            sub.col1.blue = i;
-            BoxVolume(root, &sub, &half);
+            sub.upper.blue = i;
+            nVol(root, &sub, &half);
             restWeight = whole->weight - half.weight;
             restRed = whole->red - half.red;
             restGreen = whole->green - half.green;
@@ -433,7 +433,7 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
         }
         break;
     case 4:
-        for (i = set->col0.alpha; i < set->col1.alpha; i++)
+        for (i = set->lower.alpha; i < set->upper.alpha; i++)
         {
             F32 restWeight;
             F32 restRed;
@@ -441,8 +441,8 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
             F32 restBlue;
             F32 restAlpha;
 
-            sub.col1.alpha = i;
-            BoxVolume(root, &sub, &half);
+            sub.upper.alpha = i;
+            nVol(root, &sub, &half);
             restWeight = whole->weight - half.weight;
             restRed = whole->red - half.red;
             restGreen = whole->green - half.green;
@@ -488,7 +488,7 @@ static S32 nCut(PalQuantBranch* root, PalQuantBox* set1, PalQuantBox* set2)
     F32 maxb;
     F32 maxa;
 
-    BoxVolume(root, set1, &whole);
+    nVol(root, set1, &whole);
     maxr = nMaximize(root, set1, 1, &cutr, &whole);
     maxg = nMaximize(root, set1, 2, &cutg, &whole);
     maxb = nMaximize(root, set1, 3, &cutb, &whole);
@@ -507,48 +507,48 @@ static S32 nCut(PalQuantBranch* root, PalQuantBox* set1, PalQuantBox* set2)
         {
             if (maxr >= maxa)
             {
-                set2->col0.red = cutr;
-                set1->col1.red = cutr;
+                set2->lower.red = cutr;
+                set1->upper.red = cutr;
             }
             else
             {
-                set2->col0.alpha = cuta;
-                set1->col1.alpha = cuta;
+                set2->lower.alpha = cuta;
+                set1->upper.alpha = cuta;
             }
         }
         else if (maxb >= maxa)
         {
-            set2->col0.blue = cutb;
-            set1->col1.blue = cutb;
+            set2->lower.blue = cutb;
+            set1->upper.blue = cutb;
         }
         else
         {
-            set2->col0.alpha = cuta;
-            set1->col1.alpha = cuta;
+            set2->lower.alpha = cuta;
+            set1->upper.alpha = cuta;
         }
     }
     else if (maxg >= maxb)
     {
         if (maxg >= maxa)
         {
-            set2->col0.green = cutg;
-            set1->col1.green = cutg;
+            set2->lower.green = cutg;
+            set1->upper.green = cutg;
         }
         else
         {
-            set2->col0.alpha = cuta;
-            set1->col1.alpha = cuta;
+            set2->lower.alpha = cuta;
+            set1->upper.alpha = cuta;
         }
     }
     else if (maxb >= maxa)
     {
-        set2->col0.blue = cutb;
-        set1->col1.blue = cutb;
+        set2->lower.blue = cutb;
+        set1->upper.blue = cutb;
     }
     else
     {
-        set2->col0.alpha = cuta;
-        set1->col1.alpha = cuta;
+        set2->lower.alpha = cuta;
+        set1->upper.alpha = cuta;
     }
 
     return TRUE;
@@ -566,7 +566,7 @@ static S32 CountLeafs(PalQuantBranch* root, S32 depth)
 
             for (i = 0; i < 16; i++)
             {
-                count += CountLeafs(root->dir[i], depth - 1);
+                count += CountLeafs(root->child[i], depth - 1);
             }
         }
         else
@@ -589,7 +589,7 @@ static S32 ExtractNodes(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32
 
             for (i = 0; i < 16; i++)
             {
-                palIndex = ExtractNodes(root->dir[i], palette, palIndex, depth - 1);
+                palIndex = ExtractNodes(root->child[i], palette, palIndex, depth - 1);
             }
         }
         else
@@ -639,16 +639,16 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
         PalQuantLeaf volume;
         S32 i;
 
-        pq->Mcube[0].col0.red = 0;
-        pq->Mcube[0].col0.green = 0;
-        pq->Mcube[0].col0.blue = 0;
-        pq->Mcube[0].col0.alpha = 0;
-        pq->Mcube[0].col1.red = 32;
-        pq->Mcube[0].col1.green = 32;
-        pq->Mcube[0].col1.blue = 32;
-        pq->Mcube[0].col1.alpha = 32;
-        BoxVolume(pq->root, &pq->Mcube[0], &volume);
-        pq->Mvv[0] = volume.var - PALQUANT_DOT(&volume) / volume.weight;
+        pq->boxes[0].lower.red = 0;
+        pq->boxes[0].lower.green = 0;
+        pq->boxes[0].lower.blue = 0;
+        pq->boxes[0].lower.alpha = 0;
+        pq->boxes[0].upper.red = 32;
+        pq->boxes[0].upper.green = 32;
+        pq->boxes[0].upper.blue = 32;
+        pq->boxes[0].upper.alpha = 32;
+        nVol(pq->root, &pq->boxes[0], &volume);
+        pq->variances[0] = volume.var - PALQUANT_DOT(&volume) / volume.weight;
 
         for (i = 1; i < maxcols; i++)
         {
@@ -658,9 +658,9 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
 
             for (k = 0; k < i; k++)
             {
-                if (pq->Mvv[k] > maxvv)
+                if (pq->variances[k] > maxvv)
                 {
-                    maxvv = pq->Mvv[k];
+                    maxvv = pq->variances[k];
                     next = k;
                 }
             }
@@ -670,19 +670,19 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
                 break;
             }
 
-            if (nCut(pq->root, &pq->Mcube[next], &pq->Mcube[i]))
+            if (nCut(pq->root, &pq->boxes[next], &pq->boxes[i]))
             {
                 PalQuantLeaf lower;
                 PalQuantLeaf upper;
 
-                BoxVolume(pq->root, &pq->Mcube[next], &lower);
-                pq->Mvv[next] = lower.var - PALQUANT_DOT(&lower) / lower.weight;
-                BoxVolume(pq->root, &pq->Mcube[i], &upper);
-                pq->Mvv[i] = upper.var - PALQUANT_DOT(&upper) / upper.weight;
+                nVol(pq->root, &pq->boxes[next], &lower);
+                pq->variances[next] = lower.var - PALQUANT_DOT(&lower) / lower.weight;
+                nVol(pq->root, &pq->boxes[i], &upper);
+                pq->variances[i] = upper.var - PALQUANT_DOT(&upper) / upper.weight;
             }
             else
             {
-                pq->Mvv[next] = 0.0f;
+                pq->variances[next] = 0.0f;
                 i--;
             }
         }
@@ -701,8 +701,8 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
                 origin.green = 0;
                 origin.blue = 0;
                 origin.alpha = 0;
-                assignindex(pq->root, &origin, PALQUANT_DEPTH, &pq->Mcube[i], i);
-                BoxVolume(pq->root, &pq->Mcube[i], &mean);
+                assignindex(pq->root, &origin, PALQUANT_DEPTH, &pq->boxes[i], i);
+                nVol(pq->root, &pq->boxes[i], &mean);
 
                 scale = 0.0f;
 
@@ -736,7 +736,7 @@ static U8 GetIndex(PalQuantBranch* root, U32 cellIndex, S32 depth)
         return ((PalQuantLeaf*)root)->palIndex;
     }
 
-    return GetIndex(root->dir[cellIndex & 15], cellIndex >> 4, depth - 1);
+    return GetIndex(root->child[cellIndex & 15], cellIndex >> 4, depth - 1);
 }
 
 // Writes an image's pixels as palette indices, two to a byte for a 4-bit packed destination.
@@ -894,11 +894,11 @@ S32 _rwPalQuantInit(PalQuant* pq)
         splice[i] = value;
     }
 
-    pq->Mcube = (PalQuantBox*)RWSRCGLOBAL(memoryFuncs).rwcalloc(sizeof(PalQuantBox),
+    pq->boxes = (PalQuantBox*)RWSRCGLOBAL(memoryFuncs).rwcalloc(sizeof(PalQuantBox),
                                                                  PALQUANT_MAXCOLORS);
-    pq->Mvv = (F32*)RWSRCGLOBAL(memoryFuncs).rwcalloc(sizeof(F32), PALQUANT_MAXCOLORS);
-    pq->cubefreelist = RwFreeListCreate(sizeof(PalQuantBranch), 64, 0);
-    pq->root = CreateCube(pq->cubefreelist);
+    pq->variances = (F32*)RWSRCGLOBAL(memoryFuncs).rwcalloc(sizeof(F32), PALQUANT_MAXCOLORS);
+    pq->nodeFreeList = RwFreeListCreate(sizeof(PalQuantBranch), 64, 0);
+    pq->root = CreateCube(pq->nodeFreeList);
     InitBranch(pq->root);
 
     return TRUE;
@@ -914,11 +914,11 @@ static void DeleteOctTree(PalQuant* pq, PalQuantBranch* root, S32 depth)
 
             for (i = 0; i < 16; i++)
             {
-                DeleteOctTree(pq, root->dir[i], depth - 1);
+                DeleteOctTree(pq, root->child[i], depth - 1);
             }
         }
 
-        RWSRCGLOBAL(memoryFree)(pq->cubefreelist, root);
+        RWSRCGLOBAL(memoryFree)(pq->nodeFreeList, root);
     }
 }
 
@@ -926,7 +926,7 @@ void _rwPalQuantTerm(PalQuant* pq)
 {
     DeleteOctTree(pq, pq->root, PALQUANT_DEPTH);
     pq->root = NULL;
-    RwFreeListDestroy(pq->cubefreelist);
-    RwFree(pq->Mvv);
-    RwFree(pq->Mcube);
+    RwFreeListDestroy(pq->nodeFreeList);
+    RwFree(pq->variances);
+    RwFree(pq->boxes);
 }

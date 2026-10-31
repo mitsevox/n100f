@@ -886,6 +886,7 @@ config.libs: List[Dict[str, Any]] = [
     RWLib(
         "rphanim",
         [
+            Object(NonMatching, "rwsdk/plugin/hanim/stdkey.c"),
             Object(NonMatching, "rwsdk/plugin/hanim/rphanim.c"),
         ],
     ),

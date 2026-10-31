@@ -68,9 +68,6 @@ struct MeshOpStatic
 
 static MeshOpStatic MeshOp = { { 0, 0, 0, 0, 0 }, RpBuildMeshGenerateDefaultTriStrip, NULL };
 
-#define RwFreeListAlloc(_fl) (RWSRCGLOBAL(memoryAlloc)(_fl))
-#define RwFreeListFree(_fl, _p) (RWSRCGLOBAL(memoryFree)((_fl), (_p)))
-
 // The number of triangles on an edge that a pass has not used yet.
 #define TRISTRIPEDGEFREE(_edge, _flag)                                                             \
     (((_edge)->tri[1] && !(_edge)->tri[1]->_flag) + ((_edge)->tri[0] && !(_edge)->tri[0]->_flag))
@@ -273,7 +270,7 @@ static RpMesh* SortPolygonsInTriListMesh(RpMesh* mesh, RpMeshHeader* meshHeader,
 }
 
 // Finds the edge from vert0 to vert1 among the edges so far, or adds it.
-static TriStripEdge* TriStripAddEdge(TriStripFreeLists* freeLists, TriStripEdge** edgeList,
+static TriStripEdge* rpTriStripAddEdge(TriStripFreeLists* freeLists, TriStripEdge** edgeList,
                                      TriStripBinEntry* entry, U16 vert0, U16 vert1)
 {
     TriStripEdge* edge;
@@ -290,7 +287,7 @@ static TriStripEdge* TriStripAddEdge(TriStripFreeLists* freeLists, TriStripEdge*
         }
     }
 
-    edge = (TriStripEdge*)RwFreeListAlloc(freeLists->edgeFreeList);
+    edge = (TriStripEdge*)RWSRCGLOBAL(memoryAlloc)(freeLists->edgeFreeList);
     edge->vert[0] = vert0;
     edge->vert[1] = vert1;
     edge->tri[0] = entry;
@@ -314,18 +311,18 @@ static TriStripBinEntry** TriStripBinEntryArrayCreate(U32 numTris, TriStripFreeL
 
     for (i = 0; i < numTris; i++, triangles++)
     {
-        entries[i] = (TriStripBinEntry*)RwFreeListAlloc(freeLists->binEntryFreeList);
+        entries[i] = (TriStripBinEntry*)RWSRCGLOBAL(memoryAlloc)(freeLists->binEntryFreeList);
         entries[i]->numNeighbours = 0;
         entries[i]->triIndex = i;
         entries[i]->prev = NULL;
         entries[i]->next = NULL;
         entries[i]->used = FALSE;
 
-        entries[i]->edge[0] = TriStripAddEdge(freeLists, edgeList, entries[i],
+        entries[i]->edge[0] = rpTriStripAddEdge(freeLists, edgeList, entries[i],
                                               triangles->vertIndex[0], triangles->vertIndex[1]);
-        entries[i]->edge[1] = TriStripAddEdge(freeLists, edgeList, entries[i],
+        entries[i]->edge[1] = rpTriStripAddEdge(freeLists, edgeList, entries[i],
                                               triangles->vertIndex[1], triangles->vertIndex[2]);
-        entries[i]->edge[2] = TriStripAddEdge(freeLists, edgeList, entries[i],
+        entries[i]->edge[2] = rpTriStripAddEdge(freeLists, edgeList, entries[i],
                                               triangles->vertIndex[2], triangles->vertIndex[0]);
     }
 
@@ -578,7 +575,8 @@ static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEn
 // Adds an empty strip with room for space indices to the head of a strip list.
 static TriStripList* TriStripListAdd(TriStripList** stripList, U32 space)
 {
-    TriStripList* strip = (TriStripList*)RwFreeListAlloc(MESHGLOBAL(triStripListEntryFreeList));
+    TriStripList* strip =
+        (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
 
     strip->next = *stripList;
     *stripList = strip;
@@ -620,12 +618,12 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
         TRISTRIPBININSERT(bins, entries[i]);
     }
 
-    forward = (TriStripList*)RwFreeListAlloc(MESHGLOBAL(triStripListEntryFreeList));
+    forward = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
     forward->space = numTris * 2 + 2;
     forward->numIndices = 0;
     forward->indices = (U16*)RwMalloc(forward->space * sizeof(U32));
 
-    backward = (TriStripList*)RwFreeListAlloc(MESHGLOBAL(triStripListEntryFreeList));
+    backward = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
     backward->space = numTris * 2 + 2;
     backward->numIndices = 0;
     backward->indices = (U16*)RwMalloc(backward->space * sizeof(U32));
@@ -640,7 +638,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
             // A triangle with no free neighbours is a strip of its own.
             TriStripBinEntry* entry = bins[0];
             TriStripList* strip =
-                (TriStripList*)RwFreeListAlloc(MESHGLOBAL(triStripListEntryFreeList));
+                (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
             U16* vertIndex;
 
             strip->next = *stripList;
@@ -837,8 +835,8 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
                     if (pass >= TRISTRIPNUMPASSES)
                     {
-                        TriStripList* strip =
-                            (TriStripList*)RwFreeListAlloc(MESHGLOBAL(triStripListEntryFreeList));
+                        TriStripList* strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(
+                            MESHGLOBAL(triStripListEntryFreeList));
 
                         strip->next = *stripList;
                         *stripList = strip;
@@ -854,17 +852,17 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
     RwFree(backward->indices);
     backward->indices = NULL;
-    RwFreeListFree(MESHGLOBAL(triStripListEntryFreeList), backward);
+    RWSRCGLOBAL(memoryFree)(MESHGLOBAL(triStripListEntryFreeList), backward);
 
     RwFree(forward->indices);
     forward->indices = NULL;
-    RwFreeListFree(MESHGLOBAL(triStripListEntryFreeList), forward);
+    RWSRCGLOBAL(memoryFree)(MESHGLOBAL(triStripListEntryFreeList), forward);
 
     for (edge = edgeList; edge;)
     {
         TriStripEdge* next = edge->next;
 
-        RwFreeListFree(freeLists.edgeFreeList, edge);
+        RWSRCGLOBAL(memoryFree)(freeLists.edgeFreeList, edge);
         edge = next;
     }
 
@@ -873,7 +871,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
     for (i = 0; i < numTris; i++)
     {
-        RwFreeListFree(freeLists.binEntryFreeList, entries[i]);
+        RWSRCGLOBAL(memoryFree)(freeLists.binEntryFreeList, entries[i]);
         entries[i] = NULL;
     }
 
@@ -899,7 +897,7 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
         return FALSE;
     }
 
-    joined = (TriStripList*)RwFreeListAlloc(MESHGLOBAL(triStripListEntryFreeList));
+    joined = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
     joined->numIndices = 0;
     joined->space = 0;
 
@@ -920,7 +918,7 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
     RwFree(strip->indices);
     strip->indices = NULL;
     rest = strip->next;
-    RwFreeListFree(MESHGLOBAL(triStripListEntryFreeList), strip);
+    RWSRCGLOBAL(memoryFree)(MESHGLOBAL(triStripListEntryFreeList), strip);
 
     while (rest)
     {
@@ -999,7 +997,7 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
         if (rest == strip)
         {
             rest = rest->next;
-            RwFreeListFree(MESHGLOBAL(triStripListEntryFreeList), strip);
+            RWSRCGLOBAL(memoryFree)(MESHGLOBAL(triStripListEntryFreeList), strip);
         }
         else
         {
@@ -1011,7 +1009,7 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
             }
 
             prev->next = strip->next;
-            RwFreeListFree(MESHGLOBAL(triStripListEntryFreeList), strip);
+            RWSRCGLOBAL(memoryFree)(MESHGLOBAL(triStripListEntryFreeList), strip);
         }
     }
 
@@ -1144,7 +1142,7 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
             stripList = strip->next;
             RwFree(strip->indices);
             strip->indices = NULL;
-            RwFreeListFree(MESHGLOBAL(triStripListEntryFreeList), strip);
+            RWSRCGLOBAL(memoryFree)(MESHGLOBAL(triStripListEntryFreeList), strip);
         }
 
         RwFree(triangles);
