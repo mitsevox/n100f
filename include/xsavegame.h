@@ -68,6 +68,14 @@ struct st_XSAVEGAME_DATA
     st_ISGSESSION* isgsess;
 };
 
+// The leader block that opens every saved game: what the load screen shows for it.
+struct st_XSAVEGAME_LEADER
+{
+    char gameLabel[64];
+    S32 thumIconIndex;
+    iTime gametime;
+};
+
 enum en_XSGASYNC_STATUS
 {
     XSG_ASTAT_NOOP = 0,

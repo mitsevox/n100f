@@ -54,6 +54,13 @@ enum en_ASYNC_OPCODE
     ISG_OPER_LOAD
 };
 
+enum en_ISG_IOMODE
+{
+    ISG_IOMODE_READ = 1,
+    ISG_IOMODE_WRITE,
+    ISG_IOMODE_APPEND
+};
+
 enum en_ASYNC_OPSTAT
 {
     ISG_OPSTAT_FAILURE = -1,
@@ -107,5 +114,19 @@ S32 iSGTgtHaveRoom(st_ISGSESSION* isgdata, S32 tidx, S32 fsize, const char* dpat
                    const char* fname, S32* bytesNeeded, S32* availOnDisk, S32* needFile);
 S32 iSGSelectGameDir(st_ISGSESSION* isgdata, const char* dname);
 S32 iSGFileSize(st_ISGSESSION* isgdata, const char* fname);
+U32 iSGTgtState(st_ISGSESSION* isgdata, S32 tgtidx, const char* dpath);
+char* iSGFileModDate(st_ISGSESSION* isgdata, const char* fname);
+S32 iSGSaveFile(st_ISGSESSION* isgdata, const char* fname, char* data, S32 n, S32 async,
+                char* label);
+S32 iSGLoadFile(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 async);
+S32 iSGReadLeader(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 numbytes,
+                  S32 async);
+extern "C" {
+S32 fn_800132C4(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted);
+S32 fn_800138EC(st_ISGSESSION* isgdata, const char* dname, const char* fname);
+S32 fn_80013C64(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* filesFree);
+char* fn_80014180(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype);
+S32 fn_80014310(st_ISGSESSION* isgdata, S32 slot);
+}
 
 #endif

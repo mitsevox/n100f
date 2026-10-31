@@ -47,13 +47,28 @@ extern "C" {
 #define CARD_STAT_BANNER_RGB5A3 2
 #define CARD_STAT_BANNER_MASK 3
 
+#define CARD_STAT_ICON_NONE 0
+
+#define CARD_STAT_ANIM_LOOP 0x00
+#define CARD_STAT_ANIM_MASK 0x04
+
+#define CARD_STAT_SPEED_END 0
 #define CARD_STAT_SPEED_FAST 1
+#define CARD_STAT_SPEED_MIDDLE 2
 #define CARD_STAT_SPEED_MASK 3
 
 #define CARD_ATTR_PUBLIC 0x04u
 
 #define CARDGetBannerFormat(stat) (((stat)->bannerFormat) & CARD_STAT_BANNER_MASK)
 #define CARDGetIconFormat(stat, n) (((stat)->iconFormat >> (2 * (n))) & CARD_STAT_ICON_MASK)
+#define CARDSetBannerFormat(stat, f) \
+    ((stat)->bannerFormat = (u8)(((stat)->bannerFormat & ~CARD_STAT_BANNER_MASK) | (f)))
+#define CARDSetIconAnim(stat, f) \
+    ((stat)->bannerFormat = (u8)(((stat)->bannerFormat & ~CARD_STAT_ANIM_MASK) | (f)))
+#define CARDSetIconFormat(stat, n, f) \
+    ((stat)->iconFormat = (u16)(((stat)->iconFormat & ~(CARD_STAT_ICON_MASK << (2 * (n)))) | ((f) << (2 * (n)))))
+#define CARDSetIconAddress(stat, addr) ((stat)->iconAddr = (u32)(addr))
+#define CARDSetCommentAddress(stat, addr) ((stat)->commentAddr = (u32)(addr))
 #define CARDSetIconSpeed(stat, n, f) \
     ((stat)->iconSpeed = (u16)(((stat)->iconSpeed & ~(CARD_STAT_SPEED_MASK << (2 * (n)))) | ((f) << (2 * (n)))))
 

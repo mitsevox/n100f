@@ -54,7 +54,7 @@ extern "C" S32 fn_80040FCC(S32 card, S32 game);
 extern "C" void fn_80016600();
 extern "C" void fn_80016698(S32 reset);
 // The memory card's file counts, from the save-game layer.
-extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* files, S32* filesNeeded);
+extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree);
 // The per-frame helpers the front-end loops share.
 extern "C" void fn_80021B20();
 extern "C" void fn_80021E30();
