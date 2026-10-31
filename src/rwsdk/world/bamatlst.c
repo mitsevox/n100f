@@ -57,7 +57,7 @@ S32 _rpMaterialListFindMaterialIndex(const RpMaterialList* matList, const RpMate
 // The number of slots a full list grows by.
 #define MATERIALLIST_GROWBY 20
 
-RpMaterial* fn_8014D2BC(RwStream* stream);
+RpMaterial* RpMaterialStreamRead(RwStream* stream);
 
 // Makes room for space materials, keeping the ones already listed.
 static RpMaterialList* MaterialListAlloc(RpMaterialList* matList, S32 space)
@@ -196,7 +196,7 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
 
                 if (version >= rwLIBRARYBASEVERSION && version <= rwLIBRARYCURRENTVERSION)
                 {
-                    material = fn_8014D2BC(stream);
+                    material = RpMaterialStreamRead(stream);
 
                     if (!material)
                     {

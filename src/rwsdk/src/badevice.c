@@ -104,8 +104,8 @@ S32 RwEngineGetCurrentVideoMode(void)
     return -1;
 }
 
-void fn_8016D498(F32 gamma);
-void fn_80163A8C(void);
+S32 RwImageSetGamma(F32 gammaValue);
+void _rwMemoryClose(void);
 
 // Lets the plugins and the device shut down, leaving the engine open.
 S32 RwEngineStop(void)
@@ -136,7 +136,7 @@ S32 RwEngineStart(void)
     {
         if (_rwPluginRegistryInitObject(&engineTKList, RwEngineInstance))
         {
-            fn_8016D498(RWSRCGLOBAL(dOpenDevice).gammaCorrection);
+            RwImageSetGamma(RWSRCGLOBAL(dOpenDevice).gammaCorrection);
             _rwDeviceSystemRequest(device, DEVICESYSTEMFINALIZESTART, NULL, NULL, 0);
             RWSRCGLOBAL(engineStatus) = rwENGINESTATUSSTARTED;
             return TRUE;
@@ -269,7 +269,7 @@ S32 RwEngineTerm(void)
     {
         _rwPluginRegistryClose();
         _rwFileSystemClose();
-        fn_80163A8C();
+        _rwMemoryClose();
         RWSRCGLOBAL(engineStatus) = rwENGINESTATUSIDLE;
     }
 

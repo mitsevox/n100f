@@ -905,6 +905,8 @@ config.libs: List[Dict[str, Any]] = [
         [
             Object(NonMatching, "rwsdk/plugin/skin2/rpskin.c"),
             Object(NonMatching, "rwsdk/plugin/skin2/gcn/skingcn.c"),
+            Object(NonMatching, "rwsdk/plugin/skin2/gcn/skinstream.c"),
+            Object(NonMatching, "rwsdk/plugin/skin2/gcn/skingcng.c"),
         ],
     ),
     RWLib(
@@ -940,6 +942,13 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/wrldpipe.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c"),
+            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/native.c"),
+        ],
+    ),
+    RWLib(
+        "rtslerp",
+        [
+            Object(NonMatching, "rwsdk/tool/slerp/rtslerp.c"),
         ],
     ),
     RWLib(
@@ -950,6 +959,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/plcore/bafsys.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/plcore/baimmedi.c"),
             Object(NonMatching, "rwsdk/src/plcore/bamatrix.c"),
+            Object(NonMatching, "rwsdk/src/plcore/bamemory.c"),
             Object(NonMatching, "rwsdk/src/plcore/baresour.c"),
             Object(NonMatching, "rwsdk/src/plcore/bastream.c"),
             Object(NonMatching, "rwsdk/src/plcore/batkbin.c"),
@@ -957,6 +967,9 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/plcore/bavector.c"),
             Object(NonMatching, "rwsdk/src/plcore/resmem.c"),
             Object(NonMatching, "rwsdk/src/plcore/rwstring.c"),
+            Object(NonMatching, "rwsdk/os/gcn/osintf.c"),
+            Object(NonMatching, "rwsdk/src/babbox.c"),
+            Object(NonMatching, "rwsdk/src/babincam.c"),
             Object(NonMatching, "rwsdk/src/babinfrm.c"),
             Object(NonMatching, "rwsdk/src/babintex.c"),
             Object(NonMatching, "rwsdk/src/bacamera.c"),
@@ -989,6 +1002,8 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/pipe/p2/nodeSubmitLine.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/pipe/p2/nodeSubmitTriangle.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/nodeTransform.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/p2altmdl.c"),
+            Object(NonMatching, "rwsdk/src/pipe/p2/p2clpcom.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/p2core.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/p2define.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/p2dep.c"),
