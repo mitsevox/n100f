@@ -2,6 +2,8 @@
 
 #include "iMath.h"
 
+#include <ctype.h>
+
 static S32 g_xutilinit;
 static S32 g_crc_needinit = 1;
 static U32 g_crc32_table[256] = {};
@@ -20,6 +22,72 @@ S32 xUtilShutdown()
 {
     g_xutilinit--;
     return g_xutilinit;
+}
+
+// Prints a four-character asset tag into one of six rotating buffers, with '?' for unprintable
+// characters. Buffers 4 and 5 keep the byte order, 6 prints both orders as "abcd/dcba".
+char* xUtil_idtag2string(U32 srctag, S32 bufidx)
+{
+    U32 tag = srctag;
+    char* strptr;
+    char* uc = (char*)&tag;
+    S32 l;
+    char t;
+    static char buf[6][10] = {};
+
+    if (bufidx < 0 || bufidx >= 7)
+    {
+        strptr = buf[0];
+    }
+    else
+    {
+        strptr = buf[bufidx];
+    }
+
+    // Swap to big endian on a little-endian machine.
+    l = 1;
+    if ((S32)((char*)&l)[3] != 0)
+    {
+        t = uc[0];
+        uc[0] = uc[3];
+        uc[3] = t;
+
+        t = uc[1];
+        uc[1] = uc[2];
+        uc[2] = t;
+    }
+
+    switch (bufidx)
+    {
+    case 4:
+    case 5:
+        strptr[0] = isprint(uc[0]) ? uc[0] : '?';
+        strptr[1] = isprint(uc[1]) ? uc[1] : '?';
+        strptr[2] = isprint(uc[2]) ? uc[2] : '?';
+        strptr[3] = isprint(uc[3]) ? uc[3] : '?';
+        break;
+    case 6:
+    default:
+        strptr[0] = isprint(uc[3]) ? uc[3] : '?';
+        strptr[1] = isprint(uc[2]) ? uc[2] : '?';
+        strptr[2] = isprint(uc[1]) ? uc[1] : '?';
+        strptr[3] = isprint(uc[0]) ? uc[0] : '?';
+        break;
+    }
+
+    strptr[4] = '\0';
+
+    if (bufidx == 6)
+    {
+        strptr[4] = '/';
+        strptr[5] = isprint(uc[0]) ? uc[0] : '?';
+        strptr[6] = isprint(uc[1]) ? uc[1] : '?';
+        strptr[7] = isprint(uc[2]) ? uc[2] : '?';
+        strptr[8] = isprint(uc[3]) ? uc[3] : '?';
+        strptr[9] = '\0';
+    }
+
+    return strptr;
 }
 
 U32 xUtil_crc_init()

@@ -105,6 +105,84 @@ struct xParCmdAge : xParCmdAsset
     F32 age_rate;
 };
 
+struct xParCmdJet : xParCmdAsset
+{
+    xVec3 center;
+    xVec3 acc;
+    F32 gravity;
+    F32 epsilon;
+    F32 radiusSqr;
+};
+
+struct xParCmdRotateAround : xParCmdAsset
+{
+    xVec3 pos;
+    F32 unused1;
+    F32 radius_growth;
+    F32 yaw;
+};
+
+struct xParCmdApplyCamMat : xParCmdAsset
+{
+    xVec3 apply;
+};
+
+struct xParCmdRotPar : xParCmdAsset
+{
+    xVec3 min;
+    xVec3 max;
+};
+
+struct xParCmdRandomVelocityPar : xParCmdAsset
+{
+    F32 x;
+    F32 y;
+    F32 z;
+};
+
+struct xParCmdPlayerCollision : xParCmdAsset
+{
+    F32 min;
+    F32 max;
+};
+
+struct xParCmdTexAnim : xParCmdAsset
+{
+    U8 anim_mode;
+    U8 anim_wrap_mode;
+    U8 pad_anim;
+    U8 throttle_spd_less_than;
+    F32 throttle_spd_sqr;
+    F32 throttle_time;
+    F32 throttle_time_elapsed;
+};
+
+// The commands below are not in the PS2 debug information. Their sizes come from the command table
+// and their fields from what the GameCube update functions read.
+
+// Picks one of two built-in curves.
+struct xParCmdSmokeAlpha : xParCmdAsset
+{
+    S32 curve;
+};
+
+// Picks one of two built-in curves.
+struct xParCmdScale : xParCmdAsset
+{
+    S32 curve;
+};
+
+struct xParCmdAnimalMagnetism : xParCmdAsset
+{
+    F32 strength;
+};
+
+// Picks one of the hard-coded behaviours.
+struct xParCmdCustom : xParCmdAsset
+{
+    S32 type;
+};
+
 struct xParCmd
 {
     U32 flag;

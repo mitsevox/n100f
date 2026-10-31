@@ -75,6 +75,7 @@ double asin(double x);
 double atan(double x);
 double atan2(double y, double x);
 double copysign(double x, double y);
+double exp(double x);
 double floor(double x);
 double fmod(double x, double y);
 double frexp(double x, int* exp);
