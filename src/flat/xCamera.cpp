@@ -556,7 +556,7 @@ extern "C" void fn_8001F8C0(_tagxCamFrame* cam, _tagxCam* c, F32 seconds)
     xVec3Sub(&vec, &c->mat.pos, &target_with_y);
     xMat3x3LookVec((xMat3x3*)&c->mat, &vec);
 
-    if (sControllerStill && seconds > 0.0f)
+    if (sControllerStill > 0 && seconds > 0.0f)
     {
         ShoulderStateSwitch(cam, c, 1);
     }

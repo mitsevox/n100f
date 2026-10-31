@@ -409,7 +409,7 @@ U32 xShadowReceiveShadowSetup(_xEnt* ent)
     }
 
     // One entity in C004 drops out near its spot.
-    if (ent->id == 0xFC1CFD0B && sceneID == zSceneIDFromName("c004"))
+    if (ent->id == 0xFC1DFD0B && sceneID == zSceneIDFromName("c004"))
     {
         xVec3 spot = { -458.0f, -17.0f, 121.0f };
         xVec3* pos = (xVec3*)&globals.player.ent.model->Mat->pos;
