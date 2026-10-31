@@ -475,7 +475,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/iEnv.cpp"),
             Object(NonMatching, "flat/iFile.cpp"),
             Object(NonMatching, "flat/iFont.cpp"),
-            Object(MatchingFor("GIHE78-rev0"), "flat/iLight.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iLight.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMath.cpp"),
             Object(NonMatching, "flat/iMath3.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMemMgr.cpp"),
