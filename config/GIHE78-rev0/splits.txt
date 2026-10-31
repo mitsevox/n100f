@@ -1691,12 +1691,18 @@ rwsdk/world/pipe/p2/nodeAtomicInstance.c:
 
 rwsdk/world/pipe/p2/nodeLight.c:
 	.text       start:0x80155B68 end:0x80157088
+	.data       start:0x801DD6D0 end:0x801DD790
+	.sdata      start:0x8025E7A0 end:0x8025E7A8
+	.sdata2     start:0x80262950 end:0x80262960
 
 rwsdk/world/pipe/p2/nodeMaterialScatter.c:
 	.text       start:0x80157088 end:0x801571CC
 
 rwsdk/world/pipe/p2/nodePostLight.c:
 	.text       start:0x801571CC end:0x80157880
+	.data       start:0x801DD838 end:0x801DD8E8
+	.sdata      start:0x8025E7A8 end:0x8025E7B0
+	.sdata2     start:0x80262960 end:0x80262970
 
 rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c:
 	.text       start:0x80157880 end:0x80157A3C

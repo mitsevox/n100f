@@ -338,6 +338,10 @@ typedef enum RpLightType
     rpLIGHTTYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RpLightType;
 
+// RpLightSetColor sets this private flag when the light's red, green and blue are equal, so the
+// light functions can use one product for all three channels.
+#define LIGHT_PRIVATENOCHROMA 0x01
+
 #define RpLightGetType(_light) ((RpLightType)rwObjectGetSubType((_light)))
 #define RpLightGetFrame(_light) ((RwFrame*)rwObjectGetParent((_light)))
 #define RpLightSetFrame(_light, _frame) (_rwObjectHasFrameSetFrame((_light), (_frame)), (_light))

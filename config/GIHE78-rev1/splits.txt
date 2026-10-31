@@ -1361,6 +1361,9 @@ rwsdk/world/pipe/p2/nodeMaterialScatter.c:
 
 rwsdk/world/pipe/p2/nodePostLight.c:
 	.text       start:0x801571AC end:0x80157860
+	.data       start:0x801EE1B8 end:0x801EE268
+	.sdata      start:0x80270648 end:0x80270650
+	.sdata2     start:0x80274828 end:0x80274838
 
 rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c:
 	.text       start:0x80157860 end:0x80157A1C

@@ -5,9 +5,6 @@
 // The first version whose light chunk holds the cone's minus cosine; older chunks hold its tangent.
 #define LIGHT_MINUSCOSVERSION 0x30300
 
-// The private flag set when a light's red, green and blue are equal.
-#define LIGHT_PRIVATENOCHROMA 0x01
-
 // A light's stream chunk.
 typedef struct RpLightChunkInfo RpLightChunkInfo;
 struct RpLightChunkInfo
