@@ -78,37 +78,38 @@
 void RpHAnimStdKeyFrameToMatrix(void* matrix, void* voidIFrame)
 {
     RwMatrix* mpMatrix = (RwMatrix*)matrix;
-    RpHAnimStdKeyFrame* iFrame = (RpHAnimStdKeyFrame*)voidIFrame;
+    HAnimStdKey* iFrame = (HAnimStdKey*)voidIFrame;
 
-    RtQuatUnitConvertToMatrixMacro(&iFrame->q, mpMatrix);
-    mpMatrix->pos.x = iFrame->t.x;
-    mpMatrix->pos.y = iFrame->t.y;
-    mpMatrix->pos.z = iFrame->t.z;
+    RtQuatUnitConvertToMatrixMacro(&iFrame->rotation, mpMatrix);
+    mpMatrix->pos.x = iFrame->translation.x;
+    mpMatrix->pos.y = iFrame->translation.y;
+    mpMatrix->pos.z = iFrame->translation.z;
 }
 
 void RpHAnimStdKeyFrameInterpolate(void* voidOut, void* voidIn1, void* voidIn2, F32 time)
 {
-    RpHAnimStdKeyFrame* out = (RpHAnimStdKeyFrame*)voidOut;
-    RpHAnimStdKeyFrame* in1 = (RpHAnimStdKeyFrame*)voidIn1;
-    RpHAnimStdKeyFrame* in2 = (RpHAnimStdKeyFrame*)voidIn2;
+    HAnimStdKey* out = (HAnimStdKey*)voidOut;
+    HAnimStdKey* in1 = (HAnimStdKey*)voidIn1;
+    HAnimStdKey* in2 = (HAnimStdKey*)voidIn2;
     F32 fTime = (time - in1->time) / (in2->time - in1->time);
     F32 cosTheta;
     F32 fromScale;
     F32 toScale;
 
-    cosTheta = RwV3dDotProductMacro(&in1->q.imag, &in2->q.imag) + in1->q.real * in2->q.real;
-    out->t.x = in1->t.x + fTime * (in2->t.x - in1->t.x);
-    out->t.y = in1->t.y + fTime * (in2->t.y - in1->t.y);
-    out->t.z = in1->t.z + fTime * (in2->t.z - in1->t.z);
+    cosTheta = RwV3dDotProductMacro(&in1->rotation.imag, &in2->rotation.imag) +
+               in1->rotation.real * in2->rotation.real;
+    out->translation.x = in1->translation.x + fTime * (in2->translation.x - in1->translation.x);
+    out->translation.y = in1->translation.y + fTime * (in2->translation.y - in1->translation.y);
+    out->translation.z = in1->translation.z + fTime * (in2->translation.z - in1->translation.z);
     out->time = time;
 
     if (cosTheta < 0.0f)
     {
         cosTheta = -cosTheta;
-        in2->q.imag.x = -in2->q.imag.x;
-        in2->q.imag.y = -in2->q.imag.y;
-        in2->q.imag.z = -in2->q.imag.z;
-        in2->q.real = -in2->q.real;
+        in2->rotation.imag.x = -in2->rotation.imag.x;
+        in2->rotation.imag.y = -in2->rotation.imag.y;
+        in2->rotation.imag.z = -in2->rotation.imag.z;
+        in2->rotation.real = -in2->rotation.real;
     }
 
     fromScale = 1.0f - fTime;
@@ -131,33 +132,34 @@ void RpHAnimStdKeyFrameInterpolate(void* voidOut, void* voidIn1, void* voidIn2, 
         toScale *= recipSinTheta;
     }
 
-    out->q.imag.x = fromScale * in1->q.imag.x + toScale * in2->q.imag.x;
-    out->q.imag.y = fromScale * in1->q.imag.y + toScale * in2->q.imag.y;
-    out->q.imag.z = fromScale * in1->q.imag.z + toScale * in2->q.imag.z;
-    out->q.real = fromScale * in1->q.real + toScale * in2->q.real;
+    out->rotation.imag.x = fromScale * in1->rotation.imag.x + toScale * in2->rotation.imag.x;
+    out->rotation.imag.y = fromScale * in1->rotation.imag.y + toScale * in2->rotation.imag.y;
+    out->rotation.imag.z = fromScale * in1->rotation.imag.z + toScale * in2->rotation.imag.z;
+    out->rotation.real = fromScale * in1->rotation.real + toScale * in2->rotation.real;
 }
 
 void RpHAnimStdKeyFrameBlend(void* voidOut, void* voidIn1, void* voidIn2, F32 alpha)
 {
-    RpHAnimStdKeyFrame* out = (RpHAnimStdKeyFrame*)voidOut;
-    RpHAnimStdKeyFrame* in1 = (RpHAnimStdKeyFrame*)voidIn1;
-    RpHAnimStdKeyFrame* in2 = (RpHAnimStdKeyFrame*)voidIn2;
+    HAnimStdKey* out = (HAnimStdKey*)voidOut;
+    HAnimStdKey* in1 = (HAnimStdKey*)voidIn1;
+    HAnimStdKey* in2 = (HAnimStdKey*)voidIn2;
     F32 cosTheta;
     F32 fromScale;
     F32 toScale;
 
-    cosTheta = RwV3dDotProductMacro(&in1->q.imag, &in2->q.imag) + in1->q.real * in2->q.real;
-    out->t.x = in1->t.x + alpha * (in2->t.x - in1->t.x);
-    out->t.y = in1->t.y + alpha * (in2->t.y - in1->t.y);
-    out->t.z = in1->t.z + alpha * (in2->t.z - in1->t.z);
+    cosTheta = RwV3dDotProductMacro(&in1->rotation.imag, &in2->rotation.imag) +
+               in1->rotation.real * in2->rotation.real;
+    out->translation.x = in1->translation.x + alpha * (in2->translation.x - in1->translation.x);
+    out->translation.y = in1->translation.y + alpha * (in2->translation.y - in1->translation.y);
+    out->translation.z = in1->translation.z + alpha * (in2->translation.z - in1->translation.z);
 
     if (cosTheta < 0.0f)
     {
         cosTheta = -cosTheta;
-        in2->q.imag.x = -in2->q.imag.x;
-        in2->q.imag.y = -in2->q.imag.y;
-        in2->q.imag.z = -in2->q.imag.z;
-        in2->q.real = -in2->q.real;
+        in2->rotation.imag.x = -in2->rotation.imag.x;
+        in2->rotation.imag.y = -in2->rotation.imag.y;
+        in2->rotation.imag.z = -in2->rotation.imag.z;
+        in2->rotation.real = -in2->rotation.real;
     }
 
     fromScale = 1.0f - alpha;
@@ -180,20 +182,20 @@ void RpHAnimStdKeyFrameBlend(void* voidOut, void* voidIn1, void* voidIn2, F32 al
         toScale *= recipSinTheta;
     }
 
-    out->q.imag.x = fromScale * in1->q.imag.x + toScale * in2->q.imag.x;
-    out->q.imag.y = fromScale * in1->q.imag.y + toScale * in2->q.imag.y;
-    out->q.imag.z = fromScale * in1->q.imag.z + toScale * in2->q.imag.z;
-    out->q.real = fromScale * in1->q.real + toScale * in2->q.real;
+    out->rotation.imag.x = fromScale * in1->rotation.imag.x + toScale * in2->rotation.imag.x;
+    out->rotation.imag.y = fromScale * in1->rotation.imag.y + toScale * in2->rotation.imag.y;
+    out->rotation.imag.z = fromScale * in1->rotation.imag.z + toScale * in2->rotation.imag.z;
+    out->rotation.real = fromScale * in1->rotation.real + toScale * in2->rotation.real;
 }
 
 RpHAnimAnimation* RpHAnimStdKeyFrameStreamRead(RwStream* stream, RpHAnimAnimation* animation)
 {
-    RpHAnimStdKeyFrame* frame;
-    RpHAnimStdKeyFrame* frames;
+    HAnimStdKey* frame;
+    HAnimStdKey* frames;
     S32 i;
 
-    animation->pFrames = RwMalloc(animation->numFrames * sizeof(RpHAnimStdKeyFrame));
-    frames = (RpHAnimStdKeyFrame*)animation->pFrames;
+    animation->pFrames = RwMalloc(animation->numFrames * sizeof(HAnimStdKey));
+    frames = (HAnimStdKey*)animation->pFrames;
 
     if (!frames)
     {
@@ -216,7 +218,7 @@ RpHAnimAnimation* RpHAnimStdKeyFrameStreamRead(RwStream* stream, RpHAnimAnimatio
             return NULL;
         }
 
-        frame->prevFrame = &frames[prevOffset / sizeof(RpHAnimStdKeyFrame)];
+        frame->prev = &frames[prevOffset / sizeof(HAnimStdKey)];
         frame++;
     }
 
@@ -225,9 +227,9 @@ RpHAnimAnimation* RpHAnimStdKeyFrameStreamRead(RwStream* stream, RpHAnimAnimatio
 
 S32 RpHAnimStdKeyFrameStreamWrite(RpHAnimAnimation* animation, RwStream* stream)
 {
-    RpHAnimStdKeyFrame* frame;
+    HAnimStdKey* frame;
     S32 i;
-    RpHAnimStdKeyFrame* frames = (RpHAnimStdKeyFrame*)animation->pFrames;
+    HAnimStdKey* frames = (HAnimStdKey*)animation->pFrames;
 
     frame = frames;
 
@@ -240,7 +242,7 @@ S32 RpHAnimStdKeyFrameStreamWrite(RpHAnimAnimation* animation, RwStream* stream)
             return FALSE;
         }
 
-        prevOffset = (U8*)frame->prevFrame - (U8*)frames;
+        prevOffset = (U8*)frame->prev - (U8*)frames;
 
         if (!RwStreamWriteInt32(stream, &prevOffset, sizeof(S32)))
         {
@@ -268,23 +270,23 @@ S32 RpHAnimStdKeyFrameStreamGetSize(RpHAnimAnimation* animation)
 
 void RpHAnimStdKeyFrameMulRecip(void* voidFrame, void* voidStart)
 {
-    RpHAnimStdKeyFrame* frame = (RpHAnimStdKeyFrame*)voidFrame;
-    RpHAnimStdKeyFrame* start = (RpHAnimStdKeyFrame*)voidStart;
+    HAnimStdKey* frame = (HAnimStdKey*)voidFrame;
+    HAnimStdKey* start = (HAnimStdKey*)voidStart;
     RtQuat qRecip;
     RtQuat qTemp;
 
-    RtQuatReciprocalMacro(&qRecip, &start->q);
-    qTemp = frame->q;
-    RtQuatMultiplyMacro(&frame->q, &qRecip, &qTemp);
-    RwV3dSubMacro(&frame->t, &frame->t, &start->t);
+    RtQuatReciprocalMacro(&qRecip, &start->rotation);
+    qTemp = frame->rotation;
+    RtQuatMultiplyMacro(&frame->rotation, &qRecip, &qTemp);
+    RwV3dSubMacro(&frame->translation, &frame->translation, &start->translation);
 }
 
 void RpHAnimStdKeyFrameAdd(void* voidOut, void* voidIn1, void* voidIn2)
 {
-    RpHAnimStdKeyFrame* out = (RpHAnimStdKeyFrame*)voidOut;
-    RpHAnimStdKeyFrame* in1 = (RpHAnimStdKeyFrame*)voidIn1;
-    RpHAnimStdKeyFrame* in2 = (RpHAnimStdKeyFrame*)voidIn2;
+    HAnimStdKey* out = (HAnimStdKey*)voidOut;
+    HAnimStdKey* in1 = (HAnimStdKey*)voidIn1;
+    HAnimStdKey* in2 = (HAnimStdKey*)voidIn2;
 
-    RtQuatMultiplyMacro(&out->q, &in1->q, &in2->q);
-    RwV3dAddMacro(&out->t, &in1->t, &in2->t);
+    RtQuatMultiplyMacro(&out->rotation, &in1->rotation, &in2->rotation);
+    RwV3dAddMacro(&out->translation, &in1->translation, &in2->translation);
 }

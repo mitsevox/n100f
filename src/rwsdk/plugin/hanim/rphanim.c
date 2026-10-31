@@ -35,20 +35,20 @@ typedef struct RpHAnimAtomicGlobalVars RpHAnimAtomicGlobalVars;
 struct RpHAnimAtomicGlobalVars
 {
     S32 engineOffset;
-    RwFreeList* freeList;
-    RwFreeList* animationFreeList;
+    RwFreeList* HAnimFreeList;
+    RwFreeList* HAnimAnimationFreeList;
 };
 
 // What the plugin adds to every frame: its node ID and the hierarchy it heads.
-typedef struct RpHAnimFrameExtension RpHAnimFrameExtension;
-struct RpHAnimFrameExtension
+typedef struct HAnimFrameData HAnimFrameData;
+struct HAnimFrameData
 {
     S32 id;
     RpHAnimHierarchy* hierarchy;
 };
 
-#define HANIMFRAMEEXT(frame)                                                                       \
-    ((RpHAnimFrameExtension*)((U8*)(frame) + RpHAnimAtomicGlobals.engineOffset))
+#define HANIM_FRAMEDATA(frame)                                                                     \
+    ((HAnimFrameData*)((U8*)(frame) + RpHAnimAtomicGlobals.engineOffset))
 
 RpHAnimAtomicGlobalVars RpHAnimAtomicGlobals;
 RpHAnimInterpolatorInfo RpHAnimInterpolatorInfoBlock[HANIM_MAX_INTERPOLATORS];
@@ -60,16 +60,16 @@ static void* HAnimOpen(void* instance, S32 offset, S32 size)
 {
     RpHAnimInterpolatorInfo interpolatorInfo;
 
-    RpHAnimAtomicGlobals.freeList = NULL;
-    RpHAnimAtomicGlobals.animationFreeList = RwFreeListCreate(sizeof(RpHAnimAnimation), 20, 0);
+    RpHAnimAtomicGlobals.HAnimFreeList = NULL;
+    RpHAnimAtomicGlobals.HAnimAnimationFreeList = RwFreeListCreate(sizeof(RpHAnimAnimation), 20, 0);
 
-    if (!RpHAnimAtomicGlobals.animationFreeList)
+    if (!RpHAnimAtomicGlobals.HAnimAnimationFreeList)
     {
         instance = NULL;
     }
 
     interpolatorInfo.typeID = HANIM_STD_KEYFRAME_TYPE;
-    interpolatorInfo.keyFrameSize = sizeof(RpHAnimStdKeyFrame);
+    interpolatorInfo.keyFrameSize = sizeof(HAnimStdKey);
     interpolatorInfo.keyFrameToMatrixCB = RpHAnimStdKeyFrameToMatrix;
     interpolatorInfo.keyFrameBlendCB = RpHAnimStdKeyFrameBlend;
     interpolatorInfo.keyFrameInterpolateCB = RpHAnimStdKeyFrameInterpolate;
@@ -87,16 +87,16 @@ static void* HAnimClose(void* instance, S32 offset, S32 size)
 {
     RpHAnimInterpolatorInfoBlockNumEntries = 0;
 
-    if (RpHAnimAtomicGlobals.animationFreeList)
+    if (RpHAnimAtomicGlobals.HAnimAnimationFreeList)
     {
-        RwFreeListDestroy(RpHAnimAtomicGlobals.animationFreeList);
-        RpHAnimAtomicGlobals.animationFreeList = NULL;
+        RwFreeListDestroy(RpHAnimAtomicGlobals.HAnimAnimationFreeList);
+        RpHAnimAtomicGlobals.HAnimAnimationFreeList = NULL;
     }
 
-    if (RpHAnimAtomicGlobals.freeList)
+    if (RpHAnimAtomicGlobals.HAnimFreeList)
     {
-        RwFreeListDestroy(RpHAnimAtomicGlobals.freeList);
-        RpHAnimAtomicGlobals.freeList = NULL;
+        RwFreeListDestroy(RpHAnimAtomicGlobals.HAnimFreeList);
+        RpHAnimAtomicGlobals.HAnimFreeList = NULL;
     }
 
     return instance;
@@ -104,7 +104,7 @@ static void* HAnimClose(void* instance, S32 offset, S32 size)
 
 static void* HAnimConstructor(void* object, S32 offset, S32 size)
 {
-    RpHAnimFrameExtension* frameExt = HANIMFRAMEEXT(object);
+    HAnimFrameData* frameExt = HANIM_FRAMEDATA(object);
 
     frameExt->hierarchy = NULL;
     frameExt->id = -1;
@@ -115,7 +115,7 @@ static void* HAnimConstructor(void* object, S32 offset, S32 size)
 // Unlinks the frame's hierarchy from its frames and destroys it when this frame heads it.
 static void* HAnimDestructor(void* object, S32 offset, S32 size)
 {
-    RpHAnimFrameExtension* frameExt = HANIMFRAMEEXT(object);
+    HAnimFrameData* frameExt = HANIM_FRAMEDATA(object);
     RpHAnimHierarchy* hierarchy = frameExt->hierarchy;
 
     if (hierarchy)
@@ -142,8 +142,8 @@ static void* HAnimDestructor(void* object, S32 offset, S32 size)
 
 static void* HAnimCopy(void* dstObject, const void* srcObject, S32 offset, S32 size)
 {
-    RpHAnimFrameExtension* srcFrameExt = HANIMFRAMEEXT(srcObject);
-    RpHAnimFrameExtension* dstFrameExt = HANIMFRAMEEXT(dstObject);
+    HAnimFrameData* srcFrameExt = HANIM_FRAMEDATA(srcObject);
+    HAnimFrameData* dstFrameExt = HANIM_FRAMEDATA(dstObject);
     RpHAnimHierarchy* srcHierarchy;
 
     dstFrameExt->id = srcFrameExt->id;
@@ -176,7 +176,7 @@ static RwStream* HAnimWrite(RwStream* stream, S32 binaryLength, const void* obje
                             S32 size)
 {
     S32 version = HANIM_STREAM_VERSION;
-    RpHAnimFrameExtension* frameExt;
+    HAnimFrameData* frameExt;
     RpHAnimHierarchy* hierarchy;
 
     if (!RwStreamWriteInt32(stream, &version, sizeof(S32)))
@@ -184,7 +184,7 @@ static RwStream* HAnimWrite(RwStream* stream, S32 binaryLength, const void* obje
         return NULL;
     }
 
-    frameExt = HANIMFRAMEEXT(object);
+    frameExt = HANIM_FRAMEDATA(object);
 
     if (!RwStreamWriteInt32(stream, &frameExt->id, sizeof(S32)))
     {
@@ -250,7 +250,7 @@ static RwStream* HAnimWrite(RwStream* stream, S32 binaryLength, const void* obje
 
 static RwStream* HAnimRead(RwStream* stream, S32 binaryLength, void* object, S32 offset, S32 size)
 {
-    RpHAnimFrameExtension* frameExt = HANIMFRAMEEXT(object);
+    HAnimFrameData* frameExt = HANIM_FRAMEDATA(object);
     S32 version;
     S32 numNodes;
     S32 flags;
@@ -354,7 +354,7 @@ static RwStream* HAnimRead(RwStream* stream, S32 binaryLength, void* object, S32
 static S32 HAnimSize(const void* object, S32 offset, S32 size)
 {
     S32 streamSize = sizeof(S32) * 3;
-    RpHAnimHierarchy* hierarchy = HANIMFRAMEEXT(object)->hierarchy;
+    RpHAnimHierarchy* hierarchy = HANIM_FRAMEDATA(object)->hierarchy;
 
     if (hierarchy && !(hierarchy->flags & rpHANIMHIERARCHYSUBHIERARCHY))
     {
@@ -478,7 +478,7 @@ RpHAnimHierarchy* RpHAnimHierarchyDestroy(RpHAnimHierarchy* hierarchy)
 
     if (parentFrame)
     {
-        HANIMFRAMEEXT(parentFrame)->hierarchy = NULL;
+        HANIM_FRAMEDATA(parentFrame)->hierarchy = NULL;
     }
 
     return NULL;
@@ -486,7 +486,7 @@ RpHAnimHierarchy* RpHAnimHierarchyDestroy(RpHAnimHierarchy* hierarchy)
 
 S32 RpHAnimFrameSetHierarchy(RwFrame* frame, RpHAnimHierarchy* hierarchy)
 {
-    RpHAnimFrameExtension* frameExt = HANIMFRAMEEXT(frame);
+    HAnimFrameData* frameExt = HANIM_FRAMEDATA(frame);
 
     if (frameExt->hierarchy)
     {
@@ -505,7 +505,7 @@ S32 RpHAnimFrameSetHierarchy(RwFrame* frame, RpHAnimHierarchy* hierarchy)
 
 RpHAnimHierarchy* RpHAnimFrameGetHierarchy(RwFrame* frame)
 {
-    return HANIMFRAMEEXT(frame)->hierarchy;
+    return HANIM_FRAMEDATA(frame)->hierarchy;
 }
 
 S32 RpHAnimPluginAttach(void)
@@ -518,7 +518,7 @@ S32 RpHAnimPluginAttach(void)
     }
 
     RpHAnimAtomicGlobals.engineOffset =
-        RwFrameRegisterPlugin(sizeof(RpHAnimFrameExtension), HANIM_PLUGIN_ID, HAnimConstructor,
+        RwFrameRegisterPlugin(sizeof(HAnimFrameData), HANIM_PLUGIN_ID, HAnimConstructor,
                               HAnimDestructor, HAnimCopy);
     offset = RwFrameRegisterPluginStream(HANIM_PLUGIN_ID, HAnimRead, HAnimWrite, HAnimSize);
 

@@ -18,13 +18,13 @@ struct RpHAnimAnimation
 
 // The standard keyframe: a rotation and a translation at a time, linked to the previous
 // keyframe of the same node.
-typedef struct RpHAnimStdKeyFrame RpHAnimStdKeyFrame;
-struct RpHAnimStdKeyFrame
+typedef struct HAnimStdKey HAnimStdKey;
+struct HAnimStdKey
 {
-    RpHAnimStdKeyFrame* prevFrame;
+    HAnimStdKey* prev;
     F32 time;
-    RtQuat q;
-    RwV3d t;
+    RtQuat rotation;
+    RwV3d translation;
 };
 
 typedef struct RpHAnimNodeInfo RpHAnimNodeInfo;
