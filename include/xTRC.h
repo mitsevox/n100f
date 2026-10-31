@@ -3,7 +3,8 @@
 
 #include "types.h"
 
-// The GC values, which add the disk states to the PS2 enum.
+// The GC values: the disk states follow the pad states, which renumbers the PS2 tray and
+// invalid-disk states (PS2 5/6/7 are 7/8/10 here).
 enum _tagTRCState
 {
     TRC_Unknown,
@@ -23,6 +24,9 @@ enum _tagTRCState
 };
 
 extern _tagTRCState gTrcDisk[2];
+
+void xTRCInit();
+void xTRCDisk(_tagTRCState state);
 
 struct _tagTRCPadInfo
 {

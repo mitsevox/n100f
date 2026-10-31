@@ -70,8 +70,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xSpline.cpp	xstransvc.cpp	0x8003F904	0x8003F904	alignment only (2 cuts tie on data)	0
 .text	xstransvc.cpp	xString.cpp	0x80040978	0x80040978	alignment only (2 cuts tie on data)	0
 .text	xString.cpp	xSurface.cpp	0x80040EE4	0x80040EE4	alignment only (4 cuts tie on data)	0
-.text	xSurface.cpp	xTRC.cpp	0x80040FCC	0x80040FCC	single cut by data references; xTRC.cpp left unsplit	0
-.text	xTRC.cpp	xutil.cpp	0x80044780	0x80044780	alignment only (2 cuts tie on data); xTRC.cpp left unsplit	0
+.text	xSurface.cpp	xTRC.cpp	0x80040FCC	0x80040FCC	single cut by data references	0
+.text	xTRC.cpp	xutil.cpp	0x80044780	0x80044780	alignment only (2 cuts tie on data)	0
 .text	xutil.cpp	zActionLine.cpp	0x80044C44	0x80044C44	single cut by data references	1
 .text	zActionLine.cpp	zAnimList.cpp	0x80044E20	0x80044E20	alignment only (4 cuts tie on data)	0
 .text	zAnimList.cpp	zAssetTypes.cpp	0x80045174	0x800451D4	open: 1 unassigned functions (1 joined by references)	0
@@ -190,8 +190,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .data	xsavegame.cpp	xserializer.cpp	0x801B5B60	0x801B5B60	single aligned candidate	0
 .data	xserializer.cpp	xSpline.cpp	0x801B5C88	0x801B5C88	single aligned candidate	0
 .data	xSpline.cpp	xstransvc.cpp	0x801B5D08	0x801B5D08	single aligned candidate	0
-.data	xstransvc.cpp	xTRC.cpp	0x801B6610	-	single aligned candidate; a side left unsplit	0
-.data	xTRC.cpp	xutil.cpp	-	0x801B6798	single aligned candidate; a side left unsplit	0
+.data	xstransvc.cpp	xTRC.cpp	0x801B6610	0x801B6610	single aligned candidate	0
+.data	xTRC.cpp	xutil.cpp	0x801B6798	0x801B6798	single aligned candidate	0
 .data	xutil.cpp	zAnimList.cpp	0x801B6BD8	0x801B6BD8	single aligned candidate	0
 .data	zAnimList.cpp	zAssetTypes.cpp	0x801B6C28	0x801B6C28	single aligned candidate	0
 .data	zAssetTypes.cpp	zCutsceneMgr.cpp	0x801B7540	0x801B7540	single aligned candidate	0
@@ -243,8 +243,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .rodata	xShadow.cpp	xSnd.cpp	0x80193EE8	0x80193EE8	single aligned candidate	0
 .rodata	xSnd.cpp	xSpline.cpp	0x80193EF8	0x80193EF8	single aligned candidate	0
 .rodata	xSpline.cpp	xstransvc.cpp	0x80193F08	0x80193F08	single aligned candidate	0
-.rodata	xstransvc.cpp	xTRC.cpp	0x80193F60	-	single aligned candidate; a side left unsplit	0
-.rodata	xTRC.cpp	zActionLine.cpp	-	0x801960D8	single aligned candidate; a side left unsplit	0
+.rodata	xstransvc.cpp	xTRC.cpp	0x80193F60	0x80193F60	single aligned candidate	0
+.rodata	xTRC.cpp	zActionLine.cpp	0x801960D8	0x801960D8	single aligned candidate	0
 .rodata	zActionLine.cpp	zAssetTypes.cpp	0x801960E8	0x801960E8	single aligned candidate	0
 .rodata	zAssetTypes.cpp	zDispatcher.cpp	0x80196198	0x80196198	single aligned candidate	0
 .rodata	zDispatcher.cpp	zEnt.cpp	0x801961A8	0x801961A8	single aligned candidate	0
@@ -287,7 +287,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	iDebug.cpp	iEnv.cpp	0x8025E898	0x8025E898	single aligned candidate	0
 .sbss	iEnv.cpp	iFile.cpp	0x8025E8A8	0x8025E8A8	single aligned candidate	0
 .sbss	iFile.cpp	iFont.cpp	0x8025E8B8	0x8025E8B8	single aligned candidate	0
-.sbss	iFont.cpp	iLight.cpp	0x8025E8D8	0x8025E8D8	single aligned candidate; 1 in-range loads by functions outside the written units	1
+.sbss	iFont.cpp	iLight.cpp	0x8025E8D8	0x8025E8D8	single aligned candidate	0
 .sbss	iLight.cpp	iMath.cpp	0x8025E8E0	0x8025E8E0	single aligned candidate	0
 .sbss	iMath.cpp	iMemMgr.cpp	0x8025E8E8	0x8025E8E8	single aligned candidate	0
 .sbss	iMemMgr.cpp	iModel.cpp	0x8025E900	0x8025E900	single aligned candidate; 6 in-range loads by functions outside the written units	6
@@ -321,8 +321,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	xserializer.cpp	xShadow.cpp	0x8025EB90	0x8025EB90	single aligned candidate	0
 .sbss	xShadow.cpp	xstransvc.cpp	0x8025EBC0	0x8025EBC0	single aligned candidate	0
 .sbss	xstransvc.cpp	xSurface.cpp	0x8025EBD0	0x8025EBD0	single aligned candidate	0
-.sbss	xSurface.cpp	xTRC.cpp	0x8025EBD8	-	open: 1 items loaded by unassigned functions; a side left unsplit	0
-.sbss	xTRC.cpp	xutil.cpp	-	0x8025EBF8	single aligned candidate; a side left unsplit	0
+.sbss	xSurface.cpp	xTRC.cpp	0x8025EBD8	0x8025EBE0	open: 1 items loaded by unassigned functions	0
+.sbss	xTRC.cpp	xutil.cpp	0x8025EBF8	0x8025EBF8	single aligned candidate	0
 .sbss	xutil.cpp	zActionLine.cpp	0x8025EC00	0x8025EC00	single aligned candidate	0
 .sbss	zActionLine.cpp	zAnimList.cpp	0x8025EC08	0x8025EC08	single aligned candidate	0
 .sbss	zAnimList.cpp	zCutsceneMgr.cpp	0x8025EC18	0x8025EC18	single aligned candidate	0
@@ -339,7 +339,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	zFeet.cpp	zFMV.cpp	0x8025EEC8	0x8025EEC8	single aligned candidate	0
 .sbss	zFMV.cpp	zGame.cpp	0x8025EED0	0x8025EED8	open: 2 items between aligned candidates	0
 .sbss	zGame.cpp	zGameExtras.cpp	0x8025EF28	0x8025EF28	single aligned candidate	0
-.sbss	zGameExtras.cpp	zGameState.cpp	0x8025EF80	0x8025EF80	single aligned candidate; 1 in-range loads by functions outside the written units	1
+.sbss	zGameExtras.cpp	zGameState.cpp	0x8025EF80	0x8025EF80	single aligned candidate	0
 .sbss	zGameState.cpp	zGust.cpp	0x8025EF88	0x8025EF88	single aligned candidate	0
 .sbss	zGust.cpp	zHud.cpp	0x8025EF98	0x8025EF98	single aligned candidate	0
 .sbss	zHud.cpp	zLaugh.cpp	0x8025EFE8	0x8025EFE8	single aligned candidate	0
@@ -358,8 +358,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	zSurface.cpp	zUI.cpp	0x8025F0F0	0x8025F0F0	single aligned candidate	0
 .sbss	zUI.cpp	zVar.cpp	0x8025F140	0x8025F140	single aligned candidate	0
 .sbss2	iModel.cpp	isavegame.cpp	0x80262C68	0x80262C68	single aligned candidate	0
-.sbss2	isavegame.cpp	xTRC.cpp	0x80262C70	-	single aligned candidate; a side left unsplit	0
-.sbss2	xTRC.cpp	zAssetTypes.cpp	-	0x80262C80	single aligned candidate; a side left unsplit	0
+.sbss2	isavegame.cpp	xTRC.cpp	0x80262C70	0x80262C70	single aligned candidate	0
+.sbss2	xTRC.cpp	zAssetTypes.cpp	0x80262C80	0x80262C80	single aligned candidate	0
 .sbss2	zAssetTypes.cpp	zDispatcher.cpp	0x80262C88	0x80262C88	single aligned candidate	0
 .sbss2	zDispatcher.cpp	zEntPlayer.cpp	0x80262C90	0x80262C90	single aligned candidate	0
 .sbss2	zEntPlayer.cpp	zEntProjectile.cpp	0x80262C98	0x80262C98	single aligned candidate	0
@@ -447,8 +447,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	xShadow.cpp	xSnd.cpp	0x80260260	0x80260260	single aligned candidate	0
 .sdata2	xSnd.cpp	xSpline.cpp	0x80260280	0x80260280	single aligned candidate	0
 .sdata2	xSpline.cpp	xstransvc.cpp	0x802602F0	0x802602F0	single aligned candidate	0
-.sdata2	xstransvc.cpp	xTRC.cpp	0x80260310	-	single aligned candidate; a side left unsplit	0
-.sdata2	xTRC.cpp	xutil.cpp	-	0x802603A8	single aligned candidate; a side left unsplit	0
+.sdata2	xstransvc.cpp	xTRC.cpp	0x80260310	0x80260310	single aligned candidate	0
+.sdata2	xTRC.cpp	xutil.cpp	0x802603A8	0x802603A8	single aligned candidate	0
 .sdata2	xutil.cpp	zActionLine.cpp	0x802603B8	0x802603B8	single aligned candidate	0
 .sdata2	zActionLine.cpp	zAnimList.cpp	0x802603C0	0x80260460	open: 21 items between aligned candidates	0
 .sdata2	zAnimList.cpp	zAssetTypes.cpp	0x80260478	0x80260478	single aligned candidate	0
