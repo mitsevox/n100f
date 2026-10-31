@@ -5,6 +5,8 @@
 #include "xMath3.h"
 
 struct _xCollis;
+struct _xBox;
+struct _xScene;
 
 enum _xCollsIdx
 {
@@ -17,6 +19,7 @@ enum _xCollsIdx
     k_XCOLLS_IDX_COUNT
 };
 
+void xCollideInit(_xScene* sc);
 _xCollsIdx xCollideGetCollsIdx(const xVec3* tohit, const xMat3x3* mat);
 U32 xSphereHitsOBB(const xSphere* a, const _xBox* b, const xMat4x3* m, _xCollis* coll);
 U32 xSphereHitsBox(const xSphere* a, const _xBox* b, _xCollis* coll);
