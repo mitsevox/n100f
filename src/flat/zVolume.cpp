@@ -24,9 +24,7 @@ PreCalcOcclude gOccludeCalc[10];
 
 S32 zVolumeEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*);
 
-// The functions are in the reverse of their target order (the SLUS-20349 DWARF's line order),
-// the order GC/1.3.2 emits them in. zVolume_OccludeTest is not in the target: nothing in the GC
-// build calls it.
+// zVolume_OccludeTest is not in the target: nothing in the GC build calls it.
 
 // Volumes save and restore only their base state.
 void zVolumeSave(_zVolume* ent, xSerial* s)
@@ -39,8 +37,8 @@ void zVolumeLoad(_zVolume* ent, xSerial* s)
     xBaseLoad(ent, s);
 }
 
-// Create one volume per 'VOLU' asset in the scene. The motion pointer in the base's link field
-// points just past the asset when the asset has links.
+// Create one volume per 'VOLU' asset in the scene. The base's link pointer points just past the
+// asset when the asset has links.
 void zVolumeInit()
 {
     zVolumeAsset* asset;
@@ -223,8 +221,10 @@ void zVolume_OccludePrecalc(xVec3* camPos)
     }
 }
 
-// Volume events: reset restores the base from its asset, and the occlude events add the volume to
-// or remove it from the list of occluders (at most 10) that zVolume_OccludePrecalc reads.
+// Volume events: reset restores the base from its asset. Occlude-on adds the volume to the list
+// of occluders (at most 10) that zVolume_OccludePrecalc reads. Occlude-off, when the volume is in
+// the list, copies the last entry into the slot past it and shortens the list by one, so it drops
+// the last entry whichever volume matched.
 S32 zVolumeEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
 {
     _zVolume* vol = (_zVolume*)to;

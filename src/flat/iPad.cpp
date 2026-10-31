@@ -15,8 +15,6 @@ extern "C" void fn_80044458(S32 pad_id, S32 state);
 
 PADStatus sPadData[4];
 
-// The functions are in the reverse of their target order, the order GC/1.3.2 emits them in.
-
 S32 iPadInit()
 {
     PADInit();

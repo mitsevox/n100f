@@ -162,8 +162,8 @@ extern "C" void fn_800167F0()
     }
 }
 
-// GC only: the retrace callback. Counts retraces, polls the reset button and then runs the
-// callback it replaced.
+// GC only: the retrace callback. Stores the retrace count it is given, polls the reset button and
+// then runs the callback it replaced.
 extern "C" void fn_800167A8(u32 retraceCount)
 {
     lbl_8025E978 = retraceCount;
@@ -545,7 +545,7 @@ static RwTexture* TextureRead(const char* name, const char* maskName)
     return NULL;
 }
 
-// Called where a debugger breakpoint would go: a bad free, or a free below the top allocation.
+// Adds 4 to mem_base_alloc. _rwDolphinHeapFree calls it for a block below mem_top_alloc.
 void null_func()
 {
     mem_base_alloc += 4;

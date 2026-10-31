@@ -12,8 +12,6 @@ static char dm_names[14][16] = {
     "dm_gui", "dm_par",       "dm_fade", "dm_render", "dm_mem",    "dm_vram", "dm_pad",
 };
 
-// The functions are in the reverse of their target order, the order GC/1.3.2 emits them in.
-
 // Debug printing is compiled out.
 void xprintf(const char* msg, ...)
 {

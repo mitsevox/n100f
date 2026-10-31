@@ -847,6 +847,7 @@ def main():
                 if tstart[w] > tend[w]:
                     emptied.add(w)
             unit_of[f] = u
+        free -= set(fs)  # a later claim overlapping this one is reported, not applied
         tstart[u], tend[u] = fs[0], fs[-1]
         for w in emptied:
             order.remove(w)

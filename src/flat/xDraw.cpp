@@ -9,8 +9,6 @@ extern "C" S32 RwIm2DRenderLine(RwIm2DVertex* vertices, S32 numVertices, S32 ver
 // The colour of the debug lines drawn below; white until set.
 static iColor_tag sgDrawColor = { 0xFF, 0xFF, 0xFF, 0xFF };
 
-// The functions are in the reverse of their target order, the order GC/1.3.2 emits them in.
-
 void xDrawBegin()
 {
     iDrawBegin();

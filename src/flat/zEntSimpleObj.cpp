@@ -19,10 +19,6 @@ S32 zEntSimpleObjEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase*);
 void zEntSimpleObj_Init(_zEntSimpleObj* ent, p2EntAsset* asset);
 static void DiggableSetup(_zEntSimpleObj* ent);
 
-// The functions are in the reverse of the SLUS-20349 DWARF's line order, the order GC/1.3.2
-// emits them in, so the target has them in DWARF order. The typed zEntSimpleObj_Init and
-// DiggableSetup are inlined into their callers.
-
 void zEntSimpleObj_Init(void* ent, void* asset)
 {
     zEntSimpleObj_Init((_zEntSimpleObj*)ent, (p2EntAsset*)asset);
