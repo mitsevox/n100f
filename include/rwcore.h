@@ -413,6 +413,20 @@ struct RwEngineOpenParams
 #define _RW_S4 ((float)2.7557314297e-06)
 #define _RW_S5 ((float)-2.5050759689e-08)
 #define _RW_S6 ((float)1.5896910177e-10)
+#define _RW_one ((float)1.0000000000e+00)
+#define _RW_pS0 ((float)1.6666667163e-01)
+#define _RW_pS1 ((float)-3.2556581497e-01)
+#define _RW_pS2 ((float)2.0121252537e-01)
+#define _RW_pS3 ((float)-4.0055535734e-02)
+#define _RW_pS4 ((float)7.9153501429e-04)
+#define _RW_pS5 ((float)3.4793309169e-05)
+#define _RW_pi ((float)3.1415925026e+00)
+#define _RW_pio2_hi ((float)1.5707962513e+00)
+#define _RW_pio2_lo ((float)7.5497894159e-08)
+#define _RW_qS1 ((float)-2.4033949375e+00)
+#define _RW_qS2 ((float)2.0209457874e+00)
+#define _RW_qS3 ((float)-6.8828397989e-01)
+#define _RW_qS4 ((float)7.7038154006e-02)
 
 #define RwSinMinusPiToPiMacro(result, x)                                                           \
     do                                                                                             \
@@ -1661,8 +1675,13 @@ S32 RwCameraRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor con
 void _rwObjectHasFrameSetFrame(void* object, RwFrame* frame);
 RwRaster* RwRasterCreate(S32 width, S32 height, S32 depth, S32 flags);
 S32 RwRasterDestroy(RwRaster* raster);
+RwImage* RwImageCreate(S32 width, S32 height, S32 depth);
 S32 RwImageDestroy(RwImage* image);
+RwImage* RwImageAllocatePixels(RwImage* image);
 RwImage* RwImageFreePixels(RwImage* image);
+RwImage* RwImageCopy(RwImage* destImage, const RwImage* sourceImage);
+RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage);
+RwImage* RwImageCreateResample(const RwImage* srcImage, S32 width, S32 height);
 const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict,
                                                     RwTextureCallBack fpCallBack, void* pData);
 S32 RwRenderStateSet(RwRenderState state, void* value);
@@ -1696,6 +1715,7 @@ RwMatrix* RwMatrixRotateOneMinusCosineSine(RwMatrix* matrix, const RwV3d* unitAx
                                            F32 oneMinusCosine, F32 sine,
                                            RwOpCombineType combineOp);
 RwMatrix* RwMatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMatrix);
+RwMatrix* RwMatrixInvert(RwMatrix* dstMatrix, const RwMatrix* matrix);
 F32 _rwMatrixDeterminant(const RwMatrix* matrix);
 F32 _rwMatrixOrthogonalError(const RwMatrix* matrix);
 F32 _rwMatrixNormalError(const RwMatrix* matrix);

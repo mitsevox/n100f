@@ -1551,6 +1551,7 @@ dolphin/card/CARDNet.c: comment:8
 
 rwsdk/plugin/collis/ctgeom.c:
 	.text       start:0x801372EC end:0x80138904
+	.sdata2     start:0x802627D8 end:0x802627E8
 
 rwsdk/plugin/collis/ctworld.c:
 	.text       start:0x80138904 end:0x8013AA64
@@ -1692,6 +1693,7 @@ rwsdk/src/plcore/babinary.c:
 
 rwsdk/src/plcore/bacolor.c:
 	.text       start:0x80160F60 end:0x80160F88
+	.sbss       start:0x8025F778 end:0x8025F780
 
 rwsdk/src/plcore/baerr.c:
 	.text       start:0x80160F88 end:0x8016109C

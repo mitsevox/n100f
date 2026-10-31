@@ -14,7 +14,7 @@ extern "C" {
 S32 RpWorldPluginAttach();
 S32 RpCollisionPluginAttach();
 S32 RpSkinPluginAttach();
-S32 fn_8013D854();
+S32 RpHAnimPluginAttach();
 S32 fn_8013EDB0();
 S32 RpUserDataPluginAttach();
 S32 RwEngineStop();
@@ -179,7 +179,7 @@ static U32 RWAttachPlugins()
     {
         return 1;
     }
-    if (!fn_8013D854())
+    if (!RpHAnimPluginAttach())
     {
         return 1;
     }

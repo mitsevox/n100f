@@ -964,7 +964,7 @@ config.libs: List[Dict[str, Any]] = [
         "rwcore",
         [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/plcore/babinary.c"),
-            Object(NonMatching, "rwsdk/src/plcore/bacolor.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/plcore/bacolor.c"),
             Object(NonMatching, "rwsdk/src/plcore/baerr.c"),
             Object(NonMatching, "rwsdk/src/plcore/bafsys.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/plcore/baimmedi.c"),
