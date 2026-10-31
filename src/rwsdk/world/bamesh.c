@@ -15,22 +15,11 @@
      (((const RwObject*)(object))->type == rpWORLD &&                                       \
       !(((const RpWorld*)(object))->flags & rpWORLDNATIVE)))
 
-typedef struct MeshGlobals MeshGlobals;
-struct MeshGlobals
-{
-    S16 nextSerialNum;
-    U8 unused[6];
-    U8 meshFlagsToPrimType[32];
-    U8 primTypeToMeshFlags[8];
-};
-
 typedef struct MeshStaticData MeshStaticData;
 struct MeshStaticData
 {
     RwFreeList* buildMeshFreeList;
 };
-
-#define MESHGLOBAL(var) (((MeshGlobals*)((U8*)RwEngineInstance + meshModule.globalsOffset))->var)
 
 RwModuleInfo meshModule;
 static MeshStaticData MeshStatic = { NULL };

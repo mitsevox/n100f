@@ -27,6 +27,18 @@ struct RpMeshHeader
     U32 firstMeshOffset;
 };
 
+typedef enum RpMeshHeaderFlags
+{
+    rpMESHHEADERTRISTRIP = 0x0001,
+    rpMESHHEADERTRIFAN = 0x0002,
+    rpMESHHEADERLINELIST = 0x0004,
+    rpMESHHEADERPOLYLINE = 0x0008,
+    rpMESHHEADERPOINTLIST = 0x0010,
+    rpMESHHEADERPRIMMASK = 0x00FF,
+    rpMESHHEADERUNINDEXED = 0x0100,
+    rpMESHHEADERFLAGSFORCEENUMSIZEINT = 0x7FFFFFFF
+} RpMeshHeaderFlags;
+
 typedef struct RpMaterial RpMaterial;
 
 typedef struct RpMesh RpMesh;
@@ -445,6 +457,10 @@ S32 _rpBuildMeshDestroy(RpBuildMesh* mesh);
 RpBuildMesh* _rpBuildMeshAddTriangle(RpBuildMesh* mesh, RpMaterial* material, S32 vert1,
                                      S32 vert2, S32 vert3);
 RpMeshHeader* _rpMeshOptimise(RpBuildMesh* buildmesh, U32 flags);
+RpMeshHeader* RpBuildMeshGenerateDefaultTriStrip(RpBuildMesh* buildmesh, void* data);
+RpMeshHeader* _rpTriListMeshGenerate(RpBuildMesh* buildMesh, void* data);
+RpMeshHeader* _rpMeshHeaderForAllMeshes(RpMeshHeader* meshHeader, RpMeshCallBack fpCallBack,
+                                        void* pData);
 RpMaterial* _rpMaterialListGetMaterial(const RpMaterialList* matList, S32 matIndex);
 RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matList);
 void _rpMaterialSetDefaultSurfaceProperties(const RwSurfaceProperties* surfaceProps);
@@ -478,6 +494,21 @@ RxNodeDefinition* RxNodeDefinitionGetWorldSectorInstance(void);
 RxNodeDefinition* RxNodeDefinitionGetWorldSectorEnumerateLights(void);
 RxNodeDefinition* RxNodeDefinitionGetGameCubeAtomicAllInOne(void);
 RxNodeDefinition* RxNodeDefinitionGetGameCubeWorldSectorAllInOne(void);
+
+// The mesh module's globals in each engine instance, shared by the mesh code and the mesh
+// optimiser.
+typedef struct MeshGlobals MeshGlobals;
+struct MeshGlobals
+{
+    S16 nextSerialNum;
+    RwFreeList* triStripListEntryFreeList;
+    U8 meshFlagsToPrimType[32];
+    U8 primTypeToMeshFlags[8];
+};
+
+extern RwModuleInfo meshModule;
+
+#define MESHGLOBAL(var) (((MeshGlobals*)((U8*)RwEngineInstance + meshModule.globalsOffset))->var)
 
 #ifdef __cplusplus
 }
