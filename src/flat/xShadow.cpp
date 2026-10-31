@@ -191,8 +191,9 @@ void xShadowCameraCreate()
     gc_saveraster = RwRasterCreate(256, 256, 32, rwRASTERTYPETEXTURE | rwRASTERFORMAT8888);
 }
 
-// Shadows normally drop back faces only past a dot of 0 with the light; the listed scenes take
-// steeper triangles too. W028 casts from further away.
+// A world triangle takes the shadow only while its dot with the light stays at or below
+// SHADOW_BF_DOT; the listed scenes lower it from 0 to -0.5, so steep surfaces drop out. W028
+// casts from further away.
 void xShadowSetWorld(RpWorld* world)
 {
     U32 sceneID = globals.sceneCur->sceneID;
@@ -346,13 +347,14 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     }
 }
 
-static inline U32 xShadowEntIsOutsideFrustum(_xEnt* ent, RwCamera* cam)
+static inline U32 xShadowEntIsOutsideFrustum(_xEnt* ent)
 {
     F32 xScale2;
     F32 yScale2;
     F32 zScale2;
     F32 atomicScale;
     RwMatrix* mat;
+    RwCamera* cam;
     RwSphere worldsph;
     RpAtomic* atomic;
 
@@ -361,6 +363,7 @@ static inline U32 xShadowEntIsOutsideFrustum(_xEnt* ent, RwCamera* cam)
         return 1;
     }
 
+    cam = ShadowCamera;
     mat = ent->model->Mat;
     RwV3dTransformPoints(&worldsph.center, &atomic->boundingSphere.center, 1, mat);
     yScale2 = mat->up.x * mat->up.x + mat->up.y * mat->up.y + mat->up.z * mat->up.z;
@@ -375,7 +378,7 @@ static inline U32 xShadowEntIsOutsideFrustum(_xEnt* ent, RwCamera* cam)
 }
 
 // Decide whether ent takes the shadow this frame: shadows are on, the entity is visible and in
-// the shadow camera's view, and (in two scenes) it is a valid receiver.
+// the shadow camera's view, and (in W027) it is a valid receiver.
 U32 xShadowReceiveShadowSetup(_xEnt* ent)
 {
     U32 sceneID = globals.sceneCur->sceneID;
@@ -403,7 +406,7 @@ U32 xShadowReceiveShadowSetup(_xEnt* ent)
     {
         return 0;
     }
-    if (xShadowEntIsOutsideFrustum(ent, ShadowCamera))
+    if (xShadowEntIsOutsideFrustum(ent))
     {
         return 0;
     }
@@ -453,7 +456,7 @@ void xShadowReceiveShadow(_xEnt* ent)
     RwV3d at;
     S32 fogstate;
 
-    if (!xShadowEntIsOutsideFrustum(ent, shadowCamera) && !(ent->flags & 0x4) &&
+    if (!xShadowEntIsOutsideFrustum(ent) && !(ent->flags & 0x4) &&
         !(ent->material_alpha < 255.0f))
     {
         if (ent->moreFlags & 0x1)

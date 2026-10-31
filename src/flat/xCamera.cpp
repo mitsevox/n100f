@@ -518,7 +518,7 @@ _tagxCam* xCameraFollowState(_tagxCamFrame* cam, F32 seconds)
 }
 
 // The shoulder position for the facing (x, z): distance behind the target and height above it.
-static inline S32 ShoulderGetDesiredPos(_tagxCam* c, xVec3* pos, F32 x, F32 z)
+static inline S32 ShoulderGetDesiredPos(_tagxCamFrame*, _tagxCam* c, xVec3* pos, F32 x, F32 z)
 {
     pos->x = sTargetPos.x - x * c->u.sh.distance;
     pos->y = sTargetPos.y + c->u.sh.height;
@@ -547,7 +547,7 @@ extern "C" void fn_8001F8C0(_tagxCamFrame* cam, _tagxCam* c, F32 seconds)
     dir.x = cam->hi_cam.mat.at.x;
     dir.y = cam->hi_cam.mat.at.z;
     xVec2Normalize(&dir, &dir);
-    ShoulderGetDesiredPos(c, &desired_pos, dir.x, dir.y);
+    ShoulderGetDesiredPos(cam, c, &desired_pos, dir.x, dir.y);
     c->mat.pos.x = xCameraApproach(c->mat.pos.x, desired_pos.x, 1.0f);
     c->mat.pos.y = xCameraApproach(c->mat.pos.y, desired_pos.y, 1.0f);
     c->mat.pos.z = xCameraApproach(c->mat.pos.z, desired_pos.z, 1.0f);
@@ -572,7 +572,7 @@ static void ShoulderStatePause(_tagxCamFrame* cam, _tagxCam* c, F32 seconds)
     dir.x = cam->hi_cam.mat.at.x;
     dir.y = cam->hi_cam.mat.at.z;
     xVec2Normalize(&dir, &dir);
-    ShoulderGetDesiredPos(c, &desired_pos, dir.x, dir.y);
+    ShoulderGetDesiredPos(cam, c, &desired_pos, dir.x, dir.y);
     c->mat.pos.x = xCameraApproach(c->mat.pos.x, desired_pos.x, 1.0f);
     c->mat.pos.y = xCameraApproach(c->mat.pos.y, desired_pos.y, 1.0f);
     c->mat.pos.z = xCameraApproach(c->mat.pos.z, desired_pos.z, 1.0f);
@@ -638,7 +638,7 @@ static void ShoulderStateRealign(_tagxCamFrame* cam, _tagxCam* c, F32)
     vec.z = cam->hi_cam.mat.at.z;
     xVec3Normalize(&vec, &vec);
     xMat3x3LMulVec(&vec, &rot_matrix, &vec);
-    ShoulderGetDesiredPos(c, &desired_pos, vec.x, vec.z);
+    ShoulderGetDesiredPos(cam, c, &desired_pos, vec.x, vec.z);
     c->mat.pos.x = xCameraApproach(c->mat.pos.x, desired_pos.x, 1.0f);
     c->mat.pos.y = xCameraApproach(c->mat.pos.y, desired_pos.y, 1.0f);
     c->mat.pos.z = xCameraApproach(c->mat.pos.z, desired_pos.z, 1.0f);
