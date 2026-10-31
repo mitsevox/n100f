@@ -47,7 +47,8 @@ inline U32 xRayHitsCylinderFast(const xRay3* r, const _xCylinder* c)
 }
 
 // Whether the ray hits any static, dynamic or NPC entity that can be collided with, or the
-// level geometry. Entities whose collision level is 5 are tested against their model.
+// level geometry. Static and dynamic entities whose collision level is 5 must also hit their
+// model; NPCs count on their bound alone.
 U32 xRayHitsSceneFast(const _xRay3* r, const _xScene* sc)
 {
     xQCData qcr;

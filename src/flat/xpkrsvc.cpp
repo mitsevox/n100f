@@ -207,7 +207,7 @@ static st_PACKER_READ_DATA* PKR_ReadInit(void* userdata, char* pkgfile, U32 opts
 }
 
 // Closes a package: tells each asset's type handler the asset is going away (last layer and
-// asset first), drops the layer memory, frees the table-of-contents lists, closes the file and
+// asset first), forgets each layer's memory pointer, frees the table-of-contents lists, closes the file and
 // gives the reader slot back.
 static void PKR_ReadDone(st_PACKER_READ_DATA* pr)
 {

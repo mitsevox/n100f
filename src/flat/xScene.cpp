@@ -5,6 +5,7 @@
 #include "xBound.h"
 #include "xQuickCull.h"
 #include "iCollide.h"
+#include "xCollide.h"
 #include "xCollideFast.h"
 
 struct _xEnv;
@@ -12,7 +13,6 @@ struct xSerial;
 
 void xAnimTempTransitionInit(U32 count);
 void xAnimPoolInit(xMemPool* pool, U32 count, U32 singles, U32 blendFlags, U32 effectMax);
-void xCollideInit(_xScene* sc);
 void xEnvSetup(_xEnv* env);
 
 // Allocates the scene's entity lists and sets up the animation, model and collision pools.
