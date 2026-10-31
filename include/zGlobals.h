@@ -7,12 +7,12 @@
 #include "zEntPlayer.h"
 #include "iCamera.h"
 #include "iTime.h"
+#include "xCamera.h"
 
 struct zScene;
 struct zAssetPickupTable;
 struct _zCutsceneMgr;
 struct _tagxPad;
-struct xCamAsset;
 
 struct zGlobalGameStats
 {
@@ -68,30 +68,6 @@ struct zGlobalGameStats
     U32 keys_tot;
     U32 clues;
     U32 clues_tot;
-};
-
-// Partial: only the header, the matrix, the rotation and the field of view are declared. The GC
-// object is 0xA0 bytes; the PS2 copy is 0xB0 because its matrices are 16-byte aligned.
-struct _tagxCam : xBase
-{
-    U32 valid_flags;
-    S32 cam_type;
-    U32 flags;
-    xMat4x3 mat;
-    xQuat rot;
-    F32 fov;
-    U8 opaque_70[0x9C - 0x70];
-    xCamAsset* asset;
-};
-
-// Partial: only the RenderWare camera and the two cameras are declared. The GC object is
-// 0x1F0 bytes.
-struct _tagxCamFrame
-{
-    RwCamera* lo_cam;
-    _tagxCam orig_cam;
-    _tagxCam hi_cam;
-    U8 opaque_144[0x1F0 - 0x144];
 };
 
 struct zGlobals

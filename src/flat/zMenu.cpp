@@ -34,13 +34,7 @@ void xSndUpdate(F32 dt);
 void xSndStopAll();
 void xCameraBegin(_tagxCamFrame* cam, S32 clear);
 void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
-extern "C" void fn_8001E83C(_tagxCamFrame*);
-extern "C" void fn_8001E8A0(_tagxCamFrame*, F32);
 U32 zSaveLoad_LoadLoop();
-extern "C" void fn_8001E798(_tagxCamFrame*);
-extern "C" void fn_800207E8(_tagxCamFrame*);
-extern "C" void fn_800207EC(_tagxCamFrame*, S32, S32);
-extern "C" void fn_8001E7C4(_tagxCamFrame*, _xEnv*);
 extern "C" U32 lbl_8025E890;
 extern "C" U32 lbl_8025E968;
 extern "C" U32 lbl_8025EF10;
@@ -191,7 +185,7 @@ U32 zMenuLoop()
         zSceneUpdate(time_elapsed);
         globals.player.ent.update(&globals.player.ent, globals.sceneCur, time_elapsed);
         xSndUpdate(time_elapsed);
-        fn_8001E8A0(&globals.camera, time_elapsed);
+        xCameraUpdate(&globals.camera, time_elapsed);
         xCameraBegin(&globals.camera, 1);
         zSceneRender();
         xFontRender();
@@ -212,7 +206,7 @@ U32 zMenuLoop()
         }
         lbl_8025EF10 = lbl_8025E968;
 
-        fn_8001E83C(&globals.camera);
+        xCameraShowRaster(&globals.camera);
 
         s = 0;
         if (gGameMode == eGameMode_Load)
@@ -248,7 +242,7 @@ void zMenuSetup()
     sAttractMode_timer = 30.0f;
     setupPlayer();
     zEnvStartingCamera(gCurEnv);
-    fn_8001E8A0(&globals.camera, -1.0f);
+    xCameraUpdate(&globals.camera, -1.0f);
     zEntEventAll(NULL, 0, 0x57, NULL);
     zEntEventAll(NULL, 0, 0x59, NULL);
     zEntEvent(&globals.player.ent, 8);
@@ -257,8 +251,8 @@ void zMenuSetup()
 void zMenuExit()
 {
     zMusicKill();
-    fn_8001E798(&globals.camera);
-    fn_800207E8(&globals.camera);
+    xCameraRemoveEnv(&globals.camera);
+    xCameraDestroy(&globals.camera);
     zSceneExit();
     xSndStopAll();
     sInMenu = 0;
@@ -272,8 +266,8 @@ void zMenuInit(U32 theSceneID)
     irand();
     zSceneInit(theSceneID);
     zHud_Init();
-    fn_800207EC(&globals.camera, 640, 480);
-    fn_8001E7C4(&globals.camera, globals.sceneCur->env);
+    xCameraCreate(&globals.camera, 640, 480);
+    xCameraAssignEnv(&globals.camera, globals.sceneCur->env);
     zMusicInit();
 }
 

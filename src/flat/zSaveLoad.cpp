@@ -59,8 +59,6 @@ extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* files, S3
 extern "C" void fn_80021B20();
 extern "C" void fn_80021E30();
 extern "C" void fn_80021E50();
-extern "C" void fn_8001E83C(_tagxCamFrame* cam);
-extern "C" void fn_8001E8A0(_tagxCamFrame* cam, F32 dt);
 extern "C" void fn_8004436C();
 
 extern "C" U32 lbl_8025E9F8;
@@ -1942,7 +1940,7 @@ void zSaveLoad_Tick()
                 &globals.camera.hi_cam.mat.at, &globals.camera.hi_cam.mat.pos, 25.0f);
     xSndSetFrameFar((xVec3*)&globals.player.ent.model->Mat->pos);
     xSndUpdate(time_elapsed);
-    fn_8001E8A0(&globals.camera, time_elapsed);
+    xCameraUpdate(&globals.camera, time_elapsed);
     xCameraBegin(&globals.camera, 1);
     zSceneRender();
     fn_80021B20();
@@ -1954,6 +1952,6 @@ void zSaveLoad_Tick()
     }
     xCameraEnd(&globals.camera, time_elapsed, 1);
     iEnvEndRenderFX(NULL);
-    fn_8001E83C(&globals.camera);
+    xCameraShowRaster(&globals.camera);
     lbl_8025E9F8++;
 }
