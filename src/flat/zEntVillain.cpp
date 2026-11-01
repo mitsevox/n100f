@@ -383,6 +383,7 @@ static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
 static S32 VPRJ_BGG_attach(zEntProjectile* prj);
 static void VPRJ_BGG_detach(zEntProjectile* prj);
 static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
+static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt);
 static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
 static S32 VPRJ_BRB_attach(zEntProjectile* prj);
 static void VPRJ_BRB_detach(zEntProjectile* prj);
@@ -405,6 +406,7 @@ static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser);
 static void VEFX_plop_gum(st_zEntVillain* ent);
 static void VPAR_emit_extattack(st_zEntVillain*, _xVec3*, _xVec3*, F32, F32, F32);
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE emittype, F32 dt);
+static void VPAR_readyize_emitters();
 static void VBON_drop_bonusItem(st_zEntVillain* vil);
 static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp);
 static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop_caller);
@@ -412,6 +414,7 @@ static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 fl
                               F32 delay, F32 repeatDelay, S32 repeatCount, U32 useThisSound);
 static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
+extern "C" void VIL_HOLO_FLICKER(st_zEntVillain* vil, F32 dt);
 static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan);
 static inline F32 VANM_entTime(const _zEnt* ent);
 static inline F32 VCFG_tymref(st_zEntVillain* vil, S32 which);
@@ -425,6 +428,8 @@ static inline U32 VANM_entStateType(const _zEnt* ent);
 static inline U32 VANM_entMoveType(const _zEnt* ent);
 static inline void VANM_setSpeed(st_zEntVillain* ent, F32 spd, _xVec3 sanim);
 static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil);
+static S32 VWEP_extend_particles(st_zEntVillain* vil, F32 dt, _xVec3* target);
+static S32 VWEP_swipe(st_zEntVillain* vil, F32 dt);
 static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
 static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
                                     _xVec3* vec_spin, F32 arcness, F32 heavy);
@@ -448,6 +453,9 @@ extern "C" U8 gVillainDotsColorDeath[50][4];
 static inline S32 VWEP_lobAtPlayer(zEntProjectile* prj, st_zEntVillain* vil);
 static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset, S32 follow);
 static inline void VOUT_dogoto_pos(st_zEntVillain* vil, const _xVec3* pos, F32 dst_offset);
+static en_ZVILLAIN_HEADBUTT_RESPONSE VOUT_spikey_header(st_zEntVillain* ent);
+static S32 VOUT_apply_anchor(st_zEntVillain* vil);
+static S32 VILN_std_xtrarend(st_zEntVillain* vil);
 static void VWEP_mm_zapPlayer(st_zEntVillain* vil);
 static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs);
 static inline void VEFX_mm_teleportHide(F32 dt);
@@ -916,6 +924,26 @@ static char* g_animname[ZVIL_ANIM_NOMORE + 1] = {
 // The bonus items villains can drop.
 static st_NPC_BONUS g_npcBonus[11] = { 0 };
 
+// The scene object names of the bonus items, in g_npcBonus order.
+static char* g_strz_npcBonus[11] = { "_PICK_VILN_FOOD_FOOD", "_PICK_VILN_FOOD_BURGER", "_PICK_VILN_FOOD_ICECREAM", "_PICK_VILN_FOOD_TURKEY", "_PICK_VILN_FOOD_CAKE", "_PICK_VILN_AMMO_SOAP_A", "_PICK_VILN_AMMO_SOAP_B", "_PICK_VILN_AMMO_SOAP_C", "_PICK_VILN_AMMO_GUM_A", "_PICK_VILN_AMMO_GUM_B", "_PICK_VILN_AMMO_GUM_C" };
+
+// The INI parameter names, in en_NPC_INI_PARAMETERS order.
+static char* g_parmname[ZVIL_PARM_NOMORE] = {
+    "Parm_Hit_Points", "Parm_Bubbled_Time", "Parm_Gummed_Time", "Parm_Dazed_Time",
+    "Parm_Extend_Range", "Parm_Extend_Rate", "Parm_Extend_Width", "Parm_Extend_Time",
+    "Parm_FOV_Angle", "Parm_Gloat_Time", "Parm_Lob_Range", "Parm_Lob_Speed", "Parm_Lob_Salvo",
+    "Parm_Lob_ProjectileTypeName", "Parm_Lob_Reload_Time", "Parm_Lob_Arcness",
+    "Parm_Lob_Heaviness", "Parm_Detect_Radius", "Parm_Detect_Height", "Parm_Detect_HeightOffset",
+    "Parm_Pursue_Radius", "Parm_Move_Rate", "Parm_Chase_Rate", "Parm_Turn_Rate",
+    "Parm_ModelScale_Base", "Parm_SAnim_Idle", "Parm_SAnim_Move", "Parm_SAnim_Chase",
+    "Parm_Wander_Angle", "Parm_GumVert_LeftFoot", "Parm_GumVert_RightFoot", "Parm_GumVert_Elbow",
+    "Parm_GumVert_CustomA", "Parm_GumVert_CustomB", "Parm_WepVert_Attach", "Parm_WepVert_Launch",
+    "Parm_WepVert_LaunchAlt", "Parm_DmgVert_Buttbounce", "Parm_LOSVert_Eyeball",
+    "Parm_WepVert_RBSwordHandle", "Parm_WepVert_RBSwordPivot", "Parm_SBoundOffsetVec",
+    "Parm_SBoundRadius", "Parm_SBound2OffsetVec", "Parm_SBound2Radius", "Parm_SpawnMask",
+    "Parm_MinDifficulty", "Parm_AttackDmgBegTime", "Parm_AttackDmgEndTime"
+};
+
 // The player's tally per villain type; the last row holds the totals.
 static st_NPC_TALLY_RECORD g_stattally[eEntVillainType_NoMore + 1] = { 0 };
 
@@ -1015,6 +1043,9 @@ static st_XORDEREDARRAY g_emitlist = { 0 };
 static _zParEmitter* sEmitMMTeleportHide;
 static _zParEmitter* sEmitMMTeleportShow;
 
+// Cleared at scene end.
+static S32 g_NPCSoundStreamLock;
+
 // How many times the villain system has been started without being shut down.
 static S32 g_npcinit;
 
@@ -1027,6 +1058,12 @@ static st_zEntVillain* g_npcpool;
 // The goal and the stimulus a villain type's stimulus or goal-change step is handling.
 static en_BEHAVIOUR_GOAL g_pgol;
 static en_NPC_STIMULUS g_pstm;
+
+// The gum puddle model, whether the bonus item table is set up, and a villain tally the scene
+// start clears.
+static RpAtomic* g_gumModelAsset;
+static S32 g_bonusTableReady;
+static S32 g_stattotvil;
 
 // Records of the particle emitters the villains use, how many are in use, and whether they
 // are set up.
@@ -2335,6 +2372,308 @@ static S32 VILN_std_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
     return 1;
 }
 
+// Fill the bonus item table: find each bonus pickup of the scene, make it droppable (parked far
+// away) and mark its kind (food, soap ammo or gum ammo).
+static inline void VBON_setup_bonusTable()
+{
+    U32 aid_pick;
+    S32 i;
+    _xVec3 farfar = { 867.0f, -5309.0f, 2469.0f };
+
+    memset(g_npcBonus, 0, sizeof(g_npcBonus));
+    for (i = 0; i < 11; i++)
+    {
+        aid_pick = xStrHash(g_strz_npcBonus[i]);
+        g_npcBonus[i].pickup = (_zEntPickup*)zSceneFindObject(aid_pick);
+        if (g_npcBonus[i].pickup)
+        {
+            zEntPickup_MakeDroppable(g_npcBonus[i].pickup, &farfar, NULL);
+            switch (i)
+            {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+                g_npcBonus[i].flg_info |= 0x40000;
+                break;
+            case 5:
+            case 6:
+            case 7:
+                g_npcBonus[i].flg_info |= 0x20000;
+                break;
+            case 8:
+            case 9:
+            case 10:
+                g_npcBonus[i].flg_info |= 0x10000;
+                break;
+            }
+        }
+    }
+}
+
+// Look up every villain sound of the jukebox; a sound the game does not have gets ID 0.
+static inline void VSND_setup_soundTable()
+{
+    U32 hash;
+    st_NPC_SOUND_RECORDS* trax;
+    st_NPC_SOUND_ENTRY* entry;
+
+    for (entry = g_npcJukeBox; entry->sndList; entry++)
+    {
+        for (trax = entry->sndList; trax->typ_sound != VSND_LISTEND; trax++)
+        {
+            hash = xStrHash(trax->nam_sound);
+            if (iSndLookup(hash))
+            {
+                trax->aid_sound = hash;
+            }
+            else
+            {
+                trax->aid_sound = 0;
+            }
+        }
+    }
+}
+
+// Count the scene's killable villains per type, with the total in the last row.
+static inline void VTAL_cntKillable()
+{
+    S32 i;
+
+    memset(g_stattally, 0, sizeof(g_stattally));
+    g_stattotvil = 0;
+    for (i = 0; i < g_npccnt; i++)
+    {
+        if (g_npcpool[i].abl_vuln & 0x4)
+        {
+            g_stattally[g_npcpool[i].subType].cnt_mortals++;
+            g_stattally[eEntVillainType_NoMore].cnt_mortals++;
+        }
+    }
+}
+
+// The standard villain's reaction to an event sent to it. Scene start sets up the shared bonus
+// and sound tables and counts the killable villains; the other events toggle the villain's
+// allowances, start and stop patrols, guarding, talking and sleep, send it after a widget, hurt
+// a boss, respawn the villain when the difficulty and the player's specials allow it, or reset
+// it. Most answer through resp, a stimulus for the villain's type.
+static S32 VILN_std_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32* toParam,
+                             xBase* toParamWidget, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    switch (toEvent)
+    {
+    case 87:
+        if (!g_bonusTableReady)
+        {
+            VBON_setup_bonusTable();
+            g_bonusTableReady = 1;
+            g_gumModelAsset = (RpAtomic*)xSTFindAsset(xStrHash("gum_puddle"), NULL);
+            VSND_setup_soundTable();
+        }
+        if (!g_emitready)
+        {
+            VPAR_readyize_emitters();
+        }
+        VTAL_cntKillable();
+        break;
+    case 88:
+        g_scene_is_a_boss_battle = 0;
+        g_bonusTableReady = 0;
+        g_NPCSoundStreamLock = 0;
+        break;
+    case eEventVisible:
+        vil->flags |= 0x1;
+        break;
+    case eEventInvisible:
+        vil->flags &= ~0x1;
+        break;
+    case 37:
+        resp->stim = ZVIL_STIM_KILLSELF;
+        break;
+    case 51:
+        resp->stim = ZVIL_STIM_DOTAUNT;
+        vil->mode = (vil->mode < ZVIL_MODE_NORMAL) ? vil->mode : ZVIL_MODE_NORMAL;
+        break;
+    case 40:
+        vil->allow |= 0x1;
+        vil->flg_misc &= ~0x20000000;
+        vil->flg_misc &= ~0x10000000;
+        vil->flg_misc &= ~0x40000000;
+        vil->flg_misc &= ~0x80000000;
+        vil->ds2_goto_keepaway = 0.0f;
+        resp->stim = ZVIL_STIM_STARTPATROL;
+        break;
+    case 41:
+        vil->allow &= ~0x1;
+        vil->flg_misc &= ~0x20000000;
+        vil->flg_misc &= ~0x10000000;
+        vil->flg_misc &= ~0x40000000;
+        vil->flg_misc &= ~0x80000000;
+        vil->ds2_goto_keepaway = 0.0f;
+        resp->stim = ZVIL_STIM_STOPPATROL;
+        break;
+    case 42:
+        vil->allow |= 0x2;
+        vil->flg_misc &= ~0x20000000;
+        vil->flg_misc &= ~0x10000000;
+        vil->flg_misc &= ~0x40000000;
+        vil->flg_misc &= ~0x80000000;
+        vil->ds2_goto_keepaway = 0.0f;
+        resp->stim = ZVIL_STIM_STARTGUARD;
+        break;
+    case 43:
+        vil->allow &= ~0x2;
+        vil->flg_misc &= ~0x20000000;
+        vil->flg_misc &= ~0x10000000;
+        vil->flg_misc &= ~0x40000000;
+        vil->flg_misc &= ~0x80000000;
+        vil->ds2_goto_keepaway = 0.0f;
+        resp->stim = ZVIL_STIM_STOPGUARD;
+        break;
+    case eEventNPCDetectOn:
+        vil->allow |= 0x4;
+        break;
+    case eEventNPCDetectOff:
+        vil->allow &= ~0x4;
+        break;
+    case eEventNPCChaseOn:
+        vil->allow |= 0x10;
+        break;
+    case eEventNPCChaseOff:
+        vil->allow &= ~0x10;
+        break;
+    case 255:
+        vil->allow |= 0x400;
+        resp->stim = ZVIL_STIM_STARTTALK;
+        if (toParamWidget)
+        {
+            resp->widge = toParamWidget;
+        }
+        break;
+    case 256:
+        vil->allow &= ~0x400;
+        resp->stim = ZVIL_STIM_STOPTALK;
+        break;
+    case 49:
+        resp->stim = ZVIL_STIM_WAKEUP;
+        break;
+    case 48:
+        if ((vil->allow & 0x1) && vil->nav_mvptlist && vil->nav_next)
+        {
+            xSceneID2Name(globals.sceneCur, vil->id);
+            vil->allow &= ~0x1;
+        }
+        resp->stim = ZVIL_STIM_GOTOSLEEP;
+        break;
+    case 174:
+        if (vil->ability & 0x1)
+        {
+            if (globals.player.Health)
+            {
+                if (vil->hitpts == 1)
+                {
+                    if (globals.player.ControlOffTimer > 0.0f)
+                    {
+                        globals.player.ControlOffTimer += 25.0f;
+                    }
+                    else
+                    {
+                        globals.player.ControlOffTimer = 25.0f;
+                    }
+                }
+                resp->stim = ZVIL_STIM_HURTBOSS;
+                resp->widge = toParamWidget;
+            }
+            else
+            {
+                resp->stim = ZVIL_STIM_DOTAUNT;
+            }
+        }
+        break;
+    case 175:
+        if ((vil->allow & 0x8) && (vil->abl_atak & 0x1))
+        {
+            resp->stim = ZVIL_STIM_ATTACKHERO;
+        }
+        break;
+    case 176:
+        vil->allow |= 0x8;
+        break;
+    case 177:
+        vil->allow &= ~0x8;
+        break;
+    case 236:
+        vil->allow |= 0x20;
+        break;
+    case 237:
+        vil->allow &= ~0x20;
+        break;
+    case 217:
+        if (toParamWidget && toParamWidget->id != vil->id)
+        {
+            resp->stim = ZVIL_STIM_FOLLOWWIDGET;
+            resp->widge = toParamWidget;
+            resp->off_goto = *toParam;
+        }
+        break;
+    case 205:
+        if (toParamWidget && toParamWidget->id != vil->id)
+        {
+            resp->stim = ZVIL_STIM_GOTOWIDGET;
+            resp->widge = toParamWidget;
+            resp->off_goto = *toParam;
+        }
+        break;
+    case 50:
+    {
+        S32 spawnmask = 0;
+        S32 spawn = 1;
+        S32 difficulty = 0;
+        VCFG_getParm(&vil->vilcfg, ZVIL_PARM_MINDIFFICULTY, &difficulty);
+        VCFG_getParm(&vil->vilcfg, ZVIL_PARM_SPAWNMASK, &spawnmask);
+        if (difficulty < 0)
+        {
+            spawn = 0;
+            xSceneID2Name(globals.sceneCur, vil->id);
+        }
+        if (spawnmask != (spawnmask & globals.player.Inv_Specials))
+        {
+            spawn = 0;
+        }
+        if (spawn)
+        {
+            st_STIMULUS_CONTEXT_DATA stimctxt = { ZVIL_STIM_GOTOAFTERLIFE };
+            zVIL_input_stim(vil, ZVIL_STIM_GOTOAFTERLIFE, &stimctxt);
+            st_STIMULUS_CONTEXT_DATA readyctxt = { ZVIL_STIM_MAKEREADY };
+            zVIL_input_stim(vil, ZVIL_STIM_MAKEREADY, &readyctxt);
+            VPAR_emit_partype(vil, VPAR_EMIT_RESPAWN, globals.update_dt);
+        }
+        break;
+    }
+    case eEventReset:
+        if (vil->bubble)
+        {
+            zEntBubble_Pop(vil->bubble);
+        }
+        vil->bubble = NULL;
+        VIL_RESET(vil, globals.sceneCur);
+        break;
+    case 234:
+        resp->stim = ZVIL_STIM_DOACTION;
+        break;
+    case 235:
+        resp->stim = ZVIL_STIM_GANGBOSSACTION;
+        break;
+    case 240:
+        resp->stim = ZVIL_STIM_GUARDWIDGET;
+        resp->widge = toParamWidget;
+        resp->off_goto = *toParam;
+        break;
+    }
+    return 1;
+}
+
 // Reads one of the villain's flag groups from its subtype's settings; the allow group reads as 0.
 static S32 VILN_std_flag(st_zEntVillain* vil, en_ZVIL_FLAG_GROUPS flaggroup, en_BEHAVIOUR_GOAL)
 {
@@ -2402,6 +2741,2352 @@ static S32 VILN_std_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     return 1;
 }
 
+
+// The standard per-frame goal decisions. Waiting villains (idle, bored, guarding, patrolling)
+// watch for the player and pick the strongest reaction: attack when the player is too close,
+// surprise when seen, listen when heard, otherwise follow, head home, patrol, get bored or fidget.
+// Alert goals (look, listen, surprise, investigate) escalate or calm down on their timers.
+// Readying an attack turns to face the player and then picks a close attack, a lob or a spell
+// from the player's range flags, or a chase, or gives up. The attacks run their damage windows
+// and lob salvos; dazed, soaped and gummed play their recovery animations and sounds and break
+// free when their timers run out; dying fades out as a hologram and goes to the afterlife.
+static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    F32 fv = 0.0f;
+    S32 iv;
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+    if (g_scene_is_a_boss_battle > 2 && vil->asset->subtype != eEntVillainTypeGhostDiver)
+        vil->tgt_stat = 0x0400887C;
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_BASEINIT:
+        vil->collis->chk = 0x26;
+        vil->collis->pen = 0x66;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_STARTUP:
+        resp->trangoal = ZVIL_GOAL_GOONLINE;
+        resp->tranmode = ZVIL_MODE_READY;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        vil->collis->chk = 0x26;
+        vil->collis->pen = 0x66;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_GOONLINE:
+        resp->trangoal = vil->goaldflt;
+        resp->tranmode = ZVIL_MODE_NORMAL;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    case ZVIL_GOAL_IDLE:
+        if (vil->vhf->query(vil, ZVIL_Q_PLYRTOOCLOSE))
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR))
+        {
+            resp->trangoal = ZVIL_GOAL_SURPRIZE;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANHEARPLYR))
+        {
+            resp->trangoal = ZVIL_GOAL_LISTEN;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_DOFOLLOW))
+        {
+            resp->trangoal = ZVIL_GOAL_FOLLOW;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+        {
+            resp->trangoal = ZVIL_GOAL_MINIPATROL;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_HAVEGUARDPOS))
+        {
+            resp->trangoal = ZVIL_GOAL_MINIPATROL;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else
+        {
+            if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
+            if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                resp->trangoal = ZVIL_GOAL_PATROL;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->tmr_list[ZVIL_TTIL_BORED] <= 0.0f && !(vil->ability & 0x20000))
+            {
+                resp->trangoal = ZVIL_GOAL_BORED;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f)
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_FIDGET);
+                F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET];
+                vil->tmr_list[ZVIL_TTIL_FIDGET] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            }
+        }
+        break;
+    case ZVIL_GOAL_BORED:
+        VPAR_emit_partype(vil, VPAR_EMIT_BORED, dt);
+        if (vil->vhf->query(vil, ZVIL_Q_PLYRTOOCLOSE))
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR))
+        {
+            resp->trangoal = ZVIL_GOAL_SURPRIZE;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANHEARPLYR))
+        {
+            resp->trangoal = ZVIL_GOAL_LISTEN;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_DOFOLLOW))
+        {
+            resp->trangoal = ZVIL_GOAL_FOLLOW;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+        {
+            resp->trangoal = ZVIL_GOAL_MINIPATROL;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_HAVEGUARDPOS))
+        {
+            resp->trangoal = ZVIL_GOAL_MINIPATROL;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else
+        {
+            if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
+            if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                resp->trangoal = ZVIL_GOAL_PATROL;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f && !(vil->ability & 0x20000))
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_BORED, ZVIL_GSPOT_FIDGET);
+                F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET];
+                vil->tmr_list[ZVIL_TTIL_FIDGET] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            }
+        }
+        break;
+    case ZVIL_GOAL_ACTION:
+        if ((vil->abl_move & 0x8000) &&
+            (vil->collis->env_sidx != vil->collis->env_eidx ||
+             vil->collis->stat_sidx != vil->collis->stat_eidx ||
+             vil->collis->dyn_sidx != vil->collis->dyn_eidx))
+        {
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        if (!vil->vhf->query(vil, ZVIL_Q_DOFOLLOW))
+        {
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_PATROL:
+        if (vil->vhf->query(vil, ZVIL_Q_PLYRTOOCLOSE))
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR))
+        {
+            resp->trangoal = ZVIL_GOAL_SURPRIZE;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANHEARPLYR))
+        {
+            resp->trangoal = ZVIL_GOAL_LISTEN;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else
+        {
+            if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV) && VNAV_get_nav(vil))
+                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_CLANKING);
+            if (!vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                if (vil->vhf->query(vil, ZVIL_Q_CANGUARD))
+                {
+                    resp->pos_guard = *xEntGetPos(vil);
+                    resp->trangoal = ZVIL_GOAL_GUARD;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_IDLE;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+        }
+        break;
+    case ZVIL_GOAL_MINIPATROL:
+        if (vil->vhf->query(vil, ZVIL_Q_DOFOLLOW))
+        {
+            resp->trangoal = ZVIL_GOAL_FOLLOW;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (!vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+        {
+            vil->mode = MIN(vil->mode, ZVIL_MODE_ALERT);
+            if (vil->vhf->query(vil, ZVIL_Q_PLYRTOOCLOSE))
+            {
+                resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR))
+            {
+                resp->trangoal = ZVIL_GOAL_SURPRIZE;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->vhf->query(vil, ZVIL_Q_CANHEARPLYR))
+            {
+                resp->trangoal = ZVIL_GOAL_LISTEN;
+                resp->tranmode = ZVIL_MODE_ALERT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (!vil->vhf->query(vil, ZVIL_Q_HAVEGUARDPOS))
+            {
+                if (vil->vhf->query(vil, ZVIL_Q_CANGUARD))
+                {
+                    resp->pos_guard = *xEntGetPos(vil);
+                    resp->trangoal = ZVIL_GOAL_GUARD;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_IDLE;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+        }
+        break;
+    case ZVIL_GOAL_GUARD:
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f) VPAR_emit_partype(vil, VPAR_EMIT_GUARD, dt);
+        if (vil->vhf->query(vil, ZVIL_Q_PLYRTOOCLOSE))
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR))
+        {
+            resp->trangoal = ZVIL_GOAL_SURPRIZE;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANHEARPLYR))
+        {
+            resp->trangoal = ZVIL_GOAL_LISTEN;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_DOFOLLOW))
+        {
+            resp->trangoal = ZVIL_GOAL_FOLLOW;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+        {
+            resp->trangoal = ZVIL_GOAL_MINIPATROL;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_HAVEGUARDPOS))
+        {
+            resp->trangoal = ZVIL_GOAL_MINIPATROL;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else
+        {
+            if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
+            if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                resp->trangoal = ZVIL_GOAL_PATROL;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else
+            {
+                if (vil->anim_playnext == ZVIL_ANIM_LOOK_LOOP && vil->anim_playing)
+                {
+                    if (vil->tmr_list[ZVIL_TDUR_LOOK] <= 0.0f)
+                    {
+                        vil->anim_loopmult = 0.97f;
+                        vil->vhf->pickanim(vil, ZVIL_GOAL_GUARD, ZVIL_GSPOT_START);
+                        F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET];
+                        vil->tmr_list[ZVIL_TTIL_FIDGET] = duration + 0.25f * (iurand() - 0.5f) * duration;
+                    }
+                }
+                if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f)
+                {
+                    vil->anim_loopmult = 0.97f;
+                    vil->vhf->pickanim(vil, ZVIL_GOAL_GUARD, ZVIL_GSPOT_FIDGET);
+                    F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET];
+                    vil->tmr_list[ZVIL_TTIL_FIDGET] = duration + 0.25f * (iurand() - 0.5f) * duration;
+                    vil->tmr_list[ZVIL_TDUR_LOOK] = 2.0f;
+                }
+            }
+        }
+        break;
+    case ZVIL_GOAL_AMBUSH:
+        vil->tgt_stat = 0x0400887C;
+        if (vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV))
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_LEAP:
+        if (vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV))
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_LOOKFORHERO:
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            vil->tgt_stat &= ~0x2;
+            if (vil->vhf->query(vil, ZVIL_Q_PLYRTOOCLOSE))
+            {
+                resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR))
+            {
+                resp->trangoal = ZVIL_GOAL_SURPRIZE;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->vhf->query(vil, ZVIL_Q_CANHEARPLYR) && !vil->vhf->query(vil, ZVIL_Q_PLYRINFOV))
+            {
+                resp->trangoal = ZVIL_GOAL_LISTEN;
+                resp->tranmode = ZVIL_MODE_ALERT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->tmr_list[ZVIL_TDUR_LOOK] <= 0.0f)
+            {
+                resp->trangoal = ZVIL_GOAL_INVESTIGATE;
+                resp->tranmode = ZVIL_MODE_ALERT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_LISTEN:
+        if (vil->vhf->query(vil, ZVIL_Q_PLYRNEAR)) vil->ang_listen = prec->ang_VtoP;
+        if (vil->vhf->query(vil, ZVIL_Q_PLYRTOOCLOSE))
+        {
+            vil->tgt_stat &= ~0x2;
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            if (vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR))
+            {
+                resp->trangoal = ZVIL_GOAL_SURPRIZE;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (fabs(vil->frame->rot.angle - vil->ang_listen) <= 0.2f)
+            {
+                resp->trangoal = ZVIL_GOAL_LOOKFORHERO;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->tmr_list[ZVIL_TDUR_HEAR] <= 0.0f)
+            {
+                resp->trangoal = ZVIL_GOAL_LOOKFORHERO;
+                resp->tranmode = ZVIL_MODE_ALERT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_SURPRIZE:
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            vil->tgt_stat &= ~0x2;
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_INVESTIGATE:
+        vil->tgt_stat &= ~0x2;
+        if (vil->vhf->query(vil, ZVIL_Q_PLYRTOOCLOSE))
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR))
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANHEARPLYR))
+        {
+            resp->trangoal = ZVIL_GOAL_LISTEN;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->tmr_list[ZVIL_TDUR_SEARCH] <= 0.0f)
+        {
+            vil->tgt_stat = 0;
+            if (vil->vhf->query(vil, ZVIL_Q_CANGUARD))
+            {
+                resp->pos_guard = *xEntGetPos(vil);
+                resp->trangoal = ZVIL_GOAL_GUARD;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_IDLE;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_ATTACKREADY:
+        if (!(vil->abl_move & 0x4000) && vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] < 0.3f)
+        {
+            fv = vil->frame->rot.angle;
+            if (fabs(fv - prec->ang_VtoP) <= 0.1f)
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_ATTACKREADY, ZVIL_GSPOT_START);
+            }
+            else if (!(prec->plyr_mvinf & 0xFF00))
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_ATTACKREADY, ZVIL_GSPOT_MOVERIGHT);
+            }
+        }
+        if (vil->anim_playing != ZVIL_ANIM_TURN ||
+            fabs(fv - prec->ang_VtoP) <= 0.5 * MAX(vil->fov_detect, 0.2f))
+        {
+            if (!g_scene_is_a_boss_battle || vil->asset->subtype != eEntVillainTypeWitchDoctor ||
+                vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+            {
+                if (!vil->vhf->query(vil, ZVIL_Q_CANDETECT))
+                {
+                    resp->trangoal = ZVIL_GOAL_IDLE;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    if (vil->vhf->query(vil, ZVIL_Q_PLYRNEAR) && vil->vhf->query(vil, ZVIL_Q_CANSEEPLYR))
+                    {
+                        F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_ALERT];
+                        vil->tmr_list[ZVIL_TDUR_ALERT] = duration + 0.25f * (iurand() - 0.5f) * duration;
+                    }
+                    iv = vil->vhf->query(vil, ZVIL_Q_CANATTACK);
+                    if (iv && (prec->flg_plyr & 0x10) && (vil->abl_atak & 0x20000))
+                    {
+                        resp->trangoal = ZVIL_GOAL_CQCATTACK;
+                        resp->tranmode = ZVIL_MODE_BATTLE;
+                        resp->stim = ZVIL_STIM_TRANGOAL;
+                    }
+                    else if (iv && (prec->flg_plyr & 0x20) && (vil->abl_atak & 0x40000) &&
+                             vil->tmr_list[ZVIL_TDUR_LOBRELOAD] <= 0.0f &&
+                             (vil->prj_reserved = VWEP_lobReservePRJ(vil)))
+                    {
+                        resp->trangoal = ZVIL_GOAL_LOBBING;
+                        resp->tranmode = ZVIL_MODE_BATTLE;
+                        resp->stim = ZVIL_STIM_TRANGOAL;
+                    }
+                    else if (iv && (prec->flg_plyr & 0x40) && (vil->abl_atak & 0x80000) &&
+                             vil->tmr_list[ZVIL_TDUR_EXTRELOAD] <= 0.0f)
+                    {
+                        resp->trangoal = ZVIL_GOAL_SPELLCAST;
+                        resp->tranmode = ZVIL_MODE_BATTLE;
+                        resp->stim = ZVIL_STIM_TRANGOAL;
+                    }
+                    else if (vil->vhf->query(vil, ZVIL_Q_CANCHASE) &&
+                             vil->tmr_list[ZVIL_TTIL_NEXTCHASE] <= 0.0f &&
+                             vil->vhf->query(vil, ZVIL_Q_CANPURSUE) &&
+                             ((vil->abl_atak & 0x10000) || (vil->abl_atak & 0x20000) ||
+                              (vil->abl_atak & 0x40000) || (vil->abl_atak & 0x80000)))
+                    {
+                        resp->trangoal = ZVIL_GOAL_CHASE;
+                        resp->tranmode = ZVIL_MODE_BATTLE;
+                        resp->stim = ZVIL_STIM_TRANGOAL;
+                        F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_NEXTCHASE];
+                        vil->tmr_list[ZVIL_TTIL_NEXTCHASE] = duration + 0.25f * (iurand() - 0.5f) * duration;
+                    }
+                    else
+                    {
+                        if (vil->tmr_list[ZVIL_TDUR_ALERT] <= 0.0f)
+                        {
+                            resp->trangoal = ZVIL_GOAL_INVESTIGATE;
+                            resp->tranmode = ZVIL_MODE_ALERT;
+                            resp->stim = ZVIL_STIM_TRANGOAL;
+                        }
+                        if (vil->tmr_list[ZVIL_TTIL_TAUNT] <= 0.0f)
+                            vil->tmr_list[ZVIL_TTIL_TAUNT] = 32000000.0f;
+                    }
+                }
+            }
+        }
+        break;
+    case ZVIL_GOAL_CHASE:
+        if (!vil->vhf->query(vil, ZVIL_Q_PLYRSEEN))
+        {
+            resp->trangoal = ZVIL_GOAL_INVESTIGATE;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (!vil->vhf->query(vil, ZVIL_Q_CANPURSUE))
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_BATTLE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->vhf->query(vil, ZVIL_Q_CANATTACK))
+        {
+            if ((prec->flg_plyr & 0x10) && (vil->abl_atak & 0x20000))
+            {
+                resp->trangoal = ZVIL_GOAL_CQCATTACK;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if ((prec->flg_plyr & 0x20) && (vil->abl_atak & 0x40000))
+            {
+                vil->prj_reserved = VWEP_lobReservePRJ(vil);
+                if (vil->prj_reserved)
+                {
+                    resp->trangoal = ZVIL_GOAL_LOBBING;
+                    resp->tranmode = ZVIL_MODE_BATTLE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            else if ((prec->flg_plyr & 0x40) && (vil->abl_atak & 0x80000))
+            {
+                resp->trangoal = ZVIL_GOAL_SPELLCAST;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_CQCATTACK:
+        iv = VCFG_inDamageWindow(vil, VANM_entTime(vil));
+        if (!vil->goodattack && iv)
+        {
+            vil->goodattack = VWEP_swipe(vil, dt);
+            if (vil->goodattack)
+            {
+                if (prec->plyr_mvinf & 1) VWEP_mm_zapPlayer(vil);
+                vil->tmr_list[ZVIL_TWIN_POSTATTACK] = vil->vilcfg.tymref_list[ZVIL_TWIN_POSTATTACK];
+            }
+        }
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            if (vil->vhf->query(vil, ZVIL_Q_RUNAWAY))
+            {
+                if (vil->nav_next)
+                {
+                    vil->pos_guard_home = *zMovePointGetPos(vil->nav_next);
+                    vil->flg_misc |= 0x40000000;
+                }
+                else if (vil->nav_prev)
+                {
+                    vil->pos_guard_home = *zMovePointGetPos(vil->nav_prev);
+                    vil->flg_misc |= 0x40000000;
+                }
+                else
+                {
+                    vil->pos_guard_home = prec->dir_VtoP;
+                    xVec3SMulBy(&vil->pos_guard_home, -3.0f);
+                    xVec3AddTo(&vil->pos_guard_home, xEntGetPos(vil));
+                    vil->flg_misc |= 0x40000000;
+                }
+                resp->trangoal = ZVIL_GOAL_MINIPATROL;
+                resp->tranmode = ZVIL_MODE_RETREAT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->goodattack && (vil->ability & 0x100))
+            {
+                if (vil->tmr_list[ZVIL_TWIN_POSTATTACK] <= 0.0f)
+                {
+                    resp->trangoal = ZVIL_GOAL_TAUNT;
+                    resp->tranmode = ZVIL_MODE_NOCHANGE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_LOBBING:
+        if (vil->tmr_list[ZVIL_TDUR_BUILDUP] <= 0.0f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_LOBBING, ZVIL_GSPOT_KICKATTACK);
+            iv = VCFG_inDamageWindow(vil, VANM_entTime(vil));
+            if (vil->anim_playnext == ZVIL_ANIM_LOB_ATTACK && vil->anim_playing && iv &&
+                vil->prj_reserved && vil->cnt_lobSalvo > 0)
+            {
+                if (vil->tgt_bullseye && (vil->allow & 0x100))
+                {
+                    VWEP_lobActivatePRJ(vil->prj_reserved, vil, zMovePointGetPos(vil->tgt_bullseye), NULL,
+                                        &vil->vec_lobSpin, vil->fac_lobarc, vil->fac_lobheavy);
+                }
+                else if (prec->flg_plyr & 0x20)
+                {
+                    _xVec3 vec_off = { 0 };
+                    vec_off.x = 0.5f - iurand();
+                    vec_off.y = 0.5f - iurand();
+                    vec_off.z = 0.5f - iurand();
+                    xVec3Normalize(&vec_off, &vec_off);
+                    xVec3SMulBy(&vec_off, vil->cnt_lobSalvo - 1);
+                    VWEP_lobActivatePRJ(vil->prj_reserved, vil, xBoundCenter(&globals.player.ent.bound),
+                                        &vec_off, &vil->vec_lobSpin, vil->fac_lobarc, vil->fac_lobheavy);
+                }
+                else if (vil->tgt_bullseye)
+                {
+                    VWEP_lobActivatePRJ(vil->prj_reserved, vil, zMovePointGetPos(vil->tgt_bullseye), NULL,
+                                        &vil->vec_lobSpin, vil->fac_lobarc, vil->fac_lobheavy);
+                }
+                vil->cnt_lobSalvo--;
+                if (vil->cnt_lobSalvo > 0 && !vil->prj_reserved) vil->prj_reserved = VWEP_lobReservePRJ(vil);
+            }
+            if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+            {
+                resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_SPELLCAST:
+        if (vil->anim_playnext == ZVIL_ANIM_EXT_ATTACK_LOOP && vil->anim_playing)
+        {
+            if (!vil->goodattack)
+            {
+                if (VCFG_inDamageWindow(vil, VANM_entTime(vil)))
+                    vil->goodattack |= VWEP_extend_particles(vil, dt, &vil->pos_exttgt);
+                if (vil->goodattack) VWEP_mm_zapPlayer(vil);
+                vil->tmr_list[ZVIL_TWIN_POSTATTACK] = vil->vilcfg.tymref_list[ZVIL_TWIN_POSTATTACK];
+            }
+            else if (VCFG_inDamageWindow(vil, VANM_entTime(vil)))
+            {
+                VWEP_extend_particles(vil, dt, &vil->pos_exttgt);
+            }
+        }
+        if (vil->tmr_list[ZVIL_TDUR_EXTEND] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->goodattack && (vil->ability & 0x100) && vil->tmr_list[ZVIL_TWIN_POSTATTACK] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_TAUNT;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (prec->dst_VtoP > 1.5f * vil->dst_extend)
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_TAUNT:
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            if (vil->mode < ZVIL_MODE_ALERT)
+            {
+                if (vil->vhf->query(vil, ZVIL_Q_CANGUARD))
+                {
+                    resp->trangoal = ZVIL_GOAL_GUARD;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_IDLE;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            else if (vil->vhf->query(vil, ZVIL_Q_RUNAWAY))
+            {
+                if (prec->ds2_grdpos < 9.0f)
+                {
+                    vil->pos_guard_home = prec->dir_VtoP;
+                    xVec3SMulBy(&vil->pos_guard_home, -3.0f);
+                }
+                vil->flg_misc |= 0x40000000;
+                resp->trangoal = ZVIL_GOAL_MINIPATROL;
+                resp->tranmode = ZVIL_MODE_RETREAT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_DAZED:
+        VPAR_emit_partype(vil, VPAR_EMIT_STUN, dt);
+        if (vil->tmr_list[ZVIL_TTIL_RECOVERY] <= 0.0f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_DAZED, ZVIL_GSPOT_STATERECOVER);
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] = 32000000.0f;
+        }
+        else if (vil->tmr_list[ZVIL_TDUR_DAZED] <= 0.0f)
+        {
+            vil->hitpts = vil->vilcfg.hitpts;
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_SOAPED:
+        VPAR_emit_partype(vil, VPAR_EMIT_SOAPY, dt);
+        if (vil->tmr_list[ZVIL_TDUR_SOAP] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->tmr_list[ZVIL_TTIL_RECOVERY] <= 0.0f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_SOAPED, ZVIL_GSPOT_BUBBREAKFREE);
+            VIL_QUEUE_PROPSOUND(vil, VSND_TYP_SOAPSTOP);
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] = 32000000.0f;
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = 32000000.0f;
+        }
+        else if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_SOAPED, ZVIL_GSPOT_BUBRESIST);
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = 2.0f + 2.0f * (0.25f * (iurand() - 0.5f));
+        }
+        break;
+    case ZVIL_GOAL_GUMMED:
+        if (vil->mdl_gumBlob)
+        {
+            xVec3Copy((xVec3*)&vil->mdl_gumBlob->Mat->pos, xEntGetPos(vil));
+            if (vil->asset->subtype == eEntVillainTypeBat) vil->mdl_gumBlob->Mat->pos.y -= 0.3f;
+        }
+        VPAR_emit_partype(vil, VPAR_EMIT_GUMMY, dt);
+        if ((vil->abl_vuln & 0x200) && vil->tmr_list[ZVIL_TWIN_MINGUM] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_DIE;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->tmr_list[ZVIL_TTIL_RECOVERY] <= 0.0f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_GUMMED, ZVIL_GSPOT_BUBBREAKFREE);
+            VIL_QUEUE_PROPSOUND(vil, VSND_TYP_GUMMED);
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] = 32000000.0f;
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = 32000000.0f;
+        }
+        else if (vil->tmr_list[ZVIL_TDUR_GUM] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_GUMMED, ZVIL_GSPOT_BUBRESIST);
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = 3.0f + 3.0f * (0.25f * (iurand() - 0.5f));
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        if (vil->asset->subtype == eEntVillainTypeWitchDoctor && sWitchDyingEmitter)
+        {
+            _zParEmitterCustomSettings info;
+            info.custom_flags = 0x20;
+            xVec3Copy(&info.pos, xEntGetPos(vil));
+            info.pos.y += 1.0f;
+            zParEmitterEmitCustom(sWitchDyingEmitter, dt, &info);
+        }
+        VPAR_emit_partype(vil, VPAR_EMIT_DECAY, dt);
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
+            {
+                zHologramAdd(vil);
+                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
+                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
+                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+            }
+            VIL_HOLO_FLICKER(vil, dt);
+            if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
+            {
+                VPAR_emit_partype(vil, VPAR_EMIT_POOF, dt);
+                resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+                resp->tranmode = ZVIL_MODE_SHUTDOWN;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    default:
+        resp->trangoal = ZVIL_GOAL_IDLE;
+        resp->tranmode = ZVIL_MODE_NOCHANGE;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    }
+    return 1;
+}
+
+// The standard reaction to a stimulus, in two passes over the current goal. The first pass covers
+// orders and hits: death and afterlife orders, actions, soap and gum (which envelop the villain
+// when it is vulnerable and count toward the tally), headbutts, bounces and bumps (which daze or
+// hurt it, or send it to attack, taunt or run away), sighting the player, sleep and wake orders,
+// going to a spot or widget, and patrol and guard orders. The second pass covers what the current
+// goal adds: taunts, a frontal bump while chasing starting a close attack, hits while dazed, and
+// the bubble reactions while soaped or gummed (which knock a soaped villain around).
+static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
+                             st_STIMULUS_CONTEXT_DATA* resp)
+{
+    S32 std_mvpt_nav;
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    switch (g_pgol = vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+    case ZVIL_GOAL_DAZED:
+    case ZVIL_GOAL_DIE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_GUARDWIDGET:
+            vil->tgt_protect = (_zEnt*)stimctxt->widge;
+            vil->ds2_goto_keepaway = SQR(stimctxt->off_goto);
+            break;
+        }
+        break;
+    case ZVIL_GOAL_SOAPED:
+    case ZVIL_GOAL_GUMMED:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_GUARDWIDGET:
+            vil->tgt_protect = (_zEnt*)stimctxt->widge;
+            vil->ds2_goto_keepaway = SQR(stimctxt->off_goto);
+            break;
+        case ZVIL_STIM_KILLSELF:
+            vil->hitpts = 0;
+            resp->trangoal = ZVIL_GOAL_DIE;
+            resp->tranmode = ZVIL_MODE_DEATH;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOAFTERLIFE:
+            resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_SOAPED:
+            stimctxt->res_bubble = ZVIL_BUBBLE_BREAK;
+            if (vil->goal == ZVIL_GOAL_SOAPED)
+            {
+                F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_SOAP];
+                vil->tmr_list[ZVIL_TDUR_SOAP] = duration + 0.25f * (iurand() - 0.5f) * duration;
+                vil->tmr_list[ZVIL_TTIL_FIDGET] = 3.0f + 3.0f * (0.25f * (iurand() - 0.5f));
+            }
+            break;
+        case ZVIL_STIM_GUMMED:
+            stimctxt->res_bubble = ZVIL_BUBBLE_BREAK;
+            if (vil->goal == ZVIL_GOAL_GUMMED)
+            {
+                F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_GUM];
+                vil->tmr_list[ZVIL_TDUR_GUM] = duration + 0.25f * (iurand() - 0.5f) * duration;
+                vil->tmr_list[ZVIL_TTIL_FIDGET] = 3.0f + 3.0f * (0.25f * (iurand() - 0.5f));
+            }
+            break;
+        }
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_BORED:
+    case ZVIL_GOAL_PATROL:
+    case ZVIL_GOAL_MINIPATROL:
+    case ZVIL_GOAL_FOLLOW:
+    case ZVIL_GOAL_GUARD:
+    case ZVIL_GOAL_AMBUSH:
+    case ZVIL_GOAL_LEAP:
+    case ZVIL_GOAL_LOOKFORHERO:
+    case ZVIL_GOAL_LISTEN:
+    case ZVIL_GOAL_SURPRIZE:
+    case ZVIL_GOAL_INVESTIGATE:
+    case ZVIL_GOAL_ATTACKREADY:
+    case ZVIL_GOAL_CHASE:
+    case ZVIL_GOAL_CQCATTACK:
+    case ZVIL_GOAL_LOBBING:
+    case ZVIL_GOAL_SPELLCAST:
+    case ZVIL_GOAL_TAUNT:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_KILLSELF:
+            vil->hitpts = 0;
+            resp->trangoal = ZVIL_GOAL_DIE;
+            resp->tranmode = ZVIL_MODE_DEATH;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOAFTERLIFE:
+            resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_DOACTION:
+            resp->trangoal = ZVIL_GOAL_ACTION;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GANGBOSSACTION:
+            resp->trangoal = ZVIL_GOAL_ACTION;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_SOAPED:
+            if (vil->abl_vuln & 0x40)
+            {
+                stimctxt->res_bubble = ZVIL_BUBBLE_ENVELOP;
+                resp->trangoal = ZVIL_GOAL_SOAPED;
+                resp->tranmode = ZVIL_MODE_ALERT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                g_stattally[vil->asset->subtype].cnt_hitsoap++;
+                g_stattally[eEntVillainType_NoMore].cnt_hitsoap++;
+            }
+            else
+            {
+                stimctxt->res_bubble = ZVIL_BUBBLE_BREAK;
+            }
+            break;
+        case ZVIL_STIM_GUMMED:
+            if (vil->abl_vuln & 0x20)
+            {
+                stimctxt->res_bubble = ZVIL_BUBBLE_ENVELOP;
+                resp->trangoal = ZVIL_GOAL_GUMMED;
+                resp->tranmode = ZVIL_MODE_ALERT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                g_stattally[vil->asset->subtype].cnt_hitgum++;
+                g_stattally[eEntVillainType_NoMore].cnt_hitgum++;
+            }
+            else
+            {
+                stimctxt->res_bubble = ZVIL_BUBBLE_BREAK;
+            }
+            break;
+        case ZVIL_STIM_HEADBUTT:
+            if (vil->ability & 4)
+            {
+                stimctxt->res_headbutt = ZVIL_HEADBUTT_HITGANG;
+            }
+            else if (VOUT_spikey_header(vil) == ZVIL_HEADBUTT_DAMAGE)
+            {
+                stimctxt->res_headbutt = ZVIL_HEADBUTT_DAMAGE;
+            }
+            else if (vil->abl_vuln & 0x80)
+            {
+                if ((vil->ability & 0x80000) && !(vil->ability & 0x80))
+                {
+                    stimctxt->res_headbutt = ZVIL_HEADBUTT_CONTINUE;
+                    vil->dir_bowling.x = stimctxt->dir_headbutt.x * stimctxt->mag_headbutt;
+                    vil->dir_bowling.y = stimctxt->dir_headbutt.y * stimctxt->mag_headbutt;
+                    vil->dir_bowling.z = stimctxt->dir_headbutt.z * stimctxt->mag_headbutt;
+                }
+                else
+                {
+                    stimctxt->res_headbutt = ZVIL_HEADBUTT_NORMAL;
+                }
+                if ((vil->ability & 0x80) || !(globals.player.Inv_Specials & 0x800))
+                {
+                    resp->trangoal = ZVIL_GOAL_DAZED;
+                    resp->tranmode = ZVIL_MODE_BATTLE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else if (--vil->hitpts < 1)
+                {
+                    resp->trangoal = ZVIL_GOAL_DIE;
+                    resp->tranmode = ZVIL_MODE_DEATH;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+                    resp->tranmode = ZVIL_MODE_BATTLE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            else
+            {
+                stimctxt->res_headbutt = ZVIL_HEADBUTT_NONE;
+            }
+            break;
+        case ZVIL_STIM_BOUNCED:
+            if ((vil->abl_spyk & 1) && (vil->abl_spyk & 0x20))
+            {
+                stimctxt->res_buttbounce = ZVIL_BOUNCE_DAMAGE;
+            }
+            else if (vil->abl_vuln & 0x100)
+            {
+                stimctxt->res_buttbounce = ZVIL_BOUNCE_NORMAL;
+                if (vil->ability & 0x80)
+                {
+                    resp->trangoal = ZVIL_GOAL_DAZED;
+                    resp->tranmode = ZVIL_MODE_BATTLE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else if (--vil->hitpts < 1)
+                {
+                    resp->trangoal = ZVIL_GOAL_DIE;
+                    resp->tranmode = ZVIL_MODE_DEATH;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+                    resp->tranmode = ZVIL_MODE_BATTLE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            else
+            {
+                stimctxt->res_buttbounce = ZVIL_BOUNCE_NONE;
+            }
+            break;
+        case ZVIL_STIM_BUMPED:
+            if (!(vil->ability & 0x40))
+                stimctxt->res_bumped = ZVIL_BUMPED_NONE;
+            else if (!(vil->abl_atak & 1))
+                stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE;
+            else if (vil->abl_atak & 0x10000)
+                stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE;
+            else if (vil->abl_atak & 0xFF0000)
+                stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE;
+            else
+                stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE;
+            if (vil->goal == ZVIL_GOAL_BORED && (vil->abl_move & 0x8000))
+            {
+                resp->trangoal = ZVIL_GOAL_ACTION;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                resp->use_alt_action = 1;
+            }
+            if ((vil->allow & 8) && (vil->abl_atak & 1) && (vil->abl_atak & 0x20000))
+            {
+                resp->trangoal = ZVIL_GOAL_CQCATTACK;
+                resp->tranmode = ZVIL_MODE_ALERT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                vil->ang_moveto = vil->precalc.ang_VtoP;
+                vil->domove |= 0x80000000;
+                vil->domove |= 0x20000000 | 0x40;
+            }
+            else if (vil->ability & 0x100)
+            {
+                resp->trangoal = ZVIL_GOAL_TAUNT;
+                resp->tranmode = ZVIL_MODE_ALERT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if (vil->vhf->query(vil, ZVIL_Q_RUNAWAY))
+            {
+                if (vil->precalc.ds2_grdpos < 9.0f)
+                {
+                    vil->pos_guard_home = vil->precalc.dir_VtoP;
+                    xVec3SMulBy(&vil->pos_guard_home, -3.0f);
+                }
+                vil->flg_misc |= 0x40000000;
+                resp->trangoal = ZVIL_GOAL_MINIPATROL;
+                resp->tranmode = ZVIL_MODE_RETREAT;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        case ZVIL_STIM_STUNNING:
+            if (vil->abl_vuln & 0x40000)
+            {
+                resp->trangoal = ZVIL_GOAL_DAZED;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        case ZVIL_STIM_LOOKFORHERO:
+            resp->trangoal = ZVIL_GOAL_LOOKFORHERO;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_HEARDHERO:
+            resp->trangoal = ZVIL_GOAL_LISTEN;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_SAWHERO:
+            resp->trangoal = ZVIL_GOAL_SURPRIZE;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_SHOCKED:
+            resp->trangoal = ZVIL_GOAL_SURPRIZE;
+            resp->tranmode = ZVIL_MODE_ALERT;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_ATTACKHERO:
+            if (vil->vhf->query(vil, ZVIL_Q_CANATTACK))
+            {
+                resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else
+            {
+                xSceneID2Name(globals.sceneCur, vil->id);
+            }
+            break;
+        case ZVIL_STIM_WAKEUP:
+            if (vil->goal == ZVIL_GOAL_BORED && (vil->abl_move & 0x8000))
+            {
+                resp->trangoal = ZVIL_GOAL_ACTION;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                resp->use_alt_action = 1;
+            }
+            else if (vil->goal == ZVIL_GOAL_BORED)
+            {
+                resp->trangoal = ZVIL_GOAL_IDLE;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        case ZVIL_STIM_GOTOSLEEP:
+            if (vil->mode < ZVIL_MODE_ALERT)
+            {
+                resp->trangoal = ZVIL_GOAL_BORED;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        case ZVIL_STIM_GUARDWIDGET:
+            vil->tgt_protect = (_zEnt*)stimctxt->widge;
+            vil->ds2_goto_keepaway = SQR(stimctxt->off_goto);
+            break;
+        case ZVIL_STIM_GOTOPOS:
+            vil->allow |= 1;
+            vil->need_navpt = 0;
+            vil->flg_misc &= ~0x20000000;
+            vil->flg_misc &= ~0x40000000;
+            vil->flg_misc &= ~0x80000000;
+            vil->flg_misc |= 0x10000000;
+            vil->ds2_goto_keepaway = SQR(stimctxt->off_goto);
+            vil->pos_goto = stimctxt->gotopos;
+            resp->trangoal = ZVIL_GOAL_FOLLOW;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOWIDGET:
+            if (stimctxt->widge && (vil->abl_move & 0x100))
+            {
+                VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 0);
+                vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+                resp->trangoal = ZVIL_GOAL_FOLLOW;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        case ZVIL_STIM_FOLLOWWIDGET:
+            if (stimctxt->widge && (vil->abl_move & 0x100))
+            {
+                std_mvpt_nav = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 1);
+                vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+                if (std_mvpt_nav)
+                {
+                    resp->trangoal = ZVIL_GOAL_PATROL;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_FOLLOW;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            break;
+        case ZVIL_STIM_STARTPATROL:
+            if (vil->goal == ZVIL_GOAL_BORED && (vil->abl_move & 0x8000))
+            {
+                resp->trangoal = ZVIL_GOAL_ACTION;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                resp->use_alt_action = 1;
+            }
+            else
+            {
+                vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+                if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
+                if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+                {
+                    resp->trangoal = ZVIL_GOAL_PATROL;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_IDLE;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            break;
+        case ZVIL_STIM_STOPPATROL:
+            if (vil->mode < ZVIL_MODE_ALERT)
+            {
+                if ((vil->allow & 2) && (vil->abl_move & 0x10))
+                {
+                    resp->pos_guard = *xEntGetPos(vil);
+                    resp->trangoal = ZVIL_GOAL_GUARD;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_IDLE;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            break;
+        case ZVIL_STIM_STARTGUARD:
+            if (vil->mode < ZVIL_MODE_ALERT)
+            {
+                if ((vil->allow & 2) && (vil->abl_move & 0x10))
+                {
+                    resp->pos_guard = *xEntGetPos(vil);
+                    resp->trangoal = ZVIL_GOAL_GUARD;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_IDLE;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            break;
+        case ZVIL_STIM_STOPGUARD:
+            if (vil->mode < ZVIL_MODE_ALERT)
+            {
+                resp->trangoal = ZVIL_GOAL_IDLE;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        }
+        break;
+    }
+
+    switch (g_pgol = vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_BASEINIT:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_BORED:
+    case ZVIL_GOAL_PATROL:
+    case ZVIL_GOAL_FOLLOW:
+    case ZVIL_GOAL_AMBUSH:
+    case ZVIL_GOAL_LEAP:
+        g_pstm = stim;
+        break;
+    case ZVIL_GOAL_MINIPATROL:
+    case ZVIL_GOAL_GUARD:
+    case ZVIL_GOAL_LOOKFORHERO:
+    case ZVIL_GOAL_LISTEN:
+    case ZVIL_GOAL_SURPRIZE:
+    case ZVIL_GOAL_INVESTIGATE:
+    case ZVIL_GOAL_ATTACKREADY:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_DOTAUNT:
+            if (vil->ability & 0x100)
+            {
+                resp->trangoal = ZVIL_GOAL_TAUNT;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        }
+        break;
+    case ZVIL_GOAL_CHASE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_BUMPED:
+        {
+            en_NPC_QUADRANT quad = ZVIL_QUAD_UNKNOWN;
+            VSUP_ent_AOI(vil, &globals.player.ent, &quad);
+            if (quad == ZVIL_QUAD_FRONT)
+            {
+                resp->trangoal = ZVIL_GOAL_CQCATTACK;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        }
+        case ZVIL_STIM_DOTAUNT:
+            if (vil->ability & 0x100)
+            {
+                resp->trangoal = ZVIL_GOAL_TAUNT;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        }
+        break;
+    case ZVIL_GOAL_CQCATTACK:
+    case ZVIL_GOAL_LOBBING:
+    case ZVIL_GOAL_SPELLCAST:
+    case ZVIL_GOAL_TAUNT:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_DOTAUNT:
+            if (vil->ability & 0x100)
+            {
+                resp->trangoal = ZVIL_GOAL_TAUNT;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
+        }
+        break;
+    case ZVIL_GOAL_DAZED:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_HEADBUTT:
+            if (vil->abl_vuln & 0x80)
+            {
+                if (vil->ability & 0x80000)
+                    stimctxt->res_headbutt = ZVIL_HEADBUTT_CONTINUE;
+                else
+                    stimctxt->res_headbutt = ZVIL_HEADBUTT_NORMAL;
+                if (!(globals.player.Inv_Specials & 0x800))
+                {
+                    vil->tmr_list[ZVIL_TDUR_DAZED] =
+                        VCFG_tymref(vil, ZVIL_TDUR_DAZED) +
+                        0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_DAZED);
+                }
+                else if (--vil->hitpts < 1)
+                {
+                    resp->trangoal = ZVIL_GOAL_DIE;
+                    resp->tranmode = ZVIL_MODE_DEATH;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    vil->tmr_list[ZVIL_TDUR_DAZED] =
+                        VCFG_tymref(vil, ZVIL_TDUR_DAZED) +
+                        0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_DAZED);
+                }
+            }
+            break;
+        case ZVIL_STIM_BOUNCED:
+            if (vil->abl_vuln & 0x100)
+            {
+                stimctxt->res_buttbounce = ZVIL_BOUNCE_NORMAL;
+                if (--vil->hitpts < 1)
+                {
+                    resp->trangoal = ZVIL_GOAL_DIE;
+                    resp->tranmode = ZVIL_MODE_DEATH;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    vil->anim_loopmult = 0.97f;
+                    vil->vhf->pickanim(vil, ZVIL_GOAL_DAZED, ZVIL_GSPOT_RESUME);
+                    vil->tmr_list[ZVIL_TDUR_DAZED] =
+                        VCFG_tymref(vil, ZVIL_TDUR_DAZED) +
+                        0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_DAZED);
+                    vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_DAZED];
+                    vil->tmr_list[ZVIL_TTIL_RECOVERY] =
+                        (vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f < -1.0f)
+                            ? -1.0f
+                            : vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f;
+                }
+            }
+            else
+            {
+                stimctxt->res_buttbounce = ZVIL_BOUNCE_NORMAL;
+            }
+            break;
+        case ZVIL_STIM_STUNNING:
+            if (vil->abl_vuln & 0x40000)
+            {
+                vil->tmr_list[ZVIL_TDUR_DAZED] =
+                    VCFG_tymref(vil, ZVIL_TDUR_DAZED) +
+                    0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_DAZED);
+                if (stimctxt->amt_stun > 0.0f)
+                {
+                    vil->tmr_list[ZVIL_TDUR_DAZED] =
+                        MAX(1.5f, vil->tmr_list[ZVIL_TDUR_DAZED] * stimctxt->amt_stun);
+                }
+                vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_DAZED];
+                vil->tmr_list[ZVIL_TTIL_RECOVERY] =
+                    (vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f < -1.0f)
+                        ? -1.0f
+                        : vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f;
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_DAZED, ZVIL_GSPOT_RESUME);
+            }
+            break;
+        case ZVIL_STIM_KILLSELF:
+            vil->hitpts = 0;
+            resp->trangoal = ZVIL_GOAL_DIE;
+            resp->tranmode = ZVIL_MODE_DEATH;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_GOTOAFTERLIFE:
+            resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        case ZVIL_STIM_SOAPED:
+            if (vil->abl_vuln & 0x40)
+            {
+                stimctxt->res_bubble = ZVIL_BUBBLE_ENVELOP;
+                resp->trangoal = ZVIL_GOAL_SOAPED;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                g_stattally[vil->asset->subtype].cnt_hitsoap++;
+                g_stattally[eEntVillainType_NoMore].cnt_hitsoap++;
+            }
+            break;
+        case ZVIL_STIM_GUMMED:
+            if (vil->abl_vuln & 0x20)
+            {
+                stimctxt->res_bubble = ZVIL_BUBBLE_ENVELOP;
+                resp->trangoal = ZVIL_GOAL_GUMMED;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                g_stattally[vil->asset->subtype].cnt_hitgum++;
+                g_stattally[eEntVillainType_NoMore].cnt_hitgum++;
+            }
+            break;
+        }
+        break;
+    case ZVIL_GOAL_SOAPED:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_STUNNING:
+            break;
+        case ZVIL_STIM_HEADBUTT:
+            if (vil->ability & 0x100000)
+            {
+                _xVec3 vec_tmp = { 0 };
+                static F32 fac;
+                static S8 init;
+                if (!init)
+                {
+                    init = 1;
+                    fac = 1.0f;
+                }
+                xVec3SMul(&vec_tmp, &stimctxt->dir_headbutt,
+                          stimctxt->mag_headbutt * g_npcTable[vil->asset->subtype].inv_mass);
+                vec_tmp.y = fabs(vec_tmp.y);
+                xVec3AddTo(&vil->vec_knocked, &vec_tmp);
+                vil->vec_knocked.x = CLAMP(vil->vec_knocked.x, -5.0f, 5.0f);
+                vil->vec_knocked.y = CLAMP(vil->vec_knocked.y, -5.0f, 5.0f);
+                vil->vec_knocked.z = CLAMP(vil->vec_knocked.z, -5.0f, 5.0f);
+                vil->flg_misc |= 0x100000;
+            }
+            stimctxt->res_headbutt = ZVIL_HEADBUTT_NONE;
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_SOAPED, ZVIL_GSPOT_BUBHIT);
+            break;
+        case ZVIL_STIM_BOUNCED:
+            if (vil->ability & 0x100000)
+            {
+                _xVec3 vec_tmp = { 0 };
+                xVec3SMul(&vec_tmp, &g_NY3, 2.5f);
+                xVec3AddTo(&vil->vec_knocked, &vec_tmp);
+                vil->vec_knocked.y = CLAMP(vil->vec_knocked.y, -5.0f, 5.0f);
+                vil->flg_misc |= 0x100000;
+            }
+            stimctxt->res_buttbounce = ZVIL_BOUNCE_LAND;
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_SOAPED, ZVIL_GSPOT_BUBBOUNCE);
+            break;
+        case ZVIL_STIM_BUMPED:
+            stimctxt->res_bumped = ZVIL_BUMPED_SOAP;
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_SOAPED, ZVIL_GSPOT_BUBHIT);
+            break;
+        }
+        break;
+    case ZVIL_GOAL_GUMMED:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_STUNNING:
+            break;
+        case ZVIL_STIM_HEADBUTT:
+            stimctxt->res_headbutt = ZVIL_HEADBUTT_NONE;
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_GUMMED, ZVIL_GSPOT_BUBHIT);
+            break;
+        case ZVIL_STIM_BOUNCED:
+            stimctxt->res_buttbounce = ZVIL_BOUNCE_GUM;
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_GUMMED, ZVIL_GSPOT_BUBBOUNCE);
+            break;
+        case ZVIL_STIM_BUMPED:
+            stimctxt->res_bumped = ZVIL_BUMPED_GUM;
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_GUMMED, ZVIL_GSPOT_BUBHIT);
+            break;
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        g_pstm = stim;
+        break;
+    }
+    return 1;
+}
+
+// The standard goal entry and exit. Entering a goal picks its starting animation and sets it up:
+// starting up resets the villain from its type and configuration, waiting goals restart their
+// fidget and boredom timers, alert goals set the timers and target flags that drive detection and
+// emit the question or exclamation marks, attacks reset their timers and pick a target, dazed,
+// soaped and gummed set their durations and recovery (soap holds the bubble, gum lays a gum puddle
+// model under the villain), and dying turns collision off and starts the decay. Leaving a goal
+// restores what it changed.
+static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    en_BEHAVIOUR_GOAL goal;
+    if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
+        goal = stimctxt->trangoal;
+    else
+        goal = vil->goal;
+    switch (g_pgol = goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_AFTERLIFE, ZVIL_GSPOT_START);
+            vil->chkby = 0;
+            vil->penby = 0;
+            vil->flags &= (U8)~0x1;
+            break;
+        case ZVIL_STIM_EXITGOAL:
+            vil->flags = vil->asset->flags;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_BASEINIT:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_EXITGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_BASEINIT, ZVIL_GSPOT_START);
+            vil->chkby = 0;
+            vil->penby = 0;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_STARTUP:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_EXITGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_STARTUP, ZVIL_GSPOT_START);
+            vil->frame->dvel.x = 0.0f;
+            vil->frame->dvel.y = 0.0f;
+            vil->frame->dvel.z = 0.0f;
+            vil->frame->vel.x = 0.0f;
+            vil->frame->vel.y = 0.0f;
+            vil->frame->vel.z = 0.0f;
+            vil->frame->mode |= 0xC;
+            vil->ability = g_npcTable[vil->asset->subtype].ability;
+            vil->abl_atak = g_npcTable[vil->asset->subtype].abl_atak;
+            vil->abl_dtct = g_npcTable[vil->asset->subtype].abl_dtct;
+            vil->abl_move = g_npcTable[vil->asset->subtype].abl_move;
+            vil->abl_spyk = g_npcTable[vil->asset->subtype].abl_spyk;
+            vil->abl_vuln = g_npcTable[vil->asset->subtype].abl_vuln;
+            vil->chkby = vil->vhf->flags(vil, ZVIL_FGRP_CHKBY, ZVIL_GOAL_NONE);
+            vil->penby = vil->vhf->flags(vil, ZVIL_FGRP_PENBY, ZVIL_GOAL_NONE);
+            vil->collis->chk = vil->vhf->flags(vil, ZVIL_FGRP_CHK, ZVIL_GOAL_NONE);
+            vil->collis->pen = vil->vhf->flags(vil, ZVIL_FGRP_PEN, ZVIL_GOAL_NONE);
+            vil->pflags = vil->vhf->flags(vil, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+            vil->typ_person = g_npcTable[vil->asset->subtype].typ_person;
+            if (vil->flg_misc & 0x8)
+                VCFG_getParm(&vil->vilcfg, ZVIL_PARM_MDLSCL_BASE, &vil->asset->scale);
+            xEntReset(vil);
+            vil->frame->rot.axis = g_Y3;
+            vil->frame->rot.angle = vil->asset->ang.x;
+            vil->pos_guard_home = *xEntGetPos(vil);
+            vil->nav_mvptlist = NULL;
+            vil->nav_prev = NULL;
+            vil->nav_next = NULL;
+            vil->nav_mvptlist = vil->vilcfg.vilp2ass->pathAssetID
+                                    ? zMovePoint_From_xAssetID(vil->vilcfg.vilp2ass->pathAssetID)
+                                    : NULL;
+            zVIL_apply_vilcfg(vil, &vil->vilcfg);
+            if (vil->ability & 0x2)
+            {
+                vil->allow |= 0x800;
+            }
+            if (vil->ability & 0x2)
+            {
+                if (vil->asset->subtype == eEntVillainTypeFlyingFish)
+                {
+                    vil->allow &= ~0x800;
+                }
+                else
+                {
+                    st_ZVIL_BONUS_EXCLUSION* exclusion = g_bonusExclusions;
+                    while (exclusion->scene)
+                    {
+                        if (exclusion->scene == globals.sceneCur->sceneID &&
+                            (!exclusion->id || exclusion->id == vil->id))
+                        {
+                            vil->allow &= ~0x800;
+                            break;
+                        }
+                        exclusion++;
+                    }
+                }
+            }
+            xAnimPlaySetState(vil->model->Anim->Single, vil->model->Anim->Table->StateList, 0.0f);
+            vil->anim_playing = 1;
+            vil->anim_playsync = 0;
+            en_NPC_ANIMSTATES choices[2] = { ZVIL_ANIM_UNKNOWN, ZVIL_ANIM_IDLE };
+            choices[0] = ZVIL_ANIM_IDLE;
+            VANM_set(vil, choices, 2, 0);
+            vil->vhf->notice(vil, ZVIL_NOTE_PREPARE, NULL);
+            if ((vil->asset->flags & 0x1) && vil->mode != ZVIL_MODE_SHUTDOWN)
+                vil->flags |= 0x1;
+            else
+                vil->flags &= (U8)~0x1;
+            vil->nav_prev = NULL;
+            vil->nav_next = NULL;
+            if (vil->nav_mvptlist) vil->need_navpt = 1;
+            vil->flg_misc &= ~0xC0000000;
+            vil->tgt_stat = 0;
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_GOONLINE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_EXITGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_GOONLINE, ZVIL_GSPOT_START);
+            vil->chkby = vil->vhf->flags(vil, ZVIL_FGRP_CHKBY, ZVIL_GOAL_NONE);
+            vil->penby = vil->vhf->flags(vil, ZVIL_FGRP_PENBY, ZVIL_GOAL_NONE);
+            vil->collis->chk = vil->vhf->flags(vil, ZVIL_FGRP_CHK, ZVIL_GOAL_NONE);
+            vil->collis->pen = vil->vhf->flags(vil, ZVIL_FGRP_PEN, ZVIL_GOAL_NONE);
+            vil->pflags = vil->vhf->flags(vil, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+            vil->flags |= 0x1;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_IDLE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_EXITGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET];
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            duration = vil->vilcfg.tymref_list[ZVIL_TTIL_BORED];
+            vil->tmr_list[ZVIL_TTIL_BORED] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            vil->tgt_stat = 0;
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_BORED:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_BORED, ZVIL_GSPOT_START);
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET];
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            switch (vil->asset->subtype)
+            {
+            case eEntVillainTypeBat:
+            case eEntVillainTypeSpider:
+                vil->pflags &= (U8)~0x4;
+                break;
+            case eEntVillainTypeGargoyle:
+            case eEntVillainTypeWitchDoctor:
+                vil->pflags |= 0x4;
+                break;
+            default:
+                if (vil->ability & 0x20000) vil->pflags |= 0x4;
+                break;
+            }
+            break;
+        }
+        case ZVIL_STIM_EXITGOAL:
+            vil->pflags = vil->vhf->flags(vil, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+            break;
+        }
+        break;
+    case ZVIL_GOAL_ACTION:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            if (stimctxt->use_alt_action)
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_ACTION, ZVIL_GSPOT_ACTION_ALTA);
+            }
+            else
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_ACTION, ZVIL_GSPOT_START);
+            }
+            if (vil->abl_move & 0x8000) vil->pflags &= (U8)~0x4;
+            break;
+        case ZVIL_STIM_EXITGOAL:
+            if (vil->abl_move & 0x8000)
+                vil->pflags = vil->vhf->flags(vil, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+            break;
+        }
+        break;
+    case ZVIL_GOAL_AMBUSH:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_AMBUSH, ZVIL_GSPOT_START);
+            vil->pflags &= (U8)~0x4;
+            vil->collis->chk = 0;
+            vil->collis->pen = 0;
+            vil->chkby = 0;
+            vil->penby = 0;
+            vil->nav_prev = vil->nav_mvptlist;
+            vil->nav_next = vil->nav_mvptlist;
+            vil->need_navpt = 0;
+            vil->tmr_list[ZVIL_TTIL_CHKFORNAV] = -1.0f;
+            _xVec3 vec_trav = { 0 };
+            if (vil->nav_next)
+            {
+                xVec3Sub(&vec_trav, zMovePointGetPos(vil->nav_next), xEntGetPos(vil));
+                vil->dst_navTween = xVec3Length(&vec_trav);
+                vil->tmr_list[ZVIL_TYMR_GENERIC] = vil->dst_navTween / 6.0f;
+            }
+            else
+            {
+                vil->dst_navTween = MIN(0.8f * vil->precalc.dst_VtoP, 2.5f);
+                vil->tmr_list[ZVIL_TYMR_GENERIC] = vil->dst_navTween / 6.0f;
+            }
+            break;
+        }
+        case ZVIL_STIM_EXITGOAL:
+            vil->pflags = vil->vhf->flags(vil, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+            vil->chkby = vil->vhf->flags(vil, ZVIL_FGRP_CHKBY, ZVIL_GOAL_NONE);
+            vil->penby = vil->vhf->flags(vil, ZVIL_FGRP_PENBY, ZVIL_GOAL_NONE);
+            vil->collis->chk = vil->vhf->flags(vil, ZVIL_FGRP_CHK, ZVIL_GOAL_NONE);
+            vil->collis->pen = vil->vhf->flags(vil, ZVIL_FGRP_PEN, ZVIL_GOAL_NONE);
+            break;
+        }
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_EXITGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_FOLLOW, ZVIL_GSPOT_START);
+            break;
+        }
+        break;
+    case ZVIL_GOAL_PATROL:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_EXITGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, ZVIL_GSPOT_START);
+            vil->tgt_stat = 0;
+            if (!vil->nav_next) vil->need_navpt = 1;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_MINIPATROL:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_EXITGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_MINIPATROL, ZVIL_GSPOT_START);
+            break;
+        }
+        break;
+    case ZVIL_GOAL_GUARD:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_EXITGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_GUARD, ZVIL_GSPOT_START);
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET];
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            vil->tgt_stat = 0;
+            if (!(vil->flg_misc & 0x40000000)) vil->pos_guard_home = stimctxt->pos_guard;
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_LOOKFORHERO:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_LOOKFORHERO, ZVIL_GSPOT_START);
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_LOOK];
+            vil->tmr_list[ZVIL_TDUR_LOOK] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            vil->tgt_stat |= 0x2;
+            vil->tgt_stat |= 0x04000000 | 0x8000;
+            break;
+        }
+        case ZVIL_STIM_EXITGOAL:
+            vil->tgt_stat &= ~0x2;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_LISTEN:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_LISTEN, ZVIL_GSPOT_START);
+            VPAR_emit_partype(vil, VPAR_EMIT_QUESTMARK, dt);
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_HEAR];
+            vil->tmr_list[ZVIL_TDUR_HEAR] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            vil->tgt_stat |= 0x6;
+            vil->tgt_stat |= 0x04000000 | 0x8000;
+            vil->ang_listen = vil->precalc.ang_VtoP;
+            break;
+        }
+        case ZVIL_STIM_EXITGOAL:
+            vil->tgt_stat &= ~0x2;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_SURPRIZE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_SURPRIZE, ZVIL_GSPOT_START);
+            VPAR_emit_partype(vil, VPAR_EMIT_EXCLAIM, dt);
+            vil->tgt_stat |= 0xC;
+            vil->tgt_stat |= 0x12;
+            vil->tgt_stat |= 0x20;
+            vil->tgt_stat |= 0x800 | 0x20;
+            break;
+        case ZVIL_STIM_EXITGOAL:
+            vil->tgt_stat &= ~0x2;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_INVESTIGATE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            VPAR_emit_partype(vil, VPAR_EMIT_QUESTMARK, dt);
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_INVESTIGATE, ZVIL_GSPOT_START);
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_SEARCH];
+            vil->tmr_list[ZVIL_TDUR_SEARCH] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            vil->tgt_stat |= 0x42;
+            break;
+        }
+        case ZVIL_STIM_EXITGOAL:
+            vil->tgt_stat &= ~0x2;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_ATTACKREADY:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_EXITGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_ATTACKREADY, ZVIL_GSPOT_START);
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_ALERT];
+            vil->tmr_list[ZVIL_TDUR_ALERT] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            duration = vil->vilcfg.tymref_list[ZVIL_TTIL_NEXTCHASE];
+            vil->tmr_list[ZVIL_TTIL_NEXTCHASE] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            vil->goodattack = 0;
+            vil->tgt_stat = 0x0400887C;
+            if (!(vil->flg_misc & 0x80000000))
+            {
+                VOUT_apply_anchor(vil);
+                vil->flg_misc |= 0x80000000;
+                vil->flg_misc &= ~0x40000000;
+            }
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_CHASE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_CHASE, ZVIL_GSPOT_START);
+            break;
+        case ZVIL_STIM_EXITGOAL:
+        {
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_TAUNT];
+            vil->tmr_list[ZVIL_TTIL_TAUNT] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_CQCATTACK:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_CQCATTACK, ZVIL_GSPOT_START);
+            vil->goodattack = 0;
+            break;
+        case ZVIL_STIM_EXITGOAL:
+            vil->goodattack = 0;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_LOBBING:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_LOBBING, ZVIL_GSPOT_START);
+            vil->goodattack = 0;
+            vil->tmr_list[ZVIL_TDUR_BUILDUP] = -1.0f;
+            VCFG_getParm(&vil->vilcfg, ZVIL_PARM_LOB_SALVO, &vil->cnt_lobSalvo);
+            break;
+        case ZVIL_STIM_EXITGOAL:
+        {
+            vil->goodattack = 0;
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_LOBRELOAD];
+            vil->tmr_list[ZVIL_TDUR_LOBRELOAD] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            if (vil->prj_reserved) vil->prj_reserved->Abort();
+            vil->prj_reserved = NULL;
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_SPELLCAST:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_SPELLCAST, ZVIL_GSPOT_START);
+            vil->goodattack = 0;
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_EXTEND];
+            vil->tmr_list[ZVIL_TDUR_EXTEND] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            if (vil->tgt_bullseye && (vil->allow & 0x100))
+                vil->pos_exttgt = *zMovePointGetPos(vil->tgt_bullseye);
+            else if (vil->precalc.flg_plyr & 0x40)
+                vil->pos_exttgt = *xEntGetPos(&globals.player.ent);
+            else if (vil->tgt_bullseye)
+                vil->pos_exttgt = *zMovePointGetPos(vil->tgt_bullseye);
+            break;
+        }
+        case ZVIL_STIM_EXITGOAL:
+        {
+            vil->goodattack = 0;
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_EXTRELOAD];
+            vil->tmr_list[ZVIL_TDUR_EXTRELOAD] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            xSndStopChildren((U32)vil + 3);
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_TAUNT:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+        case ZVIL_STIM_EXITGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_TAUNT, ZVIL_GSPOT_START);
+            vil->tmr_list[ZVIL_TDUR_TAUNT] = vil->vilcfg.tymref_list[ZVIL_TDUR_TAUNT];
+            break;
+        }
+        break;
+    case ZVIL_GOAL_DAZED:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_DAZED, ZVIL_GSPOT_START);
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_DAZED];
+            vil->tmr_list[ZVIL_TDUR_DAZED] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            if (stimctxt->amt_stun > 0.0f)
+            {
+                vil->tmr_list[ZVIL_TDUR_DAZED] =
+                    MAX(1.5f, vil->tmr_list[ZVIL_TDUR_DAZED] * stimctxt->amt_stun);
+            }
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_DAZED];
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] =
+                (vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f < -1.0f)
+                    ? -1.0f
+                    : vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f;
+            vil->flinch = 0;
+            if (vil->abl_vuln & 0x80000000)
+            {
+                vil->abl_vuln |= 0x100;
+                vil->abl_vuln &= ~0x80;
+            }
+            break;
+        }
+        case ZVIL_STIM_EXITGOAL:
+            if (vil->abl_vuln & 0x80000000)
+            {
+                vil->abl_vuln &= ~0x100;
+                vil->abl_vuln |= 0x80;
+            }
+            break;
+        }
+        break;
+    case ZVIL_GOAL_SOAPED:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_SOAPED, ZVIL_GSPOT_START);
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_SOAP];
+            vil->tmr_list[ZVIL_TDUR_SOAP] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = 2.0f + 2.0f * (0.25f * (iurand() - 0.5f));
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_SOAP];
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] =
+                (vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f < -1.0f)
+                    ? -1.0f
+                    : vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f;
+            vil->pflags |= 0x20;
+            vil->bubble = stimctxt->bubble;
+            vil->pflags &= (U8)~0x4;
+            vil->collis->pen |= 0x62;
+            vil->pos_moveto = *xEntGetPos(vil);
+            break;
+        }
+        case ZVIL_STIM_EXITGOAL:
+            vil->pflags &= (U8)~0x20;
+            VPAR_emit_partype(vil, VPAR_EMIT_POPSOAP, dt);
+            if (vil->bubble) zEntBubble_Pop(vil->bubble);
+            vil->bubble = NULL;
+            vil->chkby = vil->vhf->flags(vil, ZVIL_FGRP_CHKBY, ZVIL_GOAL_NONE);
+            vil->penby = vil->vhf->flags(vil, ZVIL_FGRP_PENBY, ZVIL_GOAL_NONE);
+            vil->collis->chk = vil->vhf->flags(vil, ZVIL_FGRP_CHK, ZVIL_GOAL_NONE);
+            vil->collis->pen = vil->vhf->flags(vil, ZVIL_FGRP_PEN, ZVIL_GOAL_NONE);
+            vil->pflags = vil->vhf->flags(vil, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+            if (vil->flg_misc & 0x100000) VPAR_emit_partype(vil, VPAR_EMIT_QUESTMARK, dt);
+            vil->flg_misc &= ~0x100000;
+            vil->vec_knocked.x = 0.0f;
+            vil->vec_knocked.y = 0.0f;
+            vil->vec_knocked.z = 0.0f;
+            xVec3Init(&vil->frame->vel, 0.0f, 0.0f, 0.0f);
+            xVec3Init(&vil->frame->dvel, 0.0f, 0.0f, 0.0f);
+            break;
+        }
+        break;
+    case ZVIL_GOAL_GUMMED:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_GUMMED, ZVIL_GSPOT_START);
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TDUR_GUM];
+            vil->tmr_list[ZVIL_TDUR_GUM] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = 3.0f + 3.0f * (0.25f * (iurand() - 0.5f));
+            vil->tmr_list[ZVIL_TWIN_MINGUM] = vil->vilcfg.tymref_list[ZVIL_TWIN_MINGUM];
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_GUM];
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] =
+                (vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f < -1.0f)
+                    ? -1.0f
+                    : vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f;
+            vil->bubble = NULL;
+            if (g_gumModelAsset && !(vil->abl_move & 0x100000))
+            {
+                vil->mdl_gumBlob = xModelInstanceAlloc(g_gumModelAsset, vil, 0, 0, NULL);
+                xModelInstance* blob = vil->mdl_gumBlob;
+                if (blob)
+                {
+                    xVec3* pos = xEntGetPos(vil);
+                    xMat4x3 mat = { 0 };
+                    xMat3x3Euler((xMat3x3*)&mat, (xVec3*)&g_O3);
+                    F32 scale = 1.0f;
+                    xVec3SMulBy(&mat.right, scale);
+                    xVec3SMulBy(&mat.up, scale);
+                    xVec3SMulBy(&mat.at, scale);
+                    mat.flags = 0;
+                    mat.pos = *pos;
+                    memcpy(blob->Mat, &mat, sizeof(mat));
+                    if (vil->asset->subtype == eEntVillainTypeBat) vil->mdl_gumBlob->Mat->pos.y -= 0.3f;
+                    if (!g_npcFuncs[vil->asset->subtype].xtrarend)
+                        g_npcFuncs[vil->asset->subtype].xtrarend = VILN_std_xtrarend;
+                }
+            }
+            if (!(vil->abl_move & 0x100000))
+            {
+                vil->pflags |= 0x4;
+                vil->collis->chk |= 0x26;
+                vil->collis->pen |= 0x66;
+            }
+            break;
+        }
+        case ZVIL_STIM_EXITGOAL:
+            VPAR_emit_partype(vil, VPAR_EMIT_POPGUM, dt);
+            if (vil->bubble) zEntBubble_Pop(vil->bubble);
+            if (vil->mdl_gumBlob) xModelInstanceFree(vil->mdl_gumBlob);
+            vil->bubble = NULL;
+            vil->mdl_gumBlob = NULL;
+            vil->chkby = vil->vhf->flags(vil, ZVIL_FGRP_CHKBY, ZVIL_GOAL_NONE);
+            vil->penby = vil->vhf->flags(vil, ZVIL_FGRP_PENBY, ZVIL_GOAL_NONE);
+            vil->collis->chk = vil->vhf->flags(vil, ZVIL_FGRP_CHK, ZVIL_GOAL_NONE);
+            vil->collis->pen = vil->vhf->flags(vil, ZVIL_FGRP_PEN, ZVIL_GOAL_NONE);
+            vil->pflags = vil->vhf->flags(vil, ZVIL_FGRP_PHYS, ZVIL_GOAL_NONE);
+            break;
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_DIE, ZVIL_GSPOT_START);
+            vil->pflags |= 0x4;
+            vil->chkby = 0;
+            vil->penby = 0;
+            vil->flg_misc &= ~0xC0000000;
+            vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
+            vil->tmr_list[ZVIL_TYMR_GENERIC] = -1.0f;
+            vil->tgt_stat = 0;
+            zEntEvent(vil, vil, 36);
+            VPAR_emit_partype(vil, VPAR_EMIT_DYING, dt);
+            break;
+        case ZVIL_STIM_EXITGOAL:
+            zEntEvent(vil, vil, 239);
+            vil->collis->chk = 0;
+            vil->collis->pen = 0;
+            break;
+        }
+        break;
+    }
+    return 1;
+}
 
 // The standard movement step, by goal:
 // - lifeless or starting up: the frame stops;
@@ -2642,6 +5327,278 @@ static S32 VILN_std_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA*)
     }
 }
 
+// Picks the standard villain's animation for a goal and where it is in the goal: idle and bored
+// fidgets, walking or running on patrol, turning while guarding, the jump, look, listen and
+// investigate animations, attacks, the gummed and soaped reactions, dazed and death.
+static S32 VILN_std_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVIL_GOAL_SPOT gspot)
+{
+    switch (goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+    {
+        en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_POSE, ZVIL_ANIM_IDLE };
+        VANM_set(vil, best, 2, 0);
+        break;
+    }
+    case ZVIL_GOAL_IDLE:
+        if (gspot == ZVIL_GSPOT_FIDGET)
+        {
+            en_NPC_ANIMSTATES choices[] = { ZVIL_ANIM_FIDGET_IDLE1, ZVIL_ANIM_FIDGET_IDLE2 };
+            VANM_randset(vil, NULL, choices, 2);
+            vil->anim_playsync = 1;
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_IDLE);
+        }
+        break;
+    case ZVIL_GOAL_BORED:
+        if (gspot == ZVIL_GSPOT_FIDGET)
+        {
+            en_NPC_ANIMSTATES choices[] = { ZVIL_ANIM_FIDGET_BORED1, ZVIL_ANIM_FIDGET_BORED2 };
+            VANM_randset(vil, NULL, choices, 2);
+            vil->anim_playsync = 1;
+        }
+        else
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_BORED, ZVIL_ANIM_IDLE };
+            VANM_set(vil, best, 2, 0);
+        }
+        break;
+    case ZVIL_GOAL_ACTION:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_ACTION_NOMOVE, ZVIL_ANIM_TAUNT, ZVIL_ANIM_ATTACK };
+            VANM_set(vil, best, 3, 0);
+        }
+        else if (gspot == ZVIL_GSPOT_ACTION_ALTA)
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_ACTION_MOVING, ZVIL_ANIM_JUMP_BEGIN };
+            VANM_set(vil, best, 2, 0);
+        }
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        VANM_setone(vil, ZVIL_ANIM_MOVE);
+        break;
+    case ZVIL_GOAL_PATROL:
+        if (vil->allow & 0x20)
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_CHASE, ZVIL_ANIM_MOVE };
+            VANM_set(vil, best, 2, 0);
+        }
+        else
+        {
+            VANM_setone(vil, ZVIL_ANIM_MOVE);
+        }
+        break;
+    case ZVIL_GOAL_MINIPATROL:
+        VANM_setone(vil, ZVIL_ANIM_MOVE);
+        break;
+    case ZVIL_GOAL_GUARD:
+        switch (gspot)
+        {
+        case ZVIL_GSPOT_START:
+            VANM_setone(vil, ZVIL_ANIM_IDLE);
+            break;
+        case ZVIL_GSPOT_FIDGET:
+        {
+            en_NPC_ANIMSTATES choices[] = { ZVIL_ANIM_FIDGET_IDLE1, ZVIL_ANIM_FIDGET_IDLE2 };
+            VANM_randset(vil, NULL, choices, 2);
+            vil->anim_playsync = 1;
+            break;
+        }
+        case ZVIL_GSPOT_MOVELEFT:
+        case ZVIL_GSPOT_MOVERIGHT:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_TURN, ZVIL_ANIM_IDLE };
+            VANM_set(vil, best, 2, 0);
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_AMBUSH:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_JUMP_BEGIN, ZVIL_ANIM_JUMP_LOOP, ZVIL_ANIM_CHASE };
+            VANM_set(vil, best, 3, 0);
+        }
+        else if (gspot == ZVIL_GSPOT_ACTION_ALTA)
+        {
+            VANM_setone(vil, ZVIL_ANIM_POSE);
+        }
+        break;
+    case ZVIL_GOAL_LEAP:
+    {
+        en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_SURPRIZE, ZVIL_ANIM_INVESTIGATE_START, ZVIL_ANIM_INVESTIGATE };
+        VANM_set(vil, best, 3, 0);
+        break;
+    }
+    case ZVIL_GOAL_LOOKFORHERO:
+    {
+        en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_LOOK_START, ZVIL_ANIM_LOOK_LOOP };
+        VANM_set(vil, best, 2, 0);
+        vil->anim_loopmult = 0.6f;
+        break;
+    }
+    case ZVIL_GOAL_LISTEN:
+    {
+        en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_HEAR_START, ZVIL_ANIM_HEAR_LOOP, ZVIL_ANIM_TURN };
+        VANM_set(vil, best, 3, 0);
+        vil->anim_loopmult = 0.6f;
+        break;
+    }
+    case ZVIL_GOAL_SURPRIZE:
+        VANM_setone(vil, ZVIL_ANIM_SURPRIZE);
+        break;
+    case ZVIL_GOAL_INVESTIGATE:
+    {
+        en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_INVESTIGATE_START, ZVIL_ANIM_INVESTIGATE };
+        VANM_set(vil, best, 2, 0);
+        break;
+    }
+    case ZVIL_GOAL_TAUNT:
+        VANM_setone(vil, ZVIL_ANIM_TAUNT);
+        vil->anim_playsync = 1;
+        break;
+    case ZVIL_GOAL_DAZED:
+        if (gspot == ZVIL_GSPOT_STATERECOVER)
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_DAZED_RECOVER, ZVIL_ANIM_DAZED };
+            VANM_set(vil, best, 2, 0);
+        }
+        else if (gspot == ZVIL_GSPOT_RESUME)
+        {
+            VANM_setone(vil, ZVIL_ANIM_DAZED);
+        }
+        else
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_DAZED_BEGIN, ZVIL_ANIM_DAZED, ZVIL_ANIM_ATTACKIDLE,
+                                         ZVIL_ANIM_IDLE };
+            VANM_set(vil, best, 4, 0);
+        }
+        break;
+    case ZVIL_GOAL_ATTACKREADY:
+        switch (gspot)
+        {
+        case ZVIL_GSPOT_START:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_ATTACKIDLE, ZVIL_ANIM_IDLE };
+            VANM_set(vil, best, 2, 0);
+            break;
+        }
+        case ZVIL_GSPOT_MOVELEFT:
+        case ZVIL_GSPOT_MOVERIGHT:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_TURN, ZVIL_ANIM_ATTACKIDLE, ZVIL_ANIM_IDLE };
+            VANM_set(vil, best, 3, 0);
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_CHASE:
+    {
+        en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_CHASE, ZVIL_ANIM_MOVE };
+        VANM_set(vil, best, 2, 0);
+        break;
+    }
+    case ZVIL_GOAL_CQCATTACK:
+    {
+        en_NPC_ANIMSTATES choices[] = { ZVIL_ANIM_ATTACK, ZVIL_ANIM_ATTACK1, ZVIL_ANIM_ATTACK2 };
+        VANM_randset(vil, NULL, choices, 3);
+        break;
+    }
+    case ZVIL_GOAL_LOBBING:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            VANM_setone(vil, ZVIL_ANIM_LOB_ATTACK);
+        }
+        break;
+    case ZVIL_GOAL_SPELLCAST:
+        if (gspot == ZVIL_GSPOT_START)
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_EXT_ATTACK_START, ZVIL_ANIM_EXT_ATTACK_LOOP, ZVIL_ANIM_ATTACK,
+                                         ZVIL_ANIM_ATTACK1, ZVIL_ANIM_ATTACK2 };
+            VANM_set(vil, best, 5, 0);
+        }
+        break;
+    case ZVIL_GOAL_GUMMED:
+        switch (gspot)
+        {
+        case ZVIL_GSPOT_START:
+            VANM_setone(vil, ZVIL_ANIM_GUMMED);
+            break;
+        case ZVIL_GSPOT_BUBHIT:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_HIT_WHEN_GUMMED, ZVIL_ANIM_BOUNCED_WHEN_GUMMED, ZVIL_ANIM_GUMMED };
+            VANM_set(vil, best, 3, 0);
+            break;
+        }
+        case ZVIL_GSPOT_BUBBOUNCE:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_BOUNCED_WHEN_GUMMED, ZVIL_ANIM_HIT_WHEN_GUMMED, ZVIL_ANIM_GUMMED };
+            VANM_set(vil, best, 3, 0);
+            break;
+        }
+        case ZVIL_GSPOT_BUBRESIST:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_GUMMED_RESIST, ZVIL_ANIM_GUMMED };
+            VANM_set(vil, best, 2, 0);
+            break;
+        }
+        case ZVIL_GSPOT_BUBBREAKFREE:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_GUMMED_BREAKFREE, ZVIL_ANIM_GUMMED_RESIST, ZVIL_ANIM_GUMMED };
+            VANM_set(vil, best, 3, 0);
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_SOAPED:
+        switch (gspot)
+        {
+        case ZVIL_GSPOT_START:
+            VANM_setone(vil, ZVIL_ANIM_SOAPED);
+            break;
+        case ZVIL_GSPOT_BUBHIT:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_HIT_WHEN_SOAPED, ZVIL_ANIM_BOUNCED_WHEN_SOAPED, ZVIL_ANIM_SOAPED };
+            VANM_set(vil, best, 3, 0);
+            break;
+        }
+        case ZVIL_GSPOT_BUBBOUNCE:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_BOUNCED_WHEN_SOAPED, ZVIL_ANIM_HIT_WHEN_SOAPED, ZVIL_ANIM_SOAPED };
+            VANM_set(vil, best, 3, 0);
+            break;
+        }
+        case ZVIL_GSPOT_BUBRESIST:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_SOAPED_RESIST, ZVIL_ANIM_SOAPED };
+            VANM_set(vil, best, 2, 0);
+            break;
+        }
+        case ZVIL_GSPOT_BUBBREAKFREE:
+        {
+            en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_SOAPED_BREAKFREE, ZVIL_ANIM_SOAPED_RESIST, ZVIL_ANIM_SOAPED };
+            VANM_set(vil, best, 3, 0);
+            break;
+        }
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+    {
+        en_NPC_ANIMSTATES best[] = { ZVIL_ANIM_DEATH_DAZED, ZVIL_ANIM_DEATH, ZVIL_ANIM_DEATH_ABOVE,
+                                     ZVIL_ANIM_DEATH_IDLE };
+        VANM_set(vil, best, 4, 0);
+        break;
+    }
+    }
+    return 1;
+}
+
 
 // Draws the villain's gum blob, when it has one.
 static S32 VILN_std_xtrarend(st_zEntVillain* vil)
@@ -2687,6 +5644,230 @@ static S32 VILN_kp_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
     }
 
     return result;
+}
+
+// Update a killer plant's goal: it waits ready to attack, then swipes, lobs or casts its spell at
+// the player, and fades out as a hologram when it dies.
+static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_STARTUP:
+        resp->trangoal = ZVIL_GOAL_GOONLINE;
+        resp->tranmode = ZVIL_MODE_READY;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_GOONLINE:
+        resp->trangoal = vil->goaldflt;
+        resp->tranmode = ZVIL_MODE_NORMAL;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    case ZVIL_GOAL_IDLE:
+    case ZVIL_GOAL_BORED:
+    case ZVIL_GOAL_GUARD:
+        resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+        resp->tranmode = ZVIL_MODE_BATTLE;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    case ZVIL_GOAL_PATROL:
+    case ZVIL_GOAL_MINIPATROL:
+    case ZVIL_GOAL_FOLLOW:
+    case ZVIL_GOAL_AMBUSH:
+    case ZVIL_GOAL_LEAP:
+    case ZVIL_GOAL_LOOKFORHERO:
+    case ZVIL_GOAL_LISTEN:
+    case ZVIL_GOAL_SURPRIZE:
+    case ZVIL_GOAL_INVESTIGATE:
+    case ZVIL_GOAL_CHASE:
+    case ZVIL_GOAL_DAZED:
+    case ZVIL_GOAL_SOAPED:
+    case ZVIL_GOAL_GUMMED:
+        resp->trangoal = ZVIL_GOAL_IDLE;
+        resp->tranmode = ZVIL_MODE_NOCHANGE;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    case ZVIL_GOAL_ATTACKREADY:
+        if (vil->vhf->query(vil, ZVIL_Q_CANATTACK))
+        {
+            if ((vil->abl_atak & 0x80000) && vil->tmr_list[ZVIL_TDUR_EXTRELOAD] <= 0.0f)
+            {
+                resp->trangoal = ZVIL_GOAL_SPELLCAST;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else if ((vil->abl_atak & 0x40000) && vil->tmr_list[ZVIL_TDUR_LOBRELOAD] <= 0.0f)
+            {
+                vil->prj_reserved = VWEP_lobReservePRJ(vil);
+                if (vil->prj_reserved)
+                {
+                    resp->trangoal = ZVIL_GOAL_LOBBING;
+                    resp->tranmode = ZVIL_MODE_BATTLE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            else if (vil->abl_atak & 0x20000)
+            {
+                resp->trangoal = ZVIL_GOAL_CQCATTACK;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_CQCATTACK:
+        if (!vil->goodattack && (prec->plyr_mvinf & 1))
+        {
+            vil->goodattack = VWEP_swipe(vil, dt);
+            if (vil->goodattack) VWEP_mm_zapPlayer(vil);
+            vil->tmr_list[ZVIL_TWIN_POSTATTACK] = vil->vilcfg.tymref_list[ZVIL_TWIN_POSTATTACK];
+        }
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            if (vil->goodattack && (vil->ability & 0x100))
+            {
+                if (vil->tmr_list[ZVIL_TWIN_POSTATTACK] <= 0.0f)
+                {
+                    resp->trangoal = ZVIL_GOAL_TAUNT;
+                    resp->tranmode = ZVIL_MODE_NOCHANGE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_LOBBING:
+        if (vil->tmr_list[ZVIL_TDUR_BUILDUP] <= 0.0f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_LOBBING, ZVIL_GSPOT_KICKATTACK);
+            if (VCFG_inDamageWindow(vil, VANM_entTime(vil)) && vil->prj_reserved && vil->cnt_lobSalvo > 0)
+            {
+                _xVec3 vec_off = { 0 };
+                vec_off.x = 0.5f - iurand();
+                vec_off.y = 0.5f - iurand();
+                vec_off.z = 0.5f - iurand();
+                xVec3Normalize(&vec_off, &vec_off);
+                xVec3SMul(&vec_off, &vec_off, vil->cnt_lobSalvo - 1);
+                VWEP_lobActivatePRJ(vil->prj_reserved, vil, xBoundCenter(&globals.player.ent.bound), &vec_off,
+                                    &vil->vec_lobSpin, vil->fac_lobarc, vil->fac_lobheavy);
+                vil->cnt_lobSalvo--;
+                if (vil->cnt_lobSalvo > 0 && !vil->prj_reserved) vil->prj_reserved = VWEP_lobReservePRJ(vil);
+            }
+            if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+            {
+                resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+                resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_SPELLCAST:
+        if (VCFG_inDamageWindow(vil, VANM_entTime(vil)))
+            vil->goodattack |= VWEP_extend_particles(vil, dt, &vil->pos_exttgt);
+        if (vil->goodattack)
+            VWEP_mm_zapPlayer(vil);
+        else
+            vil->tmr_list[ZVIL_TWIN_POSTATTACK] = vil->vilcfg.tymref_list[ZVIL_TWIN_POSTATTACK];
+        if (vil->tmr_list[ZVIL_TDUR_EXTEND] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        else if (vil->goodattack && (vil->ability & 0x100))
+        {
+            if (vil->tmr_list[ZVIL_TWIN_POSTATTACK] <= 0.0f)
+            {
+                resp->trangoal = ZVIL_GOAL_TAUNT;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    case ZVIL_GOAL_TAUNT:
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_ATTACKREADY;
+            resp->tranmode = ZVIL_MODE_NOCHANGE;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
+            {
+                zHologramAdd(vil);
+                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
+                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
+                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+            }
+            if (vil->ability & 8)
+            {
+                F32 fade = vil->tmr_list[ZVIL_TDUR_DECAY];
+                fade = fade > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] ? fade : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+                if (fade != 0.0f)
+                {
+                    _zParEmitterCustomSettings info;
+                    info.custom_flags = 0x5a0;
+                    info.color_birth[0] = gVillainPoofColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainPoofColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainPoofColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainPoofColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainPoofColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainPoofColorDeath[vil->asset->subtype][2];
+                    info.color_birth[3] = 0;
+                    info.color_death[3] = 0;
+                    info.pos = *xBoundCenter(&vil->bound);
+                    info.size_death = 5.0f * vil->bound.sph.r;
+                    zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
+                    info.color_birth[0] = gVillainDotsColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainDotsColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainDotsColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainDotsColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainDotsColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainDotsColorDeath[vil->asset->subtype][2];
+                    info.color_birth[3] = 255;
+                    info.color_death[3] = 0;
+                    info.custom_flags = 0x201a0;
+                    info.xzcircle_radius = vil->bound.sph.r;
+                    zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
+                }
+                if (xUtil_yesno(fade)) vil->flags |= 1;
+                else vil->flags &= (U8)~1;
+            }
+            if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
+            {
+                VPAR_emit_partype(vil, VPAR_EMIT_POOF, dt);
+                resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+                resp->tranmode = ZVIL_MODE_SHUTDOWN;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    default:
+        resp->trangoal = ZVIL_GOAL_IDLE;
+        resp->tranmode = ZVIL_MODE_NOCHANGE;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    }
+    return 1;
 }
 
 
@@ -3652,6 +6833,208 @@ static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
     return 1;
 }
 
+// Update a gang member's goal from its timers: idle quips and fidgets, talking, following,
+// patrolling, and the hologram fade-out when it dies.
+static S32 VILN_gang_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
+{
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_STARTUP:
+        resp->trangoal = ZVIL_GOAL_GOONLINE;
+        resp->tranmode = ZVIL_MODE_READY;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        vil->collis->chk = 0;
+        vil->collis->pen = 0;
+        vil->chkby = 0;
+        vil->penby = 0;
+        break;
+    case ZVIL_GOAL_GOONLINE:
+        resp->trangoal = vil->goaldflt;
+        resp->tranmode = ZVIL_MODE_NORMAL;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    case ZVIL_GOAL_IDLE:
+        if (vil->vhf->query(vil, ZVIL_Q_CANPATROL))
+        {
+            if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
+            if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                resp->trangoal = ZVIL_GOAL_PATROL;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                break;
+            }
+        }
+        if (vil->tmr_list[ZVIL_TTIL_QUIP_OK] <= 0.0f && (prec->flg_plyr & 1) && (prec->flg_plyr & 8))
+        {
+            F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_QUIP_OK];
+            vil->tmr_list[ZVIL_TTIL_QUIP_OK] = duration + 0.25f * (iurand() - 0.5f) * duration;
+            if (VSND_select_sound(vil, VSND_TYP_ONELINER))
+            {
+                resp->trangoal = ZVIL_GOAL_TALK;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+                resp->talkSFX = (zSFX*)-1;
+                break;
+            }
+        }
+        if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f && vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            en_NPC_ANIMSTATES anim = vil->anim_playnext;
+            if (anim == ZVIL_ANIM_GANG_FIDGET || anim == ZVIL_ANIM_GANG_FIDGET1 ||
+                anim == ZVIL_ANIM_GANG_FIDGET2 || anim == ZVIL_ANIM_GANG_FIDGET3)
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_RESUME);
+                vil->tmr_list[ZVIL_TTIL_FIDGET] = 5.0f + 5.0f * (0.25f * (iurand() - 0.5f));
+            }
+            else if (xUtil_yesno(0.35f))
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_FIDGET);
+                vil->tmr_list[ZVIL_TTIL_FIDGET] = 2.0f + 2.0f * (0.25f * (iurand() - 0.5f));
+            }
+            else
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_RESUME);
+                vil->tmr_list[ZVIL_TTIL_FIDGET] = 5.0f + 5.0f * (0.25f * (iurand() - 0.5f));
+            }
+        }
+        break;
+    case ZVIL_GOAL_TALK:
+    {
+        F32 duration = vil->vilcfg.tymref_list[ZVIL_TTIL_QUIP_OK];
+        vil->tmr_list[ZVIL_TTIL_QUIP_OK] = duration + 0.25f * (iurand() - 0.5f) * duration;
+        if (!(vil->allow & 0x400) && !vil->sfx_curTalk) xSceneID2Name(globals.sceneCur, vil->id);
+        if (vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f && vil->sfx_curTalk &&
+            !iSndIsPlaying(0, (U32)vil + 2))
+        {
+            if (vil->sfx_curTalk != (zSFX*)-1)
+            {
+                xSceneID2Name(globals.sceneCur, vil->id);
+                xSceneID2Name(globals.sceneCur, vil->sfx_curTalk->asset->id);
+            }
+            else
+            {
+                xSceneID2Name(globals.sceneCur, vil->id);
+            }
+            vil->sfx_curTalk = NULL;
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f && vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_TALK, ZVIL_GSPOT_FIDGET);
+            vil->tmr_list[ZVIL_TTIL_FIDGET] = 4.0f + 4.0f * (0.25f * (iurand() - 0.5f));
+        }
+        break;
+    }
+    case ZVIL_GOAL_ACTION:
+        if (vil->asset->subtype != eEntVillainTypeFred && vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_FOLLOW:
+        if (!vil->vhf->query(vil, ZVIL_Q_DOFOLLOW))
+        {
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_PATROL:
+        if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
+        if (!vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+        {
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_TAUNT:
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f && vil->tmr_list[ZVIL_TDUR_TAUNT] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
+    case ZVIL_GOAL_DIE:
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
+            {
+                zHologramAdd(vil);
+                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
+                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
+                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+            }
+            if (vil->ability & 8)
+            {
+                F32 fade = vil->tmr_list[ZVIL_TDUR_DECAY];
+                fade = fade > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] ? fade : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
+                if (fade != 0.0f)
+                {
+                    _zParEmitterCustomSettings info;
+                    info.custom_flags = 0x5a0;
+                    info.color_birth[0] = gVillainPoofColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainPoofColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainPoofColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainPoofColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainPoofColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainPoofColorDeath[vil->asset->subtype][2];
+                    info.color_birth[3] = 0;
+                    info.color_death[3] = 0;
+                    info.pos = *xBoundCenter(&vil->bound);
+                    info.size_death = 5.0f * vil->bound.sph.r;
+                    zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
+                    info.color_birth[0] = gVillainDotsColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainDotsColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainDotsColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainDotsColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainDotsColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainDotsColorDeath[vil->asset->subtype][2];
+                    info.color_birth[3] = 255;
+                    info.color_death[3] = 0;
+                    info.custom_flags = 0x201a0;
+                    info.xzcircle_radius = vil->bound.sph.r;
+                    zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
+                }
+                if (xUtil_yesno(fade)) vil->flags |= 1;
+                else vil->flags &= (U8)~1;
+            }
+            if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
+            {
+                VPAR_emit_partype(vil, VPAR_EMIT_POOF, dt);
+                resp->trangoal = ZVIL_GOAL_AFTERLIFE;
+                resp->tranmode = ZVIL_MODE_SHUTDOWN;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+        }
+        break;
+    default:
+        resp->trangoal = ZVIL_GOAL_IDLE;
+        resp->tranmode = ZVIL_MODE_NOCHANGE;
+        resp->stim = ZVIL_STIM_TRANGOAL;
+        break;
+    }
+    return 1;
+}
+
 // Fred's boss-action animation and model parts need special setup on preparation.
 static S32 VILN_gang_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
                             st_STIMULUS_CONTEXT_DATA*)
@@ -4480,23 +7863,24 @@ static S32 VILN_sham_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
                 if (fade != 0.0f)
                 {
                     _zParEmitterCustomSettings info;
-                    U8 subtype = vil->asset->subtype;
                     info.custom_flags = 0x5a0;
-                    for (S32 i = 0; i < 3; i++)
-                    {
-                        info.color_birth[i] = gVillainPoofColorBirth[subtype][i];
-                        info.color_death[i] = gVillainPoofColorDeath[subtype][i];
-                    }
+                    info.color_birth[0] = gVillainPoofColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainPoofColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainPoofColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainPoofColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainPoofColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainPoofColorDeath[vil->asset->subtype][2];
                     info.color_birth[3] = 0;
                     info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
                     zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
-                    for (S32 i = 0; i < 3; i++)
-                    {
-                        info.color_birth[i] = gVillainDotsColorBirth[subtype][i];
-                        info.color_death[i] = gVillainDotsColorDeath[subtype][i];
-                    }
+                    info.color_birth[0] = gVillainDotsColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainDotsColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainDotsColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainDotsColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainDotsColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainDotsColorDeath[vil->asset->subtype][2];
                     info.color_birth[3] = 255;
                     info.color_death[3] = 0;
                     info.custom_flags = 0x201a0;
@@ -4605,23 +7989,24 @@ static S32 VILN_shagM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_C
                 if (fade != 0.0f)
                 {
                     _zParEmitterCustomSettings info;
-                    U8 subtype = vil->asset->subtype;
                     info.custom_flags = 0x5a0;
-                    for (S32 i = 0; i < 3; i++)
-                    {
-                        info.color_birth[i] = gVillainPoofColorBirth[subtype][i];
-                        info.color_death[i] = gVillainPoofColorDeath[subtype][i];
-                    }
+                    info.color_birth[0] = gVillainPoofColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainPoofColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainPoofColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainPoofColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainPoofColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainPoofColorDeath[vil->asset->subtype][2];
                     info.color_birth[3] = 0;
                     info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
                     zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
-                    for (S32 i = 0; i < 3; i++)
-                    {
-                        info.color_birth[i] = gVillainDotsColorBirth[subtype][i];
-                        info.color_death[i] = gVillainDotsColorDeath[subtype][i];
-                    }
+                    info.color_birth[0] = gVillainDotsColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainDotsColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainDotsColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainDotsColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainDotsColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainDotsColorDeath[vil->asset->subtype][2];
                     info.color_birth[3] = 255;
                     info.color_death[3] = 0;
                     info.custom_flags = 0x201a0;
@@ -5003,23 +8388,24 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                 if (fade != 0.0f)
                 {
                     _zParEmitterCustomSettings info;
-                    U8 subtype = vil->asset->subtype;
                     info.custom_flags = 0x5a0;
-                    for (S32 i = 0; i < 3; i++)
-                    {
-                        info.color_birth[i] = gVillainPoofColorBirth[subtype][i];
-                        info.color_death[i] = gVillainPoofColorDeath[subtype][i];
-                    }
+                    info.color_birth[0] = gVillainPoofColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainPoofColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainPoofColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainPoofColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainPoofColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainPoofColorDeath[vil->asset->subtype][2];
                     info.color_birth[3] = 0;
                     info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
                     zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
-                    for (S32 i = 0; i < 3; i++)
-                    {
-                        info.color_birth[i] = gVillainDotsColorBirth[subtype][i];
-                        info.color_death[i] = gVillainDotsColorDeath[subtype][i];
-                    }
+                    info.color_birth[0] = gVillainDotsColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainDotsColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainDotsColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainDotsColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainDotsColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainDotsColorDeath[vil->asset->subtype][2];
                     info.color_birth[3] = 255;
                     info.color_death[3] = 0;
                     info.custom_flags = 0x201a0;
@@ -5457,23 +8843,24 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                 if (fade != 0.0f)
                 {
                     _zParEmitterCustomSettings info;
-                    U8 subtype = vil->asset->subtype;
                     info.custom_flags = 0x5a0;
-                    for (S32 i = 0; i < 3; i++)
-                    {
-                        info.color_birth[i] = gVillainPoofColorBirth[subtype][i];
-                        info.color_death[i] = gVillainPoofColorDeath[subtype][i];
-                    }
+                    info.color_birth[0] = gVillainPoofColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainPoofColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainPoofColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainPoofColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainPoofColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainPoofColorDeath[vil->asset->subtype][2];
                     info.color_birth[3] = 0;
                     info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
                     zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
-                    for (S32 i = 0; i < 3; i++)
-                    {
-                        info.color_birth[i] = gVillainDotsColorBirth[subtype][i];
-                        info.color_death[i] = gVillainDotsColorDeath[subtype][i];
-                    }
+                    info.color_birth[0] = gVillainDotsColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainDotsColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainDotsColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainDotsColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainDotsColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainDotsColorDeath[vil->asset->subtype][2];
                     info.color_birth[3] = 255;
                     info.color_death[3] = 0;
                     info.custom_flags = 0x201a0;
@@ -5983,23 +9370,24 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                 if (fade != 0.0f)
                 {
                     _zParEmitterCustomSettings info;
-                    U8 subtype = vil->asset->subtype;
                     info.custom_flags = 0x5a0;
-                    for (S32 i = 0; i < 3; i++)
-                    {
-                        info.color_birth[i] = gVillainPoofColorBirth[subtype][i];
-                        info.color_death[i] = gVillainPoofColorDeath[subtype][i];
-                    }
+                    info.color_birth[0] = gVillainPoofColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainPoofColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainPoofColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainPoofColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainPoofColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainPoofColorDeath[vil->asset->subtype][2];
                     info.color_birth[3] = 0;
                     info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
                     zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
-                    for (S32 i = 0; i < 3; i++)
-                    {
-                        info.color_birth[i] = gVillainDotsColorBirth[subtype][i];
-                        info.color_death[i] = gVillainDotsColorDeath[subtype][i];
-                    }
+                    info.color_birth[0] = gVillainDotsColorBirth[vil->asset->subtype][0];
+                    info.color_birth[1] = gVillainDotsColorBirth[vil->asset->subtype][1];
+                    info.color_birth[2] = gVillainDotsColorBirth[vil->asset->subtype][2];
+                    info.color_death[0] = gVillainDotsColorDeath[vil->asset->subtype][0];
+                    info.color_death[1] = gVillainDotsColorDeath[vil->asset->subtype][1];
+                    info.color_death[2] = gVillainDotsColorDeath[vil->asset->subtype][2];
                     info.color_birth[3] = 255;
                     info.color_death[3] = 0;
                     info.custom_flags = 0x201a0;
@@ -12816,6 +16204,121 @@ extern "C" void VIL_HOLO_FLICKER(st_zEntVillain* vil, F32 dt)
     else vil->flags &= ~1;
 }
 
+// Grow a broken flask's splash over its aftermath time, hurt the player inside it and emit the
+// flask's particles.
+static inline void VPRJ_BMM_splash(zEntProjectile* prj, F32 dt, _zParEmitter* emitter)
+{
+    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
+    _xCollis colrec = { 0 };
+    if (flask->tym_aftermath < 0.1f) return;
+
+    F32 pct = prj->tmr_curstate / flask->tym_aftermath;
+    F32 rad_orig = prj->bound.sph.r;
+    prj->bound.sph.r = pct * flask->rad_aftermath;
+    xBoundHitsBound(&prj->bound, &globals.player.ent.bound, &colrec);
+    if (colrec.flags & 1)
+    {
+        zEntPlayer_Damage(prj, 1);
+        prj->SendEvent(ZPRJ_EVNT_HITPLYR);
+    }
+    prj->bound.sph.r = rad_orig;
+
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xEntGetPos(prj);
+    zParEmitterEmitCustom(emitter, dt, &info);
+}
+
+// Run a Mastermind flask through its tease, toss and aftermath stages.
+static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame)
+{
+    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
+    st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
+
+    if (prj->tmr_alive > prj->tym_maxlife)
+    {
+        prj->StateSet(ZPRJ_STATE_DEAD);
+        return 1;
+    }
+
+    if ((prj->plyr_colrec->flags & 1) && (prj->flg_prop & 0x10))
+    {
+        zEntPlayer_Damage(prj, 1);
+        prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
+        prj->StateSet(ZPRJ_STATE_DEAD);
+        return 1;
+    }
+
+    switch (flask->stage)
+    {
+    case MAST_STAGE_UNKNOWN:
+        break;
+    case MAST_STAGE_TEASE:
+        prj->SendEvent(ZPRJ_EVNT_VIL_BUILDUP, dt);
+        prj->ColDelaySet(0.4f, 0);
+        VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &prj->frame->mat.pos);
+        prj->frame->mode |= 1;
+        xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
+        xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+        prj->frame->mode |= 0xC;
+        break;
+    case MAST_STAGE_TOSS:
+        if (flask->flg_stat & 2)
+        {
+            flask->flg_stat &= ~2;
+            prj->tmr_curstate = 0.0f;
+            ST_CAT_AIMDATA aiminf = { ZPRJ_CAIM_GRAVBALL };
+            aiminf.spd_base = flask->spd_flight;
+            xVec3Sub(&aiminf.dir_base, xEntGetPos(prj), xEntGetPos(&globals.player.ent));
+            aiminf.grav.pos_src = *xEntGetPos(prj);
+            aiminf.grav.pos_tgt = *xEntGetPos(&globals.player.ent);
+            aiminf.grav.fac_arcness = 1.0f;
+            aiminf.grav.acc_gravity = flask->heavy;
+            prj->AimAtTarget(&aiminf, 1);
+            prj->cat_data.gravball.acc_gravity = flask->heavy;
+            prj->SendEvent(ZPRJ_EVNT_LAUNCH, dt);
+        }
+        prj->SendEvent(ZPRJ_EVNT_INFLIGHT, dt);
+        if (prj->collis->colls[0].flags & 1)
+        {
+            flask->flg_stat |= 2;
+            flask->stage = MAST_STAGE_AFTERMATH;
+        }
+        xVec3Init(&prj->frame->dvel, 0.0f, -(dt * prj->cat_data.gravball.acc_gravity), 0.0f);
+        prj->frame->mode |= 8;
+        if (prj->flg_categ & 0x4000000)
+        {
+            xMat4x3RMul3x3((xMat4x3*)frame, &prj->common.mat_flex, (xMat4x3*)frame);
+            prj->frame->mode |= 0x100;
+        }
+        break;
+    case MAST_STAGE_AFTERMATH:
+        if (flask->flg_stat & 2)
+        {
+            flask->flg_stat &= ~2;
+            prj->tmr_curstate = 0.0f;
+            prj->flags &= (U8)~1;
+            prj->flg_prop &= ~8;
+            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
+            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->mode |= 0xC;
+            prj->flg_chk &= (U8)~0x10;
+            prj->flg_pen &= (U8)~0x10;
+            prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
+        }
+        prj->SendEvent(ZPRJ_EVNT_VIL_AFTERMATH, dt);
+        switch (flask->typ_flask)
+        {
+        case MAST_FLSK_FIRE: VPRJ_BMM_splash(prj, dt, sMMRedFlaskEmitter); break;
+        case MAST_FLSK_ACID: VPRJ_BMM_splash(prj, dt, sMMGreenFlaskEmitter); break;
+        case MAST_FLSK_SMOG: VPRJ_BMM_splash(prj, dt, sMMBlackFlaskEmitter); break;
+        }
+        if (prj->tmr_curstate > flask->tym_aftermath) prj->StateSet(ZPRJ_STATE_DEAD);
+        break;
+    }
+    return 1;
+}
+
 // Notify the Mastermind projectile's owner and play its sounds.
 static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*)
 {
@@ -13197,11 +16700,165 @@ static void VPAR_readyize_emitters()
     sRBWallEmitter = zParEmitterFind("RB STOPPING WALL EMITTER");
 }
 
+// Emit the Green Ghost ball's glow at the projectile, raised by yoff.
+static inline void VPRJ_BGG_ballfx(zEntProjectile* prj, F32 dt, F32 yoff)
+{
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xEntGetPos(prj);
+    info.pos.y += yoff;
+    zParEmitterEmitCustom(sGreenBallEmitter, dt, &info);
+}
+
+// Keep the quake ball's landing point for the shockwave, or emit the shockwave ring there
+// when no projectile is given.
+static inline void VPRJ_BGG_shockfx(zEntProjectile* prj, F32 dt, F32 radius)
+{
+    if (prj)
+    {
+        sGreenShockPosition = *xEntGetPos(prj);
+    }
+    else
+    {
+        _zParEmitterCustomSettings info;
+        info.custom_flags = 0x20020;
+        info.xzcircle_radius = radius;
+        info.pos = sGreenShockPosition;
+        zParEmitterEmitCustom(sGreenShockEmitter, dt, &info);
+    }
+}
+
+// Run the Green Ghost's quake ball through its buildup, flight, fall and shockwave phases.
+static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
+{
+    st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)prj->xtradata;
+    st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
+    _xVec3 vec_tmp = { 0 };
+    _xVec3 pos_left = { 0 };
+    _xVec3 pos_ryht = { 0 };
+
+    if (prj->tmr_alive > prj->tym_maxlife)
+    {
+        prj->StateSet(ZPRJ_STATE_DEAD);
+        return 1;
+    }
+
+    if ((prj->plyr_colrec->flags & 1) && (prj->flg_prop & 0x10))
+    {
+        zEntPlayer_Damage(prj, 1);
+        prj->StateSet(ZPRJ_STATE_DEAD);
+        return 1;
+    }
+
+    switch (quake->phase)
+    {
+    case BGG_PHAZ_UNKNOWN:
+        break;
+    case BGG_PHAZ_BUILDUP:
+    {
+        VPRJ_BGG_ballfx(prj, dt, 3.0f);
+        prj->SendEvent(ZPRJ_EVNT_VIL_BUILDUP, dt);
+        prj->ColDelaySet(0.4f, 0);
+        VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &pos_left);
+        VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACKALT, &pos_ryht);
+        xVec3Add(&vec_tmp, &pos_left, &pos_ryht);
+        xVec3SMul(&prj->frame->mat.pos, &vec_tmp, 0.5f);
+        prj->frame->mode |= 1;
+        break;
+    }
+    case BGG_PHAZ_FLY:
+    {
+        prj->SendEvent(ZPRJ_EVNT_INFLIGHT, dt);
+        VPRJ_BGG_ballfx(prj, dt, 1.5f);
+
+        S32 start_fall = 0;
+        _xVec3 vec_delt = { 0 };
+        _xVec3 dir_delt = { 0 };
+        xVec3Sub(&vec_delt, &quake->pos_tgt, xEntGetPos(prj));
+        if (quake->flg_stat & 2)
+        {
+            quake->flg_stat &= ~2;
+            prj->tmr_curstate = 0.0f;
+            F32 dist = xVec3Normalize(&dir_delt, &vec_delt);
+            quake->tym_flightMax = (0.2f + dist) / quake->spd_flight;
+            xVec3SMul(&prj->frame->vel, &dir_delt, quake->spd_flight);
+            prj->frame->mode |= 4;
+        }
+
+        if (prj->tmr_curstate > quake->tym_flightMax)
+            start_fall = 1;
+        else if (xVec3Length2(&vec_delt) < 0.0625f)
+            start_fall = 1;
+        else if (prj->collis->env_sidx < prj->collis->env_eidx ||
+                 prj->collis->npc_sidx < prj->collis->npc_eidx ||
+                 prj->collis->stat_sidx < prj->collis->stat_eidx ||
+                 prj->collis->dyn_sidx < prj->collis->dyn_eidx)
+            start_fall = 1;
+
+        if (start_fall)
+        {
+            quake->flg_stat |= 2;
+            quake->phase = BGG_PHAZ_FALL;
+        }
+        break;
+    }
+    case BGG_PHAZ_FALL:
+    {
+        prj->SendEvent(ZPRJ_EVNT_INFLIGHT, dt);
+        VPRJ_BGG_ballfx(prj, dt, 0.0f);
+        if (quake->flg_stat & 2)
+        {
+            quake->flg_stat &= ~2;
+            prj->tmr_curstate = 0.0f;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.z = 0.0f;
+            prj->frame->mode |= 4;
+        }
+
+        if (prj->collis->colls[0].flags & 1)
+        {
+            quake->flg_stat |= 2;
+            quake->phase = BGG_PHAZ_SHOCKWAVE;
+        }
+        else
+        {
+            xVec3Init(&prj->frame->dvel, 0.0f, -(dt * prj->cat_data.gravball.acc_gravity), 0.0f);
+            prj->frame->mode |= 8;
+        }
+        break;
+    }
+    case BGG_PHAZ_SHOCKWAVE:
+        if (quake->flg_stat & 2)
+        {
+            quake->flg_stat &= ~2;
+            prj->tmr_curstate = 0.0f;
+            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
+            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->mode |= 0xC;
+            prj->flg_chk &= (U8)~0x10;
+            prj->flg_pen &= (U8)~0x10;
+            _zParEmitterCustomSettings info;
+            info.custom_flags = 0x20;
+            info.pos = *xEntGetPos(prj);
+            zParEmitterEmitCustom(sGreenBallSmackEmitter, dt, &info);
+            VPRJ_BGG_shockfx(prj, dt, 0.0f);
+            prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
+        }
+        else
+        {
+            prj->SendEvent(ZPRJ_EVNT_VIL_AFTERMATH, dt);
+        }
+        VPRJ_BGG_shockwave(prj, dt);
+        if (prj->tmr_curstate > quake->tym_shock) prj->StateSet(ZPRJ_STATE_DEAD);
+        break;
+    }
+    return 1;
+}
+
 // Emit the Green Ghost shockwave and test whether the player lies outside its ring.
 static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt)
 {
     st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)prj->xtradata;
-    _zParEmitterCustomSettings info = { 0 };
     _xVec3 delta = { 0 };
     _xVec3 playerpos = { 0 };
     _xVec3 pos = { 0 };
@@ -13217,10 +16874,7 @@ static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt)
     playerpos = *xEntGetPos(&globals.player.ent);
     xVec3Sub(&delta, &playerpos, &pos);
     player_radius = globals.player.ent.bound.sph.r;
-    info.custom_flags = 0x20020;
-    info.xzcircle_radius = radius;
-    info.pos = sGreenShockPosition;
-    zParEmitterEmitCustom(sGreenShockEmitter, dt, &info);
+    VPRJ_BGG_shockfx(NULL, dt, radius);
 
     dist2 = xVec3Length2(&delta);
     if (dist2 > SQR(radius + player_radius)) return 1;
@@ -13599,6 +17253,216 @@ static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil)
     return prj;
 }
 
+// Read each villain setting from the model's INI parameters, falling back to the defaults here.
+static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
+{
+    _xVec3 vec_res = { 0 };
+    _xVec3 scl_dflt = { 1.0f, 1.0f, 1.0f };
+    _xVec3 vec_tmp = { 0 };
+    _xVec3 vec_zero = { 0 };
+    U32 pmsize = 0;
+    zAssetModelParam* pmdata;
+
+    if (cfgdata->asset->modelInfoID &&
+        (pmdata = zEntGetModelParams(cfgdata->asset->modelInfoID, &pmsize)))
+    {
+        if (!pmsize) return;
+
+        for (S32 i = 0; i < ZVIL_PARM_NOMORE; i++)
+        {
+            switch (i)
+            {
+            case ZVIL_PARM_MDLSCL_BASE:
+                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
+                    cfgdata->misc_flags |= 8;
+                else
+                    cfgdata->misc_flags &= ~8;
+                cfgdata->scl_modelBase = vec_res;
+                break;
+            case ZVIL_PARM_SANIM_IDLE:
+                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
+                    cfgdata->misc_flags |= 1;
+                else
+                    cfgdata->misc_flags &= ~1;
+                cfgdata->sanim_idle = vec_res;
+                break;
+            case ZVIL_PARM_SANIM_MOVE:
+                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
+                    cfgdata->misc_flags |= 2;
+                else
+                    cfgdata->misc_flags &= ~2;
+                cfgdata->sanim_move = vec_res;
+                break;
+            case ZVIL_PARM_SANIM_CHASE:
+                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res))
+                    cfgdata->misc_flags |= 4;
+                else
+                    cfgdata->misc_flags &= ~4;
+                cfgdata->sanim_chase = vec_res;
+                break;
+            case ZVIL_PARM_WANDER_ARC:
+                cfgdata->ang_wander = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+                break;
+            case ZVIL_PARM_HIT_POINTS:
+                cfgdata->hitpts = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
+                break;
+            case ZVIL_PARM_BUBBLED_TIME:
+                cfgdata->tymref_list[ZVIL_TDUR_SOAP] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
+                break;
+            case ZVIL_PARM_GUMMED_TIME:
+                cfgdata->tymref_list[ZVIL_TDUR_GUM] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
+                break;
+            case ZVIL_PARM_DAZED_TIME:
+                cfgdata->tymref_list[ZVIL_TDUR_DAZED] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+                break;
+            case ZVIL_PARM_EXTEND_RANGE:
+                cfgdata->dst_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+                break;
+            case ZVIL_PARM_EXTEND_RATE:
+                cfgdata->spd_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+                break;
+            case ZVIL_PARM_EXTEND_WIDTH:
+                cfgdata->wid_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+                break;
+            case ZVIL_PARM_EXTEND_TIME:
+                cfgdata->tymref_list[ZVIL_TDUR_EXTEND] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 2.0f);
+                break;
+            case ZVIL_PARM_FOV_ANGLE:
+                cfgdata->fov_detect = PI * zParamGetFloat(pmdata, pmsize, g_parmname[i], 50.0f) / 180.0f;
+                break;
+            case ZVIL_PARM_GLOAT_TIME:
+                cfgdata->tymref_list[ZVIL_TDUR_TAUNT] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 3.0f);
+                break;
+            case ZVIL_PARM_LOB_RANGE:
+                cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+                break;
+            case ZVIL_PARM_LOB_SPEED:
+                cfgdata->spd_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], 2.0f);
+                break;
+            case ZVIL_PARM_LOB_SALVO:
+                cfgdata->cnt_lobSalvo = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
+                break;
+            case ZVIL_PARM_LOB_RELOAD_TIME:
+                cfgdata->tymref_list[ZVIL_TDUR_LOBRELOAD] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+                break;
+            case ZVIL_PARM_LOB_ARC:
+                cfgdata->fac_lobarc = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
+                break;
+            case ZVIL_PARM_LOB_HEAVY:
+                cfgdata->fac_lobheavy = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
+                break;
+            case ZVIL_PARM_DETECT_RADIUS:
+            {
+                F32 fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+                cfgdata->ds2_detect = SQR(fv);
+                break;
+            }
+            case ZVIL_PARM_DETECT_HEIGHT:
+                cfgdata->hyt_detect = zParamGetFloat(pmdata, pmsize, g_parmname[i], 6.0f);
+                break;
+            case ZVIL_PARM_DETECT_HYTOFF:
+                cfgdata->hyt_dtctoff = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.0f);
+                break;
+            case ZVIL_PARM_PURSUE_RADIUS:
+            {
+                F32 fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+                cfgdata->ds2_pursue = SQR(fv);
+                break;
+            }
+            case ZVIL_PARM_MOVE_RATE:
+                cfgdata->spd_move = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+                break;
+            case ZVIL_PARM_CHASE_RATE:
+                cfgdata->spd_chase = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+                break;
+            case ZVIL_PARM_TURN_RATE:
+                cfgdata->spd_turn = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.235988f);
+                break;
+            case ZVIL_PARM_VERT_GUM_LFOOT:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_LFOOT] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_GUM_RFOOT:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_RFOOT] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_GUM_ELBOW:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_ELBOW] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_GUM_CUSTA:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_CUSTA] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_GUM_CUSTB:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_CUSTB] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_WEAPON:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_WEAPON] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_ATTACK:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_ATTACK] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_ATTACKALT:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_ATTACKALT] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_DMG_BOUNCE:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_DMG_BOUNCE] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_LOSEYEBALL:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_LOSEYEBALL] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_RBSWORDHANDLE:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_SWORDHANDLE] = vec_res;
+                break;
+            case ZVIL_PARM_VERT_RBSWORDPIVOT:
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+                cfgdata->pos_verts[ZVIL_MDLVERT_SWORDPIVOT] = vec_res;
+                break;
+            case ZVIL_PARM_BND_SPH_CENTER:
+                vec_tmp.x = 0.0f;
+                vec_tmp.y = 0.7f;
+                vec_tmp.z = 0.0f;
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_tmp, &vec_res);
+                cfgdata->vec_bndoffset = vec_res;
+                break;
+            case ZVIL_PARM_BND_SPH_RADIUS:
+                cfgdata->rad_bound = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.7f);
+                break;
+            case ZVIL_PARM_BND2_SPH_CENTER:
+                vec_tmp.x = 0.0f;
+                vec_tmp.y = 2.1f;
+                vec_tmp.z = 0.0f;
+                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_tmp, &vec_res);
+                cfgdata->vec_bnd2offset = vec_res;
+                break;
+            case ZVIL_PARM_BND2_SPH_RADIUS:
+                cfgdata->rad_bound2 = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.0f);
+                break;
+            case ZVIL_PARM_SPAWNMASK:
+                cfgdata->msk_condspawn = zParamGetInt(pmdata, pmsize, g_parmname[i], 0);
+                break;
+            case ZVIL_PARM_MINDIFFICULTY:
+                cfgdata->minDifficulty = zParamGetInt(pmdata, pmsize, g_parmname[i], 0);
+                break;
+            case ZVIL_PARM_DMG_BEGTIME:
+                cfgdata->tym_attack_begin = zParamGetInt(pmdata, pmsize, g_parmname[i], -1) / 30.0f;
+                break;
+            case ZVIL_PARM_DMG_ENDTIME:
+                cfgdata->tym_attack_end = zParamGetInt(pmdata, pmsize, g_parmname[i], 1000) / 30.0f;
+                break;
+            }
+        }
+    }
+}
+
 // Fetch a villain configuration value in the caller's requested storage.
 static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS pid, void* vv)
 {
@@ -13656,6 +17520,75 @@ static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS
     default: found = 0; break;
     }
     return found;
+}
+
+// Set the villain's behaviour goal and, when it has links, send them the event for the kind of
+// goal it entered (idle, patrol, guard, dazed, search, listen, investigate, chase, attack and
+// mini-patrol each have one; bored sends its event only while the villain is asleep).
+static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal)
+{
+    ent->goal = goal;
+    if (ent->linkCount)
+    {
+        switch (ent->goal)
+        {
+        case ZVIL_GOAL_IDLE:
+            zEntEvent(ent, 179);
+            break;
+        case ZVIL_GOAL_BORED:
+            if (ent->vhf->query(ent, ZVIL_Q_ASLEEP))
+            {
+                zEntEvent(ent, 180);
+            }
+            break;
+        case ZVIL_GOAL_GUARD:
+            zEntEvent(ent, 181);
+            break;
+        case ZVIL_GOAL_PATROL:
+            zEntEvent(ent, 182);
+            break;
+        case ZVIL_GOAL_DAZED:
+            zEntEvent(ent, 183);
+            break;
+        case ZVIL_GOAL_LOOKFORHERO:
+            zEntEvent(ent, 184);
+            break;
+        case ZVIL_GOAL_LISTEN:
+            zEntEvent(ent, 185);
+            break;
+        case ZVIL_GOAL_INVESTIGATE:
+            zEntEvent(ent, 186);
+            break;
+        case ZVIL_GOAL_CHASE:
+            zEntEvent(ent, 187);
+            break;
+        case ZVIL_GOAL_CQCATTACK:
+        case ZVIL_GOAL_LOBBING:
+        case ZVIL_GOAL_SPELLCAST:
+            zEntEvent(ent, 188);
+            break;
+        case ZVIL_GOAL_MINIPATROL:
+            zEntEvent(ent, 189);
+            break;
+        case ZVIL_GOAL_FOLLOW:
+            break;
+        case ZVIL_GOAL_AMBUSH:
+            break;
+        case ZVIL_GOAL_LEAP:
+            break;
+        case ZVIL_GOAL_TALK:
+            break;
+        case ZVIL_GOAL_SURPRIZE:
+            break;
+        case ZVIL_GOAL_ATTACKREADY:
+            break;
+        case ZVIL_GOAL_BULLREADY:
+            break;
+        case ZVIL_GOAL_TAUNT:
+            break;
+        }
+    }
+    return ent->goal;
 }
 
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
