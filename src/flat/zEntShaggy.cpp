@@ -2393,25 +2393,13 @@ static U32 Shaggy3_MoveDead(xAnimTransition* tran, xAnimSingle* anim, _zPlatform
 
 static U32 Shaggy3_Stop(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
 {
-    _xEntFrame* frame = ent->frame;
-
-    if (frame == NULL)
+    // Return from driving to idle after the platform settles, outside the damage reaction window.
+    if (!ent->frame)
     {
         return 0;
     }
-    U8 retval = 0;
-    U8 stopped = 1;
-
-    if ((frame->mode & 0x2) && !(frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
-                                     frame->dpos.z * frame->dpos.z <
-                                 0.0005f))
-    {
-        stopped = 0;
-    }
-    if (stopped && globals.player.DamageTimer < 1.25f)
-    {
-        retval = 1;
-    }
+    U8 retval = (!(ent->frame->mode & 0x2) || xVec3Length2(&ent->frame->dpos) < 0.0005f) &&
+                globals.player.DamageTimer < 1.25f;
     return retval;
 }
 
