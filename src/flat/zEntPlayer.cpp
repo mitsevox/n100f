@@ -6405,11 +6405,6 @@ static inline void PlayerCollsWallsLoopTranslate(_xCollis* colls, F32 x, F32 y, 
     }
 }
 
-// Unused, so the GC linker strips its code (and the PS2 build leaves this stretch of the original
-// file without code), but the compiler had already pooled its two constants, 0.35 and -2.0, in
-// .sdata2 between PlayerCollsSelectDepen's and PlayerCollCheckOneVillain's. Only the constants
-// are known; the body is a placeholder that uses them in that order (kept by the owner's
-// decision, 2026-11-01).
 static void PlayerCollsUnusedConsts(F32* a, F32* b)
 {
     *a = 0.35f;
