@@ -13,17 +13,6 @@ S32 _rwDlTokenQueryDone(U16 token);
 // Draw sync tokens wrap at this value. Written for this project.
 #define GCPIPE_TOKENWRAP 0xE000
 
-// The callbacks an all-in-one node keeps in its private data. Names written for this project;
-// the field at 8 is not read or written here.
-typedef struct GCNAllInOnePrivateData GCNAllInOnePrivateData;
-struct GCNAllInOnePrivateData
-{
-    void* instanceCB;
-    void* reinstanceCB;
-    void* unk8;
-    void* renderCB;
-};
-
 // The functions between the wait and the accessors (fn_801588E8, fn_80158B20, fn_80158DC4 and
 // fn_80158FB0, one of them the default render callback) are still in assembly.
 

@@ -5,48 +5,6 @@
 #define MATFX_PLUGIN_ID 0x120
 #define TOON_PLUGIN_ID 0x12E
 
-// The bone matrices and per-vertex bone indices and weights of a skinned geometry, carved from
-// one 16-byte aligned allocation.
-struct RpSkin
-{
-    U32 numBones;
-    RwMatrix* skinToBoneMatrices;
-    U32* vertexBoneIndices;
-    RwMatrixWeights* vertexBoneWeights;
-    S32 unk10;
-    S32 unk14;
-    void* unaligned;
-};
-
-// The plugin's state: the plugin offsets, the shared matrix cache and the skin free list.
-typedef struct SkinGlobals SkinGlobals;
-struct SkinGlobals
-{
-    S32 engineOffset;
-    S32 atomicOffset;
-    S32 geometryOffset;
-    RwMatrix* matrixCache;
-    void* matrixCacheUnaligned;
-    RwFreeList* freeList;
-    RwModuleInfo module;
-    U8 unk20[0x18];
-};
-
-extern SkinGlobals _rpSkinGlobals;
-
-RpGeometry* _rpSkinInitialize(RpGeometry* geometry);
-RpGeometry* _rpSkinDeinitialize(RpGeometry* geometry);
-S32 _rpSkinPipelinesCreate(U32 pipes);
-S32 _rpSkinPipelinesDestroy(void);
-RpAtomic* _rpSkinPipelinesAttach(RpAtomic* atomic, RpSkinType type);
-S32 _rpSkinGeometryNativeSize(const RpGeometry* geometry);
-RwStream* _rpSkinGeometryNativeWrite(RwStream* stream, const RpGeometry* geometry);
-RwStream* _rpSkinGeometryNativeRead(RwStream* stream, RpGeometry* geometry);
-
-#define SKINGEOMETRYGETDATA(geometry)                                                              \
-    (*(RpSkin**)((U8*)(geometry) + _rpSkinGlobals.geometryOffset))
-#define SKINATOMICGETDATA(atomic)                                                                  \
-    (*(RpHAnimHierarchy**)((U8*)(atomic) + _rpSkinGlobals.atomicOffset))
 
 static RpSkin* SkinCreate(U32 numBones, U32 numVertices)
 {

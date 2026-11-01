@@ -549,11 +549,14 @@ extern RpGameCubeVtxFmt _RpDlVtxFmtDefault;
 // and where its array starts. It follows the resource entry; the display lists of the meshes
 // (GCNDisplayList) follow it, then, 32-byte aligned, the arrays and lists themselves. syncToken is
 // the draw sync token of the last frame that drew from it; flags marks the arrays that live
-// outside the entry (GCNARRAYS_*). The first word and the bytes before flags are not established.
+// outside the entry (GCNARRAYS_*). serialNum is the mesh header's serial number when the arrays
+// were built and indexType the GX index type of the display lists (2 for 8-bit, 3 for 16-bit
+// indices). The bytes before flags are not established.
 typedef struct GCNVertexArrays GCNVertexArrays;
 struct GCNVertexArrays
 {
-    U8 unk0[4];
+    U16 serialNum;
+    U16 indexType;
     U16 syncToken;
     U8 posStride;
     U8 nrmStride;
@@ -582,23 +585,40 @@ struct GCNDisplayList
     void* list;
 };
 
-// What the GameCube lighting callbacks collect for one object: the summed ambient color, whether
-// any ambient light was found, which hardware lights the global (directional) and local
-// (positioned) lights were loaded into, and how many hardware lights are in use. Field names are
-// written for this project; the first 12 bytes are not read by the lighting code.
-typedef struct GCNLightingData GCNLightingData;
-struct GCNLightingData
+// The callbacks an all-in-one node keeps in its private data: instance, reinstance, lighting and
+// render, and a word of flags the world sector node clears from the world's flags. Names written
+// for this project.
+typedef struct GCNAllInOnePrivateData GCNAllInOnePrivateData;
+struct GCNAllInOnePrivateData
 {
-    U8 unk0[0xC];
+    void* instanceCB;
+    void* reinstanceCB;
+    void* lightingCB;
+    void* renderCB;
+    U32 clearFlags;
+};
+
+// What an all-in-one node passes its callbacks for one object: the instanced entry, the mesh
+// header and the geometry's (or world's) flags; then what the lighting callbacks collect, the
+// summed ambient color, whether any ambient light was found, which hardware lights the global
+// (directional) and local (positioned) lights were loaded into and how many hardware lights are
+// in use; then the node's private data. Type and field names are written for this project.
+typedef struct GCNObjectData GCNObjectData;
+struct GCNObjectData
+{
+    RwResEntry* repEntry;
+    RpMeshHeader* meshHeader;
+    U32 flags;
     RwRGBAReal ambient;
     S32 ambientUsed;
     U32 globalMask;
     U32 localMask;
     S32 numLights;
+    GCNAllInOnePrivateData* privateData;
 };
 
-void _rwGCLightsGlobalEnable(U8 flags, GCNLightingData* data);
-void _rwGCLightsLocalEnable(RpLight* light, GCNLightingData* data);
+void _rwGCLightsGlobalEnable(U8 flags, GCNObjectData* data);
+void _rwGCLightsLocalEnable(RpLight* light, GCNObjectData* data);
 
 S32 _rwGCNVtxFmtInstPos3D(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* src,
                           S32 numVerts, U8 stride);

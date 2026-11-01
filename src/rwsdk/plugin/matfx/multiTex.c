@@ -4,28 +4,6 @@
 #define MATFX_PLUGIN_ID 0x120
 #define MULTITEXTURE_PLUGIN_ID 0x12C
 #define MULTITEXTURE_NUMPLATFORMS 9
-#define MULTITEXTURE_MAXTEXTURES 8
-
-// A platform's multitexture material plugin: its id, its offset in the material and the size of
-// its data after each multitexture.
-typedef struct MultiTextureRegEntry MultiTextureRegEntry;
-struct MultiTextureRegEntry
-{
-    S32 platform;
-    U32 pluginID;
-    S32 offset;
-    U32 size;
-};
-
-struct RpMultiTexture
-{
-    MultiTextureRegEntry* regEntry;
-    U32 numTextures;
-    RwTexture* textures[MULTITEXTURE_MAXTEXTURES];
-    U8 coords[MULTITEXTURE_MAXTEXTURES];
-    RpMTEffect* effect;
-    void* platformData;
-};
 
 RwModuleInfo _rpMultiTextureModule;
 MultiTextureRegEntry RegEntries[MULTITEXTURE_NUMPLATFORMS];
