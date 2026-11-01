@@ -64,10 +64,11 @@ void zEntSimpleObj_Init(_zEntSimpleObj* ent, p2EntAsset* asset)
 // and a linked platform becomes diggable. Marks the object as a dig spot when it has any.
 static void DiggableSetup(_zEntSimpleObj* ent)
 {
+    U32 i;
     p2LinkAsset* curlink = ent->link;
     U32 dug = 0;
 
-    for (U32 i = 0; i < ent->linkCount; i++, curlink++)
+    for (i = 0; i < ent->linkCount; i++, curlink++)
     {
         if (curlink->srcEvent == eEventDigup)
         {

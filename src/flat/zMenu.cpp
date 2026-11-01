@@ -17,16 +17,15 @@
 #include "xPad.h"
 #include "xScrFx.h"
 #include "xString.h"
+#include "zFMV.h"
 #include <dolphin/os.h>
 #include <dolphin/vi.h>
 
-U32 zFMVPlay(char* filename, U32 buttons, F32 time);
-char* zFMVFileGetName(S32 fileEnum);
 void setupPlayer();
 void zEntEvent(xBase* to, U32 toEvent);
 void zEntEventAll(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam);
 void xFontRender();
-U32 fn_800443F8();
+extern "C" U32 fn_800443F8();
 extern "C" void fn_80016600();
 extern "C" void fn_8004436C();
 void xSndUpdate(F32 dt);
@@ -34,7 +33,7 @@ void xSndStopAll();
 void xCameraBegin(_tagxCamFrame* cam, S32 clear);
 void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
 U32 zSaveLoad_LoadLoop();
-extern "C" U32 lbl_8025E968;
+extern "C" volatile U32 lbl_8025E968;
 extern "C" U32 lbl_8025EF10;
 extern "C" U32 lbl_8025E9F8;
 extern "C" _zEnv* gCurEnv;
@@ -48,22 +47,45 @@ static F32 sAttractMode_timer;
 static S32 card;
 static S32 sInMenu;
 
-S32 zMenuIsFirstBoot()
+S32 zMenuRunning()
 {
-    return sFirstBoot;
+    return sInMenu;
 }
 
-void zMenuFMVPlay(char* filename, U32 buttons, F32 time)
+void zMenuInit(U32 theSceneID)
 {
-    zFMVPlay(filename, buttons, time);
-    time_last = iTimeGet();
-    time_current = iTimeGet();
+    sInMenu = 1;
+    isrand(iTimeGet());
+    iTimeGet();
+    irand();
+    zSceneInit(theSceneID);
+    zHud_Init();
+    xCameraCreate(&globals.camera, 640, 480);
+    xCameraAssignEnv(&globals.camera, globals.sceneCur->env);
+    zMusicInit();
+}
+
+void zMenuExit()
+{
+    zMusicKill();
+    xCameraRemoveEnv(&globals.camera);
+    xCameraDestroy(&globals.camera);
+    zSceneExit();
+    xSndStopAll();
+    sInMenu = 0;
+}
+
+void zMenuSetup()
+{
+    zSceneSetup();
+    zHud_Setup(globals.sceneCur);
     sAttractMode_timer = 30.0f;
-}
-
-U32 zMenuGetBadCard()
-{
-    return card + 1;
+    setupPlayer();
+    zEnvStartingCamera(gCurEnv);
+    xCameraUpdate(&globals.camera, -1.0f);
+    zEntEventAll(NULL, 0, 0x57, NULL);
+    zEntEventAll(NULL, 0, 0x59, NULL);
+    zEntEvent(&globals.player.ent, 8);
 }
 
 U32 zMenuLoop()
@@ -103,10 +125,10 @@ U32 zMenuLoop()
                 xScrFxFade(&clear, &black, 0.0f, NULL, 1, 0);
                 break;
             case 3:
-                zFMVPlay(zFMVFileGetName(0x12), 0, 0.0f);
-                zFMVPlay(zFMVFileGetName(0x11), 0, 0.0f);
-                zFMVPlay(zFMVFileGetName(0), 0, 0.0f);
-                zMenuFMVPlay(zFMVFileGetName(0x1A), 0, 0.0f);
+                zFMVPlay(zFMVFileGetName(eFMVFile_WarnerBrosLOGO), 0, 0.0f);
+                zFMVPlay(zFMVFileGetName(eFMVFile_THQLOGO), 0, 0.0f);
+                zFMVPlay(zFMVFileGetName(eFMVFile_HeavyIronLOGO), 0, 0.0f);
+                zMenuFMVPlay(zFMVFileGetName(eFMVFile_RenderWareLOGO), 0, 0.0f);
                 holdTmr = 10.0f;
                 zGameModeSwitch(eGameMode_Title);
                 zGameStateSwitch(1);
@@ -150,12 +172,12 @@ U32 zMenuLoop()
             {
                 if (sFirstBoot)
                 {
-                    zMenuFMVPlay(zFMVFileGetName(1), 0x10000, 0.1f);
+                    zMenuFMVPlay(zFMVFileGetName(eFMVFile_SDTitleSequence), 0x10000, 0.1f);
                     sFirstBoot = 0;
                 }
                 else
                 {
-                    zMenuFMVPlay(zFMVFileGetName(irand() % 17), -1, 0.1f);
+                    zMenuFMVPlay(zFMVFileGetName((eFMVFile)(irand() % 17)), -1, 0.1f);
                 }
                 zGameStateSwitch(0);
                 sAttractMode_timer = 30.0f;
@@ -233,43 +255,20 @@ U32 zMenuLoop()
     return s;
 }
 
-void zMenuSetup()
+U32 zMenuGetBadCard()
 {
-    zSceneSetup();
-    zHud_Setup(globals.sceneCur);
+    return card + 1;
+}
+
+void zMenuFMVPlay(char* filename, U32 buttons, F32 time)
+{
+    zFMVPlay(filename, buttons, time);
+    time_last = iTimeGet();
+    time_current = iTimeGet();
     sAttractMode_timer = 30.0f;
-    setupPlayer();
-    zEnvStartingCamera(gCurEnv);
-    xCameraUpdate(&globals.camera, -1.0f);
-    zEntEventAll(NULL, 0, 0x57, NULL);
-    zEntEventAll(NULL, 0, 0x59, NULL);
-    zEntEvent(&globals.player.ent, 8);
 }
 
-void zMenuExit()
+S32 zMenuIsFirstBoot()
 {
-    zMusicKill();
-    xCameraRemoveEnv(&globals.camera);
-    xCameraDestroy(&globals.camera);
-    zSceneExit();
-    xSndStopAll();
-    sInMenu = 0;
-}
-
-void zMenuInit(U32 theSceneID)
-{
-    sInMenu = 1;
-    isrand(iTimeGet());
-    iTimeGet();
-    irand();
-    zSceneInit(theSceneID);
-    zHud_Init();
-    xCameraCreate(&globals.camera, 640, 480);
-    xCameraAssignEnv(&globals.camera, globals.sceneCur->env);
-    zMusicInit();
-}
-
-S32 zMenuRunning()
-{
-    return sInMenu;
+    return sFirstBoot;
 }

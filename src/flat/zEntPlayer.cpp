@@ -6,6 +6,7 @@
 #include "zEntVillain.h"
 #include "zEntBubble.h"
 #include "zParEmitter.h"
+#include "zParSys.h"
 #include "zRumble.h"
 #include "zLaugh.h"
 #include "zPitchChange.h"
@@ -263,6 +264,13 @@ static F32 headcoll_bltimes[12] = { 0.15f, 0.15f, 0.1f,  0.1f,  0.15f, 0.15f,
                                     0.15f, 0.15f, 0.15f, 0.15f, 0.15f, 0.15f };
 xVec3 headcoll_fromos = { 0.0f, 0.0f, 0.0f };
 xVec3 headcoll_os = { 0.0f, 0.0f, 0.0f };
+
+// Floor probe origins in the player's frame. zEntPlayerFloorUpdate casts its rays from the first
+// four corners; the GC build's table has two more points, front and back, which no function reads.
+static xVec3 lorigins[6] = {
+    { -0.3f, 0.0f, 0.3f },  { 0.3f, 0.0f, 0.3f }, { 0.3f, 0.0f, -0.3f },
+    { -0.3f, 0.0f, -0.3f }, { 0.0f, 0.0f, 0.3f }, { 0.0f, 0.0f, -0.3f },
+};
 
 static zPlayerSituation sPlayerInfo[37] = {
     { 0, 0, 120.0f, 0.0f, 0.0f, 0, 0 },  { 1, 0, 2.0f, 0.0f, 0.0f, 0, 1 },
@@ -3045,6 +3053,18 @@ xAnimTable* zEntPlayer_LampshadeAnimTable()
     return table;
 }
 
+static zParSys* zEntPlayerFindSurfaceParSys(S32 type, char* prefix)
+{
+    char name[128];
+    char surface[128];
+
+    strcpy(name, "PARSYS_SD_");
+    strcat(name, prefix);
+    zSurfaceGetName(type, surface);
+    strcat(name, surface);
+    return (zParSys*)zSceneFindObject(xStrHash(name));
+}
+
 static _zParEmitter* zEntPlayerFindSurfaceEmitter(S32 type, char* prefix)
 {
     char name[128];
@@ -5174,12 +5194,6 @@ void zEntPlayerFloorUpdate(_xEnt* p, _xScene* sc, F32 dt)
     F32 ddotm;
     F32 dz;
     F32 s;
-    static xVec3 lorigins[4] = {
-        { -0.3f, 0.0f, 0.3f },
-        { 0.3f, 0.0f, 0.3f },
-        { 0.3f, 0.0f, -0.3f },
-        { -0.3f, 0.0f, -0.3f },
-    };
 
     fcoll = &p->collis->colls[0];
     fsurf = zSurfaceGetSurface(fcoll);
@@ -8118,6 +8132,7 @@ static void zEntPlayer_FXLostChance(_xEnt* ent, F32 seconds)
                 fx_to_play = LCFX_Water;
                 break;
             case 2:
+            case 4:
             default:
                 fx_to_play = LCFX_StdShock;
                 break;

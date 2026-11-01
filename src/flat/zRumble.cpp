@@ -2,26 +2,6 @@
 #include "xPad.h"
 
 
-void zRumbleStartDistance(S32 pad_id, F32 real_dist, F32 max_dist)
-{
-    F32 rumble_it;
-
-    if (real_dist < 0.0f)
-    {
-        real_dist = 0.0f;
-    }
-    else if (real_dist > max_dist)
-    {
-        real_dist = max_dist;
-    }
-
-    rumble_it = 0.35f * (1.0f - real_dist / max_dist);
-    if (rumble_it > 0.0f)
-    {
-        xPadAddRumble(pad_id, eRumble_Medium, rumble_it, 1, 1);
-    }
-}
-
 void zRumbleStart(S32 pad_id, _tagSDRumbleType rumble_type)
 {
     switch (rumble_type)
@@ -77,5 +57,25 @@ void zRumbleStart(S32 pad_id, _tagSDRumbleType rumble_type)
         break;
     case SDR_FireworkBang:
         break;
+    }
+}
+
+void zRumbleStartDistance(S32 pad_id, F32 real_dist, F32 max_dist)
+{
+    F32 rumble_it;
+
+    if (real_dist < 0.0f)
+    {
+        real_dist = 0.0f;
+    }
+    else if (real_dist > max_dist)
+    {
+        real_dist = max_dist;
+    }
+
+    rumble_it = 0.35f * (1.0f - real_dist / max_dist);
+    if (rumble_it > 0.0f)
+    {
+        xPadAddRumble(pad_id, eRumble_Medium, rumble_it, 1, 1);
     }
 }

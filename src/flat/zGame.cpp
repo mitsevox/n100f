@@ -78,7 +78,7 @@ extern "C" iTime lbl_8025EEF8;
 extern "C" iTime lbl_8025EF00;
 extern "C" iTime lbl_8025EF08;
 extern "C" U32 lbl_8025EF10;
-extern "C" U32 lbl_8025E968;
+extern "C" volatile U32 lbl_8025E968;
 extern "C" U32 lbl_8025E9F8;
 extern "C" S32 lbl_8025E528;
 extern "C" S32 lbl_8025E510;
