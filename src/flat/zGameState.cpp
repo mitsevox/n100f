@@ -28,37 +28,62 @@ static U32 sTitleState_DoDispatchTable[2] = { 0x8E, 0x8F };
 static U32 sIntroState_DoDispatchTable[4] = { 0x89, 0x8A, 0x8B, 0x8C };
 
 static inline S32 zGameStateFindEvent(U32* eventList, S32 eventCount, S32 targetMode, S32 targetEvent,
-                                      S32* new_mode, S32* new_state)
+                                      S32* new_mode, S32* new_state);
+void zGameModeSwitch(eGameMode modeNew);
+void zGameStateSwitch(S32 theNewState);
+void zGameStateSwitchEvent(S32 event);
+void zGameSetOstrich(_GameOstrich o);
+_GameOstrich zGameGetOstrich();
+S32 zGameModeGet();
+S32 zGameStateGet();
+
+S32 zGameStateGet()
 {
-    for (S32 i = 0; i < eventCount; i++)
-    {
-        if (targetEvent == eventList[i])
-        {
-            *new_mode = targetMode;
-            *new_state = i;
-            return 1;
-        }
-    }
-    return 0;
+    return gGameState;
 }
 
-void zGameModeSwitch(eGameMode modeNew)
+S32 zGameModeGet()
 {
-    eGameMode modeOld = gGameMode;
+    return gGameMode;
+}
 
-    if ((modeOld == eGameMode_Game && modeNew == eGameMode_Pause) ||
-        (modeOld == eGameMode_Game && modeNew == eGameMode_Save))
+_GameOstrich zGameGetOstrich()
+{
+    return gGameOstrich;
+}
+
+void zGameSetOstrich(_GameOstrich o)
+{
+    gGameOstrich = o;
+}
+
+void zGameStateSwitchEvent(S32 event)
+{
+    S32 old_mode = gGameMode;
+    S32 old_state = gGameState;
+    S32 new_mode = -1;
+    S32 new_state = -1;
+
+    if (zGameStateFindEvent(sGameState_DoDispatchTable, 8, eGameMode_Game, event, &new_mode, &new_state) ||
+        zGameStateFindEvent(sPauseState_DoDispatchTable, 2, eGameMode_Pause, event, &new_mode, &new_state) ||
+        zGameStateFindEvent(sSaveState_DoDispatchTable, 3, eGameMode_Save, event, &new_mode, &new_state) ||
+        zGameStateFindEvent(sOptionsState_DoDispatchTable, 1, eGameMode_Options, event, &new_mode,
+                            &new_state) ||
+        zGameStateFindEvent(sLoadState_DoDispatchTable, 3, eGameMode_Load, event, &new_mode, &new_state) ||
+        zGameStateFindEvent(sTitleState_DoDispatchTable, 2, eGameMode_Title, event, &new_mode, &new_state) ||
+        zGameStateFindEvent(sIntroState_DoDispatchTable, 4, eGameMode_Intro, event, &new_mode, &new_state))
     {
-        xSndPauseAll(1, 1);
-    }
-    else if ((modeOld == eGameMode_Save || modeOld == eGameMode_Pause || modeOld == eGameMode_Load) &&
-             modeNew == eGameMode_Game)
-    {
-        xSndPauseAll(0, 0);
     }
 
-    gGameMode = modeNew;
-    zEntEventAllOfType(sGameMode_DispatchTable[modeNew], 0x1E);
+    if (new_mode != old_mode)
+    {
+        zGameModeSwitch((eGameMode)new_mode);
+    }
+
+    if (new_mode != old_mode || new_state != old_state)
+    {
+        zGameStateSwitch(new_state);
+    }
 }
 
 void zGameStateSwitch(S32 theNewState)
@@ -104,51 +129,36 @@ void zGameStateSwitch(S32 theNewState)
     }
 }
 
-void zGameStateSwitchEvent(S32 event)
+static inline S32 zGameStateFindEvent(U32* eventList, S32 eventCount, S32 targetMode, S32 targetEvent,
+                                      S32* new_mode, S32* new_state)
 {
-    S32 old_mode = gGameMode;
-    S32 old_state = gGameState;
-    S32 new_mode = -1;
-    S32 new_state = -1;
-
-    if (zGameStateFindEvent(sGameState_DoDispatchTable, 8, eGameMode_Game, event, &new_mode, &new_state) ||
-        zGameStateFindEvent(sPauseState_DoDispatchTable, 2, eGameMode_Pause, event, &new_mode, &new_state) ||
-        zGameStateFindEvent(sSaveState_DoDispatchTable, 3, eGameMode_Save, event, &new_mode, &new_state) ||
-        zGameStateFindEvent(sOptionsState_DoDispatchTable, 1, eGameMode_Options, event, &new_mode,
-                            &new_state) ||
-        zGameStateFindEvent(sLoadState_DoDispatchTable, 3, eGameMode_Load, event, &new_mode, &new_state) ||
-        zGameStateFindEvent(sTitleState_DoDispatchTable, 2, eGameMode_Title, event, &new_mode, &new_state) ||
-        zGameStateFindEvent(sIntroState_DoDispatchTable, 4, eGameMode_Intro, event, &new_mode, &new_state))
+    for (S32 i = 0; i < eventCount; i++)
     {
+        if (targetEvent == eventList[i])
+        {
+            *new_mode = targetMode;
+            *new_state = i;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void zGameModeSwitch(eGameMode modeNew)
+{
+    eGameMode modeOld = gGameMode;
+
+    if ((modeOld == eGameMode_Game && modeNew == eGameMode_Pause) ||
+        (modeOld == eGameMode_Game && modeNew == eGameMode_Save))
+    {
+        xSndPauseAll(1, 1);
+    }
+    else if ((modeOld == eGameMode_Save || modeOld == eGameMode_Pause || modeOld == eGameMode_Load) &&
+             modeNew == eGameMode_Game)
+    {
+        xSndPauseAll(0, 0);
     }
 
-    if (new_mode != old_mode)
-    {
-        zGameModeSwitch((eGameMode)new_mode);
-    }
-
-    if (new_mode != old_mode || new_state != old_state)
-    {
-        zGameStateSwitch(new_state);
-    }
-}
-
-void zGameSetOstrich(_GameOstrich o)
-{
-    gGameOstrich = o;
-}
-
-_GameOstrich zGameGetOstrich()
-{
-    return gGameOstrich;
-}
-
-S32 zGameModeGet()
-{
-    return gGameMode;
-}
-
-S32 zGameStateGet()
-{
-    return gGameState;
+    gGameMode = modeNew;
+    zEntEventAllOfType(sGameMode_DispatchTable[modeNew], 0x1E);
 }
