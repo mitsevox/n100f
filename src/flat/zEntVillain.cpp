@@ -190,36 +190,6 @@ struct st_zEntVillain_ParEmitInfo
     S32 flg_omit;
 };
 
-#define ANY_VILLAIN ((en_zEntVillainSubTypeID)-1)
-static st_zEntVillain_ParEmitInfo g_emitinfo[32] = {
-    { "VilPar_Kook_Attack", VPAR_EMIT_EXTATTACK, eEntVillainTypeSpaceKook, 0, 0 },
-    { "VilPar_Witch_Attack", VPAR_EMIT_EXTATTACK, eEntVillainTypeWitch, 0, 0 },
-    { "VilPar_Plant_Attack", VPAR_EMIT_EXTATTACK, eEntVillainTypeKillerPlant, 0, 0 },
-    { "VilPar_GreenGhost_Attack", VPAR_EMIT_EXTATTACK, eEntVillainBossGreenGhost, 0, 0 },
-    { "ParEmit_Vil_Sleeping", VPAR_EMIT_BORED, ANY_VILLAIN, 0x20000, 0 },
-    { "ParEmit_Vil_Bored", VPAR_EMIT_BORED, ANY_VILLAIN, 0, 0x20000 },
-    { "ParEmit_Vil_Bored", VPAR_EMIT_GUARD, ANY_VILLAIN, 2, 0 },
-    { "ParEmit_Vil_Question", VPAR_EMIT_QUESTMARK, ANY_VILLAIN, 0, 0 },
-    { "ParEmit_Vil_Surprize", VPAR_EMIT_EXCLAIM, ANY_VILLAIN, 0, 0 },
-    { "ParEmit_Vil_Soapy", VPAR_EMIT_SOAPY, ANY_VILLAIN, 0, 0 },
-    { "ParEmit_Vil_PopSoap", VPAR_EMIT_POPSOAP, ANY_VILLAIN, 0, 0 },
-    { "ParEmit_Vil_Gummy", VPAR_EMIT_GUMMY, ANY_VILLAIN, 0, 0 },
-    { "ParEmit_Vil_PopGum", VPAR_EMIT_POPGUM, ANY_VILLAIN, 0, 0 },
-    { "ParEmit_SD_BounceOnVillain", VPAR_EMIT_BUTTBOUNCE, ANY_VILLAIN, 2, 0 },
-    { "ParEmit_SD_Headbutt", VPAR_EMIT_HEADBUTT, ANY_VILLAIN, 2, 0 },
-    { "ParEmit_SD_Headbutt2", VPAR_EMIT_HEADBUTT, ANY_VILLAIN, 2, 0 },
-    { "ParEmit_Vil_Stunned", VPAR_EMIT_STUN, ANY_VILLAIN, 2, 0 },
-    { "ParEmit_Vil_Teleport", VPAR_EMIT_TELEPORT, eEntVillainBossMastermind, 0, 0 },
-    { "ParEmit_Vil_Dying", VPAR_EMIT_DYING, ANY_VILLAIN, 0, 0 },
-    { "ParEmit_Vil_Decay", VPAR_EMIT_DECAY, ANY_VILLAIN, 0, 0 },
-    { "ParEmit_Vil_DecayRobot", VPAR_EMIT_DECAY, eEntVillainTypeRobot, 0, 0 },
-    { "ParEmit_Vil_KookRespawn", VPAR_EMIT_RESPAWN, eEntVillainTypeSpaceKook, 0, 0 },
-    { "ParEmit_Vil_HoloDecay", VPAR_EMIT_DECAY, ANY_VILLAIN, 8, 0 },
-    { "ParEmit_Vil_HoloPoof", VPAR_EMIT_POOF, ANY_VILLAIN, 8, 0 },
-    { "ParEmit_Vil_HoloDots", VPAR_EMIT_POOF, ANY_VILLAIN, 8, 0 },
-    { NULL, VPAR_EMIT_WALLPRINT, (en_zEntVillainSubTypeID)0, 0, 0 },
-};
-#undef ANY_VILLAIN
 
 
 // One bonus item a villain can drop; bit 0 of flg_info marks it as dropped.
@@ -252,7 +222,24 @@ struct st_NPC_SOUND_ENTRY
     st_NPC_SOUND_RECORDS* sndList;
 };
 
-extern "C" st_NPC_SOUND_ENTRY g_npcJukeBox[33];
+// A villain type's model scale, idle, move and chase animation speeds, bounds, attack window and
+// twelve reference points.
+struct st_NPCTYPE_CONFIG
+{
+    S32 hitpts;
+    S32 misc_flags;
+    _xVec3 scl_modelBase;
+    _xVec3 sanim_idle;
+    _xVec3 sanim_move;
+    _xVec3 sanim_chase;
+    F32 rad_bound;
+    _xVec3 vec_bndoffset;
+    F32 rad_bound2;
+    _xVec3 vec_bnd2offset;
+    F32 tym_attack_begin;
+    F32 tym_attack_end;
+    _xVec3 pos_verts[12];
+};
 
 // How many of one villain type the player has gummed, soaped and beaten, and how many there are.
 struct st_NPC_TALLY_RECORD
@@ -297,19 +284,6 @@ struct st_ZVIL_BONUS_EXCLUSION
 {
     U32 scene;
     U32 id;
-};
-
-static st_ZVIL_BONUS_EXCLUSION g_bonusExclusions[] = {
-    { 0x43303036, 0x449DB5F4 }, { 0x4F303031, 0xE8EA9736 },
-    { 0x4F303031, 0x120782D1 }, { 0x4F303031, 0xBD63DC69 },
-    { 0x4F303031, 0xD93EE089 }, { 0x57303233, 0x7BCB3A79 },
-    { 0x57303233, 0xECF98FF8 }, { 0x57303233, 0x7BCB3A7A },
-    { 0x57303233, 0x7BCB3A7B }, { 0x57303233, 0x7BCB3A7C },
-    { 0x57303233, 0x7BCB3A7D }, { 0x57303233, 0xECF98FF9 },
-    { 0x57303233, 0xECF98FFA }, { 0x57303233, 0x3B9E586B },
-    { 0x57303233, 0xECF98FFB }, { 0x57303233, 0xECF98FFC },
-    { 0x57303233, 0x7BCB3A7E }, { 0x57303233, 0x7BCB3A7F },
-    { 0x57303233, 0x7BCB3A80 }, { 0, 0 },
 };
 
 
@@ -678,60 +652,71 @@ static S32 VILN_shark_stimulus(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, st_ST
 static S32 VILN_shark_sysevent(st_zEntVillain*, xBase*, U32, F32*, xBase*, st_STIMULUS_CONTEXT_DATA*);
 static S32 VILN_shark_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
 
-// Handler functions indexed by villain subtype; the final row is the sentinel.
-static st_ZVIL_NPC_HANDLERFUNCS g_npcFuncs[51] = {
-    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
-    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
-    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_shark_flag, VILN_shark_query, VILN_shark_sysevent, VILN_shark_notice, VILN_shark_aware, VILN_shark_stimulus, VILN_shark_trangoal, VILN_shark_calcmove, VILN_shark_respond, VILN_shark_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
-    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
-    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_kp_query, VILN_std_sysevent, VILN_std_notice, VILN_kp_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
-    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
-    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
-    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
-    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
-    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
-    { 1, VILN_shagM_flag, VILN_shagM_query, VILN_shagM_sysevent, VILN_shagM_notice, VILN_shagM_aware, VILN_shagM_stimulus, VILN_shagM_trangoal, VILN_shagM_calcmove, VILN_shagM_respond, VILN_shagM_pickanim, 0, 0 },
-    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
-    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
-    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
-    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
-    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, VILN_gang_animtran, 0 },
-    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
-    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
-    { 1, VILN_BBK_flag, VILN_BBK_query, VILN_BBK_sysevent, VILN_BBK_notice, VILN_BBK_aware, VILN_BBK_stimulus, VILN_BBK_trangoal, VILN_BBK_calcmove, VILN_BBK_respond, VILN_BBK_pickanim, VILN_BBK_animtran, 0 },
-    { 1, VILN_BGG_flag, VILN_BGG_query, VILN_BGG_sysevent, VILN_BGG_notice, VILN_BGG_aware, VILN_BGG_stimulus, VILN_BGG_trangoal, VILN_BGG_calcmove, VILN_BGG_respond, VILN_BGG_pickanim, 0, 0 },
-    { 1, VILN_BRB_flag, VILN_BRB_query, VILN_BRB_sysevent, VILN_BRB_notice, VILN_BRB_aware, VILN_BRB_stimulus, VILN_BRB_trangoal, VILN_BRB_calcmove, VILN_BRB_respond, VILN_BRB_pickanim, 0, VILN_BRB_xtrarend },
-    { 1, VILN_BMM_flag, VILN_BMM_query, VILN_BMM_sysevent, VILN_BMM_notice, VILN_BMM_aware, VILN_BMM_stimulus, VILN_BMM_trangoal, VILN_BMM_calcmove, VILN_BMM_respond, VILN_BMM_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
-    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
-    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
-    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-};
+// Where the Mastermind stood when he last looked for a teleport point.
+static _xVec3 sMMPreTeleportPos;
+
+// Redbeard's swords.
+static st_REDBEARD_SWORD g_rbsword[4];
+
+
+static _tagLightning* sKnightLightning[5];
+static _tagLightning* sMastermindLightning[5];
+static _xVec3 sGreenShockPosition;
+static _zParEmitter* sGreenShockEmitter;
+static _zParEmitter* sEmitHoloPoof;
+static _zParEmitter* sEmitHoloDots;
+static _zParEmitter* sGreenBallEmitter;
+static _zParEmitter* sGreenBallSmackEmitter;
+static _zParEmitter* sGreenHurtEmitter;
+static _zParEmitter* sGreenVortexEmitter1;
+static _zParEmitter* sGreenVortexEmitter2;
+static _zParEmitter* sGreenVortexEmitter3;
+static _zParEmitter* sWitchDyingEmitter;
+static _zParEmitter* sPlantCloudEmitter;
+static _zParEmitter* sMMRedFlaskEmitter;
+static _zParEmitter* sMMGreenFlaskEmitter;
+static _zParEmitter* sMMBlackFlaskEmitter;
+static _zParEmitter* sMMShowEmitter;
+static _zParEmitter* sMMHideEmitter;
+static _zParEmitter* sRBWallEmitter;
+
+// The particle emitters of the Mastermind's teleport out and in.
+static _zParEmitter* sEmitMMTeleportHide;
+static _zParEmitter* sEmitMMTeleportShow;
+
+// Cleared at scene end.
+static S32 g_NPCSoundStreamLock;
+
+// How many times the villain system has been started without being shut down.
+static S32 g_npcinit;
+
+// How many villains the scene has.
+static S32 g_npccnt;
+
+// All villains of the scene, in one block.
+static st_zEntVillain* g_npcpool;
+
+// The goal and the stimulus a villain type's stimulus or goal-change step is handling.
+static en_BEHAVIOUR_GOAL g_pgol;
+static en_NPC_STIMULUS g_pstm;
+
+// The gum puddle model, whether the bonus item table is set up, and a villain tally the scene
+// start clears.
+static RpAtomic* g_gumModelAsset;
+static S32 g_bonusTableReady;
+static S32 g_stattotvil;
+
+// Records of the particle emitters the villains use, how many are in use, and whether they
+// are set up.
+static st_zEntVillain_ParEmitRecord* g_emitpool;
+static S32 g_emitnext;
+static S32 g_emitready;
+
+// Which boss the current scene's battle is against (1 to 4), or 0 when it is not a boss battle.
+static S32 g_scene_is_a_boss_battle;
+
+// A block of scratch memory the villain system keeps from startup.
+static char* g_datablock;
 
 // Play flags and start delay of each villain sound type, ended by VSND_LISTEND.
 static st_NPC_SOUND_PROPERTIES g_sndProps[36] = {
@@ -771,6 +756,1456 @@ static st_NPC_SOUND_PROPERTIES g_sndProps[36] = {
     { VSND_TYP_SPELL_PLAY, 0x2000, 0.0f },
     { VSND_TYP_SPELL_LOOP, 0x2803, 0.0f },
     { VSND_LISTEND, 0x2000, 0.1f },
+};
+
+// Each villain type's sounds by sound type, ended by VSND_LISTEND; the aids are looked up at
+// scene start.
+static st_NPC_SOUND_RECORDS g_sndTrax_General[65] = {
+    { VSND_TYP_SPOOKYROOM, "theramin 01", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 02", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 03", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 04", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 05", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 06", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 07", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 08", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 09", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 10", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 11", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin 12", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 01", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 02", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 03", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 04", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 05", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 06", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 07", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 08", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 09", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 10", 0 },
+    { VSND_TYP_SPOOKYROOM, "theramin loop 11", 0 },
+    { VSND_TYP_ATTACKSWIPE, "gen_attackswipe1", 0 },
+    { VSND_TYP_OUCHCRASH, "gen_crash01", 0 },
+    { VSND_TYP_OUCHCRASH, "gen_crash02", 0 },
+    { VSND_TYP_OUCHCRASH, "gen_crash03", 0 },
+    { VSND_TYP_OUCHCRASH, "gen_crash04", 0 },
+    { VSND_TYP_OUCHCRASH, "gen_crash06", 0 },
+    { VSND_TYP_OUCHCRASH, "gen_crash08", 0 },
+    { VSND_TYP_OUCHCRASH, "gen_crash09", 0 },
+    { VSND_TYP_OUCHCRASH, "gen_crash10", 0 },
+    { VSND_TYP_SOAPBEGIN, "gen_bubble_form1", 0 },
+    { VSND_TYP_SOAPBEGIN, "gen_bubble_form2", 0 },
+    { VSND_TYP_SOAPSTOP, "soapbubble_pop", 0 },
+    { VSND_TYP_SOAPSTOP, "soapbubble_pop2", 0 },
+    { VSND_TYP_SOAPSTOP, "soapbubble_pop3", 0 },
+    { VSND_TYP_GUMBEGIN, "gen_gummed1", 0 },
+    { VSND_TYP_GUMBEGIN, "gen_gummed2", 0 },
+    { VSND_TYP_GUMBEGIN, "gen_gummed3", 0 },
+    { VSND_TYP_GUMBEGIN, "gen_gummed4", 0 },
+    { VSND_TYP_GUMBEGIN, "gen_gummed5", 0 },
+    { VSND_TYP_GUMSTOP, "gum_pop", 0 },
+    { VSND_TYP_GUMBOUNCE, "gen_gumbounce1", 0 },
+    { VSND_TYP_GUMBOUNCE, "gen_gumbounce2", 0 },
+    { VSND_TYP_GUMBOUNCE, "gen_gumbounce05", 0 },
+    { VSND_TYP_GUMSTRETCH, "gen_gumstretch1", 0 },
+    { VSND_TYP_GUMSTRETCH, "gen_gumstretch2", 0 },
+    { VSND_TYP_GUMSTRETCH, "gen_gumstretch3", 0 },
+    { VSND_TYP_IDLESLOP, "gen_runstep1", 0 },
+    { VSND_TYP_IDLESLOP, "gen_runstep2", 0 },
+    { VSND_TYP_IDLESLOP, "gen_runstep3", 0 },
+    { VSND_TYP_IDLESLOP, "gen_runstep4", 0 },
+    { VSND_TYP_IDLESLOP, "gen_runstep5", 0 },
+    { VSND_TYP_IDLESLOP, "gen_runstep6", 0 },
+    { VSND_TYP_IDLESLOP, "gen_runstep7", 0 },
+    { VSND_TYP_IDLESLOP, "gen_runstep8", 0 },
+    { VSND_TYP_FALL, "gen_bodyfall1", 0 },
+    { VSND_TYP_FALL, "gen_bodyfall2", 0 },
+    { VSND_TYP_FALL, "gen_bodyfall3", 0 },
+    { VSND_TYP_FALL, "gen_bodyfall4", 0 },
+    { VSND_TYP_FALL, "gen_bodyfall5", 0 },
+    { VSND_TYP_FALL, "gen_bodyfall6", 0 },
+    { VSND_TYP_HOLOFADE, "life_essence_fade", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_BlackKnight[49] = {
+    { VSND_TYP_CLANKING, "bk_armour1", 0 },
+    { VSND_TYP_CLANKING, "bk_armour2", 0 },
+    { VSND_TYP_CLANKING, "bk_armour3", 0 },
+    { VSND_TYP_CLANKING, "bk_armour4", 0 },
+    { VSND_TYP_CLANKING, "bk_armour5", 0 },
+    { VSND_TYP_CLANKING, "bk_armour6", 0 },
+    { VSND_TYP_CLANKING, "bk_armour7", 0 },
+    { VSND_TYP_CLANKING, "bk_armour10", 0 },
+    { VSND_TYP_CLANKING, "bk_armour11", 0 },
+    { VSND_TYP_CLANKING, "bk_armour12", 0 },
+    { VSND_TYP_CLANKING, "bk_armour13", 0 },
+    { VSND_TYP_CLANKING, "bk_armour14", 0 },
+    { VSND_TYP_CLANKING, "bk_armour15", 0 },
+    { VSND_TYP_CLANKING, "bk_armour16", 0 },
+    { VSND_TYP_MOVE, "bk_step1", 0 },
+    { VSND_TYP_MOVE, "bk_step2", 0 },
+    { VSND_TYP_MOVE_ALT, "bk_step3", 0 },
+    { VSND_TYP_MOVE_ALT, "bk_step4", 0 },
+    { VSND_TYP_ATTACK, "bk_attack1", 0 },
+    { VSND_TYP_ATTACK, "bk_attack2", 0 },
+    { VSND_TYP_ATTACK, "bk_attack3", 0 },
+    { VSND_TYP_ATTACK, "bk_attack4", 0 },
+    { VSND_TYP_ATTACK, "bk_attack5", 0 },
+    { VSND_TYP_ATTACK, "bk_attack6", 0 },
+    { VSND_TYP_OUCH, "bk_death3", 0 },
+    { VSND_TYP_OUCH, "bk_death4", 0 },
+    { VSND_TYP_OUCH, "bk_death5", 0 },
+    { VSND_TYP_OUCH, "bk_death6", 0 },
+    { VSND_TYP_BKZAPPED, "bk_shock", 0 },
+    { VSND_TYP_BKDIE, "bk_break1", 0 },
+    { VSND_TYP_BKDIE, "bk_break2", 0 },
+    { VSND_TYP_BKDIE, "bk_break3", 0 },
+    { VSND_TYP_BKDIE, "bk_break4", 0 },
+    { VSND_TYP_BKDIE, "bk_break5", 0 },
+    { VSND_TYP_LAUGH, "bk_gloat1", 0 },
+    { VSND_TYP_LAUGH, "bk_gloat2", 0 },
+    { VSND_TYP_LAUGH, "bk_gloat3", 0 },
+    { VSND_TYP_LAUGH, "bk_gloat4", 0 },
+    { VSND_TYP_LAUGH, "bk_gloat5", 0 },
+    { VSND_TYP_LAUGH, "bk_gloat6", 0 },
+    { VSND_TYP_LAUGH, "bk_gloat7", 0 },
+    { VSND_TYP_LAUGH, "bk_gloat8", 0 },
+    { VSND_TYP_LAUGH, "bk_gloat9", 0 },
+    { VSND_TYP_PRJ_FLIGHT, "rb_sword_loop1", 0 },
+    { VSND_TYP_PRJ_FLIGHT, "rb_sword_loop2", 0 },
+    { VSND_TYP_PRJ_SPLAT, "bk_axehit1", 0 },
+    { VSND_TYP_PRJ_SPLAT, "bk_knifehit1", 0 },
+    { VSND_TYP_PRJ_SPLAT, "bk_knifehit2", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_GreenGhost[35] = {
+    { VSND_TYP_CLANKING, "chain_rattle", 0 },
+    { VSND_TYP_CLANKING, "chain_rattle2", 0 },
+    { VSND_TYP_CLANKING, "chain_rattle3", 0 },
+    { VSND_TYP_CLANKING, "chain_rattle4", 0 },
+    { VSND_TYP_MMDIE, "pit_moan_single", 0 },
+    { VSND_TYP_DIE, "gr_death_scream01", 0 },
+    { VSND_TYP_LAUGH, "gr_laugh01", 0 },
+    { VSND_TYP_LAUGH, "gr_laugh02", 0 },
+    { VSND_TYP_LAUGH, "gr_laugh03", 0 },
+    { VSND_TYP_LAUGH, "gr_laugh04", 0 },
+    { VSND_TYP_LAUGH, "gr_laugh05", 0 },
+    { VSND_TYP_LAUGH, "gr_laugh06", 0 },
+    { VSND_TYP_LAUGH, "gr_laugh07", 0 },
+    { VSND_TYP_LAUGH, "gr_laugh08", 0 },
+    { VSND_TYP_DIZZY, "gr_scare_scream01", 0 },
+    { VSND_TYP_DIZZY, "gr_scare_scream02", 0 },
+    { VSND_TYP_DIZZY, "gr_scare_scream03", 0 },
+    { VSND_TYP_DIZZY, "gr_scare_scream04", 0 },
+    { VSND_TYP_DIALOGUE, "gr_suck_scream01", 0 },
+    { VSND_TYP_DIALOGUE, "gr_suck_scream02", 0 },
+    { VSND_TYP_DIALOGUE, "gr_suck_scream03", 0 },
+    { VSND_TYP_DIALOGUE, "gr_suck_scream04", 0 },
+    { VSND_TYP_DIALOGUE, "gr_suck_scream05", 0 },
+    { VSND_TYP_DIALOGUE, "gr_suck_scream06", 0 },
+    { VSND_TYP_DIALOGUE, "gr_suck_scream07", 0 },
+    { VSND_TYP_DIALOGUE, "gr_suck_scream08", 0 },
+    { VSND_TYP_DIALOGUE, "gr_suck_scream09", 0 },
+    { VSND_TYP_DIALOGUE, "gr_vortex1", 0 },
+    { VSND_TYP_DIALOGUE, "gr_vortex2", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "gr_energyball_throw", 0 },
+    { VSND_TYP_PRJ_FLIGHT, "gr_energyball_loop", 0 },
+    { VSND_TYP_PRJ_EXPLODE, "gr_energyball_hit1", 0 },
+    { VSND_TYP_PRJ_EXPLODE, "gr_energyball_hit2", 0 },
+    { VSND_TYP_PRJ_SPLAT, "gr_energyball_form", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_RedBeard[23] = {
+    { VSND_TYP_PUNCH, "punch1", 0 },
+    { VSND_TYP_PUNCH, "punch2", 0 },
+    { VSND_TYP_PUNCH, "punch3", 0 },
+    { VSND_TYP_DIE, "rb_death01", 0 },
+    { VSND_TYP_DIE, "rb_death02", 0 },
+    { VSND_TYP_DIE, "rb_death03", 0 },
+    { VSND_TYP_OUCH, "rb_hurt01", 0 },
+    { VSND_TYP_OUCH, "rb_hurt02", 0 },
+    { VSND_TYP_OUCH, "rb_hurt03", 0 },
+    { VSND_TYP_IDLESLOP, "rb_idle01", 0 },
+    { VSND_TYP_IDLESLOP, "rb_idle02", 0 },
+    { VSND_TYP_ATTACK, "rb_laugh01", 0 },
+    { VSND_TYP_LAUGH, "rb_taunt01", 0 },
+    { VSND_TYP_LAUGH, "rb_taunt02", 0 },
+    { VSND_TYP_LAUGH, "rb_taunt03", 0 },
+    { VSND_TYP_LAUGH, "rb_taunt04", 0 },
+    { VSND_TYP_LAUGH, "rb_taunt05", 0 },
+    { VSND_TYP_LAUGH, "rb_taunt06", 0 },
+    { VSND_TYP_LAUGH, "rb_taunt07", 0 },
+    { VSND_TYP_LAUGH, "rb_taunt08", 0 },
+    { VSND_TYP_PRJ_FLIGHT, "rb_sword_loop1", 0 },
+    { VSND_TYP_PRJ_FLIGHT, "rb_sword_loop2", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_MasterMind[77] = {
+    { VSND_TYP_ATTACKBUILD, "mastermind_01", 0 },
+    { VSND_TYP_TRASHTALK, "mastermind_02", 0 },
+    { VSND_TYP_ESCAPING, "mastermind_03", 0 },
+    { VSND_TYP_ATTACKBUILD, "mastermind_04", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_06", 0 },
+    { VSND_TYP_BLOCKING, "mastermind_07", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_08", 0 },
+    { VSND_TYP_BLOCKING, "mastermind_09", 0 },
+    { VSND_TYP_TRASHTALK, "mastermind_10", 0 },
+    { VSND_TYP_TRASHTALK, "mastermind_11", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_12", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_13", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_14", 0 },
+    { VSND_TYP_ALMOSTKILLED, "mastermind_15", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_16", 0 },
+    { VSND_TYP_DIZZY, "mastermind_17a", 0 },
+    { VSND_TYP_DIZZY, "mastermind_17b", 0 },
+    { VSND_TYP_BUTTONPRESS, "mastermind_18", 0 },
+    { VSND_TYP_BUTTONPRESS, "mastermind_19", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_20", 0 },
+    { VSND_TYP_BUTTONPRESS, "mastermind_21", 0 },
+    { VSND_TYP_ATTACKBUILD, "mastermind_22", 0 },
+    { VSND_TYP_FOREPLAYHURT, "mastermind_23a", 0 },
+    { VSND_TYP_MMDIE, "mastermind_05", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_26", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_27", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_28", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_29", 0 },
+    { VSND_TYP_BUTTONPRESS, "mastermind_30", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_31", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_32", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_33", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_34", 0 },
+    { VSND_TYP_BUTTONPRESS, "mastermind_35", 0 },
+    { VSND_TYP_BUTTONPRESS, "mastermind_36", 0 },
+    { VSND_TYP_FOREPLAYHURT, "mastermind_37", 0 },
+    { VSND_TYP_ATTACKBUILD, "mastermind_38", 0 },
+    { VSND_TYP_BLOCKING, "mastermind_39", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_40", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_41", 0 },
+    { VSND_TYP_MMLAUGH, "mastermind_42", 0 },
+    { VSND_TYP_ATTACKBUILD, "mastermind_43", 0 },
+    { VSND_TYP_DIALOGUE, "mastermind_44", 0 },
+    { VSND_TYP_MMLAUGH, "mastermind_laugh1", 0 },
+    { VSND_TYP_MMLAUGH, "mastermind_laugh2", 0 },
+    { VSND_TYP_MMLAUGH, "mastermind_laugh3", 0 },
+    { VSND_TYP_MMLAUGH, "mastermind_laugh4", 0 },
+    { VSND_TYP_MMLAUGH, "mastermind_laugh5", 0 },
+    { VSND_TYP_ATTACKBUILD, "mastermind_laugh1", 0 },
+    { VSND_TYP_ATTACKBUILD, "mastermind_laugh2", 0 },
+    { VSND_TYP_ATTACKBUILD, "mastermind_laugh3", 0 },
+    { VSND_TYP_ATTACKBUILD, "mastermind_laugh4", 0 },
+    { VSND_TYP_ATTACKBUILD, "mastermind_laugh5", 0 },
+    { VSND_TYP_DISAPPEAR, "magic_wand1", 0 },
+    { VSND_TYP_DISAPPEAR, "magic_wand2", 0 },
+    { VSND_TYP_REAPPEAR, "magic_wand3", 0 },
+    { VSND_TYP_REAPPEAR, "magic_wand4", 0 },
+    { VSND_TYP_REAPPEAR, "magic_wand5", 0 },
+    { VSND_TYP_REAPPEAR, "magic_wand6", 0 },
+    { VSND_TYP_OUCH, "oldsk_death3", 0 },
+    { VSND_TYP_OUCH, "oldsk_death4", 0 },
+    { VSND_TYP_OUCH, "oldsk_death5", 0 },
+    { VSND_TYP_OUCH, "oldsk_death6", 0 },
+    { VSND_TYP_CLANKING, "oldsk_gumbounce3", 0 },
+    { VSND_TYP_CLANKING, "oldsk_gumbounce4", 0 },
+    { VSND_TYP_DIZZY, "oldsk_stunned1", 0 },
+    { VSND_TYP_DIZZY, "oldsk_stunned3", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "magic_potion", 0 },
+    { VSND_TYP_PRJ_EXPLODE, "potion_smash", 0 },
+    { VSND_TYP_PRJ_EXPLODE, "mm_bottle_break1", 0 },
+    { VSND_TYP_PRJ_EXPLODE, "mm_bottle_break2", 0 },
+    { VSND_TYP_PRJ_EXPLODE, "mm_bottle_break3", 0 },
+    { VSND_TYP_PRJ_SPLAT, "potion_smash", 0 },
+    { VSND_TYP_PRJ_SPLAT, "mm_bottle_break1", 0 },
+    { VSND_TYP_PRJ_SPLAT, "mm_bottle_break2", 0 },
+    { VSND_TYP_PRJ_SPLAT, "mm_bottle_break3", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Fred[1] = {
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Daphne[3] = {
+    { VSND_TYP_DIALOGUE, "daphne_01", 0 },
+    { VSND_TYP_DIALOGUE, "daphne_02", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Velma[1] = {
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Shaggy[1] = {
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Holly[41] = {
+    { VSND_TYP_DIALOGUE, "holly_25", 0 },
+    { VSND_TYP_DIALOGUE, "holly_26", 0 },
+    { VSND_TYP_DIALOGUE, "holly_27a", 0 },
+    { VSND_TYP_DIALOGUE, "holly_27b", 0 },
+    { VSND_TYP_ONELINER, "holly_30", 0 },
+    { VSND_TYP_DIALOGUE, "holly_32", 0 },
+    { VSND_TYP_ONELINER, "holly_33", 0 },
+    { VSND_TYP_DIALOGUE, "holly_40", 0 },
+    { VSND_TYP_DIALOGUE, "holly_41", 0 },
+    { VSND_TYP_DIALOGUE, "holly_42", 0 },
+    { VSND_TYP_ONELINER, "holly_43a", 0 },
+    { VSND_TYP_ONELINER, "holly_43b", 0 },
+    { VSND_TYP_DIALOGUE, "holly_44a", 0 },
+    { VSND_TYP_DIALOGUE, "holly_44b", 0 },
+    { VSND_TYP_DIALOGUE, "holly_45", 0 },
+    { VSND_TYP_DIALOGUE, "holly_46", 0 },
+    { VSND_TYP_DIALOGUE, "holly_47a", 0 },
+    { VSND_TYP_DIALOGUE, "holly_47b", 0 },
+    { VSND_TYP_DIALOGUE, "holly_48", 0 },
+    { VSND_TYP_ONELINER, "holly_49", 0 },
+    { VSND_TYP_DIALOGUE, "holly_50", 0 },
+    { VSND_TYP_ONELINER, "holly_51a", 0 },
+    { VSND_TYP_ONELINER, "holly_51b", 0 },
+    { VSND_TYP_ONELINER, "holly_52a", 0 },
+    { VSND_TYP_ONELINER, "holly_52b", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_01", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_01b", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_02", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_02b", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_03", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_03b", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_04", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_04b", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_05", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_05b", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_06", 0 },
+    { VSND_TYP_LAUGH, "holly_laugh_06b", 0 },
+    { VSND_TYP_OUCH, "holly_yell1", 0 },
+    { VSND_TYP_OUCH, "holly_yell2", 0 },
+    { VSND_TYP_OUCH, "holly_yell3", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_GroundsKeeper[67] = {
+    { VSND_TYP_ONELINER, "groundskeeper_01", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_02", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_04", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_05", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_06a", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_06b", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_07", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_08", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_09", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_10", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_11", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_12", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_13", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_15", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_16", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_17", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_18", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_19", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_20", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_21", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_22", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_23", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_24", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_25", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_26", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_27", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_28", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_29", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_30", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_31", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_32", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_33", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_34", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_35", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_36", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_37", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_38", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_39", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_40", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_41", 0 },
+    { VSND_TYP_NEEDTARBOOTS, "groundskeeper_42", 0 },
+    { VSND_TYP_EXTRASPRING, "groundskeeper_43", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_44", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_45", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_46", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_47", 0 },
+    { VSND_TYP_NEEDFLOAT, "groundskeeper_48", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_49", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_50", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_51", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_51b", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_51c", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_51d", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_52", 0 },
+    { VSND_TYP_HAVEFLOAT, "groundskeeper_53", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_54", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_55", 0 },
+    { VSND_TYP_ONELINER, "groundskeeper_56", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_57", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_58a", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_58b", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_59a", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_59b", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_60a", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_60b", 0 },
+    { VSND_TYP_DIALOGUE, "groundskeeper_61", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Professor[1] = {
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_TimConway[44] = {
+    { VSND_TYP_ONELINER, "Tim Conway U95_29", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_30", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_31", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_34", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_35", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_36", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_38", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_39", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_40", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_41", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_42", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_43", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_44", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_46", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_49", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_51", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_52", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_53", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_54", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_56", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_57", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_58", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_58b", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_59", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_59b", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_60", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_61", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_63", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_64", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_65", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_66", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_67", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_67b", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_69", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_71", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_73", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_74", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_75", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_76", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_77", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_78", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_80", 0 },
+    { VSND_TYP_ONELINER, "Tim Conway U95_81", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Bat[9] = {
+    { VSND_TYP_MOVE, "bat_wing1", 0 },
+    { VSND_TYP_MOVE, "bat_wing2", 0 },
+    { VSND_TYP_MOVE, "bat_wing3", 0 },
+    { VSND_TYP_CLANKING, "bat_cry1", 0 },
+    { VSND_TYP_CLANKING, "bat_cry2", 0 },
+    { VSND_TYP_CLANKING, "bat_cry3", 0 },
+    { VSND_TYP_CLANKING, "bigbat_cry1", 0 },
+    { VSND_TYP_CLANKING, "bigbat_cry2", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_BuckMaster[54] = {
+    { VSND_TYP_SOAPED, "bm_bubble1", 0 },
+    { VSND_TYP_SOAPED, "bm_bubble2", 0 },
+    { VSND_TYP_GUMMED, "bm_bubble3", 0 },
+    { VSND_TYP_GUMMED, "bm_bubble4", 0 },
+    { VSND_TYP_SOAPED, "bm_bubble5", 0 },
+    { VSND_TYP_GUMMED, "bm_bubble6", 0 },
+    { VSND_TYP_SOAPED, "bm_bubble7", 0 },
+    { VSND_TYP_SOAPED, "bm_bubble8", 0 },
+    { VSND_TYP_IDLESLOP, "bm_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "bm_idle2", 0 },
+    { VSND_TYP_IDLESLOP, "bm_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "bm_idle4", 0 },
+    { VSND_TYP_IDLESLOP, "bm_idle5", 0 },
+    { VSND_TYP_EXCLAIM, "bm_surprise1", 0 },
+    { VSND_TYP_EXCLAIM, "bm_surprise2", 0 },
+    { VSND_TYP_EXCLAIM, "bm_surprise3", 0 },
+    { VSND_TYP_EXCLAIM, "bm_surprise4", 0 },
+    { VSND_TYP_EXCLAIM, "bm_surprised1", 0 },
+    { VSND_TYP_EXCLAIM, "bm_surprised2", 0 },
+    { VSND_TYP_EXCLAIM, "bm_surprised3", 0 },
+    { VSND_TYP_EXCLAIM, "bm_surprised4", 0 },
+    { VSND_TYP_ATTACK, "bm_attack01", 0 },
+    { VSND_TYP_ATTACK, "bm_attack02", 0 },
+    { VSND_TYP_ATTACK, "bm_attack03", 0 },
+    { VSND_TYP_ATTACK, "bm_attack04", 0 },
+    { VSND_TYP_ATTACK, "bm_attack05", 0 },
+    { VSND_TYP_ATTACK, "bm_attack06", 0 },
+    { VSND_TYP_ATTACK, "bm_attack07", 0 },
+    { VSND_TYP_KICK, "bm_kick01", 0 },
+    { VSND_TYP_KICK, "bm_kick02", 0 },
+    { VSND_TYP_KICK, "bm_kick03", 0 },
+    { VSND_TYP_KICK, "bm_kick04", 0 },
+    { VSND_TYP_KICK, "bm_kick05", 0 },
+    { VSND_TYP_KICK, "bm_kick06", 0 },
+    { VSND_TYP_KICK, "bm_kick07", 0 },
+    { VSND_TYP_CURIOUS, "bm_look1", 0 },
+    { VSND_TYP_CURIOUS, "bm_look2", 0 },
+    { VSND_TYP_CURIOUS, "bm_look3", 0 },
+    { VSND_TYP_LOOK, "bm_look4", 0 },
+    { VSND_TYP_CURIOUS, "bm_investigate", 0 },
+    { VSND_TYP_CURIOUS, "bm_investigate2", 0 },
+    { VSND_TYP_CURIOUS, "bm_investigate3", 0 },
+    { VSND_TYP_LOOK, "bm_investigate4", 0 },
+    { VSND_TYP_LOOK, "bm_investigate5", 0 },
+    { VSND_TYP_LOOK, "bm_investigate6", 0 },
+    { VSND_TYP_LOOK, "bm_investigate7", 0 },
+    { VSND_TYP_DIE, "bm_death1", 0 },
+    { VSND_TYP_OUCH, "bm_death2", 0 },
+    { VSND_TYP_OUCH, "bm_death3", 0 },
+    { VSND_TYP_OUCH, "bm_death4", 0 },
+    { VSND_TYP_OUCH, "bm_death5", 0 },
+    { VSND_TYP_OUCH, "bm_death6", 0 },
+    { VSND_TYP_FALL, "bm_fall1", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_CaptainMoody[27] = {
+    { VSND_TYP_ATTACK, "cm_attack1", 0 },
+    { VSND_TYP_ATTACK, "cm_attack2", 0 },
+    { VSND_TYP_ATTACK, "cm_attack3", 0 },
+    { VSND_TYP_ATTACK, "cm_attack4", 0 },
+    { VSND_TYP_CLANKING, "cm_chase", 0 },
+    { VSND_TYP_CLANKING, "cm_chase2", 0 },
+    { VSND_TYP_CLANKING, "cm_chase3", 0 },
+    { VSND_TYP_CLANKING, "cm_chase4", 0 },
+    { VSND_TYP_DIE, "cm_death1", 0 },
+    { VSND_TYP_DIE, "cm_death2", 0 },
+    { VSND_TYP_MOVE, "cm_fly1", 0 },
+    { VSND_TYP_LAUGH, "cm_gloat1", 0 },
+    { VSND_TYP_LAUGH, "cm_gloat2", 0 },
+    { VSND_TYP_LAUGH, "cm_gloat3", 0 },
+    { VSND_TYP_LAUGH, "cm_gloat4", 0 },
+    { VSND_TYP_GUMMED, "cm_hit1", 0 },
+    { VSND_TYP_GUMMED, "cm_hit2", 0 },
+    { VSND_TYP_GUMMED, "cm_hit3", 0 },
+    { VSND_TYP_LISTEN, "cm_listen1", 0 },
+    { VSND_TYP_LISTEN, "cm_listen2", 0 },
+    { VSND_TYP_LOOK, "cm_look1", 0 },
+    { VSND_TYP_EXCLAIM, "cm_surprise1", 0 },
+    { VSND_TYP_EXCLAIM, "cm_surprise2", 0 },
+    { VSND_TYP_EXCLAIM, "cm_surprise3", 0 },
+    { VSND_TYP_EXCLAIM, "cm_surprise4", 0 },
+    { VSND_TYP_EXCLAIM, "cm_surprised1", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Caveman[43] = {
+    { VSND_TYP_ATTACK, "cv_attack1", 0 },
+    { VSND_TYP_ATTACK, "cv_attack2", 0 },
+    { VSND_TYP_ATTACK, "cv_attack3", 0 },
+    { VSND_TYP_SOAPED, "cv_bubble1", 0 },
+    { VSND_TYP_SOAPED, "cv_bubble2", 0 },
+    { VSND_TYP_SOAPED, "cv_bubble3", 0 },
+    { VSND_TYP_MOVE, "cv_chase1", 0 },
+    { VSND_TYP_MOVE, "cv_chase2", 0 },
+    { VSND_TYP_MOVE, "cv_chase3", 0 },
+    { VSND_TYP_MOVE, "cv_chase4", 0 },
+    { VSND_TYP_DIE, "cv_death1", 0 },
+    { VSND_TYP_DIE, "cv_death2", 0 },
+    { VSND_TYP_DIE, "cv_death3", 0 },
+    { VSND_TYP_DIE, "cv_death4", 0 },
+    { VSND_TYP_GUMMED, "cv_gummed1", 0 },
+    { VSND_TYP_GUMMED, "cv_gummed2", 0 },
+    { VSND_TYP_CLANKING, "cv_headbonk1", 0 },
+    { VSND_TYP_CLANKING, "cv_headbonk2", 0 },
+    { VSND_TYP_LISTEN, "cv_hear1", 0 },
+    { VSND_TYP_LISTEN, "cv_hear2", 0 },
+    { VSND_TYP_LISTEN, "cv_hear3", 0 },
+    { VSND_TYP_OUCH, "cv_hit1", 0 },
+    { VSND_TYP_OUCH, "cv_hit2", 0 },
+    { VSND_TYP_OUCH, "cv_hit3", 0 },
+    { VSND_TYP_IDLESLOP, "cv_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "cv_idle2", 0 },
+    { VSND_TYP_IDLESLOP, "cv_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "cv_idle4", 0 },
+    { VSND_TYP_IDLESLOP, "cv_idle5", 0 },
+    { VSND_TYP_LISTEN, "cv_listen1", 0 },
+    { VSND_TYP_LISTEN, "cv_listen2", 0 },
+    { VSND_TYP_LISTEN, "cv_listen3", 0 },
+    { VSND_TYP_LISTEN, "cv_listen4", 0 },
+    { VSND_TYP_LOOK, "cv_look1", 0 },
+    { VSND_TYP_EXCLAIM, "cv_see1", 0 },
+    { VSND_TYP_EXCLAIM, "cv_see2", 0 },
+    { VSND_TYP_EXCLAIM, "cv_surprise1", 0 },
+    { VSND_TYP_EXCLAIM, "cv_surprise2", 0 },
+    { VSND_TYP_LAUGH, "cv_taunt1", 0 },
+    { VSND_TYP_LAUGH, "cv_taunt2", 0 },
+    { VSND_TYP_LAUGH, "cv_taunt3", 0 },
+    { VSND_TYP_LAUGH, "cv_taunt4", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Creeper[45] = {
+    { VSND_TYP_ATTACK, "cr_attack1", 0 },
+    { VSND_TYP_ATTACK, "cr_attack2", 0 },
+    { VSND_TYP_ATTACK, "cr_attack3", 0 },
+    { VSND_TYP_ATTACK, "cr_attack4", 0 },
+    { VSND_TYP_ATTACK, "cr_attack5", 0 },
+    { VSND_TYP_ATTACK, "cr_attack6", 0 },
+    { VSND_TYP_ATTACK, "cr_attack7", 0 },
+    { VSND_TYP_ATTACK, "cr_attack8", 0 },
+    { VSND_TYP_SOAPED, "cr_bubble1", 0 },
+    { VSND_TYP_SOAPED, "cr_bubble2", 0 },
+    { VSND_TYP_SOAPED, "cr_bubble3", 0 },
+    { VSND_TYP_SOAPED, "cr_bubble4", 0 },
+    { VSND_TYP_DIE, "cr_death1", 0 },
+    { VSND_TYP_FALL, "cr_bodyfall1", 0 },
+    { VSND_TYP_LAUGH, "cr_gloat1", 0 },
+    { VSND_TYP_LAUGH, "cr_gloat2", 0 },
+    { VSND_TYP_LAUGH, "cr_gloat3", 0 },
+    { VSND_TYP_GUMMED, "cr_gummed1", 0 },
+    { VSND_TYP_GUMMED, "cr_gummed2", 0 },
+    { VSND_TYP_GUMMED, "cr_gummed3", 0 },
+    { VSND_TYP_GUMMED, "cr_gummed4", 0 },
+    { VSND_TYP_OUCH, "cr_hit1", 0 },
+    { VSND_TYP_OUCH, "cr_hit2", 0 },
+    { VSND_TYP_OUCH, "cr_hit3", 0 },
+    { VSND_TYP_IDLESLOP, "cr_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "cr_idle2", 0 },
+    { VSND_TYP_IDLESLOP, "cr_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "cr_idle4", 0 },
+    { VSND_TYP_CURIOUS, "cr_investigate1", 0 },
+    { VSND_TYP_CURIOUS, "cr_investigate2", 0 },
+    { VSND_TYP_CURIOUS, "cr_investigate3", 0 },
+    { VSND_TYP_CURIOUS, "cr_investigate4", 0 },
+    { VSND_TYP_LISTEN, "cr_listen1", 0 },
+    { VSND_TYP_LISTEN, "cr_listen2", 0 },
+    { VSND_TYP_LISTEN, "cr_listen3", 0 },
+    { VSND_TYP_EXCLAIM, "cr_look1", 0 },
+    { VSND_TYP_EXCLAIM, "cr_look2", 0 },
+    { VSND_TYP_MOVE, "cr_patrol1", 0 },
+    { VSND_TYP_MOVE, "cr_patrol2", 0 },
+    { VSND_TYP_EXCLAIM, "cr_react1", 0 },
+    { VSND_TYP_EXCLAIM, "cr_react2", 0 },
+    { VSND_TYP_EXCLAIM, "cr_react3", 0 },
+    { VSND_TYP_DIZZY, "cr_stunned1", 0 },
+    { VSND_TYP_DIZZY, "cr_stunned2", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_GhostDiver[73] = {
+    { VSND_TYP_ATTACK, "gd_attack01", 0 },
+    { VSND_TYP_ATTACK, "gd_attack02", 0 },
+    { VSND_TYP_ATTACK, "gd_attack03", 0 },
+    { VSND_TYP_ATTACK, "gd_attack04", 0 },
+    { VSND_TYP_ATTACK, "gd_attack05", 0 },
+    { VSND_TYP_ATTACK, "gd_attack06", 0 },
+    { VSND_TYP_ATTACK, "gd_attack07", 0 },
+    { VSND_TYP_SOAPED, "gd_bubble01", 0 },
+    { VSND_TYP_SOAPED, "gd_bubble02", 0 },
+    { VSND_TYP_SOAPED, "gd_bubble03", 0 },
+    { VSND_TYP_SOAPED, "gd_bubble04", 0 },
+    { VSND_TYP_SOAPED, "gd_bubble05", 0 },
+    { VSND_TYP_SOAPED, "gd_bubble06", 0 },
+    { VSND_TYP_SOAPED, "gd_bubble07", 0 },
+    { VSND_TYP_SOAPED, "gd_bubble08", 0 },
+    { VSND_TYP_DIE, "gd_death1", 0 },
+    { VSND_TYP_DIE, "gd_death2", 0 },
+    { VSND_TYP_DIE, "gd_death3", 0 },
+    { VSND_TYP_DIE, "gd_death4", 0 },
+    { VSND_TYP_DIE, "gd_death5", 0 },
+    { VSND_TYP_DIE, "gd_death6", 0 },
+    { VSND_TYP_DIE, "gd_death7", 0 },
+    { VSND_TYP_LAUGH, "gd_gloat1", 0 },
+    { VSND_TYP_LAUGH, "gd_gloat2", 0 },
+    { VSND_TYP_LAUGH, "gd_gloat3", 0 },
+    { VSND_TYP_LAUGH, "gd_gloat4", 0 },
+    { VSND_TYP_LAUGH, "gd_gloat5", 0 },
+    { VSND_TYP_GUMBOUNCE, "gd_gumbounce1", 0 },
+    { VSND_TYP_GUMBOUNCE, "gd_gumbounce2", 0 },
+    { VSND_TYP_GUMBOUNCE, "gd_gumbounce3", 0 },
+    { VSND_TYP_OUCH, "gd_hit1", 0 },
+    { VSND_TYP_OUCH, "gd_hit2", 0 },
+    { VSND_TYP_OUCH, "gd_hit3", 0 },
+    { VSND_TYP_OUCH, "gd_hit4", 0 },
+    { VSND_TYP_OUCH, "gd_hit5", 0 },
+    { VSND_TYP_OUCH, "gd_hit6", 0 },
+    { VSND_TYP_IDLESLOP, "gd_idle01", 0 },
+    { VSND_TYP_IDLESLOP, "gd_idle02", 0 },
+    { VSND_TYP_IDLESLOP, "gd_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "gd_idle4", 0 },
+    { VSND_TYP_LISTEN, "gd_listen1", 0 },
+    { VSND_TYP_LISTEN, "gd_listen10", 0 },
+    { VSND_TYP_LISTEN, "gd_listen11", 0 },
+    { VSND_TYP_LISTEN, "gd_listen2", 0 },
+    { VSND_TYP_LISTEN, "gd_listen3", 0 },
+    { VSND_TYP_LISTEN, "gd_listen4", 0 },
+    { VSND_TYP_LISTEN, "gd_listen5", 0 },
+    { VSND_TYP_LISTEN, "gd_listen6", 0 },
+    { VSND_TYP_LISTEN, "gd_listen7", 0 },
+    { VSND_TYP_LISTEN, "gd_listen8", 0 },
+    { VSND_TYP_LISTEN, "gd_listen9", 0 },
+    { VSND_TYP_LOOK, "gd_look1", 0 },
+    { VSND_TYP_LOOK, "gd_look2", 0 },
+    { VSND_TYP_LOOK, "gd_look3", 0 },
+    { VSND_TYP_CURIOUS, "gd_investigate1", 0 },
+    { VSND_TYP_CURIOUS, "gd_investigate2", 0 },
+    { VSND_TYP_CURIOUS, "gd_investigate3", 0 },
+    { VSND_TYP_CURIOUS, "gd_investigate4", 0 },
+    { VSND_TYP_CURIOUS, "gd_investigate5", 0 },
+    { VSND_TYP_CURIOUS, "gd_investigate6", 0 },
+    { VSND_TYP_EXCLAIM, "gd_surprise1", 0 },
+    { VSND_TYP_EXCLAIM, "gd_surprise2", 0 },
+    { VSND_TYP_EXCLAIM, "gd_surprise3", 0 },
+    { VSND_TYP_EXCLAIM, "gd_surprised1", 0 },
+    { VSND_TYP_EXCLAIM, "gd_surprised2", 0 },
+    { VSND_TYP_EXCLAIM, "gd_surprised3", 0 },
+    { VSND_TYP_DIZZY, "gd_stunned1", 0 },
+    { VSND_TYP_DIZZY, "gd_stunned2", 0 },
+    { VSND_TYP_DIZZY, "gd_stunned3", 0 },
+    { VSND_TYP_DIZZY, "gd_stunned4", 0 },
+    { VSND_TYP_DIZZY, "gd_stunned5", 0 },
+    { VSND_TYP_DIZZY, "gd_stunned6", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Gargoyle[61] = {
+    { VSND_TYP_ATTACK, "gg_attack1", 0 },
+    { VSND_TYP_ATTACK, "gg_attack2", 0 },
+    { VSND_TYP_SOAPED, "gg_bubble1", 0 },
+    { VSND_TYP_SOAPED, "gg_bubble2", 0 },
+    { VSND_TYP_SOAPED, "gg_bubble3", 0 },
+    { VSND_TYP_SOAPED, "gg_bubble4", 0 },
+    { VSND_TYP_SOAPED, "gg_bubble5", 0 },
+    { VSND_TYP_IDLESLOP, "ga_wingflap1", 0 },
+    { VSND_TYP_CLANKING, "gg_chase1", 0 },
+    { VSND_TYP_CLANKING, "gg_chase2", 0 },
+    { VSND_TYP_CLANKING, "gg_chase3", 0 },
+    { VSND_TYP_DIE, "gg_death1", 0 },
+    { VSND_TYP_DIE, "gg_death2", 0 },
+    { VSND_TYP_DIE, "gg_death3", 0 },
+    { VSND_TYP_DIE, "gg_death4", 0 },
+    { VSND_TYP_LAUGH, "gg_gloat1", 0 },
+    { VSND_TYP_LAUGH, "gg_gloat2", 0 },
+    { VSND_TYP_LAUGH, "gg_gloat3", 0 },
+    { VSND_TYP_GUMBOUNCE, "gg_gumbounce1", 0 },
+    { VSND_TYP_GUMBOUNCE, "gg_gumbounce2", 0 },
+    { VSND_TYP_GUMMED, "gg_gummed1", 0 },
+    { VSND_TYP_GUMMED, "gg_gummed2", 0 },
+    { VSND_TYP_GUMMED, "gg_gummed3", 0 },
+    { VSND_TYP_LISTEN, "gg_hear1", 0 },
+    { VSND_TYP_LISTEN, "gg_hear2", 0 },
+    { VSND_TYP_OUCH, "gg_hit1", 0 },
+    { VSND_TYP_OUCH, "gg_hit2", 0 },
+    { VSND_TYP_OUCH, "gg_hit3", 0 },
+    { VSND_TYP_OUCH, "gg_hit4", 0 },
+    { VSND_TYP_IDLESLOP, "gg_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "gg_idle2", 0 },
+    { VSND_TYP_IDLESLOP, "gg_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "gg_idle4", 0 },
+    { VSND_TYP_IDLESLOP, "gg_idle5", 0 },
+    { VSND_TYP_IDLESLOP, "gg_idle6", 0 },
+    { VSND_TYP_IDLESLOP, "gg_idle7", 0 },
+    { VSND_TYP_CURIOUS, "gg_investigate1", 0 },
+    { VSND_TYP_CURIOUS, "gg_investigate2", 0 },
+    { VSND_TYP_CURIOUS, "gg_investigate3", 0 },
+    { VSND_TYP_CLANKING, "gg_listen1", 0 },
+    { VSND_TYP_CLANKING, "gg_listen2", 0 },
+    { VSND_TYP_CLANKING, "gg_listen3", 0 },
+    { VSND_TYP_CLANKING, "gg_listen4", 0 },
+    { VSND_TYP_CLANKING, "gg_listen5", 0 },
+    { VSND_TYP_CLANKING, "gg_looking1", 0 },
+    { VSND_TYP_CLANKING, "gg_looking2", 0 },
+    { VSND_TYP_CLANKING, "gg_see1", 0 },
+    { VSND_TYP_CLANKING, "gg_see2", 0 },
+    { VSND_TYP_EXCLAIM, "gg_see3", 0 },
+    { VSND_TYP_DIZZY, "gg_stunned1", 0 },
+    { VSND_TYP_EXCLAIM, "gg_surprise1", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball1", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball2", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball3", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball4", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball5", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball6", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball7", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball8", 0 },
+    { VSND_TYP_PRJ_FLIGHT, "fireball_loop", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Ghost[5] = {
+    { VSND_TYP_MOVE, "gz_moan1", 0 },
+    { VSND_TYP_MOVE, "gz_moan2", 0 },
+    { VSND_TYP_MOVE, "gz_moan3", 0 },
+    { VSND_TYP_MOVE, "gz_moan4", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_HeadlessSpecter[35] = {
+    { VSND_TYP_ATTACK, "hs_attack01", 0 },
+    { VSND_TYP_ATTACK, "hs_attack02", 0 },
+    { VSND_TYP_ATTACK, "hs_attack03", 0 },
+    { VSND_TYP_ATTACK, "hs_attack04", 0 },
+    { VSND_TYP_ATTACK, "hs_attack05", 0 },
+    { VSND_TYP_ATTACK, "hs_attack06", 0 },
+    { VSND_TYP_ATTACK, "hs_attack07", 0 },
+    { VSND_TYP_ATTACK, "hs_attack08", 0 },
+    { VSND_TYP_ATTACK, "hs_attack09", 0 },
+    { VSND_TYP_ATTACK, "hs_attack10", 0 },
+    { VSND_TYP_SOAPED, "hs_bubble1", 0 },
+    { VSND_TYP_SOAPED, "hs_bubble2", 0 },
+    { VSND_TYP_SOAPED, "hs_bubble3", 0 },
+    { VSND_TYP_LAUGH, "hs_gloat1", 0 },
+    { VSND_TYP_LAUGH, "hs_gloat2", 0 },
+    { VSND_TYP_LAUGH, "hs_gloat3", 0 },
+    { VSND_TYP_LAUGH, "hs_gloat4", 0 },
+    { VSND_TYP_LAUGH, "hs_gloat5", 0 },
+    { VSND_TYP_LAUGH, "hs_gloat6", 0 },
+    { VSND_TYP_LAUGH, "hs_gloat7", 0 },
+    { VSND_TYP_OUCH, "hs_hit1", 0 },
+    { VSND_TYP_OUCH, "hs_hit2", 0 },
+    { VSND_TYP_OUCH, "hs_hit3", 0 },
+    { VSND_TYP_OUCH, "hs_hit4", 0 },
+    { VSND_TYP_OUCH, "hs_hit5", 0 },
+    { VSND_TYP_OUCH, "hs_hit6", 0 },
+    { VSND_TYP_IDLESLOP, "hs_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "hs_idle2", 0 },
+    { VSND_TYP_IDLESLOP, "hs_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "hs_idle4", 0 },
+    { VSND_TYP_IDLESLOP, "hs_idle5", 0 },
+    { VSND_TYP_IDLESLOP, "hs_idle6", 0 },
+    { VSND_TYP_IDLESLOP, "hs_idle7", 0 },
+    { VSND_TYP_IDLESLOP, "hs_idle8", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_KillerPlant[7] = {
+    { VSND_TYP_IDLESLOP, "flytrap_growl01", 0 },
+    { VSND_TYP_IDLESLOP, "flytrap_growl02", 0 },
+    { VSND_TYP_IDLESLOP, "flytrap_growl03", 0 },
+    { VSND_TYP_IDLESLOP, "flytrap_growl04", 0 },
+    { VSND_TYP_ATTACK, "flytrap_growl05", 0 },
+    { VSND_TYP_IDLESLOP, "flytrap_growl06", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_SeaCreature[66] = {
+    { VSND_TYP_ATTACK, "se_attack1", 0 },
+    { VSND_TYP_ATTACK, "se_attack2", 0 },
+    { VSND_TYP_ATTACK, "se_attack3", 0 },
+    { VSND_TYP_SOAPED, "se_bubble1", 0 },
+    { VSND_TYP_SOAPED, "se_bubble2", 0 },
+    { VSND_TYP_SOAPED, "se_bubble3", 0 },
+    { VSND_TYP_SOAPED, "se_bubble4", 0 },
+    { VSND_TYP_SOAPED, "se_bubble5", 0 },
+    { VSND_TYP_SOAPED, "se_bubble6", 0 },
+    { VSND_TYP_CLANKING, "se_chase2", 0 },
+    { VSND_TYP_CLANKING, "se_chase3", 0 },
+    { VSND_TYP_CLANKING, "se_chase4", 0 },
+    { VSND_TYP_CLANKING, "se_chase5", 0 },
+    { VSND_TYP_CLANKING, "se_chase6", 0 },
+    { VSND_TYP_CLANKING, "se_chase7", 0 },
+    { VSND_TYP_CLANKING, "se_chase8", 0 },
+    { VSND_TYP_CLANKING, "se_chase9", 0 },
+    { VSND_TYP_DIE, "se_death1", 0 },
+    { VSND_TYP_DIE, "se_death2", 0 },
+    { VSND_TYP_LAUGH, "se_gloat1", 0 },
+    { VSND_TYP_GUMBOUNCE, "se_gumbounce1", 0 },
+    { VSND_TYP_GUMBOUNCE, "se_gumbounce2", 0 },
+    { VSND_TYP_GUMBOUNCE, "se_gumbounce3", 0 },
+    { VSND_TYP_GUMBOUNCE, "se_gumbounce4", 0 },
+    { VSND_TYP_GUMBOUNCE, "se_gumbounce5", 0 },
+    { VSND_TYP_GUMMED, "se_gummed1", 0 },
+    { VSND_TYP_GUMMED, "se_gummed2", 0 },
+    { VSND_TYP_GUMMED, "se_gummed3", 0 },
+    { VSND_TYP_GUMMED, "se_gummed4", 0 },
+    { VSND_TYP_GUMMED, "se_gummed5", 0 },
+    { VSND_TYP_LISTEN, "se_hear1", 0 },
+    { VSND_TYP_LISTEN, "se_hear2", 0 },
+    { VSND_TYP_LISTEN, "se_hear3", 0 },
+    { VSND_TYP_LISTEN, "se_hear4", 0 },
+    { VSND_TYP_LISTEN, "se_hear5", 0 },
+    { VSND_TYP_LISTEN, "se_listen1", 0 },
+    { VSND_TYP_LISTEN, "se_listen2", 0 },
+    { VSND_TYP_LISTEN, "se_listen3", 0 },
+    { VSND_TYP_LISTEN, "se_listen4", 0 },
+    { VSND_TYP_LISTEN, "se_listen5", 0 },
+    { VSND_TYP_OUCH, "se_hit1", 0 },
+    { VSND_TYP_OUCH, "se_hit2", 0 },
+    { VSND_TYP_OUCH, "se_hit3", 0 },
+    { VSND_TYP_OUCH, "se_hit4", 0 },
+    { VSND_TYP_IDLESLOP, "se_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "se_idle2", 0 },
+    { VSND_TYP_IDLESLOP, "se_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "se_idle4", 0 },
+    { VSND_TYP_IDLESLOP, "se_idle5", 0 },
+    { VSND_TYP_CURIOUS, "se_investigate1", 0 },
+    { VSND_TYP_LOOK, "se_look1", 0 },
+    { VSND_TYP_LOOK, "se_look2", 0 },
+    { VSND_TYP_LOOK, "se_look3", 0 },
+    { VSND_TYP_LOOK, "se_look4", 0 },
+    { VSND_TYP_LOOK, "se_look5", 0 },
+    { VSND_TYP_LOOK, "se_look6", 0 },
+    { VSND_TYP_LOOK, "se_look7", 0 },
+    { VSND_TYP_LOOK, "se_look8", 0 },
+    { VSND_TYP_EXCLAIM, "se_see1", 0 },
+    { VSND_TYP_EXCLAIM, "se_see2", 0 },
+    { VSND_TYP_EXCLAIM, "se_see3", 0 },
+    { VSND_TYP_EXCLAIM, "se_see4", 0 },
+    { VSND_TYP_EXCLAIM, "se_surprise1", 0 },
+    { VSND_TYP_DIZZY, "se_stunned1", 0 },
+    { VSND_TYP_DIZZY, "se_stunned2", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_ScareCrow[78] = {
+    { VSND_TYP_ATTACK, "sc_attack1", 0 },
+    { VSND_TYP_ATTACK, "sc_attack2", 0 },
+    { VSND_TYP_ATTACK, "sc_attack3", 0 },
+    { VSND_TYP_ATTACK, "sc_attack4", 0 },
+    { VSND_TYP_SOAPED, "sc_bubble1", 0 },
+    { VSND_TYP_SOAPED, "sc_bubble2", 0 },
+    { VSND_TYP_SOAPED, "sc_bubble3", 0 },
+    { VSND_TYP_SOAPED, "sc_bubble4", 0 },
+    { VSND_TYP_SOAPED, "sc_bubble5", 0 },
+    { VSND_TYP_SOAPED, "sc_bubble6", 0 },
+    { VSND_TYP_CLANKING, "sc_chase1", 0 },
+    { VSND_TYP_CLANKING, "sc_chase2", 0 },
+    { VSND_TYP_CLANKING, "sc_chase3", 0 },
+    { VSND_TYP_CLANKING, "sc_chase4", 0 },
+    { VSND_TYP_CLANKING, "sc_chase5", 0 },
+    { VSND_TYP_DIE, "sc_death1", 0 },
+    { VSND_TYP_DIE, "sc_death2", 0 },
+    { VSND_TYP_DIE, "sc_death3", 0 },
+    { VSND_TYP_DIE, "sc_death4", 0 },
+    { VSND_TYP_DIE, "sc_death5", 0 },
+    { VSND_TYP_DIE, "sc_death6", 0 },
+    { VSND_TYP_LAUGH, "sc_gloat1", 0 },
+    { VSND_TYP_LAUGH, "sc_gloat2", 0 },
+    { VSND_TYP_LAUGH, "sc_gloat3", 0 },
+    { VSND_TYP_LAUGH, "sc_gloat4", 0 },
+    { VSND_TYP_LAUGH, "sc_gloat5", 0 },
+    { VSND_TYP_LAUGH, "sc_gloat6", 0 },
+    { VSND_TYP_LAUGH, "sc_gloat7", 0 },
+    { VSND_TYP_GUMBOUNCE, "sc_gumbounce1", 0 },
+    { VSND_TYP_GUMBOUNCE, "sc_gumbounce2", 0 },
+    { VSND_TYP_GUMBOUNCE, "sc_gumbounce3", 0 },
+    { VSND_TYP_GUMBOUNCE, "sc_gumbounce4", 0 },
+    { VSND_TYP_GUMBOUNCE, "sc_gumbounce5", 0 },
+    { VSND_TYP_GUMMED, "sc_gummed1", 0 },
+    { VSND_TYP_GUMMED, "sc_gummed2", 0 },
+    { VSND_TYP_GUMMED, "sc_gummed3", 0 },
+    { VSND_TYP_GUMMED, "sc_gummed4", 0 },
+    { VSND_TYP_GUMMED, "sc_gummed5", 0 },
+    { VSND_TYP_GUMMED, "sc_gummed6", 0 },
+    { VSND_TYP_GUMMED, "sc_gummed7", 0 },
+    { VSND_TYP_LISTEN, "sc_hear1", 0 },
+    { VSND_TYP_LISTEN, "sc_hear2", 0 },
+    { VSND_TYP_LISTEN, "sc_hear3", 0 },
+    { VSND_TYP_LISTEN, "sc_hear4", 0 },
+    { VSND_TYP_LISTEN, "sc_hear5", 0 },
+    { VSND_TYP_OUCH, "sc_hit1", 0 },
+    { VSND_TYP_OUCH, "sc_hit2", 0 },
+    { VSND_TYP_OUCH, "sc_hit3", 0 },
+    { VSND_TYP_OUCH, "sc_hit4", 0 },
+    { VSND_TYP_OUCH, "sc_hit5", 0 },
+    { VSND_TYP_IDLESLOP, "sc_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "sc_idle2", 0 },
+    { VSND_TYP_IDLESLOP, "sc_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "sc_idle4", 0 },
+    { VSND_TYP_IDLESLOP, "sc_idle5", 0 },
+    { VSND_TYP_IDLESLOP, "sc_idle6", 0 },
+    { VSND_TYP_CURIOUS, "sc_investigate1", 0 },
+    { VSND_TYP_CURIOUS, "sc_investigate2", 0 },
+    { VSND_TYP_CURIOUS, "sc_investigate3", 0 },
+    { VSND_TYP_LISTEN, "sc_listen1", 0 },
+    { VSND_TYP_LISTEN, "sc_listen2", 0 },
+    { VSND_TYP_LISTEN, "sc_listen3", 0 },
+    { VSND_TYP_LISTEN, "sc_listen4", 0 },
+    { VSND_TYP_LISTEN, "sc_listen5", 0 },
+    { VSND_TYP_LISTEN, "sc_listen6", 0 },
+    { VSND_TYP_LOOK, "sc_look1", 0 },
+    { VSND_TYP_LOOK, "sc_look2", 0 },
+    { VSND_TYP_LOOK, "sc_look3", 0 },
+    { VSND_TYP_LOOK, "sc_look4", 0 },
+    { VSND_TYP_LOOK, "sc_see1", 0 },
+    { VSND_TYP_LOOK, "sc_see2", 0 },
+    { VSND_TYP_LOOK, "sc_see3", 0 },
+    { VSND_TYP_LOOK, "sc_see4", 0 },
+    { VSND_TYP_LOOK, "sc_see5", 0 },
+    { VSND_TYP_DIZZY, "sc_stunned1", 0 },
+    { VSND_TYP_DIZZY, "sc_stunned2", 0 },
+    { VSND_TYP_EXCLAIM, "sc_surprise1", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Shark[17] = {
+    { VSND_TYP_MOVE, "sa_swim1", 0 },
+    { VSND_TYP_MOVE, "sa_swim2", 0 },
+    { VSND_TYP_MOVE, "sa_swim3", 0 },
+    { VSND_TYP_MOVE, "sa_swim4", 0 },
+    { VSND_TYP_MOVE, "sa_swim5", 0 },
+    { VSND_TYP_MOVE, "sa_swim6", 0 },
+    { VSND_TYP_MOVE, "sa_swim7", 0 },
+    { VSND_TYP_MOVE, "sa_swim8", 0 },
+    { VSND_TYP_MOVE, "sa_swim8", 0 },
+    { VSND_TYP_MOVE_ALT, "sa_bite1", 0 },
+    { VSND_TYP_MOVE_ALT, "sa_bite2", 0 },
+    { VSND_TYP_SPLISH, "sa_jump1", 0 },
+    { VSND_TYP_SPLISH, "sa_jump2", 0 },
+    { VSND_TYP_SPLASH, "sa_splash1", 0 },
+    { VSND_TYP_SPLASH, "sa_splash2", 0 },
+    { VSND_TYP_SPLASH, "sa_splash3", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Rat[6] = {
+    { VSND_TYP_MOVE, "rat_scury1", 0 },
+    { VSND_TYP_MOVE, "rat_scury1", 0 },
+    { VSND_TYP_DIE, "rat_squeak01", 0 },
+    { VSND_TYP_DIE, "rat_smash1", 0 },
+    { VSND_TYP_DIE, "rat_smash2", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Robot[65] = {
+    { VSND_TYP_ATTACK, "oldsk_attack1", 0 },
+    { VSND_TYP_ATTACK, "oldsk_attack2", 0 },
+    { VSND_TYP_ATTACK, "oldsk_attack3", 0 },
+    { VSND_TYP_ATTACK, "oldsk_attack4", 0 },
+    { VSND_TYP_ATTACK, "oldsk_attack5", 0 },
+    { VSND_TYP_ATTACK, "oldsk_attack6", 0 },
+    { VSND_TYP_SOAPED, "oldsk_bubble1", 0 },
+    { VSND_TYP_SOAPED, "oldsk_bubble2", 0 },
+    { VSND_TYP_SOAPED, "oldsk_bubble3", 0 },
+    { VSND_TYP_SOAPED, "oldsk_bubble4", 0 },
+    { VSND_TYP_DIE, "oldsk_death1", 0 },
+    { VSND_TYP_DIE, "oldsk_death2", 0 },
+    { VSND_TYP_LAUGH, "oldsk_chase1", 0 },
+    { VSND_TYP_LAUGH, "oldsk_chase2", 0 },
+    { VSND_TYP_LAUGH, "oldsk_gloat1", 0 },
+    { VSND_TYP_LAUGH, "oldsk_gloat2", 0 },
+    { VSND_TYP_LAUGH, "oldsk_gloat3", 0 },
+    { VSND_TYP_LAUGH, "oldsk_gloat4", 0 },
+    { VSND_TYP_LAUGH, "oldsk_gloat5", 0 },
+    { VSND_TYP_LAUGH, "oldsk_gloat6", 0 },
+    { VSND_TYP_LAUGH, "oldsk_gloat7", 0 },
+    { VSND_TYP_LAUGH, "oldsk_gloat8", 0 },
+    { VSND_TYP_LAUGH, "oldsk_gloat9", 0 },
+    { VSND_TYP_GUMBOUNCE, "oldsk_gumbounce1", 0 },
+    { VSND_TYP_GUMBOUNCE, "oldsk_gumbounce2", 0 },
+    { VSND_TYP_GUMMED, "oldsk_gummed1", 0 },
+    { VSND_TYP_GUMMED, "oldsk_gummed2", 0 },
+    { VSND_TYP_GUMMED, "oldsk_gummed3", 0 },
+    { VSND_TYP_GUMMED, "oldsk_gummed4", 0 },
+    { VSND_TYP_GUMMED, "oldsk_gummed5", 0 },
+    { VSND_TYP_LISTEN, "oldsk_hear1", 0 },
+    { VSND_TYP_LISTEN, "oldsk_hear2", 0 },
+    { VSND_TYP_LISTEN, "oldsk_hear3", 0 },
+    { VSND_TYP_LISTEN, "oldsk_hear4", 0 },
+    { VSND_TYP_LISTEN, "oldsk_hear5", 0 },
+    { VSND_TYP_OUCH, "oldsk_hit1", 0 },
+    { VSND_TYP_OUCH, "oldsk_hit2", 0 },
+    { VSND_TYP_OUCH, "oldsk_hit3", 0 },
+    { VSND_TYP_OUCH, "oldsk_hit4", 0 },
+    { VSND_TYP_CURIOUS, "oldsk_investigate1", 0 },
+    { VSND_TYP_CURIOUS, "oldsk_investigate2", 0 },
+    { VSND_TYP_CURIOUS, "oldsk_investigate3", 0 },
+    { VSND_TYP_CURIOUS, "oldsk_investigate4", 0 },
+    { VSND_TYP_CURIOUS, "oldsk_investigate5", 0 },
+    { VSND_TYP_CURIOUS, "oldsk_investigate6", 0 },
+    { VSND_TYP_CURIOUS, "oldsk_investigate7", 0 },
+    { VSND_TYP_CURIOUS, "oldsk_investigate8", 0 },
+    { VSND_TYP_LISTEN, "oldsk_listen1", 0 },
+    { VSND_TYP_LOOK, "oldsk_look1", 0 },
+    { VSND_TYP_LOOK, "oldsk_look2", 0 },
+    { VSND_TYP_LOOK, "oldsk_look3", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_see1", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_see10", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_see2", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_see3", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_see4", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_see5", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_see6", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_see7", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_see8", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_see9", 0 },
+    { VSND_TYP_DIZZY, "oldsk_stunned2", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_surprise1", 0 },
+    { VSND_TYP_EXCLAIM, "oldsk_surprise2", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_SpaceKook[25] = {
+    { VSND_TYP_DIE, "sk_death1", 0 },
+    { VSND_TYP_DIE, "sk_death2", 0 },
+    { VSND_TYP_MOVE, "robot_loop", 0 },
+    { VSND_TYP_GUMMED, "cm_attack1", 0 },
+    { VSND_TYP_GUMMED, "cm_attack2", 0 },
+    { VSND_TYP_SOAPED, "cm_attack3", 0 },
+    { VSND_TYP_SOAPED, "cm_attack4", 0 },
+    { VSND_TYP_EXCLAIM, "sk_gloat1", 0 },
+    { VSND_TYP_EXCLAIM, "sk_gloat2", 0 },
+    { VSND_TYP_EXCLAIM, "sk_gloat3", 0 },
+    { VSND_TYP_EXCLAIM, "sk_gloat4", 0 },
+    { VSND_TYP_EXCLAIM, "sk_gloat5", 0 },
+    { VSND_TYP_EXCLAIM, "sk_gloat6", 0 },
+    { VSND_TYP_EXCLAIM, "sk_gloat7", 0 },
+    { VSND_TYP_SPELL_CAST, "laser1", 0 },
+    { VSND_TYP_SPELL_CAST, "laser2", 0 },
+    { VSND_TYP_SPELL_CAST, "laser3", 0 },
+    { VSND_TYP_SPELL_CAST, "laser4", 0 },
+    { VSND_TYP_SPELL_CAST, "laser5", 0 },
+    { VSND_TYP_SPELL_CAST, "laser6", 0 },
+    { VSND_TYP_SPELL_CAST, "laser7", 0 },
+    { VSND_TYP_SPELL_LOOP, "laser_loop1", 0 },
+    { VSND_TYP_SPELL_LOOP, "laser_loop2", 0 },
+    { VSND_TYP_SPELL_LOOP, "laser_loop3", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_TarMonster[88] = {
+    { VSND_TYP_ATTACK, "tm_attack1", 0 },
+    { VSND_TYP_ATTACK, "tm_attack2", 0 },
+    { VSND_TYP_ATTACK, "tm_attack3", 0 },
+    { VSND_TYP_ATTACK, "tm_attack4", 0 },
+    { VSND_TYP_ATTACK, "tm_attack5", 0 },
+    { VSND_TYP_ATTACK, "tm_attack6", 0 },
+    { VSND_TYP_ATTACK, "tm_attack7", 0 },
+    { VSND_TYP_SOAPED, "tm_bubble1", 0 },
+    { VSND_TYP_SOAPED, "tm_bubble10", 0 },
+    { VSND_TYP_SOAPED, "tm_bubble2", 0 },
+    { VSND_TYP_SOAPED, "tm_bubble3", 0 },
+    { VSND_TYP_SOAPED, "tm_bubble4", 0 },
+    { VSND_TYP_SOAPED, "tm_bubble5", 0 },
+    { VSND_TYP_SOAPED, "tm_bubble6", 0 },
+    { VSND_TYP_SOAPED, "tm_bubble7", 0 },
+    { VSND_TYP_SOAPED, "tm_bubble8", 0 },
+    { VSND_TYP_SOAPED, "tm_bubble9", 0 },
+    { VSND_TYP_DIE, "tm_death1", 0 },
+    { VSND_TYP_DIE, "tm_death2", 0 },
+    { VSND_TYP_DIE, "tm_death3", 0 },
+    { VSND_TYP_DIE, "tm_death4", 0 },
+    { VSND_TYP_DIE, "tm_death5", 0 },
+    { VSND_TYP_DIE, "tm_death6", 0 },
+    { VSND_TYP_DIE, "tm_death7", 0 },
+    { VSND_TYP_DIE, "tm_death8", 0 },
+    { VSND_TYP_LAUGH, "tm_gloat1", 0 },
+    { VSND_TYP_LAUGH, "tm_gloat10", 0 },
+    { VSND_TYP_LAUGH, "tm_gloat2", 0 },
+    { VSND_TYP_LAUGH, "tm_gloat3", 0 },
+    { VSND_TYP_LAUGH, "tm_gloat4", 0 },
+    { VSND_TYP_LAUGH, "tm_gloat5", 0 },
+    { VSND_TYP_LAUGH, "tm_gloat6", 0 },
+    { VSND_TYP_LAUGH, "tm_gloat7", 0 },
+    { VSND_TYP_LAUGH, "tm_gloat8", 0 },
+    { VSND_TYP_LAUGH, "tm_gloat9", 0 },
+    { VSND_TYP_GUMBOUNCE, "tm_gumbounce1", 0 },
+    { VSND_TYP_GUMBOUNCE, "tm_gumbounce2", 0 },
+    { VSND_TYP_GUMBOUNCE, "tm_gumbounce3", 0 },
+    { VSND_TYP_GUMBOUNCE, "tm_gumbounce4", 0 },
+    { VSND_TYP_GUMBOUNCE, "tm_gumbounce5", 0 },
+    { VSND_TYP_GUMBOUNCE, "tm_gumbounce6", 0 },
+    { VSND_TYP_GUMMED, "tm_gummed1", 0 },
+    { VSND_TYP_GUMMED, "tm_gummed2", 0 },
+    { VSND_TYP_GUMMED, "tm_gummed3", 0 },
+    { VSND_TYP_IDLESLOP, "tm_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "tm_idle2", 0 },
+    { VSND_TYP_IDLESLOP, "tm_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "tm_idle4", 0 },
+    { VSND_TYP_IDLESLOP, "tm_idle5", 0 },
+    { VSND_TYP_IDLESLOP, "tm_idle6", 0 },
+    { VSND_TYP_IDLESLOP, "tm_idle7", 0 },
+    { VSND_TYP_CLANKING, "tm_puddle1", 0 },
+    { VSND_TYP_CLANKING, "tm_puddlewalk1", 0 },
+    { VSND_TYP_CURIOUS, "tm_investigate1", 0 },
+    { VSND_TYP_CURIOUS, "tm_investigate2", 0 },
+    { VSND_TYP_CURIOUS, "tm_investigate3", 0 },
+    { VSND_TYP_CURIOUS, "tm_investigate4", 0 },
+    { VSND_TYP_CURIOUS, "tm_investigate5", 0 },
+    { VSND_TYP_CURIOUS, "tm_investigate6", 0 },
+    { VSND_TYP_CURIOUS, "tm_investigate7", 0 },
+    { VSND_TYP_CURIOUS, "tm_investigate8", 0 },
+    { VSND_TYP_CURIOUS, "tm_investigate9", 0 },
+    { VSND_TYP_LISTEN, "tm_listen1", 0 },
+    { VSND_TYP_LISTEN, "tm_listen2", 0 },
+    { VSND_TYP_LISTEN, "tm_listen3", 0 },
+    { VSND_TYP_LISTEN, "tm_listen4", 0 },
+    { VSND_TYP_LISTEN, "tm_listen5", 0 },
+    { VSND_TYP_LISTEN, "tm_listen6", 0 },
+    { VSND_TYP_LISTEN, "tm_listen7", 0 },
+    { VSND_TYP_LISTEN, "tm_listen8", 0 },
+    { VSND_TYP_LISTEN, "tm_listen9", 0 },
+    { VSND_TYP_LOOK, "tm_look1", 0 },
+    { VSND_TYP_LOOK, "tm_look2", 0 },
+    { VSND_TYP_LOOK, "tm_look3", 0 },
+    { VSND_TYP_LOOK, "tm_look4", 0 },
+    { VSND_TYP_EXCLAIM, "tm_surprised1", 0 },
+    { VSND_TYP_EXCLAIM, "tm_surprised2", 0 },
+    { VSND_TYP_EXCLAIM, "tm_surprised3", 0 },
+    { VSND_TYP_EXCLAIM, "tm_surprised4", 0 },
+    { VSND_TYP_EXCLAIM, "tm_surprised5", 0 },
+    { VSND_TYP_EXCLAIM, "tm_surprised6", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball2", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball6", 0 },
+    { VSND_TYP_PRJ_FLIGHT, "fireball_loop", 0 },
+    { VSND_TYP_PRJ_EXPLODE, "tar_ball_hit1", 0 },
+    { VSND_TYP_PRJ_SPLAT, "tar_ball_splat1", 0 },
+    { VSND_TYP_PRJ_SPLAT, "tar_ball_splat2", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Witch[74] = {
+    { VSND_TYP_ATTACK, "wc_attack1", 0 },
+    { VSND_TYP_ATTACK, "wc_attack2", 0 },
+    { VSND_TYP_ATTACK, "wc_attack3", 0 },
+    { VSND_TYP_ATTACK, "wc_attack4", 0 },
+    { VSND_TYP_ATTACK, "wc_attack5", 0 },
+    { VSND_TYP_ATTACK, "wc_attack6", 0 },
+    { VSND_TYP_SOAPED, "wc_bubble1", 0 },
+    { VSND_TYP_SOAPED, "wc_bubble2", 0 },
+    { VSND_TYP_SOAPED, "wc_bubble3", 0 },
+    { VSND_TYP_SOAPED, "wc_bubble4", 0 },
+    { VSND_TYP_SOAPED, "wc_bubble5", 0 },
+    { VSND_TYP_DIE, "wc_death1", 0 },
+    { VSND_TYP_DIE, "wc_death2", 0 },
+    { VSND_TYP_DIE, "wc_death3", 0 },
+    { VSND_TYP_DIE, "wc_deathhit1", 0 },
+    { VSND_TYP_DIE, "wc_deathhit2", 0 },
+    { VSND_TYP_DIE, "wc_deathhit3", 0 },
+    { VSND_TYP_DIE, "wc_deathhit4", 0 },
+    { VSND_TYP_DIE, "wc_deathspin1", 0 },
+    { VSND_TYP_DIE, "wc_deathspin2", 0 },
+    { VSND_TYP_DIE, "wc_deathspin3", 0 },
+    { VSND_TYP_LAUGH, "wc_gloat1", 0 },
+    { VSND_TYP_LAUGH, "wc_gloat2", 0 },
+    { VSND_TYP_LAUGH, "wc_gloat3", 0 },
+    { VSND_TYP_LAUGH, "wc_gloat4", 0 },
+    { VSND_TYP_GUMBOUNCE, "wc_gumbounce1", 0 },
+    { VSND_TYP_GUMBOUNCE, "wc_gumbounce2", 0 },
+    { VSND_TYP_GUMBOUNCE, "wc_gumbounce3", 0 },
+    { VSND_TYP_GUMBOUNCE, "wc_gumbounce4", 0 },
+    { VSND_TYP_GUMMED, "wc_gummed1", 0 },
+    { VSND_TYP_GUMMED, "wc_gummed2", 0 },
+    { VSND_TYP_GUMMED, "wc_gummed3", 0 },
+    { VSND_TYP_GUMMED, "wc_gummed4", 0 },
+    { VSND_TYP_GUMMED, "wc_gummed5", 0 },
+    { VSND_TYP_IDLESLOP, "wc_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "wc_idle2", 0 },
+    { VSND_TYP_IDLESLOP, "wc_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "wc_idle4", 0 },
+    { VSND_TYP_IDLESLOP, "wc_idle5", 0 },
+    { VSND_TYP_CURIOUS, "wc_investigate1", 0 },
+    { VSND_TYP_CURIOUS, "wc_investigate2", 0 },
+    { VSND_TYP_CURIOUS, "wc_investigate3", 0 },
+    { VSND_TYP_CURIOUS, "wc_investigate4", 0 },
+    { VSND_TYP_CURIOUS, "wc_investigate5", 0 },
+    { VSND_TYP_LISTEN, "wc_listen1", 0 },
+    { VSND_TYP_LISTEN, "wc_listen2", 0 },
+    { VSND_TYP_LISTEN, "wc_listen3", 0 },
+    { VSND_TYP_LISTEN, "wc_listen4", 0 },
+    { VSND_TYP_LISTEN, "wc_listen5", 0 },
+    { VSND_TYP_LISTEN, "wc_listen6", 0 },
+    { VSND_TYP_LISTEN, "wc_listen7", 0 },
+    { VSND_TYP_LISTEN, "wc_listen8", 0 },
+    { VSND_TYP_LOOK, "wc_look1", 0 },
+    { VSND_TYP_LOOK, "wc_look2", 0 },
+    { VSND_TYP_LOOK, "wc_look3", 0 },
+    { VSND_TYP_LOOK, "wc_look4", 0 },
+    { VSND_TYP_EXCLAIM, "wc_surprised1", 0 },
+    { VSND_TYP_EXCLAIM, "wc_surprised2", 0 },
+    { VSND_TYP_EXCLAIM, "wc_surprised3", 0 },
+    { VSND_TYP_EXCLAIM, "wc_surprised4", 0 },
+    { VSND_TYP_MOVE, "wc_move1", 0 },
+    { VSND_TYP_MOVE, "wc_move2", 0 },
+    { VSND_TYP_MOVE, "wc_move3", 0 },
+    { VSND_TYP_MOVE, "wc_move4", 0 },
+    { VSND_TYP_MOVE, "wc_move5", 0 },
+    { VSND_TYP_MOVE, "wc_move6", 0 },
+    { VSND_TYP_SNORE, "wc_sleep1", 0 },
+    { VSND_TYP_SNORE, "wc_sleep2", 0 },
+    { VSND_TYP_SNORE, "wc_sleep3", 0 },
+    { VSND_TYP_SNORE, "wc_sleep4", 0 },
+    { VSND_TYP_SNORE, "wc_sleep5", 0 },
+    { VSND_TYP_SPELL_CAST, "magic_wand4", 0 },
+    { VSND_TYP_SPELL_PLAY, "magic_wand5", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_WitchDoctor[53] = {
+    { VSND_TYP_ATTACK, "wd_attack1", 0 },
+    { VSND_TYP_ATTACK, "wd_attack2", 0 },
+    { VSND_TYP_ATTACK, "wd_attack3", 0 },
+    { VSND_TYP_ATTACK, "wd_attack4", 0 },
+    { VSND_TYP_ATTACK, "wd_attack5", 0 },
+    { VSND_TYP_ATTACK, "wd_attack6", 0 },
+    { VSND_TYP_ATTACK, "wd_attack7", 0 },
+    { VSND_TYP_ATTACK, "wd_attack8", 0 },
+    { VSND_TYP_MOVE_ALT, "wd_chase1", 0 },
+    { VSND_TYP_MOVE_ALT, "wd_chase2", 0 },
+    { VSND_TYP_DIE, "wd_death1", 0 },
+    { VSND_TYP_DIE, "wd_death2", 0 },
+    { VSND_TYP_DIE, "wd_death3", 0 },
+    { VSND_TYP_LAUGH, "wd_gloat1", 0 },
+    { VSND_TYP_LAUGH, "wd_gloat2", 0 },
+    { VSND_TYP_LAUGH, "wd_gloat3", 0 },
+    { VSND_TYP_LAUGH, "wd_gloat4", 0 },
+    { VSND_TYP_LAUGH, "wd_gloat5", 0 },
+    { VSND_TYP_GUMMED, "wd_gummed1", 0 },
+    { VSND_TYP_GUMMED, "wd_gummed2", 0 },
+    { VSND_TYP_GUMMED, "wd_gummed3", 0 },
+    { VSND_TYP_LISTEN, "wd_hear1", 0 },
+    { VSND_TYP_LISTEN, "wd_hear2", 0 },
+    { VSND_TYP_OUCH, "wd_hurt1", 0 },
+    { VSND_TYP_OUCH, "wd_hurt2", 0 },
+    { VSND_TYP_OUCH, "wd_hurt3", 0 },
+    { VSND_TYP_LISTEN, "wd_listen1", 0 },
+    { VSND_TYP_LISTEN, "wd_listen2", 0 },
+    { VSND_TYP_LISTEN, "wd_listen3", 0 },
+    { VSND_TYP_LOOK, "wd_look1", 0 },
+    { VSND_TYP_LOOK, "wd_look2", 0 },
+    { VSND_TYP_LOOK, "wd_see1", 0 },
+    { VSND_TYP_LOOK, "wd_see2", 0 },
+    { VSND_TYP_LOOK, "wd_see3", 0 },
+    { VSND_TYP_LOOK, "wd_see4", 0 },
+    { VSND_TYP_LOOK, "wd_see5", 0 },
+    { VSND_TYP_LOOK, "wd_see6", 0 },
+    { VSND_TYP_DIZZY, "wd_stunned1", 0 },
+    { VSND_TYP_IDLESLOP, "wd_staff_shake", 0 },
+    { VSND_TYP_EXCLAIM, "wd_surprise1", 0 },
+    { VSND_TYP_EXCLAIM, "wd_surprise2", 0 },
+    { VSND_TYP_EXCLAIM, "wd_surprise3", 0 },
+    { VSND_TYP_EXCLAIM, "wd_surprise4", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball1", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball2", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball3", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball4", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball5", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball6", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball7", 0 },
+    { VSND_TYP_PRJ_LAUNCH, "fireball8", 0 },
+    { VSND_TYP_PRJ_FLIGHT, "fireball_loop", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Wolfman[39] = {
+    { VSND_TYP_ATTACK, "wm_attack1", 0 },
+    { VSND_TYP_ATTACK, "wm_attack2", 0 },
+    { VSND_TYP_ATTACK, "wm_attack3", 0 },
+    { VSND_TYP_ATTACK, "wm_attack4", 0 },
+    { VSND_TYP_ATTACK, "wm_attack5", 0 },
+    { VSND_TYP_ATTACK, "wm_attack6", 0 },
+    { VSND_TYP_SOAPED, "wm_bubble1", 0 },
+    { VSND_TYP_SOAPED, "wm_bubble2", 0 },
+    { VSND_TYP_SOAPED, "wm_bubble3", 0 },
+    { VSND_TYP_SOAPED, "wm_bubble4", 0 },
+    { VSND_TYP_LAUGH, "wm_chase1", 0 },
+    { VSND_TYP_LAUGH, "wm_chase2", 0 },
+    { VSND_TYP_LAUGH, "wm_chase3", 0 },
+    { VSND_TYP_LAUGH, "wm_chase4", 0 },
+    { VSND_TYP_LAUGH, "wm_chase5", 0 },
+    { VSND_TYP_LAUGH, "wm_chase6", 0 },
+    { VSND_TYP_DIE, "wm_death1", 0 },
+    { VSND_TYP_DIE, "wm_death2", 0 },
+    { VSND_TYP_DIE, "wm_death3", 0 },
+    { VSND_TYP_DIE, "wm_death4", 0 },
+    { VSND_TYP_DIE, "wm_death5", 0 },
+    { VSND_TYP_DIE, "wm_death6", 0 },
+    { VSND_TYP_DIE, "wm_death7", 0 },
+    { VSND_TYP_GUMBOUNCE, "wm_gumbounce1", 0 },
+    { VSND_TYP_GUMMED, "wm_gummed1", 0 },
+    { VSND_TYP_CLANKING, "wm_growl1", 0 },
+    { VSND_TYP_IDLESLOP, "wm_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "wm_idle2", 0 },
+    { VSND_TYP_IDLESLOP, "wm_idle3", 0 },
+    { VSND_TYP_IDLESLOP, "wm_idle4", 0 },
+    { VSND_TYP_IDLESLOP, "wm_idle5", 0 },
+    { VSND_TYP_MOVE, "wm_walk1", 0 },
+    { VSND_TYP_MOVE, "wm_walk2", 0 },
+    { VSND_TYP_MOVE, "wm_walk3", 0 },
+    { VSND_TYP_MOVE, "wm_walk4", 0 },
+    { VSND_TYP_MOVE, "wm_walk5", 0 },
+    { VSND_TYP_MOVE, "wm_walk6", 0 },
+    { VSND_TYP_MOVE, "wm_walk7", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_RECORDS g_sndTrax_Zombie[32] = {
+    { VSND_TYP_ATTACK, "zz_attack1", 0 },
+    { VSND_TYP_ATTACK, "zz_attack2", 0 },
+    { VSND_TYP_ATTACK, "zz_attack3", 0 },
+    { VSND_TYP_ATTACK, "zz_attack4", 0 },
+    { VSND_TYP_ATTACK, "zz_attack5", 0 },
+    { VSND_TYP_DIE, "zz_death1", 0 },
+    { VSND_TYP_DIE, "zz_death2", 0 },
+    { VSND_TYP_DIE, "zz_death3", 0 },
+    { VSND_TYP_DIE, "zz_death4", 0 },
+    { VSND_TYP_DIE, "zz_death5", 0 },
+    { VSND_TYP_LAUGH, "zz_gloat1", 0 },
+    { VSND_TYP_LAUGH, "zz_gloat2", 0 },
+    { VSND_TYP_LAUGH, "zz_gloat3", 0 },
+    { VSND_TYP_LAUGH, "zz_gloat4", 0 },
+    { VSND_TYP_LAUGH, "zz_gloat5", 0 },
+    { VSND_TYP_LAUGH, "zz_gloat6", 0 },
+    { VSND_TYP_LAUGH, "zz_gloat7", 0 },
+    { VSND_TYP_LISTEN, "zz_hear1", 0 },
+    { VSND_TYP_OUCH, "zz_hurt1", 0 },
+    { VSND_TYP_OUCH, "zz_hurt2", 0 },
+    { VSND_TYP_OUCH, "zz_hurt3", 0 },
+    { VSND_TYP_IDLESLOP, "zz_idle1", 0 },
+    { VSND_TYP_IDLESLOP, "zz_idle2", 0 },
+    { VSND_TYP_CURIOUS, "zz_investigate1", 0 },
+    { VSND_TYP_CURIOUS, "zz_investigate2", 0 },
+    { VSND_TYP_CURIOUS, "zz_investigate3", 0 },
+    { VSND_TYP_LISTEN, "zz_listen1", 0 },
+    { VSND_TYP_DIZZY, "zz_stunned", 0 },
+    { VSND_TYP_DIZZY, "zz_headshake1", 0 },
+    { VSND_TYP_DIZZY, "zz_headshake2", 0 },
+    { VSND_TYP_DIZZY, "zz_headshake3", 0 },
+    { VSND_LISTEND, 0, 0 },
+};
+
+static st_NPC_SOUND_ENTRY g_npcJukeBox[33] = {
+    { eEntVillainType_Undefined, g_sndTrax_General },
+    { eEntVillainTypeBat, g_sndTrax_Bat },
+    { eEntVillainTypeBuckMasters, g_sndTrax_BuckMaster },
+    { eEntVillainCaptainMoody, g_sndTrax_CaptainMoody },
+    { eEntVillainCaveMan, g_sndTrax_Caveman },
+    { eEntVillainTypeCreeper, g_sndTrax_Creeper },
+    { eEntVillainTypeGhost, g_sndTrax_Ghost },
+    { eEntVillainTypeGhostDiver, g_sndTrax_GhostDiver },
+    { eEntVillainTypeGargoyle, g_sndTrax_Gargoyle },
+    { eEntVillainTypeHeadlessSpecter, g_sndTrax_HeadlessSpecter },
+    { eEntVillainTypeKillerPlant, g_sndTrax_KillerPlant },
+    { eEntVillainTypeRat, g_sndTrax_Rat },
+    { eEntVillainTypeRobot, g_sndTrax_Robot },
+    { eEntVillainTypeSeaCreature, g_sndTrax_SeaCreature },
+    { eEntVillainTypeScarecrow, g_sndTrax_ScareCrow },
+    { eEntVillainTypeSpaceKook, g_sndTrax_SpaceKook },
+    { eEntVillainTypeShark, g_sndTrax_Shark },
+    { eEntVillainTypeTarMonster, g_sndTrax_TarMonster },
+    { eEntVillainTypeWitch, g_sndTrax_Witch },
+    { eEntVillainTypeWitchDoctor, g_sndTrax_WitchDoctor },
+    { eEntVillainTypeWolfman, g_sndTrax_Wolfman },
+    { eEntVillainTypeZombie, g_sndTrax_Zombie },
+    { eEntVillainTypeFred, g_sndTrax_Fred },
+    { eEntVillainTypeDaphne, g_sndTrax_Daphne },
+    { eEntVillainTypeVelma, g_sndTrax_Velma },
+    { eEntVillainHolly, g_sndTrax_Holly },
+    { eEntVillainProfessor, g_sndTrax_Professor },
+    { eEntVillainGroundsKeeper, g_sndTrax_GroundsKeeper },
+    { eEntVillainBossBlackKnight, g_sndTrax_BlackKnight },
+    { eEntVillainBossGreenGhost, g_sndTrax_GreenGhost },
+    { eEntVillainBossRedbeard, g_sndTrax_RedBeard },
+    { eEntVillainBossMastermind, g_sndTrax_MasterMind },
+    { eEntVillainType_Undefined, 0 },
 };
 
 // Per-subtype villain settings, indexed by the asset subtype (en_zEntVillainSubTypeID). Only the
@@ -880,12 +2315,121 @@ static st_ZVIL_NPCTYPE_LOOKUP g_npcTable[eEntVillainType_NoMore + 1] = {
     { 0 },
 };
 
-// Where the Mastermind stood when he last looked for a teleport point.
-static _xVec3 sMMPreTeleportPos;
+// Handler functions indexed by villain subtype; the final row is the sentinel.
+static st_ZVIL_NPC_HANDLERFUNCS g_npcFuncs[51] = {
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_sham_flag, VILN_sham_query, VILN_sham_sysevent, VILN_sham_notice, VILN_sham_aware, VILN_sham_stimulus, VILN_sham_trangoal, VILN_sham_calcmove, VILN_sham_respond, VILN_sham_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_shark_flag, VILN_shark_query, VILN_shark_sysevent, VILN_shark_notice, VILN_shark_aware, VILN_shark_stimulus, VILN_shark_trangoal, VILN_shark_calcmove, VILN_shark_respond, VILN_shark_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_kp_query, VILN_std_sysevent, VILN_std_notice, VILN_kp_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_crit_flag, VILN_crit_query, VILN_crit_sysevent, VILN_crit_notice, VILN_crit_aware, VILN_crit_stimulus, VILN_crit_trangoal, VILN_crit_calcmove, VILN_crit_respond, VILN_crit_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shagM_flag, VILN_shagM_query, VILN_shagM_sysevent, VILN_shagM_notice, VILN_shagM_aware, VILN_shagM_stimulus, VILN_shagM_trangoal, VILN_shagM_calcmove, VILN_shagM_respond, VILN_shagM_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_shag_flag, VILN_shag_query, VILN_shag_sysevent, VILN_shag_notice, VILN_shag_aware, VILN_shag_stimulus, VILN_shag_trangoal, VILN_shag_calcmove, VILN_shag_respond, VILN_shag_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, VILN_gang_animtran, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_BBK_flag, VILN_BBK_query, VILN_BBK_sysevent, VILN_BBK_notice, VILN_BBK_aware, VILN_BBK_stimulus, VILN_BBK_trangoal, VILN_BBK_calcmove, VILN_BBK_respond, VILN_BBK_pickanim, VILN_BBK_animtran, 0 },
+    { 1, VILN_BGG_flag, VILN_BGG_query, VILN_BGG_sysevent, VILN_BGG_notice, VILN_BGG_aware, VILN_BGG_stimulus, VILN_BGG_trangoal, VILN_BGG_calcmove, VILN_BGG_respond, VILN_BGG_pickanim, 0, 0 },
+    { 1, VILN_BRB_flag, VILN_BRB_query, VILN_BRB_sysevent, VILN_BRB_notice, VILN_BRB_aware, VILN_BRB_stimulus, VILN_BRB_trangoal, VILN_BRB_calcmove, VILN_BRB_respond, VILN_BRB_pickanim, 0, VILN_BRB_xtrarend },
+    { 1, VILN_BMM_flag, VILN_BMM_query, VILN_BMM_sysevent, VILN_BMM_notice, VILN_BMM_aware, VILN_BMM_stimulus, VILN_BMM_trangoal, VILN_BMM_calcmove, VILN_BMM_respond, VILN_BMM_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_std_flag, VILN_std_query, VILN_std_sysevent, VILN_std_notice, VILN_std_aware, VILN_std_stimulus, VILN_std_trangoal, VILN_std_calcmove, VILN_std_respond, VILN_std_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 1, VILN_gang_flag, VILN_gang_query, VILN_gang_sysevent, VILN_gang_notice, VILN_gang_aware, VILN_gang_stimulus, VILN_gang_trangoal, VILN_gang_calcmove, VILN_gang_respond, VILN_gang_pickanim, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+};
 
-// Redbeard's swords.
-static st_REDBEARD_SWORD g_rbsword[4];
+// Per-type model and bound configuration; nothing fills it in this build.
+static st_NPCTYPE_CONFIG g_npcTypeTable[50] = { 0 };
 
+// The bonus items villains can drop.
+static st_NPC_BONUS g_npcBonus[11] = { 0 };
+
+// The scene object names of the bonus items, in g_npcBonus order.
+static char* g_strz_npcBonus[11] = { "_PICK_VILN_FOOD_FOOD", "_PICK_VILN_FOOD_BURGER", "_PICK_VILN_FOOD_ICECREAM", "_PICK_VILN_FOOD_TURKEY", "_PICK_VILN_FOOD_CAKE", "_PICK_VILN_AMMO_SOAP_A", "_PICK_VILN_AMMO_SOAP_B", "_PICK_VILN_AMMO_SOAP_C", "_PICK_VILN_AMMO_GUM_A", "_PICK_VILN_AMMO_GUM_B", "_PICK_VILN_AMMO_GUM_C" };
+
+static st_ZVIL_BONUS_EXCLUSION g_bonusExclusions[] = {
+    { 0x43303036, 0x449DB5F4 }, { 0x4F303031, 0xE8EA9736 },
+    { 0x4F303031, 0x120782D1 }, { 0x4F303031, 0xBD63DC69 },
+    { 0x4F303031, 0xD93EE089 }, { 0x57303233, 0x7BCB3A79 },
+    { 0x57303233, 0xECF98FF8 }, { 0x57303233, 0x7BCB3A7A },
+    { 0x57303233, 0x7BCB3A7B }, { 0x57303233, 0x7BCB3A7C },
+    { 0x57303233, 0x7BCB3A7D }, { 0x57303233, 0xECF98FF9 },
+    { 0x57303233, 0xECF98FFA }, { 0x57303233, 0x3B9E586B },
+    { 0x57303233, 0xECF98FFB }, { 0x57303233, 0xECF98FFC },
+    { 0x57303233, 0x7BCB3A7E }, { 0x57303233, 0x7BCB3A7F },
+    { 0x57303233, 0x7BCB3A80 }, { 0, 0 },
+};
+
+// The player's tally per villain type; the last row holds the totals.
+static st_NPC_TALLY_RECORD g_stattally[eEntVillainType_NoMore + 1] = { 0 };
+
+// The particle emitters the scene's villains use.
+static st_XORDEREDARRAY g_emitlist = { 0 };
+
+#define ANY_VILLAIN ((en_zEntVillainSubTypeID)-1)
+static st_zEntVillain_ParEmitInfo g_emitinfo[32] = {
+    { "VilPar_Kook_Attack", VPAR_EMIT_EXTATTACK, eEntVillainTypeSpaceKook, 0, 0 },
+    { "VilPar_Witch_Attack", VPAR_EMIT_EXTATTACK, eEntVillainTypeWitch, 0, 0 },
+    { "VilPar_Plant_Attack", VPAR_EMIT_EXTATTACK, eEntVillainTypeKillerPlant, 0, 0 },
+    { "VilPar_GreenGhost_Attack", VPAR_EMIT_EXTATTACK, eEntVillainBossGreenGhost, 0, 0 },
+    { "ParEmit_Vil_Sleeping", VPAR_EMIT_BORED, ANY_VILLAIN, 0x20000, 0 },
+    { "ParEmit_Vil_Bored", VPAR_EMIT_BORED, ANY_VILLAIN, 0, 0x20000 },
+    { "ParEmit_Vil_Bored", VPAR_EMIT_GUARD, ANY_VILLAIN, 2, 0 },
+    { "ParEmit_Vil_Question", VPAR_EMIT_QUESTMARK, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_Surprize", VPAR_EMIT_EXCLAIM, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_Soapy", VPAR_EMIT_SOAPY, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_PopSoap", VPAR_EMIT_POPSOAP, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_Gummy", VPAR_EMIT_GUMMY, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_PopGum", VPAR_EMIT_POPGUM, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_SD_BounceOnVillain", VPAR_EMIT_BUTTBOUNCE, ANY_VILLAIN, 2, 0 },
+    { "ParEmit_SD_Headbutt", VPAR_EMIT_HEADBUTT, ANY_VILLAIN, 2, 0 },
+    { "ParEmit_SD_Headbutt2", VPAR_EMIT_HEADBUTT, ANY_VILLAIN, 2, 0 },
+    { "ParEmit_Vil_Stunned", VPAR_EMIT_STUN, ANY_VILLAIN, 2, 0 },
+    { "ParEmit_Vil_Teleport", VPAR_EMIT_TELEPORT, eEntVillainBossMastermind, 0, 0 },
+    { "ParEmit_Vil_Dying", VPAR_EMIT_DYING, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_Decay", VPAR_EMIT_DECAY, ANY_VILLAIN, 0, 0 },
+    { "ParEmit_Vil_DecayRobot", VPAR_EMIT_DECAY, eEntVillainTypeRobot, 0, 0 },
+    { "ParEmit_Vil_KookRespawn", VPAR_EMIT_RESPAWN, eEntVillainTypeSpaceKook, 0, 0 },
+    { "ParEmit_Vil_HoloDecay", VPAR_EMIT_DECAY, ANY_VILLAIN, 8, 0 },
+    { "ParEmit_Vil_HoloPoof", VPAR_EMIT_POOF, ANY_VILLAIN, 8, 0 },
+    { "ParEmit_Vil_HoloDots", VPAR_EMIT_POOF, ANY_VILLAIN, 8, 0 },
+    { NULL, VPAR_EMIT_WALLPRINT, (en_zEntVillainSubTypeID)0, 0, 0 },
+};
+#undef ANY_VILLAIN
+
+static _zParEmitterCustomSettings sExtSettings = { 0 };
 
 // Hash of each animation state name, filled in at startup; the index is en_NPC_ANIMSTATES.
 static U32 g_anamhash[ZVIL_ANIM_NOMORE] = { 0 };
@@ -921,12 +2465,6 @@ static char* g_animname[ZVIL_ANIM_NOMORE + 1] = {
     "CRIT_BatSleep", "CRIT_SpiderDrop", "CRIT_Smashed", "SIMP_Action", NULL,
 };
 
-// The bonus items villains can drop.
-static st_NPC_BONUS g_npcBonus[11] = { 0 };
-
-// The scene object names of the bonus items, in g_npcBonus order.
-static char* g_strz_npcBonus[11] = { "_PICK_VILN_FOOD_FOOD", "_PICK_VILN_FOOD_BURGER", "_PICK_VILN_FOOD_ICECREAM", "_PICK_VILN_FOOD_TURKEY", "_PICK_VILN_FOOD_CAKE", "_PICK_VILN_AMMO_SOAP_A", "_PICK_VILN_AMMO_SOAP_B", "_PICK_VILN_AMMO_SOAP_C", "_PICK_VILN_AMMO_GUM_A", "_PICK_VILN_AMMO_GUM_B", "_PICK_VILN_AMMO_GUM_C" };
-
 // The INI parameter names, in en_NPC_INI_PARAMETERS order.
 static char* g_parmname[ZVIL_PARM_NOMORE] = {
     "Parm_Hit_Points", "Parm_Bubbled_Time", "Parm_Gummed_Time", "Parm_Dazed_Time",
@@ -944,14 +2482,14 @@ static char* g_parmname[ZVIL_PARM_NOMORE] = {
     "Parm_MinDifficulty", "Parm_AttackDmgBegTime", "Parm_AttackDmgEndTime"
 };
 
-// The player's tally per villain type; the last row holds the totals.
-static st_NPC_TALLY_RECORD g_stattally[eEntVillainType_NoMore + 1] = { 0 };
-
 // Lightning data of the thrown Black Knight axes.
 static st_BKAXE_DATA g_axfxpool[10] = { 0 };
 
 // Green Ghost quake balls.
 static st_BGG_QUAKEBALL g_quakepool[4] = { 0 };
+
+// The objects a thrown Redbeard sword collides with besides the player.
+static char* g_strz_rbtgt[5] = { "ScoobyDoo!", "Rope01", "Rope02", "Rope03", "Rope04" };
 
 // Names of the Mastermind's teleport points: eight safe ones and four dangerous ones.
 static char* g_strz_mmtp[12] = {
@@ -963,119 +2501,11 @@ static char* g_strz_mmtp[12] = {
 // The Mastermind's teleport points, found by name when he is prepared.
 static _zMovePoint* g_mmtp[12] = { 0 };
 
+// Projectile asset names of the Mastermind's three flask types.
+static char* g_stz_mmftyp_name[3] = { "_PRJ_VWEP_FLASK", "_PRJ_VWEP_FLASK", "_PRJ_VWEP_FLASK" };
+
 // Mastermind flasks.
 static st_ZVMM_FLASK_DATA g_mmflask[10] = { 0 };
-static _tagLightning* sKnightLightning[5];
-static _tagLightning* sMastermindLightning[5];
-static _xVec3 sGreenShockPosition;
-static _zParEmitter* sGreenShockEmitter;
-static _zParEmitter* sEmitHoloPoof;
-static _zParEmitter* sEmitHoloDots;
-static _zParEmitter* sGreenBallEmitter;
-static _zParEmitter* sGreenBallSmackEmitter;
-static _zParEmitter* sGreenHurtEmitter;
-static _zParEmitter* sGreenVortexEmitter1;
-static _zParEmitter* sGreenVortexEmitter2;
-static _zParEmitter* sGreenVortexEmitter3;
-static _zParEmitter* sWitchDyingEmitter;
-static _zParEmitter* sPlantCloudEmitter;
-static _zParEmitter* sMMRedFlaskEmitter;
-static _zParEmitter* sMMGreenFlaskEmitter;
-static _zParEmitter* sMMBlackFlaskEmitter;
-static _zParEmitter* sMMShowEmitter;
-static _zParEmitter* sMMHideEmitter;
-static _zParEmitter* sRBWallEmitter;
-static _zParEmitterCustomSettings sExtSettings = { 0 };
-
-extern "C" U8 gVillainPoofColorBirth[50][4] = {
-    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
-    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
-    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
-    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
-    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
-    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
-    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
-    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
-    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
-    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
-};
-extern "C" U8 gVillainPoofColorDeath[50][4] = {
-    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
-    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
-    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
-    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
-    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
-    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
-    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
-    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
-    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
-    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
-};
-extern "C" U8 gVillainDotsColorBirth[50][4] = {
-    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
-    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
-    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
-    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
-    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
-    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
-    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
-    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
-    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
-    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
-};
-extern "C" U8 gVillainDotsColorDeath[50][4] = {
-    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
-    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
-    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
-    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
-    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
-    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
-    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
-    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
-    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
-    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
-};
-
-// The particle emitters the scene's villains use.
-static st_XORDEREDARRAY g_emitlist = { 0 };
-
-// The particle emitters of the Mastermind's teleport out and in.
-static _zParEmitter* sEmitMMTeleportHide;
-static _zParEmitter* sEmitMMTeleportShow;
-
-// Cleared at scene end.
-static S32 g_NPCSoundStreamLock;
-
-// How many times the villain system has been started without being shut down.
-static S32 g_npcinit;
-
-// How many villains the scene has.
-static S32 g_npccnt;
-
-// All villains of the scene, in one block.
-static st_zEntVillain* g_npcpool;
-
-// The goal and the stimulus a villain type's stimulus or goal-change step is handling.
-static en_BEHAVIOUR_GOAL g_pgol;
-static en_NPC_STIMULUS g_pstm;
-
-// The gum puddle model, whether the bonus item table is set up, and a villain tally the scene
-// start clears.
-static RpAtomic* g_gumModelAsset;
-static S32 g_bonusTableReady;
-static S32 g_stattotvil;
-
-// Records of the particle emitters the villains use, how many are in use, and whether they
-// are set up.
-static st_zEntVillain_ParEmitRecord* g_emitpool;
-static S32 g_emitnext;
-static S32 g_emitready;
-
-// Which boss the current scene's battle is against (1 to 4), or 0 when it is not a boss battle.
-static S32 g_scene_is_a_boss_battle;
-
-// A block of scratch memory the villain system keeps from startup.
-static char* g_datablock;
 
 // Start the villain system once and register its four boss projectile categories.
 // Fill each subtype's behavior flags and supply standard handlers where no handler set exists.
@@ -16114,7 +17544,6 @@ static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 // Prepare a Redbeard sword entity and its collision targets.
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* vil)
 {
-    static char* collision_names[5] = { "ScoobyDoo!", "Rope01", "Rope02", "Rope03", "Rope04" };
     _xVec3 pos = { 0 };
     _xMat4x3 mat = { 0 };
 
@@ -16156,7 +17585,7 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* vil)
     rbs->ent_colchk[0] = &globals.player.ent;
     for (index = 1; index < 5; index++)
     {
-        rbs->ent_colchk[index] = (_xEnt*)zSceneFindObject(xStrHash(collision_names[index]));
+        rbs->ent_colchk[index] = (_xEnt*)zSceneFindObject(xStrHash(g_strz_rbtgt[index]));
         if (rbs->ent_colchk[index] && rbs->ent_colchk[index]->baseType != 0x1B)
             rbs->ent_colchk[index] = NULL;
     }
@@ -17806,3 +19235,54 @@ static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
     else if (alter->z > 0.0f && out->z < 0.0f)
         out->z *= -1.0f;
 }
+
+// Colors of the hologram poof and dots particles when a villain appears and disappears, by
+// villain subtype.
+extern "C" U8 gVillainPoofColorBirth[50][4] = {
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+    { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
+};
+extern "C" U8 gVillainPoofColorDeath[50][4] = {
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+    { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 }, { 0, 26, 251, 255 },
+};
+extern "C" U8 gVillainDotsColorBirth[50][4] = {
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+    { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 }, { 4, 251, 251, 255 },
+};
+extern "C" U8 gVillainDotsColorDeath[50][4] = {
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+    { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 }, { 4, 50, 251, 255 },
+};
