@@ -810,7 +810,7 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "odenotstub",
         [
-            Object(MatchingFor("GIHE78-rev0"), "dolphin/odenotstub/odenotstub.c"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "dolphin/odenotstub/odenotstub.c"),
         ],
     ),
     DolphinLib(
@@ -1018,8 +1018,8 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/plcore/bavector.c"),
             Object(NonMatching, "rwsdk/src/plcore/resmem.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/plcore/rwstring.c"),
-            Object(MatchingFor("GIHE78-rev0"), "rwsdk/os/gcn/osintf.c"),
-            Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/babbox.c"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/os/gcn/osintf.c"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/babbox.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/babincam.c"),
             Object(NonMatching, "rwsdk/src/babinfrm.c"),
             Object(NonMatching, "rwsdk/src/babintex.c"),
