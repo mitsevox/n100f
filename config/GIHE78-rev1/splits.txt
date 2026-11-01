@@ -1189,6 +1189,12 @@ dolphin/os/OSTime.c: comment:8
 	.text       start:0x801088F8 end:0x80108D74
 	.data       start:0x801DE0A8 end:0x801DE108
 
+Runtime.PPCEABI.H/__mem.c:
+	.init       start:0x8000518C end:0x800052C4
+
+dolphin/os/__start.c: comment:8
+	.init       start:0x800052C4 end:0x80005518
+
 dolphin/os/__ppc_eabi_init.c: comment:8
 	.init       start:0x80005518 end:0x8000556C
 	.text       start:0x80108D74 end:0x80108E08
