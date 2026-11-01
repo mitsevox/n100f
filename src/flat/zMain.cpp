@@ -59,86 +59,108 @@ void zGameSetup();
 void zGameLoop();
 void zGameExit();
 
-// Load the boot and menu packages, then alternate between the menu and game scenes.
-void zMainLoop()
+void zMainLoop();
+void zMainMemLvlChkCB();
+void zMainParseINIGlobals(xIniFile* ini);
+extern "C" void main();
+
+extern "C" void main()
 {
-    xMemPushBase();
-    xUtil_idtag2string('BOOT', 0);
-    xSTPreLoadScene('BOOT', NULL);
-    xUtil_idtag2string('BOOT', 0);
-    xSTQueueSceneAssets('BOOT');
-    xUtil_idtag2string('BOOT', 0);
-    while (xSTLoadStep('BOOT') < 1.0f)
+    RwCamera* camera;
+    xFontBox* box;
+
+    iSystemInit();
+    xMemRegisterBaseNotifyFunc(zMainMemLvlChkCB);
+    memset(&globals, 0, sizeof(globals));
+    globals.sceneFirst = 1;
+    xTRCInit();
+
+    U32 size;
+    U32* data = iFileLoad("SD2.INI", 0, &size);
+    if (data)
+    {
+        xIniFile* ini = xIniParse((char*)data, size);
+        char* path = xIniGetString(ini, "PATH", 0);
+        if (path)
+            iFileSetPath(path);
+        char* boot = xIniGetString(ini, "BOOT", 0);
+        if (boot)
+        {
+            strcpy(globals.sceneStart, "BOOT");
+            if (strlen(boot) == 4)
+                strcpy(globals.sceneStart, boot);
+        }
+        globals.profile = xIniGetInt(ini, "Profile", 0);
+        strncpy(globals.profFunc[0], xIniGetString(ini, "ProfFuncTriangle", ""), 128);
+        globals.profFunc[0][127] = 0;
+        strncpy(globals.profFunc[1], xIniGetString(ini, "ProfFuncSquare", ""), 128);
+        globals.profFunc[1][127] = 0;
+        strncpy(globals.profFunc[2], xIniGetString(ini, "ProfFuncLeft", ""), 128);
+        globals.profFunc[2][127] = 0;
+        strncpy(globals.profFunc[3], xIniGetString(ini, "ProfFuncRight", ""), 128);
+        globals.profFunc[3][127] = 0;
+        strncpy(globals.profFunc[4], xIniGetString(ini, "ProfFuncUp", ""), 128);
+        globals.profFunc[4][127] = 0;
+        strncpy(globals.profFunc[5], xIniGetString(ini, "ProfFuncDown", ""), 128);
+        globals.profFunc[5][127] = 0;
+        zMainParseINIGlobals(ini);
+        xIniDestroy(ini);
+    }
+
+    iFuncProfileParse("scooby.elf", globals.profile);
+    xUtilStartup();
+    xSerialStartup(128, g_xser_sizeinfo);
+    zDispatcher_Startup();
+    zAssetStartup();
+    xFontInit();
+    xScrFxInit();
+    xParMgrInit();
+    globals.option_vibration = 1;
+    printf("---PAD ENABLE\n");
+    globals.pad0 = xPadEnable(0);
+    globals.pad1 = gDebugPad = xPadEnable(1);
+    xPadRumbleEnable(0, globals.option_vibration);
+    xSGStartup();
+    zEntProjectile_Startup();
+    zLobMaster_Startup();
+    zEntVillain_Startup();
+    fn_80043E78();
+
+    iColor_tag color = {255, 230, 0, 200};
+    camera = iCameraCreate(640, 480);
+    RwRGBA clear = lbl_80262CC8;
+    RwCameraClear(camera, &clear, 3);
+    RwCameraBeginUpdate(camera);
+    char text[] = "Game and Software, excluding Scooby-Doo materials, (C) 2002 THQ Inc. Used under exclusive license by THQ Inc.\n\n\nDeveloped by Heavy Iron Studios_. Heavy Iron Studios, THQ and their respective logos are trademarks and/or registered trademarks of THQ Inc. All Rights Reserved.\n\n\nLICENSED BY NINTENDO";
+    box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 1, color);
+    xFontBoxSetJustification(box, 0x40);
+    xFontBoxSetDrawSize(box, 17.0f, 22.6f);
+    xFontBoxSetDrawSpacing(box, 15.5f, 22.6f);
+    xFontBoxSetColor(box, color);
+    xFontBoxSetInset(box, 30.0f, 30.0f, 120.0f, 20.0f);
+    xFontBoxSetText(box, text);
+    xFontBoxRender(box);
+    xFontBoxDestroy(box);
+    RwCameraEndUpdate(camera);
+    RwCameraShowRaster(camera, 0, 1);
+    iCameraDestroy(camera);
+    S32 count = 120;
+    do
     {
         fn_80016600();
-        fn_800443AC();
-    }
-    xUtil_idtag2string('BOOT', 0);
-    iShadowInit();
-    zEntPlayer_InitCutsceneModelHack();
-    xMemPushBase();
-    xUtil_idtag2string('MNU4', 0);
-    xSTPreLoadScene('MNU4', NULL);
-    xUtil_idtag2string('MNU4', 0);
-    xSTQueueSceneAssets('MNU4');
-    xUtil_idtag2string('MNU4', 0);
-    while (xSTLoadStep('MNU4') < 1.0f)
-    {
-        fn_80016600();
-        fn_800443AC();
-    }
-    xUtil_idtag2string('MNU4', 0);
-
-    static U32 menuModeID = 'MNU3';
-    static U32 gameSceneID = (globals.sceneStart[0] << 24) | (globals.sceneStart[1] << 16) |
-                             (globals.sceneStart[2] << 8) | globals.sceneStart[3];
-    U32 newGameSceneID = gameSceneID;
-    xUtil_idtag2string(gameSceneID, 0);
-    xMemPushBase();
-    for (;;)
-    {
-        xSerialWipeMainBuffer();
-        zSceneStats_Clear();
-        zCutSceneNamesTable_clearAll();
-        zEntPickupResetWarps();
-        if (sShowMenuOnBoot)
-        {
-            zMenuInit(menuModeID);
-            zMenuSetup();
-            newGameSceneID = zMenuLoop();
-            zMenuExit();
-        }
-        else
-        {
-            sShowMenuOnBoot = 1;
-            zGameModeSwitch(eGameMode_Game);
-            zGameStateSwitch(0);
-        }
-        if (!newGameSceneID)
-        {
-            zVarNewGame();
-            iTimeSetGame(0.0f);
-            gameSceneID = (globals.sceneStart[0] << 24) | (globals.sceneStart[1] << 16) |
-                          (globals.sceneStart[2] << 8) | globals.sceneStart[3];
-        }
-        else
-        {
-            gameSceneID = newGameSceneID;
-            iTimeSetGame(0.0f);
-        }
-        zGameInit(gameSceneID);
-        zGameSetup();
-        iProfileClear(gameSceneID);
-        zGameLoop();
-        zGameExit();
-    }
-}
-
-// Check the memory base and scene memory level.
-void zMainMemLvlChkCB()
-{
-    xMemGetBase();
-    zSceneMemLvlChkCB();
+        iVSync();
+    } while (count-- > 0);
+    printf("----ENTERING MAIN LOOP\n");
+    zMainLoop();
+    zEntVillain_Shutdown();
+    zLobMaster_Shutdown();
+    zEntProjectile_Shutdown();
+    zAssetShutdown();
+    zDispatcher_Shutdown();
+    xSGShutdown();
+    xSerialShutdown();
+    xUtilShutdown();
+    iSystemExit();
 }
 
 // Load the player tuning values and initial equipment from the INI file.
@@ -245,101 +267,84 @@ void zMainParseINIGlobals(xIniFile* ini)
     sShowMenuOnBoot = xIniGetInt(ini, "ShowMenuOnBoot", 1);
 }
 
-extern "C" void main()
+// Check the memory base and scene memory level.
+void zMainMemLvlChkCB()
 {
-    RwCamera* camera;
-    xFontBox* box;
+    xMemGetBase();
+    zSceneMemLvlChkCB();
+}
 
-    iSystemInit();
-    xMemRegisterBaseNotifyFunc(zMainMemLvlChkCB);
-    memset(&globals, 0, sizeof(globals));
-    globals.sceneFirst = 1;
-    xTRCInit();
-
-    U32 size;
-    U32* data = iFileLoad("SD2.INI", 0, &size);
-    if (data)
-    {
-        xIniFile* ini = xIniParse((char*)data, size);
-        char* path = xIniGetString(ini, "PATH", 0);
-        if (path)
-            iFileSetPath(path);
-        char* boot = xIniGetString(ini, "BOOT", 0);
-        if (boot)
-        {
-            strcpy(globals.sceneStart, "BOOT");
-            if (strlen(boot) == 4)
-                strcpy(globals.sceneStart, boot);
-        }
-        globals.profile = xIniGetInt(ini, "Profile", 0);
-        strncpy(globals.profFunc[0], xIniGetString(ini, "ProfFuncTriangle", ""), 128);
-        globals.profFunc[0][127] = 0;
-        strncpy(globals.profFunc[1], xIniGetString(ini, "ProfFuncSquare", ""), 128);
-        globals.profFunc[1][127] = 0;
-        strncpy(globals.profFunc[2], xIniGetString(ini, "ProfFuncLeft", ""), 128);
-        globals.profFunc[2][127] = 0;
-        strncpy(globals.profFunc[3], xIniGetString(ini, "ProfFuncRight", ""), 128);
-        globals.profFunc[3][127] = 0;
-        strncpy(globals.profFunc[4], xIniGetString(ini, "ProfFuncUp", ""), 128);
-        globals.profFunc[4][127] = 0;
-        strncpy(globals.profFunc[5], xIniGetString(ini, "ProfFuncDown", ""), 128);
-        globals.profFunc[5][127] = 0;
-        zMainParseINIGlobals(ini);
-        xIniDestroy(ini);
-    }
-
-    iFuncProfileParse("scooby.elf", globals.profile);
-    xUtilStartup();
-    xSerialStartup(128, g_xser_sizeinfo);
-    zDispatcher_Startup();
-    zAssetStartup();
-    xFontInit();
-    xScrFxInit();
-    xParMgrInit();
-    globals.option_vibration = 1;
-    printf("---PAD ENABLE\n");
-    globals.pad0 = xPadEnable(0);
-    globals.pad1 = gDebugPad = xPadEnable(1);
-    xPadRumbleEnable(0, globals.option_vibration);
-    xSGStartup();
-    zEntProjectile_Startup();
-    zLobMaster_Startup();
-    zEntVillain_Startup();
-    fn_80043E78();
-
-    iColor_tag color = {255, 230, 0, 200};
-    camera = iCameraCreate(640, 480);
-    RwRGBA clear = lbl_80262CC8;
-    RwCameraClear(camera, &clear, 3);
-    RwCameraBeginUpdate(camera);
-    char text[] = "Game and Software, excluding Scooby-Doo materials, (C) 2002 THQ Inc. Used under exclusive license by THQ Inc.\n\n\nDeveloped by Heavy Iron Studios_. Heavy Iron Studios, THQ and their respective logos are trademarks and/or registered trademarks of THQ Inc. All Rights Reserved.\n\n\nLICENSED BY NINTENDO";
-    box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 1, color);
-    xFontBoxSetJustification(box, 0x40);
-    xFontBoxSetDrawSize(box, 17.0f, 22.6f);
-    xFontBoxSetDrawSpacing(box, 15.5f, 22.6f);
-    xFontBoxSetColor(box, color);
-    xFontBoxSetInset(box, 30.0f, 30.0f, 120.0f, 20.0f);
-    xFontBoxSetText(box, text);
-    xFontBoxRender(box);
-    xFontBoxDestroy(box);
-    RwCameraEndUpdate(camera);
-    RwCameraShowRaster(camera, 0, 1);
-    iCameraDestroy(camera);
-    S32 count = 120;
-    do
+// Load the boot and menu packages, then alternate between the menu and game scenes.
+void zMainLoop()
+{
+    xMemPushBase();
+    xUtil_idtag2string('BOOT', 0);
+    xSTPreLoadScene('BOOT', NULL);
+    xUtil_idtag2string('BOOT', 0);
+    xSTQueueSceneAssets('BOOT');
+    xUtil_idtag2string('BOOT', 0);
+    while (xSTLoadStep('BOOT') < 1.0f)
     {
         fn_80016600();
-        iVSync();
-    } while (count-- > 0);
-    printf("----ENTERING MAIN LOOP\n");
-    zMainLoop();
-    zEntVillain_Shutdown();
-    zLobMaster_Shutdown();
-    zEntProjectile_Shutdown();
-    zAssetShutdown();
-    zDispatcher_Shutdown();
-    xSGShutdown();
-    xSerialShutdown();
-    xUtilShutdown();
-    iSystemExit();
+        fn_800443AC();
+    }
+    xUtil_idtag2string('BOOT', 0);
+    iShadowInit();
+    zEntPlayer_InitCutsceneModelHack();
+    xMemPushBase();
+    xUtil_idtag2string('MNU4', 0);
+    xSTPreLoadScene('MNU4', NULL);
+    xUtil_idtag2string('MNU4', 0);
+    xSTQueueSceneAssets('MNU4');
+    xUtil_idtag2string('MNU4', 0);
+    while (xSTLoadStep('MNU4') < 1.0f)
+    {
+        fn_80016600();
+        fn_800443AC();
+    }
+    xUtil_idtag2string('MNU4', 0);
+
+    static U32 menuModeID = 'MNU3';
+    static U32 gameSceneID = (globals.sceneStart[0] << 24) | (globals.sceneStart[1] << 16) |
+                             (globals.sceneStart[2] << 8) | globals.sceneStart[3];
+    U32 newGameSceneID = gameSceneID;
+    xUtil_idtag2string(gameSceneID, 0);
+    xMemPushBase();
+    for (;;)
+    {
+        xSerialWipeMainBuffer();
+        zSceneStats_Clear();
+        zCutSceneNamesTable_clearAll();
+        zEntPickupResetWarps();
+        if (sShowMenuOnBoot)
+        {
+            zMenuInit(menuModeID);
+            zMenuSetup();
+            newGameSceneID = zMenuLoop();
+            zMenuExit();
+        }
+        else
+        {
+            sShowMenuOnBoot = 1;
+            zGameModeSwitch(eGameMode_Game);
+            zGameStateSwitch(0);
+        }
+        if (!newGameSceneID)
+        {
+            zVarNewGame();
+            iTimeSetGame(0.0f);
+            gameSceneID = (globals.sceneStart[0] << 24) | (globals.sceneStart[1] << 16) |
+                          (globals.sceneStart[2] << 8) | globals.sceneStart[3];
+        }
+        else
+        {
+            gameSceneID = newGameSceneID;
+            iTimeSetGame(0.0f);
+        }
+        zGameInit(gameSceneID);
+        zGameSetup();
+        iProfileClear(gameSceneID);
+        zGameLoop();
+        zGameExit();
+    }
 }

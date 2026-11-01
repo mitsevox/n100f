@@ -26,40 +26,19 @@ struct TexDictionaryStreamData
 extern RwPluginRegistry textureTKList;
 extern RwPluginRegistry texDictTKList;
 
-S32 _rwStringStreamGetSize(const char* string)
-{
-    if (!string)
-    {
-        string = "";
-    }
-
-    return (rwstrlen(string) + 1 + 3) & ~3;
-}
-
-const char* _rwStringStreamWrite(const char* string, RwStream* stream)
-{
-    S32 size;
-
-    if (!string)
-    {
-        string = "";
-    }
-
-    size = _rwStringStreamGetSize(string);
-
-    if (!_rwStreamWriteVersionedChunkHeader(stream, rwID_STRING, size, rwLIBRARYCURRENTVERSION,
-                                            LIBRARY_BUILDNUM))
-    {
-        return NULL;
-    }
-
-    if (!RwStreamWrite(stream, string, size))
-    {
-        return NULL;
-    }
-
-    return string;
-}
+S32 _rwStringStreamGetSize(const char* string);
+const char* _rwStringStreamWrite(const char* string, RwStream* stream);
+static char* StringStreamRead(char* nativeString, RwStream* stream, U32 length);
+static char* UnicodeStringStreamRead(char* nativeString, RwStream* stream, U32 length);
+char* _rwStringStreamFindAndRead(char* string, RwStream* stream);
+U32 RwTextureStreamGetSize(const RwTexture* texture);
+const RwTexture* RwTextureStreamWrite(const RwTexture* texture, RwStream* stream);
+S32 RwTextureRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                  RwPluginDataChunkWriteCallBack writeCB,
+                                  RwPluginDataChunkGetSizeCallBack getSizeCB);
+RwTexture* RwTextureStreamRead(RwStream* stream);
+static RwTexture* destroyTexture(RwTexture* texture, void* data);
+RwTexDictionary* RwTexDictionaryStreamRead(RwStream* stream);
 
 static char* StringStreamRead(char* nativeString, RwStream* stream, U32 length)
 {
@@ -171,6 +150,41 @@ static char* UnicodeStringStreamRead(char* nativeString, RwStream* stream, U32 l
     return nativeString;
 }
 
+S32 _rwStringStreamGetSize(const char* string)
+{
+    if (!string)
+    {
+        string = "";
+    }
+
+    return (rwstrlen(string) + 1 + 3) & ~3;
+}
+
+const char* _rwStringStreamWrite(const char* string, RwStream* stream)
+{
+    S32 size;
+
+    if (!string)
+    {
+        string = "";
+    }
+
+    size = _rwStringStreamGetSize(string);
+
+    if (!_rwStreamWriteVersionedChunkHeader(stream, rwID_STRING, size, rwLIBRARYCURRENTVERSION,
+                                            LIBRARY_BUILDNUM))
+    {
+        return NULL;
+    }
+
+    if (!RwStreamWrite(stream, string, size))
+    {
+        return NULL;
+    }
+
+    return string;
+}
+
 char* _rwStringStreamFindAndRead(char* string, RwStream* stream)
 {
     U32 type;
@@ -213,6 +227,14 @@ char* _rwStringStreamFindAndRead(char* string, RwStream* stream)
     }
 
     return NULL;
+}
+
+S32 RwTextureRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                  RwPluginDataChunkWriteCallBack writeCB,
+                                  RwPluginDataChunkGetSizeCallBack getSizeCB)
+{
+    return _rwPluginRegistryAddPluginStream(&textureTKList, pluginID, readCB, writeCB,
+                                            getSizeCB);
 }
 
 U32 RwTextureStreamGetSize(const RwTexture* texture)
@@ -277,14 +299,6 @@ const RwTexture* RwTextureStreamWrite(const RwTexture* texture, RwStream* stream
     }
 
     return texture;
-}
-
-S32 RwTextureRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
-                                  RwPluginDataChunkWriteCallBack writeCB,
-                                  RwPluginDataChunkGetSizeCallBack getSizeCB)
-{
-    return _rwPluginRegistryAddPluginStream(&textureTKList, pluginID, readCB, writeCB,
-                                            getSizeCB);
 }
 
 RwTexture* RwTextureStreamRead(RwStream* stream)

@@ -44,6 +44,111 @@ static RpAtomic* NextAtomicCallback(RpAtomic* atomic, void* data);
 
 static RpAtomic* FindAtomicCallback(RpAtomic* atomic, void* data);
 
+void iModelInit();
+static RpAtomic* FindAtomicCallback(RpAtomic* atomic, void* data);
+RpAtomic* iModelFileNew(void* buffer, U32 size);
+static RpAtomic* iModelStreamRead(RwStream* stream);
+void iModelUnload(RpAtomic* userdata);
+static RpAtomic* NextAtomicCallback(RpAtomic* atomic, void* data);
+RpAtomic* iModelFile_RWMultiAtomic(RpAtomic* model);
+U32 iModelNumBones(RpAtomic* model);
+void iModelAnimMatrices(RpAtomic* model, xQuat* quat, xVec3* tran, RwMatrix* mat);
+void iModelQuatToMat(xQuat* quat, xVec3* tran, RwMatrix* mat);
+void iModelRender(RpAtomic* model, RwMatrix* mat);
+S32 iModelCull(RpAtomic* model, RwMatrix* mat);
+U32 iModelVertCount(RpAtomic* model);
+U32 iModelVertEval(RpAtomic* model, U32 index, U32 count, RwMatrix* mat, xVec3* vert, xVec3* dest);
+static U32 iModelTagInternal(iModelTag* tag, RpAtomic* model, F32 x, F32 y, F32 z, S32 closeV);
+U32 iModelTagIndex(iModelTag* tag, RpAtomic* model, S32 v);
+U32 iModelTagSetup(iModelTag* tag, RpAtomic* model, F32 x, F32 y, F32 z);
+void iModelTagEval(RpAtomic* model, iModelTag* tag, RwMatrix* mat, xVec3* dest);
+static inline void SkinXform(xVec3* dest, const xVec3* vert, RwMatrix* mat, const RwMatrix* skinmat,
+                             const F32* wt, const U32* idx, U32 count);
+static inline RpHAnimHierarchy* GetHierarchy(RpAtomic* model);
+static RwFrame* GetChildFrameHierarchy(RwFrame* frame, void* data);
+
+static inline void SkinXform(xVec3* dest, const xVec3* vert, RwMatrix* mat, const RwMatrix* skinmat,
+                             const F32* wt, const U32* idx, U32 count)
+{
+    U32 catMatFlags[2] = { 0, 0 };
+    RwMatrix* catmat = (RwMatrix*)giAnimScratch;
+    RwMatrix* rootmat = mat;
+    mat++;
+
+    while (count != 0)
+    {
+        for (U32 i = 0; i < 4; i++)
+        {
+            U32 midx = (*idx >> (i << 3)) & 0xFF;
+            U32 bit = 1 << (midx & 0x1F);
+            if (!(bit & catMatFlags[midx >> 5]))
+            {
+                xMat4x3Mul((xMat4x3*)(catmat + midx), (const xMat4x3*)(skinmat + midx),
+                           (const xMat4x3*)(mat + midx));
+                catMatFlags[midx >> 5] |= bit;
+            }
+        }
+
+        xVec3 accumV;
+        accumV.x = accumV.y = accumV.z = 0.0f;
+
+        RwMatrix* pMatrix;
+        const F32* fwt = wt;
+        U32 wtidx = *idx;
+        U32 maxwt = 4;
+
+        while (*fwt && maxwt)
+        {
+            pMatrix = catmat + (wtidx & 0xFF);
+
+            accumV.x += *fwt * (pMatrix->right.x * vert->x + pMatrix->up.x * vert->y +
+                                pMatrix->at.x * vert->z + pMatrix->pos.x);
+            accumV.y += *fwt * (pMatrix->right.y * vert->x + pMatrix->up.y * vert->y +
+                                pMatrix->at.y * vert->z + pMatrix->pos.y);
+            accumV.z += *fwt * (pMatrix->right.z * vert->x + pMatrix->up.z * vert->y +
+                                pMatrix->at.z * vert->z + pMatrix->pos.z);
+
+            wtidx >>= 8;
+            fwt++;
+            maxwt--;
+        }
+
+        dest->x = rootmat->right.x * accumV.x + rootmat->up.x * accumV.y +
+                  rootmat->at.x * accumV.z + rootmat->pos.x;
+        dest->y = rootmat->right.y * accumV.x + rootmat->up.y * accumV.y +
+                  rootmat->at.y * accumV.z + rootmat->pos.y;
+        dest->z = rootmat->right.z * accumV.x + rootmat->up.z * accumV.y +
+                  rootmat->at.z * accumV.z + rootmat->pos.z;
+
+        vert++;
+        idx++;
+        wt += 4;
+        count--;
+        dest++;
+    }
+}
+
+static inline RpHAnimHierarchy* GetHierarchy(RpAtomic* model)
+{
+    RpHAnimHierarchy* hierarchy = NULL;
+    GetChildFrameHierarchy(RpAtomicGetFrame(model), &hierarchy);
+    return hierarchy;
+}
+
+static RwFrame* GetChildFrameHierarchy(RwFrame* frame, void* data)
+{
+    RpHAnimHierarchy* hierarchy = RpHAnimFrameGetHierarchy(frame);
+
+    if (hierarchy == NULL)
+    {
+        RwFrameForAllChildren(frame, GetChildFrameHierarchy, data);
+        return frame;
+    }
+
+    *(RpHAnimHierarchy**)data = hierarchy;
+    return NULL;
+}
+
 void iModelInit()
 {
 }
@@ -424,86 +529,4 @@ void iModelTagEval(RpAtomic* model, iModelTag* tag, RwMatrix* mat, xVec3* dest)
     {
         RwV3dTransformPoints((RwV3d*)dest, (RwV3d*)&tag->v, 1, mat);
     }
-}
-
-static inline void SkinXform(xVec3* dest, const xVec3* vert, RwMatrix* mat, const RwMatrix* skinmat,
-                             const F32* wt, const U32* idx, U32 count)
-{
-    U32 catMatFlags[2] = { 0, 0 };
-    RwMatrix* catmat = (RwMatrix*)giAnimScratch;
-    RwMatrix* rootmat = mat;
-    mat++;
-
-    while (count != 0)
-    {
-        for (U32 i = 0; i < 4; i++)
-        {
-            U32 midx = (*idx >> (i << 3)) & 0xFF;
-            U32 bit = 1 << (midx & 0x1F);
-            if (!(bit & catMatFlags[midx >> 5]))
-            {
-                xMat4x3Mul((xMat4x3*)(catmat + midx), (const xMat4x3*)(skinmat + midx),
-                           (const xMat4x3*)(mat + midx));
-                catMatFlags[midx >> 5] |= bit;
-            }
-        }
-
-        xVec3 accumV;
-        accumV.x = accumV.y = accumV.z = 0.0f;
-
-        RwMatrix* pMatrix;
-        const F32* fwt = wt;
-        U32 wtidx = *idx;
-        U32 maxwt = 4;
-
-        while (*fwt && maxwt)
-        {
-            pMatrix = catmat + (wtidx & 0xFF);
-
-            accumV.x += *fwt * (pMatrix->right.x * vert->x + pMatrix->up.x * vert->y +
-                                pMatrix->at.x * vert->z + pMatrix->pos.x);
-            accumV.y += *fwt * (pMatrix->right.y * vert->x + pMatrix->up.y * vert->y +
-                                pMatrix->at.y * vert->z + pMatrix->pos.y);
-            accumV.z += *fwt * (pMatrix->right.z * vert->x + pMatrix->up.z * vert->y +
-                                pMatrix->at.z * vert->z + pMatrix->pos.z);
-
-            wtidx >>= 8;
-            fwt++;
-            maxwt--;
-        }
-
-        dest->x = rootmat->right.x * accumV.x + rootmat->up.x * accumV.y +
-                  rootmat->at.x * accumV.z + rootmat->pos.x;
-        dest->y = rootmat->right.y * accumV.x + rootmat->up.y * accumV.y +
-                  rootmat->at.y * accumV.z + rootmat->pos.y;
-        dest->z = rootmat->right.z * accumV.x + rootmat->up.z * accumV.y +
-                  rootmat->at.z * accumV.z + rootmat->pos.z;
-
-        vert++;
-        idx++;
-        wt += 4;
-        count--;
-        dest++;
-    }
-}
-
-static inline RpHAnimHierarchy* GetHierarchy(RpAtomic* model)
-{
-    RpHAnimHierarchy* hierarchy = NULL;
-    GetChildFrameHierarchy(RpAtomicGetFrame(model), &hierarchy);
-    return hierarchy;
-}
-
-static RwFrame* GetChildFrameHierarchy(RwFrame* frame, void* data)
-{
-    RpHAnimHierarchy* hierarchy = RpHAnimFrameGetHierarchy(frame);
-
-    if (hierarchy == NULL)
-    {
-        RwFrameForAllChildren(frame, GetChildFrameHierarchy, data);
-        return frame;
-    }
-
-    *(RpHAnimHierarchy**)data = hierarchy;
-    return NULL;
 }
