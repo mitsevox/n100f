@@ -348,8 +348,7 @@ static zSceneObjectInstanceDesc sInitTable[34] = {
     { NULL, 0, 0, 0x0, NULL, NULL },
 };
 
-// Entity ids kept as named constants. Read through the float slot, they cannot be folded into the
-// table's static data, so the startup code copies them in (the 0 placeholders in .data).
+// Entity ids that the render-distance table refers to by bit pattern.
 static const union
 {
     U32 u;
@@ -358,10 +357,8 @@ static const union
   sRefID_FFF2B7A4 = { 0xFFF2B7A4 },
   sRefID_FFF2B7AA = { 0xFFF2B7AA };
 
-// GC-only; the PS2 build has no counterpart. The scene ids come from zSceneIDFromName, which is
-// not a constant expression, so the startup code fills that column in. The float column carries
-// either a distance or, for mode 2, an entity id by bit pattern, written as the float literal with
-// the same bits (the table reads like tool output).
+// Per-scene draw-distance overrides for see-through entities. The fourth column is a distance,
+// or for mode 2 the id of the entity to measure from, stored by bit pattern.
 static zSceneRenderDist lbl_801C82A0[66] = {
     { zSceneIDFromName("b004"), 0x3A93B8D5, 1, 1000.0f, 0.0f },
     { zSceneIDFromName("f001"), 0x2AA813E6, 1, 10000.0f, 0.0f },
@@ -1988,9 +1985,7 @@ static void zShadowReceivers()
 // Draws one frame of the scene: the environment, the opaque entities, then the
 // see-through ones sorted by their distance from the camera, the effects, the HUD and
 // the UI. In the intro the memory card warning is drawn over everything.
-// GC-only: billboard sprites at fixed points in four rooms. The PS2 build has no such locals in
-// zSceneRender, and the point tables precede zSceneRender's own initializer templates in
-// .rodata, so this is a separate function inlined into it.
+// Draws billboard sprites at fixed points in four rooms.
 static inline void zSceneRenderBillboards()
 {
     if (globals.sceneCur->sceneID == zSceneIDFromName("b003"))
@@ -2371,8 +2366,6 @@ void zSceneRender()
     }
 }
 
-// The PS2 build places these between zSceneFindObject and zSceneRender, after zSceneUpdate, so
-// scobj_idbps follows zSceneUpdate's local statics in .sbss.
 static IDBasePair* scobj_idbps;
 
 // Open addressing on the low bits of the id; scobj_size is a power of two and an
