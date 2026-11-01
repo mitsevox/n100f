@@ -3,7 +3,7 @@
 
 #include "iColor.h"
 
-// The debug colors xColor.cpp defines in .sdata2 (names and order from the SLUS-20349 DWARF).
+// The named colors xColor.cpp defines in .sdata2 (names and order from the SLUS-20349 DWARF).
 extern const iColor_tag g_BLACK;
 extern const iColor_tag g_NEON_RED;
 extern const iColor_tag g_NEON_GREEN;

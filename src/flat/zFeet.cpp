@@ -331,9 +331,9 @@ static inline void zFeetAddSteps(xAnimTable* table, char* name, tagzFeet* feet, 
     }
 }
 
-// Hook the footstep callbacks into the walk, run and land animations. The player (ent_type -1)
-// has four feet and one timing set per subtype; the villains with footsteps have two feet
-// stepping in their Move and Chase states.
+// Hook the footstep callbacks into the walk, run, land and other movement animations. The player
+// (ent_type -1) has one timing set per subtype, with four feet in most of them; the villains with
+// footsteps have two feet stepping in their Move and Chase states.
 void zFeetInit(S32 ent_type, _xEnt* owner, tagzFeet* feet, S32 feet_subtype, xAnimTable* table)
 {
     F32 step_time[6];
@@ -483,8 +483,7 @@ void zFeetInit(S32 ent_type, _xEnt* owner, tagzFeet* feet, S32 feet_subtype, xAn
             step_time[1] = 0.9f;
             zFeetAddSteps(table, "Chase", feet, tag_idx, step_time, zFeetStepVillainCB);
             break;
-        // The target's jump table spans types 0 to 48, so the switch had cases there that
-        // add nothing; which other types it listed is unknown.
+        // Villain types without footsteps.
         case eEntVillainTypeBat:
         case eEntVillainGroundsKeeper:
             break;
