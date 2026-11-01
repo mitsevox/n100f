@@ -9,20 +9,18 @@
 
 void iPadStartRumble(_tagxPad* pad, _tagxRumble* rumble);
 
-// iPad.cpp has no source yet; these are its rumble effect step and its pad read.
-// zScene.cpp
+// Two zScene.cpp functions without source yet: a scene flag that turns the menu stick-as-d-pad
+// mode off, and the condition under which the first pad swaps two buttons.
 #if VERSION_GIHE78_REV0
-#define PAD_RUMBLE_STEP fn_800CD24C
+#define SCENE_PAD_DPAD_OFF fn_800CD24C
 #define PAD_SWAP_BUTTONS fn_800CD170
 #elif VERSION_GIHE78_REV1
-#define PAD_RUMBLE_STEP fn_800CCE40
+#define SCENE_PAD_DPAD_OFF fn_800CCE40
 #define PAD_SWAP_BUTTONS fn_800CCD64
 #endif
-extern "C" U32 PAD_RUMBLE_STEP();
+extern "C" U32 SCENE_PAD_DPAD_OFF();
 extern "C" S32 PAD_SWAP_BUTTONS();
 
-// mPad (0x80200008) lies outside this unit's .bss range: gc/iFMV.cpp, which the split tool does
-// not write, loads it too, so the range ends before it and the array is defined there.
 extern _tagxPad mPad[4];
 static _tagxRumble mRumbleList[32];
 _tagxPad* gDebugPad;
@@ -122,7 +120,7 @@ S32 xPadUpdate(S32 idx, F32 time_passed)
         return 0;
     }
 
-    if (PAD_RUMBLE_STEP())
+    if (SCENE_PAD_DPAD_OFF())
     {
         xPadAnalogIsDigital(idx, 0);
     }
@@ -301,7 +299,8 @@ void xPadKill()
     iPadKill();
 }
 
-// Stops the motor and frees every queued rumble of the pad.
+// Stops the motor and empties the pad's rumble queue. The memset clears each node's next before
+// it is read, so only the first queued node is zeroed.
 void xPadDestroyRumbleChain(_tagxPad* pad)
 {
     iPadStopRumble(pad);
