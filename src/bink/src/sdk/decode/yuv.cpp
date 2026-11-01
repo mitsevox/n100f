@@ -638,15 +638,7 @@ void YUV_init(S32 layout)
         {
             S32 c;
 
-            if (i > 16)
-            {
-                if (i <= 234)
-                    ytable[i] = ((i - 16) * 38154) / 32768;
-                else
-                    ytable[i] = 254;
-            }
-            else
-                ytable[i] = 0;
+            ytable[i] = (i > 16) ? ((i <= 234) ? ((i - 16) * 38154) / 32768 : 254) : 0;
             ytable_x4[i] = ytable[i] << 2;
             c = i - 128;
             YUVTables[1][i] = -((c * 26639) / 32768);
@@ -667,11 +659,20 @@ void YUV_init(S32 layout)
 
     if (rgb_layout != layout && layout != -1)
     {
-        S32 rbits, gbits, bbits;
-        S32 rshift, gshift, bshift;
-        S32 rr, gr, br;
-        U32 white, white2;
-        U32 rmax, gmax, bmax;
+        S32 rbits;
+        S32 gbits;
+        S32 bbits;
+        S32 rshift;
+        S32 gshift;
+        S32 bshift;
+        S32 rr;
+        S32 gr;
+        S32 br;
+        U32 white;
+        U32 white2;
+        U32 rmax;
+        U32 gmax;
+        U32 bmax;
 
         rgb_layout = layout;
         switch (layout)
