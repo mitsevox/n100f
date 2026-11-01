@@ -31,16 +31,19 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
     if (!(trig->baseFlags & 1))
         return;
 
-    p2LinkAsset* link = trig->link;
-    p2EntTriggerAsset* tasset = (p2EntTriggerAsset*)(trig->asset + 1);
-    for (U32 i = 0; i < trig->linkCount; ++i, ++link)
+    U32 i;
+    p2LinkAsset* link;
+    p2EntTriggerAsset* tasset;
+    link = trig->link;
+    tasset = (p2EntTriggerAsset*)(trig->asset + 1);
+    for (i = 0; i < trig->linkCount; ++link, ++i)
     {
         if (!link->chkAssetID || link->srcEvent < 212 || link->srcEvent > 215)
             continue;
 
         S32 collide = 0;
-        _xEnt* checked = (_xEnt*)zSceneFindObject(link->chkAssetID);
-        if (checked)
+        _xEnt* checked;
+        if (link->chkAssetID && (checked = (_xEnt*)zSceneFindObject(link->chkAssetID)) != NULL)
         {
             xVec3* pos;
             if (checked->bound.type == 1)
@@ -91,6 +94,10 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 collide = isect.penned <= 0.0f;
                 break;
             }
+            case 4:
+                break;
+            case 5:
+                break;
             }
         }
 
@@ -99,9 +106,8 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
             if (link->srcEvent == 212)
             {
                 link->srcEvent = 214;
-                xBase* widget = zSceneFindObject(link->paramWidgetAssetID);
-                xBase* to = zSceneFindObject(link->dstAssetID);
-                zEntEvent(trig, 212, to, link->dstEvent, link->param, widget, 0);
+                zEntEvent(trig, 212, zSceneFindObject(link->dstAssetID), link->dstEvent, link->param,
+                          zSceneFindObject(link->paramWidgetAssetID), 0);
             }
             if (link->srcEvent == 213)
                 link->srcEvent = 215;
@@ -111,9 +117,8 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
             if (link->srcEvent == 215)
             {
                 link->srcEvent = 213;
-                xBase* widget = zSceneFindObject(link->paramWidgetAssetID);
-                xBase* to = zSceneFindObject(link->dstAssetID);
-                zEntEvent(trig, 213, to, link->dstEvent, link->param, widget, 0);
+                zEntEvent(trig, 213, zSceneFindObject(link->dstAssetID), link->dstEvent, link->param,
+                          zSceneFindObject(link->paramWidgetAssetID), 0);
             }
             if (link->srcEvent == 214)
                 link->srcEvent = 212;
