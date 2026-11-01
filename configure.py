@@ -589,7 +589,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zLightning.cpp"),
             Object(NonMatching, "flat/zLobMaster.cpp"),
             Object(NonMatching, "flat/zMain.cpp"),
-            Object(NonMatching, "flat/zMenu.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/zMenu.cpp"),
             Object(NonMatching, "flat/zMovePoint.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zMusic.cpp"),
             Object(NonMatching, "flat/zParCmd.cpp"),
