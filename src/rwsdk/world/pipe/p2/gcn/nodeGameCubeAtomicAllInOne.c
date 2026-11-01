@@ -17,7 +17,6 @@ extern RxNodeDefinition lbl_801DDA94;
 
 S32 _rwDlTokenQueryDone(U16 token);
 void _rxGCResEntryWaitDone(RwResEntry* resEntry);
-RpGameCubeVtxFmt* fn_8015D818(const RpGeometry* geometry);
 S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numTexCoords);
 U32 GCNDisplayListsGetSize(const RpMeshHeader* header, S32 numTexCoords, S32 indexSize, U32 flags);
 void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* header,
@@ -25,7 +24,6 @@ void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* 
 void _rwDlGeometryInstanceFast(RpGeometry* geom, GCNVertexArrays* arrays,
                                const RpGameCubeVtxFmt* vtxFmt, U32 flags, U8 numTexCoords,
                                U8* dst);
-RpAtomic* fn_80158FB0(RpAtomic* atomic, GCNObjectData* objectData);
 
 // Draw sync tokens wrap at this value; the geometry flag that keeps the entry out of the resource
 // arena; the lock bits of the attributes. Written for this project.

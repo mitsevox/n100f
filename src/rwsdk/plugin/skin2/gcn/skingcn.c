@@ -10,10 +10,8 @@
 // The draw sync token to issue next.
 extern U16 lbl_8025E800;
 
-// The all-in-one node's reinstance callback before the skin pipeline replaced it. The callback
-// type is written for this project.
-typedef RpAtomic* (*SkinReinstanceCB)(RpAtomic* atomic, RwResEntry** entryRef);
-extern SkinReinstanceCB lbl_8025F6A8;
+// The all-in-one node's reinstance callback before the skin pipeline replaced it.
+extern GCNAllInOneCallBack lbl_8025F6A8;
 
 // Per vertex component type (u8, s8, u16, s16, f32): the GQR load type, the size of one
 // component, and the GQR scale for normals; and the size of a three-component vertex.
@@ -35,11 +33,6 @@ extern const SkinCompTable lbl_802628C0;
 extern const SkinVertexSizes lbl_801AD280;
 
 S32 _rwDlTokenQueryDone(U16 token);
-RpGameCubeVtxFmt* fn_8015D818(const RpGeometry* geometry);
-void RxGameCubeAllInOneSetRenderCallBack(RxPipelineNode* node, void* callback);
-void _rxGameCubeAllInOneSetInstanceCallBack(RxPipelineNode* node, void* callback);
-void* _rxGameCubeAllInOneGetReinstanceCallBack(RxPipelineNode* node);
-void _rxGameCubeAllInOneSetReinstanceCallBack(RxPipelineNode* node, void* callback);
 
 // Draw sync tokens wrap at this value. Written for this project.
 #define SKINGCN_TOKENWRAP 0xE000
@@ -454,11 +447,11 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
 
 // The skin pipeline's reinstance callback: reinstance the original arrays when needed, build the
 // bone matrices for this frame and blend the skinned arrays from them.
-RpAtomic* fn_80145598(RpAtomic* atomic, RwResEntry** entryRef)
+RpAtomic* fn_80145598(RpAtomic* atomic, GCNObjectData* objectData)
 {
     RpGeometry* geometry = atomic->geometry;
     RpSkin* skin = SKINGEOMETRYGETDATA(geometry);
-    GCNVertexArrays* arrays = (GCNVertexArrays*)(*entryRef + 1);
+    GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
     RpHAnimHierarchy* hierarchy;
     RwMatrix* ltm;
     const RwMatrix* skinToBone;
@@ -478,7 +471,7 @@ RpAtomic* fn_80145598(RpAtomic* atomic, RwResEntry** entryRef)
     {
         if (!(geometry->flags & rpGEOMETRYNATIVE))
         {
-            lbl_8025F6A8(atomic, entryRef);
+            lbl_8025F6A8(atomic, objectData);
         }
 
         skin->savedPos = arrays->pos;
@@ -493,12 +486,12 @@ RpAtomic* fn_80145598(RpAtomic* atomic, RwResEntry** entryRef)
 
         arrays->pos = skin->savedPos;
         arrays->nrm = skin->savedNrm;
-        lbl_8025F6A8(atomic, entryRef);
+        lbl_8025F6A8(atomic, objectData);
         arrays->pos = pos;
         arrays->nrm = nrm;
     }
 
-    if (!fn_80145228(skin, atomic, arrays, entryRef))
+    if (!fn_80145228(skin, atomic, arrays, &objectData->repEntry))
     {
         return NULL;
     }
@@ -661,7 +654,7 @@ RxPipeline* _rpSkinPipelineCreate(RpSkinType type, void* instanceCB, void* reins
 
     if (reinstanceCB)
     {
-        lbl_8025F6A8 = (SkinReinstanceCB)_rxGameCubeAllInOneGetReinstanceCallBack(node);
+        lbl_8025F6A8 = (GCNAllInOneCallBack)_rxGameCubeAllInOneGetReinstanceCallBack(node);
         _rxGameCubeAllInOneSetReinstanceCallBack(node, reinstanceCB);
     }
 

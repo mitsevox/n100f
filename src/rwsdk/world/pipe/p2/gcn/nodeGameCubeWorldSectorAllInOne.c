@@ -14,7 +14,6 @@ extern U16 lbl_8025F890;
 extern RxNodeDefinition lbl_801DDAFC;
 
 void _rxGCResEntryWaitDone(RwResEntry* resEntry);
-RpGameCubeVtxFmt* fn_8015D824(const RpWorld* world);
 S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numTexCoords);
 U32 GCNDisplayListsGetSize(const RpMeshHeader* header, S32 numTexCoords, S32 indexSize, U32 flags);
 void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* header,
@@ -22,7 +21,6 @@ void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* 
 void _rwDlWorldSectorInstanceFast(RpWorldSector* sector, GCNVertexArrays* arrays,
                                   const RpGameCubeVtxFmt* vtxFmt, U32 flags, U8 numTexCoords,
                                   U8* dst);
-RpWorldSector* fn_80158FB0(RpWorldSector* sector, GCNObjectData* objectData);
 
 // The world flag that keeps the entry out of the resource arena. Written for this project.
 #define ALLINONE_WORLDOWNENTRY 0x02000000

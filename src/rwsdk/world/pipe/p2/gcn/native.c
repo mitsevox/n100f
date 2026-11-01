@@ -11,8 +11,6 @@ extern U16 lbl_8025E800;
 
 void _rxGCResEntryWaitDone(RwResEntry* resEntry);
 RpGameCubeVtxFmt* _rpGameCubeVtxFmtGetDefault(void);
-RpGameCubeVtxFmt* fn_8015D818(const RpGeometry* geometry);
-RpGameCubeVtxFmt* fn_8015D824(const RpWorld* world);
 
 S32 _rpGeometryNativeSize(const RpGeometry* geometry);
 RwStream* _rpGeometryNativeWrite(RwStream* stream, const RpGeometry* geometry);

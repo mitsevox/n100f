@@ -36,17 +36,10 @@ extern GCNMTInstanceCB lbl_8025F690;
 extern GCNMTInstanceCB lbl_8025F694;
 
 S32 _rwDlTokenQueryDone(U16 token);
-RpGameCubeVtxFmt* fn_8015D818(const RpGeometry* geometry);
-RpGameCubeVtxFmt* fn_8015D824(const RpWorld* world);
 RpGameCubeVtxFmt* RpGameCubeVtxFmtCreate(void);
 void RpGameCubeVtxFmtDestroy(RpGameCubeVtxFmt* vtxFmt);
 void RpGameCubeVtxFmtSetNormal(RpGameCubeVtxFmt* vtxFmt, U8 compType, U8 frac);
 void RpGameCubeGeometrySetVtxFmt(RpGeometry* geometry, RpGameCubeVtxFmt* vtxFmt);
-void RxGameCubeAllInOneSetRenderCallBack(RxPipelineNode* node, void* callback);
-void _rxGameCubeAllInOneSetInstanceCallBack(RxPipelineNode* node, void* callback);
-void* _rxGameCubeAllInOneGetInstanceCallBack(RxPipelineNode* node);
-void _rxGameCubeAllInOneSetReinstanceCallBack(RxPipelineNode* node, void* callback);
-void* _rxGameCubeAllInOneGetReinstanceCallBack(RxPipelineNode* node);
 RxNodeDefinition* RxNodeDefinitionGetGameCubeWorldSectorAllInOne(void);
 void _rwDlVtxFmtSetup(RpGameCubeVtxFmt* vtxFmt, GCNObjectData* objectData);
 void _rwDlTransformSetup(const RwMatrix* matrix, S32 normals);

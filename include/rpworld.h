@@ -618,6 +618,23 @@ struct GCNObjectData
 };
 
 void _rwGCLightsGlobalEnable(U8 flags, GCNObjectData* data);
+
+// The all-in-one node's callbacks take the atomic or world sector and its object data. The type
+// name is written for this project.
+typedef void* (*GCNAllInOneCallBack)(void* object, GCNObjectData* objectData);
+
+// The default render callback, shared by the atomic and world sector nodes.
+void* fn_80158FB0(void* object, GCNObjectData* objectData);
+
+// The vertex format of a geometry and of a world.
+RpGameCubeVtxFmt* fn_8015D818(const RpGeometry* geometry);
+RpGameCubeVtxFmt* fn_8015D824(const RpWorld* world);
+
+void RxGameCubeAllInOneSetRenderCallBack(RxPipelineNode* node, void* callback);
+void _rxGameCubeAllInOneSetInstanceCallBack(RxPipelineNode* node, void* callback);
+void* _rxGameCubeAllInOneGetInstanceCallBack(RxPipelineNode* node);
+void _rxGameCubeAllInOneSetReinstanceCallBack(RxPipelineNode* node, void* callback);
+void* _rxGameCubeAllInOneGetReinstanceCallBack(RxPipelineNode* node);
 void _rwGCLightsLocalEnable(RpLight* light, GCNObjectData* data);
 
 S32 _rwGCNVtxFmtInstPos3D(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* src,
