@@ -81,8 +81,6 @@ static char cardwork[ISG_NUM_SLOTS][0xA000];
 
 static void iSG_cb_asyndone(s32, s32);
 
-// Prototypes: the functions are defined in reverse of their address order (deferred
-// generation emits them last-defined first).
 static S32 iSG_mc_fwrite(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len);
 static S32 iSG_mc_fread(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len, S32 offset);
 static void iSG_cb_asyndone(s32, s32);
