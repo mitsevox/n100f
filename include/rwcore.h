@@ -165,6 +165,15 @@ struct RwRaster
     S32 originalStride;
 };
 
+typedef struct RwRect RwRect;
+struct RwRect
+{
+    S32 x;
+    S32 y;
+    S32 w;
+    S32 h;
+};
+
 typedef union RwSplitBits RwSplitBits;
 union RwSplitBits
 {
