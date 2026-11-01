@@ -40,7 +40,6 @@ void __init_user(void);
 int main(int argc, char* argv[]);
 void exit(int status);
 
-// Linkage as bfbb d8e8eac config/GQPE78/symbols.txt records it: __start weak, its helpers local.
 __declspec(section ".init") static void __check_pad3(void);
 __declspec(weak) __declspec(section ".init") void __start(void);
 __declspec(section ".init") static void __init_registers(void);
