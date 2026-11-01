@@ -1,5 +1,28 @@
 #include <rwcore.h>
+#include <rwdlgcn.h>
 #include <string.h>
+
+// The palette quantizer's state, as palquant.c defines it.
+typedef struct PalQuant PalQuant;
+struct PalQuant
+{
+    void* boxes;
+    F32* variances;
+    void* root;
+    RwFreeList* nodeFreeList;
+};
+
+S32 _rwPalQuantInit(PalQuant* pq);
+void _rwPalQuantTerm(PalQuant* pq);
+void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight);
+S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq);
+void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPacked,
+                           PalQuant* pq, RwImage* img);
+
+S32 fn_8017995C(RwRaster* raster, S32 flags);
+
+// The largest raster side GX textures allow. Written for this project.
+#define DLCONVRT_MAXSIZE 1024
 
 S32 _rwDlFindMSB(S32 num)
 {
@@ -203,11 +226,354 @@ S32 _rwDlPixelToRGB(RwRGBA* rgba, const U32* pixelIn, S32 format)
     return TRUE;
 }
 
-S32 _rwDlImage4GetFromRaster(RwImage* image, RwRaster* raster);
-S32 _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster);
-S32 _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster);
 void _rwDlRasterPalletized4SetFromImage(RwRaster* raster, RwImage* image);
 void _rwDlRasterPalletized8SetFromImage(RwRaster* raster, RwImage* image);
+
+// Reads a 4-bit palettized raster into a 4-bit image: converts the raster's 16 palette entries
+// and unpacks its two pixels a byte. Deeper rasters cannot be read into a 4-bit image.
+void _rwDlImage4GetFromRaster(RwImage* image, RwRaster* raster)
+{
+    void (*convert)(RwRGBA*, U32) = NULL;
+    S32 i;
+    S32 y;
+    S32 x;
+
+    switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
+    {
+    case rwRASTERFORMATLUM8:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(2, "rwRASTERFORMATLUM8 not yet supported");
+        RwErrorSet(&err);
+        break;
+    }
+    case rwRASTERFORMAT555:
+        convert = _rwDlConv555To8888;
+        break;
+    case rwRASTERFORMAT565:
+        convert = _rwDlConv565To8888;
+        break;
+    case rwRASTERFORMAT1555:
+        convert = _rwDlConv1555To8888;
+        break;
+    case rwRASTERFORMAT4444:
+        convert = _rwDlConv4444To8888;
+        break;
+    case rwRASTERFORMAT8888:
+        convert = _rwDlConvDl8888To8888;
+        break;
+    case rwRASTERFORMAT888:
+        convert = _rwDlConvDl888To8888;
+        break;
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000D);
+        RwErrorSet(&err);
+        break;
+    }
+    }
+
+    switch (raster->depth)
+    {
+    case 4:
+        for (i = 0; i < 16; i++)
+        {
+            convert(&image->palette[i], ((U16*)raster->palette)[i]);
+        }
+
+        for (y = 0; y < raster->height; y++)
+        {
+            U8* dst = image->cpPixels + image->stride * y;
+            U8* src = raster->cpPixels + raster->stride * y;
+
+            for (x = 0; x < raster->width; x += 2)
+            {
+                dst[0] = (*src >> 4) & 0xF;
+                dst[1] = *src & 0xF;
+                src++;
+                dst += 2;
+            }
+        }
+        break;
+    case 8:
+    case 16:
+    case 32:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode =
+            _rwerror(2, "Conversion from 8/16/32bit rasters to 4bit images is not supported");
+        RwErrorSet(&err);
+        break;
+    }
+    case 24:
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000C);
+        RwErrorSet(&err);
+        break;
+    }
+    }
+}
+
+// Reads a 4- or 8-bit palettized raster into an 8-bit image: converts the raster's palette and
+// copies (or, from 4 bits, unpacks) its pixels. 16- and 32-bit rasters cannot be read into an
+// 8-bit image.
+void _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster)
+{
+    void (*convert)(RwRGBA*, U32) = NULL;
+    S32 i;
+    S32 y;
+    S32 x;
+
+    switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
+    {
+    case rwRASTERFORMATLUM8:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(2, "rwRASTERFORMATLUM8 not yet supported");
+        RwErrorSet(&err);
+        break;
+    }
+    case rwRASTERFORMAT555:
+        convert = _rwDlConv555To8888;
+        break;
+    case rwRASTERFORMAT565:
+        convert = _rwDlConv565To8888;
+        break;
+    case rwRASTERFORMAT1555:
+        convert = _rwDlConv1555To8888;
+        break;
+    case rwRASTERFORMAT4444:
+        convert = _rwDlConv4444To8888;
+        break;
+    case rwRASTERFORMAT8888:
+        convert = _rwDlConvDl8888To8888;
+        break;
+    case rwRASTERFORMAT888:
+        convert = _rwDlConvDl888To8888;
+        break;
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000D);
+        RwErrorSet(&err);
+        break;
+    }
+    }
+
+    switch (raster->depth)
+    {
+    case 4:
+        for (i = 0; i < 16; i++)
+        {
+            convert(&image->palette[i], ((U16*)raster->palette)[i]);
+        }
+
+        for (y = 0; y < raster->height; y++)
+        {
+            U8* dst = image->cpPixels + image->stride * y;
+            U8* src = raster->cpPixels + raster->stride * y;
+
+            for (x = 0; x < raster->width; x += 2)
+            {
+                dst[0] = (*src >> 4) & 0xF;
+                dst[1] = *src & 0xF;
+                src++;
+                dst += 2;
+            }
+        }
+        break;
+    case 8:
+        for (i = 0; i < 256; i++)
+        {
+            convert(&image->palette[i], ((U16*)raster->palette)[i]);
+        }
+
+        for (y = 0; y < raster->height; y++)
+        {
+            U8* src = raster->cpPixels + raster->stride * y;
+            U8* dst = image->cpPixels + image->stride * y;
+
+            for (x = 0; x < raster->width; x++)
+            {
+                *dst = *src;
+                src++;
+                dst++;
+            }
+        }
+        break;
+    case 16:
+    case 32:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode =
+            _rwerror(2, "Conversion from 16/32bit rasters to 8bit images is not supported");
+        RwErrorSet(&err);
+        break;
+    }
+    case 24:
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000C);
+        RwErrorSet(&err);
+        break;
+    }
+    }
+}
+
+// Reads a raster into a 32-bit image: palettized rasters through their converted palette, 16- and
+// 32-bit rasters pixel by pixel. 24-bit rasters are not supported.
+void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
+{
+    void (*convert)(RwRGBA*, U32) = NULL;
+    S32 i;
+    S32 y;
+    S32 x;
+
+    switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
+    {
+    case rwRASTERFORMATLUM8:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(2, "rwRASTERFORMATLUM8 not yet supported");
+        RwErrorSet(&err);
+        break;
+    }
+    case rwRASTERFORMAT555:
+        convert = _rwDlConv555To8888;
+        break;
+    case rwRASTERFORMAT565:
+        convert = _rwDlConv565To8888;
+        break;
+    case rwRASTERFORMAT1555:
+        convert = _rwDlConv1555To8888;
+        break;
+    case rwRASTERFORMAT4444:
+        convert = _rwDlConv4444To8888;
+        break;
+    case rwRASTERFORMAT8888:
+        convert = _rwDlConvDl8888To8888;
+        break;
+    case rwRASTERFORMAT888:
+        convert = _rwDlConvDl888To8888;
+        break;
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000D);
+        RwErrorSet(&err);
+        break;
+    }
+    }
+
+    switch (raster->depth)
+    {
+    case 4:
+    {
+        RwRGBA palette[16];
+
+        for (i = 0; i < 16; i++)
+        {
+            convert(&palette[i], ((U16*)raster->palette)[i]);
+        }
+
+        for (y = 0; y < raster->height; y++)
+        {
+            RwRGBA* dst = (RwRGBA*)(image->cpPixels + image->stride * y);
+            U8* src = raster->cpPixels + raster->stride * y;
+
+            for (x = 0; x < raster->width; x += 2)
+            {
+                dst[0] = palette[*src >> 4];
+                dst[1] = palette[*src & 0xF];
+                src++;
+                dst += 2;
+            }
+        }
+        break;
+    }
+    case 8:
+    {
+        RwRGBA palette[256];
+
+        for (i = 0; i < 256; i++)
+        {
+            convert(&palette[i], ((U16*)raster->palette)[i]);
+        }
+
+        for (y = 0; y < raster->height; y++)
+        {
+            U8* src = raster->cpPixels + raster->stride * y;
+            RwRGBA* dst = (RwRGBA*)(image->cpPixels + image->stride * y);
+
+            for (x = 0; x < raster->width; x++)
+            {
+                *dst = palette[*src];
+                src++;
+                dst++;
+            }
+        }
+        break;
+    }
+    case 16:
+        for (y = 0; y < raster->height; y++)
+        {
+            U16* src = (U16*)(raster->cpPixels + raster->stride * y);
+            RwRGBA* dst = (RwRGBA*)(image->cpPixels + image->stride * y);
+
+            for (x = 0; x < raster->width; x++)
+            {
+                convert(dst, *src);
+                dst++;
+                src++;
+            }
+        }
+        break;
+    case 24:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000C);
+        RwErrorSet(&err);
+        break;
+    }
+    case 32:
+        for (y = 0; y < raster->height; y++)
+        {
+            U32* src = (U32*)(raster->cpPixels + raster->stride * y);
+            RwRGBA* dst = (RwRGBA*)(image->cpPixels + image->stride * y);
+
+            for (x = 0; x < raster->width; x++)
+            {
+                convert(dst, *src);
+                dst++;
+                src++;
+            }
+        }
+        break;
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000C);
+        RwErrorSet(&err);
+        break;
+    }
+    }
+}
 
 // Reads a raster into an image of the image's depth, locking the raster's pixels and palette for
 // reading if they are not locked already.
@@ -261,6 +627,241 @@ S32 _rwDlImageGetFromRaster(RwImage* image, RwRaster* raster)
     }
 
     return TRUE;
+}
+
+// Makes a palettized copy of a 32-bit image at the given depth, or returns NULL.
+static RwImage* ImagePalettize(RwImage* image, S32 depth)
+{
+    RwImage* palImage = RwImageCreate(image->width, image->height, depth);
+    PalQuant palQuant;
+
+    if (!palImage)
+    {
+        return NULL;
+    }
+
+    RwImageAllocatePixels(palImage);
+
+    if (!_rwPalQuantInit(&palQuant))
+    {
+        return NULL;
+    }
+
+    _rwPalQuantAddImage(&palQuant, image, 1.0f);
+    _rwPalQuantResolvePalette(palImage->palette, 1 << depth, &palQuant);
+    _rwPalQuantMatchImage(palImage->cpPixels, palImage->stride, palImage->depth, FALSE, &palQuant,
+                          image);
+    _rwPalQuantTerm(&palQuant);
+
+    return palImage;
+}
+
+// Writes an image into a 4-bit palettized raster: a 4-bit image's pixels are packed two to a
+// byte and its palette converted to the raster's format (unless a mipmap level is locked); a
+// deeper image is palettized first.
+void _rwDlRasterPalletized4SetFromImage(RwRaster* raster, RwImage* image)
+{
+    U32 (*convert)(const RwRGBA*) = NULL;
+    RwGCRasterExt* rasterExt = RWGCRASTEREXT(raster->parent);
+
+    switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
+    {
+    case rwRASTERFORMATLUM8:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(2, "rwRASTERFORMATLUM8 not yet supported");
+        RwErrorSet(&err);
+        break;
+    }
+    case rwRASTERFORMAT555:
+        convert = _rwDlConv8888To555;
+        break;
+    case rwRASTERFORMAT565:
+        convert = _rwDlConv8888To565;
+        break;
+    case rwRASTERFORMAT1555:
+    case rwRASTERFORMAT4444:
+        convert = _rwDlConv8888To555or3444;
+        break;
+    case rwRASTERFORMAT888:
+        convert = _rwDlConv8888ToDl888;
+        break;
+    case rwRASTERFORMAT8888:
+        convert = _rwDlConv8888ToDl8888;
+        break;
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000D);
+        RwErrorSet(&err);
+        break;
+    }
+    }
+
+    switch (image->depth)
+    {
+    case 4:
+    {
+        S32 y;
+        S32 x;
+        S32 i;
+
+        for (y = 0; y < raster->height; y++)
+        {
+            U8* src = image->cpPixels + image->stride * y;
+            U8* dst = raster->cpPixels + raster->stride * y;
+
+            for (x = 0; x < raster->width; x += 2)
+            {
+                *dst = ((src[0] << 4) & 0xF0) | (src[1] & 0x0F);
+                src += 2;
+                dst++;
+            }
+        }
+
+        if (rasterExt->lockedLevel == 0)
+        {
+            U16* palette = (U16*)raster->palette;
+
+            for (i = 0; i < 16; i++)
+            {
+                *palette = convert(&image->palette[i]);
+                palette++;
+            }
+        }
+
+        break;
+    }
+    case 8:
+    case 32:
+    {
+        RwImage* palImage = ImagePalettize(image, raster->depth);
+
+        if (palImage)
+        {
+            _rwDlRasterPalletized4SetFromImage(raster, palImage);
+            RwImageDestroy(palImage);
+            return;
+        }
+
+        break;
+    }
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x80000008);
+        RwErrorSet(&err);
+        break;
+    }
+    }
+}
+
+// Writes an image into an 8-bit palettized raster: a 4- or 8-bit image's pixels are copied and
+// its palette converted to the raster's format (unless a mipmap level is locked); a 32-bit image
+// is palettized first.
+void _rwDlRasterPalletized8SetFromImage(RwRaster* raster, RwImage* image)
+{
+    U32 (*convert)(const RwRGBA*) = NULL;
+
+    switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
+    {
+    case rwRASTERFORMATLUM8:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(2, "rwRASTERFORMATLUM8 not yet supported");
+        RwErrorSet(&err);
+        break;
+    }
+    case rwRASTERFORMAT555:
+        convert = _rwDlConv8888To555;
+        break;
+    case rwRASTERFORMAT565:
+        convert = _rwDlConv8888To565;
+        break;
+    case rwRASTERFORMAT1555:
+    case rwRASTERFORMAT4444:
+        convert = _rwDlConv8888To555or3444;
+        break;
+    case rwRASTERFORMAT888:
+        convert = _rwDlConv8888ToDl888;
+        break;
+    case rwRASTERFORMAT8888:
+        convert = _rwDlConv8888ToDl8888;
+        break;
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000D);
+        RwErrorSet(&err);
+        break;
+    }
+    }
+
+    switch (image->depth)
+    {
+    case 4:
+    case 8:
+    {
+        RwGCRasterExt* rasterExt;
+        S32 y;
+        S32 x;
+        S32 i;
+
+        for (y = 0; y < raster->height; y++)
+        {
+            U8* src = image->cpPixels + image->stride * y;
+            U8* dst = raster->cpPixels + raster->stride * y;
+
+            for (x = 0; x < raster->width; x++)
+            {
+                *dst = *src;
+                src++;
+                dst++;
+            }
+        }
+
+        rasterExt = RWGCRASTEREXT(raster->parent);
+
+        if (rasterExt->lockedLevel == 0)
+        {
+            U16* palette = (U16*)raster->palette;
+
+            for (i = 0; i < (1 << image->depth); i++)
+            {
+                *palette = convert(&image->palette[i]);
+                palette++;
+            }
+        }
+
+        break;
+    }
+    case 32:
+    {
+        RwImage* palImage = ImagePalettize(image, raster->depth);
+
+        if (palImage)
+        {
+            _rwDlRasterPalletized8SetFromImage(raster, palImage);
+            RwImageDestroy(palImage);
+            return;
+        }
+
+        break;
+    }
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x80000008);
+        RwErrorSet(&err);
+        break;
+    }
+    }
 }
 
 // Writes an image into a 16-bit raster, converting each palette entry or pixel to the raster's
@@ -623,4 +1224,57 @@ S32 _rwDlImageFindFormat(RwImage* image)
     }
 
     return format;
+}
+
+// The device's image-to-raster format query: gives a raster the image's size and the format it
+// converts to. Texture and normal rasters are clamped to 1024 texels a side, rounded down to
+// powers of two when mipmapped, and take the format _rwDlImageFindFormat chooses with the
+// requested mipmap flags; camera and Z-buffer rasters take the size only.
+S32 fn_801771C4(void* rasterIn, void* imageIn, S32 flags)
+{
+    RwRaster* raster = (RwRaster*)rasterIn;
+    RwImage* image = (RwImage*)imageIn;
+
+    raster->width = image->width;
+    raster->height = image->height;
+    raster->depth = 0;
+
+    if (!fn_8017995C(raster, flags))
+    {
+        return FALSE;
+    }
+
+    switch (raster->cType)
+    {
+    case rwRASTERTYPENORMAL:
+    case rwRASTERTYPETEXTURE:
+    case rwRASTERTYPECAMERATEXTURE:
+        raster->width = (raster->width > DLCONVRT_MAXSIZE) ? DLCONVRT_MAXSIZE : raster->width;
+        raster->height = (raster->height > DLCONVRT_MAXSIZE) ? DLCONVRT_MAXSIZE : raster->height;
+
+        if (flags & rwRASTERFORMATMIPMAP)
+        {
+            raster->width = 1 << _rwDlFindMSB(raster->width);
+            raster->height = 1 << _rwDlFindMSB(raster->height);
+        }
+
+        {
+            S32 format = _rwDlImageFindFormat(image);
+
+            format |= flags & (rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP);
+            raster->cFormat = (U8)(format >> 8);
+        }
+        return TRUE;
+    case rwRASTERTYPEZBUFFER:
+    case rwRASTERTYPECAMERA:
+        return TRUE;
+    default:
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000D);
+        RwErrorSet(&err);
+        return FALSE;
+    }
+    }
 }

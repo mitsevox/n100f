@@ -1,5 +1,64 @@
 #include <rwcore.h>
 
+// Allocates and initializes the resource arena (none when its size is 0) and empties both entry
+// lists; NULL when the arena cannot be allocated or set up.
+static inline RwResourcesGlobals* ResourcesGlobalsInit(RwResourcesGlobals* globals, U32 arenaSize)
+{
+    if (arenaSize)
+    {
+        globals->heap = RWSRCGLOBAL(memoryFuncs).rwmalloc(arenaSize);
+        if (!globals->heap)
+        {
+            RwError err;
+
+            err.pluginID = 1;
+            err.errorCode = _rwerror(0x80000013, arenaSize);
+            RwErrorSet(&err);
+            return NULL;
+        }
+
+        if (!_rwResHeapInit(globals->heap, arenaSize))
+        {
+            RwError err;
+
+            RWSRCGLOBAL(memoryFuncs).rwfree(globals->heap);
+            err.pluginID = 1;
+            err.errorCode = _rwerror(0xC, 0);
+            RwErrorSet(&err);
+            return NULL;
+        }
+    }
+    else
+    {
+        globals->heap = NULL;
+    }
+
+    rwLinkListInitialize(&globals->entryLists[0]);
+    rwLinkListInitialize(&globals->entryLists[1]);
+    globals->usedEntryList = &globals->entryLists[0];
+    globals->unusedEntryList = &globals->entryLists[1];
+    globals->arenaSize = arenaSize;
+    globals->usedSize = 0;
+    globals->reclaimedSize = 0;
+
+    return globals;
+}
+
+void* _rwResourcesOpen(void* instance, S32 offset, S32 size)
+{
+    resourcesModule.globalsOffset = offset;
+
+    if (!ResourcesGlobalsInit((RwResourcesGlobals*)((U8*)RwEngineInstance + offset),
+                              RWSRCGLOBAL(resArenaInitSize)))
+    {
+        return NULL;
+    }
+
+    resourcesModule.numInstances++;
+
+    return instance;
+}
+
 void* _rwResourcesClose(void* instance, S32 offset, S32 size)
 {
     RwResourcesEmptyArena();

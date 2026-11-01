@@ -26,6 +26,77 @@ struct LightModuleData
 #define LIGHT_DATA(var) \
     (((LightModuleData*)((U8*)RwEngineInstance + lightModule.globalsOffset))->var)
 
+// The rational approximation fdlibm's acos uses on z = x * x.
+#define ACOSF_RATIO(z)                                                                             \
+    (((z) * (_RW_pS0 +                                                                             \
+             (z) * (_RW_pS1 + (z) * (_RW_pS2 + (z) * (_RW_pS3 + (z) * (_RW_pS4 + (z) * _RW_pS5)))))) / \
+     (_RW_one + (z) * (_RW_qS1 + (z) * (_RW_qS2 + (z) * (_RW_qS3 + (z) * _RW_qS4)))))
+
+// A single-precision acos in the manner of fdlibm, without the special cases for NaN.
+#define ACOSF(_result, _x)                                                                         \
+    do                                                                                             \
+    {                                                                                              \
+        RwSplitBits xBits;                                                                         \
+        S32 hx;                                                                                    \
+        S32 ix;                                                                                    \
+                                                                                                   \
+        xBits.nReal = (_x);                                                                        \
+        hx = xBits.nInt;                                                                           \
+        ix = hx & 0x7FFFFFFF;                                                                      \
+                                                                                                   \
+        if (ix >= 0x3F800000)                                                                      \
+        {                                                                                          \
+            /* |x| >= 1 */                                                                         \
+            if (hx > 0)                                                                            \
+            {                                                                                      \
+                (_result) = 0.0f;                                                                  \
+            }                                                                                      \
+            else                                                                                   \
+            {                                                                                      \
+                (_result) = _RW_pi + 2.0f * _RW_pio2_lo;                                           \
+            }                                                                                      \
+        }                                                                                          \
+        else if (ix < 0x3F000000)                                                                  \
+        {                                                                                          \
+            /* |x| < 0.5 */                                                                        \
+            if (ix <= 0x23000000)                                                                  \
+            {                                                                                      \
+                (_result) = _RW_pio2_hi + _RW_pio2_lo;                                             \
+            }                                                                                      \
+            else                                                                                   \
+            {                                                                                      \
+                F32 z = (_x) * (_x);                                                               \
+                                                                                                   \
+                (_result) = _RW_pio2_hi - ((_x) - (_RW_pio2_lo - (_x) * ACOSF_RATIO(z)));          \
+            }                                                                                      \
+        }                                                                                          \
+        else if (hx < 0)                                                                           \
+        {                                                                                          \
+            /* x < -0.5 */                                                                         \
+            F32 z = 0.5f * (_RW_one + (_x));                                                       \
+            F32 s = _rwSqrt(z);                                                                    \
+                                                                                                   \
+            (_result) = _RW_pi - 2.0f * (s + (ACOSF_RATIO(z) * s - _RW_pio2_lo));                  \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            /* x > 0.5 */                                                                          \
+            F32 z = 0.5f * (_RW_one - (_x));                                                       \
+            F32 s = _rwSqrt(z);                                                                    \
+            RwSplitBits sBits;                                                                     \
+            RwSplitBits dfBits;                                                                    \
+            F32 df;                                                                                \
+            F32 c;                                                                                 \
+                                                                                                   \
+            sBits.nReal = s;                                                                       \
+            dfBits.nInt = sBits.nInt & 0xFFFFF000;                                                 \
+            df = dfBits.nReal;                                                                     \
+            c = (z - df * df) / (s + df);                                                          \
+                                                                                                   \
+            (_result) = 2.0f * (df + (c + ACOSF_RATIO(z) * s));                                    \
+        }                                                                                          \
+    } while (0)
+
 static RwPluginRegistry lightTKList = { sizeof(RpLight), sizeof(RpLight) };
 static RwModuleInfo lightModule;
 
@@ -66,6 +137,17 @@ RpLight* RpLightSetColor(RpLight* light, const RwRGBAReal* color)
     }
 
     return light;
+}
+
+// The spot cone's half angle, recovered from the stored minus cosine.
+F32 RpLightGetConeAngle(const RpLight* light)
+{
+    F32 cosAngle = -light->minusCosAngle;
+    F32 angle;
+
+    ACOSF(angle, cosAngle);
+
+    return angle;
 }
 
 RpLight* RpLightSetConeAngle(RpLight* light, F32 angle)
@@ -227,4 +309,19 @@ void* _rpLightClose(void* instance, S32 offset, S32 size)
     lightModule.numInstances--;
 
     return instance;
+}
+
+// Creates the free list the lights come from, sized from the plugin registry's light size.
+void* _rpLightOpen(void* instance, S32 offset, S32 size)
+{
+    lightModule.globalsOffset = offset;
+
+    LIGHT_DATA(freeList) = RwFreeListCreate(lightTKList.sizeOfStruct, 20, 0);
+    if (LIGHT_DATA(freeList))
+    {
+        lightModule.numInstances++;
+        return instance;
+    }
+
+    return NULL;
 }

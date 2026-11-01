@@ -52,7 +52,7 @@ void fn_80141D20(GCNObjectData* objectData, RpGameCubeVtxFmt* vtxFmt, S32 numVer
 void fn_801588E8(GCNObjectData* objectData);
 void fn_80158B20(GCNObjectData* objectData, RpMaterial* material);
 void fn_80158DC4(GCNObjectData* objectData);
-RwTexture* fn_8013E95C(const RwTexture* baseTexture, const RwTexture* effectTexture);
+RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTexture* effectTexture);
 
 // The material effects plugin id, the multitexture platform, an atomic's object type, and the
 // draw sync token wrap. Written for this project.
@@ -731,5 +731,5 @@ S32 _rpMatFXSetupDualRenderState(MatFXDualData* dualData, RwRenderState renderSt
 RwTexture* _rpMatFXSetupBumpMapTexture(const RwTexture* baseTexture,
                                        const RwTexture* effectTexture)
 {
-    return fn_8013E95C(baseTexture, effectTexture);
+    return _rpMatFXTextureMaskCreate(baseTexture, effectTexture);
 }

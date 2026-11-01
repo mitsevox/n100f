@@ -29,16 +29,16 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | Unit | Exact | Not yet |
 | --- | --- | --- |
 | `rwsdk/src/plcore/bavector.c` | 11 of 12 | `_rwVectorOpen` (97%: the stack slots of the two inlined table builders' locals, and one load per table loop scheduled before the store instead of after it) |
-| `rwsdk/src/plcore/rwstring.c` | 5 of 7 | |
-| `rwsdk/src/plcore/baerr.c` | 3 of 4 | |
+| `rwsdk/src/plcore/rwstring.c` | 7 of 7 | (Matching on GIHE78-rev0 and GIHE78-rev1) |
+| `rwsdk/src/plcore/baerr.c` | 4 of 4 | (stays NonMatching: linking it from source does not reproduce main.dol) |
 | `rwsdk/src/plcore/bafsys.c` | 4 of 4 | |
 | `rwsdk/src/plcore/resmem.c` | 4 of 4 | |
-| `rwsdk/src/plcore/baresour.c` | 6 of 8 | `RwResourcesAllocateResEntry` (98%: the first eviction path keeps the entry in `r3` before copying it to `r30`) |
+| `rwsdk/src/plcore/baresour.c` | 7 of 8 | `RwResourcesAllocateResEntry` (98%: the first eviction path keeps the entry in `r3` before copying it to `r30`) |
 | `rwsdk/src/plcore/baimmedi.c` | 7 of 7 | (Matching) |
-| `rwsdk/src/plcore/batkreg.c` | 9 of 10 | |
-| `rwsdk/src/badevice.c` | 13 of 14 | (data open: `engineTKList` in `.data`, `staticGlobals` in `.bss` and `engineInstancesOpened` in `.sbss` are not split) |
-| `rwsdk/src/baframe.c` | 19 of 21 | `rwFrameDestroyRecurse` (91.3%: GC/1.3.2 stops inlining the recursion one level later than the target, which calls `FrameDestroyRecurseDeInitLeaf` there) |
-| `rwsdk/src/bacamera.c` | 18 of 22 | (starts at `0x801683DC`, with the four camera builders `CameraSync` calls) |
+| `rwsdk/src/plcore/batkreg.c` | 10 of 10 | (stays NonMatching: linking it from source does not reproduce main.dol) |
+| `rwsdk/src/badevice.c` | 14 of 14 | (data open: `engineTKList` in `.data`, `staticGlobals` in `.bss` and `engineInstancesOpened` in `.sbss` are not split) |
+| `rwsdk/src/baframe.c` | 20 of 21 | `rwFrameDestroyRecurse` (91.4%: GC/1.3.2 stops inlining the recursion one level later than the target, which calls `FrameDestroyRecurseDeInitLeaf` there) |
+| `rwsdk/src/bacamera.c` | 18 of 22 | the four camera builders `CameraSync` calls: `CameraBuildPerspViewMatrix` (94.3%), `CameraBuildParallelViewMatrix` (93.1%), `CameraBuildPerspClipPlanes` (91.9%) and `CameraBuildParallelClipPlanes` (89.1%), float scheduling and register choice |
 | `rwsdk/src/baraster.c` | 11 of 11 | (Matching; ends at `_rwRasterOpen`, `0x8016DD04`) |
 | `rwsdk/src/baimras.c` | 3 of 3 | (Matching) |
 | `rwsdk/src/basync.c` | 7 of 7 | (Matching; starts at `SyncObject`, `0x8016E9E4`) |
@@ -67,10 +67,10 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/nodeLight.c` | 1 of 7 | `_LightFn` (99.2%) and the five `_rwApply*Light` functions (95.3-99.1%): register choice and the order of a few loads |
 | `rwsdk/world/pipe/p2/nodePostLight.c` | 1 of 2 | `_PostLightFn` (94.6%: the target reloads each color channel after its clamp test; also on GIHE78-rev1) |
 | `rwsdk/world/pipe/p2/gcn/wrldpipe.c` | 7 of 7 | (Matching on GIHE78-rev0; starts at `_rxWorldDevicePluginAttach`, `0x8015D830`) |
-| `rwsdk/src/batextur.c` | 18 of 29 | `RwTextureDestroy` (93.3%: the target loads the return value 1 before reading the reference count as well as at the end) and 8 others, not written yet |
+| `rwsdk/src/batextur.c` | 19 of 29 | `TextureDefaultNormalRead` (99.7%), `_rwTextureOpen` (99.6%), `TextureDefaultMipmapRead` (99.6%), `_rwTextureClose` (98.0%), `TextureImageReadAndSize` (97.5%), `PalettizeMipmaps` (94.2%), `RwTextureDestroy` (93.3%: the target loads the return value 1 before reading the reference count as well as at the end), `PalettizeImage` (91.4%), `TextureRasterDefaultBuildMipmaps` (87.0%) and `RwTextureRead` (86.3%), register choice and scheduling |
 | `rwsdk/src/plcore/batkbin.c` | 8 of 8 | |
 | `rwsdk/src/plcore/bamatrix.c` | 15 of 21 | `MatrixOrthoNormalize` (98.2%) and `RwMatrixTransform` (98.0%), register choice and stack traffic; `_rwMatrixDeterminant` (94.3%: register choice), `RwMatrixRotateOneMinusCosineSine` (90.1%), `_rwMatrixOpen` (89.3%: the target loads the default tolerance before it stores the optimization flags) and `RwMatrixOptimize` (72.1%) |
-| `rwsdk/src/plcore/bastream.c` | 4 of 7 | `RwStreamWrite` (99.9%: the operands of the file-write length compare are the other way round) |
+| `rwsdk/src/plcore/bastream.c` | 5 of 7 | `RwStreamWrite` (99.9%: the operands of the file-write length compare are the other way round) and `RwStreamOpen` (94.5%) |
 | `rwsdk/src/babinfrm.c` | 3 of 3 | |
 | `rwsdk/os/gcn/osintf.c` | 1 of 1 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/babbox.c` | 3 of 3 | (Matching on GIHE78-rev0) |
@@ -79,14 +79,14 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/p2altmdl.c` | 0 of 3 | `_rxPacketDestroy` (98.6%), `_rxEmbeddedPacketBetweenPipelines` (94.5%) and `_rxEmbeddedPacketBetweenNodes` (84.0%): the target clears the cluster flags with a word store where this source emits a halfword store, and register choice (text only) |
 | `rwsdk/tool/slerp/rtslerp.c` | 0 of 1 | `RtQuatSetupSlerpCache` (99.3%: operand and register order in the inlined arc cosine's products; text only) |
 | `rwsdk/src/babintex.c` | 7 of 9 | `_rwStringStreamFindAndRead` (99.0%: register choice in the inlined string readers) and `RwTextureStreamRead` (83.6%: the target keeps the inlined readers' NULL test and allocation path for its name buffers) |
-| `rwsdk/src/baimage.c` | 6 of 18 | `RwImageMakeMask` (97.4%) and `RwImageCopy` (97.9%), register choice; `RwImageAllocatePixels` (83.0%: the target compares the depth unsigned and computes the palette size without a branch); 7 others, not written yet |
+| `rwsdk/src/baimage.c` | 9 of 18 | `ImageDetermineExtender` (99.1%), `RwImageCopy` (98.9%), `ImagePathForAllFullNames` (97.8%), `RwImageMakeMask` (97.4%), `ImageConvertDepth` (92.4%), `RwImageReadMaskedImage` (92.3%), `RwImageApplyMask` (89.2%), `RwImageAllocatePixels` (83.1%: the target compares the depth unsigned and computes the palette size without a branch) and `RwImageGammaCorrect` (79.1%), register choice and scheduling |
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/src/plcore/bacolor.c` | 2 of 2 | (Matching, with `colorModule` in `.sbss`) |
 | `rwsdk/src/baresamp.c` | 0 of 4 | `ImageResampleGetAvgPixel` (99.2%: register choice), `RwImageCreateResample` (88.7%: mostly register choice), `RwImageResample` (70.0%) and `ImageResampleGetSpan` (67.9%: the target unpacks a pixel's four bytes before converting them) |
 | `rwsdk/world/basector.c` | 6 of 6 | |
-| `rwsdk/world/bamateri.c` | 7 of 9 | `_rpLightOpen` at `0x8014CFC8`, which opens the light module and probably belongs to `balight.c` ([RenderWare limits](splits.md#limits-2)) |
-| `rwsdk/world/balight.c` | 11 of 12 | `RpLightGetConeAngle`, not written yet (it inlines an arc cosine) |
+| `rwsdk/world/bamateri.c` | 8 of 8 | (starts at `0x8014D044` now that `_rpLightOpen` is in `balight.c`; stays NonMatching: linking it from source does not reproduce main.dol) |
+| `rwsdk/world/balight.c` | 12 of 13 | `RpLightGetConeAngle` (99.9%) |
 | `rwsdk/world/baclump.c` | 35 of 38 | `GeometryListStreamRead` (97.4%: the list's return is placed after the loop branch), `ClumpAtomicStreamRead` (91.1%: the two chunk structs take each other's stack slots) and `RpClumpStreamRead` (99.4%: the target keeps a second chunk version word) |
 | `rwsdk/world/bageomet.c` | 9 of 12 | `RpGeometryCreate` (98.3%: the target keeps the format's two masks apart), `RpGeometryDestroy` (94.3%: the target loads its result at entry) and `RpGeometryStreamRead` (99.8%: the morph loop's two zeroes); starts at `_rpGeometryOpen`, `0x8014AFC4`, three functions before the size-sequence placement |
 | `rwsdk/world/baworld.c` | 21 of 25 | `WorldSectorRender`, `RpWorldUnlock`, `RpWorldDestroy` and `RpWorldCreate` (94-99%: saved registers and store order) |
@@ -94,23 +94,23 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/bamatlst.c` | 4 of 5 | `_rpMaterialListStreamRead` (97.4%: the list, the stream and the material take other saved registers) |
 | `rwsdk/world/bamesh.c` | 11 of 11 | (data open: `meshModule` and `MeshStatic` not split) |
 | `rwsdk/world/bameshop.c` | 5 of 11 | `SortPolygonsInTriListMesh` (97.0%) and `TriStripMeshGenerate` (98.4%), register choice; `TriStripBinEntryArrayCreate` (88.1%: the target reloads the entry pointer inside the three inlined edge searches), `TriStripFollow` (90.0%) and `TriStripStripTris` (93.4%), where the target evaluates the edge tests into temporaries, and `TriStripJoin` (89.3%: the target reloads the joined strip's count and pointer per index); data open (`.data` and `.sdata2` not split) |
-| `rwsdk/world/babinwor.c` | 6 of 11 | the five functions the hand split added (the world and sector stream readers and the module open and close), not written yet; data open (`.sbss` not split) |
+| `rwsdk/world/babinwor.c` | 9 of 11 | `WorldSectorStreamRead` (98.1%) and `RpWorldStreamRead` (98.0%), register choice in the polygon widening loop and the size computation; data open (`.sbss` not split) |
 | `rwsdk/world/pipe/p2/gcn/instance/geominst.c` | 0 of 6 | `fn_80159380`, the vertex data sizer (89.9%), and the five `_rwGCNVtxFmtInst*` writers (71.5-92.6%): the same switches and unrolled loops; the target saves r26 or r27 to r31 through `_savegpr_*`, and register choice (round 27 sweep drafts; text only) |
 | `rwsdk/world/pipe/p2/gcn/instance/instancegeom.c` | 0 of 1 | `_rwDlGeometryInstanceFast` (91.1%: register choice, and the target indexes the texture coordinate arrays through a computed offset); its inlined stride setter is `VtxDescInitFast`, bfbb's static there (text only) |
 | `rwsdk/world/pipe/p2/gcn/instance/instanceworld.c` | 0 of 1 | `_rwDlWorldSectorInstanceFast` (92.7%, as `instancegeom.c`; text only) |
 | `rwsdk/world/pipe/p2/gcn/instance/ibuffer.c` | 1 of 2 | `GCNDisplayListsBuild` (91.8%: register choice, and the target narrows each index with `clrlwi`; text only) |
 | `rwsdk/world/pipe/p2/gcn/gclights.c` | 1 of 2 | `_rwGCLightsGlobalEnable` (96.9%: register choice for the lighting data and the light); `.data` `GCLightIDTable` and `.bss` `_RwGCLightObjs` are in the split |
 | `rwsdk/world/pipe/p2/gcn/native.c` | 3 of 8 | `_rpNativeRead` (92.4%), `_rpNativeWrite` (90.2%), `_rpGeometryNativeSize` (86.4%), `_rpWorldSectorNativeSize` (90.8%) and `_rpWorldSectorNativeWrite` (90.0%): the target associates the instance size and alignment arithmetic differently, and register choice (text only) |
-| `rwsdk/world/pipe/p2/gcn/gcpipe.c` | 5 of 10 | `_rxGCResEntryWaitDone` (96.4%: the target reloads the draw sync token for `GXSetDrawSync`); `fn_801588E8`, `fn_80158B20`, `fn_80158DC4` and `fn_80158FB0` (one of them the default render callback), not written yet (text only) |
+| `rwsdk/world/pipe/p2/gcn/gcpipe.c` | 7 of 10 | `fn_80158B20` (99.9%), `fn_80158FB0`, the default render callback (98.3%), and `_rxGCResEntryWaitDone` (96.4%: the target reloads the draw sync token for `GXSetDrawSync`); `.sdata2` (0x80262988 to 0x802629A0) not split |
 | `rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c` | 4 of 4 | (`.data` 98.5%: the four bytes of padding at its end; `.sdata` in the split) |
 | `rwsdk/world/pipe/p2/nodeMaterialScatter.c` | 2 of 2 | (`.data` 98.8%, as `nodeAtomicEnumerateLights.c`) |
 | `rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c` | 2 of 3 | `WorldSectorEnumerateLightsNodeBody` (96.4%: the target keeps `params` in r29 and loads the sector straight after locking the cluster); `.data` and `.sdata` in the split |
-| `rwsdk/world/pipe/p2/nodeAtomicInstance.c` | 1 of 5 | `AtomicInstanceNode` and its three helpers, not written yet; `.data` in the split (with the body's jump table) |
-| `rwsdk/world/pipe/p2/nodeWorldSectorInstance.c` | 1 of 4 | `WorldSectorInstanceNodeFn` and its two helpers, not written yet; `.data` and `.sdata` in the split |
-| `rwsdk/world/pipe/p2/gcn/vtxfmt.c` | 11 of 14 | `_rwDlVtxFmtSetup` (`0x8015D314`, where the unit now starts) and the two offset getters `fn_8015D818` and `fn_8015D824` at its end, not written yet; data and the start edge open (`.bss` and `.sbss` not split) |
+| `rwsdk/world/pipe/p2/nodeAtomicInstance.c` | 1 of 5 | `fn_80154E8C` (98.1%), `AtomicInstanceNode` (92.4%), `fn_801551A8` (83.8%) and `fn_80154994` (73.8%), register choice and scheduling; `.data` in the split (with the body's jump table) |
+| `rwsdk/world/pipe/p2/nodeWorldSectorInstance.c` | 1 of 4 | `WorldSectorInstanceNodeFn` (96.0%), `fn_80157A3C` (79.7%) and `fn_80157FB8` (79.5%), register choice and scheduling; `.data` and `.sdata` in the split, `.sdata2` not |
+| `rwsdk/world/pipe/p2/gcn/vtxfmt.c` | 14 of 14 | (stays NonMatching: linking it from source does not reproduce main.dol; data and the start edge open) |
 | `rwsdk/plugin/hanim/stdkey.c` | 6 of 8 | `RpHAnimStdKeyFrameInterpolate` (95.2%) and `RpHAnimStdKeyFrameBlend` (94.1%): the target tests the 0.999 slerp threshold with `cror` and `beq`, and register choice |
 | `rwsdk/plugin/hanim/rphanim.c` | 10 of 14 | `HAnimCopy`, `HAnimWrite` and `HAnimRead` (99.1-99.6%), register choice; `RpHAnimHierarchyCreate` (94.3%: the aligned matrix allocation) |
-| `rwsdk/plugin/matfx/rpmatfx.c` | 23 of 48 | the MatFX open, close, material and stream functions the hand split added, not written yet; data open (`.sdata2` and `MatFXInfo` not split) |
+| `rwsdk/plugin/matfx/rpmatfx.c` | 41 of 48 | `MatFXMaterialCopy` (98.6%), `fn_8013E188` (98.2%), `fn_8013E5CC` (98.0%), `fn_8013DEC4` (97.7%), `_rpMatFXTextureMaskCreate` (85.2%), `fn_8013E76C` and `fn_8013E894` (78.4%), register choice and scheduling; data open (`.sdata2` and `MatFXInfo` not split) |
 | `rwsdk/plugin/matfx/multiTex.c` | 15 of 17 | `MultiTextureCopy` (99.4%) and `MultiTextureStreamRead` (99.0%): the inlined create helper's size, platform entry and texture count take each other's registers |
 | `rwsdk/plugin/matfx/multiTexEffect.c` | 12 of 14 | `RpMTEffectDestroy` (99.4%: the target forms the platform entry's address with `mulli` into other registers) and `RpMTEffectFind` (98.4%: the dictionary walk's cursor and effect take each other's registers, and the target has one more `mr`) |
 | `rwsdk/plugin/skin2/rpskin.c` | 26 of 26 | (data open: `_rpSkinGlobals` not split; the skin code after it reads it; starts at `SkinOpen`, `0x80144154`, since `SkinCreate` is inlined; ends after `RpSkinAtomicSetType`, `0x80144D5C`, an edge the unsplit code after it abuts) |
@@ -118,7 +118,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/skin2/gcn/skinstream.c` | 0 of 3 | `_rpSkinGeometryNativeRead` (99.3%), `_rpSkinGeometryNativeWrite` (94.4%) and `_rpSkinGeometryNativeSize` (83.4%), differences not diagnosed yet (text only) |
 | `rwsdk/plugin/skin2/gcn/skingcng.c` | 2 of 3 | `_rpSkinPipelinesCreate` (71.2%, not diagnosed yet; text only) |
 | `rwsdk/plugin/matfx/gcn/multiTexGcn.c` | 0 of 1 | `_rpMultiTexturePlatformPluginsAttach` (91.3%, not diagnosed yet; text only) |
-| `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 3 of 7 | `GameCubeMTEffectStreamRead` (98.2%), `GameCubeMTEffectStreamWrite` (86.5%) and `RpGameCubeMTEffectCreate` (85.5%), not diagnosed yet; `GameCubeMTEffectStreamGetSize` (0%: the target folds the record sizes in another order, so every instruction differs) (text only) |
+| `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 4 of 7 | `GameCubeMTEffectStreamRead` (98.2%), `GameCubeMTEffectStreamWrite` (86.5%) and `RpGameCubeMTEffectCreate` (85.5%), not diagnosed yet |
 | `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 3 of 9 | `_rpGameCubeMTMeshRenderCallBack` (94.7%), `GetTexFrameMatrix` (90.2%), `fn_80141958` (90.1%), `_rpGameCubeMTPipeDataQueryNBTs` (89.6%), `fn_80141D20` (82.8%) and `_rpGameCubeMTEffectSend` (68.7%), not diagnosed yet (text only) |
 | `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 10 of 15 | `fn_8013FEC0` (96.3%), `fn_80140AF4` (92.7%), `_rpGCMatFXAtomicReinstanceCallBack` (84.1%), `fn_80140178`, the MatFX render callback (78.7%), and `fn_8013FA64` (67.9%), not diagnosed yet (text only) |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 2 of 7 | `_rxGCAtomicAllInOneNode` (99.6%), `fn_8015DBA4` (95.3%), `fn_8015E054` (95.0%), `fn_8015DA50`, the lighting callback (86.3%), and `fn_8015E2E8`, the instance callback (73.6%), not diagnosed yet (text only) |
@@ -133,7 +133,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/driver/common/palquant.c` | 6 of 17 | `nMaximize`, `CountLeafs` and `_rwPalQuantInit` (96.6-98.6%), register choice; `assignindex` and `addvolume` (98.0% and 98.3%: the box test's branch layout), `ExtractNodes` (97.2%: two loads swapped per compare), `AllocateToLeaf`, `nCut`, `_rwPalQuantAddImage`, `_rwPalQuantResolvePalette` and `_rwPalQuantMatchImage` (93.5-95.2%: reloads, product order and unsigned loop compares); starts at `InitLeaf`, `0x801714EC` |
 | `rwsdk/driver/gcn/dltoken.c` | 3 of 4 | `_rwDlTokenQueryDone` (75.5%: the target reloads both draw sync tokens before each comparison); the three paired-single routines are assembly functions (text only) |
 | `rwsdk/driver/gcn/dl2drend.c` | 2 of 6 | `_rwDlIm2DRenderTriangle` (96.7%), `_rwDlIm2DRenderLine` (96.9%), `_rwDlIm2DRenderPrimitive` (96.9%) and `_rwDlIm2DRenderIndexedPrimitive` (95.6%): register choice for the FIFO address and the color bytes (text only) |
-| `rwsdk/driver/gcn/dlconvrt.c` | 12 of 25 | `_rwDlRGBToPixel` (88%: the target keeps `pixel` in a stack slot), `_rwDlPixelToRGB` (93%: the target calls `_rwDlConv565To8888` out of line in its default case and inlines it for 565), `_rwDlImageGetFromRaster` (88%) and `_rwDlRasterSetFromImage` (95%), whose parameters and lock flags take other registers, `_rwDlRaster16SetFromImage` and `_rwDlRaster32SetFromImage` (96% each: the error blocks' stack slots are in the reverse order and the target loads the conversion function straight into r31), `_rwDlImageFindFormat` (95%: the target ORs the palette flag into a 4444 it keeps in r0), and `_rwDlImage4GetFromRaster`, `_rwDlImage8GetFromRaster`, `_rwDlImage32GetFromRaster`, `_rwDlRasterPalletized4SetFromImage`, `_rwDlRasterPalletized8SetFromImage` and `fn_801771C4`, not written yet |
+| `rwsdk/driver/gcn/dlconvrt.c` | 13 of 25 | the image and raster converters at 88 to 97% (`_rwDlRasterPalletized4SetFromImage` 96.8%, `_rwDlRaster16SetFromImage` and `_rwDlRaster32SetFromImage` 96.4%, `_rwDlImage8GetFromRaster` 95.5%, `_rwDlImage32GetFromRaster` 95.4%, `_rwDlRasterSetFromImage` 95.3%, `_rwDlImage4GetFromRaster` 95.3%, `_rwDlImageFindFormat` 95.0%, `_rwDlRasterPalletized8SetFromImage` 93.1%, `_rwDlPixelToRGB` 92.7%, `_rwDlRGBToPixel` 88.3%, `_rwDlImageGetFromRaster` 88.2%): the conversion function goes through `r0`, the error blocks' stack slots are in another order, and register choice |
 | `rwsdk/driver/gcn/dldevice.c` | 8 of 13 | `_rwDlRenderModeSelect` (64.5%: the draft recomputes the address of the render mode copy where the target reuses r8), `_rwDlRasterShowRaster` (77.3%: the target reloads the ring positions after each ring store, spills a local and does not keep the interrupt state), `_rwDlSystem` (97.0%: the draft reuses the compared draw sync token in its wait loop where the target reloads it, and schedules the half-frame setup differently), `_rwDlBreakPtCallback` (94.5%) and `_rwDlVIPreRetraceCallback` (94.3%), register choice (text only) |
 | `rwsdk/driver/gcn/dlraster.c` | 10 of 17 | `DlRasterTile` (84.2%) and `DlRasterUntile` (82.3%): the tile loops pick other induction variables; the lock and unlock functions `fn_80179198` (96.3%) and `fn_80179614` (96.5%): register choice and an extra reload of the draw sync token in the wait; `fn_8017A374`, the raster create (91.0%: register choice for the zero stores); `fn_80179FA0`, the format picker and allocator (97.0%), and `fn_8017A4D8`, the raster destroy (98.3%), not diagnosed yet (round 30 sweep drafts; text only) |
 | `rwsdk/driver/gcn/dlrendst.c` | 4 of 7 | `_rwDlRenderStateFogEnable` (96.4%), `RwGameCubeSetAlphaCompare` (93.8%) and `_rwDlSetRenderState` (94.0%), register choice, not diagnosed further (text only) |

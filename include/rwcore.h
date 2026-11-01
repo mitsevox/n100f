@@ -2,6 +2,8 @@
 #define RWCORE_H
 
 #include "types.h"
+#include <stdarg.h>
+#include <stddef.h>
 
 #ifndef FALSE
 #define FALSE 0
@@ -703,28 +705,43 @@ struct RwFileFunctions
 };
 
 typedef S32 (*vecSprintfFunc)(char* buffer, const char* format, ...);
+typedef S32 (*vecVsprintfFunc)(char* buffer, const char* format, va_list argptr);
 typedef char* (*vecStrcpyFunc)(char* dest, const char* srce);
-typedef char* (*vecStrncpyFunc)(char* dest, const char* srce, U32 size);
-typedef char* (*vecStrncatFunc)(char* dest, const char* srce, U32 size);
+typedef char* (*vecStrncpyFunc)(char* dest, const char* srce, size_t size);
+typedef char* (*vecStrcatFunc)(char* dest, const char* srce);
+typedef char* (*vecStrncatFunc)(char* dest, const char* srce, size_t size);
+typedef char* (*vecStrrchrFunc)(const char* string, char findThis);
+typedef char* (*vecStrchrFunc)(const char* string, char findThis);
+typedef char* (*vecStrstrFunc)(const char* string, const char* findThis);
 typedef S32 (*vecStrcmpFunc)(const char* string1, const char* string2);
-typedef U32 (*vecStrlenFunc)(const char* string);
+typedef S32 (*vecStricmpFunc)(const char* string1, const char* string2);
+typedef size_t (*vecStrlenFunc)(const char* string);
+typedef char* (*vecStruprFunc)(char* string);
+typedef char* (*vecStrlwrFunc)(char* string);
+typedef char* (*vecStrtokFunc)(char* string, const char* delimit);
+typedef S32 (*vecSscanfFunc)(const char* buffer, const char* format, ...);
 
-// Partial: this build's table is 0x40 bytes; only the members the target reaches at fixed
-// offsets are declared.
+// This build's table is 0x40 bytes, sixteen entries: _rwStringOpen fills them in this order
+// (bfbb's rwplcore.h table, without its strncmp entry).
 typedef struct RwStringFunctions RwStringFunctions;
 struct RwStringFunctions
 {
     vecSprintfFunc vecSprintf;
-    U8 unk4[0x4];
+    vecVsprintfFunc vecVsprintf;
     vecStrcpyFunc vecStrcpy;
     vecStrncpyFunc vecStrncpy;
-    U8 unk10[0x4];
+    vecStrcatFunc vecStrcat;
     vecStrncatFunc vecStrncat;
-    U8 unk18[0xC];
+    vecStrrchrFunc vecStrrchr;
+    vecStrchrFunc vecStrchr;
+    vecStrstrFunc vecStrstr;
     vecStrcmpFunc vecStrcmp;
-    U8 unk28[0x4];
+    vecStricmpFunc vecStricmp;
     vecStrlenFunc vecStrlen;
-    U8 unk30[0x10];
+    vecStruprFunc vecStrupr;
+    vecStrlwrFunc vecStrlwr;
+    vecStrtokFunc vecStrtok;
+    vecSscanfFunc vecSscanf;
 };
 
 typedef struct RwSurfaceProperties RwSurfaceProperties;
@@ -1029,6 +1046,9 @@ struct RwGlobals
 #define rwstrcpy RWSRCGLOBAL(stringFuncs).vecStrcpy
 #define rwstrncpy RWSRCGLOBAL(stringFuncs).vecStrncpy
 #define rwstrncat RWSRCGLOBAL(stringFuncs).vecStrncat
+#define rwstrcat RWSRCGLOBAL(stringFuncs).vecStrcat
+#define rwstrrchr RWSRCGLOBAL(stringFuncs).vecStrrchr
+#define rwstrchr RWSRCGLOBAL(stringFuncs).vecStrchr
 #define rwstrcmp RWSRCGLOBAL(stringFuncs).vecStrcmp
 #define rwstrlen RWSRCGLOBAL(stringFuncs).vecStrlen
 #define RwMalloc(_s) ((RWSRCGLOBAL(memoryFuncs).rwmalloc)((_s)))
@@ -1732,7 +1752,17 @@ RwImage* RwImageAllocatePixels(RwImage* image);
 RwImage* RwImageFreePixels(RwImage* image);
 RwImage* RwImageCopy(RwImage* destImage, const RwImage* sourceImage);
 RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage);
+RwImage* RwImageSetFromRaster(RwImage* image, RwRaster* raster);
+RwRaster* RwRasterSetFromImage(RwRaster* raster, RwImage* image);
+RwImage* RwImageMakeMask(RwImage* image);
+RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask);
+RwImage* RwImageFindRasterFormat(RwImage* ipImage, S32 nRasterType, S32* npWidth, S32* npHeight,
+                                 S32* npDepth, S32* npFormat);
 RwImage* RwImageCreateResample(const RwImage* srcImage, S32 width, S32 height);
+RwImage* RwImageReadMaskedImage(const char* imageName, const char* maskName);
+const char* RwImageFindFileType(const char* imageName);
+RwImage* RwImageGammaCorrect(RwImage* image);
+S32 RwRasterGetNumLevels(RwRaster* raster);
 const RwTexDictionary* RwTexDictionaryForAllTextures(const RwTexDictionary* dict,
                                                     RwTextureCallBack fpCallBack, void* pData);
 S32 RwRenderStateSet(RwRenderState state, void* value);
