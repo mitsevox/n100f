@@ -563,7 +563,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEntBubble.cpp"),
             Object(NonMatching, "flat/zEntButton.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEntDestructObj.cpp"),
-            Object(NonMatching, "flat/zEntHangable.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEntHangable.cpp"),
             Object(NonMatching, "flat/zEntPickup.cpp"),
             Object(NonMatching, "flat/zEntPlayer.cpp"),
             Object(NonMatching, "flat/zEntTrigger.cpp"),

@@ -312,7 +312,6 @@ void zEntHangable_SetMatrix(_zEntHangable* ent, F32 dt)
     xVec3* pos;
     xVec3* orot;
     xVec3 rot;
-    _zEnt* shaggy;
 
     xVec3Sub(&tmpMat.up, &ent->pivot, &ent->endpos);
     xVec3Normalize(&tmpMat.up, &tmpMat.up);
@@ -341,9 +340,10 @@ void zEntHangable_SetMatrix(_zEntHangable* ent, F32 dt)
 
     *(xMat4x3*)ent->model->Mat = tmpMat;
 
-    shaggy = ent->shaggy;
-    if (shaggy != NULL)
+    if (ent->shaggy != NULL)
     {
+        _zEnt* shaggy = ent->shaggy;
+
         // Shaggy hangs below the end of the lever, along its axis.
         height = globals.player.Shaggy1.HangTrans.y - globals.player.Shaggy1.ReleaseTrans.y -
                  globals.player.ent.bound.cyl.r;
