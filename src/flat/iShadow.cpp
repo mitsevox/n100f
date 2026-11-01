@@ -34,62 +34,43 @@ static U32 sShadowVertCount;
 // Nonzero recomputes every shadow each frame, even for entities that have not moved.
 static S32 sShadowForceUpdate;
 
-// Draws the frame's shadow quads, then puts back the render states it changed.
-void iShadowRender()
+void iShadowRender();
+void iShadowAdd(iShadowCache* cache, U8 alpha);
+void iShadowCollide(iShadowCache* cache, _xEnt* ent, F32 radius, F32 ecc);
+void iShadowInit();
+
+// Finds the shadow texture, aims the ground ray straight down (10 units long), and sets up the
+// vertex list: normals up and texture corners for two triangles per quad.
+void iShadowInit()
 {
-    if (sShadowVertCount)
-    {
-        RxRenderStateVectorLoadDriverState(&rsv);
-        RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDINVSRCCOLOR);
-        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDDESTCOLOR);
-        RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
-        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, (void*)sShadowRaster);
-        RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEGOURAUD);
-        RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
-        lbl_8025E348.alphaRef0 = 0;
-        lbl_8025E348.alphaRef1 = 0;
-        RwGameCubeSetAlphaCompare(1);
-        RwIm3DTransform(sShadowVert, sShadowVertCount, NULL,
-                        rwIM3D_VERTEXRGBA | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXUV);
-        RwIm3DRenderPrimitive(rwPRIMTYPETRILIST);
-        RwIm3DEnd();
-        RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rsv.SrcBlend);
-        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rsv.DestBlend);
-        RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rsv.ShadeMode);
-        // Render state vector flags: 4 is z-write, 8 is vertex alpha.
-        RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)((rsv.Flags >> 2) & 1));
-        RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)((rsv.Flags >> 3) & 1));
-        sShadowVertCount = 0;
-    }
-}
+    U32 i;
+    RwTexture* tex = (RwTexture*)xSTFindAsset(xStrHash("shadow"), NULL);
 
-// Queues an entity's shadow quad as two triangles at the given alpha. A shadow that found no
-// ground, or a full vertex list, adds nothing.
-void iShadowAdd(iShadowCache* cache, U8 alpha)
-{
-    if (cache->corner[0].x == -1e10f)
-    {
-        return;
-    }
+    sShadowRaster = tex ? tex->raster : NULL;
+    sShadowRay.dir.x = 0.0f;
+    sShadowRay.dir.y = -1.0f;
+    sShadowRay.dir.z = 0.0f;
+    sShadowRay.min_t = 0.0f;
+    sShadowRay.max_t = 10.0f;
+    sShadowRay.flags = 0xC00;
+    sShadowVertCount = 0;
+    memset(sShadowVert, 0, sizeof(sShadowVert));
 
-    if (sShadowVertCount >= 384)
+    for (i = 0; i < 384; i += 6)
     {
-        return;
+        sShadowVert[i + 1].u = 1.0f;
+        sShadowVert[i + 2].v = 1.0f;
+        sShadowVert[i + 3].u = 1.0f;
+        sShadowVert[i + 4].v = 1.0f;
+        sShadowVert[i + 5].u = 1.0f;
+        sShadowVert[i + 5].v = 1.0f;
+        sShadowVert[i + 0].ny = 1.0f;
+        sShadowVert[i + 1].ny = 1.0f;
+        sShadowVert[i + 2].ny = 1.0f;
+        sShadowVert[i + 3].ny = 1.0f;
+        sShadowVert[i + 4].ny = 1.0f;
+        sShadowVert[i + 5].ny = 1.0f;
     }
-
-    *(xVec3*)&sShadowVert[sShadowVertCount + 0].x = cache->corner[0];
-    *(xVec3*)&sShadowVert[sShadowVertCount + 1].x = cache->corner[1];
-    *(xVec3*)&sShadowVert[sShadowVertCount + 2].x = cache->corner[2];
-    *(xVec3*)&sShadowVert[sShadowVertCount + 3].x = cache->corner[1];
-    *(xVec3*)&sShadowVert[sShadowVertCount + 4].x = cache->corner[2];
-    *(xVec3*)&sShadowVert[sShadowVertCount + 5].x = cache->corner[3];
-    sShadowVert[sShadowVertCount + 5].a = alpha;
-    sShadowVert[sShadowVertCount + 4].a = alpha;
-    sShadowVert[sShadowVertCount + 3].a = alpha;
-    sShadowVert[sShadowVertCount + 2].a = alpha;
-    sShadowVert[sShadowVertCount + 1].a = alpha;
-    sShadowVert[sShadowVertCount + 0].a = alpha;
-    sShadowVertCount += 6;
 }
 
 // Fits the entity's shadow quad to the ground below it: casts a ray down from the entity, sets
@@ -208,36 +189,60 @@ void iShadowCollide(iShadowCache* cache, _xEnt* ent, F32 radius, F32 ecc)
     cache->corner[3].y = centery + dydx * (cache->corner[3].x - centerx) + dydz * (cache->corner[3].z - centerz);
 }
 
-// Finds the shadow texture, aims the ground ray straight down (10 units long), and sets up the
-// vertex list: normals up and texture corners for two triangles per quad.
-void iShadowInit()
+// Queues an entity's shadow quad as two triangles at the given alpha. A shadow that found no
+// ground, or a full vertex list, adds nothing.
+void iShadowAdd(iShadowCache* cache, U8 alpha)
 {
-    U32 i;
-    RwTexture* tex = (RwTexture*)xSTFindAsset(xStrHash("shadow"), NULL);
-
-    sShadowRaster = tex ? tex->raster : NULL;
-    sShadowRay.dir.x = 0.0f;
-    sShadowRay.dir.y = -1.0f;
-    sShadowRay.dir.z = 0.0f;
-    sShadowRay.min_t = 0.0f;
-    sShadowRay.max_t = 10.0f;
-    sShadowRay.flags = 0xC00;
-    sShadowVertCount = 0;
-    memset(sShadowVert, 0, sizeof(sShadowVert));
-
-    for (i = 0; i < 384; i += 6)
+    if (cache->corner[0].x == -1e10f)
     {
-        sShadowVert[i + 1].u = 1.0f;
-        sShadowVert[i + 2].v = 1.0f;
-        sShadowVert[i + 3].u = 1.0f;
-        sShadowVert[i + 4].v = 1.0f;
-        sShadowVert[i + 5].u = 1.0f;
-        sShadowVert[i + 5].v = 1.0f;
-        sShadowVert[i + 0].ny = 1.0f;
-        sShadowVert[i + 1].ny = 1.0f;
-        sShadowVert[i + 2].ny = 1.0f;
-        sShadowVert[i + 3].ny = 1.0f;
-        sShadowVert[i + 4].ny = 1.0f;
-        sShadowVert[i + 5].ny = 1.0f;
+        return;
+    }
+
+    if (sShadowVertCount >= 384)
+    {
+        return;
+    }
+
+    *(xVec3*)&sShadowVert[sShadowVertCount + 0].x = cache->corner[0];
+    *(xVec3*)&sShadowVert[sShadowVertCount + 1].x = cache->corner[1];
+    *(xVec3*)&sShadowVert[sShadowVertCount + 2].x = cache->corner[2];
+    *(xVec3*)&sShadowVert[sShadowVertCount + 3].x = cache->corner[1];
+    *(xVec3*)&sShadowVert[sShadowVertCount + 4].x = cache->corner[2];
+    *(xVec3*)&sShadowVert[sShadowVertCount + 5].x = cache->corner[3];
+    sShadowVert[sShadowVertCount + 5].a = alpha;
+    sShadowVert[sShadowVertCount + 4].a = alpha;
+    sShadowVert[sShadowVertCount + 3].a = alpha;
+    sShadowVert[sShadowVertCount + 2].a = alpha;
+    sShadowVert[sShadowVertCount + 1].a = alpha;
+    sShadowVert[sShadowVertCount + 0].a = alpha;
+    sShadowVertCount += 6;
+}
+
+// Draws the frame's shadow quads, then puts back the render states it changed.
+void iShadowRender()
+{
+    if (sShadowVertCount)
+    {
+        RxRenderStateVectorLoadDriverState(&rsv);
+        RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDINVSRCCOLOR);
+        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDDESTCOLOR);
+        RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, (void*)sShadowRaster);
+        RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEGOURAUD);
+        RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
+        lbl_8025E348.alphaRef0 = 0;
+        lbl_8025E348.alphaRef1 = 0;
+        RwGameCubeSetAlphaCompare(1);
+        RwIm3DTransform(sShadowVert, sShadowVertCount, NULL,
+                        rwIM3D_VERTEXRGBA | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXUV);
+        RwIm3DRenderPrimitive(rwPRIMTYPETRILIST);
+        RwIm3DEnd();
+        RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rsv.SrcBlend);
+        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rsv.DestBlend);
+        RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rsv.ShadeMode);
+        // Render state vector flags: 4 is z-write, 8 is vertex alpha.
+        RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)((rsv.Flags >> 2) & 1));
+        RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)((rsv.Flags >> 3) & 1));
+        sShadowVertCount = 0;
     }
 }

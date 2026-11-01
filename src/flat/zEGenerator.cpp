@@ -37,6 +37,123 @@ inline void zEGenerator_TurnOff(zEGenerator* egen)
     }
 }
 
+void zEGenerator_TurnOn(zEGenerator* egen);
+void zEGenerator_Render(zEGenerator* egen);
+void zEGenerator_Update(zEGenerator* egen, _xScene* sc, F32 dt);
+S32 zEGeneratorEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*);
+
+// Initialize the entity and its optional on animation.
+inline void zEGenerator_Init(zEGenerator* egen, p2EntAsset* asset)
+{
+    zEntInit(egen, asset, 'EGEN');
+    zEGenAsset* zasset = (zEGenAsset*)asset;
+    if (egen->linkCount)
+        egen->link = (p2LinkAsset*)(zasset + 1);
+    else
+        egen->link = 0;
+    egen->update = (void (*)(_xEnt*, _xScene*, F32))zEGenerator_Update;
+    egen->move = 0;
+    egen->eventFunc = zEGeneratorEventCB;
+    egen->render = (void (*)(_xEnt*))zEGenerator_Render;
+    egen->afile = 0;
+    if (zasset->onAnimID)
+    {
+        U32 size;
+        void* buf = xSTFindAsset(zasset->onAnimID, &size);
+        if (buf)
+        {
+            egen->afile = xAnimFileNew(buf, "", 0, 0);
+            egen->atbl = xAnimTableNew("", 0);
+            xAnimTableNewState(egen->atbl, "On", 0x10, 0, 1.0f, 0, 0, 0.0f, 0);
+            xAnimTableAddFile(egen->atbl, egen->afile, "On");
+            xAnimPoolAlloc(&globals.sceneCur->mempool, egen, egen->atbl, egen->model);
+        }
+    }
+}
+
+void zEGenerator_Init(void* egen, void* asset)
+{
+    zEGenerator_Init((zEGenerator*)egen, (p2EntAsset*)asset);
+}
+
+// Count valid destination links for later selection.
+void zEGenerator_Setup(zEGenerator* egen, _xScene*)
+{
+    zEntSetup(egen);
+    egen->num_dsts = 0;
+    for (S32 i = 0; i < egen->linkCount; i++)
+    {
+        p2LinkAsset* link = &egen->link[i];
+        xBase* dst = zSceneFindObject(link->dstAssetID);
+        if (dst && link->dstEvent == 0xC0)
+        {
+            if (dst->baseType == 0xD)
+                egen->num_dsts++;
+            else if (dst->baseType == 6)
+                egen->num_dsts++;
+        }
+    }
+}
+
+// Save the shared entity state.
+void zEGenerator_Save(zEGenerator* egen, xSerial* s)
+{
+    zEntSave(egen, s);
+}
+
+// Restore the shared entity state.
+void zEGenerator_Load(zEGenerator* egen, xSerial* s)
+{
+    zEntLoad(egen, s);
+}
+
+// Restore the generator's starting state from its asset.
+void zEGenerator_Reset(zEGenerator* egen, _xScene*)
+{
+    zEntReset(egen);
+    zEGenAsset* zasset = (zEGenAsset*)egen->asset;
+    egen->flags = zasset->flags;
+    if (egen->flags & 1)
+        zEGenerator_TurnOn(egen);
+    else
+    {
+        zEGenerator_TurnOff(egen);
+    }
+    if (zasset->moreFlags & 4)
+        egen->chkby = 0;
+    else
+        egen->chkby = 0x18;
+}
+
+// Keep a moving destination and the lightning endpoints together.
+void zEGenerator_Update(zEGenerator* egen, _xScene* sc, F32 dt)
+{
+    xEntUpdate(egen, sc, dt);
+    if (egen->dst && egen->dst->baseType == 6)
+    {
+        egen->dst_pos = *(xVec3*)&((_xEnt*)egen->dst)->model->Mat->pos;
+        if (egen->lfx[0])
+            zLightningModifyEndpoints(egen->lfx[0], &egen->src_pos, &egen->dst_pos);
+        if (egen->lfx[1])
+            zLightningModifyEndpoints(egen->lfx[1], &egen->src_pos, &egen->dst_pos);
+    }
+    if (egen->tmr > 0.0f)
+    {
+        egen->tmr -= dt;
+        if (egen->tmr <= 0.0f)
+        {
+            zEGenerator_TurnOff(egen);
+            zEntEvent(egen, eEventOff);
+        }
+    }
+}
+
+// Render the generator through the ordinary entity renderer.
+void zEGenerator_Render(zEGenerator* egen)
+{
+    xEntRender(egen);
+}
+
 // Start an arc at a randomly selected destination.
 void zEGenerator_TurnOn(zEGenerator* egen)
 {
@@ -129,84 +246,6 @@ void zEGenerator_TurnOn(zEGenerator* egen)
     egen->lfx[1] = zLightningAdd(&add);
 }
 
-// Render the generator through the ordinary entity renderer.
-void zEGenerator_Render(zEGenerator* egen)
-{
-    xEntRender(egen);
-}
-
-// Keep a moving destination and the lightning endpoints together.
-void zEGenerator_Update(zEGenerator* egen, _xScene* sc, F32 dt)
-{
-    xEntUpdate(egen, sc, dt);
-    if (egen->dst && egen->dst->baseType == 6)
-    {
-        egen->dst_pos = *(xVec3*)&((_xEnt*)egen->dst)->model->Mat->pos;
-        if (egen->lfx[0])
-            zLightningModifyEndpoints(egen->lfx[0], &egen->src_pos, &egen->dst_pos);
-        if (egen->lfx[1])
-            zLightningModifyEndpoints(egen->lfx[1], &egen->src_pos, &egen->dst_pos);
-    }
-    if (egen->tmr > 0.0f)
-    {
-        egen->tmr -= dt;
-        if (egen->tmr <= 0.0f)
-        {
-            zEGenerator_TurnOff(egen);
-            zEntEvent(egen, eEventOff);
-        }
-    }
-}
-
-// Restore the generator's starting state from its asset.
-void zEGenerator_Reset(zEGenerator* egen, _xScene*)
-{
-    zEntReset(egen);
-    zEGenAsset* zasset = (zEGenAsset*)egen->asset;
-    egen->flags = zasset->flags;
-    if (egen->flags & 1)
-        zEGenerator_TurnOn(egen);
-    else
-    {
-        zEGenerator_TurnOff(egen);
-    }
-    if (zasset->moreFlags & 4)
-        egen->chkby = 0;
-    else
-        egen->chkby = 0x18;
-}
-
-// Restore the shared entity state.
-void zEGenerator_Load(zEGenerator* egen, xSerial* s)
-{
-    zEntLoad(egen, s);
-}
-
-// Save the shared entity state.
-void zEGenerator_Save(zEGenerator* egen, xSerial* s)
-{
-    zEntSave(egen, s);
-}
-
-// Count valid destination links for later selection.
-void zEGenerator_Setup(zEGenerator* egen, _xScene*)
-{
-    zEntSetup(egen);
-    egen->num_dsts = 0;
-    for (S32 i = 0; i < egen->linkCount; i++)
-    {
-        p2LinkAsset* link = &egen->link[i];
-        xBase* dst = zSceneFindObject(link->dstAssetID);
-        if (dst && link->dstEvent == 0xC0)
-        {
-            if (dst->baseType == 0xD)
-                egen->num_dsts++;
-            else if (dst->baseType == 6)
-                egen->num_dsts++;
-        }
-    }
-}
-
 // Dispatch generator and visibility events.
 S32 zEGeneratorEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
 {
@@ -248,35 +287,4 @@ S32 zEGeneratorEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
         break;
     }
     return 1;
-}
-
-// Initialize the entity and its optional on animation.
-void zEGenerator_Init(void* object, void* assetData)
-{
-    zEGenerator* egen = (zEGenerator*)object;
-    p2EntAsset* asset = (p2EntAsset*)assetData;
-    zEntInit(egen, asset, 'EGEN');
-    zEGenAsset* zasset = (zEGenAsset*)asset;
-    if (egen->linkCount)
-        egen->link = (p2LinkAsset*)(zasset + 1);
-    else
-        egen->link = 0;
-    egen->update = (void (*)(_xEnt*, _xScene*, F32))zEGenerator_Update;
-    egen->move = 0;
-    egen->eventFunc = zEGeneratorEventCB;
-    egen->render = (void (*)(_xEnt*))zEGenerator_Render;
-    egen->afile = 0;
-    if (zasset->onAnimID)
-    {
-        U32 size;
-        void* buf = xSTFindAsset(zasset->onAnimID, &size);
-        if (buf)
-        {
-            egen->afile = xAnimFileNew(buf, "", 0, 0);
-            egen->atbl = xAnimTableNew("", 0);
-            xAnimTableNewState(egen->atbl, "On", 0x10, 0, 1.0f, 0, 0, 0.0f, 0);
-            xAnimTableAddFile(egen->atbl, egen->afile, "On");
-            xAnimPoolAlloc(&globals.sceneCur->mempool, egen, egen->atbl, egen->model);
-        }
-    }
 }
