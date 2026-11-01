@@ -22,7 +22,7 @@ GXLightID GCLightIDTable[8] = {
 // How far away a directional light is placed, in view space. Written for this project.
 #define GCLIGHTS_DIRECTIONALDIST -1048576.0f
 
-void _rwGCLightsGlobalEnable(U8 flags, GCNLightingData* data)
+void _rwGCLightsGlobalEnable(U8 flags, GCNObjectData* data)
 {
     RwLLLink* cur = rwLinkListGetFirstLLLink(&((RpWorld*)RWSRCGLOBAL(curWorld))->directionalLightList);
     RwLLLink* end = rwLinkListGetTerminator(&((RpWorld*)RWSRCGLOBAL(curWorld))->directionalLightList);
@@ -71,7 +71,7 @@ void _rwGCLightsGlobalEnable(U8 flags, GCNLightingData* data)
     }
 }
 
-void _rwGCLightsLocalEnable(RpLight* light, GCNLightingData* data)
+void _rwGCLightsLocalEnable(RpLight* light, GCNObjectData* data)
 {
     RwMatrix* ltm;
     RwV3d dir;

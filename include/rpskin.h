@@ -25,9 +25,60 @@ typedef enum RpSkinType
     rpSKINTYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RpSkinType;
 
+// The bone matrices and per-vertex bone indices and weights of a skinned geometry, carved from
+// one 16-byte aligned allocation. On GameCube, savedPos and savedNrm keep the instanced position
+// and normal arrays while the skinned copies take their place (skingcn.c), and are put back before
+// the geometry is streamed (skinstream.c).
+struct RpSkin
+{
+    U32 numBones;
+    RwMatrix* skinToBoneMatrices;
+    U32* vertexBoneIndices;
+    RwMatrixWeights* vertexBoneWeights;
+    void* savedPos;
+    void* savedNrm;
+    void* unaligned;
+};
+
+// The plugin's state: the plugin offsets, the shared matrix cache, the skin free list and the
+// skin pipeline.
+typedef struct SkinGlobals SkinGlobals;
+struct SkinGlobals
+{
+    S32 engineOffset;
+    S32 atomicOffset;
+    S32 geometryOffset;
+    RwMatrix* matrixCache;
+    void* matrixCacheUnaligned;
+    RwFreeList* freeList;
+    RwModuleInfo module;
+    U8 unk20[4];
+    RxPipeline* pipeline;
+    U8 unk28[0x10];
+};
+
+#define SKINGEOMETRYGETDATA(geometry)                                                              \
+    (*(RpSkin**)((U8*)(geometry) + _rpSkinGlobals.geometryOffset))
+#define SKINATOMICGETDATA(atomic)                                                                  \
+    (*(RpHAnimHierarchy**)((U8*)(atomic) + _rpSkinGlobals.atomicOffset))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern SkinGlobals _rpSkinGlobals;
+
+RpGeometry* _rpSkinInitialize(RpGeometry* geometry);
+RpGeometry* _rpSkinDeinitialize(RpGeometry* geometry);
+S32 _rpSkinPipelinesCreate(U32 pipes);
+S32 _rpSkinPipelinesDestroy(void);
+RpAtomic* _rpSkinPipelinesAttach(RpAtomic* atomic, RpSkinType type);
+S32 _rpSkinGeometryNativeSize(const RpGeometry* geometry);
+RwStream* _rpSkinGeometryNativeWrite(RwStream* stream, const RpGeometry* geometry);
+RwStream* _rpSkinGeometryNativeRead(RwStream* stream, RpGeometry* geometry);
+RxPipeline* _rpSkinPipelineCreate(RpSkinType type, void* instanceCB, void* reinstanceCB,
+                                  void* renderCB);
+RpAtomic* fn_80145598(RpAtomic* atomic, GCNObjectData* objectData);
 
 S32 RpSkinPluginAttach(void);
 RpSkin* RpSkinGeometryGetSkin(RpGeometry* geometry);

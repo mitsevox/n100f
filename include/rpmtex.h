@@ -17,6 +17,31 @@ typedef struct RpMTEffectDict RpMTEffectDict;
 
 typedef struct RpMultiTexture RpMultiTexture;
 
+#define MULTITEXTURE_MAXTEXTURES 8
+
+// A platform's multitexture material plugin: its id, its offset in the material and the size of
+// its data after each multitexture.
+typedef struct MultiTextureRegEntry MultiTextureRegEntry;
+struct MultiTextureRegEntry
+{
+    S32 platform;
+    U32 pluginID;
+    S32 offset;
+    U32 size;
+};
+
+// A material's multitexture for one platform: its textures, the texture coordinate set each
+// uses, its effect and the platform's own data after it.
+struct RpMultiTexture
+{
+    MultiTextureRegEntry* regEntry;
+    U32 numTextures;
+    RwTexture* textures[MULTITEXTURE_MAXTEXTURES];
+    U8 coords[MULTITEXTURE_MAXTEXTURES];
+    RpMTEffect* effect;
+    void* platformData;
+};
+
 // The multitexture plugin's word block in the engine instance.
 typedef struct MTEffectGlobals MTEffectGlobals;
 struct MTEffectGlobals
