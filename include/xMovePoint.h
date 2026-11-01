@@ -36,6 +36,16 @@ struct _xMovePoint : xBase
 
 typedef struct _xMovePoint xMovePoint;
 
+inline U16 xMovePointGetNumPoints(const xMovePoint* m)
+{
+    return m->asset->numPoints;
+}
+
+inline xMovePoint* xMovePointGetPoint(const xMovePoint* m, U16 n)
+{
+    return m->nodes[n];
+}
+
 void xMovePointInit(xMovePoint* m, p2MovePointAsset* asset);
 void xMovePointSave(xMovePoint* ent, xSerial* s);
 void xMovePointLoad(xMovePoint* ent, xSerial* s);

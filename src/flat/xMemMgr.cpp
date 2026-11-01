@@ -39,9 +39,6 @@ xMemHeap_tag gxHeap[3];
 U32 gActiveHeap;
 static void (*sMemBaseNotifyFunc)();
 
-// The empty debug-mode callback that xMemInit registers; it follows xMemInit and has no known name.
-extern "C" void fn_800300A4();
-
 // Bit 0x100 makes the heap grow down from the top of its area. The alignment is 1 << bits 9-13;
 // bit 0x10000 keeps the block headers in a separate table.
 inline void xMemInitHeap(xMemHeap_tag* heap, U32 base, U32 size, U32 flags)
@@ -71,6 +68,11 @@ inline void xMemInitHeap(xMemHeap_tag* heap, U32 base, U32 size, U32 flags)
     heap->blk = NULL;
     heap->opp_heap[0] = -1;
     heap->opp_heap[1] = -1;
+}
+
+// The empty debug-mode callback that xMemInit registers; it has no known name.
+extern "C" void fn_800300A4()
+{
 }
 
 // Heap 0 grows up from the start of game memory; heaps 1 and 2 grow down from its end.

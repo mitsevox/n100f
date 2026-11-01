@@ -9,7 +9,7 @@
 struct xPar;
 struct _xScene;
 
-// Shapes other than the offset point and volume are left opaque.
+// The emitter shapes, with the member names of the SLUS-20349 DWARF (_tagEmitCircle and so on).
 struct zParEmitterAsset : p2BaseAsset
 {
     U8 emit_flags;
@@ -22,8 +22,10 @@ struct zParEmitterAsset : p2BaseAsset
         U8 opaque_10[0x2C - 0x10];
         struct { xVec3 offset; } e_offsetp;
         struct { U32 emit_volumeID; } e_volume;
-        struct { F32 radius; } e_circle;
+        struct { F32 radius; F32 deflection; } e_circle;
         struct { F32 radius; } e_sphere;
+        struct { F32 x_len; F32 z_len; } e_rect;
+        struct { xVec3 pos1; xVec3 pos2; F32 radius; } e_line;
     };
     U32 attachToID;
     U32 parSysID;

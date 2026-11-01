@@ -26,6 +26,7 @@
 #include "zSurface.h"
 
 #include <rwcore.h>
+#include <stdio.h>
 #include <string.h>
 
 // One record per model the debug collision timer has seen: who owns it, how many entities
@@ -1462,6 +1463,292 @@ static void xEntDebugCB()
 
         xEntDebugWrite(xent);
         xEntDebugIPad(xent);
+    }
+}
+
+// The six collision slots' names, in _xCollsIdx order.
+static char scoll_name[6][6] = { "floor", "ceil", "front", "left", "rear", "right" };
+
+// Appends the name of every collision type set in type to str.
+static inline char* xEntCollTypeStrAll(char* str, U8 type)
+{
+    str[0] = '\0';
+
+    if (type & 0x1)
+    {
+        strcat(str, "trig ");
+    }
+    if (type & 0x2)
+    {
+        strcat(str, "stat ");
+    }
+    if (type & 0x4)
+    {
+        strcat(str, "dyn ");
+    }
+    if (type & 0x8)
+    {
+        strcat(str, "npc ");
+    }
+    if (type & 0x10)
+    {
+        strcat(str, "pc ");
+    }
+    if (type & 0x20)
+    {
+        strcat(str, "env ");
+    }
+    if (type & 0x40)
+    {
+        strcat(str, "walls ");
+    }
+
+    return str;
+}
+
+// Debug text for the selected entity. Mode 1 shows its flags, position, velocity, scale and
+// angles; modes 2 and 3 show its collision setup, then the hit counts (mode 2) or the six
+// collision slots (mode 3).
+static void xEntDebugWrite(const _xEnt* xent)
+{
+    char str[40];
+
+    xprintf("name:         %s", xSceneID2Name(g_xSceneCur, xent->id));
+    xprintf("   id: 0x%08x\n", xent->id);
+
+    if (dbg_mode == 1)
+    {
+        xprintf("is enabled:   %s\n", xbtoa(xent->baseFlags & 0x1));
+        xprintf("is visible:   %s\n", xbtoa(xent->flags & 0x1));
+        xprintf("is moving:    %s\n", xbtoa(xent->pflags & 0x1));
+        xprintf("has velocity: %s\n", xbtoa(xent->pflags & 0x2));
+        xprintf("has gravity:  %s\n", xbtoa(xent->pflags & 0x4));
+        xprintf("has drag:     %s\n", xbtoa(xent->pflags & 0x8));
+
+        const xMat3x3* mat = xent->model ? (const xMat3x3*)(xMat4x3*)xent->model->Mat
+                             : xent->frame ? (const xMat3x3*)&xent->frame->mat
+                                           : NULL;
+        const xVec3* pos = xent->model ? &((xMat4x3*)xent->model->Mat)->pos
+                           : xent->frame ? &xent->frame->mat.pos
+                                         : NULL;
+
+        if (pos)
+        {
+            xprintf("pos:   <%8.3f %8.3f %8.3f>\n", pos->x, pos->y, pos->z);
+
+            if (xent->pflags & 0x1)
+            {
+                xprintf("dpos:  <%8.3f %8.3f %8.3f>\n", pos->x - xent->frame->oldpos.x,
+                        pos->y - xent->frame->oldpos.y, pos->z - xent->frame->oldpos.z);
+            }
+        }
+
+        if (xent->pflags & 0x2)
+        {
+            const xVec3* vel = &xent->frame->vel;
+            const xVec3* ovel = &xent->frame->oldvel;
+            F32 dx = vel->x - ovel->x;
+            F32 dy = vel->y - ovel->y;
+            F32 dz = vel->z - ovel->z;
+
+            xprintf("vel:   <%8.3f %8.3f %8.3f>\n", xent->frame->vel.x, xent->frame->vel.y,
+                    xent->frame->vel.z);
+            xprintf("dvel:  <%8.3f %8.3f %8.3f>\n", dx, dy, dz);
+        }
+
+        if (mat)
+        {
+            xVec3 scale;
+            xMat3x3 mat_norm;
+            xVec3 ang;
+
+            xMat3x3GetScale(mat, &scale);
+            xprintf("scale: <%8.3f %8.3f %8.3f>\n", scale.x, scale.y, scale.z);
+
+            xMat3x3Normalize(&mat_norm, mat);
+            xMat3x3GetEuler(&mat_norm, &ang);
+            xprintf("ang:   <%6.1f   %6.1f   %6.1f  >   Y P R\n",
+                    180.0f * xDangleClamp(ang.x) / PI, 180.0f * xDangleClamp(ang.y) / PI,
+                    180.0f * xDangleClamp(ang.z) / PI);
+        }
+    }
+
+    if (dbg_mode == 2 || dbg_mode == 3)
+    {
+        const char* name;
+
+        switch (xent->collType)
+        {
+        case 0x1:
+            name = "trig";
+            break;
+        case 0x2:
+            name = "stat";
+            break;
+        case 0x4:
+            name = "dyn";
+            break;
+        case 0x8:
+            name = "npc";
+            break;
+        case 0x10:
+            name = "pc";
+            break;
+        case 0x20:
+            name = "env";
+            break;
+        case 0x40:
+            name = "walls";
+            break;
+        default:
+            name = "???";
+            break;
+        }
+
+        xprintf("colltype:     %s\n", name);
+
+        switch (xent->collLev)
+        {
+        case 0:
+            name = "fastest";
+            break;
+        case 1:
+            name = "aabb (box)";
+            break;
+        case 2:
+            name = "sph";
+            break;
+        case 3:
+            name = "obb";
+            break;
+        case 4:
+            name = "bound";
+            break;
+        case 5:
+            name = "model";
+            break;
+        default:
+            name = "???";
+            break;
+        }
+
+        xprintf("coll-lev:     %s\n", name);
+
+        xEntCollTypeStrAll(str, xent->chkby);
+        xprintf("chkby:        %s\n", str);
+        xEntCollTypeStrAll(str, xent->penby);
+        xprintf("penby:        %s\n", str);
+
+        switch (xent->bound.type)
+        {
+        case 0:
+            name = "none";
+            break;
+        case 1:
+            name = "sph";
+            break;
+        case 2:
+            name = "box";
+            break;
+        case 3:
+            name = "cyl";
+            break;
+        case 4:
+            name = "obb";
+            break;
+        default:
+            name = "???";
+            break;
+        }
+
+        xprintf("bound: %s", name);
+
+        str[0] = '\0';
+
+        switch (xent->bound.type)
+        {
+        case 0:
+            break;
+        case 1:
+            sprintf(str, "<%.3f %.3f %.3f> %.3f", xent->bound.sph.center.x, xent->bound.sph.center.y,
+                    xent->bound.sph.center.z, xent->bound.sph.r);
+            break;
+        case 2:
+            sprintf(str, "<%.3f %.3f %.3f> <%.3f %.3f %.3f>", xent->bound.box.box.lower.x,
+                    xent->bound.box.box.lower.y, xent->bound.box.box.lower.z,
+                    xent->bound.box.box.upper.x, xent->bound.box.box.upper.y,
+                    xent->bound.box.box.upper.z);
+            break;
+        case 4:
+            sprintf(str, "<%.3f %.3f %.3f> <%.3f %.3f %.3f>", xent->bound.box.box.lower.x,
+                    xent->bound.box.box.lower.y, xent->bound.box.box.lower.z,
+                    xent->bound.box.box.upper.x, xent->bound.box.box.upper.y,
+                    xent->bound.box.box.upper.z);
+            break;
+        }
+
+        xprintf("   %s\n", str);
+
+        if (xent->collis)
+        {
+            if (dbg_mode == 2)
+            {
+                xEntCollTypeStrAll(str, xent->collis->chk);
+                xprintf("chk:        %s\n", str);
+                xEntCollTypeStrAll(str, xent->collis->pen);
+                xprintf("pen:        %s\n", str);
+                xprintf("hits:       stat:%d", xent->collis->stat_eidx - xent->collis->stat_sidx);
+                xprintf("   dyn:%d", xent->collis->dyn_eidx - xent->collis->dyn_sidx);
+                xprintf("   npc:%d", xent->collis->npc_eidx - xent->collis->npc_sidx);
+                xprintf("   env:%d\n", xent->collis->env_eidx - xent->collis->env_sidx);
+            }
+            else
+            {
+                _xCollis* scoll = xent->collis->colls;
+
+                for (S32 i = 0; i < 6; i++, scoll++)
+                {
+                    if (scoll->flags & 0x1)
+                    {
+                        xprintf("%s-hit", scoll_name[i]);
+                    }
+                    else
+                    {
+                        xprintf("no %s", scoll_name[i]);
+                    }
+
+                    if (scoll->dist < 1e19f)
+                    {
+                        xVec3 lhdng;
+
+                        xprintf("   %.3f", scoll->dist);
+                        xprintf(" <%.3f %.3f %.3f>\n", scoll->hdng.x, scoll->hdng.y, scoll->hdng.z);
+                        xprintf("%s-oid:  %u", scoll_name[i], scoll->oid);
+                        xMat3x3LMulVec(&lhdng, (const xMat3x3*)&xent->frame->mat, &scoll->hdng);
+                        xprintf("   lhdng: <%.3f %.3f %.3f>\n", lhdng.x, lhdng.y, lhdng.z);
+
+                        if (scoll->optr)
+                        {
+                            xprintf("%s-optr: %d", scoll_name[i], scoll->optr);
+                            xprintf("   (%s)\n",
+                                    xSceneID2Name(g_xSceneCur, ((xBase*)scoll->optr)->id));
+                        }
+                        else
+                        {
+                            xprintf("\n");
+                        }
+                    }
+                    else
+                    {
+                        xprintf("\n\n\n");
+                    }
+                }
+            }
+        }
+        else
+        {
+            xprintf("no checking\n");
+        }
     }
 }
 

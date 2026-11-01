@@ -313,6 +313,184 @@ U32 zFeetStepCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
     return 0;
 }
 
+// Adds a footstep effect to the named animation state for each foot: foot i steps at
+// step_time[i] with model tag tag_idx[i]. The helper's name is this project's.
+static inline void zFeetAddSteps(xAnimTable* table, char* name, tagzFeet* feet, S32* tag_idx,
+                                 F32* step_time,
+                                 U32 (*cb)(U32, xAnimActiveEffect*, xAnimSingle*, void*))
+{
+    xAnimState* state = xAnimTableGetState(table, name);
+
+    for (S32 i = 0; i < feet->total; i++)
+    {
+        _tagFoot foot;
+        foot.feet = feet;
+        foot.idx = tag_idx[i];
+        memcpy(xAnimStateNewEffect(state, 1, step_time[i], 0.0f, cb, sizeof(_tagFoot)) + 1, &foot,
+               sizeof(_tagFoot));
+    }
+}
+
+// Hook the footstep callbacks into the walk, run, land and other movement animations. The player
+// (ent_type -1) has one timing set per subtype, with four feet in most of them; the villains with
+// footsteps have two feet stepping in their Move and Chase states.
+void zFeetInit(S32 ent_type, _xEnt* owner, tagzFeet* feet, S32 feet_subtype, xAnimTable* table)
+{
+    F32 step_time[6];
+    S32 tag_idx[6];
+
+    feet->owner = owner;
+    feet->entity_type = ent_type;
+
+    if (feet->entity_type == -1)
+    {
+        for (S32 i = 0; i < 6; i++)
+        {
+            tag_idx[i] = i;
+        }
+
+        feet->total = 4;
+
+        switch (feet_subtype)
+        {
+        case 0:
+            step_time[0] = 0.69825f;
+            step_time[1] = 0.03325f;
+            step_time[2] = 1.33f;
+            step_time[3] = 0.56525f;
+            zFeetAddSteps(table, "Walk_brave", feet, tag_idx, step_time, zFeetStepCB);
+            zFeetAddSteps(table, "Walk_normal", feet, tag_idx, step_time, zFeetStepCB);
+            zFeetAddSteps(table, "Walk_scared", feet, tag_idx, step_time, zFeetStepCB);
+            zFeetAddSteps(table, "Walk_boots", feet, tag_idx, step_time, zFeetStepCB);
+            break;
+        case 1:
+            step_time[0] = 0.17434211f;
+            step_time[1] = 0.12453008f;
+            step_time[2] = 0.32377818f;
+            step_time[3] = 0.32377818f;
+            zFeetAddSteps(table, "Run_brave", feet, tag_idx, step_time, zFeetStepCB);
+            zFeetAddSteps(table, "Run_normal", feet, tag_idx, step_time, zFeetStepCB);
+            zFeetAddSteps(table, "Run_scared", feet, tag_idx, step_time, zFeetStepCB);
+            zFeetAddSteps(table, "Run_boots", feet, tag_idx, step_time, zFeetStepCB);
+            break;
+        case 2:
+            feet->total = 2;
+            step_time[0] = 0.5657377f;
+            step_time[1] = 1.5973771f;
+            tag_idx[0] = 2;
+            tag_idx[1] = 3;
+            zFeetAddSteps(table, "Walk_sneak", feet, tag_idx, step_time, zFeetStepCB);
+            break;
+        case 3:
+            step_time[0] = 0.349125f;
+            step_time[1] = 0.016625f;
+            step_time[2] = 0.665f;
+            step_time[3] = 0.282625f;
+            zFeetAddSteps(table, "Walk_sticky", feet, tag_idx, step_time, zFeetStepCB);
+            break;
+        case 4:
+            step_time[0] = 0.12531328f;
+            step_time[1] = 0.12531328f;
+            step_time[2] = 0.25062656f;
+            step_time[3] = 0.25062656f;
+            zFeetAddSteps(table, "Action_attackrun", feet, tag_idx, step_time, zFeetStepCB);
+            break;
+        case 5:
+            step_time[0] = 0.29333332f;
+            step_time[1] = 0.26666668f;
+            step_time[2] = 0.026666667f;
+            step_time[3] = 0.08f;
+            zFeetAddSteps(table, "Land_normal", feet, tag_idx, step_time, zFeetStepCB);
+            break;
+        case 6:
+            step_time[0] = 0.02505f;
+            step_time[1] = 0.00835f;
+            step_time[2] = 0.32565f;
+            step_time[3] = 0.2505f;
+            zFeetAddSteps(table, "Land_running", feet, tag_idx, step_time, zFeetStepCB);
+            break;
+        case 7:
+            step_time[0] = 0.067058824f;
+            step_time[1] = 0.13411765f;
+            step_time[2] = 0.38f;
+            step_time[3] = 0.38f;
+            zFeetAddSteps(table, "Land_walk", feet, tag_idx, step_time, zFeetStepCB);
+            break;
+        case 8:
+            step_time[0] = 0.100250624f;
+            step_time[1] = 0.3508772f;
+            step_time[2] = 0.5012531f;
+            step_time[3] = 0.7017544f;
+            zFeetAddSteps(table, "Walk_slippery", feet, tag_idx, step_time, zFeetStepCB);
+            break;
+        case 9:
+            step_time[0] = 0.06f;
+            step_time[1] = 0.12f;
+            step_time[2] = 0.18f;
+            step_time[3] = 0.24f;
+            zFeetAddSteps(table, "Run_slippery", feet, tag_idx, step_time, zFeetStepCB);
+            break;
+        }
+    }
+    else
+    {
+        feet->total = 2;
+
+        for (S32 i = 0; i < 6; i++)
+        {
+            tag_idx[i] = i;
+        }
+
+        switch (ent_type)
+        {
+        case eEntVillainTypeCreeper:
+            step_time[0] = 0.31935483f;
+            step_time[1] = 0.07096774f;
+            zFeetAddSteps(table, "Move", feet, tag_idx, step_time, zFeetStepVillainCB);
+            step_time[0] = 0.17741935f;
+            step_time[1] = 0.46129033f;
+            zFeetAddSteps(table, "Chase", feet, tag_idx, step_time, zFeetStepVillainCB);
+            break;
+        case eEntVillainTypeGhostDiver:
+            step_time[0] = 1.0f;
+            step_time[1] = 0.516129f;
+            zFeetAddSteps(table, "Move", feet, tag_idx, step_time, zFeetStepVillainCB);
+            step_time[0] = 0.06923077f;
+            step_time[1] = 0.5192308f;
+            zFeetAddSteps(table, "Chase", feet, tag_idx, step_time, zFeetStepVillainCB);
+            break;
+        case eEntVillainTypeRobot:
+            step_time[0] = 1.625f;
+            step_time[1] = 0.75f;
+            zFeetAddSteps(table, "Move", feet, tag_idx, step_time, zFeetStepVillainCB);
+            step_time[0] = 0.46875f;
+            step_time[1] = 0.25f;
+            zFeetAddSteps(table, "Chase", feet, tag_idx, step_time, zFeetStepVillainCB);
+            break;
+        case eEntVillainTypeSpaceKook:
+            step_time[0] = 0.46666667f;
+            step_time[1] = 1.1f;
+            zFeetAddSteps(table, "Move", feet, tag_idx, step_time, zFeetStepVillainCB);
+            step_time[0] = 0.46666667f;
+            step_time[1] = 1.1f;
+            zFeetAddSteps(table, "Chase", feet, tag_idx, step_time, zFeetStepVillainCB);
+            break;
+        case eEntVillainTypeWolfman:
+            step_time[0] = 0.945f;
+            step_time[1] = 0.21f;
+            zFeetAddSteps(table, "Move", feet, tag_idx, step_time, zFeetStepVillainCB);
+            step_time[0] = 0.57857144f;
+            step_time[1] = 0.9f;
+            zFeetAddSteps(table, "Chase", feet, tag_idx, step_time, zFeetStepVillainCB);
+            break;
+        // Villain types without footsteps.
+        case eEntVillainTypeBat:
+        case eEntVillainGroundsKeeper:
+            break;
+        }
+    }
+}
+
 // Remove the player footstep effect from the animation table.
 void zFeetExit(_xEnt*, xAnimTable* table)
 {

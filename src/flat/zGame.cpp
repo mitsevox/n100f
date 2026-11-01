@@ -26,6 +26,9 @@
 #include "zEntShaggy.h"
 #include "zHud.h"
 #include "zPortal.h"
+#include "zVar.h"
+#include "zEntPickup.h"
+#include "xSnd.h"
 #include <dolphin/os.h>
 #include <dolphin/vi.h>
 #include <stdio.h>
@@ -36,9 +39,9 @@ void xPadDestroyRumbleChain(S32 idx);
 void xSndStopAll();
 void xSndUpdate(F32 time_elapsed);
 void zEntPlayer_Init(_xEnt*, p2EntAsset*);
-extern "C" void fn_80048E54(S32, S32);
+void zEntEventAllOfType(U32 toEvent, U32 type);
+static void zGameCheats(F32 dt);
 extern "C" void fn_80016600();
-extern "C" void fn_800AC100(F32);
 void xSndSetFrame(xVec3* right, xVec3* up, xVec3* at, xVec3* pos, F32 radius);
 void xSndSetFrameFar(xVec3* pos);
 extern "C" void fn_800B94C0(zScene*, F32);
@@ -320,7 +323,7 @@ void zGameLoop()
         xPadUpdate(0, lbl_8025EEEC);
         fn_80016600();
         globals.update_dt = lbl_8025EEEC;
-        fn_800AC100(lbl_8025EEEC);
+        zGameCheats(lbl_8025EEEC);
         zGameExtras(lbl_8025EEEC);
         xDrawBegin();
         S32 paused = zGameIsPaused();
@@ -372,14 +375,149 @@ void zGameLoop()
     iScrFxSetBlackoutFrames(3);
 }
 
-// Prepare the player and scene after loading, then start their game services.
-void zGameSetup()
+// The cheat codes as pad bits 0x20000 and 0x40000, oldest press first; leading zeros pad the
+// shorter codes. sCheatPressed holds the last fourteen presses. sCheatUnchecked (fourteen presses
+// of 0x40000) is a code nothing tests.
+U32 sCheatUnlockCredits[14] = { 0, 0, 0, 0, 0, 0, 0, 0, 0x40000, 0x20000, 0x20000, 0x40000, 0x20000, 0x40000 };
+U32 sCheatUnlockAllMovies[14] = { 0,       0,       0,       0,       0,       0x40000, 0x40000,
+                                  0x40000, 0x20000, 0x20000, 0x20000, 0x40000, 0x20000, 0x40000 };
+U32 sCheatWarpGate[14] = { 0,       0,       0,       0,       0x40000, 0x40000, 0x20000,
+                           0x40000, 0x40000, 0x20000, 0x40000, 0x20000, 0x20000, 0x20000 };
+U32 sCheatAllPowerups[14] = { 0x20000, 0x40000, 0x20000, 0x40000, 0x20000, 0x40000, 0x40000,
+                              0x40000, 0x20000, 0x20000, 0x40000, 0x20000, 0x20000, 0x20000 };
+U32 sCheatUnchecked[14] = { 0x40000, 0x40000, 0x40000, 0x40000, 0x40000, 0x40000, 0x40000,
+                            0x40000, 0x40000, 0x40000, 0x40000, 0x40000, 0x40000, 0x40000 };
+U32 sCheatPressed[14] = {};
+static F32 sCheatTimer;
+
+static S32 TestCheat(U32* cheat_info);
+
+// While the game is paused with the two shoulder buttons (0x1100) held, each new face-button
+// press is shifted into sCheatPressed and every code is tested. Releasing the shoulders, or 0.35
+// seconds without a press, clears the presses.
+static void zGameCheats(F32 dt)
 {
-    zSceneSetup();
-    RpWorld* world = globals.sceneCur->env->geom->world;
-    xModel_SceneEnter(world);
-    zFX_SceneEnter(world);
-    p2EntAsset* asset = (p2EntAsset*)xSTFindAssetByType('PLYR', xSTAssetCountByType('PLYR') - 1, NULL);
+    if (zGameModeGet() != eGameMode_Pause)
+    {
+        return;
+    }
+
+    if ((globals.pad0->on & 0x1100) == 0x1100)
+    {
+        U32 pressed = globals.pad0->pressed & 0xF0000;
+        if (pressed)
+        {
+            for (S32 i = 0; i < 13; i++)
+            {
+                sCheatPressed[i] = sCheatPressed[i + 1];
+            }
+
+            sCheatPressed[13] = pressed;
+            sCheatTimer = 0.35f;
+            if (TestCheat(sCheatWarpGate))
+            {
+                zEntPickupCheat_allWarps();
+            }
+
+            if (TestCheat(sCheatAllPowerups))
+            {
+                globals.player.Inv_Specials |= 1 << 0;
+                globals.player.Inv_Specials |= 1 << 1;
+                globals.player.Inv_Specials |= 1 << 2;
+                globals.player.Inv_Specials |= 1 << 4;
+                globals.player.Inv_Specials |= 1 << 3;
+                globals.player.Inv_Specials |= 1 << 5;
+                globals.player.Inv_Specials |= 1 << 9;
+                globals.player.Inv_Specials |= 1 << 10;
+                globals.player.Inv_Specials |= 1 << 11;
+                globals.player.Inv_Specials |= 1 << 12;
+                globals.player.Inv_Specials |= 1 << 13;
+                globals.player.Inv_Specials |= 1 << 14;
+                globals.player.Inv_Specials |= 1 << 6;
+                globals.player.Inv_Specials |= 1 << 7;
+                globals.player.Inv_Specials |= 1 << 8;
+            }
+
+            if (TestCheat(sCheatUnlockCredits))
+            {
+                zVarUnlockEndGame();
+            }
+
+            if (TestCheat(sCheatUnlockAllMovies))
+            {
+                zVarUnlockAllMovies();
+            }
+
+            sCheatTimer = 0.35f;
+        }
+        else
+        {
+            sCheatTimer -= dt;
+            if (sCheatTimer <= 0.0f)
+            {
+                sCheatTimer = 0.35f;
+                memset(sCheatPressed, 0, sizeof(sCheatPressed));
+            }
+        }
+    }
+    else
+    {
+        sCheatTimer = 0.35f;
+        memset(sCheatPressed, 0, sizeof(sCheatPressed));
+    }
+}
+
+// Whether the last presses end with the code (compared back to its first nonzero entry); a match
+// plays one of four excited Scooby sounds.
+static S32 TestCheat(U32* cheat_info)
+{
+    S32 i;
+
+    for (i = 13; cheat_info[i] && i >= 0; i--)
+    {
+        if (cheat_info[i] != sCheatPressed[i])
+        {
+            return 0;
+        }
+    }
+
+    switch (irand() & 3)
+    {
+    case 0:
+        xSndPlay(xStrHash("scooby_excite_01"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
+        break;
+    case 1:
+        xSndPlay(xStrHash("scooby_excite_04"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
+        break;
+    case 2:
+        xSndPlay(xStrHash("scooby_excite_09"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
+        break;
+    case 3:
+    default:
+        xSndPlay(xStrHash("scooby_excite_10"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
+        break;
+    }
+
+    return 1;
+}
+
+struct p2MarkerAsset
+{
+    xVec3 pos;
+};
+
+// Sets up the player from the scene's last player asset: the yaw a portal left (when it set one),
+// then the start position from the portal's marker (moving the camera target with it), and
+// finally sends event 0xC2 to every entity of type 30.
+void setupPlayer()
+{
+    p2MarkerAsset* m;
+    U32 size;
+    S32 playerCount;
+    p2EntAsset* asset;
+
+    playerCount = xSTAssetCountByType('PLYR');
+    asset = (p2EntAsset*)xSTFindAssetByType('PLYR', playerCount - 1, NULL);
     asset->baseType = 3;
     if (lbl_8025EEE4)
     {
@@ -391,20 +529,29 @@ void zGameSetup()
     zEntPlayer_Init(&globals.player.ent, asset);
     if (lbl_8025EED8)
     {
-        U32 size;
-        xVec3* pos = (xVec3*)xSTFindAsset(lbl_8025EED8, &size);
-        if (pos)
+        m = (p2MarkerAsset*)xSTFindAsset(lbl_8025EED8, &size);
+        if (m)
         {
-            globals.player.ent.frame->mat.pos = *pos;
-            globals.player.ent.model->Mat->pos.x = pos->x;
-            globals.player.ent.model->Mat->pos.y = pos->y;
-            globals.player.ent.model->Mat->pos.z = pos->z;
+            globals.player.ent.frame->mat.pos = m->pos;
+            globals.player.ent.model->Mat->pos.x = m->pos.x;
+            globals.player.ent.model->Mat->pos.y = m->pos.y;
+            globals.player.ent.model->Mat->pos.z = m->pos.z;
             xCameraSetTarget(&globals.camera, &globals.player.ent.frame->mat.pos);
             xCameraSetTarget(&globals.camera, (xMat4x3*)globals.player.ent.model->Mat);
         }
         lbl_8025EED8 = 0;
     }
-    fn_80048E54(0xC2, 30);
+    zEntEventAllOfType(0xC2, 30);
+}
+
+// Prepare the player and scene after loading, then start their game services.
+void zGameSetup()
+{
+    zSceneSetup();
+    RpWorld* world = globals.sceneCur->env->geom->world;
+    xModel_SceneEnter(world);
+    zFX_SceneEnter(world);
+    setupPlayer();
     zEntShaggy_SceneStart(globals.sceneCur);
     zEnvStartingCamera(gCurEnv);
     xCameraUpdate(&globals.camera, -1.0f);
