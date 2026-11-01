@@ -121,8 +121,8 @@ RpMaterial* RpMaterialCreate(void)
 }
 
 // The material's struct chunk: flags, color, a word the reader ignores, whether a texture chunk
-// follows, and the surface properties (absent from older streams). Names written for this
-// project.
+// follows, and the surface properties (absent from older streams). The type name and flags,
+// ignored and hasTexture are this project's own; color and surfaceProps follow the DWARF RpMaterial.
 typedef struct MaterialStreamHeader MaterialStreamHeader;
 struct MaterialStreamHeader
 {

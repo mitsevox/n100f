@@ -103,7 +103,8 @@ S32 _rpSizeSectRights(const void* object, S32 offset, S32 size)
 }
 
 // What a world sector's struct chunk holds: its material list base, polygon and vertex counts, its
-// bounding box (minimum corner first) and whether a collision tree follows (project-own names).
+// bounding box (minimum corner first) and whether a collision tree follows
+// (project-own type name; members that fill an SLUS-20349 DWARF field take its name, the rest are this project's own).
 typedef struct SectorStreamHeader SectorStreamHeader;
 struct SectorStreamHeader
 {
@@ -117,7 +118,8 @@ struct SectorStreamHeader
 };
 
 // What a plane sector's struct chunk holds: the split axis and value, whether each side is a
-// world sector, and the extents of the two sides (project-own names).
+// world sector, and the extents of the two sides
+// (project-own type name; members that fill an SLUS-20349 DWARF field take its name, the rest are this project's own).
 typedef struct PlaneStreamHeader PlaneStreamHeader;
 struct PlaneStreamHeader
 {
@@ -131,7 +133,8 @@ struct PlaneStreamHeader
 
 // What a world's struct chunk holds: whether the root is a world sector, the world origin
 // negated, the surface properties, the polygon, vertex, plane sector and world sector counts, the
-// collision trees' total size and the world's flags (project-own names).
+// collision trees' total size and the world's flags
+// (project-own type name; members that fill an SLUS-20349 DWARF field take its name, the rest are this project's own).
 typedef struct WorldStreamHeader WorldStreamHeader;
 struct WorldStreamHeader
 {
@@ -143,10 +146,11 @@ struct WorldStreamHeader
     S32 planeCount;
     S32 sectorCount;
     S32 collTreeBytes;
-    S32 format;
+    S32 flags;
 };
 
-// A polygon as streams before version 0x30400 stored it, with byte indices (project-own names).
+// A polygon as streams before version 0x30400 stored it, with byte indices (project-own type name;
+// the members follow the DWARF RpPolygon).
 typedef struct OldPolygon OldPolygon;
 struct OldPolygon
 {
@@ -658,7 +662,7 @@ RpWorld* RpWorldStreamRead(RwStream* stream)
     RwMemFloat32ToReal(&header.negOrigin, sizeof(header.negOrigin));
     RwMemFloat32ToReal(&header.surfaceProps, sizeof(header.surfaceProps));
 
-    format = header.format;
+    format = header.flags;
 
     worldSize = worldTKList.sizeOfStruct + header.planeCount * sizeof(RpPlaneSector) +
                 header.sectorCount * sectorTKList.sizeOfStruct;
