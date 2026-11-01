@@ -2402,9 +2402,8 @@ static U32 Shaggy3_Stop(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* en
     {
         return 0;
     }
-    U8 retval = (!(ent->frame->mode & 0x2) || xVec3Length2(&ent->frame->dpos) < 0.0005f) &&
-                globals.player.DamageTimer < 1.25f;
-    return retval;
+    return (!(ent->frame->mode & 0x2) || xVec3Length2(&ent->frame->dpos) < 0.0005f) &&
+           globals.player.DamageTimer < 1.25f;
 }
 
 static U32 Shaggy3_StopScare(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
