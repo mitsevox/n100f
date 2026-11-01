@@ -79,7 +79,7 @@ python3 tools/splits/recover.py --dol orig/GIHE78-rev0/sys/main.dol \
 
 # Library units
 
-`splits.txt` also names 165 library units: after the game units, 148 from `0x800DE530` to `0x80111EC0` and the CARD library's 16 from `0x80130990` to `0x801372EC`, after Bink; and MetroTRK's exception vector table, `__exception.s`, in `.init` at `0x80003154`. 136 of them come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target. The table counts libmap's placements, as `config/GIHE78-rev0/lib_units.tsv` records them; import corrections are described after it.
+`splits.txt` also names 165 library units: after the game units, 148 from `0x800DE530` to `0x80111EC0` and the CARD library's 16 from `0x80130990` to `0x801372EC`, after Bink; and MetroTRK's exception vector table, `__exception.s`, in `.init` at `0x80003154` (since the `.init` split, `__mem.c` and `__start.c` there too, not counted in the 165). 136 of them come from `tools/splits/libmap.py`, which compiles public decompilations of the same libraries and looks for their code in the target. The table counts libmap's placements, as `config/GIHE78-rev0/lib_units.tsv` records them; import corrections are described after it.
 
 | Library | Units | Whole-object matches | Functions placed |
 | --- | --- | --- | --- |
@@ -264,3 +264,5 @@ RenderWare round 28 adds data ranges to units whose `.text` was already split, o
 - `src/plcore/bamemory.c` takes `llGAllFreeLists` in `.sbss` (`0x8025F790`), and `world/pipe/p2/gcn/gclights.c` its light id table in `.data` (`0x801DDB40`, up to `babinary.c`'s jump table) and the eight GX light objects in `.bss` (`0x8025DB38`).
 
 RenderWare round 30 moved one edge: `fn_8017CF40` (`0x8017CF40`), the last function of `dltexdic.c`'s gap, goes to `dltextur.c`, whose `_rwDlTextureSet` inlines it three times; `dltexdic.c` now holds three functions, as many as bfbb's. GIHE78-rev1 moves the same edge (`0x8017B460`).
+
+The last unassigned bytes, `.init` `0x8000518C`–`0x800054F4` (GIHE78-rev1: `0x8000518C`–`0x80005518`), go to two objects that link in `.init` only: `Runtime.PPCEABI.H/__mem.c` (`memset`, `__fill_mem`, `memcpy`, to `0x800052C4`) and `dolphin/os/__start.c` (`__check_pad3`, `__start`, `__init_registers`, `__init_data`, up to `__ppc_eabi_init.c`), in that order, as bfbb links `Runtime/__mem.c` and `dolphin/src/os/init/__start.c`. Every byte of `.init` and `.text` on both targets now belongs to a unit.

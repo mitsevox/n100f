@@ -655,6 +655,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "Runtime.PPCEABI.H/global_destructor_chain.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "Runtime.PPCEABI.H/runtime.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "Runtime.PPCEABI.H/GCN_mem_alloc.c"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "Runtime.PPCEABI.H/__mem.c"),
         ],
     ),
     MSLLib(
@@ -836,6 +837,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "dolphin/os/OSThread.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "dolphin/os/OSTime.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "dolphin/os/__ppc_eabi_init.c"),
+            Object(MatchingFor("GIHE78-rev0"), "dolphin/os/__start.c"),
         ],
     ),
     DolphinLib(
