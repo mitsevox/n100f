@@ -671,7 +671,7 @@ flat/zScene.cpp:
 	.bss        start:0x80248828 end:0x80248878
 	.sdata      start:0x80270448 end:0x80270458
 	.sbss       start:0x80270F38 end:0x80270F80
-	.sdata2     start:0x80273B20 end:0x80273D68
+	.sdata2     start:0x80273B10 end:0x80273D68
 	.sbss2      start:0x80274B98 end:0x80274BA8
 
 flat/zScript.cpp:

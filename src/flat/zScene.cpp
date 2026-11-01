@@ -182,7 +182,6 @@ struct zSceneRenderDist
     };
 };
 
-extern "C" zSceneRenderDist lbl_801C82A0[66];
 void zLightUpdate(xBase* to, _xScene* sc, F32 dt);
 void zSurfaceUpdate(xBase* to, _xScene* sc, F32 dt);
 void zActionLineUpdate(F32 seconds);
@@ -349,6 +348,89 @@ static zSceneObjectInstanceDesc sInitTable[34] = {
     { NULL, 0, 0, 0x0, NULL, NULL },
 };
 
+// Entity ids kept as named constants. Read through the float slot, they cannot be folded into the
+// table's static data, so the startup code copies them in (the 0 placeholders in .data).
+static const union
+{
+    U32 u;
+    F32 f;
+} sRefID_FFF2B7A3 = { 0xFFF2B7A3 },
+  sRefID_FFF2B7A4 = { 0xFFF2B7A4 },
+  sRefID_FFF2B7AA = { 0xFFF2B7AA };
+
+// GC-only; the PS2 build has no counterpart. The scene ids come from zSceneIDFromName, which is
+// not a constant expression, so the startup code fills that column in. The float column carries
+// either a distance or, for mode 2, an entity id by bit pattern, written as the float literal with
+// the same bits (the table reads like tool output).
+static zSceneRenderDist lbl_801C82A0[66] = {
+    { zSceneIDFromName("b004"), 0x3A93B8D5, 1, 1000.0f, 0.0f },
+    { zSceneIDFromName("f001"), 0x2AA813E6, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("f004"), 0x22E5FF9E, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("f004"), 0xE16CD658, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("f007"), 0x05D17E38, 1, 100000.0f, 0.0f },
+    { zSceneIDFromName("f007"), 0x1FB2A715, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("f009"), 0x29133A86, 1, 100000.0f, 0.1f },
+    { zSceneIDFromName("f010"), 0x76D4796D, 2, -5.730951e+36f, -0.1f },
+    { zSceneIDFromName("i001"), 0x676E3710, 1, 18.1f, 0.0f },
+    { zSceneIDFromName("i001"), 0xFFF2B7A4, 1, 18.0f, 0.0f },
+    { zSceneIDFromName("i001"), 0x2163A5AD, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("i001"), 0xDC572112, 1, 9000.0f, 0.0f },
+    { zSceneIDFromName("i003"), 0xA207A42F, 1, 5.0f, 0.0f },
+    { zSceneIDFromName("i003"), 0x676E3710, 1, 7.0f, 0.0f },
+    { zSceneIDFromName("i003"), 0xFFF2B7A4, 1, 10.0f, 0.0f },
+    { zSceneIDFromName("i003"), 0xFFF2B7A5, 1, 5.0f, 0.0f },
+    { zSceneIDFromName("i004"), 0x213E3E5C, 2, 1.4925528e+10f, 0.1f },
+    { zSceneIDFromName("i004"), 0x0016EBA0, 2, 1.4925528e+10f, 0.2f },
+    { zSceneIDFromName("i004"), 0xD660169D, 2, 1.4925528e+10f, 0.3f },
+    { zSceneIDFromName("i006"), 0x90E56560, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("i006"), 0x9D7EF8C5, 1, 9999.0f, 0.0f },
+    { zSceneIDFromName("i006"), 0x9DA14661, 2, -1.3661381e-36f, 0.1f },
+    { zSceneIDFromName("i006"), 0x1EA6A37D, 2, sRefID_FFF2B7A3.f, 0.1f },
+    { zSceneIDFromName("i020"), 0x00794266, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("i020"), 0x0BBA9313, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("i020"), 0x1FF4FC52, 2, sRefID_FFF2B7A3.f, 0.1f },
+    { zSceneIDFromName("i020"), 0x8FD9188B, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("i020"), 0x8FD9188D, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("i021"), 0x9C17992C, 2, -1.4451877e-10f, -0.1f },
+    { zSceneIDFromName("i021"), 0x0B0E0EAC, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("i021"), 0x889C3413, 2, sRefID_FFF2B7A3.f, 0.1f },
+    { zSceneIDFromName("l017"), 0xF933F817, 2, 3.7537333e-08f, -0.1f },
+    { zSceneIDFromName("l017"), 0xF933F818, 2, 7.526812e-11f, -0.1f },
+    { zSceneIDFromName("l017"), 0xF933F819, 2, 3.2181435e-15f, -0.1f },
+    { zSceneIDFromName("l017"), 0xF933F81A, 2, 0.00011711304f, -0.1f },
+    { zSceneIDFromName("l017"), 0xF933F81B, 2, 4302963.5f, -0.1f },
+    { zSceneIDFromName("l017"), 0x105AB6CA, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("o002"), 0x76D4796D, 1, 0.0f, 0.0f },
+    { zSceneIDFromName("o003"), 0x5E6B898F, 2, -7.0447354e-10f, 0.1f },
+    { zSceneIDFromName("o003"), 0x5E6B8990, 2, -7.0447354e-10f, 0.1f },
+    { zSceneIDFromName("o003"), 0x5E6B8991, 2, -7.0447354e-10f, 0.1f },
+    { zSceneIDFromName("o003"), 0x5E6B8994, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("o003"), 0x6C62EBA8, 2, -2.5868392e-09f, 0.1f },
+    { zSceneIDFromName("o003"), 0xB10F768D, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("o003"), 0x5E6B8995, 2, -2.5868392e-09f, 0.2f },
+    { zSceneIDFromName("o003"), 0x5E6B8996, 2, 4.243065e+18f, 0.0f },
+    { zSceneIDFromName("o003"), 0x5E6B8997, 2, -9.76801e-10f, 0.1f },
+    { zSceneIDFromName("o003"), 0x5107645D, 2, -9.76801e-10f, 0.1f },
+    { zSceneIDFromName("o003"), 0x6BD9B53C, 2, -9.76801e-10f, 0.1f },
+    { zSceneIDFromName("o004"), 0x4B6C4E03, 2, sRefID_FFF2B7A4.f, 0.1f },
+    { zSceneIDFromName("o004"), 0x4B6C4E04, 2, sRefID_FFF2B7A4.f, 0.1f },
+    { zSceneIDFromName("o004"), 0x4BF5846F, 2, sRefID_FFF2B7AA.f, -0.1f },
+    { zSceneIDFromName("o004"), 0xF933F89E, 1, 32180446.0f, -0.1f },
+    { zSceneIDFromName("o004"), 0x1EA6A37A, 1, 20000.0f, 0.0f },
+    { zSceneIDFromName("r001"), 0x0BBA9312, 0, 500.0f, 500.0f },
+    { zSceneIDFromName("r001"), 0x8FD918AC, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("r001"), 0xE50A53DD, 1, 2.0f, 0.0f },
+    { zSceneIDFromName("r001"), 0xED663E44, 2, -1.4314024e-35f, 0.1f },
+    { zSceneIDFromName("r003"), 0x8598367B, 1, 5.0f, 0.0f },
+    { zSceneIDFromName("r020"), 0x3E643406, 1, 10000.0f, 0.0f },
+    { zSceneIDFromName("r021"), 0x303C778E, 0, 500.0f, 500.0f },
+    { zSceneIDFromName("r021"), 0x0BBA9312, 0, 500.0f, 500.0f },
+    { zSceneIDFromName("r021"), 0x0BBA9311, 0, 500.0f, 500.0f },
+    { zSceneIDFromName("w027"), 0x7C5CE847, 0, 500.0f, 500.0f },
+    { zSceneIDFromName("w027"), 0xAD92D5FD, 0, 500.0f, 500.0f },
+    { zSceneIDFromName("w027"), 0x7C5CE7C4, 0, 500.0f, 500.0f },
+};
+
 static S32 sMemDepthSceneStart = -1;
 static S32 scobj_size = -1;
 static S32 nidbps = -1;
@@ -359,89 +441,19 @@ static S32 availOnDisk;
 static S32 lbl_8025F0AC;
 static S32 lbl_8025F0B0;
 static S32 lbl_8025F0B4;
-static IDBasePair* scobj_idbps;
-static S32 lbl_8025F0C0;
 static F32 lbl_8025F0B8;
 static F32 lbl_8025F0BC;
+static S32 lbl_8025F0C0;
 static F32 lbl_8025F0C4;
 static F32 lbl_8025F0C8;
-
-// Open addressing on the low bits of the id; scobj_size is a power of two and an
-// id of 0 marks an empty slot.
-static xBase* zSceneObjHashtableGet(U32 id)
-{
-    S32 k, chkd;
-
-    chkd = id & (scobj_size - 1);
-
-    for (k = 0; k < scobj_size; k++)
-    {
-        IDBasePair* idbp = &scobj_idbps[chkd];
-
-        if (idbp->id == id)
-        {
-            return idbp->base;
-        }
-
-        if (idbp->id == 0)
-        {
-            return NULL;
-        }
-
-        chkd++;
-
-        if (chkd == scobj_size)
-        {
-            chkd = 0;
-        }
-    }
-
-    return NULL;
-}
-
-static void zSceneObjHashtableAdd(U32 id, xBase* base)
-{
-    S32 k, chkd;
-
-    chkd = id & (scobj_size - 1);
-
-    for (k = 0; k < scobj_size; k++)
-    {
-        IDBasePair* idbp = &scobj_idbps[chkd];
-
-        if (idbp->id == 0)
-        {
-            idbp->id = id;
-            idbp->base = base;
-            nidbps++;
-            break;
-        }
-
-        chkd++;
-
-        if (chkd == scobj_size)
-        {
-            chkd = 0;
-        }
-    }
-}
-
-static void zSceneObjHashtableInit(S32 count)
-{
-    scobj_idbps = (IDBasePair*)xMemAlloc(gActiveHeap, count * sizeof(IDBasePair));
-
-    memset(scobj_idbps, 0, count * sizeof(IDBasePair));
-
-    scobj_size = count;
-    nidbps = 0;
-}
-
-static void zSceneObjHashtableExit()
-{
-    scobj_idbps = NULL;
-    scobj_size = -1;
-    nidbps = -1;
-}
+_zEnv* gCurEnv;
+U32 gTransitionSceneID;
+F32 gSceneUpdateTime;
+_tagClimate gClimate;
+static xBase* zSceneObjHashtableGet(U32 id);
+static void zSceneObjHashtableAdd(U32 id, xBase* base);
+static void zSceneObjHashtableInit(S32 count);
+static void zSceneObjHashtableExit();
 
 static void zSceneSet(xBase* b, U32 index)
 {
@@ -1009,7 +1021,6 @@ void zSceneExit()
 {
     zScene* s = globals.sceneCur;
     RpWorld* world;
-    S32 i;
 
     zSceneForAllBase(zSceneExitSoundIteratorCB, NULL);
     xSndStopAll();
@@ -1044,7 +1055,7 @@ void zSceneExit()
     {
         zParSys* ps = (zParSys*)s->baseList[39];
 
-        for (i = 0; i < (S32)s->baseCount[39]; i++)
+        for (S32 i = 0; i < (S32)s->baseCount[39]; i++)
         {
             if (ps[i].baseFlags & 0x4)
             {
@@ -1491,28 +1502,7 @@ void zSceneLoad(zScene* ent, xSerial* s)
     }
 }
 
-// Marks the "<scene> VISITED" UI object of the current scene as visited.
-static void zSceneEnableVisited(zScene* s)
-{
-    char uiName[64];
-    U32 uiNameID;
-
-    strcpy(uiName, xUtil_idtag2string(s->sceneID, 0));
-
-    uiName[1] = ' ';
-
-    strcat(uiName, " VISITED");
-
-    uiNameID = xStrHash(uiName);
-
-    for (S32 i = 0; i < (S32)s->num_base; i++)
-    {
-        if (s->base[i] && s->base[i]->baseType == 32 && uiNameID == s->base[i]->id)
-        {
-            s->base[i]->baseFlags |= 0x1;
-        }
-    }
-}
+static void zSceneEnableVisited(zScene* s);
 
 // Restarts the scene from its last saved state: every object gets its reset, then the
 // saved state is loaded back and the scene and room begin again.
@@ -1998,6 +1988,85 @@ static void zShadowReceivers()
 // Draws one frame of the scene: the environment, the opaque entities, then the
 // see-through ones sorted by their distance from the camera, the effects, the HUD and
 // the UI. In the intro the memory card warning is drawn over everything.
+// GC-only: billboard sprites at fixed points in four rooms. The PS2 build has no such locals in
+// zSceneRender, and the point tables precede zSceneRender's own initializer templates in
+// .rodata, so this is a separate function inlined into it.
+static inline void zSceneRenderBillboards()
+{
+    if (globals.sceneCur->sceneID == zSceneIDFromName("b003"))
+    {
+        xVec3 pts[14] = {
+            { -10.935f, 32.565f, -31.772f }, { -17.635f, 34.286f, -31.771f },
+            { -24.938f, 33.703f, -31.795f }, { -31.687f, 33.524f, -32.116f },
+            { -38.701f, 33.005f, -32.116f }, { -46.224f, 33.51f, -32.116f },
+            { -61.621f, 36.247f, -46.187f }, { -71.097f, 36.108f, -46.674f },
+            { -76.251f, 36.426f, -54.49f },  { -76.251f, 36.426f, -61.185f },
+            { -69.825f, 36.541f, -68.408f }, { -61.625f, 36.541f, -68.773f },
+            { -51.77f, 29.418f, -102.253f }, { -34.7f, 33.968f, -103.255f },
+        };
+        void* asset = xSTFindAsset(0x2AA06A3A, NULL);
+
+        if (asset)
+        {
+            iDrawBillboards(pts, 14, ((RwTexture*)asset)->raster, 1.5f, 1.5f);
+        }
+    }
+    else if (globals.sceneCur->sceneID == zSceneIDFromName("e004"))
+    {
+        xVec3 pts[15] = {
+            { 336.775f, 10.53f, 68.837f },   { 345.983f, 10.53f, 76.024f },
+            { 369.36f, 10.596f, 75.283f },   { 407.768f, 10.55f, 68.261f },
+            { 440.203f, 10.592f, 86.134f },  { 458.491f, 10.497f, 85.739f },
+            { 475.495f, 10.071f, 93.686f },  { 481.907f, 10.009f, 94.842f },
+            { 482.091f, 9.982f, 104.687f },  { 475.658f, 10.075f, 105.788f },
+            { 467.437f, 10.51f, 113.27f },   { 467.063f, 10.638f, 144.221f },
+            { 442.756f, 10.297f, 144.6f },   { 398.912f, 10.449f, 144.511f },
+            { 378.616f, 10.219f, 144.498f },
+        };
+        void* asset = xSTFindAsset(0x6A38ADC5, NULL);
+
+        if (asset)
+        {
+            iDrawBillboards(pts, 15, ((RwTexture*)asset)->raster, 3.6f, 3.6f);
+        }
+    }
+    else if (globals.sceneCur->sceneID == zSceneIDFromName("p003"))
+    {
+        xVec3 pts1[5] = {
+            { 57.448f, 13.165f, -49.734f }, { 62.079f, 12.698f, -47.585f },
+            { 61.519f, 14.91f, -57.24f },   { 14.714f, 14.666f, -57.482f },
+            { 17.973f, 17.225f, -66.808f },
+        };
+        xVec3 pts2[4] = {
+            { 59.459f, 17.985f, -45.893f },
+            { 58.922f, 21.302f, -57.58f },
+            { 17.133f, 21.198f, -57.649f },
+            { 16.243f, 24.422f, -69.885f },
+        };
+        void* asset = xSTFindAsset(0xB0988A6C, NULL);
+
+        if (asset)
+        {
+            iDrawBillboards(pts1, 5, ((RwTexture*)asset)->raster, 1.2f, 1.2f);
+            iDrawBillboards(pts2, 4, ((RwTexture*)asset)->raster, 2.3f, 2.3f);
+        }
+    }
+    else if (globals.sceneCur->sceneID == zSceneIDFromName("p005"))
+    {
+        xVec3 pts[3] = {
+            { -39.211f, 10.394f, -3.671f },
+            { -44.42f, 12.877f, -3.422f },
+            { -49.24f, 12.468f, -3.422f },
+        };
+        void* asset = xSTFindAsset(0x10B4E293, NULL);
+
+        if (asset)
+        {
+            iDrawBillboards(pts, 3, ((RwTexture*)asset)->raster, 2.5f, 2.5f);
+        }
+    }
+}
+
 void zSceneRender()
 {
     zScene* s = globals.sceneCur;
@@ -2175,78 +2244,7 @@ void zSceneRender()
         }
     }
 
-    if (globals.sceneCur->sceneID == zSceneIDFromName("b003"))
-    {
-        xVec3 pts[14] = {
-            { -10.935f, 32.565f, -31.772f }, { -17.635f, 34.286f, -31.771f },
-            { -24.938f, 33.703f, -31.795f }, { -31.687f, 33.524f, -32.116f },
-            { -38.701f, 33.005f, -32.116f }, { -46.224f, 33.51f, -32.116f },
-            { -61.621f, 36.247f, -46.187f }, { -71.097f, 36.108f, -46.674f },
-            { -76.251f, 36.426f, -54.49f },  { -76.251f, 36.426f, -61.185f },
-            { -69.825f, 36.541f, -68.408f }, { -61.625f, 36.541f, -68.773f },
-            { -51.77f, 29.418f, -102.253f }, { -34.7f, 33.968f, -103.255f },
-        };
-        void* asset = xSTFindAsset(0x2AA06A3A, NULL);
-
-        if (asset)
-        {
-            iDrawBillboards(pts, 14, ((RwTexture*)asset)->raster, 1.5f, 1.5f);
-        }
-    }
-    else if (globals.sceneCur->sceneID == zSceneIDFromName("e004"))
-    {
-        xVec3 pts[15] = {
-            { 336.775f, 10.53f, 68.837f },   { 345.983f, 10.53f, 76.024f },
-            { 369.36f, 10.596f, 75.283f },   { 407.768f, 10.55f, 68.261f },
-            { 440.203f, 10.592f, 86.134f },  { 458.491f, 10.497f, 85.739f },
-            { 475.495f, 10.071f, 93.686f },  { 481.907f, 10.009f, 94.842f },
-            { 482.091f, 9.982f, 104.687f },  { 475.658f, 10.075f, 105.788f },
-            { 467.437f, 10.51f, 113.27f },   { 467.063f, 10.638f, 144.221f },
-            { 442.756f, 10.297f, 144.6f },   { 398.912f, 10.449f, 144.511f },
-            { 378.616f, 10.219f, 144.498f },
-        };
-        void* asset = xSTFindAsset(0x6A38ADC5, NULL);
-
-        if (asset)
-        {
-            iDrawBillboards(pts, 15, ((RwTexture*)asset)->raster, 3.6f, 3.6f);
-        }
-    }
-    else if (globals.sceneCur->sceneID == zSceneIDFromName("p003"))
-    {
-        xVec3 pts1[5] = {
-            { 57.448f, 13.165f, -49.734f }, { 62.079f, 12.698f, -47.585f },
-            { 61.519f, 14.91f, -57.24f },   { 14.714f, 14.666f, -57.482f },
-            { 17.973f, 17.225f, -66.808f },
-        };
-        xVec3 pts2[4] = {
-            { 59.459f, 17.985f, -45.893f },
-            { 58.922f, 21.302f, -57.58f },
-            { 17.133f, 21.198f, -57.649f },
-            { 16.243f, 24.422f, -69.885f },
-        };
-        void* asset = xSTFindAsset(0xB0988A6C, NULL);
-
-        if (asset)
-        {
-            iDrawBillboards(pts1, 5, ((RwTexture*)asset)->raster, 1.2f, 1.2f);
-            iDrawBillboards(pts2, 4, ((RwTexture*)asset)->raster, 2.3f, 2.3f);
-        }
-    }
-    else if (globals.sceneCur->sceneID == zSceneIDFromName("p005"))
-    {
-        xVec3 pts[3] = {
-            { -39.211f, 10.394f, -3.671f },
-            { -44.42f, 12.877f, -3.422f },
-            { -49.24f, 12.468f, -3.422f },
-        };
-        void* asset = xSTFindAsset(0x10B4E293, NULL);
-
-        if (asset)
-        {
-            iDrawBillboards(pts, 3, ((RwTexture*)asset)->raster, 2.5f, 2.5f);
-        }
-    }
+    zSceneRenderBillboards();
 
     if (s->env->geom && s->env->geom->fx)
     {
@@ -2371,6 +2369,87 @@ void zSceneRender()
     {
         DrawScreenSizeRectangle();
     }
+}
+
+// The PS2 build places these between zSceneFindObject and zSceneRender, after zSceneUpdate, so
+// scobj_idbps follows zSceneUpdate's local statics in .sbss.
+static IDBasePair* scobj_idbps;
+
+// Open addressing on the low bits of the id; scobj_size is a power of two and an
+// id of 0 marks an empty slot.
+static xBase* zSceneObjHashtableGet(U32 id)
+{
+    S32 k, chkd;
+
+    chkd = id & (scobj_size - 1);
+
+    for (k = 0; k < scobj_size; k++)
+    {
+        IDBasePair* idbp = &scobj_idbps[chkd];
+
+        if (idbp->id == id)
+        {
+            return idbp->base;
+        }
+
+        if (idbp->id == 0)
+        {
+            return NULL;
+        }
+
+        chkd++;
+
+        if (chkd == scobj_size)
+        {
+            chkd = 0;
+        }
+    }
+
+    return NULL;
+}
+
+static void zSceneObjHashtableAdd(U32 id, xBase* base)
+{
+    S32 k, chkd;
+
+    chkd = id & (scobj_size - 1);
+
+    for (k = 0; k < scobj_size; k++)
+    {
+        IDBasePair* idbp = &scobj_idbps[chkd];
+
+        if (idbp->id == 0)
+        {
+            idbp->id = id;
+            idbp->base = base;
+            nidbps++;
+            break;
+        }
+
+        chkd++;
+
+        if (chkd == scobj_size)
+        {
+            chkd = 0;
+        }
+    }
+}
+
+static void zSceneObjHashtableInit(S32 count)
+{
+    scobj_idbps = (IDBasePair*)xMemAlloc(gActiveHeap, count * sizeof(IDBasePair));
+
+    memset(scobj_idbps, 0, count * sizeof(IDBasePair));
+
+    scobj_size = count;
+    nidbps = 0;
+}
+
+static void zSceneObjHashtableExit()
+{
+    scobj_idbps = NULL;
+    scobj_size = -1;
+    nidbps = -1;
 }
 
 xBase* zSceneFindObject(U32 gameID)
@@ -2753,4 +2832,27 @@ extern "C" S32 fn_800CD170()
     }
 
     return 0;
+}
+
+// Marks the "<scene> VISITED" UI object of the current scene as visited.
+static void zSceneEnableVisited(zScene* s)
+{
+    char uiName[64];
+    U32 uiNameID;
+
+    strcpy(uiName, xUtil_idtag2string(s->sceneID, 0));
+
+    uiName[1] = ' ';
+
+    strcat(uiName, " VISITED");
+
+    uiNameID = xStrHash(uiName);
+
+    for (S32 i = 0; i < (S32)s->num_base; i++)
+    {
+        if (s->base[i] && s->base[i]->baseType == 32 && uiNameID == s->base[i]->id)
+        {
+            s->base[i]->baseFlags |= 0x1;
+        }
+    }
 }
