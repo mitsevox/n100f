@@ -4,9 +4,9 @@
 // atomic is between two) and its meshes into the packet's clusters. The GameCube build uses its
 // own all-in-one node instead; this one stays linked from the shared pipeline code.
 
-// The node body is still in assembly (static in the target; its June 2001 name is
-// AtomicInstanceNode, with the helpers instanceVertPos and instanceMeshes).
-S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params);
+// The node body is still in assembly (its June 2001 name is AtomicInstanceNode, with the helpers
+// instanceVertPos and instanceMeshes).
+static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params);
 
 RxNodeDefinition* RxNodeDefinitionGetAtomicInstance(void)
 {

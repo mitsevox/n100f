@@ -4,9 +4,9 @@
 // clusters. The GameCube build uses its own all-in-one node instead; this one stays linked from
 // the shared pipeline code.
 
-// The node body is still in assembly (static in the target; its June 2001 name is
-// WorldSectorInstanceNodeFn, with the helpers instanceVerts, instanceMeshes and calcTriPlanes).
-S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* params);
+// The node body is still in assembly (its June 2001 name is WorldSectorInstanceNodeFn, with the
+// helpers instanceVerts, instanceMeshes and calcTriPlanes).
+static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* params);
 
 RxNodeDefinition* RxNodeDefinitionGetWorldSectorInstance(void)
 {

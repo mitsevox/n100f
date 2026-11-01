@@ -13,7 +13,8 @@ extern RwMatrix lbl_8025E304;
 // The eight hardware light objects.
 static GXLightObj _RwGCLightObjs[8];
 
-// The GX light id for each hardware light slot. Name written for this project.
+// The GX light id for each hardware light slot. Name written for this project; its scope (global
+// or file-local) is not established.
 GXLightID GCLightIDTable[8] = {
     GX_LIGHT0, GX_LIGHT1, GX_LIGHT2, GX_LIGHT3, GX_LIGHT4, GX_LIGHT5, GX_LIGHT6, GX_LIGHT7,
 };
