@@ -531,7 +531,7 @@ flat/zEntVillain.cpp:
 	.data       start:0x801B8E88 end:0x801C54A0
 	.bss        start:0x8022A528 end:0x8022C678
 	.sbss       start:0x8025EE18 end:0x8025EEB8
-	.sdata2     start:0x80260C58 end:0x802610E8
+	.sdata2     start:0x80260E70 end:0x802610E8
 	.sbss2      start:0x80262CA0 end:0x80262CB0
 
 flat/zEnv.cpp:
