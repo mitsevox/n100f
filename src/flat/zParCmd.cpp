@@ -135,6 +135,12 @@ void (*zParCmdGetUpdateFunc(U32 parType))(zParCmd*, xParGroup*, F32)
     return NULL;
 }
 
+// An empty function between zParCmdGetUpdateFunc and xParCmdKillDistance_Update that nothing in
+// the target references; the PS2 builds have no function here, so its name is unknown.
+extern "C" void fn_800C4AB8()
+{
+}
+
 // Kills particles farther from the camera than the limit, or nearer when kill_greater_than is
 // clear. A lifetime of -1 marks a particle dead.
 void xParCmdKillDistance_Update(zParCmd* c, xParGroup* ps, F32 dt)

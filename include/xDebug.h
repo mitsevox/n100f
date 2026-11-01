@@ -29,4 +29,10 @@ void xDebugModeRegisterCallback(S32 mode, void (*func)());
 S32 xDebugModeAdd(char* debugModeName, void (*func)());
 void xprintf(const char* msg, ...);
 
+// The debug writers' yes/no text (bfbb d8e8eac's name; its two strings sit in each user's .sdata2).
+inline const char* xbtoa(U32 b)
+{
+    return b ? "true " : "false";
+}
+
 #endif

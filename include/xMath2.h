@@ -22,6 +22,15 @@ struct _xRect
 typedef struct _xVec2 xVec2;
 typedef struct _xRect xRect;
 
+// Layout from the SLUS-20349 DWARF (_xMat2x2).
+struct _xMat2x2
+{
+    xVec2 right;
+    xVec2 up;
+};
+
+typedef struct _xMat2x2 xMat2x2;
+
 inline F32 xVec2Dist(F32 x1, F32 y1, F32 x2, F32 y2)
 {
     F32 x = x1 - x2;

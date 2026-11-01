@@ -1,6 +1,8 @@
 #include "xEntMotion.h"
 
+#include "xColor.h"
 #include "xDebug.h"
+#include "xDraw.h"
 #include "xEnt.h"
 #include "xMath.h"
 #include "xMemMgr.h"
@@ -1107,5 +1109,289 @@ static void xEntMotionDebugIPad(_xEntMotion* xem)
         {
             xEntMotionStop(xem);
         }
+    }
+}
+
+// Debug text: the motion's type, state and owner, then the settings of its motion type.
+void xEntMotionDebugWrite(const _xEntMotion* xem)
+{
+    const char* owner;
+    const char* gps;
+
+    switch (xem->type)
+    {
+    case XENTMOTION_TYPE_ER:
+        gps = "extend/retract";
+        break;
+    case XENTMOTION_TYPE_ORB:
+        gps = "orbital";
+        break;
+    case XENTMOTION_TYPE_SPL:
+        gps = "spline";
+        break;
+    case XENTMOTION_TYPE_MP:
+        gps = "movepoint";
+        break;
+    case XENTMOTION_TYPE_MECH:
+        gps = "mechanism";
+        break;
+    case XENTMOTION_TYPE_PEN:
+        gps = "pendulum";
+        break;
+    default:
+        gps = "????";
+        break;
+    }
+
+    xprintf("type:             %s\n", gps);
+    xprintf("stopped:          %s\n", xbtoa(xem->flags & k_XENTMOTION_STOPPED));
+
+    if (xem->owner != NULL)
+    {
+        owner = xSceneID2Name(g_xSceneCur, xem->owner->id);
+    }
+    else
+    {
+        owner = "null";
+    }
+
+    xprintf("owner:            %s\n", owner);
+    xprintf("t:  %.3f   d: %.3f   tmr: %.3f\n", xem->t, xem->d, xem->tmr);
+
+    switch (xem->type)
+    {
+    case XENTMOTION_TYPE_ER:
+        xprintf("a:       <%.3f %.3f %.3f>\n", xem->er.a.x, xem->er.a.y, xem->er.a.z);
+        xprintf("b:       <%.3f %.3f %.3f>\n", xem->er.b.x, xem->er.b.y, xem->er.b.z);
+        xprintf("b-a:     <%.3f %.3f %.3f>\n", xem->asset->er.ext_dpos.x, xem->asset->er.ext_dpos.y,
+                xem->asset->er.ext_dpos.z);
+        xprintf("ext_tm:  %.3f\n", xem->er.et);
+        xprintf("ret_tm:  %.3f\n", xem->er.rt);
+        xprintf("wait_et: %.3f\n", xem->er.wet);
+        xprintf("wait_rt: %.3f\n", xem->er.wrt);
+        xprintf("period:  %.3f\n", xem->er.p);
+        break;
+    case XENTMOTION_TYPE_ORB:
+        xprintf("c:   <%.3f %.3f %.3f>\n", xem->orb.c.x, xem->orb.c.y, xem->orb.c.z);
+        xprintf("a:   %.3f\n", xem->orb.a);
+        xprintf("b:   %.3f\n", xem->orb.b);
+        xprintf("p:   %.3f\n", xem->orb.p);
+        xprintf("w:   %.3f\n", xem->orb.w);
+        break;
+    case XENTMOTION_TYPE_MP:
+        if (xem->mp.src != NULL)
+        {
+            gps = xSceneID2Name(g_xSceneCur, xem->mp.src->id);
+        }
+        else
+        {
+            gps = "";
+        }
+
+        xprintf("src-mp:           %s\n", gps);
+
+        if (xem->mp.dest != NULL)
+        {
+            gps = xSceneID2Name(g_xSceneCur, xem->mp.dest->id);
+        }
+        else
+        {
+            gps = "";
+        }
+
+        xprintf("dest-mp:          %s\n", gps);
+        xprintf("dist:  %.3f\n", xem->mp.dist);
+        xprintf("speed: %.3f\n", xem->mp.speed);
+        break;
+    case XENTMOTION_TYPE_MECH:
+        switch (xem->asset->mech.type)
+        {
+        case 0:
+            gps = "slide";
+            break;
+        case 1:
+            gps = "rot";
+            break;
+        case 2:
+            gps = "slide_rot";
+            break;
+        case 3:
+            gps = "slide_then_rot";
+            break;
+        case 4:
+            gps = "rot_then_slide";
+            break;
+        }
+
+        xprintf("type:             %s\n", gps);
+        xprintf("returns:          %s", xbtoa(xem->asset->mech.flags & 1));
+
+        if (xem->asset->mech.flags & 1)
+        {
+            xprintf("   ret_delay: %.3f", xem->asset->mech.ret_delay);
+        }
+
+        xprintf("\n");
+        xprintf("continuous:       %s", xbtoa(!(xem->asset->mech.flags & 2)));
+
+        if (!(xem->asset->mech.flags & 2))
+        {
+            xprintf("   end_delay: %.3f", xem->asset->mech.post_ret_delay);
+        }
+
+        xprintf("\n");
+
+        switch (xem->mech.state)
+        {
+        case 0:
+            if (xem->asset->mech.type == 2)
+            {
+                gps = "sliding + rotating forth";
+            }
+            else
+            {
+                gps = "sliding forth";
+            }
+            break;
+        case 1:
+            gps = "rotating forth";
+            break;
+        case 2:
+            gps = "waiting to return";
+            break;
+        case 3:
+            if (xem->asset->mech.type == 2)
+            {
+                gps = "sliding + rotating back";
+            }
+            else
+            {
+                gps = "sliding back";
+            }
+            break;
+        case 4:
+            gps = "rotating back";
+            break;
+        case 5:
+            gps = "waiting to begin again";
+            break;
+        case 6:
+            gps = "done";
+            break;
+        case 7:
+            gps = "undone";
+            break;
+        }
+
+        xprintf("state:            %s\n", gps);
+
+        if (xem->asset->mech.type != 1)
+        {
+            gps = xem->asset->mech.sld_axis == 0 ? "X" : xem->asset->mech.sld_axis == 1 ? "Y" : "Z";
+
+            xprintf("slide_axis:   %s", gps);
+            xprintf("       slide_dist:   %.3f\n", xem->asset->mech.sld_dist);
+            xprintf("slide_tm:     %.3f", xem->asset->mech.sld_tm);
+            xprintf("   slide_speed:  %.3f\n", xem->mech.ss);
+            xprintf("slide_acc_tm: %.3f", xem->asset->mech.sld_acc_tm);
+            xprintf("   slide_dec_tm: %.3f\n", xem->asset->mech.sld_dec_tm);
+            xprintf("slide_bd_tm:  %.3f", xem->mech.tsbd);
+            xprintf("   slide_fd_tm:  %.3f\n", xem->mech.tsfd);
+            xprintf("start_pos:  <%.3f %.3f %.3f>\n", xem->mech.apos.x, xem->mech.apos.y,
+                    xem->mech.apos.z);
+            xprintf("end_pos:    <%.3f %.3f %.3f>\n", xem->mech.bpos.x, xem->mech.bpos.y,
+                    xem->mech.bpos.z);
+            xprintf("dir:        <%.3f %.3f %.3f>\n", xem->mech.dir.x, xem->mech.dir.y,
+                    xem->mech.dir.z);
+        }
+
+        if (xem->asset->mech.type != 0)
+        {
+            gps = xem->asset->mech.rot_axis == 0 ? "X" : xem->asset->mech.rot_axis == 1 ? "Y" : "Z";
+
+            xprintf("rot_axis:   %s", gps);
+            xprintf("       rot_dist:   %.3f\n", xem->asset->mech.rot_dist);
+            xprintf("rot_tm:     %.3f", xem->asset->mech.rot_tm);
+            xprintf("   rot_speed:  %.3f\n", (xem->mech.sr * 180.0f) / PI);
+            xprintf("rot_acc_tm: %.3f", xem->asset->mech.rot_acc_tm);
+            xprintf("   rot_dec_tm: %.3f\n", xem->asset->mech.rot_dec_tm);
+            xprintf("rot_bd_tm:  %.3f", xem->mech.trbd);
+            xprintf("   rot_fd_tm:  %.3f\n", xem->mech.trfd);
+            xprintf("arot:       %.3f\n", (xem->mech.arot * 180.0f) / PI);
+            xprintf("brot:       %.3f\n", (xem->mech.brot * 180.0f) / PI);
+        }
+        break;
+    case XENTMOTION_TYPE_PEN:
+        xprintf("top:    <%.3f %.3f %.3f>\n", xem->pen.top.x, xem->pen.top.y, xem->pen.top.z);
+        xprintf("length: %.3f\n", xem->asset->pen.len);
+        xprintf("period: %.3f\n", xem->asset->pen.period);
+        xprintf("phase:  %.3f\n", (xem->asset->pen.phase * 180.0f) / PI);
+        xprintf("range:  %.3f\n", (xem->asset->pen.range * 180.0f) / PI);
+        xprintf("w:      %.3f\n", xem->pen.w);
+        break;
+    }
+}
+
+// Debug lines: owner to target, then the motion's path (extend/retract ends, orbit or pendulum
+// arm, mechanism slide, or the move point graph around the current leg).
+void xEntMotionDebugDraw(const _xEntMotion* xem)
+{
+    if (xem->owner && xem->target)
+    {
+        xDrawSetColor(g_NEON_GREEN);
+        xDrawLine(xEntGetPos(xem->owner), xEntGetPos(xem->target));
+    }
+
+    switch (xem->type)
+    {
+    case XENTMOTION_TYPE_ER:
+        xDrawSetColor(g_NEON_RED);
+        xDrawLine(&xem->er.a, &xem->er.b);
+        break;
+    case XENTMOTION_TYPE_ORB:
+        if (xem->owner)
+        {
+            xDrawSetColor(g_NEON_RED);
+            xDrawLine(&xem->orb.c, xEntGetPos(xem->owner));
+        }
+        break;
+    case XENTMOTION_TYPE_MP:
+    {
+        xDrawSetColor(g_PIMP_GOLD);
+        xMovePoint* xmp = xem->mp.dest;
+        if (xmp)
+        {
+            for (U16 idx = 0; idx < xMovePointGetNumPoints(xmp); idx++)
+            {
+                xMovePoint* omp = xMovePointGetPoint(xmp, idx);
+                if (omp != xem->mp.src)
+                {
+                    xDrawLine(xMovePointGetPos(xmp), xMovePointGetPos(omp));
+                }
+                for (U16 jdx = 0; jdx < xMovePointGetNumPoints(omp); jdx++)
+                {
+                    xMovePoint* pmp = xMovePointGetPoint(omp, jdx);
+                    xDrawLine(xMovePointGetPos(omp), xMovePointGetPos(pmp));
+                }
+            }
+        }
+        if (xem->mp.src && xem->mp.dest)
+        {
+            xDrawSetColor(g_NEON_RED);
+            xDrawLine(xMovePointGetPos(xem->mp.src), xMovePointGetPos(xem->mp.dest));
+        }
+        break;
+    }
+    case XENTMOTION_TYPE_MECH:
+        xDrawSetColor(g_NEON_RED);
+        xDrawLine(&xem->mech.apos, &xem->mech.bpos);
+        break;
+    case XENTMOTION_TYPE_PEN:
+        if (xem->owner)
+        {
+            xDrawSetColor(g_NEON_RED);
+            xDrawLine(&xem->pen.top, xEntGetPos(xem->owner));
+        }
+        break;
     }
 }
