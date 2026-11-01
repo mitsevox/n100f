@@ -145,8 +145,10 @@ void iCylinderIsectRay(const _xCylinder* c, const xRay3* r, xIsect* isx)
     F32 a, b;
     F32 t_in, t_out;
     U32 num;
-    F32 dz = r->origin.z - c->center.z;
-    F32 dx = r->origin.x - c->center.x;
+    F32 dz = r->origin.z;
+    dz -= c->center.z;
+    F32 dx = r->origin.x;
+    dx -= c->center.x;
 
     num = xMathSolveQuadratic(r->dir.x * r->dir.x + r->dir.z * r->dir.z,
                               2.0f * (dx * r->dir.x + dz * r->dir.z),
