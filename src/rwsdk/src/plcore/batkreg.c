@@ -1,6 +1,5 @@
 #include <rwcore.h>
 
-// The compiler lays out uninitialized variables in reverse order of definition.
 static RwFreeList* toolkitRegEntries;
 static U32 numRegToolkits;
 static RwPluginRegistry** toolkitNonFLRegList;

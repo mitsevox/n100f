@@ -3,7 +3,6 @@
 // RpCollisionData.flags: the tree and the triangle map share the data's own allocation.
 #define COLLISIONDATA_SINGLEBLOCK 0x1
 
-// The compiler lays out uninitialized variables in reverse order of definition.
 S32 _rpCollisionWorldSectorDataOffset;
 S32 _rpCollisionGeometryDataOffset;
 S32 _rpCollisionAtomicDataOffset;

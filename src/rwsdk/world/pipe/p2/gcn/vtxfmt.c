@@ -6,7 +6,6 @@
 RpGameCubeVtxFmt* RpGameCubeVtxFmtInit(RpGameCubeVtxFmt* vtxFmt);
 void RpGameCubeVtxFmtDestroy(RpGameCubeVtxFmt* vtxFmt);
 
-// The compiler lays out uninitialized variables in reverse order of definition.
 static RwModuleInfo _RpVtxFmtModule;
 S32 _rpDlWorldVtxFmtOffset;
 S32 _rpDlGeomVtxFmtOffset;

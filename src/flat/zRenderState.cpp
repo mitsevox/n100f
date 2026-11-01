@@ -8,7 +8,6 @@
 static S32 sBlendTable[11] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
 static _SDRenderState sRS;
 
-// The compiler's deferred mode emits the functions in reverse order of definition.
 void zRenderStateInit()
 {
     sRS = SDRS_Unknown;

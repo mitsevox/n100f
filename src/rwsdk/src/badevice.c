@@ -20,7 +20,6 @@
 #define DEVICEERROR 0x18
 
 static RwPluginRegistry engineTKList = { sizeof(RwGlobals), sizeof(RwGlobals) };
-// The compiler lays out uninitialized variables in reverse order of definition.
 static RwGlobals staticGlobals;
 void* RwEngineInstance;
 static S32 engineInstancesOpened;
