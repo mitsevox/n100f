@@ -20,9 +20,9 @@ void zEntButton_Init(_zEntButton* ent, p2EntAsset* asset)
 
     ent->basset = passet;
 
-    ent->pflags |= 0x1;
-    ent->penby |= 0x10;
-    ent->chkby |= 0x10;
+    ent->pflags |= XENT_PFLAGS_IS_MOVING;
+    ent->penby |= XENT_COLLTYPE_PLYR;
+    ent->chkby |= XENT_COLLTYPE_PLYR;
 
     ent->update = (void (*)(_xEnt*, _xScene*, F32))zEntButton_Update;
     ent->move = (void (*)(_xEnt*, _xScene*, F32, _xEntFrame*))zEntButton_Move;
@@ -74,13 +74,13 @@ void zEntButton_Reset(_zEntButton* ent, _xScene* sc)
     xEntReset(ent);
     xEntMotionReset(&ent->motion, sc);
 
-    ent->pflags |= 0x1;
-    ent->penby |= 0x10;
+    ent->pflags |= XENT_PFLAGS_IS_MOVING;
+    ent->penby |= XENT_COLLTYPE_PLYR;
     if (ent->asset->flags & 0x1)
     {
         ent->flags |= 0x1;
     }
-    ent->chkby |= 0x10;
+    ent->chkby |= XENT_COLLTYPE_PLYR;
 
     ent->state = 0;
     xEntMotionStop(&ent->motion);
@@ -201,12 +201,12 @@ S32 zEntButtonEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase*)
     {
     case eEventVisible:
     case eEventCollision_Visible_On:
-        s->chkby |= 0x10;
+        s->chkby |= XENT_COLLTYPE_PLYR;
         xEntShow(s);
         break;
     case eEventInvisible:
     case eEventCollision_Visible_Off:
-        s->chkby &= (U8)~0x10;
+        s->chkby &= (U8)~XENT_COLLTYPE_PLYR;
         xEntHide(s);
         break;
     case eEventReset:
