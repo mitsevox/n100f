@@ -1,8 +1,8 @@
 #include <rwcore.h>
 
-static RwPluginRegistry** toolkitNonFLRegList;
-static U32 numRegToolkits;
 static RwFreeList* toolkitRegEntries;
+static U32 numRegToolkits;
+static RwPluginRegistry** toolkitNonFLRegList;
 
 // Creates the free list the plugin registry entries come from (twenty per block).
 S32 _rwPluginRegistryOpen(void)
