@@ -46,6 +46,53 @@ inline U32 xRayHitsCylinderFast(const xRay3* r, const _xCylinder* c)
     return isect.penned <= 0.0f || isect.contained <= 0.0f;
 }
 
+// Fast-collision setup for a scene; the platform layer does the work.
+void xCollideFastInit(_xScene* sc)
+{
+    iCollideFastInit(sc);
+}
+
+// Whether the ray crosses the bound. An oriented box is tested in its own space, with the ray
+// brought in by the box's matrix and its length scaled by the matrix's scale.
+U32 xRayHitsBoundFast(const _xRay3* r, const _xBound* b)
+{
+    xRay3 lr;
+    xMat3x3 mn;
+
+    if (b->type == 1)
+    {
+        return xRayHitsSphereFast(r, &b->sph);
+    }
+    else if (b->type == 4)
+    {
+        F32 scale = xsqrt(xVec3Length2(&b->mat->right));
+        xMat3x3Normalize(&mn, (const xMat3x3*)b->mat);
+        xVec3Sub(&lr.origin, &r->origin, &b->mat->pos);
+        xMat3x3Tolocal(&lr.origin, (const xMat3x3*)b->mat, &lr.origin);
+        xMat3x3Tolocal(&lr.dir, &mn, &r->dir);
+        lr.max_t = r->max_t / scale;
+        lr.min_t = r->min_t / scale;
+        lr.flags = r->flags;
+        return xRayHitsBoxFast(&lr, &b->box.box);
+    }
+    else if (b->type == 2)
+    {
+        return xRayHitsBoxFast(r, &b->box.box);
+    }
+    else if (b->type == 3)
+    {
+        return xRayHitsCylinderFast(r, &b->cyl);
+    }
+
+    return 0;
+}
+
+// Whether the ray hits the level geometry; the platform layer does the test.
+U32 xRayHitsEnvFast(const _xRay3* r, const _xEnv* env)
+{
+    return iRayHitsEnvFast(r, env);
+}
+
 // Whether the ray hits any static, dynamic or NPC entity that can be collided with, or the
 // level geometry. Static and dynamic entities whose collision level is 5 must also hit their
 // model; NPCs count on their bound alone.
@@ -107,51 +154,4 @@ U32 xRayHitsSceneFast(const _xRay3* r, const _xScene* sc)
     }
 
     return iRayHitsEnvSpecialFast(r, sc->env);
-}
-
-// Whether the ray hits the level geometry; the platform layer does the test.
-U32 xRayHitsEnvFast(const _xRay3* r, const _xEnv* env)
-{
-    return iRayHitsEnvFast(r, env);
-}
-
-// Whether the ray crosses the bound. An oriented box is tested in its own space, with the ray
-// brought in by the box's matrix and its length scaled by the matrix's scale.
-U32 xRayHitsBoundFast(const _xRay3* r, const _xBound* b)
-{
-    xRay3 lr;
-    xMat3x3 mn;
-
-    if (b->type == 1)
-    {
-        return xRayHitsSphereFast(r, &b->sph);
-    }
-    else if (b->type == 4)
-    {
-        F32 scale = xsqrt(xVec3Length2(&b->mat->right));
-        xMat3x3Normalize(&mn, (const xMat3x3*)b->mat);
-        xVec3Sub(&lr.origin, &r->origin, &b->mat->pos);
-        xMat3x3Tolocal(&lr.origin, (const xMat3x3*)b->mat, &lr.origin);
-        xMat3x3Tolocal(&lr.dir, &mn, &r->dir);
-        lr.max_t = r->max_t / scale;
-        lr.min_t = r->min_t / scale;
-        lr.flags = r->flags;
-        return xRayHitsBoxFast(&lr, &b->box.box);
-    }
-    else if (b->type == 2)
-    {
-        return xRayHitsBoxFast(r, &b->box.box);
-    }
-    else if (b->type == 3)
-    {
-        return xRayHitsCylinderFast(r, &b->cyl);
-    }
-
-    return 0;
-}
-
-// Fast-collision setup for a scene; the platform layer does the work.
-void xCollideFastInit(_xScene* sc)
-{
-    iCollideFastInit(sc);
 }

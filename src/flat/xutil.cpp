@@ -44,7 +44,7 @@ char* xUtil_idtag2string(U32 srctag, S32 bufidx)
         strptr = buf[bufidx];
     }
 
-    // Swap to big endian on a little-endian machine.
+    // Reverse the tag's bytes on a big-endian machine.
     l = 1;
     if ((S32)((char*)&l)[3] != 0)
     {

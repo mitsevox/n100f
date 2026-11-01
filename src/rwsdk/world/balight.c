@@ -76,7 +76,9 @@ struct LightModuleData
             F32 z = 0.5f * (_RW_one + (_x));                                                       \
             F32 s = _rwSqrt(z);                                                                    \
                                                                                                    \
-            (_result) = _RW_pi - 2.0f * (s + (ACOSF_RATIO(z) * s - _RW_pio2_lo));                  \
+            F32 r = ACOSF_RATIO(z);                                                                \
+            F32 w = r * s - _RW_pio2_lo;                                                           \
+            (_result) = _RW_pi - 2.0f * (s + w);                                                   \
         }                                                                                          \
         else                                                                                       \
         {                                                                                          \
@@ -87,13 +89,17 @@ struct LightModuleData
             RwSplitBits dfBits;                                                                    \
             F32 df;                                                                                \
             F32 c;                                                                                 \
+            F32 r;                                                                                 \
+            F32 w;                                                                                 \
                                                                                                    \
             sBits.nReal = s;                                                                       \
             dfBits.nInt = sBits.nInt & 0xFFFFF000;                                                 \
             df = dfBits.nReal;                                                                     \
             c = (z - df * df) / (s + df);                                                          \
                                                                                                    \
-            (_result) = 2.0f * (df + (c + ACOSF_RATIO(z) * s));                                    \
+            r = ACOSF_RATIO(z);                                                                    \
+            w = r * s + c;                                                                         \
+            (_result) = 2.0f * (df + w);                                                           \
         }                                                                                          \
     } while (0)
 
