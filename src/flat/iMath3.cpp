@@ -602,44 +602,17 @@ void iBoxIsectRay(const _xBox* b, const xRay3* r, xIsect* isx)
     }
 }
 
+// Reject separated axis intervals before measuring penetration and encoding the sphere's region.
 void iBoxIsectSphere(const _xBox* box, const xSphere* p, xIsect* isx)
 {
     U32 xcode, ycode, zcode;
-    F32 lo, hi;
+    _xBox sphereBounds;
 
-    lo = p->center.x - p->r;
-    hi = p->center.x + p->r;
-
-    if (lo < box->lower.x)
-    {
-        if (hi < box->lower.x)
-        {
-            xcode = 2;
-        }
-        else if (hi > box->upper.x)
-        {
-            xcode = 0;
-        }
-        else
-        {
-            xcode = 1;
-        }
-    }
-    else
-    {
-        if (lo > box->upper.x)
-        {
-            xcode = 5;
-        }
-        else if (hi > box->upper.x)
-        {
-            xcode = 4;
-        }
-        else
-        {
-            xcode = 3;
-        }
-    }
+    sphereBounds.lower.x = p->center.x - p->r;
+    sphereBounds.upper.x = p->center.x + p->r;
+    xcode = (sphereBounds.lower.x < box->lower.x)
+        ? ((sphereBounds.upper.x < box->lower.x) ? 2 : ((sphereBounds.upper.x > box->upper.x) ? 0 : 1))
+        : ((sphereBounds.lower.x > box->upper.x) ? 5 : ((sphereBounds.upper.x > box->upper.x) ? 4 : 3));
 
     if (xcode % 3 == 2)
     {
@@ -647,35 +620,11 @@ void iBoxIsectSphere(const _xBox* box, const xSphere* p, xIsect* isx)
         return;
     }
 
-    lo = p->center.y - p->r;
-    hi = p->center.y + p->r;
-
-    if (lo < box->lower.y)
-    {
-        if (hi < box->lower.y)
-        {
-            ycode = 2;
-        }
-        else if (hi > box->upper.y)
-        {
-            ycode = 0;
-        }
-        else
-        {
-            ycode = 1;
-        }
-    }
-    else
-    {
-        if (lo > box->upper.y)
-        {
-            ycode = 5;
-        }
-        else if (hi > box->upper.y)
-        {
-            ycode = 4;
-        }
-    }
+    sphereBounds.lower.y = p->center.y - p->r;
+    sphereBounds.upper.y = p->center.y + p->r;
+    ycode = (sphereBounds.lower.y < box->lower.y)
+        ? ((sphereBounds.upper.y < box->lower.y) ? 2 : ((sphereBounds.upper.y > box->upper.y) ? 0 : 1))
+        : ((sphereBounds.lower.y > box->upper.y) ? 5 : ((sphereBounds.upper.y > box->upper.y) ? 4 : 3));
 
     if (ycode % 3 == 2)
     {
@@ -683,35 +632,11 @@ void iBoxIsectSphere(const _xBox* box, const xSphere* p, xIsect* isx)
         return;
     }
 
-    lo = p->center.z - p->r;
-    hi = p->center.z + p->r;
-
-    if (lo < box->lower.z)
-    {
-        if (hi < box->lower.z)
-        {
-            zcode = 2;
-        }
-        else if (hi > box->upper.z)
-        {
-            zcode = 0;
-        }
-        else
-        {
-            zcode = 1;
-        }
-    }
-    else
-    {
-        if (lo > box->upper.z)
-        {
-            zcode = 5;
-        }
-        else if (hi > box->upper.z)
-        {
-            zcode = 4;
-        }
-    }
+    sphereBounds.lower.z = p->center.z - p->r;
+    sphereBounds.upper.z = p->center.z + p->r;
+    zcode = (sphereBounds.lower.z < box->lower.z)
+        ? ((sphereBounds.upper.z < box->lower.z) ? 2 : ((sphereBounds.upper.z > box->upper.z) ? 0 : 1))
+        : ((sphereBounds.lower.z > box->upper.z) ? 5 : ((sphereBounds.upper.z > box->upper.z) ? 4 : 3));
 
     if (zcode % 3 == 2)
     {
