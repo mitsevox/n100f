@@ -345,17 +345,6 @@ static F32 update_dt;
 S32 headcoll_anim;
 F32 headcoll_tmr;
 F32 headcoll_bltime;
-static U32 cchkButtbounce;
-static U32 cchkSquish;
-static U32 sVO;
-static U32 sVOAssetID;
-static U32 sVOPriority;
-static zPlayerSituation* sVONextSituation;
-static F32 sVOTimer;
-static RpAtomic* sPlayerBodyAtomic;
-static RpAtomic* sPlayerHeadAtomic;
-static RpClump* sPlayerBodyClump;
-static RpClump* sPlayerHeadClump;
 
 xVec3 gPlayerWaterPos;
 xVec3 gDeadScoobyPos;
@@ -513,6 +502,20 @@ static inline void CalcAnimSpeed(_xEnt* ent, F32 f, F32* pf)
     }
 
     ent->model->Anim->Single->CurrentSpeed = f;
+}
+
+// Whether target lies within the cone of ent's facing direction (flat, in x and z) whose half-angle
+// has the cosine cosang.
+static U32 PlayerIsFacing(_xEnt* ent, _xEnt* target, F32 cosang)
+{
+    F32 ax = ent->frame->mat.at.x;
+    F32 az = ent->frame->mat.at.z;
+    F32 alen = sqrtf(ax * ax + az * az);
+    F32 dx = target->frame->mat.pos.x - ent->model->Mat->pos.x;
+    F32 dz = target->frame->mat.pos.z - ent->model->Mat->pos.z;
+    F32 dlen = sqrtf(dx * dx + dz * dz);
+
+    return ax * dx + az * dz > dlen * (cosang * alen);
 }
 
 static void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt)
@@ -1275,6 +1278,14 @@ static S32 GetHeadcollAnimState()
     }
     return state->ID == fallRun ? 11 : 0;
 }
+
+static U32 cchkButtbounce;
+static U32 cchkSquish;
+static U32 sVO;
+static U32 sVOAssetID;
+static U32 sVOPriority;
+static zPlayerSituation* sVONextSituation;
+static F32 sVOTimer;
 
 static inline void HeadcollLerp(xVec3* o, const xVec3* a, F32 t, const xVec3* b, F32 s)
 {
@@ -2110,7 +2121,7 @@ static U32 SD0_TossCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
     return 0;
 }
 
-static inline void AddGroundStatesTransition(xAnimTable* table, xAnimTransition* tran)
+static void AddGroundStatesTransition(xAnimTable* table, xAnimTransition* tran)
 {
     xAnimTableAddTransition(table, tran, "Idle_normal Idle_scared Idle_brave Walk_normal Walk_scared Walk_brave");
     xAnimTableAddTransition(table, tran, "Walk_slippery Walk_plunger Run_normal Run_scared Run_brave Run_slippery");
@@ -3223,20 +3234,6 @@ static void zEntPlayer_SnackDecrement(F32 dt)
             }
         }
     }
-}
-
-// Whether target lies within the cone of ent's facing direction (flat, in x and z) whose half-angle
-// has the cosine cosang.
-static inline U32 PlayerIsFacing(_xEnt* ent, _xEnt* target, F32 cosang)
-{
-    F32 ax = ent->frame->mat.at.x;
-    F32 az = ent->frame->mat.at.z;
-    F32 alen = sqrtf(ax * ax + az * az);
-    F32 dx = target->frame->mat.pos.x - ent->model->Mat->pos.x;
-    F32 dz = target->frame->mat.pos.z - ent->model->Mat->pos.z;
-    F32 dlen = sqrtf(dx * dx + dz * dz);
-
-    return ax * dx + az * dz > dlen * (cosang * alen);
 }
 
 // Per-frame player update: timers, health and death, movement in sub-steps with collision, Shaggy grabs,
@@ -6408,6 +6405,12 @@ static inline void PlayerCollsWallsLoopTranslate(_xCollis* colls, F32 x, F32 y, 
     }
 }
 
+static void PlayerCollsUnusedConsts(F32* a, F32* b)
+{
+    *a = 0.35f;
+    *b = -2.0f;
+}
+
 static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
 {
     _xCollis* colls;
@@ -7569,7 +7572,7 @@ void zEntPlayer_LoadCheckPoint()
         globals.player.ent.frame->rot.angle = globals.player.cp.rot;
     }
     xCameraSetTarget(&globals.camera, &globals.player.ent.frame->mat.pos);
-    xCameraSetTarget(&globals.camera, (xMat4x3*)globals.player.ent.model->Mat);
+    xCameraSetTarget(&globals.camera, xEntGetFrame(&globals.player.ent));
     xCameraPickInitial(&globals.camera, globals.player.cp.initCamID);
 }
 
@@ -8433,6 +8436,11 @@ static U32 zEntPlayer_SNDSkidCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimS
     zRumbleStart(0, SDR_ScreechingStop);
     return 0;
 }
+
+static RpAtomic* sPlayerBodyAtomic;
+static RpAtomic* sPlayerHeadAtomic;
+static RpClump* sPlayerBodyClump;
+static RpClump* sPlayerHeadClump;
 
 static void zEntPlayer_ButtonBBFX(_xEnt* ent, _zEntButton*)
 {
