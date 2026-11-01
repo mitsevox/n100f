@@ -120,6 +120,21 @@ RpMaterial* RpMaterialCreate(void)
     return material;
 }
 
+S32 RpMaterialRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
+                             RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB)
+{
+    return _rwPluginRegistryAddPlugin(&materialTKList, size, pluginID, constructCB, destructCB,
+                                      copyCB);
+}
+
+S32 RpMaterialRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                   RwPluginDataChunkWriteCallBack writeCB,
+                                   RwPluginDataChunkGetSizeCallBack getSizeCB)
+{
+    return _rwPluginRegistryAddPluginStream(&materialTKList, pluginID, readCB, writeCB,
+                                            getSizeCB);
+}
+
 // The material's struct chunk: flags, color, a word the reader ignores, whether a texture chunk
 // follows, and the surface properties (absent from older streams). The type name and flags,
 // ignored and hasTexture are this project's own; color and surfaceProps follow the DWARF RpMaterial.
@@ -222,19 +237,4 @@ RpMaterial* RpMaterialStreamRead(RwStream* stream)
         RwErrorSet(&err);
         return NULL;
     }
-}
-
-S32 RpMaterialRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
-                             RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB)
-{
-    return _rwPluginRegistryAddPlugin(&materialTKList, size, pluginID, constructCB, destructCB,
-                                      copyCB);
-}
-
-S32 RpMaterialRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
-                                   RwPluginDataChunkWriteCallBack writeCB,
-                                   RwPluginDataChunkGetSizeCallBack getSizeCB)
-{
-    return _rwPluginRegistryAddPluginStream(&materialTKList, pluginID, readCB, writeCB,
-                                            getSizeCB);
 }

@@ -18,6 +18,13 @@ struct FrameChunkInfo
     U32 data;
 };
 
+S32 RwFrameRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
+                                RwPluginDataChunkWriteCallBack writeCB,
+                                RwPluginDataChunkGetSizeCallBack getSizeCB)
+{
+    return _rwPluginRegistryAddPluginStream(&frameTKList, pluginID, readCB, writeCB, getSizeCB);
+}
+
 rwFrameList* _rwFrameListDeinitialize(rwFrameList* frameList)
 {
     if (frameList->numFrames)
@@ -26,13 +33,6 @@ rwFrameList* _rwFrameListDeinitialize(rwFrameList* frameList)
     }
 
     return frameList;
-}
-
-S32 RwFrameRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
-                                RwPluginDataChunkWriteCallBack writeCB,
-                                RwPluginDataChunkGetSizeCallBack getSizeCB)
-{
-    return _rwPluginRegistryAddPluginStream(&frameTKList, pluginID, readCB, writeCB, getSizeCB);
 }
 
 rwFrameList* _rwFrameListStreamRead(RwStream* stream, rwFrameList* frameList)

@@ -1611,6 +1611,7 @@ rwsdk/plugin/collis/ctbsp.c:
 
 rwsdk/plugin/collis/rpcollis.c:
 	.text       start:0x8013B850 end:0x8013BD2C
+	.sbss       start:0x8025F650 end:0x8025F668
 
 rwsdk/plugin/hanim/stdkey.c:
 	.text       start:0x8013BD2C end:0x8013CD48
@@ -1669,18 +1670,25 @@ rwsdk/world/balight.c:
 
 rwsdk/world/bamateri.c:
 	.text       start:0x8014D044 end:0x8014D674
+	.data       start:0x801DD4F8 end:0x801DD520
+	.sbss       start:0x8025F730 end:0x8025F738
+	.sdata2     start:0x80262930 end:0x80262938
 
 rwsdk/world/bamatlst.c:
 	.text       start:0x8014D674 end:0x8014DD4C
 
 rwsdk/world/bamesh.c:
 	.text       start:0x8014DD4C end:0x8014E7A4
+	.sdata      start:0x8025E790 end:0x8025E798
+	.sbss       start:0x8025F738 end:0x8025F740
 
 rwsdk/world/bameshop.c:
 	.text       start:0x8014E7A4 end:0x80150F5C
 
 rwsdk/world/basector.c:
 	.text       start:0x80150F5C end:0x80151038
+	.data       start:0x801DD538 end:0x801DD550
+	.sbss       start:0x8025F740 end:0x8025F748
 
 rwsdk/world/baworld.c:
 	.text       start:0x80151038 end:0x8015275C
@@ -1741,6 +1749,8 @@ rwsdk/world/pipe/p2/gcn/instance/instanceworld.c:
 
 rwsdk/world/pipe/p2/gcn/vtxfmt.c:
 	.text       start:0x8015D314 end:0x8015D830
+	.bss        start:0x8025DB20 end:0x8025DB38
+	.sbss       start:0x8025F768 end:0x8025F778
 
 rwsdk/world/pipe/p2/gcn/wrldpipe.c:
 	.text       start:0x8015D830 end:0x8015DA50
@@ -1775,9 +1785,11 @@ rwsdk/src/plcore/bacolor.c:
 
 rwsdk/src/plcore/baerr.c:
 	.text       start:0x80160F88 end:0x8016109C
+	.sbss       start:0x8025F780 end:0x8025F788
 
 rwsdk/src/plcore/bafsys.c:
 	.text       start:0x8016109C end:0x801611C4
+	.sdata      start:0x8025E7C8 end:0x8025E7D0
 
 rwsdk/src/plcore/baimmedi.c:
 	.text       start:0x801611C4 end:0x801612EC
@@ -1800,6 +1812,7 @@ rwsdk/src/plcore/batkbin.c:
 
 rwsdk/src/plcore/batkreg.c:
 	.text       start:0x801652F8 end:0x801658F8
+	.sbss       start:0x8025F7A8 end:0x8025F7B8
 
 rwsdk/src/plcore/bavector.c:
 	.text       start:0x801658F8 end:0x801662AC
@@ -1821,6 +1834,7 @@ rwsdk/src/babincam.c:
 
 rwsdk/src/babinfrm.c:
 	.text       start:0x80166B54 end:0x80166F2C
+	.sdata2     start:0x80262A90 end:0x80262A98
 
 rwsdk/src/babintex.c:
 	.text       start:0x80166F2C end:0x801683DC
@@ -1830,6 +1844,9 @@ rwsdk/src/bacamera.c:
 
 rwsdk/src/badevice.c:
 	.text       start:0x80169E98 end:0x8016A9D8
+	.data       start:0x801DDC30 end:0x801DDC48
+	.bss        start:0x8025DD38 end:0x8025DE90
+	.sbss       start:0x8025F7C8 end:0x8025F7D0
 
 rwsdk/src/baframe.c:
 	.text       start:0x8016A9D8 end:0x8016B6C4

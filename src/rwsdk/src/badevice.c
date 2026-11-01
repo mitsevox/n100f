@@ -20,8 +20,9 @@
 #define DEVICEERROR 0x18
 
 static RwPluginRegistry engineTKList = { sizeof(RwGlobals), sizeof(RwGlobals) };
-static S32 engineInstancesOpened;
 static RwGlobals staticGlobals;
+void* RwEngineInstance;
+static S32 engineInstancesOpened;
 
 // Passes a system request to the device and raises an error naming the request if it fails.
 static S32 _rwDeviceSystemRequest(RwDevice* device, S32 requestID, void* pOut, void* pInOut,
@@ -294,6 +295,22 @@ void* _rwIm3DClose(void* instance, S32 offset, S32 size);
 void* _rwResourcesOpen(void* instance, S32 offset, S32 size);
 void* _rwResourcesClose(void* instance, S32 offset, S32 size);
 
+// Closes the engine's systems once no instance is open.
+S32 RwEngineTerm(void)
+{
+    S32 result = (engineInstancesOpened == 0);
+
+    if (result)
+    {
+        _rwPluginRegistryClose();
+        _rwFileSystemClose();
+        _rwMemoryClose();
+        RWSRCGLOBAL(engineStatus) = rwENGINESTATUSIDLE;
+    }
+
+    return result;
+}
+
 // Sets up the engine's static globals (allocating from the free lists, or straight from the
 // memory functions with rwENGINEINITNOFREELISTS) and, the first time, opens the string, memory,
 // file system and plugin registry systems and registers the core modules as engine plugins.
@@ -381,22 +398,6 @@ S32 RwEngineInit(const RwMemoryFunctions* memFuncs, U32 initFlags, U32 resArenaS
 
             _rwStringClose();
         }
-    }
-
-    return result;
-}
-
-// Closes the engine's systems once no instance is open.
-S32 RwEngineTerm(void)
-{
-    S32 result = (engineInstancesOpened == 0);
-
-    if (result)
-    {
-        _rwPluginRegistryClose();
-        _rwFileSystemClose();
-        _rwMemoryClose();
-        RWSRCGLOBAL(engineStatus) = rwENGINESTATUSIDLE;
     }
 
     return result;
