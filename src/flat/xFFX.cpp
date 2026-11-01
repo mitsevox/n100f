@@ -108,11 +108,12 @@ static inline void xFFXRemoveEffectByFData(_xEnt* ent, void* fdata)
     while (*link != NULL)
     {
         xFFX* f = *link;
-        if (f->fdata == fdata)
+        if (fdata == f->fdata)
         {
+            xFFX* next = f->next;
             ent->num_ffx--;
             xFFXFree(*link);
-            *link = f->next;
+            *link = next;
             return;
         }
         link = &f->next;
@@ -125,8 +126,7 @@ void xFFXShakeUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata)
 {
     xFFXShakeState* ss = (xFFXShakeState*)fdata;
     F32 tnext = ss->tmr + dt;
-    F32 mag = exp(ss->alpha * tnext);
-    mag = sin(ss->freq * tnext) * mag;
+    F32 mag = (F32)sin(ss->freq * tnext) * (F32)exp(ss->alpha * tnext);
 
     if (ss->tmr == 0.0f)
     {
@@ -139,10 +139,9 @@ void xFFXShakeUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata)
         return;
     }
 
-    F32 d = mag - ss->lval;
-    ent->frame->mat.pos.x += ss->disp.x * d;
-    ent->frame->mat.pos.y += ss->disp.y * d;
-    ent->frame->mat.pos.z += ss->disp.z * d;
+    xVec3 dpos;
+    xVec3SMul(&dpos, &ss->disp, mag - ss->lval);
+    xVec3AddTo(&ent->frame->mat.pos, &dpos);
     ss->lval = mag;
     ss->tmr = tnext;
 }
