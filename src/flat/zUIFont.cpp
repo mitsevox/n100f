@@ -77,16 +77,16 @@ void zUIFont_Init(void* object, void* asset)
     }
 }
 
-// Load the base UI state.
-void zUIFont_Load(_zUIFont* ent, xSerial* s)
-{
-    zUI_Load(ent, s);
-}
-
 // Save the base UI state.
 void zUIFont_Save(_zUIFont* ent, xSerial* s)
 {
     zUI_Save(ent, s);
+}
+
+// Load the base UI state.
+void zUIFont_Load(_zUIFont* ent, xSerial* s)
+{
+    zUI_Load(ent, s);
 }
 
 // Translate controller presses into the font widget's input flags.

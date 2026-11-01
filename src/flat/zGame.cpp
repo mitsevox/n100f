@@ -136,110 +136,22 @@ struct p2MarkerAsset
     xVec3 pos;
 };
 
-// Process gameplay state changes, including the transition through a portal.
-void zGameUpdateMode()
-{
-    if (gGameMode != eGameMode_Game)
-        return;
-
-    if (lbl_8025E528 == 1)
-    {
-        iTimeGameAdvance(lbl_8025EEEC);
-        if (globals.pad0->pressed & 1)
-        {
-            if (globals.player.ControlOn && !globals.cmgr)
-            {
-                if (!lbl_8025E510)
-                {
-                    if (gGameMode != eGameMode_Pause)
-                    {
-                        zGameModeSwitch(eGameMode_Pause);
-                        zGameStateSwitch(0);
-                        iPadStopRumble(globals.pad0);
-                        zEntEvent("techbutton6_click", 0x18);
-                    }
-                }
-                else
-                    lbl_8025E510 = 1;
-            }
-        }
-        else
-            lbl_8025E510 = 0;
-    }
-    else if (lbl_8025E528 == 5)
-    {
-        zPortalAsset* portal = globals.sceneCur->pendingPortal->passet;
-        S8* sceneName = (S8*)&portal->sceneID;
-        U32 sceneID = ((U32)sceneName[0] << 24) | ((U32)sceneName[1] << 16) |
-                      ((U32)sceneName[2] << 8) | (U32)sceneName[3];
-        if (portal->sceneID != globals.sceneCur->sceneID)
-        {
-            lbl_8025EED8 = portal->assetMarkerID;
-            lbl_8025EEDC = portal->assetCameraID;
-            lbl_8025EEE0 = portal->ang;
-            lbl_8025EEE4 = 1;
-            zGameExit();
-            S32 delay = sceneID == 'S006' ? 120 : 30;
-            while (delay-- > 0)
-                iVSync();
-            zGameInit(sceneID);
-            zGameSetup();
-            if (globals.cmgr)
-                zCutsceneMgrFinishLoad(globals.cmgr);
-        }
-        else if (lbl_8025EED8)
-        {
-            U32 size;
-            xVec3* pos = (xVec3*)xSTFindAsset(lbl_8025EED8, &size);
-            if (pos)
-                globals.player.ent.frame->mat.pos = *pos;
-            lbl_8025EED8 = 0;
-        }
-        xBase* camera = zSceneFindObject(lbl_8025EEDC);
-        if (!camera)
-        {
-            xBase* fallback = zSceneGetObject(7, 0);
-            lbl_8025EEDC = fallback->id;
-            for (S32 i = 0; i < 50; ++i) {}
-            for (S32 i = 0; i < 50; ++i) {}
-            xSTAssetName(fallback->id);
-        }
-        if (camera)
-        {
-            xCameraPickInitial(&globals.camera, (_tagxCam*)camera);
-            globals.player.cp.initCamID = lbl_8025EEDC;
-            zEntPlayer_StoreCheckPoint(NULL);
-        }
-        lbl_8025EEDC = 0;
-        lbl_8025EEF0 = iTimeGet() - (U64)((F32)OS_TIMER_CLOCK / 60.0f);
-        zGameStateSwitch(1);
-    }
-    else if (lbl_8025E528 == 2)
-    {
-        zSceneReset();
-        zGameStateSwitch(1);
-    }
-    else if (lbl_8025E528 == 3)
-    {
-        if (lbl_8025EEE8 == 0.0f)
-        {
-            lbl_8025EEE8 = 5.0f;
-            xScrFxFade(&lbl_8025E518, &lbl_8025E514, 4.5f, NULL, 1, 1);
-        }
-        else
-        {
-            lbl_8025EEE8 -= lbl_8025EEEC;
-            xprintf("GAME OVER (%f secs)\n", lbl_8025EEE8);
-            if (lbl_8025EEE8 <= 0.0f)
-            {
-                lbl_8025EEE8 = 0.0f;
-                zGameStateSwitch(7);
-            }
-        }
-    }
-    else if (lbl_8025E528 == 7)
-        lbl_8025EEE8 = 0.0f;
-}
+void zGameUpdateMode();
+void zGameInit(U32 theSceneID);
+void zGameExit();
+void zGameSetup();
+void setupPlayer();
+static S32 TestCheat(U32* cheat_info);
+static void zGameCheats(F32 dt);
+void zGameLoop();
+S32 zGameIsPaused();
+void zGamePauseIfPossible();
+void zGameScreenTransitionBegin();
+void zGameScreenTransitionUpdate(F32 percentComplete, char* msg);
+void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba);
+void zGameScreenTransition_UIRender(F32 x1, F32 y1, F32 x2, F32 y2, S32 tex);
+void zGameScreenTransitionEnd();
+extern "C" S32 fn_800AC0BC();
 
 // Initialize the scene, camera, music and counters for a new game.
 void zGameInit(U32 theSceneID)
@@ -290,153 +202,6 @@ void zGameSetup()
     zEntEventAll(NULL, 0, 0x57, NULL);
     zEntEventAll(NULL, 0, 0x59, NULL);
     zGameExtrasInit();
-}
-
-// Sets up the player from the scene's last player asset: the yaw a portal left (when it set one),
-// then the start position from the portal's marker (moving the camera target with it), and
-// finally sends event 0xC2 to every entity of type 30.
-void setupPlayer()
-{
-    p2MarkerAsset* m;
-    U32 size;
-    S32 playerCount;
-    p2EntAsset* asset;
-
-    playerCount = xSTAssetCountByType('PLYR');
-    asset = (p2EntAsset*)xSTFindAssetByType('PLYR', playerCount - 1, NULL);
-    asset->baseType = 3;
-    if (lbl_8025EEE4)
-    {
-        asset->ang.x = 3.1415927f * lbl_8025EEE0 / 180.0f;
-        lbl_8025EEE4 = 0;
-    }
-    asset->ang.y = 0.0f;
-    asset->ang.z = 0.0f;
-    zEntPlayer_Init(&globals.player.ent, asset);
-    if (lbl_8025EED8)
-    {
-        m = (p2MarkerAsset*)xSTFindAsset(lbl_8025EED8, &size);
-        if (m)
-        {
-            globals.player.ent.frame->mat.pos = m->pos;
-            globals.player.ent.model->Mat->pos.x = m->pos.x;
-            globals.player.ent.model->Mat->pos.y = m->pos.y;
-            globals.player.ent.model->Mat->pos.z = m->pos.z;
-            xCameraSetTarget(&globals.camera, &globals.player.ent.frame->mat.pos);
-            xCameraSetTarget(&globals.camera, (xMat4x3*)globals.player.ent.model->Mat);
-        }
-        lbl_8025EED8 = 0;
-    }
-    zEntEventAllOfType(0xC2, 30);
-}
-
-// Whether the last presses end with the code (compared back to its first nonzero entry); a match
-// plays one of four excited Scooby sounds.
-static S32 TestCheat(U32* cheat_info)
-{
-    S32 i;
-
-    for (i = 13; cheat_info[i] && i >= 0; i--)
-    {
-        if (cheat_info[i] != sCheatPressed[i])
-        {
-            return 0;
-        }
-    }
-
-    switch (irand() & 3)
-    {
-    case 0:
-        xSndPlay(xStrHash("scooby_excite_01"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
-        break;
-    case 1:
-        xSndPlay(xStrHash("scooby_excite_04"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
-        break;
-    case 2:
-        xSndPlay(xStrHash("scooby_excite_09"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
-        break;
-    case 3:
-    default:
-        xSndPlay(xStrHash("scooby_excite_10"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
-        break;
-    }
-
-    return 1;
-}
-
-// While the game is paused with the two shoulder buttons (0x1100) held, each new face-button
-// press is shifted into sCheatPressed and every code is tested. Releasing the shoulders, or 0.35
-// seconds without a press, clears the presses.
-static void zGameCheats(F32 dt)
-{
-    if (zGameModeGet() != eGameMode_Pause)
-    {
-        return;
-    }
-
-    if ((globals.pad0->on & 0x1100) == 0x1100)
-    {
-        U32 pressed = globals.pad0->pressed & 0xF0000;
-        if (pressed)
-        {
-            for (S32 i = 0; i < 13; i++)
-            {
-                sCheatPressed[i] = sCheatPressed[i + 1];
-            }
-
-            sCheatPressed[13] = pressed;
-            sCheatTimer = 0.35f;
-            if (TestCheat(sCheatWarpGate))
-            {
-                zEntPickupCheat_allWarps();
-            }
-
-            if (TestCheat(sCheatAllPowerups))
-            {
-                globals.player.Inv_Specials |= 1 << 0;
-                globals.player.Inv_Specials |= 1 << 1;
-                globals.player.Inv_Specials |= 1 << 2;
-                globals.player.Inv_Specials |= 1 << 4;
-                globals.player.Inv_Specials |= 1 << 3;
-                globals.player.Inv_Specials |= 1 << 5;
-                globals.player.Inv_Specials |= 1 << 9;
-                globals.player.Inv_Specials |= 1 << 10;
-                globals.player.Inv_Specials |= 1 << 11;
-                globals.player.Inv_Specials |= 1 << 12;
-                globals.player.Inv_Specials |= 1 << 13;
-                globals.player.Inv_Specials |= 1 << 14;
-                globals.player.Inv_Specials |= 1 << 6;
-                globals.player.Inv_Specials |= 1 << 7;
-                globals.player.Inv_Specials |= 1 << 8;
-            }
-
-            if (TestCheat(sCheatUnlockCredits))
-            {
-                zVarUnlockEndGame();
-            }
-
-            if (TestCheat(sCheatUnlockAllMovies))
-            {
-                zVarUnlockAllMovies();
-            }
-
-            sCheatTimer = 0.35f;
-        }
-        else
-        {
-            sCheatTimer -= dt;
-            if (sCheatTimer <= 0.0f)
-            {
-                sCheatTimer = 0.35f;
-                memset(sCheatPressed, 0, sizeof(sCheatPressed));
-            }
-        }
-    }
-    else
-    {
-        sCheatTimer = 0.35f;
-        memset(sCheatPressed, 0, sizeof(sCheatPressed));
-    }
 }
 
 // Advance input, simulation, rendering and game mode until gameplay exits.
@@ -541,6 +306,111 @@ void zGamePauseIfPossible()
         iPadStopRumble(globals.pad0);
         zEntEvent("techbutton6_click", 0x18);
     }
+}
+
+// Process gameplay state changes, including the transition through a portal.
+void zGameUpdateMode()
+{
+    if (gGameMode != eGameMode_Game)
+        return;
+
+    if (lbl_8025E528 == 1)
+    {
+        iTimeGameAdvance(lbl_8025EEEC);
+        if (globals.pad0->pressed & 1)
+        {
+            if (globals.player.ControlOn && !globals.cmgr)
+            {
+                if (!lbl_8025E510)
+                {
+                    if (gGameMode != eGameMode_Pause)
+                    {
+                        zGameModeSwitch(eGameMode_Pause);
+                        zGameStateSwitch(0);
+                        iPadStopRumble(globals.pad0);
+                        zEntEvent("techbutton6_click", 0x18);
+                    }
+                }
+                else
+                    lbl_8025E510 = 1;
+            }
+        }
+        else
+            lbl_8025E510 = 0;
+    }
+    else if (lbl_8025E528 == 5)
+    {
+        zPortalAsset* portal = globals.sceneCur->pendingPortal->passet;
+        S8* sceneName = (S8*)&portal->sceneID;
+        U32 sceneID = ((U32)sceneName[0] << 24) | ((U32)sceneName[1] << 16) |
+                      ((U32)sceneName[2] << 8) | (U32)sceneName[3];
+        if (portal->sceneID != globals.sceneCur->sceneID)
+        {
+            lbl_8025EED8 = portal->assetMarkerID;
+            lbl_8025EEDC = portal->assetCameraID;
+            lbl_8025EEE0 = portal->ang;
+            lbl_8025EEE4 = 1;
+            zGameExit();
+            S32 delay = sceneID == 'S006' ? 120 : 30;
+            while (delay-- > 0)
+                iVSync();
+            zGameInit(sceneID);
+            zGameSetup();
+            if (globals.cmgr)
+                zCutsceneMgrFinishLoad(globals.cmgr);
+        }
+        else if (lbl_8025EED8)
+        {
+            U32 size;
+            xVec3* pos = (xVec3*)xSTFindAsset(lbl_8025EED8, &size);
+            if (pos)
+                globals.player.ent.frame->mat.pos = *pos;
+            lbl_8025EED8 = 0;
+        }
+        xBase* camera = zSceneFindObject(lbl_8025EEDC);
+        if (!camera)
+        {
+            xBase* fallback = zSceneGetObject(7, 0);
+            lbl_8025EEDC = fallback->id;
+            for (S32 i = 0; i < 50; ++i) {}
+            for (S32 i = 0; i < 50; ++i) {}
+            xSTAssetName(fallback->id);
+        }
+        if (camera)
+        {
+            xCameraPickInitial(&globals.camera, (_tagxCam*)camera);
+            globals.player.cp.initCamID = lbl_8025EEDC;
+            zEntPlayer_StoreCheckPoint(NULL);
+        }
+        lbl_8025EEDC = 0;
+        lbl_8025EEF0 = iTimeGet() - (U64)((F32)OS_TIMER_CLOCK / 60.0f);
+        zGameStateSwitch(1);
+    }
+    else if (lbl_8025E528 == 2)
+    {
+        zSceneReset();
+        zGameStateSwitch(1);
+    }
+    else if (lbl_8025E528 == 3)
+    {
+        if (lbl_8025EEE8 == 0.0f)
+        {
+            lbl_8025EEE8 = 5.0f;
+            xScrFxFade(&lbl_8025E518, &lbl_8025E514, 4.5f, NULL, 1, 1);
+        }
+        else
+        {
+            lbl_8025EEE8 -= lbl_8025EEEC;
+            xprintf("GAME OVER (%f secs)\n", lbl_8025EEE8);
+            if (lbl_8025EEE8 <= 0.0f)
+            {
+                lbl_8025EEE8 = 0.0f;
+                zGameStateSwitch(7);
+            }
+        }
+    }
+    else if (lbl_8025E528 == 7)
+        lbl_8025EEE8 = 0.0f;
 }
 
 // Create the temporary scene used to display loading progress.
@@ -714,6 +584,153 @@ void zGameScreenTransitionEnd()
         }
         RpWorldDestroy(lbl_8025EF18);
         lbl_8025EF18 = NULL;
+    }
+}
+
+// Sets up the player from the scene's last player asset: the yaw a portal left (when it set one),
+// then the start position from the portal's marker (moving the camera target with it), and
+// finally sends event 0xC2 to every entity of type 30.
+void setupPlayer()
+{
+    p2MarkerAsset* m;
+    U32 size;
+    S32 playerCount;
+    p2EntAsset* asset;
+
+    playerCount = xSTAssetCountByType('PLYR');
+    asset = (p2EntAsset*)xSTFindAssetByType('PLYR', playerCount - 1, NULL);
+    asset->baseType = 3;
+    if (lbl_8025EEE4)
+    {
+        asset->ang.x = 3.1415927f * lbl_8025EEE0 / 180.0f;
+        lbl_8025EEE4 = 0;
+    }
+    asset->ang.y = 0.0f;
+    asset->ang.z = 0.0f;
+    zEntPlayer_Init(&globals.player.ent, asset);
+    if (lbl_8025EED8)
+    {
+        m = (p2MarkerAsset*)xSTFindAsset(lbl_8025EED8, &size);
+        if (m)
+        {
+            globals.player.ent.frame->mat.pos = m->pos;
+            globals.player.ent.model->Mat->pos.x = m->pos.x;
+            globals.player.ent.model->Mat->pos.y = m->pos.y;
+            globals.player.ent.model->Mat->pos.z = m->pos.z;
+            xCameraSetTarget(&globals.camera, &globals.player.ent.frame->mat.pos);
+            xCameraSetTarget(&globals.camera, (xMat4x3*)globals.player.ent.model->Mat);
+        }
+        lbl_8025EED8 = 0;
+    }
+    zEntEventAllOfType(0xC2, 30);
+}
+
+// Whether the last presses end with the code (compared back to its first nonzero entry); a match
+// plays one of four excited Scooby sounds.
+static S32 TestCheat(U32* cheat_info)
+{
+    S32 i;
+
+    for (i = 13; cheat_info[i] && i >= 0; i--)
+    {
+        if (cheat_info[i] != sCheatPressed[i])
+        {
+            return 0;
+        }
+    }
+
+    switch (irand() & 3)
+    {
+    case 0:
+        xSndPlay(xStrHash("scooby_excite_01"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
+        break;
+    case 1:
+        xSndPlay(xStrHash("scooby_excite_04"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
+        break;
+    case 2:
+        xSndPlay(xStrHash("scooby_excite_09"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
+        break;
+    case 3:
+    default:
+        xSndPlay(xStrHash("scooby_excite_10"), 0.5f, 0.5f, 0.0f, 0x80, 0x202, 0xDEADBEEF);
+        break;
+    }
+
+    return 1;
+}
+
+// While the game is paused with the two shoulder buttons (0x1100) held, each new face-button
+// press is shifted into sCheatPressed and every code is tested. Releasing the shoulders, or 0.35
+// seconds without a press, clears the presses.
+static void zGameCheats(F32 dt)
+{
+    if (zGameModeGet() != eGameMode_Pause)
+    {
+        return;
+    }
+
+    if ((globals.pad0->on & 0x1100) == 0x1100)
+    {
+        U32 pressed = globals.pad0->pressed & 0xF0000;
+        if (pressed)
+        {
+            for (S32 i = 0; i < 13; i++)
+            {
+                sCheatPressed[i] = sCheatPressed[i + 1];
+            }
+
+            sCheatPressed[13] = pressed;
+            sCheatTimer = 0.35f;
+            if (TestCheat(sCheatWarpGate))
+            {
+                zEntPickupCheat_allWarps();
+            }
+
+            if (TestCheat(sCheatAllPowerups))
+            {
+                globals.player.Inv_Specials |= 1 << 0;
+                globals.player.Inv_Specials |= 1 << 1;
+                globals.player.Inv_Specials |= 1 << 2;
+                globals.player.Inv_Specials |= 1 << 4;
+                globals.player.Inv_Specials |= 1 << 3;
+                globals.player.Inv_Specials |= 1 << 5;
+                globals.player.Inv_Specials |= 1 << 9;
+                globals.player.Inv_Specials |= 1 << 10;
+                globals.player.Inv_Specials |= 1 << 11;
+                globals.player.Inv_Specials |= 1 << 12;
+                globals.player.Inv_Specials |= 1 << 13;
+                globals.player.Inv_Specials |= 1 << 14;
+                globals.player.Inv_Specials |= 1 << 6;
+                globals.player.Inv_Specials |= 1 << 7;
+                globals.player.Inv_Specials |= 1 << 8;
+            }
+
+            if (TestCheat(sCheatUnlockCredits))
+            {
+                zVarUnlockEndGame();
+            }
+
+            if (TestCheat(sCheatUnlockAllMovies))
+            {
+                zVarUnlockAllMovies();
+            }
+
+            sCheatTimer = 0.35f;
+        }
+        else
+        {
+            sCheatTimer -= dt;
+            if (sCheatTimer <= 0.0f)
+            {
+                sCheatTimer = 0.35f;
+                memset(sCheatPressed, 0, sizeof(sCheatPressed));
+            }
+        }
+    }
+    else
+    {
+        sCheatTimer = 0.35f;
+        memset(sCheatPressed, 0, sizeof(sCheatPressed));
     }
 }
 

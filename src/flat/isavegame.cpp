@@ -1138,6 +1138,11 @@ S32 iSGReadLeader(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 
     return readret;
 }
 
+en_ASYNC_OPSTAT iSGPollStatus(st_ISGSESSION* isgdata, en_ASYNC_OPCODE* curop, S32 block)
+{
+    return isgdata->as_opstat;
+}
+
 en_ASYNC_OPERR iSGOpError(st_ISGSESSION* isgdata, char* errmsg)
 {
     static char* errmsgs[ISG_OPERR_NOMORE + 1] = {
@@ -1180,11 +1185,6 @@ en_ASYNC_OPERR iSGOpError(st_ISGSESSION* isgdata, char* errmsg)
     }
     errmsg[0x7F] = NULL;
     return isgdata->as_operr;
-}
-
-en_ASYNC_OPSTAT iSGPollStatus(st_ISGSESSION* isgdata, en_ASYNC_OPCODE* curop, S32 block)
-{
-    return isgdata->as_opstat;
 }
 
 // Maps the mcidx'th card present to its physical slot. present, when given, receives one

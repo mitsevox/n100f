@@ -84,6 +84,19 @@ void zUI_Save(_zUI* ent, xSerial* s);
 void zUI_Init(_zUI* ent, p2EntAsset* asset);
 void zUI_Init(void* ent, void* asset);
 
+void zUI_Init(void* ent, void* asset);
+void zUI_Init(_zUI* ent, p2EntAsset* asset);
+void zUI_Save(_zUI* ent, xSerial* s);
+void zUI_Load(_zUI* ent, xSerial* s);
+void zUI_Reset(_zUI* ent);
+void zUI_PreUpdate(_zUI* ent, _xScene*, F32);
+void zUI_Update(_zUI* ent, _xScene* sc, F32 dt);
+void zUIRenderAll();
+void zUI_Render(_xEnt* e);
+xBase* zUIRenderIteratorInsert(xBase* b, zScene*, void*);
+S32 iRenderQSort_Face(const void* a, const void* b);
+S32 zUIEventCB(xBase*, xBase* to, U32 event, F32*, xBase*);
+
 void zUI_Init(void* ent, void* asset)
 {
     zUI_Init(static_cast<_zUI*>(ent), static_cast<p2EntAsset*>(asset));
@@ -196,6 +209,25 @@ void zUI_Update(_zUI* ent, _xScene* sc, F32 dt)
         else if (ent->uiButton & 0x80000) zEntEvent(ent, ent, 0x40);
         ent->uiFlags &= ~0x40;
     }
+}
+
+// Collect each UI element for the later depth sort.
+xBase* zUIRenderIteratorInsert(xBase* b, zScene*, void*)
+{
+    sSorted[sSortedCount++] = static_cast<_zUI*>(b);
+    return b;
+}
+
+// Draw UI elements with larger asset depth first.
+S32 iRenderQSort_Face(const void* a, const void* b)
+{
+    const _zUI* left = *static_cast<_zUI* const*>(a);
+    const _zUI* right = *static_cast<_zUI* const*>(b);
+    if (left->sasset->pos.z < right->sasset->pos.z)
+        return 1;
+    if (left->sasset->pos.z > right->sasset->pos.z)
+        return -1;
+    return 0;
 }
 
 // Gather, sort and draw visible UI elements.
@@ -335,25 +367,6 @@ void zUI_Render(_xEnt* e)
     {
         xEntRender(ent);
     }
-}
-
-// Collect each UI element for the later depth sort.
-xBase* zUIRenderIteratorInsert(xBase* b, zScene*, void*)
-{
-    sSorted[sSortedCount++] = static_cast<_zUI*>(b);
-    return b;
-}
-
-// Draw UI elements with larger asset depth first.
-S32 iRenderQSort_Face(const void* a, const void* b)
-{
-    const _zUI* left = *static_cast<_zUI* const*>(a);
-    const _zUI* right = *static_cast<_zUI* const*>(b);
-    if (left->sasset->pos.z < right->sasset->pos.z)
-        return 1;
-    if (left->sasset->pos.z > right->sasset->pos.z)
-        return -1;
-    return 0;
 }
 
 // Handle visibility and focus changes for a UI element.
