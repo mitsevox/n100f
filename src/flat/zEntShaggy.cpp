@@ -32,8 +32,6 @@ ShaggyGuts gShaggy[16];
 static iModelTag ChimneyTag;
 static iModelTag ShaggyTag;
 U32 gNumShaggy;
-F32 gACCEL_START;
-F32 gACCEL_END;
 F32 THROW_MINHEIGHT = 4.25f;
 F32 THROW_DEFHEIGHT = 6.0f;
 static U32 ChimneyTagIndex = 27;
@@ -44,6 +42,8 @@ static _zParEmitter* gBurningManEmitter;
 static S32 (*sVilEventFunc)(xBase*, xBase*, U32, F32*, xBase*);
 static void (*sVilUpdateFunc)(_xEnt*, _xScene*, F32);
 static void (*sVilMoveFunc)(_xEnt*, _xScene*, F32, _xEntFrame*);
+F32 gACCEL_START;
+F32 gACCEL_END;
 F32 sHangVirtualPeak = 0.75f + THROW_DEFHEIGHT;
 F32 sDefHangTime;
 static ShaggyMagnet sMagnetList[64];
@@ -1108,6 +1108,7 @@ static void Shaggy1_MiddleUpdate(_zEnt* shag, _xScene* sc, F32 dt)
     sc->gravity = oldgravity;
 }
 
+// Keeps carry/hang interactions in sync and rights the throwing variant's tilted model.
 static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
 {
     U32 i;
@@ -1115,7 +1116,6 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
     F32 cy;
     F32 cz;
     zScene* zsc;
-    _zEntPickup* pup;
     xVec3* pos;
     F32 mag;
     xMat3x3* mat;
@@ -1155,15 +1155,18 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
             cz = ent->bound.sph.center.z;
             for (i = 0; i < zsc->num_ents; i++)
             {
-                pup = (_zEntPickup*)zsc->ents[i];
-                if (pup->baseType == 4 && (pup->state & 0x3F) == 1)
+                if (zsc->ents[i]->baseType == 4)
                 {
-                    pos = &((xMat4x3*)pup->model->Mat)->pos;
-                    if ((cx - pos->x) * (cx - pos->x) + (cy - pos->y) * (cy - pos->y) +
-                            (cz - pos->z) * (cz - pos->z) <
-                        4.0f)
+                    _zEntPickup* pup = (_zEntPickup*)zsc->ents[i];
+                    if ((pup->state & 0x3F) == 1)
                     {
-                        pup->state = (pup->state & ~0x3F) | 2;
+                        pos = &((xMat4x3*)pup->model->Mat)->pos;
+                        if ((cx - pos->x) * (cx - pos->x) + (cy - pos->y) * (cy - pos->y) +
+                                (cz - pos->z) * (cz - pos->z) <
+                            4.0f)
+                        {
+                            pup->state = (pup->state & ~0x3F) | 2;
+                        }
                     }
                 }
             }
@@ -1171,13 +1174,15 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
 
         if (!guts->hangme)
         {
-            mat = (xMat3x3*)ent->model->Mat;
-            if (xabs(mat->up.y - 1.0f) > 0.0001f)
+            if (xabs(ent->model->Mat->up.y - 1.0f) > 0.0001f)
             {
-                dx = -mat->up.x;
-                cy = 1.0f - mat->up.y;
-                dz = -mat->up.z;
-                mag = dx * dx + cy * cy + dz * dz;
+                mat = (xMat3x3*)ent->model->Mat;
+                xVec3 delta;
+
+                delta.x = -mat->up.x;
+                delta.y = 1.0f - mat->up.y;
+                delta.z = -mat->up.z;
+                mag = xVec3Length2(&delta);
                 if (mag < 0.0049f)
                 {
                     mat->up.x = 0.0f;
@@ -1187,12 +1192,8 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
                 else
                 {
                     mag = 0.07f * (1.0f / sqrtf(mag));
-                    dx *= mag;
-                    cy *= mag;
-                    dz *= mag;
-                    mat->up.x += dx;
-                    mat->up.y += cy;
-                    mat->up.z += dz;
+                    xVec3SMul(&delta, &delta, mag);
+                    xVec3Add(&mat->up, &mat->up, &delta);
                     xVec3Normalize(&mat->up, &mat->up);
                     xVec3Cross(&mat->right, &mat->up, &mat->at);
                     xVec3Normalize(&mat->right, &mat->right);
