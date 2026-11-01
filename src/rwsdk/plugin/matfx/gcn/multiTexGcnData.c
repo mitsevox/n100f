@@ -139,8 +139,16 @@ struct GCNMTStreamIndStage
 U32 GameCubeMTEffectStreamGetSize(RpMTEffect* effect)
 {
     GCNMTConfig* config = &((GCNMTEffect*)effect)->config;
+    U32 size;
 
-    return MTGCN_STREAMSIZE(config);
+    size = config->numTexMatrices * (sizeof(GCNMTStreamTexMatrix) + sizeof(F32) * 12) +
+           sizeof(GCNMTStreamHeader);
+    size += config->numTexCoordGens * sizeof(GCNMTStreamTexCoordGen);
+    size += config->numIndMatrices * (sizeof(GCNMTStreamIndMatrix) + sizeof(F32) * 6);
+    size += config->numIndStages * sizeof(GCNMTStreamIndStage);
+    size += config->numTevStages * sizeof(GCNMTStreamTevStage);
+
+    return size;
 }
 
 RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)

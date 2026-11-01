@@ -1017,7 +1017,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/plcore/batkreg.c"),
             Object(NonMatching, "rwsdk/src/plcore/bavector.c"),
             Object(NonMatching, "rwsdk/src/plcore/resmem.c"),
-            Object(NonMatching, "rwsdk/src/plcore/rwstring.c"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/plcore/rwstring.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/os/gcn/osintf.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/babbox.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/babincam.c"),

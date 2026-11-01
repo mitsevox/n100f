@@ -12,6 +12,19 @@ struct ErrorModuleData
 
 static RwModuleInfo errorModule;
 
+// Records where the error module's globals sit in the engine instance and clears the last error
+// (plugin 0, the "no error" code).
+void* _rwErrorOpen(void* instance, S32 offset, S32 size)
+{
+    errorModule.globalsOffset = offset;
+    errorModule.numInstances++;
+
+    ERROR_DATA(lastError).pluginID = 0;
+    ERROR_DATA(lastError).errorCode = (S32)0x80000000;
+
+    return instance;
+}
+
 void* _rwErrorClose(void* instance)
 {
     errorModule.numInstances--;

@@ -1,4 +1,9 @@
 #include <rwcore.h>
+#include <stdio.h>
+#include <string.h>
+
+int vsprintf(char* s, const char* format, va_list arg);
+int sscanf(const char* s, const char* format, ...);
 
 S32 StrICmp(const char* s1, const char* s2)
 {
@@ -112,4 +117,32 @@ char* StrRChr(const char* str, char c)
     } while (ch);
 
     return found;
+}
+
+// Fills the engine's string function table: the C library's functions, and this file's own for
+// the case-insensitive compare, the case conversions and the character searches.
+S32 _rwStringOpen(void)
+{
+    RWSRCGLOBAL(stringFuncs).vecSprintf = sprintf;
+    RWSRCGLOBAL(stringFuncs).vecVsprintf = vsprintf;
+    RWSRCGLOBAL(stringFuncs).vecStrcpy = strcpy;
+    RWSRCGLOBAL(stringFuncs).vecStrncpy = strncpy;
+    RWSRCGLOBAL(stringFuncs).vecStrcat = strcat;
+    RWSRCGLOBAL(stringFuncs).vecStrncat = strncat;
+    RWSRCGLOBAL(stringFuncs).vecStrrchr = StrRChr;
+    RWSRCGLOBAL(stringFuncs).vecStrchr = StrChr;
+    RWSRCGLOBAL(stringFuncs).vecStrstr = strstr;
+    RWSRCGLOBAL(stringFuncs).vecStrcmp = strcmp;
+    RWSRCGLOBAL(stringFuncs).vecStricmp = StrICmp;
+    RWSRCGLOBAL(stringFuncs).vecStrlen = strlen;
+    RWSRCGLOBAL(stringFuncs).vecStrupr = StrUpr;
+    RWSRCGLOBAL(stringFuncs).vecStrlwr = StrLwr;
+    RWSRCGLOBAL(stringFuncs).vecStrtok = strtok;
+    RWSRCGLOBAL(stringFuncs).vecSscanf = sscanf;
+
+    return TRUE;
+}
+
+void _rwStringClose(void)
+{
 }

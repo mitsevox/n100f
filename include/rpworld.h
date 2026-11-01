@@ -248,13 +248,21 @@ typedef RpAtomic* (*RpAtomicCallBack)(RpAtomic* atomic, void* data);
 #define rpGEOMETRYMODULATEMATERIALCOLOR 0x0040
 #define rpGEOMETRYTEXTURED2 0x0080
 
+// The geometry lock bits for the positions and the normals, which the atomic instance node
+// tests in lockedSinceLastInst. Names written for this project.
+#define GEOMETRY_LOCKVERTICES 0x0002
+#define GEOMETRY_LOCKNORMALS 0x0004
 #define rpGEOMETRYLOCKTEXCOORDS1 0x0010
 #define rpGEOMETRYNATIVE 0x01000000
 #define rpGEOMETRYFLAGSMASK 0x00FF
 #define rpGEOMETRYNATIVEFLAGSMASK 0x0F000000
 
 #define rpWORLDTRISTRIP 0x01
+#define rpWORLDTEXTURED 0x04
+#define rpWORLDPRELIT 0x08
+#define rpWORLDNORMALS 0x10
 #define rpWORLDLIGHT 0x20
+#define rpWORLDTEXTURED2 0x80
 #define rpWORLDNATIVE 0x01000000
 #define rpWORLDSINGLEMALLOC 0x01
 

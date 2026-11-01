@@ -1,4 +1,5 @@
 #include <rpworld.h>
+#include <dolphin/gx.h>
 
 #define VTXFMT_PLUGIN_ID 0x511
 
@@ -9,6 +10,68 @@ RpGameCubeVtxFmt _RpDlVtxFmtDefault;
 S32 _rpDlGeomVtxFmtOffset;
 S32 _rpDlWorldVtxFmtOffset;
 static RwModuleInfo _RpVtxFmtModule;
+
+// Describes the instanced arrays to GX for drawing: each attribute the object has (positions
+// always; normals, or normal-binormal-tangent triples when the format's normal fraction is set;
+// prelit colors; each texture coordinate set with an array) gets its index type, its component
+// format and fraction from the vertex format (the default when none is given), and its array.
+void _rwDlVtxFmtSetup(RpGameCubeVtxFmt* vtxFmt, GCNObjectData* objectData)
+{
+    GCNVertexArrays* texArrays;
+    GXAttr attr;
+    GCNVertexArrays* arrays;
+    S32 i;
+
+    if (!vtxFmt)
+    {
+        vtxFmt = &_RpDlVtxFmtDefault;
+    }
+
+    arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
+    GXClearVtxDesc();
+
+    GXSetVtxDesc(GX_VA_POS, arrays->indexType);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, vtxFmt->compType[0], vtxFmt->frac[0]);
+    GXSetArray(GX_VA_POS, arrays->pos, arrays->posStride);
+
+    if (objectData->flags & rpGEOMETRYNORMALS)
+    {
+        if (vtxFmt->frac[1])
+        {
+            GXSetVtxDesc(GX_VA_NBT, arrays->indexType);
+            GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NBT, GX_NRM_NBT, vtxFmt->compType[1], 0);
+            GXSetArray(GX_VA_NBT, arrays->nrm, arrays->nrmStride);
+        }
+        else
+        {
+            GXSetVtxDesc(GX_VA_NRM, arrays->indexType);
+            GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, vtxFmt->compType[1], 0);
+            GXSetArray(GX_VA_NRM, arrays->nrm, arrays->nrmStride);
+        }
+    }
+
+    if (objectData->flags & rpGEOMETRYPRELIT)
+    {
+        GXSetVtxDesc(GX_VA_CLR0, arrays->indexType);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, vtxFmt->compType[10] > GX_RGBX8, vtxFmt->compType[10],
+                        0);
+        GXSetArray(GX_VA_CLR0, arrays->clr, arrays->clrStride);
+    }
+
+    if (objectData->flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
+    {
+        texArrays = arrays;
+        for (i = 0; i < 8 && texArrays->tex[0]; i++)
+        {
+            attr = (GXAttr)(GX_VA_TEX0 + i);
+            GXSetVtxDesc(attr, arrays->indexType);
+            GXSetVtxAttrFmt(GX_VTXFMT0, attr, GX_TEX_ST, vtxFmt->compType[2 + i],
+                            vtxFmt->frac[2 + i]);
+            GXSetArray(attr, texArrays->tex[0], arrays->texStride[i]);
+            texArrays = (GCNVertexArrays*)((U8*)texArrays + sizeof(void*));
+        }
+    }
+}
 
 RpGameCubeVtxFmt* _rpGameCubeVtxFmtGetDefault(void)
 {
@@ -146,4 +209,16 @@ void RpGameCubeGeometrySetVtxFmt(RpGeometry* geometry, RpGameCubeVtxFmt* vtxFmt)
 
     *slot = vtxFmt;
     (*slot)->refCount++;
+}
+
+// The vertex format a geometry carries in its plugin slot.
+RpGameCubeVtxFmt* fn_8015D818(const RpGeometry* geometry)
+{
+    return *(RpGameCubeVtxFmt**)((U8*)geometry + _rpDlGeomVtxFmtOffset);
+}
+
+// The vertex format a world carries in its plugin slot, used for all its sectors.
+RpGameCubeVtxFmt* fn_8015D824(const RpWorld* world)
+{
+    return *(RpGameCubeVtxFmt**)((U8*)world + _rpDlWorldVtxFmtOffset);
 }

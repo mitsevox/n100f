@@ -34,9 +34,9 @@ RwRaster* RwRasterShowRaster(RwRaster* raster, void* dev, U32 flags);
 void _rwPipeInitForCamera(const RwCamera* camera);
 
 void CameraBuildPerspClipPlanes(RwCamera* camera);
-void CameraBuildPerspViewMatrix(RwCamera* camera);
+RwCamera* CameraBuildPerspViewMatrix(RwCamera* camera);
 void CameraBuildParallelClipPlanes(RwCamera* camera);
-void CameraBuildParallelViewMatrix(RwCamera* camera);
+RwCamera* CameraBuildParallelViewMatrix(RwCamera* camera);
 
 // Maps the camera's near and far planes onto the device's Z range.
 static void rwCameraUpdateZShiftScale(RwCamera* camera)
@@ -68,6 +68,268 @@ static void rwCameraUpdateZShiftScale(RwCamera* camera)
     zScale = (farScreenZ - nearScreenZ) / (farZ - nearZ);
     camera->zScale = zScale;
     camera->zShift = 0.5f * ((farScreenZ + nearScreenZ) - zScale * (farZ + nearZ));
+}
+
+// Fills a frustum plane's closest-corner flags: 1 for each axis along which the normal is positive,
+// 0 where it is negative, read from the sign bit.
+#define CAMERA_PLANESIGN(_value) ((U8)((*(const S32*)&(_value) >> 31) + 1))
+
+#define CameraSetPlaneClosest(_plane)                                                              \
+    do                                                                                             \
+    {                                                                                              \
+        (_plane)->closestX = CAMERA_PLANESIGN((_plane)->plane.normal.x);                           \
+        (_plane)->closestY = CAMERA_PLANESIGN((_plane)->plane.normal.y);                           \
+        (_plane)->closestZ = CAMERA_PLANESIGN((_plane)->plane.normal.z);                           \
+    } while (0)
+
+#define CameraNormalizePlane(_plane)                                                               \
+    do                                                                                             \
+    {                                                                                              \
+        F32 recip = _rwInvSqrt(                                                                    \
+            RwV3dDotProductMacro(&(_plane)->plane.normal, &(_plane)->plane.normal));               \
+        RwV3dScaleMacro(&(_plane)->plane.normal, &(_plane)->plane.normal, recip);                  \
+    } while (0)
+
+// Builds the perspective frustum: the eight corners (near then far, each starting top right in
+// the window's terms and going round) in world space, then the far and near planes along the
+// camera's at vector and the four side planes through the corners, with normals pointing out.
+void CameraBuildPerspClipPlanes(RwCamera* camera)
+{
+    RwMatrix* camMatrix = &RwCameraGetFrame(camera)->ltm;
+    RwV3d* corners = camera->frustumCorners;
+    RwFrustumPlane* plane;
+    RwV3d vector;
+    RwV3d xWindow;
+    RwV3d yWindow;
+    RwV3d xWindow2;
+    RwV3d offset;
+    RwV3d edge;
+    S32 i;
+
+    RwV3dScaleMacro(&offset, &camMatrix->right, -camera->viewOffset.x);
+    RwV3dIncrementScaledMacro(&offset, &camMatrix->up, camera->viewOffset.y);
+    RwV3dScaleMacro(&xWindow, &camMatrix->right, camera->viewWindow.x);
+    RwV3dScaleMacro(&yWindow, &camMatrix->up, camera->viewWindow.y);
+    RwV3dScaleMacro(&xWindow2, &xWindow, 2.0f);
+
+    RwV3dAddMacro(&vector, &camMatrix->at, &xWindow);
+    RwV3dAddMacro(&vector, &vector, &yWindow);
+    corners[0] = vector;
+    RwV3dSubMacro(&vector, &vector, &xWindow2);
+    corners[1] = vector;
+    vector.x -= 2.0f * yWindow.x;
+    vector.y -= 2.0f * yWindow.y;
+    vector.z -= 2.0f * yWindow.z;
+    corners[2] = vector;
+    RwV3dAddMacro(&vector, &vector, &xWindow2);
+    corners[3] = vector;
+
+    for (i = 0; i < 4; i++)
+    {
+        RwV3dSubMacro(&vector, &corners[i], &offset);
+        RwV3dAddMacro(&corners[i], &offset, &camMatrix->pos);
+        RwV3dIncrementScaledMacro(&corners[i], &vector, camera->nearPlane);
+        RwV3dAddMacro(&corners[i + 4], &offset, &camMatrix->pos);
+        RwV3dIncrementScaledMacro(&corners[i + 4], &vector, camera->farPlane);
+    }
+
+    plane = camera->frustumPlanes;
+
+    plane->plane.normal = camMatrix->at;
+    plane->plane.distance = RwV3dDotProductMacro(&corners[4], &camMatrix->at);
+    CameraSetPlaneClosest(plane);
+    plane++;
+
+    plane->plane.normal.x = -camera->frustumPlanes[0].plane.normal.x;
+    plane->plane.normal.y = -camera->frustumPlanes[0].plane.normal.y;
+    plane->plane.normal.z = -camera->frustumPlanes[0].plane.normal.z;
+    plane->plane.distance = RwV3dDotProductMacro(&corners[0], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+    plane++;
+
+    RwV3dSubMacro(&vector, &corners[1], &corners[5]);
+    RwV3dSubMacro(&edge, &corners[6], &corners[5]);
+    RwV3dCrossProductMacro(&plane->plane.normal, &vector, &edge);
+    CameraNormalizePlane(plane);
+    plane->plane.distance = RwV3dDotProductMacro(&corners[1], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+    plane++;
+
+    RwV3dSubMacro(&edge, &corners[4], &corners[5]);
+    RwV3dCrossProductMacro(&plane->plane.normal, &edge, &vector);
+    CameraNormalizePlane(plane);
+    plane->plane.distance = RwV3dDotProductMacro(&corners[1], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+    plane++;
+
+    RwV3dSubMacro(&vector, &corners[3], &corners[7]);
+    RwV3dSubMacro(&edge, &corners[4], &corners[7]);
+    RwV3dCrossProductMacro(&plane->plane.normal, &vector, &edge);
+    CameraNormalizePlane(plane);
+    plane->plane.distance = RwV3dDotProductMacro(&corners[3], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+    plane++;
+
+    RwV3dSubMacro(&edge, &corners[6], &corners[7]);
+    RwV3dCrossProductMacro(&plane->plane.normal, &edge, &vector);
+    CameraNormalizePlane(plane);
+    plane->plane.distance = RwV3dDotProductMacro(&corners[3], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+}
+
+// Builds the perspective view matrix: the inverse of the camera's frame matrix, scaled and offset
+// so the view window maps onto the range 0 to 1 after the divide by Z.
+RwCamera* CameraBuildPerspViewMatrix(RwCamera* camera)
+{
+    RwMatrix* camMatrix = &RwCameraGetFrame(camera)->ltm;
+    RwMatrix* viewMatrix = &camera->viewMatrix;
+    RwV3d column;
+    F32 scale;
+    F32 offset;
+
+    scale = -0.5f * camera->recipViewWindow.x;
+    offset = 0.5f - scale * camera->viewOffset.x;
+    RwV3dScaleMacro(&column, &camMatrix->right, scale);
+    RwV3dIncrementScaledMacro(&column, &camMatrix->at, offset);
+    viewMatrix->right.x = column.x;
+    viewMatrix->up.x = column.y;
+    viewMatrix->at.x = column.z;
+    viewMatrix->pos.x = 0.5f - (offset + RwV3dDotProductMacro(&camMatrix->pos, &column));
+
+    scale = -0.5f * camera->recipViewWindow.y;
+    offset = 0.5f + scale * camera->viewOffset.y;
+    RwV3dScaleMacro(&column, &camMatrix->up, scale);
+    RwV3dIncrementScaledMacro(&column, &camMatrix->at, offset);
+    viewMatrix->right.y = column.x;
+    viewMatrix->up.y = column.y;
+    viewMatrix->at.y = column.z;
+    viewMatrix->pos.y = 0.5f - (offset + RwV3dDotProductMacro(&camMatrix->pos, &column));
+
+    viewMatrix->right.z = camMatrix->at.x;
+    viewMatrix->up.z = camMatrix->at.y;
+    viewMatrix->at.z = camMatrix->at.z;
+    viewMatrix->pos.z = -RwV3dDotProductMacro(&camMatrix->pos, &camMatrix->at);
+
+    RwMatrixOptimize(viewMatrix, NULL);
+
+    return camera;
+}
+
+// Builds the parallel frustum: the eight corners in camera space, the window shifted by the view
+// offset scaled down towards the far plane, moved to world space by the frame matrix, then the
+// far and near planes along the camera's at vector and the four side planes, the last two facing
+// the first two.
+void CameraBuildParallelClipPlanes(RwCamera* camera)
+{
+    RwV3d* corners = camera->frustumCorners;
+    RwMatrix* camMatrix = &RwCameraGetFrame(camera)->ltm;
+    RwFrustumPlane* plane;
+    RwV3d vector;
+    RwV3d edge;
+    F32 nearX;
+    F32 nearY;
+    F32 farX;
+    F32 farY;
+
+    nearX = (1.0f - camera->nearPlane) * -camera->viewOffset.x;
+    nearY = (1.0f - camera->nearPlane) * camera->viewOffset.y;
+    farX = (1.0f - camera->farPlane) * -camera->viewOffset.x;
+    farY = (1.0f - camera->farPlane) * camera->viewOffset.y;
+
+    corners[0].z = corners[1].z = corners[2].z = corners[3].z = camera->nearPlane;
+    corners[4].z = corners[5].z = corners[6].z = corners[7].z = camera->farPlane;
+
+    corners[0].x = corners[3].x = camera->viewWindow.x + nearX;
+    corners[1].x = corners[2].x = -camera->viewWindow.x + nearX;
+    corners[4].x = corners[7].x = camera->viewWindow.x + farX;
+    corners[5].x = corners[6].x = -camera->viewWindow.x + farX;
+
+    corners[0].y = corners[1].y = camera->viewWindow.y + nearY;
+    corners[2].y = corners[3].y = -camera->viewWindow.y + nearY;
+    corners[4].y = corners[5].y = camera->viewWindow.y + farY;
+    corners[6].y = corners[7].y = -camera->viewWindow.y + farY;
+
+    RwV3dTransformPoints(corners, corners, 8, camMatrix);
+
+    plane = camera->frustumPlanes;
+
+    plane->plane.normal = camMatrix->at;
+    plane->plane.distance = RwV3dDotProductMacro(&corners[4], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+    plane++;
+
+    plane->plane.normal.x = -camera->frustumPlanes[0].plane.normal.x;
+    plane->plane.normal.y = -camera->frustumPlanes[0].plane.normal.y;
+    plane->plane.normal.z = -camera->frustumPlanes[0].plane.normal.z;
+    plane->plane.distance = RwV3dDotProductMacro(&corners[0], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+    plane++;
+
+    RwV3dSubMacro(&vector, &corners[1], &corners[5]);
+    RwV3dSubMacro(&edge, &corners[6], &corners[5]);
+    RwV3dCrossProductMacro(&plane->plane.normal, &vector, &edge);
+    CameraNormalizePlane(plane);
+    plane->plane.distance = RwV3dDotProductMacro(&corners[1], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+    plane++;
+
+    RwV3dSubMacro(&edge, &corners[4], &corners[5]);
+    RwV3dCrossProductMacro(&plane->plane.normal, &edge, &vector);
+    CameraNormalizePlane(plane);
+    plane->plane.distance = RwV3dDotProductMacro(&corners[1], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+    plane++;
+
+    plane->plane.normal.x = -camera->frustumPlanes[2].plane.normal.x;
+    plane->plane.normal.y = -camera->frustumPlanes[2].plane.normal.y;
+    plane->plane.normal.z = -camera->frustumPlanes[2].plane.normal.z;
+    plane->plane.distance = RwV3dDotProductMacro(&corners[3], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+    plane++;
+
+    plane->plane.normal.x = -camera->frustumPlanes[3].plane.normal.x;
+    plane->plane.normal.y = -camera->frustumPlanes[3].plane.normal.y;
+    plane->plane.normal.z = -camera->frustumPlanes[3].plane.normal.z;
+    plane->plane.distance = RwV3dDotProductMacro(&corners[3], &plane->plane.normal);
+    CameraSetPlaneClosest(plane);
+}
+
+// Builds the parallel view matrix: the same as the perspective one without the 0.5 offset in the
+// window terms, since there is no divide by Z.
+RwCamera* CameraBuildParallelViewMatrix(RwCamera* camera)
+{
+    RwMatrix* camMatrix = &RwCameraGetFrame(camera)->ltm;
+    RwMatrix* viewMatrix = &camera->viewMatrix;
+    RwV3d column;
+    F32 scale;
+    F32 offset;
+
+    scale = -0.5f * camera->recipViewWindow.x;
+    offset = -(scale * camera->viewOffset.x);
+    RwV3dScaleMacro(&column, &camMatrix->right, scale);
+    RwV3dIncrementScaledMacro(&column, &camMatrix->at, offset);
+    viewMatrix->right.x = column.x;
+    viewMatrix->up.x = column.y;
+    viewMatrix->at.x = column.z;
+    viewMatrix->pos.x = 0.5f - (offset + RwV3dDotProductMacro(&camMatrix->pos, &column));
+
+    scale = -0.5f * camera->recipViewWindow.y;
+    offset = scale * camera->viewOffset.y;
+    RwV3dScaleMacro(&column, &camMatrix->up, scale);
+    RwV3dIncrementScaledMacro(&column, &camMatrix->at, offset);
+    viewMatrix->right.y = column.x;
+    viewMatrix->up.y = column.y;
+    viewMatrix->at.y = column.z;
+    viewMatrix->pos.y = 0.5f - (offset + RwV3dDotProductMacro(&camMatrix->pos, &column));
+
+    viewMatrix->right.z = camMatrix->at.x;
+    viewMatrix->up.z = camMatrix->at.y;
+    viewMatrix->at.z = camMatrix->at.z;
+    viewMatrix->pos.z = -RwV3dDotProductMacro(&camMatrix->pos, &camMatrix->at);
+
+    RwMatrixOptimize(viewMatrix, NULL);
+
+    return camera;
 }
 
 static RwObjectHasFrame* CameraSync(RwObjectHasFrame* object)

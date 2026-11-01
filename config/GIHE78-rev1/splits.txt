@@ -1407,7 +1407,7 @@ rwsdk/world/baclump.c:
 	.text       start:0x80148710 end:0x80149190
 
 rwsdk/world/balight.c:
-	.text       start:0x8014C810 end:0x8014CFFC
+	.text       start:0x8014C810 end:0x8014D078
 
 rwsdk/world/bamateri.c:
 	.text       start:0x8014D0B8 end:0x8014D6A4

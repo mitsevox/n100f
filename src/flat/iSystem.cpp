@@ -27,7 +27,7 @@ S32 RpWorldPluginAttach();
 S32 RpCollisionPluginAttach();
 S32 RpSkinPluginAttach();
 S32 RpHAnimPluginAttach();
-S32 fn_8013EDB0();
+S32 RpMatFXPluginAttach();
 S32 RpUserDataPluginAttach();
 S32 RwEngineStop();
 S32 RwEngineClose();
@@ -448,7 +448,7 @@ static U32 RWAttachPlugins()
     {
         return 1;
     }
-    if (!fn_8013EDB0())
+    if (!RpMatFXPluginAttach())
     {
         return 1;
     }

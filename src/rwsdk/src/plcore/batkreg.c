@@ -4,6 +4,20 @@ static RwPluginRegistry** toolkitNonFLRegList;
 static U32 numRegToolkits;
 static RwFreeList* toolkitRegEntries;
 
+// Creates the free list the plugin registry entries come from (twenty per block).
+S32 _rwPluginRegistryOpen(void)
+{
+    toolkitRegEntries = RwFreeListCreate(sizeof(RwPluginRegEntry), 20, 0);
+    if (!toolkitRegEntries)
+    {
+        return FALSE;
+    }
+
+    numRegToolkits = 0;
+
+    return TRUE;
+}
+
 static void rwDestroyEntry(void* mem, void* data)
 {
     RwPluginRegEntry* entry = (RwPluginRegEntry*)mem;

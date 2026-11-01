@@ -28,6 +28,24 @@ static RwModuleInfo frameModule;
 void rwFrameDestroyRecurse(RwFrame* frame);
 void _rwFrameSyncHierarchyLTM(RwFrame* frame);
 
+// Creates the frame free list (fifty per block) and empties the engine's dirty frame list.
+void* _rwFrameOpen(void* instance, S32 offset, S32 size)
+{
+    frameModule.globalsOffset = offset;
+
+    FRAME_DATA(freeList) = RwFreeListCreate(frameTKList.sizeOfStruct, 50, 4);
+    if (!FRAME_DATA(freeList))
+    {
+        return NULL;
+    }
+
+    rwLinkListInitialize(&RWSRCGLOBAL(dirtyFrameList));
+
+    frameModule.numInstances++;
+
+    return instance;
+}
+
 void* _rwFrameClose(void* instance, S32 offset, S32 size)
 {
     if (FRAME_DATA(freeList))
