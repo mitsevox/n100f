@@ -28,7 +28,7 @@ struct DlVideoModes
     char badTvFormat[0x14];
 };
 
-// The camera being updated and the device's open parameter (8 bytes, small data). Type and member names written for
+// The camera being updated and the device's open parameter. Type and member names written for
 // this project.
 typedef struct DlDeviceState DlDeviceState;
 struct DlDeviceState
@@ -43,7 +43,8 @@ extern DlFrame lbl_8025E2B0[3];
 // The application's render mode, copied by _rwDlRenderModeSelect.
 extern GXRenderModeObj lbl_8025E2C8;
 
-// The inverse of the camera's frame, flipped to GX's axes (_rwDlCameraBeginUpdate).
+// The camera's view matrix: the inverse of its frame, offset by the view offset
+// (_rwDlCameraBeginUpdate).
 extern RwMatrix lbl_8025E304;
 
 // Whether the next display copy clears the frame.
@@ -426,7 +427,7 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
         lbl_8025F848 = lbl_8025F84C;
         lbl_8025F858 = GXInit(lbl_8025F854, lbl_8025E7F4);
 
-        while (lbl_8025F890 != (U16)GXReadDrawSync())
+        while ((U16)GXReadDrawSync() != lbl_8025F890)
         {
             GXSetDrawSync(lbl_8025F890);
         }
@@ -469,7 +470,7 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
         {
             GXSetDispCopyYScale(1.0f);
             lbl_8025F808 = 1;
-            lbl_8025F85C = renderMode->xfbHeight >> 1;
+            lbl_8025F85C = renderMode->xfbHeight / 2;
             lbl_8025E7F0 = 1;
         }
         else
@@ -566,9 +567,9 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
     return FALSE;
 }
 
-// Clears the camera: its z-buffer (and color) by drawing a quad over its frame buffer's area
-// (twice the height when the frame is drawn in halves), or the color through the next display
-// copy when only the color is cleared.
+// Clears the camera: by drawing a quad over its frame buffer's area (twice the height when the
+// frame is drawn in halves), or, when the next display copy clears the frame, by setting that
+// copy's clear color (and the far depth) if the image is cleared.
 S32 _rwDlCameraClear(void* camera, void* color, S32 flags)
 {
     RwRect rect;
@@ -603,9 +604,9 @@ S32 _rwDlCameraClear(void* camera, void* color, S32 flags)
     return TRUE;
 }
 
-// Starts rendering through the camera: loads its view matrix (the inverse of its frame, offset by
-// the view offset and flipped to GX's axes) and its projection, and sets the viewport and scissor
-// to its frame buffer, or to the half of the frame being drawn.
+// Starts rendering through the camera: builds its view matrix (the inverse of its frame, offset
+// by the view offset), loads its projection, and sets the viewport and scissor to its frame
+// buffer, or to the half of the frame being drawn.
 S32 _rwDlCameraBeginUpdate(void* out, void* object, S32 flags)
 {
     RwCamera* camera = object;
@@ -718,12 +719,12 @@ S32 _rwDlCameraBeginUpdate(void* out, void* object, S32 flags)
                 }
                 else if (raster->nOffsetY * 2 > lbl_8025F85C + 2)
                 {
-                    GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, 0);
+                    GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, lbl_8025F85C + 2);
                 }
                 else
                 {
                     GXSetScissor(raster->nOffsetX, raster->nOffsetY * 2, _RwDlRenderMode->fbWidth,
-                                 lbl_8025F85C + 2 - raster->nOffsetY * 2);
+                                 lbl_8025F85C + 2);
                 }
 
                 GXSetScissorBoxOffset(0, 0);
@@ -737,7 +738,8 @@ S32 _rwDlCameraBeginUpdate(void* out, void* object, S32 flags)
                 }
                 else if ((raster->nOffsetY + raster->height) * 2 < lbl_8025F85C + 2)
                 {
-                    GXSetScissor(0, lbl_8025F85C - 2, _RwDlRenderMode->fbWidth, 0);
+                    GXSetScissor(0, lbl_8025F85C - 2, _RwDlRenderMode->fbWidth,
+                                 lbl_8025F85C + 2);
                 }
                 else
                 {
@@ -871,7 +873,7 @@ RwDevice* _rwDeviceGetHandle(void)
 
 // Loads the object's transform (the matrix, or none, times the camera's view matrix) as GX's
 // position matrix, and as its normal matrix when lighting needs it. RenderWare's matrices are
-// row vectors; GX takes the transpose, with the right and at rows negated.
+// row vectors; GX takes the transpose, with its x and z rows negated.
 void _rwDlTransformSetup(RwMatrix* matrix, S32 normals)
 {
     RwMatrix combined;
