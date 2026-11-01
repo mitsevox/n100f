@@ -49,9 +49,10 @@ struct RwGCTextureExt
 #define RWGCTEXTURE_DEFAULTLOD 0x01000000
 #define RWGCTEXTURE_PRELOADED 0x02000000
 
-// The render states this driver keeps. Type and member names written for this project.
-typedef struct DlRenderStateCache DlRenderStateCache;
-struct DlRenderStateCache
+// The render states this driver keeps (0x40 bytes). The type name is the one src/flat/iEnv.cpp and
+// iShadow.cpp give their partial view of it; the member names are written for this project.
+typedef struct RwGcnRenderStateCache RwGcnRenderStateCache;
+struct RwGcnRenderStateCache
 {
     S32 zWriteEnable;
     S32 zTestEnable;
@@ -72,6 +73,12 @@ struct DlRenderStateCache
     U8 alphaRef1;
 };
 
+#define RWGCRASTEREXT(_raster) ((RwGCRasterExt*)((U8*)(_raster) + lbl_8025F870))
+#define RWGCTEXTUREEXT(_texture) ((RwGCTextureExt*)((U8*)(_texture) + lbl_8025F888))
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // The raster and texture plugin offsets.
 extern S32 lbl_8025F870;
@@ -81,14 +88,7 @@ extern S32 lbl_8025F888;
 extern GXRenderModeObj* _RwDlRenderMode;
 
 // The render states the driver last set (dlrendst.c).
-extern DlRenderStateCache lbl_8025E348;
-
-#define RWGCRASTEREXT(_raster) ((RwGCRasterExt*)((U8*)(_raster) + lbl_8025F870))
-#define RWGCTEXTUREEXT(_texture) ((RwGCTextureExt*)((U8*)(_texture) + lbl_8025F888))
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+extern RwGcnRenderStateCache lbl_8025E348;
 
 S32 _rwDlFindMSB(S32 num);
 S32 fn_80179064(RwRaster* raster, U8 level);

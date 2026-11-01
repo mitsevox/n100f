@@ -23,7 +23,8 @@ extern RwTexture* lbl_8025F87C;
 #define DLTEXTUR_PALETTED(_raster)                                                                 \
     (RwRasterGetFormat(_raster) & (rwRASTERFORMATPAL4 | rwRASTERFORMATPAL8))
 
-// The texture's LOD bias, from GX's signed fixed point back to a float.
+// The texture's LOD bias as GX reports it, rescaled: (4096 + bias) / -1024 when negative,
+// bias / 1024 otherwise.
 F32 fn_8017CF40(const GXTexObj* texObj)
 {
     F32 bias = GXGetTexObjLODBias(texObj);

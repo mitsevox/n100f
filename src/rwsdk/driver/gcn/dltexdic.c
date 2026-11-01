@@ -132,7 +132,7 @@ S32 fn_8017C9E4(RwStream* stream, RwTexture* texture)
     size -= sizeof(header);
     raster = texture->raster;
     rasterExt = RWGCRASTEREXT(raster);
-    rasterHeader.format = (*(U32*)&raster->cType & ~0xFF00) | ((raster->cFormat << 8) & 0xFF00);
+    rasterHeader.format = (raster->cType & ~0xFF00) | ((raster->cFormat << 8) & 0xFF00);
     rasterHeader.width = raster->width;
     rasterHeader.height = raster->height;
     rasterHeader.depth = raster->depth;
