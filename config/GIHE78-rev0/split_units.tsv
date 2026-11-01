@@ -37,7 +37,7 @@ xDebug.cpp	0x80021B1C	0x80021CB0	6	8	0	0	-	claimed
 xDraw.cpp	0x80021CB0	0x80021E70	6	5	0	0	-	count-match
 xEnt.cpp	0x80021E70	0x800258F4	41	47	22	18	0x80021EB4=xModCollCB (name)	anchored
 xEntDrive.cpp	0x800258F4	0x80025F04	4	4	1	0	0x800258F4=xEntDriveUpdate (floats+calls)	anchored
-xEntMotion.cpp	0x80025F04	0x80028D18	15	21	9	4	0x80025F04=xEntMotionDebugDraw (name)	anchored
+xEntMotion.cpp	0x80025F04	0x80028D18	15	21	10	5	0x80025F04=xEntMotionDebugDraw (name)	anchored
 xEnv.cpp	0x80028D18	0x80028DFC	4	4	3	3	0x80028D18=xEnvRender (name)	anchored
 xFFX.cpp	0x80028DFC	0x80029458	14	14	4	4	0x80028DFC=xFFXRotMatchAlloc (name)	anchored
 xFilter.cpp	0x80029458	0x800294E8	4	4	4	0	0x80029458=xFilterCurvedInterp4 (floats)	anchored
