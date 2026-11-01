@@ -1043,7 +1043,7 @@ static st_XORDEREDARRAY g_emitlist = { 0 };
 static _zParEmitter* sEmitMMTeleportHide;
 static _zParEmitter* sEmitMMTeleportShow;
 
-// Cleared at scene end; set while a villain sound stream holds the channel.
+// Cleared at scene end; the target has no other access, so its use is unknown.
 static S32 g_NPCSoundStreamLock;
 
 // How many times the villain system has been started without being shut down.
@@ -16711,7 +16711,8 @@ static inline void VPRJ_BGG_ballfx(zEntProjectile* prj, F32 dt, F32 yoff)
 }
 
 // Keep the quake ball's landing point for the shockwave, or emit the shockwave ring there
-// when no projectile is given.
+// when no projectile is given. The target's VPRJ_BGG_logix still holds the unreachable
+// emission path with a radius of 0.0, which is why one helper covers both.
 static inline void VPRJ_BGG_shockfx(zEntProjectile* prj, F32 dt, F32 radius)
 {
     if (prj)
