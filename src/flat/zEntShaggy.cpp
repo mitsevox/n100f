@@ -1666,6 +1666,7 @@ static inline S32 PointInQuadXZ(xVec3* quad, xVec3* vec)
 
 static void NearestPointObb2D(xVec3* near, xVec3* vec, _xBox* b, xMat4x3* m)
 {
+    // Use the floor plane for interior points; otherwise examine the four perimeter edges.
     xVec3 test;
     S32 i;
     xVec3 corner[4];
@@ -1676,6 +1677,7 @@ static void NearestPointObb2D(xVec3* near, xVec3* vec, _xBox* b, xMat4x3* m)
     F32 ddot;
     F32 lerp;
     F32 testdist2;
+    xVec3* current;
     xVec3* v2;
 
     if (m->up.y > 0.0f)
@@ -1722,13 +1724,14 @@ static void NearestPointObb2D(xVec3* near, xVec3* vec, _xBox* b, xMat4x3* m)
 
     for (i = 0; i < 4; i++)
     {
+        current = &corner[i];
         v2 = &corner[(i + 1) & 3];
-        dx = v2->x - corner[i].x;
-        dz = v2->z - corner[i].z;
-        pdot = dx * (vec->x - corner[i].x) + dz * (vec->z - corner[i].z);
+        dx = v2->x - current->x;
+        dz = v2->z - current->z;
+        pdot = dx * (vec->x - current->x) + dz * (vec->z - current->z);
         if (pdot <= 0.0f)
         {
-            test = corner[i];
+            test = *current;
         }
         else
         {
@@ -1740,9 +1743,9 @@ static void NearestPointObb2D(xVec3* near, xVec3* vec, _xBox* b, xMat4x3* m)
             else
             {
                 lerp = pdot / sqrtf(ddot);
-                test.x = corner[i].x + lerp * (v2->x - corner[i].x);
-                test.y = corner[i].y + lerp * (v2->y - corner[i].y);
-                test.z = corner[i].z + lerp * (v2->z - corner[i].z);
+                test.x = current->x + lerp * (v2->x - current->x);
+                test.y = current->y + lerp * (v2->y - current->y);
+                test.z = current->z + lerp * (v2->z - current->z);
             }
         }
         testdist2 = (test.x - vec->x) * (test.x - vec->x) + (test.z - vec->z) * (test.z - vec->z);
