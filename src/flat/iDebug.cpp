@@ -71,46 +71,48 @@ void iDebugScreenDump()
 
     camRas = RwCameraGetRaster(RwCameraGetCurrentCamera());
 
-    if (!camRas)
+    if (camRas)
     {
-        return;
-    }
+        width = camRas->width;
+        height = camRas->height;
+        oldCamPixels = camRas->cpPixels;
+        pixels = (U8*)malloc((camRas->depth >> 3) * (width * height));
 
-    width = camRas->width;
-    height = camRas->height;
-    oldCamPixels = camRas->cpPixels;
-    pixels = (U8*)malloc((camRas->depth >> 3) * (width * height));
+        if (pixels)
+        {
+            camRas->cpPixels = pixels;
+        }
+        else
+        {
+            return;
+        }
 
-    if (pixels)
-    {
-        camRas->cpPixels = pixels;
+        if (!RwRasterLock(camRas, 0, rwRASTERLOCKREAD))
+        {
+            camRas->cpPixels = oldCamPixels;
+            free(pixels);
+        }
+
+        image = RwImageCreate(width, height, 32);
+
+        if (image)
+        {
+            RwImageAllocatePixels(image);
+            RwImageSetFromRaster(image, camRas);
+            RwRasterUnlock(camRas);
+            camRas->cpPixels = oldCamPixels;
+            free(pixels);
+        }
+        else
+        {
+            RwRasterUnlock(camRas);
+            camRas->cpPixels = oldCamPixels;
+            free(pixels);
+            return;
+        }
     }
     else
     {
-        return;
-    }
-
-    if (!RwRasterLock(camRas, 0, rwRASTERLOCKREAD))
-    {
-        camRas->cpPixels = oldCamPixels;
-        free(pixels);
-    }
-
-    image = RwImageCreate(width, height, 32);
-
-    if (image)
-    {
-        RwImageAllocatePixels(image);
-        RwImageSetFromRaster(image, camRas);
-        RwRasterUnlock(camRas);
-        camRas->cpPixels = oldCamPixels;
-        free(pixels);
-    }
-    else
-    {
-        RwRasterUnlock(camRas);
-        camRas->cpPixels = oldCamPixels;
-        free(pixels);
         return;
     }
 
