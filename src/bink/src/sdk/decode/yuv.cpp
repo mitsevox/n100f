@@ -1113,9 +1113,6 @@ extern "C" void YUV_blit_16a4bpp(void* dest, U32 destx, U32 desty, S32 pitch, U8
         return x + count;                                   \
     }
 
-// The masked writers put each output word in a variable the caller declares once for the
-// whole loop body (a column function reuses it for both rows), and each shifted half in a
-// temporary of its own. Both change GCC's register allocation (source-form rows).
 #define YMW(w, y, hi, lo)                       \
     {                                           \
         U32 t = (S.y[hi] << 16) | 0x80008000;   \
