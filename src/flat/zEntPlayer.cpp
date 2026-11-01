@@ -8132,6 +8132,7 @@ static void zEntPlayer_FXLostChance(_xEnt* ent, F32 seconds)
                 fx_to_play = LCFX_Water;
                 break;
             case 2:
+            case 4:
             default:
                 fx_to_play = LCFX_StdShock;
                 break;
