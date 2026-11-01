@@ -25,9 +25,10 @@ pairs found by position alone that the tool cannot show equal, which are not (no
 
 A unit's section range is ported only when both edges map, the range has the same length on both
 sides, and every symbol in it maps with the range's shift and the same contents; any other unit
-is left out of the sibling, with the reason in the report. The exception is a unit with only a
-.text range: when the longest run of its functions from either end of the range ports by those
-rules, that run is its range on the sibling, and the report says so. The pairing establishes sameness of
+is left out of the sibling, with the reason in the report. The exception is a unit's .text
+range: when the longest run of its functions from either end of the range ports by those rules,
+that run is its .text range on the sibling, and the report says so; the unit's other ranges must
+still port whole. The pairing establishes sameness of
 contents, not that a name or boundary is right on either target: every ported name keeps
 whatever evidence its origin target recorded."""
 import argparse
@@ -532,10 +533,11 @@ def port_splits(a,b,smap,refs):
         new=[];why=None;partial=[]
         for section,start,end,rest in ranges:
             got=carry(section,start,end)
-            # A code-only unit whose range changed at one end carries the functions that did not,
-            # so the shared source keeps measuring them; the toolkit assigns the others on the
-            # sibling, and the unit cannot link there (tools/link_candidates.py).
-            if not isinstance(got,tuple) and len(ranges)==1 and section=='.text':
+            # A unit whose .text range changed at one end carries the functions that did not, so
+            # the shared source keeps measuring them; its other ranges must still carry whole.
+            # The toolkit assigns the other functions on the sibling, and the unit cannot link
+            # there (tools/link_candidates.py).
+            if not isinstance(got,tuple) and section=='.text':
                 edges=sorted({s.addr for s in real_a.get('.text',[]) if start<s.addr<end})
                 cut=trimmed(start,end,edges,lambda s,e:carry('.text',s,e))
                 if cut:
