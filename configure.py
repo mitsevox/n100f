@@ -531,7 +531,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xMorph.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xMovePoint.cpp"),
             Object(NonMatching, "flat/xordarray.cpp"),
-            Object(NonMatching, "flat/xPad.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xPad.cpp"),
             Object(NonMatching, "flat/xPar.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xParGroup.cpp"),
             Object(NonMatching, "flat/xParMgr.cpp"),

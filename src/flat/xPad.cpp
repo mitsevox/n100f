@@ -11,10 +11,19 @@ void iPadStartRumble(_tagxPad* pad, _tagxRumble* rumble);
 
 // iPad.cpp has no source yet; these are its rumble effect step and its pad read.
 // zScene.cpp
-extern "C" U32 fn_800CD24C();
-extern "C" S32 fn_800CD170();
+#if VERSION_GIHE78_REV0
+#define PAD_RUMBLE_STEP fn_800CD24C
+#define PAD_SWAP_BUTTONS fn_800CD170
+#elif VERSION_GIHE78_REV1
+#define PAD_RUMBLE_STEP fn_800CCE40
+#define PAD_SWAP_BUTTONS fn_800CCD64
+#endif
+extern "C" U32 PAD_RUMBLE_STEP();
+extern "C" S32 PAD_SWAP_BUTTONS();
 
-_tagxPad mPad[4];
+// mPad (0x80200008) lies outside this unit's .bss range: gc/iFMV.cpp, which the split tool does
+// not write, loads it too, so the range ends before it and the array is defined there.
+extern _tagxPad mPad[4];
 static _tagxRumble mRumbleList[32];
 _tagxPad* gDebugPad;
 _tagxPad* gPlayerPad;
@@ -113,7 +122,7 @@ S32 xPadUpdate(S32 idx, F32 time_passed)
         return 0;
     }
 
-    if (fn_800CD24C())
+    if (PAD_RUMBLE_STEP())
     {
         xPadAnalogIsDigital(idx, 0);
     }
@@ -163,8 +172,8 @@ S32 xPadUpdate(S32 idx, F32 time_passed)
         return 1;
     }
 
-    // Swaps the two buttons at 0x40000 and 0x80000 on the first port while fn_800CD170 says so.
-    if (p->port == 0 && fn_800CD170())
+    // Swaps the two buttons at 0x40000 and 0x80000 on the first port while PAD_SWAP_BUTTONS says so.
+    if (p->port == 0 && PAD_SWAP_BUTTONS())
     {
         U32 swapped = new_on & ~0xC0000;
         if (new_on & 0x40000)
@@ -350,7 +359,7 @@ S32 xPadAddRumble(S32 idx, _tagRumbleType type, F32 time, S32 replace, U32 fxfla
 
     r = &pad->rumble_head;
     last_r = r;
-    if (pad->rumble_head.next == NULL)
+    if (r->next == NULL)
     {
         appended = 0;
     }
