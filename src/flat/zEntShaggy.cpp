@@ -3846,6 +3846,7 @@ static inline F32 xVec3Dist(const xVec3* a, const xVec3* b)
 
 void zEntShaggy_SceneStart(zScene* sc)
 {
+    // Register special Shaggy actors and connect each chimney to its platform.
     U32 i;
     U32 j;
     U32 hangHashID;
@@ -3962,8 +3963,9 @@ void zEntShaggy_SceneStart(zScene* sc)
             sc->ents[i]->update = (void (*)(_xEnt*, _xScene*, F32))Shaggy2_Update;
             sc->ents[i]->render = Shaggy2_Render;
             sc->ents[i]->eventFunc = Shaggy2_EventCB;
-            sc->ents[i]->chkby |= 0x10;
-            sc->ents[i]->penby |= 0x10;
+            U8 collisionMask = 0x10;
+            sc->ents[i]->chkby |= collisionMask;
+            sc->ents[i]->penby |= collisionMask;
 
             plat = (_zPlatform*)sc->ents[i];
             gShaggy[gNumShaggy].chimneyHeight = plat->motion.asset->er.ext_dpos.y;
