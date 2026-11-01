@@ -128,8 +128,8 @@ struct MaterialStreamHeader
 {
     S32 flags;
     RwRGBA color;
-    S32 unused;
-    S32 textured;
+    S32 ignored;
+    S32 hasTexture;
     RwSurfaceProperties surfaceProps;
 };
 
@@ -181,7 +181,7 @@ RpMaterial* RpMaterialStreamRead(RwStream* stream)
 
         material->texture = NULL;
 
-        if (header.textured)
+        if (header.hasTexture)
         {
             if (!RwStreamFindChunk(stream, rwID_TEXTURE, NULL, &version))
             {

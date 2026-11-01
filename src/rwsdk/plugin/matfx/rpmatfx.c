@@ -699,8 +699,8 @@ static S32 fn_8013E954(const void* object, S32 offset, S32 size)
 
 // Builds a bump map texture: the base texture's image (or plain white without one) masked by the
 // effect texture's image, resampled to the base size, in a raster of the base raster's mipmap
-// flags, with the base texture's addressing and filtering and a name interleaving the two
-// textures' names.
+// flags, with the base texture's addressing and filtering (the effect texture's for all three when
+// there is no base) and a name interleaving the two textures' names.
 RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTexture* effectTexture)
 {
     RwRaster* effectRaster = effectTexture->raster;

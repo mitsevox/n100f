@@ -112,8 +112,8 @@ struct SectorStreamHeader
     S32 numVertices;
     RwV3d inf;
     RwV3d sup;
-    S32 collSectorPresent;
-    S32 unused;
+    S32 hasCollTree;
+    S32 pad;
 };
 
 // What a plane sector's struct chunk holds: the split axis and value, whether each side is a
@@ -123,8 +123,8 @@ struct PlaneStreamHeader
 {
     S32 type;
     F32 value;
-    S32 leftIsWorldSector;
-    S32 rightIsWorldSector;
+    S32 leftIsLeaf;
+    S32 rightIsLeaf;
     F32 leftValue;
     F32 rightValue;
 };
@@ -135,14 +135,14 @@ struct PlaneStreamHeader
 typedef struct WorldStreamHeader WorldStreamHeader;
 struct WorldStreamHeader
 {
-    S32 rootIsWorldSector;
-    RwV3d invWorldOrigin;
+    S32 rootIsLeaf;
+    RwV3d negOrigin;
     RwSurfaceProperties surfaceProps;
     S32 numPolygons;
     S32 numVertices;
-    S32 numPlaneSectors;
-    S32 numWorldSectors;
-    S32 colSectorSize;
+    S32 planeCount;
+    S32 sectorCount;
+    S32 collTreeBytes;
     S32 format;
 };
 
@@ -397,7 +397,7 @@ RpWorldSector* WorldSectorStreamRead(RwStream* stream, U8** memory, RpWorld* wor
         }
     }
 
-    if (header.collSectorPresent)
+    if (header.hasCollTree)
     {
         S32 size;
 
@@ -506,7 +506,7 @@ RpPlaneSector* PlaneSectorStreamRead(RwStream* stream, U8** memory, RpWorld* wor
         plane->rightValue = header.value;
     }
 
-    if (header.leftIsWorldSector)
+    if (header.leftIsLeaf)
     {
         if (!RwStreamFindChunk(stream, rwID_ATOMICSECT, NULL, &version))
         {
@@ -555,7 +555,7 @@ RpPlaneSector* PlaneSectorStreamRead(RwStream* stream, U8** memory, RpWorld* wor
         }
     }
 
-    if (header.rightIsWorldSector)
+    if (header.rightIsLeaf)
     {
         if (!RwStreamFindChunk(stream, rwID_ATOMICSECT, NULL, &version))
         {
@@ -655,13 +655,13 @@ RpWorld* RpWorldStreamRead(RwStream* stream)
     }
 
     RwMemNative32(&header, sizeof(header));
-    RwMemFloat32ToReal(&header.invWorldOrigin, sizeof(header.invWorldOrigin));
+    RwMemFloat32ToReal(&header.negOrigin, sizeof(header.negOrigin));
     RwMemFloat32ToReal(&header.surfaceProps, sizeof(header.surfaceProps));
 
     format = header.format;
 
-    worldSize = worldTKList.sizeOfStruct + header.numPlaneSectors * sizeof(RpPlaneSector) +
-                header.numWorldSectors * sectorTKList.sizeOfStruct;
+    worldSize = worldTKList.sizeOfStruct + header.planeCount * sizeof(RpPlaneSector) +
+                header.sectorCount * sectorTKList.sizeOfStruct;
 
     texCoordSets = format & BINWORLD_TEXCOORDSETSMASK;
 
@@ -700,7 +700,7 @@ RpWorld* RpWorldStreamRead(RwStream* stream)
         worldSize += header.numPolygons * sizeof(RpPolygon);
     }
 
-    worldSize += header.colSectorSize;
+    worldSize += header.collTreeBytes;
 
     world = (RpWorld*)RwMalloc(worldSize);
 
@@ -725,7 +725,7 @@ RpWorld* RpWorldStreamRead(RwStream* stream)
     world->renderOrder = rpWORLDRENDERBACK2FRONT;
     _rpWorldSetSurfaceProperties(world, &header.surfaceProps);
 
-    RwV3dScaleMacro(&world->worldOrigin, &header.invWorldOrigin, -1.0f);
+    RwV3dScaleMacro(&world->worldOrigin, &header.negOrigin, -1.0f);
 
     world->numTexCoordSets = numTexCoordSets;
     world->rootSector = NULL;
@@ -752,7 +752,7 @@ RpWorld* RpWorldStreamRead(RwStream* stream)
         return NULL;
     }
 
-    if (header.rootIsWorldSector)
+    if (header.rootIsLeaf)
     {
         if (!RwStreamFindChunk(stream, rwID_ATOMICSECT, NULL, &version))
         {

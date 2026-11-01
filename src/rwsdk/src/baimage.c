@@ -31,8 +31,8 @@ struct ImageReadData
 typedef struct ImageFileFormat ImageFileFormat;
 struct ImageFileFormat
 {
-    char lowerExtender[20];
-    char upperExtender[20];
+    char extLower[20];
+    char extUpper[20];
     ImageReadFunc readFunc;
     void* writeFunc;
     ImageFileFormat* next;
@@ -44,13 +44,13 @@ typedef struct ImageModuleData ImageModuleData;
 struct ImageModuleData
 {
     RwFreeList* freeList;
-    char* imagePath;
-    S32 imagePathSize;
-    U8 gammaTable[256];
-    U8 invGammaTable[256];
-    F32 gammaValue;
-    char* scratchMem;
-    S32 scratchMemSize;
+    char* searchPath;
+    S32 searchPathSize;
+    U8 gammaLut[256];
+    U8 gammaInvLut[256];
+    F32 gamma;
+    char* nameBuf;
+    S32 nameBufSize;
     RwFreeList* formatFreeList;
     ImageFileFormat* formats;
 };
@@ -102,10 +102,10 @@ void* _rwImageOpen(void* instance, S32 offset, S32 size)
         return NULL;
     }
 
-    IMAGE_DATA(imagePathSize) = IMAGE_PATHSIZE;
-    IMAGE_DATA(imagePath) = (char*)RwMalloc(IMAGE_DATA(imagePathSize));
+    IMAGE_DATA(searchPathSize) = IMAGE_PATHSIZE;
+    IMAGE_DATA(searchPath) = (char*)RwMalloc(IMAGE_DATA(searchPathSize));
 
-    if (!IMAGE_DATA(imagePath))
+    if (!IMAGE_DATA(searchPath))
     {
         RwFreeListDestroy(IMAGE_DATA(formatFreeList));
         IMAGE_DATA(formatFreeList) = NULL;
@@ -114,7 +114,7 @@ void* _rwImageOpen(void* instance, S32 offset, S32 size)
         return NULL;
     }
 
-    IMAGE_DATA(imagePath)[0] = '\0';
+    IMAGE_DATA(searchPath)[0] = '\0';
 
     imageModule.numInstances++;
 
@@ -122,14 +122,14 @@ void* _rwImageOpen(void* instance, S32 offset, S32 size)
 
     IMAGE_DATA(formats) = NULL;
 
-    IMAGE_DATA(scratchMemSize) = IMAGE_SCRATCHSIZE;
-    IMAGE_DATA(scratchMem) = (char*)RwMalloc(IMAGE_DATA(scratchMemSize));
+    IMAGE_DATA(nameBufSize) = IMAGE_SCRATCHSIZE;
+    IMAGE_DATA(nameBuf) = (char*)RwMalloc(IMAGE_DATA(nameBufSize));
 
-    if (!IMAGE_DATA(scratchMem))
+    if (!IMAGE_DATA(nameBuf))
     {
-        RwFree(IMAGE_DATA(imagePath));
-        IMAGE_DATA(imagePath) = NULL;
-        IMAGE_DATA(imagePathSize) = 0;
+        RwFree(IMAGE_DATA(searchPath));
+        IMAGE_DATA(searchPath) = NULL;
+        IMAGE_DATA(searchPathSize) = 0;
         RwFreeListDestroy(IMAGE_DATA(formatFreeList));
         IMAGE_DATA(formatFreeList) = NULL;
         RwFreeListDestroy(IMAGE_DATA(freeList));
@@ -142,18 +142,18 @@ void* _rwImageOpen(void* instance, S32 offset, S32 size)
 
 void* _rwImageClose(void* instance, S32 offset, S32 size)
 {
-    if (IMAGE_DATA(scratchMem))
+    if (IMAGE_DATA(nameBuf))
     {
-        RwFree(IMAGE_DATA(scratchMem));
-        IMAGE_DATA(scratchMem) = NULL;
-        IMAGE_DATA(scratchMemSize) = 0;
+        RwFree(IMAGE_DATA(nameBuf));
+        IMAGE_DATA(nameBuf) = NULL;
+        IMAGE_DATA(nameBufSize) = 0;
     }
 
-    if (IMAGE_DATA(imagePath))
+    if (IMAGE_DATA(searchPath))
     {
-        RwFree(IMAGE_DATA(imagePath));
-        IMAGE_DATA(imagePath) = NULL;
-        IMAGE_DATA(imagePathSize) = 0;
+        RwFree(IMAGE_DATA(searchPath));
+        IMAGE_DATA(searchPath) = NULL;
+        IMAGE_DATA(searchPathSize) = 0;
     }
 
     while (IMAGE_DATA(formats))
@@ -436,13 +436,13 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
 // Returns the scratch buffer grown to at least size bytes, or NULL when it cannot grow.
 static char* ImageGetScratch(S32 size)
 {
-    if (size > IMAGE_DATA(scratchMemSize))
+    if (size > IMAGE_DATA(nameBufSize))
     {
         char* mem;
 
-        if (IMAGE_DATA(scratchMem))
+        if (IMAGE_DATA(nameBuf))
         {
-            mem = (char*)RwRealloc(IMAGE_DATA(scratchMem), size);
+            mem = (char*)RwRealloc(IMAGE_DATA(nameBuf), size);
         }
         else
         {
@@ -459,11 +459,11 @@ static char* ImageGetScratch(S32 size)
             return NULL;
         }
 
-        IMAGE_DATA(scratchMem) = mem;
-        IMAGE_DATA(scratchMemSize) = size;
+        IMAGE_DATA(nameBuf) = mem;
+        IMAGE_DATA(nameBufSize) = size;
     }
 
-    return IMAGE_DATA(scratchMem);
+    return IMAGE_DATA(nameBuf);
 }
 
 const char* ImageAttempRead(const char* fullName, void* data)
@@ -492,19 +492,19 @@ const char* ImageDetermineExtender(const char* fullName, void* data)
 
     while (format)
     {
-        rwstrcpy(end, format->lowerExtender);
+        rwstrcpy(end, format->extLower);
 
         if (RWSRCGLOBAL(fileFuncs).rwfexist(fullName))
         {
-            *(const char**)data = format->lowerExtender;
+            *(const char**)data = format->extLower;
             return NULL;
         }
 
-        rwstrcpy(end, format->upperExtender);
+        rwstrcpy(end, format->extUpper);
 
         if (RWSRCGLOBAL(fileFuncs).rwfexist(fullName))
         {
-            *(const char**)data = format->upperExtender;
+            *(const char**)data = format->extUpper;
             return NULL;
         }
 
@@ -558,7 +558,7 @@ RwImage* RwImageRead(const char* imageName)
 
     for (format = IMAGE_DATA(formats); format; format = format->next)
     {
-        if (!rwstrcmp(format->lowerExtender, extender) || !rwstrcmp(format->upperExtender, extender))
+        if (!rwstrcmp(format->extLower, extender) || !rwstrcmp(format->extUpper, extender))
         {
             ImageReadData readData;
 
@@ -720,7 +720,7 @@ RwImage* RwImageCopy(RwImage* destImage, const RwImage* sourceImage)
 // Runs numPixels colors through the gamma table, keeping their alpha.
 static void ImageGammaCorrectPixels(RwRGBA* out, const RwRGBA* in, S32 numPixels)
 {
-    const U8* table = IMAGE_DATA(gammaTable);
+    const U8* table = IMAGE_DATA(gammaLut);
 
     while (numPixels--)
     {
@@ -790,16 +790,16 @@ S32 RwImageSetGamma(F32 gammaValue)
     F32 invGamma = 1.0f / gammaValue;
     S32 i;
 
-    IMAGE_DATA(gammaValue) = gammaValue;
-    IMAGE_DATA(gammaTable)[0] = 0;
-    IMAGE_DATA(invGammaTable)[0] = 0;
+    IMAGE_DATA(gamma) = gammaValue;
+    IMAGE_DATA(gammaLut)[0] = 0;
+    IMAGE_DATA(gammaInvLut)[0] = 0;
 
     for (i = 1; i < 256; i++)
     {
         F32 value = (F32)i / 255.0f;
 
-        IMAGE_DATA(gammaTable)[i] = (U8)(0.5f + 255.0f * (F32)pow(value, invGamma));
-        IMAGE_DATA(invGammaTable)[i] = (U8)(0.5f + 255.0f * (F32)pow(value, gammaValue));
+        IMAGE_DATA(gammaLut)[i] = (U8)(0.5f + 255.0f * (F32)pow(value, invGamma));
+        IMAGE_DATA(gammaInvLut)[i] = (U8)(0.5f + 255.0f * (F32)pow(value, gammaValue));
     }
 
     return TRUE;
@@ -816,7 +816,7 @@ S32 RwImageSetGamma(F32 gammaValue)
 const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
                                      ImagePathCallBack callBack, void* data)
 {
-    const char* path = IMAGE_DATA(imagePath);
+    const char* path = IMAGE_DATA(searchPath);
 
     if (_rwpathisabsolute(imageName) || !path || !*path)
     {
