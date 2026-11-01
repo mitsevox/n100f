@@ -784,12 +784,24 @@ struct RwImage
 typedef RwTexture* (*RwTextureCallBackRead)(const char* name, const char* maskName);
 typedef RwTexture* (*RwTextureCallBack)(RwTexture* texture, void* pData);
 
-// Partial: only entrySize is declared.
+typedef struct RwFreeBlock RwFreeBlock;
+struct RwFreeBlock
+{
+    RwFreeBlock* nextBlock;
+};
+
 typedef struct RwFreeList RwFreeList;
 struct RwFreeList
 {
-    U8 unk0[0x10];
+    void** freeListStack;
+    void** freeListStackTop;
+    RwFreeBlock* firstBlock;
+    S32 blockSize;
     S32 entrySize;
+    S32 alignmentMinusOne;
+    S32 entriesPerBlock;
+    S32 entriesAllocated;
+    RwLLLink lFreeList;
 };
 
 typedef void* (*RwMemoryAllocFn)(RwFreeList* fl);
@@ -1327,6 +1339,7 @@ extern RxHeap* _rxHeapGlobal;
 RxPipelineNode* _rxEmbeddedPacketBetweenNodes(RxPipeline* pipeline, RxPipelineNode* nodeFrom,
                                               U32 whichOutput);
 void _rxPacketDestroy(RxPacket* packet);
+void _rxEmbeddedPacketBetweenPipelines(RxPipeline* fromPipeline, RxPipeline* toPipeline);
 
 // Cluster flags.
 #define CLUSTER_VALID 0x1U
@@ -1381,6 +1394,35 @@ inline RxPacket* RxPacketFetch(RxPipelineNode* node)
         {                                                                                          \
             _curpipe->embeddedPacketState = rxPKST_INUSE;                                          \
             _rxPacketDestroy(_curpipe->embeddedPacket);                                            \
+        }                                                                                          \
+    }
+
+// Hands the packet's clusters to another pipeline and runs that pipeline's first node, then
+// destroys that pipeline's embedded packet if no node took it.
+#define RxPacketDispatchToPipeline(_packet, _dest, _self)                                          \
+    {                                                                                              \
+        RxPipeline* _toPipe = (_dest);                                                             \
+                                                                                                   \
+        if (_rxExecCtxGlobal.exitCode)                                                             \
+        {                                                                                          \
+            RxPipeline* _curpipe = _rxExecCtxGlobal.pipeline;                                      \
+            U32 _result;                                                                           \
+                                                                                                   \
+            _rxEmbeddedPacketBetweenPipelines(_curpipe, _toPipe);                                  \
+            _rxExecCtxGlobal.pipeline = _toPipe;                                                   \
+            _result = _toPipe->nodes->nodeDef->nodeMethods.nodeBody(_toPipe->nodes,                \
+                                                                     &_rxExecCtxGlobal.params);    \
+            if (!_result)                                                                          \
+            {                                                                                      \
+                _rxExecCtxGlobal.exitCode = _result;                                               \
+            }                                                                                      \
+            _rxExecCtxGlobal.pipeline = _curpipe;                                                  \
+        }                                                                                          \
+                                                                                                   \
+        if (_toPipe->embeddedPacketState > rxPKST_UNUSED)                                          \
+        {                                                                                          \
+            _toPipe->embeddedPacketState = rxPKST_INUSE;                                           \
+            _rxPacketDestroy(_toPipe->embeddedPacket);                                             \
         }                                                                                          \
     }
 

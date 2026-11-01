@@ -5,14 +5,6 @@
 #include <dolphin/gx/GXVert.h>
 #include <dolphin/os.h>
 
-// A mesh's display list: its size in bytes and where it starts.
-typedef struct GCNDisplayList GCNDisplayList;
-struct GCNDisplayList
-{
-    U32 size;
-    void* list;
-};
-
 #define ALIGN32(_size) (((_size) + 0x1F) & ~0x1F)
 
 // The display list bytes for every mesh of header: one index per attribute in flags for each

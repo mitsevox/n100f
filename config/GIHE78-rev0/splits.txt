@@ -1688,9 +1688,12 @@ rwsdk/world/pipe/p2/bapipew.c:
 
 rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c:
 	.text       start:0x80154714 end:0x80154994
+	.data       start:0x801DD568 end:0x801DD5F0
+	.sdata      start:0x8025E798 end:0x8025E7A0
 
 rwsdk/world/pipe/p2/nodeAtomicInstance.c:
 	.text       start:0x80154994 end:0x80155B68
+	.data       start:0x801DD5F0 end:0x801DD6D0
 
 rwsdk/world/pipe/p2/nodeLight.c:
 	.text       start:0x80155B68 end:0x80157088
@@ -1700,6 +1703,7 @@ rwsdk/world/pipe/p2/nodeLight.c:
 
 rwsdk/world/pipe/p2/nodeMaterialScatter.c:
 	.text       start:0x80157088 end:0x801571CC
+	.data       start:0x801DD790 end:0x801DD838
 
 rwsdk/world/pipe/p2/nodePostLight.c:
 	.text       start:0x801571CC end:0x80157880
@@ -1709,9 +1713,13 @@ rwsdk/world/pipe/p2/nodePostLight.c:
 
 rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c:
 	.text       start:0x80157880 end:0x80157A3C
+	.data       start:0x801DD8E8 end:0x801DD970
+	.sdata      start:0x8025E7B0 end:0x8025E7B8
 
 rwsdk/world/pipe/p2/nodeWorldSectorInstance.c:
 	.text       start:0x80157A3C end:0x8015885C
+	.data       start:0x801DD970 end:0x801DDA28
+	.sdata      start:0x8025E7B8 end:0x8025E7C0
 
 rwsdk/world/pipe/p2/gcn/gcpipe.c:
 	.text       start:0x8015885C end:0x80159380
@@ -1742,6 +1750,8 @@ rwsdk/world/pipe/p2/gcn/instance/ibuffer.c:
 
 rwsdk/world/pipe/p2/gcn/gclights.c:
 	.text       start:0x8015F0A4 end:0x8015F51C
+	.data       start:0x801DDB40 end:0x801DDB60
+	.bss        start:0x8025DB38 end:0x8025DD38
 
 rwsdk/world/pipe/p2/gcn/native.c:
 	.text       start:0x8015F51C end:0x8015FEA4
@@ -1771,6 +1781,7 @@ rwsdk/src/plcore/bamatrix.c:
 
 rwsdk/src/plcore/bamemory.c:
 	.text       start:0x8016351C end:0x80163B14
+	.sbss       start:0x8025F790 end:0x8025F798
 
 rwsdk/src/plcore/baresour.c:
 	.text       start:0x80163B14 end:0x80164374

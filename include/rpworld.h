@@ -244,6 +244,7 @@ typedef RpAtomic* (*RpAtomicCallBack)(RpAtomic* atomic, void* data);
 #define rpGEOMETRYTEXTURED 0x0004
 #define rpGEOMETRYPRELIT 0x0008
 #define rpGEOMETRYNORMALS 0x0010
+#define rpGEOMETRYLIGHT 0x0020
 #define rpGEOMETRYMODULATEMATERIALCOLOR 0x0040
 #define rpGEOMETRYTEXTURED2 0x0080
 
@@ -253,6 +254,7 @@ typedef RpAtomic* (*RpAtomicCallBack)(RpAtomic* atomic, void* data);
 #define rpGEOMETRYNATIVEFLAGSMASK 0x0F000000
 
 #define rpWORLDTRISTRIP 0x01
+#define rpWORLDLIGHT 0x20
 #define rpWORLDNATIVE 0x01000000
 #define rpWORLDSINGLEMALLOC 0x01
 
@@ -369,7 +371,11 @@ S32 RpLightDestroy(RpLight* light);
 RpLight* RpLightSetRadius(RpLight* light, F32 radius);
 RpLight* RpLightSetColor(RpLight* light, const RwRGBAReal* color);
 RpLight* RpLightSetConeAngle(RpLight* light, F32 angle);
+F32 RpLightGetConeAngle(const RpLight* light);
 RpLight* RpLightStreamRead(RwStream* stream);
+S32 _rpWorldForAllGlobalLights(RpLightCallBack callBack, void* pData);
+RpWorldSector* _rpWorldSectorForAllLocalLights(RpWorldSector* sector, RpLightCallBack callBack,
+                                               void* pData);
 S32 RpLightRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
                           RwPluginObjectDestructor destructCB, RwPluginObjectCopy copyCB);
 S32 RpLightRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack readCB,
@@ -540,22 +546,59 @@ struct RpGameCubeVtxFmt
 extern RpGameCubeVtxFmt _RpDlVtxFmtDefault;
 
 // The instanced vertex arrays of a GameCube geometry or sector: the stride of each attribute
-// and where its array starts. The leading bytes and the gap before the pointers are not
-// established.
+// and where its array starts. It follows the resource entry; the display lists of the meshes
+// (GCNDisplayList) follow it, then, 32-byte aligned, the arrays and lists themselves. syncToken is
+// the draw sync token of the last frame that drew from it; flags marks the arrays that live
+// outside the entry (GCNARRAYS_*). The first word and the bytes before flags are not established.
 typedef struct GCNVertexArrays GCNVertexArrays;
 struct GCNVertexArrays
 {
-    U8 unk0[6];
+    U8 unk0[4];
+    U16 syncToken;
     U8 posStride;
     U8 nrmStride;
     U8 clrStride;
     U8 texStride[8];
-    U8 unk11[7];
+    U8 unk11[3];
+    U32 flags;
     void* pos;
     void* nrm;
     void* clr;
     void* tex[8];
 };
+
+// GCNVertexArrays flags: the positions, colors or normals are not in the entry, or neither are
+// the texture coordinates (either bit), so streaming leaves their pointers alone.
+#define GCNARRAYS_EXTERNALPOS 0x02
+#define GCNARRAYS_EXTERNALCLR 0x08
+#define GCNARRAYS_EXTERNALNRM 0x10
+#define GCNARRAYS_EXTERNALTEX 0x84
+
+// A mesh's display list: its size in bytes and where it starts.
+typedef struct GCNDisplayList GCNDisplayList;
+struct GCNDisplayList
+{
+    U32 size;
+    void* list;
+};
+
+// What the GameCube lighting callbacks collect for one object: the summed ambient color, whether
+// any ambient light was found, which hardware lights the global (directional) and local
+// (positioned) lights were loaded into, and how many hardware lights are in use. Field names are
+// written for this project; the first 12 bytes are not read by the lighting code.
+typedef struct GCNLightingData GCNLightingData;
+struct GCNLightingData
+{
+    U8 unk0[0xC];
+    RwRGBAReal ambient;
+    S32 ambientUsed;
+    U32 globalMask;
+    U32 localMask;
+    S32 numLights;
+};
+
+void _rwGCLightsGlobalEnable(U8 flags, GCNLightingData* data);
+void _rwGCLightsLocalEnable(RpLight* light, GCNLightingData* data);
 
 S32 _rwGCNVtxFmtInstPos3D(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* src,
                           S32 numVerts, U8 stride);
@@ -569,6 +612,7 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
                         const RwTexCoords* src, S32 numVerts, U8 stride);
 
 S32 RpWorldSectorGetNumVertices(const RpWorldSector* sector);
+RpWorld* RpWorldSectorGetWorld(const RpWorldSector* sector);
 
 // The mesh module's globals in each engine instance, shared by the mesh code and the mesh
 // optimiser.
