@@ -159,6 +159,12 @@ struct xModelInstance;
 struct xSurface;
 struct xFFX;
 
+// _xEnt::pflags bits
+#define XENT_PFLAGS_IS_MOVING ((U8)(1 << 0))
+
+// Collision types (_xEnt::collType, chkby, penby)
+#define XENT_COLLTYPE_PLYR ((U8)(1 << (4)))
+
 struct _xEnt : xBase
 {
     p2EntAsset* asset;
