@@ -15,3 +15,6 @@ extract:
 - symbol: CardData
   header: dolphin/card/CardData.inc
   header_type: raw
+- symbol: LogoData
+  header: bink/LogoData.inc
+  header_type: raw

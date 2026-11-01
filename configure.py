@@ -297,6 +297,7 @@ cflags_bink = [
     "-nostdinc",
     "-I include",
     "-I include/libc",
+    f"-I build/{config.version}/include",
 ]
 
 # CARD profile ("card_debug"): the GIHE78 CARD library is the SDK's debug build, which is

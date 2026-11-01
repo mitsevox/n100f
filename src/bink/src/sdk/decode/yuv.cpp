@@ -638,15 +638,7 @@ void YUV_init(S32 layout)
         {
             S32 c;
 
-            if (i > 16)
-            {
-                if (i <= 234)
-                    ytable[i] = ((i - 16) * 38154) / 32768;
-                else
-                    ytable[i] = 254;
-            }
-            else
-                ytable[i] = 0;
+            ytable[i] = (i > 16) ? ((i <= 234) ? ((i - 16) * 38154) / 32768 : 254) : 0;
             ytable_x4[i] = ytable[i] << 2;
             c = i - 128;
             YUVTables[1][i] = -((c * 26639) / 32768);
@@ -667,11 +659,20 @@ void YUV_init(S32 layout)
 
     if (rgb_layout != layout && layout != -1)
     {
-        S32 rbits, gbits, bbits;
-        S32 rshift, gshift, bshift;
-        S32 rr, gr, br;
-        U32 white, white2;
-        U32 rmax, gmax, bmax;
+        S32 rbits;
+        S32 gbits;
+        S32 bbits;
+        S32 rshift;
+        S32 gshift;
+        S32 bshift;
+        S32 rr;
+        S32 gr;
+        S32 br;
+        U32 white;
+        U32 white2;
+        U32 rmax;
+        U32 gmax;
+        U32 bmax;
 
         rgb_layout = layout;
         switch (layout)
@@ -1112,9 +1113,11 @@ extern "C" void YUV_blit_16a4bpp(void* dest, U32 destx, U32 desty, S32 pitch, U8
         return x + count;                                   \
     }
 
-#define YMW(w, t, y, i)                     \
-    t = (S.y[i] << 16) | 0x80008000;        \
-    w = S.y[i] | t;
+#define YMW(w, y, hi, lo)                       \
+    {                                           \
+        U32 t = (S.y[hi] << 16) | 0x80008000;   \
+        w = S.y[lo] | t;                        \
+    }
 
 #define YPUT2WH(d, w0, w1)                   \
     ((U32*)S.d)[0] = w0;                    \
@@ -1123,50 +1126,34 @@ extern "C" void YUV_blit_16a4bpp(void* dest, U32 destx, U32 desty, S32 pitch, U8
     ((U32*)(S.d + S.pitch))[1] = w1;
 
 #define YMPUT2WH(d, y)                      \
-    {                                       \
-        U32 t0, t1, w0, w1;                 \
-                                            \
-        YMW(w0, t0, y, 0)                   \
-        YMW(w1, t1, y, 1)                   \
-        YPUT2WH(d, w0, w1)                   \
-    }
+    YMW(w0, y, 0, 0)                        \
+    YMW(w1, y, 1, 1)                        \
+    YPUT2WH(d, w0, w1)
 
 #define YMPUT2W(d, y)                       \
-    {                                       \
-        U32 t, w;                           \
-                                            \
-        t = (S.y[0] << 16) | 0x80008000;    \
-        w = t | S.y[0];                     \
-        ((U32*)S.d)[0] = w;                 \
-        t = (S.y[1] << 16) | 0x80008000;    \
-        w = t | S.y[1];                     \
-        S.y += 2;                           \
-        ((U32*)S.d)[1] = w;                 \
-    }
+    YMW(w, y, 0, 0)                         \
+    ((U32*)S.d)[0] = w;                     \
+    YMW(w, y, 1, 1)                         \
+    S.y += 2;                               \
+    ((U32*)S.d)[1] = w;
 
 #define YMPUT2H(d, y)                       \
-    {                                       \
-        U32 t = (S.y[1] << 16) | 0x80008000; \
-        U32 w = S.y[0] | t;                 \
-        S.y += 2;                           \
-        ((U32*)S.d)[0] = w;                 \
-        *(U32*)(S.d + S.pitch) = w;         \
-    }
+    YMW(w, y, 1, 0)                         \
+    S.y += 2;                               \
+    ((U32*)S.d)[0] = w;                     \
+    *(U32*)(S.d + S.pitch) = w;
 
 #define YMPUT(d, y)                         \
-    {                                       \
-        U32 t = (S.y[1] << 16) | 0x80008000; \
-        U32 w = S.y[0] | t;                 \
-        S.y += 2;                           \
-        *(U32*)S.d = w;                     \
-    }
+    YMW(w, y, 1, 0)                         \
+    S.y += 2;                               \
+    *(U32*)S.d = w;
 
-YROWM(dounalignedYUY2rowm2wh, YMPUT2WH(dst0, y0) S.y0 += 2; S.dst0 += 8;)
-YCOL(dounalignedYUY2colm2wh, YMPUT2WH(dst0, y0) YMPUT2WH(dst1, y1) S.y0 += 2; S.y1 += 2; S.dst0 += 8; S.dst1 += 8;)
-YROWM(dounalignedYUY2rowm2w, YMPUT2W(dst0, y0) S.dst0 += 8;)
-YCOL(dounalignedYUY2colm2w, YMPUT2W(dst0, y0) YMPUT2W(dst1, y1) S.dst0 += 8; S.dst1 += 8;)
-YROWM(dounalignedYUY2rowm2h, YMPUT2H(dst0, y0) S.dst0 += 4;)
-YCOL(dounalignedYUY2colm2h, YMPUT2H(dst0, y0) YMPUT2H(dst1, y1) S.dst0 += 4; S.dst1 += 4;)
+YROWM(dounalignedYUY2rowm2wh, U32 w0; U32 w1; YMPUT2WH(dst0, y0) S.y0 += 2; S.dst0 += 8;)
+YCOL(dounalignedYUY2colm2wh, U32 w0; U32 w1; YMPUT2WH(dst0, y0) YMPUT2WH(dst1, y1) S.y0 += 2; S.y1 += 2; S.dst0 += 8; S.dst1 += 8;)
+YROWM(dounalignedYUY2rowm2w, U32 w; YMPUT2W(dst0, y0) S.dst0 += 8;)
+YCOL(dounalignedYUY2colm2w, U32 w; YMPUT2W(dst0, y0) YMPUT2W(dst1, y1) S.dst0 += 8; S.dst1 += 8;)
+YROWM(dounalignedYUY2rowm2h, U32 w; YMPUT2H(dst0, y0) S.dst0 += 4;)
+YCOL(dounalignedYUY2colm2h, U32 w; YMPUT2H(dst0, y0) YMPUT2H(dst1, y1) S.dst0 += 4; S.dst1 += 4;)
 
 YROWM(dounalignedYUY2row2wh,
       U32 w0 = YC(y0, 0, 0);
@@ -1222,8 +1209,8 @@ YCOL(dounalignedYUY2col2h,
      *(U32*)(S.dst1 + S.pitch) = w;
      S.dst0 += 4;
      S.dst1 += 4;)
-YROWM(dounalignedYUY2rowm, YMPUT(dst0, y0) S.dst0 += 4;)
-YCOL(dounalignedYUY2colm, YMPUT(dst0, y0) YMPUT(dst1, y1) S.dst0 += 4; S.dst1 += 4;)
+YROWM(dounalignedYUY2rowm, U32 w; YMPUT(dst0, y0) S.dst0 += 4;)
+YCOL(dounalignedYUY2colm, U32 w; YMPUT(dst0, y0) YMPUT(dst1, y1) S.dst0 += 4; S.dst1 += 4;)
 YROWM(dounalignedYUY2row,
       U32 w = YC(y0, 0, 1);
       S.y0 += 2;
