@@ -37,111 +37,45 @@ S32 zLightEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b);
 void zLightSave(_zLight* ent, xSerial* s);
 void zLightLoad(_zLight* ent, xSerial* s);
 
-void zLightLoad(_zLight* ent, xSerial* s)
-{
-    xBaseLoad(ent, s);
-}
+void zLightLoad(_zLight* ent, xSerial* s);
+void zLightSave(_zLight* ent, xSerial* s);
+S32 zLightEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b);
+void zLightDestroyAll();
+void zLightUpdate(xBase* to, _xScene*, F32 dt);
+void zLightResolveLinks();
+void zLightAddLocalEnv();
+void zLightInit(xBase* b, zLightAsset* tasset);
+void zLightAddLocal(_xEnt* ent);
+void zLightRemoveLocalEnv();
+void zLightInit(void* b, void* tasset);
+void zLightResetAll(_xEnv* env);
+void zLightRemoveLocal();
+void zLightSetVolume(_zVolume* vol);
+void zLightOn(_zLight* zl, S32 on);
+static inline void zLightReset(_zLight* zl);
+static inline void zLightDestroy(_zLight* zl);
+static inline void zLightEffectSet(_zLight* zlight, S32 idx);
 
-void zLightSave(_zLight* ent, xSerial* s)
+void zLightResetAll(_xEnv* env)
 {
-    xBaseSave(ent, s);
-}
-
-S32 zLightEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b)
-{
-    _zLight* t = (_zLight*)to;
-    switch (toEvent)
-    {
-    case eEventOn:
-    {
-        t->flags |= 1;
-        break;
-    }
-    case eEventOff:
-    {
-        t->flags &= 0xfffffffe;
-        break;
-    }
-    case eEventReset:
-    {
-        zLightReset(t);
-        break;
-    }
-    default:
-    {
-        break;
-    }
-    }
-    return 1;
-}
-
-void zLightDestroyAll()
-{
-    S32 total = sLightTotal;
-
-    for (int i = 0; i < total; i++, sLightTotal--)
-    {
-        zLightDestroy(sLight[i]);
-    }
+    memset(sLight, 0, sizeof(sLight));
     sLightTotal = 0;
+
+    if (sPartitionVolume)
+    {
+        xPartitionVolume(&sLightPart, sPartitionVolume, 10, 1, 10);
+    }
+    else
+    {
+        xPartitionWorld(&sLightPart, env, 10, 1, 10);
+    }
+
+    xPartitionDump(&sLightPart, "Lighting");
 }
 
-void zLightUpdate(xBase* to, _xScene*, F32 dt)
+void zLightInit(void* b, void* tasset)
 {
-    _zLight* t = (_zLight*)to;
-
-    if ((t->flags & 1) && t->attached_to)
-    {
-        xVec3 pos = *xEntGetPos((_xEnt*)t->attached_to);
-        pos.y += 1.0f;
-        iLightSetPos(&t->light, &pos);
-        t->light.sph.center = pos;
-        t->true_idx = xPartitionUpdate(&sLightPart, t, t->true_idx, &pos);
-    }
-
-    if (sEffectFuncs[t->effect_idx])
-    {
-        sEffectFuncs[t->effect_idx](t, dt);
-    }
-}
-
-void zLightResolveLinks()
-{
-    S32 i;
-    _zLight* zl;
-
-    for (i = 0; i < sLightTotal; i++)
-    {
-        zl = sLight[i];
-        if (zl->tasset->attachID)
-        {
-            zl->attached_to = zSceneFindObject(zl->tasset->attachID);
-        }
-        else
-        {
-            zl->attached_to = 0;
-        }
-    }
-}
-
-void zLightAddLocalEnv()
-{
-    for (int i = 0; i < sLightTotal; i++)
-    {
-        _zLight* zlight = sLight[i];
-        if ((zlight->flags & 1) && (zlight->tasset->lightFlags & 8))
-        {
-            iLight* light = &zlight->light;
-            iLightEnv(light, 1);
-            light->hw->inWorld.prev = gLightWorld->directionalLightList.link.prev;
-            light->hw->inWorld.next = &gLightWorld->directionalLightList.link;
-            gLightWorld->directionalLightList.link.prev->next = &light->hw->inWorld;
-            gLightWorld->directionalLightList.link.prev = &light->hw->inWorld;
-
-            gTemporaryLights[gNumTemporaryLights] = zlight;
-            gNumTemporaryLights++;
-        }
-    }
+    zLightInit((xBase*)b, (zLightAsset*)tasset);
 }
 
 void zLightInit(xBase* b, zLightAsset* tasset)
@@ -211,6 +145,113 @@ void zLightInit(xBase* b, zLightAsset* tasset)
         }
 
         t->true_idx = xPartitionInsert(&sLightPart, t, &t->light.sph.center);
+    }
+}
+
+void zLightResolveLinks()
+{
+    S32 i;
+    _zLight* zl;
+
+    for (i = 0; i < sLightTotal; i++)
+    {
+        zl = sLight[i];
+        if (zl->tasset->attachID)
+        {
+            zl->attached_to = zSceneFindObject(zl->tasset->attachID);
+        }
+        else
+        {
+            zl->attached_to = 0;
+        }
+    }
+}
+
+void zLightDestroyAll()
+{
+    S32 total = sLightTotal;
+
+    for (int i = 0; i < total; i++, sLightTotal--)
+    {
+        zLightDestroy(sLight[i]);
+    }
+    sLightTotal = 0;
+}
+
+void zLightSave(_zLight* ent, xSerial* s)
+{
+    xBaseSave(ent, s);
+}
+
+void zLightLoad(_zLight* ent, xSerial* s)
+{
+    xBaseLoad(ent, s);
+}
+
+S32 zLightEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* b)
+{
+    _zLight* t = (_zLight*)to;
+    switch (toEvent)
+    {
+    case eEventOn:
+    {
+        t->flags |= 1;
+        break;
+    }
+    case eEventOff:
+    {
+        t->flags &= 0xfffffffe;
+        break;
+    }
+    case eEventReset:
+    {
+        zLightReset(t);
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+    return 1;
+}
+
+void zLightUpdate(xBase* to, _xScene*, F32 dt)
+{
+    _zLight* t = (_zLight*)to;
+
+    if ((t->flags & 1) && t->attached_to)
+    {
+        xVec3 pos = *xEntGetPos((_xEnt*)t->attached_to);
+        pos.y += 1.0f;
+        iLightSetPos(&t->light, &pos);
+        t->light.sph.center = pos;
+        t->true_idx = xPartitionUpdate(&sLightPart, t, t->true_idx, &pos);
+    }
+
+    if (sEffectFuncs[t->effect_idx])
+    {
+        sEffectFuncs[t->effect_idx](t, dt);
+    }
+}
+
+void zLightAddLocalEnv()
+{
+    for (int i = 0; i < sLightTotal; i++)
+    {
+        _zLight* zlight = sLight[i];
+        if ((zlight->flags & 1) && (zlight->tasset->lightFlags & 8))
+        {
+            iLight* light = &zlight->light;
+            iLightEnv(light, 1);
+            light->hw->inWorld.prev = gLightWorld->directionalLightList.link.prev;
+            light->hw->inWorld.next = &gLightWorld->directionalLightList.link;
+            gLightWorld->directionalLightList.link.prev->next = &light->hw->inWorld;
+            gLightWorld->directionalLightList.link.prev = &light->hw->inWorld;
+
+            gTemporaryLights[gNumTemporaryLights] = zlight;
+            gNumTemporaryLights++;
+        }
     }
 }
 
@@ -383,28 +424,6 @@ void zLightRemoveLocalEnv()
         link->next->prev = link->prev;
     }
     gNumTemporaryLights = 0;
-}
-
-void zLightInit(void* b, void* tasset)
-{
-    zLightInit((xBase*)b, (zLightAsset*)tasset);
-}
-
-void zLightResetAll(_xEnv* env)
-{
-    memset(sLight, 0, sizeof(sLight));
-    sLightTotal = 0;
-
-    if (sPartitionVolume)
-    {
-        xPartitionVolume(&sLightPart, sPartitionVolume, 10, 1, 10);
-    }
-    else
-    {
-        xPartitionWorld(&sLightPart, env, 10, 1, 10);
-    }
-
-    xPartitionDump(&sLightPart, "Lighting");
 }
 
 void zLightRemoveLocal()
