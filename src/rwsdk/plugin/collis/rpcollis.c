@@ -3,11 +3,12 @@
 // RpCollisionData.flags: the tree and the triangle map share the data's own allocation.
 #define COLLISIONDATA_SINGLEBLOCK 0x1
 
-S32 _rpCollisionNumInstances;
-S32 _rpCollisionGlobalsOffset;
-S32 _rpCollisionAtomicDataOffset;
-S32 _rpCollisionGeometryDataOffset;
+// The compiler lays out uninitialized variables in reverse order of definition.
 S32 _rpCollisionWorldSectorDataOffset;
+S32 _rpCollisionGeometryDataOffset;
+S32 _rpCollisionAtomicDataOffset;
+S32 _rpCollisionGlobalsOffset;
+S32 _rpCollisionNumInstances;
 
 // The plugin's word in the engine instance, cleared when the plugin opens.
 #define COLLISIONENGINEDATA() (*(void**)((U8*)RwEngineInstance + _rpCollisionGlobalsOffset))

@@ -6,10 +6,11 @@
 RpGameCubeVtxFmt* RpGameCubeVtxFmtInit(RpGameCubeVtxFmt* vtxFmt);
 void RpGameCubeVtxFmtDestroy(RpGameCubeVtxFmt* vtxFmt);
 
-RpGameCubeVtxFmt _RpDlVtxFmtDefault;
-S32 _rpDlGeomVtxFmtOffset;
-S32 _rpDlWorldVtxFmtOffset;
+// The compiler lays out uninitialized variables in reverse order of definition.
 static RwModuleInfo _RpVtxFmtModule;
+S32 _rpDlWorldVtxFmtOffset;
+S32 _rpDlGeomVtxFmtOffset;
+RpGameCubeVtxFmt _RpDlVtxFmtDefault;
 
 // Describes the instanced arrays to GX for drawing: each attribute the object has (positions
 // always; normals, or normal-binormal-tangent triples when the format's normal fraction is set;
