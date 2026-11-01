@@ -315,10 +315,10 @@ void fn_801450A8(RwResEntry* resEntry)
         skin = SKINGEOMETRYGETDATA((RpGeometry*)resEntry->owner);
     }
 
-    arrays->pos = skin->unk10;
-    arrays->nrm = (void*)skin->unk14;
-    skin->unk10 = NULL;
-    skin->unk14 = 0;
+    arrays->pos = skin->savedPos;
+    arrays->nrm = skin->savedNrm;
+    skin->savedPos = NULL;
+    skin->savedNrm = NULL;
 
     GXInvalidateVtxCache();
 }
@@ -354,10 +354,10 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
     RwResourcesUseResEntry(*entryRef);
     (*entryRef)->destroyNotify = fn_801450A8;
 
-    if (!skin->unk10)
+    if (!skin->savedPos)
     {
-        skin->unk10 = arrays->pos;
-        skin->unk14 = (S32)arrays->nrm;
+        skin->savedPos = arrays->pos;
+        skin->savedNrm = arrays->nrm;
         arrays->pos = NULL;
         arrays->nrm = NULL;
     }
@@ -474,15 +474,15 @@ RpAtomic* fn_80145598(RpAtomic* atomic, RwResEntry** entryRef)
     register U32 gqr6;
     register U32 gqr7;
 
-    if (!skin->unk10)
+    if (!skin->savedPos)
     {
         if (!(geometry->flags & rpGEOMETRYNATIVE))
         {
             lbl_8025F6A8(atomic, entryRef);
         }
 
-        skin->unk10 = arrays->pos;
-        skin->unk14 = (S32)arrays->nrm;
+        skin->savedPos = arrays->pos;
+        skin->savedNrm = arrays->nrm;
         arrays->pos = NULL;
         arrays->nrm = NULL;
     }
@@ -491,8 +491,8 @@ RpAtomic* fn_80145598(RpAtomic* atomic, RwResEntry** entryRef)
         void* pos = arrays->pos;
         void* nrm = arrays->nrm;
 
-        arrays->pos = skin->unk10;
-        arrays->nrm = (void*)skin->unk14;
+        arrays->pos = skin->savedPos;
+        arrays->nrm = skin->savedNrm;
         lbl_8025F6A8(atomic, entryRef);
         arrays->pos = pos;
         arrays->nrm = nrm;
@@ -555,7 +555,7 @@ RpAtomic* fn_80145598(RpAtomic* atomic, RwResEntry** entryRef)
     vtxFmt = fn_8015D818(geometry);
     posSize = sizeof(F32);
     nrmSize = sizeof(F32);
-    srcNrm = (void*)skin->unk14;
+    srcNrm = skin->savedNrm;
     nbtSize = 0;
     dstPos = arrays->pos;
     gqr6 = 0;
@@ -584,10 +584,10 @@ RpAtomic* fn_80145598(RpAtomic* atomic, RwResEntry** entryRef)
 
     if (!arrays->nrm)
     {
-        srcNrm = skin->unk10;
+        srcNrm = skin->savedPos;
     }
 
-    fn_80144D5C(skin->vertexBoneWeights, skin->unk10, srcNrm, dstPos, arrays->nrm,
+    fn_80144D5C(skin->vertexBoneWeights, skin->savedPos, srcNrm, dstPos, arrays->nrm,
                 _rpSkinGlobals.matrixCache, skin->vertexBoneIndices, numVertices, posSize, nrmSize,
                 nbtSize);
 
@@ -614,8 +614,8 @@ RpGeometry* _rpSkinInitialize(RpGeometry* geometry)
             }
         }
 
-        skin->unk10 = NULL;
-        skin->unk14 = 0;
+        skin->savedPos = NULL;
+        skin->savedNrm = NULL;
     }
 
     return geometry;
@@ -627,8 +627,8 @@ RpGeometry* _rpSkinDeinitialize(RpGeometry* geometry)
 
     if (skin)
     {
-        skin->unk10 = NULL;
-        skin->unk14 = 0;
+        skin->savedPos = NULL;
+        skin->savedNrm = NULL;
     }
 
     return geometry;

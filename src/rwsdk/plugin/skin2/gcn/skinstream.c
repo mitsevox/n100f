@@ -19,15 +19,15 @@ void _rxGCResEntryWaitDone(RwResEntry* resEntry);
 // Hands back the instanced arrays a skin kept from streaming to the geometry's resource entry,
 // which then waits for the GPU before it is freed.
 #define SKINSTREAM_RESTOREARRAYS(_geometry, _skin)                                                 \
-    if ((_skin)->unk10)                                                                            \
+    if ((_skin)->savedPos)                                                                            \
     {                                                                                              \
         GCNVertexArrays* arrays = (GCNVertexArrays*)((_geometry)->repEntry + 1);                   \
         *(S32*)((U8*)((void**)arrays->pos)[-1] + 0x10) = 0;                                        \
-        arrays->pos = (_skin)->unk10;                                                              \
-        arrays->nrm = (void*)(_skin)->unk14;                                                       \
+        arrays->pos = (_skin)->savedPos;                                                              \
+        arrays->nrm = (_skin)->savedNrm;                                                       \
         (_geometry)->repEntry->destroyNotify = _rxGCResEntryWaitDone;                              \
-        (_skin)->unk10 = NULL;                                                                     \
-        (_skin)->unk14 = 0;                                                                        \
+        (_skin)->savedPos = NULL;                                                                     \
+        (_skin)->savedNrm = NULL;                                                                        \
     }
 
 S32 _rpSkinGeometryNativeSize(const RpGeometry* geometry)

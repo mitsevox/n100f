@@ -26,16 +26,17 @@ typedef enum RpSkinType
 } RpSkinType;
 
 // The bone matrices and per-vertex bone indices and weights of a skinned geometry, carved from
-// one 16-byte aligned allocation. On GameCube, unk10 and unk14 hold an instanced resource and its
-// size until the geometry is next instanced (skinstream.c).
+// one 16-byte aligned allocation. On GameCube, savedPos and savedNrm keep the instanced position
+// and normal arrays while the skinned copies take their place (skingcn.c), and are put back before
+// the geometry is streamed (skinstream.c).
 struct RpSkin
 {
     U32 numBones;
     RwMatrix* skinToBoneMatrices;
     U32* vertexBoneIndices;
     RwMatrixWeights* vertexBoneWeights;
-    void* unk10;
-    S32 unk14;
+    void* savedPos;
+    void* savedNrm;
     void* unaligned;
 };
 
@@ -75,6 +76,9 @@ RpAtomic* _rpSkinPipelinesAttach(RpAtomic* atomic, RpSkinType type);
 S32 _rpSkinGeometryNativeSize(const RpGeometry* geometry);
 RwStream* _rpSkinGeometryNativeWrite(RwStream* stream, const RpGeometry* geometry);
 RwStream* _rpSkinGeometryNativeRead(RwStream* stream, RpGeometry* geometry);
+RxPipeline* _rpSkinPipelineCreate(RpSkinType type, void* instanceCB, void* reinstanceCB,
+                                  void* renderCB);
+RpAtomic* fn_80145598(RpAtomic* atomic, RwResEntry** entryRef);
 
 S32 RpSkinPluginAttach(void);
 RpSkin* RpSkinGeometryGetSkin(RpGeometry* geometry);
