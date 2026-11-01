@@ -67,3 +67,17 @@ Check: drafts for ten functions already matched, swapped into their units and sc
 - GCC dump flags: only the ProDG (Bink) code would use them.
 - coddog and Ghidra BSim: rev1 is tied to rev0 by its byte-identical relink and `tools/port_symbols.py`, and the library and RenderWare maps already name shared code.
 - The compiler probe the handbook describes is [`tools/compiler_probe.py`](../tools/compiler_probe.py).
+
+## What keeps a unit from linking: `tools/closure.py`
+
+A unit links all or nothing, and objdiff's scores miss two of the reasons a unit with every function exact still fails to link: the order its functions come out in (game code emits them in reverse definition order under `-inline auto,deferred`) and data sections the source lacks or the split gives no range. For every unlinked unit this report lists the function misses (how many at 99% or more), the data sections below 100%, whether the compiled object emits the target's functions in the target's order, and every data section whose size differs from the target object's by 8 bytes or more, is missing from the source, or has no range in `splits.txt`. Rows are ranked by kilobytes per blocker, so the next unit to close is the first row. It needs `report.json` as well as the build.
+
+```sh
+ninja -f build/GIHE78-rev0/build.ninja build/GIHE78-rev0/report.json
+python3 tools/closure.py --target GIHE78-rev0 --top 30
+python3 tools/closure.py --target GIHE78-rev0 --unit flat/zEntPlayer --json /tmp/rows.json
+```
+
+Two things are deliberately not counted: functions only the compiled object defines (the linker strips them, and linked units carry them too) and the weak local statics of inline functions such as `sqrtf`'s `_half` and `_three` (the linker keeps one copy). A row with no blocker is worth a trial link; the report itself changes nothing.
+
+Check: on `main` at `2fac192` (GIHE78-rev0) its order verdicts agree with a by-hand comparison of each unlinked unit's symbol offsets against the target's addresses (20 units out of order), and its section findings reproduce the known gaps: zEntVillain's .data and .rodata, binkread's .data, zFeet's .bss and the RenderWare units whose data has no split range.
