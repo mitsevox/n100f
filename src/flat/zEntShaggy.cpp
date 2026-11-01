@@ -1051,8 +1051,8 @@ static void Shaggy1_BonusAnims(_zEnt* ent)
 
 static void Shaggy1_MiddleUpdate(_zEnt* shag, _xScene* sc, F32 dt)
 {
-    F32 dz = 0.0f;
-    F32 dx = 0.0f;
+    F32 dz;
+    F32 dx;
     F32 oldgravity;
     xAnimState* plyrstate;
     xAnimState* astate;
@@ -1095,9 +1095,10 @@ static void Shaggy1_MiddleUpdate(_zEnt* shag, _xScene* sc, F32 dt)
         if (!xStricmp(plyrstate->Name, "SD1_ThrowIdle") ||
             !xStricmp(plyrstate->Name, "SD1_ThrowWalk"))
         {
-            dx = shag->frame->mat.pos.x - globals.player.ent.frame->mat.pos.x;
-            dz = shag->frame->mat.pos.z - globals.player.ent.frame->mat.pos.z;
-            if (shag->frame->mat.pos.y - globals.player.ent.frame->mat.pos.y < 1.8f &&
+            _xEntFrame* frame = shag->frame;
+            dx = frame->mat.pos.x - globals.player.ent.frame->mat.pos.x;
+            dz = frame->mat.pos.z - globals.player.ent.frame->mat.pos.z;
+            if (frame->mat.pos.y - globals.player.ent.frame->mat.pos.y < 1.8f &&
                 dx * dx + dz * dz < 0.5f)
             {
                 globals.player.Shaggy1.CatchMe = 1;
