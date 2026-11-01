@@ -556,13 +556,14 @@ void zEntPickup_FlyToInterface(_zEntPickup* ent, F32)
     perc = xFilterCurvedInterp2(perc);
 
     src = &ent->grab_pos;
-    delta.x = dest.pos.x - src->x;
-    delta.y = dest.pos.y - src->y;
-    delta.z = dest.pos.z - src->z;
+    delta.x = dest.pos.x - ent->grab_pos.x;
+    delta.y = dest.pos.y - ent->grab_pos.y;
+    delta.z = dest.pos.z - ent->grab_pos.z;
     ent->model->Mat->pos.x = src->x + delta.x * perc;
     ent->model->Mat->pos.y = src->y + delta.y * perc;
     ent->model->Mat->pos.z = src->z + delta.z * perc;
-    scale = 0.9f * perc;
+    scale = 0.9f;
+    scale *= perc;
     ent->fx_scale = 1.0f - scale;
 
     ent->vel.x = 0.0f;
