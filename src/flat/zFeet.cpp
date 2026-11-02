@@ -19,35 +19,11 @@
 
 struct _xEnt;
 
-#if VERSION_GIHE78_REV0
-extern void* lbl_8025EEC0;
-extern xBase* lbl_8025EEB8;
-extern xBase* lbl_8025EEBC;
-extern U32 lbl_8022C678[23];
-extern F32 lbl_801A4140[];
-extern RwIm3DVertex lbl_8022C6D4[];
-#define SKID_RASTER lbl_8025EEC0
-#define PAWPRINT_EMITTER lbl_8025EEB8
-#define FOOTPRINT_EMITTER lbl_8025EEBC
-#define STEP_SOUND_IDS lbl_8022C678
-#define SKID_WIDTHS lbl_801A4140
-#define RAY_COLLIDE_DATA gCurXEnv
-#define STRIP_VERTS lbl_8022C6D4
-#elif VERSION_GIHE78_REV1
-extern void* lbl_80270D58;
-extern xBase* lbl_80270D50;
-extern xBase* lbl_80270D54;
-extern U32 lbl_8023CD28[23];
-extern F32 lbl_801A12A8[];
-extern RwIm3DVertex lbl_8023CD84[];
-#define SKID_RASTER lbl_80270D58
-#define PAWPRINT_EMITTER lbl_80270D50
-#define FOOTPRINT_EMITTER lbl_80270D54
-#define STEP_SOUND_IDS lbl_8023CD28
-#define SKID_WIDTHS lbl_801A12A8
-#define RAY_COLLIDE_DATA gCurXEnv
-#define STRIP_VERTS lbl_8023CD84
-#endif
+static const F32 cPlayerSkidWidth[4] = { 0.075f, 0.075f, 0.1f, 0.1f };
+static xBase* paremit_sd_pawprint;
+static xBase* paremit_vil_footprint;
+static RwRaster* sSkidMarkRaster;
+static U32 sSurfaceSoundIDStep[23];
 extern void zSurfaceGetName(S32, char*);
 void DrawSkidMarkStrip(_tagFeetSkidMark*, _tagSkidEdge*, U8, U8, U8);
 U32 zFeetStepCB(U32, xAnimActiveEffect*, xAnimSingle*, void*);
@@ -78,15 +54,15 @@ void zFeetGetIDs()
         zSurfaceGetName(i, surface);
         strcpy(sound, "SNDFX_STEP_");
         strcat(sound, surface);
-        STEP_SOUND_IDS[i] = xStrHash(sound);
+        sSurfaceSoundIDStep[i] = xStrHash(sound);
     }
 
-    PAWPRINT_EMITTER = zSceneFindObject(xStrHash("PAREMIT_SD_PAWPRINT"));
-    FOOTPRINT_EMITTER = zSceneFindObject(xStrHash("PAREMIT_VIL_FOOTPRINT"));
+    paremit_sd_pawprint = zSceneFindObject(xStrHash("PAREMIT_SD_PAWPRINT"));
+    paremit_vil_footprint = zSceneFindObject(xStrHash("PAREMIT_VIL_FOOTPRINT"));
     void* texture = xSTFindAsset(xStrHash("SKIDMARKTEX"), 0);
     if (texture)
     {
-        SKID_RASTER = *(void**)texture;
+        sSkidMarkRaster = *(RwRaster**)texture;
     }
     xDebugModeAdd("Feet", zFeetDebugCB);
 }
@@ -302,7 +278,7 @@ U32 zFeetStepCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
     ray.dir.y = -0.1f;
     ray.dir.z = 0.0f;
     ray.flags = 0;
-    S32 collided_with_ground = xRayHitsEnvFast(&ray, RAY_COLLIDE_DATA) != 0;
+    S32 collided_with_ground = xRayHitsEnvFast(&ray, gCurXEnv) != 0;
     info.pos.y = ent->model->Mat->pos.y + 0.05f;
 
     S32 surface_type = 0;
@@ -317,13 +293,13 @@ U32 zFeetStepCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
         return 0;
     }
 
-    if (STEP_SOUND_IDS[surface_type])
+    if (sSurfaceSoundIDStep[surface_type])
     {
         F32 pitch;
         feet->pitch = zPitchChange(feet->pitch, &pitch, 45, 3.0f);
-        if (xSndPlay3D(STEP_SOUND_IDS[surface_type], 0.25f, pitch, 0, 2, &info.pos, 25.0f) == 0xFFFFFFFF)
+        if (xSndPlay3D(sSurfaceSoundIDStep[surface_type], 0.25f, pitch, 0, 2, &info.pos, 25.0f) == 0xFFFFFFFF)
         {
-            STEP_SOUND_IDS[surface_type] = 0;
+            sSurfaceSoundIDStep[surface_type] = 0;
         }
     }
 
@@ -335,7 +311,7 @@ U32 zFeetStepCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
         info.rot[0] = (U8)(255.0f * (angles.x / 6.2831855f));
         info.rot[1] = (U8)(255.0f * (angles.y / 6.2831855f));
         info.rot[2] = (U8)(255.0f * (angles.z / 6.2831855f));
-        zParEmitterEmitCustom((_zParEmitter*)PAWPRINT_EMITTER, 0.0f, &info);
+        zParEmitterEmitCustom((_zParEmitter*)paremit_sd_pawprint, 0.0f, &info);
         info.custom_flags = 0x20;
         zParEmitterEmitCustom(gPlayerfx.emit_land[surface_type], 0.033333335f, &info);
     }
@@ -374,13 +350,13 @@ U32 zFeetStepVillainCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
         return 0;
     }
 
-    if (STEP_SOUND_IDS[surface_type])
+    if (sSurfaceSoundIDStep[surface_type])
     {
         F32 pitch;
         feet->pitch = zPitchChange(feet->pitch, &pitch, 45, 3.0f);
-        if (xSndPlay3D(STEP_SOUND_IDS[surface_type], 0.25f, pitch, 0, 2, &info.pos, 25.0f) == 0xFFFFFFFF)
+        if (xSndPlay3D(sSurfaceSoundIDStep[surface_type], 0.25f, pitch, 0, 2, &info.pos, 25.0f) == 0xFFFFFFFF)
         {
-            STEP_SOUND_IDS[surface_type] = 0;
+            sSurfaceSoundIDStep[surface_type] = 0;
         }
     }
 
@@ -390,7 +366,7 @@ U32 zFeetStepVillainCB(U32, xAnimActiveEffect* active, xAnimSingle*, void*)
     info.rot[0] = (U8)(255.0f * (angles.x / 6.2831855f));
     info.rot[1] = (U8)(255.0f * (angles.y / 6.2831855f));
     info.rot[2] = (U8)(255.0f * (angles.z / 6.2831855f));
-    zParEmitterEmitCustom((_zParEmitter*)FOOTPRINT_EMITTER, 0.0f, &info);
+    zParEmitterEmitCustom((_zParEmitter*)paremit_vil_footprint, 0.0f, &info);
     info.custom_flags = 0x20;
     zParEmitterEmitCustom(gPlayerfx.emit_land[surface_type], 0.033333335f, &info);
     return 0;
@@ -442,7 +418,7 @@ void zFeetAddSkidMark(_xEnt* ent, _tagFeetSkidMark* m, F32 seconds)
             iModelTagEval(ent->model->Data, &globals.player.HangPawTag[i], ent->model->Mat, &edge->centre);
             edge->centre.y = globals.player.ent.model->Mat->pos.y - 0.15f;
             edge->local_x = feet_dir;
-            edge->width = SKID_WIDTHS[i];
+            edge->width = cPlayerSkidWidth[i];
         }
         m->total_edges++;
     }
@@ -470,6 +446,8 @@ void zFeetUpdateSkidMark(_tagFeetSkidMark* m, F32 seconds)
 // Turn the sampled edges into a textured triangle strip.
 void DrawSkidMarkStrip(_tagFeetSkidMark* m, _tagSkidEdge* edges, U8 red, U8 green, U8 blue)
 {
+    static RwIm3DVertex strip_vert[256];
+
     U32 vert_idx = 0;
     S32 i = m->first_idx;
     do
@@ -493,7 +471,7 @@ void DrawSkidMarkStrip(_tagFeetSkidMark* m, _tagSkidEdge* edges, U8 red, U8 gree
         for (S32 side = 0; side < 2; side++)
         {
             F32 width = side ? edge->width : -edge->width;
-            RwIm3DVertex* vertex = &STRIP_VERTS[vert_idx++];
+            RwIm3DVertex* vertex = &strip_vert[vert_idx++];
             vertex->x = edge->centre.x + edge->local_x.x * width;
             vertex->y = edge->centre.y + edge->local_x.y * width + 0.2f;
             vertex->z = edge->centre.z + edge->local_x.z * width;
@@ -515,7 +493,7 @@ void DrawSkidMarkStrip(_tagFeetSkidMark* m, _tagSkidEdge* edges, U8 red, U8 gree
         i++;
     } while (i < m->total_edges);
 
-    if (RwIm3DTransform(STRIP_VERTS, vert_idx, 0, 0x19))
+    if (RwIm3DTransform(strip_vert, vert_idx, 0, 0x19))
     {
         RwIm3DRenderPrimitive(rwPRIMTYPETRISTRIP);
         RwIm3DEnd();
@@ -527,7 +505,7 @@ void zFeetRenderSkidMark(_tagFeetSkidMark* m)
 {
     if (m->total_edges >= 2)
     {
-        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, SKID_RASTER);
+        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, sSkidMarkRaster);
         for (S32 i = 0; i < m->total_feet; i++)
         {
             DrawSkidMarkStrip(m, m->edge[i], 20, 18, 3);
