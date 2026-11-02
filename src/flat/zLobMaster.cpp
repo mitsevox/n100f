@@ -75,6 +75,7 @@ void zLobMaster_sceneFinish()
     }
 }
 
+// Allocate and zero the scene's pool of lob masters (level objects that launch projectiles).
 st_LOBMASTER_DATA* zLobMaster_memPool(S32 cnt)
 {
     st_LOBMASTER_DATA* pool;
@@ -86,7 +87,7 @@ st_LOBMASTER_DATA* zLobMaster_memPool(S32 cnt)
     }
 
     pool = (st_LOBMASTER_DATA*)xMemAlloc(gActiveHeap, cnt * sizeof(st_LOBMASTER_DATA));
-    memset(pool, 0, cnt * sizeof(st_LOBMASTER_DATA));
+    memset(pool, 0, cnt * (S32)sizeof(st_LOBMASTER_DATA));
 
     depot->raw_pool = pool;
     depot->raw_cnt = cnt;
@@ -829,6 +830,10 @@ static S32 ZLOB_shoot_arrow(st_LOBMASTER_DATA* lob, S32, S32)
     return result;
 }
 
+// Throw one piece of bouncing debris: a short-lived tumbling projectile launched at a speed
+// that depends on the player's move state, from the lob master's launch point (or a random
+// spot in its alternate bound) inside a cone. On GameCube it also fades see-through, faster
+// for two objects in o004.
 static S32 ZLOB_shoot_debris(st_LOBMASTER_DATA* lob, S32 nth, S32 total)
 {
     S32 result;
@@ -866,7 +871,7 @@ static S32 ZLOB_shoot_debris(st_LOBMASTER_DATA* lob, S32 nth, S32 total)
 
     flg_player = zEntPlayer_MoveInfo();
 
-    prj->flags |= 0x4;
+    prj->flags |= (U8)0x4;
     prj->fade_tmr = 1.25f;
     if ((gTransitionSceneID ^ 0x20000000) == zSceneIDFromName("o004") &&
         (prj->id == 0xF933F89E || prj->id == 0xFFF2B7AA))
@@ -905,8 +910,9 @@ static S32 ZLOB_shoot_debris(st_LOBMASTER_DATA* lob, S32 nth, S32 total)
         spd_base = 6.0f;
     }
 
-    spd_launch = spd_base + 1.8f * (2.0f * (iurand() - 0.5f));
-    spd_launch = MAX(0.5f * spd_base, spd_launch);
+    spd_launch = spd_base;
+    spd_base += 1.8f * (2.0f * (iurand() - 0.5f));
+    spd_launch = MAX(0.5f * spd_launch, spd_base);
 
     if (lob->flg_suitcase & 4)
     {
