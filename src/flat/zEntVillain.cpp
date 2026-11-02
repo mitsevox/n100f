@@ -15894,6 +15894,109 @@ static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs)
     rbs->flg_stat |= 4;
 }
 
+// Collision for a flying Redbeard sword, with a widened bound. The first entity to check is the
+// player, who gets zapped on contact. The others are hit if the sword's bound touches their model:
+// each gets event 0x16 from Redbeard and is dropped from the list, as is any that is not visible.
+static void VWEP_rbs_chkCollide(st_REDBEARD_SWORD* rbs, F32 dt)
+{
+    _xCollis colrec = { 0 };
+    _xEnt* tgt;
+    S32 i;
+
+    xEntBeginCollide(rbs, globals.sceneCur, dt);
+    if (rbs->ent_colchk[0])
+    {
+        xBoundHitsBound(&rbs->bound, &rbs->ent_colchk[0]->bound, &colrec);
+        if (colrec.flags & 1)
+        {
+            VWEP_mm_zapPlayer(rbs->rbvil);
+        }
+    }
+
+    rbs->bound.sph.r = 1.5f;
+    for (i = 1; i < 5; i++)
+    {
+        tgt = rbs->ent_colchk[i];
+        colrec.flags = 0;
+        if (!tgt)
+        {
+            continue;
+        }
+        if (!xEntIsVisible(tgt))
+        {
+            rbs->ent_colchk[i] = NULL;
+            continue;
+        }
+
+        colrec.optr = tgt;
+        colrec.oid = tgt->id;
+        xBoundHitsBound(&rbs->bound, &tgt->bound, &colrec);
+        if (!(colrec.flags & 1))
+        {
+            continue;
+        }
+
+        colrec.flags = 0;
+        xBoundHitsModel(&rbs->bound, tgt->model, &colrec, 1, PI / 4);
+        if (colrec.flags & 1)
+        {
+            zEntEvent(rbs->rbvil, 0, tgt, 0x16, NULL, NULL, 0);
+            rbs->ent_colchk[i] = NULL;
+        }
+    }
+    rbs->bound.sph.r = 0.75f;
+
+    xEntEndCollide(rbs, globals.sceneCur, dt);
+}
+
+// Draws one gum strand as a 16-sided tube from a ring of top_radius around from to a ring of
+// bot_radius around to, in mid grey, wrapping the texture once around and once along it.
+static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bot_radius)
+{
+    static RwIm3DVertex sStripVert[32];
+    _xVec3 offset = { 0.0f, 0.0f, 1.0f };
+    _xMat3x3 mat;
+    _xVec3 vec_in;
+    RwIm3DVertex* vert = sStripVert;
+    F32 u;
+    _xVec3 pos;
+
+    for (S32 i = 0; i < 16; i++)
+    {
+        xMat3x3Euler(&mat, DEG2RAD(22.5f * i), 0.0f, 0.0f);
+
+        offset.z = top_radius;
+        xMat3x3LMulVec(&vec_in, &mat, &offset);
+        xVec3Add(&pos, from, &vec_in);
+        RwIm3DVertexSetPos(&vert[0], pos.x, pos.y, pos.z);
+        u = 0.0625f * i;
+        RwIm3DVertexSetU(&vert[0], u);
+        RwIm3DVertexSetV(&vert[0], 0.0f);
+        RwIm3DVertexSetRGBA(&vert[0], 128, 128, 128, 255);
+
+        offset.z = bot_radius;
+        xMat3x3LMulVec(&vec_in, &mat, &offset);
+        xVec3Add(&pos, to, &vec_in);
+        RwIm3DVertexSetPos(&vert[1], pos.x, pos.y, pos.z);
+        RwIm3DVertexSetU(&vert[1], u);
+        RwIm3DVertexSetV(&vert[1], 1.0f);
+        RwIm3DVertexSetRGBA(&vert[1], 128, 128, 128, 255);
+
+        vert += 2;
+    }
+
+    vert[0] = sStripVert[0];
+    RwIm3DVertexSetU(&vert[0], 1.0f);
+    vert[1] = sStripVert[1];
+    RwIm3DVertexSetU(&vert[1], 1.0f);
+
+    if (RwIm3DTransform(sStripVert, 34, NULL, rwIM3D_VERTEXRGBA | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXUV))
+    {
+        RwIm3DRenderPrimitive(rwPRIMTYPETRISTRIP);
+        RwIm3DEnd();
+    }
+}
+
 // Emit hologram particles and flicker the villain while its hologram flag is set.
 extern "C" void VIL_HOLO_FLICKER(st_zEntVillain* vil, F32 dt)
 {
