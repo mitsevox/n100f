@@ -32,99 +32,30 @@ static S32 zSurfaceEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
 static S32 sMapperCount;
 static zMaterialMapAsset* sMapper[1] = {};
 
-static inline void zSurfaceInitDefaultSurface()
-{
-    sDef_surf.friction = 1.0f;
-    sDef_surf.state = 0;
-    sDef_surf.moprops = &sDef_surf_props;
-    sDef_surf_props.asset = &sDef_surf_asset;
-
-    sDef_surf_asset.game_damage_type = 0;
-    sDef_surf_asset.game_sticky = 0;
-    sDef_surf_asset.game_damage_flags = 0;
-    sDef_surf_asset.sld_start = 20;
-    sDef_surf_asset.sld_stop = 10;
-    sDef_surf_asset.phys_flags = 0;
-    sDef_surf_asset.friction = 1.0f;
-}
-
-void zSurfaceGetName(S32 type, char* buffer)
-{
-    *buffer = '\0';
-
-    switch (type)
-    {
-    case 0:
-        strcpy(buffer, "DEFAULT");
-        break;
-    case 1:
-        strcpy(buffer, "TILE");
-        break;
-    case 2:
-        strcpy(buffer, "CARPET");
-        break;
-    case 3:
-        strcpy(buffer, "SHORTGRASS");
-        break;
-    case 4:
-        strcpy(buffer, "LONGGRASS");
-        break;
-    case 5:
-        strcpy(buffer, "GRAVEL");
-        break;
-    case 6:
-        strcpy(buffer, "DIRT");
-        break;
-    case 7:
-        strcpy(buffer, "MUD");
-        break;
-    case 8:
-        strcpy(buffer, "THORNS");
-        break;
-    case 9:
-        strcpy(buffer, "METAL");
-        break;
-    case 10:
-        strcpy(buffer, "SHEETMETAL");
-        break;
-    case 11:
-        strcpy(buffer, "CONCRETE");
-        break;
-    case 12:
-        strcpy(buffer, "MARBLE");
-        break;
-    case 13:
-        strcpy(buffer, "STONE");
-        break;
-    case 14:
-        strcpy(buffer, "WOOD");
-        break;
-    case 15:
-        strcpy(buffer, "SNOW");
-        break;
-    case 16:
-        strcpy(buffer, "ICE");
-        break;
-    case 17:
-        strcpy(buffer, "SHALLOWWATER");
-        break;
-    case 18:
-        strcpy(buffer, "DEEPWATER");
-        break;
-    case 19:
-        strcpy(buffer, "TAR");
-        break;
-    case 20:
-        strcpy(buffer, "SPECIAL1");
-        break;
-    case 21:
-        strcpy(buffer, "DeepAcid");
-        break;
-    case 22:
-        strcpy(buffer, "NONE");
-        break;
-    }
-}
+static inline void zSurfaceInitDefaultSurface();
+void zSurfaceGetName(S32 type, char* buffer);
+void zSurfaceInit();
+void zSurfaceRegisterMapper(U32 assetId);
+void zSurfaceUpdate(xBase* to, _xScene*, F32 dt);
+static S32 zSurfaceEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
+void zSurfaceExit();
+xSurface* zSurfaceGetSurface(U32 mat_id);
+xSurface* zSurfaceGetSurface(const _xCollis* coll);
+U32 zSurfaceGetSlide(const xSurface* surf);
+U32 zSurfaceGetStep(const xSurface* surf);
+F32 zSurfaceGetSlideStartAngle(const xSurface* surf);
+F32 zSurfaceGetSlideStopAngle(const xSurface* surf);
+U32 zSurfaceGetMatchOrient(const xSurface* surf);
+S32 zSurfaceGetDamageType(const xSurface* surf);
+void zSurfaceSetup(xSurface* s);
+U32 zSurfaceGetDamagePassthrough(const xSurface* surf);
+void zSurfaceLoad(xSurface* ent, xSerial* s);
+void zSurfaceSave(xSurface* ent, xSerial* s);
+F32 zSurfaceGetDamping(const xSurface* surf, F32 min_vel);
+U32 zSurfaceGetSticky(const xSurface* surf);
+S32 zSurfaceGetSlickness(const xSurface* surf);
+F32 zSurfaceGetFriction(const xSurface* surf);
+U32 zSurfaceGetStandOn(const xSurface* surf);
 
 void zSurfaceInit()
 {
@@ -210,6 +141,189 @@ void zSurfaceRegisterMapper(U32 assetId)
     if (sMapper[sMapperCount])
     {
         sMapperCount++;
+    }
+}
+
+void zSurfaceExit()
+{
+    xSurfaceExit();
+    sMapperCount = 0;
+}
+
+xSurface* zSurfaceGetSurface(U32 mat_id)
+{
+    for (S32 map = 0; map < sMapperCount; map++)
+    {
+        zMaterialMapAsset* mapper = sMapper[map];
+        if (mapper)
+        {
+            for (U16 i = 0; i < mapper->count; i++)
+            {
+                zMaterialMapEntry* entry = (zMaterialMapEntry*)(mapper + 1) + i;
+                if (entry->materialIndex == mat_id)
+                {
+                    U16 nsurfs = xSurfaceGetNumSurfaces();
+                    for (U16 j = 0; j < nsurfs; j++)
+                    {
+                        xSurface* surf = xSurfaceGetByIdx(j);
+                        if (surf->id == entry->surfaceAssetID)
+                        {
+                            return surf;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return &sDef_surf;
+}
+
+xSurface* zSurfaceGetSurface(const _xCollis* coll)
+{
+    xSurface* surf = NULL;
+
+    if (coll->flags & 1)
+    {
+        if (coll->optr)
+        {
+            surf = ((_xEnt*)coll->optr)->surf;
+        }
+        else
+        {
+            surf = zSurfaceGetSurface(coll->oid);
+        }
+    }
+
+    if (surf)
+    {
+        return surf;
+    }
+
+    return &sDef_surf;
+}
+
+U32 zSurfaceGetSlide(const xSurface* surf)
+{
+    if (surf->moprops)
+    {
+        return ((zSurfaceProps*)surf->moprops)->asset->phys_flags & 1;
+    }
+    return 0;
+}
+
+U32 zSurfaceGetStep(const xSurface* surf)
+{
+    if (surf->moprops)
+    {
+        return ((zSurfaceProps*)surf->moprops)->asset->phys_flags & 4;
+    }
+    return 0;
+}
+
+F32 zSurfaceGetSlideStartAngle(const xSurface* surf)
+{
+    if (surf->moprops)
+    {
+        return 3.1415927f * ((zSurfaceProps*)surf->moprops)->asset->sld_start / 180.0f;
+    }
+    return 3.1415927f * 20 / 180.0f;
+}
+
+F32 zSurfaceGetSlideStopAngle(const xSurface* surf)
+{
+    if (surf->moprops)
+    {
+        return 3.1415927f * ((zSurfaceProps*)surf->moprops)->asset->sld_stop / 180.0f;
+    }
+    return 3.1415927f * 10 / 180.0f;
+}
+
+U32 zSurfaceGetMatchOrient(const xSurface* surf)
+{
+    if (surf->moprops)
+    {
+        return ((zSurfaceProps*)surf->moprops)->asset->phys_flags & 2;
+    }
+    return 0;
+}
+
+S32 zSurfaceGetDamageType(const xSurface* surf)
+{
+    if (surf->moprops)
+    {
+        return ((zSurfaceProps*)surf->moprops)->asset->game_damage_type;
+    }
+    return 0;
+}
+
+U32 zSurfaceGetDamagePassthrough(const xSurface* surf)
+{
+    if (surf->moprops)
+    {
+        return ((zSurfaceProps*)surf->moprops)->asset->game_damage_flags & 1;
+    }
+    return 0;
+}
+
+U32 zSurfaceGetSticky(const xSurface* surf)
+{
+    if (surf->moprops)
+    {
+        return ((zSurfaceProps*)surf->moprops)->asset->game_sticky;
+    }
+    return 0;
+}
+
+U32 zSurfaceGetStandOn(const xSurface* surf)
+{
+    if (surf->moprops)
+    {
+        return !(((zSurfaceProps*)surf->moprops)->asset->phys_flags & 8);
+    }
+    return 1;
+}
+
+F32 zSurfaceGetFriction(const xSurface* surf)
+{
+    return surf->friction;
+}
+
+S32 zSurfaceGetSlickness(const xSurface* surf)
+{
+    return (S32)(1.0f / surf->friction);
+}
+
+F32 zSurfaceGetDamping(const xSurface* surf, F32 min_vel)
+{
+    return pow(min_vel, surf->friction);
+}
+
+void zSurfaceSave(xSurface* ent, xSerial* s)
+{
+    xSurfaceSave(ent, s);
+}
+
+void zSurfaceLoad(xSurface* ent, xSerial* s)
+{
+    xSurfaceLoad(ent, s);
+}
+
+void zSurfaceSetup(xSurface* s)
+{
+    zSurfaceProps* pp = (zSurfaceProps*)s->moprops;
+    if (!pp)
+    {
+        return;
+    }
+
+    for (S32 i = 0; i < 2; i++)
+    {
+        pp->texanim[i].group_ptr = NULL;
+        if (pp->texanim[i].group)
+        {
+            pp->texanim[i].group_ptr = zSceneFindObject(pp->texanim[i].group);
+        }
     }
 }
 
@@ -507,185 +621,96 @@ static S32 zSurfaceEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase* 
     return 1;
 }
 
-void zSurfaceExit()
+static inline void zSurfaceInitDefaultSurface()
 {
-    xSurfaceExit();
-    sMapperCount = 0;
+    sDef_surf.friction = 1.0f;
+    sDef_surf.state = 0;
+    sDef_surf.moprops = &sDef_surf_props;
+    sDef_surf_props.asset = &sDef_surf_asset;
+
+    sDef_surf_asset.game_damage_type = 0;
+    sDef_surf_asset.game_sticky = 0;
+    sDef_surf_asset.game_damage_flags = 0;
+    sDef_surf_asset.sld_start = 20;
+    sDef_surf_asset.sld_stop = 10;
+    sDef_surf_asset.phys_flags = 0;
+    sDef_surf_asset.friction = 1.0f;
 }
 
-xSurface* zSurfaceGetSurface(U32 mat_id)
+void zSurfaceGetName(S32 type, char* buffer)
 {
-    for (S32 map = 0; map < sMapperCount; map++)
+    *buffer = '\0';
+
+    switch (type)
     {
-        zMaterialMapAsset* mapper = sMapper[map];
-        if (mapper)
-        {
-            for (U16 i = 0; i < mapper->count; i++)
-            {
-                zMaterialMapEntry* entry = (zMaterialMapEntry*)(mapper + 1) + i;
-                if (entry->materialIndex == mat_id)
-                {
-                    U16 nsurfs = xSurfaceGetNumSurfaces();
-                    for (U16 j = 0; j < nsurfs; j++)
-                    {
-                        xSurface* surf = xSurfaceGetByIdx(j);
-                        if (surf->id == entry->surfaceAssetID)
-                        {
-                            return surf;
-                        }
-                    }
-                }
-            }
-        }
+    case 0:
+        strcpy(buffer, "DEFAULT");
+        break;
+    case 1:
+        strcpy(buffer, "TILE");
+        break;
+    case 2:
+        strcpy(buffer, "CARPET");
+        break;
+    case 3:
+        strcpy(buffer, "SHORTGRASS");
+        break;
+    case 4:
+        strcpy(buffer, "LONGGRASS");
+        break;
+    case 5:
+        strcpy(buffer, "GRAVEL");
+        break;
+    case 6:
+        strcpy(buffer, "DIRT");
+        break;
+    case 7:
+        strcpy(buffer, "MUD");
+        break;
+    case 8:
+        strcpy(buffer, "THORNS");
+        break;
+    case 9:
+        strcpy(buffer, "METAL");
+        break;
+    case 10:
+        strcpy(buffer, "SHEETMETAL");
+        break;
+    case 11:
+        strcpy(buffer, "CONCRETE");
+        break;
+    case 12:
+        strcpy(buffer, "MARBLE");
+        break;
+    case 13:
+        strcpy(buffer, "STONE");
+        break;
+    case 14:
+        strcpy(buffer, "WOOD");
+        break;
+    case 15:
+        strcpy(buffer, "SNOW");
+        break;
+    case 16:
+        strcpy(buffer, "ICE");
+        break;
+    case 17:
+        strcpy(buffer, "SHALLOWWATER");
+        break;
+    case 18:
+        strcpy(buffer, "DEEPWATER");
+        break;
+    case 19:
+        strcpy(buffer, "TAR");
+        break;
+    case 20:
+        strcpy(buffer, "SPECIAL1");
+        break;
+    case 21:
+        strcpy(buffer, "DeepAcid");
+        break;
+    case 22:
+        strcpy(buffer, "NONE");
+        break;
     }
-
-    return &sDef_surf;
-}
-
-xSurface* zSurfaceGetSurface(const _xCollis* coll)
-{
-    xSurface* surf = NULL;
-
-    if (coll->flags & 1)
-    {
-        if (coll->optr)
-        {
-            surf = ((_xEnt*)coll->optr)->surf;
-        }
-        else
-        {
-            surf = zSurfaceGetSurface(coll->oid);
-        }
-    }
-
-    if (surf)
-    {
-        return surf;
-    }
-
-    return &sDef_surf;
-}
-
-U32 zSurfaceGetSlide(const xSurface* surf)
-{
-    if (surf->moprops)
-    {
-        return ((zSurfaceProps*)surf->moprops)->asset->phys_flags & 1;
-    }
-    return 0;
-}
-
-U32 zSurfaceGetStep(const xSurface* surf)
-{
-    if (surf->moprops)
-    {
-        return ((zSurfaceProps*)surf->moprops)->asset->phys_flags & 4;
-    }
-    return 0;
-}
-
-F32 zSurfaceGetSlideStartAngle(const xSurface* surf)
-{
-    if (surf->moprops)
-    {
-        return 3.1415927f * ((zSurfaceProps*)surf->moprops)->asset->sld_start / 180.0f;
-    }
-    return 3.1415927f * 20 / 180.0f;
-}
-
-F32 zSurfaceGetSlideStopAngle(const xSurface* surf)
-{
-    if (surf->moprops)
-    {
-        return 3.1415927f * ((zSurfaceProps*)surf->moprops)->asset->sld_stop / 180.0f;
-    }
-    return 3.1415927f * 10 / 180.0f;
-}
-
-U32 zSurfaceGetMatchOrient(const xSurface* surf)
-{
-    if (surf->moprops)
-    {
-        return ((zSurfaceProps*)surf->moprops)->asset->phys_flags & 2;
-    }
-    return 0;
-}
-
-S32 zSurfaceGetDamageType(const xSurface* surf)
-{
-    if (surf->moprops)
-    {
-        return ((zSurfaceProps*)surf->moprops)->asset->game_damage_type;
-    }
-    return 0;
-}
-
-void zSurfaceSetup(xSurface* s)
-{
-    zSurfaceProps* pp = (zSurfaceProps*)s->moprops;
-    if (!pp)
-    {
-        return;
-    }
-
-    for (S32 i = 0; i < 2; i++)
-    {
-        pp->texanim[i].group_ptr = NULL;
-        if (pp->texanim[i].group)
-        {
-            pp->texanim[i].group_ptr = zSceneFindObject(pp->texanim[i].group);
-        }
-    }
-}
-
-U32 zSurfaceGetDamagePassthrough(const xSurface* surf)
-{
-    if (surf->moprops)
-    {
-        return ((zSurfaceProps*)surf->moprops)->asset->game_damage_flags & 1;
-    }
-    return 0;
-}
-
-void zSurfaceLoad(xSurface* ent, xSerial* s)
-{
-    xSurfaceLoad(ent, s);
-}
-
-void zSurfaceSave(xSurface* ent, xSerial* s)
-{
-    xSurfaceSave(ent, s);
-}
-
-F32 zSurfaceGetDamping(const xSurface* surf, F32 min_vel)
-{
-    return pow(min_vel, surf->friction);
-}
-
-U32 zSurfaceGetSticky(const xSurface* surf)
-{
-    if (surf->moprops)
-    {
-        return ((zSurfaceProps*)surf->moprops)->asset->game_sticky;
-    }
-    return 0;
-}
-
-S32 zSurfaceGetSlickness(const xSurface* surf)
-{
-    return (S32)(1.0f / surf->friction);
-}
-
-F32 zSurfaceGetFriction(const xSurface* surf)
-{
-    return surf->friction;
-}
-
-U32 zSurfaceGetStandOn(const xSurface* surf)
-{
-    if (surf->moprops)
-    {
-        return !(((zSurfaceProps*)surf->moprops)->asset->phys_flags & 8);
-    }
-    return 1;
 }

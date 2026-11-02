@@ -66,130 +66,48 @@ static inline void zGustInit(_zGust* g, zGustAsset* a)
     g->debris_timer = 0.15f;
 }
 
-void zGustUpdateFX(F32 seconds)
+void zGustInit()
 {
-    for (S32 i = 0; i < ngusts; i++)
+    ngusts = xSTAssetCountByType('GUST');
+
+    if (ngusts)
     {
-        _zGust* curr = &gusts[i];
-        if (curr->flags & 1)
+        gusts = (_zGust*)xMemAlloc(gActiveHeap, ngusts * sizeof(_zGust));
+        for (U16 i = 0; i < ngusts; i++)
         {
-            UpdateGustFX(curr, seconds);
+            U32 size;
+            zGustAsset* asset = (zGustAsset*)xSTFindAssetByType('GUST', i, &size);
+            zGustInit(&gusts[i], asset);
         }
     }
+    else
+    {
+        gusts = NULL;
+    }
 }
 
-// Blows dust (asset flag 2) or debris around the gust's volume, more for a larger floor area.
-static void UpdateGustFX(_zGust* g, F32 seconds)
+void zGustSetup()
 {
-    S32 i;
-
-    if (g->asset->partMod <= 0.0f)
+    if (gusts)
     {
-        return;
-    }
-
-    g->debris_timer -= seconds;
-    if (!(g->debris_timer <= 0.0f))
-    {
-        return;
-    }
-
-    _zVolume* volume = !g->asset->effectID ? g->volume : g->fx_volume;
-    zVolumeAsset* asset = volume->asset;
-
-    S32 vol_area = (asset->bound.box.box.upper.x - asset->bound.box.box.lower.x) *
-                   (asset->bound.box.box.upper.z - asset->bound.box.box.lower.z);
-
-    if (vol_area > 1000)
-    {
-        g->debris_timer = 1000000.0f;
-        return;
-    }
-
-    S32 total_debris = vol_area >> 5;
-    if (total_debris > 5)
-    {
-        total_debris = 5;
-    }
-    else if (total_debris < 1)
-    {
-        total_debris = 1;
-    }
-
-    g->debris_timer = iurand() * 0.15f + 0.15f;
-
-    _zParEmitter* e = (g->asset->flags & 2) ? sGustDustEmitter : sGustDebrisEmitter;
-    if (!e)
-    {
-        return;
-    }
-
-    _zParEmitterCustomSettings info;
-    info.custom_flags = 0x61;
-
-    for (i = 0; i < total_debris; i++)
-    {
-        if (g->asset->effectID == 0)
+        for (U16 i = 0; i < ngusts; i++)
         {
-            asset = g->volume->asset;
-            _xBBox* box = &asset->bound.box;
-
-            info.pos = box->box.lower;
-            info.pos.x = (box->box.upper.x - box->box.lower.x) * iurand() + info.pos.x;
-            info.pos.z = (box->box.upper.z - box->box.lower.z) * iurand() + info.pos.z;
-            info.vel.x = 0.0f;
-            info.vel.y = 5.0f;
-            info.vel.z = 0.0f;
-            info.life = (box->box.upper.y - box->box.lower.y) / 5.0f * 2.0f;
-        }
-        else
-        {
-            asset = g->fx_volume->asset;
-            _xBBox* box = &asset->bound.box;
-
-            info.pos.x = (box->box.upper.x - box->box.lower.x) * iurand() + box->box.lower.x;
-            info.pos.y = (box->box.upper.y - box->box.lower.y) * iurand() + box->box.lower.y;
-            info.pos.z = (box->box.upper.z - box->box.lower.z) * iurand() + box->box.lower.z;
-            info.vel.x = 1.5f * g->asset->vel.x;
-            info.vel.y = 1.5f * g->asset->vel.y;
-            info.vel.z = 1.5f * g->asset->vel.z;
-            info.life = 7.5f * g->asset->fade;
+            zGustSetup(&gusts[i]);
         }
 
-        info.life *= g->asset->partMod;
-        zParEmitterEmitCustom(e, 1.0f / 30.0f, &info);
+        sGustDustEmitter = zParEmitterFind(xStrHash("PAREMIT_GUST_DUST"));
+        sGustDebrisEmitter = zParEmitterFind(xStrHash("PAREMIT_GUST_DEBRIS"));
     }
 }
 
-S32 zGustEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
+_zGust* zGustGetGust(U16 n)
 {
-    switch (toEvent)
+    if (gusts)
     {
-    case eEventOn:
-        zGustTurnOn((_zGust*)to);
-        break;
-    case eEventOff:
-        zGustTurnOff((_zGust*)to);
-        break;
-    case eEventToggle:
-        zGustToggleOn((_zGust*)to);
-        break;
-    case eEventReset:
-        zGustReset((_zGust*)to);
-        break;
+        return &gusts[n];
     }
 
-    return 1;
-}
-
-void zGustLoad(_zGust* ent, xSerial* s)
-{
-    xBaseLoad(ent, s);
-}
-
-void zGustSave(_zGust* ent, xSerial* s)
-{
-    xBaseSave(ent, s);
+    return NULL;
 }
 
 // An entity can be in four gusts at once. lerp fades each gust in (0 to 1) and out (-1 to 0) over
@@ -306,46 +224,127 @@ void zGustUpdateEnt(_xEnt* ent, _xScene*, F32 dt, void* gdata)
     }
 }
 
-_zGust* zGustGetGust(U16 n)
+void zGustSave(_zGust* ent, xSerial* s)
 {
-    if (gusts)
-    {
-        return &gusts[n];
-    }
-
-    return NULL;
+    xBaseSave(ent, s);
 }
 
-void zGustSetup()
+void zGustLoad(_zGust* ent, xSerial* s)
 {
-    if (gusts)
+    xBaseLoad(ent, s);
+}
+
+S32 zGustEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
+{
+    switch (toEvent)
     {
-        for (U16 i = 0; i < ngusts; i++)
+    case eEventOn:
+        zGustTurnOn((_zGust*)to);
+        break;
+    case eEventOff:
+        zGustTurnOff((_zGust*)to);
+        break;
+    case eEventToggle:
+        zGustToggleOn((_zGust*)to);
+        break;
+    case eEventReset:
+        zGustReset((_zGust*)to);
+        break;
+    }
+
+    return 1;
+}
+
+// Blows dust (asset flag 2) or debris around the gust's volume, more for a larger floor area.
+static void UpdateGustFX(_zGust* g, F32 seconds)
+{
+    if (g->asset->partMod <= 0.0f)
+    {
+        return;
+    }
+
+    g->debris_timer -= seconds;
+    if (!(g->debris_timer <= 0.0f))
+    {
+        return;
+    }
+
+    _zVolume* volume = !g->asset->effectID ? g->volume : g->fx_volume;
+    zVolumeAsset* asset = volume->asset;
+
+    S32 vol_area = (asset->bound.box.box.upper.x - asset->bound.box.box.lower.x) *
+                   (asset->bound.box.box.upper.z - asset->bound.box.box.lower.z);
+
+    if (vol_area > 1000)
+    {
+        g->debris_timer = 1000000.0f;
+        return;
+    }
+
+    S32 total_debris = vol_area >> 5;
+    if (total_debris > 5)
+    {
+        total_debris = 5;
+    }
+    else if (total_debris < 1)
+    {
+        total_debris = 1;
+    }
+
+    g->debris_timer = iurand() * 0.15f + 0.15f;
+
+    _zParEmitter* e = (g->asset->flags & 2) ? sGustDustEmitter : sGustDebrisEmitter;
+    if (!e)
+    {
+        return;
+    }
+
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x61;
+
+    for (S32 i = 0; i < total_debris; i++)
+    {
+        if (g->asset->effectID == 0)
         {
-            zGustSetup(&gusts[i]);
+            asset = g->volume->asset;
+            _xBBox* box = &asset->bound.box;
+
+            info.pos = box->box.lower;
+            info.pos.x = (box->box.upper.x - box->box.lower.x) * iurand() + info.pos.x;
+            info.pos.z = (box->box.upper.z - box->box.lower.z) * iurand() + info.pos.z;
+            info.vel.x = 0.0f;
+            info.vel.y = 5.0f;
+            info.vel.z = 0.0f;
+            info.life = (box->box.upper.y - box->box.lower.y) / 5.0f;
+            info.life *= 2.0f;
+        }
+        else
+        {
+            asset = g->fx_volume->asset;
+            _xBBox* box = &asset->bound.box;
+
+            info.pos.x = (box->box.upper.x - box->box.lower.x) * iurand() + box->box.lower.x;
+            info.pos.y = (box->box.upper.y - box->box.lower.y) * iurand() + box->box.lower.y;
+            info.pos.z = (box->box.upper.z - box->box.lower.z) * iurand() + box->box.lower.z;
+            info.vel.x = 1.5f * g->asset->vel.x;
+            info.vel.y = 1.5f * g->asset->vel.y;
+            info.vel.z = 1.5f * g->asset->vel.z;
+            info.life = 7.5f * g->asset->fade;
         }
 
-        sGustDustEmitter = zParEmitterFind(xStrHash("PAREMIT_GUST_DUST"));
-        sGustDebrisEmitter = zParEmitterFind(xStrHash("PAREMIT_GUST_DEBRIS"));
+        info.life *= g->asset->partMod;
+        zParEmitterEmitCustom(e, 1.0f / 30.0f, &info);
     }
 }
 
-void zGustInit()
+void zGustUpdateFX(F32 seconds)
 {
-    ngusts = xSTAssetCountByType('GUST');
-
-    if (ngusts)
+    for (S32 i = 0; i < ngusts; i++)
     {
-        gusts = (_zGust*)xMemAlloc(gActiveHeap, ngusts * sizeof(_zGust));
-        for (U16 i = 0; i < ngusts; i++)
+        _zGust* curr = &gusts[i];
+        if (curr->flags & 1)
         {
-            U32 size;
-            zGustAsset* asset = (zGustAsset*)xSTFindAssetByType('GUST', i, &size);
-            zGustInit(&gusts[i], asset);
+            UpdateGustFX(curr, seconds);
         }
-    }
-    else
-    {
-        gusts = NULL;
     }
 }

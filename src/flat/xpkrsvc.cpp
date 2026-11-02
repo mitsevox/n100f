@@ -106,6 +106,78 @@ static S32 g_packinit;
 
 static S32 PKR_LoadStep_Async();
 
+st_PACKER_READ_FUNCS* PKRGetReadFuncs(S32 apiver);
+S32 PKRStartup();
+S32 PKRShutdown();
+S32 PKRLoadStep(S32);
+static st_PACKER_READ_DATA* PKR_ReadInit(void* userdata, char* pkgfile, U32 opts, S32* cltver,
+                                         st_PACKER_ASSETTYPE* typelist);
+static void PKR_ReadDone(st_PACKER_READ_DATA* pr);
+static S32 PKR_SetActive(st_PACKER_READ_DATA* pr, en_LAYER_TYPE layer);
+static S32 PKR_parse_TOC(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static S32 PKR_LoadStep_Async();
+static inline char* PKR_LayerMemReserve(st_PACKER_READ_DATA* pr, st_PACKER_LTOC_NODE* layer);
+static inline void PKR_LayerMemRelease(st_PACKER_READ_DATA* pr, st_PACKER_LTOC_NODE* layer);
+static inline char* PKR_getRWarena(st_PACKER_READ_DATA* pr, S32 amount);
+static inline void PKR_relRWarena();
+static inline en_PKR_LAYER_LOAD_DEST PKR_layerLoadDest(en_LAYER_TYPE layer);
+static inline S32 PKR_layerTypeNeedsXForm(en_LAYER_TYPE layer);
+static S32 PKR_findNextLayerToLoad(st_PACKER_READ_DATA** work_on_pkg,
+                                   st_PACKER_LTOC_NODE** next_layer);
+static void PKR_updateLayerAssets(st_PACKER_LTOC_NODE* laynode);
+static inline void PKR_xformLayerAssets(st_PACKER_LTOC_NODE* laynode);
+static void PKR_xform_asset(st_PACKER_ATOC_NODE* assnode);
+static S32 PKR_LoadLayer(st_PACKER_READ_DATA* pr, en_LAYER_TYPE layer);
+static void* PKR_LoadAsset(st_PACKER_READ_DATA* pr, U32 aid, const char*, void*);
+static U32 PKR_getPackTimestamp(st_PACKER_READ_DATA* pr);
+static char* PKR_AssetName(st_PACKER_READ_DATA* pr, U32 aid);
+static U32 PKR_GetBaseSector(st_PACKER_READ_DATA* pr);
+static S32 PKR_GetAssetInfo(st_PACKER_READ_DATA* pr, U32 aid, st_PKR_ASSET_TOCINFO* tocainfo);
+static S32 PKR_GetAssetInfoByType(st_PACKER_READ_DATA* pr, U32 type, S32 idx,
+                                  st_PKR_ASSET_TOCINFO* tocainfo);
+static U32 PKR_GetAssetSize(st_PACKER_READ_DATA* pr, U32 aid);
+static S32 PKR_AssetCount(st_PACKER_READ_DATA* pr, U32 type);
+static void* PKR_AssetByType(st_PACKER_READ_DATA* pr, U32 type, S32 idx, U32* size);
+static S32 PKR_IsAssetReady(st_PACKER_READ_DATA* pr, U32 aid);
+static S32 PKR_PkgHasAsset(st_PACKER_READ_DATA* pr, U32 aid);
+static S32 PKR_FRIEND_assetIsGameDup(U32 aid, const st_PACKER_READ_DATA* skippr, S32 oursize,
+                                     U32 ourtype, U32 chksum, char*);
+static inline void* PKR_gettempmem(S32 amount, char** memtrue);
+static inline void* PKR_getmem(S32 amount);
+static inline void PKR_makepool_anode(st_PACKER_READ_DATA* pr, S32 cnt);
+static inline void PKR_kiilpool_anode(st_PACKER_READ_DATA* pr);
+static inline st_PACKER_ATOC_NODE* PKR_newassnode(st_PACKER_READ_DATA* pr, U32 aid);
+static inline st_PACKER_LTOC_NODE* PKR_newlaynode(en_LAYER_TYPE layer, S32 refcnt);
+static inline void PKR_oldlaynode(st_PACKER_LTOC_NODE* laynode);
+static S32 OrdTest_R_AssetID(const void* vkey, void* vitem);
+static S32 OrdTest_R_Asset(const void* vkey, void* vitem);
+static inline S32 LOD_r_HIPA(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_PACK(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_PVER(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_PFLG(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_PCNT(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_PCRT(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_PMOD(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_DICT(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_ATOC(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_AINF(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static S32 LOD_r_AHDR(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_ADBG(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr, st_PACKER_ATOC_NODE* assnode);
+static inline S32 LOD_r_LTOC(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_LINF(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static S32 LOD_r_LHDR(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_LDBG(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr, st_PACKER_LTOC_NODE* laynode);
+static inline S32 LOD_r_STRM(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_DHDR(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline S32 LOD_r_DPAK(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr);
+static inline st_PACKER_ASSETTYPE* PKR_type2typeref(U32 asstype, st_PACKER_ASSETTYPE* types);
+static void PKR_bld_typecnt(st_PACKER_READ_DATA* pr);
+static void PKR_special_loadbuf_killed(RwResEntry*);
+static inline S32 PKR_typeHdlr_idx(st_PACKER_READ_DATA* pr, U32 type);
+
+static RwResEntry* g_RWarena_resEntry;
+static RwResEntry* g_RWarena_resOwner;
+
 st_PACKER_READ_FUNCS* PKRGetReadFuncs(S32 apiver)
 {
     switch (apiver)
@@ -379,9 +451,6 @@ static S32 PKR_parse_TOC(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr)
     }
     return done;
 }
-
-static RwResEntry* g_RWarena_resEntry;
-static RwResEntry* g_RWarena_resOwner;
 
 // One step of the background loader. With no layer in flight, picks the next unloaded layer,
 // gets its memory and starts reading the whole layer in one go; otherwise polls that read and,
@@ -774,76 +843,6 @@ static void* PKR_LoadAsset(st_PACKER_READ_DATA* pr, U32 aid, const char*, void*)
     return assnode != NULL ? assnode->memloc : NULL;
 }
 
-static U32 PKR_getPackTimestamp(st_PACKER_READ_DATA* pr)
-{
-    return pr->time_made;
-}
-
-static char* PKR_AssetName(st_PACKER_READ_DATA* pr, U32 aid)
-{
-    char* name = NULL;
-    S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
-
-    if (idx >= 0)
-    {
-        name = ((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->name;
-    }
-
-    return name;
-}
-
-static U32 PKR_GetBaseSector(st_PACKER_READ_DATA* pr)
-{
-    return pr->base_sector;
-}
-
-static S32 PKR_GetAssetInfo(st_PACKER_READ_DATA* pr, U32 aid, st_PKR_ASSET_TOCINFO* tocainfo)
-{
-    memset(tocainfo, 0, sizeof(st_PKR_ASSET_TOCINFO));
-    S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
-    if (idx >= 0)
-    {
-        st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)pr->asstoc.list[idx];
-        tocainfo->aid = aid;
-        tocainfo->sector = pr->base_sector + assnode->d_off / pkr_sector_size;
-        tocainfo->plus_offset = assnode->d_off % pkr_sector_size;
-        tocainfo->size = assnode->d_size;
-        tocainfo->mempos = assnode->memloc;
-    }
-    return idx >= 0 ? 1 : 0;
-}
-
-static S32 PKR_GetAssetInfoByType(st_PACKER_READ_DATA* pr, U32 type, S32 idx,
-                                  st_PKR_ASSET_TOCINFO* tocainfo)
-{
-    memset(tocainfo, 0, sizeof(st_PKR_ASSET_TOCINFO));
-    if (idx < 0)
-    {
-        idx = 0;
-    }
-
-    S32 typeidx = PKR_typeHdlr_idx(pr, type);
-    if (typeidx < 0)
-    {
-        return 0;
-    }
-
-    st_XORDEREDARRAY* tmplist = &pr->typelist[typeidx];
-    if (idx >= tmplist->cnt)
-    {
-        return 0;
-    }
-
-    st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)tmplist->list[idx];
-    tocainfo->aid = assnode->aid;
-    tocainfo->sector = pr->base_sector + assnode->d_off / pkr_sector_size;
-    tocainfo->plus_offset = assnode->d_off % pkr_sector_size;
-    tocainfo->size = assnode->d_size;
-    tocainfo->mempos = assnode->memloc;
-
-    return 1;
-}
-
 static U32 PKR_GetAssetSize(st_PACKER_READ_DATA* pr, U32 aid)
 {
     st_PACKER_ATOC_NODE* assnode = NULL;
@@ -936,6 +935,76 @@ static S32 PKR_IsAssetReady(st_PACKER_READ_DATA* pr, U32 aid)
     return ready;
 }
 
+static U32 PKR_getPackTimestamp(st_PACKER_READ_DATA* pr)
+{
+    return pr->time_made;
+}
+
+static char* PKR_AssetName(st_PACKER_READ_DATA* pr, U32 aid)
+{
+    char* name = NULL;
+    S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
+
+    if (idx >= 0)
+    {
+        name = ((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->name;
+    }
+
+    return name;
+}
+
+static U32 PKR_GetBaseSector(st_PACKER_READ_DATA* pr)
+{
+    return pr->base_sector;
+}
+
+static S32 PKR_GetAssetInfo(st_PACKER_READ_DATA* pr, U32 aid, st_PKR_ASSET_TOCINFO* tocainfo)
+{
+    memset(tocainfo, 0, sizeof(st_PKR_ASSET_TOCINFO));
+    S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
+    if (idx >= 0)
+    {
+        st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)pr->asstoc.list[idx];
+        tocainfo->aid = aid;
+        tocainfo->sector = pr->base_sector + assnode->d_off / pkr_sector_size;
+        tocainfo->plus_offset = assnode->d_off % pkr_sector_size;
+        tocainfo->size = assnode->d_size;
+        tocainfo->mempos = assnode->memloc;
+    }
+    return idx >= 0 ? 1 : 0;
+}
+
+static S32 PKR_GetAssetInfoByType(st_PACKER_READ_DATA* pr, U32 type, S32 idx,
+                                  st_PKR_ASSET_TOCINFO* tocainfo)
+{
+    memset(tocainfo, 0, sizeof(st_PKR_ASSET_TOCINFO));
+    if (idx < 0)
+    {
+        idx = 0;
+    }
+
+    S32 typeidx = PKR_typeHdlr_idx(pr, type);
+    if (typeidx < 0)
+    {
+        return 0;
+    }
+
+    st_XORDEREDARRAY* tmplist = &pr->typelist[typeidx];
+    if (idx >= tmplist->cnt)
+    {
+        return 0;
+    }
+
+    st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)tmplist->list[idx];
+    tocainfo->aid = assnode->aid;
+    tocainfo->sector = pr->base_sector + assnode->d_off / pkr_sector_size;
+    tocainfo->plus_offset = assnode->d_off % pkr_sector_size;
+    tocainfo->size = assnode->d_size;
+    tocainfo->mempos = assnode->memloc;
+
+    return 1;
+}
+
 static S32 PKR_PkgHasAsset(st_PACKER_READ_DATA* pr, U32 aid)
 {
     S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
@@ -993,6 +1062,24 @@ static S32 PKR_FRIEND_assetIsGameDup(U32 aid, const st_PACKER_READ_DATA* skippr,
     }
 
     return is_dup;
+}
+
+static S32 OrdTest_R_Asset(const void* vkey, void* vitem)
+{
+    S32 rc;
+    if (*(U32*)vkey < *(U32*)vitem)
+    {
+        rc = -1;
+    }
+    else if (*(U32*)vkey > *(U32*)vitem)
+    {
+        rc = 1;
+    }
+    else
+    {
+        rc = 0;
+    }
+    return rc;
 }
 
 // A zeroed block from the temporary stack, 0x80 bytes larger than asked so the 64-byte-aligned
@@ -1085,24 +1172,6 @@ static S32 OrdTest_R_AssetID(const void* vkey, void* vitem)
         rc = -1;
     }
     else if ((U32)vkey > *(U32*)vitem)
-    {
-        rc = 1;
-    }
-    else
-    {
-        rc = 0;
-    }
-    return rc;
-}
-
-static S32 OrdTest_R_Asset(const void* vkey, void* vitem)
-{
-    S32 rc;
-    if (*(U32*)vkey < *(U32*)vitem)
-    {
-        rc = -1;
-    }
-    else if (*(U32*)vkey > *(U32*)vitem)
     {
         rc = 1;
     }

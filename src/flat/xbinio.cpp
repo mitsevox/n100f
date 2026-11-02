@@ -29,6 +29,132 @@ static S32 BFD_read(void* data, S32 elesize, S32 elecnt, tag_xFile* bffp, void* 
 
 static U32 g_loadlock = 0xFFFFFF00;
 
+static void LoadDestroy(st_FILELOADINFO* fli);
+static void SetBuffer(st_FILELOADINFO* fli, char* dblbuffer, S32 bufsize);
+static void DiscardBuffer(st_FILELOADINFO* fli);
+static S32 ReadRaw(st_FILELOADINFO* fli, void* data, S32 size, S32 count);
+static S32 ReadBytes(st_FILELOADINFO* fli, char* data, S32 count);
+static S32 ReadMShorts(st_FILELOADINFO* fli, S16* data, S32 count);
+static S32 ReadMLongs(st_FILELOADINFO* fli, S32* data, S32 count);
+static S32 ReadMFloats(st_FILELOADINFO* fli, F32* data, S32 count);
+static S32 ReadMDoubles(st_FILELOADINFO* fli, F64* data, S32 count);
+static S32 ReadIShorts(st_FILELOADINFO* fli, S16* data, S32 count);
+static S32 ReadILongs(st_FILELOADINFO* fli, S32* data, S32 count);
+static S32 ReadIFloats(st_FILELOADINFO* fli, F32* data, S32 count);
+static S32 ReadIDoubles(st_FILELOADINFO* fli, F64* data, S32 count);
+static void Swap2(char* d, S32 n);
+static void Swap4(char* d, S32 n);
+static void Swap8(char* d, S32 n);
+static void BFD_close(tag_xFile* bffp, void* xtradata);
+static tag_xFile* BFD_open(const char* filename, const char* mode, U32 lockid, S32, void* xtradata);
+static S32 BFD_read(void* data, S32 elesize, S32 elecnt, tag_xFile* bffp, void* xtradata);
+static S32 BFD_seek(tag_xFile* bffp, S32 offset, S32 whence, void* xtradata);
+static S32 SkipBytes(st_FILELOADINFO* fli, S32 fwd);
+static S32 ReadSeek(st_FILELOADINFO* fli, S32 pos);
+static void BFD_cb_GCP2_readasync(tag_xFile* bffp);
+static S32 BFD_AsyncRead(st_FILELOADINFO* fli, S32 pos, void* data, S32 size, S32 n, S32 endian);
+static en_BIO_ASYNC_ERRCODES BFD_AsyncReadStatus(st_FILELOADINFO* fli);
+static S32 AsyncMRead(st_FILELOADINFO* fli, S32 offset, char* data, S32 size, S32 n);
+static S32 AsyncIRead(st_FILELOADINFO* fli, S32 offset, char* data, S32 size, S32 n);
+static en_BIO_ASYNC_ERRCODES AsyncReadStatus(st_FILELOADINFO* fli);
+static S32 BFD_getLength(tag_xFile* bffp, void* xtradata);
+static S32 BFD_startSector(const char* filename);
+st_FILELOADINFO* xBinioLoadCreate(const char* filename);
+
+static tag_xFile g_xfload[8] = {};
+
+static st_BINIO_XTRADATA* g_async_context;
+
+static st_FILELOADINFO g_loadinst[8] = {};
+static st_BINIO_XTRADATA g_xtraload[8] = {};
+
+static S32 BFD_getLength(tag_xFile* bffp, void* xtradata)
+{
+    return iFileGetSize(bffp);
+}
+
+// The disc address of the file, or 0 when it is not found.
+static S32 BFD_startSector(const char* filename)
+{
+    tag_xFile file = {};
+    U32 addr = 0;
+    U32 length = 0;
+
+    if (!iFileFind(filename, &file))
+    {
+        iFileGetInfo(&file, &addr, &length);
+    }
+
+    return addr;
+}
+
+// Takes a free one of the eight load slots and opens the file in it, or returns NULL.
+st_FILELOADINFO* xBinioLoadCreate(const char* filename)
+{
+    st_FILELOADINFO* fli = NULL;
+    tag_xFile* tmp_fp;
+    S32 i;
+    S32 uselock = -1;
+
+    for (i = 0; i < 8; i++)
+    {
+        if (!(g_loadlock & (1 << i)))
+        {
+            g_loadlock |= 1 << i;
+            uselock = i;
+            fli = &g_loadinst[i];
+            break;
+        }
+    }
+
+    if (fli)
+    {
+        memset(fli, 0, sizeof(st_FILELOADINFO));
+
+        fli->lockid = uselock & ~(uselock >> 31);
+        fli->xtradata = &g_xtraload[uselock];
+        fli->destroy = LoadDestroy;
+        fli->readBytes = ReadBytes;
+        fli->readMShorts = ReadMShorts;
+        fli->readMLongs = ReadMLongs;
+        fli->readMFloats = ReadMFloats;
+        fli->readMDoubles = ReadMDoubles;
+        fli->readIShorts = ReadIShorts;
+        fli->readILongs = ReadILongs;
+        fli->readIFloats = ReadIFloats;
+        fli->readIDoubles = ReadIDoubles;
+        fli->asyncIRead = AsyncIRead;
+        fli->asyncMRead = AsyncMRead;
+        fli->asyncReadStatus = AsyncReadStatus;
+        fli->skipBytes = SkipBytes;
+        fli->seekSpot = ReadSeek;
+        fli->setDoubleBuf = SetBuffer;
+        fli->discardDblBuf = DiscardBuffer;
+        fli->error = FIOERR_NONE;
+        fli->remain = 0;
+        fli->basesector = 0;
+        fli->filesize = 0;
+        fli->position = 0;
+        fli->basesector = 0;
+
+        tmp_fp = BFD_open(filename, "rb", uselock, 0, fli->xtradata);
+        if (tmp_fp)
+        {
+            fli->basesector = BFD_startSector(filename);
+            fli->privdata = tmp_fp;
+            fli->filesize = BFD_getLength(tmp_fp, fli->xtradata);
+            fli->remain = fli->filesize;
+        }
+        else
+        {
+            LoadDestroy(fli);
+            fli = NULL;
+        }
+    }
+
+    return fli;
+}
+
 static void LoadDestroy(st_FILELOADINFO* fli)
 {
     tag_xFile* fp = (tag_xFile*)fli->privdata;
@@ -43,6 +169,84 @@ static void LoadDestroy(st_FILELOADINFO* fli)
     memset(fli, 0, sizeof(st_FILELOADINFO));
 
     g_loadlock &= ~(1 << lockid);
+}
+
+// Returns nonzero when the seek fails.
+static S32 BFD_seek(tag_xFile* bffp, S32 offset, S32 whence, void* xtradata)
+{
+    st_BINIO_XTRADATA* xtra = (st_BINIO_XTRADATA*)xtradata;
+    S32 rc = (iFileSeek(bffp, offset, whence) == -1) ? 1 : 0;
+
+    xtra->fpos = offset;
+
+    return rc;
+}
+
+static S32 SkipBytes(st_FILELOADINFO* fli, S32 fwd)
+{
+    tag_xFile* file = (tag_xFile*)fli->privdata;
+
+    if (fli->error != FIOERR_NONE)
+    {
+        return 0;
+    }
+
+    if (fwd == 0)
+    {
+        return 1;
+    }
+
+    if (fwd < 0)
+    {
+        fwd = 0;
+    }
+
+    if (BFD_seek(file, fli->position + fwd, IFILE_SEEK_SET, fli->xtradata) != 0)
+    {
+        fli->error = FIOERR_SEEKFAIL;
+    }
+    else
+    {
+        fli->remain -= fwd;
+        fli->position += fwd;
+    }
+
+    if (fli->error != FIOERR_NONE)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+// Clamps the position to the file size.
+static S32 ReadSeek(st_FILELOADINFO* fli, S32 pos)
+{
+    tag_xFile* file = (tag_xFile*)fli->privdata;
+
+    if (fli->error != FIOERR_NONE)
+    {
+        return 0;
+    }
+
+    pos = (pos < fli->filesize) ? pos : fli->filesize;
+
+    if (BFD_seek(file, pos, IFILE_SEEK_SET, fli->xtradata) != 0)
+    {
+        fli->error = FIOERR_SEEKFAIL;
+    }
+    else
+    {
+        fli->position = pos;
+        fli->remain = fli->filesize - pos;
+    }
+
+    if (fli->error != FIOERR_NONE)
+    {
+        return 0;
+    }
+
+    return 1;
 }
 
 static void SetBuffer(st_FILELOADINFO* fli, char* dblbuffer, S32 bufsize)
@@ -161,6 +365,69 @@ static S32 ReadIDoubles(st_FILELOADINFO* fli, F64* data, S32 count)
     return act;
 }
 
+static en_BIO_ASYNC_ERRCODES BFD_AsyncReadStatus(st_FILELOADINFO* fli)
+{
+    en_BIO_ASYNC_ERRCODES status;
+    st_BINIO_XTRADATA* xtra = (st_BINIO_XTRADATA*)fli->xtradata;
+
+    if (!g_async_context)
+    {
+        status = BINIO_ASYNC_NOOP;
+    }
+    else if (xtra != g_async_context)
+    {
+        status = BINIO_ASYNC_INPROG;
+    }
+    else
+    {
+        if (xtra->asyn_status == BINIO_ASYNC_INPROG)
+        {
+            S32 amtsofar = 0;
+
+            switch (iFileReadAsyncStatus(xtra->gcaskey, &amtsofar))
+            {
+            case IFILE_RDSTAT_QUEUED:
+            case IFILE_RDSTAT_INPROG:
+                break;
+            case IFILE_RDSTAT_DONE:
+                xtra->asyn_status = BINIO_ASYNC_DONE;
+                break;
+            case IFILE_RDSTAT_NOOP:
+            case IFILE_RDSTAT_FAIL:
+            case IFILE_RDSTAT_EXPIRED:
+            default:
+                xtra->asyn_status = BINIO_ASYNC_FAIL;
+                break;
+            }
+        }
+
+        status = xtra->asyn_status;
+
+        if (status == BINIO_ASYNC_FAIL || status == BINIO_ASYNC_DONE)
+        {
+            xtra->asyn_status = BINIO_ASYNC_NOOP;
+            g_async_context = NULL;
+        }
+    }
+
+    return status;
+}
+
+static S32 AsyncMRead(st_FILELOADINFO* fli, S32 offset, char* data, S32 size, S32 n)
+{
+    return BFD_AsyncRead(fli, offset, data, size, n, 1);
+}
+
+static S32 AsyncIRead(st_FILELOADINFO* fli, S32 offset, char* data, S32 size, S32 n)
+{
+    return BFD_AsyncRead(fli, offset, data, size, n, 0);
+}
+
+static en_BIO_ASYNC_ERRCODES AsyncReadStatus(st_FILELOADINFO* fli)
+{
+    return BFD_AsyncReadStatus(fli);
+}
+
 static void Swap2(char* d, S32 n)
 {
     char t;
@@ -232,8 +499,6 @@ static void BFD_close(tag_xFile* bffp, void* xtradata)
     xtra->dbl_end = 0;
     xtra->dbl_amt = 0;
 }
-
-static tag_xFile g_xfload[8] = {};
 
 // Only reading uses one of the eight file slots; "wb" is recognised but never opens anything.
 static tag_xFile* BFD_open(const char* filename, const char* mode, U32 lockid, S32, void* xtradata)
@@ -364,86 +629,6 @@ static S32 BFD_read(void* data, S32 elesize, S32 elecnt, tag_xFile* bffp, void* 
     return (S32)numBytes / elesize;
 }
 
-static st_BINIO_XTRADATA* g_async_context;
-
-// Returns nonzero when the seek fails.
-static S32 BFD_seek(tag_xFile* bffp, S32 offset, S32 whence, void* xtradata)
-{
-    st_BINIO_XTRADATA* xtra = (st_BINIO_XTRADATA*)xtradata;
-    S32 rc = (iFileSeek(bffp, offset, whence) == -1) ? 1 : 0;
-
-    xtra->fpos = offset;
-
-    return rc;
-}
-
-static S32 SkipBytes(st_FILELOADINFO* fli, S32 fwd)
-{
-    tag_xFile* file = (tag_xFile*)fli->privdata;
-
-    if (fli->error != FIOERR_NONE)
-    {
-        return 0;
-    }
-
-    if (fwd == 0)
-    {
-        return 1;
-    }
-
-    if (fwd < 0)
-    {
-        fwd = 0;
-    }
-
-    if (BFD_seek(file, fli->position + fwd, IFILE_SEEK_SET, fli->xtradata) != 0)
-    {
-        fli->error = FIOERR_SEEKFAIL;
-    }
-    else
-    {
-        fli->remain -= fwd;
-        fli->position += fwd;
-    }
-
-    if (fli->error != FIOERR_NONE)
-    {
-        return 0;
-    }
-
-    return 1;
-}
-
-// Clamps the position to the file size.
-static S32 ReadSeek(st_FILELOADINFO* fli, S32 pos)
-{
-    tag_xFile* file = (tag_xFile*)fli->privdata;
-
-    if (fli->error != FIOERR_NONE)
-    {
-        return 0;
-    }
-
-    pos = (pos < fli->filesize) ? pos : fli->filesize;
-
-    if (BFD_seek(file, pos, IFILE_SEEK_SET, fli->xtradata) != 0)
-    {
-        fli->error = FIOERR_SEEKFAIL;
-    }
-    else
-    {
-        fli->position = pos;
-        fli->remain = fli->filesize - pos;
-    }
-
-    if (fli->error != FIOERR_NONE)
-    {
-        return 0;
-    }
-
-    return 1;
-}
-
 static void BFD_cb_GCP2_readasync(tag_xFile* bffp)
 {
 }
@@ -495,157 +680,4 @@ static S32 BFD_AsyncRead(st_FILELOADINFO* fli, S32 pos, void* data, S32 size, S3
     }
 
     return rc;
-}
-
-static en_BIO_ASYNC_ERRCODES BFD_AsyncReadStatus(st_FILELOADINFO* fli)
-{
-    en_BIO_ASYNC_ERRCODES status;
-    st_BINIO_XTRADATA* xtra = (st_BINIO_XTRADATA*)fli->xtradata;
-
-    if (!g_async_context)
-    {
-        status = BINIO_ASYNC_NOOP;
-    }
-    else if (xtra != g_async_context)
-    {
-        status = BINIO_ASYNC_INPROG;
-    }
-    else
-    {
-        if (xtra->asyn_status == BINIO_ASYNC_INPROG)
-        {
-            S32 amtsofar = 0;
-
-            switch (iFileReadAsyncStatus(xtra->gcaskey, &amtsofar))
-            {
-            case IFILE_RDSTAT_QUEUED:
-            case IFILE_RDSTAT_INPROG:
-                break;
-            case IFILE_RDSTAT_DONE:
-                xtra->asyn_status = BINIO_ASYNC_DONE;
-                break;
-            case IFILE_RDSTAT_NOOP:
-            case IFILE_RDSTAT_FAIL:
-            case IFILE_RDSTAT_EXPIRED:
-            default:
-                xtra->asyn_status = BINIO_ASYNC_FAIL;
-                break;
-            }
-        }
-
-        status = xtra->asyn_status;
-
-        if (status == BINIO_ASYNC_FAIL || status == BINIO_ASYNC_DONE)
-        {
-            xtra->asyn_status = BINIO_ASYNC_NOOP;
-            g_async_context = NULL;
-        }
-    }
-
-    return status;
-}
-
-static S32 AsyncMRead(st_FILELOADINFO* fli, S32 offset, char* data, S32 size, S32 n)
-{
-    return BFD_AsyncRead(fli, offset, data, size, n, 1);
-}
-
-static S32 AsyncIRead(st_FILELOADINFO* fli, S32 offset, char* data, S32 size, S32 n)
-{
-    return BFD_AsyncRead(fli, offset, data, size, n, 0);
-}
-
-static en_BIO_ASYNC_ERRCODES AsyncReadStatus(st_FILELOADINFO* fli)
-{
-    return BFD_AsyncReadStatus(fli);
-}
-
-static S32 BFD_getLength(tag_xFile* bffp, void* xtradata)
-{
-    return iFileGetSize(bffp);
-}
-
-// The disc address of the file, or 0 when it is not found.
-static S32 BFD_startSector(const char* filename)
-{
-    tag_xFile file = {};
-    U32 addr = 0;
-    U32 length = 0;
-
-    if (!iFileFind(filename, &file))
-    {
-        iFileGetInfo(&file, &addr, &length);
-    }
-
-    return addr;
-}
-
-static st_FILELOADINFO g_loadinst[8] = {};
-static st_BINIO_XTRADATA g_xtraload[8] = {};
-
-// Takes a free one of the eight load slots and opens the file in it, or returns NULL.
-st_FILELOADINFO* xBinioLoadCreate(const char* filename)
-{
-    st_FILELOADINFO* fli = NULL;
-    tag_xFile* tmp_fp;
-    S32 i;
-    S32 uselock = -1;
-
-    for (i = 0; i < 8; i++)
-    {
-        if (!(g_loadlock & (1 << i)))
-        {
-            g_loadlock |= 1 << i;
-            uselock = i;
-            fli = &g_loadinst[i];
-            break;
-        }
-    }
-
-    if (fli)
-    {
-        memset(fli, 0, sizeof(st_FILELOADINFO));
-
-        fli->lockid = uselock & ~(uselock >> 31);
-        fli->xtradata = &g_xtraload[uselock];
-        fli->destroy = LoadDestroy;
-        fli->readBytes = ReadBytes;
-        fli->readMShorts = ReadMShorts;
-        fli->readMLongs = ReadMLongs;
-        fli->readMFloats = ReadMFloats;
-        fli->readMDoubles = ReadMDoubles;
-        fli->readIShorts = ReadIShorts;
-        fli->readILongs = ReadILongs;
-        fli->readIFloats = ReadIFloats;
-        fli->readIDoubles = ReadIDoubles;
-        fli->asyncIRead = AsyncIRead;
-        fli->asyncMRead = AsyncMRead;
-        fli->asyncReadStatus = AsyncReadStatus;
-        fli->skipBytes = SkipBytes;
-        fli->seekSpot = ReadSeek;
-        fli->setDoubleBuf = SetBuffer;
-        fli->discardDblBuf = DiscardBuffer;
-        fli->error = FIOERR_NONE;
-        fli->remain = 0;
-        fli->basesector = 0;
-        fli->filesize = 0;
-        fli->position = 0;
-        fli->basesector = 0;
-
-        tmp_fp = BFD_open(filename, "rb", uselock, 0, fli->xtradata);
-        if (tmp_fp)
-        {
-            fli->basesector = BFD_startSector(filename);
-            fli->privdata = tmp_fp;
-            fli->filesize = BFD_getLength(tmp_fp, fli->xtradata);
-            fli->remain = fli->filesize;
-        }
-        else
-        {
-            LoadDestroy(fli);
-            fli = NULL;
-        }
-    }
-
-    return fli;
 }

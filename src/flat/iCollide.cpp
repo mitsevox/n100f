@@ -1,4 +1,5 @@
 #include "iCollide.h"
+#include <math.h>
 
 #include "iMath3.h"
 #include "xCollide.h"
@@ -50,9 +51,9 @@ void iCollideInit(_xScene* sc)
 static S32 PointWithinTriangle(RwV3d* pt, RwV3d** tri, RwV3d* normal)
 {
     Dimension dimension;
-    F32 absX = iabs(normal->x);
-    F32 absY = iabs(normal->y);
-    F32 absZ = iabs(normal->z);
+    F32 absX = fabsf(normal->x);
+    F32 absY = fabsf(normal->y);
+    F32 absZ = fabsf(normal->z);
     S32 inside = 0;
     S32 i;
     S32 j;
@@ -117,11 +118,15 @@ static S32 PointWithinTriangle(RwV3d* pt, RwV3d** tri, RwV3d* normal)
 static void FindNearestPointOnLine(RwV3d* result, RwV3d* point, RwV3d* start, RwV3d* end)
 {
     RwV3d localResult;
+    RwV3d line;
     F32 mu;
     F32 lineLength2;
 
-    mu = (point->x * (end->x - start->x) + point->y * (end->y - start->y) + point->z * (end->z - start->z)) -
-         (start->x * (end->x - start->x) + start->y * (end->y - start->y) + start->z * (end->z - start->z));
+    line.x = end->x - start->x;
+    line.y = end->y - start->y;
+    line.z = end->z - start->z;
+    mu = (point->x * line.x + point->y * line.y + point->z * line.z) -
+         (start->x * line.x + start->y * line.y + start->z * line.z);
 
     if (mu <= 0.0f)
     {
@@ -129,16 +134,16 @@ static void FindNearestPointOnLine(RwV3d* result, RwV3d* point, RwV3d* start, Rw
     }
     else
     {
-        lineLength2 = SQR(end->x - start->x) + SQR(end->y - start->y) + SQR(end->z - start->z);
+        lineLength2 = SQR(line.x) + SQR(line.y) + SQR(line.z);
 
         if (mu < lineLength2)
         {
             mu /= lineLength2;
-            localResult.x = mu * (end->x - start->x);
+            localResult.x = line.x * mu;
             localResult.x += start->x;
-            localResult.y = mu * (end->y - start->y);
+            localResult.y = line.y * mu;
             localResult.y += start->y;
-            localResult.z = mu * (end->z - start->z);
+            localResult.z = line.z * mu;
             localResult.z += start->z;
         }
         else
@@ -150,7 +155,7 @@ static void FindNearestPointOnLine(RwV3d* result, RwV3d* point, RwV3d* start, Rw
     *result = localResult;
 }
 
-// Distance from a sphere centre to a triangle: to the plane when the projected centre lies inside the
+// Distance from a sphere center to a triangle: to the plane when the projected center lies inside the
 // triangle, otherwise to the nearest edge point within the radius.
 static void properSphereIsectTri(const xVec3* center, F32 radius, xVec3* tohit, F32* dist_ptr,
                                  RpCollisionTriangle* tri)
@@ -178,8 +183,8 @@ static void properSphereIsectTri(const xVec3* center, F32 radius, xVec3* tohit, 
     }
     else
     {
-        dist2 = SQ(dist);
-        radius2 = SQ(radius);
+        dist2 = SQR(dist);
+        radius2 = SQR(radius);
 
         for (i = 0; i < 3; i++)
         {
@@ -228,7 +233,7 @@ static RpCollisionTriangle* sphereHitsEnv3CB(RpIntersection* isx, RpWorldSector*
         return tri;
     }
 
-    if (SQ(tohit.y) > SQ(tohit.x) + SQ(tohit.z))
+    if (SQR(tohit.y) > SQR(tohit.x) + SQR(tohit.z))
     {
         if (FLOOR == 0xFF)
         {
@@ -288,14 +293,16 @@ static RpCollisionTriangle* sphereHitsEnv3CB(RpIntersection* isx, RpWorldSector*
             }
             else
             {
-                idx = cbnumcs;
                 NEXT2 = cbnumcs;
+                idx = cbnumcs;
                 cbnumcs++;
 
                 if (dist < colls[OTHER].dist)
                 {
-                    NEXT2 = OTHER;
-                    OTHER = idx;
+                    idx = OTHER;
+                    OTHER = NEXT2;
+                    NEXT2 = idx;
+                    idx = OTHER;
                 }
             }
         }

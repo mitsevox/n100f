@@ -128,7 +128,8 @@ void xSndExit()
 // sound is swapped for another when that one is loaded.
 U32 xSndPlay(U32 id, F32 volL, F32 volR, F32 pitch, U32 priority, U32 flags, U32 parentID)
 {
-    if (id == 0x91D67287 && globals.sceneCur->sceneID == zSceneIDFromName("s005") &&
+    U32 sceneID = globals.sceneCur->sceneID;
+    if (id == 0x91D67287 && sceneID == zSceneIDFromName("s005") &&
         iSndLookup(0xFE619D7B) != NULL)
     {
         id = 0xFE619D7B;

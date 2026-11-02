@@ -32,8 +32,6 @@ ShaggyGuts gShaggy[16];
 static iModelTag ChimneyTag;
 static iModelTag ShaggyTag;
 U32 gNumShaggy;
-F32 gACCEL_START;
-F32 gACCEL_END;
 F32 THROW_MINHEIGHT = 4.25f;
 F32 THROW_DEFHEIGHT = 6.0f;
 static U32 ChimneyTagIndex = 27;
@@ -44,6 +42,8 @@ static _zParEmitter* gBurningManEmitter;
 static S32 (*sVilEventFunc)(xBase*, xBase*, U32, F32*, xBase*);
 static void (*sVilUpdateFunc)(_xEnt*, _xScene*, F32);
 static void (*sVilMoveFunc)(_xEnt*, _xScene*, F32, _xEntFrame*);
+F32 gACCEL_START;
+F32 gACCEL_END;
 F32 sHangVirtualPeak = 0.75f + THROW_DEFHEIGHT;
 F32 sDefHangTime;
 static ShaggyMagnet sMagnetList[64];
@@ -1051,8 +1051,8 @@ static void Shaggy1_BonusAnims(_zEnt* ent)
 
 static void Shaggy1_MiddleUpdate(_zEnt* shag, _xScene* sc, F32 dt)
 {
-    F32 dz = 0.0f;
-    F32 dx = 0.0f;
+    F32 dz;
+    F32 dx;
     F32 oldgravity;
     xAnimState* plyrstate;
     xAnimState* astate;
@@ -1095,9 +1095,10 @@ static void Shaggy1_MiddleUpdate(_zEnt* shag, _xScene* sc, F32 dt)
         if (!xStricmp(plyrstate->Name, "SD1_ThrowIdle") ||
             !xStricmp(plyrstate->Name, "SD1_ThrowWalk"))
         {
-            dx = shag->frame->mat.pos.x - globals.player.ent.frame->mat.pos.x;
-            dz = shag->frame->mat.pos.z - globals.player.ent.frame->mat.pos.z;
-            if (shag->frame->mat.pos.y - globals.player.ent.frame->mat.pos.y < 1.8f &&
+            _xEntFrame* frame = shag->frame;
+            dx = frame->mat.pos.x - globals.player.ent.frame->mat.pos.x;
+            dz = frame->mat.pos.z - globals.player.ent.frame->mat.pos.z;
+            if (frame->mat.pos.y - globals.player.ent.frame->mat.pos.y < 1.8f &&
                 dx * dx + dz * dz < 0.5f)
             {
                 globals.player.Shaggy1.CatchMe = 1;
@@ -1108,6 +1109,7 @@ static void Shaggy1_MiddleUpdate(_zEnt* shag, _xScene* sc, F32 dt)
     sc->gravity = oldgravity;
 }
 
+// Keeps carry/hang interactions in sync and rights the throwing variant's tilted model.
 static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
 {
     U32 i;
@@ -1115,7 +1117,6 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
     F32 cy;
     F32 cz;
     zScene* zsc;
-    _zEntPickup* pup;
     xVec3* pos;
     F32 mag;
     xMat3x3* mat;
@@ -1155,15 +1156,18 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
             cz = ent->bound.sph.center.z;
             for (i = 0; i < zsc->num_ents; i++)
             {
-                pup = (_zEntPickup*)zsc->ents[i];
-                if (pup->baseType == 4 && (pup->state & 0x3F) == 1)
+                if (zsc->ents[i]->baseType == 4)
                 {
-                    pos = &((xMat4x3*)pup->model->Mat)->pos;
-                    if ((cx - pos->x) * (cx - pos->x) + (cy - pos->y) * (cy - pos->y) +
-                            (cz - pos->z) * (cz - pos->z) <
-                        4.0f)
+                    _zEntPickup* pup = (_zEntPickup*)zsc->ents[i];
+                    if ((pup->state & 0x3F) == 1)
                     {
-                        pup->state = (pup->state & ~0x3F) | 2;
+                        pos = &((xMat4x3*)pup->model->Mat)->pos;
+                        if ((cx - pos->x) * (cx - pos->x) + (cy - pos->y) * (cy - pos->y) +
+                                (cz - pos->z) * (cz - pos->z) <
+                            4.0f)
+                        {
+                            pup->state = (pup->state & ~0x3F) | 2;
+                        }
                     }
                 }
             }
@@ -1171,13 +1175,15 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
 
         if (!guts->hangme)
         {
-            mat = (xMat3x3*)ent->model->Mat;
-            if (xabs(mat->up.y - 1.0f) > 0.0001f)
+            if (xabs(ent->model->Mat->up.y - 1.0f) > 0.0001f)
             {
-                dx = -mat->up.x;
-                cy = 1.0f - mat->up.y;
-                dz = -mat->up.z;
-                mag = dx * dx + cy * cy + dz * dz;
+                mat = (xMat3x3*)ent->model->Mat;
+                xVec3 delta;
+
+                delta.x = -mat->up.x;
+                delta.y = 1.0f - mat->up.y;
+                delta.z = -mat->up.z;
+                mag = xVec3Length2(&delta);
                 if (mag < 0.0049f)
                 {
                     mat->up.x = 0.0f;
@@ -1187,12 +1193,8 @@ static void Shaggy1_Update(_zEnt* ent, _xScene* sc, F32 dt)
                 else
                 {
                     mag = 0.07f * (1.0f / sqrtf(mag));
-                    dx *= mag;
-                    cy *= mag;
-                    dz *= mag;
-                    mat->up.x += dx;
-                    mat->up.y += cy;
-                    mat->up.z += dz;
+                    xVec3SMul(&delta, &delta, mag);
+                    xVec3Add(&mat->up, &mat->up, &delta);
                     xVec3Normalize(&mat->up, &mat->up);
                     xVec3Cross(&mat->right, &mat->up, &mat->at);
                     xVec3Normalize(&mat->right, &mat->right);
@@ -1665,6 +1667,7 @@ static inline S32 PointInQuadXZ(xVec3* quad, xVec3* vec)
 
 static void NearestPointObb2D(xVec3* near, xVec3* vec, _xBox* b, xMat4x3* m)
 {
+    // Use the floor plane for interior points; otherwise examine the four perimeter edges.
     xVec3 test;
     S32 i;
     xVec3 corner[4];
@@ -1675,6 +1678,7 @@ static void NearestPointObb2D(xVec3* near, xVec3* vec, _xBox* b, xMat4x3* m)
     F32 ddot;
     F32 lerp;
     F32 testdist2;
+    xVec3* current;
     xVec3* v2;
 
     if (m->up.y > 0.0f)
@@ -1721,13 +1725,14 @@ static void NearestPointObb2D(xVec3* near, xVec3* vec, _xBox* b, xMat4x3* m)
 
     for (i = 0; i < 4; i++)
     {
+        current = &corner[i];
         v2 = &corner[(i + 1) & 3];
-        dx = v2->x - corner[i].x;
-        dz = v2->z - corner[i].z;
-        pdot = dx * (vec->x - corner[i].x) + dz * (vec->z - corner[i].z);
+        dx = v2->x - current->x;
+        dz = v2->z - current->z;
+        pdot = dx * (vec->x - current->x) + dz * (vec->z - current->z);
         if (pdot <= 0.0f)
         {
-            test = corner[i];
+            test = *current;
         }
         else
         {
@@ -1739,9 +1744,9 @@ static void NearestPointObb2D(xVec3* near, xVec3* vec, _xBox* b, xMat4x3* m)
             else
             {
                 lerp = pdot / sqrtf(ddot);
-                test.x = corner[i].x + lerp * (v2->x - corner[i].x);
-                test.y = corner[i].y + lerp * (v2->y - corner[i].y);
-                test.z = corner[i].z + lerp * (v2->z - corner[i].z);
+                test.x = current->x + lerp * (v2->x - current->x);
+                test.y = current->y + lerp * (v2->y - current->y);
+                test.z = current->z + lerp * (v2->z - current->z);
             }
         }
         testdist2 = (test.x - vec->x) * (test.x - vec->x) + (test.z - vec->z) * (test.z - vec->z);
@@ -2392,26 +2397,13 @@ static U32 Shaggy3_MoveDead(xAnimTransition* tran, xAnimSingle* anim, _zPlatform
 
 static U32 Shaggy3_Stop(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
 {
-    _xEntFrame* frame = ent->frame;
-
-    if (frame == NULL)
+    // Return from driving to idle after the platform settles, outside the damage reaction window.
+    if (!ent->frame)
     {
         return 0;
     }
-    U8 retval = 0;
-    U8 stopped = 1;
-
-    if ((frame->mode & 0x2) && !(frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
-                                     frame->dpos.z * frame->dpos.z <
-                                 0.0005f))
-    {
-        stopped = 0;
-    }
-    if (stopped && globals.player.DamageTimer < 1.25f)
-    {
-        retval = 1;
-    }
-    return retval;
+    return (!(ent->frame->mode & 0x2) || xVec3Length2(&ent->frame->dpos) < 0.0005f) &&
+           globals.player.DamageTimer < 1.25f;
 }
 
 static U32 Shaggy3_StopScare(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
@@ -3854,6 +3846,7 @@ static inline F32 xVec3Dist(const xVec3* a, const xVec3* b)
 
 void zEntShaggy_SceneStart(zScene* sc)
 {
+    // Register special Shaggy actors and connect each chimney to its platform.
     U32 i;
     U32 j;
     U32 hangHashID;
@@ -3970,8 +3963,9 @@ void zEntShaggy_SceneStart(zScene* sc)
             sc->ents[i]->update = (void (*)(_xEnt*, _xScene*, F32))Shaggy2_Update;
             sc->ents[i]->render = Shaggy2_Render;
             sc->ents[i]->eventFunc = Shaggy2_EventCB;
-            sc->ents[i]->chkby |= 0x10;
-            sc->ents[i]->penby |= 0x10;
+            U8 collisionMask = 0x10;
+            sc->ents[i]->chkby |= collisionMask;
+            sc->ents[i]->penby |= collisionMask;
 
             plat = (_zPlatform*)sc->ents[i];
             gShaggy[gNumShaggy].chimneyHeight = plat->motion.asset->er.ext_dpos.y;
@@ -3994,10 +3988,12 @@ void zEntShaggy_SceneStart(zScene* sc)
             {
                 if (i != j && sc->ents[j]->baseType == 6)
                 {
-                    if (xVec3Dist(&sc->ents[j]->asset->pos, &sc->ents[i]->asset->pos) < 0.1f)
+                    p2EntAsset* candidateAsset = sc->ents[j]->asset;
+                    p2EntAsset* currentAsset = sc->ents[i]->asset;
+                    if (xVec3Dist(&candidateAsset->pos, &currentAsset->pos) < 0.1f)
                     {
                         gShaggy[gNumShaggy].chimneyPlat = (_zPlatform*)sc->ents[j];
-                        sc->ents[j]->flags &= ~0x1;
+                        sc->ents[j]->flags &= 0xFE;
                         sc->ents[j]->model->Flags = 0;
                         sc->ents[j]->eventFunc = Shaggy2Plat_EventCB;
                         break;

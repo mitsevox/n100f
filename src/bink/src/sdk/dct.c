@@ -775,10 +775,13 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
     unsigned char* o2;
     unsigned int p0, p1, p2, p3;
     int ctr;
+    int s2;
     int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
     int tmp10, tmp11, tmp12, tmp13;
     int z5, z10, z11, z12, z13;
 
+    o2 = out + stride;
+    s2 = stride + stride;
     w = ws;
     for (ctr = 8; ctr > 0; ctr--)
     {
@@ -844,8 +847,6 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
 
     w = ws;
     o = out;
-    o2 = out + stride;
-    stride += stride;
     for (ctr = 8; ctr > 0; ctr--)
     {
         tmp10 = w[0] + w[4];
@@ -887,8 +888,8 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
         ((unsigned int*)o2)[2] = p2;
         ((unsigned int*)o2)[3] = p3;
         w += 8;
-        o += stride;
-        o2 += stride;
+        o += s2;
+        o2 += s2;
     }
 }
 

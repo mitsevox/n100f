@@ -30,7 +30,9 @@ typedef struct BinkHdr {
 #define TRACKFREQ(t) ((t) & 0xFFFF)
 
 static U32 TrackNums[8] = {0};
-extern U8 LogoData[];
+U8 LogoData[0x3A18] = {
+#include "bink/LogoData.inc"
+};
 static char binkerr[256];
 static BinkSndSysOpen sysopen = 0;
 static BinkSndOpen sndopen = 0;
