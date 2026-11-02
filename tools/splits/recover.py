@@ -474,6 +474,70 @@ def literal_groups(data, data_refs, data_users):
     return [sorted(g) for g in groups.values() if len(g) > 1]
 
 
+def check_data_claims(data_claims, data, users, inferred, emitted):
+    """Item -> unit for the `data` claims (claimed_data) that hold up, and a message for each
+    refused one.  `users` maps an item to the units whose functions load it, `inferred` is the
+    (unit, section) -> (start, end) placement found without any claim, and `emitted` the units
+    that are written.  A claim is refused when an item in it is loaded only by functions of one
+    other emitted unit, when it overlaps a range the run gives another unit, or when it overlaps
+    an earlier claim: a claim may only place what the run leaves unplaced (like apply_claims)."""
+    accepted, refused, taken = {}, [], []
+    for (u, sec), (lo, hi) in sorted(data_claims.items(), key=lambda kv: (kv[0][1], kv[1])):
+        why = None
+        if u not in emitted:
+            why = 'its unit is not written'
+        items = [d for d, item in enumerate(data) if item[2] == sec and lo <= item[0] < hi]
+        for d in items:
+            if why:
+                break
+            us = users.get(d, set())
+            if len(us) == 1 and None not in us and us != {u} and next(iter(us)) in emitted:
+                why = f'0x{data[d][0]:08X} is loaded only by {next(iter(us))}'
+        for (v, s), (a, b) in sorted(inferred.items()):
+            if not why and s == sec and v != u and a < hi and lo < b:
+                why = f'it overlaps {v} {sec} 0x{a:08X}-0x{b:08X}'
+        for (v, s, a, b) in taken:
+            if not why and s == sec and a < hi and lo < b:
+                why = f'it overlaps the claim of {v}'
+        if why:
+            refused.append(f'check: data claim {u} {sec} 0x{lo:08X}-0x{hi:08X} refused: {why}')
+            continue
+        taken.append((u, sec, lo, hi))
+        accepted.update({d: u for d in items})
+    return accepted, refused
+
+
+def assign_groups(groups, range_unit, users, pointers, claimed, units):
+    """Item -> unit for the literal_groups and the number of groups left alone.  A group goes to
+    the unit whose range (range_unit) already holds members, else to the one unit whose functions
+    load members.  It is left alone when its members fall in two units' ranges, when two units load
+    it and no range holds any, or when a member that points to nothing (a literal, not the table)
+    is loaded only by one unit other than the chosen one: dtk's `lbl_` also names globals no one
+    has named yet.  Claimed items keep their claim; `pointers` are the members that point to
+    others, `units` the units that may be chosen."""
+    out, conflicts = {}, 0
+    for g in groups:
+        held = {range_unit(d) for d in g} - {None}
+        if not held:
+            held = set().union(*(users.get(d, set()) for d in g))
+            if None in held:
+                continue
+        if len(held) != 1:
+            conflicts += 1
+            continue
+        v, = held
+        if v not in units:
+            continue
+        if any(d not in pointers and len(users.get(d, ())) == 1 and users[d] != {v} and None not in users[d]
+               for d in g):
+            conflicts += 1
+            continue
+        for d in g:
+            if d not in claimed and users.get(d) != {v}:
+                out[d] = v
+    return out, conflicts
+
+
 def claimed_units(rows, prefix):
     """Unit -> (start, end) for the `unit` rows whose subject is a `prefix` path: a person's claim
     of the unit's .text extent, which the evidence column has to support (config/README.md). A row
@@ -1030,53 +1094,42 @@ def main():
                 final[(u, sec)] = (data[mn][0], end)
         return dclass, stray, placed, final
 
-    # Placement beyond function loads, in two steps.
-    # 1. A `data` row in evidence.tsv that claims a unit's section range places every item in it.
-    claimed = {}
-    for (u, sec), (lo, hi) in sorted(data_claims.items()):
-        if u in index:
-            claimed.update({d: u for d, item in enumerate(data) if item[2] == sec and lo <= item[0] < hi})
-    # 2. Items that one object must define together (literal_groups: a table and the strings
-    #    it points to) go to one unit: the unit whose range already holds members of the group,
-    #    else the one unit that loads members.  A group whose members fall in two units' ranges,
-    #    or that two units load and no range holds, is left alone.  Repeated until it settles,
-    #    since a placed group can move a range edge.
+    # Placement beyond function loads.  Items that one object must define together
+    # (literal_groups: a table and the strings it points to) go to one unit (assign_groups),
+    # repeated until it settles, since a placed group can move a range edge.  A `data` row in
+    # evidence.tsv that claims a unit's section range places every item in it, unless the run
+    # without claims already places any of it elsewhere (check_data_claims).
     groups = literal_groups(data, data_refs, data_users)
-    extra, conflicts = dict(claimed), 0
-    for _ in range(4):
-        dclass, stray, placed, final = place(users, extra)
-        spans = collections.defaultdict(list)
-        for (u, sec), (lo, hi) in final.items():
-            spans[sec].append((lo, hi, u))
-        for sec in spans:
-            spans[sec].sort()
+    pointers = set().union(*data_refs.values()) if data_refs else set()
 
-        def range_unit(d):
-            sp = spans.get(data[d][2], [])
-            i = bisect.bisect_right(sp, (data[d][0], float('inf'), '')) - 1
-            return sp[i][2] if i >= 0 and sp[i][0] <= data[d][0] < sp[i][1] else None
+    def settle(claimed):
+        extra = dict(claimed)
+        for _ in range(4):
+            dclass, stray, placed, final = place(users, extra)
+            spans = collections.defaultdict(list)
+            for (u, sec), (lo, hi) in final.items():
+                spans[sec].append((lo, hi, u))
+            for sec in spans:
+                spans[sec].sort()
 
-        new, conflicts = dict(claimed), 0
-        for g in groups:
-            held = {range_unit(d) for d in g} - {None}
-            if not held:
-                held = set().union(*(users.get(d, set()) for d in g))
-                if None in held:
-                    continue
-            if len(held) != 1:
-                conflicts += 1
-                continue
-            v, = held
-            if v not in index:
-                continue
-            for d in g:
-                if d not in claimed and users.get(d) != {v}:
-                    new[d] = v
-        if new == extra:
-            break
-        extra = new
-    else:
-        dclass, stray, placed, final = place(users, extra)
+            def range_unit(d):
+                sp = spans.get(data[d][2], [])
+                i = bisect.bisect_right(sp, (data[d][0], float('inf'), '')) - 1
+                return sp[i][2] if i >= 0 and sp[i][0] <= data[d][0] < sp[i][1] else None
+
+            by_group, conflicts = assign_groups(groups, range_unit, users, pointers, claimed, index)
+            new = {**by_group, **claimed}
+            if new == extra:
+                return extra, conflicts, dclass, stray, placed, final
+            extra = new
+        raise SystemExit('data placement did not settle in 4 rounds: a table group moves a range '
+                         'edge that moves it back; check the groups near the last change')
+
+    emitted_units = {u for u in order if status(u) != 'weak'}
+    claimed, refused = check_data_claims(data_claims, data, users, settle({})[5], emitted_units)
+    for msg in refused:
+        print(msg, file=sys.stderr)
+    extra, conflicts, dclass, stray, placed, final = settle(claimed)
     by_table = sum(1 for d in extra if d not in claimed)
 
     # An item inside a written range that a function no emitted unit holds loads

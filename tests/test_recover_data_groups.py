@@ -64,5 +64,86 @@ class ClaimedData(unittest.TestCase):
         self.assertEqual(recover.claimed_data(rows, "flat/"), {})
 
 
+# A zVarEntryTable shape: the table (0) is loaded only by zConditional, its strings (1, 2) lie
+# inside zVar's .rodata range, so table and strings are zVar's.
+GDATA = [
+    (0x801C8CB0, 0x6C0, ".data", "zVarEntryTable", False, None),
+    (0x801A7020, 0xB, ".rodata", "lbl_801A7020", False, "string"),
+    (0x801A702C, 0xD, ".rodata", "lbl_801A702C", False, "string"),
+]
+ZVAR_RODATA = (0x801A7010, 0x801A7B10)
+
+
+def in_zvar(d):
+    lo, hi = ZVAR_RODATA
+    return "zVar" if GDATA[d][2] == ".rodata" and lo <= GDATA[d][0] < hi else None
+
+
+class AssignGroups(unittest.TestCase):
+    units = {"zConditional": 0, "zUI": 1, "zVar": 2}
+
+    def test_table_follows_its_strings(self):
+        out, conflicts = recover.assign_groups([[0, 1, 2]], in_zvar, {0: {"zConditional"}}, {0}, {}, self.units)
+        self.assertEqual((out, conflicts), ({0: "zVar", 1: "zVar", 2: "zVar"}, 0))
+
+    def test_sole_loader_when_no_range_holds(self):
+        out, conflicts = recover.assign_groups([[0, 1, 2]], lambda d: None, {0: {"zConditional"}}, {0}, {}, self.units)
+        self.assertEqual((out, conflicts), ({1: "zConditional", 2: "zConditional"}, 0))
+
+    def test_literal_loaded_by_another_unit_is_a_conflict(self):
+        users = {0: {"zConditional"}, 1: {"zUI"}}  # an lbl_ that only zUI loads: an unnamed global
+        out, conflicts = recover.assign_groups([[0, 1, 2]], in_zvar, users, {0}, {}, self.units)
+        self.assertEqual((out, conflicts), ({}, 1))
+
+    def test_two_ranges_is_a_conflict(self):
+        out, conflicts = recover.assign_groups([[0, 1, 2]], lambda d: ["zUI", "zVar", None][d], {}, {0}, {}, self.units)
+        self.assertEqual((out, conflicts), ({}, 1))
+
+    def test_claimed_items_keep_their_claim(self):
+        out, _ = recover.assign_groups([[0, 1, 2]], in_zvar, {}, {0}, {0: "zUI"}, self.units)
+        self.assertEqual(out, {1: "zVar", 2: "zVar"})
+
+
+CDATA = [
+    (0x80227748, 0x1270, ".bss", "gSnd", False, None),     # 0: many loaders
+    (0x802289B8, 0x30, ".bss", "lbl_802289B8", False, None),  # 1: loaded only by xTRC
+    (0x80300000, 0x10, ".bss", "lbl_80300000", False, None),  # 2: no loader
+]
+EMITTED = {"xSnd.cpp", "xTRC.cpp", "zMain.cpp"}
+
+
+class CheckDataClaims(unittest.TestCase):
+    users = {0: {"xSnd.cpp", "zMain.cpp", None}, 1: {"xTRC.cpp"}}
+
+    def check(self, claims, inferred=None):
+        return recover.check_data_claims(claims, CDATA, self.users, inferred or {}, EMITTED)
+
+    def test_shared_global_is_accepted(self):
+        accepted, refused = self.check({("xSnd.cpp", ".bss"): (0x80227748, 0x802289B8)})
+        self.assertEqual((accepted, refused), ({0: "xSnd.cpp"}, []))
+
+    def test_item_only_another_unit_loads_is_refused(self):
+        accepted, refused = self.check({("xSnd.cpp", ".bss"): (0x80227748, 0x802289E8)})
+        self.assertEqual(accepted, {})
+        self.assertIn("loaded only by xTRC.cpp", refused[0])
+
+    def test_overlap_with_inferred_range_is_refused(self):
+        accepted, refused = self.check({("zMain.cpp", ".bss"): (0x80300000, 0x80300010)},
+                                       {("xTRC.cpp", ".bss"): (0x802289B8, 0x80300008)})
+        self.assertEqual(accepted, {})
+        self.assertIn("overlaps xTRC.cpp .bss", refused[0])
+
+    def test_overlap_with_another_claim_is_refused(self):
+        accepted, refused = self.check({("xSnd.cpp", ".bss"): (0x80227748, 0x802289B8),
+                                        ("zMain.cpp", ".bss"): (0x80227750, 0x80227760)})
+        self.assertEqual(accepted, {0: "xSnd.cpp"})
+        self.assertIn("overlaps the claim of xSnd.cpp", refused[0])
+
+    def test_unwritten_unit_is_refused(self):
+        accepted, refused = self.check({("zMenu.cpp", ".bss"): (0x80300000, 0x80300010)})
+        self.assertEqual(accepted, {})
+        self.assertIn("not written", refused[0])
+
+
 if __name__ == "__main__":
     unittest.main()
