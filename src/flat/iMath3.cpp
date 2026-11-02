@@ -132,7 +132,7 @@ void iCylinderIsectVec(const _xCylinder* c, const xVec3* v, xIsect* isx)
     }
 }
 
-// o = p + d * t: the point at distance t along a ray.
+// o = p + d * t: the point at parameter t along a ray.
 static inline void RayPoint(xVec3* o, const xVec3* d, F32 t, const xVec3* p)
 {
     xVec3Copy(o, d);
@@ -140,19 +140,26 @@ static inline void RayPoint(xVec3* o, const xVec3* d, F32 t, const xVec3* p)
     xVec3AddTo(o, p);
 }
 
+// Intersect the circular cross section, then check the cylinder's height.
 void iCylinderIsectRay(const _xCylinder* c, const xRay3* r, xIsect* isx)
 {
     F32 a, b;
     F32 t_in, t_out;
     U32 num;
-    F32 dz = r->origin.z;
-    dz -= c->center.z;
-    F32 dx = r->origin.x;
-    dx -= c->center.x;
+    // Use (z, x) coordinates on the plane normal to the cylinder's Y axis.
+    xVec2 directionZX;
+    directionZX.x = r->dir.z;
+    directionZX.y = r->dir.x;
+    xVec2 offsetZX;
+    offsetZX.y = r->origin.x;
+    offsetZX.y -= c->center.x;
+    offsetZX.x = r->origin.z;
+    offsetZX.x -= c->center.z;
 
-    num = xMathSolveQuadratic(r->dir.x * r->dir.x + r->dir.z * r->dir.z,
-                              2.0f * (dx * r->dir.x + dz * r->dir.z),
-                              dx * dx + dz * dz - c->r * c->r, &t_in, &t_out);
+    num = xMathSolveQuadratic(
+        directionZX.y * directionZX.y + directionZX.x * directionZX.x,
+        2.0f * (offsetZX.y * directionZX.y + offsetZX.x * directionZX.x),
+        offsetZX.y * offsetZX.y + offsetZX.x * offsetZX.x - c->r * c->r, &t_in, &t_out);
 
     if (num == 0)
     {
