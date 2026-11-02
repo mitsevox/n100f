@@ -500,7 +500,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/iParMgr.cpp"),
             Object(NonMatching, "flat/isavegame.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iScrFX.cpp"),
-            Object(NonMatching, "flat/iShadow.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iShadow.cpp"),
             Object(NonMatching, "flat/iSystem.cpp", cflags=cflags_game_noinline),
             Object(MatchingFor("GIHE78-rev0"), "flat/iTime.cpp"),
             Object(NonMatching, "flat/xAnim.cpp"),
