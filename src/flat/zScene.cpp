@@ -348,14 +348,10 @@ static zSceneObjectInstanceDesc sInitTable[34] = {
     { NULL, 0, 0, 0x0, NULL, NULL },
 };
 
-// Entity ids kept as named constants.
-static const union
-{
-    U32 u;
-    F32 f;
-} sRefID_FFF2B7A3 = { 0xFFF2B7A3 },
-  sRefID_FFF2B7A4 = { 0xFFF2B7A4 },
-  sRefID_FFF2B7AA = { 0xFFF2B7AA };
+// Entity ids stored in the table's float column for mode 2.
+static const U32 sRefID_FFF2B7A3 = 0xFFF2B7A3;
+static const U32 sRefID_FFF2B7A4 = 0xFFF2B7A4;
+static const U32 sRefID_FFF2B7AA = 0xFFF2B7AA;
 
 // GC-only; the PS2 build has no counterpart. The float column holds a distance or, for mode 2,
 // the id of the entity whose distance is used.
@@ -382,15 +378,15 @@ static zSceneRenderDist lbl_801C82A0[66] = {
     { zSceneIDFromName("i006"), 0x90E56560, 1, 10000.0f, 0.0f },
     { zSceneIDFromName("i006"), 0x9D7EF8C5, 1, 9999.0f, 0.0f },
     { zSceneIDFromName("i006"), 0x9DA14661, 2, -1.3661381e-36f, 0.1f },
-    { zSceneIDFromName("i006"), 0x1EA6A37D, 2, sRefID_FFF2B7A3.f, 0.1f },
+    { zSceneIDFromName("i006"), 0x1EA6A37D, 2, *(const F32*)&sRefID_FFF2B7A3, 0.1f },
     { zSceneIDFromName("i020"), 0x00794266, 1, 10000.0f, 0.0f },
     { zSceneIDFromName("i020"), 0x0BBA9313, 1, 10000.0f, 0.0f },
-    { zSceneIDFromName("i020"), 0x1FF4FC52, 2, sRefID_FFF2B7A3.f, 0.1f },
+    { zSceneIDFromName("i020"), 0x1FF4FC52, 2, *(const F32*)&sRefID_FFF2B7A3, 0.1f },
     { zSceneIDFromName("i020"), 0x8FD9188B, 1, 10000.0f, 0.0f },
     { zSceneIDFromName("i020"), 0x8FD9188D, 1, 10000.0f, 0.0f },
     { zSceneIDFromName("i021"), 0x9C17992C, 2, -1.4451877e-10f, -0.1f },
     { zSceneIDFromName("i021"), 0x0B0E0EAC, 1, 10000.0f, 0.0f },
-    { zSceneIDFromName("i021"), 0x889C3413, 2, sRefID_FFF2B7A3.f, 0.1f },
+    { zSceneIDFromName("i021"), 0x889C3413, 2, *(const F32*)&sRefID_FFF2B7A3, 0.1f },
     { zSceneIDFromName("l017"), 0xF933F817, 2, 3.7537333e-08f, -0.1f },
     { zSceneIDFromName("l017"), 0xF933F818, 2, 7.526812e-11f, -0.1f },
     { zSceneIDFromName("l017"), 0xF933F819, 2, 3.2181435e-15f, -0.1f },
@@ -409,9 +405,9 @@ static zSceneRenderDist lbl_801C82A0[66] = {
     { zSceneIDFromName("o003"), 0x5E6B8997, 2, -9.76801e-10f, 0.1f },
     { zSceneIDFromName("o003"), 0x5107645D, 2, -9.76801e-10f, 0.1f },
     { zSceneIDFromName("o003"), 0x6BD9B53C, 2, -9.76801e-10f, 0.1f },
-    { zSceneIDFromName("o004"), 0x4B6C4E03, 2, sRefID_FFF2B7A4.f, 0.1f },
-    { zSceneIDFromName("o004"), 0x4B6C4E04, 2, sRefID_FFF2B7A4.f, 0.1f },
-    { zSceneIDFromName("o004"), 0x4BF5846F, 2, sRefID_FFF2B7AA.f, -0.1f },
+    { zSceneIDFromName("o004"), 0x4B6C4E03, 2, *(const F32*)&sRefID_FFF2B7A4, 0.1f },
+    { zSceneIDFromName("o004"), 0x4B6C4E04, 2, *(const F32*)&sRefID_FFF2B7A4, 0.1f },
+    { zSceneIDFromName("o004"), 0x4BF5846F, 2, *(const F32*)&sRefID_FFF2B7AA, -0.1f },
     { zSceneIDFromName("o004"), 0xF933F89E, 1, 32180446.0f, -0.1f },
     { zSceneIDFromName("o004"), 0x1EA6A37A, 1, 20000.0f, 0.0f },
     { zSceneIDFromName("r001"), 0x0BBA9312, 0, 500.0f, 500.0f },
@@ -795,30 +791,6 @@ static U32 zSceneInitFunc_Dispatcher(zScene* s, zSceneObjectInstanceDesc* desc, 
     }
 
     return base_idx;
-}
-
-// Clears the per-room counts and the collected totals, and loads each level's clue total.
-void zSceneGameStats_Init()
-{
-    globals.stats.scares = 0;
-    globals.stats.specials = 0;
-    globals.stats.specials_tot = 0;
-    globals.stats.tokens = 0;
-    globals.stats.tokens_tot = 0;
-    globals.stats.snacks = 0;
-    globals.stats.snacks_tot = 0;
-    globals.stats.chances = 0;
-    globals.stats.chances_tot = 0;
-    globals.stats.keys = 0;
-    globals.stats.keys_tot = 0;
-    globals.stats.clues = 0;
-    globals.stats.clues_tot = 0;
-    globals.stats.roomTime = 0.0f;
-
-    for (S32 i = 0; i < 13; i++)
-    {
-        globals.levelStats[i].clues_tot = sLevelTable[i].totalClues;
-    }
 }
 
 // Loads a scene: reads its assets behind the transition screen, then creates every
@@ -2669,6 +2641,30 @@ void zSceneGameStatsTally_clue()
     strncpy(lvl, xStrupr(xUtil_idtag2string(globals.sceneCur->sceneID, 0)), 4);
 
     globals.levelStats[zSceneGetLevelIndex(lvl[0])].clues++;
+}
+
+// Clears the per-room counts and the collected totals, and loads each level's clue total.
+void zSceneGameStats_Init()
+{
+    globals.stats.scares = 0;
+    globals.stats.specials = 0;
+    globals.stats.specials_tot = 0;
+    globals.stats.tokens = 0;
+    globals.stats.tokens_tot = 0;
+    globals.stats.snacks = 0;
+    globals.stats.snacks_tot = 0;
+    globals.stats.chances = 0;
+    globals.stats.chances_tot = 0;
+    globals.stats.keys = 0;
+    globals.stats.keys_tot = 0;
+    globals.stats.clues = 0;
+    globals.stats.clues_tot = 0;
+    globals.stats.roomTime = 0.0f;
+
+    for (S32 i = 0; i < 13; i++)
+    {
+        globals.levelStats[i].clues_tot = sLevelTable[i].totalClues;
+    }
 }
 
 S32 zRayHitsPlayer(_xRay3* r)
