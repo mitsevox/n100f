@@ -130,6 +130,7 @@ void xPartitionWorld(_tagPartition* part, _xEnv* env, S32 x_spaces, S32 y_spaces
     PartitionSpaceReset(&part->global);
 }
 
+// Put the item in its grid cell, or the global list when it is outside the grid.
 S32 xPartitionInsert(_tagPartition* part, void* insert_data, xVec3* insert_pos)
 {
     if (insert_pos->x < part->min.x || insert_pos->x > part->max.x || insert_pos->y < part->min.y ||
@@ -139,9 +140,10 @@ S32 xPartitionInsert(_tagPartition* part, void* insert_data, xVec3* insert_pos)
         return -1;
     }
 
-    S32 idx = xPartitionGetTrueIdx(part, (insert_pos->x - part->min.x) / part->space_dim.x,
-                                   (insert_pos->y - part->min.y) / part->space_dim.y,
-                                   (insert_pos->z - part->min.z) / part->space_dim.z);
+    S32 x = (insert_pos->x - part->min.x) / part->space_dim.x;
+    S32 y = (insert_pos->y - part->min.y) / part->space_dim.y;
+    S32 z = (insert_pos->z - part->min.z) / part->space_dim.z;
+    S32 idx = xPartitionGetTrueIdx(part, x, y, z);
     PartitionSpaceInsert(&part->space[idx], insert_data);
     return idx;
 }
