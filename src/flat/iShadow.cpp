@@ -21,7 +21,13 @@ struct RwGcnRenderStateCache
     U8 unk3E[2];
 };
 
-extern "C" RwGcnRenderStateCache lbl_8025E348;
+// The RenderWare GameCube driver's render-state block (address label per target).
+#if VERSION_GIHE78_REV0
+#define RW_GCN_RENDER_STATE lbl_8025E348
+#elif VERSION_GIHE78_REV1
+#define RW_GCN_RENDER_STATE lbl_802701E8
+#endif
+extern "C" RwGcnRenderStateCache RW_GCN_RENDER_STATE;
 extern "C" void RwGameCubeSetAlphaCompare(S32);
 
 // Blob shadows: each entity's shadow is a quad laid on the ground under it. The quads of a
@@ -193,22 +199,17 @@ void iShadowCollide(iShadowCache* cache, _xEnt* ent, F32 radius, F32 ecc)
 // ground, or a full vertex list, adds nothing.
 void iShadowAdd(iShadowCache* cache, U8 alpha)
 {
-    if (cache->corner[0].x == -1e10f)
+    if (cache->corner[0].x == -1e10f || sShadowVertCount >= 384)
     {
         return;
     }
 
-    if (sShadowVertCount >= 384)
-    {
-        return;
-    }
-
-    *(xVec3*)&sShadowVert[sShadowVertCount + 0].x = cache->corner[0];
-    *(xVec3*)&sShadowVert[sShadowVertCount + 1].x = cache->corner[1];
-    *(xVec3*)&sShadowVert[sShadowVertCount + 2].x = cache->corner[2];
-    *(xVec3*)&sShadowVert[sShadowVertCount + 3].x = cache->corner[1];
-    *(xVec3*)&sShadowVert[sShadowVertCount + 4].x = cache->corner[2];
-    *(xVec3*)&sShadowVert[sShadowVertCount + 5].x = cache->corner[3];
+    *(RwV3d*)&sShadowVert[sShadowVertCount + 0].x = *(RwV3d*)&cache->corner[0];
+    *(RwV3d*)&sShadowVert[sShadowVertCount + 1].x = *(RwV3d*)&cache->corner[1];
+    *(RwV3d*)&sShadowVert[sShadowVertCount + 2].x = *(RwV3d*)&cache->corner[2];
+    *(RwV3d*)&sShadowVert[sShadowVertCount + 3].x = *(RwV3d*)&cache->corner[1];
+    *(RwV3d*)&sShadowVert[sShadowVertCount + 4].x = *(RwV3d*)&cache->corner[2];
+    *(RwV3d*)&sShadowVert[sShadowVertCount + 5].x = *(RwV3d*)&cache->corner[3];
     sShadowVert[sShadowVertCount + 5].a = alpha;
     sShadowVert[sShadowVertCount + 4].a = alpha;
     sShadowVert[sShadowVertCount + 3].a = alpha;
@@ -230,8 +231,8 @@ void iShadowRender()
         RwRenderStateSet(rwRENDERSTATETEXTURERASTER, (void*)sShadowRaster);
         RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEGOURAUD);
         RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
-        lbl_8025E348.alphaRef0 = 0;
-        lbl_8025E348.alphaRef1 = 0;
+        RW_GCN_RENDER_STATE.alphaRef0 = 0;
+        RW_GCN_RENDER_STATE.alphaRef1 = 0;
         RwGameCubeSetAlphaCompare(1);
         RwIm3DTransform(sShadowVert, sShadowVertCount, NULL,
                         rwIM3D_VERTEXRGBA | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXUV);
