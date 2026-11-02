@@ -243,7 +243,7 @@ static void Decompress_frame(struct Bink* bnk, HRAD3DIMAGE rad_image)
     }
 }
 
-// Shows three empty frames from the main camera, before and after a movie.
+// Runs the main camera through three update-and-show cycles, before and after a movie.
 static inline void Flush_frames()
 {
     S32 i;
