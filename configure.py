@@ -355,7 +355,7 @@ cflags_game_nodeferred = [
 ]
 
 # Game flags without automatic inlining: only functions declared inline are inlined, and functions
-# are still emitted in reverse source order (xpkrsvc; see the compiler row in evidence.tsv).
+# are still emitted in reverse source order (xpkrsvc, zConditional; see the compiler rows in evidence.tsv).
 # GC/1.3.2 compiles `-inline deferred` and `-inline on,deferred` to identical objects.
 cflags_game_inlineonly = [
     "-inline deferred" if f == "-inline auto,deferred" else f for f in cflags_game
@@ -560,7 +560,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "flat/zAnimList.cpp"),
             Object(NonMatching, "flat/zAssetTypes.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zCamera.cpp"),
-            Object(NonMatching, "flat/zConditional.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zConditional.cpp", cflags=cflags_game_inlineonly),
             Object(NonMatching, "flat/zDispatcher.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zCounter.cpp"),
             Object(NonMatching, "flat/zCutsceneMgr.cpp"),
