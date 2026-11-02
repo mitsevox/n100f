@@ -425,18 +425,19 @@ CLAIM_EDGES = ('exact', 'provisional')  # an `open` edge says the true edge lies
 
 
 def claimed_data(rows, prefix):
-    """(unit, section) -> (start, end) for the `data` rows whose subject is a `prefix` path and a
+    """((unit, section), (start, end)) for each of the `data` rows whose subject is a `prefix` path and a
     section name, such as `flat/xSnd.cpp .bss`: a person's claim of that section range of the unit.
     A shared global (one that many units load, like `globals` or `gSnd`) gives the run no way to
     tell which unit defines it, so the row's evidence column has to.  A row with an `open` edge
-    claims nothing."""
-    out = {}
+    claims nothing.  Every row is returned, so check_data_claims judges each one (two rows for one
+    unit and section are two claims, and the overlap rule refuses the second)."""
+    out = []
     for r in rows:
         if r[0] != 'data' or r[1] == '-' or r[2] == '-' or r[5] not in CLAIM_EDGES or r[6] not in CLAIM_EDGES:
             continue
         m = re.fullmatch(re.escape(prefix) + r'(\S+) (\.\w+)', r[3])
         if m and m[2] in DATA_SECTIONS:
-            out[(m[1], m[2])] = (int(r[1], 16), int(r[2], 16))
+            out.append(((m[1], m[2]), (int(r[1], 16), int(r[2], 16))))
     return out
 
 
@@ -474,15 +475,16 @@ def literal_groups(data, data_refs, data_users):
     return [sorted(g) for g in groups.values() if len(g) > 1]
 
 
-def check_data_claims(data_claims, data, users, inferred, emitted):
+def check_data_claims(data_claims, data, elsewhere, inferred, emitted):
     """Item -> unit for the `data` claims (claimed_data) that hold up, and a message for each
-    refused one.  `users` maps an item to the units whose functions load it, `inferred` is the
-    (unit, section) -> (start, end) placement found without any claim, and `emitted` the units
-    that are written.  A claim is refused when an item in it is loaded only by functions of one
-    other emitted unit, when it overlaps a range the run gives another unit, or when it overlaps
-    an earlier claim: a claim may only place what the run leaves unplaced (like apply_claims)."""
+    refused one.  The run without claims gives `inferred`, (unit, section) -> (start, end), and
+    `elsewhere`, item -> unit for the items it places outside those ranges (table groups);
+    `emitted` holds the units that are written.  A claim is refused when an item in it is placed
+    with another unit, when it overlaps a range the run gives another unit, or when it overlaps an
+    earlier claim (in section, address and unit order): a claim may only place what the run leaves
+    unplaced, like apply_claims."""
     accepted, refused, taken = {}, [], []
-    for (u, sec), (lo, hi) in sorted(data_claims.items(), key=lambda kv: (kv[0][1], kv[1])):
+    for (u, sec), (lo, hi) in sorted(data_claims, key=lambda c: (c[0][1], c[1], c[0][0])):
         why = None
         if u not in emitted:
             why = 'its unit is not written'
@@ -490,9 +492,8 @@ def check_data_claims(data_claims, data, users, inferred, emitted):
         for d in items:
             if why:
                 break
-            us = users.get(d, set())
-            if len(us) == 1 and None not in us and us != {u} and next(iter(us)) in emitted:
-                why = f'0x{data[d][0]:08X} is loaded only by {next(iter(us))}'
+            if elsewhere.get(d, u) != u:
+                why = f'0x{data[d][0]:08X} is placed with {elsewhere[d]}'
         for (v, s), (a, b) in sorted(inferred.items()):
             if not why and s == sec and v != u and a < hi and lo < b:
                 why = f'it overlaps {v} {sec} 0x{a:08X}-0x{b:08X}'
@@ -536,6 +537,35 @@ def assign_groups(groups, range_unit, users, pointers, claimed, units):
             if d not in claimed and users.get(d) != {v}:
                 out[d] = v
     return out, conflicts
+
+
+def settle_placement(place, data, groups, users, pointers, claimed, units, rounds=4):
+    """Run `place(users, extra)` (-> dclass, stray, placed, final) with the claimed items and the
+    table groups (assign_groups) placed, until the groups stop moving.  A placed group can move a
+    range edge, so this repeats; if it has not settled after `rounds`, the tool stops.
+    Returns extra, conflicts, dclass, stray, placed, final."""
+    extra = dict(claimed)
+    for _ in range(rounds):
+        dclass, stray, placed, final = place(users, extra)
+        spans = collections.defaultdict(list)
+        for (u, sec), (lo, hi) in final.items():
+            spans[sec].append((lo, hi, u))
+        for sec in spans:
+            spans[sec].sort()
+
+        def range_unit(d):
+            sp = spans.get(data[d][2], [])
+            i = bisect.bisect_right(sp, (data[d][0], float('inf'), '')) - 1
+            return sp[i][2] if i >= 0 and sp[i][0] <= data[d][0] < sp[i][1] else None
+
+        by_group, conflicts = assign_groups(groups, range_unit, users, pointers, claimed, units)
+        new = {**by_group, **claimed}
+        if new == extra:
+            return extra, conflicts, dclass, stray, placed, final
+        extra = new
+    raise SystemExit(f'data placement did not settle in {rounds} rounds: a table group moves a range '
+                     'edge that moves it back; check the groups near the last change')
+
 
 
 def claimed_units(rows, prefix):
@@ -1103,33 +1133,20 @@ def main():
     pointers = set().union(*data_refs.values()) if data_refs else set()
 
     def settle(claimed):
-        extra = dict(claimed)
-        for _ in range(4):
-            dclass, stray, placed, final = place(users, extra)
-            spans = collections.defaultdict(list)
-            for (u, sec), (lo, hi) in final.items():
-                spans[sec].append((lo, hi, u))
-            for sec in spans:
-                spans[sec].sort()
-
-            def range_unit(d):
-                sp = spans.get(data[d][2], [])
-                i = bisect.bisect_right(sp, (data[d][0], float('inf'), '')) - 1
-                return sp[i][2] if i >= 0 and sp[i][0] <= data[d][0] < sp[i][1] else None
-
-            by_group, conflicts = assign_groups(groups, range_unit, users, pointers, claimed, index)
-            new = {**by_group, **claimed}
-            if new == extra:
-                return extra, conflicts, dclass, stray, placed, final
-            extra = new
-        raise SystemExit('data placement did not settle in 4 rounds: a table group moves a range '
-                         'edge that moves it back; check the groups near the last change')
+        return settle_placement(place, data, groups, users, pointers, claimed, index)
 
     emitted_units = {u for u in order if status(u) != 'weak'}
-    claimed, refused = check_data_claims(data_claims, data, users, settle({})[5], emitted_units)
+    free_extra, _, _, _, _, free_final = settle({})
+    claimed, refused = check_data_claims(data_claims, data, free_extra, free_final, emitted_units)
     for msg in refused:
         print(msg, file=sys.stderr)
     extra, conflicts, dclass, stray, placed, final = settle(claimed)
+    # A claim the link-order run then leaves out (its unit is out of order there) is reported.
+    left_out = sorted({(u, data[d][2]) for d, u in claimed.items()
+                       if not final.get((u, data[d][2]), (0, 0))[0] <= data[d][0] < final.get((u, data[d][2]), (0, 0))[1]})
+    for u, sec in left_out:
+        print(f'check: a data claim of {u} {sec} was accepted, but link order leaves some of it '
+              'outside the range the unit gets', file=sys.stderr)
     by_table = sum(1 for d in extra if d not in claimed)
 
     # An item inside a written range that a function no emitted unit holds loads

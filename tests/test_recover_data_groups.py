@@ -47,10 +47,14 @@ def row(subject, start="0x80227748", end="0x802289B8", a="exact", b="exact"):
 class ClaimedData(unittest.TestCase):
     def test_unit_section_rows_claim(self):
         rows = [row("flat/xSnd.cpp .bss"), row("flat/zMain.cpp .bss", "0x80234AE0", "0x80237DE0", "exact", "provisional")]
-        self.assertEqual(recover.claimed_data(rows, "flat/"), {
-            ("xSnd.cpp", ".bss"): (0x80227748, 0x802289B8),
-            ("zMain.cpp", ".bss"): (0x80234AE0, 0x80237DE0),
-        })
+        self.assertEqual(recover.claimed_data(rows, "flat/"), [
+            (("xSnd.cpp", ".bss"), (0x80227748, 0x802289B8)),
+            (("zMain.cpp", ".bss"), (0x80234AE0, 0x80237DE0)),
+        ])
+
+    def test_two_rows_for_one_unit_section_are_two_claims(self):
+        rows = [row("flat/zMain.cpp .bss", "0x80234AE0", "0x80237DE0"), row("flat/zMain.cpp .bss")]
+        self.assertEqual(len(recover.claimed_data(rows, "flat/")), 2)
 
     def test_other_rows_claim_nothing(self):
         rows = [
@@ -61,7 +65,7 @@ class ClaimedData(unittest.TestCase):
             row("flat/xSnd.cpp .bss", start="-"),          # no address
             row("flat/zScene.cpp lbl_801C82A0 initializer"),
         ]
-        self.assertEqual(recover.claimed_data(rows, "flat/"), {})
+        self.assertEqual(recover.claimed_data(rows, "flat/"), [])
 
 
 # A zVarEntryTable shape: the table (0) is loaded only by zConditional, its strings (1, 2) lie
@@ -113,10 +117,10 @@ EMITTED = {"xSnd.cpp", "xTRC.cpp", "zMain.cpp"}
 
 
 class CheckDataClaims(unittest.TestCase):
-    users = {0: {"xSnd.cpp", "zMain.cpp", None}, 1: {"xTRC.cpp"}}
+    elsewhere = {1: "xTRC.cpp"}  # the run without claims places item 1 with xTRC
 
     def check(self, claims, inferred=None):
-        return recover.check_data_claims(claims, CDATA, self.users, inferred or {}, EMITTED)
+        return recover.check_data_claims(list(claims.items()), CDATA, self.elsewhere, inferred or {}, EMITTED)
 
     def test_shared_global_is_accepted(self):
         accepted, refused = self.check({("xSnd.cpp", ".bss"): (0x80227748, 0x802289B8)})
@@ -125,7 +129,22 @@ class CheckDataClaims(unittest.TestCase):
     def test_item_only_another_unit_loads_is_refused(self):
         accepted, refused = self.check({("xSnd.cpp", ".bss"): (0x80227748, 0x802289E8)})
         self.assertEqual(accepted, {})
-        self.assertIn("loaded only by xTRC.cpp", refused[0])
+        self.assertIn("placed with xTRC.cpp", refused[0])
+
+    def test_item_only_another_unit_loads_but_left_unplaced_is_accepted(self):
+        # zVarEntryTable's case: loaded only by zConditional, but the run places it nowhere else
+        accepted, refused = recover.check_data_claims(
+            [(("zMain.cpp", ".bss"), (0x80300000, 0x80300010))], CDATA, {}, {}, EMITTED)
+        self.assertEqual((accepted, refused), ({2: "zMain.cpp"}, []))
+
+    def test_duplicate_unit_section_row_is_judged_and_refused(self):
+        claims = [(("zMain.cpp", ".bss"), (0x80300000, 0x80300010)),
+                  (("zMain.cpp", ".bss"), (0x80227748, 0x802289B8)),
+                  (("xSnd.cpp", ".bss"), (0x80227748, 0x802289B8))]
+        accepted, refused = recover.check_data_claims(claims, CDATA, {}, {}, EMITTED)
+        self.assertEqual(accepted, {0: "xSnd.cpp", 2: "zMain.cpp"})
+        self.assertEqual(len(refused), 1)
+        self.assertIn("zMain.cpp .bss 0x80227748-0x802289B8 refused: it overlaps the claim of xSnd.cpp", refused[0])
 
     def test_overlap_with_inferred_range_is_refused(self):
         accepted, refused = self.check({("zMain.cpp", ".bss"): (0x80300000, 0x80300010)},
@@ -143,6 +162,33 @@ class CheckDataClaims(unittest.TestCase):
         accepted, refused = self.check({("zMenu.cpp", ".bss"): (0x80300000, 0x80300010)})
         self.assertEqual(accepted, {})
         self.assertIn("not written", refused[0])
+
+
+
+class SettlePlacement(unittest.TestCase):
+    def test_stops_when_groups_keep_moving(self):
+        # a group of one table and one literal; each placement moves the range that holds the
+        # literal to the other unit, so the group never settles
+        data = [(0x80200000, 8, ".data", "t", False, None), (0x80300000, 4, ".rodata", "lbl_80300000", False, None)]
+        calls = []
+
+        def place(users, extra):
+            calls.append(dict(extra))
+            u = "A" if extra.get(0) == "B" else "B"
+            return {}, {}, {}, {(u, ".rodata"): (0x80300000, 0x80300004)}
+
+        with self.assertRaises(SystemExit):
+            recover.settle_placement(place, data, [[0, 1]], {}, {0}, {}, {"A": 0, "B": 1})
+        self.assertEqual(len(calls), 4)
+
+    def test_returns_when_settled(self):
+        data = [(0x80200000, 8, ".data", "t", False, None), (0x80300000, 4, ".rodata", "lbl_80300000", False, None)]
+
+        def place(users, extra):
+            return {}, {}, {}, {("A", ".rodata"): (0x80300000, 0x80300004)}
+
+        extra, conflicts, *_ = recover.settle_placement(place, data, [[0, 1]], {}, {0}, {}, {"A": 0})
+        self.assertEqual((extra, conflicts), ({0: "A", 1: "A"}, 0))
 
 
 if __name__ == "__main__":
