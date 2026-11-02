@@ -424,6 +424,150 @@ def exact_bodies(rows):
 CLAIM_EDGES = ('exact', 'provisional')  # an `open` edge says the true edge lies elsewhere
 
 
+def claimed_data(rows, prefix):
+    """((unit, section), (start, end)) for each of the `data` rows whose subject is a `prefix` path and a
+    section name, such as `flat/xSnd.cpp .bss`: a person's claim of that section range of the unit.
+    A shared global (one that many units load, like `globals` or `gSnd`) gives the run no way to
+    tell which unit defines it, so the row's evidence column has to.  A row with an `open` edge
+    claims nothing.  Every row is returned, so check_data_claims judges each one (two rows for one
+    unit and section are two claims, and the overlap rule refuses the second)."""
+    out = []
+    for r in rows:
+        if r[0] != 'data' or r[1] == '-' or r[2] == '-' or r[5] not in CLAIM_EDGES or r[6] not in CLAIM_EDGES:
+            continue
+        m = re.fullmatch(re.escape(prefix) + r'(\S+) (\.\w+)', r[3])
+        if m and m[2] in DATA_SECTIONS:
+            out.append(((m[1], m[2]), (int(r[1], 16), int(r[2], 16))))
+    return out
+
+
+class Dsu:
+    def __init__(self):
+        self.up = {}
+
+    def find(self, x):
+        while self.up.get(x, x) != x:
+            self.up[x] = self.up.get(self.up[x], self.up[x])
+            x = self.up[x]
+        return x
+
+    def join(self, a, b):
+        self.up.setdefault(a, a)
+        self.up.setdefault(b, b)
+        self.up[self.find(a)] = self.find(b)
+
+
+def literal_groups(data, data_refs, data_users):
+    """Groups of data items that one object must define together.  A pointer from a data item to
+    a literal (a dtk `lbl_` label: string literals, pooled constants) or to an item no function
+    loads (a static table only another table points to) ties the two to one unit: a literal is
+    local to its object, and a static only data points to has no other way to be reached.
+    Pointers to named items that functions load (globals) tie nothing."""
+    dsu = Dsu()
+    for d, srcs in data_refs.items():
+        name = data[d][3]
+        if name.startswith(('lbl_', '@')) or '$' in name or d not in data_users:
+            for s in srcs:
+                dsu.join(s, d)
+    groups = collections.defaultdict(list)
+    for d in list(dsu.up):
+        groups[dsu.find(d)].append(d)
+    return [sorted(g) for g in groups.values() if len(g) > 1]
+
+
+def check_data_claims(data_claims, data, elsewhere, inferred, emitted):
+    """Item -> unit for the `data` claims (claimed_data) that hold up, and a message for each
+    refused one.  The run without claims gives `inferred`, (unit, section) -> (start, end), and
+    `elsewhere`, item -> unit for the items it places outside those ranges (table groups);
+    `emitted` holds the units that are written.  A claim is refused when an item in it is placed
+    with another unit, when it overlaps a range the run gives another unit, or when it overlaps an
+    earlier claim (in section, address and unit order): a claim may only place what the run leaves
+    unplaced, like apply_claims."""
+    accepted, refused, taken = {}, [], []
+    for (u, sec), (lo, hi) in sorted(data_claims, key=lambda c: (c[0][1], c[1], c[0][0])):
+        why = None
+        if u not in emitted:
+            why = 'its unit is not written'
+        items = [d for d, item in enumerate(data) if item[2] == sec and lo <= item[0] < hi]
+        for d in items:
+            if why:
+                break
+            if elsewhere.get(d, u) != u:
+                why = f'0x{data[d][0]:08X} is placed with {elsewhere[d]}'
+        for (v, s), (a, b) in sorted(inferred.items()):
+            if not why and s == sec and v != u and a < hi and lo < b:
+                why = f'it overlaps {v} {sec} 0x{a:08X}-0x{b:08X}'
+        for (v, s, a, b) in taken:
+            if not why and s == sec and a < hi and lo < b:
+                why = f'it overlaps the claim of {v}'
+        if why:
+            refused.append(f'check: data claim {u} {sec} 0x{lo:08X}-0x{hi:08X} refused: {why}')
+            continue
+        taken.append((u, sec, lo, hi))
+        accepted.update({d: u for d in items})
+    return accepted, refused
+
+
+def assign_groups(groups, range_unit, users, pointers, claimed, units):
+    """Item -> unit for the literal_groups and the number of groups left alone.  A group goes to
+    the unit whose range (range_unit) already holds members, else to the one unit whose functions
+    load members.  It is left alone when its members fall in two units' ranges, when two units load
+    it and no range holds any, or when a member that points to nothing (a literal, not the table)
+    is loaded only by one unit other than the chosen one: dtk's `lbl_` also names globals no one
+    has named yet.  Claimed items keep their claim; `pointers` are the members that point to
+    others, `units` the units that may be chosen."""
+    out, conflicts = {}, 0
+    for g in groups:
+        held = {range_unit(d) for d in g} - {None}
+        if not held:
+            held = set().union(*(users.get(d, set()) for d in g))
+            if None in held:
+                continue
+        if len(held) != 1:
+            conflicts += 1
+            continue
+        v, = held
+        if v not in units:
+            continue
+        if any(d not in pointers and len(users.get(d, ())) == 1 and users[d] != {v} and None not in users[d]
+               for d in g):
+            conflicts += 1
+            continue
+        for d in g:
+            if d not in claimed and users.get(d) != {v}:
+                out[d] = v
+    return out, conflicts
+
+
+def settle_placement(place, data, groups, users, pointers, claimed, units, rounds=4):
+    """Run `place(users, extra)` (-> dclass, stray, placed, final) with the claimed items and the
+    table groups (assign_groups) placed, until the groups stop moving.  A placed group can move a
+    range edge, so this repeats; if it has not settled after `rounds`, the tool stops.
+    Returns extra, conflicts, dclass, stray, placed, final."""
+    extra = dict(claimed)
+    for _ in range(rounds):
+        dclass, stray, placed, final = place(users, extra)
+        spans = collections.defaultdict(list)
+        for (u, sec), (lo, hi) in final.items():
+            spans[sec].append((lo, hi, u))
+        for sec in spans:
+            spans[sec].sort()
+
+        def range_unit(d):
+            sp = spans.get(data[d][2], [])
+            i = bisect.bisect_right(sp, (data[d][0], float('inf'), '')) - 1
+            return sp[i][2] if i >= 0 and sp[i][0] <= data[d][0] < sp[i][1] else None
+
+        by_group, conflicts = assign_groups(groups, range_unit, users, pointers, claimed, units)
+        new = {**by_group, **claimed}
+        if new == extra:
+            return extra, conflicts, dclass, stray, placed, final
+        extra = new
+    raise SystemExit(f'data placement did not settle in {rounds} rounds: a table group moves a range '
+                     'edge that moves it back; check the groups near the last change')
+
+
+
 def claimed_units(rows, prefix):
     """Unit -> (start, end) for the `unit` rows whose subject is a `prefix` path: a person's claim
     of the unit's .text extent, which the evidence column has to support (config/README.md). A row
@@ -535,9 +679,18 @@ def main():
     func_targets = collections.defaultdict(list)
     func_data = collections.defaultdict(set)
     data_users = collections.defaultdict(set)
+    data_refs = collections.defaultdict(set)  # item -> data items that point to it
+
+    def in_item(a):
+        d = didx(a)
+        return d if d is not None and (not data[d][1] or a < data[d][0] + data[d][1]) else None
+
     for src, dst in relocs:
         f = fidx(src)
         if f is None:
+            s, d = in_item(src), in_item(dst)
+            if s is not None and d is not None and s != d:
+                data_refs[d].add(s)
             continue
         func_targets[f].append(dst)
         d = didx(dst)
@@ -552,6 +705,7 @@ def main():
     rows = list(csv.reader(open(args.evidence, encoding='utf-8'), delimiter='\t'))
     exact = exact_bodies(rows)
     claims = claimed_units(rows, args.prefix)
+    data_claims = claimed_data(rows, args.prefix)
     gc_feats = {j: gc_features(dol, r2, f[0], f[1], func_targets[j]) for j, f in enumerate(funcs)}
     ps2_feats = {i: ps2.features(f[0], f[1]) for i, f in enumerate(ps2.funcs)}
     # Calls are features too: a GC call to an exact-body function, and a PS2 jal to
@@ -882,85 +1036,118 @@ def main():
                  lambda w: status(w) == 'weak', tclass, tconf)
 
     users = {d: {unit_of.get(f) for f in fs} for d, fs in data_users.items()}
+    index = {u: k for k, u in enumerate(order)}
 
     def aligned(d):
         return data[d][0] % DATA_ALIGN == 0
 
-    # Data cuts between consecutive units that own unit-local items in a section.
-    # Items that unassigned functions load stay out of every unit.
-    ranges, dclass, stray, placed, shared_items = {}, {}, {}, {}, set()
-    for sec in DATA_SECTIONS:
-        # Unit-local items must appear in link order.  Keep the largest set of them
-        # whose owners never go backwards (longest non-decreasing run); an item out
-        # of that order is a global another unit defines, so it marks no range.
-        items = sorted((d, k) for k, u in enumerate(order)
-                       for d in owned(tstart[u], tend[u], sec) if users[d] == {u})
-        kept = longest_run(items)
-        # Heuristic: an item several units load is usually defined by one of them.
-        # Where link order leaves room for only one of its users (between the units
-        # of the kept items around it), it is placed with that user.
-        index = {u: k for k, u in enumerate(order)}
-        at = [d for d, _ in kept]
-        for d in sorted(d for d, us in users.items() if data[d][2] == sec and None not in us and len(us) > 1):
-            i = bisect.bisect_left(at, d)
-            lo = kept[i - 1][1] if i else 0
-            hi = kept[i][1] if i < len(kept) else len(order) - 1
-            fits = [index[u] for u in users[d] if lo <= index[u] <= hi]
-            if len(fits) == 1:
-                items.append((d, fits[0]))
-                shared_items.add(d)
-        items.sort()
-        kept = longest_run(items)
-        stray[sec] = len(items) - len(kept)
-        placed[sec] = sum(1 for d, _ in kept if d in shared_items)
-        seq = []
-        for d, k in kept:
-            if seq and seq[-1][0] == order[k]:
-                seq[-1][2], seq[-1][3] = d, seq[-1][3] + 1
-            else:
-                seq.append([order[k], d, d, 1])
-        for u, mn, mx, _ in seq:
-            end = data[mx + 1][0] if mx + 1 < len(data) and data[mx + 1][2] == sec else data[mx][0] + data[mx][1]
-            ranges[(u, sec)] = [mn, end]
-        for (u, _, mx, _), (v, mn, _, _) in zip(seq, seq[1:]):
-            between = range(mx + 1, mn)
-            floating = [d for d in between if None in users.get(d, ())]
-            lo_c = min(floating) if floating else mn          # A may end no later than here
-            hi_c = max(floating) + 1 if floating else mx + 1  # B may start no earlier than here
-            cands = [d for d in range(mx + 1, mn + 1) if aligned(d)]
-            a_end = [c for c in cands if c <= lo_c]
-            b_start = [c for c in cands if c >= hi_c]
-            if not floating:
-                scored = {c: sum(1 for d in between for w in users.get(d, ())
-                                 if (w == u and d >= c) or (w == v and d < c)) for c in cands}
-                best = min(scored.values()) if scored else 0
-                ties = [c for c in cands if scored[c] == best]
-                a_end, b_start = ties[:1], ties[-1:]
-            else:
-                best = 0
-            ranges[(u, sec)][1] = data[a_end[0]][0] if a_end else None
-            ranges[(v, sec)][0] = b_start[-1] if b_start else None
-            if floating:
-                cls = f'open: {len(floating)} items loaded by unassigned functions'
-            elif len(a_end) == 1 and a_end == b_start:
-                cls = 'single aligned candidate'
-            else:
-                cls = f'open: {b_start[-1] - a_end[0] + 1 if a_end and b_start else 0} items between aligned candidates'
-            dclass[(u, v, sec)] = (cls, best)
+    def place(users, extra):
+        """Data ranges, given each item's loading units (`users`) and the items placed with a
+        unit by other means (`extra`, item -> unit), which outrank their loaders."""
+        users = dict(users)
+        for d, u in extra.items():
+            users[d] = {u}
+        # Data cuts between consecutive units that own unit-local items in a section.
+        # Items that unassigned functions load stay out of every unit.
+        ranges, dclass, stray, placed, shared_items = {}, {}, {}, {}, set()
+        for sec in DATA_SECTIONS:
+            # Unit-local items must appear in link order.  Keep the largest set of them
+            # whose owners never go backwards (longest non-decreasing run); an item out
+            # of that order is a global another unit defines, so it marks no range.
+            items = sorted({(d, k) for k, u in enumerate(order)
+                            for d in owned(tstart[u], tend[u], sec) if d not in extra and users[d] == {u}}
+                           | {(d, index[u]) for d, u in extra.items() if data[d][2] == sec and u in index})
+            kept = longest_run(items)
+            # Heuristic: an item several units load is usually defined by one of them.
+            # Where link order leaves room for only one of its users (between the units
+            # of the kept items around it), it is placed with that user.
+            at = [d for d, _ in kept]
+            for d in sorted(d for d, us in users.items() if data[d][2] == sec and None not in us and len(us) > 1):
+                i = bisect.bisect_left(at, d)
+                lo = kept[i - 1][1] if i else 0
+                hi = kept[i][1] if i < len(kept) else len(order) - 1
+                fits = [index[u] for u in users[d] if lo <= index[u] <= hi]
+                if len(fits) == 1:
+                    items.append((d, fits[0]))
+                    shared_items.add(d)
+            items.sort()
+            kept = longest_run(items)
+            stray[sec] = len(items) - len(kept)
+            placed[sec] = sum(1 for d, _ in kept if d in shared_items)
+            seq = []
+            for d, k in kept:
+                if seq and seq[-1][0] == order[k]:
+                    seq[-1][2], seq[-1][3] = d, seq[-1][3] + 1
+                else:
+                    seq.append([order[k], d, d, 1])
+            for u, mn, mx, _ in seq:
+                end = data[mx + 1][0] if mx + 1 < len(data) and data[mx + 1][2] == sec else data[mx][0] + data[mx][1]
+                ranges[(u, sec)] = [mn, end]
+            for (u, _, mx, _), (v, mn, _, _) in zip(seq, seq[1:]):
+                between = range(mx + 1, mn)
+                floating = [d for d in between if None in users.get(d, ())]
+                lo_c = min(floating) if floating else mn          # A may end no later than here
+                hi_c = max(floating) + 1 if floating else mx + 1  # B may start no earlier than here
+                cands = [d for d in range(mx + 1, mn + 1) if aligned(d)]
+                a_end = [c for c in cands if c <= lo_c]
+                b_start = [c for c in cands if c >= hi_c]
+                if not floating:
+                    scored = {c: sum(1 for d in between for w in users.get(d, ())
+                                     if (w == u and d >= c) or (w == v and d < c)) for c in cands}
+                    best = min(scored.values()) if scored else 0
+                    ties = [c for c in cands if scored[c] == best]
+                    a_end, b_start = ties[:1], ties[-1:]
+                else:
+                    best = 0
+                ranges[(u, sec)][1] = data[a_end[0]][0] if a_end else None
+                ranges[(v, sec)][0] = b_start[-1] if b_start else None
+                if floating:
+                    cls = f'open: {len(floating)} items loaded by unassigned functions'
+                elif len(a_end) == 1 and a_end == b_start:
+                    cls = 'single aligned candidate'
+                else:
+                    cls = f'open: {b_start[-1] - a_end[0] + 1 if a_end and b_start else 0} items between aligned candidates'
+                dclass[(u, v, sec)] = (cls, best)
 
-    # A section range is written only if it starts on an aligned symbol and ends
-    # at a known edge; anything else stays in dtk's automatic objects.
-    final = {}
-    for (u, sec), (mn, end) in ranges.items():
-        if mn is None or end is None:
-            continue
-        if not aligned(mn):
-            back = [d for d in range(mn - 1, -1, -1) if data[d][2] == sec and aligned(d)]
-            if not back or any(users.get(d) and users[d] != {u} for d in range(back[0], mn)):
+        # A section range is written only if it starts on an aligned symbol and ends
+        # at a known edge; anything else stays in dtk's automatic objects.
+        final = {}
+        for (u, sec), (mn, end) in ranges.items():
+            if mn is None or end is None:
                 continue
-            mn = back[0]
-        if data[mn][0] < end:
-            final[(u, sec)] = (data[mn][0], end)
+            if not aligned(mn):
+                back = [d for d in range(mn - 1, -1, -1) if data[d][2] == sec and aligned(d)]
+                if not back or any(users.get(d) and users[d] != {u} for d in range(back[0], mn)):
+                    continue
+                mn = back[0]
+            if data[mn][0] < end:
+                final[(u, sec)] = (data[mn][0], end)
+        return dclass, stray, placed, final
+
+    # Placement beyond function loads.  Items that one object must define together
+    # (literal_groups: a table and the strings it points to) go to one unit (assign_groups),
+    # repeated until it settles, since a placed group can move a range edge.  A `data` row in
+    # evidence.tsv that claims a unit's section range places every item in it, unless the run
+    # without claims already places any of it elsewhere (check_data_claims).
+    groups = literal_groups(data, data_refs, data_users)
+    pointers = set().union(*data_refs.values()) if data_refs else set()
+
+    def settle(claimed):
+        return settle_placement(place, data, groups, users, pointers, claimed, index)
+
+    emitted_units = {u for u in order if status(u) != 'weak'}
+    free_extra, _, _, _, _, free_final = settle({})
+    claimed, refused = check_data_claims(data_claims, data, free_extra, free_final, emitted_units)
+    for msg in refused:
+        print(msg, file=sys.stderr)
+    extra, conflicts, dclass, stray, placed, final = settle(claimed)
+    # A claim the link-order run then leaves out (its unit is out of order there) is reported.
+    left_out = sorted({(u, data[d][2]) for d, u in claimed.items()
+                       if not final.get((u, data[d][2]), (0, 0))[0] <= data[d][0] < final.get((u, data[d][2]), (0, 0))[1]})
+    for u, sec in left_out:
+        print(f'check: a data claim of {u} {sec} was accepted, but link order leaves some of it '
+              'outside the range the unit gets', file=sys.stderr)
+    by_table = sum(1 for d in extra if d not in claimed)
 
     # An item inside a written range that a function no emitted unit holds loads
     # (unassigned, or in a weak unit) is a reference from outside every written unit.
@@ -1062,7 +1249,9 @@ def main():
           f'{len(named)} by name, '
           f'aligned {len(pairs)}, units {len(order)} ({sum(status(u) != "weak" for u in order)} emitted), '
           f'data edges {len(dclass)}, out-of-order unit-local items {sum(stray.values())}, '
-          f'shared items placed by link order {sum(placed.values())}; .sdata2 locality violations {len(locality)}, '
+          f'shared items placed by link order {sum(placed.values())}, '
+          f'items placed with their tables {by_table} ({conflicts} table groups left alone), '
+          f'items placed by data rows {len(claimed)}; .sdata2 locality violations {len(locality)}, '
           f'repeated floats {len(duplicates)} (advice)', file=sys.stderr)
     if locality:
         sys.exit(1)
