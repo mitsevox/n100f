@@ -342,12 +342,16 @@ void xEntReset(_xEnt* ent)
 
     switch (ent->bound.type)
     {
-    case 0:
-        break;
     case 1:
         ent->bound.sph.center.x = ent->asset->pos.x;
         ent->bound.sph.center.y = ent->asset->pos.y;
         ent->bound.sph.center.z = ent->asset->pos.z;
+        break;
+    case 2:
+        break;
+    case 3:
+        break;
+    case 4:
         break;
     }
 
@@ -1504,6 +1508,14 @@ static inline char* xEntCollTypeStrAll(char* str, U8 type)
     }
 
     return str;
+}
+
+// Not called anywhere in the game.
+static void xEnt_UnknownAnimTables()
+{
+    xprintf("anim-file");
+    xprintf("anim-table");
+    xprintf("ent-table");
 }
 
 // Debug text for the selected entity. Mode 1 shows its flags, position, velocity, scale and
