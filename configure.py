@@ -367,6 +367,11 @@ cflags_game_noinline = [
     "-inline off,deferred" if f == "-inline auto,deferred" else f for f in cflags_game
 ]
 
+# Game flags without the cpp_extensions pragma (xEntMotion; see the compiler row in evidence.tsv).
+# With the pragma, a value an inlined test loads is reused by the code after the test; without it,
+# that code loads the value again, as the target does.
+cflags_game_nocppext = [f for f in cflags_game if f != '-pragma "cpp_extensions on"']
+
 # Same release as the game compiler. Every mwld from GC/1.0 to 2.6 relinks the baseline
 # identically, so the target does not independently establish the linker version.
 config.linker_version = "GC/1.3.2"
@@ -516,7 +521,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xDraw.cpp"),
             Object(NonMatching, "flat/xEnt.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEntDrive.cpp"),
-            Object(NonMatching, "flat/xEntMotion.cpp"),
+            Object(NonMatching, "flat/xEntMotion.cpp", cflags=cflags_game_nocppext),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEnv.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xFFX.cpp"),
             Object(NonMatching, "flat/xFX.cpp"),
