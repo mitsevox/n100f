@@ -132,7 +132,7 @@ void iCylinderIsectVec(const _xCylinder* c, const xVec3* v, xIsect* isx)
     }
 }
 
-// o = p + d * t: the point at distance t along a ray.
+// o = p + d * t: the point at parameter t along a ray.
 static inline void RayPoint(xVec3* o, const xVec3* d, F32 t, const xVec3* p)
 {
     xVec3Copy(o, d);
@@ -140,17 +140,26 @@ static inline void RayPoint(xVec3* o, const xVec3* d, F32 t, const xVec3* p)
     xVec3AddTo(o, p);
 }
 
+// Intersect the circular cross section, then check the cylinder's height.
 void iCylinderIsectRay(const _xCylinder* c, const xRay3* r, xIsect* isx)
 {
     F32 a, b;
     F32 t_in, t_out;
     U32 num;
-    F32 dz = r->origin.z - c->center.z;
-    F32 dx = r->origin.x - c->center.x;
+    // Use (z, x) coordinates on the plane normal to the cylinder's Y axis.
+    xVec2 directionZX;
+    directionZX.x = r->dir.z;
+    directionZX.y = r->dir.x;
+    xVec2 offsetZX;
+    offsetZX.y = r->origin.x;
+    offsetZX.y -= c->center.x;
+    offsetZX.x = r->origin.z;
+    offsetZX.x -= c->center.z;
 
-    num = xMathSolveQuadratic(r->dir.x * r->dir.x + r->dir.z * r->dir.z,
-                              2.0f * (dx * r->dir.x + dz * r->dir.z),
-                              dx * dx + dz * dz - c->r * c->r, &t_in, &t_out);
+    num = xMathSolveQuadratic(
+        directionZX.y * directionZX.y + directionZX.x * directionZX.x,
+        2.0f * (offsetZX.y * directionZX.y + offsetZX.x * directionZX.x),
+        offsetZX.y * offsetZX.y + offsetZX.x * offsetZX.x - c->r * c->r, &t_in, &t_out);
 
     if (num == 0)
     {
@@ -602,44 +611,17 @@ void iBoxIsectRay(const _xBox* b, const xRay3* r, xIsect* isx)
     }
 }
 
+// Reject separated axis intervals before measuring penetration and encoding the sphere's region.
 void iBoxIsectSphere(const _xBox* box, const xSphere* p, xIsect* isx)
 {
     U32 xcode, ycode, zcode;
-    F32 lo, hi;
+    _xBox sphereBounds;
 
-    lo = p->center.x - p->r;
-    hi = p->center.x + p->r;
-
-    if (lo < box->lower.x)
-    {
-        if (hi < box->lower.x)
-        {
-            xcode = 2;
-        }
-        else if (hi > box->upper.x)
-        {
-            xcode = 0;
-        }
-        else
-        {
-            xcode = 1;
-        }
-    }
-    else
-    {
-        if (lo > box->upper.x)
-        {
-            xcode = 5;
-        }
-        else if (hi > box->upper.x)
-        {
-            xcode = 4;
-        }
-        else
-        {
-            xcode = 3;
-        }
-    }
+    sphereBounds.lower.x = p->center.x - p->r;
+    sphereBounds.upper.x = p->center.x + p->r;
+    xcode = (sphereBounds.lower.x < box->lower.x)
+        ? ((sphereBounds.upper.x < box->lower.x) ? 2 : ((sphereBounds.upper.x > box->upper.x) ? 0 : 1))
+        : ((sphereBounds.lower.x > box->upper.x) ? 5 : ((sphereBounds.upper.x > box->upper.x) ? 4 : 3));
 
     if (xcode % 3 == 2)
     {
@@ -647,35 +629,11 @@ void iBoxIsectSphere(const _xBox* box, const xSphere* p, xIsect* isx)
         return;
     }
 
-    lo = p->center.y - p->r;
-    hi = p->center.y + p->r;
-
-    if (lo < box->lower.y)
-    {
-        if (hi < box->lower.y)
-        {
-            ycode = 2;
-        }
-        else if (hi > box->upper.y)
-        {
-            ycode = 0;
-        }
-        else
-        {
-            ycode = 1;
-        }
-    }
-    else
-    {
-        if (lo > box->upper.y)
-        {
-            ycode = 5;
-        }
-        else if (hi > box->upper.y)
-        {
-            ycode = 4;
-        }
-    }
+    sphereBounds.lower.y = p->center.y - p->r;
+    sphereBounds.upper.y = p->center.y + p->r;
+    ycode = (sphereBounds.lower.y < box->lower.y)
+        ? ((sphereBounds.upper.y < box->lower.y) ? 2 : ((sphereBounds.upper.y > box->upper.y) ? 0 : 1))
+        : ((sphereBounds.lower.y > box->upper.y) ? 5 : ((sphereBounds.upper.y > box->upper.y) ? 4 : 3));
 
     if (ycode % 3 == 2)
     {
@@ -683,35 +641,11 @@ void iBoxIsectSphere(const _xBox* box, const xSphere* p, xIsect* isx)
         return;
     }
 
-    lo = p->center.z - p->r;
-    hi = p->center.z + p->r;
-
-    if (lo < box->lower.z)
-    {
-        if (hi < box->lower.z)
-        {
-            zcode = 2;
-        }
-        else if (hi > box->upper.z)
-        {
-            zcode = 0;
-        }
-        else
-        {
-            zcode = 1;
-        }
-    }
-    else
-    {
-        if (lo > box->upper.z)
-        {
-            zcode = 5;
-        }
-        else if (hi > box->upper.z)
-        {
-            zcode = 4;
-        }
-    }
+    sphereBounds.lower.z = p->center.z - p->r;
+    sphereBounds.upper.z = p->center.z + p->r;
+    zcode = (sphereBounds.lower.z < box->lower.z)
+        ? ((sphereBounds.upper.z < box->lower.z) ? 2 : ((sphereBounds.upper.z > box->upper.z) ? 0 : 1))
+        : ((sphereBounds.lower.z > box->upper.z) ? 5 : ((sphereBounds.upper.z > box->upper.z) ? 4 : 3));
 
     if (zcode % 3 == 2)
     {
