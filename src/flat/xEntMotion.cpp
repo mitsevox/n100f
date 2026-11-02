@@ -610,11 +610,16 @@ static void xEntPenMove(_xEntMotion* motion, _xScene* sc, F32 dt, _xEntFrame* fr
 {
     _xEntPenData* pen = &motion->pen;
     p2EntMotionPenData* aspen = &motion->asset->pen;
+    F32 th = motion->t;
     F32 v = pen->w;
-    F32 th = 0.5f * dt;
-    F32 rem = motion->t + th;
-    F32 dangle = (2.0f * aspen->range) * isin(th * v) * icos(rem * v + aspen->phase);
-    F32 newt = motion->t - aspen->period;
+    F32 dangle;
+    F32 newt;
+    F32 rem = 0.5f * dt;
+
+    th += rem;
+    th = th * pen->w + aspen->phase;
+    dangle = (2.0f * aspen->range) * isin(rem * v) * icos(th);
+    newt = motion->t - aspen->period;
 
     if (newt > 0.0f)
     {

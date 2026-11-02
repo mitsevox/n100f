@@ -521,7 +521,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xDraw.cpp"),
             Object(NonMatching, "flat/xEnt.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEntDrive.cpp"),
-            Object(NonMatching, "flat/xEntMotion.cpp", cflags=cflags_game_nocppext),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEntMotion.cpp", cflags=cflags_game_nocppext),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEnv.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xFFX.cpp"),
             Object(NonMatching, "flat/xFX.cpp"),
