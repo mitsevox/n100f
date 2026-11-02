@@ -165,6 +165,18 @@ class CheckDataClaims(unittest.TestCase):
 
 
 
+class ClaimWarnings(unittest.TestCase):
+    def test_item_only_another_unit_loads_is_reported(self):
+        users = {0: {"xSnd.cpp", "zMain.cpp", None}, 1: {"xTRC.cpp"}}
+        msgs = recover.claim_warnings({0: "xSnd.cpp", 1: "xSnd.cpp", 2: "xSnd.cpp"}, CDATA, users, EMITTED)
+        self.assertEqual(len(msgs), 1)
+        self.assertIn("0x802289B8 (lbl_802289B8), which only xTRC.cpp loads", msgs[0])
+
+    def test_own_or_unwritten_loader_is_not_reported(self):
+        users = {1: {"xSnd.cpp"}, 2: {"zMenu.cpp"}}
+        self.assertEqual(recover.claim_warnings({1: "xSnd.cpp", 2: "xSnd.cpp"}, CDATA, users, EMITTED), [])
+
+
 class SettlePlacement(unittest.TestCase):
     def test_stops_when_groups_keep_moving(self):
         # a group of one table and one literal; each placement moves the range that holds the
