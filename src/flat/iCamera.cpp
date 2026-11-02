@@ -251,12 +251,15 @@ void iCameraUpdateFog(RwCamera* cam, iTime t)
     iFogParams* fb;
     F32 a;
     U32 bite_me;
+    RwRGBA colorA;
+    RwRGBA colorB;
+    RwRGBA colorOut;
 
     fp = &globals.fog;
     fa = &globals.fogA;
     fb = &globals.fogB;
 
-    if (fp->type == rwFOGTYPENAFOGTYPE)
+    if (globals.fog.type == rwFOGTYPENAFOGTYPE)
     {
         RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);
         RwCameraSetFarClipPlane(cam, sCameraFarClip);
@@ -274,23 +277,32 @@ void iCameraUpdateFog(RwCamera* cam, iTime t)
         a = CLAMP(a, 0.0f, 1.0f);
 
         fp->type = fb->type;
-        fp->table = fb->table;
+        fp->table = globals.fogB.table;
         fp->start = fa->start + a * (fb->start - fa->start);
         fp->stop = fa->stop + a * (fb->stop - fa->stop);
         fp->density = fa->density + a * (fb->density - fa->density);
-        fp->fogcolor.green = fa->fogcolor.green + a * (fb->fogcolor.green - fa->fogcolor.green);
-        fp->fogcolor.blue = fa->fogcolor.blue + a * (fb->fogcolor.blue - fa->fogcolor.blue);
-        fp->fogcolor.alpha = fa->fogcolor.alpha + a * (fb->fogcolor.alpha - fa->fogcolor.alpha);
-        fp->fogcolor.red = fa->fogcolor.red + a * (fb->fogcolor.red - fa->fogcolor.red);
-        fp->bgcolor.green = fa->bgcolor.green + a * (fb->bgcolor.green - fa->bgcolor.green);
-        fp->bgcolor.blue = fa->bgcolor.blue + a * (fb->bgcolor.blue - fa->bgcolor.blue);
-        fp->bgcolor.alpha = fa->bgcolor.alpha + a * (fb->bgcolor.alpha - fa->bgcolor.alpha);
-        fp->bgcolor.red = fa->bgcolor.red + a * (fb->bgcolor.red - fa->bgcolor.red);
+
+        // Blend each endpoint color before replacing the active color.
+        colorA = fa->fogcolor;
+        colorB = fb->fogcolor;
+        colorOut.green = colorA.green + a * (colorB.green - colorA.green);
+        colorOut.blue = colorA.blue + a * (colorB.blue - colorA.blue);
+        colorOut.alpha = colorA.alpha + a * (colorB.alpha - colorA.alpha);
+        colorOut.red = colorA.red + a * (colorB.red - colorA.red);
+        fp->fogcolor = colorOut;
+
+        colorA = fa->bgcolor;
+        colorB = fb->bgcolor;
+        colorOut.green = colorA.green + a * (colorB.green - colorA.green);
+        colorOut.blue = colorA.blue + a * (colorB.blue - colorA.blue);
+        colorOut.alpha = colorA.alpha + a * (colorB.alpha - colorA.alpha);
+        colorOut.red = colorA.red + a * (colorB.red - colorA.red);
+        fp->bgcolor = colorOut;
 
         if (a == 1.0f)
         {
             globals.fog_t0 = 0;
-            *fa = *fb;
+            globals.fogA = globals.fogB;
         }
     }
 
