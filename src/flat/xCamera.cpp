@@ -688,7 +688,7 @@ static void xCameraSeeThruCallback(_xEnt* ent)
 
     if (see_thru && ent->baseType != 3)
     {
-        ent->flags |= 0x4;
+        ent->flags |= (U8)0x4;
         ent->fade_tmr = 1.25f;
         if (zSceneIDFromName("o004") == (gTransitionSceneID ^ 0x20000000) &&
             (ent->id == 0xF933F89E || ent->id == 0xFFF2B7AA))

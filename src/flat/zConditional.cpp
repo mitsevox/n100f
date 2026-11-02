@@ -66,6 +66,8 @@ S32 zConditionalEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
         else
             zEntEvent(t, t, 62);
         break;
+    case 61:
+        break;
     case eEventReset:
         xBaseReset(t, t->asset);
         break;

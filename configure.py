@@ -355,7 +355,7 @@ cflags_game_nodeferred = [
 ]
 
 # Game flags without automatic inlining: only functions declared inline are inlined, and functions
-# are still emitted in reverse source order (xpkrsvc; see the compiler row in evidence.tsv).
+# are still emitted in reverse source order (xpkrsvc, zConditional; see the compiler rows in evidence.tsv).
 # GC/1.3.2 compiles `-inline deferred` and `-inline on,deferred` to identical objects.
 cflags_game_inlineonly = [
     "-inline deferred" if f == "-inline auto,deferred" else f for f in cflags_game
@@ -366,6 +366,11 @@ cflags_game_inlineonly = [
 cflags_game_noinline = [
     "-inline off,deferred" if f == "-inline auto,deferred" else f for f in cflags_game
 ]
+
+# Game flags without the cpp_extensions pragma (xEntMotion, xEnt, ngcrad3d; see the compiler rows in evidence.tsv).
+# With the pragma, a value an inlined test loads is reused by the code after the test; without it,
+# that code loads the value again, as the target does.
+cflags_game_nocppext = [f for f in cflags_game if f != '-pragma "cpp_extensions on"']
 
 # Same release as the game compiler. Every mwld from GC/1.0 to 2.6 relinks the baseline
 # identically, so the target does not independently establish the linker version.
@@ -514,9 +519,9 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xCutscene.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xDebug.cpp"),
             Object(NonMatching, "flat/xDraw.cpp"),
-            Object(NonMatching, "flat/xEnt.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEnt.cpp", cflags=cflags_game_nocppext),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEntDrive.cpp"),
-            Object(NonMatching, "flat/xEntMotion.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEntMotion.cpp", cflags=cflags_game_nocppext),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEnv.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xFFX.cpp"),
             Object(NonMatching, "flat/xFX.cpp"),
@@ -552,10 +557,10 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xTRC.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xutil.cpp"),
             Object(NonMatching, "flat/zActionLine.cpp"),
-            Object(NonMatching, "flat/zAnimList.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/zAnimList.cpp"),
             Object(NonMatching, "flat/zAssetTypes.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zCamera.cpp"),
-            Object(NonMatching, "flat/zConditional.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zConditional.cpp", cflags=cflags_game_inlineonly),
             Object(NonMatching, "flat/zDispatcher.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zCounter.cpp"),
             Object(NonMatching, "flat/zCutsceneMgr.cpp"),
@@ -569,7 +574,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zEntPlayer.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEntTrigger.cpp"),
             Object(NonMatching, "flat/zEntProjectile.cpp"),
-            Object(NonMatching, "flat/zEntShaggy.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/zEntShaggy.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEntSimpleObj.cpp"),
             Object(NonMatching, "flat/zEntVillain.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEnv.cpp"),
@@ -588,7 +593,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zLight.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zLightEffect.cpp"),
             Object(NonMatching, "flat/zLightning.cpp"),
-            Object(NonMatching, "flat/zLobMaster.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zLobMaster.cpp"),
             Object(NonMatching, "flat/zMain.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/zMenu.cpp"),
             Object(NonMatching, "flat/zMovePoint.cpp"),
@@ -614,8 +619,8 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zVolume.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "gc/iAnim.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "gc/iMix.c"),
-            Object(NonMatching, "gc/ngcrad3d.c"),
-            Object(NonMatching, "gc/iFMV.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "gc/ngcrad3d.c", cflags=cflags_game_nocppext),
+            Object(MatchingFor("GIHE78-rev0"), "gc/iFMV.cpp"),
             Object(NonMatching, "gc/iSnd.cpp"),
             Object(NonMatching, "gc/iFX.cpp"),
         ],
