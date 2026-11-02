@@ -130,6 +130,7 @@ void xPartitionWorld(_tagPartition* part, _xEnv* env, S32 x_spaces, S32 y_spaces
     PartitionSpaceReset(&part->global);
 }
 
+// Put the item in its grid cell, or the global list when it is outside the grid.
 S32 xPartitionInsert(_tagPartition* part, void* insert_data, xVec3* insert_pos)
 {
     if (insert_pos->x < part->min.x || insert_pos->x > part->max.x || insert_pos->y < part->min.y ||
@@ -139,18 +140,19 @@ S32 xPartitionInsert(_tagPartition* part, void* insert_data, xVec3* insert_pos)
         return -1;
     }
 
-    S32 idx = xPartitionGetTrueIdx(part, (insert_pos->x - part->min.x) / part->space_dim.x,
-                                   (insert_pos->y - part->min.y) / part->space_dim.y,
-                                   (insert_pos->z - part->min.z) / part->space_dim.z);
+    S32 x = (insert_pos->x - part->min.x) / part->space_dim.x;
+    S32 y = (insert_pos->y - part->min.y) / part->space_dim.y;
+    S32 z = (insert_pos->z - part->min.z) / part->space_dim.z;
+    S32 idx = xPartitionGetTrueIdx(part, x, y, z);
     PartitionSpaceInsert(&part->space[idx], insert_data);
     return idx;
 }
 
 static inline void xPartitionSpaceMove(_tagPartSpace* src, _tagPartSpace* dest, U32 data)
 {
-    _tagPartLink* src_pre;
-    _tagPartLink* src_lnk;
     _tagPartLink* dest_lnk = &dest->head;
+    _tagPartLink* src_lnk;
+    _tagPartLink* src_pre;
 
     while (dest_lnk->next != NULL)
     {
@@ -175,11 +177,12 @@ static inline void xPartitionSpaceMove(_tagPartSpace* src, _tagPartSpace* dest, 
     dest->total++;
 }
 
+// Move the item between cell lists when its position changes cells.
 S32 xPartitionUpdate(_tagPartition* part, void* data, S32 old_idx, xVec3* current_pos)
 {
-    _tagPartSpace* dest;
-    _tagPartSpace* src;
     S32 cur_idx;
+    _tagPartSpace* src;
+    _tagPartSpace* dest;
 
     if (current_pos->x < part->min.x || current_pos->x > part->max.x ||
         current_pos->y < part->min.y || current_pos->y > part->max.y ||
@@ -189,9 +192,10 @@ S32 xPartitionUpdate(_tagPartition* part, void* data, S32 old_idx, xVec3* curren
     }
     else
     {
-        cur_idx = xPartitionGetTrueIdx(part, (current_pos->x - part->min.x) / part->space_dim.x,
-                                       (current_pos->y - part->min.y) / part->space_dim.y,
-                                       (current_pos->z - part->min.z) / part->space_dim.z);
+        S32 x = (current_pos->x - part->min.x) / part->space_dim.x;
+        S32 y = (current_pos->y - part->min.y) / part->space_dim.y;
+        S32 z = (current_pos->z - part->min.z) / part->space_dim.z;
+        cur_idx = xPartitionGetTrueIdx(part, x, y, z);
     }
 
     if (old_idx == cur_idx)
@@ -199,8 +203,22 @@ S32 xPartitionUpdate(_tagPartition* part, void* data, S32 old_idx, xVec3* curren
         return cur_idx;
     }
 
-    src = old_idx == -1 ? &part->global : &part->space[old_idx];
-    dest = cur_idx == -1 ? &part->global : &part->space[cur_idx];
+    if (old_idx == -1)
+    {
+        src = &part->global;
+    }
+    else
+    {
+        src = &part->space[old_idx];
+    }
+    if (cur_idx == -1)
+    {
+        dest = &part->global;
+    }
+    else
+    {
+        dest = &part->space[cur_idx];
+    }
     xPartitionSpaceMove(src, dest, (U32)data);
     return cur_idx;
 }
