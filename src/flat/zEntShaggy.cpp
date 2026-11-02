@@ -2104,7 +2104,8 @@ static S32 Shaggy0_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
 
 static void zEntShaggy_UnknownModlTime(F32 time)
 {
-    printf("ModlTime = %f\n", time);
+    time *= -4.0f;
+    printf("ModlTime = %f\n", time + 0.365f);
 }
 
 static U32 Shaggy2_StateChange(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
