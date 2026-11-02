@@ -18,6 +18,7 @@
 #include <dolphin/vi.h>
 
 #include <string.h>
+#include <math.h>
 
 #define FMV_WORK_AREA_SIZE 0x3E0000
 #define FMV_WORK_BUFFER_SIZE 0x12C400
@@ -48,8 +49,8 @@ static U8* Work_area_aligned;
 static U32 Work_area_used;
 U8* FMVWorkBuffer;
 static volatile F32 vol;
-S32 ip;
-U32 oof;
+volatile S32 ip;
+volatile U32 oof;
 static char* Bink_error;
 
 static F32 Width_scale = 1.0f;
@@ -242,15 +243,11 @@ static void Decompress_frame(struct Bink* bnk, HRAD3DIMAGE rad_image)
     }
 }
 
-static void PlayFMV(char* fname, U32 buttons, F32 time)
+// Shows three empty frames from the main camera, before and after a movie.
+static inline void Flush_frames()
 {
-    RwCamera* cam;
-    RwResEntry* entry;
-    U8* buffer;
     S32 i;
-    U32 err;
-    F32 t;
-    tag_xFile file;
+    RwCamera* cam;
 
     cam = globals.camera.lo_cam;
     i = 3;
@@ -260,6 +257,17 @@ static void PlayFMV(char* fname, U32 buttons, F32 time)
         RwCameraEndUpdate(cam);
         RwCameraShowRaster(cam, NULL, 1);
     }
+}
+
+static void PlayFMV(char* fname, U32 buttons, F32 time)
+{
+    RwResEntry* entry;
+    U8* buffer;
+    U32 err;
+    F32 t;
+    tag_xFile file;
+
+    Flush_frames();
 
     iScrFxSetBlackoutFrames(0);
     iPadStopRumble(globals.pad0);
@@ -281,12 +289,12 @@ static void PlayFMV(char* fname, U32 buttons, F32 time)
     Work_area = (U8*)(entry + 1);
     Work_area_aligned = (U8*)(((U32)Work_area + 31) & ~31);
     buffer = (U8*)iFMVmalloc(FMV_WORK_BUFFER_SIZE);
-    OSReport("RW rep entry round:  %08X-%08X\n", buffer, buffer + FMV_WORK_BUFFER_SIZE - 1);
+    OSReport("RW rep entry round:  %08X-%08X\n", buffer, (U32)(buffer + FMV_WORK_BUFFER_SIZE) - 1);
     FMVWorkBuffer = buffer;
     OSReport("### Allocated %d bytes at %08X for Bink work buffer\n", FMV_WORK_BUFFER_SIZE,
              buffer);
     OSReport("FMV work area:  %08X - %08X\n", FMVWorkBuffer,
-             FMVWorkBuffer + FMV_WORK_BUFFER_SIZE - 1);
+             (U32)(FMVWorkBuffer + FMV_WORK_BUFFER_SIZE) - 1);
 
     RADSetAudioMemory(arammalloc, aramfree);
     RADSetMemory(iFMVmalloc, iFMVfree);
@@ -321,11 +329,14 @@ static void PlayFMV(char* fname, U32 buttons, F32 time)
         {
             for (ip = 0; ip <= Movie->num_tracks; ip++)
             {
-                vol = xabs(MAX(gSnd.mastervol.volL, gSnd.mastervol.volR)) *
-                      xabs(MAX(gSnd.streamvol.volL, gSnd.streamvol.volR));
+                vol = (F32)fabs(MAX(gSnd.mastervol.volL, gSnd.mastervol.volR)) *
+                      (F32)fabs(MAX(gSnd.streamvol.volL, gSnd.streamvol.volR));
                 vol *= vol;
                 vol *= 32768.0f;
-                BinkSetVolume(Movie, ip, vol);
+                {
+                    S32 v = vol;
+                    BinkSetVolume(Movie, ip, v);
+                }
             }
         }
 
@@ -387,14 +398,7 @@ static void PlayFMV(char* fname, U32 buttons, F32 time)
         Bink_error = BinkGetError();
     }
 
-    cam = globals.camera.lo_cam;
-    i = 3;
-    while (i-- > 0)
-    {
-        RwCameraBeginUpdate(cam);
-        RwCameraEndUpdate(cam);
-        RwCameraShowRaster(cam, NULL, 1);
-    }
+    Flush_frames();
 
     RwResourcesFreeResEntry(entry);
     Work_area = NULL;

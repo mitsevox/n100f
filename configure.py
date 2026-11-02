@@ -620,7 +620,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "gc/iAnim.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "gc/iMix.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "gc/ngcrad3d.c", cflags=cflags_game_nocppext),
-            Object(NonMatching, "gc/iFMV.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "gc/iFMV.cpp"),
             Object(NonMatching, "gc/iSnd.cpp"),
             Object(NonMatching, "gc/iFX.cpp"),
         ],
