@@ -193,25 +193,28 @@ F32 iAnimDurationSKB(iAnimSKBHeader* data)
 // rebuilds the key offset table.
 void _iAnimSKBSwapTranslate(iAnimSKBHeader* data, U32 bonelo, U32 bonehi)
 {
-    U32 i;
-    U32 j;
-    iAnimSKBKey* buflo;
-    iAnimSKBKey* bufhi;
+    U32 lofirst;
+    U32 lolast;
+    U32 lastRow;
+    iAnimSKBKey* loKeys;
+    size_t loBytes;
     U32 bcount;
     U32 tcount;
-    U16* offsets;
-    U16 keyIndex;
-    U32 lofirst;
+    iAnimSKBKey* buflo;
+    iAnimSKBKey* bufhi;
     iAnimSKBKey* bufmid;
     iAnimSKBKey* keys;
-    U32 lolast;
-    U32 locount;
+    U16* offsets;
     U32 hifirst;
     U32 hicount;
     S32 out;
     U32 midfirst;
     U32 midlast;
     S32 midcount;
+    size_t hiBytes;
+    U32 i;
+    U32 j;
+    U16 keyIndex;
 
     keys = (iAnimSKBKey*)(data + 1);
     tcount = data->TimeCount;
@@ -223,13 +226,16 @@ void _iAnimSKBSwapTranslate(iAnimSKBHeader* data, U32 bonelo, U32 bonehi)
     bufmid = bufhi + tcount;
 
     lofirst = offsets[bonelo];
-    lolast = offsets[(tcount - 2) * bcount + bonelo] + 1;
-    locount = lolast - lofirst + 1;
-    memcpy(buflo, &keys[lofirst], locount * sizeof(iAnimSKBKey));
+    lastRow = (tcount - 2) * bcount;
+    lolast = offsets[bonelo + lastRow] + 1;
+    loKeys = &keys[lofirst];
+    loBytes = (lolast - lofirst + 1) * sizeof(iAnimSKBKey);
+    memcpy(buflo, loKeys, loBytes);
 
     hifirst = offsets[bonehi];
-    hicount = offsets[(tcount - 2) * bcount + bonehi] + 1 - hifirst + 1;
-    memcpy(bufhi, &keys[hifirst], hicount * sizeof(iAnimSKBKey));
+    hicount = offsets[bonehi + lastRow] + 1 - hifirst + 1;
+    hiBytes = hicount * sizeof(iAnimSKBKey);
+    memcpy(bufhi, &keys[hifirst], hiBytes);
 
     midfirst = lolast + 1;
     midlast = hifirst - 1;
@@ -240,7 +246,7 @@ void _iAnimSKBSwapTranslate(iAnimSKBHeader* data, U32 bonelo, U32 bonehi)
         memcpy(bufmid, &keys[midfirst], midcount * sizeof(iAnimSKBKey));
     }
 
-    memcpy(&keys[lofirst], bufhi, hicount * sizeof(iAnimSKBKey));
+    memcpy(loKeys, bufhi, hiBytes);
     out = lofirst + hicount;
 
     if (midcount > 0)
@@ -249,7 +255,7 @@ void _iAnimSKBSwapTranslate(iAnimSKBHeader* data, U32 bonelo, U32 bonehi)
         out += midcount;
     }
 
-    memcpy(&keys[out], buflo, locount * sizeof(iAnimSKBKey));
+    memcpy(&keys[out], buflo, loBytes);
 
     xMemPopTemp(buflo);
 
@@ -394,7 +400,8 @@ void _iAnimSKBAdjustTranslate(iAnimSKBHeader* data, U32 bone, F32* tran)
     }
 }
 
-// Turns one bone's keys half a turn about the vertical axis.
+// Turns one bone's compressed keys half a turn about the vertical axis, rotating the
+// quaternion and negating its X/Z translations.
 void _iAnimSKBFlip180(iAnimSKBHeader* data, U32 bone)
 {
     U32 i;
@@ -404,13 +411,13 @@ void _iAnimSKBFlip180(iAnimSKBHeader* data, U32 bone)
     U32 tcount;
     iAnimSKBKey* keys;
     U16* offsets;
-    F32 quat[4] = { 0.0f, 1.0f, 0.0f, 0.0f };
     F32 _s, _x, _y, _z;
 
     tcount = data->TimeCount;
     kcount = data->KeyCount;
     keys = (iAnimSKBKey*)(data + 1);
     offsets = (U16*)((F32*)(keys + kcount) + tcount);
+    F32 quat[4] = { 0.0f, 1.0f, 0.0f, 0.0f };
     keyfirst = offsets[bone];
     keylast = offsets[(tcount - 2) * data->BoneCount + bone] + 1;
 
@@ -420,11 +427,11 @@ void _iAnimSKBFlip180(iAnimSKBHeader* data, U32 bone)
         {
             _s = quat[3] * keys[i].Quat[3] - quat[0] * keys[i].Quat[0] - quat[1] * keys[i].Quat[1] -
                  quat[2] * keys[i].Quat[2];
-            _x = quat[0] * keys[i].Quat[3] + quat[3] * keys[i].Quat[0] + quat[1] * keys[i].Quat[2] -
+            _x = quat[3] * keys[i].Quat[0] + quat[0] * keys[i].Quat[3] + quat[1] * keys[i].Quat[2] -
                  quat[2] * keys[i].Quat[1];
-            _y = quat[1] * keys[i].Quat[3] + quat[3] * keys[i].Quat[1] + quat[2] * keys[i].Quat[0] -
+            _y = quat[3] * keys[i].Quat[1] + quat[1] * keys[i].Quat[3] + quat[2] * keys[i].Quat[0] -
                  quat[0] * keys[i].Quat[2];
-            _z = quat[2] * keys[i].Quat[3] + quat[3] * keys[i].Quat[2] + quat[0] * keys[i].Quat[1] -
+            _z = quat[3] * keys[i].Quat[2] + quat[2] * keys[i].Quat[3] + quat[0] * keys[i].Quat[1] -
                  quat[1] * keys[i].Quat[0];
 
             keys[i].Quat[0] = CLAMP(_x, -32767.0f, 32767.0f);
