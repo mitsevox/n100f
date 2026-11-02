@@ -508,6 +508,22 @@ def check_data_claims(data_claims, data, elsewhere, inferred, emitted):
     return accepted, refused
 
 
+def claim_warnings(claimed, data, users, emitted, elsewhere=None):
+    """Advice on accepted data claims: one message for each claimed item whose only function
+    loader is a different written unit (an item like gDBfont, which only iFont.cpp loads,
+    claimed for another unit).  An item the run without claims already places with the claiming
+    unit (`elsewhere`, item -> unit, as for zVarEntryTable and zVar.cpp) is not reported.  The run leaves such an item unplaced, so the claim stands, but the row's
+    evidence should say why the loader is not the owner."""
+    out = []
+    for d, u in sorted(claimed.items()):
+        us = users.get(d, set())
+        if (elsewhere or {}).get(d) != u and len(us) == 1 and None not in us and us != {u} \
+                and next(iter(us)) in emitted:
+            out.append(f'check: data claim of {u} takes 0x{data[d][0]:08X} ({data[d][3]}), which '
+                       f'only {next(iter(us))} loads')
+    return out
+
+
 def assign_groups(groups, range_unit, users, pointers, claimed, units):
     """Item -> unit for the literal_groups and the number of groups left alone.  A group goes to
     the unit whose range (range_unit) already holds members, else to the one unit whose functions
@@ -1138,7 +1154,7 @@ def main():
     emitted_units = {u for u in order if status(u) != 'weak'}
     free_extra, _, _, _, _, free_final = settle({})
     claimed, refused = check_data_claims(data_claims, data, free_extra, free_final, emitted_units)
-    for msg in refused:
+    for msg in refused + claim_warnings(claimed, data, users, emitted_units, free_extra):
         print(msg, file=sys.stderr)
     extra, conflicts, dclass, stray, placed, final = settle(claimed)
     # A claim the link-order run then leaves out (its unit is out of order there) is reported.
