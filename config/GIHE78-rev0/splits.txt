@@ -131,12 +131,12 @@ flat/iShadow.cpp:
 
 flat/iSystem.cpp:
 	.text       start:0x80015168 end:0x80016900
-	.rodata     start:0x80192C60 end:0x80192CE0
+	.rodata     start:0x80192BE8 end:0x80192CE0
 	.data       start:0x801AD940 end:0x801AD9C0
 	.bss        start:0x801FE3B8 end:0x801FE3E8
 	.sdata      start:0x8025E3F8 end:0x8025E400
 	.sbss       start:0x8025E968 end:0x8025E998
-	.sdata2     start:0x8025FB78 end:0x8025FB88
+	.sdata2     start:0x8025FB30 end:0x8025FB88
 
 flat/iTime.cpp:
 	.text       start:0x80016900 end:0x80016A30
@@ -413,7 +413,7 @@ flat/zAnimList.cpp:
 	.text       start:0x80044E20 end:0x80045174
 	.data       start:0x801B6BD8 end:0x801B6C28
 	.sbss       start:0x8025EC08 end:0x8025EC18
-	.sdata2     start:0x80260460 end:0x80260478
+	.sdata2     start:0x802603C0 end:0x80260478
 
 flat/zAssetTypes.cpp:
 	.text       start:0x80045174 end:0x80045B50
@@ -531,7 +531,7 @@ flat/zEntVillain.cpp:
 	.data       start:0x801B8E88 end:0x801C54A0
 	.bss        start:0x8022A528 end:0x8022C678
 	.sbss       start:0x8025EE18 end:0x8025EEB8
-	.sdata2     start:0x80260E70 end:0x802610E8
+	.sdata2     start:0x80260C58 end:0x802610E8
 	.sbss2      start:0x80262CA0 end:0x80262CB0
 
 flat/zEnv.cpp:
@@ -607,7 +607,7 @@ flat/zHud.cpp:
 	.bss        start:0x8022ECF0 end:0x80233698
 	.sdata      start:0x8025E558 end:0x8025E568
 	.sbss       start:0x8025EF98 end:0x8025EFE8
-	.sdata2     start:0x802613B0 end:0x802615A8
+	.sdata2     start:0x80261390 end:0x802615A8
 	.sbss2      start:0x80262CB0 end:0x80262CC8
 
 flat/zLaugh.cpp:
@@ -730,7 +730,7 @@ flat/zSaveLoad.cpp:
 	.bss        start:0x80238048 end:0x80238178
 	.sdata      start:0x8025E598 end:0x8025E5A8
 	.sbss       start:0x8025F070 end:0x8025F0A0
-	.sdata2     start:0x80261C20 end:0x80261C50
+	.sdata2     start:0x80261C10 end:0x80261C50
 
 flat/zScene.cpp:
 	.text       start:0x800CD170 end:0x800D1B20
@@ -740,7 +740,7 @@ flat/zScene.cpp:
 	.bss        start:0x80238178 end:0x802381C8
 	.sdata      start:0x8025E5A8 end:0x8025E5B8
 	.sbss       start:0x8025F0A0 end:0x8025F0E8
-	.sdata2     start:0x80261C60 end:0x80261EA8
+	.sdata2     start:0x80261C50 end:0x80261EA8
 	.sbss2      start:0x80262CD8 end:0x80262CE8
 
 flat/zScript.cpp:
@@ -771,7 +771,7 @@ flat/zUI.cpp:
 	.data       start:0x801C8BC0 end:0x801C8CB0
 	.bss        start:0x80238378 end:0x80238FE8
 	.sbss       start:0x8025F0F0 end:0x8025F140
-	.sdata2     start:0x80261F78 end:0x80261FB0
+	.sdata2     start:0x80261F68 end:0x80261FB0
 	.sbss2      start:0x80262CE8 end:0x80262CF0
 
 flat/zUIFont.cpp:

@@ -535,9 +535,18 @@ def main():
     func_targets = collections.defaultdict(list)
     func_data = collections.defaultdict(set)
     data_users = collections.defaultdict(set)
+    data_refs = collections.defaultdict(set)  # item -> data items that point to it
+
+    def in_item(a):
+        d = didx(a)
+        return d if d is not None and (not data[d][1] or a < data[d][0] + data[d][1]) else None
+
     for src, dst in relocs:
         f = fidx(src)
         if f is None:
+            s, d = in_item(src), in_item(dst)
+            if s is not None and d is not None and s != d:
+                data_refs[d].add(s)
             continue
         func_targets[f].append(dst)
         d = didx(dst)
@@ -883,6 +892,25 @@ def main():
 
     users = {d: {unit_of.get(f) for f in fs} for d, fs in data_users.items()}
 
+    # An item no function loads, whose only referrers are data items of one unit
+    # (the strings of a name table, say), is that unit's.  Followed to a fixed point,
+    # so a string behind a table behind a table counts too.
+    data_unit = {}
+    changed = True
+    while changed:
+        changed = False
+        for d, srcs in sorted(data_refs.items()):
+            if d in data_users or d in data_unit:
+                continue
+            us = set()
+            for s in srcs:
+                us |= users[s] if s in users else {data_unit.get(s)}
+            if len(us) == 1 and None not in us:
+                data_unit[d] = next(iter(us))
+                changed = True
+    for d, u in data_unit.items():
+        users[d] = {u}
+
     def aligned(d):
         return data[d][0] % DATA_ALIGN == 0
 
@@ -895,6 +923,9 @@ def main():
         # of that order is a global another unit defines, so it marks no range.
         items = sorted((d, k) for k, u in enumerate(order)
                        for d in owned(tstart[u], tend[u], sec) if users[d] == {u})
+        index = {u: k for k, u in enumerate(order)}
+        items += [(d, index[u]) for d, u in data_unit.items() if data[d][2] == sec and u in index]
+        items.sort()
         kept = longest_run(items)
         # Heuristic: an item several units load is usually defined by one of them.
         # Where link order leaves room for only one of its users (between the units

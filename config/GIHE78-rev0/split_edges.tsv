@@ -230,7 +230,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .rodata	iDebug.cpp	iFont.cpp	0x8018E650	0x8018E650	single aligned candidate	0
 .rodata	iFont.cpp	iMorph.cpp	0x8018E730	0x8018E730	single aligned candidate	0
 .rodata	iMorph.cpp	isavegame.cpp	0x8018E740	0x8018E740	single aligned candidate	0
-.rodata	isavegame.cpp	iSystem.cpp	0x80192BE8	0x80192C60	open: 11 items between aligned candidates	0
+.rodata	isavegame.cpp	iSystem.cpp	0x80192BE8	0x80192BE8	single aligned candidate	0
 .rodata	iSystem.cpp	xAnim.cpp	0x80192CE0	0x80192CE0	single aligned candidate	0
 .rodata	xAnim.cpp	xbinio.cpp	0x80192D20	0x80192D20	single aligned candidate	0
 .rodata	xbinio.cpp	xClimate.cpp	0x80192E20	0x80192E20	single aligned candidate	0
@@ -416,7 +416,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	iParMgr.cpp	isavegame.cpp	0x8025FA98	0x8025FA98	single aligned candidate	0
 .sdata2	isavegame.cpp	iScrFX.cpp	0x8025FAC0	0x8025FAC0	single aligned candidate	0
 .sdata2	iScrFX.cpp	iShadow.cpp	0x8025FAE8	0x8025FAE8	single aligned candidate	0
-.sdata2	iShadow.cpp	iSystem.cpp	0x8025FB30	0x8025FB78	open: 10 items between aligned candidates	0
+.sdata2	iShadow.cpp	iSystem.cpp	0x8025FB30	0x8025FB30	single aligned candidate	0
 .sdata2	iSystem.cpp	iTime.cpp	0x8025FB88	0x8025FB88	single aligned candidate	0
 .sdata2	iTime.cpp	xAnim.cpp	0x8025FB90	0x8025FB90	single aligned candidate	0
 .sdata2	xAnim.cpp	xbinio.cpp	0x8025FBE0	0x8025FBE0	single aligned candidate	0
@@ -454,7 +454,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	xstransvc.cpp	xTRC.cpp	0x80260310	0x80260310	single aligned candidate	0
 .sdata2	xTRC.cpp	xutil.cpp	0x802603A8	0x802603A8	single aligned candidate	0
 .sdata2	xutil.cpp	zActionLine.cpp	0x802603B8	0x802603B8	single aligned candidate	0
-.sdata2	zActionLine.cpp	zAnimList.cpp	0x802603C0	0x80260460	open: 21 items between aligned candidates	0
+.sdata2	zActionLine.cpp	zAnimList.cpp	0x802603C0	0x802603C0	single aligned candidate	0
 .sdata2	zAnimList.cpp	zAssetTypes.cpp	0x80260478	0x80260478	single aligned candidate	0
 .sdata2	zAssetTypes.cpp	zCutsceneMgr.cpp	0x802604A0	0x802604A0	single aligned candidate	0
 .sdata2	zCutsceneMgr.cpp	zDispatcher.cpp	0x802604C8	0x802604C8	single aligned candidate	0
@@ -469,7 +469,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	zEntProjectile.cpp	zEntShaggy.cpp	0x80260A38	0x80260A38	single aligned candidate	0
 .sdata2	zEntShaggy.cpp	zEntSimpleObj.cpp	0x80260C48	0x80260C48	single aligned candidate	0
 .sdata2	zEntSimpleObj.cpp	zEntTrigger.cpp	0x80260C50	0x80260C50	single aligned candidate	0
-.sdata2	zEntTrigger.cpp	zEntVillain.cpp	0x80260C58	0x80260E70	open: 68 items between aligned candidates	0
+.sdata2	zEntTrigger.cpp	zEntVillain.cpp	0x80260C58	0x80260C58	single aligned candidate	0
 .sdata2	zEntVillain.cpp	zFeet.cpp	0x802610E8	0x802610E8	single aligned candidate	0
 .sdata2	zFeet.cpp	zFMV.cpp	0x80261200	0x80261200	single aligned candidate	0
 .sdata2	zFMV.cpp	zFog.cpp	0x80261220	0x80261220	single aligned candidate	0
@@ -478,7 +478,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	zGame.cpp	zGameExtras.cpp	0x802612D0	0x802612D0	single aligned candidate	0
 .sdata2	zGameExtras.cpp	zGust.cpp	0x80261358	0x80261358	single aligned candidate	0
 .sdata2	zGust.cpp	zHologram.cpp	0x80261388	0x80261388	single aligned candidate	0
-.sdata2	zHologram.cpp	zHud.cpp	0x80261390	0x802613B0	open: 5 items between aligned candidates	0
+.sdata2	zHologram.cpp	zHud.cpp	0x80261390	0x80261390	single aligned candidate	0
 .sdata2	zHud.cpp	zLaugh.cpp	0x802615A8	0x802615A8	single aligned candidate	0
 .sdata2	zLaugh.cpp	zLight.cpp	0x802615B0	0x802615B0	single aligned candidate	0
 .sdata2	zLight.cpp	zLightEffect.cpp	0x802615C8	0x802615C8	single aligned candidate	0
@@ -495,11 +495,11 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	zPendulum.cpp	zPitchChange.cpp	0x80261BA0	0x80261BA0	single aligned candidate	0
 .sdata2	zPitchChange.cpp	zPlatform.cpp	0x80261BB0	0x80261BB0	single aligned candidate	0
 .sdata2	zPlatform.cpp	zRumble.cpp	0x80261BE8	0x80261BE8	single aligned candidate	0
-.sdata2	zRumble.cpp	zSaveLoad.cpp	0x80261C10	0x80261C20	open: 3 items between aligned candidates	0
-.sdata2	zSaveLoad.cpp	zScene.cpp	0x80261C50	0x80261C60	open: 3 items between aligned candidates	0
+.sdata2	zRumble.cpp	zSaveLoad.cpp	0x80261C10	0x80261C10	single aligned candidate	0
+.sdata2	zSaveLoad.cpp	zScene.cpp	0x80261C50	0x80261C50	single aligned candidate	0
 .sdata2	zScene.cpp	zSFX.cpp	0x80261EA8	0x80261EA8	single aligned candidate	0
 .sdata2	zSFX.cpp	zSurface.cpp	0x80261EB8	0x80261EB8	single aligned candidate	0
 .sdata2	zSurface.cpp	zTimer.cpp	0x80261F60	0x80261F60	single aligned candidate	0
-.sdata2	zTimer.cpp	zUI.cpp	0x80261F68	0x80261F78	open: 3 items between aligned candidates	0
+.sdata2	zTimer.cpp	zUI.cpp	0x80261F68	0x80261F68	single aligned candidate	0
 .sdata2	zUI.cpp	zUIFont.cpp	0x80261FB0	0x80261FB0	single aligned candidate	0
 .sdata2	zUIFont.cpp	zVar.cpp	0x80261FC8	0x80261FE8	open: 5 items between aligned candidates	0
