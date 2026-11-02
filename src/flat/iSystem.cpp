@@ -102,8 +102,10 @@ struct dlFSGlobals
 
 #define FSGLOBALS() ((dlFSGlobals*)((U8*)RwEngineInstance + lbl_8025E98C.globalsOffset))
 
-extern char* months[];
-extern char* dotw[];
+// Month and weekday names for the formatted date, each followed by a space.
+char* months[12] = { "January ", "February ", "March ", "April ", "May ", "June ",
+                     "July ", "August ", "September ", "October ", "November ", "December " };
+char* dotw[7] = { "Sunday ", "Monday ", "Tuesday ", "Wednesday ", "Thursday ", "Friday ", "Saturday " };
 
 extern U32 mem_top_alloc;
 extern U32 mem_base_alloc;
