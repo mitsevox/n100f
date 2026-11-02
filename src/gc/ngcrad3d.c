@@ -165,6 +165,14 @@ void Blit_RAD_3D_image(HRAD3DIMAGE rad_image, F32 x_offset, F32 y_offset, F32 x_
     GXSetBlendMode(GX_BM_NONE, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 }
 
+// One corner of the quad: position, opaque white with the given alpha, texture coordinate.
+static void Submit_vertex(S16 x, S16 y, U8 alpha, F32 s, F32 t)
+{
+    GXPosition3s16(x, y, 0);
+    GXColor4u8(255, 255, 255, alpha);
+    GXTexCoord2f32(s, t);
+}
+
 static void Submit_vertices(F32 dest_x, F32 dest_y, F32 scale_x, F32 scale_y, S32 width,
                             S32 height, F32 alpha)
 {
@@ -176,22 +184,9 @@ static void Submit_vertices(F32 dest_x, F32 dest_y, F32 scale_x, F32 scale_y, S3
 
     GXSetCullMode(GX_CULL_NONE);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-
-    GXPosition3s16((S32)dest_x, y1, 0);
-    GXColor4u8(255, 255, 255, (S32)alpha);
-    GXTexCoord2f32(0.0f, 1.0f);
-
-    GXPosition3s16((S32)dest_x, (S32)dest_y, 0);
-    GXColor4u8(255, 255, 255, (S32)alpha);
-    GXTexCoord2f32(0.0f, 0.0f);
-
-    GXPosition3s16(x1, (S32)dest_y, 0);
-    GXColor4u8(255, 255, 255, (S32)alpha);
-    GXTexCoord2f32(1.0f, 0.0f);
-
-    GXPosition3s16(x1, y1, 0);
-    GXColor4u8(255, 255, 255, (S32)alpha);
-    GXTexCoord2f32(1.0f, 1.0f);
-
+    Submit_vertex(dest_x, y1, alpha, 0.0f, 1.0f);
+    Submit_vertex(dest_x, dest_y, alpha, 0.0f, 0.0f);
+    Submit_vertex(x1, dest_y, alpha, 1.0f, 0.0f);
+    Submit_vertex(x1, y1, alpha, 1.0f, 1.0f);
     GXEnd();
 }
