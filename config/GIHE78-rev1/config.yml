@@ -16,7 +16,7 @@ extract:
   header_type: raw
 # Words in the unsplit .data blob lbl_801AA4A0 that equal addresses inside iCollide's local
 # sphereHitsEnv3CB (0x80008A60 once, 0x80008AB0 five times in a row) but are not pointers: no
-# code takes those addresses, and in GIHE78-rev0 the same blob holds no such words.
+# code takes those addresses. The blob is rev1-only; GIHE78-rev0 has no counterpart.
 block_relocations:
 - source: 0x801B4334
   end: 0x801B4338
