@@ -15,7 +15,11 @@ _xCollsIdx xCollideGetCollsIdx(const xVec3* tohit, const xMat3x3* mat)
 {
     if (tohit->y * tohit->y > tohit->x * tohit->x + tohit->z * tohit->z)
     {
-        return (_xCollsIdx)!(tohit->y < 0.0f);
+        if (tohit->y < 0.0f)
+        {
+            return k_XCOLLS_IDX_FLOOR;
+        }
+        return k_XCOLLS_IDX_CEIL;
     }
 
     F32 local_x = mat->right.x * tohit->x + mat->right.z * tohit->z;
