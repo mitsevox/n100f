@@ -394,7 +394,8 @@ void _iAnimSKBAdjustTranslate(iAnimSKBHeader* data, U32 bone, F32* tran)
     }
 }
 
-// Turns one bone's keys half a turn about the vertical axis.
+// Turns one bone's compressed keys half a turn about the vertical axis, rotating the
+// quaternion and negating its X/Z translations.
 void _iAnimSKBFlip180(iAnimSKBHeader* data, U32 bone)
 {
     U32 i;
@@ -404,13 +405,13 @@ void _iAnimSKBFlip180(iAnimSKBHeader* data, U32 bone)
     U32 tcount;
     iAnimSKBKey* keys;
     U16* offsets;
-    F32 quat[4] = { 0.0f, 1.0f, 0.0f, 0.0f };
     F32 _s, _x, _y, _z;
 
     tcount = data->TimeCount;
     kcount = data->KeyCount;
     keys = (iAnimSKBKey*)(data + 1);
     offsets = (U16*)((F32*)(keys + kcount) + tcount);
+    F32 quat[4] = { 0.0f, 1.0f, 0.0f, 0.0f };
     keyfirst = offsets[bone];
     keylast = offsets[(tcount - 2) * data->BoneCount + bone] + 1;
 
@@ -420,11 +421,11 @@ void _iAnimSKBFlip180(iAnimSKBHeader* data, U32 bone)
         {
             _s = quat[3] * keys[i].Quat[3] - quat[0] * keys[i].Quat[0] - quat[1] * keys[i].Quat[1] -
                  quat[2] * keys[i].Quat[2];
-            _x = quat[0] * keys[i].Quat[3] + quat[3] * keys[i].Quat[0] + quat[1] * keys[i].Quat[2] -
+            _x = quat[3] * keys[i].Quat[0] + quat[0] * keys[i].Quat[3] + quat[1] * keys[i].Quat[2] -
                  quat[2] * keys[i].Quat[1];
-            _y = quat[1] * keys[i].Quat[3] + quat[3] * keys[i].Quat[1] + quat[2] * keys[i].Quat[0] -
+            _y = quat[3] * keys[i].Quat[1] + quat[1] * keys[i].Quat[3] + quat[2] * keys[i].Quat[0] -
                  quat[0] * keys[i].Quat[2];
-            _z = quat[2] * keys[i].Quat[3] + quat[3] * keys[i].Quat[2] + quat[0] * keys[i].Quat[1] -
+            _z = quat[3] * keys[i].Quat[2] + quat[2] * keys[i].Quat[3] + quat[0] * keys[i].Quat[1] -
                  quat[1] * keys[i].Quat[0];
 
             keys[i].Quat[0] = CLAMP(_x, -32767.0f, 32767.0f);
