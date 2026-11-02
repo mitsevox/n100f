@@ -75,8 +75,7 @@ void zLobMaster_sceneFinish()
     }
 }
 
-// Allocate and zero the scene's pool of lob masters (level objects that launch projectiles). The memset size uses a signed
-// sizeof, as zDispatcher's does; the target recomputes cnt * size for it.
+// Allocate and zero the scene's pool of lob masters (level objects that launch projectiles).
 st_LOBMASTER_DATA* zLobMaster_memPool(S32 cnt)
 {
     st_LOBMASTER_DATA* pool;
