@@ -367,7 +367,7 @@ cflags_game_noinline = [
     "-inline off,deferred" if f == "-inline auto,deferred" else f for f in cflags_game
 ]
 
-# Game flags without the cpp_extensions pragma (xEntMotion; see the compiler row in evidence.tsv).
+# Game flags without the cpp_extensions pragma (xEntMotion, xEnt; see the compiler rows in evidence.tsv).
 # With the pragma, a value an inlined test loads is reused by the code after the test; without it,
 # that code loads the value again, as the target does.
 cflags_game_nocppext = [f for f in cflags_game if f != '-pragma "cpp_extensions on"']
@@ -519,7 +519,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xCutscene.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xDebug.cpp"),
             Object(NonMatching, "flat/xDraw.cpp"),
-            Object(NonMatching, "flat/xEnt.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEnt.cpp", cflags=cflags_game_nocppext),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEntDrive.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEntMotion.cpp", cflags=cflags_game_nocppext),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEnv.cpp"),
