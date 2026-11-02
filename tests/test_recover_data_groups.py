@@ -172,6 +172,13 @@ class ClaimWarnings(unittest.TestCase):
         self.assertEqual(len(msgs), 1)
         self.assertIn("0x802289B8 (lbl_802289B8), which only xTRC.cpp loads", msgs[0])
 
+    def test_item_the_run_places_with_the_claimer_is_not_reported(self):
+        # zVarEntryTable: only zConditional loads it, but the run places it with zVar
+        users = {0: {"zConditional.cpp"}}
+        emitted = {"zConditional.cpp", "zVar.cpp"}
+        self.assertEqual(recover.claim_warnings({0: "zVar.cpp"}, GDATA, users, emitted, {0: "zVar.cpp"}), [])
+        self.assertEqual(len(recover.claim_warnings({0: "zVar.cpp"}, GDATA, users, emitted, {})), 1)
+
     def test_own_or_unwritten_loader_is_not_reported(self):
         users = {1: {"xSnd.cpp"}, 2: {"zMenu.cpp"}}
         self.assertEqual(recover.claim_warnings({1: "xSnd.cpp", 2: "xSnd.cpp"}, CDATA, users, EMITTED), [])
