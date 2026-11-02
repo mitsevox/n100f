@@ -83,8 +83,7 @@ static void UpdateRain(_tagClimate* climate, F32 seconds)
         S32 total_rain_drops = 25.0f * climate->rain.strength;
         if (globals.sceneCur->sceneID == zSceneIDFromName("R004"))
         {
-            S32 i;
-            for (i = 0; i < 5; i++)
+            for (S32 i = 0; i < 5; i++)
             {
                 info.pos.x = 99.9643f;
                 info.pos.y = 32.8615f;
@@ -94,7 +93,7 @@ static void UpdateRain(_tagClimate* climate, F32 seconds)
                 info.pos.z += 25.0f * iurand() - 12.5f;
                 zParEmitterEmitCustom(climate->rain.rain_emitter, seconds, &info);
             }
-            for (i = 0; i < 5; i++)
+            for (S32 i = 0; i < 5; i++)
             {
                 info.pos = *(xVec3*)&globals.player.ent.model->Mat->pos;
                 info.pos.x += 25.0f * iurand() - 12.5f;
@@ -102,7 +101,7 @@ static void UpdateRain(_tagClimate* climate, F32 seconds)
                 info.pos.z += 25.0f * iurand() - 12.5f;
                 zParEmitterEmitCustom(climate->rain.rain_emitter, seconds, &info);
             }
-            for (i = 0; i < total_rain_drops; i++)
+            for (S32 i = 0; i < total_rain_drops; i++)
             {
                 info.pos.x = 10.0f * globals.camera.hi_cam.mat.at.x + globals.camera.hi_cam.mat.pos.x;
                 info.pos.y = 10.0f * globals.camera.hi_cam.mat.at.y + globals.camera.hi_cam.mat.pos.y;
@@ -129,18 +128,19 @@ static void UpdateRain(_tagClimate* climate, F32 seconds)
     }
 
     xVec3 fool;
+    S32 total_snow_flakes = 25.0f * climate->rain.strength;
     fool.x = 10.0f * globals.camera.hi_cam.mat.at.x + globals.camera.hi_cam.mat.pos.x;
     fool.y = 10.0f * globals.camera.hi_cam.mat.at.y + globals.camera.hi_cam.mat.pos.y;
     fool.z = 10.0f * globals.camera.hi_cam.mat.at.z + globals.camera.hi_cam.mat.pos.z;
     info.custom_flags |= 1;
-    S32 total_snow_flakes = 25.0f * climate->rain.strength;
     for (S32 i = 0; i < total_snow_flakes; i++)
     {
         info.pos = fool;
         info.pos.x += 45.0f * iurand() - 22.5f;
         info.pos.z += 45.0f * iurand() - 22.5f;
 
-        F32 perc = 1.0f - (info.pos.x - fool.x) * (info.pos.z - fool.z) / 506.25f;
+        F32 perc = (info.pos.x - fool.x) * (info.pos.z - fool.z) / 506.25f;
+        perc = 1.0f - perc;
         info.pos.y += 5.0f * perc + 5.0f;
         info.life = 2.5f * perc + 2.5f;
         zParEmitterEmitCustom(climate->rain.snow_emitter, seconds, &info);
