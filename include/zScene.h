@@ -111,6 +111,7 @@ void zSceneStats_Clear();
 void zScene_UpdateFlyToInterface(F32 dt);
 U32 zSceneCalcProgress();
 S32 zRayHitsPlayer(_xRay3* r);
+void zSceneGameStats_Init();
 void zSceneGameStatsTally_clue();
 void zSceneGameStatsTally_death();
 void zSceneGameStatsTally_scare();
