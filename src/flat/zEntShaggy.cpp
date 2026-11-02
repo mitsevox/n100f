@@ -2102,7 +2102,6 @@ static S32 Shaggy0_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
     return retval;
 }
 
-// Unknown debug routine that nothing calls; only its text and constants survive in the game.
 static void zEntShaggy_UnknownModlTime(F32 time)
 {
     time *= -4.0f;
