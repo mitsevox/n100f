@@ -43,6 +43,9 @@ extern void zEntProjectile_Shutdown();
 extern void zAssetShutdown();
 extern S32 xSGShutdown();
 
+// The game's shared state: player, camera, current scene, options.
+zGlobals globals;
+
 S32 xMemPushBase();
 S32 xMemGetBase();
 S32 xSTPreLoadScene(U32, void*);
