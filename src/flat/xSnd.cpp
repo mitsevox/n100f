@@ -128,44 +128,50 @@ void xSndExit()
 // sound is swapped for another when that one is loaded.
 U32 xSndPlay(U32 id, F32 volL, F32 volR, F32 pitch, U32 priority, U32 flags, U32 parentID)
 {
-    U32 sceneID = globals.sceneCur->sceneID;
+    U32 voice;
+    iSndFileInfo* ip;
+    xSndVoiceInfo* vp;
+    U32 sceneID;
+    sceneID = globals.sceneCur->sceneID;
     if (id == 0x91D67287 && sceneID == zSceneIDFromName("s005") &&
         iSndLookup(0xFE619D7B) != NULL)
     {
         id = 0xFE619D7B;
     }
 
-    iSndFileInfo* info = iSndLookup(id);
-    if (info == NULL)
+    ip = iSndLookup(id);
+    if (ip == NULL)
     {
         return -1;
     }
 
-    U32 vflags;
     flags &= 0x700;
-    vflags = flags | 4;
-    if ((S32)info->ID >= 0x1000)
+    if ((S32)ip->ID >= 0x1000)
     {
-        vflags = flags | 2;
+        flags |= 2;
+    }
+    else
+    {
+        flags |= 4;
     }
 
-    U32 idx = iSndFindFreeVoice(priority, vflags);
-    if (idx == 0xFFFFFFFE)
+    voice = iSndFindFreeVoice(priority, flags);
+    if (voice == 0xFFFFFFFE)
     {
         return -2;
     }
 
-    xSndVoiceInfo* vp = &gSnd.voice[idx];
+    vp = &gSnd.voice[voice];
     vp->priority = priority;
     vp->pitch = pitch;
     vp->vol = (volL > volR) ? volL : volR;
-    vp->sample_rate = info->info.dsp.sample_rate;
+    vp->sample_rate = ip->info.dsp.sample_rate;
     vp->assetID = id;
-    vp->internalID = info->ID;
+    vp->internalID = ip->ID;
     vp->parentID = parentID;
     vp->parentPos = NULL;
     vp->sndID = ++gSnd.SndCount;
-    vp->flags = vflags;
+    vp->flags = flags;
     vp->flags |= 1;
     vp->deadct = 0;
     if (!iSndPlay(vp))
@@ -179,53 +185,52 @@ U32 xSndPlay(U32 id, F32 volL, F32 volR, F32 pitch, U32 priority, U32 flags, U32
 // Plays a sound that follows the entity. A radius of 0 or less means it carries 1000 units.
 U32 xSndPlay3D(U32 id, F32 vol, F32 pitch, U32 priority, U32 flags, _xEnt* parent, F32 radius)
 {
+    U32 voice;
+    iSndFileInfo* ip;
+    xSndVoiceInfo* vp;
+
     if (parent == NULL)
     {
         return -2;
     }
 
-    iSndFileInfo* info = iSndLookup(id);
-    if (info == NULL)
+    ip = iSndLookup(id);
+    if (ip == NULL)
     {
         return -1;
     }
 
-    U32 vflags;
     flags &= 0x700;
-    vflags = flags | 4;
-    if ((S32)info->ID >= 0x1000)
+    if ((S32)ip->ID >= 0x1000)
     {
-        vflags = flags | 2;
+        flags |= 2;
+    }
+    else
+    {
+        flags |= 4;
     }
 
-    U32 idx = iSndFindFreeVoice(priority, vflags);
-    if (idx == 0xFFFFFFFE)
+    voice = iSndFindFreeVoice(priority, flags);
+    if (voice == 0xFFFFFFFE)
     {
         return -2;
     }
 
-    xSndVoiceInfo* vp = &gSnd.voice[idx];
+    vp = &gSnd.voice[voice];
     vp->priority = priority;
     vp->pitch = pitch;
     vp->vol = vol;
-    vp->sample_rate = info->info.dsp.sample_rate;
+    vp->sample_rate = ip->info.dsp.sample_rate;
     vp->assetID = id;
-    vp->internalID = info->ID;
+    vp->internalID = ip->ID;
     vp->sndID = ++gSnd.SndCount;
-    vp->flags = vflags;
+    vp->flags = flags;
     vp->flags |= 1;
     vp->deadct = 0;
     vp->parentID = (U32)parent;
     vp->parentPos = NULL;
     vp->pos = *(xVec3*)&((_xEnt*)((U32)parent & ~3))->model->Mat->pos;
-    if (radius <= 0.0f)
-    {
-        vp->radius2 = 1000000.0f;
-    }
-    else
-    {
-        vp->radius2 = radius * radius;
-    }
+    vp->radius2 = (radius <= 0.0f) ? 1000000.0f : radius * radius;
     vp->flags |= 0x18;
     iSndPlay(vp);
     return vp->sndID;
