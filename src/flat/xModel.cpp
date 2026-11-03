@@ -485,10 +485,10 @@ void xModelRender2D(xModelInstance* modelInst, _xRect* sr, xVec3* from, xVec3* t
 
         RwCameraSetViewWindow(camera, &vw);
 
-        F32 dy = sr->y - 240.0f;
-        F32 dx = sr->x - 320.0f;
-        offset.x = dx / 320.0f * scalex;
-        offset.y = -(dy / 240.0f) * scaley;
+        F32 dx = (sr->x - 320.0f) / 320.0f * scalex;
+        F32 dy = -((sr->y - 240.0f) / 240.0f) * scaley;
+        offset.y = dy;
+        offset.x = dx;
         RwCameraSetViewOffset(camera, &offset);
 
         RwCameraBeginUpdate(camera);
@@ -507,6 +507,13 @@ void xModelRender2D(xModelInstance* modelInst, _xRect* sr, xVec3* from, xVec3* t
         iCameraUpdatePos(globals.camera.lo_cam, &globals.camera.hi_cam.mat);
         iCameraSetFOV(globals.camera.lo_cam, globals.camera.hi_cam.fov);
     }
+}
+
+// Unused: nothing calls it, so only the 640x480 screen size it worked with remains.
+static void Render2DUnusedConsts(F32* w, F32* h)
+{
+    *w = 640.0f;
+    *h = 480.0f;
 }
 
 // Create a camera with its own frame, frame buffer and (when c is set) z buffer.
