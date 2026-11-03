@@ -29,9 +29,6 @@ F32 iurand();
 void xScrFxUpdate(RwCamera* cam, F32 seconds);
 void iCameraUpdateFog(RwCamera* cam, iTime t);
 
-extern "C" void fn_80038D48(_xScene* sc, xRay3* r, void (*cb)(_xEnt*));
-extern "C" void fn_8001F8C0(_tagxCamFrame* cam, _tagxCam* c, F32 seconds);
-
 extern S32 gDeadScooby;
 extern xVec3 gDeadScoobyPos;
 extern S32 gPlayerHitWater;
@@ -50,11 +47,6 @@ static F32 sCurXOffset;
 static F32 sCurYOffset;
 static S32 sControllerStill;
 F32 gCameraLastFov;
-S32 sDXLeft;
-S32 sDXRight;
-S32 sDYUp;
-S32 sDYDown;
-static F32 sShoulderTimer;
 
 static void xCameraSeeThruCallback(_xEnt* ent);
 static inline void GetPointOnLine(xVec3* C, U32 marker1id, U32 marker2id, xVec3* result);
@@ -67,8 +59,10 @@ static inline F32 xCameraApproach(F32 cur, F32 dst, F32 t)
     {
         return cur;
     }
-    d = (dst - cur) * t;
-    return d + cur;
+    d = dst - cur;
+    d *= t;
+    d += cur;
+    return d;
 }
 
 static inline _tagxCam* xCameraCur(_tagxCamFrame* cam)
@@ -109,14 +103,13 @@ void xCameraBegin(_tagxCamFrame* cam, S32 clear)
 _tagxCam* xCameraFollowWithOffsetState(_tagxCamFrame* cam, F32 seconds)
 {
     xVec3 new_pos;
-    xVec3 preline_test_pos;
     F32 cpb;
     F32 cpa;
     S32 trans;
-    xVec3 tmp;
     xMat3x3 mrot;
-    xVec3 dirvec;
     xVec3 to_vec;
+    xVec3 tmp;
+    xVec3 dirvec;
     _tagxCam* c;
 
     if (cam->t_cam)
@@ -158,7 +151,7 @@ _tagxCam* xCameraFollowWithOffsetState(_tagxCamFrame* cam, F32 seconds)
     cpa = trans ? 1.0f : c->u.f.rubber_band;
     cpb = 1.0f - cpa;
 
-    preline_test_pos = c->mat.pos;
+    xVec3 preline_test_pos = c->mat.pos;
     if (!(c->flags & 0x1))
     {
         preline_test_pos.x = new_pos.x * cpa + c->mat.pos.x * cpb;
@@ -184,6 +177,12 @@ _tagxCam* xCameraFollowWithOffsetState(_tagxCamFrame* cam, F32 seconds)
 
     return c;
 }
+
+// Frames the stick has been held in each direction (see xCameraSetTargetDX/DY).
+S32 sDXLeft;
+S32 sDXRight;
+S32 sDYUp;
+S32 sDYDown;
 
 // The X counterpart of xCameraSetTargetDY, moving towards view_offset.x.
 void xCameraSetTargetDX(_tagxCamFrame* cam, F32 dx, F32 seconds)
@@ -410,10 +409,20 @@ static inline void GetPointOnLine(xVec3* C, U32 marker1id, U32 marker2id, xVec3*
     F32 len;
     F32 r;
 
-    xVec3Sub(&AB, &m2->pos, &m1->pos);
-    r = (C->x - m1->pos.x) * AB.x + (C->y - m1->pos.y) * AB.y + (C->z - m1->pos.z) * AB.z;
-    len = xVec3Normalize(&normAB, &AB);
-    r /= len * len;
+    AB.x = m2->pos.x - m1->pos.x;
+    AB.y = m2->pos.y - m1->pos.y;
+    AB.z = m2->pos.z - m1->pos.z;
+    {
+        xVec3 AC;
+        F32 dot;
+
+        AC.x = C->x - m1->pos.x;
+        AC.y = C->y - m1->pos.y;
+        AC.z = C->z - m1->pos.z;
+        dot = xVec3Dot(&AC, &AB);
+        len = xVec3Normalize(&normAB, &AB);
+        r = dot / (len * len);
+    }
     if (isnan(r))
     {
         r = 0.0f;
@@ -441,14 +450,13 @@ static inline void GetPointOnLine(xVec3* C, U32 marker1id, U32 marker2id, xVec3*
 _tagxCam* xCameraFollowState(_tagxCamFrame* cam, F32 seconds)
 {
     xVec3 new_pos;
-    xVec3 preline_test_pos;
     F32 cpb;
     F32 cpa;
     S32 trans;
-    xVec3 tmp;
     xMat3x3 mrot;
-    xVec3 dirvec;
     xVec3 to_vec;
+    xVec3 tmp;
+    xVec3 dirvec;
     _tagxCam* c;
 
     if (cam->t_cam)
@@ -490,7 +498,7 @@ _tagxCam* xCameraFollowState(_tagxCamFrame* cam, F32 seconds)
     cpa = trans ? 1.0f : c->u.f.rubber_band;
     cpb = 1.0f - cpa;
 
-    preline_test_pos = c->mat.pos;
+    xVec3 preline_test_pos = c->mat.pos;
     if (!(c->flags & 0x1))
     {
         preline_test_pos.x = new_pos.x * cpa + c->mat.pos.x * cpb;
@@ -507,7 +515,8 @@ _tagxCam* xCameraFollowState(_tagxCamFrame* cam, F32 seconds)
     if (c->asset->markerid[0] && c->asset->markerid[1])
     {
         GetPointOnLine(&preline_test_pos, c->asset->markerid[0], c->asset->markerid[1],
-                       &c->mat.pos);
+                       &new_pos);
+        c->mat.pos = new_pos;
     }
     else
     {
@@ -517,31 +526,53 @@ _tagxCam* xCameraFollowState(_tagxCamFrame* cam, F32 seconds)
     return c;
 }
 
+// Orient the camera matrix m along the vector from target to pos (a camera at pos looking at target).
+static inline void xCameraLookFrom(xMat4x3* m, const xVec3* pos, const xVec3* target)
+{
+    xVec3 vec;
+
+    xVec3Sub(&vec, pos, target);
+    xMat3x3LookVec((xMat3x3*)m, &vec);
+}
+
+// Time spent in the shoulder pause state.
+static F32 sShoulderTimer;
+
 // The shoulder position for the facing (x, z): distance behind the target and height above it.
 static inline S32 ShoulderGetDesiredPos(_tagxCamFrame*, _tagxCam* c, xVec3* pos, F32 x, F32 z)
 {
-    pos->x = sTargetPos.x - x * c->u.sh.distance;
-    pos->y = sTargetPos.y + c->u.sh.height;
-    pos->z = sTargetPos.z - z * c->u.sh.distance;
+    *pos = sTargetPos;
+    pos->y += c->u.sh.height;
+    pos->x -= x * c->u.sh.distance;
+    pos->z -= z * c->u.sh.distance;
     return 1;
 }
 
-static inline void ShoulderStateSwitch(_tagxCamFrame*, _tagxCam* c, S32 new_state)
+static inline void ShoulderStateSwitch(_tagxCamFrame* cam, _tagxCam* c, S32 new_state)
 {
-    if (new_state == 1)
+    switch (new_state)
     {
+    case 0:
+        break;
+    case 1:
         sShoulderTimer = 0.0f;
+        break;
+    case 2:
+        cam->pre_align_dir.x = cam->target_frame->at.x;
+        cam->pre_align_dir.y = cam->target_frame->at.y;
+        cam->pre_align_dir.z = cam->target_frame->at.z;
+        break;
+    case 3:
+        break;
     }
     c->u.sh.state = new_state;
 }
 
 // Shoulder state 0: keep behind the target along the camera's facing; once the stick has been
 // released, start the wait.
-extern "C" void fn_8001F8C0(_tagxCamFrame* cam, _tagxCam* c, F32 seconds)
+static void ShoulderStateFollow(_tagxCamFrame* cam, _tagxCam* c, F32 seconds)
 {
     xVec3 desired_pos;
-    xVec3 target_with_y;
-    xVec3 vec;
     xVec2 dir;
 
     dir.x = cam->hi_cam.mat.at.x;
@@ -551,10 +582,9 @@ extern "C" void fn_8001F8C0(_tagxCamFrame* cam, _tagxCam* c, F32 seconds)
     c->mat.pos.x = xCameraApproach(c->mat.pos.x, desired_pos.x, 1.0f);
     c->mat.pos.y = xCameraApproach(c->mat.pos.y, desired_pos.y, 1.0f);
     c->mat.pos.z = xCameraApproach(c->mat.pos.z, desired_pos.z, 1.0f);
-    target_with_y = sTargetPos;
+    xVec3 target_with_y = sTargetPos;
     target_with_y.y += cam->hi_cam.view_offset.y;
-    xVec3Sub(&vec, &c->mat.pos, &target_with_y);
-    xMat3x3LookVec((xMat3x3*)&c->mat, &vec);
+    xCameraLookFrom(&c->mat, &c->mat.pos, &target_with_y);
 
     if (sControllerStill > 0 && seconds > 0.0f)
     {
@@ -592,7 +622,6 @@ static void ShoulderStatePause(_tagxCamFrame* cam, _tagxCam* c, F32 seconds)
         if (cam->pre_align_dir.x == 0.0f && cam->pre_align_dir.y == 0.0f &&
             cam->pre_align_dir.z == 0.0f)
         {
-            cam->pre_align_dir = cam->target_frame->at;
             ShoulderStateSwitch(cam, c, 2);
             return;
         }
@@ -605,7 +634,6 @@ static void ShoulderStatePause(_tagxCamFrame* cam, _tagxCam* c, F32 seconds)
         xVec2Normalize(&cur, &cur);
         if (pre.x * cur.x + pre.y * cur.y <= 0.5f)
         {
-            cam->pre_align_dir = cam->target_frame->at;
             ShoulderStateSwitch(cam, c, 2);
         }
     }
@@ -616,13 +644,11 @@ static void ShoulderStatePause(_tagxCamFrame* cam, _tagxCam* c, F32 seconds)
 static void ShoulderStateRealign(_tagxCamFrame* cam, _tagxCam* c, F32)
 {
     xMat3x3 rot_matrix;
-    xVec3 vec;
-    xVec3 desired_pos;
-    xVec3 target_with_y;
     F32 rad_rot = DEG2RAD(c->u.sh.realign_speed);
     F32 dp1 = cam->hi_cam.mat.at.x * cam->target_frame->right.x +
               cam->hi_cam.mat.at.z * cam->target_frame->right.z;
-    F32 dp2;
+    xVec3 vec;
+    xVec3 desired_pos;
 
     if (dp1 < 0.0f)
     {
@@ -642,25 +668,45 @@ static void ShoulderStateRealign(_tagxCamFrame* cam, _tagxCam* c, F32)
     c->mat.pos.x = xCameraApproach(c->mat.pos.x, desired_pos.x, 1.0f);
     c->mat.pos.y = xCameraApproach(c->mat.pos.y, desired_pos.y, 1.0f);
     c->mat.pos.z = xCameraApproach(c->mat.pos.z, desired_pos.z, 1.0f);
-    target_with_y = sTargetPos;
+    xVec3 target_with_y = sTargetPos;
     target_with_y.y += cam->hi_cam.view_offset.y;
-    xVec3Sub(&vec, &c->mat.pos, &target_with_y);
-    xMat3x3LookVec((xMat3x3*)&c->mat, &vec);
+    xCameraLookFrom(&c->mat, &c->mat.pos, &target_with_y);
 
-    dp2 = cam->hi_cam.mat.at.x * cam->target_frame->right.x +
+    F32 dp2 = cam->hi_cam.mat.at.x * cam->target_frame->right.x +
           cam->hi_cam.mat.at.z * cam->target_frame->right.z;
     if ((dp1 <= 0.0f && dp2 >= 0.0f) || (dp1 >= 0.0f && dp2 <= 0.0f))
     {
-        c->mat.pos = sTargetPos;
-        c->mat.pos.y += c->u.sh.height;
-        c->mat.pos.x -= cam->target_frame->at.x * c->u.sh.distance;
-        c->mat.pos.z -= cam->target_frame->at.z * c->u.sh.distance;
-        target_with_y = sTargetPos;
+        ShoulderGetDesiredPos(cam, c, &c->mat.pos, cam->target_frame->at.x, cam->target_frame->at.z);
+        xVec3 target_with_y = sTargetPos;
         target_with_y.y += cam->hi_cam.view_offset.y;
-        xVec3Sub(&vec, &c->mat.pos, &target_with_y);
-        xMat3x3LookVec((xMat3x3*)&c->mat, &vec);
+        xCameraLookFrom(&c->mat, &c->mat.pos, &target_with_y);
         ShoulderStateSwitch(cam, c, 3);
     }
+
+    if (!sControllerStill)
+    {
+        ShoulderStateSwitch(cam, c, 0);
+    }
+}
+
+// Shoulder state 3: the realign has finished; ease into place behind the target until the stick
+// moves again.
+static inline void ShoulderStateSettle(_tagxCamFrame* cam, _tagxCam* c, F32)
+{
+    xVec3 desired_pos;
+    xVec3 vec;
+
+    vec.x = cam->hi_cam.mat.at.x;
+    vec.y = 0.0f;
+    vec.z = cam->hi_cam.mat.at.z;
+    xVec3Normalize(&vec, &vec);
+    ShoulderGetDesiredPos(cam, c, &desired_pos, vec.x, vec.z);
+    c->mat.pos.x = xCameraApproach(c->mat.pos.x, desired_pos.x, 0.2f);
+    c->mat.pos.y = xCameraApproach(c->mat.pos.y, desired_pos.y, 0.2f);
+    c->mat.pos.z = xCameraApproach(c->mat.pos.z, desired_pos.z, 0.2f);
+    xVec3 target_with_y = sTargetPos;
+    target_with_y.y += cam->hi_cam.view_offset.y;
+    xCameraLookFrom(&c->mat, &c->mat.pos, &target_with_y);
 
     if (!sControllerStill)
     {
@@ -722,7 +768,7 @@ _tagxCam* xCameraShoulderState(_tagxCamFrame* cam, F32 seconds)
     switch (c->u.sh.state)
     {
     case 0:
-        fn_8001F8C0(cam, c, seconds);
+        ShoulderStateFollow(cam, c, seconds);
         break;
     case 1:
         ShoulderStatePause(cam, c, seconds);
@@ -731,31 +777,8 @@ _tagxCam* xCameraShoulderState(_tagxCamFrame* cam, F32 seconds)
         ShoulderStateRealign(cam, c, seconds);
         break;
     case 3:
-    {
-        xVec3 desired_pos;
-        xVec3 target_with_y;
-        xVec3 vec;
-
-        vec.x = cam->hi_cam.mat.at.x;
-        vec.y = 0.0f;
-        vec.z = cam->hi_cam.mat.at.z;
-        xVec3Normalize(&vec, &vec);
-        desired_pos.x = sTargetPos.x - vec.x * c->u.sh.distance;
-        desired_pos.y = sTargetPos.y + c->u.sh.height;
-        desired_pos.z = sTargetPos.z - vec.z * c->u.sh.distance;
-        c->mat.pos.x = xCameraApproach(c->mat.pos.x, desired_pos.x, 0.2f);
-        c->mat.pos.y = xCameraApproach(c->mat.pos.y, desired_pos.y, 0.2f);
-        c->mat.pos.z = xCameraApproach(c->mat.pos.z, desired_pos.z, 0.2f);
-        target_with_y = sTargetPos;
-        target_with_y.y += cam->hi_cam.view_offset.y;
-        xVec3Sub(&vec, &c->mat.pos, &target_with_y);
-        xMat3x3LookVec((xMat3x3*)&c->mat, &vec);
-        if (!sControllerStill)
-        {
-            c->u.sh.state = 0;
-        }
+        ShoulderStateSettle(cam, c, seconds);
         break;
-    }
     }
 
     memcpy(&old_matrix, &c->mat, sizeof(xMat4x3));
@@ -764,20 +787,19 @@ _tagxCam* xCameraShoulderState(_tagxCamFrame* cam, F32 seconds)
     {
         _xCollis collis_env;
         xMat4x3 target_pos_matrix;
-        xVec3 target_with_y;
         xMat4x3 desired_pos_matrix;
         xRay3 ray;
 
         memcpy(&target_pos_matrix, &c->mat, sizeof(xMat4x3));
-        target_with_y = sTargetPos;
-        target_with_y.y += cam->hi_cam.view_offset.y;
+        target_pos_matrix.pos = sTargetPos;
+        target_pos_matrix.pos.y += cam->hi_cam.view_offset.y;
         memcpy(&desired_pos_matrix, &c->mat, sizeof(xMat4x3));
         xMat4x3MoveLocalRight(&desired_pos_matrix, sCurXOffset);
         xMat4x3MoveLocalAt(&desired_pos_matrix, sCurYOffset);
         xMat4x3MoveLocalUp(&desired_pos_matrix, 0.25f * sCurYOffset);
 
-        ray.origin = target_with_y;
-        xVec3Sub(&ray.dir, &desired_pos_matrix.pos, &target_with_y);
+        ray.origin = target_pos_matrix.pos;
+        xVec3Sub(&ray.dir, &desired_pos_matrix.pos, &ray.origin);
         ray.max_t = xVec3Normalize(&ray.dir, &ray.dir);
         ray.min_t = 0.1f;
         ray.flags = 0xC00;
@@ -816,12 +838,16 @@ _tagxCam* xCameraShoulderState(_tagxCamFrame* cam, F32 seconds)
 // height is held at the last ground height, so jumps do not bob the camera.
 static inline void xCameraAdjustTargetPos(_tagxCamFrame* cam, F32)
 {
-    _tagxCam* c = xCameraCur(cam);
+    _tagxCam* c = &cam->hi_cam;
+
+    if (cam->t_cam)
+    {
+        c = cam->t_cam;
+    }
 
     if (c->flags & 0x40)
     {
         xVec3 desired_target_pos = *cam->target_pos;
-        xVec3 cur_pos;
 
         if (!sOnGround)
         {
@@ -839,7 +865,7 @@ static inline void xCameraAdjustTargetPos(_tagxCamFrame* cam, F32)
             sGroundHeight = desired_target_pos.y;
         }
 
-        cur_pos = sTargetPos;
+        xVec3 cur_pos = sTargetPos;
         sTargetPos.x = xCameraApproach(cur_pos.x, desired_target_pos.x, 0.5f);
         sTargetPos.y = xCameraApproach(cur_pos.y, desired_target_pos.y, 0.5f);
         sTargetPos.z = xCameraApproach(cur_pos.z, desired_target_pos.z, 0.5f);
@@ -857,6 +883,43 @@ static inline void xCameraAdjustTargetPos(_tagxCamFrame* cam, F32)
     {
         sTargetPos = gPlayerWaterPos;
     }
+}
+
+// Aim from the camera's current position, then place it at its asset position.
+static inline _tagxCam* xCameraStaticFollowState(_tagxCamFrame* cam, F32)
+{
+    xVec3 to_vec;
+    _tagxCam* c = xCameraCur(cam);
+
+    xVec3Sub(&to_vec, &c->mat.pos, &sTargetPos);
+    xMat3x3LookVec((xMat3x3*)&c->mat, &to_vec);
+    c->mat.pos = c->asset->pos;
+    return c;
+}
+
+// Fade out the scenery between camera c and the target.
+static inline void xCameraSeeThru(_tagxCamFrame* cam, _tagxCam* c)
+{
+    xVec3 offset;
+    xRay3 ray;
+    xMat3x3 rot;
+    _xCollis collis;
+
+    memset(&collis, 0, sizeof(_xCollis));
+    ray.origin = c->mat.pos;
+    xVec3Sub(&ray.dir, &sTargetPos, &ray.origin);
+    ray.max_t = xVec3Normalize(&ray.dir, &ray.dir);
+    ray.min_t = 0.0f;
+    ray.flags = 0xC00;
+    ray.dir = cam->hi_cam.mat.at;
+    xRayHitsCameraScene(g_xSceneCur, &ray, xCameraSeeThruCallback);
+
+    xVec3SMul(&offset, &cam->hi_cam.mat.right, 0.5f);
+    xMat3x3RotC(&rot, ray.dir.x, ray.dir.y, ray.dir.z, 6.2831855f * iurand());
+    xMat3x3RMulVec(&offset, &rot, &offset);
+    xVec3AddTo(&ray.dir, &offset);
+    ray.max_t *= xVec3Normalize(&ray.dir, &ray.dir);
+    xRayHitsCameraScene(g_xSceneCur, &ray, xCameraSeeThruCallback);
 }
 
 // Run the current camera's state, then fade out the scenery between the camera and the target.
@@ -883,15 +946,8 @@ void xCameraRunState(_tagxCamFrame* cam, F32 seconds)
         c = xCameraCur(cam);
         break;
     case eCamType_StaticFollow:
-    {
-        xVec3 to_vec;
-
-        c = xCameraCur(cam);
-        xVec3Sub(&to_vec, &c->mat.pos, &sTargetPos);
-        xMat3x3LookVec((xMat3x3*)&c->mat, &to_vec);
-        c->mat.pos = c->asset->pos;
+        c = xCameraStaticFollowState(cam, seconds);
         break;
-    }
     case eCamType_Path:
         c = NULL;
         break;
@@ -900,28 +956,7 @@ void xCameraRunState(_tagxCamFrame* cam, F32 seconds)
         break;
     }
 
-    {
-        xVec3 offset;
-        xRay3 ray;
-        xMat3x3 rot;
-        _xCollis collis;
-
-        memset(&collis, 0, sizeof(_xCollis));
-        ray.origin = c->mat.pos;
-        xVec3Sub(&ray.dir, &sTargetPos, &ray.origin);
-        ray.max_t = xVec3Normalize(&ray.dir, &ray.dir);
-        ray.min_t = 0.0f;
-        ray.flags = 0xC00;
-        ray.dir = cam->hi_cam.mat.at;
-        fn_80038D48(g_xSceneCur, &ray, xCameraSeeThruCallback);
-
-        xVec3SMul(&offset, &cam->hi_cam.mat.right, 0.5f);
-        xMat3x3RotC(&rot, ray.dir.x, ray.dir.y, ray.dir.z, 6.2831855f * iurand());
-        xMat3x3RMulVec(&offset, &rot, &offset);
-        xVec3AddTo(&ray.dir, &offset);
-        ray.max_t *= xVec3Normalize(&ray.dir, &ray.dir);
-        fn_80038D48(g_xSceneCur, &ray, xCameraSeeThruCallback);
-    }
+    xCameraSeeThru(cam, c);
 }
 
 void xCameraUpdate(_tagxCamFrame* cam, F32 seconds)
@@ -1064,6 +1099,22 @@ _tagxCam* xCameraSetAsset(_tagxCamFrame* cam, xCamAsset* src, S32 idx)
     return cam->cameras[idx];
 }
 
+// Turn src between the orientations of orig and dest by t, keeping src's position.
+static inline void xCameraInterpRot(_tagxCam* src, _tagxCam* orig, _tagxCam* dest, F32 t)
+{
+    xQuat a;
+    xQuat b;
+    xQuat o;
+    xVec3 pos;
+
+    pos = src->mat.pos;
+    xQuatFromMat(&a, (xMat3x3*)&orig->mat);
+    xQuatFromMat(&b, (xMat3x3*)&dest->mat);
+    xQuatSlerp(&o, &a, &b, t);
+    xQuatToMat(&o, (xMat3x3*)&src->mat);
+    src->mat.pos = pos;
+}
+
 // Blend each field t_cam marks valid from orig_cam towards t_cam, along the transition curve.
 void xCameraInterpValid(_tagxCamFrame* cam, _tagTransType trans_type, F32 seconds)
 {
@@ -1184,16 +1235,7 @@ void xCameraInterpValid(_tagxCamFrame* cam, _tagTransType trans_type, F32 second
             }
             else
             {
-                xQuat a;
-                xQuat b;
-                xQuat o;
-                xVec3 pos = src->mat.pos;
-
-                xQuatFromMat(&a, (xMat3x3*)&orig->mat);
-                xQuatFromMat(&b, (xMat3x3*)&dest->mat);
-                xQuatSlerp(&o, &a, &b, t);
-                xQuatToMat(&o, (xMat3x3*)&src->mat);
-                src->mat.pos = pos;
+                xCameraInterpRot(src, orig, dest, t);
             }
         }
         else
@@ -1296,24 +1338,28 @@ void xCameraNext(_tagxCamFrame* cam, _tagxCam* trans_cam)
     cam->g_time = 0.0f;
 }
 
+// The camera in cam's list whose id is id, or NULL.
+static inline _tagxCam* xCameraFind(_tagxCamFrame* cam, U32 id)
+{
+    _tagxCam* c;
+    S32 i;
+
+    for (i = 0; i < (S32)cam->total_cameras; i++)
+    {
+        c = cam->cameras[i];
+        if (c->id == id)
+        {
+            return c;
+        }
+    }
+    return NULL;
+}
+
 void xCameraPickInitial(_tagxCamFrame* cam, U32 init_id)
 {
     if (init_id)
     {
-        _tagxCam* c;
-        S32 i;
-
-        for (i = 0; i < (S32)cam->total_cameras; i++)
-        {
-            c = cam->cameras[i];
-            if (c->id == init_id)
-            {
-                goto found;
-            }
-        }
-        c = NULL;
-    found:
-        xCameraPickInitial(cam, c);
+        xCameraPickInitial(cam, xCameraFind(cam, init_id));
     }
 }
 
