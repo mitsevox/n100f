@@ -393,7 +393,7 @@ static U32 soundEffectCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* 
         else
         {
             sndhandle = xSndPlay3D(snd->ID, snd->vol * 0.5f, snd->pitch, snd->priority,
-                                   snd->flags, ent_tmp, snd->radius);
+                                   snd->flags, (_xEnt*)object, snd->radius);
         }
     }
 
@@ -410,6 +410,12 @@ static void* FindAssetCB(U32 ID, char*)
 {
     U32 size;
     return xSTFindAsset(ID, &size);
+}
+
+// Build an animation table with the given constructor.
+static inline xAnimTable* Anim_ATBL_getTable(xAnimTable* (*constructor)())
+{
+    return constructor();
 }
 
 // Build an animation table from an 'ATBL' asset: resolve its raw animations, make its
@@ -496,7 +502,7 @@ static void* ATBL_Read(void*, U32 aid, void* indata, U32, U32* outsize)
 
     gxAnimUseGrowAlloc = 1;
 
-    table = tableFuncList[zaTbl->ConstructFunc]();
+    table = Anim_ATBL_getTable(tableFuncList[zaTbl->ConstructFunc]);
 
     char tmpstr[32];
     for (i = 0; i < zaTbl->NumStates; i++)
@@ -548,7 +554,7 @@ static void* ATBL_Read(void*, U32 aid, void* indata, U32, U32* outsize)
                                             zaEffect->EndTime, effectFuncList[zaEffect->EffectType],
                                             zaEffect->UserDataSize);
                     memcpy(effect + 1, zaEffect + 1, zaEffect->UserDataSize);
-                    zaEffect = (xAnimAssetEffect*)((U32)(zaEffect + 1) + zaEffect->UserDataSize);
+                    zaEffect = (xAnimAssetEffect*)((U32)zaEffect + zaEffect->UserDataSize) + 1;
                 }
             }
         }
