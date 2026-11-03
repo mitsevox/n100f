@@ -509,7 +509,7 @@ void xModelRender2D(xModelInstance* modelInst, _xRect* sr, xVec3* from, xVec3* t
     }
 }
 
-// Unused: nothing calls it, so only the 640x480 screen size it worked with remains.
+// Unused.
 static void Render2DUnusedConsts(F32* w, F32* h)
 {
     *w = 640.0f;
