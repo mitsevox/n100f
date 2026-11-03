@@ -36,7 +36,7 @@ static inline void Interpolate_Bspline(xVec3* data, xVec3* control, F32* knots, 
 static F32 ArcLength3(xCoef3* coef, F64 ustart, F64 uend);
 static inline void EvalCoef3(xCoef3* coef, F32 u, U32 deriv, xVec3* o);
 static inline void BasisToCoef3(xCoef3* coef, F32 (*N)[4], xVec3* v1, xVec3* v2, xVec3* v3, xVec3* v4);
-static inline void CoefToUnity3(xCoef3* dest, xCoef3* coef, F32 t1, F32 t2);
+static void CoefToUnity3(xCoef3* dest, xCoef3* coef, F32 t1, F32 t2);
 static inline void BasisBspline(F32 (*N)[4], F32* t);
 static inline U32 SegBspline(xSpline3* spl, F32 u);
 void xSpline3_Catmullize(xSpline3* spl);
@@ -65,7 +65,7 @@ static void Tridiag_Solve(F32* a, F32* b, F32* c, xVec3* d, xVec3* x, S32 n)
     gamma[0] = c[0] / b[0];
     for (k = 0; k < 3; k++)
     {
-        (&delta[0].x)[k] = (&d[0].x)[k] / b[0];
+        ((F32*)&delta[0])[k] = ((F32*)&d[0])[k] / b[0];
     }
 
     for (j = 1; j < n; j++)
@@ -74,20 +74,20 @@ static void Tridiag_Solve(F32* a, F32* b, F32* c, xVec3* d, xVec3* x, S32 n)
         gamma[j] = c[j] / beta;
         for (k = 0; k < 3; k++)
         {
-            (&delta[j].x)[k] = ((&d[j].x)[k] - a[j] * (&delta[j - 1].x)[k]) / beta;
+            ((F32*)&delta[j])[k] = (((F32*)&d[j])[k] - a[j] * ((F32*)&delta[j - 1])[k]) / beta;
         }
     }
 
     for (k = 0; k < 3; k++)
     {
-        (&x[n - 1].x)[k] = (&delta[n - 1].x)[k];
+        ((F32*)&x[n - 1])[k] = ((F32*)&delta[n - 1])[k];
     }
 
     for (j = n - 2; j >= 0; j--)
     {
         for (k = 0; k < 3; k++)
         {
-            (&x[j].x)[k] = (&delta[j].x)[k] - gamma[j] * (&x[j + 1].x)[k];
+            ((F32*)&x[j])[k] = ((F32*)&delta[j])[k] - gamma[j] * ((F32*)&x[j + 1])[k];
         }
     }
 
@@ -150,30 +150,27 @@ static inline void Interpolate_Bspline(xVec3* data, xVec3* control, F32* knots, 
 // Arc length of one cubic segment between two parameters, by Simpson's rule over 50 steps.
 static F32 ArcLength3(xCoef3* coef, F64 ustart, F64 uend)
 {
-    U32 i;
-    F64 u;
-    F64 sum;
-    F64 h;
     F64 E;
     F64 D;
     F64 C;
-    F64 B;
     F64 A;
-    F64 xa = coef->x.a[0];
-    F64 xb = coef->x.a[1];
-    F64 xc = coef->x.a[2];
-    F64 ya = coef->y.a[0];
-    F64 yb = coef->y.a[1];
-    F64 yc = coef->y.a[2];
-    F64 za = coef->z.a[0];
-    F64 zb = coef->z.a[1];
-    F64 zc = coef->z.a[2];
+    F64 B;
+    U32 i;
+    F64 h;
+    F64 sum;
+    F64 u;
 
-    E = 9.0 * (za * za + (xa * xa + ya * ya));
-    D = 12.0 * (za * zb + (xa * xb + ya * yb));
-    C = 6.0 * (za * zc + (xa * xc + ya * yc)) + 4.0 * (zb * zb + (xb * xb + yb * yb));
-    B = 4.0 * (zb * zc + (xb * xc + yb * yc));
-    A = zc * zc + (xc * xc + yc * yc);
+    E = 9.0 * ((F64)coef->x.a[0] * coef->x.a[0] + (F64)coef->y.a[0] * coef->y.a[0] +
+               (F64)coef->z.a[0] * coef->z.a[0]);
+    D = 12.0 * ((F64)coef->x.a[0] * coef->x.a[1] + (F64)coef->y.a[0] * coef->y.a[1] +
+                (F64)coef->z.a[0] * coef->z.a[1]);
+    C = 6.0 * ((F64)coef->x.a[0] * coef->x.a[2] + (F64)coef->y.a[0] * coef->y.a[2] +
+               (F64)coef->z.a[0] * coef->z.a[2]) +
+        4.0 * ((F64)coef->x.a[1] * coef->x.a[1] + (F64)coef->y.a[1] * coef->y.a[1] +
+               (F64)coef->z.a[1] * coef->z.a[1]);
+    B = 4.0 * ((F64)coef->x.a[1] * coef->x.a[2] + (F64)coef->y.a[1] * coef->y.a[2] +
+               (F64)coef->z.a[1] * coef->z.a[2]);
+    A = (F64)coef->x.a[2] * coef->x.a[2] + (F64)coef->y.a[2] * coef->y.a[2] + (F64)coef->z.a[2] * coef->z.a[2];
 
     h = (uend - ustart) / 50.0;
     sum = 0.0;
@@ -198,12 +195,9 @@ static F32 ArcLength3(xCoef3* coef, F64 ustart, F64 uend)
            3.0;
 }
 
-static void EvalBspline3(xSpline3* spl, F32 u, U32 deriv, xVec3* o)
+// Clamps u to the B-spline's knot range.
+static inline F32 ClampBspline(xSpline3* spl, F32 u)
 {
-    F32 N[7][4];
-    xCoef3 coef;
-    U32 seg;
-
     if (u < 0.0f)
     {
         u = 0.0f;
@@ -212,7 +206,16 @@ static void EvalBspline3(xSpline3* spl, F32 u, U32 deriv, xVec3* o)
     {
         u = spl->knot[spl->N + 3];
     }
+    return u;
+}
 
+static void EvalBspline3(xSpline3* spl, F32 u, U32 deriv, xVec3* o)
+{
+    F32 N[7][4];
+    xCoef3 coef;
+    U32 seg;
+
+    u = ClampBspline(spl, u);
     seg = SegBspline(spl, u);
     BasisBspline(N, &spl->knot[seg]);
     BasisToCoef3(&coef, N, spl->bctrl + seg, spl->bctrl + seg + 1, spl->bctrl + seg + 2,
@@ -299,18 +302,18 @@ void xSpline3_EvalSeg(xSpline3* spl, F32 u, U32 deriv, xVec3* o)
 static F32 ArcEvalIterate(xSpline3* spl, F32 s, U32 deriv, xVec3* o, U32 iterations)
 {
     xCoef3 tempCoef;
-    xCoef3* coef;
-    S32 segmul;
-    S32 seg;
-    S32 test;
-    S32 max;
-    S32 min;
-    F32 arctest;
-    F32 utest;
-    F32 smax;
-    F32 smin;
-    F32 umax;
     F32 umin;
+    F32 umax;
+    F32 smin;
+    F32 smax;
+    F32 utest;
+    F32 arctest;
+    S32 min;
+    S32 max;
+    S32 test;
+    S32 seg;
+    S32 segmul;
+    xCoef3* coef;
     F32 sbase;
     S32 sample = spl->arcSample;
 
@@ -436,6 +439,14 @@ void xSpline3_ArcInit(xSpline3* spl, U32 sample)
     }
 }
 
+// Unused.
+static void ArcUnusedConsts(F64* a, F64* b, F32* u, U32 n)
+{
+    *a = 0.5;
+    *b = 3.0;
+    *u = (F32)n;
+}
+
 static inline xSpline3* AllocSpline3(xVec3* points, F32* time, U32 numpoints, U32 numalloc, U32 flags,
                               U32 type)
 {
@@ -546,48 +557,49 @@ static inline void BasisToCoef3(xCoef3* coef, F32 (*N)[4], xVec3* v1, xVec3* v2,
 
     for (i = 0; i < 4; i++)
     {
-        coef->x.a[i] = N[3][i] * v4->x + (N[2][i] * v3->x + (v1->x * N[0][i] + N[1][i] * v2->x));
-        coef->y.a[i] = N[3][i] * v4->y + (N[2][i] * v3->y + (v1->y * N[0][i] + N[1][i] * v2->y));
-        coef->z.a[i] = N[3][i] * v4->z + (N[2][i] * v3->z + (v1->z * N[0][i] + N[1][i] * v2->z));
+        coef->x.a[i] = v1->x * N[0][i] + N[1][i] * v2->x + N[2][i] * v3->x + N[3][i] * v4->x;
+        coef->y.a[i] = v1->y * N[0][i] + N[1][i] * v2->y + N[2][i] * v3->y + N[3][i] * v4->y;
+        coef->z.a[i] = v1->z * N[0][i] + N[1][i] * v2->z + N[2][i] * v3->z + N[3][i] * v4->z;
     }
 }
 
-static inline void CoefToUnity3(xCoef3* dest, xCoef3* coef, F32 t1, F32 t2)
+// Rewrites a segment's cubic coefficients from the knot interval [t1, t2] onto [0, 1].
+static void CoefToUnity3(xCoef3* dest, xCoef3* coef, F32 t1, F32 t2)
 {
-    F32 dt;
-    F32* o;
     F32* p;
+    F32 b;
+    F32 dt;
+    U32 i;
     F32 d;
     F32 c;
-    F32 b;
-    F32 a;
-    U32 i;
+    F32* o;
 
     dt = t2 - t1;
+    p = coef->x.a;
+    o = dest->x.a;
     for (i = 0; i < 3; i++)
     {
-        p = coef->x.a + i * 4;
-        o = dest->x.a + i * 4;
+        b = t1 * (dt * (3.0f * p[0] * dt)) + dt * (p[1] * dt);
+        c = p[2] * dt + (t1 * (t1 * (3.0f * p[0] * dt)) + t1 * (2.0f * p[1] * dt));
+        d = p[3] + (p[2] * t1 + (t1 * (t1 * (p[0] * t1)) + t1 * (p[1] * t1)));
 
-        a = p[0];
-        b = p[1];
-        c = p[2];
-        d = p[3];
+        o[0] = dt * (dt * (p[0] * dt));
+        o[1] = b;
+        o[2] = c;
+        o[3] = d;
 
-        o[0] = dt * (dt * (a * dt));
-        o[1] = t1 * (dt * (3.0f * a * dt)) + dt * (b * dt);
-        o[2] = c * dt + (t1 * (t1 * (3.0f * a * dt)) + t1 * (2.0f * b * dt));
-        o[3] = d + (c * t1 + (t1 * (t1 * (a * t1)) + t1 * (b * t1)));
+        p += 4;
+        o += 4;
     }
 }
 
 static inline void BasisBspline(F32 (*N)[4], F32* t)
 {
+    U32 k;
     F32 d2;
+    U32 i;
     F32 d1;
     U32 c;
-    U32 k;
-    U32 i;
 
     N[0][3] = 0.0f;
     N[1][3] = 0.0f;
@@ -630,15 +642,15 @@ static inline void BasisBspline(F32 (*N)[4], F32* t)
 
 static inline U32 SegBspline(xSpline3* spl, F32 u)
 {
-    U32 mid;
-    U32 max;
     U32 min;
+    U32 max;
+    U32 mid;
 
     min = 3;
     max = spl->N + 3;
     while (min + 1 != max)
     {
-        mid = (min + max) >> 1;
+        mid = (max + min) >> 1;
         if (spl->knot[mid] >= u)
         {
             max = mid;
