@@ -439,10 +439,11 @@ void xSpline3_ArcInit(xSpline3* spl, U32 sample)
     }
 }
 
-// Unused; the linker strips it.
-static void ArcUnusedConsts(F64* r, F32* u, U32 n)
+// Unused.
+static void ArcUnusedConsts(F64* a, F64* b, F32* u, U32 n)
 {
-    *r = sqrt(0.5);
+    *a = 0.5;
+    *b = 3.0;
     *u = (F32)n;
 }
 
@@ -562,6 +563,36 @@ static inline void BasisToCoef3(xCoef3* coef, F32 (*N)[4], xVec3* v1, xVec3* v2,
     }
 }
 
+// Rewrites a segment's cubic coefficients from the knot interval [t1, t2] onto [0, 1].
+static void CoefToUnity3(xCoef3* dest, xCoef3* coef, F32 t1, F32 t2)
+{
+    F32* p;
+    F32 b;
+    F32 dt;
+    U32 i;
+    F32 d;
+    F32 c;
+    F32* o;
+
+    dt = t2 - t1;
+    p = coef->x.a;
+    o = dest->x.a;
+    for (i = 0; i < 3; i++)
+    {
+        b = t1 * (dt * (3.0f * p[0] * dt)) + dt * (p[1] * dt);
+        c = p[2] * dt + (t1 * (t1 * (3.0f * p[0] * dt)) + t1 * (2.0f * p[1] * dt));
+        d = p[3] + (p[2] * t1 + (t1 * (t1 * (p[0] * t1)) + t1 * (p[1] * t1)));
+
+        o[0] = dt * (dt * (p[0] * dt));
+        o[1] = b;
+        o[2] = c;
+        o[3] = d;
+
+        p += 4;
+        o += 4;
+    }
+}
+
 static inline void BasisBspline(F32 (*N)[4], F32* t)
 {
     U32 k;
@@ -636,34 +667,4 @@ static inline U32 SegBspline(xSpline3* spl, F32 u)
 void xSpline3_Catmullize(xSpline3* spl)
 {
     xSpline3_Update(spl);
-}
-
-// Rewrites a segment's cubic coefficients from the knot interval [t1, t2] onto [0, 1].
-static void CoefToUnity3(xCoef3* dest, xCoef3* coef, F32 t1, F32 t2)
-{
-    F32* p;
-    F32 b;
-    F32 dt;
-    U32 i;
-    F32 d;
-    F32 c;
-    F32* o;
-
-    dt = t2 - t1;
-    p = coef->x.a;
-    o = dest->x.a;
-    for (i = 0; i < 3; i++)
-    {
-        b = t1 * (dt * (3.0f * p[0] * dt)) + dt * (p[1] * dt);
-        c = p[2] * dt + (t1 * (t1 * (3.0f * p[0] * dt)) + t1 * (2.0f * p[1] * dt));
-        d = p[3] + (p[2] * t1 + (t1 * (t1 * (p[0] * t1)) + t1 * (p[1] * t1)));
-
-        o[0] = dt * (dt * (p[0] * dt));
-        o[1] = b;
-        o[2] = c;
-        o[3] = d;
-
-        p += 4;
-        o += 4;
-    }
 }
