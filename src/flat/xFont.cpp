@@ -8,7 +8,6 @@ void iFontSaveRenderState();
 void iFontRestoreRenderState();
 void iFontSetCharRenderState(xFontBox* box);
 void iFontSetBackdropRenderState(xFontBox* box);
-void iFontDrawChar(char c, F32 depth, iColor_tag color, xFontBox* box);
 void iFontDrawBackdrop(xFontBox* box);
 
 xFontGlobals_t gFontGlobals = { 0.0f, 0.0f, 0, 0.0f };

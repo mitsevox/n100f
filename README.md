@@ -27,6 +27,8 @@ You need your own copy of the game disc. Keep disc images and extracted files ou
 3. `python3 configure.py --version <id> --dtk decomp-toolkit/target/release/dtk` then `ninja -f build/<id>/build.ninja`. The build fails unless the relinked executable matches `config/<id>/build.sha1`.
 4. `ninja -f build/<id>/build.ninja progress build/<id>/report.json` measures the target.
 
+For `GIHE78-rev1`, Ninja generates `build/GIHE78-rev1/include/ifont_assets.h` from the verified original DOL before compilation. It contains the four embedded font/button texture dictionaries and three spacing tables used by `iFont`; generated original assets stay under ignored `build/` and must not be committed. `tools/extract_ifont_assets.py` verifies the original SHA-1 and the texture chunk headers before writing the arrays.
+
 To check every active target: `for id in $(python3 -c 'from tools.targets import build_targets; print(*build_targets())'); do python3 configure.py --version "$id" --dtk decomp-toolkit/target/release/dtk && ninja -f "build/$id/build.ninja"; done`.
 
 Pinned tool versions are in `configure.py`; tools for trying one variant of a function, and the out-of-repository matching tools, are in [docs/matching_tools.md](docs/matching_tools.md); the build structure is [dtk-template](https://github.com/encounter/dtk-template) at the revision named in `CREDITS.md`. Compiler profiles and their evidence are in [docs/compiler_profile/](docs/compiler_profile/README.md). For objdiff's source watcher, `python3 tools/activate_target.py --target <id>` makes that target the root workspace's view.

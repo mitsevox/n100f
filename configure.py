@@ -169,6 +169,19 @@ config.wibo_tag = "1.0.3"
 # Project
 config.config_path = Path("config") / config.version / "config.yml"
 config.check_sha_path = Path("config") / config.version / "build.sha1"
+if config.version == "GIHE78-rev1":
+    config.custom_build_rules = [{
+        "name": "ifont_assets",
+        "command": "$python tools/extract_ifont_assets.py --target GIHE78-rev1 --output $out",
+        "description": "FONT ASSETS $out",
+        "restat": True,
+    }]
+    config.custom_build_steps = {"pre-compile": [{
+        "outputs": config.project_dir / "include/ifont_assets.h",
+        "rule": "ifont_assets",
+        "inputs": ["orig/GIHE78-rev1/sys/main.dol"],
+        "implicit": ["tools/extract_ifont_assets.py", "config/GIHE78-rev1/build.sha1"],
+    }]}
 config.asflags = [
     "-mgekko",
     "--strip-local-absolute",
@@ -494,7 +507,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iDraw.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/iEnv.cpp"),
             Object(NonMatching, "flat/iFile.cpp"),
-            Object(NonMatching, "flat/iFont.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iFont.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iLight.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMath.cpp"),
             Object(NonMatching, "flat/iMath3.cpp"),
