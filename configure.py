@@ -563,7 +563,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xserializer.cpp", cflags=cflags_game_nodeferred),
             Object(NonMatching, "flat/xShadow.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/xSnd.cpp"),
-            Object(NonMatching, "flat/xSpline.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xSpline.cpp"),
             Object(NonMatching, "flat/xstransvc.cpp"),
             Object(NonMatching, "flat/xString.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xSurface.cpp"),
