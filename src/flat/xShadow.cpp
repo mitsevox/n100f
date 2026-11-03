@@ -221,6 +221,33 @@ void xShadowSetLight(xVec3* target_pos, xVec3* in_vec, F32 strength)
 
 // Cast three short rays along the light under the entity. When they reach the world geometry
 // before any entity, project the shadow onto the world triangles in a sphere round the hit.
+static inline void xShadowRenderWorldNear(xVec3* center, F32 radius)
+{
+    U32 sceneID = globals.sceneCur->sceneID;
+    xVec3* pos = (xVec3*)&globals.player.ent.model->Mat->pos;
+
+    if (sceneID == zSceneIDFromName("I001"))
+    {
+        xVec3 spot = { -7.0f, 10.0f, -6.0f };
+        F32 dx = pos->x - spot.x;
+        F32 dy = pos->y - spot.y;
+        F32 dz = pos->z - spot.z;
+
+        SHADOW_BOTH = (dx * dx + dy * dy + dz * dz < 16.0f) ? 0.1f : 2.0f;
+    }
+    else if (sceneID == zSceneIDFromName("I005"))
+    {
+        xVec3 spot = { -5.0f, 11.0f, -179.0f };
+        F32 dx = pos->x - spot.x;
+        F32 dy = pos->y - spot.y;
+        F32 dz = pos->z - spot.z;
+
+        SHADOW_BOTH = (dx * dx + dy * dy + dz * dz < 1.0f) ? 0.05f : 2.0f;
+    }
+
+    xShadowRenderWorld(center, radius);
+}
+
 void xShadowRenderWorld(xVec3* center, F32 radius)
 {
     RpIntersection shadowZone;
@@ -337,10 +364,13 @@ static inline U32 xShadowEntIsOutsideFrustum(_xEnt* ent)
     F32 yScale2;
     F32 zScale2;
     F32 atomicScale;
+    RwV3d* up;
+    RwV3d* at;
+    RpAtomic* atomic;
     RwMatrix* mat;
     RwCamera* cam;
     RwSphere worldsph;
-    RpAtomic* atomic;
+    U32 test;
 
     if (!ent || !ent->model || !(atomic = ent->model->Data))
     {
@@ -350,15 +380,18 @@ static inline U32 xShadowEntIsOutsideFrustum(_xEnt* ent)
     cam = ShadowCamera;
     mat = ent->model->Mat;
     RwV3dTransformPoints(&worldsph.center, &atomic->boundingSphere.center, 1, mat);
-    yScale2 = mat->up.x * mat->up.x + mat->up.y * mat->up.y + mat->up.z * mat->up.z;
-    zScale2 = mat->at.x * mat->at.x + mat->at.y * mat->at.y + mat->at.z * mat->at.z;
     xScale2 = mat->right.x * mat->right.x + mat->right.y * mat->right.y + mat->right.z * mat->right.z;
+    up = &mat->up;
+    yScale2 = up->x * up->x + up->y * up->y + up->z * up->z;
+    at = &mat->at;
+    zScale2 = at->x * at->x + at->y * at->y + at->z * at->z;
     atomicScale = (xScale2 >= (yScale2 >= zScale2 ? yScale2 : zScale2))
                       ? xScale2
                       : (yScale2 >= zScale2 ? yScale2 : zScale2);
     atomicScale = sqrtf(atomicScale);
     worldsph.radius = atomic->boundingSphere.radius * atomicScale;
-    return RwCameraFrustumTestSphere(cam, &worldsph) == rwSPHEREOUTSIDE;
+    test = RwCameraFrustumTestSphere(cam, &worldsph);
+    return test == rwSPHEREOUTSIDE;
 }
 
 // Decide whether ent takes the shadow this frame: shadows are on, the entity is visible and in
@@ -439,6 +472,7 @@ void xShadowReceiveShadow(_xEnt* ent)
     F32 len;
     RwV3d at;
     S32 fogstate;
+    F32 fadeDist;
 
     if (!xShadowEntIsOutsideFrustum(ent) && !(ent->flags & 0x4) &&
         !(ent->material_alpha < 255.0f))
@@ -471,7 +505,8 @@ void xShadowReceiveShadow(_xEnt* ent)
         at = shadowMatrix->at;
         RwMatrixInvert(&invMatrix, shadowMatrix);
         scl.x = scl.y = -0.5f / radius;
-        scl.z = 1.0f / (0.0f + radius);
+        fadeDist = 0.0f;
+        scl.z = 1.0f / (fadeDist + radius);
         RwMatrixScale(&invMatrix, &scl, rwCOMBINEPOSTCONCAT);
         tr.x = tr.y = 0.5f;
         tr.z = 0.0f;
@@ -588,17 +623,23 @@ void xShadowReceiveShadow(_xEnt* ent)
     }
 }
 
-// Fit the shadow camera's parallel view round a sphere and back it off along its view direction.
+// Fit the shadow camera's parallel view round a sphere of the given radius.
 static inline RwCamera* ShadowCameraSetSpherePersp(RwCamera* camera, xVec3* center, F32 radius)
 {
     RwV2d vw;
-    RwFrame* camFrame;
 
     RwCameraSetFarClipPlane(camera, 2.0f * radius);
     RwCameraSetNearClipPlane(camera, 0.001f * radius);
     vw.x = radius;
     vw.y = radius;
     RwCameraSetViewWindow(camera, &vw);
+    return camera;
+}
+
+// Center the shadow camera on a point, then back it off along its view direction.
+static inline RwCamera* ShadowCameraSetCenter(RwCamera* camera, xVec3* center)
+{
+    RwFrame* camFrame;
 
     camFrame = (RwFrame*)camera->object.object.parent;
     *(xVec3*)&camFrame->modelling.pos = *center;
@@ -615,23 +656,7 @@ static inline void GCSaveFrameBuffer()
     fn_80178A3C(gc_saveraster);
 }
 
-// Put back the frame buffer saved before the shadow pass.
-static inline void GCRestoreFrameBuffer()
-{
-    F32 recipCamZ = 1.0f / (*(RwCamera**)RwEngineInstance)->farPlane;
-
-    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDONE);
-    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDZERO);
-    RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)FALSE);
-    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
-    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, gc_saveraster);
-    Im2DRenderQuad(0.0f, 0.0f, 256.0f, 256.0f, RwIm2DGetFarScreenZ(), recipCamZ, 0.0f);
-    RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
-    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)TRUE);
-    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
-}
+static void GCRestoreFrameBuffer();
 
 // Render the model white on clear into the shadow camera's raster, then invert it, keeping the
 // main camera's frame buffer intact.
@@ -669,46 +694,24 @@ static inline RwCamera* ShadowCameraUpdate(RwCamera* shadowCamera, xModelInstanc
     return shadowCamera;
 }
 
+static inline void xShadowCameraUpdate(xModelInstance* model, xVec3* center, F32 radius)
+{
+    ShadowCameraSetSpherePersp(ShadowCamera, center, radius);
+    ShadowCameraSetCenter(ShadowCamera, center);
+    ShadowCameraUpdate(ShadowCamera, model);
+}
+
 // Render ent's model into the shadow raster from the light, then cast it onto the world.
 // Two scenes tighten the entity/world distance that still counts as one surface near a spot.
 void xShadowRender(_xEnt* ent)
 {
     xVec3 center;
     F32 radius;
-    xModelInstance* model;
-    U32 sceneID;
-    xVec3* pos;
 
     zEntGetShadowParams(ent, &center, &radius);
-
-    model = ent->model;
-    ShadowCameraSetSpherePersp(ShadowCamera, &center, radius);
-
-    ShadowCameraUpdate(ShadowCamera, model);
+    xShadowCameraUpdate(ent->model, &center, radius);
     ShadowRenderRaster = ShadowCameraRaster;
-
-    sceneID = globals.sceneCur->sceneID;
-    pos = (xVec3*)&globals.player.ent.model->Mat->pos;
-    if (sceneID == zSceneIDFromName("I001"))
-    {
-        xVec3 spot = { -7.0f, 10.0f, -6.0f };
-        F32 dx = pos->x - spot.x;
-        F32 dy = pos->y - spot.y;
-        F32 dz = pos->z - spot.z;
-
-        SHADOW_BOTH = (dx * dx + dy * dy + dz * dz < 16.0f) ? 0.1f : 2.0f;
-    }
-    else if (sceneID == zSceneIDFromName("I005"))
-    {
-        xVec3 spot = { -5.0f, 11.0f, -179.0f };
-        F32 dx = pos->x - spot.x;
-        F32 dy = pos->y - spot.y;
-        F32 dz = pos->z - spot.z;
-
-        SHADOW_BOTH = (dx * dx + dy * dy + dz * dz < 1.0f) ? 0.05f : 2.0f;
-    }
-
-    xShadowRenderWorld(&center, radius);
+    xShadowRenderWorldNear(&center, radius);
 }
 
 S32 Im2DRenderQuad(F32 x1, F32 y1, F32 x2, F32 y2, F32 z, F32 recipCamZ, F32 uvOffset)
@@ -956,4 +959,22 @@ static S32 ShadowRender(RwCamera* shadowCamera, RwRaster* shadowRaster, RpWorld*
     RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
     RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
     return 1;
+}
+
+// Put back the frame buffer saved before the shadow pass.
+static void GCRestoreFrameBuffer()
+{
+    F32 recipCamZ = 1.0f / (*(RwCamera**)RwEngineInstance)->farPlane;
+
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDONE);
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDZERO);
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)FALSE);
+    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, gc_saveraster);
+    Im2DRenderQuad(0.0f, 0.0f, 256.0f, 256.0f, RwIm2DGetFarScreenZ(), recipCamZ, 0.0f);
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
+    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)TRUE);
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
 }
