@@ -289,9 +289,7 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
         xRayHitsScene(globals.sceneCur, &R[i], &crec[i]);
 
         hit = R[i].origin;
-        hit.x = R[i].dir.x * crec[i].dist + hit.x;
-        hit.y = R[i].dir.y * crec[i].dist + hit.y;
-        hit.z = R[i].dir.z * crec[i].dist + hit.z;
+        RwV3dIncrementScaledMacro((RwV3d*)&hit, (RwV3d*)&R[i].dir, crec[i].dist);
 
         if (crec[i].flags & 1)
         {
@@ -346,16 +344,24 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     if (sShadowFlags & 1)
     {
         zone.r = radius;
-        sSphere = zone;
-        shadowZone.type = 3;
-        shadowZone.t.sphere = *(RwSphere*)&zone;
-        ShadowRender(ShadowCamera, ShadowRenderRaster, globals.sceneCur->env->geom->world,
-                     &shadowZone, ShadowStrength, ShadowFade ? ShadowZoneRadius : 0.0f);
+        sSphere.center.x = zone.center.x;
+        sSphere.center.y = zone.center.y;
+        sSphere.center.z = zone.center.z;
+        sSphere.r = zone.r;
     }
     else
     {
         sSphere.r = 0.0f;
+        return;
     }
+
+    shadowZone.type = 3;
+    shadowZone.t.sphere.center.x = zone.center.x;
+    shadowZone.t.sphere.center.y = zone.center.y;
+    shadowZone.t.sphere.center.z = zone.center.z;
+    shadowZone.t.sphere.radius = zone.r;
+    ShadowRender(ShadowCamera, ShadowRenderRaster, globals.sceneCur->env->geom->world,
+                 &shadowZone, ShadowStrength, ShadowFade ? ShadowZoneRadius : 0.0f);
 }
 
 static inline U32 xShadowEntIsOutsideFrustum(_xEnt* ent)
