@@ -344,7 +344,8 @@ void iFontDrawChar(char c, F32 depth, iColor_tag color, xFontBox* box)
 
     if (0.0f != FONT_WIGGLE)
     {
-        y += FONT_WIGGLE * (F32)cos(10.0f * gFontWiggleTime + (x + y) / 10.0f);
+        F32 wave = (F32)cos(10.0f * gFontWiggleTime + (x + y) / 10.0f);
+        y += FONT_WIGGLE * wave;
     }
 
     F32 sx = font->oo_tex_width * (font->oo_tex_width * box->draw_width);
@@ -507,7 +508,8 @@ void iFontDrawChar(U8 c, F32 depth, iColor_tag color, xFontBox* box)
 
     if (0.0f != FONT_WIGGLE)
     {
-        y += FONT_WIGGLE * (F32)cos(10.0f * gFontWiggleTime + (x + y) / 10.0f);
+        F32 wave = (F32)cos(10.0f * gFontWiggleTime + (x + y) / 10.0f);
+        y += FONT_WIGGLE * wave;
     }
 
     F32 sx = font->oo_tex_width * (font->oo_tex_width * box->draw_width);
