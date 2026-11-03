@@ -37,13 +37,29 @@ void zVolumeLoad(_zVolume* ent, xSerial* s)
     xBaseLoad(ent, s);
 }
 
+static inline void zVolumeInit(_zVolume* vol, zVolumeAsset* asset)
+{
+    xBaseInit(vol, asset);
+    vol->eventFunc = zVolumeEventCB;
+    vol->asset = asset;
+
+    if (vol->linkCount != 0)
+    {
+        vol->link = (p2LinkAsset*)(vol->asset + 1);
+    }
+    else
+    {
+        vol->link = NULL;
+    }
+}
+
 // Create one volume per 'VOLU' asset in the scene. The base's link pointer points just past the
 // asset when the asset has links.
 void zVolumeInit()
 {
-    zVolumeAsset* asset;
-    U32 size;
     U16 i;
+    U32 size;
+    zVolumeAsset* asset;
 
     nvols = xSTAssetCountByType('VOLU');
 
@@ -55,19 +71,7 @@ void zVolumeInit()
         {
             asset = (zVolumeAsset*)xSTFindAssetByType('VOLU', i, &size);
 
-            _zVolume* vol = &vols[i];
-            xBaseInit(vol, asset);
-            vol->eventFunc = zVolumeEventCB;
-            vol->asset = asset;
-
-            if (vol->linkCount != 0)
-            {
-                vol->link = (p2LinkAsset*)(vol->asset + 1);
-            }
-            else
-            {
-                vol->link = NULL;
-            }
+            zVolumeInit(&vols[i], asset);
         }
     }
     else
@@ -106,16 +110,16 @@ _zVolume* zVolumeGetVolume(U16 n)
 // almost edge-on (camera within one unit of its plane) is skipped.
 void zVolume_OccludePrecalc(xVec3* camPos)
 {
-    F32 camdot;
-    F32 depthdot;
-    xVec4 locFrustVec[4];
-    PreCalcOcclude* calc;
-    F32 s;
-    F32 c;
-    zVolumeAsset* a;
-    xVec3 corner[5];
-    S32 j;
     S32 i;
+    S32 j;
+    xVec3 corner[5];
+    zVolumeAsset* a;
+    F32 c;
+    F32 s;
+    PreCalcOcclude* calc;
+    xVec4 locFrustVec[4];
+    F32 depthdot;
+    F32 camdot;
 
     gOccludeCalcCount = 0;
 
@@ -128,21 +132,21 @@ void zVolume_OccludePrecalc(xVec3* camPos)
 
         calc = &gOccludeCalc[gOccludeCalcCount];
 
-        corner[0].x = c * (a->bound.box.box.lower.x - a->xpivot) + a->xpivot;
+        corner[0].x = a->xpivot + c * (a->bound.box.box.lower.x - a->xpivot);
         corner[0].y = a->bound.box.box.lower.y;
-        corner[0].z = s * (a->bound.box.box.lower.x - a->xpivot) + a->bound.box.box.lower.z;
+        corner[0].z = a->bound.box.box.lower.z + s * (a->bound.box.box.lower.x - a->xpivot);
 
-        corner[1].x = c * (a->bound.box.box.upper.x - a->xpivot) + a->xpivot;
+        corner[1].x = a->xpivot + c * (a->bound.box.box.upper.x - a->xpivot);
         corner[1].y = a->bound.box.box.lower.y;
-        corner[1].z = s * (a->bound.box.box.upper.x - a->xpivot) + a->bound.box.box.lower.z;
+        corner[1].z = a->bound.box.box.lower.z + s * (a->bound.box.box.upper.x - a->xpivot);
 
-        corner[2].x = corner[1].x;
+        corner[2].x = a->xpivot + c * (a->bound.box.box.upper.x - a->xpivot);
         corner[2].y = a->bound.box.box.upper.y;
-        corner[2].z = corner[1].z;
+        corner[2].z = a->bound.box.box.lower.z + s * (a->bound.box.box.upper.x - a->xpivot);
 
-        corner[3].x = corner[0].x;
+        corner[3].x = a->xpivot + c * (a->bound.box.box.lower.x - a->xpivot);
         corner[3].y = a->bound.box.box.upper.y;
-        corner[3].z = corner[0].z;
+        corner[3].z = a->bound.box.box.lower.z + s * (a->bound.box.box.lower.x - a->xpivot);
 
         corner[4] = corner[0];
 
@@ -161,7 +165,7 @@ void zVolume_OccludePrecalc(xVec3* camPos)
 
         if (camdot > depthdot)
         {
-            xVec3SMulBy((xVec3*)&calc->DepthVec, -1.0f);
+            xVec3Inv((xVec3*)&calc->DepthVec, (xVec3*)&calc->DepthVec);
             camdot = -camdot;
             depthdot = -depthdot;
         }
