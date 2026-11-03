@@ -455,6 +455,7 @@ void xShadowReceiveShadow(_xEnt* ent)
     RwV3d scl;
     RwV3d tr;
     U32 i;
+    U32 numverts;
     xVec3* xvert;
     RpTriangle* tri;
     RpGeometry* geom;
@@ -515,9 +516,10 @@ void xShadowReceiveShadow(_xEnt* ent)
     max_verts = 0;
     for (model = ent->model; model; model = model->Next)
     {
-        if ((U32)model->Data->geometry->numVertices > max_verts)
+        numverts = model->Data->geometry->numVertices;
+        if (numverts > max_verts)
         {
-            max_verts = model->Data->geometry->numVertices;
+            max_verts = numverts;
         }
     }
 
@@ -548,10 +550,10 @@ void xShadowReceiveShadow(_xEnt* ent)
                 Im3DBufferPos = 0;
             }
 
+            imv = &Im3DBuffer[Im3DBufferPos];
             v0 = &xvert[tri->vertIndex[0]];
             v1 = &xvert[tri->vertIndex[1]];
             v2 = &xvert[tri->vertIndex[2]];
-            imv = &Im3DBuffer[Im3DBufferPos];
             *(xVec3*)&vIn[0] = *v0;
             *(xVec3*)&vIn[1] = *v1;
             *(xVec3*)&vIn[2] = *v2;
