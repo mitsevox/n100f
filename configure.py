@@ -558,7 +558,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xutil.cpp"),
             Object(NonMatching, "flat/zActionLine.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/zAnimList.cpp"),
-            Object(NonMatching, "flat/zAssetTypes.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zAssetTypes.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zCamera.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zConditional.cpp", cflags=cflags_game_inlineonly),
             Object(NonMatching, "flat/zDispatcher.cpp"),
