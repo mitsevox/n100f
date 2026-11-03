@@ -567,16 +567,10 @@ void xShadowReceiveShadow(_xEnt* ent)
             }
 
             {
-                F32 ax = v1->x - v0->x;
-                F32 ay = v1->y - v0->y;
-                F32 az = v1->z - v0->z;
-                F32 bx = v2->x - v0->x;
-                F32 by = v2->y - v0->y;
-                F32 bz = v2->z - v0->z;
-
-                c.x = ay * bz - az * by;
-                c.y = az * bx - ax * bz;
-                c.z = ax * by - ay * bx;
+                RwV3d a, b;
+                RwV3dSubMacro(&a, v1, v0);
+                RwV3dSubMacro(&b, v2, v0);
+                RwV3dCrossProductMacro(&c, &a, &b);
             }
             len = 0.001f / RwV3dLength(&c);
             c.x *= len;
