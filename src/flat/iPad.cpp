@@ -24,7 +24,6 @@ extern "C" U32 TRC_DISK_HALTED();
 extern "C" void TRC_PAD_REPORT(S32 pad_id, S32 state);
 extern "C" _tagTRCPadInfo TRC_PAD_INFO[4];
 
-// Explicitly initialized, so it is placed in .data rather than .bss.
 PADStatus sPadData[4] = {};
 
 S32 iPadInit()
