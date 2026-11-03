@@ -162,15 +162,11 @@ void xQuickCullForSphere(xQCData* q, const xSphere* s)
     xVec3 v1;
     xVec3 v2;
 
-    F32 r = s->r;
-    F32 nr = -r;
-
-    v1.x = s->center.x + nr;
-    v1.y = s->center.y + nr;
-    v1.z = s->center.z + nr;
-    v2.x = s->center.x + r;
-    v2.y = s->center.y + r;
-    v2.z = s->center.z + r;
+    // The sphere's opposite bounding-box corners cover its occupied cells.
+    xVec3Init(&v1, -s->r, -s->r, -s->r);
+    xVec3Add(&v1, &s->center, &v1);
+    xVec3Init(&v2, s->r, s->r, s->r);
+    xVec3Add(&v2, &s->center, &v2);
 
     xQCData a;
     xQuickCullCellForVec(&a, &v1);
