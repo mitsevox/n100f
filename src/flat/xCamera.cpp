@@ -408,21 +408,18 @@ static inline void GetPointOnLine(xVec3* C, U32 marker1id, U32 marker2id, xVec3*
     xVec3 normAB;
     F32 len;
     F32 r;
+    xVec3 AC;
+    F32 dot;
 
     AB.x = m2->pos.x - m1->pos.x;
     AB.y = m2->pos.y - m1->pos.y;
     AB.z = m2->pos.z - m1->pos.z;
-    {
-        xVec3 AC;
-        F32 dot;
-
-        AC.x = C->x - m1->pos.x;
-        AC.y = C->y - m1->pos.y;
-        AC.z = C->z - m1->pos.z;
-        dot = xVec3Dot(&AC, &AB);
-        len = xVec3Normalize(&normAB, &AB);
-        r = dot / (len * len);
-    }
+    AC.x = C->x - m1->pos.x;
+    AC.y = C->y - m1->pos.y;
+    AC.z = C->z - m1->pos.z;
+    dot = xVec3Dot(&AC, &AB);
+    len = xVec3Normalize(&normAB, &AB);
+    r = dot / (len * len);
     if (isnan(r))
     {
         r = 0.0f;
