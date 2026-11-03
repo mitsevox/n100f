@@ -412,10 +412,10 @@ static void* FindAssetCB(U32 ID, char*)
     return xSTFindAsset(ID, &size);
 }
 
-// Build the animation table the constructor at index in tableFuncList makes.
-static inline xAnimTable* zAssetConstructTable(U32 index)
+// Build an animation table with the given constructor.
+static inline xAnimTable* Anim_ATBL_getTable(xAnimTable* (*constructor)())
 {
-    return tableFuncList[index]();
+    return constructor();
 }
 
 // Build an animation table from an 'ATBL' asset: resolve its raw animations, make its
@@ -502,7 +502,7 @@ static void* ATBL_Read(void*, U32 aid, void* indata, U32, U32* outsize)
 
     gxAnimUseGrowAlloc = 1;
 
-    table = zAssetConstructTable(zaTbl->ConstructFunc);
+    table = Anim_ATBL_getTable(tableFuncList[zaTbl->ConstructFunc]);
 
     char tmpstr[32];
     for (i = 0; i < zaTbl->NumStates; i++)
