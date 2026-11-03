@@ -393,7 +393,7 @@ static U32 soundEffectCB(U32 cbenum, xAnimActiveEffect* acteffect, xAnimSingle* 
         else
         {
             sndhandle = xSndPlay3D(snd->ID, snd->vol * 0.5f, snd->pitch, snd->priority,
-                                   snd->flags, ent_tmp, snd->radius);
+                                   snd->flags, (_xEnt*)object, snd->radius);
         }
     }
 
@@ -548,7 +548,7 @@ static void* ATBL_Read(void*, U32 aid, void* indata, U32, U32* outsize)
                                             zaEffect->EndTime, effectFuncList[zaEffect->EffectType],
                                             zaEffect->UserDataSize);
                     memcpy(effect + 1, zaEffect + 1, zaEffect->UserDataSize);
-                    zaEffect = (xAnimAssetEffect*)((U32)(zaEffect + 1) + zaEffect->UserDataSize);
+                    zaEffect = (xAnimAssetEffect*)((U32)zaEffect + zaEffect->UserDataSize) + 1;
                 }
             }
         }
