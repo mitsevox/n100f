@@ -9,11 +9,22 @@
 #define PAD_ERR_NOT_READY -2
 #define PAD_ERR_TRANSFER -3
 
-// The GC-only xTRC.cpp pad and disc helpers (see their rows in evidence.tsv).
-extern "C" S32 fn_800443F8();
-extern "C" void fn_80044458(S32 pad_id, S32 state);
+// The GC-only xTRC.cpp pad and disc helpers (see their rows in evidence.tsv) and the four pad
+// records xTRC.cpp keeps (gTrcPad in the PS2 DWARF), under each target's address labels.
+#if VERSION_GIHE78_REV0
+#define TRC_DISK_HALTED fn_800443F8
+#define TRC_PAD_REPORT fn_80044458
+#define TRC_PAD_INFO lbl_802289B8
+#elif VERSION_GIHE78_REV1
+#define TRC_DISK_HALTED fn_8004421C
+#define TRC_PAD_REPORT fn_8004427C
+#define TRC_PAD_INFO lbl_80239068
+#endif
+extern "C" U32 TRC_DISK_HALTED();
+extern "C" void TRC_PAD_REPORT(S32 pad_id, S32 state);
+extern "C" _tagTRCPadInfo TRC_PAD_INFO[4];
 
-PADStatus sPadData[4];
+PADStatus sPadData[4] = {};
 
 S32 iPadInit()
 {
@@ -26,7 +37,7 @@ _tagxPad* iPadEnable(_tagxPad* pad, S16 port)
 {
     pad->port = port;
     pad->slot = 0;
-    lbl_802289B8[pad->port].state = TRC_PadInserted;
+    TRC_PAD_INFO[pad->port].state = TRC_PadInserted;
     pad->flags |= 3;
     pad->flags |= 4;
     return pad;
@@ -39,7 +50,7 @@ static inline U32 iPadConvFromGCN(U32 buttons, U32 mask, U32 bit)
 }
 
 // A stick axis (about -40 to 40 after PADClamp) scaled by 3.2 into -127 to 127.
-static inline S32 iPadConvStick(F32 value)
+static inline S8 iPadConvStick(F32 value)
 {
     if (value > 40.0f)
     {
@@ -69,10 +80,10 @@ static inline S32 iPadConvStick(F32 value)
 // the game or when the pad gave no data.
 S32 iPadUpdate(_tagxPad* pad, U32* on)
 {
+    S32 temp;
     U32 temp_on;
-    U16 buttons;
 
-    if (fn_800443F8())
+    if (TRC_DISK_HALTED())
     {
         return 0;
     }
@@ -86,28 +97,29 @@ S32 iPadUpdate(_tagxPad* pad, U32* on)
     switch (sPadData[pad->port].err)
     {
     case PAD_ERR_NO_CONTROLLER:
-        fn_80044458(pad->port, TRC_PadMissing);
+        TRC_PAD_REPORT(pad->port, TRC_PadMissing);
         PADReset(0x80000000 >> pad->port);
-        return 0;
+        goto fail;
     case PAD_ERR_NOT_READY:
     case PAD_ERR_TRANSFER:
         return 0;
     default:
+    fail:
         return 0;
     case PAD_ERR_NONE:
         break;
     }
 
-    buttons = sPadData[pad->port].button;
-    temp_on = iPadConvFromGCN(buttons, 0x1, 0x80);
-    temp_on |= iPadConvFromGCN(buttons, 0x2, 0x20);
-    temp_on |= iPadConvFromGCN(buttons, 0x4, 0x40);
-    temp_on |= iPadConvFromGCN(buttons, 0x8, 0x10);
+    temp = sPadData[pad->port].button;
+    temp_on = iPadConvFromGCN(temp, 0x1, 0x80);
+    temp_on |= iPadConvFromGCN(temp, 0x2, 0x20);
+    temp_on |= iPadConvFromGCN(temp, 0x4, 0x40);
+    temp_on |= iPadConvFromGCN(temp, 0x8, 0x10);
 
-    if (buttons & 0x10)
+    if (temp & 0x10)
     {
-        temp_on |= iPadConvFromGCN(buttons, 0x20, 0x2000);
-        temp_on |= iPadConvFromGCN(buttons, 0x40, 0x200);
+        temp_on |= iPadConvFromGCN(temp, 0x20, 0x2000);
+        temp_on |= iPadConvFromGCN(temp, 0x40, 0x200);
         if (sPadData[pad->port].triggerLeft >= 0x18)
         {
             temp_on |= 0x200;
@@ -120,8 +132,8 @@ S32 iPadUpdate(_tagxPad* pad, U32* on)
     }
     else
     {
-        temp_on |= iPadConvFromGCN(buttons, 0x20, 0x1000);
-        temp_on |= iPadConvFromGCN(buttons, 0x40, 0x100);
+        temp_on |= iPadConvFromGCN(temp, 0x20, 0x1000);
+        temp_on |= iPadConvFromGCN(temp, 0x40, 0x100);
         if (sPadData[pad->port].triggerLeft >= 0x18)
         {
             temp_on |= 0x100;
@@ -132,11 +144,11 @@ S32 iPadUpdate(_tagxPad* pad, U32* on)
         }
     }
 
-    temp_on |= iPadConvFromGCN(buttons, 0x100, 0x10000);
-    temp_on |= iPadConvFromGCN(buttons, 0x200, 0x80000);
-    temp_on |= iPadConvFromGCN(buttons, 0x800, 0x40000);
-    temp_on |= iPadConvFromGCN(buttons, 0x400, 0x20000);
-    temp_on |= iPadConvFromGCN(buttons, 0x1000, 0x1);
+    temp_on |= iPadConvFromGCN(temp, 0x100, 0x10000);
+    temp_on |= iPadConvFromGCN(temp, 0x200, 0x80000);
+    temp_on |= iPadConvFromGCN(temp, 0x800, 0x40000);
+    temp_on |= iPadConvFromGCN(temp, 0x400, 0x20000);
+    temp_on |= iPadConvFromGCN(temp, 0x1000, 0x1);
     *on = temp_on;
 
     pad->analog1.x = iPadConvStick(sPadData[pad->port].stickX);
@@ -144,9 +156,9 @@ S32 iPadUpdate(_tagxPad* pad, U32* on)
     pad->analog2.x = iPadConvStick(sPadData[pad->port].substickX);
     pad->analog2.y = -iPadConvStick(sPadData[pad->port].substickY);
 
-    if (lbl_802289B8[pad->port].state != TRC_PadInserted)
+    if (TRC_PAD_INFO[pad->port].state != TRC_PadInserted)
     {
-        fn_80044458(pad->port, TRC_PadInserted);
+        TRC_PAD_REPORT(pad->port, TRC_PadInserted);
     }
 
     return 1;
