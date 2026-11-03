@@ -623,15 +623,12 @@ extern "C" S32 fn_80043E20(TRCCardWatch* watch)
 }
 
 // Hook the card dialogs call before they show a problem message. On GameCube it does nothing
-// and returns 2, so the dialog goes ahead; its message buffer is never filled. The dialogs call
-// it as a function, not inlined.
-#pragma dont_inline on
+// and returns 2, so the dialog goes ahead; its message buffer is never filled.
 extern "C" S32 fn_80043E18(S32 card, st_ISGSESSION* session)
 {
     char text[512] = { 0 };
     return 2;
 }
-#pragma dont_inline reset
 
 // Checks that a card is in the slot; a card that is not ready says why.
 extern "C" S32 fn_80043BA4(S32 card)
