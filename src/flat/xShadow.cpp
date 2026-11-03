@@ -474,137 +474,70 @@ void xShadowReceiveShadow(_xEnt* ent)
     S32 fogstate;
     F32 fadeDist;
 
-    if (!xShadowEntIsOutsideFrustum(ent) && !(ent->flags & 0x4) &&
-        !(ent->material_alpha < 255.0f))
+    if (xShadowEntIsOutsideFrustum(ent) || (ent->flags & 0x4) || ent->material_alpha < 255.0f ||
+        (ent->moreFlags & 0x1))
     {
-        if (ent->moreFlags & 0x1)
+        return;
+    }
+
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, ShadowCamera->frameBuffer);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+    RwRenderStateGet(rwRENDERSTATEFOGENABLE, &fogstate);
+    RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDZERO);
+
+    shadowFactor = ShadowStrength;
+    if (shadowFactor < 0.0f)
+    {
+        shadowFactor = -shadowFactor;
+        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDSRCCOLOR);
+    }
+    else
+    {
+        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCCOLOR);
+    }
+
+    radius = shadowCamera->viewWindow.x;
+    shadowMatrix = &((RwFrame*)shadowCamera->object.object.parent)->modelling;
+    at = shadowMatrix->at;
+    RwMatrixInvert(&invMatrix, shadowMatrix);
+    scl.x = scl.y = -0.5f / radius;
+    fadeDist = 0.0f;
+    scl.z = 1.0f / (fadeDist + radius);
+    RwMatrixScale(&invMatrix, &scl, rwCOMBINEPOSTCONCAT);
+    tr.x = tr.y = 0.5f;
+    tr.z = 0.0f;
+    RwMatrixTranslate(&invMatrix, &tr, rwCOMBINEPOSTCONCAT);
+
+    val = (U8)(255.0f * shadowFactor);
+
+    max_verts = 0;
+    for (model = ent->model; model; model = model->Next)
+    {
+        if ((U32)model->Data->geometry->numVertices > max_verts)
         {
-            return;
+            max_verts = model->Data->geometry->numVertices;
         }
+    }
 
-        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, ShadowCamera->frameBuffer);
-        RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
-        RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
-        RwRenderStateGet(rwRENDERSTATEFOGENABLE, &fogstate);
-        RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);
-        RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDZERO);
+    xvert = (xVec3*)xMemPushTemp(max_verts * sizeof(xVec3));
+    if (!xvert)
+    {
+        return;
+    }
 
-        shadowFactor = ShadowStrength;
-        if (shadowFactor < 0.0f)
+    Im3DBuffer = gRenderBuffer.m_vertex;
+    for (model = ent->model; model; model = model->Next)
+    {
+        geom = model->Data->geometry;
+        iModelVertEval(model->Data, 0, geom->numVertices, model->Mat, NULL, xvert);
+        xDrawSetColor(0, 0, 255, 255);
+
+        tri = geom->triangles;
+        for (i = 0; i < (U32)geom->numTriangles; i++, tri++)
         {
-            shadowFactor = -shadowFactor;
-            RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDSRCCOLOR);
-        }
-        else
-        {
-            RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCCOLOR);
-        }
-
-        radius = shadowCamera->viewWindow.x;
-        shadowMatrix = &((RwFrame*)shadowCamera->object.object.parent)->modelling;
-        at = shadowMatrix->at;
-        RwMatrixInvert(&invMatrix, shadowMatrix);
-        scl.x = scl.y = -0.5f / radius;
-        fadeDist = 0.0f;
-        scl.z = 1.0f / (fadeDist + radius);
-        RwMatrixScale(&invMatrix, &scl, rwCOMBINEPOSTCONCAT);
-        tr.x = tr.y = 0.5f;
-        tr.z = 0.0f;
-        RwMatrixTranslate(&invMatrix, &tr, rwCOMBINEPOSTCONCAT);
-
-        val = (U8)(255.0f * shadowFactor);
-
-        max_verts = 0;
-        for (model = ent->model; model; model = model->Next)
-        {
-            if ((U32)model->Data->geometry->numVertices > max_verts)
-            {
-                max_verts = model->Data->geometry->numVertices;
-            }
-        }
-
-        xvert = (xVec3*)xMemPushTemp(max_verts * sizeof(xVec3));
-        if (!xvert)
-        {
-            return;
-        }
-
-        Im3DBuffer = gRenderBuffer.m_vertex;
-        for (model = ent->model; model; model = model->Next)
-        {
-            geom = model->Data->geometry;
-            iModelVertEval(model->Data, 0, geom->numVertices, model->Mat, NULL, xvert);
-            xDrawSetColor(0, 0, 255, 255);
-
-            tri = geom->triangles;
-            for (i = 0; i < (U32)geom->numTriangles; i++, tri++)
-            {
-                if (Im3DBufferPos > 477)
-                {
-                    if (RwIm3DTransform(Im3DBuffer, Im3DBufferPos, NULL,
-                                        rwIM3D_VERTEXUV | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXRGBA))
-                    {
-                        RwIm3DRenderPrimitive(rwPRIMTYPETRILIST);
-                        RwIm3DEnd();
-                    }
-                    Im3DBufferPos = 0;
-                }
-
-                v0 = &xvert[tri->vertIndex[0]];
-                v1 = &xvert[tri->vertIndex[1]];
-                v2 = &xvert[tri->vertIndex[2]];
-                imv = &Im3DBuffer[Im3DBufferPos];
-                *(xVec3*)&vIn[0] = *v0;
-                *(xVec3*)&vIn[1] = *v1;
-                *(xVec3*)&vIn[2] = *v2;
-                RwV3dTransformPoints(vShad, vIn, 3, &invMatrix);
-
-                if ((vShad[0].z < 0.0f && vShad[1].z < 0.0f && vShad[2].z < 0.0f) ||
-                    (vShad[0].x < 0.0f && vShad[1].x < 0.0f && vShad[2].x < 0.0f) ||
-                    (vShad[0].x > 1.0f && vShad[1].x > 1.0f && vShad[2].x > 1.0f) ||
-                    (vShad[0].y < 0.0f && vShad[1].y < 0.0f && vShad[2].y < 0.0f) ||
-                    (vShad[0].y > 1.0f && vShad[1].y > 1.0f && vShad[2].y > 1.0f))
-                {
-                    continue;
-                }
-
-                {
-                    F32 ax = v1->x - v0->x;
-                    F32 ay = v1->y - v0->y;
-                    F32 az = v1->z - v0->z;
-                    F32 bx = v2->x - v0->x;
-                    F32 by = v2->y - v0->y;
-                    F32 bz = v2->z - v0->z;
-
-                    c.x = ay * bz - az * by;
-                    c.y = az * bx - ax * bz;
-                    c.z = ax * by - ay * bx;
-                }
-                len = 0.001f / RwV3dLength(&c);
-                c.x *= len;
-                c.y *= len;
-                c.z *= len;
-                if (c.x * at.x + c.y * at.y + c.z * at.z > 0.0f)
-                {
-                    continue;
-                }
-
-                RwIm3DVertexSetPos(&imv[0], v0->x + c.x, v0->y + c.y, v0->z + c.z);
-                RwIm3DVertexSetPos(&imv[1], v1->x + c.x, v1->y + c.y, v1->z + c.z);
-                RwIm3DVertexSetPos(&imv[2], v2->x + c.x, v2->y + c.y, v2->z + c.z);
-                imv[0].u = vShad[0].x;
-                imv[1].u = vShad[1].x;
-                imv[2].u = vShad[2].x;
-                imv[0].v = vShad[0].y;
-                imv[1].v = vShad[1].y;
-                imv[2].v = vShad[2].y;
-                RwIm3DVertexSetRGBA(&imv[0], val, val, val, val);
-                RwIm3DVertexSetRGBA(&imv[1], val, val, val, val);
-                RwIm3DVertexSetRGBA(&imv[2], val, val, val, val);
-                Im3DBufferPos += 3;
-            }
-
-            if (Im3DBufferPos)
+            if (Im3DBufferPos > 477)
             {
                 if (RwIm3DTransform(Im3DBuffer, Im3DBufferPos, NULL,
                                     rwIM3D_VERTEXUV | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXRGBA))
@@ -614,13 +547,77 @@ void xShadowReceiveShadow(_xEnt* ent)
                 }
                 Im3DBufferPos = 0;
             }
+
+            v0 = &xvert[tri->vertIndex[0]];
+            v1 = &xvert[tri->vertIndex[1]];
+            v2 = &xvert[tri->vertIndex[2]];
+            imv = &Im3DBuffer[Im3DBufferPos];
+            *(xVec3*)&vIn[0] = *v0;
+            *(xVec3*)&vIn[1] = *v1;
+            *(xVec3*)&vIn[2] = *v2;
+            RwV3dTransformPoints(vShad, vIn, 3, &invMatrix);
+
+            if ((vShad[0].z < 0.0f && vShad[1].z < 0.0f && vShad[2].z < 0.0f) ||
+                (vShad[0].x < 0.0f && vShad[1].x < 0.0f && vShad[2].x < 0.0f) ||
+                (vShad[0].x > 1.0f && vShad[1].x > 1.0f && vShad[2].x > 1.0f) ||
+                (vShad[0].y < 0.0f && vShad[1].y < 0.0f && vShad[2].y < 0.0f) ||
+                (vShad[0].y > 1.0f && vShad[1].y > 1.0f && vShad[2].y > 1.0f))
+            {
+                continue;
+            }
+
+            {
+                F32 ax = v1->x - v0->x;
+                F32 ay = v1->y - v0->y;
+                F32 az = v1->z - v0->z;
+                F32 bx = v2->x - v0->x;
+                F32 by = v2->y - v0->y;
+                F32 bz = v2->z - v0->z;
+
+                c.x = ay * bz - az * by;
+                c.y = az * bx - ax * bz;
+                c.z = ax * by - ay * bx;
+            }
+            len = 0.001f / RwV3dLength(&c);
+            c.x *= len;
+            c.y *= len;
+            c.z *= len;
+            if (c.x * at.x + c.y * at.y + c.z * at.z > 0.0f)
+            {
+                continue;
+            }
+
+            RwIm3DVertexSetPos(&imv[0], v0->x + c.x, v0->y + c.y, v0->z + c.z);
+            RwIm3DVertexSetPos(&imv[1], v1->x + c.x, v1->y + c.y, v1->z + c.z);
+            RwIm3DVertexSetPos(&imv[2], v2->x + c.x, v2->y + c.y, v2->z + c.z);
+            imv[0].u = vShad[0].x;
+            imv[1].u = vShad[1].x;
+            imv[2].u = vShad[2].x;
+            imv[0].v = vShad[0].y;
+            imv[1].v = vShad[1].y;
+            imv[2].v = vShad[2].y;
+            RwIm3DVertexSetRGBA(&imv[0], val, val, val, val);
+            RwIm3DVertexSetRGBA(&imv[1], val, val, val, val);
+            RwIm3DVertexSetRGBA(&imv[2], val, val, val, val);
+            Im3DBufferPos += 3;
         }
 
-        xMemPopTemp(xvert);
-        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
-        RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-        RwRenderStateSet(rwRENDERSTATEFOGENABLE, &fogstate);
+        if (Im3DBufferPos)
+        {
+            if (RwIm3DTransform(Im3DBuffer, Im3DBufferPos, NULL,
+                                rwIM3D_VERTEXUV | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXRGBA))
+            {
+                RwIm3DRenderPrimitive(rwPRIMTYPETRILIST);
+                RwIm3DEnd();
+            }
+            Im3DBufferPos = 0;
+        }
     }
+
+    xMemPopTemp(xvert);
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+    RwRenderStateSet(rwRENDERSTATEFOGENABLE, &fogstate);
 }
 
 // Fit the shadow camera's parallel view round a sphere of the given radius.
