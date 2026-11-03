@@ -487,7 +487,7 @@ config.libs: List[Dict[str, Any]] = [
         "game",
         [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iAnimSKB.cpp"),
-            Object(NonMatching, "flat/iCamera.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iCamera.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iCollide.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iCollideFast.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/iDebug.cpp"),
