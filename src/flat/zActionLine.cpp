@@ -48,13 +48,14 @@ void zActionLineUpdate(F32 seconds)
     }
 }
 
-static inline void RenderActionLine(_tagActionLine* l)
+static void RenderActionLine(_tagActionLine* l)
 {
     static RxObjSpace3DVertex sStripVert[4];
     RxObjSpace3DVertex* vert = sStripVert;
     for (S32 i = 0; i < 4; i++, vert++)
     {
-        RwIm3DVertexSetPos(vert, l->pos[i].x, l->pos[i].y, l->pos[i].z);
+        F32 y = l->pos[i].y;
+        RwIm3DVertexSetPos(vert, l->pos[i].x, y, l->pos[i].z);
         RwIm3DVertexSetU(vert, 0.0f);
         RwIm3DVertexSetV(vert, 0.0f);
         RwIm3DVertexSetRGBA(vert, 255, 255, 255, 128);
