@@ -1,11 +1,17 @@
 #include "iFile.h"
+#include "xTRC.h"
 
 #include <dolphin/os.h>
 #include <string.h>
 
 extern "C" {
+#if VERSION_GIHE78_REV0
 void fn_80016600();
 void fn_800443AC();
+#elif VERSION_GIHE78_REV1
+void fn_800166C0();
+void fn_800441D0();
+#endif
 }
 
 struct file_queue_entry
@@ -41,6 +47,7 @@ void iFileExit()
 
 // Reads a whole file in one blocking call, into a new 32-byte aligned block when no buffer is given.
 // The size returned is rounded up to 32 bytes.
+#if VERSION_GIHE78_REV0
 U32* iFileLoad(char* name, U32* buffer, U32* size)
 {
     char path[128];
@@ -72,6 +79,33 @@ U32* iFileLoad(char* name, U32* buffer, U32* size)
 
     return buffer;
 }
+#elif VERSION_GIHE78_REV1
+U32* iFileLoad(char* name, U32* buffer, U32* size)
+{
+    char path[128];
+    tag_xFile file;
+    S32 fileSize;
+
+    iFileFullPath(name, path);
+    iFileOpen(name, IFILE_OPEN_ABSPATH, &file);
+    fileSize = iFileGetSize(&file);
+
+    if (!buffer)
+    {
+        buffer = (U32*)OSAllocFromHeap(__OSCurrHeap, OSRoundUp32B(fileSize));
+    }
+
+    iFileRead(&file, buffer, OSRoundUp32B(fileSize));
+
+    if (size)
+    {
+        *size = OSRoundUp32B(fileSize);
+    }
+
+    iFileClose(&file);
+    return buffer;
+}
+#endif
 
 U32 iFileOpen(const char* name, S32 flags, tag_xFile* file)
 {
@@ -149,14 +183,22 @@ static void ifilereadCB(tag_xFile* file)
 // Blocking read: queues an asynchronous read and services the disc until it finishes.
 U32 iFileRead(tag_xFile* file, void* buf, U32 size)
 {
+    tag_iFile* ps = &file->ps;
+
+    iFileSeek(file, ps->offset, IFILE_SEEK_SET);
     iFileSyncAsyncReadActive = 1;
 
     iFileReadAsync(file, buf, size, ifilereadCB);
 
     while (iFileSyncAsyncReadActive)
     {
+#if VERSION_GIHE78_REV0
         fn_80016600();
         fn_800443AC();
+#elif VERSION_GIHE78_REV1
+        fn_800166C0();
+        fn_800441D0();
+#endif
     }
 
     return size;
@@ -171,6 +213,10 @@ static void async_cb(s32 result, DVDFileInfo* fileInfo)
     switch (result)
     {
     case -1:
+#if VERSION_GIHE78_REV1
+        xTRCDisk(TRC_DiskFatal);
+        return;
+#endif
     case -3:
         break;
     case -2:
@@ -208,7 +254,9 @@ static void async_cb(s32 result, DVDFileInfo* fileInfo)
         s32 length;
         if (entry->size - entry->offset < 0x8000)
         {
-            length = (entry->size - entry->offset + 3) & ~3;
+            length = entry->size - entry->offset;
+            length += 3;
+            length &= ~3;
         }
         else
         {
@@ -232,7 +280,8 @@ S32 iFileReadAsync(tag_xFile* file, void* buf, U32 aSize, void (*callback)(tag_x
     {
         if (file_queue[i].stat != IFILE_RDSTAT_QUEUED && file_queue[i].stat != IFILE_RDSTAT_INPROG)
         {
-            S32 id = fopcount++ << 2;
+            S32 id = fopcount++;
+            id <<= 2;
 
             file_queue[i].file = file;
             file_queue[i].buf = buf;
@@ -242,11 +291,17 @@ S32 iFileReadAsync(tag_xFile* file, void* buf, U32 aSize, void (*callback)(tag_x
             file_queue[i].callback = callback;
             file_queue[i].asynckey = id + i;
 
-            aSize = (aSize < 32) ? (aSize + 3) & ~3 : 32;
+            s32 readSize = 32;
+            if (aSize < 32)
+            {
+                readSize = aSize;
+                readSize += 3;
+                readSize &= ~3;
+            }
 
             ps->fileInfo.cb.userData = (void*)i;
 
-            DVDReadAsyncPrio(&ps->fileInfo, buf, aSize, ps->offset, async_cb, 2);
+            DVDReadAsyncPrio(&ps->fileInfo, buf, readSize, ps->offset, async_cb, 2);
 
             return id + i;
         }
@@ -282,8 +337,8 @@ U32 iFileClose(tag_xFile* file)
     tag_iFile* ps = &file->ps;
     S32 ret;
 
-    ret = DVDClose(&file->ps.fileInfo);
-    ret = DVDClose(&file->ps.fileInfo);
+    ret = DVDClose(&ps->fileInfo);
+    ret = DVDClose(&ps->fileInfo);
 
     if (!ret)
     {
