@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "iColor.h"
+#include "version.h"
 
 struct RwTexture;
 struct RwRaster;
@@ -31,8 +32,13 @@ struct xFontInfo
     F32 v;
     U16 layout;
     U16 pad;
+#if VERSION_GIHE78_REV0
     U8 lookup[128];
     iFontSpacing pspc[128];
+#elif VERSION_GIHE78_REV1
+    U8 lookup[256];
+    iFontSpacing* pspc;
+#endif
     char* characters;
     iFontInfo ps;
 };
@@ -87,5 +93,10 @@ void xFontRender();
 void xFontInit();
 
 void iFontInit();
+#if VERSION_GIHE78_REV0
+void iFontDrawChar(char c, F32 depth, iColor_tag color, xFontBox* box);
+#elif VERSION_GIHE78_REV1
+void iFontDrawChar(U8 c, F32 depth, iColor_tag color, xFontBox* box);
+#endif
 
 #endif

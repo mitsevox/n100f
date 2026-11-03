@@ -896,7 +896,7 @@ typedef enum RwPrimitiveType
     rwPRIMITIVETYPEFORCEENUMSIZEINT = 0x7FFFFFFF
 } RwPrimitiveType;
 
-// Partial: this driver's 2D vertex is 0x1C bytes; the last word is not reached.
+// This driver's 2D vertex is 0x1C bytes; the last float's role is unresolved.
 typedef struct RwIm2DVertex RwIm2DVertex;
 struct RwIm2DVertex
 {
@@ -906,7 +906,24 @@ struct RwIm2DVertex
     RwRGBA emissiveColor;
     F32 u;
     F32 v;
-    U8 unk18[4];
+    F32 unk18;
+
+#ifdef __cplusplus
+    RwIm2DVertex& operator=(const RwIm2DVertex& rhs)
+    {
+        x = rhs.x;
+        y = rhs.y;
+        z = rhs.z;
+        emissiveColor.red = rhs.emissiveColor.red;
+        emissiveColor.green = rhs.emissiveColor.green;
+        emissiveColor.blue = rhs.emissiveColor.blue;
+        emissiveColor.alpha = rhs.emissiveColor.alpha;
+        u = rhs.u;
+        v = rhs.v;
+        unk18 = rhs.unk18;
+        return *this;
+    }
+#endif
 };
 typedef U16 RwImVertexIndex;
 
@@ -1952,6 +1969,7 @@ U32 RwTextureStreamGetSize(const RwTexture* texture);
 const RwTexture* RwTextureStreamWrite(const RwTexture* texture, RwStream* stream);
 RwTexture* RwTextureStreamRead(RwStream* stream);
 RwTexDictionary* RwTexDictionaryStreamRead(RwStream* stream);
+RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dictionary, const char* name);
 RwTexture* RwTexDictionaryRemoveTexture(RwTexture* texture);
 S32 RwTexDictionaryDestroy(RwTexDictionary* dict);
 RwTexture* RwTexDictionaryAddTexture(RwTexDictionary* dict, RwTexture* texture);
