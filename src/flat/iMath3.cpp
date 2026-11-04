@@ -677,6 +677,12 @@ void iBoxIsectSphere(const _xBox* box, const xSphere* p, xIsect* isx)
     }
 }
 
+// Unused.
+static void BoxUnusedConsts(F32* f)
+{
+    *f = -1.0f;
+}
+
 void iBoxInitBoundVec(_xBox* b, const xVec3* v)
 {
     xVec3Copy(&b->lower, v);
