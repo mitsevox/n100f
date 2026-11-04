@@ -6586,6 +6586,12 @@ static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _x
 }
 
 
+// A lost helper: only its zeroed 12-byte template is left in the data, and nothing calls it.
+static void zEntVillain_UnknownTemplate12()
+{
+    _xVec3 lost = { 0 };
+}
+
 // When a soaped villain with ability bit 20 has bumped into something, it bounces its knockback
 // velocity off it. Nothing is returned.
 static S32 VILN_std_respond(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA*)
@@ -13355,6 +13361,12 @@ static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base)
     }
 
     return rate;
+}
+
+// A lost helper: only its zeroed 128 bytes of templates are left in the data, and nothing calls it.
+static void zEntVillain_UnknownTemplate128()
+{
+    S32 lost[32] = { 0 };
 }
 
 // Picks the Mastermind's next teleport point. Unless forced, he picks none while the player is more
