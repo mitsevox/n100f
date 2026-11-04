@@ -4,6 +4,7 @@
 #include "iDebug.h"
 #include "iSystem.h"
 #include "zEnv.h"
+#include "zGame.h"
 #include "zGameState.h"
 #include "zGlobals.h"
 #include "zScene.h"
@@ -34,7 +35,6 @@ void xCameraBegin(_tagxCamFrame* cam, S32 clear);
 void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
 U32 zSaveLoad_LoadLoop();
 extern "C" volatile U32 lbl_8025E968;
-extern "C" U32 lbl_8025EF10;
 extern "C" U32 lbl_8025E9F8;
 extern "C" _zEnv* gCurEnv;
 
@@ -220,11 +220,11 @@ U32 zMenuLoop()
 
         xCameraEnd(&globals.camera, time_elapsed, 1);
 
-        while ((lbl_8025E968 = VIGetRetraceCount()) - lbl_8025EF10 < 2)
+        while ((lbl_8025E968 = VIGetRetraceCount()) - gLastVsyncFlip < 2)
         {
             iVSync();
         }
-        lbl_8025EF10 = lbl_8025E968;
+        gLastVsyncFlip = lbl_8025E968;
 
         xCameraShowRaster(&globals.camera);
 
