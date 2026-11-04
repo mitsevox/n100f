@@ -2019,19 +2019,15 @@ static U32 HangCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
     globals.player.HangVel.y = 0.0f;
     globals.player.HangVel.z = 0.0f;
     globals.player.HangLength = globals.player.HangFound->hangInfo->leverArm;
-    globals.player.HangStartPos = ((xMat4x3*)globals.player.ent.model->Mat)->pos;
+    globals.player.HangStartPos.x = ((xMat4x3*)globals.player.ent.model->Mat)->pos.x;
+    globals.player.HangStartPos.y = ((xMat4x3*)globals.player.ent.model->Mat)->pos.y;
+    globals.player.HangStartPos.z = ((xMat4x3*)globals.player.ent.model->Mat)->pos.z;
     globals.player.HangStartLerp = 1.0f;
 
-    targetPos.x = globals.player.ent.bound.sph.center.x - globals.player.HangPivot.x;
-    targetPos.y = globals.player.ent.bound.sph.center.y - globals.player.HangPivot.y;
-    targetPos.z = globals.player.ent.bound.sph.center.z - globals.player.HangPivot.z;
+    xVec3Sub(&targetPos, &globals.player.ent.bound.sph.center, &globals.player.HangFound->pivot);
     xVec3Normalize(&targetPos, &targetPos);
-    targetPos.x *= globals.player.HangFound->hangInfo->leverArm;
-    targetPos.y *= globals.player.HangFound->hangInfo->leverArm;
-    targetPos.z *= globals.player.HangFound->hangInfo->leverArm;
-    targetPos.x += globals.player.HangFound->pivot.x;
-    targetPos.y += globals.player.HangFound->pivot.y;
-    targetPos.z += globals.player.HangFound->pivot.z;
+    xVec3SMulBy(&targetPos, globals.player.HangFound->hangInfo->leverArm);
+    xVec3AddTo(&targetPos, &globals.player.HangFound->pivot);
 
     vHangBefore = ((xMat4x3*)ent->model->Mat)->pos;
     ((xMat4x3*)ent->model->Mat)->pos.x = targetPos.x;
@@ -3771,12 +3767,12 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         _xCollis* endcoll;
         _zEnt* shagent;
 
-        shagent = globals.player.Shaggy1.Grab;
         coll = &ent->collis->colls[ent->collis->npc_sidx];
         endcoll = &ent->collis->colls[ent->collis->npc_eidx];
         for (; coll < endcoll; coll++)
         {
-            if (coll->optr == shagent && coll->hdng.y < -0.7071f)
+            shagent = (_zEnt*)coll->optr;
+            if (shagent == globals.player.Shaggy1.Grab && coll->hdng.y < -0.7071f)
             {
                 ent->frame->mat.pos.x += 0.001f;
                 globals.player.Shaggy1.CatchYou = 1;
@@ -3978,8 +3974,8 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         }
         else
         {
-            mag = 1.0f / sqrtf(mag) * lerpspeed;
-            xVec3SMulBy(&delta, mag);
+            mag = 1.0f / sqrtf(mag);
+            xVec3SMulBy(&delta, mag * lerpspeed);
             xVec3AddTo(&globals.player.RootUp, &delta);
             xVec3Normalize(&globals.player.RootUp, &globals.player.RootUp);
         }
@@ -4059,9 +4055,9 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         {
             if (zsc->stats[i] && (zsc->stats[i]->baseFlags & 1) && xEntIsVisible(zsc->stats[i]))
             {
-                simpent = (_zEntSimpleObj*)zsc->stats[i];
-                if (simpent->sflags & 1)
+                if (((_zEntSimpleObj*)zsc->stats[i])->sflags & 1)
                 {
+                    simpent = (_zEntSimpleObj*)zsc->stats[i];
                     F32 dx = globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x;
                     F32 dy = globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y;
                     F32 dz = globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z;
@@ -5147,7 +5143,8 @@ void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
             return;
         }
         xVec3 dv;
-        xVec3SMul(&dv, &coll->norm, 0.5f * -rft);
+        s = 0.5f * -rft;
+        xVec3SMul(&dv, &coll->norm, s);
         v->x += dv.x;
         v->y += dv.y;
         v->z += dv.z;
