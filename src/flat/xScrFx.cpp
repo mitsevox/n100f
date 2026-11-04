@@ -6,6 +6,7 @@
 #include "iDraw.h"
 #include "xModel.h"
 #include "xMath3.h"
+#include "xColor.h"
 
 #include <rwcore.h>
 #include <string.h>
@@ -27,7 +28,7 @@ static F32 mLetterboxTO;
 static _xFadeData mFade;
 
 // zFMV.cpp: set once the end credits have played in s005.
-extern "C" U32 lbl_8025EEC8;
+extern U32 gCreditsBlackout;
 
 void xScrFxInit()
 {
@@ -66,16 +67,24 @@ void DrawScreenSizeRectangle()
     RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRISTRIP, v, 4, indices, 4);
 }
 
+// One channel of a plain fade: src + (dest - src) * t.
+static inline U8 FadeLerp(U8 a, U8 b, F32 t)
+{
+    F32 d = b - a;
+    d *= t;
+    d += a;
+    return d;
+}
+
 // Draws the fade and the letterbox bars over the frame. After the end credits in s005 the screen
 // stays black. A fancy fade draws black around the player's model, scaled up from or down to
 // nothing in front of the camera, before the whole screen goes black.
 void xScrFxUpdate(RwCamera* cam, F32 seconds)
 {
-    if (lbl_8025EEC8)
+    if (gCreditsBlackout)
     {
-        static const iColor_tag black = { 0, 0, 0, 255 };
         iScrFxBegin();
-        iScrFxDrawFade(cam, (iColor_tag*)&black);
+        iScrFxDrawFade(cam, (iColor_tag*)&g_BLACK);
         iScrFxEnd();
         return;
     }
@@ -159,7 +168,8 @@ void xScrFxUpdate(RwCamera* cam, F32 seconds)
                     {
                         dog_y = -20.5f;
                         dog_z = 25.0f;
-                        F32 sc = (1.0f - t) * 300.0f;
+                        F32 sc = 1.0f - t;
+                        sc *= 300.0f;
                         globals.player.ent.model->Scale.x = sc;
                         globals.player.ent.model->Scale.y = sc;
                         globals.player.ent.model->Scale.z = 1.0f;
@@ -200,10 +210,10 @@ void xScrFxUpdate(RwCamera* cam, F32 seconds)
             else
             {
                 iColor_tag col;
-                col.r = (mFade.dest.r - mFade.src.r) * t + mFade.src.r;
-                col.g = (mFade.dest.g - mFade.src.g) * t + mFade.src.g;
-                col.b = (mFade.dest.b - mFade.src.b) * t + mFade.src.b;
-                col.a = (mFade.dest.a - mFade.src.a) * t + mFade.src.a;
+                col.r = FadeLerp(mFade.src.r, mFade.dest.r, t);
+                col.g = FadeLerp(mFade.src.g, mFade.dest.g, t);
+                col.b = FadeLerp(mFade.src.b, mFade.dest.b, t);
+                col.a = FadeLerp(mFade.src.a, mFade.dest.a, t);
                 iScrFxDrawFade(cam, &col);
             }
         }
