@@ -20,6 +20,7 @@ S16 xFFXAddEffect(_xEnt* ent, xFFX* effect);
 static _zParEmitter* sEmitTremble;
 static _zParEmitter* sEmitBreakaway;
 static void zPlatformTranslate(_xEnt* ent, xVec3* dpos);
+static void zPlatform_BreakawayEmit(_zPlatform* plat);
 void zPlatform_Move(_xEnt* entplat, _xScene* sc, F32 dt, _xEntFrame* frame);
 void zPlatform_Init(_zPlatform* plat, p2EntAsset* asset);
 
@@ -176,12 +177,7 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
             plat->tmr -= dt;
             if (plat->tmr <= 0.0f)
             {
-                _zParEmitterCustomSettings info;
-                info.custom_flags = 0x20;
-                info.pos = *xBoundCenter(&plat->bound);
-                info.pos.y += 0.5f;
-                for (S32 i = 0; i < 25; i++)
-                    zParEmitterEmitCustom(sEmitBreakaway, 1.0f / 30.0f, &info);
+                zPlatform_BreakawayEmit(plat);
                 plat->state = 2;
                 plat->pflags |= 6;
                 plat->tmr = plat->passet->ba.reset_delay;
@@ -380,6 +376,16 @@ void zPlatform_Shake(_zPlatform* plat, F32 unused, F32 ampl, F32 freq)
             xFFXAddEffect(plat, sfkt);
         }
     }
+}
+
+static void zPlatform_BreakawayEmit(_zPlatform* plat)
+{
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xBoundCenter(&plat->bound);
+    info.pos.y += 0.5f;
+    for (S32 i = 0; i < 25; i++)
+        zParEmitterEmitCustom(sEmitBreakaway, 1.0f / 30.0f, &info);
 }
 
 static void zPlatform_Tremble(_zPlatform* plat, F32 ampl, F32 freq, F32 dur)
