@@ -11,15 +11,16 @@
 #include "zParEmitter.h"
 #include "zScene.h"
 #include <string.h>
+#include <math.h>
 
 void xFFXShakeFree(xFFXShakeState* s);
 void xFFXShakeUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata);
 S16 xFFXAddEffect(_xEnt* ent, xFFX* effect);
-extern "C" void fn_8002E174(xVec3* out, const xMat3x3* mat, const xVec3* v);
 
 static _zParEmitter* sEmitTremble;
 static _zParEmitter* sEmitBreakaway;
 static void zPlatformTranslate(_xEnt* ent, xVec3* dpos);
+static void zPlatform_BreakawayFallFX(_zPlatform* plat, F32 dt);
 void zPlatform_Move(_xEnt* entplat, _xScene* sc, F32 dt, _xEntFrame* frame);
 void zPlatform_Init(_zPlatform* plat, p2EntAsset* asset);
 
@@ -176,12 +177,7 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
             plat->tmr -= dt;
             if (plat->tmr <= 0.0f)
             {
-                _zParEmitterCustomSettings info;
-                info.custom_flags = 0x20;
-                info.pos = *xBoundCenter(&plat->bound);
-                info.pos.y += 0.5f;
-                for (S32 i = 0; i < 25; i++)
-                    zParEmitterEmitCustom(sEmitBreakaway, 1.0f / 30.0f, &info);
+                zPlatform_BreakawayFallFX(plat, dt);
                 plat->state = 2;
                 plat->pflags |= 6;
                 plat->tmr = plat->passet->ba.reset_delay;
@@ -228,10 +224,11 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
         U16 state = plat->motion.mech.state;
         if (state != plat->state)
         {
+            p2EntMotionMechData* mkasst = &plat->motion.asset->mech;
             if (plat->state == 2)
                 zEntEvent(plat, 0x39);
             else if (state == 6 || state == 7 ||
-                     (!(plat->motion.asset->mech.flags & 2) && (state == 0 || state == 1)))
+                     (!(mkasst->flags & 2) && (state == 0 || state == 1)))
                 zEntEvent(plat, 0x1F);
             plat->state = state;
         }
@@ -247,10 +244,8 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
         {
             F32 s = plat == drv->driver ? drv->s : drv->os;
             _xEnt* p = drv->driven;
-            xMat4x3* mat = (xMat4x3*)plat->model->Mat;
-            xVec3SMul(&p->frame->dpos, &mat->right, s * plat->passet->cb.speed * dt);
-            xVec3* pos = (xVec3*)&p->model->Mat->pos;
-            xVec3Add(pos, pos, &p->frame->dpos);
+            xVec3SMul(&p->frame->dpos, (xVec3*)&plat->model->Mat->right, s * plat->passet->cb.speed * dt);
+            xVec3Add((xVec3*)&p->model->Mat->pos, (xVec3*)&p->model->Mat->pos, &p->frame->dpos);
         }
     }
     else if (plat->subType == 11)
@@ -260,7 +255,7 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
         {
             F32 ctilt = plat->frame->rot.axis.z;
             F32 itilt = plat->asset->ang.z;
-            F32 dtilt = xabs((PI * plat->passet->teet.invmass / 180.0f) * dt);
+            F32 dtilt = fabsf((PI * plat->passet->teet.invmass / 180.0f) * dt);
             if (ctilt != itilt)
             {
                 if (ctilt < itilt)
@@ -268,26 +263,26 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
                 else if (ctilt > itilt)
                     dtilt = MAX(-dtilt, itilt - ctilt);
                 plat->frame->rot.axis.z += dtilt;
-                xMat4x3* mat = (xMat4x3*)plat->model->Mat;
-                xMat3x3Euler((xMat3x3*)mat, plat->frame->rot.axis.x,
+                xMat3x3Euler((xMat3x3*)plat->model->Mat, plat->frame->rot.axis.x,
                              plat->frame->rot.axis.y, plat->frame->rot.axis.z);
-                xVec3SMul(&mat->right, &mat->right, plat->asset->scale.x);
-                xVec3SMul(&mat->up, &mat->up, plat->asset->scale.y);
-                xVec3SMul(&mat->at, &mat->at, plat->asset->scale.z);
+                xVec3* scale = &plat->asset->scale;
+                xVec3SMul((xVec3*)&plat->model->Mat->right, (xVec3*)&plat->model->Mat->right, scale->x);
+                xVec3SMul((xVec3*)&plat->model->Mat->up, (xVec3*)&plat->model->Mat->up, scale->y);
+                xVec3SMul((xVec3*)&plat->model->Mat->at, (xVec3*)&plat->model->Mat->at, scale->z);
             }
         }
         else
         {
             F32 s = plat == drv->driver ? drv->s : drv->os;
-            _xEnt* p = drv->driven;
-            xMat4x3* mat = (xMat4x3*)plat->model->Mat;
             xVec3 lpos;
-            xVec3Sub(&lpos, &p->frame->mat.pos, &mat->pos);
-            fn_8002E174(&lpos, (xMat3x3*)mat, &lpos);
+            lpos.x = drv->driven->frame->mat.pos.x - plat->model->Mat->pos.x;
+            lpos.y = drv->driven->frame->mat.pos.y - plat->model->Mat->pos.y;
+            lpos.z = drv->driven->frame->mat.pos.z - plat->model->Mat->pos.z;
+            xMat3x3Tolocal(&lpos, (xMat3x3*)plat->model->Mat, &lpos);
             F32 cangle = plat->frame->rot.axis.z;
             F32 dangle = -s * (PI * plat->passet->teet.invmass / 180.0f) * lpos.x * dt;
-            F32 mangle = xabs(plat->passet->teet.maxtilt);
-            F32 tangle = xabs(dangle + cangle) - mangle;
+            F32 mangle = fabsf(plat->passet->teet.maxtilt);
+            F32 tangle = fabsf(dangle + cangle) - mangle;
             if (tangle > 0.0f)
             {
                 if (dangle < 0.0f)
@@ -296,11 +291,12 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
                     dangle -= tangle;
             }
             plat->frame->rot.axis.z += dangle;
-            xMat3x3Euler((xMat3x3*)mat, plat->frame->rot.axis.x,
+            xMat3x3Euler((xMat3x3*)plat->model->Mat, plat->frame->rot.axis.x,
                          plat->frame->rot.axis.y, plat->frame->rot.axis.z);
-            xVec3SMul(&mat->right, &mat->right, plat->asset->scale.x);
-            xVec3SMul(&mat->up, &mat->up, plat->asset->scale.y);
-            xVec3SMul(&mat->at, &mat->at, plat->asset->scale.z);
+            xVec3* scale = &plat->asset->scale;
+            xVec3SMul((xVec3*)&plat->model->Mat->right, (xVec3*)&plat->model->Mat->right, scale->x);
+            xVec3SMul((xVec3*)&plat->model->Mat->up, (xVec3*)&plat->model->Mat->up, scale->y);
+            xVec3SMul((xVec3*)&plat->model->Mat->at, (xVec3*)&plat->model->Mat->at, scale->z);
         }
     }
 
@@ -320,12 +316,27 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
     xVec3* rot = &plat->frame->rot.axis;
     S32 moving;
     if (plat->subType == 11)
-        moving = orot->x != rot->x || orot->y != rot->y || orot->z != rot->z;
+    {
+        if (orot->x != rot->x || orot->y != rot->y || orot->z != rot->z)
+            moving = 1;
+        else
+            moving = 0;
+    }
     else
-        moving = opos->x != pos->x || opos->y != pos->y || opos->z != pos->z ||
-                 orot->x != rot->x || orot->y != rot->y || orot->z != rot->z;
+    {
+        if (opos->x != pos->x || opos->y != pos->y || opos->z != pos->z ||
+            orot->x != rot->x || orot->y != rot->y || orot->z != rot->z)
+            moving = 1;
+        else
+            moving = 0;
+    }
     if (moving != plat->moving)
-        zEntEvent(plat, moving ? eEventStartMoving : eEventStopMoving);
+    {
+        if (moving)
+            zEntEvent(plat, eEventStartMoving);
+        else
+            zEntEvent(plat, eEventStopMoving);
+    }
     plat->moving = moving;
 }
 
@@ -398,6 +409,17 @@ static void zPlatform_Tremble(_zPlatform* plat, F32 ampl, F32 freq, F32 dur)
     }
 }
 
+// Emit the breakaway platform's falling particle burst.
+static void zPlatform_BreakawayFallFX(_zPlatform* plat, F32 dt)
+{
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xBoundCenter(&plat->bound);
+    info.pos.y += 0.5f;
+    for (S32 i = 0; i < 25; i++)
+        zParEmitterEmitCustom(sEmitBreakaway, 1.0f / 30.0f, &info);
+}
+
 // Begin the breakaway platform's tremble when it is mounted.
 void zPlatform_Mount(_zPlatform* plat)
 {
@@ -463,6 +485,8 @@ S32 zPlatformEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* t
     case eEventStop:
         xEntMotionStop(&plat->motion);
         break;
+    case eEventBreak:
+        break;
     case 0x12A:
         if (plat->subType == 4)
             xEntMechForward(&plat->motion);
@@ -518,13 +542,12 @@ S32 zPlatformEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* t
         break;
     case 0xCB:
         if (plat->subType == 3)
-            plat->motion.mp.speed = MAX(0.0f, toParam[0]);
+            xEntMPSetSpeed(&plat->motion, toParam[0]);
         break;
     case 0xCC:
         if (plat->subType == 3)
         {
-            F32 speed = plat->motion.mp.speed + toParam[0];
-            plat->motion.mp.speed = MAX(0.0f, speed);
+            plat->motion.mp.speed = MAX(0.0f, plat->motion.mp.speed + toParam[0]);
         }
         break;
     }

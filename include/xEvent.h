@@ -22,6 +22,7 @@ enum en_xEventTags
     eEventArrive = 31,
     eEventMount = 32,
     eEventDismount = 33,
+    eEventBreak = 34,
     eEventPickup = 35,
     eEventOn = 38,
     eEventOff = 39,
