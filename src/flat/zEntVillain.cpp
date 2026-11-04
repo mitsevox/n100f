@@ -15146,13 +15146,16 @@ static void VPRJ_BBK_detach(zEntProjectile* prj)
 // Advance a thrown Black Knight axe and its resting lightning.
 static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
 {
-    st_BKAXE_DATA* axe = (st_BKAXE_DATA*)prj->xtradata;
-    if (prj->cat_data.bounce.atRest)
+    st_ZPRJ_CAT_BOUNCEBALL* bounce = &prj->cat_data.bounce;
+    st_BKAXE_DATA* axfx = (st_BKAXE_DATA*)prj->xtradata;
+
+    if (bounce->atRest)
         prj->SendEvent(ZPRJ_EVNT_ATREST, dt);
     else
         prj->SendEvent(ZPRJ_EVNT_INFLIGHT, dt);
 
-    _xVec3 pos = *xEntGetPos(prj);
+    _xVec3 pos_prj = { 0 };
+    pos_prj = *xEntGetPos(prj);
     if (prj->tmr_alive >= prj->tym_maxlife)
     {
         prj->SendEvent(ZPRJ_EVNT_SELFDESTRUCT);
@@ -15160,7 +15163,7 @@ static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         return 1;
     }
 
-    if (pos.z > axe->planes.z || pos.y < axe->planes.x)
+    if (pos_prj.z > axfx->planes.z || pos_prj.y < axfx->planes.x)
     {
         prj->ColDelaySet(-1.0f, 0);
         prj->flg_pen = 0x7E;
@@ -15169,7 +15172,7 @@ static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
     {
         prj->ColDelaySet(5.0f, 0);
     }
-    if (pos.y < axe->planes.y) prj->StateSet(ZPRJ_STATE_DEAD);
+    if (pos_prj.y < axfx->planes.y) prj->StateSet(ZPRJ_STATE_DEAD);
 
     if (prj->plyr_colrec->flags & 1)
     {
@@ -15177,22 +15180,22 @@ static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
         prj->StateSet(ZPRJ_STATE_DEAD);
     }
-    else if (prj->cat_data.bounce.atRest == 1 || (prj->collis->colls[0].flags & 1))
+    else if (bounce->atRest == 1 || (prj->collis->colls[0].flags & 1))
     {
-        if (!prj->cat_data.bounce.atRest)
+        if (!bounce->atRest)
         {
             prj->SendEvent(ZPRJ_EVNT_STARTRESTING);
             prj->tmr_curstate = 0.0f;
-            prj->cat_data.bounce.atRest = 1;
-            prj->cat_data.bounce.acc_gravity = 0.0f;
+            bounce->atRest = 1;
+            bounce->acc_gravity = 0.0f;
             VPRJ_zapTheAxe(prj, 0);
             xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
             xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
             prj->frame->mode |= 0xC;
-            axe->flg_stat |= 2;
+            axfx->flg_stat |= 2;
         }
     }
-    if (prj->cat_data.bounce.atRest == 1 && prj->tmr_curstate > axe->tym_zapdur)
+    if (bounce->atRest == 1 && prj->tmr_curstate > axfx->tym_zapdur)
     {
         prj->SendEvent(ZPRJ_EVNT_DETONATE);
         prj->StateSet(ZPRJ_STATE_DEAD);
