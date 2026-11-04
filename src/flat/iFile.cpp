@@ -325,10 +325,12 @@ IFILE_READSECTOR_STATUS iFileReadAsyncStatus(S32 key, S32* amtToFar)
 }
 
 // The disc is read-only, so nothing is ever written.
+#if VERSION_GIHE78_REV0
 U32 iFileWrite(tag_xFile* file, void* buf, U32 size)
 {
     return 0;
 }
+#endif
 
 // The file is closed twice; only the second result counts.
 U32 iFileClose(tag_xFile* file)

@@ -159,6 +159,64 @@ void zGameModeSwitch(eGameMode modeNew)
         xSndPauseAll(0, 0);
     }
 
+    // Per-mode exit and entry hooks; every case is empty in this build.
+    switch (modeOld)
+    {
+    case eGameMode_Boot:
+        break;
+    case eGameMode_Intro:
+        break;
+    case eGameMode_Title:
+        break;
+    case eGameMode_Start:
+        break;
+    case eGameMode_Load:
+        break;
+    case eGameMode_Options:
+        break;
+    case eGameMode_Save:
+        break;
+    case eGameMode_Pause:
+        break;
+    case eGameMode_WorldMap:
+        break;
+    case eGameMode_MonsterGallery:
+        break;
+    case eGameMode_ConceptArtGallery:
+        break;
+    case eGameMode_Game:
+        break;
+    }
+
     gGameMode = modeNew;
+
+    switch (modeNew)
+    {
+    case eGameMode_Boot:
+        break;
+    case eGameMode_Intro:
+        break;
+    case eGameMode_Title:
+        break;
+    case eGameMode_Start:
+        break;
+    case eGameMode_Load:
+        break;
+    case eGameMode_Options:
+        break;
+    case eGameMode_Save:
+        break;
+    case eGameMode_Pause:
+        break;
+    case eGameMode_WorldMap:
+        break;
+    case eGameMode_MonsterGallery:
+        break;
+    case eGameMode_ConceptArtGallery:
+        break;
+    case eGameMode_Game:
+        break;
+    }
+
     zEntEventAllOfType(sGameMode_DispatchTable[modeNew], 0x1E);
 }
