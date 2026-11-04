@@ -417,7 +417,7 @@ static inline U32 VANM_entStateType(const _zEnt* ent);
 static inline U32 VANM_entMoveType(const _zEnt* ent);
 static inline void VANM_setSpeed(st_zEntVillain* ent, F32 spd, _xVec3 sanim);
 static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil);
-static S32 VWEP_extend_particles(st_zEntVillain* vil, F32 dt, _xVec3* target);
+static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt);
 static S32 VWEP_swipe(st_zEntVillain* vil, F32 dt);
 static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void* data);
 static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
@@ -14475,66 +14475,69 @@ static S32 VWEP_swipe(st_zEntVillain* vil, F32)
 }
 
 // Aim the extended attack from its tagged vertex and emit its trail.
-static S32 VWEP_extend_particles(st_zEntVillain* vil, F32 dt, _xVec3* target)
+static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
 {
-    _xVec3 origin = { 0 };
-    _xVec3 alternate = { 0 };
-    _xVec3 direction = { 0 };
-    _xVec3 delta = { 0 };
-    _xVec3 normal = { 0 };
-    _xMat3x3 mat = { 0 };
-    _zParEmitterCustomSettings settings = { 0 };
-    S32 have_origin = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &origin);
-    S32 have_alternate = VSUP_vertPos(vil, ZVIL_MDLVERT_WEAPON, &alternate);
-    if (!have_origin && !have_alternate) origin = alternate;
-    else if (have_origin && have_alternate && vil->asset->subtype == eEntVillainTypeKillerPlant)
+    _xVec3 dirvec = { 0 };
+    _xVec3 shotpos = { 0 };
+    _xVec3 weppos = { 0 };
+    _xVec3 tmpvec = { 0 };
+    _xMat3x3 mat_rot = { 0 };
+    _xVec3 dltvec = { 0 };
+    F32 ang_updwn;
+    F32 tym_elap;
+    F32 dist;
+    F32 conrat;
+    S32 have_shot = VSUP_vertPos(ent, ZVIL_MDLVERT_ATTACK, &shotpos);
+    S32 have_wep = VSUP_vertPos(ent, ZVIL_MDLVERT_WEAPON, &weppos);
+    if (!have_shot && !have_wep) shotpos = weppos;
+    else if (have_shot && have_wep && ent->asset->subtype == eEntVillainTypeKillerPlant)
     {
-        xVec3AddTo(&origin, &alternate);
-        xVec3SMul(&origin, &origin, 0.5f);
+        xVec3AddTo(&shotpos, &weppos);
+        xVec3SMul(&shotpos, &shotpos, 0.5f);
     }
-    if (!have_origin)
+    if (!have_shot)
     {
-        xSceneID2Name(globals.sceneCur, vil->id);
-        origin = *xBoundCenter(&vil->bound);
-        origin.y += 0.4f;
-        origin.x += 1.5f * vil->precalc.sin_faceang;
-        origin.z += 1.5f * vil->precalc.cos_faceang;
+        xSceneID2Name(globals.sceneCur, ent->id);
+        shotpos = *xBoundCenter(&ent->bound);
+        shotpos.y += 0.4f;
+        shotpos.x += 1.5f * ent->precalc.sin_faceang;
+        shotpos.z += 1.5f * ent->precalc.cos_faceang;
     }
-    F32 length = MAX(0.01f, MIN(vil->spd_extend *
-                               MIN(vil->tmr_list[ZVIL_TDUR_EXTEND], vil->tmr_list[ZVIL_TYMR_CURGOAL]), vil->dst_extend));
-    F32 slope = vil->wid_extend / vil->dst_extend;
-    F32 facing = vil->frame->rot.angle;
-    direction.x = sin(facing);
-    direction.z = cos(facing);
-    if (target)
+    tym_elap = MIN(ent->tmr_list[ZVIL_TDUR_EXTEND], ent->tmr_list[ZVIL_TYMR_CURGOAL]);
+    dist = MAX(0.01f, MIN(ent->spd_extend * tym_elap, ent->dst_extend));
+    conrat = ent->wid_extend / ent->dst_extend;
+    dirvec.x = sin(ent->frame->rot.angle);
+    dirvec.z = cos(ent->frame->rot.angle);
+    if (pos_tgt)
     {
-        xVec3Sub(&delta, target, &origin);
-        xVec3Normalize(&normal, &delta);
-        F32 pitch = asin(normal.y);
-        if (vil->asset->subtype == eEntVillainTypeKillerPlant) pitch = 0.0f;
-        else pitch = MAX(-0.25f, MIN(pitch, 0.25f));
-        xMat3x3Euler(&mat, 0.0f, pitch, 0.0f);
-        xMat3x3LMulVec(&direction, &mat, &g_Z3);
-        xMat3x3Euler(&mat, -facing, 0.0f, 0.0f);
-        xMat3x3LMulVec(&direction, &mat, &direction);
+        xVec3Sub(&dltvec, pos_tgt, &shotpos);
+        xVec3Normalize(&tmpvec, &dltvec);
+        ang_updwn = asin(tmpvec.y);
+        if (ent->asset->subtype == eEntVillainTypeKillerPlant) ang_updwn = 0.0f;
+        else ang_updwn = MAX(-0.25f, MIN(ang_updwn, 0.25f));
+        xMat3x3Euler(&mat_rot, 0.0f, ang_updwn, 0.0f);
+        xMat3x3LMulVec(&dirvec, &mat_rot, &g_Z3);
+        xMat3x3Euler(&mat_rot, -ent->frame->rot.angle, 0.0f, 0.0f);
+        xMat3x3LMulVec(&dirvec, &mat_rot, &dirvec);
     }
-    if (vil->asset->subtype == eEntVillainTypeKillerPlant)
+    if (ent->asset->subtype == eEntVillainTypeKillerPlant)
     {
         if (sPlantCloudEmitter)
         {
-            settings.pos.x = vil->model->Mat->pos.x;
-            settings.pos.y = vil->model->Mat->pos.y;
-            settings.pos.z = vil->model->Mat->pos.z;
+            _zParEmitterCustomSettings settings;
+            settings.pos.x = ent->model->Mat->pos.x;
+            settings.pos.y = ent->model->Mat->pos.y;
+            settings.pos.z = ent->model->Mat->pos.z;
             settings.pos.y += 1.6f;
-            settings.pos.x += 0.25f * vil->model->Mat->at.x;
-            settings.pos.z += 0.25f * vil->model->Mat->at.z;
-            xVec3Normalize(&normal, &direction);
+            settings.pos.x += 0.25f * ent->model->Mat->at.x;
+            settings.pos.z += 0.25f * ent->model->Mat->at.z;
+            xVec3Normalize(&tmpvec, &dirvec);
             settings.custom_flags = 0x60;
-            xVec3SMul(&settings.vel, &normal, 1.0f + 0.25f * iurand());
+            xVec3SMul(&settings.vel, &tmpvec, 1.0f + 0.25f * iurand());
             zParEmitterEmitCustom(sPlantCloudEmitter, dt, &settings);
         }
     }
-    else VPAR_emit_extattack(vil, &origin, &direction, length, slope, dt);
+    else VPAR_emit_extattack(ent, &shotpos, &dirvec, dist, conrat, dt);
     return 0;
 }
 
