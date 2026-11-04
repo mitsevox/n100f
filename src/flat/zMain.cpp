@@ -66,13 +66,12 @@ void zGameExit();
 void zMainLoop();
 void zMainMemLvlChkCB();
 void zMainParseINIGlobals(xIniFile* ini);
+static void zMainReadProfFuncs(xIniFile* ini);
+static void zMainShowLegal();
 extern "C" void main();
 
 extern "C" void main()
 {
-    RwCamera* camera;
-    xFontBox* box;
-
     iSystemInit();
     xMemRegisterBaseNotifyFunc(zMainMemLvlChkCB);
     memset(&globals, 0, sizeof(globals));
@@ -95,18 +94,7 @@ extern "C" void main()
                 strcpy(globals.sceneStart, boot);
         }
         globals.profile = xIniGetInt(ini, "Profile", 0);
-        strncpy(globals.profFunc[0], xIniGetString(ini, "ProfFuncTriangle", ""), 128);
-        globals.profFunc[0][127] = 0;
-        strncpy(globals.profFunc[1], xIniGetString(ini, "ProfFuncSquare", ""), 128);
-        globals.profFunc[1][127] = 0;
-        strncpy(globals.profFunc[2], xIniGetString(ini, "ProfFuncLeft", ""), 128);
-        globals.profFunc[2][127] = 0;
-        strncpy(globals.profFunc[3], xIniGetString(ini, "ProfFuncRight", ""), 128);
-        globals.profFunc[3][127] = 0;
-        strncpy(globals.profFunc[4], xIniGetString(ini, "ProfFuncUp", ""), 128);
-        globals.profFunc[4][127] = 0;
-        strncpy(globals.profFunc[5], xIniGetString(ini, "ProfFuncDown", ""), 128);
-        globals.profFunc[5][127] = 0;
+        zMainReadProfFuncs(ini);
         zMainParseINIGlobals(ini);
         xIniDestroy(ini);
     }
@@ -129,6 +117,25 @@ extern "C" void main()
     zLobMaster_Startup();
     zEntVillain_Startup();
     fn_80043E78();
+
+    zMainShowLegal();
+    printf("----ENTERING MAIN LOOP\n");
+    zMainLoop();
+    zEntVillain_Shutdown();
+    zLobMaster_Shutdown();
+    zEntProjectile_Shutdown();
+    zAssetShutdown();
+    zDispatcher_Shutdown();
+    xSGShutdown();
+    xSerialShutdown();
+    xUtilShutdown();
+    iSystemExit();
+}
+
+static void zMainShowLegal()
+{
+    RwCamera* camera;
+    xFontBox* box;
 
     iColor_tag color = {255, 230, 0, 200};
     camera = iCameraCreate(640, 480);
@@ -154,17 +161,6 @@ extern "C" void main()
         iSystemPollResetAndDisc();
         iVSync();
     } while (count-- > 0);
-    printf("----ENTERING MAIN LOOP\n");
-    zMainLoop();
-    zEntVillain_Shutdown();
-    zLobMaster_Shutdown();
-    zEntProjectile_Shutdown();
-    zAssetShutdown();
-    zDispatcher_Shutdown();
-    xSGShutdown();
-    xSerialShutdown();
-    xUtilShutdown();
-    iSystemExit();
 }
 
 // Load the player tuning values and initial equipment from the INI file.
@@ -269,6 +265,22 @@ void zMainParseINIGlobals(xIniFile* ini)
     globals.player.s.Initial_Specials |= xIniGetInt(ini, "eSPECIAL_Shovel", 0) << 13;
     globals.player.s.Initial_Specials |= xIniGetInt(ini, "eSPECIAL_LightningBoltStun", 0) << 14;
     sShowMenuOnBoot = xIniGetInt(ini, "ShowMenuOnBoot", 1);
+}
+
+static void zMainReadProfFuncs(xIniFile* ini)
+{
+    strncpy(globals.profFunc[0], xIniGetString(ini, "ProfFuncTriangle", ""), 128);
+    globals.profFunc[0][127] = 0;
+    strncpy(globals.profFunc[1], xIniGetString(ini, "ProfFuncSquare", ""), 128);
+    globals.profFunc[1][127] = 0;
+    strncpy(globals.profFunc[2], xIniGetString(ini, "ProfFuncLeft", ""), 128);
+    globals.profFunc[2][127] = 0;
+    strncpy(globals.profFunc[3], xIniGetString(ini, "ProfFuncRight", ""), 128);
+    globals.profFunc[3][127] = 0;
+    strncpy(globals.profFunc[4], xIniGetString(ini, "ProfFuncUp", ""), 128);
+    globals.profFunc[4][127] = 0;
+    strncpy(globals.profFunc[5], xIniGetString(ini, "ProfFuncDown", ""), 128);
+    globals.profFunc[5][127] = 0;
 }
 
 // Check the memory base and scene memory level.
