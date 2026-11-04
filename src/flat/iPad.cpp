@@ -9,20 +9,17 @@
 #define PAD_ERR_NOT_READY -2
 #define PAD_ERR_TRANSFER -3
 
-// The GC-only xTRC.cpp pad and disc helpers (see their rows in evidence.tsv) and the four pad
-// records xTRC.cpp keeps (gTrcPad in the PS2 DWARF), under each target's address labels.
+// The GC-only xTRC.cpp pad and disc helpers (see their rows in evidence.tsv), under each
+// target's address labels.
 #if VERSION_GIHE78_REV0
 #define TRC_DISK_HALTED fn_800443F8
 #define TRC_PAD_REPORT fn_80044458
-#define TRC_PAD_INFO lbl_802289B8
 #elif VERSION_GIHE78_REV1
 #define TRC_DISK_HALTED fn_8004421C
 #define TRC_PAD_REPORT fn_8004427C
-#define TRC_PAD_INFO lbl_80239068
 #endif
 extern "C" U32 TRC_DISK_HALTED();
 extern "C" void TRC_PAD_REPORT(S32 pad_id, S32 state);
-extern "C" _tagTRCPadInfo TRC_PAD_INFO[4];
 
 PADStatus sPadData[4] = {};
 
@@ -37,7 +34,7 @@ _tagxPad* iPadEnable(_tagxPad* pad, S16 port)
 {
     pad->port = port;
     pad->slot = 0;
-    TRC_PAD_INFO[pad->port].state = TRC_PadInserted;
+    gTrcPad[pad->port].state = TRC_PadInserted;
     pad->flags |= 3;
     pad->flags |= 4;
     return pad;
@@ -156,7 +153,7 @@ S32 iPadUpdate(_tagxPad* pad, U32* on)
     pad->analog2.x = iPadConvStick(sPadData[pad->port].substickX);
     pad->analog2.y = -iPadConvStick(sPadData[pad->port].substickY);
 
-    if (TRC_PAD_INFO[pad->port].state != TRC_PadInserted)
+    if (gTrcPad[pad->port].state != TRC_PadInserted)
     {
         TRC_PAD_REPORT(pad->port, TRC_PadInserted);
     }

@@ -5,10 +5,8 @@
 #define fn_800138EC fn_800138D0
 #define fn_80013C64 fn_80013C48
 #define fn_80014310 fn_800142F4
-#define fn_80016600 fn_800166C0
 #define fn_80016698 fn_80016804
 #define fn_800389FC fn_80038A18
-#define fn_800AC0BC fn_800ABEC4
 #define fn_80040FCC fn_80040FE8
 #define fn_800411A8 fn_800411C4
 #define fn_80041310 fn_8004132C
@@ -29,13 +27,11 @@
 #define fn_80043E18 fn_80043C58
 #define fn_80043E20 fn_80043C60
 #define fn_80043E78 fn_80043CB8
-#define fn_8004436C fn_80044190
 #define fn_800443AC fn_800441D0
 #define fn_800443F8 fn_8004421C
 #define fn_80044458 fn_8004427C
 #define fn_80044478 fn_8004429C
 #define lbl_801B6610 lbl_801C4FD0
-#define lbl_802289B8 lbl_80239068
 #define lbl_8025EBE0 lbl_80270A78
 #define lbl_8025EBE4 lbl_80270A7C
 #define lbl_8025EBE8 lbl_80270A80
@@ -95,23 +91,25 @@ static const iColor_tag sTrcTextColor = { 255, 230, 0, 255 };
 void zGamePauseIfPossible();
 extern F32 gFontWiggleTime;
 
+void iSystemPollResetAndDisc();
+U32 zGameNickCamActive();
+
 extern "C" {
-void fn_80016600();
 void fn_80016698(S32 reset);
 // The localized device, slot and card names.
 char* fn_800389FC(S32 lang, S32 card, S32 which);
-U32 fn_800AC0BC();
 
 // The two message records, the start-up check's busy flag (zScene reads it), the font box of
 // the pad and disc message (sTrcFontBox in the SLUS-20349 DWARF) and the flag that makes that
-// message draw a frame of its own. The four pad records (gTrcPad in the SLUS-20349 DWARF) are
-// defined here too.
+// message draw a frame of its own.
 TRCCardMessage lbl_801B6610[2] = {};
-_tagTRCPadInfo lbl_802289B8[4];
 U32 lbl_8025EBE0;
 xFontBox* lbl_8025EBE4;
 U32 lbl_8025EBE8;
 }
+
+// The four pad records.
+_tagTRCPadInfo gTrcPad[4];
 
 extern "C" {
 
@@ -119,7 +117,6 @@ S32 fn_80044478(_tagTRCState state);
 void fn_80044458(S32 pad_id, S32 state);
 S32 fn_800443F8();
 void fn_800443AC();
-void fn_8004436C();
 void fn_80043E78();
 S32 fn_80043E20(TRCCardWatch* watch);
 S32 fn_80043E18(S32 card, st_ISGSESSION* session);
@@ -166,10 +163,10 @@ static S32 TRCAskCard(char* text, const char* first, const char* second, TRCCard
 // xTRCInit: the pad records number their pads, and the disc state starts unknown.
 void xTRCInit()
 {
-    memset(lbl_802289B8, 0, sizeof(lbl_802289B8));
+    memset(gTrcPad, 0, sizeof(gTrcPad));
     for (S32 i = 0; i < 4; i++)
     {
-        lbl_802289B8[i].id = i;
+        gTrcPad[i].id = i;
     }
     memset(gTrcDisk, 0, sizeof(gTrcDisk));
 }
@@ -206,7 +203,7 @@ extern "C" S32 fn_80044478(_tagTRCState state)
         {
             show = 0;
         }
-        else if (fn_800AC0BC())
+        else if (zGameNickCamActive())
         {
             show = 0;
         }
@@ -286,7 +283,7 @@ extern "C" void fn_80044458(S32 pad_id, S32 state)
 {
     if (pad_id == 0)
     {
-        lbl_802289B8[pad_id].state = state;
+        gTrcPad[pad_id].state = state;
     }
 }
 
@@ -327,14 +324,14 @@ extern "C" S32 fn_800443F8()
 extern "C" void fn_800443AC()
 {
     lbl_8025EBE8 = 1;
-    fn_80044478((_tagTRCState)lbl_802289B8[0].state) || fn_80044478(gTrcDisk[0]);
+    fn_80044478((_tagTRCState)gTrcPad[0].state) || fn_80044478(gTrcDisk[0]);
     lbl_8025EBE8 = 0;
 }
 
 // Draws the pad message, or else the disc message, into the current frame.
-extern "C" void fn_8004436C()
+void xTRCRenderMessage()
 {
-    if (fn_80044478((_tagTRCState)lbl_802289B8[0].state))
+    if (fn_80044478((_tagTRCState)gTrcPad[0].state))
     {
         return;
     }
@@ -1368,7 +1365,7 @@ static void TRCWaitFrames(S32 frames)
 {
     while (frames-- > 0)
     {
-        fn_80016600();
+        iSystemPollResetAndDisc();
         iVSync();
     }
 }
@@ -1545,7 +1542,7 @@ extern "C" S32 fn_80041D90(char* text, const char** options, TRCCardCheck check,
             choice = -1;
             break;
         }
-        fn_80016600();
+        iSystemPollResetAndDisc();
         xPadUpdate(0, 1.0f / 60.0f);
         U32 pressed = mask & globals.pad0->pressed;
         switch (count)

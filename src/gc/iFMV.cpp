@@ -27,12 +27,13 @@ extern "C" {
 extern GXRenderModeObj* _RwDlRenderMode;
 
 void fn_800167F0();
-void fn_80016600();
 S32 fn_800443F8();
 void fn_800443AC();
-S32 fn_8004436C();
 void fn_80021CB0(F32, F32, F32, F32);
 }
+
+void iSystemPollResetAndDisc();
+void xTRCRenderMessage();
 
 static U32 Bink_surface_type[5];
 
@@ -180,7 +181,7 @@ static void Show_frame()
         RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRISTRIP, verts, 4, indices, 4);
     }
 
-    fn_8004436C();
+    xTRCRenderMessage();
     RwCameraEndUpdate(cam);
     RwCameraShowRaster(cam, NULL, 0);
 }
@@ -307,7 +308,7 @@ static void PlayFMV(char* fname, U32 buttons, F32 time)
         {
             iFileOpen(fname, 0, &file);
             DVDSeekAsyncPrio(&file.ps.fileInfo, 0, NULL, 2);
-            fn_80016600();
+            iSystemPollResetAndDisc();
             DVDCancelAsync(&file.ps.fileInfo.cb, NULL);
         }
 
@@ -351,7 +352,7 @@ static void PlayFMV(char* fname, U32 buttons, F32 time)
             oof = 0;
             do
             {
-                fn_80016600();
+                iSystemPollResetAndDisc();
                 err = fn_800443F8();
                 if (err)
                 {
