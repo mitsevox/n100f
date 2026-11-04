@@ -959,8 +959,7 @@ struct RxObjSpace3DVertex
 typedef RxObjSpace3DVertex RxObjSpace3DLitVertex;
 typedef RxObjSpace3DLitVertex RwIm3DVertex;
 
-// A macro with a block-local copy of the position: the game's callers evaluate all three
-// coordinates, in order, before the stores (xShadow's vertex writes depend on it).
+// Sets an immediate-mode vertex's position.
 #define RwIm3DVertexSetPos(vert, imgx, imgy, imgz)                                                \
     do                                                                                             \
     {                                                                                              \
