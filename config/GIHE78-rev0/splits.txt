@@ -1991,6 +1991,7 @@ rwsdk/src/pipe/p2/p2dep.c:
 
 rwsdk/src/pipe/p2/p2heap.c:
 	.text       start:0x8018A644 end:0x8018B69C
+	.data       start:0x801DEF98 end:0x801DEFC0
 
 rwsdk/src/pipe/p2/p2renderstate.c:
 	.text       start:0x8018B69C end:0x8018BB5C
