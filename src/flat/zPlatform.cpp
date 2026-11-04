@@ -20,7 +20,7 @@ S16 xFFXAddEffect(_xEnt* ent, xFFX* effect);
 static _zParEmitter* sEmitTremble;
 static _zParEmitter* sEmitBreakaway;
 static void zPlatformTranslate(_xEnt* ent, xVec3* dpos);
-static void zPlatform_BreakawayEmit(_zPlatform* plat);
+static void zPlatform_BreakawayFallFX(_zPlatform* plat, F32 dt);
 void zPlatform_Move(_xEnt* entplat, _xScene* sc, F32 dt, _xEntFrame* frame);
 void zPlatform_Init(_zPlatform* plat, p2EntAsset* asset);
 
@@ -177,7 +177,7 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
             plat->tmr -= dt;
             if (plat->tmr <= 0.0f)
             {
-                zPlatform_BreakawayEmit(plat);
+                zPlatform_BreakawayFallFX(plat, dt);
                 plat->state = 2;
                 plat->pflags |= 6;
                 plat->tmr = plat->passet->ba.reset_delay;
@@ -378,16 +378,6 @@ void zPlatform_Shake(_zPlatform* plat, F32 unused, F32 ampl, F32 freq)
     }
 }
 
-static void zPlatform_BreakawayEmit(_zPlatform* plat)
-{
-    _zParEmitterCustomSettings info;
-    info.custom_flags = 0x20;
-    info.pos = *xBoundCenter(&plat->bound);
-    info.pos.y += 0.5f;
-    for (S32 i = 0; i < 25; i++)
-        zParEmitterEmitCustom(sEmitBreakaway, 1.0f / 30.0f, &info);
-}
-
 static void zPlatform_Tremble(_zPlatform* plat, F32 ampl, F32 freq, F32 dur)
 {
     xFFXShakeState* ss = xFFXShakeAlloc();
@@ -417,6 +407,17 @@ static void zPlatform_Tremble(_zPlatform* plat, F32 ampl, F32 freq, F32 dur)
     {
         zParEmitterEmitCustom(sEmitTremble, 1.0f / 30.0f, &info);
     }
+}
+
+// Emit the breakaway platform's falling particle burst.
+static void zPlatform_BreakawayFallFX(_zPlatform* plat, F32 dt)
+{
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xBoundCenter(&plat->bound);
+    info.pos.y += 0.5f;
+    for (S32 i = 0; i < 25; i++)
+        zParEmitterEmitCustom(sEmitBreakaway, 1.0f / 30.0f, &info);
 }
 
 // Begin the breakaway platform's tremble when it is mounted.
@@ -484,7 +485,7 @@ S32 zPlatformEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* t
     case eEventStop:
         xEntMotionStop(&plat->motion);
         break;
-    case 34:
+    case eEventBreak:
         break;
     case 0x12A:
         if (plat->subType == 4)
@@ -541,10 +542,7 @@ S32 zPlatformEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* t
         break;
     case 0xCB:
         if (plat->subType == 3)
-        {
-            F32 speed = toParam[0];
-            plat->motion.mp.speed = MAX(0.0f, speed);
-        }
+            xEntMPSetSpeed(&plat->motion, toParam[0]);
         break;
     case 0xCC:
         if (plat->subType == 3)

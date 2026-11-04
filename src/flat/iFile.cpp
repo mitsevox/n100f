@@ -288,7 +288,7 @@ S32 iFileReadAsync(tag_xFile* file, void* buf, U32 aSize, void (*callback)(tag_x
             file_queue[i].offset = 0;
             file_queue[i].stat = IFILE_RDSTAT_QUEUED;
             file_queue[i].callback = callback;
-            file_queue[i].asynckey = id + i;
+            file_queue[i].asynckey = (U32)id + i;
 
             s32 readSize = 32;
             if (aSize < 32)
@@ -325,10 +325,12 @@ IFILE_READSECTOR_STATUS iFileReadAsyncStatus(S32 key, S32* amtToFar)
 }
 
 // The disc is read-only, so nothing is ever written.
+#if VERSION_GIHE78_REV0
 U32 iFileWrite(tag_xFile* file, void* buf, U32 size)
 {
     return 0;
 }
+#endif
 
 // The file is closed twice; only the second result counts.
 U32 iFileClose(tag_xFile* file)

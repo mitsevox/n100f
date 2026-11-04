@@ -202,7 +202,7 @@ void zParCmdFindClipVolumes();
 void zActionLineInit();
 void xClimateInit(_tagClimate* climate);
 void iSystemPollResetAndDisc();
-extern "C" U32 lbl_8025EEC8;
+extern U32 gCreditsBlackout;
 void zPlatform_Reset(_zPlatform* plat, _xScene* sc);
 void zPlatform_Setup(_zPlatform* plat, _xScene* sc);
 void zMovePointSetup(_zMovePoint* mvpt, zScene* scn);
@@ -1579,7 +1579,7 @@ void zSceneSetup()
     zScene* s = globals.sceneCur;
 
     globals.cmgr = NULL;
-    lbl_8025EEC8 = 0;
+    gCreditsBlackout = 0;
 
     xSceneSetup(s);
 

@@ -56,9 +56,8 @@ static zFMVFile zFMVFileTable[eFMVFileCount] =
     { eFMVFile_Cin13, "cin_mmsc", 0 },
     { eFMVFile_Cin14, "cin_shbr", 0 },
 };
-extern "C" {
-U32 lbl_8025EEC8;
-}
+// Set once the end credits have played in s005; xScrFxUpdate then keeps the screen black.
+U32 gCreditsBlackout;
 void xSndSuspend();
 void xSndResume();
 U32 iFMVPlay(char* filename, U32 buttons, F32 time);
@@ -75,7 +74,7 @@ U32 zFMVPlay(char* filename, U32 buttons, F32 time)
     if (xStricmp(filename, "Credits2") == 0 &&
         globals.sceneCur->sceneID == zSceneIDFromName("s005"))
     {
-        lbl_8025EEC8 = 1;
+        gCreditsBlackout = 1;
     }
     return ret;
 }
