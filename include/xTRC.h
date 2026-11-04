@@ -35,6 +35,6 @@ struct _tagTRCPadInfo
     S32 state;
 };
 
-extern "C" _tagTRCPadInfo lbl_802289B8[4];
+extern _tagTRCPadInfo gTrcPad[4];
 
 #endif

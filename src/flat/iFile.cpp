@@ -4,12 +4,12 @@
 #include <dolphin/os.h>
 #include <string.h>
 
+void iSystemPollResetAndDisc();
+
 extern "C" {
 #if VERSION_GIHE78_REV0
-void fn_80016600();
 void fn_800443AC();
 #elif VERSION_GIHE78_REV1
-void fn_800166C0();
 void fn_800441D0();
 #endif
 }
@@ -192,11 +192,10 @@ U32 iFileRead(tag_xFile* file, void* buf, U32 size)
 
     while (iFileSyncAsyncReadActive)
     {
+        iSystemPollResetAndDisc();
 #if VERSION_GIHE78_REV0
-        fn_80016600();
         fn_800443AC();
 #elif VERSION_GIHE78_REV1
-        fn_800166C0();
         fn_800441D0();
 #endif
     }
