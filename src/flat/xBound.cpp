@@ -45,7 +45,7 @@ xVec3* xBoundCenter(const _xBound* b)
     return NULL;
 }
 
-// Recomputes the centre of a box bound, in world space for an oriented one, then its cull data.
+// Recomputes the center of a box bound, in world space for an oriented one, then its cull data.
 void xBoundUpdate(_xBound* b)
 {
     if (b->type == 2)
