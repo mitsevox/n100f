@@ -147,6 +147,7 @@ void xScrFxUpdate(RwCamera* cam, F32 seconds)
                     {
                         F32 sc = 300.0f * t;
                         dog_y = -5.5f;
+                        dog_z = 25.0f;
                         globals.player.ent.model->Scale.x = sc;
                         globals.player.ent.model->Scale.y = sc;
                         globals.player.ent.model->Scale.z = 1.0f;
@@ -157,6 +158,7 @@ void xScrFxUpdate(RwCamera* cam, F32 seconds)
                     else
                     {
                         dog_y = -20.5f;
+                        dog_z = 25.0f;
                         F32 sc = (1.0f - t) * 300.0f;
                         globals.player.ent.model->Scale.x = sc;
                         globals.player.ent.model->Scale.y = sc;
@@ -165,7 +167,6 @@ void xScrFxUpdate(RwCamera* cam, F32 seconds)
                         globals.player.ent.model->Next->Scale.y = sc;
                         globals.player.ent.model->Next->Scale.z = 1.0f;
                     }
-                    dog_z = 25.0f;
 
                     xMat4x3Copy(&old, (xMat4x3*)globals.player.ent.model->Mat);
                     xMat4x3Identity((xMat4x3*)globals.player.ent.model->Mat);
