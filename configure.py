@@ -616,7 +616,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zParSys.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zPitchChange.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zPendulum.cpp"),
-            Object(NonMatching, "flat/zPlatform.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zPlatform.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zPortal.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zRenderState.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zRumble.cpp"),
