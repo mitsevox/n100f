@@ -248,6 +248,13 @@ static inline void xShadowRenderWorldNear(xVec3* center, F32 radius)
     xShadowRenderWorld(center, radius);
 }
 
+static inline void xVec3AddScaled(xVec3* o, const xVec3* v, F32 s)
+{
+    o->x += v->x * s;
+    o->y += v->y * s;
+    o->z += v->z * s;
+}
+
 void xShadowRenderWorld(xVec3* center, F32 radius)
 {
     xSphere _s;
@@ -309,9 +316,7 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
                     p.x = R[i].origin.x;
                     p.y = R[i].origin.y;
                     p.z = R[i].origin.z;
-                    p.x += R[i].dir.x * ecrec.dist;
-                    p.y += R[i].dir.y * ecrec.dist;
-                    p.z += R[i].dir.z * ecrec.dist;
+                    xVec3AddScaled(&p, &R[i].dir, ecrec.dist);
                     if (ecrec.dist < env_dist)
                     {
                         env_dist = ecrec.dist;
