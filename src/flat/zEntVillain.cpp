@@ -15094,6 +15094,15 @@ static void VPRJ_startup()
     zEntProjectile_addProps(ZPRJ_CAT_MMFLASK, &prop_flask);
 }
 
+// A lost helper: only its three 12-byte templates (two quarter turns about z, then zero) are left
+// in the data, and nothing calls it.
+static void zEntVillain_UnknownTemplate36()
+{
+    _xVec3 lost_a = { 0.0f, 0.0f, PI / 2 };
+    _xVec3 lost_b = { 0.0f, 0.0f, PI / 2 };
+    _xVec3 lost_c = { 0 };
+}
+
 // Keeps the Black Knight's axe's collision sphere (radius 0.75) on its position.
 static void VPRJ_BBK_bupdate(_xEnt* prjent, _xVec3* pos)
 {
