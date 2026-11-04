@@ -437,7 +437,10 @@ static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bo
 static void VWEP_rbs_chkCollide(st_REDBEARD_SWORD* rbs, F32 dt);
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* sword, st_zEntVillain* vil);
 static void VWEP_rbs_bupdate(_xEnt* ent_rbs, _xVec3* pos);
-static inline void VPRJ_BMM_splash(zEntProjectile* prj, F32 dt, _zParEmitter* emitter);
+static inline en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil);
+static inline void VPRJ_BMM_redflask(zEntProjectile* prj, F32 dt);
+static inline void VPRJ_BMM_greenflask(zEntProjectile* prj, F32 dt);
+static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt);
 static inline void VPRJ_BGG_shockfx(zEntProjectile* prj, F32 dt, F32 radius);
 static inline void VPRJ_BGG_ballfx(zEntProjectile* prj, F32 dt, F32 yoff);
 extern "C" U8 gVillainPoofColorBirth[50][4];
@@ -14558,19 +14561,9 @@ static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil)
     case eEntVillainBossGreenGhost: cat = ZPRJ_CAT_GGSHOCK; break;
     case eEntVillainBossRedbeard: cat = ZPRJ_CAT_RBSWORD; break;
     case eEntVillainBossMastermind:
-    {
-        S32 choices[3] = { MAST_FLSK_SMOG, MAST_FLSK_ACID, MAST_FLSK_FIRE };
         cat = ZPRJ_CAT_MMFLASK;
-        switch (vil->hitpts)
-        {
-        case 4: flask_type = MAST_FLSK_SMOG; break;
-        case 3: flask_type = MAST_FLSK_ACID; break;
-        case 2: flask_type = MAST_FLSK_FIRE; break;
-        case 1: flask_type = (en_ZVMM_FLASK_TYPE)VSUP_choose(choices, NULL, 3); break;
-        default: flask_type = MAST_FLSK_SMOG; break;
-        }
+        flask_type = VPRJ_BMM_select_flasktype(vil);
         break;
-    }
     default:
         xSceneID2Name(globals.sceneCur, vil->id);
         cat = ZPRJ_CAT_ARROW;
@@ -14584,6 +14577,11 @@ static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil)
     prj->owner = vil;
     prj->ownerContext = NULL;
     prj->ownerNotify = VWEP_prjOwnerNotify;
+    // A check on the reserved projectile's owner, switched off in this build.
+    if (0)
+    {
+        if (prj->owner != vil) xSceneID2Name(globals.sceneCur, vil->id);
+    }
     return prj;
 }
 
@@ -15911,9 +15909,9 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
         prj->SendEvent(ZPRJ_EVNT_VIL_AFTERMATH, dt);
         switch (flask->typ_flask)
         {
-        case MAST_FLSK_FIRE: VPRJ_BMM_splash(prj, dt, sMMRedFlaskEmitter); break;
-        case MAST_FLSK_ACID: VPRJ_BMM_splash(prj, dt, sMMGreenFlaskEmitter); break;
-        case MAST_FLSK_SMOG: VPRJ_BMM_splash(prj, dt, sMMBlackFlaskEmitter); break;
+        case MAST_FLSK_FIRE: VPRJ_BMM_redflask(prj, dt); break;
+        case MAST_FLSK_ACID: VPRJ_BMM_greenflask(prj, dt); break;
+        case MAST_FLSK_SMOG: VPRJ_BMM_blackflask(prj, dt); break;
         }
         if (prj->tmr_curstate > flask->tym_aftermath) prj->StateSet(ZPRJ_STATE_DEAD);
         break;
@@ -15962,6 +15960,97 @@ static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
     default: break;
     }
     return 1;
+}
+
+// The Mastermind's flask type for his next throw: smog at 4 hit points, acid at 3, fire at 2 and a
+// random one of the three at 1; smog otherwise.
+static inline en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil)
+{
+    en_ZVMM_FLASK_TYPE ftype;
+    S32 typlist[3] = { MAST_FLSK_SMOG, MAST_FLSK_ACID, MAST_FLSK_FIRE };
+
+    switch (vil->hitpts)
+    {
+    case 4: ftype = MAST_FLSK_SMOG; break;
+    case 3: ftype = MAST_FLSK_ACID; break;
+    case 2: ftype = MAST_FLSK_FIRE; break;
+    case 1: ftype = (en_ZVMM_FLASK_TYPE)VSUP_choose(typlist, NULL, 3); break;
+    default: ftype = MAST_FLSK_SMOG; break;
+    }
+    return ftype;
+}
+
+// A broken fire flask's splash grows over its aftermath time and hurts the player inside it;
+// it emits the red flask particles.
+static inline void VPRJ_BMM_redflask(zEntProjectile* prj, F32 dt)
+{
+    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
+    F32 rad_oldbnd;
+    _xCollis colrec = { 0 };
+    if (flask->tym_aftermath < 0.1f) return;
+
+    rad_oldbnd = prj->bound.sph.r;
+    prj->bound.sph.r = prj->tmr_curstate / flask->tym_aftermath * flask->rad_aftermath;
+    xBoundHitsBound(&prj->bound, &globals.player.ent.bound, &colrec);
+    if (colrec.flags & 1)
+    {
+        zEntPlayer_Damage(prj, 1);
+        prj->SendEvent(ZPRJ_EVNT_HITPLYR);
+    }
+    prj->bound.sph.r = rad_oldbnd;
+
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xEntGetPos(prj);
+    zParEmitterEmitCustom(sMMRedFlaskEmitter, dt, &info);
+}
+
+// A broken acid flask's splash, as VPRJ_BMM_redflask, with the green flask particles.
+static inline void VPRJ_BMM_greenflask(zEntProjectile* prj, F32 dt)
+{
+    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
+    F32 rad_oldbnd;
+    _xCollis colrec = { 0 };
+    if (flask->tym_aftermath < 0.1f) return;
+
+    rad_oldbnd = prj->bound.sph.r;
+    prj->bound.sph.r = prj->tmr_curstate / flask->tym_aftermath * flask->rad_aftermath;
+    xBoundHitsBound(&prj->bound, &globals.player.ent.bound, &colrec);
+    if (colrec.flags & 1)
+    {
+        zEntPlayer_Damage(prj, 1);
+        prj->SendEvent(ZPRJ_EVNT_HITPLYR);
+    }
+    prj->bound.sph.r = rad_oldbnd;
+
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xEntGetPos(prj);
+    zParEmitterEmitCustom(sMMGreenFlaskEmitter, dt, &info);
+}
+
+// A broken smog flask's splash, as VPRJ_BMM_redflask, with the black flask particles.
+static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt)
+{
+    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
+    F32 rad_oldbnd;
+    _xCollis colrec = { 0 };
+    if (flask->tym_aftermath < 0.1f) return;
+
+    rad_oldbnd = prj->bound.sph.r;
+    prj->bound.sph.r = prj->tmr_curstate / flask->tym_aftermath * flask->rad_aftermath;
+    xBoundHitsBound(&prj->bound, &globals.player.ent.bound, &colrec);
+    if (colrec.flags & 1)
+    {
+        zEntPlayer_Damage(prj, 1);
+        prj->SendEvent(ZPRJ_EVNT_HITPLYR);
+    }
+    prj->bound.sph.r = rad_oldbnd;
+
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xEntGetPos(prj);
+    zParEmitterEmitCustom(sMMBlackFlaskEmitter, dt, &info);
 }
 
 // Prepare a Redbeard sword entity and its collision targets.
@@ -19310,31 +19399,6 @@ static inline void VEFX_gumBlob_place(xModelInstance* blob, xVec3* pos, F32 scal
     mat.flags = 0;
     mat.pos = *pos;
     memcpy(blob->Mat, &mat, sizeof(mat));
-}
-
-// Grow a broken flask's splash over its aftermath time, hurt the player inside it and emit the
-// flask's particles.
-static inline void VPRJ_BMM_splash(zEntProjectile* prj, F32 dt, _zParEmitter* emitter)
-{
-    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
-    _xCollis colrec = { 0 };
-    if (flask->tym_aftermath < 0.1f) return;
-
-    F32 pct = prj->tmr_curstate / flask->tym_aftermath;
-    F32 rad_orig = prj->bound.sph.r;
-    prj->bound.sph.r = pct * flask->rad_aftermath;
-    xBoundHitsBound(&prj->bound, &globals.player.ent.bound, &colrec);
-    if (colrec.flags & 1)
-    {
-        zEntPlayer_Damage(prj, 1);
-        prj->SendEvent(ZPRJ_EVNT_HITPLYR);
-    }
-    prj->bound.sph.r = rad_orig;
-
-    _zParEmitterCustomSettings info;
-    info.custom_flags = 0x20;
-    info.pos = *xEntGetPos(prj);
-    zParEmitterEmitCustom(emitter, dt, &info);
 }
 
 // Emit the Green Ghost ball's glow at the projectile, raised by yoff.
