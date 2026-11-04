@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <string.h>
 
+void iSystemPollResetAndDisc();
+
 extern "C" {
 S32 RpWorldPluginAttach();
 S32 RpCollisionPluginAttach();
@@ -33,10 +35,8 @@ S32 RwEngineStop();
 S32 RwEngineClose();
 S32 RwEngineTerm();
 
-// GC-only helpers with no name in any reference build: the disc check and the reset path the
-// TRC code calls, the reset button poll, the retrace callback, the arena and stack fill, and the
-// DOL entry point.
-void fn_80016600();
+// GC-only helpers with no name in any reference build: the reset path the TRC code calls, the
+// reset button poll, the retrace callback, the arena and stack fill, and the DOL entry point.
 void fn_80016698(S32 reset);
 void fn_80016730();
 void fn_80016768();
@@ -225,7 +225,7 @@ extern "C" void fn_80016698(S32 reset)
 }
 
 // GC only: polls the reset button, then reports the drive status to the TRC disc state.
-extern "C" void fn_80016600()
+void iSystemPollResetAndDisc()
 {
     fn_80016768();
     fn_80016730();

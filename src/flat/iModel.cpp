@@ -73,6 +73,7 @@ static inline void SkinXform(xVec3* dest, const xVec3* vert, RwMatrix* mat, cons
     U32 catMatFlags[2] = { 0, 0 };
     RwMatrix* catmat = (RwMatrix*)giAnimScratch;
     RwMatrix* rootmat = mat;
+    const xVec3* v = vert;
     mat++;
 
     while (count != 0)
@@ -101,12 +102,12 @@ static inline void SkinXform(xVec3* dest, const xVec3* vert, RwMatrix* mat, cons
         {
             pMatrix = catmat + (wtidx & 0xFF);
 
-            accumV.x += *fwt * (pMatrix->right.x * vert->x + pMatrix->up.x * vert->y +
-                                pMatrix->at.x * vert->z + pMatrix->pos.x);
-            accumV.y += *fwt * (pMatrix->right.y * vert->x + pMatrix->up.y * vert->y +
-                                pMatrix->at.y * vert->z + pMatrix->pos.y);
-            accumV.z += *fwt * (pMatrix->right.z * vert->x + pMatrix->up.z * vert->y +
-                                pMatrix->at.z * vert->z + pMatrix->pos.z);
+            accumV.x += *fwt * (pMatrix->right.x * v->x + pMatrix->up.x * v->y +
+                                pMatrix->at.x * v->z + pMatrix->pos.x);
+            accumV.y += *fwt * (pMatrix->right.y * v->x + pMatrix->up.y * v->y +
+                                pMatrix->at.y * v->z + pMatrix->pos.y);
+            accumV.z += *fwt * (pMatrix->right.z * v->x + pMatrix->up.z * v->y +
+                                pMatrix->at.z * v->z + pMatrix->pos.z);
 
             wtidx >>= 8;
             fwt++;
@@ -120,7 +121,7 @@ static inline void SkinXform(xVec3* dest, const xVec3* vert, RwMatrix* mat, cons
         dest->z = rootmat->right.z * accumV.x + rootmat->up.z * accumV.y +
                   rootmat->at.z * accumV.z + rootmat->pos.z;
 
-        vert++;
+        v++;
         idx++;
         wt += 4;
         count--;

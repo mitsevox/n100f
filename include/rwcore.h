@@ -959,12 +959,18 @@ struct RxObjSpace3DVertex
 typedef RxObjSpace3DVertex RxObjSpace3DLitVertex;
 typedef RxObjSpace3DLitVertex RwIm3DVertex;
 
-inline void RwIm3DVertexSetPos(RwIm3DVertex* vert, F32 x, F32 y, F32 z)
-{
-    vert->x = x;
-    vert->y = y;
-    vert->z = z;
-}
+// Sets an immediate-mode vertex's position.
+#define RwIm3DVertexSetPos(vert, imgx, imgy, imgz)                                                \
+    do                                                                                             \
+    {                                                                                              \
+        RwV3d _pos;                                                                                \
+        _pos.x = (imgx);                                                                           \
+        _pos.y = (imgy);                                                                           \
+        _pos.z = (imgz);                                                                           \
+        (vert)->x = _pos.x;                                                                        \
+        (vert)->y = _pos.y;                                                                        \
+        (vert)->z = _pos.z;                                                                        \
+    } while (0)
 
 inline void RwIm3DVertexSetU(RwIm3DVertex* vert, F32 u)
 {

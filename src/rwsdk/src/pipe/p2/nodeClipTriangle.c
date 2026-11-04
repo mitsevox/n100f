@@ -63,10 +63,10 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
             RwImVertexIndex idx0;
             RwImVertexIndex idx1;
             RwImVertexIndex idx2;
-            RwImVertexIndex firstNewVert;
+            U32 numNewTris;
             U8 clipFlagsOr;
             U8 clipFlagsAnd;
-            U32 numNewTris;
+            RwImVertexIndex firstNewVert;
 
             numNewTris = 0;
 
@@ -523,10 +523,10 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
             RwImVertexIndex idx0;
             RwImVertexIndex idx1;
             RwImVertexIndex idx2;
-            RwImVertexIndex firstNewVert;
+            U32 numNewTris;
             U8 clipFlagsOr;
             U8 clipFlagsAnd;
-            U32 numNewTris;
+            RwImVertexIndex firstNewVert;
 
             numNewTris = 0;
 

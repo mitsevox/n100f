@@ -221,11 +221,39 @@ void xShadowSetLight(xVec3* target_pos, xVec3* in_vec, F32 strength)
 
 // Cast three short rays along the light under the entity. When they reach the world geometry
 // before any entity, project the shadow onto the world triangles in a sphere round the hit.
+static inline void xShadowRenderWorldNear(xVec3* center, F32 radius)
+{
+    U32 sceneID = globals.sceneCur->sceneID;
+    xVec3* pos = (xVec3*)&globals.player.ent.model->Mat->pos;
+
+    if (sceneID == zSceneIDFromName("I001"))
+    {
+        xVec3 spot = { -7.0f, 10.0f, -6.0f };
+        F32 dx = pos->x - spot.x;
+        F32 dy = pos->y - spot.y;
+        F32 dz = pos->z - spot.z;
+
+        SHADOW_BOTH = (dx * dx + dy * dy + dz * dz < 16.0f) ? 0.1f : 2.0f;
+    }
+    else if (sceneID == zSceneIDFromName("I005"))
+    {
+        xVec3 spot = { -5.0f, 11.0f, -179.0f };
+        F32 dx = pos->x - spot.x;
+        F32 dy = pos->y - spot.y;
+        F32 dz = pos->z - spot.z;
+
+        SHADOW_BOTH = (dx * dx + dy * dy + dz * dz < 1.0f) ? 0.05f : 2.0f;
+    }
+
+    xShadowRenderWorld(center, radius);
+}
+
 void xShadowRenderWorld(xVec3* center, F32 radius)
 {
+    xSphere _s;
     RpIntersection shadowZone;
     xSphere zone;
-    RwMatrix* camMatrix;
+    RwMatrix* camMatrix = &((RwFrame*)ShadowCamera->object.object.parent)->modelling;
     xRay3 R[3];
     _xCollis crec[3];
     F32 sf[3][2] = { { 0.0f, 0.0f }, { 0.0f, 0.5f }, { 0.0f, -0.5f } };
@@ -237,13 +265,12 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     xVec3 hit;
     _xCollis ecrec;
 
-    camMatrix = &((RwFrame*)ShadowCamera->object.object.parent)->modelling;
     zone.center.x = 0.0f;
     zone.center.y = 0.0f;
-    zone.center.z = 0.0f;
     sShadowFlags = 0;
     ent_dist = 100.0f;
     env_dist = 100.0f;
+    zone.center.z = 0.0f;
     hit_env = 0;
     hit_ent = 0;
     for (i = 0; i < 3; i++)
@@ -261,10 +288,8 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
         R[i].flags = 0xC00;
         xRayHitsScene(globals.sceneCur, &R[i], &crec[i]);
 
-        hit = R[i].origin;
-        hit.x = R[i].dir.x * crec[i].dist + hit.x;
-        hit.y = R[i].dir.y * crec[i].dist + hit.y;
-        hit.z = R[i].dir.z * crec[i].dist + hit.z;
+        *(RwV3d*)&hit = *(RwV3d*)&R[i].origin;
+        xVec3AddScaled(&hit, &R[i].dir, crec[i].dist);
 
         if (crec[i].flags & 1)
         {
@@ -279,13 +304,16 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
                 iRayHitsEnv(&R[i], globals.sceneCur->env, &ecrec);
                 if (ecrec.flags & 1)
                 {
+                    xVec3 p;
                     hit_env++;
+                    p = R[i].origin;
+                    xVec3AddScaled(&p, &R[i].dir, ecrec.dist);
                     if (ecrec.dist < env_dist)
                     {
                         env_dist = ecrec.dist;
-                        zone.center.x = R[i].dir.x * ecrec.dist + R[i].origin.x;
-                        zone.center.y = R[i].dir.y * ecrec.dist + R[i].origin.y;
-                        zone.center.z = R[i].dir.z * ecrec.dist + R[i].origin.z;
+                        zone.center.x = p.x;
+                        zone.center.y = p.y;
+                        zone.center.z = p.z;
                     }
                 }
             }
@@ -319,16 +347,24 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     if (sShadowFlags & 1)
     {
         zone.r = radius;
-        sSphere = zone;
-        shadowZone.type = 3;
-        shadowZone.t.sphere = *(RwSphere*)&zone;
-        ShadowRender(ShadowCamera, ShadowRenderRaster, globals.sceneCur->env->geom->world,
-                     &shadowZone, ShadowStrength, ShadowFade ? ShadowZoneRadius : 0.0f);
+        _s.center = zone.center;
+        _s.r = zone.r;
+        sSphere.center.x = zone.center.x;
+        sSphere.center.y = zone.center.y;
+        sSphere.center.z = zone.center.z;
+        sSphere.r = zone.r;
     }
     else
     {
         sSphere.r = 0.0f;
+        return;
     }
+
+    shadowZone.type = 3;
+    shadowZone.t.sphere.center = *(RwV3d*)&_s.center;
+    shadowZone.t.sphere.radius = _s.r;
+    ShadowRender(ShadowCamera, ShadowRenderRaster, globals.sceneCur->env->geom->world,
+                 &shadowZone, ShadowStrength, ShadowFade ? ShadowZoneRadius : 0.0f);
 }
 
 static inline U32 xShadowEntIsOutsideFrustum(_xEnt* ent)
@@ -337,10 +373,13 @@ static inline U32 xShadowEntIsOutsideFrustum(_xEnt* ent)
     F32 yScale2;
     F32 zScale2;
     F32 atomicScale;
+    RwV3d* up;
+    RwV3d* at;
+    RpAtomic* atomic;
     RwMatrix* mat;
     RwCamera* cam;
     RwSphere worldsph;
-    RpAtomic* atomic;
+    U32 test;
 
     if (!ent || !ent->model || !(atomic = ent->model->Data))
     {
@@ -350,15 +389,18 @@ static inline U32 xShadowEntIsOutsideFrustum(_xEnt* ent)
     cam = ShadowCamera;
     mat = ent->model->Mat;
     RwV3dTransformPoints(&worldsph.center, &atomic->boundingSphere.center, 1, mat);
-    yScale2 = mat->up.x * mat->up.x + mat->up.y * mat->up.y + mat->up.z * mat->up.z;
-    zScale2 = mat->at.x * mat->at.x + mat->at.y * mat->at.y + mat->at.z * mat->at.z;
     xScale2 = mat->right.x * mat->right.x + mat->right.y * mat->right.y + mat->right.z * mat->right.z;
+    up = &mat->up;
+    yScale2 = up->x * up->x + up->y * up->y + up->z * up->z;
+    at = &mat->at;
+    zScale2 = at->x * at->x + at->y * at->y + at->z * at->z;
     atomicScale = (xScale2 >= (yScale2 >= zScale2 ? yScale2 : zScale2))
                       ? xScale2
                       : (yScale2 >= zScale2 ? yScale2 : zScale2);
     atomicScale = sqrtf(atomicScale);
     worldsph.radius = atomic->boundingSphere.radius * atomicScale;
-    return RwCameraFrustumTestSphere(cam, &worldsph) == rwSPHEREOUTSIDE;
+    test = RwCameraFrustumTestSphere(cam, &worldsph);
+    return test == rwSPHEREOUTSIDE;
 }
 
 // Decide whether ent takes the shadow this frame: shadows are on, the entity is visible and in
@@ -422,6 +464,7 @@ void xShadowReceiveShadow(_xEnt* ent)
     RwV3d scl;
     RwV3d tr;
     U32 i;
+    U32 numverts;
     xVec3* xvert;
     RpTriangle* tri;
     RpGeometry* geom;
@@ -439,137 +482,73 @@ void xShadowReceiveShadow(_xEnt* ent)
     F32 len;
     RwV3d at;
     S32 fogstate;
+    F32 fadeDist;
 
-    if (!xShadowEntIsOutsideFrustum(ent) && !(ent->flags & 0x4) &&
-        !(ent->material_alpha < 255.0f))
+    if (xShadowEntIsOutsideFrustum(ent) || (ent->flags & 0x4) || ent->material_alpha < 255.0f ||
+        (ent->moreFlags & 0x1))
     {
-        if (ent->moreFlags & 0x1)
+        return;
+    }
+
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, ShadowCamera->frameBuffer);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+    RwRenderStateGet(rwRENDERSTATEFOGENABLE, &fogstate);
+    RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDZERO);
+
+    shadowFactor = ShadowStrength;
+    if (shadowFactor < 0.0f)
+    {
+        shadowFactor = -shadowFactor;
+        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDSRCCOLOR);
+    }
+    else
+    {
+        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCCOLOR);
+    }
+
+    radius = shadowCamera->viewWindow.x;
+    shadowMatrix = &((RwFrame*)shadowCamera->object.object.parent)->modelling;
+    at = shadowMatrix->at;
+    RwMatrixInvert(&invMatrix, shadowMatrix);
+    scl.x = scl.y = -0.5f / radius;
+    fadeDist = 0.0f;
+    scl.z = 1.0f / (fadeDist + radius);
+    RwMatrixScale(&invMatrix, &scl, rwCOMBINEPOSTCONCAT);
+    tr.x = tr.y = 0.5f;
+    tr.z = 0.0f;
+    RwMatrixTranslate(&invMatrix, &tr, rwCOMBINEPOSTCONCAT);
+
+    val = (U8)(255.0f * shadowFactor);
+
+    max_verts = 0;
+    for (model = ent->model; model; model = model->Next)
+    {
+        numverts = model->Data->geometry->numVertices;
+        if (numverts > max_verts)
         {
-            return;
+            max_verts = numverts;
         }
+    }
 
-        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, ShadowCamera->frameBuffer);
-        RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
-        RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
-        RwRenderStateGet(rwRENDERSTATEFOGENABLE, &fogstate);
-        RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);
-        RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDZERO);
+    xvert = (xVec3*)xMemPushTemp(max_verts * sizeof(xVec3));
+    if (!xvert)
+    {
+        return;
+    }
 
-        shadowFactor = ShadowStrength;
-        if (shadowFactor < 0.0f)
+    Im3DBuffer = gRenderBuffer.m_vertex;
+    for (model = ent->model; model; model = model->Next)
+    {
+        geom = model->Data->geometry;
+        iModelVertEval(model->Data, 0, geom->numVertices, model->Mat, NULL, xvert);
+        xDrawSetColor(0, 0, 255, 255);
+
+        tri = geom->triangles;
+        for (i = 0; i < (U32)geom->numTriangles; i++, tri++)
         {
-            shadowFactor = -shadowFactor;
-            RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDSRCCOLOR);
-        }
-        else
-        {
-            RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCCOLOR);
-        }
-
-        radius = shadowCamera->viewWindow.x;
-        shadowMatrix = &((RwFrame*)shadowCamera->object.object.parent)->modelling;
-        at = shadowMatrix->at;
-        RwMatrixInvert(&invMatrix, shadowMatrix);
-        scl.x = scl.y = -0.5f / radius;
-        scl.z = 1.0f / (0.0f + radius);
-        RwMatrixScale(&invMatrix, &scl, rwCOMBINEPOSTCONCAT);
-        tr.x = tr.y = 0.5f;
-        tr.z = 0.0f;
-        RwMatrixTranslate(&invMatrix, &tr, rwCOMBINEPOSTCONCAT);
-
-        val = (U8)(255.0f * shadowFactor);
-
-        max_verts = 0;
-        for (model = ent->model; model; model = model->Next)
-        {
-            if ((U32)model->Data->geometry->numVertices > max_verts)
-            {
-                max_verts = model->Data->geometry->numVertices;
-            }
-        }
-
-        xvert = (xVec3*)xMemPushTemp(max_verts * sizeof(xVec3));
-        if (!xvert)
-        {
-            return;
-        }
-
-        Im3DBuffer = gRenderBuffer.m_vertex;
-        for (model = ent->model; model; model = model->Next)
-        {
-            geom = model->Data->geometry;
-            iModelVertEval(model->Data, 0, geom->numVertices, model->Mat, NULL, xvert);
-            xDrawSetColor(0, 0, 255, 255);
-
-            tri = geom->triangles;
-            for (i = 0; i < (U32)geom->numTriangles; i++, tri++)
-            {
-                if (Im3DBufferPos > 477)
-                {
-                    if (RwIm3DTransform(Im3DBuffer, Im3DBufferPos, NULL,
-                                        rwIM3D_VERTEXUV | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXRGBA))
-                    {
-                        RwIm3DRenderPrimitive(rwPRIMTYPETRILIST);
-                        RwIm3DEnd();
-                    }
-                    Im3DBufferPos = 0;
-                }
-
-                v0 = &xvert[tri->vertIndex[0]];
-                v1 = &xvert[tri->vertIndex[1]];
-                v2 = &xvert[tri->vertIndex[2]];
-                imv = &Im3DBuffer[Im3DBufferPos];
-                *(xVec3*)&vIn[0] = *v0;
-                *(xVec3*)&vIn[1] = *v1;
-                *(xVec3*)&vIn[2] = *v2;
-                RwV3dTransformPoints(vShad, vIn, 3, &invMatrix);
-
-                if ((vShad[0].z < 0.0f && vShad[1].z < 0.0f && vShad[2].z < 0.0f) ||
-                    (vShad[0].x < 0.0f && vShad[1].x < 0.0f && vShad[2].x < 0.0f) ||
-                    (vShad[0].x > 1.0f && vShad[1].x > 1.0f && vShad[2].x > 1.0f) ||
-                    (vShad[0].y < 0.0f && vShad[1].y < 0.0f && vShad[2].y < 0.0f) ||
-                    (vShad[0].y > 1.0f && vShad[1].y > 1.0f && vShad[2].y > 1.0f))
-                {
-                    continue;
-                }
-
-                {
-                    F32 ax = v1->x - v0->x;
-                    F32 ay = v1->y - v0->y;
-                    F32 az = v1->z - v0->z;
-                    F32 bx = v2->x - v0->x;
-                    F32 by = v2->y - v0->y;
-                    F32 bz = v2->z - v0->z;
-
-                    c.x = ay * bz - az * by;
-                    c.y = az * bx - ax * bz;
-                    c.z = ax * by - ay * bx;
-                }
-                len = 0.001f / RwV3dLength(&c);
-                c.x *= len;
-                c.y *= len;
-                c.z *= len;
-                if (c.x * at.x + c.y * at.y + c.z * at.z > 0.0f)
-                {
-                    continue;
-                }
-
-                RwIm3DVertexSetPos(&imv[0], v0->x + c.x, v0->y + c.y, v0->z + c.z);
-                RwIm3DVertexSetPos(&imv[1], v1->x + c.x, v1->y + c.y, v1->z + c.z);
-                RwIm3DVertexSetPos(&imv[2], v2->x + c.x, v2->y + c.y, v2->z + c.z);
-                imv[0].u = vShad[0].x;
-                imv[1].u = vShad[1].x;
-                imv[2].u = vShad[2].x;
-                imv[0].v = vShad[0].y;
-                imv[1].v = vShad[1].y;
-                imv[2].v = vShad[2].y;
-                RwIm3DVertexSetRGBA(&imv[0], val, val, val, val);
-                RwIm3DVertexSetRGBA(&imv[1], val, val, val, val);
-                RwIm3DVertexSetRGBA(&imv[2], val, val, val, val);
-                Im3DBufferPos += 3;
-            }
-
-            if (Im3DBufferPos)
+            if (Im3DBufferPos > 477)
             {
                 if (RwIm3DTransform(Im3DBuffer, Im3DBufferPos, NULL,
                                     rwIM3D_VERTEXUV | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXRGBA))
@@ -579,26 +558,90 @@ void xShadowReceiveShadow(_xEnt* ent)
                 }
                 Im3DBufferPos = 0;
             }
+
+            imv = &Im3DBuffer[Im3DBufferPos];
+            v0 = &xvert[tri->vertIndex[0]];
+            v1 = &xvert[tri->vertIndex[1]];
+            v2 = &xvert[tri->vertIndex[2]];
+            *(xVec3*)&vIn[0] = *v0;
+            *(xVec3*)&vIn[1] = *v1;
+            *(xVec3*)&vIn[2] = *v2;
+            RwV3dTransformPoints(vShad, vIn, 3, &invMatrix);
+
+            if ((vShad[0].z < 0.0f && vShad[1].z < 0.0f && vShad[2].z < 0.0f) ||
+                (vShad[0].x < 0.0f && vShad[1].x < 0.0f && vShad[2].x < 0.0f) ||
+                (vShad[0].x > 1.0f && vShad[1].x > 1.0f && vShad[2].x > 1.0f) ||
+                (vShad[0].y < 0.0f && vShad[1].y < 0.0f && vShad[2].y < 0.0f) ||
+                (vShad[0].y > 1.0f && vShad[1].y > 1.0f && vShad[2].y > 1.0f))
+            {
+                continue;
+            }
+
+            {
+                RwV3d a, b;
+                RwV3dSubMacro(&a, v1, v0);
+                RwV3dSubMacro(&b, v2, v0);
+                RwV3dCrossProductMacro(&c, &a, &b);
+            }
+            len = 0.001f / RwV3dLength(&c);
+            c.x *= len;
+            c.y *= len;
+            c.z *= len;
+            if (c.x * at.x + c.y * at.y + c.z * at.z > 0.0f)
+            {
+                continue;
+            }
+
+            RwIm3DVertexSetPos(&imv[0], v0->x + c.x, v0->y + c.y, v0->z + c.z);
+            RwIm3DVertexSetPos(&imv[1], v1->x + c.x, v1->y + c.y, v1->z + c.z);
+            RwIm3DVertexSetPos(&imv[2], v2->x + c.x, v2->y + c.y, v2->z + c.z);
+            imv[0].u = vShad[0].x;
+            imv[1].u = vShad[1].x;
+            imv[2].u = vShad[2].x;
+            imv[0].v = vShad[0].y;
+            imv[1].v = vShad[1].y;
+            imv[2].v = vShad[2].y;
+            RwIm3DVertexSetRGBA(&imv[0], val, val, val, val);
+            RwIm3DVertexSetRGBA(&imv[1], val, val, val, val);
+            RwIm3DVertexSetRGBA(&imv[2], val, val, val, val);
+            Im3DBufferPos += 3;
         }
 
-        xMemPopTemp(xvert);
-        RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
-        RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-        RwRenderStateSet(rwRENDERSTATEFOGENABLE, &fogstate);
+        if (Im3DBufferPos)
+        {
+            if (RwIm3DTransform(Im3DBuffer, Im3DBufferPos, NULL,
+                                rwIM3D_VERTEXUV | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXRGBA))
+            {
+                RwIm3DRenderPrimitive(rwPRIMTYPETRILIST);
+                RwIm3DEnd();
+            }
+            Im3DBufferPos = 0;
+        }
     }
+
+    xMemPopTemp(xvert);
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+    RwRenderStateSet(rwRENDERSTATEFOGENABLE, &fogstate);
 }
 
-// Fit the shadow camera's parallel view round a sphere and back it off along its view direction.
+// Fit the shadow camera's parallel view round a sphere of the given radius.
 static inline RwCamera* ShadowCameraSetSpherePersp(RwCamera* camera, xVec3* center, F32 radius)
 {
     RwV2d vw;
-    RwFrame* camFrame;
 
     RwCameraSetFarClipPlane(camera, 2.0f * radius);
     RwCameraSetNearClipPlane(camera, 0.001f * radius);
     vw.x = radius;
     vw.y = radius;
     RwCameraSetViewWindow(camera, &vw);
+    return camera;
+}
+
+// Center the shadow camera on a point, then back it off along its view direction.
+static inline RwCamera* ShadowCameraSetCenter(RwCamera* camera, xVec3* center)
+{
+    RwFrame* camFrame;
 
     camFrame = (RwFrame*)camera->object.object.parent;
     *(xVec3*)&camFrame->modelling.pos = *center;
@@ -615,23 +658,7 @@ static inline void GCSaveFrameBuffer()
     fn_80178A3C(gc_saveraster);
 }
 
-// Put back the frame buffer saved before the shadow pass.
-static inline void GCRestoreFrameBuffer()
-{
-    F32 recipCamZ = 1.0f / (*(RwCamera**)RwEngineInstance)->farPlane;
-
-    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDONE);
-    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDZERO);
-    RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)FALSE);
-    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
-    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, gc_saveraster);
-    Im2DRenderQuad(0.0f, 0.0f, 256.0f, 256.0f, RwIm2DGetFarScreenZ(), recipCamZ, 0.0f);
-    RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
-    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)TRUE);
-    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
-}
+static void GCRestoreFrameBuffer();
 
 // Render the model white on clear into the shadow camera's raster, then invert it, keeping the
 // main camera's frame buffer intact.
@@ -669,46 +696,24 @@ static inline RwCamera* ShadowCameraUpdate(RwCamera* shadowCamera, xModelInstanc
     return shadowCamera;
 }
 
+static inline void xShadowCameraUpdate(xModelInstance* model, xVec3* center, F32 radius)
+{
+    ShadowCameraSetSpherePersp(ShadowCamera, center, radius);
+    ShadowCameraSetCenter(ShadowCamera, center);
+    ShadowCameraUpdate(ShadowCamera, model);
+}
+
 // Render ent's model into the shadow raster from the light, then cast it onto the world.
 // Two scenes tighten the entity/world distance that still counts as one surface near a spot.
 void xShadowRender(_xEnt* ent)
 {
     xVec3 center;
     F32 radius;
-    xModelInstance* model;
-    U32 sceneID;
-    xVec3* pos;
 
     zEntGetShadowParams(ent, &center, &radius);
-
-    model = ent->model;
-    ShadowCameraSetSpherePersp(ShadowCamera, &center, radius);
-
-    ShadowCameraUpdate(ShadowCamera, model);
+    xShadowCameraUpdate(ent->model, &center, radius);
     ShadowRenderRaster = ShadowCameraRaster;
-
-    sceneID = globals.sceneCur->sceneID;
-    pos = (xVec3*)&globals.player.ent.model->Mat->pos;
-    if (sceneID == zSceneIDFromName("I001"))
-    {
-        xVec3 spot = { -7.0f, 10.0f, -6.0f };
-        F32 dx = pos->x - spot.x;
-        F32 dy = pos->y - spot.y;
-        F32 dz = pos->z - spot.z;
-
-        SHADOW_BOTH = (dx * dx + dy * dy + dz * dz < 16.0f) ? 0.1f : 2.0f;
-    }
-    else if (sceneID == zSceneIDFromName("I005"))
-    {
-        xVec3 spot = { -5.0f, 11.0f, -179.0f };
-        F32 dx = pos->x - spot.x;
-        F32 dy = pos->y - spot.y;
-        F32 dz = pos->z - spot.z;
-
-        SHADOW_BOTH = (dx * dx + dy * dy + dz * dz < 1.0f) ? 0.05f : 2.0f;
-    }
-
-    xShadowRenderWorld(&center, radius);
+    xShadowRenderWorldNear(&center, radius);
 }
 
 S32 Im2DRenderQuad(F32 x1, F32 y1, F32 x2, F32 y2, F32 z, F32 recipCamZ, F32 uvOffset)
@@ -829,9 +834,7 @@ static RpCollisionTriangle* ShadowRenderTriangleCB(RpIntersection* intersection,
     RwV3d vShad[3];
     RxObjSpace3DVertex* imv;
     U8 val;
-    F32 ox;
-    F32 oy;
-    F32 oz;
+    RwV3d off;
 
     if (collTriangle->normal.x * param->at.x + collTriangle->normal.y * param->at.y +
             collTriangle->normal.z * param->at.z >
@@ -867,13 +870,11 @@ static RpCollisionTriangle* ShadowRenderTriangleCB(RpIntersection* intersection,
     }
 
     // Lift the triangle a little off the surface along its normal.
-    ox = 0.001f * collTriangle->normal.x;
-    oy = 0.001f * collTriangle->normal.y;
-    oz = 0.001f * collTriangle->normal.z;
     imv = &Im3DBuffer[Im3DBufferPos];
-    RwIm3DVertexSetPos(&imv[0], vIn[0].x + ox, vIn[0].y + oy, vIn[0].z + oz);
-    RwIm3DVertexSetPos(&imv[1], vIn[1].x + ox, vIn[1].y + oy, vIn[1].z + oz);
-    RwIm3DVertexSetPos(&imv[2], vIn[2].x + ox, vIn[2].y + oy, vIn[2].z + oz);
+    RwV3dScaleMacro(&off, &collTriangle->normal, 0.001f);
+    RwIm3DVertexSetPos(&imv[0], vIn[0].x + off.x, vIn[0].y + off.y, vIn[0].z + off.z);
+    RwIm3DVertexSetPos(&imv[1], vIn[1].x + off.x, vIn[1].y + off.y, vIn[1].z + off.z);
+    RwIm3DVertexSetPos(&imv[2], vIn[2].x + off.x, vIn[2].y + off.y, vIn[2].z + off.z);
     imv[0].u = vShad[0].x;
     imv[1].u = vShad[1].x;
     imv[2].u = vShad[2].x;
@@ -956,4 +957,22 @@ static S32 ShadowRender(RwCamera* shadowCamera, RwRaster* shadowRaster, RpWorld*
     RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
     RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
     return 1;
+}
+
+// Put back the frame buffer saved before the shadow pass.
+static void GCRestoreFrameBuffer()
+{
+    F32 recipCamZ = 1.0f / (*(RwCamera**)RwEngineInstance)->farPlane;
+
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDONE);
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDZERO);
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)FALSE);
+    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, gc_saveraster);
+    Im2DRenderQuad(0.0f, 0.0f, 256.0f, 256.0f, RwIm2DGetFarScreenZ(), recipCamZ, 0.0f);
+    RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
+    RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)TRUE);
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
 }

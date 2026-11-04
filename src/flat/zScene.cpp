@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include <string.h>
 
-extern "C" S32 lbl_8025E528;
+extern S32 gGameState;
 extern "C" U32 lbl_8025EBE0;
 
 void xSerialTraverse(S32 (*func)(U32 clientID, xSerial* xser));
@@ -201,8 +201,8 @@ void zFeetGetIDs();
 void zParCmdFindClipVolumes();
 void zActionLineInit();
 void xClimateInit(_tagClimate* climate);
-extern "C" void fn_80016600();
-extern "C" U32 lbl_8025EEC8;
+void iSystemPollResetAndDisc();
+extern U32 gCreditsBlackout;
 void zPlatform_Reset(_zPlatform* plat, _xScene* sc);
 void zPlatform_Setup(_zPlatform* plat, _xScene* sc);
 void zMovePointSetup(_zMovePoint* mvpt, zScene* scn);
@@ -825,7 +825,7 @@ void zSceneInit(U32 theSceneID)
 
     zSceneGameStats_Init();
     zHud_sceneReset();
-    fn_80016600();
+    iSystemPollResetAndDisc();
 
     zGameScreenTransitionBegin();
     zGameScreenTransitionUpdate(0.0f, "...preparing to preload\n");
@@ -1579,7 +1579,7 @@ void zSceneSetup()
     zScene* s = globals.sceneCur;
 
     globals.cmgr = NULL;
-    lbl_8025EEC8 = 0;
+    gCreditsBlackout = 0;
 
     xSceneSetup(s);
 
@@ -2815,7 +2815,7 @@ extern "C" S32 fn_800CD170()
         return 1;
     }
 
-    if (lbl_8025E528 == 7)
+    if (gGameState == 7)
     {
         return 1;
     }
