@@ -273,6 +273,7 @@ flat/xMath3.cpp:
 flat/xMemMgr.cpp:
 	.text       start:0x8002F920 end:0x800300A8
 	.bss        start:0x801FFC00 end:0x801FFE08
+	.sbss       start:0x8025EAB8 end:0x8025EAC0
 
 flat/xModel.cpp:
 	.text       start:0x800300A8 end:0x80030F28

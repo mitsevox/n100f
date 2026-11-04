@@ -97,24 +97,26 @@ void xMemExit()
     iMemExit();
 }
 
-#define XMEM_ALIGN(x, align) (((x) + (align) - 1) & -(align))
+#define XMEM_ALIGN(x, align) (-(align) & ((x) + (align) - 1))
 
 // Grows the heap's last block in place by size bytes, cleared, and returns the new part.
 void* xMemGrowAlloc(U32 heapID, U32 size)
 {
-    void* memptr;
-    xHeapState_tag* sp;
-    xMemBlock_tag* hdr;
-    xMemHeap_tag* heap = &gxHeap[heapID];
-    U32 oldalignsize;
     U32 align;
+    U32 oldalignsize;
+    U32 newalignsize;
+    xMemHeap_tag* heap;
+    xMemBlock_tag* hdr;
+    xHeapState_tag* sp;
+    void* memptr;
 
+    heap = &gxHeap[heapID];
+    sp = &heap->state[heap->state_idx];
     hdr = heap->lastblk;
     align = 1 << ((heap->flags >> 9) & 0x1F);
-    sp = &heap->state[heap->state_idx];
     oldalignsize = XMEM_ALIGN(hdr->size, align);
-    align = XMEM_ALIGN(hdr->size + size, align) - oldalignsize;
-    if (sp->used + align > heap->size)
+    newalignsize = XMEM_ALIGN(hdr->size + size, align);
+    if (sp->used + (newalignsize - oldalignsize) > heap->size)
     {
         return NULL;
     }
@@ -123,18 +125,129 @@ void* xMemGrowAlloc(U32 heapID, U32 size)
     {
         memptr = (void*)(hdr->addr - size);
         hdr->addr = (U32)memptr;
-        sp->curr -= align;
+        sp->curr -= newalignsize - oldalignsize;
     }
     else
     {
-        sp->curr += align;
         memptr = (void*)(hdr->addr + hdr->size);
+        sp->curr += newalignsize - oldalignsize;
     }
 
-    sp->used += align;
+    sp->used += newalignsize - oldalignsize;
     hdr->size += size;
     memset(memptr, 0, size);
     return memptr;
+}
+
+struct xMemBlkInfo_tag
+{
+    xMemBlock_tag* header;
+    U32 pre;
+    U32 block;
+    U32 post;
+    U32 curr;
+    U32 waste;
+    U32 total;
+};
+
+// Lays out a block of size bytes at the heap's current end: the header (inline when bit 0x8000 is
+// set, else in the separate table at bit 0x10000), the aligned block and at least one alignment
+// unit after it. Bit 0x100 lays the block out downward from the current end.
+static U32 xMemGetBlockInfo(xMemHeap_tag* heap, U32 size, xMemBlkInfo_tag* info)
+{
+    U32 align = 1 << ((heap->flags >> 9) & 0x1F);
+    U32 hdrsize;
+    U32 total;
+    S32 hdr;
+    xHeapState_tag* sp = &heap->state[heap->state_idx];
+    S32 block;
+    S32 dir = 1;
+    S32 pre;
+    S32 post;
+
+    if (heap->flags & 0x100)
+    {
+        dir = -1;
+    }
+    hdrsize = ((heap->flags & 0x8000) ? sizeof(xMemBlock_tag) : 0);
+    hdr = 0;
+    pre = -align & (align + hdrsize - 1);
+    block = pre + XMEM_ALIGN(0, align);
+    post = block + XMEM_ALIGN(size, align);
+    total = post + (align > XMEM_ALIGN(0, align) ? align : XMEM_ALIGN(0, align));
+
+    if (heap->flags & 0x100)
+    {
+        hdr = -hdrsize;
+        block = XMEM_ALIGN(0, align) - total;
+    }
+
+    if (heap->flags & 0x10000)
+    {
+        info->header = &heap->blk[sp->blk_ct];
+    }
+    else
+    {
+        info->header = (xMemBlock_tag*)(sp->curr + hdr);
+    }
+
+    info->pre = sp->curr + pre;
+    info->block = sp->curr + block;
+    info->post = sp->curr + post;
+    info->curr = sp->curr + dir * total;
+    info->waste = total - (hdrsize + size);
+    info->total = total;
+    return total;
+}
+
+// Takes a cleared block of size bytes from the heap's current end. Returns NULL when the heap is
+// full or keeps its headers in the separate table, and 0xDEADBEEF for a zero size.
+void* xMemAlloc(U32 heapID, U32 size)
+{
+    U32 total;
+    xMemBlkInfo_tag info;
+    xHeapState_tag* sp;
+    xMemBlock_tag* hdr;
+    xMemHeap_tag* heap;
+
+    heap = &gxHeap[heapID];
+    sp = &heap->state[heap->state_idx];
+    if (size == 0)
+    {
+        return (void*)0xDEADBEEF;
+    }
+
+    total = xMemGetBlockInfo(heap, size, &info);
+    hdr = info.header;
+    if (sp->used + total > heap->size)
+    {
+        return NULL;
+    }
+
+    // Checks that the new end does not run into either opposite heap; the report is debug-only.
+    for (S32 i = 0; i < 2; i++)
+    {
+        xMemHeap_tag* opp = &gxHeap[heap->opp_heap[i]];
+        xHeapState_tag* osp = &opp->state[opp->state_idx];
+        if ((heap->flags & 0x100) ? info.curr < osp->curr : info.curr > osp->curr)
+        {
+        }
+    }
+
+    sp->curr = info.curr;
+    sp->blk_ct++;
+    if (heap->flags & 0x10000)
+    {
+        return NULL;
+    }
+
+    hdr->addr = info.block;
+    hdr->size = size;
+    sp->used += total;
+    sp->wasted += info.waste;
+    memset((void*)hdr->addr, 0, size);
+    heap->lastblk = hdr;
+    return (void*)hdr->addr;
 }
 
 void* xMemPushTemp(U32 size)
