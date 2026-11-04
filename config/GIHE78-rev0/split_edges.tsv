@@ -311,8 +311,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	xEnv.cpp	xFFX.cpp	0x8025EA50	0x8025EA50	single aligned candidate	0
 .sbss	xFFX.cpp	xFX.cpp	0x8025EA78	0x8025EA80	open: 2 items between aligned candidates	0
 .sbss	xFX.cpp	xhipio.cpp	0x8025EAB0	0x8025EAB0	single aligned candidate	0
-.sbss	xhipio.cpp	xMemMgr.cpp	0x8025EAB8	-	open: 1 items loaded by unassigned functions; a side left unsplit	0
-.sbss	xMemMgr.cpp	xModel.cpp	-	0x8025EAC0	single aligned candidate; a side left unsplit	0
+.sbss	xhipio.cpp	xMemMgr.cpp	0x8025EAB8	0x8025EAB8	single aligned candidate	0
+.sbss	xMemMgr.cpp	xModel.cpp	0x8025EAC0	0x8025EAC0	single aligned candidate; 1 in-range loads by functions outside the written units	1
 .sbss	xModel.cpp	xPad.cpp	0x8025EAD0	0x8025EAD0	single aligned candidate	0
 .sbss	xPad.cpp	xPar.cpp	0x8025EAD8	0x8025EAD8	single aligned candidate	0
 .sbss	xPar.cpp	xParGroup.cpp	0x8025EAE0	0x8025EAE0	single aligned candidate	0

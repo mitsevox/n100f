@@ -47,13 +47,13 @@
         F32 length2;                                                                               \
                                                                                                    \
         RwV3dSubMacro(&edge, &vc[b], &vc[a]);                                                      \
-        t = RwV3dDotProductMacro(&edge, &vc[a]) / RwV3dDotProductMacro(&edge, &edge);              \
+        t = SphereTriangleDot(&edge, &vc[a]) / SphereTriangleDot(&edge, &edge);                    \
         nearest.x = vc[a].x - edge.x * t;                                                          \
         nearest.y = vc[a].y - edge.y * t;                                                          \
         nearest.z = vc[a].z - edge.z * t;                                                          \
-        length2 = RwV3dDotProductMacro(&nearest, &nearest);                                        \
+        length2 = SphereTriangleDot(&nearest, &nearest);                                           \
                                                                                                    \
-        if (length2 > sphereRadiusSquared && length2 < RwV3dDotProductMacro(&nearest, &vc[c]))     \
+        if (length2 > sphereRadiusSquared && length2 < SphereTriangleDot(&nearest, &vc[c]))        \
         {                                                                                          \
             return FALSE;                                                                          \
         }                                                                                          \
@@ -64,8 +64,8 @@
 #define SPHERETRIANGLE_VERTEXREJECT(a, b, c, d)                                                    \
     do                                                                                             \
     {                                                                                              \
-        if (RwV3dDotProductMacro(&vc[a], &vc[b]) > (d) &&                                         \
-            RwV3dDotProductMacro(&vc[a], &vc[c]) > (d))                                            \
+        if (SphereTriangleDot(&vc[a], &vc[b]) > (d) &&                                             \
+            SphereTriangleDot(&vc[a], &vc[c]) > (d))                                               \
         {                                                                                          \
             return FALSE;                                                                          \
         }                                                                                          \
@@ -150,19 +150,25 @@
         }                                                                                          \
     } while (0)
 
+// The dot product of two vectors.
+static F32 SphereTriangleDot(const RwV3d* a, const RwV3d* b)
+{
+    return RwV3dDotProductMacro(a, b);
+}
+
 S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const RwV3d* v1,
                                  const RwV3d* v2, RwV3d* normal, F32* distance)
 {
     RwV3d vc[3];
     RwV3d e1;
     RwV3d e2;
-    F32 length2;
-    F32 factor;
-    F32 distToPlane;
-    F32 sphereRadiusSquared;
     F32 d0;
     F32 d1;
     F32 d2;
+    F32 distToPlane;
+    F32 sphereRadiusSquared;
+    F32 length2;
+    F32 factor;
 
     RwV3dSubMacro(&vc[0], v0, &sphere->center);
     RwV3dSubMacro(&vc[1], v1, &sphere->center);
@@ -176,7 +182,7 @@ S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const 
     RwV3dSubMacro(&e2, v2, v0);
     RwV3dCrossProductMacro(normal, &e1, &e2);
 
-    length2 = RwV3dDotProductMacro(normal, normal);
+    length2 = SphereTriangleDot(normal, normal);
 
     if (length2 <= 0.0f)
     {
@@ -186,7 +192,7 @@ S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const 
     factor = _rwInvSqrt(length2);
     RwV3dScaleMacro(normal, normal, factor);
 
-    distToPlane = RwV3dDotProductMacro(&vc[0], normal);
+    distToPlane = SphereTriangleDot(&vc[0], normal);
 
     if (distToPlane < -sphere->radius || distToPlane > sphere->radius)
     {
@@ -197,21 +203,21 @@ S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const 
 
     sphereRadiusSquared = sphere->radius * sphere->radius;
 
-    d0 = RwV3dDotProductMacro(&vc[0], &vc[0]);
+    d0 = SphereTriangleDot(&vc[0], &vc[0]);
 
     if (d0 <= sphereRadiusSquared)
     {
         return TRUE;
     }
 
-    d1 = RwV3dDotProductMacro(&vc[1], &vc[1]);
+    d1 = SphereTriangleDot(&vc[1], &vc[1]);
 
     if (d1 <= sphereRadiusSquared)
     {
         return TRUE;
     }
 
-    d2 = RwV3dDotProductMacro(&vc[2], &vc[2]);
+    d2 = SphereTriangleDot(&vc[2], &vc[2]);
 
     if (d2 <= sphereRadiusSquared)
     {

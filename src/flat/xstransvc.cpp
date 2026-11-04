@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-extern "C" void fn_80016600();
+void iSystemPollResetAndDisc();
 
 struct st_STRAN_SCENE
 {
@@ -289,7 +289,7 @@ void xSTUnLoadScene(U32 sid)
 F32 xSTLoadStep(U32)
 {
     F32 pct = PKRLoadStep(0) != 0 ? 0.0f : 1.00001f;
-    fn_80016600();
+    iSystemPollResetAndDisc();
     return pct;
 }
 

@@ -4,7 +4,11 @@
 #include "types.h"
 
 struct st_SERIAL_CLIENTINFO;
-struct st_SERIAL_PERCID_SIZE;
+struct st_SERIAL_PERCID_SIZE
+{
+    U32 idtag;
+    S32 needsize;
+};
 
 struct xSerial
 {

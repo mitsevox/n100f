@@ -1,7 +1,7 @@
 #include "zGameState.h"
 #include "zEnt.h"
+#include "zGame.h"
 
-extern "C" S32 lbl_8025E510;
 void xSndPauseAll(U32 pause_effects, U32 pause_streams);
 
 S32 gGameState = 6;
@@ -95,7 +95,7 @@ void zGameStateSwitch(S32 theNewState)
 
     if (theNewState == 1 && stateOld == 0)
     {
-        lbl_8025E510 = 1;
+        startPressed = 1;
     }
 
     switch (gGameMode)

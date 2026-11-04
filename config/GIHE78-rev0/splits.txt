@@ -273,6 +273,7 @@ flat/xMath3.cpp:
 flat/xMemMgr.cpp:
 	.text       start:0x8002F920 end:0x800300A8
 	.bss        start:0x801FFC00 end:0x801FFE08
+	.sbss       start:0x8025EAB8 end:0x8025EAC0
 
 flat/xModel.cpp:
 	.text       start:0x800300A8 end:0x80030F28
@@ -1991,6 +1992,7 @@ rwsdk/src/pipe/p2/p2dep.c:
 
 rwsdk/src/pipe/p2/p2heap.c:
 	.text       start:0x8018A644 end:0x8018B69C
+	.data       start:0x801DEF98 end:0x801DEFC0
 
 rwsdk/src/pipe/p2/p2renderstate.c:
 	.text       start:0x8018B69C end:0x8018BB5C

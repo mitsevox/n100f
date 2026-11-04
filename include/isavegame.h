@@ -123,7 +123,7 @@ S32 iSGReadLeader(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 
                   S32 async);
 extern "C" {
 S32 fn_800132C4(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted);
-S32 fn_800138EC(st_ISGSESSION* isgdata, const char* dname, const char* fname);
+S32 fn_800138EC(st_ISGSESSION* isgdata);
 S32 fn_80013C64(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* filesFree);
 char* fn_80014180(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype);
 S32 fn_80014310(st_ISGSESSION* isgdata, S32 slot);

@@ -53,14 +53,14 @@ extern "C" void fn_80041D58(S32 mode);
 extern "C" S32 fn_80041310(S32 card, S32 mode);
 extern "C" S32 fn_800411A8(S32 card, S32 repair, S32* files, S32* repaired);
 extern "C" S32 fn_80040FCC(S32 card, S32 game);
-extern "C" void fn_80016600();
+void iSystemPollResetAndDisc();
 extern "C" void fn_80016698(S32 reset);
 // The memory card's file counts, from the save-game layer.
 extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree);
 // The per-frame helpers the front-end loops share.
-extern "C" void fn_8004436C();
+void xTRCRenderMessage();
 
-extern "C" U32 lbl_8025E9F8;
+extern U32 gFrameCount;
 
 zSaveLoadGame zSaveLoadGameTable[3];
 
@@ -1563,7 +1563,7 @@ S32 zSaveLoad_CardCheckFormatted(S32 cardNumber, S32 mode)
     }
 
     fn_80041D58(1);
-    fn_80016600();
+    iSystemPollResetAndDisc();
 
     S32 files = -1;
     S32 repaired = 0;
@@ -1614,7 +1614,7 @@ S32 zSaveLoad_CardCheckFormatted(S32 cardNumber, S32 mode)
         zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
     }
     fn_80041D58(1);
-    fn_80016600();
+    iSystemPollResetAndDisc();
     return 1;
 }
 
@@ -1926,7 +1926,7 @@ void zSaveLoad_Tick()
     t0 = t1;
     t1 = iTimeGet();
     xPadUpdate(0, time_elapsed);
-    fn_80016600();
+    iSystemPollResetAndDisc();
     if (globals.pad1)
     {
         xPadUpdate(1, time_elapsed);
@@ -1942,7 +1942,7 @@ void zSaveLoad_Tick()
     xCameraBegin(&globals.camera, 1);
     zSceneRender();
     xDebugUpdate();
-    fn_8004436C();
+    xTRCRenderMessage();
     xDrawEnd();
     if (gScreenDump)
     {
@@ -1951,5 +1951,5 @@ void zSaveLoad_Tick()
     xCameraEnd(&globals.camera, time_elapsed, 1);
     iEnvEndRenderFX(NULL);
     xCameraShowRaster(&globals.camera);
-    lbl_8025E9F8++;
+    gFrameCount++;
 }
