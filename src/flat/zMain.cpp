@@ -36,7 +36,6 @@ extern void zEntProjectile_Startup();
 extern void zLobMaster_Startup();
 extern S32 zEntVillain_Startup();
 extern "C" void fn_80043E78();
-extern "C" RwRGBA lbl_80262CC8;
 extern void xFontBoxSetInset(xFontBox*, F32, F32, F32, F32);
 extern S32 zEntVillain_Shutdown();
 extern void zLobMaster_Shutdown();
@@ -66,8 +65,9 @@ void zGameExit();
 void zMainLoop();
 void zMainMemLvlChkCB();
 void zMainParseINIGlobals(xIniFile* ini);
+static void zMainCheckINI();
 static void zMainReadProfFuncs(xIniFile* ini);
-static void zMainShowLegal();
+void zMainFirstScreen(S32 mode);
 extern "C" void main();
 
 extern "C" void main()
@@ -77,28 +77,7 @@ extern "C" void main()
     memset(&globals, 0, sizeof(globals));
     globals.sceneFirst = 1;
     xTRCInit();
-
-    U32 size;
-    U32* data = iFileLoad("SD2.INI", 0, &size);
-    if (data)
-    {
-        xIniFile* ini = xIniParse((char*)data, size);
-        char* path = xIniGetString(ini, "PATH", 0);
-        if (path)
-            iFileSetPath(path);
-        char* boot = xIniGetString(ini, "BOOT", 0);
-        if (boot)
-        {
-            strcpy(globals.sceneStart, "BOOT");
-            if (strlen(boot) == 4)
-                strcpy(globals.sceneStart, boot);
-        }
-        globals.profile = xIniGetInt(ini, "Profile", 0);
-        zMainReadProfFuncs(ini);
-        zMainParseINIGlobals(ini);
-        xIniDestroy(ini);
-    }
-
+    zMainCheckINI();
     iFuncProfileParse("scooby.elf", globals.profile);
     xUtilStartup();
     xSerialStartup(128, g_xser_sizeinfo);
@@ -118,7 +97,7 @@ extern "C" void main()
     zEntVillain_Startup();
     fn_80043E78();
 
-    zMainShowLegal();
+    zMainFirstScreen(1);
     printf("----ENTERING MAIN LOOP\n");
     zMainLoop();
     zEntVillain_Shutdown();
@@ -130,37 +109,6 @@ extern "C" void main()
     xSerialShutdown();
     xUtilShutdown();
     iSystemExit();
-}
-
-static void zMainShowLegal()
-{
-    RwCamera* camera;
-    xFontBox* box;
-
-    iColor_tag color = {255, 230, 0, 200};
-    camera = iCameraCreate(640, 480);
-    RwRGBA clear = lbl_80262CC8;
-    RwCameraClear(camera, &clear, 3);
-    RwCameraBeginUpdate(camera);
-    char text[] = "Game and Software, excluding Scooby-Doo materials, (C) 2002 THQ Inc. Used under exclusive license by THQ Inc.\n\n\nDeveloped by Heavy Iron Studios_. Heavy Iron Studios, THQ and their respective logos are trademarks and/or registered trademarks of THQ Inc. All Rights Reserved.\n\n\nLICENSED BY NINTENDO";
-    box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 1, color);
-    xFontBoxSetJustification(box, 0x40);
-    xFontBoxSetDrawSize(box, 17.0f, 22.6f);
-    xFontBoxSetDrawSpacing(box, 15.5f, 22.6f);
-    xFontBoxSetColor(box, color);
-    xFontBoxSetInset(box, 30.0f, 30.0f, 120.0f, 20.0f);
-    xFontBoxSetText(box, text);
-    xFontBoxRender(box);
-    xFontBoxDestroy(box);
-    RwCameraEndUpdate(camera);
-    RwCameraShowRaster(camera, 0, 1);
-    iCameraDestroy(camera);
-    S32 count = 120;
-    do
-    {
-        iSystemPollResetAndDisc();
-        iVSync();
-    } while (count-- > 0);
 }
 
 // Load the player tuning values and initial equipment from the INI file.
@@ -267,22 +215,6 @@ void zMainParseINIGlobals(xIniFile* ini)
     sShowMenuOnBoot = xIniGetInt(ini, "ShowMenuOnBoot", 1);
 }
 
-static void zMainReadProfFuncs(xIniFile* ini)
-{
-    strncpy(globals.profFunc[0], xIniGetString(ini, "ProfFuncTriangle", ""), 128);
-    globals.profFunc[0][127] = 0;
-    strncpy(globals.profFunc[1], xIniGetString(ini, "ProfFuncSquare", ""), 128);
-    globals.profFunc[1][127] = 0;
-    strncpy(globals.profFunc[2], xIniGetString(ini, "ProfFuncLeft", ""), 128);
-    globals.profFunc[2][127] = 0;
-    strncpy(globals.profFunc[3], xIniGetString(ini, "ProfFuncRight", ""), 128);
-    globals.profFunc[3][127] = 0;
-    strncpy(globals.profFunc[4], xIniGetString(ini, "ProfFuncUp", ""), 128);
-    globals.profFunc[4][127] = 0;
-    strncpy(globals.profFunc[5], xIniGetString(ini, "ProfFuncDown", ""), 128);
-    globals.profFunc[5][127] = 0;
-}
-
 // Check the memory base and scene memory level.
 void zMainMemLvlChkCB()
 {
@@ -363,4 +295,75 @@ void zMainLoop()
         zGameLoop();
         zGameExit();
     }
+}
+
+static void zMainReadProfFuncs(xIniFile* ini)
+{
+    strncpy(globals.profFunc[0], xIniGetString(ini, "ProfFuncTriangle", ""), 128);
+    globals.profFunc[0][127] = 0;
+    strncpy(globals.profFunc[1], xIniGetString(ini, "ProfFuncSquare", ""), 128);
+    globals.profFunc[1][127] = 0;
+    strncpy(globals.profFunc[2], xIniGetString(ini, "ProfFuncLeft", ""), 128);
+    globals.profFunc[2][127] = 0;
+    strncpy(globals.profFunc[3], xIniGetString(ini, "ProfFuncRight", ""), 128);
+    globals.profFunc[3][127] = 0;
+    strncpy(globals.profFunc[4], xIniGetString(ini, "ProfFuncUp", ""), 128);
+    globals.profFunc[4][127] = 0;
+    strncpy(globals.profFunc[5], xIniGetString(ini, "ProfFuncDown", ""), 128);
+    globals.profFunc[5][127] = 0;
+}
+
+static void zMainCheckINI()
+{
+    U32 size;
+    void* buf = iFileLoad("SD2.INI", 0, &size);
+    if (buf)
+    {
+        xIniFile* ini = xIniParse((char*)buf, size);
+        char* str = xIniGetString(ini, "PATH", 0);
+        if (str)
+            iFileSetPath(str);
+        str = xIniGetString(ini, "BOOT", 0);
+        if (str)
+        {
+            strcpy(globals.sceneStart, "BOOT");
+            if (strlen(str) == 4)
+                strcpy(globals.sceneStart, str);
+        }
+        globals.profile = xIniGetInt(ini, "Profile", 0);
+        zMainReadProfFuncs(ini);
+        zMainParseINIGlobals(ini);
+        xIniDestroy(ini);
+    }
+}
+
+void zMainFirstScreen(S32 mode)
+{
+    iColor_tag yellow = {255, 230, 0, 200};
+    RwCamera* cam;
+    xFontBox* b;
+
+    cam = iCameraCreate(640, 480);
+    RwRGBA bg = {0, 0, 0, 0};
+    RwCameraClear(cam, &bg, 3);
+    RwCameraBeginUpdate(cam);
+    char str[] = "Game and Software, excluding Scooby-Doo materials, (C) 2002 THQ Inc. Used under exclusive license by THQ Inc.\n\n\nDeveloped by Heavy Iron Studios_. Heavy Iron Studios, THQ and their respective logos are trademarks and/or registered trademarks of THQ Inc. All Rights Reserved.\n\n\nLICENSED BY NINTENDO";
+    b = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 1, yellow);
+    xFontBoxSetJustification(b, 0x40);
+    xFontBoxSetDrawSize(b, 17.0f, 22.6f);
+    xFontBoxSetDrawSpacing(b, 15.5f, 22.6f);
+    xFontBoxSetColor(b, yellow);
+    xFontBoxSetInset(b, 30.0f, 30.0f, 120.0f, 20.0f);
+    xFontBoxSetText(b, str);
+    xFontBoxRender(b);
+    xFontBoxDestroy(b);
+    RwCameraEndUpdate(cam);
+    RwCameraShowRaster(cam, 0, 1);
+    iCameraDestroy(cam);
+    S32 count = 120;
+    do
+    {
+        iSystemPollResetAndDisc();
+        iVSync();
+    } while (count-- > 0);
 }
