@@ -253,7 +253,7 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     xSphere _s;
     RpIntersection shadowZone;
     xSphere zone;
-    RwMatrix* camMatrix;
+    RwMatrix* camMatrix = &((RwFrame*)ShadowCamera->object.object.parent)->modelling;
     xRay3 R[3];
     _xCollis crec[3];
     F32 sf[3][2] = { { 0.0f, 0.0f }, { 0.0f, 0.5f }, { 0.0f, -0.5f } };
@@ -265,7 +265,6 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     xVec3 hit;
     _xCollis ecrec;
 
-    camMatrix = &((RwFrame*)ShadowCamera->object.object.parent)->modelling;
     zone.center.x = 0.0f;
     zone.center.y = 0.0f;
     zone.center.z = 0.0f;
@@ -356,7 +355,10 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
         _s.center.y = zone.center.y;
         _s.center.z = zone.center.z;
         _s.r = zone.r;
-        sSphere = _s;
+        sSphere.center.x = zone.center.x;
+        sSphere.center.y = zone.center.y;
+        sSphere.center.z = zone.center.z;
+        sSphere.r = zone.r;
     }
     else
     {
@@ -365,7 +367,8 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     }
 
     shadowZone.type = 3;
-    shadowZone.t.sphere = *(RwSphere*)&sSphere;
+    shadowZone.t.sphere.center = *(RwV3d*)&_s.center;
+    shadowZone.t.sphere.radius = _s.r;
     ShadowRender(ShadowCamera, ShadowRenderRaster, globals.sceneCur->env->geom->world,
                  &shadowZone, ShadowStrength, ShadowFade ? ShadowZoneRadius : 0.0f);
 }
