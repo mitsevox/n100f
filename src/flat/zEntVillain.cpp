@@ -16267,7 +16267,7 @@ static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bo
 // Emit hologram particles and flicker the villain while its hologram flag is set.
 extern "C" void VIL_HOLO_FLICKER(st_zEntVillain* vil, F32 dt)
 {
-    if (!(vil->flg_misc & 8)) return;
+    if (!(vil->ability & 8)) return;
 
     F32 time = vil->tmr_list[ZVIL_TDUR_DECAY] > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]
                    ? vil->tmr_list[ZVIL_TDUR_DECAY] : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
@@ -16276,14 +16276,14 @@ extern "C" void VIL_HOLO_FLICKER(st_zEntVillain* vil, F32 dt)
         U32 type = vil->asset->subtype;
         _zParEmitterCustomSettings info;
         info.custom_flags = 0x5A0;
-        info.pos = *xBoundCenter(&vil->bound);
         info.color_birth[0] = gVillainPoofColorBirth[type][0];
         info.color_birth[1] = gVillainPoofColorBirth[type][1];
         info.color_birth[2] = gVillainPoofColorBirth[type][2];
-        info.color_birth[3] = 0;
         info.color_death[0] = gVillainPoofColorDeath[type][0];
         info.color_death[1] = gVillainPoofColorDeath[type][1];
         info.color_death[2] = gVillainPoofColorDeath[type][2];
+        info.pos = *xBoundCenter(&vil->bound);
+        info.color_birth[3] = 0;
         info.color_death[3] = 0;
         info.size_death = 5.0f * vil->bound.sph.r;
         zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
