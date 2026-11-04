@@ -50,7 +50,7 @@ S32 xMemPushBase();
 S32 xMemGetBase();
 S32 xSTPreLoadScene(U32, void*);
 S32 xSTQueueSceneAssets(U32);
-extern "C" void fn_80016600();
+void iSystemPollResetAndDisc();
 extern "C" void fn_800443AC();
 void zEntPlayer_InitCutsceneModelHack();
 extern "C" S32 sShowMenuOnBoot;
@@ -150,7 +150,7 @@ extern "C" void main()
     S32 count = 120;
     do
     {
-        fn_80016600();
+        iSystemPollResetAndDisc();
         iVSync();
     } while (count-- > 0);
     printf("----ENTERING MAIN LOOP\n");
@@ -288,7 +288,7 @@ void zMainLoop()
     xUtil_idtag2string('BOOT', 0);
     while (xSTLoadStep('BOOT') < 1.0f)
     {
-        fn_80016600();
+        iSystemPollResetAndDisc();
         fn_800443AC();
     }
     xUtil_idtag2string('BOOT', 0);
@@ -302,7 +302,7 @@ void zMainLoop()
     xUtil_idtag2string('MNU4', 0);
     while (xSTLoadStep('MNU4') < 1.0f)
     {
-        fn_80016600();
+        iSystemPollResetAndDisc();
         fn_800443AC();
     }
     xUtil_idtag2string('MNU4', 0);

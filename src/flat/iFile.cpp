@@ -6,7 +6,7 @@
 
 extern "C" {
 #if VERSION_GIHE78_REV0
-void fn_80016600();
+void iSystemPollResetAndDisc();
 void fn_800443AC();
 #elif VERSION_GIHE78_REV1
 void fn_800166C0();
@@ -193,7 +193,7 @@ U32 iFileRead(tag_xFile* file, void* buf, U32 size)
     while (iFileSyncAsyncReadActive)
     {
 #if VERSION_GIHE78_REV0
-        fn_80016600();
+        iSystemPollResetAndDisc();
         fn_800443AC();
 #elif VERSION_GIHE78_REV1
         fn_800166C0();

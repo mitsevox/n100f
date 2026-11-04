@@ -44,12 +44,13 @@ typedef S32 (*TRCCardCheck)(TRCCardWatch* watch);
 void zGamePauseIfPossible();
 extern F32 gFontWiggleTime;
 
+void iSystemPollResetAndDisc();
+S32 zGameNickCamActive();
+
 extern "C" {
-void fn_80016600();
 void fn_80016698(S32 reset);
 // The localized device, slot and card names.
 char* fn_800389FC(S32 lang, S32 card, S32 which);
-U32 fn_800AC0BC();
 
 // The two message records, the start-up check's busy flag (zScene reads it), the font box of
 // the pad and disc message (sTrcFontBox in the SLUS-20349 DWARF) and the flag that makes that
@@ -66,7 +67,6 @@ S32 fn_80044478(_tagTRCState state);
 void fn_80044458(S32 pad_id, S32 state);
 S32 fn_800443F8();
 void fn_800443AC();
-void fn_8004436C();
 void fn_80043E78();
 S32 fn_80043E20(TRCCardWatch* watch);
 S32 fn_80043E18(S32 card, st_ISGSESSION* session);
@@ -99,10 +99,10 @@ S32 fn_80040FCC(S32 card, S32 game);
 // xTRCInit: the pad records number their pads, and the disc state starts unknown.
 void xTRCInit()
 {
-    memset(lbl_802289B8, 0, sizeof(lbl_802289B8));
+    memset(gTrcPad, 0, sizeof(gTrcPad));
     for (S32 i = 0; i < 4; i++)
     {
-        lbl_802289B8[i].id = i;
+        gTrcPad[i].id = i;
     }
     memset(gTrcDisk, 0, sizeof(gTrcDisk));
 }
@@ -139,7 +139,7 @@ extern "C" S32 fn_80044478(_tagTRCState state)
         {
             show = 0;
         }
-        else if (fn_800AC0BC())
+        else if (zGameNickCamActive())
         {
             show = 0;
         }
@@ -219,7 +219,7 @@ extern "C" void fn_80044458(S32 pad_id, S32 state)
 {
     if (pad_id == 0)
     {
-        lbl_802289B8[pad_id].state = state;
+        gTrcPad[pad_id].state = state;
     }
 }
 
@@ -260,14 +260,14 @@ extern "C" S32 fn_800443F8()
 extern "C" void fn_800443AC()
 {
     lbl_8025EBE8 = 1;
-    fn_80044478((_tagTRCState)lbl_802289B8[0].state) || fn_80044478(gTrcDisk[0]);
+    fn_80044478((_tagTRCState)gTrcPad[0].state) || fn_80044478(gTrcDisk[0]);
     lbl_8025EBE8 = 0;
 }
 
 // Draws the pad message, or else the disc message, into the current frame.
-extern "C" void fn_8004436C()
+void xTRCRenderMessage()
 {
-    fn_80044478((_tagTRCState)lbl_802289B8[0].state) || fn_80044478(gTrcDisk[0]);
+    fn_80044478((_tagTRCState)gTrcPad[0].state) || fn_80044478(gTrcDisk[0]);
 }
 
 // The start-up memory-card check that main runs: the cards in both slots are checked for
@@ -321,7 +321,7 @@ extern "C" void fn_80043E78()
             }
             for (S32 i = 14; i >= 0; i--)
             {
-                fn_80016600();
+                iSystemPollResetAndDisc();
                 iVSync();
             }
         }
@@ -936,7 +936,7 @@ extern "C" S32 fn_80043050(S32 card, S32* formatted)
                     S32 ok = iSGTgtFormat(session, slot, 0, &canRecover);
                     for (S32 i = 59; i >= 0; i--)
                     {
-                        fn_80016600();
+                        iSystemPollResetAndDisc();
                         iVSync();
                     }
                     fn_80041CE8(0, slot, card);
@@ -1442,7 +1442,7 @@ extern "C" S32 fn_80041D90(char* text, const char** options, TRCCardCheck check,
             choice = -1;
             break;
         }
-        fn_80016600();
+        iSystemPollResetAndDisc();
         xPadUpdate(0, 1.0f / 60.0f);
         U32 pressed = mask & globals.pad0->pressed;
         switch (count)

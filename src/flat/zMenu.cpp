@@ -27,15 +27,15 @@ void zEntEvent(xBase* to, U32 toEvent);
 void zEntEventAll(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam);
 void xFontRender();
 extern "C" U32 fn_800443F8();
-extern "C" void fn_80016600();
-extern "C" void fn_8004436C();
+void iSystemPollResetAndDisc();
+void xTRCRenderMessage();
 void xSndUpdate(F32 dt);
 void xSndStopAll();
 void xCameraBegin(_tagxCamFrame* cam, S32 clear);
 void xCameraEnd(_tagxCamFrame* cam, F32 seconds, S32 update_scrn_fx);
 U32 zSaveLoad_LoadLoop();
-extern "C" volatile U32 lbl_8025E968;
-extern "C" U32 lbl_8025E9F8;
+extern volatile U32 gVsyncCount;
+extern U32 gFrameCount;
 extern "C" _zEnv* gCurEnv;
 
 static S32 sFirstBoot = 1;
@@ -200,7 +200,7 @@ U32 zMenuLoop()
             xPadUpdate(1, time_elapsed);
         }
 
-        fn_80016600();
+        iSystemPollResetAndDisc();
         xDrawBegin();
         zSceneUpdate(time_elapsed);
         globals.player.ent.update(&globals.player.ent, globals.sceneCur, time_elapsed);
@@ -210,7 +210,7 @@ U32 zMenuLoop()
         zSceneRender();
         xFontRender();
         xDebugUpdate();
-        fn_8004436C();
+        xTRCRenderMessage();
         xDrawEnd();
 
         if (gScreenDump)
@@ -220,11 +220,11 @@ U32 zMenuLoop()
 
         xCameraEnd(&globals.camera, time_elapsed, 1);
 
-        while ((lbl_8025E968 = VIGetRetraceCount()) - gLastVsyncFlip < 2)
+        while ((gVsyncCount = VIGetRetraceCount()) - gLastVsyncFlip < 2)
         {
             iVSync();
         }
-        gLastVsyncFlip = lbl_8025E968;
+        gLastVsyncFlip = gVsyncCount;
 
         xCameraShowRaster(&globals.camera);
 
@@ -240,7 +240,7 @@ U32 zMenuLoop()
             time_last = elapsed + (F32)iTimeGet();
         }
 
-        lbl_8025E9F8++;
+        gFrameCount++;
 
         if (ostrich_delay > 0)
         {

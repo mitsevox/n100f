@@ -41,7 +41,7 @@ void xSndStopAll();
 void xSndUpdate(F32 time_elapsed);
 void zEntPlayer_Init(_xEnt*, p2EntAsset*);
 void zEntEventAllOfType(U32 toEvent, U32 type);
-extern "C" void fn_80016600();
+void iSystemPollResetAndDisc();
 void xSndSetFrame(xVec3* right, xVec3* up, xVec3* at, xVec3* pos, F32 radius);
 void xSndSetFrameFar(xVec3* pos);
 void xCameraBegin(_tagxCamFrame* cam, S32 clear);
@@ -60,15 +60,15 @@ void xCameraSetTarget(_tagxCamFrame*, xMat4x3*);
 void zEntEventAll(xBase*, U32, U32, F32*);
 extern "C" RpWorld* RpWorldCreate(const RwBBox*);
 extern "C" F32 RwIm2DGetNearScreenZ();
-extern "C" void fn_8004436C();
+void xTRCRenderMessage();
 void xFontRender();
-extern "C" volatile U32 lbl_8025E968;
-extern "C" U32 lbl_8025E9F8;
-extern "C" S32 lbl_8025E528;
+extern volatile U32 gVsyncCount;
+extern U32 gFrameCount;
+extern S32 gGameState;
 void xScrFxFade(iColor_tag*, iColor_tag*, F32, void (*)(), S32, S32);
 void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba);
 
-extern "C" S32 fn_800AC0BC();
+S32 zGameNickCamActive();
 void zGameScreenTransitionEnd();
 void zGameScreenTransition_UIRender(F32 x1, F32 y1, F32 x2, F32 y2, S32 tex);
 void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba);
@@ -152,7 +152,7 @@ void zGameScreenTransitionUpdate(F32 percentComplete, char* msg);
 void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba);
 void zGameScreenTransition_UIRender(F32 x1, F32 y1, F32 x2, F32 y2, S32 tex);
 void zGameScreenTransitionEnd();
-extern "C" S32 fn_800AC0BC();
+S32 zGameNickCamActive();
 
 // Initialize the scene, camera, music and counters for a new game.
 void zGameInit(U32 theSceneID)
@@ -210,7 +210,7 @@ static S32 zGameLoopContinue()
 {
     if (gGameMode == eGameMode_Game)
     {
-        return lbl_8025E528 == 1 || lbl_8025E528 == 3 || lbl_8025E528 == 4;
+        return gGameState == 1 || gGameState == 3 || gGameState == 4;
     }
     else
     {
@@ -249,7 +249,7 @@ void zGameLoop()
         t0 = t1;
         t1 = iTimeGet();
         xPadUpdate(0, sTimeElapsed);
-        fn_80016600();
+        iSystemPollResetAndDisc();
         globals.update_dt = sTimeElapsed;
         zGameCheats(sTimeElapsed);
         zGameExtras(sTimeElapsed);
@@ -268,19 +268,19 @@ void zGameLoop()
         xCameraBegin(&globals.camera, 1);
         zVolume_OccludePrecalc(&globals.camera.hi_cam.mat.pos);
         zSceneRender();
-        fn_8004436C();
+        xTRCRenderMessage();
         xDebugUpdate();
         xDrawEnd();
         xCameraEnd(&globals.camera, sTimeElapsed, 1);
         iEnvEndRenderFX(NULL);
-        while ((lbl_8025E968 = VIGetRetraceCount()) - gLastVsyncFlip < 2)
+        while ((gVsyncCount = VIGetRetraceCount()) - gLastVsyncFlip < 2)
             iVSync();
-        gLastVsyncFlip = lbl_8025E968;
+        gLastVsyncFlip = gVsyncCount;
         xCameraShowRaster(&globals.camera);
         zLaughUpdate(sTimeElapsed);
         zMusicUpdate(sTimeElapsed);
         zGameUpdateMode();
-        ++lbl_8025E9F8;
+        ++gFrameCount;
         if (ostrich_delay > 0)
             --ostrich_delay;
         else
@@ -296,7 +296,7 @@ S32 zGameIsPaused()
         return 1;
     if (gGameMode == eGameMode_Save)
         return 1;
-    if (!zMenuRunning() && lbl_802289B8[0].state != 2)
+    if (!zMenuRunning() && gTrcPad[0].state != 2)
         return 1;
     return 0;
 }
@@ -307,7 +307,7 @@ void zGamePauseIfPossible()
     if (zGameGetOstrich() != 2 || zMenuRunning() || zGameModeGet() == 6 ||
         zGameModeGet() == 4)
         return;
-    if (fn_800AC0BC())
+    if (zGameNickCamActive())
         return;
     if (gGameMode != eGameMode_Pause)
     {
@@ -338,7 +338,7 @@ static void zGameUpdateMode()
     if (gGameMode != eGameMode_Game)
         return;
 
-    if (lbl_8025E528 == 1)
+    if (gGameState == 1)
     {
         iTimeGameAdvance(sTimeElapsed);
         if (globals.pad0->pressed & 1)
@@ -362,11 +362,11 @@ static void zGameUpdateMode()
         else
             startPressed = 0;
     }
-    else if (lbl_8025E528 == 4)
+    else if (gGameState == 4)
     {
         return;
     }
-    else if (lbl_8025E528 == 5)
+    else if (gGameState == 5)
     {
         zPortalAsset* portal = globals.sceneCur->pendingPortal->passet;
         S8* sceneName = (S8*)&portal->sceneID;
@@ -416,12 +416,12 @@ static void zGameUpdateMode()
         sTimeLast = iTimeGet() - (U64)((F32)OS_TIMER_CLOCK / 60.0f);
         zGameStateSwitch(1);
     }
-    else if (lbl_8025E528 == 2)
+    else if (gGameState == 2)
     {
         zSceneReset();
         zGameStateSwitch(1);
     }
-    else if (lbl_8025E528 == 3)
+    else if (gGameState == 3)
     {
         if (sGameOverTimer == 0.0f)
         {
@@ -439,7 +439,7 @@ static void zGameUpdateMode()
             }
         }
     }
-    else if (lbl_8025E528 == 7)
+    else if (gGameState == 7)
         sGameOverTimer = 0.0f;
 }
 
@@ -543,7 +543,7 @@ void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba)
         }
     }
     ++loadMeter;
-    fn_8004436C();
+    xTRCRenderMessage();
     xFontRender();
     xDebugUpdate();
     xDrawEnd();
@@ -775,7 +775,7 @@ static void zGameCheats(F32 dt)
 }
 
 // Test whether the active camera uses the special NICK CAM 2 asset.
-extern "C" S32 fn_800AC0BC()
+S32 zGameNickCamActive()
 {
     return xStrHash("NICK CAM 2") == globals.camera.hi_cam.asset->id ? TRUE : FALSE;
 }
