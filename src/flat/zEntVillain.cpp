@@ -19019,129 +19019,6 @@ static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp)
     return &g_npcBonus[list[choice]];
 }
 
-// Accumulate collision depenetration and redirect navigation when facing a wall.
-static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
-{
-    S32 hit_something = 0;
-    S32 looked = 1;
-    _xVec3 dir_trav = { 0.0f, 0.0f, 0.0f };
-    if (vil->abl_move & 0x10000)
-    {
-        looked = 0;
-        F32 angle = vil->frame->rot.angle;
-        dir_trav.x = sin(angle);
-        dir_trav.y = 0.0f;
-        dir_trav.z = cos(angle);
-    }
-    _xCollis* colrec = &vil->collis->colls[0];
-    if (colrec->flags & 1)
-    {
-        hit_something = 1;
-        xVec3AddTo(vec_accum, &colrec->depen);
-    }
-    else if (vil->collis->colls[1].flags & 1)
-    {
-        hit_something = 1;
-        xVec3AddTo(vec_accum, &vil->collis->colls[1].depen);
-    }
-    for (S32 i = vil->collis->npc_sidx; i < vil->collis->npc_eidx; i++)
-    {
-        colrec = &vil->collis->colls[i];
-        if (colrec->optr && (colrec->flags & 1) && !(colrec->flags & 2))
-        {
-            hit_something++;
-            xVec3AddTo(vec_accum, &colrec->depen);
-        }
-    }
-    for (S32 i = vil->collis->env_sidx; i < vil->collis->env_eidx; i++)
-    {
-        hit_something++;
-        colrec = &vil->collis->colls[i];
-        if (colrec->optr && (colrec->flags & 1) && !(colrec->flags & 2))
-        {
-            xVec3AddTo(vec_accum, &colrec->depen);
-            if (!looked) looked = VOUT_hit_isWall(vil, &dir_trav, &colrec->norm);
-        }
-    }
-    for (S32 i = vil->collis->stat_sidx; i < vil->collis->stat_eidx; i++)
-    {
-        colrec = &vil->collis->colls[i];
-        if (colrec->optr && (colrec->flags & 1) && !(colrec->flags & 2))
-        {
-            hit_something++;
-            xVec3AddTo(vec_accum, &colrec->depen);
-            if (!looked) looked = VOUT_hit_isWall(vil, &dir_trav, &colrec->norm);
-        }
-    }
-    return hit_something;
-}
-
-// Places a gum blob model at pos, unrotated and scaled by scale.
-static inline void VEFX_gumBlob_place(xModelInstance* blob, xVec3* pos, F32 scale)
-{
-    xMat4x3 mat = { 0 };
-    xMat3x3Euler((xMat3x3*)&mat, (xVec3*)&g_O3);
-    xVec3SMulBy(&mat.right, scale);
-    xVec3SMulBy(&mat.up, scale);
-    xVec3SMulBy(&mat.at, scale);
-    mat.flags = 0;
-    mat.pos = *pos;
-    memcpy(blob->Mat, &mat, sizeof(mat));
-}
-
-// Grow a broken flask's splash over its aftermath time, hurt the player inside it and emit the
-// flask's particles.
-static inline void VPRJ_BMM_splash(zEntProjectile* prj, F32 dt, _zParEmitter* emitter)
-{
-    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
-    _xCollis colrec = { 0 };
-    if (flask->tym_aftermath < 0.1f) return;
-
-    F32 pct = prj->tmr_curstate / flask->tym_aftermath;
-    F32 rad_orig = prj->bound.sph.r;
-    prj->bound.sph.r = pct * flask->rad_aftermath;
-    xBoundHitsBound(&prj->bound, &globals.player.ent.bound, &colrec);
-    if (colrec.flags & 1)
-    {
-        zEntPlayer_Damage(prj, 1);
-        prj->SendEvent(ZPRJ_EVNT_HITPLYR);
-    }
-    prj->bound.sph.r = rad_orig;
-
-    _zParEmitterCustomSettings info;
-    info.custom_flags = 0x20;
-    info.pos = *xEntGetPos(prj);
-    zParEmitterEmitCustom(emitter, dt, &info);
-}
-
-// Emit the Green Ghost ball's glow at the projectile, raised by yoff.
-static inline void VPRJ_BGG_ballfx(zEntProjectile* prj, F32 dt, F32 yoff)
-{
-    _zParEmitterCustomSettings info;
-    info.custom_flags = 0x20;
-    info.pos = *xEntGetPos(prj);
-    info.pos.y += yoff;
-    zParEmitterEmitCustom(sGreenBallEmitter, dt, &info);
-}
-
-// Keep the quake ball's landing point for the shockwave, or emit the shockwave ring there
-// when no projectile is given.
-static inline void VPRJ_BGG_shockfx(zEntProjectile* prj, F32 dt, F32 radius)
-{
-    if (prj)
-    {
-        sGreenShockPosition = *xEntGetPos(prj);
-    }
-    else
-    {
-        _zParEmitterCustomSettings info;
-        info.custom_flags = 0x20020;
-        info.xzcircle_radius = radius;
-        info.pos = sGreenShockPosition;
-        zParEmitterEmitCustom(sGreenShockEmitter, dt, &info);
-    }
-}
-
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
 {
     S32 idx = 0;
@@ -19198,6 +19075,15 @@ static inline F32 VSUP_ang_ofXZDir(_xVec3 dir)
     return atan2(dir.x, dir.z);
 }
 
+// Squared flat (x and z) distance from the entity to a position.
+static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
+{
+    _xVec3 delta = { 0 };
+
+    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
+    return delta.x * delta.x + delta.z * delta.z;
+}
+
 // Heading (around the y axis) from the entity to a position. If dir is given, it gets the unit
 // direction to the position.
 static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
@@ -19213,15 +19099,6 @@ static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
         xVec3Normalize(dir, &delta);
     }
     return ang;
-}
-
-// Squared flat (x and z) distance from the entity to a position.
-static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
-{
-    _xVec3 delta = { 0 };
-
-    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
-    return delta.x * delta.x + delta.z * delta.z;
 }
 
 // Squared flat (x and z) distance from the villain to another entity's position.
@@ -19356,6 +19233,129 @@ static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
         out->z *= -1.0f;
     else if (alter->z > 0.0f && out->z < 0.0f)
         out->z *= -1.0f;
+}
+
+// Accumulate collision depenetration and redirect navigation when facing a wall.
+static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
+{
+    S32 hit_something = 0;
+    S32 looked = 1;
+    _xVec3 dir_trav = { 0.0f, 0.0f, 0.0f };
+    if (vil->abl_move & 0x10000)
+    {
+        looked = 0;
+        F32 angle = vil->frame->rot.angle;
+        dir_trav.x = sin(angle);
+        dir_trav.y = 0.0f;
+        dir_trav.z = cos(angle);
+    }
+    _xCollis* colrec = &vil->collis->colls[0];
+    if (colrec->flags & 1)
+    {
+        hit_something = 1;
+        xVec3AddTo(vec_accum, &colrec->depen);
+    }
+    else if (vil->collis->colls[1].flags & 1)
+    {
+        hit_something = 1;
+        xVec3AddTo(vec_accum, &vil->collis->colls[1].depen);
+    }
+    for (S32 i = vil->collis->npc_sidx; i < vil->collis->npc_eidx; i++)
+    {
+        colrec = &vil->collis->colls[i];
+        if (colrec->optr && (colrec->flags & 1) && !(colrec->flags & 2))
+        {
+            hit_something++;
+            xVec3AddTo(vec_accum, &colrec->depen);
+        }
+    }
+    for (S32 i = vil->collis->env_sidx; i < vil->collis->env_eidx; i++)
+    {
+        hit_something++;
+        colrec = &vil->collis->colls[i];
+        if (colrec->optr && (colrec->flags & 1) && !(colrec->flags & 2))
+        {
+            xVec3AddTo(vec_accum, &colrec->depen);
+            if (!looked) looked = VOUT_hit_isWall(vil, &dir_trav, &colrec->norm);
+        }
+    }
+    for (S32 i = vil->collis->stat_sidx; i < vil->collis->stat_eidx; i++)
+    {
+        colrec = &vil->collis->colls[i];
+        if (colrec->optr && (colrec->flags & 1) && !(colrec->flags & 2))
+        {
+            hit_something++;
+            xVec3AddTo(vec_accum, &colrec->depen);
+            if (!looked) looked = VOUT_hit_isWall(vil, &dir_trav, &colrec->norm);
+        }
+    }
+    return hit_something;
+}
+
+// Places a gum blob model at pos, unrotated and scaled by scale.
+static inline void VEFX_gumBlob_place(xModelInstance* blob, xVec3* pos, F32 scale)
+{
+    xMat4x3 mat = { 0 };
+    xMat3x3Euler((xMat3x3*)&mat, (xVec3*)&g_O3);
+    xVec3SMulBy(&mat.right, scale);
+    xVec3SMulBy(&mat.up, scale);
+    xVec3SMulBy(&mat.at, scale);
+    mat.flags = 0;
+    mat.pos = *pos;
+    memcpy(blob->Mat, &mat, sizeof(mat));
+}
+
+// Grow a broken flask's splash over its aftermath time, hurt the player inside it and emit the
+// flask's particles.
+static inline void VPRJ_BMM_splash(zEntProjectile* prj, F32 dt, _zParEmitter* emitter)
+{
+    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
+    _xCollis colrec = { 0 };
+    if (flask->tym_aftermath < 0.1f) return;
+
+    F32 pct = prj->tmr_curstate / flask->tym_aftermath;
+    F32 rad_orig = prj->bound.sph.r;
+    prj->bound.sph.r = pct * flask->rad_aftermath;
+    xBoundHitsBound(&prj->bound, &globals.player.ent.bound, &colrec);
+    if (colrec.flags & 1)
+    {
+        zEntPlayer_Damage(prj, 1);
+        prj->SendEvent(ZPRJ_EVNT_HITPLYR);
+    }
+    prj->bound.sph.r = rad_orig;
+
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xEntGetPos(prj);
+    zParEmitterEmitCustom(emitter, dt, &info);
+}
+
+// Emit the Green Ghost ball's glow at the projectile, raised by yoff.
+static inline void VPRJ_BGG_ballfx(zEntProjectile* prj, F32 dt, F32 yoff)
+{
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xEntGetPos(prj);
+    info.pos.y += yoff;
+    zParEmitterEmitCustom(sGreenBallEmitter, dt, &info);
+}
+
+// Keep the quake ball's landing point for the shockwave, or emit the shockwave ring there
+// when no projectile is given.
+static inline void VPRJ_BGG_shockfx(zEntProjectile* prj, F32 dt, F32 radius)
+{
+    if (prj)
+    {
+        sGreenShockPosition = *xEntGetPos(prj);
+    }
+    else
+    {
+        _zParEmitterCustomSettings info;
+        info.custom_flags = 0x20020;
+        info.xzcircle_radius = radius;
+        info.pos = sGreenShockPosition;
+        zParEmitterEmitCustom(sGreenShockEmitter, dt, &info);
+    }
 }
 
 // Colors of the hologram poof and dots particles when a villain appears and disappears, by
