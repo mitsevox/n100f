@@ -588,31 +588,32 @@ static S32 VILN_shark_trangoal(st_zEntVillain*, st_STIMULUS_CONTEXT_DATA*, F32);
 // Where the Mastermind stood when he last looked for a teleport point.
 static _xVec3 sMMPreTeleportPos;
 
+// The Black Knight's lightning bolts.
+static _tagLightning* g_bk_lytstrk[5];
+
 // Redbeard's swords.
 static st_REDBEARD_SWORD g_rbsword[4];
 
-
-static _tagLightning* sKnightLightning[5];
-static _tagLightning* sMastermindLightning[5];
+// The Mastermind's lightning bolts.
+static _tagLightning* g_mm_lytstrk[5];
 static _xVec3 sGreenShockPosition;
-static _zParEmitter* sGreenShockEmitter;
+
+// Particle emitters, in the SLUS-20349 declaration order (which is also the target's .sbss order).
 static _zParEmitter* sEmitHoloPoof;
 static _zParEmitter* sEmitHoloDots;
-static _zParEmitter* sGreenBallEmitter;
-static _zParEmitter* sGreenBallSmackEmitter;
-static _zParEmitter* sGreenHurtEmitter;
-static _zParEmitter* sGreenVortexEmitter1;
-static _zParEmitter* sGreenVortexEmitter2;
-static _zParEmitter* sGreenVortexEmitter3;
-static _zParEmitter* sWitchDyingEmitter;
-static _zParEmitter* sPlantCloudEmitter;
-static _zParEmitter* sMMRedFlaskEmitter;
-static _zParEmitter* sMMGreenFlaskEmitter;
-static _zParEmitter* sMMBlackFlaskEmitter;
-static _zParEmitter* sMMShowEmitter;
-static _zParEmitter* sMMHideEmitter;
-static _zParEmitter* sRBWallEmitter;
-
+static _zParEmitter* sEmitRBFlames;
+static _zParEmitter* sEmitGGVortex1;
+static _zParEmitter* sEmitGGVortex2;
+static _zParEmitter* sEmitGGVortex3;
+static _zParEmitter* sEmitGGVortexHurt;
+static _zParEmitter* sEmitGreenBall;
+static _zParEmitter* sEmitGreenBallSmack;
+static _zParEmitter* sEmitGreenBallShockwave;
+static _zParEmitter* sEmitWitchDying;
+static _zParEmitter* sEmitKillerPlant;
+static _zParEmitter* sEmitMMRedFlask;
+static _zParEmitter* sEmitMMGreenFlask;
+static _zParEmitter* sEmitMMBlackFlask;
 // The particle emitters of the Mastermind's teleport out and in.
 static _zParEmitter* sEmitMMTeleportHide;
 static _zParEmitter* sEmitMMTeleportShow;
@@ -4879,13 +4880,13 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         }
         break;
     case ZVIL_GOAL_DIE:
-        if (vil->asset->subtype == eEntVillainTypeWitchDoctor && sWitchDyingEmitter)
+        if (vil->asset->subtype == eEntVillainTypeWitchDoctor && sEmitWitchDying)
         {
             _zParEmitterCustomSettings info;
             info.custom_flags = 0x20;
             xVec3Copy(&info.pos, xEntGetPos(vil));
             info.pos.y += 1.0f;
-            zParEmitterEmitCustom(sWitchDyingEmitter, dt, &info);
+            zParEmitterEmitCustom(sEmitWitchDying, dt, &info);
         }
         VPAR_emit_partype(vil, VPAR_EMIT_DECAY, dt);
         if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
@@ -9773,7 +9774,7 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             xAnimSingle* single = VANM_entSingle(vil);
             if (single) single->CurrentSpeed = vil->sanim_chase.y;
         }
-        sGreenHurtEmitter->emit_flags |= 1;
+        sEmitGGVortexHurt->emit_flags |= 1;
         if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f && vil->tmr_list[ZVIL_TDUR_HURT] <= 0.0f)
         {
             if (vil->hitpts < 1)
@@ -9787,7 +9788,7 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                 resp->tranmode = ZVIL_MODE_NORMAL;
             }
             resp->stim = ZVIL_STIM_TRANGOAL;
-            sGreenHurtEmitter->emit_flags &= (U8)~1;
+            sEmitGGVortexHurt->emit_flags &= (U8)~1;
         }
         break;
     case ZVIL_GOAL_DIE:
@@ -10282,12 +10283,12 @@ static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     static F32 flame_timer = 0.0f;
     S32 idx = 0;
     xModelInstance* model = vil->model;
-    if (sRBWallEmitter)
+    if (sEmitRBFlames)
     {
         if ((vil->goal >= ZVIL_GOAL_NONE && vil->goal <= ZVIL_GOAL_IDLE) || vil->goal == ZVIL_GOAL_DIE)
         {
             zEntEvent(zSceneFindObject(xStrHash("FIREBALL_LOOP_SFX")), eEventStop);
-            sRBWallEmitter->emit_flags &= (U8)~1;
+            sEmitRBFlames->emit_flags &= (U8)~1;
         }
         else
         {
@@ -10295,20 +10296,20 @@ static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
             F32 dx = -0.5f - pos->x;
             if (dx * dx + pos->z * pos->z < 30.0f)
             {
-                if (!(sRBWallEmitter->emit_flags & 1))
+                if (!(sEmitRBFlames->emit_flags & 1))
                 {
                     zEntEvent(zSceneFindObject(xStrHash("FIREBALL_LOOP_SFX")), eEventPlay);
-                    sRBWallEmitter->emit_flags |= 1;
+                    sEmitRBFlames->emit_flags |= 1;
                     flame_timer = 3.0f;
                 }
             }
             else
             {
                 flame_timer -= 0.033333335f;
-                if (flame_timer <= 0.0f && (sRBWallEmitter->emit_flags & 1))
+                if (flame_timer <= 0.0f && (sEmitRBFlames->emit_flags & 1))
                 {
                     zEntEvent(zSceneFindObject(xStrHash("FIREBALL_LOOP_SFX")), eEventStop);
-                    sRBWallEmitter->emit_flags &= (U8)~1;
+                    sEmitRBFlames->emit_flags &= (U8)~1;
                 }
             }
         }
@@ -14535,7 +14536,7 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
     }
     if (ent->asset->subtype == eEntVillainTypeKillerPlant)
     {
-        if (sPlantCloudEmitter)
+        if (sEmitKillerPlant)
         {
             _zParEmitterCustomSettings settings;
             settings.pos.x = ent->model->Mat->pos.x;
@@ -14547,7 +14548,7 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
             xVec3Normalize(&tmpvec, &dirvec);
             settings.custom_flags = 0x60;
             xVec3SMul(&settings.vel, &tmpvec, 1.0f + 0.25f * iurand());
-            zParEmitterEmitCustom(sPlantCloudEmitter, dt, &settings);
+            zParEmitterEmitCustom(sEmitKillerPlant, dt, &settings);
         }
     }
     else VPAR_emit_extattack(ent, &shotpos, &dirvec, dist, conrat, dt);
@@ -15491,7 +15492,7 @@ static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
             _zParEmitterCustomSettings info;
             info.custom_flags = 0x20;
             info.pos = *xEntGetPos(prj);
-            zParEmitterEmitCustom(sGreenBallSmackEmitter, dt, &info);
+            zParEmitterEmitCustom(sEmitGreenBallSmack, dt, &info);
             VPRJ_BGG_shockfx(prj, dt, 0.0f);
             prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
         }
@@ -16008,7 +16009,7 @@ static inline void VPRJ_BMM_redflask(zEntProjectile* prj, F32 dt)
     _zParEmitterCustomSettings info;
     info.custom_flags = 0x20;
     info.pos = *xEntGetPos(prj);
-    zParEmitterEmitCustom(sMMRedFlaskEmitter, dt, &info);
+    zParEmitterEmitCustom(sEmitMMRedFlask, dt, &info);
 }
 
 // A broken acid flask's splash, as VPRJ_BMM_redflask, with the green flask particles.
@@ -16032,7 +16033,7 @@ static inline void VPRJ_BMM_greenflask(zEntProjectile* prj, F32 dt)
     _zParEmitterCustomSettings info;
     info.custom_flags = 0x20;
     info.pos = *xEntGetPos(prj);
-    zParEmitterEmitCustom(sMMGreenFlaskEmitter, dt, &info);
+    zParEmitterEmitCustom(sEmitMMGreenFlask, dt, &info);
 }
 
 // A broken smog flask's splash, as VPRJ_BMM_redflask, with the black flask particles.
@@ -16056,7 +16057,7 @@ static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt)
     _zParEmitterCustomSettings info;
     info.custom_flags = 0x20;
     info.pos = *xEntGetPos(prj);
-    zParEmitterEmitCustom(sMMBlackFlaskEmitter, dt, &info);
+    zParEmitterEmitCustom(sEmitMMBlackFlask, dt, &info);
 }
 
 // Prepare a Redbeard sword entity and its collision targets.
@@ -16311,10 +16312,10 @@ static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup)
     S32 i;
     for (i = 0; i < 5; i++)
     {
-        if (sMastermindLightning[i])
+        if (g_mm_lytstrk[i])
         {
-            zLightningKill(sMastermindLightning[i]);
-            sMastermindLightning[i] = NULL;
+            zLightningKill(g_mm_lytstrk[i]);
+            g_mm_lytstrk[i] = NULL;
         }
     }
     if (cleanup) return;
@@ -16328,7 +16329,7 @@ static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup)
     add.r = add.g = add.b = 255;
     add.rand_radius = 5.0f;
     add.flags = 0x34;
-    sMastermindLightning[0] = zLightningAdd(&add);
+    g_mm_lytstrk[0] = zLightningAdd(&add);
 
     add.type = eLT_Rotating;
     add.total_points = 16;
@@ -16341,7 +16342,7 @@ static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup)
     if (irand() & 1) add.move_degrees = -add.move_degrees;
     add.rot_radius = 0.5f;
     add.flags = 0x3C;
-    sMastermindLightning[1] = zLightningAdd(&add);
+    g_mm_lytstrk[1] = zLightningAdd(&add);
 }
 
 // Replace or clear the lightning around the Black Knight.
@@ -16353,10 +16354,10 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
 
     for (i = 0; i < 5; i++)
     {
-        if (sKnightLightning[i])
+        if (g_bk_lytstrk[i])
         {
-            zLightningKill(sKnightLightning[i]);
-            sKnightLightning[i] = NULL;
+            zLightningKill(g_bk_lytstrk[i]);
+            g_bk_lytstrk[i] = NULL;
         }
     }
     if (cleanup) return;
@@ -16373,7 +16374,7 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
     add.r = add.g = add.b = 255;
     add.rand_radius = 5.0f;
     add.flags = 0x34;
-    sKnightLightning[0] = zLightningAdd(&add);
+    g_bk_lytstrk[0] = zLightningAdd(&add);
 
     add.type = eLT_Rotating;
     add.total_points = 16;
@@ -16386,7 +16387,7 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
     if (irand() & 1) add.move_degrees = -add.move_degrees;
     add.rot_radius = 0.5f;
     add.flags = 0x3C;
-    sKnightLightning[1] = zLightningAdd(&add);
+    g_bk_lytstrk[1] = zLightningAdd(&add);
 }
 
 // Start a straight white bolt from one point to another.
@@ -16459,21 +16460,21 @@ static void VPAR_readyize_emitters()
     g_emitready = 1;
     sEmitHoloPoof = zParEmitterFind("ParEmit_Vil_HoloPoof");
     sEmitHoloDots = zParEmitterFind("ParEmit_Vil_HoloDots");
-    sGreenBallEmitter = zParEmitterFind("GREENBALL EMITTER");
-    sGreenBallSmackEmitter = zParEmitterFind("GREENBALL SMACK EMITTER");
-    sGreenShockEmitter = zParEmitterFind("GREENBALL SHOCKWAVE EMITTER");
-    sGreenHurtEmitter = zParEmitterFind("VORTEX EMITTER GG HURT");
-    sGreenVortexEmitter1 = zParEmitterFind("VORTEX EMITTER 1");
-    sGreenVortexEmitter2 = zParEmitterFind("VORTEX EMITTER 2");
-    sGreenVortexEmitter3 = zParEmitterFind("VORTEX EMITTER 3");
-    sWitchDyingEmitter = zParEmitterFind("PAREMIT_WITCH_DYING");
-    sPlantCloudEmitter = zParEmitterFind("PAREMIT_KILLERPLANT_CLOUD");
-    sMMRedFlaskEmitter = zParEmitterFind("PAREMIT_MM_REDFLASK");
-    sMMGreenFlaskEmitter = zParEmitterFind("PAREMIT_MM_GREENFLASK");
-    sMMBlackFlaskEmitter = zParEmitterFind("PAREMIT_MM_BLACKFLASK");
-    sMMShowEmitter = zParEmitterFind("PAREMIT_MM_TELEPORT_SHOW");
-    sMMHideEmitter = zParEmitterFind("PAREMIT_MM_TELEPORT_HIDE");
-    sRBWallEmitter = zParEmitterFind("RB STOPPING WALL EMITTER");
+    sEmitGreenBall = zParEmitterFind("GREENBALL EMITTER");
+    sEmitGreenBallSmack = zParEmitterFind("GREENBALL SMACK EMITTER");
+    sEmitGreenBallShockwave = zParEmitterFind("GREENBALL SHOCKWAVE EMITTER");
+    sEmitGGVortexHurt = zParEmitterFind("VORTEX EMITTER GG HURT");
+    sEmitGGVortex1 = zParEmitterFind("VORTEX EMITTER 1");
+    sEmitGGVortex2 = zParEmitterFind("VORTEX EMITTER 2");
+    sEmitGGVortex3 = zParEmitterFind("VORTEX EMITTER 3");
+    sEmitWitchDying = zParEmitterFind("PAREMIT_WITCH_DYING");
+    sEmitKillerPlant = zParEmitterFind("PAREMIT_KILLERPLANT_CLOUD");
+    sEmitMMRedFlask = zParEmitterFind("PAREMIT_MM_REDFLASK");
+    sEmitMMGreenFlask = zParEmitterFind("PAREMIT_MM_GREENFLASK");
+    sEmitMMBlackFlask = zParEmitterFind("PAREMIT_MM_BLACKFLASK");
+    sEmitMMTeleportShow = zParEmitterFind("PAREMIT_MM_TELEPORT_SHOW");
+    sEmitMMTeleportHide = zParEmitterFind("PAREMIT_MM_TELEPORT_HIDE");
+    sEmitRBFlames = zParEmitterFind("RB STOPPING WALL EMITTER");
 }
 
 // Emit a villain particle role at its bound, head, or marked model vertices.
@@ -19471,7 +19472,7 @@ static inline void VPRJ_BGG_ballfx(zEntProjectile* prj, F32 dt, F32 yoff)
     info.custom_flags = 0x20;
     info.pos = *xEntGetPos(prj);
     info.pos.y += yoff;
-    zParEmitterEmitCustom(sGreenBallEmitter, dt, &info);
+    zParEmitterEmitCustom(sEmitGreenBall, dt, &info);
 }
 
 // Keep the quake ball's landing point for the shockwave, or emit the shockwave ring there
@@ -19488,6 +19489,6 @@ static inline void VPRJ_BGG_shockfx(zEntProjectile* prj, F32 dt, F32 radius)
         info.custom_flags = 0x20020;
         info.xzcircle_radius = radius;
         info.pos = sGreenShockPosition;
-        zParEmitterEmitCustom(sGreenShockEmitter, dt, &info);
+        zParEmitterEmitCustom(sEmitGreenBallShockwave, dt, &info);
     }
 }
