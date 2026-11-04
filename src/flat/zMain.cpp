@@ -66,7 +66,6 @@ void zMainLoop();
 void zMainMemLvlChkCB();
 void zMainParseINIGlobals(xIniFile* ini);
 static void zMainCheckINI();
-static void zMainReadProfFuncs(xIniFile* ini);
 void zMainFirstScreen(S32 mode);
 extern "C" void main();
 
@@ -297,22 +296,6 @@ void zMainLoop()
     }
 }
 
-static void zMainReadProfFuncs(xIniFile* ini)
-{
-    strncpy(globals.profFunc[0], xIniGetString(ini, "ProfFuncTriangle", ""), 128);
-    globals.profFunc[0][127] = 0;
-    strncpy(globals.profFunc[1], xIniGetString(ini, "ProfFuncSquare", ""), 128);
-    globals.profFunc[1][127] = 0;
-    strncpy(globals.profFunc[2], xIniGetString(ini, "ProfFuncLeft", ""), 128);
-    globals.profFunc[2][127] = 0;
-    strncpy(globals.profFunc[3], xIniGetString(ini, "ProfFuncRight", ""), 128);
-    globals.profFunc[3][127] = 0;
-    strncpy(globals.profFunc[4], xIniGetString(ini, "ProfFuncUp", ""), 128);
-    globals.profFunc[4][127] = 0;
-    strncpy(globals.profFunc[5], xIniGetString(ini, "ProfFuncDown", ""), 128);
-    globals.profFunc[5][127] = 0;
-}
-
 static void zMainCheckINI()
 {
     U32 size;
@@ -331,7 +314,18 @@ static void zMainCheckINI()
                 strcpy(globals.sceneStart, str);
         }
         globals.profile = xIniGetInt(ini, "Profile", 0);
-        zMainReadProfFuncs(ini);
+        strncpy(globals.profFunc[0], xIniGetString(ini, "ProfFuncTriangle", ""), 128);
+        globals.profFunc[0][127] = 0;
+        strncpy(globals.profFunc[1], xIniGetString(ini, "ProfFuncSquare", ""), 128);
+        globals.profFunc[1][127] = 0;
+        strncpy(globals.profFunc[2], xIniGetString(ini, "ProfFuncLeft", ""), 128);
+        globals.profFunc[2][127] = 0;
+        strncpy(globals.profFunc[3], xIniGetString(ini, "ProfFuncRight", ""), 128);
+        globals.profFunc[3][127] = 0;
+        strncpy(globals.profFunc[4], xIniGetString(ini, "ProfFuncUp", ""), 128);
+        globals.profFunc[4][127] = 0;
+        strncpy(globals.profFunc[5], xIniGetString(ini, "ProfFuncDown", ""), 128);
+        globals.profFunc[5][127] = 0;
         zMainParseINIGlobals(ini);
         xIniDestroy(ini);
     }
