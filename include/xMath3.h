@@ -125,6 +125,13 @@ inline void xVec3SMul(xVec3* o, const xVec3* v, F32 s)
     o->z = v->z * s;
 }
 
+inline void xVec3AddScaled(xVec3* o, const xVec3* v, F32 s)
+{
+    o->x += v->x * s;
+    o->y += v->y * s;
+    o->z += v->z * s;
+}
+
 inline void xVec3SMulBy(xVec3* v, F32 s)
 {
     v->x *= s;

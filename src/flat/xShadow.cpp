@@ -248,13 +248,6 @@ static inline void xShadowRenderWorldNear(xVec3* center, F32 radius)
     xShadowRenderWorld(center, radius);
 }
 
-static inline void xVec3AddScaled(xVec3* o, const xVec3* v, F32 s)
-{
-    o->x += v->x * s;
-    o->y += v->y * s;
-    o->z += v->z * s;
-}
-
 void xShadowRenderWorld(xVec3* center, F32 radius)
 {
     xSphere _s;
@@ -274,10 +267,10 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
 
     zone.center.x = 0.0f;
     zone.center.y = 0.0f;
-    zone.center.z = 0.0f;
     sShadowFlags = 0;
     ent_dist = 100.0f;
     env_dist = 100.0f;
+    zone.center.z = 0.0f;
     hit_env = 0;
     hit_ent = 0;
     for (i = 0; i < 3; i++)
@@ -295,8 +288,8 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
         R[i].flags = 0xC00;
         xRayHitsScene(globals.sceneCur, &R[i], &crec[i]);
 
-        hit = R[i].origin;
-        RwV3dIncrementScaledMacro((RwV3d*)&hit, (RwV3d*)&R[i].dir, crec[i].dist);
+        *(RwV3d*)&hit = *(RwV3d*)&R[i].origin;
+        xVec3AddScaled(&hit, &R[i].dir, crec[i].dist);
 
         if (crec[i].flags & 1)
         {
@@ -313,9 +306,7 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
                 {
                     xVec3 p;
                     hit_env++;
-                    p.x = R[i].origin.x;
-                    p.y = R[i].origin.y;
-                    p.z = R[i].origin.z;
+                    p = R[i].origin;
                     xVec3AddScaled(&p, &R[i].dir, ecrec.dist);
                     if (ecrec.dist < env_dist)
                     {
@@ -356,9 +347,7 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     if (sShadowFlags & 1)
     {
         zone.r = radius;
-        _s.center.x = zone.center.x;
-        _s.center.y = zone.center.y;
-        _s.center.z = zone.center.z;
+        _s.center = zone.center;
         _s.r = zone.r;
         sSphere.center.x = zone.center.x;
         sSphere.center.y = zone.center.y;
