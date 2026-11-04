@@ -433,6 +433,8 @@ static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3*
                                _xVec3* vec_off, _xVec3* vec_spin, F32 arcness, F32 heavy);
 static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup);
 static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup);
+static inline _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 dur);
+static inline _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 dur);
 static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bot_radius);
 static void VWEP_rbs_chkCollide(st_REDBEARD_SWORD* rbs, F32 dt);
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* sword, st_zEntVillain* vil);
@@ -15289,65 +15291,35 @@ static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
 // Replace or clear the lightning emitted by a Black Knight axe.
 static void VPRJ_zapTheAxe(zEntProjectile* prj, S32 cleanup)
 {
-    st_BKAXE_DATA* axe = (st_BKAXE_DATA*)prj->xtradata;
+    st_BKAXE_DATA* axfx = (st_BKAXE_DATA*)prj->xtradata;
     S32 i;
+    _xVec3 loca = { 0 };
+    _xVec3 from = { 0 };
+
     for (i = 0; i < 8; i++)
     {
-        if (axe->strk[i])
+        if (axfx->strk[i])
         {
-            zLightningKill(axe->strk[i]);
-            axe->strk[i] = NULL;
+            zLightningKill(axfx->strk[i]);
+            axfx->strk[i] = NULL;
         }
     }
     if (cleanup) return;
 
-    _xVec3 end = *xEntGetPos(prj);
-    end.y += 50.0f;
-    _tagLightningAdd line = { eLT_Line };
-    line.start = xEntGetPos(prj);
-    line.end = &end;
-    line.time = axe->tym_zapdur;
-    line.total_points = 16;
-    line.thickness = 0.25f;
-    line.r = line.g = line.b = 255;
-    line.rand_radius = 5.0f;
-    line.flags = 0x34;
-    axe->strk[0] = zLightningAdd(&line);
+    loca = *xEntGetPos(prj);
+    loca.y += 50.0f;
+    axfx->strk[0] = VEFX_zapper_type_A(xEntGetPos(prj), &loca, axfx->tym_zapdur);
+    axfx->strk[1] = VEFX_zapper_type_B(xEntGetPos(prj), &loca, axfx->tym_zapdur);
 
-    _tagLightningAdd ring = { eLT_Line };
-    ring.start = xEntGetPos(prj);
-    ring.end = &end;
-    ring.time = axe->tym_zapdur;
-    ring.total_points = 16;
-    ring.thickness = 0.16f;
-    ring.r = ring.g = 80;
-    ring.b = 255;
-    ring.rand_radius = 3.0f;
-    ring.setup_degrees = 20.0f + 90.0f * iurand();
-    ring.move_degrees = 180.0f + 360.0f * iurand();
-    if (irand() & 1) ring.move_degrees = -ring.move_degrees;
-    ring.rot_radius = 0.5f;
-    ring.flags = 0x3C;
-    axe->strk[1] = zLightningAdd(&ring);
-
-    _xVec3 start = *xEntGetPos(prj);
-    start.y += 1.0f;
+    from = *xEntGetPos(prj);
+    from.y += 1.0f;
     for (i = 2; i <= 4; i++)
     {
-        end = *xEntGetPos(prj);
-        end.x += axe->rad_zap * (2.0f * (iurand() - 0.5f));
-        end.z += axe->rad_zap * (2.0f * (iurand() - 0.5f));
-        end.y -= axe->dst_zapdrop;
-        _tagLightningAdd ground = { eLT_Line };
-        ground.start = &start;
-        ground.end = &end;
-        ground.time = axe->tym_zapdur;
-        ground.total_points = 16;
-        ground.thickness = 0.25f;
-        ground.r = ground.g = ground.b = 255;
-        ground.rand_radius = 5.0f;
-        ground.flags = 0x34;
-        axe->strk[i] = zLightningAdd(&ground);
+        loca = *xEntGetPos(prj);
+        loca.x += axfx->rad_zap * (2.0f * (iurand() - 0.5f));
+        loca.z += axfx->rad_zap * (2.0f * (iurand() - 0.5f));
+        loca.y -= axfx->dst_zapdrop;
+        axfx->strk[i] = VEFX_zapper_type_A(&from, &loca, axfx->tym_zapdur);
     }
 }
 
@@ -16384,6 +16356,43 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
     add.rot_radius = 0.5f;
     add.flags = 0x3C;
     sKnightLightning[1] = zLightningAdd(&add);
+}
+
+// Start a straight white bolt from one point to another.
+static inline _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 dur)
+{
+    _tagLightningAdd add = { eLT_Line };
+    add.start = from;
+    add.end = to;
+    add.time = dur;
+    add.total_points = 16;
+    add.thickness = 0.25f;
+    add.r = add.g = add.b = 255;
+    add.rand_radius = 5.0f;
+    add.flags = 0x34;
+    _tagLightning* bolt = zLightningAdd(&add);
+    return bolt;
+}
+
+// Start a blue bolt that spins around the line from one point to another.
+static inline _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 dur)
+{
+    _tagLightningAdd add = { eLT_Line };
+    add.start = from;
+    add.end = to;
+    add.time = dur;
+    add.total_points = 16;
+    add.thickness = 0.16f;
+    add.r = add.g = 80;
+    add.b = 255;
+    add.rand_radius = 3.0f;
+    add.setup_degrees = 20.0f + 90.0f * iurand();
+    add.move_degrees = 180.0f + 360.0f * iurand();
+    if (irand() & 1) add.move_degrees = -add.move_degrees;
+    add.rot_radius = 0.5f;
+    add.flags = 0x3C;
+    _tagLightning* bolt = zLightningAdd(&add);
+    return bolt;
 }
 
 // Find the particle emitters used by villains in this scene.
