@@ -624,7 +624,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zScene.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zScript.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zSFX.cpp"),
-            Object(NonMatching, "flat/zSurface.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zSurface.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zTimer.cpp"),
             Object(NonMatching, "flat/zUIFont.cpp"),
             Object(NonMatching, "flat/zUI.cpp"),
