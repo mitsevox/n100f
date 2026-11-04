@@ -5418,7 +5418,7 @@ void zEntPlayerFloorUpdate(_xEnt* p, _xScene* sc, F32 dt)
         vel = &p->frame->vel;
         if (((fcoll->flags & 1) &&
              (fnorm->y > (F32)cos(surfSlideStop) || (fsurf && (fsurf->state || !zSurfaceGetSlide(fsurf))))) ||
-            vel->y > 0.0f || surfSlickRatio != 0.0f)
+            vel->y > 0.0f || surfSlickRatio)
         {
             if (!(globals.player.Inv_Specials & 8))
             {
@@ -5894,7 +5894,10 @@ void zEntPlayerReset(_xEnt* ent)
             globals.player.Inv_Chances = 3;
             globals.player.Inv_ScoobySnacks = 0;
             globals.player.Inv_Specials = globals.player.s.Initial_Specials;
-            globals.player.Inv_Mtokens[0] = 0;
+            for (U32 i = 0; i < sizeof(globals.player.Inv_Mtokens) / sizeof(globals.player.Inv_Mtokens[0]); i++)
+            {
+                globals.player.Inv_Mtokens[i] = 0;
+            }
             gPlayerHitWater = 0;
             sPlayerWaterOffset = 0.0f;
             gDeadScooby = 0;
