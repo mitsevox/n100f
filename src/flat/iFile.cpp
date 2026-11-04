@@ -288,7 +288,7 @@ S32 iFileReadAsync(tag_xFile* file, void* buf, U32 aSize, void (*callback)(tag_x
             file_queue[i].offset = 0;
             file_queue[i].stat = IFILE_RDSTAT_QUEUED;
             file_queue[i].callback = callback;
-            file_queue[i].asynckey = id + i;
+            file_queue[i].asynckey = (U32)id + i;
 
             s32 readSize = 32;
             if (aSize < 32)
