@@ -21,6 +21,7 @@ Notes on the DWARF exports:
 - MW records every aggregate as `class`. `dwarf_types.h` keeps that, so read `class` as struct/class.
 - Functions referenced through pointers also show up as `global_variable` entries with a function type (e.g. animation callbacks). They're kept as-is.
 - Static functions sometimes carry no parameter entries. The mangled name still encodes their parameter types.
+- SLUS-20349's type attributes omit qualifiers that its mangled names retain. For example, `iFileFind__FPCcP9tag_xFile` encodes a `const char*`, while its parameter record renders as `char*`; `xQuatMul` likewise loses the const qualifiers of its input pointers. Do not infer that original declarations lacked const or volatile merely because the type dump lacks them. Check mangled names, actual accesses and other evidence; qualifier omission does not establish which qualifier any particular local had.
 
 ## Community references
 
