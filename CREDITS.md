@@ -22,6 +22,7 @@ The `XENT_PFLAGS_IS_MOVING` and `XENT_COLLTYPE_PLYR` macros in `include/xEnt.h` 
 - `xClimateVecFromAngle` and `xIniGetIndex` keep bfbb's names but are declared `static inline` by choice: neither the target nor the SLUS-20349 DWARF has an out-of-line copy, so their original linkage is unknown.
 - `xClimateInitAsset` stores `1` and `0` to `_tagRain::rain`, an `S32` in the DWARF, where bfbb writes `1.0f` and `0.0f`.
 - `xScrFxLetterbox` sets 16.0f where bfbb reads `sLetterBoxSize`, as the target does.
+- `xScrFxUpdate` computes a plain fade's channels through bfbb's static helper `InterpCol` (`src/SB/Core/x/xScrFx.cpp` at revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6`, CC0 1.0), copied verbatim; the rest of `xScrFxUpdate` is written for this project from the target.
 
 `zEntPlayerJumpStart` in `src/flat/zEntPlayer.cpp` was written from the target and the SLUS-20349 DWARF, and coincides almost line for line, including its duplicate branch, with the function of the same name in bfbb's `zEntPlayer.cpp` at revision `d8e8eac38dd617ee72161f4cb2da4498bc89aad6` (CC0 1.0). The same file's `static inline` sine and cosine wrappers take the names `isin` and `icos` from bfbb's `iMath.h` at that revision; their one-line bodies are written for this project. The inline `xEntGetFrame` in `include/xEnt.h` takes its name from bfbb's `zEntPlayer.cpp` at that revision, which passes `xEntGetFrame(&globals.player.ent)` to its camera as `zEntPlayerReset` does here; its one-line body is written for this project.
 
