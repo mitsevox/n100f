@@ -3262,7 +3262,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
             }
             else if (globals.player.Inv_Specials & 0x10)
             {
-                globals.player.Sneak = ((globals.player.Inv_Specials >> 5) & 1) + 1;
+                globals.player.Sneak = ((globals.player.Inv_Specials & 0x20) >> 5) + 1;
                 zLaughNotify(0);
             }
         }
@@ -3457,8 +3457,8 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         {
             zSceneGameStatsTally_death();
             zGameStateSwitch(2);
-            gPlayerHitWater = 0;
             globals.player.Health = 3;
+            gPlayerHitWater = 0;
             sPlayerWaterOffset = 0.0f;
             gDeadScooby = 0;
         }
@@ -3495,7 +3495,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
                             (vill->frame->oldpos.x - ent->frame->mat.pos.x) +
                         (vill->frame->oldpos.z - ent->frame->mat.pos.z) *
                             (vill->frame->oldpos.z - ent->frame->mat.pos.z);
-            ydist = fabs(vill->frame->mat.pos.y - ent->frame->mat.pos.y);
+            ydist = fabsf(vill->frame->mat.pos.y - ent->frame->mat.pos.y);
             if (((rad2 > sdist2 && radold2 <= sdist2) || (rad2 > sdistold2 && radold2 <= sdistold2)) &&
                 ydist < 0.5f)
             {
@@ -4053,7 +4053,10 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
                 simpent = (_zEntSimpleObj*)zsc->stats[i];
                 if (simpent->sflags & 1)
                 {
-                    if (xVec3Dist2(&globals.player.ent.bound.sph.center, (xVec3*)&simpent->model->Mat->pos) <
+                    F32 dx = globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x;
+                    F32 dy = globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y;
+                    F32 dz = globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z;
+                    if (SQ(dx) + SQ(dy) + SQ(dz) <
                         (1.25f * globals.player.ent.bound.sph.r) * (1.25f * globals.player.ent.bound.sph.r))
                     {
                         globals.player.Diggable = simpent;
@@ -4589,7 +4592,7 @@ U32 zEntPlayer_MoveInfo()
     U32 animflags;
 
     animflags = plyr->model->Anim->Single->State->UserFlags & 0x1E;
-    if (!animflags || plyr->model->Anim->Single->State->UserFlags & 1)
+    if (!(plyr->model->Anim->Single->State->UserFlags & 0x1E) || plyr->model->Anim->Single->State->UserFlags & 1)
     {
         infoflags |= 0x1;
     }
@@ -5666,9 +5669,11 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
 
     drv = &globals.player.drv;
 
-    if (drv->odriver && !drv->os)
+    if (drv->odriver)
     {
         plat = (_zPlatform*)drv->odriver;
+        if (!drv->os)
+    {
         zEntEvent(plat, 0x21);
         drv->odriver = NULL;
         drv->otm = 0.0f;
@@ -5680,6 +5685,7 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
         {
             zPlatform_Shake(plat, dt, 0.2f, 37.699112f);
         }
+    }
     }
 
     coll = &p->collis->colls[0];
@@ -7370,6 +7376,34 @@ static void PlayerTeeterCheck(_xEnt* ent, _xScene* sc, F32 dt)
                 floor_tmr[i] = 0.0f;
             }
         }
+    }
+
+    switch (globals.player.Teeter)
+    {
+    case 0:
+        break;
+    case 1:
+        break;
+    case 2:
+        break;
+    case 3:
+        break;
+    case 4:
+        break;
+    case 5:
+        break;
+    case 6:
+        break;
+    case 7:
+        break;
+    case 8:
+        break;
+    case 9:
+        break;
+    case 10:
+        break;
+    case 11:
+        break;
     }
 }
 
