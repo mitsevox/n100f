@@ -14922,6 +14922,11 @@ static S32 VWEP_lobInitBKAxe(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_o
     axfx->planes.y = vil->dst_lob;
     axfx->planes.z = -268.5f;
     axfx->planes.x = 46.0f;
+    // A check on the axe's zap setup, switched off in this build.
+    if (0)
+    {
+        if (axfx->rad_zap < 0.0f) xSceneID2Name(globals.sceneCur, vil->id);
+    }
     if (vec_spin)
     {
         prj->FlexMatSet(vec_spin, globals.update_dt);
@@ -15018,6 +15023,16 @@ static S32 VWEP_lobInitMMFlask(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec
     _xMat3x3 mat_rot = { 0 };
     st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
     static _xVec3 vec_initwobble = { 0.0f, 0.0f, PI / 4 };
+
+    // A check on the reserved flask's data, switched off in this build.
+    if (0)
+    {
+        if (!flask)
+        {
+            xSceneID2Name(globals.sceneCur, vil->id);
+            return 0;
+        }
+    }
 
     VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, (_xVec3*)&prj->frame->mat.pos);
     xMat3x3Euler(&mat_rot, &vec_initwobble);
