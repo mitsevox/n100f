@@ -3116,10 +3116,24 @@ static void zEntPlayerFindEmitters()
     sSoundWaterSplash = xStrHash("scooby_splash");
 }
 
+// Clear the pending voice line and restart every situation's repeat delay.
+static inline void zEntPlayer_VOReset()
+{
+    S32 i;
+
+    sVONextSituation = NULL;
+    sVOTimer = 0.0f;
+
+    for (i = 0; i < 15; i++)
+    {
+        sPlayerInfo[i].elapsedTime = sPlayerInfo[i].delay;
+        sPlayerInfo[i].count = 0;
+    }
+}
+
 void zEntPlayer_Init(_xEnt* ent, p2EntAsset* asset)
 {
     xFFXRotMatchState* rms;
-    S32 i;
 
     zEntInit((_zEnt*)ent, asset, 'PLYR');
     ent->baseFlags |= 1;
@@ -3175,14 +3189,7 @@ void zEntPlayer_Init(_xEnt* ent, p2EntAsset* asset)
     sDecrementSnackGateEnt = NULL;
     sDecrementDelay = 0.0f;
     sDecrementAmount = 2.0f;
-    sVONextSituation = NULL;
-    sVOTimer = 0.0f;
-
-    for (i = 0; i < 15; i++)
-    {
-        sPlayerInfo[i].elapsedTime = sPlayerInfo[i].delay;
-        sPlayerInfo[i].count = 0;
-    }
+    zEntPlayer_VOReset();
 
     zEntPlayerReset(ent);
 }
@@ -7321,10 +7328,9 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
         if (hangme->baseType == 0x17 && hangme->enabled > 0 && !hangme->grabTimer &&
             (hangme->state != 1 || hangme->shaggy))
         {
-            F32 dist2 = xVec3Dist2(&ent->bound.sph.center, &hangme->endpos);
-            if (dist2 < closedist)
+            if (xVec3Dist2(&ent->bound.sph.center, &hangme->endpos) < closedist)
             {
-                closedist = dist2;
+                closedist = xVec3Dist2(&ent->bound.sph.center, &hangme->endpos);
                 hangclose = hangme;
                 center = ent->bound.sph.center;
             }
