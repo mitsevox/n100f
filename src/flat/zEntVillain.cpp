@@ -5,6 +5,7 @@
 #include "iSnd.h"
 #include "xAnim.h"
 #include "xBound.h"
+#include "xColor.h"
 #include "xDraw.h"
 #include "xEvent.h"
 #include "xFFX.h"
@@ -14436,42 +14437,42 @@ static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal)
 // argument (the caller's dt) is not used.
 static S32 VWEP_swipe(st_zEntVillain* vil, F32)
 {
-    _xCollis coll = { 0 };
-    _xBound bound = { 0 };
-    S32 hit = 0;
+    _xCollis colrec = { 0 };
+    _xBound bnd = { 0 };
+    S32 hitplyr = 0;
     if (vil->precalc.ds2_VtoP > 2.2f) return 0;
 
-    coll.oid = globals.player.ent.id;
-    coll.optr = &globals.player.ent;
-    bound.type = 1;
-    bound.qcd = globals.player.ent.bound.qcd;
+    colrec.oid = globals.player.ent.id;
+    colrec.optr = &globals.player.ent;
+    bnd.type = 1;
+    bnd.qcd = globals.player.ent.bound.qcd;
 #if VERSION_GIHE78_REV0
-    iColor_tag color = { 0x80, 0x00, 0x00, 0xFF };
+    iColor_tag color = g_MAROON;
     xDrawSetColor(color);
 #elif VERSION_GIHE78_REV1
     U32 color = 0x800000FF;
     fn_80021FA0(&color);
 #endif
-    if (VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &bound.sph.center))
+    if (VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &bnd.sph.center))
     {
-        bound.sph.r = 0.2f;
-        xBoundHitsBound(&bound, &globals.player.ent.bound, &coll);
-        if (coll.flags & 1) hit = 1;
+        bnd.sph.r = 0.2f;
+        xBoundHitsBound(&bnd, &globals.player.ent.bound, &colrec);
+        if (colrec.flags & 1) hitplyr = 1;
     }
-    if (!hit && VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACKALT, &bound.sph.center))
+    if (!hitplyr && VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACKALT, &bnd.sph.center))
     {
-        bound.sph.r = 0.2f;
-        xBoundHitsBound(&bound, &globals.player.ent.bound, &coll);
-        if (coll.flags & 1) hit = 1;
+        bnd.sph.r = 0.2f;
+        xBoundHitsBound(&bnd, &globals.player.ent.bound, &colrec);
+        if (colrec.flags & 1) hitplyr = 1;
     }
-    if (!hit && VSUP_vertPos(vil, ZVIL_MDLVERT_WEAPON, &bound.sph.center))
+    if (!hitplyr && VSUP_vertPos(vil, ZVIL_MDLVERT_WEAPON, &bnd.sph.center))
     {
-        bound.sph.r = 0.3f;
-        xBoundHitsBound(&bound, &globals.player.ent.bound, &coll);
-        if (coll.flags & 1) hit = 1;
+        bnd.sph.r = 0.3f;
+        xBoundHitsBound(&bnd, &globals.player.ent.bound, &colrec);
+        if (colrec.flags & 1) hitplyr = 1;
     }
-    if (hit) xSceneID2Name(globals.sceneCur, vil->id);
-    return hit;
+    if (hitplyr) xSceneID2Name(globals.sceneCur, vil->id);
+    return hitplyr;
 }
 
 // Aim the extended attack from its tagged vertex and emit its trail.
