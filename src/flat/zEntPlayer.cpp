@@ -2037,8 +2037,8 @@ static U32 HangCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 
     if (globals.player.HangEnt->shaggy)
     {
-        spinAngle = xAngleClamp(atan2(((xMat4x3*)globals.player.HangEnt->shaggy->model->Mat)->at.x,
-                                      ((xMat4x3*)globals.player.HangEnt->shaggy->model->Mat)->at.z));
+        spinAngle = xAngleClamp(atan2(((xMat4x3*)globals.player.HangEnt->model->Mat)->at.x,
+                                      ((xMat4x3*)globals.player.HangEnt->model->Mat)->at.z));
         scoobAngle = xAngleClamp(atan2(((xMat4x3*)ent->model->Mat)->at.x,
                                        ((xMat4x3*)ent->model->Mat)->at.z));
         hangAngle = scoobAngle - spinAngle;
@@ -7332,9 +7332,9 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
         {
             if (xVec3Dist2(&ent->bound.sph.center, &hangme->endpos) < closedist)
             {
-                closedist = xVec3Dist2(&ent->bound.sph.center, &hangme->endpos);
-                hangclose = hangme;
                 center = ent->bound.sph.center;
+                hangclose = hangme;
+                closedist = xVec3Dist2(&ent->bound.sph.center, &hangme->endpos);
             }
         }
     }
