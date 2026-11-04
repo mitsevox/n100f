@@ -14040,10 +14040,10 @@ static S32 zVIL_chk_pitfall(st_zEntVillain* vil, S32 prev, F32 rand)
 // Read each villain setting from the model's INI parameters, falling back to the defaults here.
 static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
 {
-    _xVec3 vec_res = { 0 };
-    _xVec3 scl_dflt = { 1.0f, 1.0f, 1.0f };
-    _xVec3 vec_tmp = { 0 };
     _xVec3 vec_zero = { 0 };
+    _xVec3 vec_tmp = { 0 };
+    _xVec3 scl_dflt = { 1.0f, 1.0f, 1.0f };
+    _xVec3 vec_res = { 0 };
     U32 pmsize = 0;
     zAssetModelParam* pmdata;
 
@@ -14480,6 +14480,12 @@ static S32 VWEP_swipe(st_zEntVillain* vil, F32)
     return hitplyr;
 }
 
+// A lost helper: only its zeroed 108 bytes of templates are left in the data, and nothing calls it.
+static void zEntVillain_UnknownTemplate108()
+{
+    S32 lost[27] = { 0 };
+}
+
 // Aim the extended attack from its tagged vertex and emit its trail.
 static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
 {
@@ -14665,28 +14671,9 @@ static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3*
     switch (reserved->cat_proj)
     {
     case ZPRJ_CAT_ARROW:
-    {
-        _xVec3 pos_launch = { 0 };
-        ST_CAT_AIMDATA aim = { ZPRJ_CAIM_ARROW };
-        _xVec3 offset = { 0 };
-        reserved->ColDelaySet(0.4f, 1);
-        if (!VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &pos_launch))
-        {
-            xSceneID2Name(globals.sceneCur, vil->id);
-            pos_launch = *xBoundCenter(&vil->bound);
-            xVec3SMul(&offset, (_xVec3*)&vil->model->Mat->at, 0.5f);
-            offset.y += 0.5f;
-            xVec3AddTo(&pos_launch, &offset);
-        }
-        aim.spd_base = vil->spd_lob;
-        aim.dir_base = *(_xVec3*)&vil->model->Mat->at;
-        aim.arrow.pos_src = pos_launch;
-        if (vec_off) xVec3Add(&aim.arrow.pos_tgt, pos_tgt, vec_off);
-        else aim.arrow.pos_tgt = *pos_tgt;
-        result = reserved->AimAtTarget(&aim, 1);
+        result = VWEP_lobInitArrow(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
         prj->flg_prop |= 0x30000014;
         break;
-    }
     case ZPRJ_CAT_GRAVBALL:
     case ZPRJ_CAT_BOUNCEBALL:
         result = VWEP_lobInitArcing(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
@@ -14776,6 +14763,51 @@ static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, v
         return 1;
     default: return 0;
     }
+}
+
+// A lost helper: only its zeroed 56 bytes of templates are left in the data, and nothing calls it.
+static void zEntVillain_UnknownTemplate56()
+{
+    S32 lost[14] = { 0 };
+}
+
+// Aims the villain's reserved projectile like an arrow from his attack vertex, or else from half
+// a unit ahead of and above his bound centre (looking up his name, unused), toward pos_tgt plus
+// vec_off (when given), at his lob speed. It cannot collide for the first 0.4 seconds. Always
+// returns 1.
+static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
+                                    _xVec3* vec_spin, F32 arcness, F32 heavy)
+{
+    zEntProjectile* prj = vil->prj_reserved;
+    _xVec3 pos_launch = { 0 };
+    ST_CAT_AIMDATA aiminf = { ZPRJ_CAIM_ARROW };
+    _xVec3 tmp_vec = { 0 };
+    S32 rc;
+
+    prj->ColDelaySet(0.4f, 1);
+    rc = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &pos_launch);
+    if (!rc)
+    {
+        xSceneID2Name(globals.sceneCur, vil->id);
+        xVec3Copy(&pos_launch, xBoundCenter(&vil->bound));
+        xVec3SMul(&tmp_vec, (_xVec3*)&vil->model->Mat->at, 0.5f);
+        tmp_vec.y += 0.5f;
+        xVec3AddTo(&pos_launch, &tmp_vec);
+    }
+
+    aiminf.spd_base = vil->spd_lob;
+    xVec3Copy(&aiminf.dir_base, (_xVec3*)&vil->model->Mat->at);
+    xVec3Copy(&aiminf.arrow.pos_src, &pos_launch);
+    if (vec_off)
+    {
+        xVec3Add(&aiminf.arrow.pos_tgt, pos_tgt, vec_off);
+    }
+    else
+    {
+        xVec3Copy(&aiminf.arrow.pos_tgt, pos_tgt);
+    }
+    prj->AimAtTarget(&aiminf, 1);
+    return 1;
 }
 
 // Aims the villain's reserved projectile as a gravity ball from his attack vertex, or else from
@@ -14927,45 +14959,6 @@ static S32 VWEP_lobInitGGQuaker(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* ve
     quake->hyt_shock = vil->wid_extend;
     quake->rad_shock = vil->dst_extend;
     quake->tym_shock = vil->spd_extend;
-    return 1;
-}
-
-// Aims the villain's reserved projectile like an arrow from his attack vertex, or else from half
-// a unit ahead of and above his bound centre (looking up his name, unused), toward pos_tgt plus
-// vec_off (when given), at his lob speed. It cannot collide for the first 0.4 seconds. Always
-// returns 1.
-static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
-                                    _xVec3* vec_spin, F32 arcness, F32 heavy)
-{
-    zEntProjectile* prj = vil->prj_reserved;
-    _xVec3 pos_launch = { 0 };
-    ST_CAT_AIMDATA aiminf = { ZPRJ_CAIM_ARROW };
-    _xVec3 tmp_vec = { 0 };
-    S32 rc;
-
-    prj->ColDelaySet(0.4f, 1);
-    rc = VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &pos_launch);
-    if (!rc)
-    {
-        xSceneID2Name(globals.sceneCur, vil->id);
-        xVec3Copy(&pos_launch, xBoundCenter(&vil->bound));
-        xVec3SMul(&tmp_vec, (_xVec3*)&vil->model->Mat->at, 0.5f);
-        tmp_vec.y += 0.5f;
-        xVec3AddTo(&pos_launch, &tmp_vec);
-    }
-
-    aiminf.spd_base = vil->spd_lob;
-    xVec3Copy(&aiminf.dir_base, (_xVec3*)&vil->model->Mat->at);
-    xVec3Copy(&aiminf.arrow.pos_src, &pos_launch);
-    if (vec_off)
-    {
-        xVec3Add(&aiminf.arrow.pos_tgt, pos_tgt, vec_off);
-    }
-    else
-    {
-        xVec3Copy(&aiminf.arrow.pos_tgt, pos_tgt);
-    }
-    prj->AimAtTarget(&aiminf, 1);
     return 1;
 }
 
