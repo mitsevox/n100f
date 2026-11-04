@@ -59,7 +59,6 @@ U32 zSurfaceGetStandOn(const xSurface* surf);
 
 // Set up every surface asset in the scene: allocate one zSurfaceProps per surface, copy each
 // asset's friction, state and texture/UV animation settings, then build the default surface.
-// Locals are declared in the reverse of the PS2 debug order.
 void zSurfaceInit()
 {
     U32 size;
@@ -550,40 +549,38 @@ static S32 zSurfaceEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase* 
     }
     case 243:
     {
-        // Toggle the animation. The target tests the flag bit twice in a row.
+        // Toggle the animation.
         zSurfaceProps* p = (zSurfaceProps*)t->moprops;
         if (p)
         {
             if (toParam[3] == 0.0f)
             {
-                U32 flags = p->texanim_flags;
-                U32 bit = flags & 1;
+                U32 bit = p->texanim_flags & 1;
                 if (bit)
                 {
                     if (bit)
                     {
-                        p->texanim_flags = flags ^ 1;
+                        p->texanim_flags ^= 1;
                     }
                 }
                 else
                 {
-                    p->texanim_flags = flags | 1;
+                    p->texanim_flags |= 1;
                 }
             }
             else
             {
-                U32 flags = p->texanim_flags;
-                U32 bit = flags & 2;
+                U32 bit = p->texanim_flags & 2;
                 if (bit)
                 {
                     if (bit)
                     {
-                        p->texanim_flags = flags ^ 2;
+                        p->texanim_flags ^= 2;
                     }
                 }
                 else
                 {
-                    p->texanim_flags = flags | 2;
+                    p->texanim_flags |= 2;
                 }
             }
         }
