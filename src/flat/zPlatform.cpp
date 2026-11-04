@@ -475,6 +475,8 @@ S32 zPlatformEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* t
     case eEventStop:
         xEntMotionStop(&plat->motion);
         break;
+    case 34:
+        break;
     case 0x12A:
         if (plat->subType == 4)
             xEntMechForward(&plat->motion);
@@ -530,13 +532,15 @@ S32 zPlatformEventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* t
         break;
     case 0xCB:
         if (plat->subType == 3)
-            plat->motion.mp.speed = MAX(0.0f, toParam[0]);
+        {
+            F32 speed = toParam[0];
+            plat->motion.mp.speed = MAX(0.0f, speed);
+        }
         break;
     case 0xCC:
         if (plat->subType == 3)
         {
-            F32 speed = plat->motion.mp.speed + toParam[0];
-            plat->motion.mp.speed = MAX(0.0f, speed);
+            plat->motion.mp.speed = MAX(0.0f, plat->motion.mp.speed + toParam[0]);
         }
         break;
     }
