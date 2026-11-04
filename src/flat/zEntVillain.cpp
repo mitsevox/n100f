@@ -18215,6 +18215,20 @@ static inline en_NPC_ANIMSTATES VANM_setthree(st_zEntVillain* ent, en_NPC_ANIMST
     return VANM_set(ent, best, 3, 0);
 }
 
+// Plays the first of four animations that the villain's animation table has.
+static inline en_NPC_ANIMSTATES VANM_setfour(st_zEntVillain* ent, en_NPC_ANIMSTATES a, en_NPC_ANIMSTATES b, en_NPC_ANIMSTATES c, en_NPC_ANIMSTATES d)
+{
+    en_NPC_ANIMSTATES best[4] = { a, b, c, d };
+    return VANM_set(ent, best, 4, 0);
+}
+
+// Plays the first of five animations that the villain's animation table has.
+static inline en_NPC_ANIMSTATES VANM_setfive(st_zEntVillain* ent, en_NPC_ANIMSTATES a, en_NPC_ANIMSTATES b, en_NPC_ANIMSTATES c, en_NPC_ANIMSTATES d, en_NPC_ANIMSTATES e)
+{
+    en_NPC_ANIMSTATES best[5] = { a, b, c, d, e };
+    return VANM_set(ent, best, 5, 0);
+}
+
 // Plays one of three animations, picked at random, without weights, among those the villain's
 // animation table has.
 static inline en_NPC_ANIMSTATES VANM_randthree(st_zEntVillain* ent, en_NPC_ANIMSTATES a,
@@ -18240,18 +18254,10 @@ static inline en_NPC_ANIMSTATES VANM_randfour(st_zEntVillain* ent, en_NPC_ANIMST
     return VANM_randset(ent, NULL, choice_list, 4);
 }
 
-// Plays the first of four animations that the villain's animation table has.
-static inline en_NPC_ANIMSTATES VANM_setfour(st_zEntVillain* ent, en_NPC_ANIMSTATES a, en_NPC_ANIMSTATES b, en_NPC_ANIMSTATES c, en_NPC_ANIMSTATES d)
+// A lost helper: only its zeroed 20-byte template is left in the data, and nothing calls it.
+static void zEntVillain_UnknownTemplate20()
 {
-    en_NPC_ANIMSTATES best[4] = { a, b, c, d };
-    return VANM_set(ent, best, 4, 0);
-}
-
-// Plays the first of five animations that the villain's animation table has.
-static inline en_NPC_ANIMSTATES VANM_setfive(st_zEntVillain* ent, en_NPC_ANIMSTATES a, en_NPC_ANIMSTATES b, en_NPC_ANIMSTATES c, en_NPC_ANIMSTATES d, en_NPC_ANIMSTATES e)
-{
-    en_NPC_ANIMSTATES best[5] = { a, b, c, d, e };
-    return VANM_set(ent, best, 5, 0);
+    S32 lost[5] = { 0 };
 }
 
 static inline en_NPC_ANIMSTATES VANM_hashToAnim(U32 hash)
