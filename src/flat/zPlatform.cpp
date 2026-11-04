@@ -15,7 +15,6 @@
 void xFFXShakeFree(xFFXShakeState* s);
 void xFFXShakeUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata);
 S16 xFFXAddEffect(_xEnt* ent, xFFX* effect);
-extern "C" void fn_8002E174(xVec3* out, const xMat3x3* mat, const xVec3* v);
 
 static _zParEmitter* sEmitTremble;
 static _zParEmitter* sEmitBreakaway;
@@ -228,10 +227,11 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
         U16 state = plat->motion.mech.state;
         if (state != plat->state)
         {
+            p2EntMotionMechData* mkasst = &plat->motion.asset->mech;
             if (plat->state == 2)
                 zEntEvent(plat, 0x39);
             else if (state == 6 || state == 7 ||
-                     (!(plat->motion.asset->mech.flags & 2) && (state == 0 || state == 1)))
+                     (!(mkasst->flags & 2) && (state == 0 || state == 1)))
                 zEntEvent(plat, 0x1F);
             plat->state = state;
         }
@@ -247,10 +247,8 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
         {
             F32 s = plat == drv->driver ? drv->s : drv->os;
             _xEnt* p = drv->driven;
-            xMat4x3* mat = (xMat4x3*)plat->model->Mat;
-            xVec3SMul(&p->frame->dpos, &mat->right, s * plat->passet->cb.speed * dt);
-            xVec3* pos = (xVec3*)&p->model->Mat->pos;
-            xVec3Add(pos, pos, &p->frame->dpos);
+            xVec3SMul(&p->frame->dpos, (xVec3*)&plat->model->Mat->right, s * plat->passet->cb.speed * dt);
+            xVec3Add((xVec3*)&p->model->Mat->pos, (xVec3*)&p->model->Mat->pos, &p->frame->dpos);
         }
     }
     else if (plat->subType == 11)
@@ -268,22 +266,20 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
                 else if (ctilt > itilt)
                     dtilt = MAX(-dtilt, itilt - ctilt);
                 plat->frame->rot.axis.z += dtilt;
-                xMat4x3* mat = (xMat4x3*)plat->model->Mat;
-                xMat3x3Euler((xMat3x3*)mat, plat->frame->rot.axis.x,
+                xMat3x3Euler((xMat3x3*)plat->model->Mat, plat->frame->rot.axis.x,
                              plat->frame->rot.axis.y, plat->frame->rot.axis.z);
-                xVec3SMul(&mat->right, &mat->right, plat->asset->scale.x);
-                xVec3SMul(&mat->up, &mat->up, plat->asset->scale.y);
-                xVec3SMul(&mat->at, &mat->at, plat->asset->scale.z);
+                xVec3* scale = &plat->asset->scale;
+                xVec3SMul((xVec3*)&plat->model->Mat->right, (xVec3*)&plat->model->Mat->right, scale->x);
+                xVec3SMul((xVec3*)&plat->model->Mat->up, (xVec3*)&plat->model->Mat->up, scale->y);
+                xVec3SMul((xVec3*)&plat->model->Mat->at, (xVec3*)&plat->model->Mat->at, scale->z);
             }
         }
         else
         {
             F32 s = plat == drv->driver ? drv->s : drv->os;
-            _xEnt* p = drv->driven;
-            xMat4x3* mat = (xMat4x3*)plat->model->Mat;
             xVec3 lpos;
-            xVec3Sub(&lpos, &p->frame->mat.pos, &mat->pos);
-            fn_8002E174(&lpos, (xMat3x3*)mat, &lpos);
+            xVec3Sub(&lpos, &drv->driven->frame->mat.pos, (xVec3*)&plat->model->Mat->pos);
+            xMat3x3Tolocal(&lpos, (xMat3x3*)plat->model->Mat, &lpos);
             F32 cangle = plat->frame->rot.axis.z;
             F32 dangle = -s * (PI * plat->passet->teet.invmass / 180.0f) * lpos.x * dt;
             F32 mangle = xabs(plat->passet->teet.maxtilt);
@@ -296,11 +292,12 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
                     dangle -= tangle;
             }
             plat->frame->rot.axis.z += dangle;
-            xMat3x3Euler((xMat3x3*)mat, plat->frame->rot.axis.x,
+            xMat3x3Euler((xMat3x3*)plat->model->Mat, plat->frame->rot.axis.x,
                          plat->frame->rot.axis.y, plat->frame->rot.axis.z);
-            xVec3SMul(&mat->right, &mat->right, plat->asset->scale.x);
-            xVec3SMul(&mat->up, &mat->up, plat->asset->scale.y);
-            xVec3SMul(&mat->at, &mat->at, plat->asset->scale.z);
+            xVec3* scale = &plat->asset->scale;
+            xVec3SMul((xVec3*)&plat->model->Mat->right, (xVec3*)&plat->model->Mat->right, scale->x);
+            xVec3SMul((xVec3*)&plat->model->Mat->up, (xVec3*)&plat->model->Mat->up, scale->y);
+            xVec3SMul((xVec3*)&plat->model->Mat->at, (xVec3*)&plat->model->Mat->at, scale->z);
         }
     }
 
@@ -320,12 +317,27 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
     xVec3* rot = &plat->frame->rot.axis;
     S32 moving;
     if (plat->subType == 11)
-        moving = orot->x != rot->x || orot->y != rot->y || orot->z != rot->z;
+    {
+        if (orot->x != rot->x || orot->y != rot->y || orot->z != rot->z)
+            moving = 1;
+        else
+            moving = 0;
+    }
     else
-        moving = opos->x != pos->x || opos->y != pos->y || opos->z != pos->z ||
-                 orot->x != rot->x || orot->y != rot->y || orot->z != rot->z;
+    {
+        if (opos->x != pos->x || opos->y != pos->y || opos->z != pos->z ||
+            orot->x != rot->x || orot->y != rot->y || orot->z != rot->z)
+            moving = 1;
+        else
+            moving = 0;
+    }
     if (moving != plat->moving)
-        zEntEvent(plat, moving ? eEventStartMoving : eEventStopMoving);
+    {
+        if (moving)
+            zEntEvent(plat, eEventStartMoving);
+        else
+            zEntEvent(plat, eEventStopMoving);
+    }
     plat->moving = moving;
 }
 
