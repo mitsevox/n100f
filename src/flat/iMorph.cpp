@@ -21,7 +21,7 @@ static RpMorphTarget* s_tgt;
 static F32* s_alloc;
 static F32* s_vTemp;
 static F32* s_nTemp;
-static S32 s_numV;
+static U32 s_numV;
 
 // Morph targets are packed 16-bit coordinates; these unpack one, or blend two or four, into
 // floats.
@@ -72,16 +72,16 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
                         F32 scale, S32 dorender)
 {
     U32 i;
-    U32 a = 0;
+    U32 a;
     S16 wa[4];
     S16* va[4];
-    S32 wsum = 0;
+    S32 wsum;
     RwV3d* vold = NULL;
     RwV3d* nold = NULL;
     S32 lockMode;
     RpUserDataArray* usr;
     DirtyMorph* dm;
-    U8 useNormals = 0;
+    U8 useNormals;
 
     s_geom = model->geometry;
     s_tgt = s_geom->morphTarget;
@@ -89,10 +89,7 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
     s_alloc = NULL;
     s_nTemp = NULL;
 
-    if (normals && s_geom->object.flags & rpGEOMETRYNORMALS)
-    {
-        useNormals = 1;
-    }
+    useNormals = normals && s_geom->object.flags & rpGEOMETRYNORMALS;
 
     vold = s_tgt->verts;
     // RenderWare's lock flags: 2 locks the vertices, 4 the normals.
@@ -102,6 +99,9 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
     {
         nold = s_tgt->normals;
     }
+
+    a = 0;
+    wsum = 0;
 
     for (i = 0; i < 4; i++)
     {
@@ -247,7 +247,7 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
 
         for (i = 0; i < a; ++i)
         {
-            va[i] = (S16*)((char*)va[i] + (((s_numV * 3 + 7) * 2) & ~0xF));
+            va[i] += (s_numV * 3 + 7) & ~7;
         }
 
         if (a == 1)
