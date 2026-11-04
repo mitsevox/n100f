@@ -531,7 +531,7 @@ static void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt)
     F32 camAngle;
     xVec3 euler;
 
-    if (lbl_802289B8[0].state != 2)
+    if (gTrcPad[0].state != 2)
     {
         z = x = 0.0f;
     }

@@ -19,8 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+void iSystemPollResetAndDisc();
+
 extern "C" {
-void fn_80016600();
 void fn_800443AC();
 U32 fn_800443F8();
 }
@@ -1357,7 +1358,7 @@ void iSndLoadSounds(void* data)
             iFileReadAsync(file, stream_buffer, size, sndloadcb);
             while (SoundFlags != 0)
             {
-                fn_80016600();
+                iSystemPollResetAndDisc();
                 fn_800443AC();
                 if ((fc & 0xF) == 0)
                 {

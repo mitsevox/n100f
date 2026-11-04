@@ -122,7 +122,7 @@ static S32 iSG_get_fmoddate(st_ISG_MEMCARD_DATA* mcdata, const char* fname, int*
 char* iSGFileModDate(st_ISGSESSION* isgdata, const char* fname);
 static S32 iSG_get_fsize(st_ISG_MEMCARD_DATA* mcdata, const char* fname);
 S32 iSGFileSize(st_ISGSESSION* isgdata, const char* fname);
-extern "C" S32 fn_800138EC(st_ISGSESSION* isgdata, const char* dname, const char* fname);
+extern "C" S32 fn_800138EC(st_ISGSESSION* isgdata);
 S32 iSGTgtHaveRoom(st_ISGSESSION* isgdata, S32 tidx, S32 fsize, const char* dpath,
                    const char* fname, S32* bytesNeeded, S32* availOnDisk, S32* needFile);
 static S32 iSG_mc_mount(S32 slot);
@@ -675,7 +675,7 @@ S32 iSGTgtHaveRoom(st_ISGSESSION* isgdata, S32 tidx, S32 fsize, const char* dpat
 }
 
 // The number of the game's save files on the active card.
-extern "C" S32 fn_800138EC(st_ISGSESSION* isgdata, const char* dname, const char* fname)
+extern "C" S32 fn_800138EC(st_ISGSESSION* isgdata)
 {
     if (isgdata->slot < 0)
     {

@@ -251,6 +251,7 @@ flat/xMath3.cpp:
 flat/xMemMgr.cpp:
 	.text       start:0x8002FA38 end:0x800301C0
 	.bss        start:0x802102B0 end:0x802104B8
+	.sbss       start:0x80270950 end:0x80270958
 
 flat/xModel.cpp:
 	.text       start:0x800301C0 end:0x80031040
@@ -350,6 +351,15 @@ flat/xString.cpp:
 flat/xSurface.cpp:
 	.text       start:0x80040F00 end:0x80040FE8
 	.sbss       start:0x80270A68 end:0x80270A70
+
+flat/xTRC.cpp:
+	.text       start:0x80040FE8 end:0x80044588
+	.rodata     start:0x801910E0 end:0x80193240
+	.data       start:0x801C4FD0 end:0x801C5158
+	.bss        start:0x80239068 end:0x80239098
+	.sbss       start:0x80270A78 end:0x80270A90
+	.sdata2     start:0x802721C8 end:0x80272268
+	.sbss2      start:0x80274B30 end:0x80274B40
 
 flat/xutil.cpp:
 	.text       start:0x80044588 end:0x80044A4C

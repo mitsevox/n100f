@@ -1,3 +1,42 @@
+// Revision 1 places these functions and data at other addresses. The labels below are the
+// revision 0 ones; on revision 1 each stands for that revision's label.
+#if VERSION_GIHE78_REV1
+#define fn_800132C4 fn_800132A8
+#define fn_800138EC fn_800138D0
+#define fn_80013C64 fn_80013C48
+#define fn_80014310 fn_800142F4
+#define fn_80016698 fn_80016804
+#define fn_800389FC fn_80038A18
+#define fn_80040FCC fn_80040FE8
+#define fn_800411A8 fn_800411C4
+#define fn_80041310 fn_8004132C
+#define fn_80041548 fn_80041564
+#define fn_80041BC8 fn_80041B94
+#define fn_80041C4C fn_80041C18
+#define fn_80041CC4 fn_80041C44
+#define fn_80041CE8 fn_80041C68
+#define fn_80041D58 fn_80041CD8
+#define fn_80041D90 fn_80041D10
+#define fn_800423EC fn_80042264
+#define fn_80042774 fn_800425EC
+#define fn_80042A48 fn_800428C0
+#define fn_80043050 fn_80042EAC
+#define fn_80043730 fn_80043570
+#define fn_80043940 fn_80043780
+#define fn_80043BA4 fn_800439E4
+#define fn_80043E18 fn_80043C58
+#define fn_80043E20 fn_80043C60
+#define fn_80043E78 fn_80043CB8
+#define fn_800443AC fn_800441D0
+#define fn_800443F8 fn_8004421C
+#define fn_80044458 fn_8004427C
+#define fn_80044478 fn_8004429C
+#define lbl_801B6610 lbl_801C4FD0
+#define lbl_8025EBE0 lbl_80270A78
+#define lbl_8025EBE4 lbl_80270A7C
+#define lbl_8025EBE8 lbl_80270A80
+#endif
+
 #include "xTRC.h"
 #include "iCamera.h"
 #include "iSystem.h"
@@ -41,15 +80,24 @@ struct TRCCardWatch
 
 typedef S32 (*TRCCardCheck)(TRCCardWatch* watch);
 
+// The yellow of every message's text. Revision 1 keeps it as one constant.
+#if VERSION_GIHE78_REV0
+#define TRC_TEXT_COLOR xColorFromRGBA(255, 230, 0, 255)
+#elif VERSION_GIHE78_REV1
+static const iColor_tag sTrcTextColor = { 255, 230, 0, 255 };
+#define TRC_TEXT_COLOR sTrcTextColor
+#endif
+
 void zGamePauseIfPossible();
 extern F32 gFontWiggleTime;
 
+void iSystemPollResetAndDisc();
+U32 zGameNickCamActive();
+
 extern "C" {
-void fn_80016600();
 void fn_80016698(S32 reset);
 // The localized device, slot and card names.
 char* fn_800389FC(S32 lang, S32 card, S32 which);
-U32 fn_800AC0BC();
 
 // The two message records, the start-up check's busy flag (zScene reads it), the font box of
 // the pad and disc message (sTrcFontBox in the SLUS-20349 DWARF) and the flag that makes that
@@ -60,13 +108,15 @@ xFontBox* lbl_8025EBE4;
 U32 lbl_8025EBE8;
 }
 
+// The four pad records.
+_tagTRCPadInfo gTrcPad[4];
+
 extern "C" {
 
 S32 fn_80044478(_tagTRCState state);
 void fn_80044458(S32 pad_id, S32 state);
 S32 fn_800443F8();
 void fn_800443AC();
-void fn_8004436C();
 void fn_80043E78();
 S32 fn_80043E20(TRCCardWatch* watch);
 S32 fn_80043E18(S32 card, st_ISGSESSION* session);
@@ -81,16 +131,30 @@ S32 fn_80041D90(char* text, const char** options, TRCCardCheck check, TRCCardWat
 void fn_80041D58(S32 mode);
 void fn_80041CE8(S32 mode, S32 card, S32 slot);
 void fn_80041CC4(S32 mode, S32 message);
+#if VERSION_GIHE78_REV0
 void fn_80041C78(S32 mode, S32 available, S32 needed, S32 blockSize, S32 freeFiles, S32 needFile);
+#elif VERSION_GIHE78_REV1
+static void fn_80041C78(S32 mode, S32 available, S32 needed, S32 blockSize, S32 freeFiles, S32 needFile);
+#endif
 void fn_80041C4C(S32 mode, S32 value);
 S32 fn_80041BC8(S32 mode, char* dst);
+#if VERSION_GIHE78_REV0
 S32 fn_80041B10(S32 mode, char* dst);
 S32 fn_80041ADC(S32 mode, char* dst);
+#elif VERSION_GIHE78_REV1
+S32 fn_80041ADC(S32 mode, char* dst);
+S32 fn_80041AA8(S32 mode, char* dst);
+#endif
 S32 fn_80041548(S32 mode, char* dst);
 S32 fn_80041310(S32 card, S32 mode);
 S32 fn_800411A8(S32 card, S32 repair, S32* files, S32* repaired);
 S32 fn_80040FCC(S32 card, S32 game);
 }
+
+static void TRCClearScreen();
+static void TRCWaitFrames(S32 frames);
+static void TRCShowCardMessage(char* text);
+static S32 TRCAskCard(char* text, const char* first, const char* second, TRCCardCheck check, TRCCardWatch* watch);
 
 #define TRC_TITLE "$A170066176Scooby-Doo: Night of 100 Frights$C"
 #define TRC_RED "200040046"
@@ -99,10 +163,10 @@ S32 fn_80040FCC(S32 card, S32 game);
 // xTRCInit: the pad records number their pads, and the disc state starts unknown.
 void xTRCInit()
 {
-    memset(lbl_802289B8, 0, sizeof(lbl_802289B8));
+    memset(gTrcPad, 0, sizeof(gTrcPad));
     for (S32 i = 0; i < 4; i++)
     {
-        lbl_802289B8[i].id = i;
+        gTrcPad[i].id = i;
     }
     memset(gTrcDisk, 0, sizeof(gTrcDisk));
 }
@@ -139,7 +203,7 @@ extern "C" S32 fn_80044478(_tagTRCState state)
         {
             show = 0;
         }
-        else if (fn_800AC0BC())
+        else if (zGameNickCamActive())
         {
             show = 0;
         }
@@ -193,7 +257,7 @@ extern "C" S32 fn_80044478(_tagTRCState state)
             RwCameraClear(camera, &clear, 3);
             RwCameraBeginUpdate(camera);
         }
-        lbl_8025EBE4 = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 0, xColorFromRGBA(255, 230, 0, 255));
+        lbl_8025EBE4 = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 0, TRC_TEXT_COLOR);
         xFontBoxSetText(lbl_8025EBE4, text);
         xFontBoxSetFont(lbl_8025EBE4, 1);
         xFontBoxSetDrawSize(lbl_8025EBE4, 15.0f, 20.0f);
@@ -219,7 +283,7 @@ extern "C" void fn_80044458(S32 pad_id, S32 state)
 {
     if (pad_id == 0)
     {
-        lbl_802289B8[pad_id].state = state;
+        gTrcPad[pad_id].state = state;
     }
 }
 
@@ -260,14 +324,21 @@ extern "C" S32 fn_800443F8()
 extern "C" void fn_800443AC()
 {
     lbl_8025EBE8 = 1;
-    fn_80044478((_tagTRCState)lbl_802289B8[0].state) || fn_80044478(gTrcDisk[0]);
+    fn_80044478((_tagTRCState)gTrcPad[0].state) || fn_80044478(gTrcDisk[0]);
     lbl_8025EBE8 = 0;
 }
 
 // Draws the pad message, or else the disc message, into the current frame.
-extern "C" void fn_8004436C()
+void xTRCRenderMessage()
 {
-    fn_80044478((_tagTRCState)lbl_802289B8[0].state) || fn_80044478(gTrcDisk[0]);
+    if (fn_80044478((_tagTRCState)gTrcPad[0].state))
+    {
+        return;
+    }
+    if (fn_80044478(gTrcDisk[0]))
+    {
+        return;
+    }
 }
 
 // The start-up memory-card check that main runs: the cards in both slots are checked for
@@ -275,7 +346,6 @@ extern "C" void fn_8004436C()
 // when the player retries.
 extern "C" void fn_80043E78()
 {
-    static S32 warned = 0;
     S32 formatted;
     S32 retry;
     S32 pass;
@@ -283,51 +353,25 @@ extern "C" void fn_80043E78()
 
     lbl_8025EBE0 = 1;
     formatted = 0;
+    static S32 warned = 0;
     pass = 0;
-    for (;;)
+    do
     {
         if (pass++ != 0)
         {
             if (warned)
             {
-                RwRGBA clear = { 0, 0, 0, 0 };
-                char text[256] = { 0 };
-                sprintf(text, "$A%sWARNING!$C Accessing the Nintendo GameCube%s Memory Card.\nPlease do not remove the Memory Card or turn off the power to the Nintendo GameCube%s.\n", TRC_RED, "^", "^");
-                xFontBox* box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 1, xColorFromRGBA(255, 230, 0, 255));
-                xFontBoxSetText(box, text);
-                xFontBoxSetDrawSize(box, 18.0f, 24.0f);
-                xFontBoxSetDrawSpacing(box, 17.0f, 24.0f);
-                xFontBoxSetBackdrop(box, xColorFromRGBA(0, 0, 0, 255));
-                xFontBoxSetInset(box, 100.0f, 100.0f, 100.0f, 0.0f);
-                xFontBoxSetJustification(box, 0x40);
-                RwCamera* camera = iCameraCreate(640, 480);
-                RwCameraClear(camera, &clear, 3);
-                RwCameraBeginUpdate(camera);
-                xFontBoxRender(box);
-                RwCameraEndUpdate(camera);
-                RwCameraShowRaster(camera, NULL, 1);
-                iCameraDestroy(camera);
-                xFontBoxDestroy(box);
+                TRCShowCardMessage(NULL);
             }
             else
             {
-                RwRGBA clear = { 0, 0, 0, 0 };
-                RwCamera* camera = iCameraCreate(640, 480);
-                RwCameraClear(camera, &clear, 3);
-                RwCameraBeginUpdate(camera);
-                RwCameraEndUpdate(camera);
-                RwCameraShowRaster(camera, NULL, 1);
-                iCameraDestroy(camera);
+                TRCClearScreen();
             }
-            for (S32 i = 14; i >= 0; i--)
-            {
-                fn_80016600();
-                iVSync();
-            }
+            TRCWaitFrames(15);
         }
 
-        retry = 0;
         formatted = 0;
+        retry = 0;
         result = fn_80043940();
         if (result == 3)
         {
@@ -336,17 +380,16 @@ extern "C" void fn_80043E78()
         if (result == 4)
         {
             retry = 1;
-            goto next;
+            continue;
         }
-
         result = fn_80043BA4(0);
-        if (result == 3)
-        {
-            break;
-        }
         if (result == 2)
         {
             goto slot1;
+        }
+        if (result == 3)
+        {
+            break;
         }
         if (result == 4)
         {
@@ -354,16 +397,16 @@ extern "C" void fn_80043E78()
         }
         if (retry)
         {
-            goto next;
+            continue;
         }
         result = fn_80043730(0);
-        if (result == 3)
-        {
-            break;
-        }
         if (result == 2)
         {
             goto slot1;
+        }
+        if (result == 3)
+        {
+            break;
         }
         if (result == 4)
         {
@@ -371,37 +414,37 @@ extern "C" void fn_80043E78()
         }
         if (retry)
         {
-            goto next;
+            continue;
         }
         result = fn_80043050(0, &formatted);
-        if (result == 3)
-        {
-            break;
-        }
         if (result == 2)
         {
             goto slot1;
         }
+        if (result == 3)
+        {
+            break;
+        }
         if (result == 4)
         {
             retry = 1;
-        }
-        if (retry)
-        {
-            goto next;
         }
         if (result == 1 && !formatted)
         {
             goto slot1;
         }
-        result = fn_80042A48(0);
-        if (result == 3)
+        if (retry)
         {
-            break;
+            continue;
         }
+        result = fn_80042A48(0);
         if (result == 2)
         {
             goto slot1;
+        }
+        if (result == 3)
+        {
+            break;
         }
         if (result == 4)
         {
@@ -409,26 +452,13 @@ extern "C" void fn_80043E78()
         }
         if (retry)
         {
-            goto next;
+            continue;
         }
         result = fn_80042774(0);
-        if (result == 3)
-        {
-            break;
-        }
         if (result == 2)
         {
             goto slot1;
         }
-        if (result == 4)
-        {
-            retry = 1;
-        }
-        if (retry)
-        {
-            goto next;
-        }
-        result = fn_800423EC(0);
         if (result == 3)
         {
             break;
@@ -439,7 +469,24 @@ extern "C" void fn_80043E78()
         }
         if (retry)
         {
-            goto next;
+            continue;
+        }
+        result = fn_800423EC(0);
+        if (result == 2)
+        {
+            goto slot1;
+        }
+        if (result == 3)
+        {
+            break;
+        }
+        if (result == 4)
+        {
+            retry = 1;
+        }
+        if (retry)
+        {
+            continue;
         }
         if (result == 1)
         {
@@ -447,10 +494,11 @@ extern "C" void fn_80043E78()
         }
 
     slot1:
-        do
+        result = fn_80043BA4(1);
+        if (result == 2)
         {
-            result = fn_80043BA4(1);
-        } while (result == 2);
+            goto slot1;
+        }
         if (result == 3)
         {
             break;
@@ -461,10 +509,14 @@ extern "C" void fn_80043E78()
         }
         if (retry)
         {
-            goto next;
+            continue;
         }
         result = fn_80043730(1);
-        if (result == 2 || result == 3)
+        if (result == 2)
+        {
+            break;
+        }
+        if (result == 3)
         {
             break;
         }
@@ -474,27 +526,35 @@ extern "C" void fn_80043E78()
         }
         if (retry)
         {
-            goto next;
+            continue;
         }
         result = fn_80043050(1, &formatted);
-        if (result == 2 || result == 3)
+        if (result == 2)
+        {
+            break;
+        }
+        if (result == 3)
         {
             break;
         }
         if (result == 4)
         {
             retry = 1;
-        }
-        if (retry)
-        {
-            goto next;
         }
         if (result == 1 && !formatted)
         {
             break;
         }
+        if (retry)
+        {
+            continue;
+        }
         result = fn_80042A48(1);
-        if (result == 2 || result == 3)
+        if (result == 2)
+        {
+            break;
+        }
+        if (result == 3)
         {
             break;
         }
@@ -504,10 +564,14 @@ extern "C" void fn_80043E78()
         }
         if (retry)
         {
-            goto next;
+            continue;
         }
         result = fn_80042774(1);
-        if (result == 2 || result == 3)
+        if (result == 2)
+        {
+            break;
+        }
+        if (result == 3)
         {
             break;
         }
@@ -517,28 +581,24 @@ extern "C" void fn_80043E78()
         }
         if (retry)
         {
-            goto next;
+            continue;
         }
         result = fn_800423EC(1);
+        if (result == 2)
+        {
+            break;
+        }
+        if (result == 3)
+        {
+            break;
+        }
         if (result == 4)
         {
             retry = 1;
         }
+    } while (retry);
 
-    next:
-        if (!retry)
-        {
-            break;
-        }
-    }
-
-    RwRGBA clear = { 0, 0, 0, 0 };
-    RwCamera* camera = iCameraCreate(640, 480);
-    RwCameraClear(camera, &clear, 3);
-    RwCameraBeginUpdate(camera);
-    RwCameraEndUpdate(camera);
-    RwCameraShowRaster(camera, NULL, 1);
-    iCameraDestroy(camera);
+    TRCClearScreen();
     lbl_8025EBE0 = 0;
 }
 
@@ -559,9 +619,11 @@ extern "C" S32 fn_80043E20(TRCCardWatch* watch)
     return changed;
 }
 
-// The start-up check's hook for a card it cannot use; 2 lets the check ask the player.
+// Hook the card dialogs call before they show a problem message. On GameCube it does nothing
+// and returns 2, so the dialog goes ahead; its message buffer is never filled.
 extern "C" S32 fn_80043E18(S32 card, st_ISGSESSION* session)
 {
+    char text[512] = { 0 };
     return 2;
 }
 
@@ -578,10 +640,7 @@ extern "C" S32 fn_80043BA4(S32 card)
         fn_80041CE8(0, card, card);
         fn_80041CC4(0, 24);
         fn_80041548(0, text);
-        const char* options[4] = {};
-        options[0] = "Continue Without Saving";
-        options[1] = "Retry";
-        S32 choice = fn_80041D90(text, options, NULL, NULL);
+        S32 choice = TRCAskCard(text, "Continue Without Saving", "Retry", NULL, NULL);
         if (choice == -1)
         {
             result = 4;
@@ -611,10 +670,7 @@ extern "C" S32 fn_80043BA4(S32 card)
             fn_80041CE8(0, card, card);
             fn_80041CC4(0, 27);
             fn_80041548(0, text);
-            const char* options[4] = {};
-            options[0] = "Continue Without Saving";
-            options[1] = "Retry";
-            S32 choice = fn_80041D90(text, options, NULL, NULL);
+            S32 choice = TRCAskCard(text, "Continue Without Saving", "Retry", NULL, NULL);
             if (choice == -1)
             {
                 result = 4;
@@ -655,10 +711,7 @@ extern "C" S32 fn_80043940()
         fn_80041CE8(0, 0, 0);
         fn_80041CC4(0, 25);
         fn_80041548(0, text);
-        const char* options[4] = {};
-        options[0] = "Continue Without Saving";
-        options[1] = "Retry";
-        S32 choice = fn_80041D90(text, options, NULL, NULL);
+        S32 choice = TRCAskCard(text, "Continue Without Saving", "Retry", NULL, NULL);
         if (choice == -1)
         {
             result = 4;
@@ -685,10 +738,7 @@ extern "C" S32 fn_80043940()
         fn_80041CE8(0, 0, 0);
         fn_80041CC4(0, 25);
         fn_80041548(0, text);
-        const char* options[4] = {};
-        options[0] = "Continue Without Saving";
-        options[1] = "Retry";
-        S32 choice = fn_80041D90(text, options, NULL, NULL);
+        S32 choice = TRCAskCard(text, "Continue Without Saving", "Retry", NULL, NULL);
         if (choice == -1)
         {
             result = 4;
@@ -715,10 +765,9 @@ extern "C" S32 fn_80043730(S32 card)
 {
     S32 result = 1;
     char text[512] = { 0 };
-    st_ISGSESSION* session = iSGSessionBegin(NULL, NULL);
     S32 slot = -1;
+    st_ISGSESSION* session = iSGSessionBegin(NULL, NULL);
     S32 count = iSGTgtCount(session, NULL);
-
     if (count < 1)
     {
         result = 4;
@@ -773,10 +822,7 @@ extern "C" S32 fn_80043730(S32 card)
                 fn_80041CE8(0, slot, card);
                 fn_80041CC4(0, message);
                 fn_80041548(0, text);
-                const char* options[4] = {};
-                options[0] = "Continue Without Saving";
-                options[1] = "Retry";
-                S32 choice = fn_80041D90(text, options, NULL, NULL);
+                S32 choice = TRCAskCard(text, "Continue Without Saving", "Retry", NULL, NULL);
                 if (choice == 1)
                 {
                     result = 4;
@@ -796,32 +842,11 @@ extern "C" S32 fn_80043730(S32 card)
     return result;
 }
 
-// Draws one memory-card message as a single frame, with no buttons.
-static inline void TRCShowCardMessage(char* text)
-{
-    RwRGBA clear = { 0, 0, 0, 0 };
-    char unused[256] = { 0 };
-    xFontBox* box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 1, xColorFromRGBA(255, 230, 0, 255));
-    xFontBoxSetText(box, text);
-    xFontBoxSetDrawSize(box, 18.0f, 24.0f);
-    xFontBoxSetDrawSpacing(box, 17.0f, 24.0f);
-    xFontBoxSetBackdrop(box, xColorFromRGBA(0, 0, 0, 255));
-    xFontBoxSetInset(box, 100.0f, 100.0f, 100.0f, 0.0f);
-    xFontBoxSetJustification(box, 0x40);
-    RwCamera* camera = iCameraCreate(640, 480);
-    RwCameraClear(camera, &clear, 3);
-    RwCameraBeginUpdate(camera);
-    xFontBoxRender(box);
-    RwCameraEndUpdate(camera);
-    RwCameraShowRaster(camera, NULL, 1);
-    iCameraDestroy(camera);
-    xFontBoxDestroy(box);
-}
-
 // Checks that the card is formatted for this market, and offers to format it.
 extern "C" S32 fn_80043050(S32 card, S32* formatted)
 {
     S32 result = 1;
+    st_ISGSESSION* session;
     TRCCardWatch watch = { 0 };
     watch.card = card;
     char text[512] = { 0 };
@@ -831,7 +856,7 @@ extern "C" S32 fn_80043050(S32 card, S32* formatted)
     {
         *formatted = 0;
     }
-    st_ISGSESSION* session = iSGSessionBegin(NULL, NULL);
+    session = iSGSessionBegin(NULL, NULL);
     S32 count = iSGTgtCount(session, NULL);
     if (count < 1)
     {
@@ -898,26 +923,25 @@ extern "C" S32 fn_80043050(S32 card, S32* formatted)
             }
             fn_80041548(0, text);
             const char* options[4] = { "Continue Without Saving", "Retry", "Format Memory Card" };
-            switch (fn_80041D90(text, options, fn_80043E20, &watch))
+            S32 choice = fn_80041D90(text, options, fn_80043E20, &watch);
+            if (choice == -1)
             {
-            case -1:
                 result = 4;
-                break;
-            case 1:
+            }
+            else if (choice == 1)
+            {
                 result = 4;
-                break;
-            case 0:
+            }
+            else if (choice == 0)
+            {
                 result = 1;
-                break;
-            case 2:
+            }
+            else if (choice == 2)
             {
                 fn_80041CE8(0, slot, card);
                 fn_80041CC4(0, 18);
                 fn_80041548(0, text);
-                const char* confirm[4] = {};
-                confirm[0] = "No";
-                confirm[1] = "Yes";
-                S32 choice = fn_80041D90(text, confirm, fn_80043E20, &watch);
+                S32 choice = TRCAskCard(text, "No", "Yes", fn_80043E20, &watch);
                 if (choice == -1)
                 {
                     result = 4;
@@ -934,11 +958,7 @@ extern "C" S32 fn_80043050(S32 card, S32* formatted)
                     fn_80041548(0, text);
                     TRCShowCardMessage(text);
                     S32 ok = iSGTgtFormat(session, slot, 0, &canRecover);
-                    for (S32 i = 59; i >= 0; i--)
-                    {
-                        fn_80016600();
-                        iVSync();
-                    }
+                    TRCWaitFrames(60);
                     fn_80041CE8(0, slot, card);
                     if (ok)
                     {
@@ -962,25 +982,17 @@ extern "C" S32 fn_80043050(S32 card, S32* formatted)
                     fn_80041548(0, text);
                     if (ok)
                     {
-                        const char* done[4] = {};
-                        done[0] = NULL;
-                        done[1] = "Continue";
-                        choice = fn_80041D90(text, done, fn_80043E20, &watch);
+                        choice = TRCAskCard(text, NULL, "Continue", fn_80043E20, &watch);
                     }
                     else
                     {
-                        const char* done[4] = {};
-                        done[0] = NULL;
-                        done[1] = "Continue";
-                        choice = fn_80041D90(text, done, NULL, NULL);
+                        choice = TRCAskCard(text, NULL, "Continue", NULL, NULL);
                     }
                     if (choice == -1)
                     {
                         result = 4;
                     }
                 }
-                break;
-            }
             }
         }
         else if ((state & 2) && formatted)
@@ -996,11 +1008,12 @@ extern "C" S32 fn_80043050(S32 card, S32* formatted)
 extern "C" S32 fn_80042A48(S32 card)
 {
     S32 result = 4;
+    st_ISGSESSION* session;
+    S32 slot = -1;
     TRCCardWatch watch = { 0 };
     watch.card = card;
     char text[512] = { 0 };
-    S32 slot = -1;
-    st_ISGSESSION* session = iSGSessionBegin(NULL, NULL);
+    session = iSGSessionBegin(NULL, NULL);
     S32 count = iSGTgtCount(session, NULL);
 
     if (count < 1)
@@ -1053,46 +1066,47 @@ extern "C" S32 fn_80042A48(S32 card)
             fn_80041CC4(0, 9);
             fn_80041C4C(0, corrupt);
             fn_80041548(0, text);
-            switch (fn_80041D90(text, options, fn_80043E20, &watch))
+            S32 choice = fn_80041D90(text, options, fn_80043E20, &watch);
+            if (choice == -1)
             {
-            case -1:
                 result = 4;
-                break;
-            case 1:
+            }
+            else if (choice == 1)
+            {
                 result = 4;
-                break;
-            case 0:
+            }
+            else if (choice == 0)
+            {
                 result = 3;
-                break;
-            case 2:
+            }
+            else if (choice == 2)
             {
                 fn_80041CE8(0, slot, card);
                 fn_80041CC4(0, 10);
                 fn_80041548(0, text);
-                const char* confirm[4] = {};
-                confirm[0] = "No";
-                confirm[1] = "Yes";
-                switch (fn_80041D90(text, confirm, fn_80043E20, &watch))
+                choice = TRCAskCard(text, "No", "Yes", fn_80043E20, &watch);
+                if (choice == -1)
                 {
-                case -1:
                     result = 4;
-                    break;
-                case 0:
+                }
+                else if (choice == 0)
+                {
                     result = 4;
-                    break;
-                case 1:
+                }
+                else if (choice == 1)
                 {
                     fn_80041CE8(0, slot, card);
                     fn_80041CC4(0, 13);
                     fn_80041548(0, text);
                     TRCShowCardMessage(text);
                     fn_80041CE8(0, slot, card);
-                    if (fn_800132C4(session, 1, NULL, &repaired) == 0)
+                    S32 ok = fn_800132C4(session, 1, NULL, &repaired);
+                    if (ok)
                     {
                         result = 1;
                         fn_80041CC4(0, 11);
                     }
-                    else if (repaired >= 0)
+                    else if (!ok && repaired >= 0)
                     {
                         result = 4;
                         fn_80041CC4(0, 11);
@@ -1103,24 +1117,19 @@ extern "C" S32 fn_80042A48(S32 card)
                         fn_80041CC4(0, 12);
                     }
                     fn_80041548(0, text);
-                    const char* done[4] = {};
-                    done[0] = NULL;
-                    done[1] = "Continue";
-                    if (fn_80041D90(text, done, fn_80043E20, &watch) == -1)
+                    if (TRCAskCard(text, NULL, "Continue", fn_80043E20, &watch) == -1)
                     {
                         result = 4;
                     }
-                    break;
                 }
-                default:
+                else
+                {
                     result = 3;
-                    break;
                 }
-                break;
             }
-            default:
+            else
+            {
                 result = 3;
-                break;
             }
         }
     }
@@ -1131,8 +1140,9 @@ extern "C" S32 fn_80042A48(S32 card)
 // Checks that the card has room for a save file, and offers to manage the card.
 extern "C" S32 fn_80042774(S32 card)
 {
+    st_ISGSESSION* session;
     S32 result = 1;
-    S32 reset = 0;
+    S32 slot = -1;
     TRCCardWatch watch = { 0 };
     watch.card = card;
     S32 needed = 0;
@@ -1140,9 +1150,9 @@ extern "C" S32 fn_80042774(S32 card)
     S32 blockSize = 0;
     S32 needFile = 0;
     S32 freeFiles = 0;
+    S32 reset = 0;
     char text[512] = { 0 };
-    S32 slot = -1;
-    st_ISGSESSION* session = iSGSessionBegin(NULL, NULL);
+    session = iSGSessionBegin(NULL, NULL);
     S32 count = iSGTgtCount(session, NULL);
 
     if (count < 1)
@@ -1194,24 +1204,27 @@ extern "C" S32 fn_80042774(S32 card)
             fn_80041CC4(0, 32);
             fn_80041C78(0, available, needed, blockSize, freeFiles, needFile);
             fn_80041548(0, text);
-            switch (fn_80041D90(text, options, fn_80043E20, &watch))
+            S32 choice = fn_80041D90(text, options, fn_80043E20, &watch);
+            if (choice == -1)
             {
-            case -1:
                 result = 4;
-                break;
-            case 1:
+            }
+            else if (choice == 1)
+            {
                 result = 4;
-                break;
-            case 0:
+            }
+            else if (choice == 0)
+            {
                 result = 3;
-                break;
-            case 2:
+            }
+            else if (choice == 2)
+            {
                 reset = 1;
                 result = 4;
-                break;
-            default:
+            }
+            else
+            {
                 result = 3;
-                break;
             }
         }
     }
@@ -1227,7 +1240,8 @@ extern "C" S32 fn_80042774(S32 card)
 extern "C" S32 fn_800423EC(S32 card)
 {
     S32 result = 1;
-    S32 reset = 0;
+    st_ISGSESSION* session;
+    S32 slot = -1;
     TRCCardWatch watch = { 0 };
     watch.card = card;
     S32 needed = 0;
@@ -1235,9 +1249,9 @@ extern "C" S32 fn_800423EC(S32 card)
     S32 blockSize = 0;
     S32 needFile = 0;
     S32 freeFiles = 0;
+    S32 reset = 0;
     char text[512] = { 0 };
-    S32 slot = -1;
-    st_ISGSESSION* session = iSGSessionBegin(NULL, NULL);
+    session = iSGSessionBegin(NULL, NULL);
     S32 count = iSGTgtCount(session, NULL);
 
     if (count < 1)
@@ -1272,13 +1286,14 @@ extern "C" S32 fn_800423EC(S32 card)
         S32 first = -1;
         S32 hook = 2;
         S32 sizes[3] = { 0 };
-        S32 found = fn_800138EC(session, NULL, NULL);
+        S32 found = fn_800138EC(session);
         if (found >= 1 && found != 3)
         {
             S32 i;
             for (i = 0; i < 3; i++)
             {
-                sizes[i] = iSGFileSize(session, iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i));
+                char* name = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i);
+                sizes[i] = iSGFileSize(session, name);
                 if (sizes[i] < 1)
                 {
                     sizes[i] = -1;
@@ -1311,24 +1326,27 @@ extern "C" S32 fn_800423EC(S32 card)
                     fn_80041CC4(0, 33);
                     fn_80041C78(0, available, needed, blockSize, freeFiles, needFile);
                     fn_80041548(0, text);
-                    switch (fn_80041D90(text, options, fn_80043E20, &watch))
+                    S32 choice = fn_80041D90(text, options, fn_80043E20, &watch);
+                    if (choice == -1)
                     {
-                    case -1:
                         result = 4;
-                        break;
-                    case 1:
+                    }
+                    else if (choice == 1)
+                    {
                         result = 4;
-                        break;
-                    case 0:
+                    }
+                    else if (choice == 0)
+                    {
                         result = 3;
-                        break;
-                    case 2:
+                    }
+                    else if (choice == 2)
+                    {
                         reset = 1;
                         result = 4;
-                        break;
-                    default:
+                    }
+                    else
+                    {
                         result = 3;
-                        break;
                     }
                 }
             }
@@ -1342,32 +1360,89 @@ extern "C" S32 fn_800423EC(S32 card)
     return result;
 }
 
+// Waits the given number of frames, keeping the pads updated.
+static void TRCWaitFrames(S32 frames)
+{
+    while (frames-- > 0)
+    {
+        iSystemPollResetAndDisc();
+        iVSync();
+    }
+}
+
+// Clears the screen to black for one frame.
+static void TRCClearScreen()
+{
+    RwRGBA clear = { 0, 0, 0, 0 };
+    RwCamera* camera = iCameraCreate(640, 480);
+    RwCameraClear(camera, &clear, 3);
+    RwCameraBeginUpdate(camera);
+    RwCameraEndUpdate(camera);
+    RwCameraShowRaster(camera, NULL, 1);
+    iCameraDestroy(camera);
+}
+
+// Draws one memory-card message as a single frame, with no buttons. With no text it draws the
+// warning not to remove the memory card.
+static void TRCShowCardMessage(char* text)
+{
+    RwRGBA clear = { 0, 0, 0, 0 };
+    RwCamera* camera;
+    char buffer[256] = { 0 };
+    if (!text)
+    {
+        sprintf(buffer, "$A%sWARNING!$C Accessing the Nintendo GameCube%s Memory Card.\nPlease do not remove the Memory Card or turn off the power to the Nintendo GameCube%s.\n", TRC_RED, "^", "^");
+        text = buffer;
+    }
+    xFontBox* box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 1, TRC_TEXT_COLOR);
+    xFontBoxSetText(box, text);
+    xFontBoxSetDrawSize(box, 18.0f, 24.0f);
+    xFontBoxSetDrawSpacing(box, 17.0f, 24.0f);
+    xFontBoxSetBackdrop(box, xColorFromRGBA(0, 0, 0, 255));
+    xFontBoxSetInset(box, 100.0f, 100.0f, 100.0f, 0.0f);
+    xFontBoxSetJustification(box, 0x40);
+    camera = iCameraCreate(640, 480);
+    RwCameraClear(camera, &clear, 3);
+    RwCameraBeginUpdate(camera);
+    xFontBoxRender(box);
+    RwCameraEndUpdate(camera);
+    RwCameraShowRaster(camera, NULL, 1);
+    iCameraDestroy(camera);
+    xFontBoxDestroy(box);
+}
+
+// Shows a message box with two buttons, the first option on B and the second on A.
+static S32 TRCAskCard(char* text, const char* first, const char* second, TRCCardCheck check, TRCCardWatch* watch)
+{
+    const char* options[4] = {};
+    options[0] = first;
+    options[1] = second;
+    return fn_80041D90(text, options, check, watch);
+}
+
 // Shows a message box with up to four buttons (A, B, X, Y, in options order: B, A, X, Y) and
 // waits for one, or for the check callback to report a change (-1). Returns the button's
 // option index. With no text it only clears the screen.
 extern "C" S32 fn_80041D90(char* text, const char** options, TRCCardCheck check, TRCCardWatch* watch)
 {
-    RwRGBA clear = { 0, 0, 0, 0 };
     S32 choice = 0;
+    RwRGBA clear = { 0, 0, 0, 0 };
+    RwCamera* camera;
+    xFontBox* box;
+    xFontBox* buttons1;
     xFontBox* buttons2 = NULL;
     char buttons[256] = { 0 };
     char buttonsLow[256] = { 0 };
+    S32 count;
+    U32 mask;
     S32 done = 0;
 
     if (text == NULL)
     {
-        RwRGBA black = { 0, 0, 0, 0 };
-        RwCamera* camera = iCameraCreate(640, 480);
-        RwCameraClear(camera, &black, 3);
-        RwCameraBeginUpdate(camera);
-        RwCameraEndUpdate(camera);
-        RwCameraShowRaster(camera, NULL, 1);
-        iCameraDestroy(camera);
+        TRCClearScreen();
         return 0;
     }
 
-    S32 count;
-    U32 mask;
     if (options[1] && options[0] && options[2] && options[3])
     {
         count = 4;
@@ -1395,11 +1470,12 @@ extern "C" S32 fn_80041D90(char* text, const char** options, TRCCardCheck check,
         sprintf(buttons, "%s %s", "#", options[1]);
     }
 
-    xFontBox* box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 360.0f, 1, xColorFromRGBA(255, 230, 0, 255));
-    xFontBox* buttons1 = xFontBoxCreate(0.0f, 360.0f, 640.0f, 100.0f, 1, xColorFromRGBA(255, 230, 0, 255));
+#if VERSION_GIHE78_REV0
+    box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 360.0f, 1, TRC_TEXT_COLOR);
+    buttons1 = xFontBoxCreate(0.0f, 360.0f, 640.0f, 100.0f, 1, TRC_TEXT_COLOR);
     if (count > 2)
     {
-        buttons2 = xFontBoxCreate(0.0f, 400.0f, 640.0f, 100.0f, 1, xColorFromRGBA(255, 230, 0, 255));
+        buttons2 = xFontBoxCreate(0.0f, 400.0f, 640.0f, 100.0f, 1, TRC_TEXT_COLOR);
     }
     xFontBoxSetText(box, text);
     xFontBoxSetDrawSize(box, 18.0f, 24.0f);
@@ -1422,8 +1498,32 @@ extern "C" S32 fn_80041D90(char* text, const char** options, TRCCardCheck check,
         xFontBoxSetInset(buttons2, 40.0f, 10.0f, 0.0f, 0.0f);
         xFontBoxSetJustification(buttons2, 0x40);
     }
+#elif VERSION_GIHE78_REV1
+    // Revision 1 draws a smaller box with no black backdrop and does not set the glyph size.
+    box = xFontBoxCreate(0.0f, 0.0f, 640.0f, 320.0f, 1, TRC_TEXT_COLOR);
+    buttons1 = xFontBoxCreate(0.0f, 320.0f, 640.0f, 30.0f, 1, TRC_TEXT_COLOR);
+    if (count > 2)
+    {
+        buttons2 = xFontBoxCreate(0.0f, 350.0f, 640.0f, 30.0f, 1, TRC_TEXT_COLOR);
+    }
+    xFontBoxSetText(box, text);
+    xFontBoxSetDrawSpacing(box, 16.0f, 24.0f);
+    xFontBoxSetInset(box, 32.0f, 32.0f, 96.0f, 0.0f);
+    xFontBoxSetJustification(box, 0x40);
+    xFontBoxSetText(buttons1, buttons);
+    xFontBoxSetDrawSpacing(buttons1, 16.0f, 24.0f);
+    xFontBoxSetInset(buttons1, 40.0f, 10.0f, 0.0f, 0.0f);
+    xFontBoxSetJustification(buttons1, 0x40);
+    if (count > 2)
+    {
+        xFontBoxSetText(buttons2, buttonsLow);
+        xFontBoxSetDrawSpacing(buttons2, 16.0f, 24.0f);
+        xFontBoxSetInset(buttons2, 40.0f, 10.0f, 0.0f, 0.0f);
+        xFontBoxSetJustification(buttons2, 0x40);
+    }
+#endif
 
-    RwCamera* camera = iCameraCreate(640, 480);
+    camera = iCameraCreate(640, 480);
     while (!done)
     {
         gFontWiggleTime += 1.0f / 60.0f;
@@ -1442,7 +1542,7 @@ extern "C" S32 fn_80041D90(char* text, const char** options, TRCCardCheck check,
             choice = -1;
             break;
         }
-        fn_80016600();
+        iSystemPollResetAndDisc();
         xPadUpdate(0, 1.0f / 60.0f);
         U32 pressed = mask & globals.pad0->pressed;
         switch (count)
@@ -1553,7 +1653,13 @@ extern "C" void fn_80041CC4(S32 mode, S32 message)
     msg->message = message;
 }
 
+// Stores the space counts a "not enough space" message prints. zSaveLoad calls it too on
+// revision 0; revision 1 keeps it inside this file.
+#if VERSION_GIHE78_REV0
 extern "C" void fn_80041C78(S32 mode, S32 available, S32 needed, S32 blockSize, S32 freeFiles, S32 needFile)
+#elif VERSION_GIHE78_REV1
+static void fn_80041C78(S32 mode, S32 available, S32 needed, S32 blockSize, S32 freeFiles, S32 needFile)
+#endif
 {
     TRCCardMessage* msg = &lbl_801B6610[mode];
     if (msg->flags)
@@ -1580,7 +1686,9 @@ extern "C" void fn_80041C4C(S32 mode, S32 value)
 // The label of the message box's B button.
 extern "C" S32 fn_80041BC8(S32 mode, char* dst)
 {
-    switch (lbl_801B6610[mode].message)
+    TRCCardMessage* msg = &lbl_801B6610[mode];
+
+    switch (msg->message)
     {
     case 33:
         return sprintf(dst, "%s", "Continue");
@@ -1592,9 +1700,15 @@ extern "C" S32 fn_80041BC8(S32 mode, char* dst)
 }
 
 // The label of the message box's X button.
+#if VERSION_GIHE78_REV0
 extern "C" S32 fn_80041B10(S32 mode, char* dst)
+#elif VERSION_GIHE78_REV1
+extern "C" S32 fn_80041ADC(S32 mode, char* dst)
+#endif
 {
-    switch (lbl_801B6610[mode].message)
+    TRCCardMessage* msg = &lbl_801B6610[mode];
+
+    switch (msg->message)
     {
     case 4:
     case 32:
@@ -1610,7 +1724,11 @@ extern "C" S32 fn_80041B10(S32 mode, char* dst)
     }
 }
 
+#if VERSION_GIHE78_REV0
 extern "C" S32 fn_80041ADC(S32 mode, char* dst)
+#elif VERSION_GIHE78_REV1
+extern "C" S32 fn_80041AA8(S32 mode, char* dst)
+#endif
 {
     return sprintf(dst, "%s", "--error--");
 }
@@ -1623,10 +1741,14 @@ extern "C" S32 fn_80041548(S32 mode, char* dst)
     char cardName[64] = { 0 };
     char slotName[32] = { 0 };
     S32 blocks;
+    char* name;
 
-    sprintf(device, fn_800389FC(0, msg->slot, 2));
-    sprintf(slotName, fn_800389FC(0, msg->slot, 3));
-    sprintf(cardName, fn_800389FC(0, msg->slot, 4));
+    name = fn_800389FC(0, msg->slot, 2);
+    sprintf(device, name);
+    name = fn_800389FC(0, msg->slot, 3);
+    sprintf(slotName, name);
+    name = fn_800389FC(0, msg->slot, 4);
+    sprintf(cardName, name);
 
     switch (msg->message)
     {
@@ -1637,8 +1759,12 @@ extern "C" S32 fn_80041548(S32 mode, char* dst)
     case 3:
         return sprintf(dst, "$A%sSave Failed!$C\nCheck the %s and try again.", TRC_RED, cardName);
     case 4:
-        blocks = (msg->needed + (msg->blockSize - 1)) / msg->blockSize;
+        blocks = (msg->needed + msg->blockSize - 1) / msg->blockSize;
+#if VERSION_GIHE78_REV0
         return sprintf(dst, "$A%sSave Failed!$C\nNot enough space on the %s to create a new %s file.\nAt least $A%s%d file%s and %d block%s required.\n", TRC_RED, cardName, TRC_TITLE, TRC_GREEN, msg->needFile, msg->needFile == 1 ? "" : "s", blocks, blocks == 1 ? "$C is" : "s$C are");
+#elif VERSION_GIHE78_REV1
+        return sprintf(dst, "$A%sSave Failed!$C\nNot enough space on the %s to create a new %s file.\nAt least $A%s%d file%s and %d block%s required.\nExisting files may be loaded and overwritten.\n", TRC_RED, cardName, TRC_TITLE, TRC_GREEN, msg->needFile, msg->needFile == 1 ? "" : "s", blocks, blocks == 1 ? "$C is" : "s$C are");
+#endif
     case 5:
         return sprintf(dst, "$A%sWARNING!$C\nLoading. Do not touch the %s or the %s.\n", TRC_RED, cardName, "POWER Button");
     case 6:
@@ -1690,20 +1816,28 @@ extern "C" S32 fn_80041548(S32 mode, char* dst)
     case 26:
         return sprintf(dst, "The %s is damaged and cannot be used.\n", cardName);
     case 27:
+#if VERSION_GIHE78_REV0
         return sprintf(dst, "Wrong device in %s.\n\nPlease insert a\n%s.\n", slotName, device);
+#elif VERSION_GIHE78_REV1
+        return sprintf(dst, "Wrong device in %s.\n\nPlease insert a\n%s in %s.\n", slotName, device, slotName);
+#endif
     case 28:
         return sprintf(dst, "The %s is not compatible with the %s save file.", cardName, TRC_TITLE);
     case 29:
-        return sprintf(dst, "The %s is formatted for a market not compatible with the save file format of %s.\nTo avoid accidental data loss in this situation, reformatting is not supported.\nPlease review the %s Nintendo GameCube%s Instruction Booklet for more information.\n", cardName, TRC_TITLE, cardName, "^");
+        return sprintf(dst, "The %s is formatted for a market not compatible with the save file format of %s.\nTo avoid accidental data loss in this situation, reformatting is not supported.\nPlease review the %s using the Nintendo GameCube%s IPL Memory Card Browser.\n", cardName, TRC_TITLE, cardName, "^");
     case 30:
         return sprintf(dst, "The %s appears to be damaged and cannot be used.\n", cardName);
     case 31:
         return sprintf(dst, "The %s is not compatible with the save file format of\n%s.\n", cardName, TRC_TITLE);
+#if VERSION_GIHE78_REV0
     case 32:
-        blocks = (msg->needed + (msg->blockSize - 1)) / msg->blockSize;
+        blocks = (msg->needed + msg->blockSize - 1) / msg->blockSize;
         return sprintf(dst, "Not enough space on the %s.\nAt least $A%s%d file%s and %d block%s required.\n", cardName, TRC_GREEN, msg->needFile, msg->needFile == 1 ? "" : "s", blocks, blocks == 1 ? "$C is" : "s$C are");
+#elif VERSION_GIHE78_REV1
+    case 32:
+#endif
     case 33:
-        blocks = (msg->needed + (msg->blockSize - 1)) / msg->blockSize;
+        blocks = (msg->needed + msg->blockSize - 1) / msg->blockSize;
         return sprintf(dst, "Not enough space on the %s to create a new %s file.\nAt least $A%s%d file%s and %d block%s required.\nExisting files may be loaded and overwritten.\n", cardName, TRC_TITLE, TRC_GREEN, msg->needFile, msg->needFile == 1 ? "" : "s", blocks, blocks == 1 ? "$C is" : "s$C are");
     default:
         return sprintf(dst, "$A255050080<<internal error>>$C");
