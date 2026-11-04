@@ -16471,6 +16471,7 @@ static xAnimTable* VANM_mktable_BK()
     xAnimTable* table;
     xAnimTransition* tmp_tran;
     char* strptrz[32] = {NULL};
+    xAnimTransition* intranz[ZVIL_ANIM_NOMORE] = {NULL};
     S32 i;
 
     table = xAnimTableNew("Villain_BlackKnight", NULL);
@@ -16625,6 +16626,7 @@ static xAnimTable* VANM_mktable_GG()
 {
     xAnimTable* table;
     char* strptrz[32] = {NULL};
+    xAnimTransition* intranz[ZVIL_ANIM_NOMORE] = {NULL};
     S32 i;
 
     table = xAnimTableNew("Villain_GreenGhost", NULL);
@@ -16739,6 +16741,7 @@ static xAnimTable* VANM_mktable_RB()
 {
     xAnimTable* table;
     char* strptrz[32] = {NULL};
+    xAnimTransition* intranz[ZVIL_ANIM_NOMORE] = {NULL};
     S32 i;
 
     table = xAnimTableNew("Villain_RedBeard", NULL);
