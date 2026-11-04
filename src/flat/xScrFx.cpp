@@ -67,13 +67,15 @@ void DrawScreenSizeRectangle()
     RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRISTRIP, v, 4, indices, 4);
 }
 
-// One channel of a plain fade: src + (dest - src) * t.
-static inline U8 FadeLerp(U8 a, U8 b, F32 t)
+// One channel of a plain fade: s + (d - s) * t.
+static U8 InterpCol(F32 t, U8 s, U8 d)
 {
-    F32 d = b - a;
-    d *= t;
-    d += a;
-    return d;
+    U8 uval;
+    F32 val = d - s;
+    val *= t;
+    val += s;
+    uval = (U8)val;
+    return uval;
 }
 
 // Draws the fade and the letterbox bars over the frame. After the end credits in s005 the screen
@@ -210,10 +212,10 @@ void xScrFxUpdate(RwCamera* cam, F32 seconds)
             else
             {
                 iColor_tag col;
-                col.r = FadeLerp(mFade.src.r, mFade.dest.r, t);
-                col.g = FadeLerp(mFade.src.g, mFade.dest.g, t);
-                col.b = FadeLerp(mFade.src.b, mFade.dest.b, t);
-                col.a = FadeLerp(mFade.src.a, mFade.dest.a, t);
+                col.r = InterpCol(t, mFade.src.r, mFade.dest.r);
+                col.g = InterpCol(t, mFade.src.g, mFade.dest.g);
+                col.b = InterpCol(t, mFade.src.b, mFade.dest.b);
+                col.a = InterpCol(t, mFade.src.a, mFade.dest.a);
                 iScrFxDrawFade(cam, &col);
             }
         }
