@@ -19,8 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern "C" {
 void iSystemPollResetAndDisc();
+
+extern "C" {
 void fn_800443AC();
 U32 fn_800443F8();
 }

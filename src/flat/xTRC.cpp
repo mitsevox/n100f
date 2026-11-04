@@ -45,7 +45,7 @@ void zGamePauseIfPossible();
 extern F32 gFontWiggleTime;
 
 void iSystemPollResetAndDisc();
-S32 zGameNickCamActive();
+U32 zGameNickCamActive();
 
 extern "C" {
 void fn_80016698(S32 reset);
