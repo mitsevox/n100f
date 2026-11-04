@@ -8,7 +8,7 @@
 #include <math.h>
 #include <string.h>
 
-extern "C" U32 lbl_8025E9F8;
+extern U32 gFrameCount;
 
 struct zMaterialMapEntry
 {
@@ -341,10 +341,10 @@ void zSurfaceUpdate(xBase* to, _xScene*, F32 dt)
             switch (moprops->uvfx[j].mode)
             {
             case 1:
-                moprops->uvfx[j].trans.x = sin((1.0f / 60) * (2.0f * lbl_8025E9F8));
-                moprops->uvfx[j].trans.y = sin((1.0f / 60) * (2.0f * lbl_8025E9F8));
-                moprops->uvfx[j].scale.x = sin((1.0f / 60) * (2.0f * lbl_8025E9F8));
-                moprops->uvfx[j].scale.y = sin((1.0f / 60) * (2.0f * lbl_8025E9F8));
+                moprops->uvfx[j].trans.x = sin((1.0f / 60) * (2.0f * gFrameCount));
+                moprops->uvfx[j].trans.y = sin((1.0f / 60) * (2.0f * gFrameCount));
+                moprops->uvfx[j].scale.x = sin((1.0f / 60) * (2.0f * gFrameCount));
+                moprops->uvfx[j].scale.y = sin((1.0f / 60) * (2.0f * gFrameCount));
                 break;
             default:
             {
