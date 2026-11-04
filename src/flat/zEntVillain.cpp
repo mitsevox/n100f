@@ -17035,6 +17035,7 @@ static xAnimTable* VANM_mktable_MM()
 {
     xAnimTable* table;
     char* strptrz[32] = {NULL};
+    xAnimTransition* intranz[ZVIL_ANIM_NOMORE] = {NULL};
     S32 i;
 
     table = xAnimTableNew("Villain_MasterMind", NULL);
@@ -17323,6 +17324,8 @@ static xAnimTable* VANM_mktable_MM()
 static xAnimTable* VANM_mktable_SHAM()
 {
     xAnimTable* table;
+    char* strptrz[32] = {NULL};
+    xAnimTransition* intranz[ZVIL_ANIM_NOMORE] = {NULL};
     S32 i;
 
     table = xAnimTableNew("Villain_BossSham", NULL);
@@ -17359,6 +17362,8 @@ static xAnimTable* VANM_mktable_SHARK()
 {
     xAnimTable* table;
     xAnimTransition* tmp_tran;
+    char* strptrz[32] = {NULL};
+    xAnimTransition* intranz[ZVIL_ANIM_NOMORE] = {NULL};
     S32 i;
 
     table = xAnimTableNew("Villain_Shark", NULL);
@@ -17440,6 +17445,8 @@ static xAnimTable* VANM_mktable_SHARK()
 static xAnimTable* VANM_mktable_SIMP()
 {
     xAnimTable* table;
+    char* strptrz[32] = {NULL};
+    xAnimTransition* intranz[ZVIL_ANIM_NOMORE] = {NULL};
     S32 i;
 
     table = xAnimTableNew("Villain_Simple", NULL);
@@ -17459,6 +17466,12 @@ static xAnimTable* VANM_mktable_SIMP()
     }
 
     return table;
+}
+
+// A lost helper: only its zeroed 716 bytes of templates are left in the data, and nothing calls it.
+static void zEntVillain_UnknownTemplate716()
+{
+    S32 lost[179] = { 0 };
 }
 
 // Builds the gang's animation table: idles, fidgets, movement, actions and talking. Every state
