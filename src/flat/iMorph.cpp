@@ -81,7 +81,6 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
     S32 lockMode;
     RpUserDataArray* usr;
     DirtyMorph* dm;
-    U8 useNormals;
 
     s_geom = model->geometry;
     s_tgt = s_geom->morphTarget;
@@ -89,13 +88,13 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
     s_alloc = NULL;
     s_nTemp = NULL;
 
-    useNormals = normals && s_geom->object.flags & rpGEOMETRYNORMALS;
+    normals = normals && s_geom->object.flags & rpGEOMETRYNORMALS;
 
     vold = s_tgt->verts;
     // RenderWare's lock flags: 2 locks the vertices, 4 the normals.
-    lockMode = (useNormals ? 4 : 0) | 2;
+    lockMode = (normals ? 4 : 0) | 2;
 
-    if (useNormals)
+    if (normals)
     {
         nold = s_tgt->normals;
     }
@@ -129,7 +128,7 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
 
         s_tgt->verts = (RwV3d*)s_vTemp;
 
-        if (useNormals)
+        if (normals)
         {
             s_nTemp = s_vTemp + s_numV * 3;
 
@@ -205,7 +204,7 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
             }
         }
 
-        if (useNormals && s_geom->object.flags & rpGEOMETRYNORMALS)
+        if (normals && s_geom->object.flags & rpGEOMETRYNORMALS)
         {
             if (s_numV == 0)
             {
@@ -275,7 +274,7 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
 
         s_tgt->verts = vold;
 
-        if (useNormals)
+        if (normals)
         {
             s_tgt->normals = nold;
         }
@@ -286,7 +285,7 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
         vold = s_tgt->verts;
         s_tgt->verts = (RwV3d*)s_vTemp;
 
-        if (useNormals)
+        if (normals)
         {
             nold = s_tgt->normals;
             s_tgt->normals = (RwV3d*)s_nTemp;
@@ -296,7 +295,7 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
         iModelRender(model, mat);
         s_tgt->verts = vold;
 
-        if (useNormals)
+        if (normals)
         {
             s_tgt->normals = nold;
         }
