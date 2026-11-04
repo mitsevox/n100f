@@ -145,7 +145,7 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
         {
             for (i = 1; i < a; i++)
             {
-                if (dm->weight[i] != wa[i] || dm->v_array[i] != va[i])
+                if (dm->weight[i] != wa[i] || va[i] != dm->v_array[i])
                 {
                     break;
                 }
@@ -184,8 +184,8 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
     // Three targets use the four-target blend with a zero-weight fourth.
     if (a == 3)
     {
-        wa[3] = 0;
         va[3] = va[2];
+        wa[3] = 0;
     }
 
     if (!usr)
