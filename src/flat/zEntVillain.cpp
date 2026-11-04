@@ -15565,6 +15565,13 @@ static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt)
     return 0;
 }
 
+// A lost helper: only its zeroed 24 bytes of templates are left in the data, and nothing calls it.
+static void zEntVillain_UnknownTemplate24()
+{
+    _xVec3 lost_a = { 0 };
+    _xVec3 lost_b = { 0 };
+}
+
 // Sets up a Redbeard sword projectile and takes a free sword. Returns 1 if one was free.
 static S32 VPRJ_BRB_attach(zEntProjectile* prj)
 {
@@ -15901,6 +15908,12 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
         break;
     }
     return 1;
+}
+
+// A lost helper: only its zeroed 12-byte template is left in the data, and nothing calls it.
+static void zEntVillain_UnknownTemplate12b()
+{
+    _xVec3 lost = { 0 };
 }
 
 // Notify the Mastermind projectile's owner and play its sounds.
