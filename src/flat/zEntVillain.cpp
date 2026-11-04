@@ -16463,88 +16463,89 @@ static void VPAR_readyize_emitters()
 // Emit a villain particle role at its bound, head, or marked model vertices.
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F32 dt)
 {
-    _zParEmitterCustomSettings info = { 0 };
-    _xVec3 center = *xBoundCenter(&ent->bound);
-    _xVec3 head = { 0 };
-    if (!VSUP_vertPos(ent, ZVIL_MDLVERT_DMG_BOUNCE, &head))
+    _zParEmitterCustomSettings pecust = { 0 };
+    _xVec3 vilctr = { 0 };
+    _xVec3 vilhed = { 0 };
+    vilctr = *xBoundCenter(&ent->bound);
+    if (!VSUP_vertPos(ent, ZVIL_MDLVERT_DMG_BOUNCE, &vilhed))
     {
-        head = *xEntGetPos(ent);
-        head.y += ent->precalc.hyt_vil;
+        vilhed = *xEntGetPos(ent);
+        vilhed.y += ent->precalc.hyt_vil;
     }
-    head.y += 0.1f;
+    vilhed.y += 0.1f;
 
-    S32 emit = 0;
+    S32 do_emit = 0;
     for (S32 i = 0; i < g_emitlist.cnt; i++)
     {
-        st_zEntVillain_ParEmitRecord* rec = (st_zEntVillain_ParEmitRecord*)g_emitlist.list[i];
-        if (!rec->emitctxt || rec->emitrole != role ||
-            (rec->viltype != (en_zEntVillainSubTypeID)-1 && rec->viltype != ent->asset->subtype) ||
-            (rec->flg_need & ent->flg_misc) != rec->flg_need || (rec->flg_omit & ent->flg_misc))
+        st_zEntVillain_ParEmitRecord* vpar = (st_zEntVillain_ParEmitRecord*)g_emitlist.list[i];
+        if (!vpar->emitctxt || vpar->emitrole != role ||
+            (vpar->viltype != (en_zEntVillainSubTypeID)-1 && vpar->viltype != ent->asset->subtype) ||
+            (vpar->flg_need & ent->flg_misc) != vpar->flg_need || (vpar->flg_omit & ent->flg_misc))
             continue;
-        info.custom_flags = 0;
+        pecust.custom_flags = 0;
         switch (role)
         {
         case VPAR_EMIT_EXTATTACK:
         case VPAR_EMIT_POOF:
         case VPAR_EMIT_TELEPORT:
-            emit = 0;
+            do_emit = 0;
             break;
         case VPAR_EMIT_GUMMY:
-            info.custom_flags = 0x20;
-            for (S32 vert = 0; vert <= 4; vert++)
-                if (VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)vert, &info.pos))
-                    zParEmitterEmitCustom(rec->emitctxt, dt, &info);
-            emit = 0;
+            pecust.custom_flags = 0x20;
+            for (S32 idx = 0; idx <= 4; idx++)
+                if (VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)idx, &pecust.pos))
+                    zParEmitterEmitCustom(vpar->emitctxt, dt, &pecust);
+            do_emit = 0;
             break;
         case VPAR_EMIT_HEADBUTT:
         {
             xMat4x3* playerframe = (xMat4x3*)globals.player.ent.model->Mat;
             _xVec3 angles = { 0 };
             F32 emitdt = dt;
-            info.pos.x = playerframe->pos.x + playerframe->at.x;
-            info.pos.y = playerframe->pos.y + 1.1f;
-            info.pos.z = playerframe->pos.z + playerframe->at.z;
-            info.custom_flags = 0x10020;
+            pecust.pos.x = playerframe->pos.x + playerframe->at.x;
+            pecust.pos.y = playerframe->pos.y + 1.1f;
+            pecust.pos.z = playerframe->pos.z + playerframe->at.z;
+            pecust.custom_flags = 0x10020;
             xMat3x3GetEuler((xMat3x3*)playerframe, &angles);
-            info.rot[0] = (U8)(S32)(255.0f * (angles.x / (2.0f * PI)));
-            info.rot[1] = 0x40;
-            info.rot[2] = (U8)(S32)(255.0f * (angles.z / (2.0f * PI)));
-            if (rec->emitterID == xStrHash("ParEmit_SD_Headbutt2"))
-                info.rot[0] += 0x40;
+            pecust.rot[0] = (U8)(S32)(255.0f * (angles.x / (2.0f * PI)));
+            pecust.rot[1] = 0x40;
+            pecust.rot[2] = (U8)(S32)(255.0f * (angles.z / (2.0f * PI)));
+            if (vpar->emitterID == xStrHash("ParEmit_SD_Headbutt2"))
+                pecust.rot[0] += 0x40;
             else
                 emitdt = 0.0f;
-            zParEmitterEmitCustom(rec->emitctxt, emitdt, &info);
-            emit = 0;
+            zParEmitterEmitCustom(vpar->emitctxt, emitdt, &pecust);
+            do_emit = 0;
             break;
         }
         case VPAR_EMIT_BORED:
         case VPAR_EMIT_GUARD:
-            info.pos = head;
-            info.custom_flags = 0x20;
-            if (rec->emitterID == xStrHash("ParEmit_Vil_Bored"))
+            pecust.pos = vilhed;
+            pecust.custom_flags = 0x20;
+            if (vpar->emitterID == xStrHash("ParEmit_Vil_Bored"))
             {
-                info.color_birth[3] = 0;
-                info.color_death[3] = 0;
-                info.custom_flags |= 0x180;
+                pecust.color_birth[3] = 0;
+                pecust.color_death[3] = 0;
+                pecust.custom_flags |= 0x180;
             }
-            emit = 1;
+            do_emit = 1;
             break;
         case VPAR_EMIT_QUESTMARK:
         case VPAR_EMIT_EXCLAIM:
             if (g_scene_is_a_boss_battle) break;
         case VPAR_EMIT_BUTTBOUNCE:
         case VPAR_EMIT_STUN:
-            info.pos = head;
-            info.custom_flags = 0x20;
-            emit = 1;
+            pecust.pos = vilhed;
+            pecust.custom_flags = 0x20;
+            do_emit = 1;
             break;
         default:
-            info.pos = center;
-            info.custom_flags = 0x20;
-            emit = 1;
+            pecust.pos = vilctr;
+            pecust.custom_flags = 0x20;
+            do_emit = 1;
             break;
         }
-        if (emit) zParEmitterEmitCustom(rec->emitctxt, dt, &info);
+        if (do_emit) zParEmitterEmitCustom(vpar->emitctxt, dt, &pecust);
     }
 }
 
