@@ -7485,7 +7485,6 @@ static void PlayerDigUpdate(_xEnt* ent, F32 dt)
 static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata)
 {
     xVec3* eup;
-    xVec3* fup;
     S32 grounded;
     xSurface* surf;
     S32 hit_it;
@@ -7501,6 +7500,7 @@ static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata
         hit_it = grounded && surf && !surf->state && zSurfaceGetMatchOrient(surf);
         if (hit_it)
         {
+            xVec3* fup;
             xVec3 nfup;
             xVec3 neup;
             F32 fdecl;
@@ -7539,7 +7539,7 @@ static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata
                         rang *= dang;
                         rang -= 0.001f;
                         xMat4x3Rot(&rot, &raxis, rang, &((xMat4x3*)ent->model->Mat)->pos);
-                        xMat3x3RMulVec(eup, (xMat3x3*)&rot, &neup);
+                        xMat3x3RMulVec(&globals.player.RootUpTarget, (xMat3x3*)&rot, &neup);
                         globals.player.HangElapsed = 0.0f;
                     }
                 }
@@ -7569,7 +7569,7 @@ static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata
                 {
                     rang = MIN(1.0f, dt / rms->trelax);
                     xMat4x3Rot(&rot, &raxis, rang * dang, &((xMat4x3*)ent->model->Mat)->pos);
-                    xMat3x3RMulVec(eup, (xMat3x3*)&rot, &neup);
+                    xMat3x3RMulVec(&globals.player.RootUpTarget, (xMat3x3*)&rot, &neup);
                     globals.player.HangElapsed = 0.0f;
                 }
             }
