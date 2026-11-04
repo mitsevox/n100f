@@ -22,4 +22,9 @@ inline iColor_tag xColorFromRGBA(U8 r, U8 g, U8 b, U8 a)
     return c;
 }
 
+inline void xColorCopy(iColor_tag* o, iColor_tag c)
+{
+    *(U32*)o = *(U32*)&c;
+}
+
 #endif

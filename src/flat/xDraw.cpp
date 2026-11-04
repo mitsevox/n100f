@@ -1,6 +1,8 @@
 #include "xDraw.h"
 
 #include "iDraw.h"
+#include "xColor.h"
+#include "version.h"
 
 #include <rwcore.h>
 
@@ -21,19 +23,12 @@ void xDrawEnd()
 
 void xDrawSetColor(iColor_tag color)
 {
-    sgDrawColor = color;
+    xColorCopy(&sgDrawColor, color);
 }
 
 void xDrawSetColor(U8 r, U8 g, U8 b, U8 a)
 {
-    iColor_tag color;
-
-    color.r = r;
-    color.g = g;
-    color.b = b;
-    color.a = a;
-
-    xDrawSetColor(color);
+    sgDrawColor = xColorFromRGBA(r, g, b, a);
 }
 
 // A world-space line from a to b in the current colour, queued for iDraw.
@@ -57,6 +52,7 @@ void xDrawLine(const xVec3* a, const xVec3* b)
 
 // GC only: a screen-space line from (x1, y1) to (x2, y2) in the current colour, at the near
 // screen depth.
+#if VERSION_GIHE78_REV0
 extern "C" void fn_80021CB0(F32 x1, F32 y1, F32 x2, F32 y2)
 {
     RwIm2DVertex verts[2];
@@ -74,3 +70,31 @@ extern "C" void fn_80021CB0(F32 x1, F32 y1, F32 x2, F32 y2)
 
     RwIm2DRenderLine(verts, 2, 0, 1);
 }
+#elif VERSION_GIHE78_REV1
+extern "C" void fn_80021DEC(F32 x1, F32 y1, F32 x2, F32 y2)
+{
+    RwIm2DVertex verts[2];
+    F32 z = RwIm2DGetNearScreenZ();
+    RwRaster* raster;
+    S32 vertexAlpha;
+
+    RwRenderStateGet(rwRENDERSTATETEXTURERASTER, &raster);
+    RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &vertexAlpha);
+
+    RwIm2DVertexSetScreenX(&verts[0], x1);
+    RwIm2DVertexSetScreenY(&verts[0], y1);
+    RwIm2DVertexSetScreenZ(&verts[0], z);
+    RwIm2DVertexSetIntRGBA(&verts[0], sgDrawColor.r, sgDrawColor.g, sgDrawColor.b, sgDrawColor.a);
+
+    RwIm2DVertexSetScreenX(&verts[1], x2);
+    RwIm2DVertexSetScreenY(&verts[1], y2);
+    RwIm2DVertexSetScreenZ(&verts[1], z);
+    RwIm2DVertexSetIntRGBA(&verts[1], sgDrawColor.r, sgDrawColor.g, sgDrawColor.b, sgDrawColor.a);
+
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, NULL);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, NULL);
+    RwIm2DRenderLine(verts, 2, 0, 1);
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, raster);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)vertexAlpha);
+}
+#endif

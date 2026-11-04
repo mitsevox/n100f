@@ -175,8 +175,8 @@ static void PKR_bld_typecnt(st_PACKER_READ_DATA* pr);
 static void PKR_special_loadbuf_killed(RwResEntry*);
 static inline S32 PKR_typeHdlr_idx(st_PACKER_READ_DATA* pr, U32 type);
 
-static RwResEntry* g_RWarena_resEntry;
-static RwResEntry* g_RWarena_resOwner;
+extern RwResEntry* g_RWarena_resEntry;
+extern RwResEntry* g_RWarena_resOwner;
 
 st_PACKER_READ_FUNCS* PKRGetReadFuncs(S32 apiver)
 {
@@ -458,7 +458,9 @@ static S32 PKR_parse_TOC(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr)
 // Returns 0 only when there is nothing left to load.
 static S32 PKR_LoadStep_Async()
 {
+    en_READ_ASYNC_STATUS readstat;
     S32 rc;
+    S32 moretodo;
     static st_PACKER_READ_DATA* curpr = NULL;
     static st_PACKER_LTOC_NODE* asynlay = NULL;
 
@@ -472,54 +474,66 @@ static S32 PKR_LoadStep_Async()
             {
                 if (asynlay->laymem == NULL)
                 {
-                    asynlay->laymem = PKR_LayerMemReserve(curpr, asynlay);
+                    if (PKR_layerLoadDest(asynlay->laytyp) == PKR_LDDEST_RWHANDOFF)
+                    {
+                        asynlay->laymem = PKR_getRWarena(curpr, asynlay->laysize);
+                    }
+                    else
+                    {
+                        asynlay->laymem = (char*)PKR_getmem(asynlay->laysize);
+                    }
                 }
 
                 st_PACKER_ATOC_NODE* tmpass = (st_PACKER_ATOC_NODE*)asynlay->assref.list[0];
                 g_hiprf->setSpot(tmpass->ownpkg, tmpass->d_off);
 
-                if (g_hiprf->readBytes(tmpass->ownpkg, asynlay->laymem, asynlay->laysize))
+                rc = g_hiprf->readBytes(tmpass->ownpkg, asynlay->laymem, asynlay->laysize);
+                if (rc)
                 {
                     asynlay->flg_ldstat |= 0x1000000;
                 }
                 else
                 {
-                    PKR_LayerMemRelease(curpr, asynlay);
+                    if (PKR_layerLoadDest(asynlay->laytyp) == PKR_LDDEST_RWHANDOFF)
+                    {
+                        PKR_relRWarena();
+                    }
                     asynlay->laymem = NULL;
                     asynlay->flg_ldstat &= 0xfcffffff;
                     curpr = NULL;
                     asynlay = NULL;
                 }
 
-                rc = 1;
+                moretodo = 1;
             }
             else
             {
-                rc = 1;
+                moretodo = 1;
                 asynlay->flg_ldstat |= 0x2000000;
                 asynlay = NULL;
             }
         }
         else
         {
-            rc = 0;
+            moretodo = 0;
             curpr = NULL;
             asynlay = NULL;
         }
     }
     else
     {
-        S32 moretodo = g_hiprf->pollRead(curpr->pkg);
-        if (moretodo == HIP_RDSTAT_INPROG)
+        readstat = g_hiprf->pollRead(curpr->pkg);
+        if (readstat == HIP_RDSTAT_INPROG)
         {
+            moretodo = 1;
             // Keeps the arena entry at the head of the in-use list while the read runs.
             if (PKR_layerLoadDest(asynlay->laytyp) == PKR_LDDEST_RWHANDOFF)
             {
-                RwResourcesUseResEntry(g_RWarena_resEntry);
+                RwResEntry* entry = g_RWarena_resEntry;
+                RwResourcesUseResEntry(entry);
             }
-            rc = 1;
         }
-        else if (moretodo == HIP_RDSTAT_SUCCESS)
+        else if (readstat == HIP_RDSTAT_SUCCESS)
         {
             PKR_updateLayerAssets(asynlay);
 
@@ -528,9 +542,13 @@ static S32 PKR_LoadStep_Async()
                 PKR_xformLayerAssets(asynlay);
             }
 
-            PKR_LayerMemRelease(curpr, asynlay);
+            if (PKR_layerLoadDest(asynlay->laytyp) == PKR_LDDEST_RWHANDOFF)
+            {
+                PKR_relRWarena();
+                asynlay->laymem = NULL;
+            }
 
-            rc = 1;
+            moretodo = 1;
             asynlay->flg_ldstat |= 0x2000000;
             asynlay = NULL;
         }
@@ -538,18 +556,25 @@ static S32 PKR_LoadStep_Async()
         {
             if (asynlay->laymem != NULL)
             {
-                PKR_LayerMemRelease(curpr, asynlay);
+                if (PKR_layerLoadDest(asynlay->laytyp) == PKR_LDDEST_RWHANDOFF)
+                {
+                    PKR_relRWarena();
+                    asynlay->laymem = NULL;
+                }
             }
 
-            rc = 1;
+            moretodo = 1;
             asynlay->flg_ldstat &= 0xfcffffff;
             asynlay = NULL;
             curpr = NULL;
         }
     }
 
-    return rc;
+    return moretodo;
 }
+
+RwResEntry* g_RWarena_resEntry;
+RwResEntry* g_RWarena_resOwner;
 
 // The layer's read buffer: the RenderWare arena for layers converted into RenderWare objects,
 // otherwise a 64-byte-aligned block from the active heap.
@@ -733,20 +758,21 @@ static void PKR_updateLayerAssets(st_PACKER_LTOC_NODE* laynode)
 
     if (tmpass != NULL)
     {
+        st_PACKER_ATOC_NODE* assnode;
         S32 lay_hip_pos = tmpass->d_off;
         for (i = 0; i < laynode->assref.cnt; i++)
         {
-            st_PACKER_ATOC_NODE* tmpass = (st_PACKER_ATOC_NODE*)laynode->assref.list[i];
-            if (!(tmpass->loadflag & 0x100000))
+            assnode = (st_PACKER_ATOC_NODE*)laynode->assref.list[i];
+            if (!(assnode->loadflag & 0x100000))
             {
-                if (tmpass->loadflag & 0x200000)
+                if (assnode->loadflag & 0x200000)
                 {
-                    tmpass->memloc = NULL;
+                    assnode->memloc = NULL;
                 }
                 else
                 {
-                    tmpass->memloc = laynode->laymem + (tmpass->d_off - lay_hip_pos);
-                    tmpass->loadflag |= 0x80000;
+                    assnode->memloc = laynode->laymem + (assnode->d_off - lay_hip_pos);
+                    assnode->loadflag |= 0x80000;
                 }
             }
         }
@@ -785,11 +811,7 @@ static void PKR_xform_asset(st_PACKER_ATOC_NODE* assnode)
 {
     if (!(assnode->infoflag & 4))
     {
-        if (assnode->typeref == NULL)
-        {
-            return;
-        }
-        if (assnode->typeref->readXForm != NULL)
+        if (assnode->typeref != NULL && assnode->typeref->readXForm != NULL)
         {
         }
         else
@@ -1117,8 +1139,9 @@ static inline void PKR_makepool_anode(st_PACKER_READ_DATA* pr, S32 cnt)
         return;
     }
 
-    st_PACKER_ATOC_NODE* assnode =
-        (st_PACKER_ATOC_NODE*)PKR_getmem(cnt * sizeof(st_PACKER_ATOC_NODE));
+    st_PACKER_ATOC_NODE* assnode;
+    S32 amount = cnt * sizeof(st_PACKER_ATOC_NODE);
+    assnode = (st_PACKER_ATOC_NODE*)PKR_getmem(amount);
     if (assnode != NULL)
     {
         pr->pool_anode = assnode;
@@ -1566,10 +1589,10 @@ static void PKR_bld_typecnt(st_PACKER_READ_DATA* pr)
     S32 idx;
     S32 typcnt[129] = {};
     st_XORDEREDARRAY* tmplist;
-    S32 lasttidx = 0;
     U32 lasttype = 0;
+    S32 lasttidx = 0;
 
-    for (i = 0; i < pr->laytoc.cnt; i++)
+    for (S32 i = 0; i < pr->laytoc.cnt; i++)
     {
         laynode = (st_PACKER_LTOC_NODE*)pr->laytoc.list[i];
         for (j = 0; j < laynode->assref.cnt; j++)
@@ -1610,7 +1633,7 @@ static void PKR_bld_typecnt(st_PACKER_READ_DATA* pr)
 
     for (i = 0; i < pr->laytoc.cnt; i++)
     {
-        st_PACKER_LTOC_NODE* laynode = (st_PACKER_LTOC_NODE*)pr->laytoc.list[i];
+        laynode = (st_PACKER_LTOC_NODE*)pr->laytoc.list[i];
         for (j = 0; j < laynode->assref.cnt; j++)
         {
             st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)laynode->assref.list[j];

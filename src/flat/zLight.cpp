@@ -1,4 +1,5 @@
 #include "zLight.h"
+#include "zLightEffect.h"
 #include "zVolume.h"
 #include "zScene.h"
 #include "xString.h"
@@ -10,12 +11,33 @@
 #include "zGame.h"
 #include <string.h>
 
+// Asset effect indices select both the update routine and its state initializer.
+void (*sEffectFuncs[18])(_zLight*, F32) = {
+    NULL, NULL,
+    zLightEffectFlickerSlow, zLightEffectFlicker, zLightEffectFlickerErratic,
+    zLightEffectStrobeSlow, zLightEffectStrobe, zLightEffectStrobeFast,
+    zLightEffectDimSlow, zLightEffectDim, zLightEffectDimFast,
+    zLightEffectHalfDimSlow, zLightEffectHalfDim, zLightEffectHalfDimFast,
+    zLightEffectRandomColSlow, zLightEffectRandomCol, zLightEffectRandomColFast,
+    zLightEffectCauldron
+};
+
+void (*sEffectInitFuncs[18])(_zLight*) = {
+    NULL, NULL,
+    zLightEffectInitFlicker, zLightEffectInitFlicker, zLightEffectInitFlicker,
+    zLightEffectInitStrobe, zLightEffectInitStrobe, zLightEffectInitStrobe,
+    zLightEffectInitDim, zLightEffectInitDim, zLightEffectInitDim,
+    zLightEffectInitHalfDim, zLightEffectInitHalfDim, zLightEffectInitHalfDim,
+    zLightEffectInitRandomCol, zLightEffectInitRandomCol, zLightEffectInitRandomCol,
+    zLightEffectInitCauldron
+};
+
 static _zLight* sLight[32];
 static S32 sLightTotal;
 static _zVolume* sPartitionVolume;
 static S32 gNumTemporaryLights;
-static _zLight* gTemporaryLights[32];
 static _tagPartition sLightPart;
+static _zLight* gTemporaryLights[32];
 static xVec3 sDefaultShadowVec = { 0.0f, 1.0f, 0.0f };
 
 static inline void zLightEffectSet(_zLight* zlight, S32 idx);
@@ -293,15 +315,17 @@ void zLightAddLocal(_xEnt* ent)
     {
         for (xi = xstart; xi <= xend; xi++)
         {
-            _tagPartSpace* space = xPartitionGetSpace(&sLightPart, xPartitionGetTrueIdx(&sLightPart, xi, 0, zi));
+            S32 true_idx = xPartitionGetTrueIdx(&sLightPart, xi, 0, zi);
+            _tagPartSpace* space = xPartitionGetSpace(&sLightPart, true_idx);
             if (space->total <= 0)
             {
                 continue;
             }
 
             _tagPartLink* link = &space->head;
-            while ((link = link->next) != NULL)
+            while (link->next)
             {
+                link = link->next;
                 _zLight* zlight = (_zLight*)link->data;
                 if (!(zlight->flags & 1))
                 {
@@ -331,7 +355,7 @@ void zLightAddLocal(_xEnt* ent)
                     F32 x = light->sph.center.x - pos->x;
                     F32 y = light->sph.center.y - pos->y;
                     F32 z = light->sph.center.z - pos->z;
-                    if (1.0f + (y * y + x * x + z * z) <= light->radius_sq)
+                    if (1.0f + (x * x + y * y + z * z) <= light->radius_sq)
                     {
                         iLightEnv(light, 2);
                         iLightAdd(light);
@@ -345,7 +369,7 @@ void zLightAddLocal(_xEnt* ent)
                     F32 x = zlight->light.sph.center.x - pos->x;
                     F32 y = zlight->light.sph.center.y - pos->y;
                     F32 z = zlight->light.sph.center.z - pos->z;
-                    F32 dist = 1.0f + (y * y + x * x + z * z);
+                    F32 dist = 1.0f + (x * x + y * y + z * z);
                     if (dist < zlight->light.radius_sq)
                     {
                         shadow_vec[shadow_light_total].x = x;
@@ -362,7 +386,8 @@ void zLightAddLocal(_xEnt* ent)
 
     if (shadow_light_total)
     {
-        xVec3 single_light_vec = {};
+        // Keep a vertical bias while combining the nearby light directions.
+        xVec3 single_light_vec = { 0.0f, 2.0f, 0.0f };
         xVec3 single_light_pos = {};
 
         for (S32 i = 0; i < shadow_light_total; i++)
@@ -385,25 +410,31 @@ void zLightAddLocal(_xEnt* ent)
         if (!zGameIsPaused() && ent->ent_shadow)
         {
             _xEntShadow* shadow = ent->ent_shadow;
-            shadow->pos.x += 0.1f * (single_light_pos.x - shadow->pos.x);
-            shadow->pos.y += 0.1f * (single_light_pos.y - shadow->pos.y);
-            shadow->pos.z += 0.1f * (single_light_pos.z - shadow->pos.z);
-            shadow = ent->ent_shadow;
-            shadow->vec.x += 0.1f * (single_light_vec.x - shadow->vec.x);
-            shadow->vec.y += 0.1f * (single_light_vec.y - shadow->vec.y);
-            shadow->vec.z += 0.1f * (single_light_vec.z - shadow->vec.z);
+            xVec3 next_pos;
+            xVec3 next_vec;
+            next_vec.x = shadow->vec.x + 0.1f * (single_light_vec.x - shadow->vec.x);
+            next_vec.y = shadow->vec.y + 0.1f * (single_light_vec.y - shadow->vec.y);
+            next_vec.z = shadow->vec.z + 0.1f * (single_light_vec.z - shadow->vec.z);
+            next_pos.x = shadow->pos.x + 0.1f * (single_light_pos.x - shadow->pos.x);
+            next_pos.y = shadow->pos.y + 0.1f * (single_light_pos.y - shadow->pos.y);
+            next_pos.z = shadow->pos.z + 0.1f * (single_light_pos.z - shadow->pos.z);
+            ent->ent_shadow->pos = next_pos;
+            ent->ent_shadow->vec = next_vec;
         }
     }
     else if (!zGameIsPaused() && ent->ent_shadow)
     {
         _xEntShadow* shadow = ent->ent_shadow;
-        shadow->pos.x += 0.01f * (default_light_pos.x - shadow->pos.x);
-        shadow->pos.y += 0.01f * (default_light_pos.y - shadow->pos.y);
-        shadow->pos.z += 0.01f * (default_light_pos.z - shadow->pos.z);
-        shadow = ent->ent_shadow;
-        shadow->vec.x += 0.01f * (sDefaultShadowVec.x - shadow->vec.x);
-        shadow->vec.y += 0.01f * (sDefaultShadowVec.y - shadow->vec.y);
-        shadow->vec.z += 0.01f * (sDefaultShadowVec.z - shadow->vec.z);
+        xVec3 next_pos;
+        xVec3 next_vec;
+        next_vec.x = shadow->vec.x + 0.01f * (sDefaultShadowVec.x - shadow->vec.x);
+        next_vec.y = shadow->vec.y + 0.01f * (sDefaultShadowVec.y - shadow->vec.y);
+        next_vec.z = shadow->vec.z + 0.01f * (sDefaultShadowVec.z - shadow->vec.z);
+        next_pos.x = shadow->pos.x + 0.01f * (default_light_pos.x - shadow->pos.x);
+        next_pos.y = shadow->pos.y + 0.01f * (default_light_pos.y - shadow->pos.y);
+        next_pos.z = shadow->pos.z + 0.01f * (default_light_pos.z - shadow->pos.z);
+        ent->ent_shadow->pos = next_pos;
+        ent->ent_shadow->vec = next_vec;
     }
 
     if (ent->ent_shadow)
