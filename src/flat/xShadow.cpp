@@ -250,6 +250,7 @@ static inline void xShadowRenderWorldNear(xVec3* center, F32 radius)
 
 void xShadowRenderWorld(xVec3* center, F32 radius)
 {
+    xSphere _s;
     RpIntersection shadowZone;
     xSphere zone;
     RwMatrix* camMatrix;
@@ -304,13 +305,20 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
                 iRayHitsEnv(&R[i], globals.sceneCur->env, &ecrec);
                 if (ecrec.flags & 1)
                 {
+                    xVec3 p;
                     hit_env++;
+                    p.x = R[i].origin.x;
+                    p.y = R[i].origin.y;
+                    p.z = R[i].origin.z;
+                    p.x += R[i].dir.x * ecrec.dist;
+                    p.y += R[i].dir.y * ecrec.dist;
+                    p.z += R[i].dir.z * ecrec.dist;
                     if (ecrec.dist < env_dist)
                     {
                         env_dist = ecrec.dist;
-                        zone.center.x = R[i].dir.x * ecrec.dist + R[i].origin.x;
-                        zone.center.y = R[i].dir.y * ecrec.dist + R[i].origin.y;
-                        zone.center.z = R[i].dir.z * ecrec.dist + R[i].origin.z;
+                        zone.center.x = p.x;
+                        zone.center.y = p.y;
+                        zone.center.z = p.z;
                     }
                 }
             }
@@ -344,10 +352,11 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     if (sShadowFlags & 1)
     {
         zone.r = radius;
-        sSphere.center.x = zone.center.x;
-        sSphere.center.y = zone.center.y;
-        sSphere.center.z = zone.center.z;
-        sSphere.r = zone.r;
+        _s.center.x = zone.center.x;
+        _s.center.y = zone.center.y;
+        _s.center.z = zone.center.z;
+        _s.r = zone.r;
+        sSphere = _s;
     }
     else
     {
@@ -356,10 +365,7 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     }
 
     shadowZone.type = 3;
-    shadowZone.t.sphere.center.x = zone.center.x;
-    shadowZone.t.sphere.center.y = zone.center.y;
-    shadowZone.t.sphere.center.z = zone.center.z;
-    shadowZone.t.sphere.radius = zone.r;
+    shadowZone.t.sphere = *(RwSphere*)&sSphere;
     ShadowRender(ShadowCamera, ShadowRenderRaster, globals.sceneCur->env->geom->world,
                  &shadowZone, ShadowStrength, ShadowFade ? ShadowZoneRadius : 0.0f);
 }
