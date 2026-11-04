@@ -280,10 +280,13 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
             xVec3 lpos;
             xVec3Sub(&lpos, &drv->driven->frame->mat.pos, (xVec3*)&plat->model->Mat->pos);
             xMat3x3Tolocal(&lpos, (xMat3x3*)plat->model->Mat, &lpos);
+            F32 tangle;
+            F32 mangle;
+            F32 dangle;
             F32 cangle = plat->frame->rot.axis.z;
-            F32 dangle = -s * (PI * plat->passet->teet.invmass / 180.0f) * lpos.x * dt;
-            F32 mangle = xabs(plat->passet->teet.maxtilt);
-            F32 tangle = xabs(dangle + cangle) - mangle;
+            dangle = -s * (PI * plat->passet->teet.invmass / 180.0f) * lpos.x * dt;
+            mangle = xabs(plat->passet->teet.maxtilt);
+            tangle = xabs(dangle + cangle) - mangle;
             if (tangle > 0.0f)
             {
                 if (dangle < 0.0f)
