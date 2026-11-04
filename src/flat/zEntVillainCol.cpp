@@ -1,8 +1,7 @@
 #include "types.h"
 
 // Colors of the hologram poof and dots particles when a villain appears and disappears, by
-// villain subtype. The PS2 build defines these four tables in their own file with no code;
-// zEntVillain.cpp reads them.
+// villain subtype.
 extern "C" U8 gVillainPoofColorBirth[50][4] = {
     { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },
     { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 }, { 255, 255, 255, 255 },

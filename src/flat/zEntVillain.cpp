@@ -598,7 +598,7 @@ static st_REDBEARD_SWORD g_rbsword[4];
 static _tagLightning* g_mm_lytstrk[5];
 static _xVec3 sGreenShockPosition;
 
-// Particle emitters, in the SLUS-20349 declaration order (which is also the target's .sbss order).
+// Particle emitters.
 static _zParEmitter* sEmitHoloPoof;
 static _zParEmitter* sEmitHoloDots;
 static _zParEmitter* sEmitRBFlames;
@@ -2512,7 +2512,7 @@ xAnimTable* zEntVillain_AnimTable_MasterMind()
     return VANM_mktable_MM();
 }
 
-// Builds the boss Shaggy's animation table (VANM_mktable_SHAM, held inline).
+// Builds the boss Shaggy's animation table.
 xAnimTable* zEntVillain_AnimTable_BossSham()
 {
     return VANM_mktable_SHAM();
@@ -6594,7 +6594,7 @@ static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _x
 }
 
 
-// A lost helper: only its zeroed 12-byte template is left in the data, and nothing calls it.
+// Unused.
 static void zEntVillain_UnknownTemplate12()
 {
     _xVec3 lost = { 0 };
@@ -12810,8 +12810,7 @@ static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
 
 // Changes the villain's goal when asked to: clears its sound queue, lets its type leave the old
 // goal and enter the new one, then sets the goal and restarts the goal timer. Returns 0 if
-// either step failed. The guard against nested goal changes is switched off in this build; only
-// its counter's setup is left.
+// either step failed.
 static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
 {
     S32 rc;
@@ -13371,7 +13370,7 @@ static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base)
     return rate;
 }
 
-// A lost helper: only its zeroed 128 bytes of templates are left in the data, and nothing calls it.
+// Unused.
 static void zEntVillain_UnknownTemplate128()
 {
     S32 lost[32] = { 0 };
@@ -14482,7 +14481,7 @@ static S32 VWEP_swipe(st_zEntVillain* vil, F32)
     return hitplyr;
 }
 
-// A lost helper: only its zeroed 108 bytes of templates are left in the data, and nothing calls it.
+// Unused.
 static void zEntVillain_UnknownTemplate108()
 {
     S32 lost[27] = { 0 };
@@ -14587,7 +14586,6 @@ static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil)
     prj->owner = vil;
     prj->ownerContext = NULL;
     prj->ownerNotify = VWEP_prjOwnerNotify;
-    // A check on the reserved projectile's owner, switched off in this build.
     if (0)
     {
         if (prj->owner != vil) xSceneID2Name(globals.sceneCur, vil->id);
@@ -14767,7 +14765,7 @@ static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, v
     }
 }
 
-// A lost helper: only its zeroed 56 bytes of templates are left in the data, and nothing calls it.
+// Unused.
 static void zEntVillain_UnknownTemplate56()
 {
     S32 lost[14] = { 0 };
@@ -14923,7 +14921,6 @@ static S32 VWEP_lobInitBKAxe(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_o
     axfx->planes.y = vil->dst_lob;
     axfx->planes.z = -268.5f;
     axfx->planes.x = 46.0f;
-    // A check on the axe's zap setup, switched off in this build.
     if (0)
     {
         if (axfx->rad_zap < 0.0f) xSceneID2Name(globals.sceneCur, vil->id);
@@ -15025,7 +15022,6 @@ static S32 VWEP_lobInitMMFlask(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec
     st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
     static _xVec3 vec_initwobble = { 0.0f, 0.0f, PI / 4 };
 
-    // A check on the reserved flask's data, switched off in this build.
     if (0)
     {
         if (!flask)
@@ -15104,8 +15100,7 @@ static void VPRJ_startup()
     zEntProjectile_addProps(ZPRJ_CAT_MMFLASK, &prop_flask);
 }
 
-// A lost helper: only its three 12-byte templates (two quarter turns about z, then zero) are left
-// in the data, and nothing calls it.
+// Unused.
 static void zEntVillain_UnknownTemplate36()
 {
     _xVec3 lost_a = { 0.0f, 0.0f, PI / 2 };
@@ -15575,7 +15570,7 @@ static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt)
     return 0;
 }
 
-// A lost helper: only its zeroed 24 bytes of templates are left in the data, and nothing calls it.
+// Unused.
 static void zEntVillain_UnknownTemplate24()
 {
     _xVec3 lost_a = { 0 };
@@ -15920,7 +15915,7 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
     return 1;
 }
 
-// A lost helper: only its zeroed 12-byte template is left in the data, and nothing calls it.
+// Unused.
 static void zEntVillain_UnknownTemplate12b()
 {
     _xVec3 lost = { 0 };
@@ -17485,7 +17480,7 @@ static xAnimTable* VANM_mktable_SIMP()
     return table;
 }
 
-// A lost helper: only its zeroed 716 bytes of templates are left in the data, and nothing calls it.
+// Unused.
 static void zEntVillain_UnknownTemplate716()
 {
     S32 lost[179] = { 0 };
@@ -18270,7 +18265,7 @@ static inline en_NPC_ANIMSTATES VANM_randfour(st_zEntVillain* ent, en_NPC_ANIMST
     return VANM_randset(ent, NULL, choice_list, 4);
 }
 
-// A lost helper: only its zeroed 20-byte template is left in the data, and nothing calls it.
+// Unused.
 static void zEntVillain_UnknownTemplate20()
 {
     S32 lost[5] = { 0 };
