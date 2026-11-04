@@ -11,6 +11,7 @@
 #include "zParEmitter.h"
 #include "zScene.h"
 #include <string.h>
+#include <math.h>
 
 void xFFXShakeFree(xFFXShakeState* s);
 void xFFXShakeUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata);
@@ -258,7 +259,7 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
         {
             F32 ctilt = plat->frame->rot.axis.z;
             F32 itilt = plat->asset->ang.z;
-            F32 dtilt = xabs((PI * plat->passet->teet.invmass / 180.0f) * dt);
+            F32 dtilt = fabsf((PI * plat->passet->teet.invmass / 180.0f) * dt);
             if (ctilt != itilt)
             {
                 if (ctilt < itilt)
@@ -276,17 +277,15 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
         }
         else
         {
+            _xEnt* p = drv->driven;
             F32 s = plat == drv->driver ? drv->s : drv->os;
             xVec3 lpos;
-            xVec3Sub(&lpos, &drv->driven->frame->mat.pos, (xVec3*)&plat->model->Mat->pos);
+            xVec3Sub(&lpos, &p->frame->mat.pos, (xVec3*)&plat->model->Mat->pos);
             xMat3x3Tolocal(&lpos, (xMat3x3*)plat->model->Mat, &lpos);
-            F32 tangle;
-            F32 mangle;
-            F32 dangle;
             F32 cangle = plat->frame->rot.axis.z;
-            dangle = -s * (PI * plat->passet->teet.invmass / 180.0f) * lpos.x * dt;
-            mangle = xabs(plat->passet->teet.maxtilt);
-            tangle = xabs(dangle + cangle) - mangle;
+            F32 dangle = -s * (PI * plat->passet->teet.invmass / 180.0f) * lpos.x * dt;
+            F32 mangle = fabsf(plat->passet->teet.maxtilt);
+            F32 tangle = fabsf(dangle + cangle) - mangle;
             if (tangle > 0.0f)
             {
                 if (dangle < 0.0f)
