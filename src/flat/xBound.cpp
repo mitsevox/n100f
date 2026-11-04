@@ -130,9 +130,9 @@ void xRayHitsBound(const _xRay3* r, const _xBound* b, _xCollis* c)
         _xRay3 xfr;
         xMat3x3 mnormal;
         const xMat3x3* m;
-        F32 len2 = SQR(b->mat->right.x) + SQR(b->mat->right.y) + SQR(b->mat->right.z);
+        F32 len2 = xVec3Length2(&b->mat->right);
 
-        if ((F32)iabs(len2 - 1.0f) >= 0.00001f)
+        if ((F32)iabs(len2 - 1.0f) >= 0.001f)
         {
             F32 len_inv = 1.0f / xsqrt(len2);
             xfr.max_t = r->max_t * len_inv;
