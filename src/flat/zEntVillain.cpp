@@ -383,6 +383,7 @@ static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt);
 static inline void zVIL_send_stim(st_zEntVillain* ent, en_NPC_STIMULUS stim);
 static inline void VEFX_gumBlob_place(xModelInstance* blob, xVec3* pos, F32 scale);
+static inline S32 VOUT_hit_isWall(st_zEntVillain* vil, _xVec3* dir_trav, _xVec3* vec_fromwall);
 static S32 zVIL_cond_spawn_ok(st_zEntVillain* vil);
 static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo);
 static void VPRJ_zapTheAxe(zEntProjectile* prj, S32 cleanup);
@@ -12793,6 +12794,316 @@ static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
     }
 }
 
+// Changes the villain's goal when asked to: clears its sound queue, lets its type leave the old
+// goal and enter the new one, then sets the goal and restarts the goal timer. Returns 0 if
+// either step failed. The guard against nested goal changes is switched off in this build; only
+// its counter's setup is left.
+static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    S32 rc;
+    S32 result = 1;
+    static S32 trangoal_safety_nest = 0;
+    st_STIMULUS_CONTEXT_DATA tranctxt = { ZVIL_STIM_NONE };
+
+    if (0)
+    {
+        trangoal_safety_nest++;
+        if (trangoal_safety_nest > 1) return 0;
+    }
+
+    if (stimctxt->stim == ZVIL_STIM_TRANGOAL && stimctxt->trangoal != ent->goal)
+    {
+        if (stimctxt->tranmode)
+        {
+            ent->mode = stimctxt->tranmode;
+        }
+
+        for (S32 i = 0; i < 4; i++)
+        {
+            ent->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
+            ent->snd_queue[i].sndDirect = 0;
+        }
+
+        tranctxt.stim = ZVIL_STIM_EXITGOAL;
+        tranctxt.trangoal = ent->goal;
+        rc = ent->vhf->trangoal(ent, &tranctxt, dt);
+        if (!rc)
+        {
+            result = 0;
+        }
+
+        stimctxt->stim = ZVIL_STIM_ENTERGOAL;
+        rc = ent->vhf->trangoal(ent, stimctxt, dt);
+        if (!rc)
+        {
+            result = 0;
+        }
+
+        VGOL_set(ent, stimctxt->trangoal);
+        ent->tmr_list[ZVIL_TYMR_CURGOAL] = 0.0f;
+    }
+
+    if (0) trangoal_safety_nest--;
+
+    return result;
+}
+
+// Heads the villain for his next path point: sets his move target to the point, his heading and
+// direction toward it, domove bit 0x4 if move ability bit 0x1000 or 0x400 is set, and domove bits
+// 0x800, 0x1, 0xA and 0x80000000. Without a next point it only looks up his name (nothing is done
+// with it) and returns 0; otherwise it returns 1.
+static S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
+{
+    if (!vil->nav_next)
+    {
+        xSceneID2Name(globals.sceneCur, vil->id);
+        return 0;
+    }
+
+    xVec3Copy(&vil->pos_moveto, zMovePointGetPos(vil->nav_next));
+    vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        vil->domove |= 0x4;
+    }
+
+    vil->domove |= 0x800;
+    vil->domove |= 0x1;
+    vil->domove |= 0xA;
+    vil->domove |= 0x80000000;
+    return 1;
+}
+
+// Checks whether the villain has reached his move target: his squared flat distance to it, or the
+// squared height difference if that is larger and move ability bit 0x1000 or 0x400 is set, must
+// not exceed his type's squared arrival distance. On arrival his position becomes his guard spot
+// unless flg_misc bit 0x40000000 is set, he gets the point's wait time on his path delay timer,
+// asks for a new path point, sets his path-check timer to -1 and sends the point an arrive event.
+// Returns 1 on arrival, 0 otherwise.
+static S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil)
+{
+    _xVec3 entpos = { 0 };
+    F32 dy;
+    F32 dist = VSUP_ds2_toPos(vil, vil->pos_moveto);
+
+    entpos = *xEntGetPos(vil);
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        dy = SQR(vil->pos_moveto.y - entpos.y);
+        dist = MAX(dist, dy);
+    }
+
+    if (dist > g_npcTable[vil->asset->subtype].ds2_atpos)
+    {
+        return 0;
+    }
+
+    if (!(vil->flg_misc & 0x40000000))
+    {
+        xVec3Copy(&vil->pos_guard_home, xEntGetPos(vil));
+    }
+
+    vil->tmr_list[ZVIL_TDUR_NAVDELAY] = zMovePointGetDelay(vil->nav_next);
+    vil->need_navpt = 1;
+    vil->tmr_list[ZVIL_TTIL_CHKFORNAV] = -1.0f;
+    zEntEvent(vil, vil->nav_next, eEventArrive);
+    return 1;
+}
+
+// Checks whether the villain has reached his mini patrol target: the larger of his squared flat
+// distance to it and (if move ability bit 0x1000 or 0x400 is set) the squared height difference
+// must not exceed his type's squared arrival distance plus his squared stand-off. On arrival it
+// clears flg_misc bit 0x80000000 if he has an anchor, otherwise bit 0x40000000. Returns 1 on
+// arrival, 0 otherwise.
+static S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil)
+{
+    _xVec3 entpos = { 0 };
+    F32 dy = 0.0f;
+    S32 amthere = 0;
+    F32 ds2;
+
+    entpos = *xEntGetPos(vil);
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        dy = SQR(vil->pos_moveto.y - entpos.y);
+    }
+
+    ds2 = VSUP_ds2_toPos(vil, vil->pos_moveto);
+    if (MAX(ds2, dy) > vil->ds2_goto_keepaway + g_npcTable[vil->asset->subtype].ds2_atpos)
+    {
+        return amthere;
+    }
+
+    if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+    {
+        vil->flg_misc &= ~0x80000000;
+    }
+    else
+    {
+        vil->flg_misc &= ~0x40000000;
+    }
+
+    amthere = 1;
+    return amthere;
+}
+
+// Heads the villain for what he follows: the spot he was sent to (flg_misc bit 0x10000000), the
+// entity he trails (bit 0x20000000), or else his next path point. It sets his heading and
+// direction toward it and the same domove bits as a patrol move. With none of the three it returns
+// 0; otherwise 1.
+static S32 VOUT_follow_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
+{
+    if (!vil->nav_next && !(vil->flg_misc & 0x10000000) && !(vil->flg_misc & 0x20000000))
+    {
+        return 0;
+    }
+
+    if (vil->flg_misc & 0x10000000)
+    {
+        xVec3Copy(&vil->pos_moveto, &vil->pos_goto);
+    }
+    else if (vil->flg_misc & 0x20000000)
+    {
+        xVec3Copy(&vil->pos_moveto, &xModelGetFrame(vil->tgt_follow->model)->pos);
+    }
+    else
+    {
+        xVec3Copy(&vil->pos_moveto, zMovePointGetPos(vil->nav_next));
+    }
+
+    vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        vil->domove |= 0x4;
+    }
+
+    vil->domove |= 0x800;
+    vil->domove |= 0x1;
+    vil->domove |= 0xA;
+    vil->domove |= 0x80000000;
+    return 1;
+}
+
+// Checks whether the villain has reached what he follows, as a patrol arrival does but with his
+// squared stand-off added to the arrival distance. On arrival his position becomes his guard spot
+// unless flg_misc bit 0x40000000 is set. If he was sent to a spot or trails an entity, the
+// stand-off and those two flg_misc bits are cleared along with allow bit 0x1; otherwise he waits
+// at the path point as on patrol. Returns 1 on arrival, 0 otherwise.
+static S32 VOUT_chkdo_followArrived(st_zEntVillain* vil)
+{
+    _xVec3 entpos = { 0 };
+    F32 dy;
+    F32 dist = VSUP_ds2_toPos(vil, vil->pos_moveto);
+
+    entpos = *xEntGetPos(vil);
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        dy = SQR(vil->pos_moveto.y - entpos.y);
+        dist = MAX(dist, dy);
+    }
+
+    if (dist > vil->ds2_goto_keepaway + g_npcTable[vil->asset->subtype].ds2_atpos)
+    {
+        return 0;
+    }
+
+    if (!(vil->flg_misc & 0x40000000))
+    {
+        xVec3Copy(&vil->pos_guard_home, xEntGetPos(vil));
+    }
+
+    if (vil->flg_misc & 0x10000000 || vil->flg_misc & 0x20000000)
+    {
+        vil->ds2_goto_keepaway = 0.0f;
+        vil->flg_misc &= ~0x10000000;
+        vil->flg_misc &= ~0x20000000;
+        vil->allow &= ~0x1;
+    }
+    else
+    {
+        vil->tmr_list[ZVIL_TDUR_NAVDELAY] = zMovePointGetDelay(vil->nav_next);
+        vil->need_navpt = 1;
+        vil->tmr_list[ZVIL_TTIL_CHKFORNAV] = -1.0f;
+        zEntEvent(vil, vil->nav_next, eEventArrive);
+    }
+    return 1;
+}
+
+// Heads the villain for the player: his move target is the player's intercept point if precalc
+// flg_plyr bit 0x400 is set, otherwise the centre of the player's bound. His heading is the one
+// toward the player, and it sets domove bits 0x800, 0x1, 0xA, 0x4 (if move ability bit 0x1000 or
+// 0x400 is set) and 0x80000000. Returns 1.
+static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
+{
+    if (vil->precalc.flg_plyr & 0x400)
+    {
+        xVec3Copy(&vil->pos_moveto, &vil->precalc.pos_intercept);
+    }
+    else
+    {
+        xVec3Copy(&vil->pos_moveto, xBoundCenter(&globals.player.ent.bound));
+    }
+
+    VSUP_ds2_toPos(vil, vil->pos_moveto);
+    vil->ang_moveto = vil->precalc.ang_VtoP;
+
+    vil->domove |= 0x800;
+    vil->domove |= 0x1;
+    vil->domove |= 0xA;
+
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        vil->domove |= 0x4;
+    }
+
+    vil->domove |= 0x80000000;
+    return 1;
+}
+
+// Whether the wall with normal vec_fromwall is roughly across the villain's travel direction. If
+// it is, the villain picks the nearest move point it can see as its next one.
+static inline S32 VOUT_hit_isWall(st_zEntVillain* vil, _xVec3* dir_trav, _xVec3* vec_fromwall)
+{
+    _xVec3 vec_tmp = { 0.0f, 0.0f, 0.0f };
+    S32 flg_look = 12;
+    S32 result = 0;
+
+    if (vil->abl_move & 0x1000) flg_look = 8;
+
+    if (fabsf(vec_fromwall->y) > 0.01f)
+    {
+        result = 0;
+    }
+    else if (vil->mode > ZVIL_MODE_NORMAL)
+    {
+        result = 0;
+    }
+    else if (!(vec_fromwall->x * vec_fromwall->x + vec_fromwall->z * vec_fromwall->z > 0.0f))
+    {
+        result = 0;
+    }
+    else
+    {
+        vec_tmp.x = vec_fromwall->x;
+        vec_tmp.z = vec_fromwall->z;
+        xVec3Normalize(&vec_tmp, &vec_tmp);
+        if (fabsf(xVec3Dot(dir_trav, &vec_tmp)) > 0.8f)
+        {
+            flg_look |= 0x11;
+            result = 1;
+            _zMovePoint* pt = zMovePointFindNearest(flg_look, xBoundCenter(&vil->bound), vil, VNAV_chklos_timz);
+            vil->need_navpt = 0;
+            if (pt && pt != vil->nav_next) vil->nav_next = pt;
+        }
+    }
+    return result;
+}
+
 // Sets the villain's pursuit home from the widget it protects. A protected entity's position
 // becomes home. A move point's position is stored but then replaced, as with no widget: the
 // villain's own position becomes home and the keep-away distance is cleared. Any other kind of
@@ -18459,223 +18770,6 @@ static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan)
     return iSndIsPlaying(0, (U32)vil + (flg_chan & 3));
 }
 
-// Heads the villain for his next path point: sets his move target to the point, his heading and
-// direction toward it, domove bit 0x4 if move ability bit 0x1000 or 0x400 is set, and domove bits
-// 0x800, 0x1, 0xA and 0x80000000. Without a next point it only looks up his name (nothing is done
-// with it) and returns 0; otherwise it returns 1.
-static S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
-{
-    if (!vil->nav_next)
-    {
-        xSceneID2Name(globals.sceneCur, vil->id);
-        return 0;
-    }
-
-    xVec3Copy(&vil->pos_moveto, zMovePointGetPos(vil->nav_next));
-    vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
-
-    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
-    {
-        vil->domove |= 0x4;
-    }
-
-    vil->domove |= 0x800;
-    vil->domove |= 0x1;
-    vil->domove |= 0xA;
-    vil->domove |= 0x80000000;
-    return 1;
-}
-
-// Checks whether the villain has reached his move target: his squared flat distance to it, or the
-// squared height difference if that is larger and move ability bit 0x1000 or 0x400 is set, must
-// not exceed his type's squared arrival distance. On arrival his position becomes his guard spot
-// unless flg_misc bit 0x40000000 is set, he gets the point's wait time on his path delay timer,
-// asks for a new path point, sets his path-check timer to -1 and sends the point an arrive event.
-// Returns 1 on arrival, 0 otherwise.
-static S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil)
-{
-    _xVec3 entpos = { 0 };
-    F32 dy;
-    F32 dist = VSUP_ds2_toPos(vil, vil->pos_moveto);
-
-    entpos = *xEntGetPos(vil);
-
-    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
-    {
-        dy = SQR(vil->pos_moveto.y - entpos.y);
-        dist = MAX(dist, dy);
-    }
-
-    if (dist > g_npcTable[vil->asset->subtype].ds2_atpos)
-    {
-        return 0;
-    }
-
-    if (!(vil->flg_misc & 0x40000000))
-    {
-        xVec3Copy(&vil->pos_guard_home, xEntGetPos(vil));
-    }
-
-    vil->tmr_list[ZVIL_TDUR_NAVDELAY] = zMovePointGetDelay(vil->nav_next);
-    vil->need_navpt = 1;
-    vil->tmr_list[ZVIL_TTIL_CHKFORNAV] = -1.0f;
-    zEntEvent(vil, vil->nav_next, eEventArrive);
-    return 1;
-}
-
-// Checks whether the villain has reached his mini patrol target: the larger of his squared flat
-// distance to it and (if move ability bit 0x1000 or 0x400 is set) the squared height difference
-// must not exceed his type's squared arrival distance plus his squared stand-off. On arrival it
-// clears flg_misc bit 0x80000000 if he has an anchor, otherwise bit 0x40000000. Returns 1 on
-// arrival, 0 otherwise.
-static S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil)
-{
-    _xVec3 entpos = { 0 };
-    F32 dy = 0.0f;
-    S32 amthere = 0;
-    F32 ds2;
-
-    entpos = *xEntGetPos(vil);
-
-    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
-    {
-        dy = SQR(vil->pos_moveto.y - entpos.y);
-    }
-
-    ds2 = VSUP_ds2_toPos(vil, vil->pos_moveto);
-    if (MAX(ds2, dy) > vil->ds2_goto_keepaway + g_npcTable[vil->asset->subtype].ds2_atpos)
-    {
-        return amthere;
-    }
-
-    if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
-    {
-        vil->flg_misc &= ~0x80000000;
-    }
-    else
-    {
-        vil->flg_misc &= ~0x40000000;
-    }
-
-    amthere = 1;
-    return amthere;
-}
-
-// Heads the villain for what he follows: the spot he was sent to (flg_misc bit 0x10000000), the
-// entity he trails (bit 0x20000000), or else his next path point. It sets his heading and
-// direction toward it and the same domove bits as a patrol move. With none of the three it returns
-// 0; otherwise 1.
-static S32 VOUT_follow_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
-{
-    if (!vil->nav_next && !(vil->flg_misc & 0x10000000) && !(vil->flg_misc & 0x20000000))
-    {
-        return 0;
-    }
-
-    if (vil->flg_misc & 0x10000000)
-    {
-        xVec3Copy(&vil->pos_moveto, &vil->pos_goto);
-    }
-    else if (vil->flg_misc & 0x20000000)
-    {
-        xVec3Copy(&vil->pos_moveto, &xModelGetFrame(vil->tgt_follow->model)->pos);
-    }
-    else
-    {
-        xVec3Copy(&vil->pos_moveto, zMovePointGetPos(vil->nav_next));
-    }
-
-    vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
-
-    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
-    {
-        vil->domove |= 0x4;
-    }
-
-    vil->domove |= 0x800;
-    vil->domove |= 0x1;
-    vil->domove |= 0xA;
-    vil->domove |= 0x80000000;
-    return 1;
-}
-
-// Checks whether the villain has reached what he follows, as a patrol arrival does but with his
-// squared stand-off added to the arrival distance. On arrival his position becomes his guard spot
-// unless flg_misc bit 0x40000000 is set. If he was sent to a spot or trails an entity, the
-// stand-off and those two flg_misc bits are cleared along with allow bit 0x1; otherwise he waits
-// at the path point as on patrol. Returns 1 on arrival, 0 otherwise.
-static S32 VOUT_chkdo_followArrived(st_zEntVillain* vil)
-{
-    _xVec3 entpos = { 0 };
-    F32 dy;
-    F32 dist = VSUP_ds2_toPos(vil, vil->pos_moveto);
-
-    entpos = *xEntGetPos(vil);
-
-    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
-    {
-        dy = SQR(vil->pos_moveto.y - entpos.y);
-        dist = MAX(dist, dy);
-    }
-
-    if (dist > vil->ds2_goto_keepaway + g_npcTable[vil->asset->subtype].ds2_atpos)
-    {
-        return 0;
-    }
-
-    if (!(vil->flg_misc & 0x40000000))
-    {
-        xVec3Copy(&vil->pos_guard_home, xEntGetPos(vil));
-    }
-
-    if (vil->flg_misc & 0x10000000 || vil->flg_misc & 0x20000000)
-    {
-        vil->ds2_goto_keepaway = 0.0f;
-        vil->flg_misc &= ~0x10000000;
-        vil->flg_misc &= ~0x20000000;
-        vil->allow &= ~0x1;
-    }
-    else
-    {
-        vil->tmr_list[ZVIL_TDUR_NAVDELAY] = zMovePointGetDelay(vil->nav_next);
-        vil->need_navpt = 1;
-        vil->tmr_list[ZVIL_TTIL_CHKFORNAV] = -1.0f;
-        zEntEvent(vil, vil->nav_next, eEventArrive);
-    }
-    return 1;
-}
-
-// Heads the villain for the player: his move target is the player's intercept point if precalc
-// flg_plyr bit 0x400 is set, otherwise the centre of the player's bound. His heading is the one
-// toward the player, and it sets domove bits 0x800, 0x1, 0xA, 0x4 (if move ability bit 0x1000 or
-// 0x400 is set) and 0x80000000. Returns 1.
-static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
-{
-    if (vil->precalc.flg_plyr & 0x400)
-    {
-        xVec3Copy(&vil->pos_moveto, &vil->precalc.pos_intercept);
-    }
-    else
-    {
-        xVec3Copy(&vil->pos_moveto, xBoundCenter(&globals.player.ent.bound));
-    }
-
-    VSUP_ds2_toPos(vil, vil->pos_moveto);
-    vil->ang_moveto = vil->precalc.ang_VtoP;
-
-    vil->domove |= 0x800;
-    vil->domove |= 0x1;
-    vil->domove |= 0xA;
-
-    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
-    {
-        vil->domove |= 0x4;
-    }
-
-    vil->domove |= 0x80000000;
-    return 1;
-}
-
 // Pick a loaded sound of the requested type for this villain.
 static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 {
@@ -18954,25 +19048,7 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
         if (colrec->optr && (colrec->flags & 1) && !(colrec->flags & 2))
         {
             xVec3AddTo(vec_accum, &colrec->depen);
-            if (!looked)
-            {
-                _xVec3 norm = { 0.0f, 0.0f, 0.0f };
-                S32 opts = (vil->abl_move & 0x1000) ? 8 : 12;
-                if (!(fabs(colrec->norm.y) > 0.01f) && vil->mode <= 3 &&
-                    colrec->norm.x * colrec->norm.x + colrec->norm.z * colrec->norm.z > 0.0f)
-                {
-                    norm.x = colrec->norm.x;
-                    norm.z = colrec->norm.z;
-                    xVec3Normalize(&norm, &norm);
-                    if (fabs(xVec3Dot(&dir_trav, &norm)) > 0.8f)
-                    {
-                        looked = 1;
-                        _zMovePoint* pt = zMovePointFindNearest(opts | 0x11, xBoundCenter(&vil->bound), vil, VNAV_chklos_timz);
-                        vil->need_navpt = 0;
-                        if (pt && pt != vil->nav_next) vil->nav_next = pt;
-                    }
-                }
-            }
+            if (!looked) looked = VOUT_hit_isWall(vil, &dir_trav, &colrec->norm);
         }
     }
     for (S32 i = vil->collis->stat_sidx; i < vil->collis->stat_eidx; i++)
@@ -18982,25 +19058,7 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
         {
             hit_something++;
             xVec3AddTo(vec_accum, &colrec->depen);
-            if (!looked)
-            {
-                _xVec3 norm = { 0.0f, 0.0f, 0.0f };
-                S32 opts = (vil->abl_move & 0x1000) ? 8 : 12;
-                if (!(fabs(colrec->norm.y) > 0.01f) && vil->mode <= 3 &&
-                    colrec->norm.x * colrec->norm.x + colrec->norm.z * colrec->norm.z > 0.0f)
-                {
-                    norm.x = colrec->norm.x;
-                    norm.z = colrec->norm.z;
-                    xVec3Normalize(&norm, &norm);
-                    if (fabs(xVec3Dot(&dir_trav, &norm)) > 0.8f)
-                    {
-                        looked = 1;
-                        _zMovePoint* pt = zMovePointFindNearest(opts | 0x11, xBoundCenter(&vil->bound), vil, VNAV_chklos_timz);
-                        vil->need_navpt = 0;
-                        if (pt && pt != vil->nav_next) vil->nav_next = pt;
-                    }
-                }
-            }
+            if (!looked) looked = VOUT_hit_isWall(vil, &dir_trav, &colrec->norm);
         }
     }
     return hit_something;
