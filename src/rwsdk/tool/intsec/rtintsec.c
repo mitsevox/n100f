@@ -150,8 +150,7 @@
         }                                                                                          \
     } while (0)
 
-// The dot product of two vectors. RtIntersectionSphereTriangle takes every dot product through
-// this inlined helper rather than the macro directly, which sets its register and stack choices.
+// The dot product of two vectors.
 static F32 SphereTriangleDot(const RwV3d* a, const RwV3d* b)
 {
     return RwV3dDotProductMacro(a, b);
