@@ -25,7 +25,8 @@ extern void CalcJumpImpulse(zJumpParam* param);
 void xMemRegisterBaseNotifyFunc(void (*func)());
 extern xIniFile* xIniParse(char*, S32);
 extern void xIniDestroy(xIniFile*);
-extern "C" st_SERIAL_PERCID_SIZE g_xser_sizeinfo[];
+// Per-client serializer sizes: the player's 0x148-byte save block, then the end marker.
+static st_SERIAL_PERCID_SIZE g_xser_sizeinfo[2] = { { 'PLYR', 0x148 }, { 0, 0 } };
 extern void zAssetStartup();
 extern void xFontInit();
 extern void xScrFxInit();
@@ -53,7 +54,7 @@ S32 xSTQueueSceneAssets(U32);
 void iSystemPollResetAndDisc();
 extern "C" void fn_800443AC();
 void zEntPlayer_InitCutsceneModelHack();
-extern "C" S32 sShowMenuOnBoot;
+static S32 sShowMenuOnBoot = 1;
 
 F32 xSTLoadStep(U32);
 void iShadowInit();

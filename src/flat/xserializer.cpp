@@ -14,12 +14,6 @@ struct st_SERIAL_CLIENTINFO
     S32 actsize;
 };
 
-struct st_SERIAL_PERCID_SIZE
-{
-    U32 idtag;
-    S32 needsize;
-};
-
 struct st_XSERIAL_DATA_PRIV
 {
     S32 flg_info;
