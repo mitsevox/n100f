@@ -57,10 +57,19 @@ S32 zSurfaceGetSlickness(const xSurface* surf);
 F32 zSurfaceGetFriction(const xSurface* surf);
 U32 zSurfaceGetStandOn(const xSurface* surf);
 
+// Set up every surface asset in the scene: allocate one zSurfaceProps per surface, copy each
+// asset's friction, state and texture/UV animation settings, then build the default surface.
 void zSurfaceInit()
 {
     U32 size;
-    U16 nsurfs = xSTAssetCountByType('SURF');
+    U16 nsurfs;
+    U16 i;
+    zSurfAsset* asset;
+    xSurface* surf;
+    zSurfaceProps* moprops;
+    S32 j;
+
+    nsurfs = xSTAssetCountByType('SURF');
 
     xSurfaceInit(nsurfs);
 
@@ -68,13 +77,13 @@ void zSurfaceInit()
     {
         zsps = (zSurfaceProps*)xMemAlloc(gActiveHeap, nsurfs * sizeof(zSurfaceProps));
 
-        for (U16 i = 0; i < nsurfs; i++)
+        for (i = 0; i < nsurfs; i++)
         {
-            xSurface* surf = xSurfaceGetByIdx(i);
-            zSurfaceProps* moprops = &zsps[i];
+            surf = xSurfaceGetByIdx(i);
+            moprops = &zsps[i];
             surf->moprops = moprops;
 
-            zSurfAsset* asset = (zSurfAsset*)xSTFindAssetByType('SURF', i, &size);
+            asset = (zSurfAsset*)xSTFindAssetByType('SURF', i, &size);
             moprops->asset = asset;
 
             xBaseInit(surf, asset);
@@ -94,7 +103,7 @@ void zSurfaceInit()
             moprops->uvfx_flags = asset->uvfx_flags;
             moprops->texanim_flags = asset->texture_anim_flags;
 
-            for (S32 j = 0; j < 2; j++)
+            for (j = 0; j < 2; j++)
             {
                 moprops->texanim[j].mode = asset->texture_anim[j].mode;
                 moprops->texanim[j].speed = asset->texture_anim[j].speed;
@@ -455,6 +464,7 @@ void zSurfaceUpdate(xBase* to, _xScene*, F32 dt)
     }
 }
 
+// Handle a surface's events: on/off/toggle, reset, and the texture animation commands.
 // toParam[3] selects the first (0) or second texture animation.
 static S32 zSurfaceEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget)
 {
@@ -539,14 +549,16 @@ static S32 zSurfaceEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase* 
     }
     case 243:
     {
+        // Toggle the animation.
         zSurfaceProps* p = (zSurfaceProps*)t->moprops;
         if (p)
         {
             if (toParam[3] == 0.0f)
             {
-                if (p->texanim_flags & 1)
+                U32 bit = p->texanim_flags & 1;
+                if (bit)
                 {
-                    if (p->texanim_flags & 1)
+                    if (bit)
                     {
                         p->texanim_flags ^= 1;
                     }
@@ -558,9 +570,10 @@ static S32 zSurfaceEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase* 
             }
             else
             {
-                if (p->texanim_flags & 2)
+                U32 bit = p->texanim_flags & 2;
+                if (bit)
                 {
-                    if (p->texanim_flags & 2)
+                    if (bit)
                     {
                         p->texanim_flags ^= 2;
                     }
