@@ -3239,8 +3239,6 @@ static void zEntPlayer_SnackDecrement(F32 dt)
     }
 }
 
-// Per-frame player update: timers, health and death, movement in sub-steps with collision, Shaggy grabs,
-// villain bounces and bumps, bubble platforms, then the floor, jump and drive updates, hanging and digging.
 // Restore full health and clear the drowning and death flags.
 static inline void zEntPlayer_RestoreHealth()
 {
@@ -3250,6 +3248,8 @@ static inline void zEntPlayer_RestoreHealth()
     gDeadScooby = 0;
 }
 
+// Per-frame player update: timers, health and death, movement in sub-steps with collision, Shaggy grabs,
+// villain bounces and bumps, bubble platforms, then the floor, jump and drive updates, hanging and digging.
 void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
 {
     xAnimState* astate;
@@ -4067,11 +4067,10 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
                 if (((_zEntSimpleObj*)zsc->stats[i])->sflags & 1)
                 {
                     simpent = (_zEntSimpleObj*)zsc->stats[i];
-                    F32 dx = globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x;
-                    F32 dy = globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y;
-                    F32 dz = globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z;
-                    if (SQ(dx) + SQ(dy) + SQ(dz) <
-                        (1.25f * globals.player.ent.bound.sph.r) * (1.25f * globals.player.ent.bound.sph.r))
+                    if (SQ(globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x) +
+                            SQ(globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y) +
+                            SQ(globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z) <
+                        SQ(1.25f * globals.player.ent.bound.sph.r))
                     {
                         globals.player.Diggable = simpent;
                         if (!(simpent->sflags & 2))
@@ -4605,11 +4604,12 @@ U32 zEntPlayer_MoveInfo()
     _xEnt* plyr = &globals.player.ent;
     U32 animflags;
 
-    animflags = plyr->model->Anim->Single->State->UserFlags & 0x1E;
-    if (!(plyr->model->Anim->Single->State->UserFlags & 0x1E) || plyr->model->Anim->Single->State->UserFlags & 1)
+    animflags = plyr->model->Anim->Single->State->UserFlags;
+    if (!(animflags & 0x1E) || animflags & 1)
     {
         infoflags |= 0x1;
     }
+    animflags &= 0x1E;
     if (animflags == 0x4)
     {
         infoflags |= 0x2;
@@ -5688,19 +5688,19 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
     {
         plat = (_zPlatform*)drv->odriver;
         if (!drv->os)
-    {
-        zEntEvent(plat, 0x21);
-        drv->odriver = NULL;
-        drv->otm = 0.0f;
-        if (plat->subType == 9)
         {
-            zPlatform_Dismount(plat);
+            zEntEvent(plat, 0x21);
+            drv->odriver = NULL;
+            drv->otm = 0.0f;
+            if (plat->subType == 9)
+            {
+                zPlatform_Dismount(plat);
+            }
+            if (plat->passet->flags & 1)
+            {
+                zPlatform_Shake(plat, dt, 0.2f, 37.699112f);
+            }
         }
-        if (plat->passet->flags & 1)
-        {
-            zPlatform_Shake(plat, dt, 0.2f, 37.699112f);
-        }
-    }
     }
 
     coll = &p->collis->colls[0];
@@ -7315,6 +7315,7 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
     F32 d1;
     F32 d2;
     xVec3 center;
+    F32 dist2;
 
     globals.player.HangFound = NULL;
     if (globals.player.HangEnt)
@@ -7330,11 +7331,12 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
         if (hangme->baseType == 0x17 && hangme->enabled > 0 && !hangme->grabTimer &&
             (hangme->state != 1 || hangme->shaggy))
         {
-            if (xVec3Dist2(&ent->bound.sph.center, &hangme->endpos) < closedist)
+            dist2 = xVec3Dist2(&ent->bound.sph.center, &hangme->endpos);
+            if (dist2 < closedist)
             {
-                center = ent->bound.sph.center;
                 hangclose = hangme;
-                closedist = xVec3Dist2(&ent->bound.sph.center, &hangme->endpos);
+                closedist = dist2;
+                center = ent->bound.sph.center;
             }
         }
     }
