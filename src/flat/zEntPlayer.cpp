@@ -3238,6 +3238,15 @@ static void zEntPlayer_SnackDecrement(F32 dt)
 
 // Per-frame player update: timers, health and death, movement in sub-steps with collision, Shaggy grabs,
 // villain bounces and bumps, bubble platforms, then the floor, jump and drive updates, hanging and digging.
+// Restore full health and clear the drowning and death flags.
+static inline void zEntPlayer_RestoreHealth()
+{
+    globals.player.Health = 3;
+    gPlayerHitWater = 0;
+    sPlayerWaterOffset = 0.0f;
+    gDeadScooby = 0;
+}
+
 void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
 {
     xAnimState* astate;
@@ -3457,10 +3466,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         {
             zSceneGameStatsTally_death();
             zGameStateSwitch(2);
-            globals.player.Health = 3;
-            gPlayerHitWater = 0;
-            sPlayerWaterOffset = 0.0f;
-            gDeadScooby = 0;
+            zEntPlayer_RestoreHealth();
         }
     }
 
@@ -3711,8 +3717,9 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         F32 hdotm;
         xSurface* wsurf;
 
+        wcoll = &ent->collis->colls[2];
         gcoll = &ent->collis->colls[6];
-        for (wcoll = &ent->collis->colls[2]; wcoll < gcoll; wcoll++)
+        for (; wcoll < gcoll; wcoll++)
         {
             if (wcoll->flags & 1)
             {
@@ -3901,11 +3908,12 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
 
         coll = &ent->collis->colls[ent->collis->dyn_sidx];
         endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
-        for (; coll < endcoll; coll++)
+        while (coll < endcoll)
         {
             bub = (_zEntBubble*)coll->optr;
             if (!bub)
             {
+                coll++;
                 continue;
             }
             if (bub->baseType == 0xF)
@@ -3932,6 +3940,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
                     zEntVillain_Headbutt((st_zEntVillain*)bub->villain, &coll->hdng);
                 }
             }
+            coll++;
         }
     }
 
@@ -4729,7 +4738,7 @@ static F32 CalcJumpImpulse_Smooth(F32 g, F32 j, F32 h, F32 Tgc, F32 Tgs)
     A = (j - g) / (6.0f * Tgs);
     B = (g * Tgc - j * Tgc - j * Tgs) / (2.0f * Tgs);
     Kc = -(j * Tgc + 3.0f * A * SQ(Tgc) + 2.0f * B * Tgc);
-    D = AS * SQ(Tgc) - A * (Tgc * SQ(Tgc)) - B * SQ(Tgc) - Kc * Tgc;
+    D = (-j / 2.0f) * SQ(Tgc) - A * (Tgc * SQ(Tgc)) - B * SQ(Tgc) - Kc * Tgc;
     AF = -g / 2.0f;
     Kbf = 3.0f * A * SQ(Tgc + Tgs) + 2.0f * B * (Tgc + Tgs) + g * (Tgc + Tgs);
     Tmfound = 0.0f;
@@ -5877,10 +5886,7 @@ void zEntPlayerReset(_xEnt* ent)
 
         if (zGameModeGet() == eGameMode_Game && zGameStateGet() == 2)
         {
-            globals.player.Health = 3;
-            gPlayerHitWater = 0;
-            sPlayerWaterOffset = 0.0f;
-            gDeadScooby = 0;
+            zEntPlayer_RestoreHealth();
         }
         else
         {
