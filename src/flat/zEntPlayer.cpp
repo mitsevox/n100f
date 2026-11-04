@@ -2019,19 +2019,15 @@ static U32 HangCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
     globals.player.HangVel.y = 0.0f;
     globals.player.HangVel.z = 0.0f;
     globals.player.HangLength = globals.player.HangFound->hangInfo->leverArm;
-    globals.player.HangStartPos = ((xMat4x3*)globals.player.ent.model->Mat)->pos;
+    globals.player.HangStartPos.x = ((xMat4x3*)globals.player.ent.model->Mat)->pos.x;
+    globals.player.HangStartPos.y = ((xMat4x3*)globals.player.ent.model->Mat)->pos.y;
+    globals.player.HangStartPos.z = ((xMat4x3*)globals.player.ent.model->Mat)->pos.z;
     globals.player.HangStartLerp = 1.0f;
 
-    targetPos.x = globals.player.ent.bound.sph.center.x - globals.player.HangPivot.x;
-    targetPos.y = globals.player.ent.bound.sph.center.y - globals.player.HangPivot.y;
-    targetPos.z = globals.player.ent.bound.sph.center.z - globals.player.HangPivot.z;
+    xVec3Sub(&targetPos, &globals.player.ent.bound.sph.center, &globals.player.HangFound->pivot);
     xVec3Normalize(&targetPos, &targetPos);
-    targetPos.x *= globals.player.HangFound->hangInfo->leverArm;
-    targetPos.y *= globals.player.HangFound->hangInfo->leverArm;
-    targetPos.z *= globals.player.HangFound->hangInfo->leverArm;
-    targetPos.x += globals.player.HangFound->pivot.x;
-    targetPos.y += globals.player.HangFound->pivot.y;
-    targetPos.z += globals.player.HangFound->pivot.z;
+    xVec3SMulBy(&targetPos, globals.player.HangFound->hangInfo->leverArm);
+    xVec3AddTo(&targetPos, &globals.player.HangFound->pivot);
 
     vHangBefore = ((xMat4x3*)ent->model->Mat)->pos;
     ((xMat4x3*)ent->model->Mat)->pos.x = targetPos.x;
@@ -2041,8 +2037,8 @@ static U32 HangCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 
     if (globals.player.HangEnt->shaggy)
     {
-        spinAngle = xAngleClamp(atan2(((xMat4x3*)globals.player.HangEnt->shaggy->model->Mat)->at.x,
-                                      ((xMat4x3*)globals.player.HangEnt->shaggy->model->Mat)->at.z));
+        spinAngle = xAngleClamp(atan2(((xMat4x3*)globals.player.HangEnt->model->Mat)->at.x,
+                                      ((xMat4x3*)globals.player.HangEnt->model->Mat)->at.z));
         scoobAngle = xAngleClamp(atan2(((xMat4x3*)ent->model->Mat)->at.x,
                                        ((xMat4x3*)ent->model->Mat)->at.z));
         hangAngle = scoobAngle - spinAngle;
@@ -3120,10 +3116,24 @@ static void zEntPlayerFindEmitters()
     sSoundWaterSplash = xStrHash("scooby_splash");
 }
 
+// Clear the pending voice line and restart every situation's repeat delay.
+static inline void zEntPlayer_VOReset()
+{
+    S32 i;
+
+    sVONextSituation = NULL;
+    sVOTimer = 0.0f;
+
+    for (i = 0; i < 15; i++)
+    {
+        sPlayerInfo[i].elapsedTime = sPlayerInfo[i].delay;
+        sPlayerInfo[i].count = 0;
+    }
+}
+
 void zEntPlayer_Init(_xEnt* ent, p2EntAsset* asset)
 {
     xFFXRotMatchState* rms;
-    S32 i;
 
     zEntInit((_zEnt*)ent, asset, 'PLYR');
     ent->baseFlags |= 1;
@@ -3179,14 +3189,7 @@ void zEntPlayer_Init(_xEnt* ent, p2EntAsset* asset)
     sDecrementSnackGateEnt = NULL;
     sDecrementDelay = 0.0f;
     sDecrementAmount = 2.0f;
-    sVONextSituation = NULL;
-    sVOTimer = 0.0f;
-
-    for (i = 0; i < 15; i++)
-    {
-        sPlayerInfo[i].elapsedTime = sPlayerInfo[i].delay;
-        sPlayerInfo[i].count = 0;
-    }
+    zEntPlayer_VOReset();
 
     zEntPlayerReset(ent);
 }
@@ -3236,6 +3239,15 @@ static void zEntPlayer_SnackDecrement(F32 dt)
     }
 }
 
+// Restore full health and clear the drowning and death flags.
+static inline void zEntPlayer_RestoreHealth()
+{
+    globals.player.Health = 3;
+    gPlayerHitWater = 0;
+    sPlayerWaterOffset = 0.0f;
+    gDeadScooby = 0;
+}
+
 // Per-frame player update: timers, health and death, movement in sub-steps with collision, Shaggy grabs,
 // villain bounces and bumps, bubble platforms, then the floor, jump and drive updates, hanging and digging.
 void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
@@ -3262,7 +3274,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
             }
             else if (globals.player.Inv_Specials & 0x10)
             {
-                globals.player.Sneak = ((globals.player.Inv_Specials >> 5) & 1) + 1;
+                globals.player.Sneak = ((globals.player.Inv_Specials & 0x20) >> 5) + 1;
                 zLaughNotify(0);
             }
         }
@@ -3457,10 +3469,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         {
             zSceneGameStatsTally_death();
             zGameStateSwitch(2);
-            gPlayerHitWater = 0;
-            globals.player.Health = 3;
-            sPlayerWaterOffset = 0.0f;
-            gDeadScooby = 0;
+            zEntPlayer_RestoreHealth();
         }
     }
 
@@ -3495,7 +3504,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
                             (vill->frame->oldpos.x - ent->frame->mat.pos.x) +
                         (vill->frame->oldpos.z - ent->frame->mat.pos.z) *
                             (vill->frame->oldpos.z - ent->frame->mat.pos.z);
-            ydist = fabs(vill->frame->mat.pos.y - ent->frame->mat.pos.y);
+            ydist = fabsf(vill->frame->mat.pos.y - ent->frame->mat.pos.y);
             if (((rad2 > sdist2 && radold2 <= sdist2) || (rad2 > sdistold2 && radold2 <= sdistold2)) &&
                 ydist < 0.5f)
             {
@@ -3689,16 +3698,18 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
             cend = &ent->collis->colls[ent->collis->idx];
             for (c = &ent->collis->colls[6]; c < cend; c++)
             {
-                cent = (_xEnt*)c->optr;
-                if (cent && cent &&
-                    (cent->id == xStrHash("slipdeck01") || cent->id == xStrHash("slipdeck02") ||
-                     cent->id == xStrHash("slipdeck03") || cent->id == xStrHash("slipdeck04")))
+                if (c->optr)
                 {
-                    iRayHitsModel(&ctr, cent->model, &ctc);
-                    if (ctc.flags & 1)
+                    cent = (_xEnt*)c->optr;
+                    if (cent && (cent->id == xStrHash("slipdeck01") || cent->id == xStrHash("slipdeck02") ||
+                         cent->id == xStrHash("slipdeck03") || cent->id == xStrHash("slipdeck04")))
                     {
-                        xVec3Copy(&ent->frame->mat.pos, &ent->frame->oldpos);
-                        break;
+                        iRayHitsModel(&ctr, cent->model, &ctc);
+                        if (ctc.flags & 1)
+                        {
+                            xVec3Copy(&ent->frame->mat.pos, &ent->frame->oldpos);
+                            break;
+                        }
                     }
                 }
             }
@@ -3711,8 +3722,9 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         F32 hdotm;
         xSurface* wsurf;
 
+        wcoll = &ent->collis->colls[2];
         gcoll = &ent->collis->colls[6];
-        for (wcoll = &ent->collis->colls[2]; wcoll < gcoll; wcoll++)
+        for (; wcoll < gcoll; wcoll++)
         {
             if (wcoll->flags & 1)
             {
@@ -3764,12 +3776,12 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         _xCollis* endcoll;
         _zEnt* shagent;
 
-        shagent = globals.player.Shaggy1.Grab;
         coll = &ent->collis->colls[ent->collis->npc_sidx];
         endcoll = &ent->collis->colls[ent->collis->npc_eidx];
         for (; coll < endcoll; coll++)
         {
-            if (coll->optr == shagent && coll->hdng.y < -0.7071f)
+            shagent = (_zEnt*)coll->optr;
+            if (shagent == globals.player.Shaggy1.Grab && coll->hdng.y < -0.7071f)
             {
                 ent->frame->mat.pos.x += 0.001f;
                 globals.player.Shaggy1.CatchYou = 1;
@@ -3901,11 +3913,12 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
 
         coll = &ent->collis->colls[ent->collis->dyn_sidx];
         endcoll = &ent->collis->colls[ent->collis->dyn_eidx];
-        for (; coll < endcoll; coll++)
+        while (coll < endcoll)
         {
             bub = (_zEntBubble*)coll->optr;
             if (!bub)
             {
+                coll++;
                 continue;
             }
             if (bub->baseType == 0xF)
@@ -3932,6 +3945,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
                     zEntVillain_Headbutt((st_zEntVillain*)bub->villain, &coll->hdng);
                 }
             }
+            coll++;
         }
     }
 
@@ -3969,8 +3983,8 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         }
         else
         {
-            mag = 1.0f / sqrtf(mag) * lerpspeed;
-            xVec3SMulBy(&delta, mag);
+            mag = 1.0f / sqrtf(mag);
+            xVec3SMulBy(&delta, mag * lerpspeed);
             xVec3AddTo(&globals.player.RootUp, &delta);
             xVec3Normalize(&globals.player.RootUp, &globals.player.RootUp);
         }
@@ -4050,11 +4064,13 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         {
             if (zsc->stats[i] && (zsc->stats[i]->baseFlags & 1) && xEntIsVisible(zsc->stats[i]))
             {
-                simpent = (_zEntSimpleObj*)zsc->stats[i];
-                if (simpent->sflags & 1)
+                if (((_zEntSimpleObj*)zsc->stats[i])->sflags & 1)
                 {
-                    if (xVec3Dist2(&globals.player.ent.bound.sph.center, (xVec3*)&simpent->model->Mat->pos) <
-                        (1.25f * globals.player.ent.bound.sph.r) * (1.25f * globals.player.ent.bound.sph.r))
+                    simpent = (_zEntSimpleObj*)zsc->stats[i];
+                    if (SQ(globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x) +
+                            SQ(globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y) +
+                            SQ(globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z) <
+                        SQ(1.25f * globals.player.ent.bound.sph.r))
                     {
                         globals.player.Diggable = simpent;
                         if (!(simpent->sflags & 2))
@@ -4588,11 +4604,12 @@ U32 zEntPlayer_MoveInfo()
     _xEnt* plyr = &globals.player.ent;
     U32 animflags;
 
-    animflags = plyr->model->Anim->Single->State->UserFlags & 0x1E;
-    if (!animflags || plyr->model->Anim->Single->State->UserFlags & 1)
+    animflags = plyr->model->Anim->Single->State->UserFlags;
+    if (!(animflags & 0x1E) || animflags & 1)
     {
         infoflags |= 0x1;
     }
+    animflags &= 0x1E;
     if (animflags == 0x4)
     {
         infoflags |= 0x2;
@@ -4726,7 +4743,7 @@ static F32 CalcJumpImpulse_Smooth(F32 g, F32 j, F32 h, F32 Tgc, F32 Tgs)
     A = (j - g) / (6.0f * Tgs);
     B = (g * Tgc - j * Tgc - j * Tgs) / (2.0f * Tgs);
     Kc = -(j * Tgc + 3.0f * A * SQ(Tgc) + 2.0f * B * Tgc);
-    D = AS * SQ(Tgc) - A * (Tgc * SQ(Tgc)) - B * SQ(Tgc) - Kc * Tgc;
+    D = (-j / 2.0f) * SQ(Tgc) - A * (Tgc * SQ(Tgc)) - B * SQ(Tgc) - Kc * Tgc;
     AF = -g / 2.0f;
     Kbf = 3.0f * A * SQ(Tgc + Tgs) + 2.0f * B * (Tgc + Tgs) + g * (Tgc + Tgs);
     Tmfound = 0.0f;
@@ -5135,7 +5152,8 @@ void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
             return;
         }
         xVec3 dv;
-        xVec3SMul(&dv, &coll->norm, 0.5f * -rft);
+        s = 0.5f * -rft;
+        xVec3SMul(&dv, &coll->norm, s);
         v->x += dv.x;
         v->y += dv.y;
         v->z += dv.z;
@@ -5406,7 +5424,7 @@ void zEntPlayerFloorUpdate(_xEnt* p, _xScene* sc, F32 dt)
         vel = &p->frame->vel;
         if (((fcoll->flags & 1) &&
              (fnorm->y > (F32)cos(surfSlideStop) || (fsurf && (fsurf->state || !zSurfaceGetSlide(fsurf))))) ||
-            vel->y > 0.0f || surfSlickRatio != 0.0f)
+            vel->y > 0.0f || surfSlickRatio)
         {
             if (!(globals.player.Inv_Specials & 8))
             {
@@ -5443,10 +5461,10 @@ void zEntPlayerFloorUpdate(_xEnt* p, _xScene* sc, F32 dt)
             {
                 globals.player.Slide = 3;
                 s = ddotm / sqrtf(D_flat.x * D_flat.x + D_flat.z * D_flat.z);
-                dz = D_flat.x * s;
-                s *= D_flat.z;
-                p->frame->mat.pos.x -= dz;
-                p->frame->mat.pos.z -= s;
+                dz = D_flat.z * s;
+                s = D_flat.x * s;
+                p->frame->mat.pos.x -= s;
+                p->frame->mat.pos.z -= dz;
                 if (update_motion.y > 0.0f)
                 {
                     p->frame->mat.pos.y = p->frame->oldpos.y;
@@ -5666,19 +5684,22 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
 
     drv = &globals.player.drv;
 
-    if (drv->odriver && !drv->os)
+    if (drv->odriver)
     {
         plat = (_zPlatform*)drv->odriver;
-        zEntEvent(plat, 0x21);
-        drv->odriver = NULL;
-        drv->otm = 0.0f;
-        if (plat->subType == 9)
+        if (!drv->os)
         {
-            zPlatform_Dismount(plat);
-        }
-        if (plat->passet->flags & 1)
-        {
-            zPlatform_Shake(plat, dt, 0.2f, 37.699112f);
+            zEntEvent(plat, 0x21);
+            drv->odriver = NULL;
+            drv->otm = 0.0f;
+            if (plat->subType == 9)
+            {
+                zPlatform_Dismount(plat);
+            }
+            if (plat->passet->flags & 1)
+            {
+                zPlatform_Shake(plat, dt, 0.2f, 37.699112f);
+            }
         }
     }
 
@@ -5871,10 +5892,7 @@ void zEntPlayerReset(_xEnt* ent)
 
         if (zGameModeGet() == eGameMode_Game && zGameStateGet() == 2)
         {
-            globals.player.Health = 3;
-            gPlayerHitWater = 0;
-            sPlayerWaterOffset = 0.0f;
-            gDeadScooby = 0;
+            zEntPlayer_RestoreHealth();
         }
         else
         {
@@ -5882,7 +5900,10 @@ void zEntPlayerReset(_xEnt* ent)
             globals.player.Inv_Chances = 3;
             globals.player.Inv_ScoobySnacks = 0;
             globals.player.Inv_Specials = globals.player.s.Initial_Specials;
-            globals.player.Inv_Mtokens[0] = 0;
+            for (U32 i = 0; i < sizeof(globals.player.Inv_Mtokens) / sizeof(globals.player.Inv_Mtokens[0]); i++)
+            {
+                globals.player.Inv_Mtokens[i] = 0;
+            }
             gPlayerHitWater = 0;
             sPlayerWaterOffset = 0.0f;
             gDeadScooby = 0;
@@ -7294,6 +7315,7 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
     F32 d1;
     F32 d2;
     xVec3 center;
+    F32 dist2;
 
     globals.player.HangFound = NULL;
     if (globals.player.HangEnt)
@@ -7309,11 +7331,11 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
         if (hangme->baseType == 0x17 && hangme->enabled > 0 && !hangme->grabTimer &&
             (hangme->state != 1 || hangme->shaggy))
         {
-            F32 dist2 = xVec3Dist2(&ent->bound.sph.center, &hangme->endpos);
+            dist2 = xVec3Dist2(&ent->bound.sph.center, &hangme->endpos);
             if (dist2 < closedist)
             {
-                closedist = dist2;
                 hangclose = hangme;
+                closedist = dist2;
                 center = ent->bound.sph.center;
             }
         }
@@ -7370,6 +7392,34 @@ static void PlayerTeeterCheck(_xEnt* ent, _xScene* sc, F32 dt)
                 floor_tmr[i] = 0.0f;
             }
         }
+    }
+
+    switch (globals.player.Teeter)
+    {
+    case 0:
+        break;
+    case 1:
+        break;
+    case 2:
+        break;
+    case 3:
+        break;
+    case 4:
+        break;
+    case 5:
+        break;
+    case 6:
+        break;
+    case 7:
+        break;
+    case 8:
+        break;
+    case 9:
+        break;
+    case 10:
+        break;
+    case 11:
+        break;
     }
 }
 
@@ -7437,7 +7487,6 @@ static void PlayerDigUpdate(_xEnt* ent, F32 dt)
 static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata)
 {
     xVec3* eup;
-    xVec3* fup;
     S32 grounded;
     xSurface* surf;
     S32 hit_it;
@@ -7453,6 +7502,7 @@ static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata
         hit_it = grounded && surf && !surf->state && zSurfaceGetMatchOrient(surf);
         if (hit_it)
         {
+            xVec3* fup;
             xVec3 nfup;
             xVec3 neup;
             F32 fdecl;
@@ -7491,7 +7541,7 @@ static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata
                         rang *= dang;
                         rang -= 0.001f;
                         xMat4x3Rot(&rot, &raxis, rang, &((xMat4x3*)ent->model->Mat)->pos);
-                        xMat3x3RMulVec(eup, (xMat3x3*)&rot, &neup);
+                        xMat3x3RMulVec(&globals.player.RootUpTarget, (xMat3x3*)&rot, &neup);
                         globals.player.HangElapsed = 0.0f;
                     }
                 }
@@ -7521,7 +7571,7 @@ static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata
                 {
                     rang = MIN(1.0f, dt / rms->trelax);
                     xMat4x3Rot(&rot, &raxis, rang * dang, &((xMat4x3*)ent->model->Mat)->pos);
-                    xMat3x3RMulVec(eup, (xMat3x3*)&rot, &neup);
+                    xMat3x3RMulVec(&globals.player.RootUpTarget, (xMat3x3*)&rot, &neup);
                     globals.player.HangElapsed = 0.0f;
                 }
             }
