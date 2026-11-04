@@ -277,10 +277,11 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
         }
         else
         {
-            _xEnt* p = drv->driven;
             F32 s = plat == drv->driver ? drv->s : drv->os;
             xVec3 lpos;
-            xVec3Sub(&lpos, &p->frame->mat.pos, (xVec3*)&plat->model->Mat->pos);
+            lpos.x = drv->driven->frame->mat.pos.x - plat->model->Mat->pos.x;
+            lpos.y = drv->driven->frame->mat.pos.y - plat->model->Mat->pos.y;
+            lpos.z = drv->driven->frame->mat.pos.z - plat->model->Mat->pos.z;
             xMat3x3Tolocal(&lpos, (xMat3x3*)plat->model->Mat, &lpos);
             F32 cangle = plat->frame->rot.axis.z;
             F32 dangle = -s * (PI * plat->passet->teet.invmass / 180.0f) * lpos.x * dt;
