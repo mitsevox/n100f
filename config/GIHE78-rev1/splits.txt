@@ -181,7 +181,7 @@ flat/xDebug.cpp:
 	.bss        start:0x8020ECE8 end:0x8020EE58
 
 flat/xDraw.cpp:
-	.text       start:0x80021ED8 end:0x80021FF8
+	.text       start:0x80021DEC end:0x80021FF8
 	.sdata      start:0x802702B0 end:0x802702B8
 
 flat/xEnt.cpp:
@@ -297,6 +297,12 @@ flat/xPartition.cpp:
 	.text       start:0x80032F04 end:0x80033734
 	.sdata2     start:0x80271FD8 end:0x80271FE0
 
+flat/xpkrsvc.cpp:
+	.text       start:0x80033734 end:0x8003596C
+	.rodata     start:0x801909B0 end:0x80190DB8
+	.data       start:0x801BD838 end:0x801C2138
+	.sbss       start:0x80270988 end:0x802709B0
+
 flat/xQuickCull.cpp:
 	.text       start:0x8003596C end:0x80036A20
 	.sbss       start:0x802709B0 end:0x80270A08
@@ -304,7 +310,7 @@ flat/xQuickCull.cpp:
 
 flat/xsavegame.cpp:
 	.text       start:0x80036A20 end:0x800386F4
-	.rodata     start:0x80190CB8 end:0x80191010
+	.rodata     start:0x80190DB8 end:0x80191010
 	.data       start:0x801C2138 end:0x801C4520
 	.sbss       start:0x80270A08 end:0x80270A10
 	.sdata2     start:0x80271FF0 end:0x80272000

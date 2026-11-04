@@ -34,7 +34,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xCollideFast.cpp	xCutscene.cpp	0x80021B10	0x80021B10	claimed by a unit row in evidence.tsv	0
 .text	xCutscene.cpp	xDebug.cpp	0x80021B1C	0x80021B1C	claimed by a unit row in evidence.tsv	0
 .text	xDebug.cpp	xDraw.cpp	0x80021CB0	0x80021CB0	claimed by a unit row in evidence.tsv	0
-.text	xDraw.cpp	xEnt.cpp	0x80021E70	0x80021E70	claimed by a unit row in evidence.tsv	0
+.text	xDraw.cpp	xEnt.cpp	0x80021E70	0x80021E70	alignment only (4 cuts tie on data)	0
 .text	xEnt.cpp	xEntDrive.cpp	0x800258F4	0x800258F4	single cut by data references	0
 .text	xEntDrive.cpp	xEntMotion.cpp	0x80025F04	0x80025F04	single cut by data references	3
 .text	xEntMotion.cpp	xEnv.cpp	0x80028D18	0x80028D18	single cut by data references	0
@@ -57,7 +57,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .text	xPar.cpp	xParGroup.cpp	0x80032540	0x80032540	single cut by data references	0
 .text	xParGroup.cpp	xParMgr.cpp	0x80032D28	0x80032D28	alignment only (4 cuts tie on data)	0
 .text	xParMgr.cpp	xPartition.cpp	0x80032DEC	0x80032DEC	alignment only (6 cuts tie on data)	0
-.text	xPartition.cpp	xpkrsvc.cpp	0x8003361C	0x8003361C	alignment only (4 cuts tie on data, 2 on calls)	0
+.text	xPartition.cpp	xpkrsvc.cpp	0x8003361C	0x8003361C	alignment only (3 cuts tie on data, 2 on calls)	0
 .text	xpkrsvc.cpp	xQuickCull.cpp	0x80035854	0x80035854	closed by references (1 functions joined; was open: 1 unassigned functions)	2
 .text	xQuickCull.cpp	xsavegame.cpp	0x80036908	0x80036908	single cut by data references	0
 .text	xsavegame.cpp	xScene.cpp	0x80038D48	0x80038D48	alignment only (9 cuts tie on data)	0
