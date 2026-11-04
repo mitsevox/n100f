@@ -382,6 +382,8 @@ static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplic
 static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt);
 static inline void zVIL_send_stim(st_zEntVillain* ent, en_NPC_STIMULUS stim);
+static inline void VEFX_gumBlob_place(xModelInstance* blob, xVec3* pos, F32 scale);
+static S32 zVIL_cond_spawn_ok(st_zEntVillain* vil);
 static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo);
 static void VPRJ_zapTheAxe(zEntProjectile* prj, S32 cleanup);
 static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal);
@@ -2668,13 +2670,13 @@ void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
         ent->penby = 0;
         ent->flags &= ~0x1;
         break;
-    case ZVIL_START_SLEEPING:
-        ent->goaldflt = ZVIL_GOAL_BORED;
+    case ZVIL_START_DEFAULT:
+        ent->goaldflt = ZVIL_GOAL_IDLE;
         ent->mode = ZVIL_MODE_SHUTDOWN;
         VGOL_set(ent, ZVIL_GOAL_STARTUP);
         break;
-    case ZVIL_START_DEFAULT:
-        ent->goaldflt = ZVIL_GOAL_IDLE;
+    case ZVIL_START_SLEEPING:
+        ent->goaldflt = ZVIL_GOAL_BORED;
         ent->mode = ZVIL_MODE_SHUTDOWN;
         VGOL_set(ent, ZVIL_GOAL_STARTUP);
         break;
@@ -2685,18 +2687,7 @@ void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
         break;
     }
 
-    S32 difficulty = 0;
-    S32 spawnmask = 0;
-    S32 spawn = 1;
-    VCFG_getParm(&ent->vilcfg, ZVIL_PARM_MINDIFFICULTY, &difficulty);
-    VCFG_getParm(&ent->vilcfg, ZVIL_PARM_SPAWNMASK, &spawnmask);
-    if (difficulty < 0)
-    {
-        spawn = 0;
-        xSceneID2Name(globals.sceneCur, ent->id);
-    }
-    if ((spawnmask & globals.player.Inv_Specials) != spawnmask) spawn = 0;
-    if (!spawn) VGOL_set(ent, ZVIL_GOAL_BASEINIT);
+    if (!zVIL_cond_spawn_ok(ent)) VGOL_set(ent, ZVIL_GOAL_BASEINIT);
 
     if ((ent->asset->flags & 0x1) && ent->mode != ZVIL_MODE_SHUTDOWN)
         ent->flags |= 0x1;
@@ -4004,21 +3995,7 @@ static S32 VILN_std_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
         break;
     case 50:
     {
-        S32 spawnmask = 0;
-        S32 spawn = 1;
-        S32 difficulty = 0;
-        VCFG_getParm(&vil->vilcfg, ZVIL_PARM_MINDIFFICULTY, &difficulty);
-        VCFG_getParm(&vil->vilcfg, ZVIL_PARM_SPAWNMASK, &spawnmask);
-        if (difficulty < 0)
-        {
-            spawn = 0;
-            xSceneID2Name(globals.sceneCur, vil->id);
-        }
-        if (spawnmask != (spawnmask & globals.player.Inv_Specials))
-        {
-            spawn = 0;
-        }
-        if (spawn)
+        if (zVIL_cond_spawn_ok(vil))
         {
             zVIL_send_stim(vil, ZVIL_STIM_GOTOAFTERLIFE);
             zVIL_send_stim(vil, ZVIL_STIM_MAKEREADY);
@@ -6323,16 +6300,7 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 xModelInstance* blob = vil->mdl_gumBlob;
                 if (blob)
                 {
-                    xVec3* pos = xEntGetPos(vil);
-                    xMat4x3 mat = { 0 };
-                    xMat3x3Euler((xMat3x3*)&mat, (xVec3*)&g_O3);
-                    F32 scale = 1.0f;
-                    xVec3SMulBy(&mat.right, scale);
-                    xVec3SMulBy(&mat.up, scale);
-                    xVec3SMulBy(&mat.at, scale);
-                    mat.flags = 0;
-                    mat.pos = *pos;
-                    memcpy(blob->Mat, &mat, sizeof(mat));
+                    VEFX_gumBlob_place(blob, xEntGetPos(vil), 1.0f);
                     if (vil->asset->subtype == eEntVillainTypeBat) vil->mdl_gumBlob->Mat->pos.y -= 0.3f;
                     if (!g_npcFuncs[vil->asset->subtype].xtrarend)
                         g_npcFuncs[vil->asset->subtype].xtrarend = VILN_std_xtrarend;
@@ -12981,6 +12949,28 @@ static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force)
     return do_teleport;
 }
 
+// Whether the villain may spawn: not when its minimum difficulty is negative, nor unless the
+// player has every special its spawn mask asks for.
+static S32 zVIL_cond_spawn_ok(st_zEntVillain* vil)
+{
+    S32 result = 1;
+    S32 msk_condspawn = 0;
+    S32 vil_minhardness = 0;
+
+    VCFG_getParm(&vil->vilcfg, ZVIL_PARM_MINDIFFICULTY, &vil_minhardness);
+    VCFG_getParm(&vil->vilcfg, ZVIL_PARM_SPAWNMASK, &msk_condspawn);
+    if (vil_minhardness < 0)
+    {
+        result = 0;
+        xSceneID2Name(globals.sceneCur, vil->id);
+    }
+    if ((msk_condspawn & globals.player.Inv_Specials) != msk_condspawn)
+    {
+        result = 0;
+    }
+    return result;
+}
+
 // Passes a bare stimulus, with no other context, to the villain's type.
 static inline void zVIL_send_stim(st_zEntVillain* ent, en_NPC_STIMULUS stim)
 {
@@ -19040,6 +19030,19 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
         }
     }
     return hit_something;
+}
+
+// Places a gum blob model at pos, unrotated and scaled by scale.
+static inline void VEFX_gumBlob_place(xModelInstance* blob, xVec3* pos, F32 scale)
+{
+    xMat4x3 mat = { 0 };
+    xMat3x3Euler((xMat3x3*)&mat, (xVec3*)&g_O3);
+    xVec3SMulBy(&mat.right, scale);
+    xVec3SMulBy(&mat.up, scale);
+    xVec3SMulBy(&mat.at, scale);
+    mat.flags = 0;
+    mat.pos = *pos;
+    memcpy(blob->Mat, &mat, sizeof(mat));
 }
 
 // Grow a broken flask's splash over its aftermath time, hurt the player inside it and emit the
