@@ -21,14 +21,14 @@ void xSceneInit(_xScene* sc, U16 num_trigs, U16 num_stats, U16 num_dyns, U16 num
 {
     sc->flags = 0;
     sc->num_trigs_allocd = num_trigs;
-    sc->trigs = (_xEnt**)xMemAlloc(gActiveHeap, num_trigs * sizeof(_xEnt*));
+    sc->trigs = (_xEnt**)xMemAlloc(gActiveHeap, (U32)num_trigs * sizeof(_xEnt*));
     sc->num_stats_allocd = num_stats;
-    sc->stats = (_xEnt**)xMemAlloc(gActiveHeap, num_stats * sizeof(_xEnt*));
+    sc->stats = (_xEnt**)xMemAlloc(gActiveHeap, (U32)num_stats * sizeof(_xEnt*));
     sc->num_dyns_allocd = num_dyns;
-    sc->dyns = (_xEnt**)xMemAlloc(gActiveHeap, num_dyns * sizeof(_xEnt*));
+    sc->dyns = (_xEnt**)xMemAlloc(gActiveHeap, (U32)num_dyns * sizeof(_xEnt*));
     sc->num_npcs_allocd = num_npcs;
-    sc->npcs = (_xEnt**)xMemAlloc(gActiveHeap, num_npcs * sizeof(_xEnt*));
-    sc->num_ents_allocd = (U32)num_trigs + (U32)num_stats + (U32)num_dyns + (U32)num_npcs;
+    sc->npcs = (_xEnt**)xMemAlloc(gActiveHeap, (U32)num_npcs * sizeof(_xEnt*));
+    sc->num_ents_allocd = num_trigs + num_stats + num_dyns + num_npcs;
     sc->num_act_ents = 0;
     sc->act_ents = (_xEnt**)xMemAlloc(gActiveHeap, sc->num_ents_allocd * sizeof(_xEnt*));
     sc->num_nact_ents = 0;
