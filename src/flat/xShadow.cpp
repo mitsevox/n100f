@@ -589,21 +589,9 @@ void xShadowReceiveShadow(_xEnt* ent)
                 continue;
             }
 
-            {
-                xVec3 p;
-                p.x = v0->x + c.x;
-                p.y = v0->y + c.y;
-                p.z = v0->z + c.z;
-                RwIm3DVertexSetPos(&imv[0], p.x, p.y, p.z);
-                p.x = v1->x + c.x;
-                p.y = v1->y + c.y;
-                p.z = v1->z + c.z;
-                RwIm3DVertexSetPos(&imv[1], p.x, p.y, p.z);
-                p.x = v2->x + c.x;
-                p.y = v2->y + c.y;
-                p.z = v2->z + c.z;
-                RwIm3DVertexSetPos(&imv[2], p.x, p.y, p.z);
-            }
+            RwIm3DVertexSetPos(&imv[0], v0->x + c.x, v0->y + c.y, v0->z + c.z);
+            RwIm3DVertexSetPos(&imv[1], v1->x + c.x, v1->y + c.y, v1->z + c.z);
+            RwIm3DVertexSetPos(&imv[2], v2->x + c.x, v2->y + c.y, v2->z + c.z);
             imv[0].u = vShad[0].x;
             imv[1].u = vShad[1].x;
             imv[2].u = vShad[2].x;
@@ -843,9 +831,7 @@ static RpCollisionTriangle* ShadowRenderTriangleCB(RpIntersection* intersection,
     RwV3d vShad[3];
     RxObjSpace3DVertex* imv;
     U8 val;
-    F32 ox;
-    F32 oy;
-    F32 oz;
+    RwV3d off;
 
     if (collTriangle->normal.x * param->at.x + collTriangle->normal.y * param->at.y +
             collTriangle->normal.z * param->at.z >
@@ -881,25 +867,11 @@ static RpCollisionTriangle* ShadowRenderTriangleCB(RpIntersection* intersection,
     }
 
     // Lift the triangle a little off the surface along its normal.
-    ox = 0.001f * collTriangle->normal.x;
-    oy = 0.001f * collTriangle->normal.y;
-    oz = 0.001f * collTriangle->normal.z;
     imv = &Im3DBuffer[Im3DBufferPos];
-    {
-        xVec3 p;
-        p.x = vIn[0].x + ox;
-        p.y = vIn[0].y + oy;
-        p.z = vIn[0].z + oz;
-        RwIm3DVertexSetPos(&imv[0], p.x, p.y, p.z);
-        p.x = vIn[1].x + ox;
-        p.y = vIn[1].y + oy;
-        p.z = vIn[1].z + oz;
-        RwIm3DVertexSetPos(&imv[1], p.x, p.y, p.z);
-        p.x = vIn[2].x + ox;
-        p.y = vIn[2].y + oy;
-        p.z = vIn[2].z + oz;
-        RwIm3DVertexSetPos(&imv[2], p.x, p.y, p.z);
-    }
+    RwV3dScaleMacro(&off, &collTriangle->normal, 0.001f);
+    RwIm3DVertexSetPos(&imv[0], vIn[0].x + off.x, vIn[0].y + off.y, vIn[0].z + off.z);
+    RwIm3DVertexSetPos(&imv[1], vIn[1].x + off.x, vIn[1].y + off.y, vIn[1].z + off.z);
+    RwIm3DVertexSetPos(&imv[2], vIn[2].x + off.x, vIn[2].y + off.y, vIn[2].z + off.z);
     imv[0].u = vShad[0].x;
     imv[1].u = vShad[1].x;
     imv[2].u = vShad[2].x;
