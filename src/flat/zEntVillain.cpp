@@ -8959,6 +8959,7 @@ static S32 VILN_BBK_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
             case 2: vil->cnt_lobSalvo += 2;
             case 3: vil->cnt_lobSalvo += 1;
             case 4: vil->cnt_lobSalvo += 1; break;
+            case 0:
             default: vil->cnt_lobSalvo = 4; break;
             }
         }
