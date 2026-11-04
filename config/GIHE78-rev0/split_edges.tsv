@@ -206,7 +206,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .data	zEntPlayer.cpp	zEntProjectile.cpp	0x801B8980	0x801B8980	single aligned candidate	0
 .data	zEntProjectile.cpp	zEntShaggy.cpp	0x801B8DA0	0x801B8DA0	single aligned candidate	0
 .data	zEntShaggy.cpp	zEntVillain.cpp	0x801B8E88	0x801B8E88	single aligned candidate	0
-.data	zEntVillain.cpp	zFeet.cpp	0x801C54A0	0x801C54A0	single aligned candidate	0
+.data	zEntVillain.cpp	zEntVillainCol.cpp	0x801C5180	0x801C5180	data-only unit claimed by a data row in evidence.tsv	0
+.data	zEntVillainCol.cpp	zFeet.cpp	0x801C54A0	0x801C54A0	single aligned candidate	0
 .data	zFeet.cpp	zFMV.cpp	0x801C5590	0x801C5590	single aligned candidate	0
 .data	zFMV.cpp	zGame.cpp	0x801C5BF8	0x801C5BF8	single aligned candidate	0
 .data	zGame.cpp	zGameExtras.cpp	0x801C5D58	0x801C5D58	single aligned candidate	0

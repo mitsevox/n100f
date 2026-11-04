@@ -590,6 +590,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "flat/zEntShaggy.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEntSimpleObj.cpp"),
             Object(NonMatching, "flat/zEntVillain.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/zEntVillainCol.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEnv.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zFeet.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/zFMV.cpp"),

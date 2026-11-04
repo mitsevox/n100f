@@ -441,6 +441,55 @@ def claimed_data(rows, prefix):
     return out
 
 
+def data_only_units(variables_tsv, function_units, prefix_dir='E:\\SD2\\Game\\flat\\'):
+    """{unit file name: names of its globals} for the PS2 compile units under `prefix_dir` that
+    the DWARF lists with global variables and no functions (zEntVillainCol.cpp, xColor.cpp).
+    Such a unit has no .text, so the alignment never sees it.  A global that another unit only
+    declares appears under both units with one address; the data-only unit is the one that
+    defines it, since it has nothing else to contribute."""
+    out = collections.defaultdict(set)
+    for r in csv.DictReader(open(variables_tsv, encoding='utf-8'), delimiter='\t'):
+        src = r['Source_File']
+        if r['Binding'] == 'GLOBAL' and src.startswith(prefix_dir):
+            unit = src[len(prefix_dir):]
+            if unit not in function_units:
+                out[unit].add(r['Name'])
+    return dict(out)
+
+
+def carve_data_only(data_claims, data_only, data, final, order):
+    """Section ranges for the data-only units (data_only_units) that `data` rows claim, and a
+    message for each refused claim.  The run gives a data-only unit's items to a neighbour, so a
+    claim carves them off the end of the range of the unit linked right before it (link order
+    is case-insensitive by name): `final` is changed in place.  A claim is refused when it does
+    not end where that range ends, when it takes the whole range, or when it holds an item whose
+    name the PS2 DWARF does not list as a global of the claiming unit.  Returns
+    ({host unit: [(unit, section, start, end)]}, messages)."""
+    hosted, refused = collections.defaultdict(list), []
+    for (u, sec), (lo, hi) in sorted(data_claims, key=lambda c: (c[0][1], c[1], c[0][0])):
+        why = None
+        before = [v for v in order if v.lower() < u.lower()]
+        host = before[-1] if before else None
+        r = final.get((host, sec)) if host else None
+        items = [d for d, item in enumerate(data) if item[2] == sec and lo <= item[0] < hi]
+        if not r:
+            why = f'no unit linked before it has a {sec} range'
+        elif r[1] != hi or not r[0] < lo:
+            why = f'it is not a tail of {host} {sec} 0x{r[0]:08X}-0x{r[1]:08X}'
+        elif not items:
+            why = 'it holds no item'
+        else:
+            bad = [data[d] for d in items if data[d][3] not in data_only[u]]
+            if bad:
+                why = f'0x{bad[0][0]:08X} {bad[0][3]} is not a global the PS2 DWARF lists in {u}'
+        if why:
+            refused.append(f'check: data claim {u} {sec} 0x{lo:08X}-0x{hi:08X} refused: {why}')
+            continue
+        final[(host, sec)] = (r[0], lo)
+        hosted[host].append((u, sec, lo, hi))
+    return dict(hosted), refused
+
+
 class Dsu:
     def __init__(self):
         self.up = {}
@@ -657,6 +706,8 @@ def main():
     ap.add_argument('--dol', required=True)
     ap.add_argument('--ps2-elf', required=True)
     ap.add_argument('--dwarf', default='references/Scooby-Doo Night of 100 Frights/SLUS-20349/symbols/dwarf_functions.tsv')
+    ap.add_argument('--dwarf-variables', default='references/Scooby-Doo Night of 100 Frights/SLUS-20349/symbols/dwarf_variables.tsv',
+                    help='DWARF variable export; its data-only compile units can be claimed by data rows')
     ap.add_argument('--symbols', default='config/GIHE78-rev0/symbols.txt')
     ap.add_argument('--evidence', default='config/GIHE78-rev0/evidence.tsv', help='function rows with exact bodies pin by name')
     ap.add_argument('--objdir', default='build/GIHE78-rev0/obj', help='objects from a dtk split of the DOL')
@@ -1152,11 +1203,18 @@ def main():
         return settle_placement(place, data, groups, users, pointers, claimed, index)
 
     emitted_units = {u for u in order if status(u) != 'weak'}
+    data_only = data_only_units(args.dwarf_variables, {f[3] for f in ps2.funcs})
+    unit_claims = [c for c in data_claims if c[0][0] not in data_only]
     free_extra, _, _, _, _, free_final = settle({})
-    claimed, refused = check_data_claims(data_claims, data, free_extra, free_final, emitted_units)
+    claimed, refused = check_data_claims(unit_claims, data, free_extra, free_final, emitted_units)
     for msg in refused + claim_warnings(claimed, data, users, emitted_units, free_extra):
         print(msg, file=sys.stderr)
     extra, conflicts, dclass, stray, placed, final = settle(claimed)
+    # Data-only units take their claimed ranges off the end of the unit linked before them.
+    hosted, refused = carve_data_only([c for c in data_claims if c[0][0] in data_only],
+                                      data_only, data, final, [u for u in order if status(u) != 'weak'])
+    for msg in refused:
+        print(msg, file=sys.stderr)
     # A claim the link-order run then leaves out (its unit is out of order there) is reported.
     left_out = sorted({(u, data[d][2]) for d, u in claimed.items()
                        if not final.get((u, data[d][2]), (0, 0))[0] <= data[d][0] < final.get((u, data[d][2]), (0, 0))[1]})
@@ -1232,6 +1290,11 @@ def main():
                 r = final.get((u, sec))
                 if r:
                     out.write(f'\t{sec:<11} start:0x{r[0]:08X} end:0x{r[1]:08X}\n')
+            for w in sorted({h[0] for h in hosted.get(u, [])}, key=str.lower):
+                out.write(f'\n{args.prefix}{w}:\n')
+                for _, sec, lo, hi in sorted((h for h in hosted[u] if h[0] == w),
+                                             key=lambda h: DATA_SECTIONS.index(h[1])):
+                    out.write(f'\t{sec:<11} start:0x{lo:08X} end:0x{hi:08X}\n')
     with open(args.edges, 'w') as out:
         out.write('section\tleft_unit\tright_unit\tleft_end\tright_start\tclass\tcrossing_refs\n')
         for A, B in zip(order, order[1:]):
@@ -1241,6 +1304,12 @@ def main():
         for (u, v, sec), (cls, conflicts) in sorted(dclass.items(), key=lambda kv: (kv[0][2], order.index(kv[0][0]))):
             a = final.get((u, sec)) if status(u) != 'weak' else None
             b = final.get((v, sec)) if status(v) != 'weak' else None
+            # A data-only unit carved off u's range sits between u and v.
+            for w, wsec, lo, hi in hosted.get(u, []):
+                if wsec == sec:
+                    out.write(f'{sec}\t{u}\t{w}\t0x{lo:08X}\t0x{lo:08X}\t'
+                              'data-only unit claimed by a data row in evidence.tsv\t0\n')
+                    u, a = w, (lo, hi)
             out.write(f'{sec}\t{u}\t{v}\t{"0x%08X" % a[1] if a else "-"}\t{"0x%08X" % b[0] if b else "-"}\t'
                       f'{cls if a and b else cls + "; a side left unsplit"}\t{conflicts}\n')
     def anchor_kind(g, i):
@@ -1267,7 +1336,8 @@ def main():
           f'data edges {len(dclass)}, out-of-order unit-local items {sum(stray.values())}, '
           f'shared items placed by link order {sum(placed.values())}, '
           f'items placed with their tables {by_table} ({conflicts} table groups left alone), '
-          f'items placed by data rows {len(claimed)}; .sdata2 locality violations {len(locality)}, '
+          f'items placed by data rows {len(claimed)}, '
+          f'data-only units {sum(len({h[0] for h in v}) for v in hosted.values())}; .sdata2 locality violations {len(locality)}, '
           f'repeated floats {len(duplicates)} (advice)', file=sys.stderr)
     if locality:
         sys.exit(1)
