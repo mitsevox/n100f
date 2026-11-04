@@ -71,17 +71,17 @@ static void FastS16weight4(F32* dest, S16** v_array, S16* weight, S32 count, F32
 static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* weight, U32 normals,
                         F32 scale, S32 dorender)
 {
-    S16* va[4];
-    S16 wa[4];
     U32 i;
     U32 a = 0;
+    S16 wa[4];
+    S16* va[4];
     S32 wsum = 0;
-    RwV3d* oldVerts = NULL;
+    RwV3d* vold = NULL;
+    RwV3d* nold = NULL;
+    S32 lockMode;
     RpUserDataArray* usr;
     DirtyMorph* dm;
     U8 useNormals = 0;
-    RwV3d* oldNorms = NULL;
-    S32 lockMode;
 
     s_geom = model->geometry;
     s_tgt = s_geom->morphTarget;
@@ -94,13 +94,13 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
         useNormals = 1;
     }
 
-    oldVerts = s_tgt->verts;
+    vold = s_tgt->verts;
     // RenderWare's lock flags: 2 locks the vertices, 4 the normals.
     lockMode = (useNormals ? 4 : 0) | 2;
 
     if (useNormals)
     {
-        oldNorms = s_tgt->normals;
+        nold = s_tgt->normals;
     }
 
     for (i = 0; i < 4; i++)
@@ -158,11 +158,11 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
                     iModelRender(model, mat);
                 }
 
-                s_tgt->verts = oldVerts;
+                s_tgt->verts = vold;
 
-                if (oldNorms)
+                if (nold)
                 {
-                    s_tgt->normals = oldNorms;
+                    s_tgt->normals = nold;
                 }
 
                 return;
@@ -243,7 +243,7 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
 
     if (s_nTemp)
     {
-        F32 normScale = 1.0f / (wsum * 16384.0f);
+        scale = 1.0f / (wsum * 16384.0f);
 
         for (i = 0; i < a; ++i)
         {
@@ -252,15 +252,15 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
 
         if (a == 1)
         {
-            FastS16unpack(s_nTemp, va[0], s_numV * 3, normScale * wsum);
+            FastS16unpack(s_nTemp, va[0], s_numV * 3, scale * wsum);
         }
         else if (a == 2)
         {
-            FastS16weight2(s_nTemp, va, wa, s_numV * 3, normScale);
+            FastS16weight2(s_nTemp, va, wa, s_numV * 3, scale);
         }
         else
         {
-            FastS16weight4(s_nTemp, va, wa, s_numV * 3, normScale);
+            FastS16weight4(s_nTemp, va, wa, s_numV * 3, scale);
         }
     }
 
@@ -273,32 +273,32 @@ static void MorphCommon(RpAtomic* model, RwMatrixTag* mat, S16** v_array, S16* w
             iModelRender(model, mat);
         }
 
-        s_tgt->verts = oldVerts;
+        s_tgt->verts = vold;
 
         if (useNormals)
         {
-            s_tgt->normals = oldNorms;
+            s_tgt->normals = nold;
         }
     }
     else if (dorender)
     {
         RpGeometryLock(s_geom, lockMode);
-        oldVerts = s_tgt->verts;
+        vold = s_tgt->verts;
         s_tgt->verts = (RwV3d*)s_vTemp;
 
         if (useNormals)
         {
-            oldNorms = s_tgt->normals;
+            nold = s_tgt->normals;
             s_tgt->normals = (RwV3d*)s_nTemp;
         }
 
         RpGeometryUnlock(s_geom);
         iModelRender(model, mat);
-        s_tgt->verts = oldVerts;
+        s_tgt->verts = vold;
 
         if (useNormals)
         {
-            s_tgt->normals = oldNorms;
+            s_tgt->normals = nold;
         }
     }
 }
