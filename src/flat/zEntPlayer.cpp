@@ -3698,16 +3698,18 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
             cend = &ent->collis->colls[ent->collis->idx];
             for (c = &ent->collis->colls[6]; c < cend; c++)
             {
-                cent = (_xEnt*)c->optr;
-                if (cent && cent &&
-                    (cent->id == xStrHash("slipdeck01") || cent->id == xStrHash("slipdeck02") ||
-                     cent->id == xStrHash("slipdeck03") || cent->id == xStrHash("slipdeck04")))
+                if (c->optr)
                 {
-                    iRayHitsModel(&ctr, cent->model, &ctc);
-                    if (ctc.flags & 1)
+                    cent = (_xEnt*)c->optr;
+                    if (cent && (cent->id == xStrHash("slipdeck01") || cent->id == xStrHash("slipdeck02") ||
+                         cent->id == xStrHash("slipdeck03") || cent->id == xStrHash("slipdeck04")))
                     {
-                        xVec3Copy(&ent->frame->mat.pos, &ent->frame->oldpos);
-                        break;
+                        iRayHitsModel(&ctr, cent->model, &ctc);
+                        if (ctc.flags & 1)
+                        {
+                            xVec3Copy(&ent->frame->mat.pos, &ent->frame->oldpos);
+                            break;
+                        }
                     }
                 }
             }
@@ -5459,10 +5461,10 @@ void zEntPlayerFloorUpdate(_xEnt* p, _xScene* sc, F32 dt)
             {
                 globals.player.Slide = 3;
                 s = ddotm / sqrtf(D_flat.x * D_flat.x + D_flat.z * D_flat.z);
-                dz = D_flat.x * s;
-                s *= D_flat.z;
-                p->frame->mat.pos.x -= dz;
-                p->frame->mat.pos.z -= s;
+                dz = D_flat.z * s;
+                s = D_flat.x * s;
+                p->frame->mat.pos.x -= s;
+                p->frame->mat.pos.z -= dz;
                 if (update_motion.y > 0.0f)
                 {
                     p->frame->mat.pos.y = p->frame->oldpos.y;
