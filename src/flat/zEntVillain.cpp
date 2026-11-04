@@ -2511,6 +2511,7 @@ xAnimTable* zEntVillain_AnimTable_MasterMind()
     return VANM_mktable_MM();
 }
 
+// Builds the boss Shaggy's animation table (VANM_mktable_SHAM, held inline).
 xAnimTable* zEntVillain_AnimTable_BossSham()
 {
     return VANM_mktable_SHAM();
