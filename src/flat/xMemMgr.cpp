@@ -70,8 +70,8 @@ inline void xMemInitHeap(xMemHeap_tag* heap, U32 base, U32 size, U32 flags)
     heap->opp_heap[1] = -1;
 }
 
-// The empty debug-mode callback that xMemInit registers; it has no known name.
-extern "C" void fn_800300A4()
+// The empty debug-mode callback that xMemInit registers.
+void xMemDebugModeCB()
 {
 }
 
@@ -89,7 +89,7 @@ void xMemInit()
     gxHeap[2].opp_heap[0] = 0;
     gxHeap[2].opp_heap[1] = 1;
     gActiveHeap = 0;
-    xDebugModeRegisterCallback(11, fn_800300A4);
+    xDebugModeRegisterCallback(11, xMemDebugModeCB);
 }
 
 void xMemExit()
@@ -224,7 +224,7 @@ void* xMemAlloc(U32 heapID, U32 size)
         return NULL;
     }
 
-    // Checks that the new end does not run into either opposite heap; the report is debug-only.
+    // Compares the new end with each opposite heap's current end.
     for (S32 i = 0; i < 2; i++)
     {
         xMemHeap_tag* opp = &gxHeap[heap->opp_heap[i]];
