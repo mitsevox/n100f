@@ -773,12 +773,13 @@ static S32 iSG_get_fsize(st_ISG_MEMCARD_DATA* mcdata, const char* fname)
 char* iSGFileModDate(st_ISGSESSION* isgdata, const char* fname)
 {
     static char datestr[0x40] = { 0 };
-    int yr = 0;
-    int day = 0;
-    int mon = 0;
-    int hr = 0;
-    int min = 0;
-    int sec = 0;
+    int yr, day, mon, hr, min, sec;
+    sec = 0;
+    min = 0;
+    hr = 0;
+    mon = 0;
+    day = 0;
+    yr = 0;
     if (iSG_get_fmoddate(&isgdata->mcdata[isgdata->slot], fname, &sec, &min, &hr, &mon, &day,
                          &yr) != 0)
     {
