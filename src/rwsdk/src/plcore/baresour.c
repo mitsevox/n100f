@@ -132,6 +132,7 @@ void _rwResourcesPurge(void)
     RWRESOURCESGLOBAL(reclaimedSize) = 0;
 }
 
+// Unused entries are evicted first; only evicted used entries contribute to reclaimedSize.
 RwResEntry* RwResourcesAllocateResEntry(void* owner, RwResEntry** ownerRef, S32 size,
                                         RwResEntryDestroyNotify destroyNotify)
 {
@@ -161,18 +162,18 @@ RwResEntry* RwResourcesAllocateResEntry(void* owner, RwResEntry** ownerRef, S32 
         }
         else
         {
-            RwLinkList* list = RWRESOURCESGLOBAL(unusedEntryList);
-
-            if (list->link.prev != &list->link)
+            if (RWRESOURCESGLOBAL(unusedEntryList)->link.prev !=
+                &RWRESOURCESGLOBAL(unusedEntryList)->link)
             {
-                RwResourcesFreeResEntry((RwResEntry*)list->link.prev);
+                RwResEntry* unusedEntry = (RwResEntry*)RWRESOURCESGLOBAL(unusedEntryList)->link.prev;
+
+                RwResourcesFreeResEntry(unusedEntry);
             }
             else
             {
-                list = RWRESOURCESGLOBAL(usedEntryList);
-                oldest = (RwResEntry*)list->link.prev;
+                oldest = (RwResEntry*)RWRESOURCESGLOBAL(usedEntryList)->link.prev;
 
-                if ((RwLLLink*)oldest != &list->link)
+                if ((RwLLLink*)oldest != &RWRESOURCESGLOBAL(usedEntryList)->link)
                 {
                     RWRESOURCESGLOBAL(reclaimedSize) += oldest->size;
                     RwResourcesFreeResEntry(oldest);
