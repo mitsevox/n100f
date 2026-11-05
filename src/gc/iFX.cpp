@@ -93,9 +93,9 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
             {
                 F32 x = fmod(warbc[1] * (ov->x + t), 2 * PI);
                 F32 y = fmod(warbc[3] * (ov->z + t), 2 * PI);
-                F32 b = sin(y);
-                F32 a = sin(x);
-                nv->y = warbc[0] * a + ov->y + warbc[2] * b;
+                y = sin(y);
+                x = sin(x);
+                nv->y = warbc[0] * x + ov->y + warbc[2] * y;
             }
             break;
 
@@ -149,9 +149,9 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
                 {
                     F32 percent = ooy * (ov->y - miny);
                     F32 x = warbc[1] * (0.4 * percent + t);
-                    F32 b = fmod(x, 2 * PI);
-                    F32 a = sin(b);
-                    mul = 0.5f * (percent * (warbc[0] * a));
+                    x = fmod(x, 2 * PI);
+                    x = sin(x);
+                    mul = 0.5f * (percent * (warbc[0] * x));
                 }
                 else
                 {
@@ -165,7 +165,7 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
 
         case IFX_WARB_WEB:
         {
-            miny = maxy = orig_verts->y;
+            maxy = miny = orig_verts->y;
             for (i = 0; i < geom->numVertices; i++, ov++)
             {
                 miny = MIN(miny, ov->y);
@@ -175,22 +175,18 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
             F32 mul = 0.1f * (maxy - miny);
             miny += mul;
             maxy -= mul;
-            t = -t;
+            F32 nt = -t;
 
             ov = orig_verts;
             for (i = 0; i < geom->numVertices; i++, ov++, nv++)
             {
                 if (ov->y >= miny && ov->y <= maxy)
                 {
-                    F32 x = ov->y - miny;
-                    F32 b = maxy - ov->y;
-                    if (x > b)
-                    {
-                        x = b;
-                    }
-                    b = fmod(warbc[1] * (t + x), 2 * PI);
+                    F32 percent = MIN(ov->y - miny, maxy - ov->y);
+                    F32 x = warbc[1] * (nt + percent);
+                    F32 b = fmod(x, 2 * PI);
                     F32 a = sin(b);
-                    mul = x * (warbc[0] * a);
+                    mul = percent * (warbc[0] * a);
                 }
                 else
                 {
@@ -205,4 +201,10 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
 
         RpGeometryUnlock(geom);
     }
+}
+
+// Unused.
+static void WarbUnusedConsts(F32* f)
+{
+    *f = 0.0f;
 }
