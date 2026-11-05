@@ -1347,26 +1347,31 @@ static S32 iSG_isSpaceForFile(st_ISG_MEMCARD_DATA* mcdata, S32 fsize, const char
     {
         return 0;
     }
-    len = iSG_cubeicon_size(mcdata->chan, mcdata->sectorSize) + fsize + 0x1FF & ~0x1FF;
+    len = iSG_cubeicon_size(mcdata->chan, mcdata->sectorSize);
+    len = len + fsize;
+    len = len + 0x1FF & ~0x1FF;
 
     do
     {
         result = CARDFreeBlocks(mcdata->chan, &byteNotUsed, &filesNotUsed);
     } while (result == CARD_RESULT_BUSY);
 
-    if (result != CARD_RESULT_READY)
+    if (result == CARD_RESULT_READY)
+    {
+        if (availOnDisk != NULL)
+        {
+            *availOnDisk = byteNotUsed;
+        }
+        if (bytesNeeded != NULL)
+        {
+            *bytesNeeded = len;
+        }
+    }
+    else
     {
         return 0;
     }
 
-    if (availOnDisk != NULL)
-    {
-        *availOnDisk = byteNotUsed;
-    }
-    if (bytesNeeded != NULL)
-    {
-        *bytesNeeded = len;
-    }
     if (needFile != NULL)
     {
         *needFile = 1;
