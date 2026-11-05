@@ -185,11 +185,9 @@ static inline F32 xVec3Dist2(const xVec3* a, const xVec3* b)
 
 static inline F32 xVec3Dist(const xVec3* a, const xVec3* b)
 {
-    F32 dx = a->x - b->x;
-    F32 dy = a->y - b->y;
-    F32 dz = a->z - b->z;
-
-    return sqrtf(dx * dx + dy * dy + dz * dz);
+    xVec3 delta;
+    xVec3Sub(&delta, a, b);
+    return sqrtf(xVec3Length2(&delta));
 }
 
 static inline F32 xVec3Length(const xVec3* vec)
@@ -401,13 +399,13 @@ static void DampenControls(F32* angle, F32* mag, F32 x, F32 y)
         return;
     }
 
-    if (xabs(x) > xabs(y))
+    if (fabsf(x) > fabsf(y))
     {
-        *mag = xabs(x);
+        *mag = fabsf(x);
     }
     else
     {
-        *mag = xabs(y);
+        *mag = fabsf(y);
     }
     *mag = (*mag - globals.player.s.AnalogMin) /
            (globals.player.s.AnalogMax - globals.player.s.AnalogMin);
@@ -428,7 +426,7 @@ static void DampenControls(F32* angle, F32* mag, F32 x, F32 y)
 
 static inline void SlideLeanUpdate(F32 angle, F32 dt)
 {
-    F32 abs = xabs(angle);
+    F32 abs = fabs(angle);
     F32 lerp;
     F32 t;
 
@@ -457,7 +455,7 @@ static inline void SlideLeanUpdate(F32 angle, F32 dt)
 
 static inline void LeanUpdate(F32 angle, F32 dt)
 {
-    F32 abs = xabs(angle);
+    F32 abs = fabs(angle);
     F32 lerp;
     F32 t;
 
@@ -518,6 +516,7 @@ static U32 PlayerIsFacing(_xEnt* ent, _xEnt* target, F32 cosang)
     return ax * dx + az * dz > dlen * (cosang * alen);
 }
 
+// Turn movement input into the player's desired facing and speed for the current movement state.
 static void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt)
 {
     U32 animUserFlag;
@@ -666,7 +665,7 @@ static void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt)
         return;
     }
 
-    if (globals.player.HotsauceTimer != 0.0f)
+    if (globals.player.HotsauceTimer)
     {
         globals.player.HotsauceTimer -= dt;
         if (globals.player.HotsauceTimer <= 0.0f)
@@ -1022,7 +1021,7 @@ move:
         switch (moveFlag)
         {
         case 0x2:
-            if (dir_dp <= 0.0f || mag == 0.0f)
+            if (dir_dp <= 0.0f || !mag)
             {
                 goto lean;
             }
@@ -1076,29 +1075,45 @@ move:
             }
             else
             {
-                if (mag == 0.0f)
+                if (!mag)
                 {
                     goto lean;
                 }
                 maxVelmag = globals.player.s.SpeedRun[1];
-                mag = mag >= globals.player.s.SpeedRun[3] ? globals.player.s.SpeedRun[1]
-                    : mag <= globals.player.s.SpeedRun[2] ? globals.player.s.SpeedRun[0]
-                    : (mag - globals.player.s.SpeedRun[2]) /
-                              (globals.player.s.SpeedRun[3] - globals.player.s.SpeedRun[2]) *
-                              (globals.player.s.SpeedRun[1] - globals.player.s.SpeedRun[0]) +
-                          globals.player.s.SpeedRun[0];
-                globals.player.DecelRun = globals.player.DecelRunSpeed = mag;
+                {
+                    F32 mappedSpeed;
+
+                    if (mag >= globals.player.s.SpeedRun[3])
+                        mappedSpeed = globals.player.s.SpeedRun[1];
+                    else if (mag <= globals.player.s.SpeedRun[2])
+                        mappedSpeed = globals.player.s.SpeedRun[0];
+                    else
+                    {
+                        mappedSpeed = (mag - globals.player.s.SpeedRun[2]) /
+                                      (globals.player.s.SpeedRun[3] - globals.player.s.SpeedRun[2]);
+                        mappedSpeed = mappedSpeed *
+                                          (globals.player.s.SpeedRun[1] - globals.player.s.SpeedRun[0]) +
+                                      globals.player.s.SpeedRun[0];
+                    }
+                    mag = mappedSpeed;
+                    globals.player.DecelRun = globals.player.DecelRunSpeed = mappedSpeed;
+                }
             }
             break;
         case 0x8:
             maxVelmag = globals.player.s.SpeedHotsauce[1];
-            mag = mag >= globals.player.s.SpeedHotsauce[3] ? globals.player.s.SpeedHotsauce[1]
-                : mag <= globals.player.s.SpeedHotsauce[2] ? globals.player.s.SpeedHotsauce[0]
-                : (mag - globals.player.s.SpeedHotsauce[2]) /
-                          (globals.player.s.SpeedHotsauce[3] - globals.player.s.SpeedHotsauce[2]) *
-                          (globals.player.s.SpeedHotsauce[1] - globals.player.s.SpeedHotsauce[0]) +
-                      globals.player.s.SpeedHotsauce[0];
-            globals.player.DecelRun = globals.player.DecelRunSpeed = mag;
+            {
+                F32 fraction;
+
+                mag = mag >= globals.player.s.SpeedHotsauce[3] ? globals.player.s.SpeedHotsauce[1] :
+                      mag <= globals.player.s.SpeedHotsauce[2] ? globals.player.s.SpeedHotsauce[0] :
+                      (fraction = (mag - globals.player.s.SpeedHotsauce[2]) /
+                                  (globals.player.s.SpeedHotsauce[3] - globals.player.s.SpeedHotsauce[2]),
+                       fraction *
+                               (globals.player.s.SpeedHotsauce[1] - globals.player.s.SpeedHotsauce[0]) +
+                           globals.player.s.SpeedHotsauce[0]);
+                globals.player.DecelRun = globals.player.DecelRunSpeed = mag;
+            }
             break;
         case 0xA:
         case 0xE:
@@ -1140,7 +1155,7 @@ move:
             F32 peakLerp;
             F32 accelMag;
 
-            if (mag == 0.0f)
+            if (!mag)
             {
                 goto lean;
             }
@@ -1215,7 +1230,7 @@ lean:
         ent->model->Anim->Single->Blend->BilinearLerp[0] = globals.player.LeanLerp;
     }
 
-    if (globals.player.Shaggy1.GrabTimer != 0.0f)
+    if (globals.player.Shaggy1.GrabTimer)
     {
         ent->frame->mode &= ~0x6;
     }
@@ -3131,16 +3146,34 @@ static inline void zEntPlayer_VOReset()
     }
 }
 
+// Flag updates through a byte-sized mask; Init enables and shows the player and clears a physics bit.
+static inline void zEntPlayerOrBaseFlags(xBase* b, U8 mask)
+{
+    b->baseFlags |= mask;
+}
+
+static inline void zEntPlayerOrFlags(_xEnt* ent, U8 mask)
+{
+    ent->flags |= mask;
+}
+
+static inline void zEntPlayerAndPFlags(_xEnt* ent, U8 mask)
+{
+    ent->pflags &= mask;
+}
+
+// Set up the player entity: base init, flags and callbacks, gust and rotation-match effects, particle
+// emitters, the ten foot trackers, animation callbacks, snack-gate and voice state, then a full reset.
 void zEntPlayer_Init(_xEnt* ent, p2EntAsset* asset)
 {
     xFFXRotMatchState* rms;
 
     zEntInit((_zEnt*)ent, asset, 'PLYR');
-    ent->baseFlags |= 1;
-    ent->flags |= 1;
+    zEntPlayerOrBaseFlags(ent, 1);
+    zEntPlayerOrFlags(ent, 1);
     globals.player.Visible = 1;
     globals.player.AutoMoveSpeed = 0;
-    ent->pflags &= 0xFB;
+    zEntPlayerAndPFlags(ent, 0xFB);
     ent->collis->chk &= 0xFE;
     ent->update = zEntPlayer_Update;
     ent->move = zEntPlayer_Move;
@@ -4053,6 +4086,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
     }
     else
     {
+        S32 digSituation = 0;
         U32 i;
         zScene* zsc;
         _zEntSimpleObj* simpent;
@@ -4067,15 +4101,19 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
                 if (((_zEntSimpleObj*)zsc->stats[i])->sflags & 1)
                 {
                     simpent = (_zEntSimpleObj*)zsc->stats[i];
-                    if (SQ(globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x) +
-                            SQ(globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y) +
-                            SQ(globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z) <
-                        SQ(1.25f * globals.player.ent.bound.sph.r))
+                    if ((globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x) *
+                            (globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x) +
+                        (globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y) *
+                            (globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y) +
+                        (globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z) *
+                            (globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z) <
+                        (1.25f * globals.player.ent.bound.sph.r) *
+                            (1.25f * globals.player.ent.bound.sph.r))
                     {
                         globals.player.Diggable = simpent;
                         if (!(simpent->sflags & 2))
                         {
-                            zEntPlayer_Notify(0);
+                            zEntPlayer_Notify(digSituation);
                             parm[0] = 2.0f;
                             zEntEvent(simpent, 0xC3, parm);
                             simpent->sflags |= 2;
@@ -5161,6 +5199,7 @@ void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
     }
 }
 
+// Sum the normals of the two triangles formed by the four floor supports.
 static inline void PlayerFloorNormal(xVec3* o, const xVec3* p)
 {
     xVec3 a;
@@ -5172,8 +5211,15 @@ static inline void PlayerFloorNormal(xVec3* o, const xVec3* p)
     xVec3Sub(&a, &p[1], &p[0]);
     xVec3Sub(&b, &p[2], &p[0]);
     xVec3Sub(&c, &p[3], &p[0]);
-    xVec3Cross(&n1, &a, &b);
-    xVec3Cross(&n2, &b, &c);
+    xVec3 temp;
+    temp.x = a.y * b.z - b.y * a.z;
+    temp.y = a.z * b.x - b.z * a.x;
+    temp.z = a.x * b.y - b.x * a.y;
+    n1 = temp;
+    temp.x = b.y * c.z - c.y * b.z;
+    temp.y = b.z * c.x - c.z * b.x;
+    temp.z = b.x * c.y - c.x * b.y;
+    n2 = temp;
     xVec3Add(o, &n1, &n2);
 }
 
@@ -5461,9 +5507,9 @@ void zEntPlayerFloorUpdate(_xEnt* p, _xScene* sc, F32 dt)
             {
                 globals.player.Slide = 3;
                 s = ddotm / sqrtf(D_flat.x * D_flat.x + D_flat.z * D_flat.z);
+                F32 dx = D_flat.x * s;
                 dz = D_flat.z * s;
-                s = D_flat.x * s;
-                p->frame->mat.pos.x -= s;
+                p->frame->mat.pos.x -= dx;
                 p->frame->mat.pos.z -= dz;
                 if (update_motion.y > 0.0f)
                 {
@@ -5675,7 +5721,7 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
     _xEntDrive* drv;
     _zPlatform* oplat;
     _xCollis* coll;
-    _zPlatform* plat;
+    _zEnt* plat;
     xSurface* surf;
     F32* jmphs;
     xVec3* jmpdir;
@@ -5686,7 +5732,7 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
 
     if (drv->odriver)
     {
-        plat = (_zPlatform*)drv->odriver;
+        plat = (_zEnt*)drv->odriver;
         if (!drv->os)
         {
             zEntEvent(plat, 0x21);
@@ -5694,11 +5740,11 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
             drv->otm = 0.0f;
             if (plat->subType == 9)
             {
-                zPlatform_Dismount(plat);
+                zPlatform_Dismount((_zPlatform*)plat);
             }
-            if (plat->passet->flags & 1)
+            if (((_zPlatform*)plat)->passet->flags & 1)
             {
-                zPlatform_Shake(plat, dt, 0.2f, 37.699112f);
+                zPlatform_Shake((_zPlatform*)plat, dt, 0.2f, 37.699112f);
             }
         }
     }
@@ -5706,7 +5752,7 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
     coll = &p->collis->colls[0];
     if (coll->flags & 1)
     {
-        plat = (_zPlatform*)coll->optr;
+        plat = (_zEnt*)coll->optr;
     }
     else
     {
@@ -5745,7 +5791,7 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
         return;
     }
 
-    if (plat != (_zPlatform*)drv->driver)
+    if (plat != drv->driver)
     {
         if (drv->driver)
         {
@@ -5763,14 +5809,14 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
             return;
         }
 
-        oplat = plat;
+        oplat = (_zPlatform*)plat;
 
-        if (!(plat->plat_flags & 1))
+        if (!(oplat->plat_flags & 1))
         {
             return;
         }
 
-        if (!gPlayerHitWater && plat != (_zPlatform*)drv->odriver)
+        if (!gPlayerHitWater && plat != drv->odriver)
         {
             zEntEvent(plat, 0x20);
         }
@@ -6432,6 +6478,7 @@ static void PlayerCollsUnusedConsts(F32* a, F32* b)
     *b = -2.0f;
 }
 
+// Apply floor and ceiling push-outs, then resolve the remaining wall contacts.
 static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
 {
     _xCollis* colls;
@@ -6458,10 +6505,11 @@ static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
     _xCollis* cright;
 
     colls = p->collis->colls;
+    c = colls;
     mat = (_xMat4x3*)p->frame;
 
     cend = &colls[p->collis->idx];
-    for (c = &colls[k_XCOLLS_IDX_COUNT]; c < cend; c++)
+    for (c += k_XCOLLS_IDX_COUNT; c < cend; c++)
     {
         idx = xCollideGetCollsIdx(&c->tohit, (xMat3x3*)mat);
         curr = &colls[idx];
@@ -6552,7 +6600,20 @@ static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
         else
         {
             mat->pos.y += colls[k_XCOLLS_IDX_FLOOR].depen.y;
-            PlayerCollsWallsLoopTranslate(colls, 0.0f, colls[k_XCOLLS_IDX_FLOOR].depen.y, 0.0f);
+            {
+                F32 y = colls[k_XCOLLS_IDX_FLOOR].depen.y;
+                _xCollis* c;
+                _xCollis* cend;
+                cend = &colls[k_XCOLLS_IDX_COUNT];
+                for (c = &colls[k_XCOLLS_IDX_FRONT]; c < cend; c++)
+                {
+                    if (c->dist < 1e19f &&
+                        (c->depen.x != 0.0f || c->depen.y != 0.0f || c->depen.z != 0.0f))
+                    {
+                        PlayerCollisTranslate(c, 0.0f, y, 0.0f);
+                    }
+                }
+            }
         }
     }
     else
@@ -6570,7 +6631,20 @@ static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
             else
             {
                 mat->pos.y += cceil->depen.y;
-                PlayerCollsWallsLoopTranslate(colls, 0.0f, cceil->depen.y, 0.0f);
+                {
+                    F32 y = cceil->depen.y;
+                    _xCollis* c;
+                    _xCollis* cend;
+                    cend = &colls[k_XCOLLS_IDX_COUNT];
+                    for (c = &colls[k_XCOLLS_IDX_FRONT]; c < cend; c++)
+                    {
+                        if (c->dist < 1e19f &&
+                            (c->depen.x != 0.0f || c->depen.y != 0.0f || c->depen.z != 0.0f))
+                        {
+                            PlayerCollisTranslate(c, 0.0f, y, 0.0f);
+                        }
+                    }
+                }
                 p->frame->vel.y = 0.0f;
             }
         }
@@ -7305,8 +7379,10 @@ static inline U32 PlayerHangInReach(const xVec3* hang, const xVec3* pos)
     return xVec3Length2(&dpos) < 2.25f && fabsf(dot) < 0.65f;
 }
 
+// Find the nearest available hangable and test whether the player can grab it.
 static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
 {
+    F32 dx, dy, dz;
     U32 i;
     U32 sphereresult;
     F32 closedist;
@@ -7331,7 +7407,10 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
         if (hangme->baseType == 0x17 && hangme->enabled > 0 && !hangme->grabTimer &&
             (hangme->state != 1 || hangme->shaggy))
         {
-            dist2 = xVec3Dist2(&ent->bound.sph.center, &hangme->endpos);
+            dx = ent->bound.sph.center.x - hangme->endpos.x;
+            dy = ent->bound.sph.center.y - hangme->endpos.y;
+            dz = ent->bound.sph.center.z - hangme->endpos.z;
+            dist2 = dx * dx + dy * dy + dz * dz;
             if (dist2 < closedist)
             {
                 hangclose = hangme;
