@@ -22,16 +22,19 @@ struct st_STRAN_DATA
     U32 loadlock;
 };
 
+// The eight scene slots; bit N of loadlock marks slot N in use.
 static st_STRAN_DATA g_xstdata = {};
 static S32 g_straninit;
 static st_PACKER_READ_FUNCS* g_pkrf;
 static st_PACKER_ASSETTYPE* g_typeHandlers;
 
+// Clears every slot and the lock mask.
 static inline void XST_reset_raw()
 {
     memset(&g_xstdata, 0, sizeof(st_STRAN_DATA));
 }
 
+// Claims the first free slot, clears it and records its lock bit; NULL when all eight are taken.
 static inline st_STRAN_SCENE* XST_lock_next()
 {
     st_STRAN_SCENE* sdata = NULL;
@@ -56,6 +59,7 @@ static inline st_STRAN_SCENE* XST_lock_next()
     return sdata;
 }
 
+// Releases a slot that is still locked and clears it.
 static inline void XST_unlock(st_STRAN_SCENE* sdata)
 {
     if (sdata != NULL)
@@ -73,6 +77,7 @@ static inline st_STRAN_SCENE* XST_get_rawinst(S32 index)
     return &g_xstdata.hipscn[index];
 }
 
+// Releases every locked slot.
 static inline void XST_unlock_all()
 {
     if (g_xstdata.loadlock)
@@ -87,6 +92,7 @@ static inline void XST_unlock_all()
     }
 }
 
+// Number of slots in use.
 static inline S32 XST_cnt_locked()
 {
     S32 sum = 0;
@@ -100,6 +106,7 @@ static inline S32 XST_cnt_locked()
     return sum;
 }
 
+// The index-th slot in use, counting in slot order.
 static inline st_STRAN_SCENE* XST_nth_locked(S32 index)
 {
     st_STRAN_SCENE* sdata = NULL;
@@ -120,6 +127,7 @@ static inline st_STRAN_SCENE* XST_nth_locked(S32 index)
     return sdata;
 }
 
+// The slot holding scene sid, or NULL.
 static inline st_STRAN_SCENE* XST_find_bySID(U32 sid)
 {
     st_STRAN_SCENE* da_sdata = NULL;
@@ -139,6 +147,7 @@ static inline st_STRAN_SCENE* XST_find_bySID(U32 sid)
     return da_sdata;
 }
 
+// Opens the scene's package file; returns its client version, or 0 when it does not open.
 static inline S32 XST_PreLoadScene(st_STRAN_SCENE* sdata, const char* name)
 {
     S32 cltver = 0;
@@ -153,6 +162,7 @@ static inline S32 XST_PreLoadScene(st_STRAN_SCENE* sdata, const char* name)
 static char* XST_translate_sid(U32 sid);
 static char* XST_translate_sid_path(U32 sid);
 
+// Reference-counted startup: the first call stores the asset type handlers, clears the slots and starts the packer.
 S32 xSTStartup(st_PACKER_ASSETTYPE* handlers)
 {
     if (g_straninit++ == 0)
@@ -165,6 +175,7 @@ S32 xSTStartup(st_PACKER_ASSETTYPE* handlers)
     return g_straninit;
 }
 
+// Reference-counted shutdown: the last call releases every scene and stops the packer.
 S32 xSTShutdown()
 {
     g_straninit--;
@@ -177,6 +188,8 @@ S32 xSTShutdown()
     return g_straninit;
 }
 
+// Takes a slot for scene sid and opens its .HIP, first as XX/XXXX.HIP in the scene's folder (except
+// BOOT and FONT), then as XXXX.HIP at the root; retries until a file opens. Returns the client version.
 S32 xSTPreLoadScene(U32 sid, void* userdata)
 {
     S32 result;
@@ -226,6 +239,7 @@ S32 xSTPreLoadScene(U32 sid, void* userdata)
     return result;
 }
 
+// Queues every layer of a loaded scene for reading; 0 when the scene is not loaded.
 S32 xSTQueueSceneAssets(U32 sid)
 {
     S32 result = 1;
@@ -241,6 +255,7 @@ S32 xSTQueueSceneAssets(U32 sid)
     return result;
 }
 
+// Closes scene sid's package and frees its slot; sid 0 closes every loaded scene.
 void xSTUnLoadScene(U32 sid)
 {
     st_STRAN_SCENE* sdata;
@@ -273,6 +288,8 @@ void xSTUnLoadScene(U32 sid)
     }
 }
 
+// Advances background loading by one step and polls the reset button and disc; returns 1.00001
+// once nothing is left to read, else 0.
 F32 xSTLoadStep(U32)
 {
     F32 pct = PKRLoadStep(0) != 0 ? 0.0f : 1.00001f;
@@ -280,6 +297,7 @@ F32 xSTLoadStep(U32)
     return pct;
 }
 
+// Makes scene sid's assets the active set, reporting 0 and 1 to the progress callback.
 S32 xSTSwitchScene(U32 sid, void* userdata, S32 (*progmon)(void*, F32))
 {
     S32 result = 1;
@@ -311,6 +329,7 @@ S32 xSTSwitchScene(U32 sid, void* userdata, S32 (*progmon)(void*, F32))
     return result;
 }
 
+// The name of asset aid from the first loaded scene that has it.
 char* xSTAssetName(U32 aid)
 {
     char* aname = NULL;
@@ -330,6 +349,7 @@ char* xSTAssetName(U32 aid)
     return aname;
 }
 
+// Asset aid's data and size from the first loaded scene that has it; NULL while it is still loading.
 void* xSTFindAsset(U32 aid, U32* size)
 {
     void* memloc = NULL;
@@ -358,6 +378,7 @@ void* xSTFindAsset(U32 aid, U32* size)
     return memloc;
 }
 
+// Number of assets of a type across all loaded scenes.
 S32 xSTAssetCountByType(U32 type)
 {
     S32 sum = 0;
@@ -370,6 +391,7 @@ S32 xSTAssetCountByType(U32 type)
     return sum;
 }
 
+// The idx-th asset of a type, counting across the loaded scenes in slot order.
 void* xSTFindAssetByType(U32 type, S32 idx, U32* size)
 {
     void* memptr = NULL;
@@ -390,6 +412,7 @@ void* xSTFindAssetByType(U32 type, S32 idx, U32* size)
     return memptr;
 }
 
+// Copies asset aid's table-of-contents entry (disc sector, offset, size, memory) into ainfo.
 S32 xSTGetAssetInfo(U32 aid, st_xST_XASSETINFO* ainfo)
 {
     S32 found = 0;
@@ -418,6 +441,7 @@ S32 xSTGetAssetInfo(U32 aid, st_xST_XASSETINFO* ainfo)
     return found;
 }
 
+// As xSTGetAssetInfo for the idx-th asset of a type, counting across the loaded scenes.
 S32 xSTGetAssetInfoByType(U32 type, S32 idx, st_xST_XASSETINFO* ainfo)
 {
     S32 found = 0;
@@ -453,6 +477,7 @@ S32 xSTGetAssetInfoByType(U32 type, S32 idx, st_xST_XASSETINFO* ainfo)
     return found;
 }
 
+// The .HIP path of the first loaded scene holding asset aid, and that scene's id.
 static inline char* xST_xAssetID_HIPFullPath(U32 aid, U32* sceneID)
 {
     char* da_hipname = NULL;
@@ -473,11 +498,13 @@ static inline char* xST_xAssetID_HIPFullPath(U32 aid, U32* sceneID)
     return da_hipname;
 }
 
+// The .HIP path of the first loaded scene holding asset aid.
 char* xST_xAssetID_HIPFullPath(U32 aid)
 {
     return xST_xAssetID_HIPFullPath(aid, NULL);
 }
 
+// "XXXX.HIP" for scene id XXXX.
 static char* XST_translate_sid(U32 sid)
 {
     static char fname[0x40] = {};
@@ -485,6 +512,7 @@ static char* XST_translate_sid(U32 sid)
     return fname;
 }
 
+// "XX/XXXX.HIP": the scene's file in the folder named by its first two letters.
 static char* XST_translate_sid_path(U32 sid)
 {
     static char fname[0x40] = {};
