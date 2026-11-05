@@ -143,16 +143,23 @@ _zMovePoint* zMovePointFindNearest(S32 flg_opts, xVec3* yourpos, F32 okdist, F32
 {
     xVec3 delta = {};
     F32 ds2_far;
-    F32 ds2_best = 999999.0f;
-    F32 ds2_nohope = nohope * nohope;
     F32 ds2_ok = okdist * okdist;
-    _zMovePoint* found = NULL;
-    S32 suspend = 0;
-    S32 eidx;
-    S32 sidx;
-    S32 i;
-    _zMovePoint* cur_best = NULL;
+    F32 ds2_nohope = nohope * nohope;
+    F32 ds2_best = 999999.0f;
+    S32 accept_on;
+    S32 cnt = g_mvpt_cnt;
     _zMovePoint* da_mvpt;
+    S32 accept_off;
+    S32 require_property;
+    S32 ground_plane;
+    S32 check_los;
+    S32 search_slice;
+    _zMovePoint* found = NULL;
+    _zMovePoint* cur_best = NULL;
+    S32 i;
+    S32 sidx;
+    S32 eidx;
+    S32 suspend = 0;
 
     if (!idx_resume || !prev_best)
     {
@@ -168,11 +175,12 @@ _zMovePoint* zMovePointFindNearest(S32 flg_opts, xVec3* yourpos, F32 okdist, F32
         losfunc = NULL;
     }
 
-    if (flg_opts & 0x20)
+    search_slice = flg_opts & 0x20;
+
+    if (search_slice)
     {
-        sidx = *idx_resume;
-        sidx = (sidx < 0) ? 0 : (sidx < g_mvpt_cnt ? sidx : g_mvpt_cnt);
-        eidx = (sidx + 50 < g_mvpt_cnt) ? sidx + 50 : g_mvpt_cnt;
+        sidx = (*idx_resume < 0) ? 0 : (*idx_resume < cnt ? *idx_resume : cnt);
+        eidx = (sidx + 50 < cnt) ? sidx + 50 : cnt;
 
         if (prev_best && (cur_best = *prev_best) != NULL)
         {
@@ -190,8 +198,14 @@ _zMovePoint* zMovePointFindNearest(S32 flg_opts, xVec3* yourpos, F32 okdist, F32
     else
     {
         sidx = 0;
-        eidx = g_mvpt_cnt;
+        eidx = cnt;
     }
+
+    accept_on = flg_opts & 1;
+    accept_off = flg_opts & 2;
+    require_property = flg_opts & 8;
+    ground_plane = flg_opts & 4;
+    check_los = flg_opts & 0x10;
 
     for (i = sidx; i < eidx; i++)
     {
@@ -201,21 +215,21 @@ _zMovePoint* zMovePointFindNearest(S32 flg_opts, xVec3* yourpos, F32 okdist, F32
         {
             continue;
         }
-        if (!(flg_opts & 1) && da_mvpt->on)
+        if (!accept_on && da_mvpt->on)
         {
             continue;
         }
-        if (!(flg_opts & 2) && !da_mvpt->on)
+        if (!accept_off && !da_mvpt->on)
         {
             continue;
         }
-        if ((flg_opts & 8) && !(da_mvpt->flg_props & 1))
+        if (require_property && !(da_mvpt->flg_props & 1))
         {
             continue;
         }
 
         xVec3Sub(&delta, da_mvpt->pos, yourpos);
-        if (flg_opts & 4)
+        if (ground_plane)
         {
             if (delta.y > 1.0f || delta.y < -1.0f)
             {
@@ -236,7 +250,7 @@ _zMovePoint* zMovePointFindNearest(S32 flg_opts, xVec3* yourpos, F32 okdist, F32
         {
             continue;
         }
-        if (flg_opts & 0x10)
+        if (check_los)
         {
             suspend = 1;
             if (!losfunc(yourdata, yourpos, da_mvpt))
@@ -253,7 +267,7 @@ _zMovePoint* zMovePointFindNearest(S32 flg_opts, xVec3* yourpos, F32 okdist, F32
             found = da_mvpt;
             break;
         }
-        if ((flg_opts & 0x20) && suspend)
+        if (search_slice && suspend)
         {
             break;
         }
@@ -270,7 +284,7 @@ _zMovePoint* zMovePointFindNearest(S32 flg_opts, xVec3* yourpos, F32 okdist, F32
             *prev_best = found;
         }
     }
-    else if (i == g_mvpt_cnt)
+    else if (i == cnt)
     {
         found = cur_best;
         if (idx_resume)
@@ -282,12 +296,12 @@ _zMovePoint* zMovePointFindNearest(S32 flg_opts, xVec3* yourpos, F32 okdist, F32
             *prev_best = cur_best;
         }
     }
-    else if ((flg_opts & 0x20) && i == eidx)
+    else if (search_slice && i == eidx)
     {
         *prev_best = cur_best;
         *idx_resume = i;
     }
-    else if ((flg_opts & 0x20) && suspend)
+    else if (search_slice && suspend)
     {
         *prev_best = cur_best;
         *idx_resume = i + 1;
@@ -307,11 +321,7 @@ static S32 MVPT_dflt_chklos(void*, xVec3* mypos, const _zMovePoint* mvpt)
     ray_los.origin = *mvpt->pos;
     xVec3Sub(&vec_tgt, mypos, &ray_los.origin);
 
-    F32 dist = xVec3Length2(&vec_tgt);
-    if (dist > 0.0f)
-    {
-        dist = xsqrt(dist);
-    }
+    F32 dist = xsqrt(xVec3Length2(&vec_tgt));
 
     xVec3Normalize(&ray_los.dir, &vec_tgt);
     ray_los.flags = 0xC00;

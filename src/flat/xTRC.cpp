@@ -1,10 +1,6 @@
 // Revision 1 places these functions and data at other addresses. The labels below are the
 // revision 0 ones; on revision 1 each stands for that revision's label.
 #if VERSION_GIHE78_REV1
-#define fn_800132C4 fn_800132A8
-#define fn_800138EC fn_800138D0
-#define fn_80013C64 fn_80013C48
-#define fn_80014310 fn_800142F4
 #define fn_80016698 fn_80016804
 #define fn_800389FC fn_80038A18
 #define fn_80040FCC fn_80040FE8
@@ -633,7 +629,7 @@ extern "C" S32 fn_80043BA4(S32 card)
     S32 result = 1;
     char text[512] = { 0 };
     st_ISGSESSION* session = iSGSessionBegin(NULL, NULL);
-    U32 state = fn_80014310(session, card);
+    U32 state = iSGCheckMemoryCard(session, card);
 
     if (card != 0 && !(state & 1))
     {
@@ -699,8 +695,8 @@ extern "C" S32 fn_80043940()
     S32 result;
     char text[512] = { 0 };
     st_ISGSESSION* session = iSGSessionBegin(NULL, NULL);
-    S32 stateA = fn_80014310(session, 0);
-    S32 stateB = fn_80014310(session, 1);
+    S32 stateA = iSGCheckMemoryCard(session, 0);
+    S32 stateB = iSGCheckMemoryCard(session, 1);
 
     if ((stateA & 1) || (stateB & 1))
     {
@@ -1046,7 +1042,7 @@ extern "C" S32 fn_80042A48(S32 card)
         watch.slot = slot;
         S32 corrupt = -1;
         S32 repaired = -1;
-        S32 ok = fn_800132C4(session, 0, &corrupt, NULL);
+        S32 ok = iSGCheckForCorruptFiles(session, 0, &corrupt, NULL);
         if (!ok)
         {
             hook = fn_80043E18(card, session);
@@ -1100,7 +1096,7 @@ extern "C" S32 fn_80042A48(S32 card)
                     fn_80041548(0, text);
                     TRCShowCardMessage(text);
                     fn_80041CE8(0, slot, card);
-                    S32 ok = fn_800132C4(session, 1, NULL, &repaired);
+                    S32 ok = iSGCheckForCorruptFiles(session, 1, NULL, &repaired);
                     if (ok)
                     {
                         result = 1;
@@ -1182,7 +1178,7 @@ extern "C" S32 fn_80042774(S32 card)
         watch.session = session;
         watch.card = card;
         watch.slot = slot;
-        fn_80013C64(session, slot, &blockSize, &freeFiles);
+        iSGTgtFreeSpace(session, slot, &blockSize, &freeFiles);
         S32 hook = 2;
         S32 room = iSGTgtHaveRoom(session, slot, 0x6000, NULL, NULL, &needed, &available, &needFile);
         if (!room)
@@ -1281,12 +1277,12 @@ extern "C" S32 fn_800423EC(S32 card)
         watch.session = session;
         watch.card = card;
         watch.slot = slot;
-        fn_80013C64(session, slot, &blockSize, &freeFiles);
+        iSGTgtFreeSpace(session, slot, &blockSize, &freeFiles);
         S32 missing = 0;
         S32 first = -1;
         S32 hook = 2;
         S32 sizes[3] = { 0 };
-        S32 found = fn_800138EC(session);
+        S32 found = iSGGameFileCount(session);
         if (found >= 1 && found != 3)
         {
             S32 i;
@@ -1856,7 +1852,7 @@ extern "C" S32 fn_80041310(S32 card, S32 mode)
     S32 count;
 
     session = iSGSessionBegin(NULL, NULL);
-    state = fn_80014310(session, card);
+    state = iSGCheckMemoryCard(session, card);
     if ((state & 1) && !(state & 2))
     {
         fn_80041CE8(1, card, card);
@@ -1965,7 +1961,7 @@ extern "C" S32 fn_800411A8(S32 card, S32 repair, S32* files, S32* repaired)
     else if (repair)
     {
         S32 left = 0;
-        S32 err = fn_800132C4(session, 1, NULL, &left);
+        S32 err = iSGCheckForCorruptFiles(session, 1, NULL, &left);
         if (err == 0 && left >= 0)
         {
             if (repaired)
@@ -1979,7 +1975,7 @@ extern "C" S32 fn_800411A8(S32 card, S32 repair, S32* files, S32* repaired)
             result = 0;
         }
     }
-    else if (fn_800132C4(session, 0, files, NULL) == 0)
+    else if (iSGCheckForCorruptFiles(session, 0, files, NULL) == 0)
     {
         result = 0;
     }
@@ -2046,7 +2042,7 @@ extern "C" S32 fn_80040FCC(S32 card, S32 game)
         }
         else
         {
-            fn_80013C64(session, slot, &blockSize, &freeFiles);
+            iSGTgtFreeSpace(session, slot, &blockSize, &freeFiles);
             char* fname = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, game);
             if (iSGTgtHaveRoom(session, slot, 0x6000, NULL, fname, &needed, &available, &needFile))
             {

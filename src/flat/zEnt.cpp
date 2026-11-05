@@ -47,6 +47,10 @@ _ShadowParams gShadowParams[27] = {
     { 37, 0.0f, 1.5f },  { 999, 0.0f, 1.5f }, { 999, 0.0f, 1.5f },
 };
 
+static void (*explicitUnusedDisable)(xBase*) = xBaseDisable;
+static void (*explicitUnusedEnable)(xBase*) = xBaseEnable;
+static U32 (*explicitUnusedEnabled)(xBase*) = xBaseIsEnabled;
+
 // Set up an entity of the given asset type: its collision class and bound, its model and, from
 // its animation list, its animation table starting in the "idle" state.
 void zEntInit(_zEnt* ent, p2EntAsset* asset, U32 type)
@@ -328,25 +332,27 @@ void zEntEvent(xBase* from, xBase* to, U32 toEvent)
 void zEntEvent(xBase* from, U32 fromEvent, xBase* to, U32 toEvent, F32* toParam,
                xBase* toParamWidget, S32 forceEvent)
 {
+    xBase* receiver = to;
+
     if (toEvent == 2)
     {
-        xBaseDisable(to);
+        xBaseDisable(receiver);
     }
     else if (toEvent == 1)
     {
-        xBaseEnable(to);
+        xBaseEnable(receiver);
     }
 
-    if (to->eventFunc != NULL && (xBaseIsEnabled(to) || forceEvent))
+    if (receiver->eventFunc != NULL && (xBaseIsEnabled(receiver) || forceEvent))
     {
-        to->eventFunc(from, to, toEvent, toParam, toParamWidget);
+        receiver->eventFunc(from, receiver, toEvent, toParam, toParamWidget);
     }
 
-    if (xBaseIsEnabled(to) && to->linkCount != 0)
+    if (xBaseIsEnabled(receiver) && receiver->linkCount != 0)
     {
-        p2LinkAsset* idx = to->link;
+        p2LinkAsset* idx = receiver->link;
 
-        for (S32 i = 0; i < to->linkCount; i++, idx++)
+        for (S32 i = 0; i < receiver->linkCount; i++, idx++)
         {
             if (toEvent == idx->srcEvent)
             {
@@ -356,7 +362,9 @@ void zEntEvent(xBase* from, U32 fromEvent, xBase* to, U32 toEvent, F32* toParam,
 
                     if (sendTo != NULL)
                     {
+                        F32* linkParam;
                         xBase* b;
+
                         if (idx->paramWidgetAssetID != 0)
                         {
                             b = zSceneFindObject(idx->paramWidgetAssetID);
@@ -366,7 +374,7 @@ void zEntEvent(xBase* from, U32 fromEvent, xBase* to, U32 toEvent, F32* toParam,
                             b = NULL;
                         }
 
-                        zEntEvent(to, toEvent, sendTo, idx->dstEvent, idx->param, b, 0);
+                        zEntEvent(receiver, toEvent, sendTo, idx->dstEvent, (linkParam = idx->param), b, 0);
                     }
                 }
             }
@@ -379,13 +387,15 @@ void zEntEvent(xBase* from, U32 fromEvent, xBase* to, U32 toEvent, F32* toParam,
 xModelInstance* zEntRecurseModelInfo(void* info, _xEnt* ent)
 {
     zAssetModelInfo* zinfo = (zAssetModelInfo*)info;
+    U32 i;
+    RpAtomic* imodel;
     zAssetModelInst* zinst = (zAssetModelInst*)(zinfo + 1);
     xModelInstance* tempInst[64];
     U32 bufsize;
 
-    for (U32 i = 0; i < zinfo->NumModelInst; i++)
+    for (i = 0; i < zinfo->NumModelInst; i++)
     {
-        RpAtomic* imodel = (RpAtomic*)xSTFindAsset(zinst[i].ModelID, &bufsize);
+        imodel = (RpAtomic*)xSTFindAsset(zinst[i].ModelID, &bufsize);
         if (*(U32*)imodel == 0x464E494D)
         {
             tempInst[i] = zEntRecurseModelInfo(imodel, ent);
@@ -542,8 +552,8 @@ void zEntAnimEvent(_zEnt* ent, U32 animEvent, F32* animParam)
             break;
         }
 
-        F32 prob = 0.01f * animParam[1];
         S32 anum = (S32)animParam[0] - 1;
+        F32 prob = 0.01f * animParam[1];
         if (anum < 0 || anum >= 10)
         {
             break;
@@ -591,7 +601,7 @@ zAssetModelParam* zEntGetModelParams(U32 assetID, U32* size)
     return NULL;
 }
 
-// Each parameter is an 8-byte header followed by WordLength words of string.
+// Records advance by 8 + 4*WordLength bytes; text begins at byte 5.
 char* zParamGetString(zAssetModelParam* param, U32 size, char* tok, char* def)
 {
     U32 testhash = xStrHash(tok);
@@ -687,9 +697,7 @@ void zEntGetShadowParams(_xEnt* ent, xVec3* center, F32* radius)
             if (ent->subType == sp->type)
             {
                 rad *= sp->rad;
-                c.x += sp->at * at->x;
-                c.y += sp->at * at->y;
-                c.z += sp->at * at->z;
+                xVec3AddScaled(&c, at, sp->at);
                 break;
             }
             sp++;
