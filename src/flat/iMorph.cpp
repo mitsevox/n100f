@@ -333,4 +333,3 @@ static void FastS16weight4(F32* dest, S16** v_array, S16* weight, S32 count, F32
         dest[i] = a0[i] * s0 + a1[i] * s1 + a2[i] * s2 + a3[i] * s3;
     }
 }
-
