@@ -53,7 +53,7 @@ extern "C" zSceneLevel lbl_801C8BCC[];
 extern "C" F32 lbl_8025E8C4;
 void zSceneForAllBase(xBase* (*func)(xBase*, zScene*, void*), S32 baseType, void* data);
 void zUI_Render(_xEnt* ent);
-extern "C" void fn_800D47E8(_xEnt* ent);
+void zUIFont_Render(_xEnt* e);
 
 static _zUI* sSorted[768];
 static U32 sSortedCount;
@@ -251,7 +251,7 @@ void zUIRenderAll()
             zUI_Render(sSorted[i]);
         else if (!zGameIsPaused() ||
                  !(static_cast<zUIFontAsset*>(sSorted[i]->sasset)->uiFontFlags & 0x100))
-            fn_800D47E8(sSorted[i]);
+            zUIFont_Render(sSorted[i]);
     }
 }
 
