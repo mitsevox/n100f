@@ -23,47 +23,9 @@ static F32* s_vTemp;
 static F32* s_nTemp;
 static U32 s_numV;
 
-// Morph targets are packed 16-bit coordinates; these unpack one, or blend two or four, into
-// floats.
-static void FastS16unpack(F32* dest, S16* v, S32 count, F32 scale)
-{
-    for (S32 i = 0; i < count; i++)
-    {
-        dest[i] = v[i] * scale;
-    }
-}
-
-static void FastS16weight2(F32* dest, S16** v_array, S16* weight, S32 count, F32 scale)
-{
-    S32 i;
-    S16* a = v_array[0];
-    S16* b = v_array[1];
-    F32 s0 = scale * weight[0];
-    F32 s1 = scale * weight[1];
-
-    for (i = 0; i < count; i++)
-    {
-        dest[i] = a[i] * s0 + b[i] * s1;
-    }
-}
-
-static void FastS16weight4(F32* dest, S16** v_array, S16* weight, S32 count, F32 scale)
-{
-    S32 i;
-    S16* a0 = v_array[0];
-    S16* a1 = v_array[1];
-    S16* a2 = v_array[2];
-    S16* a3 = v_array[3];
-    F32 s0 = scale * weight[0];
-    F32 s1 = scale * weight[1];
-    F32 s2 = scale * weight[2];
-    F32 s3 = scale * weight[3];
-
-    for (i = 0; i < count; ++i)
-    {
-        dest[i] = a0[i] * s0 + a1[i] * s1 + a2[i] * s2 + a3[i] * s3;
-    }
-}
+static void FastS16unpack(F32* dest, S16* v, S32 count, F32 scale);
+static void FastS16weight2(F32* dest, S16** v_array, S16* weight, S32 count, F32 scale);
+static void FastS16weight4(F32* dest, S16** v_array, S16* weight, S32 count, F32 scale);
 
 // Blends up to four weighted morph targets into the model's vertices (and normals) and
 // optionally renders it. With a MORPHSTATE block the result is cached there and reused while
@@ -329,3 +291,46 @@ void iMorphRender(RpAtomic* model, RwMatrix* mat, S16** v_array, S16* weight, U3
         s_alloc = NULL;
     }
 }
+
+// Morph targets are packed 16-bit coordinates; these unpack one, or blend two or four, into
+// floats.
+static void FastS16unpack(F32* dest, S16* v, S32 count, F32 scale)
+{
+    for (S32 i = 0; i < count; i++)
+    {
+        dest[i] = v[i] * scale;
+    }
+}
+
+static void FastS16weight2(F32* dest, S16** v_array, S16* weight, S32 count, F32 scale)
+{
+    S32 i;
+    S16* a = v_array[0];
+    S16* b = v_array[1];
+    F32 s0 = scale * weight[0];
+    F32 s1 = scale * weight[1];
+
+    for (i = 0; i < count; i++)
+    {
+        dest[i] = a[i] * s0 + b[i] * s1;
+    }
+}
+
+static void FastS16weight4(F32* dest, S16** v_array, S16* weight, S32 count, F32 scale)
+{
+    S32 i;
+    S16* a0 = v_array[0];
+    S16* a1 = v_array[1];
+    S16* a2 = v_array[2];
+    S16* a3 = v_array[3];
+    F32 s0 = scale * weight[0];
+    F32 s1 = scale * weight[1];
+    F32 s2 = scale * weight[2];
+    F32 s3 = scale * weight[3];
+
+    for (i = 0; i < count; ++i)
+    {
+        dest[i] = a0[i] * s0 + a1[i] * s1 + a2[i] * s2 + a3[i] * s3;
+    }
+}
+
