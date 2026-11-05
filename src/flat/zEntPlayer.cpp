@@ -3146,16 +3146,35 @@ static inline void zEntPlayer_VOReset()
     }
 }
 
+// Flag updates through a byte-sized mask. Init enables and shows the player and clears a physics bit
+// with these; the masks are byte values here, not plain constants (inferred, see the evidence record).
+static inline void zEntPlayerOrBaseFlags(xBase* b, U8 mask)
+{
+    b->baseFlags |= mask;
+}
+
+static inline void zEntPlayerOrFlags(_xEnt* ent, U8 mask)
+{
+    ent->flags |= mask;
+}
+
+static inline void zEntPlayerAndPFlags(_xEnt* ent, U8 mask)
+{
+    ent->pflags &= mask;
+}
+
+// Set up the player entity: base init, flags and callbacks, gust and rotation-match effects, particle
+// emitters, the ten foot trackers, animation callbacks, snack-gate and voice state, then a full reset.
 void zEntPlayer_Init(_xEnt* ent, p2EntAsset* asset)
 {
     xFFXRotMatchState* rms;
 
     zEntInit((_zEnt*)ent, asset, 'PLYR');
-    ent->baseFlags |= 1;
-    ent->flags |= 1;
+    zEntPlayerOrBaseFlags(ent, 1);
+    zEntPlayerOrFlags(ent, 1);
     globals.player.Visible = 1;
     globals.player.AutoMoveSpeed = 0;
-    ent->pflags &= 0xFB;
+    zEntPlayerAndPFlags(ent, 0xFB);
     ent->collis->chk &= 0xFE;
     ent->update = zEntPlayer_Update;
     ent->move = zEntPlayer_Move;
