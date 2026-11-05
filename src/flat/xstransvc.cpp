@@ -196,7 +196,6 @@ S32 xSTPreLoadScene(U32 sid, void* userdata)
     S32 cltver = 0;
     S32 cnt_retry = 0;
     st_STRAN_SCENE* sdata;
-    char* path;
 
     do
     {
@@ -209,7 +208,7 @@ S32 xSTPreLoadScene(U32 sid, void* userdata)
 
         if (sid != 'BOOT' && sid != 'FONT')
         {
-            path = XST_translate_sid_path(sid);
+            char* const path = XST_translate_sid_path(sid);
             if (path != NULL)
             {
                 strcpy(sdata->fnam, path);
@@ -218,7 +217,7 @@ S32 xSTPreLoadScene(U32 sid, void* userdata)
         }
         if (cltver == 0)
         {
-            path = XST_translate_sid(sid);
+            char* const path = XST_translate_sid(sid);
             if (path != NULL)
             {
                 strcpy(sdata->fnam, path);
