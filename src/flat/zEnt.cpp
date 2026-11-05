@@ -601,7 +601,7 @@ zAssetModelParam* zEntGetModelParams(U32 assetID, U32* size)
     return NULL;
 }
 
-// Each parameter is an 8-byte header followed by WordLength words of string.
+// Records advance by 8 + 4*WordLength bytes; text begins at byte 5.
 char* zParamGetString(zAssetModelParam* param, U32 size, char* tok, char* def)
 {
     U32 testhash = xStrHash(tok);
