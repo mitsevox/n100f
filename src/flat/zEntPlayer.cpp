@@ -399,13 +399,13 @@ static void DampenControls(F32* angle, F32* mag, F32 x, F32 y)
         return;
     }
 
-    if (xabs(x) > xabs(y))
+    if (fabsf(x) > fabsf(y))
     {
-        *mag = xabs(x);
+        *mag = fabsf(x);
     }
     else
     {
-        *mag = xabs(y);
+        *mag = fabsf(y);
     }
     *mag = (*mag - globals.player.s.AnalogMin) /
            (globals.player.s.AnalogMax - globals.player.s.AnalogMin);
@@ -426,7 +426,7 @@ static void DampenControls(F32* angle, F32* mag, F32 x, F32 y)
 
 static inline void SlideLeanUpdate(F32 angle, F32 dt)
 {
-    F32 abs = xabs(angle);
+    F32 abs = fabs(angle);
     F32 lerp;
     F32 t;
 
@@ -455,7 +455,7 @@ static inline void SlideLeanUpdate(F32 angle, F32 dt)
 
 static inline void LeanUpdate(F32 angle, F32 dt)
 {
-    F32 abs = xabs(angle);
+    F32 abs = fabs(angle);
     F32 lerp;
     F32 t;
 
@@ -516,6 +516,7 @@ static U32 PlayerIsFacing(_xEnt* ent, _xEnt* target, F32 cosang)
     return ax * dx + az * dz > dlen * (cosang * alen);
 }
 
+// Turn movement input into the player's desired facing and speed for the current movement state.
 static void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt)
 {
     U32 animUserFlag;
@@ -664,7 +665,7 @@ static void PlayerAbsControl(_xEnt* ent, F32 x, F32 z, F32 dt)
         return;
     }
 
-    if (globals.player.HotsauceTimer != 0.0f)
+    if (globals.player.HotsauceTimer)
     {
         globals.player.HotsauceTimer -= dt;
         if (globals.player.HotsauceTimer <= 0.0f)
@@ -1020,7 +1021,7 @@ move:
         switch (moveFlag)
         {
         case 0x2:
-            if (dir_dp <= 0.0f || mag == 0.0f)
+            if (dir_dp <= 0.0f || !mag)
             {
                 goto lean;
             }
@@ -1074,29 +1075,45 @@ move:
             }
             else
             {
-                if (mag == 0.0f)
+                if (!mag)
                 {
                     goto lean;
                 }
                 maxVelmag = globals.player.s.SpeedRun[1];
-                mag = mag >= globals.player.s.SpeedRun[3] ? globals.player.s.SpeedRun[1]
-                    : mag <= globals.player.s.SpeedRun[2] ? globals.player.s.SpeedRun[0]
-                    : (mag - globals.player.s.SpeedRun[2]) /
-                              (globals.player.s.SpeedRun[3] - globals.player.s.SpeedRun[2]) *
-                              (globals.player.s.SpeedRun[1] - globals.player.s.SpeedRun[0]) +
-                          globals.player.s.SpeedRun[0];
-                globals.player.DecelRun = globals.player.DecelRunSpeed = mag;
+                {
+                    F32 mappedSpeed;
+
+                    if (mag >= globals.player.s.SpeedRun[3])
+                        mappedSpeed = globals.player.s.SpeedRun[1];
+                    else if (mag <= globals.player.s.SpeedRun[2])
+                        mappedSpeed = globals.player.s.SpeedRun[0];
+                    else
+                    {
+                        mappedSpeed = (mag - globals.player.s.SpeedRun[2]) /
+                                      (globals.player.s.SpeedRun[3] - globals.player.s.SpeedRun[2]);
+                        mappedSpeed = mappedSpeed *
+                                          (globals.player.s.SpeedRun[1] - globals.player.s.SpeedRun[0]) +
+                                      globals.player.s.SpeedRun[0];
+                    }
+                    mag = mappedSpeed;
+                    globals.player.DecelRun = globals.player.DecelRunSpeed = mappedSpeed;
+                }
             }
             break;
         case 0x8:
             maxVelmag = globals.player.s.SpeedHotsauce[1];
-            mag = mag >= globals.player.s.SpeedHotsauce[3] ? globals.player.s.SpeedHotsauce[1]
-                : mag <= globals.player.s.SpeedHotsauce[2] ? globals.player.s.SpeedHotsauce[0]
-                : (mag - globals.player.s.SpeedHotsauce[2]) /
-                          (globals.player.s.SpeedHotsauce[3] - globals.player.s.SpeedHotsauce[2]) *
-                          (globals.player.s.SpeedHotsauce[1] - globals.player.s.SpeedHotsauce[0]) +
-                      globals.player.s.SpeedHotsauce[0];
-            globals.player.DecelRun = globals.player.DecelRunSpeed = mag;
+            {
+                F32 fraction;
+
+                mag = mag >= globals.player.s.SpeedHotsauce[3] ? globals.player.s.SpeedHotsauce[1] :
+                      mag <= globals.player.s.SpeedHotsauce[2] ? globals.player.s.SpeedHotsauce[0] :
+                      (fraction = (mag - globals.player.s.SpeedHotsauce[2]) /
+                                  (globals.player.s.SpeedHotsauce[3] - globals.player.s.SpeedHotsauce[2]),
+                       fraction *
+                               (globals.player.s.SpeedHotsauce[1] - globals.player.s.SpeedHotsauce[0]) +
+                           globals.player.s.SpeedHotsauce[0]);
+                globals.player.DecelRun = globals.player.DecelRunSpeed = mag;
+            }
             break;
         case 0xA:
         case 0xE:
@@ -1138,7 +1155,7 @@ move:
             F32 peakLerp;
             F32 accelMag;
 
-            if (mag == 0.0f)
+            if (!mag)
             {
                 goto lean;
             }
@@ -1213,7 +1230,7 @@ lean:
         ent->model->Anim->Single->Blend->BilinearLerp[0] = globals.player.LeanLerp;
     }
 
-    if (globals.player.Shaggy1.GrabTimer != 0.0f)
+    if (globals.player.Shaggy1.GrabTimer)
     {
         ent->frame->mode &= ~0x6;
     }
@@ -4051,6 +4068,7 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
     }
     else
     {
+        S32 digSituation = 0;
         U32 i;
         zScene* zsc;
         _zEntSimpleObj* simpent;
@@ -4065,15 +4083,19 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
                 if (((_zEntSimpleObj*)zsc->stats[i])->sflags & 1)
                 {
                     simpent = (_zEntSimpleObj*)zsc->stats[i];
-                    if (SQ(globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x) +
-                            SQ(globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y) +
-                            SQ(globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z) <
-                        SQ(1.25f * globals.player.ent.bound.sph.r))
+                    if ((globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x) *
+                            (globals.player.ent.bound.sph.center.x - simpent->model->Mat->pos.x) +
+                        (globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y) *
+                            (globals.player.ent.bound.sph.center.y - simpent->model->Mat->pos.y) +
+                        (globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z) *
+                            (globals.player.ent.bound.sph.center.z - simpent->model->Mat->pos.z) <
+                        (1.25f * globals.player.ent.bound.sph.r) *
+                            (1.25f * globals.player.ent.bound.sph.r))
                     {
                         globals.player.Diggable = simpent;
                         if (!(simpent->sflags & 2))
                         {
-                            zEntPlayer_Notify(0);
+                            zEntPlayer_Notify(digSituation);
                             parm[0] = 2.0f;
                             zEntEvent(simpent, 0xC3, parm);
                             simpent->sflags |= 2;
