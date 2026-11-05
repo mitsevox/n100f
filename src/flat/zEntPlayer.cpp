@@ -6460,6 +6460,7 @@ static void PlayerCollsUnusedConsts(F32* a, F32* b)
     *b = -2.0f;
 }
 
+// Apply floor and ceiling push-outs, then resolve the remaining wall contacts.
 static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
 {
     _xCollis* colls;
@@ -6486,10 +6487,11 @@ static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
     _xCollis* cright;
 
     colls = p->collis->colls;
+    c = colls;
     mat = (_xMat4x3*)p->frame;
 
     cend = &colls[p->collis->idx];
-    for (c = &colls[k_XCOLLS_IDX_COUNT]; c < cend; c++)
+    for (c += k_XCOLLS_IDX_COUNT; c < cend; c++)
     {
         idx = xCollideGetCollsIdx(&c->tohit, (xMat3x3*)mat);
         curr = &colls[idx];
@@ -6580,7 +6582,20 @@ static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
         else
         {
             mat->pos.y += colls[k_XCOLLS_IDX_FLOOR].depen.y;
-            PlayerCollsWallsLoopTranslate(colls, 0.0f, colls[k_XCOLLS_IDX_FLOOR].depen.y, 0.0f);
+            {
+                F32 y = colls[k_XCOLLS_IDX_FLOOR].depen.y;
+                _xCollis* c;
+                _xCollis* cend;
+                cend = &colls[k_XCOLLS_IDX_COUNT];
+                for (c = &colls[k_XCOLLS_IDX_FRONT]; c < cend; c++)
+                {
+                    if (c->dist < 1e19f &&
+                        (c->depen.x != 0.0f || c->depen.y != 0.0f || c->depen.z != 0.0f))
+                    {
+                        PlayerCollisTranslate(c, 0.0f, y, 0.0f);
+                    }
+                }
+            }
         }
     }
     else
@@ -6598,7 +6613,20 @@ static void PlayerCollsSelectDepen(_xEnt* p, _xScene* sc, F32 dt)
             else
             {
                 mat->pos.y += cceil->depen.y;
-                PlayerCollsWallsLoopTranslate(colls, 0.0f, cceil->depen.y, 0.0f);
+                {
+                    F32 y = cceil->depen.y;
+                    _xCollis* c;
+                    _xCollis* cend;
+                    cend = &colls[k_XCOLLS_IDX_COUNT];
+                    for (c = &colls[k_XCOLLS_IDX_FRONT]; c < cend; c++)
+                    {
+                        if (c->dist < 1e19f &&
+                            (c->depen.x != 0.0f || c->depen.y != 0.0f || c->depen.z != 0.0f))
+                        {
+                            PlayerCollisTranslate(c, 0.0f, y, 0.0f);
+                        }
+                    }
+                }
                 p->frame->vel.y = 0.0f;
             }
         }
