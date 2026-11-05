@@ -47,6 +47,10 @@ _ShadowParams gShadowParams[27] = {
     { 37, 0.0f, 1.5f },  { 999, 0.0f, 1.5f }, { 999, 0.0f, 1.5f },
 };
 
+static void (*explicitUnusedDisable)(xBase*) = xBaseDisable;
+static void (*explicitUnusedEnable)(xBase*) = xBaseEnable;
+static U32 (*explicitUnusedEnabled)(xBase*) = xBaseIsEnabled;
+
 // Set up an entity of the given asset type: its collision class and bound, its model and, from
 // its animation list, its animation table starting in the "idle" state.
 void zEntInit(_zEnt* ent, p2EntAsset* asset, U32 type)
@@ -328,25 +332,27 @@ void zEntEvent(xBase* from, xBase* to, U32 toEvent)
 void zEntEvent(xBase* from, U32 fromEvent, xBase* to, U32 toEvent, F32* toParam,
                xBase* toParamWidget, S32 forceEvent)
 {
+    xBase* receiver = to;
+
     if (toEvent == 2)
     {
-        xBaseDisable(to);
+        xBaseDisable(receiver);
     }
     else if (toEvent == 1)
     {
-        xBaseEnable(to);
+        xBaseEnable(receiver);
     }
 
-    if (to->eventFunc != NULL && (xBaseIsEnabled(to) || forceEvent))
+    if (receiver->eventFunc != NULL && (xBaseIsEnabled(receiver) || forceEvent))
     {
-        to->eventFunc(from, to, toEvent, toParam, toParamWidget);
+        receiver->eventFunc(from, receiver, toEvent, toParam, toParamWidget);
     }
 
-    if (xBaseIsEnabled(to) && to->linkCount != 0)
+    if (xBaseIsEnabled(receiver) && receiver->linkCount != 0)
     {
-        p2LinkAsset* idx = to->link;
+        p2LinkAsset* idx = receiver->link;
 
-        for (S32 i = 0; i < to->linkCount; i++, idx++)
+        for (S32 i = 0; i < receiver->linkCount; i++, idx++)
         {
             if (toEvent == idx->srcEvent)
             {
@@ -356,7 +362,9 @@ void zEntEvent(xBase* from, U32 fromEvent, xBase* to, U32 toEvent, F32* toParam,
 
                     if (sendTo != NULL)
                     {
+                        F32* linkParam;
                         xBase* b;
+
                         if (idx->paramWidgetAssetID != 0)
                         {
                             b = zSceneFindObject(idx->paramWidgetAssetID);
@@ -366,7 +374,7 @@ void zEntEvent(xBase* from, U32 fromEvent, xBase* to, U32 toEvent, F32* toParam,
                             b = NULL;
                         }
 
-                        zEntEvent(to, toEvent, sendTo, idx->dstEvent, idx->param, b, 0);
+                        zEntEvent(receiver, toEvent, sendTo, idx->dstEvent, (linkParam = idx->param), b, 0);
                     }
                 }
             }

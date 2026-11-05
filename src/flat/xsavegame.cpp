@@ -129,15 +129,15 @@ extern "C" char* fn_800389FC(st_XSAVEGAME_DATA* xsgdata, S32 tidx, en_XSG_WHYFAI
     switch (whyFail)
     {
     case XSG_WHYERR_NOCARD:
-        return fn_80014180(NULL, tidx, 3);
+        return iSGTgtSlotName(NULL, tidx, 3);
     case XSG_WHYERR_NOROOM:
-        return fn_80014180(NULL, tidx, 7);
+        return iSGTgtSlotName(NULL, tidx, 7);
     case XSG_WHYERR_DAMAGE:
-        return fn_80014180(NULL, tidx, 6);
+        return iSGTgtSlotName(NULL, tidx, 6);
     case XSG_WHYERR_CARDYANKED:
-        return fn_80014180(NULL, tidx, 5);
+        return iSGTgtSlotName(NULL, tidx, 5);
     default:
-        return fn_80014180(xsgdata->isgsess, tidx, 2);
+        return iSGTgtSlotName(xsgdata->isgsess, tidx, 2);
     }
 }
 
@@ -168,7 +168,7 @@ S32 xSGTgtFormatTgt(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* canRecover)
 // Passes the card's sector size and free file entries through from the card layer.
 extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree)
 {
-    fn_80013C64(xsgdata->isgsess, tidx, sectorSize, filesFree);
+    iSGTgtFreeSpace(xsgdata->isgsess, tidx, sectorSize, filesFree);
 }
 
 S32 xSGTgtSelect(st_XSAVEGAME_DATA* xsgdata, S32 tidx)
