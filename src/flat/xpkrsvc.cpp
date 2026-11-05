@@ -1,3 +1,9 @@
+// Revision 1 places the arena fill at another address. The label below is the revision 0 one;
+// on revision 1 it stands for that revision's label.
+#if VERSION_GIHE78_REV1
+#define fn_800167F0 fn_80016958
+#endif
+
 #include "xpkrsvc.h"
 #include "xhipio.h"
 #include "xMemMgr.h"
@@ -452,6 +458,18 @@ static S32 PKR_parse_TOC(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr)
     return done;
 }
 
+// A layer's read buffer in the RenderWare resource arena.
+static inline char* PKR_LayerArenaMem(st_PACKER_READ_DATA* pr, st_PACKER_LTOC_NODE* layer)
+{
+    return PKR_getRWarena(pr, layer->laysize);
+}
+
+// A layer's read buffer from the active heap.
+static inline char* PKR_LayerHeapMem(st_PACKER_LTOC_NODE* layer)
+{
+    return (char*)PKR_getmem(layer->laysize);
+}
+
 // One step of the background loader. With no layer in flight, picks the next unloaded layer,
 // gets its memory and starts reading the whole layer in one go; otherwise polls that read and,
 // once it is done, points the layer's assets into the buffer and runs their conversions.
@@ -476,11 +494,11 @@ static S32 PKR_LoadStep_Async()
                 {
                     if (PKR_layerLoadDest(asynlay->laytyp) == PKR_LDDEST_RWHANDOFF)
                     {
-                        asynlay->laymem = PKR_getRWarena(curpr, asynlay->laysize);
+                        asynlay->laymem = PKR_LayerArenaMem(curpr, asynlay);
                     }
                     else
                     {
-                        asynlay->laymem = (char*)PKR_getmem(asynlay->laysize);
+                        asynlay->laymem = PKR_LayerHeapMem(asynlay);
                     }
                 }
 
