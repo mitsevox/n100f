@@ -971,12 +971,12 @@ S32 iSGSetupGameDir(st_ISGSESSION* isgdata, const char* dname, S32 force_iconfix
 S32 iSGSaveFile(st_ISGSESSION* isgdata, const char* fname, char* data, S32 n, S32 async,
                 char* label)
 {
-    void* alloc;
+    S32 writeret = 0;
+    st_ISG_MEMCARD_DATA* mcdata;
     S32 allocsize;
+    void* alloc;
     char* icondata;
     S32 iconsize;
-
-    S32 writeret = 0;
     en_ASYNC_OPERR operr = ISG_OPERR_NONE;
     CARDStat statA = { 0 };
     CARDStat statB = { 0 };
@@ -988,7 +988,7 @@ S32 iSGSaveFile(st_ISGSESSION* isgdata, const char* fname, char* data, S32 n, S3
         return 0;
     }
 
-    st_ISG_MEMCARD_DATA* mcdata = &isgdata->mcdata[isgdata->slot];
+    mcdata = &isgdata->mcdata[isgdata->slot];
     if (mcdata->unk_12C != 0)
     {
         isgdata->as_opstat = ISG_OPSTAT_FAILURE;
@@ -1085,15 +1085,14 @@ static void iSG_upd_icostat(CARDStat*, CARDStat* stat)
     CARDSetIconAddress(stat, 0x40);
     CARDSetIconAnim(stat, CARD_STAT_ANIM_LOOP);
 
-    S32 i;
-    for (i = 0; i < 4; ++i)
+    for (S32 i = 0; i < 4; ++i)
     {
         CARDSetIconFormat(stat, i, CARD_STAT_BANNER_RGB5A3);
         CARDSetIconSpeed(stat, i, CARD_STAT_SPEED_MIDDLE);
     }
 
-    CARDSetIconFormat(stat, i, CARD_STAT_ICON_NONE);
-    CARDSetIconSpeed(stat, i, CARD_STAT_SPEED_END);
+    CARDSetIconFormat(stat, 4, CARD_STAT_ICON_NONE);
+    CARDSetIconSpeed(stat, 4, CARD_STAT_SPEED_END);
 }
 
 // Reads all of fname's save data.
@@ -1931,7 +1930,7 @@ static S32 iSG_mc_fclose(st_ISG_MEMCARD_DATA* mcdata, CARDStat* stat)
         ret = 1;
     }
 
-    if (stat != NULL)
+    if (stat)
     {
         memcpy(stat, &mcdata->fstat, sizeof(CARDStat));
     }
