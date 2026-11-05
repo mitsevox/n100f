@@ -1481,6 +1481,7 @@ static S32 iSG_get_finfo(st_ISG_MEMCARD_DATA* mcdata, const char* dpath)
 {
     S32 rc = 0;
     en_ASYNC_OPERR operr = ISG_OPERR_NONE;
+    CARDFileInfo finfo = { 0 };
 
     if (iSG_mc_fopen(mcdata, dpath, -1, ISG_IOMODE_READ, &operr))
     {
