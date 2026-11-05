@@ -379,13 +379,15 @@ void zEntEvent(xBase* from, U32 fromEvent, xBase* to, U32 toEvent, F32* toParam,
 xModelInstance* zEntRecurseModelInfo(void* info, _xEnt* ent)
 {
     zAssetModelInfo* zinfo = (zAssetModelInfo*)info;
+    U32 i;
+    RpAtomic* imodel;
     zAssetModelInst* zinst = (zAssetModelInst*)(zinfo + 1);
     xModelInstance* tempInst[64];
     U32 bufsize;
 
-    for (U32 i = 0; i < zinfo->NumModelInst; i++)
+    for (i = 0; i < zinfo->NumModelInst; i++)
     {
-        RpAtomic* imodel = (RpAtomic*)xSTFindAsset(zinst[i].ModelID, &bufsize);
+        imodel = (RpAtomic*)xSTFindAsset(zinst[i].ModelID, &bufsize);
         if (*(U32*)imodel == 0x464E494D)
         {
             tempInst[i] = zEntRecurseModelInfo(imodel, ent);
@@ -542,8 +544,8 @@ void zEntAnimEvent(_zEnt* ent, U32 animEvent, F32* animParam)
             break;
         }
 
-        F32 prob = 0.01f * animParam[1];
         S32 anum = (S32)animParam[0] - 1;
+        F32 prob = 0.01f * animParam[1];
         if (anum < 0 || anum >= 10)
         {
             break;
@@ -687,9 +689,7 @@ void zEntGetShadowParams(_xEnt* ent, xVec3* center, F32* radius)
             if (ent->subType == sp->type)
             {
                 rad *= sp->rad;
-                c.x += sp->at * at->x;
-                c.y += sp->at * at->y;
-                c.z += sp->at * at->z;
+                xVec3AddScaled(&c, at, sp->at);
                 break;
             }
             sp++;
