@@ -185,11 +185,9 @@ static inline F32 xVec3Dist2(const xVec3* a, const xVec3* b)
 
 static inline F32 xVec3Dist(const xVec3* a, const xVec3* b)
 {
-    F32 dx = a->x - b->x;
-    F32 dy = a->y - b->y;
-    F32 dz = a->z - b->z;
-
-    return sqrtf(dx * dx + dy * dy + dz * dz);
+    xVec3 delta;
+    xVec3Sub(&delta, a, b);
+    return sqrtf(xVec3Length2(&delta));
 }
 
 static inline F32 xVec3Length(const xVec3* vec)
@@ -5161,6 +5159,7 @@ void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
     }
 }
 
+// Sum the normals of the two triangles formed by the four floor supports.
 static inline void PlayerFloorNormal(xVec3* o, const xVec3* p)
 {
     xVec3 a;
@@ -5172,8 +5171,15 @@ static inline void PlayerFloorNormal(xVec3* o, const xVec3* p)
     xVec3Sub(&a, &p[1], &p[0]);
     xVec3Sub(&b, &p[2], &p[0]);
     xVec3Sub(&c, &p[3], &p[0]);
-    xVec3Cross(&n1, &a, &b);
-    xVec3Cross(&n2, &b, &c);
+    xVec3 temp;
+    temp.x = a.y * b.z - b.y * a.z;
+    temp.y = a.z * b.x - b.z * a.x;
+    temp.z = a.x * b.y - b.x * a.y;
+    n1 = temp;
+    temp.x = b.y * c.z - c.y * b.z;
+    temp.y = b.z * c.x - c.z * b.x;
+    temp.z = b.x * c.y - c.x * b.y;
+    n2 = temp;
     xVec3Add(o, &n1, &n2);
 }
 
@@ -5461,9 +5467,9 @@ void zEntPlayerFloorUpdate(_xEnt* p, _xScene* sc, F32 dt)
             {
                 globals.player.Slide = 3;
                 s = ddotm / sqrtf(D_flat.x * D_flat.x + D_flat.z * D_flat.z);
+                F32 dx = D_flat.x * s;
                 dz = D_flat.z * s;
-                s = D_flat.x * s;
-                p->frame->mat.pos.x -= s;
+                p->frame->mat.pos.x -= dx;
                 p->frame->mat.pos.z -= dz;
                 if (update_motion.y > 0.0f)
                 {
@@ -5675,7 +5681,7 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
     _xEntDrive* drv;
     _zPlatform* oplat;
     _xCollis* coll;
-    _zPlatform* plat;
+    _zEnt* plat;
     xSurface* surf;
     F32* jmphs;
     xVec3* jmpdir;
@@ -5686,7 +5692,7 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
 
     if (drv->odriver)
     {
-        plat = (_zPlatform*)drv->odriver;
+        plat = (_zEnt*)drv->odriver;
         if (!drv->os)
         {
             zEntEvent(plat, 0x21);
@@ -5694,11 +5700,11 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
             drv->otm = 0.0f;
             if (plat->subType == 9)
             {
-                zPlatform_Dismount(plat);
+                zPlatform_Dismount((_zPlatform*)plat);
             }
-            if (plat->passet->flags & 1)
+            if (((_zPlatform*)plat)->passet->flags & 1)
             {
-                zPlatform_Shake(plat, dt, 0.2f, 37.699112f);
+                zPlatform_Shake((_zPlatform*)plat, dt, 0.2f, 37.699112f);
             }
         }
     }
@@ -5706,7 +5712,7 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
     coll = &p->collis->colls[0];
     if (coll->flags & 1)
     {
-        plat = (_zPlatform*)coll->optr;
+        plat = (_zEnt*)coll->optr;
     }
     else
     {
@@ -5745,7 +5751,7 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
         return;
     }
 
-    if (plat != (_zPlatform*)drv->driver)
+    if (plat != drv->driver)
     {
         if (drv->driver)
         {
@@ -5763,14 +5769,14 @@ void zEntPlayerDriveUpdate(_xEnt* p, _xScene* sc, F32 dt)
             return;
         }
 
-        oplat = plat;
+        oplat = (_zPlatform*)plat;
 
-        if (!(plat->plat_flags & 1))
+        if (!(oplat->plat_flags & 1))
         {
             return;
         }
 
-        if (!gPlayerHitWater && plat != (_zPlatform*)drv->odriver)
+        if (!gPlayerHitWater && plat != drv->odriver)
         {
             zEntEvent(plat, 0x20);
         }
@@ -7305,8 +7311,10 @@ static inline U32 PlayerHangInReach(const xVec3* hang, const xVec3* pos)
     return xVec3Length2(&dpos) < 2.25f && fabsf(dot) < 0.65f;
 }
 
+// Find the nearest available hangable and test whether the player can grab it.
 static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
 {
+    F32 dx, dy, dz;
     U32 i;
     U32 sphereresult;
     F32 closedist;
@@ -7331,7 +7339,10 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
         if (hangme->baseType == 0x17 && hangme->enabled > 0 && !hangme->grabTimer &&
             (hangme->state != 1 || hangme->shaggy))
         {
-            dist2 = xVec3Dist2(&ent->bound.sph.center, &hangme->endpos);
+            dx = ent->bound.sph.center.x - hangme->endpos.x;
+            dy = ent->bound.sph.center.y - hangme->endpos.y;
+            dz = ent->bound.sph.center.z - hangme->endpos.z;
+            dist2 = dx * dx + dy * dy + dz * dz;
             if (dist2 < closedist)
             {
                 hangclose = hangme;
