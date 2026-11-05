@@ -1768,6 +1768,11 @@ static S32 iSG_mc_fopen(st_ISG_MEMCARD_DATA* mcdata, const char* fname, S32 fsiz
                 default:
                     *operr = ISG_OPERR_OTHER;
                     break;
+                case CARD_RESULT_READY:
+                case CARD_RESULT_BUSY:
+                case CARD_RESULT_EXIST:
+                case CARD_RESULT_NOPERM:
+                    break;
                 }
             }
         }
