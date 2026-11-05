@@ -60,7 +60,8 @@ static inline st_SERIAL_CLIENTINFO* XSER_get_client(U32 idtag)
 
     if (idx < 0)
     {
-        clt = xsd->cltnext++;
+        clt = xsd->cltnext;
+        xsd->cltnext = clt + 1;
         clt->idtag = idtag;
         XOrdInsert(&xsd->cltlist, clt, xSER_ord_compare);
     }
@@ -84,6 +85,13 @@ inline void xSerial::prepare(U32 idtag)
     bittally = 0;
 }
 
+// Write the save format's eight-byte fill marker through the save system.
+static inline void xSER_write_fill_marker(st_XSAVEGAME_DATA* xsg, st_XSAVEGAME_WRITECONTEXT* wctxt)
+{
+    char filbuf[9] = { 'R', 'y', 'a', 'n', 'N', 'e', 'i', 'l', '\x00' };
+    xSGWriteData(xsg, wctxt, (char*)&filbuf, 8);
+}
+
 static S32 xSER_xsgclt_ldproc_fill(void*, st_XSAVEGAME_DATA* xsg, st_XSAVEGAME_READCONTEXT* rctxt,
                                    U32, S32)
 {
@@ -99,8 +107,7 @@ static S32 xSER_xsgclt_ldproc_fill(void*, st_XSAVEGAME_DATA* xsg, st_XSAVEGAME_R
 
 static S32 xSER_xsgclt_svproc_fill(void*, st_XSAVEGAME_DATA* xsg, st_XSAVEGAME_WRITECONTEXT* wctxt)
 {
-    char filbuf[9] = { 'R', 'y', 'a', 'n', 'N', 'e', 'i', 'l', '\x00' };
-    xSGWriteData(xsg, wctxt, (char*)&filbuf, 8);
+    xSER_write_fill_marker(xsg, wctxt);
     return 1;
 }
 
@@ -181,8 +188,11 @@ static S32 xSER_xsgclt_svinfo_ver(void*, st_XSAVEGAME_DATA*, S32* cur_space, S32
     return 1;
 }
 
+// Register the version, client buffers and fill marker with the save or load callbacks.
 S32 xSerial_svgame_register(st_XSAVEGAME_DATA* sgctxt, en_SAVEGAME_MODE mode)
 {
+    st_XSERIAL_DATA_PRIV* xsd = &g_xserdata;
+
     g_xserdata.flg_info &= 0xfffffffe;
 
     if (mode == XSG_MODE_SAVE)
@@ -190,9 +200,9 @@ S32 xSerial_svgame_register(st_XSAVEGAME_DATA* sgctxt, en_SAVEGAME_MODE mode)
         xSGAddSaveClient(sgctxt, 'SVID', &g_xserdata, xSER_xsgclt_svinfo_ver,
                          xSER_xsgclt_svproc_ver);
 
-        for (S32 i = 0; i < g_xserdata.cltlist.cnt; i++)
+        for (S32 i = 0; i < xsd->cltlist.cnt; i++)
         {
-            xSGAddSaveClient(sgctxt, *(U32*)g_xserdata.cltlist.list[i], g_xserdata.cltlist.list[i],
+            xSGAddSaveClient(sgctxt, *(U32*)xsd->cltlist.list[i], xsd->cltlist.list[i],
                              xSER_xsgclt_svinfo_clt, xSER_xsgclt_svproc_clt);
         }
         xSGAddSaveClient(sgctxt, 'SFIL', &g_xserdata, xSER_xsgclt_svinfo_fill,
@@ -262,7 +272,7 @@ static void xSER_init_buffers(S32 count, st_SERIAL_PERCID_SIZE* sizeinfo)
     XOrdInit(&g_xserdata.cltlist, count);
 
     xsd->cltbuf = (st_SERIAL_CLIENTINFO*)xMemAlloc(gActiveHeap, count * sizeof(st_SERIAL_CLIENTINFO));
-    memset(xsd->cltbuf, 0, count * sizeof(st_SERIAL_CLIENTINFO));
+    memset(xsd->cltbuf, 0, count * 16);
     g_xserdata.cltnext = xsd->cltbuf;
 
     sitmp = sizeinfo;
@@ -356,7 +366,7 @@ inline S32 xSerial::rdbit()
         return 0;
     }
 
-    bool is_on = ctxtdata->membuf[curele] & g_tbl_onbit[bitidx];
+    S32 is_on = (ctxtdata->membuf[curele] & g_tbl_onbit[bitidx]) ? 1 : 0;
 
     bitidx++;
     if (bitidx == 32)
@@ -414,6 +424,7 @@ S32 xSerial::Read_b1(S32* bits)
     return Read((char*)bits, 4, -1);
 }
 
+// Unpack whole elements or, for a negative count, that many individual bits.
 S32 xSerial::Read(char* buf, S32 elesize, S32 n)
 {
     S32 nbit = n > 0 ? n * elesize * 8 : -n;
@@ -504,13 +515,14 @@ S32 xSerial::Write_b1(S32 bits)
     return Write((char*)&bits, 4, -1);
 }
 
+// Pack elements or individual bits, with wrbit enforcing the current client buffer limit.
 S32 xSerial::Write(char* data, S32 elesize, S32 n)
 {
     S32 nbit;
 
     if (n == 0)
     {
-        nbit = 0;
+        return 0;
     }
     else
     {
@@ -569,11 +581,12 @@ xSerial::xSerial()
 // Calls func once per registered save client, with an xSerial set to that client's bits.
 void xSerialTraverse(S32 (*func)(U32, xSerial*))
 {
+    st_XSERIAL_DATA_PRIV* xsd = &g_xserdata;
     xSerial xser;
 
-    for (S32 i = 0; i < g_xserdata.cltlist.cnt; i++)
+    for (S32 i = 0; i < xsd->cltlist.cnt; i++)
     {
-        st_SERIAL_CLIENTINFO* clt = (st_SERIAL_CLIENTINFO*)g_xserdata.cltlist.list[i];
+        st_SERIAL_CLIENTINFO* clt = (st_SERIAL_CLIENTINFO*)xsd->cltlist.list[i];
         xser.setClient(clt->idtag);
         if (func(clt->idtag, &xser) == 0)
         {
