@@ -807,6 +807,11 @@ void iSGMakeTimeStamp(char* str)
 S32 iSGCheckForCorruptFiles(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted)
 {
     S32 rc = 1;
+    S32 i;
+    st_ISG_MEMCARD_DATA* data = NULL;
+    char* fname = NULL;
+    S32 kosher = 0;
+    S32 wasdel = 0;
 
     if (first != NULL)
     {
@@ -816,14 +821,21 @@ S32 iSGCheckForCorruptFiles(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32*
     {
         return 1;
     }
-    st_ISG_MEMCARD_DATA* data = &isgdata->mcdata[isgdata->slot];
+    data = &isgdata->mcdata[isgdata->slot];
 
-    for (S32 i = 0; i < 8; i++)
+    for (i = 0; i < 8; i++)
     {
-        S32 wasdel = 0;
-        char* fname = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i);
-        S32 kosher = iSG_fileKosher(data, fname, delbad, &wasdel);
-        if (kosher == 0)
+        fname = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i);
+        kosher = iSG_fileKosher(data, fname, delbad, &wasdel);
+        if (kosher < 0)
+        {
+            // No such file.
+        }
+        else if (kosher > 0)
+        {
+            // The game's own file.
+        }
+        else
         {
             if (first != NULL && *first < 0)
             {
@@ -840,7 +852,14 @@ S32 iSGCheckForCorruptFiles(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32*
 
     if (delbad)
     {
-        rc = iSGCheckForCorruptFiles(isgdata, 0, NULL, NULL) > 0 ? 1 : 0;
+        if (iSGCheckForCorruptFiles(isgdata, 0, NULL, NULL) > 0)
+        {
+            rc = 1;
+        }
+        else
+        {
+            rc = 0;
+        }
     }
     return rc;
 }
@@ -1090,10 +1109,10 @@ S32 iSGLoadFile(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 as
 S32 iSGReadLeader(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 numbytes,
                   S32 async)
 {
+    char* readbuf;
     S32 bufsize;
     S32 iconsize;
     S32 allocsize;
-    char* readbuf;
 
     S32 readret = 0;
     st_ISG_MEMCARD_DATA* data;
@@ -1499,6 +1518,13 @@ static S32 iSG_get_finfo(st_ISG_MEMCARD_DATA* mcdata, const char* dpath)
 static S32 iSG_curKosher(CARDStat* stat, CARDFileInfo* info)
 {
     S32 rc = 1;
+    S32 result = CARD_RESULT_READY;
+    S32 bufsize = 0x3E00;
+    S32 sigofs = 0x3A40;
+    void* alloc = NULL;
+    char* buf = NULL;
+    char* sig = NULL;
+    S32 diff = 0;
 
     if ((stat->iconAddr < 1 || stat->iconAddr > 0x7FFFFFFF) &&
         (stat->commentAddr < 1 || stat->commentAddr > 0x7FFFFFFF))
@@ -1509,24 +1535,29 @@ static S32 iSG_curKosher(CARDStat* stat, CARDFileInfo* info)
     {
         char stuff[0x200] = { 0 };
         sprintf(stuff, "SCOOBY-DOO:NIGHTOF100FRIGHTS::RyanNeilDan");
-        void* alloc = xMemPushTemp(0x3E00 + 0x1F);
-        char* buf = (char*)((U32)alloc + 0x1F & ~0x1F);
+        alloc = xMemPushTemp(bufsize + 0x1F);
+        buf = (char*)((U32)alloc + 0x1F & ~0x1F);
 
-        S32 result;
+        result = CARD_RESULT_BUSY;
         do
         {
-            result = CARDRead(info, buf, 0x3E00, 0);
+            result = CARDRead(info, buf, bufsize, 0);
         } while (result == CARD_RESULT_BUSY);
 
         if (result == CARD_RESULT_READY)
         {
-            if (memcmp(buf + 0x3A40, stuff, strlen(stuff) - 1))
+            sig = buf + sigofs;
+            diff = memcmp(sig, stuff, strlen(stuff) - 1);
+            if (diff != 0)
             {
                 rc = 0;
             }
         }
 
         xMemPopTemp(alloc);
+        alloc = NULL;
+        buf = NULL;
+        sig = NULL;
     }
 
     return rc;
@@ -1637,35 +1668,48 @@ static S32 iSG_cubeicon_size(S32 slot, S32 sectorSize)
 
 static S32 iSG_tpl_unpack(TPLPalette* tpl)
 {
+    S32 rc = 0;
+    S32 i = 0;
+    U32 base = (U32)tpl;
+    TPLDescriptor* desc = NULL;
+    TPLHeader* tex = NULL;
+    TPLClutHeader* clut = NULL;
+
     if (tpl->versionNumber != 0x20AF30)
     {
-        return 0;
+        rc = 0;
+        return rc;
     }
 
-    tpl->descriptorArray = (TPLDescriptor*)((U32)tpl + (U32)tpl->descriptorArray);
-    for (S32 i = 0; i < tpl->numDescriptors; ++i)
+    tpl->descriptorArray = (TPLDescriptor*)(base + (U32)tpl->descriptorArray);
+    for (i = 0; i < tpl->numDescriptors; ++i)
     {
-        TPLDescriptor* desc = &tpl->descriptorArray[i];
+        desc = &tpl->descriptorArray[i];
+        tex = NULL;
+        clut = NULL;
         if (desc->textureHeader != NULL)
         {
-            desc->textureHeader = (TPLHeader*)((U32)tpl + (U32)desc->textureHeader);
+            desc->textureHeader = (TPLHeader*)(base + (U32)desc->textureHeader);
             if (desc->textureHeader->unpacked == 0)
             {
-                desc->textureHeader->data = (void*)((U32)tpl + (U32)desc->textureHeader->data);
+                desc->textureHeader->data = (void*)(base + (U32)desc->textureHeader->data);
                 desc->textureHeader->unpacked = 1;
+                rc = 1;
             }
         }
         if (desc->CLUTHeader != NULL)
         {
-            desc->CLUTHeader = (TPLClutHeader*)((U32)tpl + (U32)desc->CLUTHeader);
+            desc->CLUTHeader = (TPLClutHeader*)(base + (U32)desc->CLUTHeader);
             if (desc->CLUTHeader->unpacked == 0)
             {
                 desc->CLUTHeader->data = tpl;
                 desc->CLUTHeader->unpacked = 1;
+                rc = 1;
             }
         }
     }
-    return 1;
+    rc = 1;
+    return rc;
 }
 
 static S32 iSG_mc_unmount(S32 slot)
@@ -1921,7 +1965,11 @@ static void iSG_cb_asyndone(s32, s32)
 // Reads len bytes at offset, keeping the sound system running while the card works.
 static S32 iSG_mc_fread(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len, S32 offset)
 {
+    S32 ret = 0;
     S32 x = 1000;
+    CARDStat* fstat = &mcdata->fstat;
+    s32 xferBytes = 0;
+    s32 asynresult = CARD_RESULT_READY;
     s32 result = CARDGetResultCode(mcdata->chan);
     do
     {
@@ -1930,33 +1978,45 @@ static S32 iSG_mc_fread(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len, S32 off
 
     if (result != CARD_RESULT_READY)
     {
-        return 0;
+        ret = 0;
+        return ret;
     }
 
-    CARDGetXferredBytes(mcdata->chan);
+    xferBytes = CARDGetXferredBytes(mcdata->chan);
     do
     {
-        result = CARDReadAsync(&mcdata->finfo, buf, len, offset, iSG_cb_asyndone);
-    } while (result == CARD_RESULT_BUSY);
+        asynresult = CARDReadAsync(&mcdata->finfo, buf, len, offset, iSG_cb_asyndone);
+    } while (asynresult == CARD_RESULT_BUSY);
 
-    if (result != CARD_RESULT_READY)
+    if (asynresult != CARD_RESULT_READY)
     {
-        return 0;
+        ret = 0;
+        return ret;
     }
 
+    xferBytes = 0;
     result = CARD_RESULT_BUSY;
     do
     {
         if (x++ > 500)
         {
             xSndUpdate(globals.update_dt);
-            CARDGetXferredBytes(mcdata->chan);
+            xferBytes = CARDGetXferredBytes(mcdata->chan);
             result = CARDGetResultCode(mcdata->chan);
             x = 0;
         }
         fn_80016768();
     } while (result == CARD_RESULT_BUSY);
-    return result != 0 ? 0 : 1;
+
+    if (result == CARD_RESULT_READY)
+    {
+        ret = 1;
+    }
+    else
+    {
+        ret = 0;
+    }
+    return ret;
 }
 
 // Writes len bytes at the open file's write position, keeping the sound system running while
@@ -1966,6 +2026,7 @@ static S32 iSG_mc_fwrite(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len)
     S32 ret = 0;
     S32 x = 1000;
     CARDStat* fstat = &mcdata->fstat;
+    s32 xferBytes = 0;
     s32 result;
     do
     {
@@ -1974,10 +2035,11 @@ static S32 iSG_mc_fwrite(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len)
 
     if (result != CARD_RESULT_READY)
     {
-        return 0;
+        ret = 0;
+        return ret;
     }
 
-    CARDGetXferredBytes(mcdata->chan);
+    xferBytes = CARDGetXferredBytes(mcdata->chan);
     s32 asynresult;
     do
     {
@@ -1986,9 +2048,11 @@ static S32 iSG_mc_fwrite(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len)
 
     if (asynresult != CARD_RESULT_READY)
     {
-        return 0;
+        ret = 0;
+        return ret;
     }
 
+    xferBytes = 0;
     result = CARD_RESULT_BUSY;
     do
     {
@@ -1996,7 +2060,7 @@ static S32 iSG_mc_fwrite(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len)
         {
             result = CARDGetResultCode(mcdata->chan);
             xSndUpdate(globals.update_dt);
-            CARDGetXferredBytes(mcdata->chan);
+            xferBytes = CARDGetXferredBytes(mcdata->chan);
             x = 0;
         }
         fn_80016768();
