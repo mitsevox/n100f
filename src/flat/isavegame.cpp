@@ -97,7 +97,7 @@ static S32 iSG_cubeicon_size(S32 slot, S32 sectorSize);
 static char* iSG_bfr_icondata(char* buf, CARDStat* stat, char* label, S32 sectorSize);
 static S32 iSG_curKosher(CARDStat* stat, CARDFileInfo* info);
 static S32 iSG_get_finfo(st_ISG_MEMCARD_DATA* mcdata, const char* dpath);
-extern "C" S32 fn_80012414(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S32* count);
+S32 iSG_find_gamefile(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S32* count);
 static S32 iSG_isSpaceForFile(st_ISG_MEMCARD_DATA* mcdata, S32 fsize, const char* fname,
                               S32* bytesNeeded, S32* availOnDisk, S32* needFile);
 static S32 iSG_mc_isGCcard(st_ISG_MEMCARD_DATA* mcdata, S32* badEncode, S32* ioError);
@@ -115,26 +115,26 @@ static S32 iSG_mc_isformatted(st_ISG_MEMCARD_DATA* mcdata);
 S32 iSGSelectGameDir(st_ISGSESSION* isgdata, const char* dname);
 static S32 iSG_fileKosher(st_ISG_MEMCARD_DATA* mcdata, const char* fname, S32 delbad,
                           S32* deleted);
-extern "C" S32 fn_800132C4(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted);
+S32 iSGCheckForCorruptFiles(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted);
 void iSGMakeTimeStamp(char* str);
 static S32 iSG_get_fmoddate(st_ISG_MEMCARD_DATA* mcdata, const char* fname, int* sec, int* min,
                             int* hr, int* mon, int* day, int* yr);
 char* iSGFileModDate(st_ISGSESSION* isgdata, const char* fname);
 static S32 iSG_get_fsize(st_ISG_MEMCARD_DATA* mcdata, const char* fname);
 S32 iSGFileSize(st_ISGSESSION* isgdata, const char* fname);
-extern "C" S32 fn_800138EC(st_ISGSESSION* isgdata);
+S32 iSGGameFileCount(st_ISGSESSION* isgdata);
 S32 iSGTgtHaveRoom(st_ISGSESSION* isgdata, S32 tidx, S32 fsize, const char* dpath,
                    const char* fname, S32* bytesNeeded, S32* availOnDisk, S32* needFile);
 static S32 iSG_mc_mount(S32 slot);
 static S32 iSG_mc_tryRepair(st_ISG_MEMCARD_DATA* mcdata);
 static S32 iSG_mc_settgt(st_ISG_MEMCARD_DATA* mcdata, S32 slot);
 S32 iSGTgtSetActive(st_ISGSESSION* isgdata, S32 tgtidx);
-extern "C" S32 fn_80013C64(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* filesFree);
+S32 iSGTgtFreeSpace(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* filesFree);
 static S32 iSG_mc_exists(S32 slot);
 U32 iSGTgtState(st_ISGSESSION* isgdata, S32 tgtidx, const char* dpath);
 S32 iSGTgtFormat(st_ISGSESSION* isgdata, S32 tgtidx, S32 async, S32* canRecover);
-extern "C" char* fn_80014180(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype);
-extern "C" S32 fn_80014310(st_ISGSESSION* isgdata, S32 slot);
+char* iSGTgtSlotName(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype);
+S32 iSGCheckMemoryCard(st_ISGSESSION* isgdata, S32 slot);
 S32 iSGTgtPhysSlotIdx(st_ISGSESSION* isgdata, S32 tidx);
 S32 iSGTgtCount(st_ISGSESSION* isgdata, S32* max);
 void iSGSessionEnd(st_ISGSESSION* isgdata);
@@ -281,9 +281,9 @@ S32 iSGTgtPhysSlotIdx(st_ISGSESSION* isgdata, S32 tidx)
 
 // What is in a slot: 0 nothing, 1 a device that is not a memory card, 3 a card and 4 a
 // fatal error.
-extern "C" S32 fn_80014310(st_ISGSESSION* isgdata, S32 slot)
+S32 iSGCheckMemoryCard(st_ISGSESSION* isgdata, S32 slot)
 {
-    S32 rc;
+    S32 rc = 0;
     s32 memSize = 0;
     s32 sectorSize = 0;
     fn_80016768();
@@ -294,42 +294,50 @@ extern "C" S32 fn_80014310(st_ISGSESSION* isgdata, S32 slot)
         result = CARDProbeEx(slot, &memSize, &sectorSize);
     } while (result == CARD_RESULT_BUSY);
 
-    switch (result)
+    if (result == CARD_RESULT_READY)
     {
-    case CARD_RESULT_READY:
-        rc = 3;
-        break;
-    case CARD_RESULT_NOCARD:
+        rc |= 3;
+    }
+    else if (result == CARD_RESULT_NOCARD)
+    {
         rc = 0;
-        break;
-    case CARD_RESULT_WRONGDEVICE:
-        rc = 1;
-        break;
-    case CARD_RESULT_FATAL_ERROR:
+    }
+    else if (result == CARD_RESULT_WRONGDEVICE)
+    {
+        rc |= 1;
+    }
+    else if (result == CARD_RESULT_FATAL_ERROR)
+    {
         rc = 4;
-        break;
-    default:
+    }
+    else
+    {
         rc = 0;
-        break;
     }
     return rc;
 }
 
 // Names a card slot in the wording the message needs. Types 5 to 7 take a physical slot,
 // the others the index of a card present; "^" stands for the trademark sign in the font.
-extern "C" char* fn_80014180(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype)
+char* iSGTgtSlotName(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype)
 {
     static char slotname[0x40] = { 0 };
     S32 slot = 0;
     char letters[] = "AB---";
 
-    if (msgtype < 8 && msgtype >= 5)
+    switch (msgtype)
     {
+    case 5:
+    case 6:
+    case 7:
         slot = tidx;
-    }
-    else if (iSG_mcidx2slot(tidx, &slot, NULL) == 0)
-    {
-        slot = 3;
+        break;
+    default:
+        if (iSG_mcidx2slot(tidx, &slot, NULL) == 0)
+        {
+            slot = 3;
+        }
+        break;
     }
 
     switch (msgtype)
@@ -359,6 +367,19 @@ extern "C" char* fn_80014180(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype)
     return slotname;
 }
 
+// Unused.
+char* iSG_UnusedCardMessages(char* buf, S32 err)
+{
+    char letters[] = "AB------";
+    char damaged[] = "is damaged and cannot be used";
+    char sectsize[] = "unsupprted sector size";
+    char market[] = "is formatted for another market";
+    char other[0x40] = { 0 };
+
+    sprintf(other, "encountered unexpected error (%d)", err);
+    return buf;
+}
+
 S32 iSGTgtFormat(st_ISGSESSION* isgdata, S32 tgtidx, S32 async, S32* canRecover)
 {
     S32 slot = 0;
@@ -385,7 +406,7 @@ S32 iSGTgtFormat(st_ISGSESSION* isgdata, S32 tgtidx, S32 async, S32* canRecover)
         return 0;
     }
 
-    return iSG_mc_format(data, 0, canRecover) != 0;
+    return iSG_mc_format(data, 0, canRecover) == 0 ? 0 : 1;
 }
 
 // The tgtidx'th card's state as flags: 1 present, 4 a usable card (with 2 and 8 when it is
@@ -393,8 +414,8 @@ S32 iSGTgtFormat(st_ISGSESSION* isgdata, S32 tgtidx, S32 async, S32* canRecover)
 // error, 0x4000000 wrong encoding and 0x8000000 an unsupported sector size.
 U32 iSGTgtState(st_ISGSESSION* isgdata, S32 tgtidx, const char* dpath)
 {
-    S32 isSectSizeValid = 0;
     S32 state = 0;
+    S32 isSectSizeValid = 0;
 
     S32 rc = 0;
 
@@ -504,7 +525,7 @@ static S32 iSG_mc_exists(S32 slot)
 
 // The free bytes on the tidx'th card. sectorSize and filesFree, when given, receive the
 // card's sector size and its free file entries.
-extern "C" S32 fn_80013C64(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* filesFree)
+S32 iSGTgtFreeSpace(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* filesFree)
 {
     s32 bytesFree = 0;
     s32 files = 0;
@@ -631,15 +652,13 @@ static S32 iSG_mc_mount(S32 slot)
         result = CARDMount(slot, cardwork[slot], iSG_cb_unmount);
     } while (result == CARD_RESULT_BUSY);
 
-    switch (result)
+    if (result == CARD_RESULT_READY)
     {
-    case CARD_RESULT_READY:
         ret = 1;
-        break;
-    case CARD_RESULT_BROKEN:
-    case CARD_RESULT_ENCODING:
+    }
+    else if (result == CARD_RESULT_BROKEN || result == CARD_RESULT_ENCODING)
+    {
         ret = 1;
-        break;
     }
     return ret;
 }
@@ -675,7 +694,7 @@ S32 iSGTgtHaveRoom(st_ISGSESSION* isgdata, S32 tidx, S32 fsize, const char* dpat
 }
 
 // The number of the game's save files on the active card.
-extern "C" S32 fn_800138EC(st_ISGSESSION* isgdata)
+S32 iSGGameFileCount(st_ISGSESSION* isgdata)
 {
     if (isgdata->slot < 0)
     {
@@ -688,7 +707,7 @@ extern "C" S32 fn_800138EC(st_ISGSESSION* isgdata)
     }
     fn_80016768();
     S32 count = 0;
-    fn_80012414(data, -1, NULL, &count);
+    iSG_find_gamefile(data, -1, NULL, &count);
     return count;
 }
 
@@ -735,12 +754,13 @@ static S32 iSG_get_fsize(st_ISG_MEMCARD_DATA* mcdata, const char* fname)
 char* iSGFileModDate(st_ISGSESSION* isgdata, const char* fname)
 {
     static char datestr[0x40] = { 0 };
-    int yr = 0;
-    int day = 0;
-    int mon = 0;
-    int hr = 0;
-    int min = 0;
-    int sec = 0;
+    int yr, day, mon, hr, min, sec;
+    sec = 0;
+    min = 0;
+    hr = 0;
+    mon = 0;
+    day = 0;
+    yr = 0;
     if (iSG_get_fmoddate(&isgdata->mcdata[isgdata->slot], fname, &sec, &min, &hr, &mon, &day,
                          &yr) != 0)
     {
@@ -765,9 +785,14 @@ void iSGMakeTimeStamp(char* str)
 // Looks for the first save file without the game's signature. first receives its index and
 // deleted the index of the first one removed when delbad is set. Returns 1 when no file lacks
 // the signature (checked again after the deletions when delbad is set).
-extern "C" S32 fn_800132C4(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted)
+S32 iSGCheckForCorruptFiles(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted)
 {
     S32 rc = 1;
+    S32 i;
+    st_ISG_MEMCARD_DATA* data;
+    char* fname;
+    S32 kosher;
+    S32 wasdel = 0;
 
     if (first != NULL)
     {
@@ -777,14 +802,21 @@ extern "C" S32 fn_800132C4(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* 
     {
         return 1;
     }
-    st_ISG_MEMCARD_DATA* data = &isgdata->mcdata[isgdata->slot];
+    data = &isgdata->mcdata[isgdata->slot];
 
-    for (S32 i = 0; i < 8; i++)
+    for (i = 0; i < 8; i++)
     {
-        S32 wasdel = 0;
-        char* fname = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i);
-        S32 kosher = iSG_fileKosher(data, fname, delbad, &wasdel);
-        if (kosher == 0)
+        fname = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i);
+        kosher = iSG_fileKosher(data, fname, delbad, &wasdel);
+        if (kosher < 0)
+        {
+            // No such file.
+        }
+        else if (kosher > 0)
+        {
+            // The game's own file.
+        }
+        else
         {
             if (first != NULL && *first < 0)
             {
@@ -801,7 +833,14 @@ extern "C" S32 fn_800132C4(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* 
 
     if (delbad)
     {
-        rc = fn_800132C4(isgdata, 0, NULL, NULL) > 0 ? 1 : 0;
+        if (iSGCheckForCorruptFiles(isgdata, 0, NULL, NULL) > 0)
+        {
+            rc = 1;
+        }
+        else
+        {
+            rc = 0;
+        }
     }
     return rc;
 }
@@ -861,7 +900,7 @@ S32 iSGSelectGameDir(st_ISGSESSION* isgdata, const char* dname)
         return 0;
     }
 
-    return iSG_mc_isformatted(data) != 0;
+    return iSG_mc_isformatted(data) == 0 ? 0 : 1;
 }
 
 static S32 iSG_mc_isformatted(st_ISG_MEMCARD_DATA* mcdata)
@@ -913,12 +952,12 @@ S32 iSGSetupGameDir(st_ISGSESSION* isgdata, const char* dname, S32 force_iconfix
 S32 iSGSaveFile(st_ISGSESSION* isgdata, const char* fname, char* data, S32 n, S32 async,
                 char* label)
 {
-    void* alloc;
+    S32 writeret = 0;
+    st_ISG_MEMCARD_DATA* mcdata;
     S32 allocsize;
+    void* alloc;
     char* icondata;
     S32 iconsize;
-
-    S32 writeret = 0;
     en_ASYNC_OPERR operr = ISG_OPERR_NONE;
     CARDStat statA = { 0 };
     CARDStat statB = { 0 };
@@ -930,7 +969,7 @@ S32 iSGSaveFile(st_ISGSESSION* isgdata, const char* fname, char* data, S32 n, S3
         return 0;
     }
 
-    st_ISG_MEMCARD_DATA* mcdata = &isgdata->mcdata[isgdata->slot];
+    mcdata = &isgdata->mcdata[isgdata->slot];
     if (mcdata->unk_12C != 0)
     {
         isgdata->as_opstat = ISG_OPSTAT_FAILURE;
@@ -1027,15 +1066,14 @@ static void iSG_upd_icostat(CARDStat*, CARDStat* stat)
     CARDSetIconAddress(stat, 0x40);
     CARDSetIconAnim(stat, CARD_STAT_ANIM_LOOP);
 
-    S32 i;
-    for (i = 0; i < 4; ++i)
+    for (S32 i = 0; i < 4; ++i)
     {
         CARDSetIconFormat(stat, i, CARD_STAT_BANNER_RGB5A3);
         CARDSetIconSpeed(stat, i, CARD_STAT_SPEED_MIDDLE);
     }
 
-    CARDSetIconFormat(stat, i, CARD_STAT_ICON_NONE);
-    CARDSetIconSpeed(stat, i, CARD_STAT_SPEED_END);
+    CARDSetIconFormat(stat, 4, CARD_STAT_ICON_NONE);
+    CARDSetIconSpeed(stat, 4, CARD_STAT_SPEED_END);
 }
 
 // Reads all of fname's save data.
@@ -1051,10 +1089,10 @@ S32 iSGLoadFile(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 as
 S32 iSGReadLeader(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 numbytes,
                   S32 async)
 {
+    char* readbuf;
     S32 bufsize;
     S32 iconsize;
     S32 allocsize;
-    char* readbuf;
 
     S32 readret = 0;
     st_ISG_MEMCARD_DATA* data;
@@ -1347,26 +1385,31 @@ static S32 iSG_isSpaceForFile(st_ISG_MEMCARD_DATA* mcdata, S32 fsize, const char
     {
         return 0;
     }
-    len = iSG_cubeicon_size(mcdata->chan, mcdata->sectorSize) + fsize + 0x1FF & ~0x1FF;
+    len = iSG_cubeicon_size(mcdata->chan, mcdata->sectorSize);
+    len = len + fsize;
+    len = len + 0x1FF & ~0x1FF;
 
     do
     {
         result = CARDFreeBlocks(mcdata->chan, &byteNotUsed, &filesNotUsed);
     } while (result == CARD_RESULT_BUSY);
 
-    if (result != CARD_RESULT_READY)
+    if (result == CARD_RESULT_READY)
+    {
+        if (availOnDisk != NULL)
+        {
+            *availOnDisk = byteNotUsed;
+        }
+        if (bytesNeeded != NULL)
+        {
+            *bytesNeeded = len;
+        }
+    }
+    else
     {
         return 0;
     }
 
-    if (availOnDisk != NULL)
-    {
-        *availOnDisk = byteNotUsed;
-    }
-    if (bytesNeeded != NULL)
-    {
-        *bytesNeeded = len;
-    }
     if (needFile != NULL)
     {
         *needFile = 1;
@@ -1394,24 +1437,31 @@ static S32 iSG_isSpaceForFile(st_ISG_MEMCARD_DATA* mcdata, S32 fsize, const char
 
 // Counts the game's save files on the card. With a name buffer, also returns the name of the
 // file at position which.
-extern "C" S32 fn_80012414(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S32* count)
+S32 iSG_find_gamefile(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S32* count)
 {
     S32 rc = 0;
     S32 found = 0;
+    S32 i = 0;
+    S32 exists = 0;
+    S32 numfiles = 8;
+    char* fname = NULL;
 
     if (mcdata->unk_0 == 0)
     {
-        return 0;
+        rc = 0;
+        return rc;
     }
     if (name != NULL)
     {
         *name = '\0';
     }
 
-    for (S32 i = 0; i < 8; i++)
+    for (i = 0; i < numfiles; i++)
     {
-        char* fname = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i);
-        if (iSG_get_finfo(mcdata, fname))
+        exists = 0;
+        fname = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i);
+        exists = iSG_get_finfo(mcdata, fname);
+        if (exists)
         {
             found++;
             if (name != NULL && found - 1 == which)
@@ -1424,6 +1474,7 @@ extern "C" S32 fn_80012414(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S
                 }
             }
         }
+        fname = NULL;
     }
 
     if (count != NULL)
@@ -1438,6 +1489,7 @@ static S32 iSG_get_finfo(st_ISG_MEMCARD_DATA* mcdata, const char* dpath)
 {
     S32 rc = 0;
     en_ASYNC_OPERR operr = ISG_OPERR_NONE;
+    CARDFileInfo finfo = { 0 };
 
     if (iSG_mc_fopen(mcdata, dpath, -1, ISG_IOMODE_READ, &operr))
     {
@@ -1454,6 +1506,13 @@ static S32 iSG_get_finfo(st_ISG_MEMCARD_DATA* mcdata, const char* dpath)
 static S32 iSG_curKosher(CARDStat* stat, CARDFileInfo* info)
 {
     S32 rc = 1;
+    S32 result = CARD_RESULT_READY;
+    S32 bufsize = 0x3E00;
+    S32 sigofs = 0x3A40;
+    void* alloc = NULL;
+    char* buf = NULL;
+    char* sig = NULL;
+    S32 diff = 0;
 
     if ((stat->iconAddr < 1 || stat->iconAddr > 0x7FFFFFFF) &&
         (stat->commentAddr < 1 || stat->commentAddr > 0x7FFFFFFF))
@@ -1464,24 +1523,29 @@ static S32 iSG_curKosher(CARDStat* stat, CARDFileInfo* info)
     {
         char stuff[0x200] = { 0 };
         sprintf(stuff, "SCOOBY-DOO:NIGHTOF100FRIGHTS::RyanNeilDan");
-        void* alloc = xMemPushTemp(0x3E00 + 0x1F);
-        char* buf = (char*)((U32)alloc + 0x1F & ~0x1F);
+        alloc = xMemPushTemp(bufsize + 0x1F);
+        buf = (char*)((U32)alloc + 0x1F & ~0x1F);
 
-        S32 result;
+        result = CARD_RESULT_BUSY;
         do
         {
-            result = CARDRead(info, buf, 0x3E00, 0);
+            result = CARDRead(info, buf, bufsize, 0);
         } while (result == CARD_RESULT_BUSY);
 
         if (result == CARD_RESULT_READY)
         {
-            if (memcmp(buf + 0x3A40, stuff, strlen(stuff) - 1))
+            sig = buf + sigofs;
+            diff = memcmp(sig, stuff, strlen(stuff) - 1);
+            if (diff != 0)
             {
                 rc = 0;
             }
         }
 
         xMemPopTemp(alloc);
+        alloc = NULL;
+        buf = NULL;
+        sig = NULL;
     }
 
     return rc;
@@ -1592,35 +1656,48 @@ static S32 iSG_cubeicon_size(S32 slot, S32 sectorSize)
 
 static S32 iSG_tpl_unpack(TPLPalette* tpl)
 {
+    S32 rc = 0;
+    S32 i = 0;
+    U32 base = (U32)tpl;
+    TPLDescriptor* desc = NULL;
+    TPLHeader* tex = NULL;
+    TPLClutHeader* clut = NULL;
+
     if (tpl->versionNumber != 0x20AF30)
     {
-        return 0;
+        rc = 0;
+        return rc;
     }
 
-    tpl->descriptorArray = (TPLDescriptor*)((U32)tpl + (U32)tpl->descriptorArray);
-    for (S32 i = 0; i < tpl->numDescriptors; ++i)
+    tpl->descriptorArray = (TPLDescriptor*)(base + (U32)tpl->descriptorArray);
+    for (i = 0; i < tpl->numDescriptors; ++i)
     {
-        TPLDescriptor* desc = &tpl->descriptorArray[i];
+        desc = &tpl->descriptorArray[i];
+        tex = NULL;
+        clut = NULL;
         if (desc->textureHeader != NULL)
         {
-            desc->textureHeader = (TPLHeader*)((U32)tpl + (U32)desc->textureHeader);
+            desc->textureHeader = (TPLHeader*)(base + (U32)desc->textureHeader);
             if (desc->textureHeader->unpacked == 0)
             {
-                desc->textureHeader->data = (void*)((U32)tpl + (U32)desc->textureHeader->data);
+                desc->textureHeader->data = (void*)(base + (U32)desc->textureHeader->data);
                 desc->textureHeader->unpacked = 1;
+                rc = 1;
             }
         }
         if (desc->CLUTHeader != NULL)
         {
-            desc->CLUTHeader = (TPLClutHeader*)((U32)tpl + (U32)desc->CLUTHeader);
+            desc->CLUTHeader = (TPLClutHeader*)(base + (U32)desc->CLUTHeader);
             if (desc->CLUTHeader->unpacked == 0)
             {
                 desc->CLUTHeader->data = tpl;
                 desc->CLUTHeader->unpacked = 1;
+                rc = 1;
             }
         }
     }
-    return 1;
+    rc = 1;
+    return rc;
 }
 
 static S32 iSG_mc_unmount(S32 slot)
@@ -1659,13 +1736,22 @@ static void iSG_cb_unmount(s32 chan, s32 result)
 
 static S32 iSG_mc_format(st_ISG_MEMCARD_DATA* mcdata, S32, S32* canRecover)
 {
+    S32 rc = 0;
+    S32 ret = 0;
+    s32 result = CARD_RESULT_READY;
+    s32 xferBytes = 0;
+    u16 encoding = 0;
+    s32 memSize = 0;
+    s32 sectorSize = 0;
+
     if (mcdata->unk_12C != 0)
     {
         if (canRecover != NULL)
         {
             *canRecover = 0;
         }
-        return 0;
+        ret = 0;
+        return ret;
     }
 
     if (canRecover != NULL)
@@ -1673,13 +1759,14 @@ static S32 iSG_mc_format(st_ISG_MEMCARD_DATA* mcdata, S32, S32* canRecover)
         *canRecover = 1;
     }
 
-    s32 result;
+    xferBytes = 0;
+    encoding = 0;
+    result = CARD_RESULT_BUSY;
     do
     {
         result = CARDFormat(mcdata->chan);
     } while (result == CARD_RESULT_BUSY);
 
-    S32 ret;
     if (result == CARD_RESULT_READY)
     {
         ret = 1;
@@ -1703,7 +1790,8 @@ static S32 iSG_mc_format(st_ISG_MEMCARD_DATA* mcdata, S32, S32* canRecover)
             break;
         }
     }
-    return ret;
+    rc = ret;
+    return rc;
 }
 
 // Opens fname for reading, or recreates it at fsize bytes for writing. Only this game's files
@@ -1768,6 +1856,11 @@ static S32 iSG_mc_fopen(st_ISG_MEMCARD_DATA* mcdata, const char* fname, S32 fsiz
                 default:
                     *operr = ISG_OPERR_OTHER;
                     break;
+                case CARD_RESULT_READY:
+                case CARD_RESULT_BUSY:
+                case CARD_RESULT_EXIST:
+                case CARD_RESULT_NOPERM:
+                    break;
                 }
             }
         }
@@ -1818,7 +1911,7 @@ static S32 iSG_mc_fclose(st_ISG_MEMCARD_DATA* mcdata, CARDStat* stat)
         ret = 1;
     }
 
-    if (stat != NULL)
+    if (stat)
     {
         memcpy(stat, &mcdata->fstat, sizeof(CARDStat));
     }
@@ -1871,7 +1964,11 @@ static void iSG_cb_asyndone(s32, s32)
 // Reads len bytes at offset, keeping the sound system running while the card works.
 static S32 iSG_mc_fread(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len, S32 offset)
 {
+    S32 ret = 0;
     S32 x = 1000;
+    CARDStat* fstat = &mcdata->fstat;
+    s32 xferBytes = 0;
+    s32 asynresult = CARD_RESULT_READY;
     s32 result = CARDGetResultCode(mcdata->chan);
     do
     {
@@ -1880,33 +1977,45 @@ static S32 iSG_mc_fread(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len, S32 off
 
     if (result != CARD_RESULT_READY)
     {
-        return 0;
+        ret = 0;
+        return ret;
     }
 
-    CARDGetXferredBytes(mcdata->chan);
+    xferBytes = CARDGetXferredBytes(mcdata->chan);
     do
     {
-        result = CARDReadAsync(&mcdata->finfo, buf, len, offset, iSG_cb_asyndone);
-    } while (result == CARD_RESULT_BUSY);
+        asynresult = CARDReadAsync(&mcdata->finfo, buf, len, offset, iSG_cb_asyndone);
+    } while (asynresult == CARD_RESULT_BUSY);
 
-    if (result != CARD_RESULT_READY)
+    if (asynresult != CARD_RESULT_READY)
     {
-        return 0;
+        ret = 0;
+        return ret;
     }
 
+    xferBytes = 0;
     result = CARD_RESULT_BUSY;
     do
     {
         if (x++ > 500)
         {
             xSndUpdate(globals.update_dt);
-            CARDGetXferredBytes(mcdata->chan);
+            xferBytes = CARDGetXferredBytes(mcdata->chan);
             result = CARDGetResultCode(mcdata->chan);
             x = 0;
         }
         fn_80016768();
     } while (result == CARD_RESULT_BUSY);
-    return result != 0 ? 0 : 1;
+
+    if (result == CARD_RESULT_READY)
+    {
+        ret = 1;
+    }
+    else
+    {
+        ret = 0;
+    }
+    return ret;
 }
 
 // Writes len bytes at the open file's write position, keeping the sound system running while
@@ -1916,6 +2025,7 @@ static S32 iSG_mc_fwrite(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len)
     S32 ret = 0;
     S32 x = 1000;
     CARDStat* fstat = &mcdata->fstat;
+    s32 xferBytes = 0;
     s32 result;
     do
     {
@@ -1924,10 +2034,11 @@ static S32 iSG_mc_fwrite(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len)
 
     if (result != CARD_RESULT_READY)
     {
-        return 0;
+        ret = 0;
+        return ret;
     }
 
-    CARDGetXferredBytes(mcdata->chan);
+    xferBytes = CARDGetXferredBytes(mcdata->chan);
     s32 asynresult;
     do
     {
@@ -1936,9 +2047,11 @@ static S32 iSG_mc_fwrite(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len)
 
     if (asynresult != CARD_RESULT_READY)
     {
-        return 0;
+        ret = 0;
+        return ret;
     }
 
+    xferBytes = 0;
     result = CARD_RESULT_BUSY;
     do
     {
@@ -1946,7 +2059,7 @@ static S32 iSG_mc_fwrite(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len)
         {
             result = CARDGetResultCode(mcdata->chan);
             xSndUpdate(globals.update_dt);
-            CARDGetXferredBytes(mcdata->chan);
+            xferBytes = CARDGetXferredBytes(mcdata->chan);
             x = 0;
         }
         fn_80016768();
