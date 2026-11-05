@@ -367,7 +367,7 @@ char* iSGTgtSlotName(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype)
     return slotname;
 }
 
-// Unused stand-in for stripped card-message code; its locals hold the message text.
+// Unused.
 char* iSG_UnusedCardMessages(char* buf, S32 err)
 {
     char letters[] = "AB------";
