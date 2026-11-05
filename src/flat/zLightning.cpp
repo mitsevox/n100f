@@ -10,8 +10,6 @@
 
 #include "rwcore.h"
 
-#include <stdio.h>
-
 static const U8 cSparkColors[24] = {
     0xFF, 0x00, 0x00, 0xFF, 0x80, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF, 0xFF,
     0x00, 0x00, 0x80, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0x80, 0x80, 0x00, 0xFF,
@@ -122,6 +120,7 @@ _tagLightning* zLightningAdd(_tagLightningAdd* add)
     return l;
 }
 
+// Advance bolt lifetime, perturb its interior points, and emit colored sparks.
 static void UpdateLightning(_tagLightning* l, F32 seconds)
 {
     if (!(l->flags & 0x10))
@@ -228,9 +227,12 @@ static void UpdateLightning(_tagLightning* l, F32 seconds)
 
             col = irand();
             col = col % 6 * 4;
-            info.color_death[0] = info.color_birth[0] = cSparkColors[col++];
-            info.color_death[1] = info.color_birth[1] = cSparkColors[col++];
-            info.color_death[2] = info.color_birth[2] = cSparkColors[col++];
+            info.color_death[0] = info.color_birth[0] = cSparkColors[col];
+            col++;
+            info.color_death[1] = info.color_birth[1] = cSparkColors[col];
+            col++;
+            info.color_death[2] = info.color_birth[2] = cSparkColors[col];
+            col++;
             info.color_birth[3] = cSparkColors[col];
             info.color_death[3] = 0x80;
 
@@ -252,12 +254,11 @@ void zLightningUpdate(F32 seconds)
     }
 }
 
-static void zLightning_UnknownTestText()
-{
-    printf("X to test lightning\n");
-    printf("               ");
-}
+static const char sLightningTextureName[] = "LIGHTNING";
+static const char sLightningTestPrompt[] = "X to test lightning\n";
+static const char sLightningTestSpaces[] = "               ";
 
+// Draw a bright core and a wider, flickering halo from the same points.
 static void RenderLightning(_tagLightning* l)
 {
     static RxObjSpace3DVertex sStripVert[128];
@@ -273,12 +274,26 @@ static void RenderLightning(_tagLightning* l)
                        l->point[0].z);
     RwIm3DVertexSetU(&sStripVert[0], 0.0f);
     RwIm3DVertexSetV(&sStripVert[0], 0.0f);
-    RwIm3DVertexSetRGBA(&sStripVert[0], l->r, l->g, l->b, alphau8);
+    {
+        RwRGBA color;
+        color.red = l->r;
+        color.green = l->g;
+        color.blue = l->b;
+        color.alpha = alphau8;
+        RwIm3DVertexSetRGBA(&sStripVert[0], color.red, color.green, color.blue, color.alpha);
+    }
     RwIm3DVertexSetPos(&sStripVert[1], l->point[0].x, l->point[0].y - l->thickness,
                        l->point[0].z);
     RwIm3DVertexSetU(&sStripVert[1], 0.0f);
     RwIm3DVertexSetV(&sStripVert[1], 1.0f);
-    RwIm3DVertexSetRGBA(&sStripVert[1], l->r, l->g, l->b, alphau8);
+    {
+        RwRGBA color;
+        color.red = l->r;
+        color.green = l->g;
+        color.blue = l->b;
+        color.alpha = alphau8;
+        RwIm3DVertexSetRGBA(&sStripVert[1], color.red, color.green, color.blue, color.alpha);
+    }
 
     verts = 2;
     for (S32 i = 1; i < l->total_points; i++)
@@ -294,7 +309,14 @@ static void RenderLightning(_tagLightning* l)
             RwIm3DVertexSetU(&sStripVert[verts], 0.0f);
         }
         RwIm3DVertexSetV(&sStripVert[verts], 0.0f);
-        RwIm3DVertexSetRGBA(&sStripVert[verts], l->r, l->g, l->b, alphau8);
+        {
+            RwRGBA color;
+            color.red = l->r;
+            color.green = l->g;
+            color.blue = l->b;
+            color.alpha = alphau8;
+            RwIm3DVertexSetRGBA(&sStripVert[verts], color.red, color.green, color.blue, color.alpha);
+        }
         verts++;
 
         RwIm3DVertexSetPos(&sStripVert[verts], l->point[i].x, l->point[i].y - l->thickness,
@@ -308,7 +330,14 @@ static void RenderLightning(_tagLightning* l)
             RwIm3DVertexSetU(&sStripVert[verts], 0.0f);
         }
         RwIm3DVertexSetV(&sStripVert[verts], 1.0f);
-        RwIm3DVertexSetRGBA(&sStripVert[verts], l->r, l->g, l->b, alphau8);
+        {
+            RwRGBA color;
+            color.red = l->r;
+            color.green = l->g;
+            color.blue = l->b;
+            color.alpha = alphau8;
+            RwIm3DVertexSetRGBA(&sStripVert[verts], color.red, color.green, color.blue, color.alpha);
+        }
         verts++;
 
         if (verts >= 128)
@@ -336,12 +365,26 @@ static void RenderLightning(_tagLightning* l)
                        l->point[0].z);
     RwIm3DVertexSetU(&sStripVert[0], 0.0f);
     RwIm3DVertexSetV(&sStripVert[0], 0.0f);
-    RwIm3DVertexSetRGBA(&sStripVert[0], l->r, l->g, l->b, alphau8);
+    {
+        RwRGBA color;
+        color.red = l->r;
+        color.green = l->g;
+        color.blue = l->b;
+        color.alpha = alphau8;
+        RwIm3DVertexSetRGBA(&sStripVert[0], color.red, color.green, color.blue, color.alpha);
+    }
     RwIm3DVertexSetPos(&sStripVert[1], l->point[0].x, l->point[0].y - l->thickness,
                        l->point[0].z);
     RwIm3DVertexSetU(&sStripVert[1], 0.0f);
     RwIm3DVertexSetV(&sStripVert[1], 1.0f);
-    RwIm3DVertexSetRGBA(&sStripVert[1], l->r, l->g, l->b, alphau8);
+    {
+        RwRGBA color;
+        color.red = l->r;
+        color.green = l->g;
+        color.blue = l->b;
+        color.alpha = alphau8;
+        RwIm3DVertexSetRGBA(&sStripVert[1], color.red, color.green, color.blue, color.alpha);
+    }
 
     verts = 2;
     for (S32 i = 1; i < l->total_points; i++)
@@ -357,7 +400,14 @@ static void RenderLightning(_tagLightning* l)
             RwIm3DVertexSetU(&sStripVert[verts], 0.0f);
         }
         RwIm3DVertexSetV(&sStripVert[verts], 0.0f);
-        RwIm3DVertexSetRGBA(&sStripVert[verts], l->r, l->g, l->b, alphau8);
+        {
+            RwRGBA color;
+            color.red = l->r;
+            color.green = l->g;
+            color.blue = l->b;
+            color.alpha = alphau8;
+            RwIm3DVertexSetRGBA(&sStripVert[verts], color.red, color.green, color.blue, color.alpha);
+        }
         verts++;
 
         RwIm3DVertexSetPos(&sStripVert[verts], l->point[i].x, l->point[i].y - l->thickness,
@@ -371,7 +421,14 @@ static void RenderLightning(_tagLightning* l)
             RwIm3DVertexSetU(&sStripVert[verts], 0.0f);
         }
         RwIm3DVertexSetV(&sStripVert[verts], 1.0f);
-        RwIm3DVertexSetRGBA(&sStripVert[verts], l->r, l->g, l->b, alphau8);
+        {
+            RwRGBA color;
+            color.red = l->r;
+            color.green = l->g;
+            color.blue = l->b;
+            color.alpha = alphau8;
+            RwIm3DVertexSetRGBA(&sStripVert[verts], color.red, color.green, color.blue, color.alpha);
+        }
         verts++;
 
         if (verts >= 128)
@@ -396,7 +453,7 @@ void zLightningRender()
     RwTexture* tex;
     S32 i;
 
-    tex = (RwTexture*)xSTFindAsset(xStrHash("LIGHTNING"), NULL);
+    tex = (RwTexture*)xSTFindAsset(xStrHash((char*)sLightningTextureName), NULL);
     if (tex)
     {
         RwRenderStateSet(rwRENDERSTATETEXTURERASTER, tex->raster);
