@@ -135,39 +135,10 @@ static void _repartition(U8* lo, U8* hi, U32 stride, U32 keyOffset, U32 bit)
     } while (sp != stack);
 }
 
-static inline void _insertionsort(U8* base, U32 numItems, U32 stride, U32 keyOffset)
+static void _insertionsort(U8* base, U32 numItems, U32 stride, U32 keyOffset)
 {
-    U32 minIndex;
     U32 i;
-    U32 minKey;
     U8* item;
-
-    i = SORT_SENTINELSEARCH;
-
-    if (numItems - 1 < SORT_SENTINELSEARCH)
-    {
-        i = numItems - 1;
-    }
-
-    minIndex = i;
-    minKey = SORTKEY(base + i * stride, keyOffset);
-    i--;
-
-    do
-    {
-        U32 key = SORTKEY(base + i * stride, keyOffset);
-
-        if (key < minKey)
-        {
-            minKey = key;
-            minIndex = i;
-        }
-    } while (i--);
-
-    if (minIndex)
-    {
-        SWAPITEMS(base, base + minIndex * stride, stride);
-    }
 
     for (i = numItems, item = base; item += stride, --i;)
     {
@@ -196,6 +167,37 @@ void _rx_rxRadixExchangeSort(void* base, U32 numItems, U32 stride, U32 keyOffset
 
         if (numItems > 1)
         {
+            U32 i;
+            U32 minKey;
+            U32 minIndex;
+
+            i = SORT_SENTINELSEARCH;
+
+            if (numItems - 1 < SORT_SENTINELSEARCH)
+            {
+                i = numItems - 1;
+            }
+
+            minIndex = i;
+            minKey = SORTKEY(((U8*)base) + i * stride, keyOffset);
+            i--;
+
+            do
+            {
+                U32 key = SORTKEY(((U8*)base) + i * stride, keyOffset);
+
+                if (key < minKey)
+                {
+                    minKey = key;
+                    minIndex = i;
+                }
+            } while (i--);
+
+            if (minIndex)
+            {
+                SWAPITEMS(((U8*)base), ((U8*)base) + minIndex * stride, stride);
+            }
+
             _insertionsort((U8*)base, numItems, stride, keyOffset);
         }
     }
