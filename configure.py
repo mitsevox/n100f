@@ -555,7 +555,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xParGroup.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xParMgr.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xPartition.cpp"),
-            Object(NonMatching, "flat/xpkrsvc.cpp", cflags=cflags_game_inlineonly),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xpkrsvc.cpp", cflags=cflags_game_inlineonly),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xQuickCull.cpp"),
             Object(NonMatching, "flat/xsavegame.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xScene.cpp"),
