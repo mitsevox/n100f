@@ -630,7 +630,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zUIFont.cpp"),
             Object(NonMatching, "flat/zUI.cpp"),
             Object(NonMatching, "flat/zVar.cpp"),
-            Object(NonMatching, "flat/zVolume.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zVolume.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "gc/iAnim.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "gc/iMix.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "gc/ngcrad3d.c", cflags=cflags_game_nocppext),
