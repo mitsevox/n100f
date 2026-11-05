@@ -456,6 +456,8 @@ static en_ZVILLAIN_HEADBUTT_RESPONSE VOUT_spikey_header(st_zEntVillain* ent);
 static S32 VOUT_apply_anchor(st_zEntVillain* vil);
 static S32 VILN_std_xtrarend(st_zEntVillain* vil);
 static void VWEP_mm_zapPlayer(st_zEntVillain* vil);
+static inline void VSUP_ang_toXZDir(F32 angle, _xVec3* dir);
+static inline F32 VSUP_dot_faceToEnt(const st_zEntVillain* vil, const _zEnt* ent);
 static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs);
 static inline void VEFX_mm_teleportHide(F32 dt);
 static inline void VEFX_mm_teleportShow(st_zEntVillain* vil, F32 dt);
@@ -12813,16 +12815,11 @@ static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
 // either step failed.
 static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
 {
-    S32 rc;
+    S32 rc = 0;
     S32 result = 1;
+    S32 i = 0;
     static S32 trangoal_safety_nest = 0;
     st_STIMULUS_CONTEXT_DATA tranctxt = { ZVIL_STIM_NONE };
-
-    if (0)
-    {
-        trangoal_safety_nest++;
-        if (trangoal_safety_nest > 1) return 0;
-    }
 
     if (stimctxt->stim == ZVIL_STIM_TRANGOAL && stimctxt->trangoal != ent->goal)
     {
@@ -12831,12 +12828,13 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
             ent->mode = stimctxt->tranmode;
         }
 
-        for (S32 i = 0; i < 4; i++)
+        for (i = 0; i < 4; i++)
         {
             ent->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
             ent->snd_queue[i].sndDirect = 0;
         }
 
+        rc = 0;
         tranctxt.stim = ZVIL_STIM_EXITGOAL;
         tranctxt.trangoal = ent->goal;
         rc = ent->vhf->trangoal(ent, &tranctxt, dt);
@@ -12845,6 +12843,7 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
             result = 0;
         }
 
+        rc = 0;
         stimctxt->stim = ZVIL_STIM_ENTERGOAL;
         rc = ent->vhf->trangoal(ent, stimctxt, dt);
         if (!rc)
@@ -12855,8 +12854,6 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
         VGOL_set(ent, stimctxt->trangoal);
         ent->tmr_list[ZVIL_TYMR_CURGOAL] = 0.0f;
     }
-
-    if (0) trangoal_safety_nest--;
 
     return result;
 }
@@ -13076,6 +13073,78 @@ static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*
 
     vil->domove |= 0x80000000;
     return 1;
+}
+
+// Sends the villain to a widget, dst_offset short of it, and returns whether it should use its
+// normal path navigation. Movement is allowed, the next navigation point becomes the previous one
+// and is cleared, and misc flag 0x20000000 (follow) or 0x10000000 (go to) is set, the other
+// cleared, along with 0x40000000 and 0x80000000. A move point to follow becomes the next
+// navigation point (normal navigation, both flags cleared); one to go to gives its position. An
+// entity to follow becomes the follow target; one to go to gives its position.
+static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset, S32 follow)
+{
+    S32 do_std_nav = 0;
+
+    do_std_nav = 0;
+    vil->allow |= 1;
+    if (vil->nav_next)
+    {
+        vil->nav_prev = vil->nav_next;
+    }
+    vil->nav_next = NULL;
+    vil->need_navpt = 0;
+
+    if (follow)
+    {
+        vil->flg_misc |= 0x20000000;
+        vil->flg_misc &= ~0x10000000;
+    }
+    else
+    {
+        vil->flg_misc &= ~0x20000000;
+        vil->flg_misc |= 0x10000000;
+    }
+    vil->flg_misc &= ~0x40000000;
+    vil->flg_misc &= ~0x80000000;
+    vil->ds2_goto_keepaway = dst_offset * dst_offset;
+
+    switch (widge->baseType)
+    {
+    case 13:
+        if (follow)
+        {
+            vil->nav_next = (_zMovePoint*)widge;
+            do_std_nav = 1;
+            vil->flg_misc &= ~0x10000000;
+            vil->flg_misc &= ~0x20000000;
+        }
+        else
+        {
+            xVec3Copy(&vil->pos_goto, zMovePointGetPos((_zMovePoint*)widge));
+        }
+        break;
+    case 2:
+    case 3:
+    case 4:
+    case 6:
+    case 8:
+    case 11:
+    case 12:
+    case 18:
+    case 23:
+    case 24:
+    case 27:
+        if (follow)
+        {
+            vil->tgt_follow = (_xEnt*)widge;
+        }
+        else
+        {
+            xVec3Copy(&vil->pos_goto, &xModelGetFrame(((_xEnt*)widge)->model)->pos);
+        }
+        break;
+    }
+    return do_std_nav;
 }
 
 // Whether the wall with normal vec_fromwall is roughly across the villain's travel direction. If
@@ -14038,6 +14107,45 @@ static S32 zVIL_chk_pitfall(st_zEntVillain* vil, S32 prev, F32 rand)
     return ispit;
 }
 
+// The Mastermind's zap hurts the player by the villain type's damage. A push along the line from
+// the villain is worked out (stronger the more squarely he faces the player, at least a fifth,
+// times the type's strength) but not passed on: the damage call gets no direction.
+static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
+{
+    _xVec3 vec_push = { 0 };
+    F32 fac_push = VSUP_dot_faceToEnt(vil, &globals.player.ent);
+    S32 dmg;
+
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    dmg = 0;
+    fac_push = MAX(0.2f, fac_push);
+    xVec3Copy(&vec_push, &vil->precalc.dir_VtoP);
+    fac_push *= g_npcTable[vil->asset->subtype].strength;
+    vec_push.x *= fac_push;
+    vec_push.y *= fac_push;
+    dmg = g_npcTable[vil->asset->subtype].dmg_give;
+    zEntPlayer_Damage(vil, (dmg > 0) ? dmg : 0, NULL);
+}
+
 // Read each villain setting from the model's INI parameters, falling back to the defaults here.
 static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
 {
@@ -14557,10 +14665,11 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
 // Reserve a projectile in the category used by this villain.
 static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil)
 {
-    en_ZPRJ_CATEGORY cat;
+    en_ZPRJ_CATEGORY cat = ZPRJ_CAT_ARROW;
     en_ZVMM_FLASK_TYPE flask_type = MAST_FLSK_SMOG;
-    zEntProjectile* prj;
+    zEntProjectile* prj = NULL;
 
+    prj = NULL;
     switch (vil->asset->subtype)
     {
     case eEntVillainTypeGargoyle:
@@ -14586,10 +14695,6 @@ static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil)
     prj->owner = vil;
     prj->ownerContext = NULL;
     prj->ownerNotify = VWEP_prjOwnerNotify;
-    if (0)
-    {
-        if (prj->owner != vil) xSceneID2Name(globals.sceneCur, vil->id);
-    }
     return prj;
 }
 
@@ -14903,8 +15008,9 @@ static S32 VWEP_lobInitBKAxe(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_o
     _xMat3x3 mat_rot = { 0 };
     _xVec3 vec_tmp = { 0 };
     _xVec3 ang = { 0 };
-    st_BKAXE_DATA* axfx = (st_BKAXE_DATA*)prj->xtradata;
+    st_BKAXE_DATA* axfx = NULL;
 
+    axfx = (st_BKAXE_DATA*)prj->xtradata;
     VWEP_lobInitArcing(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
     xMat3x3Euler(&mat_rot, &vec_initrot);
     xMat4x3RMul3x3(&prj->frame->mat, &mat_rot, &prj->frame->mat);
@@ -14921,10 +15027,6 @@ static S32 VWEP_lobInitBKAxe(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_o
     axfx->planes.y = vil->dst_lob;
     axfx->planes.z = -268.5f;
     axfx->planes.x = 46.0f;
-    if (0)
-    {
-        if (axfx->rad_zap < 0.0f) xSceneID2Name(globals.sceneCur, vil->id);
-    }
     if (vec_spin)
     {
         prj->FlexMatSet(vec_spin, globals.update_dt);
@@ -14935,6 +15037,8 @@ static S32 VWEP_lobInitBKAxe(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_o
         prj->flg_categ &= ~0x4000000;
     }
     prj->ds2_maxlife = 10000.0f;
+    axfx = NULL;
+    prj = NULL;
     return 1;
 }
 
@@ -14974,11 +15078,13 @@ static S32 VWEP_lobInitGGQuaker(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* ve
 static S32 VWEP_lobInitRBSword(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
                                _xVec3* vec_spin, F32 arcness, F32 heavy)
 {
-    zEntProjectile* prj = vil->prj_reserved;
+    zEntProjectile* prj = NULL;
+    prj = vil->prj_reserved;
     S32 rc;
     _xVec3 tmp_vec = { 0 };
-    st_REDBEARD_SWORD* sword = (st_REDBEARD_SWORD*)prj->xtradata;
+    st_REDBEARD_SWORD* sword = NULL;
 
+    sword = (st_REDBEARD_SWORD*)prj->xtradata;
     rc = VSUP_vertPos(vil, ZVIL_MDLVERT_SWORDHANDLE, &tmp_vec);
     if (!rc)
     {
@@ -15006,6 +15112,8 @@ static S32 VWEP_lobInitRBSword(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec
     sword->spd_fly = (1.999999f * vil->dst_extend) / 5.0f;
     xVec3Copy(&sword->dir_end, &vil->precalc.dir_VtoP);
     xVec3SMul(&sword->pos_end, &sword->dir_end, sword->dst_far);
+    sword = NULL;
+    prj = NULL;
     return 1;
 }
 
@@ -15017,20 +15125,13 @@ static S32 VWEP_lobInitRBSword(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec
 static S32 VWEP_lobInitMMFlask(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec_off,
                                _xVec3* vec_spin, F32 arcness, F32 heavy)
 {
-    zEntProjectile* prj = vil->prj_reserved;
+    zEntProjectile* prj = NULL;
+    prj = vil->prj_reserved;
     _xMat3x3 mat_rot = { 0 };
-    st_ZVMM_FLASK_DATA* flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
+    st_ZVMM_FLASK_DATA* flask = NULL;
     static _xVec3 vec_initwobble = { 0.0f, 0.0f, PI / 4 };
 
-    if (0)
-    {
-        if (!flask)
-        {
-            xSceneID2Name(globals.sceneCur, vil->id);
-            return 0;
-        }
-    }
-
+    flask = (st_ZVMM_FLASK_DATA*)prj->xtradata;
     VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, (_xVec3*)&prj->frame->mat.pos);
     xMat3x3Euler(&mat_rot, &vec_initwobble);
     xMat4x3RMul3x3(&prj->frame->mat, &mat_rot, &prj->frame->mat);
@@ -15067,6 +15168,8 @@ static S32 VWEP_lobInitMMFlask(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec
     {
         flask->heavy = heavy;
     }
+    flask = NULL;
+    prj = NULL;
     return 1;
 }
 
@@ -16257,6 +16360,57 @@ static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bo
     {
         RwIm3DRenderPrimitive(rwPRIMTYPETRISTRIP);
         RwIm3DEnd();
+    }
+}
+
+// Draws the gum strands that hold a gummed villain to the floor: from each of the first five
+// model vertices that is set, a strand runs between the vertex height and the villain's base
+// height, using the GUM-FLOOR texture. Strands shorter than 0.002 are skipped.
+static void VEFX_plop_gum(st_zEntVillain* ent)
+{
+    _xVec3 from = { 0 };
+    _xVec3 to = { 0 };
+    _xVec3 npcpos = { 0 };
+    _xVec3 pos_vert = { 0 };
+    _xMat3x3 dir_shoot = { 0 };
+    RwTexture* tex = NULL;
+    S32 i = 0;
+    _xVec3 vec;
+
+    tex = (RwTexture*)xSTFindAsset(xStrHash("GUM-FLOOR"), NULL);
+    if (tex)
+    {
+        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, tex->raster);
+    }
+
+    xVec3Copy(&npcpos, xEntGetPos(ent));
+    for (i = 0; i <= 4; i++)
+    {
+        if (!VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)i, &pos_vert))
+        {
+            continue;
+        }
+
+        xVec3Copy(&to, &pos_vert);
+        from.x = pos_vert.x;
+        from.z = pos_vert.z;
+        if (pos_vert.y > npcpos.y)
+        {
+            from.y = npcpos.y;
+        }
+        else
+        {
+            from.y = pos_vert.y;
+            to.y = npcpos.y;
+        }
+
+        if (to.y - from.y < 0.002f)
+        {
+            continue;
+        }
+        xVec3Sub(&vec, &from, &to);
+        xMat3x3LookVec(&dir_shoot, &vec);
+        SuperVillainGumDraw(&to, &from, 0.1f, 0.35f);
     }
 }
 
@@ -19388,6 +19542,26 @@ static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
         out->z *= -1.0f;
     else if (alter->z > 0.0f && out->z < 0.0f)
         out->z *= -1.0f;
+}
+
+// The flat (x and z) unit direction of a heading.
+static inline void VSUP_ang_toXZDir(F32 angle, _xVec3* dir)
+{
+    dir->x = sin(angle);
+    dir->y = 0.0f;
+    dir->z = cos(angle);
+}
+
+// How squarely the villain faces the entity: the dot product of its facing direction and the
+// direction to the entity's bound centre (1 when facing it, -1 when facing away).
+static inline F32 VSUP_dot_faceToEnt(const st_zEntVillain* vil, const _zEnt* ent)
+{
+    _xVec3 dir_ent = { 0 };
+    _xVec3 dir_face = { 0 };
+
+    VSUP_dir_toEnt(vil, ent, &dir_ent);
+    VSUP_ang_toXZDir(vil->frame->rot.angle, &dir_face);
+    return xVec3Dot(&dir_ent, &dir_face);
 }
 
 // Accumulate collision depenetration and redirect navigation when facing a wall.
