@@ -458,10 +458,6 @@ static S32 PKR_parse_TOC(st_HIPLOADDATA* pkg, st_PACKER_READ_DATA* pr)
     return done;
 }
 
-// One step of the background loader. With no layer in flight, picks the next unloaded layer,
-// gets its memory and starts reading the whole layer in one go; otherwise polls that read and,
-// once it is done, points the layer's assets into the buffer and runs their conversions.
-// Returns 0 only when there is nothing left to load.
 // A layer's read buffer in the RenderWare resource arena.
 static inline char* PKR_LayerArenaMem(st_PACKER_READ_DATA* pr, st_PACKER_LTOC_NODE* layer)
 {
@@ -474,6 +470,10 @@ static inline char* PKR_LayerHeapMem(st_PACKER_LTOC_NODE* layer)
     return (char*)PKR_getmem(layer->laysize);
 }
 
+// One step of the background loader. With no layer in flight, picks the next unloaded layer,
+// gets its memory and starts reading the whole layer in one go; otherwise polls that read and,
+// once it is done, points the layer's assets into the buffer and runs their conversions.
+// Returns 0 only when there is nothing left to load.
 static S32 PKR_LoadStep_Async()
 {
     en_READ_ASYNC_STATUS readstat;
