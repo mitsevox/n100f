@@ -97,7 +97,7 @@ static S32 iSG_cubeicon_size(S32 slot, S32 sectorSize);
 static char* iSG_bfr_icondata(char* buf, CARDStat* stat, char* label, S32 sectorSize);
 static S32 iSG_curKosher(CARDStat* stat, CARDFileInfo* info);
 static S32 iSG_get_finfo(st_ISG_MEMCARD_DATA* mcdata, const char* dpath);
-extern "C" S32 fn_80012414(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S32* count);
+S32 iSG_find_gamefile(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S32* count);
 static S32 iSG_isSpaceForFile(st_ISG_MEMCARD_DATA* mcdata, S32 fsize, const char* fname,
                               S32* bytesNeeded, S32* availOnDisk, S32* needFile);
 static S32 iSG_mc_isGCcard(st_ISG_MEMCARD_DATA* mcdata, S32* badEncode, S32* ioError);
@@ -115,26 +115,26 @@ static S32 iSG_mc_isformatted(st_ISG_MEMCARD_DATA* mcdata);
 S32 iSGSelectGameDir(st_ISGSESSION* isgdata, const char* dname);
 static S32 iSG_fileKosher(st_ISG_MEMCARD_DATA* mcdata, const char* fname, S32 delbad,
                           S32* deleted);
-extern "C" S32 fn_800132C4(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted);
+S32 iSGCheckForCorruptFiles(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted);
 void iSGMakeTimeStamp(char* str);
 static S32 iSG_get_fmoddate(st_ISG_MEMCARD_DATA* mcdata, const char* fname, int* sec, int* min,
                             int* hr, int* mon, int* day, int* yr);
 char* iSGFileModDate(st_ISGSESSION* isgdata, const char* fname);
 static S32 iSG_get_fsize(st_ISG_MEMCARD_DATA* mcdata, const char* fname);
 S32 iSGFileSize(st_ISGSESSION* isgdata, const char* fname);
-extern "C" S32 fn_800138EC(st_ISGSESSION* isgdata);
+S32 iSGGameFileCount(st_ISGSESSION* isgdata);
 S32 iSGTgtHaveRoom(st_ISGSESSION* isgdata, S32 tidx, S32 fsize, const char* dpath,
                    const char* fname, S32* bytesNeeded, S32* availOnDisk, S32* needFile);
 static S32 iSG_mc_mount(S32 slot);
 static S32 iSG_mc_tryRepair(st_ISG_MEMCARD_DATA* mcdata);
 static S32 iSG_mc_settgt(st_ISG_MEMCARD_DATA* mcdata, S32 slot);
 S32 iSGTgtSetActive(st_ISGSESSION* isgdata, S32 tgtidx);
-extern "C" S32 fn_80013C64(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* filesFree);
+S32 iSGTgtFreeSpace(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* filesFree);
 static S32 iSG_mc_exists(S32 slot);
 U32 iSGTgtState(st_ISGSESSION* isgdata, S32 tgtidx, const char* dpath);
 S32 iSGTgtFormat(st_ISGSESSION* isgdata, S32 tgtidx, S32 async, S32* canRecover);
-extern "C" char* fn_80014180(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype);
-extern "C" S32 fn_80014310(st_ISGSESSION* isgdata, S32 slot);
+char* iSGTgtSlotName(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype);
+S32 iSGCheckMemoryCard(st_ISGSESSION* isgdata, S32 slot);
 S32 iSGTgtPhysSlotIdx(st_ISGSESSION* isgdata, S32 tidx);
 S32 iSGTgtCount(st_ISGSESSION* isgdata, S32* max);
 void iSGSessionEnd(st_ISGSESSION* isgdata);
@@ -281,7 +281,7 @@ S32 iSGTgtPhysSlotIdx(st_ISGSESSION* isgdata, S32 tidx)
 
 // What is in a slot: 0 nothing, 1 a device that is not a memory card, 3 a card and 4 a
 // fatal error.
-extern "C" S32 fn_80014310(st_ISGSESSION* isgdata, S32 slot)
+S32 iSGCheckMemoryCard(st_ISGSESSION* isgdata, S32 slot)
 {
     S32 rc = 0;
     s32 memSize = 0;
@@ -319,7 +319,7 @@ extern "C" S32 fn_80014310(st_ISGSESSION* isgdata, S32 slot)
 
 // Names a card slot in the wording the message needs. Types 5 to 7 take a physical slot,
 // the others the index of a card present; "^" stands for the trademark sign in the font.
-extern "C" char* fn_80014180(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype)
+char* iSGTgtSlotName(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype)
 {
     static char slotname[0x40] = { 0 };
     S32 slot = 0;
@@ -544,7 +544,7 @@ static S32 iSG_mc_exists(S32 slot)
 
 // The free bytes on the tidx'th card. sectorSize and filesFree, when given, receive the
 // card's sector size and its free file entries.
-extern "C" S32 fn_80013C64(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* filesFree)
+S32 iSGTgtFreeSpace(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* filesFree)
 {
     s32 bytesFree = 0;
     s32 files = 0;
@@ -713,7 +713,7 @@ S32 iSGTgtHaveRoom(st_ISGSESSION* isgdata, S32 tidx, S32 fsize, const char* dpat
 }
 
 // The number of the game's save files on the active card.
-extern "C" S32 fn_800138EC(st_ISGSESSION* isgdata)
+S32 iSGGameFileCount(st_ISGSESSION* isgdata)
 {
     if (isgdata->slot < 0)
     {
@@ -726,7 +726,7 @@ extern "C" S32 fn_800138EC(st_ISGSESSION* isgdata)
     }
     fn_80016768();
     S32 count = 0;
-    fn_80012414(data, -1, NULL, &count);
+    iSG_find_gamefile(data, -1, NULL, &count);
     return count;
 }
 
@@ -803,7 +803,7 @@ void iSGMakeTimeStamp(char* str)
 // Looks for the first save file without the game's signature. first receives its index and
 // deleted the index of the first one removed when delbad is set. Returns 1 when no file lacks
 // the signature (checked again after the deletions when delbad is set).
-extern "C" S32 fn_800132C4(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted)
+S32 iSGCheckForCorruptFiles(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* deleted)
 {
     S32 rc = 1;
 
@@ -839,7 +839,7 @@ extern "C" S32 fn_800132C4(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32* 
 
     if (delbad)
     {
-        rc = fn_800132C4(isgdata, 0, NULL, NULL) > 0 ? 1 : 0;
+        rc = iSGCheckForCorruptFiles(isgdata, 0, NULL, NULL) > 0 ? 1 : 0;
     }
     return rc;
 }
@@ -1437,7 +1437,7 @@ static S32 iSG_isSpaceForFile(st_ISG_MEMCARD_DATA* mcdata, S32 fsize, const char
 
 // Counts the game's save files on the card. With a name buffer, also returns the name of the
 // file at position which.
-extern "C" S32 fn_80012414(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S32* count)
+S32 iSG_find_gamefile(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S32* count)
 {
     S32 rc = 0;
     S32 found = 0;
