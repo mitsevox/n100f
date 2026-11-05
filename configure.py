@@ -513,7 +513,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMath3.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMemMgr.cpp"),
             Object(NonMatching, "flat/iModel.cpp"),
-            Object(NonMatching, "flat/iMorph.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMorph.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iPad.cpp"),
             Object(NonMatching, "flat/iParMgr.cpp"),
             Object(NonMatching, "flat/isavegame.cpp"),
