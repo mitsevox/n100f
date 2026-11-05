@@ -283,7 +283,7 @@ S32 iSGTgtPhysSlotIdx(st_ISGSESSION* isgdata, S32 tidx)
 // fatal error.
 extern "C" S32 fn_80014310(st_ISGSESSION* isgdata, S32 slot)
 {
-    S32 rc;
+    S32 rc = 0;
     s32 memSize = 0;
     s32 sectorSize = 0;
     fn_80016768();
@@ -294,23 +294,25 @@ extern "C" S32 fn_80014310(st_ISGSESSION* isgdata, S32 slot)
         result = CARDProbeEx(slot, &memSize, &sectorSize);
     } while (result == CARD_RESULT_BUSY);
 
-    switch (result)
+    if (result == CARD_RESULT_READY)
     {
-    case CARD_RESULT_READY:
-        rc = 3;
-        break;
-    case CARD_RESULT_NOCARD:
+        rc |= 3;
+    }
+    else if (result == CARD_RESULT_NOCARD)
+    {
         rc = 0;
-        break;
-    case CARD_RESULT_WRONGDEVICE:
-        rc = 1;
-        break;
-    case CARD_RESULT_FATAL_ERROR:
+    }
+    else if (result == CARD_RESULT_WRONGDEVICE)
+    {
+        rc |= 1;
+    }
+    else if (result == CARD_RESULT_FATAL_ERROR)
+    {
         rc = 4;
-        break;
-    default:
+    }
+    else
+    {
         rc = 0;
-        break;
     }
     return rc;
 }
