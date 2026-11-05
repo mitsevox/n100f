@@ -425,7 +425,7 @@ S32 iSGTgtFormat(st_ISGSESSION* isgdata, S32 tgtidx, S32 async, S32* canRecover)
         return 0;
     }
 
-    return iSG_mc_format(data, 0, canRecover) != 0;
+    return iSG_mc_format(data, 0, canRecover) == 0 ? 0 : 1;
 }
 
 // The tgtidx'th card's state as flags: 1 present, 4 a usable card (with 2 and 8 when it is
@@ -671,15 +671,13 @@ static S32 iSG_mc_mount(S32 slot)
         result = CARDMount(slot, cardwork[slot], iSG_cb_unmount);
     } while (result == CARD_RESULT_BUSY);
 
-    switch (result)
+    if (result == CARD_RESULT_READY)
     {
-    case CARD_RESULT_READY:
         ret = 1;
-        break;
-    case CARD_RESULT_BROKEN:
-    case CARD_RESULT_ENCODING:
+    }
+    else if (result == CARD_RESULT_BROKEN || result == CARD_RESULT_ENCODING)
+    {
         ret = 1;
-        break;
     }
     return ret;
 }
@@ -901,7 +899,7 @@ S32 iSGSelectGameDir(st_ISGSESSION* isgdata, const char* dname)
         return 0;
     }
 
-    return iSG_mc_isformatted(data) != 0;
+    return iSG_mc_isformatted(data) == 0 ? 0 : 1;
 }
 
 static S32 iSG_mc_isformatted(st_ISG_MEMCARD_DATA* mcdata)
