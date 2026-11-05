@@ -1,17 +1,16 @@
 #include <rwcore.h>
 
+// Supplies line-list indices, expanding a polyline's shared endpoints into separate edge pairs.
 static S32 _ImmMangleLineIndicesNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
+    U32 numLines;
     RxPacket* packet;
     RxCluster* meshState;
     RxCluster* indices;
     RxMeshStateVector* meshData;
-    RwImVertexIndex* index;
     RwImVertexIndex* src;
     U32 numIndices;
-    U32 numLines;
     void* data;
-    U32 i;
 
     packet = RxPacketFetch(self);
 
@@ -22,6 +21,9 @@ static S32 _ImmMangleLineIndicesNode(RxPipelineNode* self, RxPipelineNodeParam* 
 
     if (!indices->numUsed)
     {
+        RwImVertexIndex* index;
+        U32 i;
+
         indices = RxClusterLockWrite(packet, 1, self);
 
         if (meshData->PrimType == rwPRIMTYPELINELIST)
@@ -67,16 +69,21 @@ static S32 _ImmMangleLineIndicesNode(RxPipelineNode* self, RxPipelineNodeParam* 
             numLines = indices->numUsed - 1;
             src = (RwImVertexIndex*)((U8*)indices->data + indices->stride * (numLines - 1));
 
-            data = RxHeapAlloc(params->heap, numLines * 2 * sizeof(RwImVertexIndex));
-            indices = RxClusterSetData(indices, data, sizeof(RwImVertexIndex), numLines * 2);
-            index = (RwImVertexIndex*)((U8*)indices->data + indices->stride * ((numLines - 1) * 2));
+            data = RxHeapAlloc(params->heap, numLines * (2 * sizeof(RwImVertexIndex)));
+            indices = RxClusterSetData(indices, data, sizeof(RwImVertexIndex), numLines << 1);
 
-            for (i = 0; i < numLines; i++)
             {
-                index[1] = src[1];
-                index[0] = src[0];
-                src--;
-                index -= 2;
+                U32 i = 0;
+                RwImVertexIndex* index =
+                    (RwImVertexIndex*)((U8*)indices->data + indices->stride * ((numLines - 1) * 2));
+
+                for (; i < numLines; i++)
+                {
+                    index[1] = src[1];
+                    index[0] = src[0];
+                    src--;
+                    index -= 2;
+                }
             }
 
             indices->numUsed = numLines * 2;
