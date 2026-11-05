@@ -5,9 +5,11 @@
 
 S32 _rpSkinPipelinesCreate(U32 pipes)
 {
+    SkinGlobals* globals = &_rpSkinGlobals;
+
     if (pipes & (1 << (rpSKINTYPEGENERIC - 1)))
     {
-        _rpSkinGlobals.pipeline = _rpSkinPipelineCreate(rpSKINTYPEGENERIC, NULL, fn_80145598, NULL);
+        globals->pipeline = _rpSkinPipelineCreate(rpSKINTYPEGENERIC, NULL, fn_80145598, NULL);
     }
 
     return TRUE;
