@@ -25,21 +25,28 @@ S32 zParEmitterEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*);
 void zParEmitterInit(xBase* b, zParEmitterAsset* tasset)
 {
     _zParEmitter* t = (_zParEmitter*)b;
+    _xEnt* ent;
     xBaseInit(t, tasset);
     t->eventFunc = zParEmitterEventCB;
     t->tasset = tasset;
-    t->link = t->linkCount ? (p2LinkAsset*)(tasset + 1) : NULL;
+    if (t->linkCount)
+        t->link = (p2LinkAsset*)(t->tasset + 1);
+    else
+        t->link = NULL;
     t->emit_flags = tasset->emit_flags;
     t->emit_interval_current = tasset->interval;
     if (tasset->attachToID && tasset->emit_type == 9)
     {
-        _xEnt* ent = (_xEnt*)zSceneFindObject(tasset->attachToID);
+        ent = (_xEnt*)zSceneFindObject(tasset->attachToID);
         iModelTagSetup(&t->tag, ent->model->Data, tasset->e_offsetp.offset.x,
                        tasset->e_offsetp.offset.y, tasset->e_offsetp.offset.z);
     }
     t->attachTo = tasset->attachToID ? zSceneFindObject(tasset->attachToID) : NULL;
     t->parSys = tasset->parSysID ? zSceneFindObject(tasset->parSysID) : NULL;
-    t->emit_volume = tasset->emit_type == 6 ? zSceneFindObject(tasset->e_volume.emit_volumeID) : NULL;
+    if (tasset->emit_type == 6)
+        t->emit_volume = zSceneFindObject(tasset->e_volume.emit_volumeID);
+    else
+        t->emit_volume = NULL;
 }
 
 // Cache the particle group after the particle system has been set up.
@@ -205,32 +212,17 @@ static void zParEmitterEmitSphereEdge(xPar* p, zParEmitterAsset* a, F32 dt, S32 
     switch (subtype)
     {
     case 7:
-    {
-        F32 roll = 6.2831855f * iurand();
-        F32 pitch = 6.2831855f * iurand();
-        F32 yaw = 6.2831855f * iurand();
-        xMat3x3Euler(&mat_rot, yaw, pitch, roll);
+        xMat3x3Euler(&mat_rot, 6.2831855f * iurand(), 6.2831855f * iurand(), 6.2831855f * iurand());
         break;
-    }
     case 10:
-    {
-        F32 pitch = 3.1415927f * iurand();
-        F32 yaw = 6.2831855f * iurand();
-        xMat3x3Euler(&mat_rot, yaw, pitch, 0.0f);
+        xMat3x3Euler(&mat_rot, 6.2831855f * iurand(), 3.1415927f * iurand(), 0.0f);
         break;
-    }
     case 11:
-    {
-        F32 roll = 6.2831855f * iurand();
-        F32 pitch = 3.1415927f * iurand() + 3.1415927f;
-        F32 yaw = 6.2831855f * iurand();
-        xMat3x3Euler(&mat_rot, yaw, pitch, roll);
+        xMat3x3Euler(&mat_rot, 6.2831855f * iurand(), 3.1415927f * iurand() + 3.1415927f, 6.2831855f * iurand());
         break;
-    }
     }
     xMat3x3LMulVec(&dirvec, &mat_rot, &dirvec);
-    F32 magnitude = sqrtf(xVec3Length2(&p->m_vel));
-    xVec3SMul(&p->m_vel, &dirvec, magnitude);
+    xVec3SMul(&p->m_vel, &dirvec, sqrtf(xVec3Length2(&p->m_vel)));
     xVec3SMul(&offset, &dirvec, a->e_sphere.radius);
     xVec3Add(&p->m_pos, &p->m_pos, &offset);
     if (a->vel_angle_variation != 0.0f)
@@ -338,8 +330,26 @@ xPar* zParEmitterEmitCustom(_zParEmitter* p, F32 dt, _zParEmitterCustomSettings*
 // An emitter attached to a group emits from each member in turn, or from a random one.
 xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
 {
-    zParEmitterAsset* a = pe->tasset;
-    xPar* last_p = NULL;
+    xPar* last_p;
+    zParEmitterAsset* a;
+    zParSys* ps;
+    xPar* p;
+    F32 life;
+    F32 size_birth;
+    U32 count;
+    S32 sanity;
+    xBase* attachObject;
+    S32 attachGroupIndex;
+    S32 attachGroupTotal;
+    S32 emitAgain;
+    xBase* emitObj;
+    S32 marker;
+    _zGroup* g;
+    U32 get_rnd_group_idx;
+    S32 i;
+
+    a = pe->tasset;
+    last_p = NULL;
 
     if (pe->emit_interval_current > 0.0f)
     {
@@ -353,7 +363,7 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
         pe->emit_interval_current = pe->tasset->interval;
     }
 
-    zParSys* ps = (zParSys*)pe->parSys;
+    ps = (zParSys*)pe->parSys;
 
     if (ps && ps->group)
     {
@@ -362,15 +372,15 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
             return NULL;
         }
 
-        F32 life = a->life;
-        F32 size_birth = a->size_birth;
-        U32 count = a->count;
+        life = a->life;
+        size_birth = a->size_birth;
+        count = a->count;
         U8 variation = pe->tasset->count_variation;
 
         if (variation)
         {
             S32 delta = irand() % (variation * 2) - variation;
-            count = a->count + (delta > 0 ? delta : 0);
+            count = a->count + ((0 > delta) ? 0 : delta);
         }
 
         if (ps->tasset->maxPar && ps->group->m_num_of_particles + count >= ps->tasset->maxPar)
@@ -378,22 +388,22 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
             count = ps->tasset->maxPar - ps->group->m_num_of_particles;
         }
 
-        xBase* emitObj = (xBase*)pe->attachTo;
-        S32 attachGroupIndex = -1;
-        S32 attachGroupTotal = -1;
-        S32 emitAgain = 0;
+        emitObj = (xBase*)pe->attachTo;
+        attachGroupIndex = -1;
+        attachGroupTotal = -1;
+        emitAgain = 0;
 
         do
         {
-            xBase* attachObject = NULL;
-            S32 marker = 0;
+            attachObject = NULL;
+            marker = 0;
             xVec3 pos;
 
             if (emitObj)
             {
                 if (emitObj->baseType == 0x11) // a group
                 {
-                    _zGroup* g = (_zGroup*)emitObj;
+                    g = (_zGroup*)emitObj;
 
                     if (attachGroupIndex == -1)
                     {
@@ -403,7 +413,7 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
 
                     if (g->asset->groupFlags & 1)
                     {
-                        U32 get_rnd_group_idx = irand() % attachGroupTotal;
+                        get_rnd_group_idx = irand() % attachGroupTotal;
                         attachObject = zGroupGetItemPtr(g, get_rnd_group_idx);
                         emitAgain = 0;
 
@@ -465,9 +475,9 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
                 pos = a->pos;
             }
 
-            for (S32 i = 0; i < (S32)count; i++)
+            for (i = 0; i < (S32)count; i++)
             {
-                xPar* p = xParGroupAddPar(ps->group);
+                p = xParGroupAddPar(ps->group);
 
                 if (!p)
                 {
@@ -591,9 +601,12 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
                         if (va->bound.type == 2)
                         {
                             const _xBox* box = &va->bound.box.box;
-                            F32 x = (box->upper.x - box->lower.x) * iurand();
-                            F32 y = (box->upper.y - box->lower.y) * iurand();
-                            F32 z = (box->upper.z - box->lower.z) * iurand();
+                            F32 x = box->upper.x - box->lower.x;
+                            F32 y = box->upper.y - box->lower.y;
+                            F32 z = box->upper.z - box->lower.z;
+                            x *= iurand();
+                            y *= iurand();
+                            z *= iurand();
                             p->m_pos.x = x + box->lower.x;
                             p->m_pos.y = y + box->lower.y;
                             p->m_pos.z = z + box->lower.z;
