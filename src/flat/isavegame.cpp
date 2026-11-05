@@ -1461,20 +1461,27 @@ S32 iSG_find_gamefile(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S32* c
 {
     S32 rc = 0;
     S32 found = 0;
+    S32 i = 0;
+    S32 exists = 0;
+    S32 numfiles = 8;
+    char* fname = NULL;
 
     if (mcdata->unk_0 == 0)
     {
-        return 0;
+        rc = 0;
+        return rc;
     }
     if (name != NULL)
     {
         *name = '\0';
     }
 
-    for (S32 i = 0; i < 8; i++)
+    for (i = 0; i < numfiles; i++)
     {
-        char* fname = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i);
-        if (iSG_get_finfo(mcdata, fname))
+        exists = 0;
+        fname = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i);
+        exists = iSG_get_finfo(mcdata, fname);
+        if (exists)
         {
             found++;
             if (name != NULL && found - 1 == which)
@@ -1487,6 +1494,7 @@ S32 iSG_find_gamefile(st_ISG_MEMCARD_DATA* mcdata, S32 which, char* name, S32* c
                 }
             }
         }
+        fname = NULL;
     }
 
     if (count != NULL)
@@ -1748,13 +1756,22 @@ static void iSG_cb_unmount(s32 chan, s32 result)
 
 static S32 iSG_mc_format(st_ISG_MEMCARD_DATA* mcdata, S32, S32* canRecover)
 {
+    S32 rc = 0;
+    S32 ret = 0;
+    s32 result = CARD_RESULT_READY;
+    s32 xferBytes = 0;
+    u16 encoding = 0;
+    s32 memSize = 0;
+    s32 sectorSize = 0;
+
     if (mcdata->unk_12C != 0)
     {
         if (canRecover != NULL)
         {
             *canRecover = 0;
         }
-        return 0;
+        ret = 0;
+        return ret;
     }
 
     if (canRecover != NULL)
@@ -1762,13 +1779,14 @@ static S32 iSG_mc_format(st_ISG_MEMCARD_DATA* mcdata, S32, S32* canRecover)
         *canRecover = 1;
     }
 
-    s32 result;
+    xferBytes = 0;
+    encoding = 0;
+    result = CARD_RESULT_BUSY;
     do
     {
         result = CARDFormat(mcdata->chan);
     } while (result == CARD_RESULT_BUSY);
 
-    S32 ret;
     if (result == CARD_RESULT_READY)
     {
         ret = 1;
@@ -1792,7 +1810,8 @@ static S32 iSG_mc_format(st_ISG_MEMCARD_DATA* mcdata, S32, S32* canRecover)
             break;
         }
     }
-    return ret;
+    rc = ret;
+    return rc;
 }
 
 // Opens fname for reading, or recreates it at fsize bytes for writing. Only this game's files
