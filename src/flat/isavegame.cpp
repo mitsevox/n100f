@@ -367,35 +367,16 @@ char* iSGTgtSlotName(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype)
     return slotname;
 }
 
-// Unused: the reason the card in a slot cannot be used, as message text.
-char* iSG_UnusedCardMessages(char* buf, S32 slot, S32 reason, S32 err)
+// Unused stand-in for stripped card-message code; its locals hold the message text.
+char* iSG_UnusedCardMessages(char* buf, S32 err)
 {
     char letters[] = "AB------";
     char damaged[] = "is damaged and cannot be used";
     char sectsize[] = "unsupprted sector size";
     char market[] = "is formatted for another market";
     char other[0x40] = { 0 };
-    char* msg;
 
-    switch (reason)
-    {
-    case 0:
-        msg = damaged;
-        break;
-    case 1:
-        msg = sectsize;
-        break;
-    case 2:
-        msg = market;
-        break;
-    default:
-        sprintf(other, "encountered unexpected error (%d)", err);
-        msg = other;
-        break;
-    }
-
-    buf[0] = letters[slot];
-    strcpy(buf + 1, msg);
+    sprintf(other, "encountered unexpected error (%d)", err);
     return buf;
 }
 
@@ -808,9 +789,9 @@ S32 iSGCheckForCorruptFiles(st_ISGSESSION* isgdata, S32 delbad, S32* first, S32*
 {
     S32 rc = 1;
     S32 i;
-    st_ISG_MEMCARD_DATA* data = NULL;
-    char* fname = NULL;
-    S32 kosher = 0;
+    st_ISG_MEMCARD_DATA* data;
+    char* fname;
+    S32 kosher;
     S32 wasdel = 0;
 
     if (first != NULL)
