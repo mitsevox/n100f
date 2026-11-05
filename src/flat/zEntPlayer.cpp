@@ -3146,8 +3146,7 @@ static inline void zEntPlayer_VOReset()
     }
 }
 
-// Flag updates through a byte-sized mask. Init enables and shows the player and clears a physics bit
-// with these; the masks are byte values here, not plain constants (inferred, see the evidence record).
+// Flag updates through a byte-sized mask; Init enables and shows the player and clears a physics bit.
 static inline void zEntPlayerOrBaseFlags(xBase* b, U8 mask)
 {
     b->baseFlags |= mask;
