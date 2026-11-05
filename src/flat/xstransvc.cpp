@@ -62,7 +62,7 @@ static inline void XST_unlock(st_STRAN_SCENE* sdata)
     {
         if (g_xstdata.loadlock & 1 << sdata->lockid)
         {
-            g_xstdata.loadlock &= ~(1 << sdata->lockid);
+            g_xstdata.loadlock &= ~(U32)(1 << sdata->lockid);
             memset(sdata, 0, sizeof(st_STRAN_SCENE));
         }
     }
@@ -150,21 +150,8 @@ static inline S32 XST_PreLoadScene(st_STRAN_SCENE* sdata, const char* name)
     return 0;
 }
 
-static inline char* XST_translate_sid(U32 sid, char* extension)
-{
-    static char fname[0x40] = {};
-    sprintf(fname, "%s%s", xUtil_idtag2string(sid, 0), extension);
-    return fname;
-}
-
-static inline char* XST_translate_sid_path(U32 sid, char* extension)
-{
-    static char fname[0x40] = {};
-    char pathSeparator[2] = "/";
-    sprintf(fname, "%c%c%s%s%s", *xUtil_idtag2string(sid, 0), *(xUtil_idtag2string(sid, 0) + 1),
-            pathSeparator, xUtil_idtag2string(sid, 0), extension);
-    return fname;
-}
+static char* XST_translate_sid(U32 sid);
+static char* XST_translate_sid_path(U32 sid);
 
 S32 xSTStartup(st_PACKER_ASSETTYPE* handlers)
 {
@@ -209,7 +196,7 @@ S32 xSTPreLoadScene(U32 sid, void* userdata)
 
         if (sid != 'BOOT' && sid != 'FONT')
         {
-            path = XST_translate_sid_path(sid, ".HIP");
+            path = XST_translate_sid_path(sid);
             if (path != NULL)
             {
                 strcpy(sdata->fnam, path);
@@ -218,7 +205,7 @@ S32 xSTPreLoadScene(U32 sid, void* userdata)
         }
         if (cltver == 0)
         {
-            path = XST_translate_sid(sid, ".HIP");
+            path = XST_translate_sid(sid);
             if (path != NULL)
             {
                 strcpy(sdata->fnam, path);
@@ -385,13 +372,10 @@ S32 xSTAssetCountByType(U32 type)
 
 void* xSTFindAssetByType(U32 type, S32 idx, U32* size)
 {
-    S32 cnt;
-    S32 sum;
-    S32 i;
     void* memptr = NULL;
-
-    sum = 0;
-    cnt = XST_cnt_locked();
+    S32 i;
+    S32 sum = 0;
+    S32 cnt = XST_cnt_locked();
     for (i = 0; i < cnt; i++)
     {
         st_STRAN_SCENE* sdata = XST_nth_locked(i);
@@ -437,19 +421,23 @@ S32 xSTGetAssetInfo(U32 aid, st_xST_XASSETINFO* ainfo)
 S32 xSTGetAssetInfoByType(U32 type, S32 idx, st_xST_XASSETINFO* ainfo)
 {
     S32 found = 0;
-    S32 sum = 0;
     st_PKR_ASSET_TOCINFO tocinfo = { 0, 0, 0, 0, NULL };
-    memset(ainfo, 0, sizeof(st_xST_XASSETINFO));
+    S32 rc;
+    S32 i;
+    S32 sum = 0;
+    S32 cnt;
 
-    S32 cnt = XST_cnt_locked();
-    for (S32 i = 0; i < cnt; i++)
+    memset(ainfo, 0, sizeof(st_xST_XASSETINFO));
+    cnt = XST_cnt_locked();
+    for (i = 0; i < cnt; i++)
     {
         st_STRAN_SCENE* sdata = XST_nth_locked(i);
         S32 scncnt = g_pkrf->AssetCount(sdata->spkg, type);
         if (idx >= sum && idx < sum + scncnt)
         {
             g_pkrf->GetBaseSector(sdata->spkg);
-            if (g_pkrf->GetAssetInfoByType(sdata->spkg, type, idx - sum, &tocinfo))
+            rc = g_pkrf->GetAssetInfoByType(sdata->spkg, type, idx - sum, &tocinfo);
+            if (rc)
             {
                 found = 1;
                 ainfo->aid = tocinfo.aid;
@@ -488,4 +476,20 @@ static inline char* xST_xAssetID_HIPFullPath(U32 aid, U32* sceneID)
 char* xST_xAssetID_HIPFullPath(U32 aid)
 {
     return xST_xAssetID_HIPFullPath(aid, NULL);
+}
+
+static char* XST_translate_sid(U32 sid)
+{
+    static char fname[0x40] = {};
+    sprintf(fname, "%s%s", xUtil_idtag2string(sid, 0), ".HIP");
+    return fname;
+}
+
+static char* XST_translate_sid_path(U32 sid)
+{
+    static char fname[0x40] = {};
+    char pathSeparator[2] = "/";
+    sprintf(fname, "%c%c%s%s%s", *xUtil_idtag2string(sid, 0), *(xUtil_idtag2string(sid, 0) + 1),
+            pathSeparator, xUtil_idtag2string(sid, 0), ".HIP");
+    return fname;
 }
