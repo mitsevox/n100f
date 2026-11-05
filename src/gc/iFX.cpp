@@ -184,7 +184,7 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
                 {
                     F32 x = ov->y - miny;
                     F32 b = maxy - ov->y;
-                    if (x >= b)
+                    if (x > b)
                     {
                         x = b;
                     }
