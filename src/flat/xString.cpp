@@ -33,7 +33,7 @@ char* xStrTok(char* string, const char* control, char** nextoken)
     do
     {
         map[*ctrl >> 3] |= (U8)(1 << (*ctrl & 0x7));
-    } while (*ctrl++ != '\0');
+    } while (*ctrl++ != 0);
 
     if (string != NULL)
     {
@@ -44,14 +44,14 @@ char* xStrTok(char* string, const char* control, char** nextoken)
         str = (U8*)*nextoken;
     }
 
-    while ((map[(*str >> 3) & 0x1F] & (1 << (*str & 0x7))) && *str != '\0')
+    while ((map[(*str >> 3) & 0x1F] & (1 << (*str & 0x7))) && *str != 0)
     {
         str++;
     }
 
     string = (char*)str;
 
-    for (; *str != '\0'; str++)
+    for (; *str != 0; str++)
     {
         if (map[(*str >> 3) & 0x1F] & (1 << (*str & 0x7)))
         {
@@ -79,8 +79,7 @@ char* xStrTokBuffer(const char* string, const char* control, void* buffer)
     U8 map[32];
     S32 count;
     char** nextoken = (char**)buffer;
-    char* dest = (char*)buffer + sizeof(char*);
-    char* token;
+    char* dest = (char*)(nextoken + 1);
 
     for (count = 0; count < 32; count++)
     {
@@ -90,7 +89,7 @@ char* xStrTokBuffer(const char* string, const char* control, void* buffer)
     do
     {
         map[*ctrl >> 3] |= (U8)(1 << (*ctrl & 0x7));
-    } while (*ctrl++ != '\0');
+    } while (*ctrl++ != 0);
 
     if (string != NULL)
     {
@@ -101,14 +100,14 @@ char* xStrTokBuffer(const char* string, const char* control, void* buffer)
         str = (U8*)*nextoken;
     }
 
-    while ((map[(*str >> 3) & 0x1F] & (1 << (*str & 0x7))) && *str != '\0')
+    while ((map[(*str >> 3) & 0x1F] & (1 << (*str & 0x7))) && *str != 0)
     {
         str++;
     }
 
-    token = (char*)str;
+    string = (char*)str;
 
-    for (; *str != '\0'; str++)
+    for (; *str != 0; str++)
     {
         if (map[(*str >> 3) & 0x1F] & (1 << (*str & 0x7)))
         {
@@ -121,38 +120,29 @@ char* xStrTokBuffer(const char* string, const char* control, void* buffer)
     *dest = '\0';
     *nextoken = (char*)str;
 
-    if (token == (char*)str)
+    if (string == (char*)str)
     {
         return NULL;
     }
 
-    return (char*)buffer + sizeof(char*);
+    return (char*)(nextoken + 1);
 }
 
-static inline char xStrToUpper(char c)
+static inline S32 xStrToUpper(char c)
 {
-    bool lower = false;
-    if (c >= 'a' && c <= 'z')
-    {
-        lower = true;
-    }
-    if (lower)
-    {
-        c -= 'a' - 'A';
-    }
-    return c;
+    return c >= 'a' && c <= 'z' ? c - 32 : c;
 }
 
+// Compare names without distinguishing ASCII letter case.
 S32 xStricmp(const char* string1, const char* string2)
 {
     S32 result = 0;
-    S32 done = 0;
 
-    while (xStrToUpper(*string1) == xStrToUpper(*string2) && !done)
+    while (xStrToUpper(*string1) == xStrToUpper(*string2) && !result)
     {
         if (*string1 == '\0' || *string2 == '\0')
         {
-            done = 1;
+            result = 1;
         }
         else
         {
@@ -160,6 +150,8 @@ S32 xStricmp(const char* string1, const char* string2)
             string2++;
         }
     }
+
+    result = 0;
 
     if (*string1 != *string2)
     {
@@ -188,16 +180,17 @@ char* xStrupr(char* string)
 
 // Reads up to max numbers from text such as "[1, -2.5, 3]" into dest and returns how many it read.
 // Brackets, braces, parentheses, '+', ',', ':' and ';' separate numbers like white space does.
+// The text must be writable: each number is temporarily terminated for atof.
 S32 xStrParseFloatList(F32* dest, const char* strbuf, S32 max)
 {
-    char* str = (char*)strbuf;
+    char* str;
     S32 index;
     S32 digits;
-    bool negate;
+    S32 negate;
     char* numstart;
     char savech;
 
-    if (!str)
+    if (!(str = (char*)strbuf))
     {
         return 0;
     }
@@ -253,15 +246,14 @@ S32 xStrParseFloatList(F32* dest, const char* strbuf, S32 max)
         savech = *str;
 
         *str = '\0';
-        *dest = atof(numstart);
+        dest[index] = atof(numstart);
 
         if (negate)
         {
-            *dest = -*dest;
+            dest[index] = -dest[index];
         }
 
         *str = savech;
-        dest++;
     }
 
     return index;
