@@ -323,13 +323,19 @@ extern "C" char* fn_80014180(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype)
     S32 slot = 0;
     char letters[] = "AB---";
 
-    if (msgtype < 8 && msgtype >= 5)
+    switch (msgtype)
     {
+    case 5:
+    case 6:
+    case 7:
         slot = tidx;
-    }
-    else if (iSG_mcidx2slot(tidx, &slot, NULL) == 0)
-    {
-        slot = 3;
+        break;
+    default:
+        if (iSG_mcidx2slot(tidx, &slot, NULL) == 0)
+        {
+            slot = 3;
+        }
+        break;
     }
 
     switch (msgtype)
@@ -357,6 +363,38 @@ extern "C" char* fn_80014180(st_ISGSESSION* isgdata, S32 tidx, S32 msgtype)
         break;
     }
     return slotname;
+}
+
+// Unused: the reason the card in a slot cannot be used, as message text.
+char* iSG_UnusedCardMessages(char* buf, S32 slot, S32 reason, S32 err)
+{
+    char letters[] = "AB------";
+    char damaged[] = "is damaged and cannot be used";
+    char sectsize[] = "unsupprted sector size";
+    char market[] = "is formatted for another market";
+    char other[0x40] = { 0 };
+    char* msg;
+
+    switch (reason)
+    {
+    case 0:
+        msg = damaged;
+        break;
+    case 1:
+        msg = sectsize;
+        break;
+    case 2:
+        msg = market;
+        break;
+    default:
+        sprintf(other, "encountered unexpected error (%d)", err);
+        msg = other;
+        break;
+    }
+
+    buf[0] = letters[slot];
+    strcpy(buf + 1, msg);
+    return buf;
 }
 
 S32 iSGTgtFormat(st_ISGSESSION* isgdata, S32 tgtidx, S32 async, S32* canRecover)
