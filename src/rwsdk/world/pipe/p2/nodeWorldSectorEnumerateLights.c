@@ -25,21 +25,24 @@ static RpLight* WorldLightsCB(RpLight* light, void* pData)
     return light;
 }
 
-static S32 WorldSectorEnumerateLightsNodeBody(RxPipelineNode* self, RxPipelineNodeParam* params)
+static inline void WorldSectorEnumerateLights(RpWorldSector* sector, RxCluster* lights)
 {
-    RxPacket* packet = RxPacketFetch(self);
-    RxCluster* lights;
-    RpWorldSector* sector;
-
-    lights = RxClusterLockWrite(packet, ENUMLIGHTSCL_LIGHTS, self);
-    sector = (RpWorldSector*)params->dataParam;
-    lights = RxClusterInitializeData(lights, 8, sizeof(RpLight*));
-
     if (((RpWorld*)RWSRCGLOBAL(curWorld))->flags & rpWORLDLIGHT)
     {
         _rpWorldForAllGlobalLights(WorldLightsCB, lights);
         _rpWorldSectorForAllLocalLights(sector, WorldLightsCB, lights);
     }
+}
+
+static S32 WorldSectorEnumerateLightsNodeBody(RxPipelineNode* self, RxPipelineNodeParam* params)
+{
+    RxPacket* packet = RxPacketFetch(self);
+    RxCluster* lights;
+
+    lights = RxClusterLockWrite(packet, ENUMLIGHTSCL_LIGHTS, self);
+    lights = RxClusterInitializeData(lights, 8, sizeof(RpLight*));
+
+    WorldSectorEnumerateLights((RpWorldSector*)params->dataParam, lights);
 
     RxPacketDispatch(packet, 0, self);
 

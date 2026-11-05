@@ -76,6 +76,9 @@ RpAtomic* _rpSkinPipelinesAttach(RpAtomic* atomic, RpSkinType type);
 S32 _rpSkinGeometryNativeSize(const RpGeometry* geometry);
 RwStream* _rpSkinGeometryNativeWrite(RwStream* stream, const RpGeometry* geometry);
 RwStream* _rpSkinGeometryNativeRead(RwStream* stream, RpGeometry* geometry);
+#if VERSION_GIHE78_REV1
+#define fn_80145598 fn_8014595C
+#endif
 RxPipeline* _rpSkinPipelineCreate(RpSkinType type, void* instanceCB, void* reinstanceCB,
                                   void* renderCB);
 RpAtomic* fn_80145598(RpAtomic* atomic, GCNObjectData* objectData);

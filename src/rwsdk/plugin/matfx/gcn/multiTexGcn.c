@@ -8,6 +8,8 @@ S32 _rpGameCubeMTPipePluginAttach(void);
 
 S32 _rpMultiTexturePlatformPluginsAttach(void)
 {
+    S32 result;
+
     if (!_rpMultiTexturePluginAttach())
     {
         return FALSE;
@@ -23,5 +25,6 @@ S32 _rpMultiTexturePlatformPluginsAttach(void)
         return FALSE;
     }
 
-    return _rpGameCubeMTPipePluginAttach();
+    result = _rpGameCubeMTPipePluginAttach();
+    return result;
 }
