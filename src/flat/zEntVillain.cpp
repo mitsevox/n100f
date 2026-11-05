@@ -15080,7 +15080,7 @@ static S32 VWEP_lobInitRBSword(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec
 {
     zEntProjectile* prj = NULL;
     prj = vil->prj_reserved;
-    S32 rc = 0;
+    S32 rc;
     _xVec3 tmp_vec = { 0 };
     st_REDBEARD_SWORD* sword = NULL;
 
