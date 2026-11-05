@@ -433,8 +433,8 @@ S32 iSGTgtFormat(st_ISGSESSION* isgdata, S32 tgtidx, S32 async, S32* canRecover)
 // error, 0x4000000 wrong encoding and 0x8000000 an unsupported sector size.
 U32 iSGTgtState(st_ISGSESSION* isgdata, S32 tgtidx, const char* dpath)
 {
-    S32 isSectSizeValid = 0;
     S32 state = 0;
+    S32 isSectSizeValid = 0;
 
     S32 rc = 0;
 
