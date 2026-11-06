@@ -101,7 +101,8 @@ DSError TRKAppendBuffer(TRKBuffer* msg, const void* data, size_t length) {
         return DS_NoError;
     }
 
-    bytesLeft = TRKMSGBUF_SIZE - msg->position;
+    bytesLeft = TRKMSGBUF_SIZE;
+    bytesLeft -= msg->position;
     if (bytesLeft < length) {
         error = DS_MessageBufferOverflow;
         length = bytesLeft;
@@ -110,7 +111,8 @@ DSError TRKAppendBuffer(TRKBuffer* msg, const void* data, size_t length) {
     if (length == 1) {
         msg->data[msg->position] = ((u8*)data)[0];
     } else {
-        TRK_memcpy(msg->data + msg->position, data, length);
+        void* dst = msg->data + msg->position;
+        TRK_memcpy(dst, data, length);
     }
 
     msg->position += length;

@@ -1,5 +1,10 @@
 #include "TRK_MINNOW_DOLPHIN/trk.h"
 
+// Minimum reply lengths of the file read and write requests: the command, the error,
+// the I/O result and the 16-bit length. Both replies have the same header.
+#define TRK_READ_FILE_REPLY_SIZE 5
+#define TRK_WRITE_FILE_REPLY_SIZE 5
+
 // Reads or writes a host file through the debugger, in pieces of up to 0x800 bytes.
 DSError TRKSuppAccessFile(u32 file_handle, u8* data, size_t* count, u8* io_result, BOOL need_reply,
                           BOOL read) {
@@ -52,7 +57,9 @@ DSError TRKSuppAccessFile(u32 file_handle, u8* data, size_t* count, u8* io_resul
                 replyLength = 0;
                 replyIOResult = 0;
 
-                error = TRKRequestSend(buffer, &replyBufferId, 5, 3, !(read && file_handle == 0));
+                error = TRKRequestSend(buffer, &replyBufferId,
+                                       read ? TRK_READ_FILE_REPLY_SIZE : TRK_WRITE_FILE_REPLY_SIZE, 3,
+                                       !(read && file_handle == 0));
                 if (error == DS_NoError) {
                     replyBuffer = (TRKBuffer*)TRKGetBuffer(replyBufferId);
                     TRKSetBufferPosition(replyBuffer, 2);

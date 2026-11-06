@@ -4,7 +4,9 @@
 
 u32 OSGetConsoleSimulatedMemSize(void)
 {
-    return __OSSimulatedMemSize;
+    u32* memSize = (u32*)OSPhysicalToCached(0xF0);
+
+    return *memSize;
 }
 
 static BOOL OnReset(BOOL final)
@@ -122,7 +124,9 @@ static OSResetFunctionInfo ResetFunctionInfo = {
 
 u32 OSGetPhysicalMemSize(void)
 {
-    return __OSPhysicalMemSize;
+    OSBootInfo* bootInfo = (OSBootInfo*)OSPhysicalToCached(0);
+
+    return bootInfo->memorySize;
 }
 
 void __OSInitMemoryProtection(void)
@@ -150,8 +154,7 @@ void __OSInitMemoryProtection(void)
     __OSSetInterruptHandler(__OS_INTERRUPT_MEM_ADDRESS, MEMIntrruptHandler);
     OSRegisterResetFunction(&ResetFunctionInfo);
 
-    simulatedSize = OSGetConsoleSimulatedMemSize();
-    if (simulatedSize < OSGetPhysicalMemSize() && simulatedSize == 0x1800000) {
+    if (OSGetConsoleSimulatedMemSize() < OSGetPhysicalMemSize() && OSGetConsoleSimulatedMemSize() == 0x1800000) {
         __MEMRegs[20] = 2;
     }
 
