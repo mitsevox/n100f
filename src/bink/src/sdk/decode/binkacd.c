@@ -100,13 +100,14 @@ static void quanttos16s(S16* out, F32* in, F32 scale, U32 n)
 
 static void quanttos16chans2(S16* out, F32* in, F32 scale, U32 n)
 {
+    S16* o = out;
     U32 i = n;
     while (i--)
     {
         S32 v = (S32)(in[0] * scale);
-        *out++ = CLAMP16(v);
+        *o++ = CLAMP16(v);
         v = (S32)(in[n] * scale);
-        *out++ = CLAMP16(v);
+        *o++ = CLAMP16(v);
         in++;
     }
 }

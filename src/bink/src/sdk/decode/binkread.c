@@ -738,15 +738,16 @@ S32 BinkCopyToBufferRect(Bink* bink, void* dest, S32 destpitch, U32 destheight, 
                     skipped = 1;
                 } else {
                     bink->io.busy = 0;
-                    bink->skipped++;
                     bink->skip_blit = 1;
+                    bink->skipped++;
                     return 1;
                 }
             } else {
-                bink->skip_blit = 0;
                 bink->skip_count = 0;
+                goto noskip;
             }
         } else {
+        noskip:
             bink->skip_blit = 0;
         }
     }
@@ -1023,45 +1024,45 @@ U32 BinkGetKeyFrame(Bink* bink, U32 frame, S32 flags)
     S32 i;
     U32 j;
 
-    if (bink) {
-        if (!(flags & 128) && (bink->frameoffsets[frame - 1] & 1))
-            return frame;
+    if (bink == 0)
+        return 0;
 
-        switch (flags & 127) {
-            case 0:
-                for (i = frame - 2; i > 0; i--) {
+    if (!(flags & 128) && (bink->frameoffsets[frame - 1] & 1))
+        return frame;
+
+    switch (flags & 127) {
+        case 0:
+            for (i = frame - 2; i > 0; i--) {
+                if (bink->frameoffsets[i] & 1)
+                    break;
+            }
+            return i + 1;
+
+        case 1:
+            for (j = frame; j < bink->frames;) {
+                if (bink->frameoffsets[j++] & 1)
+                    return j;
+            }
+            break;
+
+        case 2:
+            i = frame - 2;
+            j = frame;
+            for (;;) {
+                if (i >= 0) {
                     if (bink->frameoffsets[i] & 1)
-                        break;
-                }
-                return i + 1;
-
-            case 1:
-                for (j = frame; j < bink->frames;) {
-                    if (bink->frameoffsets[j++] & 1)
-                        return j;
-                }
-                break;
-
-            case 2:
-                i = frame - 2;
-                j = frame;
-                for (;;) {
-                    if (i >= 0) {
-                        if (bink->frameoffsets[i] & 1)
-                            return i + 1;
-                        if (j < bink->frames) {
-                            if (bink->frameoffsets[j++] & 1)
-                                return j;
-                        }
-                    } else {
-                        if (j >= bink->frames)
-                            return 0;
+                        return i + 1;
+                    if (j < bink->frames) {
                         if (bink->frameoffsets[j++] & 1)
                             return j;
                     }
-                    i--;
-                }
-        }
+                } else if (j < bink->frames) {
+                    if (bink->frameoffsets[j++] & 1)
+                        return j;
+                } else
+                    return 0;
+                i--;
+            }
     }
 
     return 0;
@@ -1426,8 +1427,9 @@ static S32 smallestrect(BinkRect* out, U8* mask, S32 pitch, BinkRect* in)
 top:
     mask += pitch * y;
     h -= y;
-    out->y = in->y + y * 16;
-    out->h = in->h - y * 16;
+    y *= 16;
+    out->y = y + in->y;
+    out->h = in->h - y;
 
     if (out->h > 1) {
         for (y = 0, m = mask + (h - 1) * pitch; y < h; y++, m -= pitch) {
@@ -1451,18 +1453,19 @@ top:
 left:
     w -= x;
     mask += x;
-    out->x = in->x + x * 16;
-    out->w = in->w - x * 16;
+    x *= 16;
+    out->x = x + in->x;
+    out->w = in->w - x;
 
     if (out->w > 1) {
-        w--;
-        for (x = w; x >= 0; x--) {
+        for (x = w - 1; x >= 0; x--) {
             for (y = 0, m = mask + x; y < h; y++, m += pitch) {
                 if (*m)
                     goto right;
             }
         }
     right:
+        w--;
         out->w -= (w - x) * 16;
     }
 
@@ -1693,31 +1696,35 @@ BinkTrack* BinkOpenTrack(Bink* bink, U32 idx)
     void* ac;
     BinkTrack* t;
 
-    if (bink && (idx < bink->num_tracks) &&
-        ((bink->track_types[idx] < 0) || (bink->track_types[idx] & 0x10000000))) {
-        ac = BinkAudioDecompressOpen(TRACKFREQ(bink->track_types[idx]), TRACKCHANS(bink->track_types[idx]),
-                                     ((bink->track_types[idx] >= 0) && (bink->track_types[idx] & 0x10000000)) ? 1 : 0);
-        if (ac == 0)
-            return 0;
+    if (bink == 0)
+        return 0;
+    if (idx >= bink->num_tracks)
+        return 0;
+    if (!((bink->track_types[idx] < 0) || (bink->track_types[idx] & 0x10000000)))
+        return 0;
+    ac = BinkAudioDecompressOpen(TRACKFREQ(bink->track_types[idx]), TRACKCHANS(bink->track_types[idx]),
+                                 ((bink->track_types[idx] >= 0) && (bink->track_types[idx] & 0x10000000)) ? 1 : 0);
+    if (ac == 0)
+        return 0;
 
-        t = bpopmalloc(bink, sizeof(BinkTrack));
-        if (t == 0) {
-            BinkAudioDecompressClose(ac);
-            return 0;
-        }
-
-        memset(t, 0, sizeof(BinkTrack));
-        t->bink = bink;
-        t->decomp = ac;
-        t->freq = TRACKFREQ(bink->track_types[idx]);
-        t->bits = TRACKBITS(bink->track_types[idx]);
-        t->chans = TRACKCHANS(bink->track_types[idx]);
-        t->max_size = (bink->track_max_size[idx] + 3) & ~3;
-        if (t->bits == 8)
-            t->max_size >>= 1;
-        t->track_num = idx;
-        return t;
+    t = bpopmalloc(bink, sizeof(BinkTrack));
+    if (t == 0) {
+        BinkAudioDecompressClose(ac);
+        goto fail;
     }
+
+    memset(t, 0, sizeof(BinkTrack));
+    t->bink = bink;
+    t->decomp = ac;
+    t->freq = TRACKFREQ(bink->track_types[idx]);
+    t->bits = TRACKBITS(bink->track_types[idx]);
+    t->chans = TRACKCHANS(bink->track_types[idx]);
+    t->max_size = (bink->track_max_size[idx] + 3) & ~3;
+    if (t->bits == 8)
+        t->max_size >>= 1;
+    t->track_num = idx;
+    return t;
+fail:
     return 0;
 }
 
@@ -1800,8 +1807,8 @@ S32 BinkSetSoundOnOff(Bink* bink, S32 onoff)
         for (i = 0; i < bink->num_opened; i++) {
             if (bink->tracks[i].set_onoff) {
                 if (!suspended) {
-                    RADCB_suspend_callback(cb_bink_sound, &bink->snd_cb);
                     suspended = 1;
+                    RADCB_suspend_callback(cb_bink_sound, &bink->snd_cb);
                 }
                 r = bink->tracks[i].set_onoff(&bink->tracks[i], onoff ? 1 : 0);
                 if (r == 0) {
@@ -1813,12 +1820,12 @@ S32 BinkSetSoundOnOff(Bink* bink, S32 onoff)
                         bink->sound_on = 0;
                     }
                 } else {
+                    ret = (r != 0);
                     if (bink->sound_on == 0) {
                         bink->sound_on = 1;
                         bink->sync_start_time = 0;
                         bink->sync_adjust = 0;
                     }
-                    ret = 1;
                 }
             }
         }

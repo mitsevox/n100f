@@ -898,7 +898,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "bink/src/sdk/decode/binkread.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "bink/src/sdk/decode/ngc/ngcfile.c"),
             Object(NonMatching, "bink/src/sdk/decode/yuv.cpp"),
-            Object(NonMatching, "bink/src/sdk/decode/binkacd.c"),
+            Object(MatchingFor("GIHE78-rev0"), "bink/src/sdk/decode/binkacd.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "bink/shared/time/radcb.c"),
             Object(NonMatching, "bink/src/sdk/decode/expand.c"),
             Object(MatchingFor("GIHE78-rev0"), "bink/src/sdk/popmal.c"),
