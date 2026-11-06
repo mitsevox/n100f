@@ -3503,9 +3503,9 @@ static void zVIL_setup_npcTable()
 // Look up every villain sound of the jukebox; a sound the game does not have gets ID 0.
 static inline void VSND_setup_soundTable()
 {
-    U32 hash;
-    st_NPC_SOUND_RECORDS* trax;
     st_NPC_SOUND_ENTRY* entry;
+    st_NPC_SOUND_RECORDS* trax;
+    U32 hash;
 
     for (entry = g_npcJukeBox; entry->sndList; entry++)
     {
@@ -3882,6 +3882,13 @@ static S32 VILN_std_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
 {
     switch (toEvent)
     {
+    case 0:
+    case eEventIncrement:
+    case 89:
+    case 90:
+    case 188:
+    case 189:
+        break;
     case 87:
         if (!g_bonusTableReady)
         {
@@ -19483,22 +19490,22 @@ static inline void VBON_setup_bonusTable()
             zEntPickup_MakeDroppable(g_npcBonus[i].pickup, &farfar, NULL);
             switch (i)
             {
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-                g_npcBonus[i].flg_info |= 0x40000;
+            case 8:
+            case 9:
+            case 10:
+                g_npcBonus[i].flg_info |= 0x10000;
                 break;
             case 5:
             case 6:
             case 7:
                 g_npcBonus[i].flg_info |= 0x20000;
                 break;
-            case 8:
-            case 9:
-            case 10:
-                g_npcBonus[i].flg_info |= 0x10000;
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+                g_npcBonus[i].flg_info |= 0x40000;
                 break;
             }
         }
