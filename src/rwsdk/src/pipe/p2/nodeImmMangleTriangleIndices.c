@@ -1,18 +1,15 @@
 #include <rwcore.h>
 
+// Supplies triangle-list indices, expanding fans and strips while preserving triangle winding.
 static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
     RxPacket* packet;
     RxCluster* meshState;
     RxCluster* indices;
     RxMeshStateVector* meshData;
-    RwImVertexIndex* index;
     RwImVertexIndex* src;
-    RwImVertexIndex first;
     U32 numIndices;
     U32 numTris;
-    U32 odd;
-    U32 i;
     void* data;
 
     packet = RxPacketFetch(self);
@@ -24,6 +21,9 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
 
     if (!indices->numUsed)
     {
+        RwImVertexIndex* index;
+        U32 i;
+
         indices = RxClusterLockWrite(packet, 1, self);
 
         switch (meshData->PrimType)
@@ -47,9 +47,11 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
 
             for (i = 0; i < meshData->NumElements; i++)
             {
+                U32 next = i + 1;
+
                 index[0] = 0;
-                index[1] = i + 1;
-                index[2] = i + 2;
+                index[1] = next++;
+                index[2] = next;
                 index += 3;
             }
 
@@ -63,7 +65,7 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
 
             for (i = 0; i < meshData->NumElements; i++)
             {
-                odd = i & 1;
+                U32 odd = i & 1;
                 index[0] = i + odd;
                 index[1] = i + (odd ^ 1);
                 index[2] = i + 2;
@@ -86,6 +88,9 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
         case rwPRIMTYPETRILIST:
             break;
         case rwPRIMTYPETRIFAN:
+        {
+            RwImVertexIndex first;
+
             numTris = indices->numUsed - 2;
             first = *(RwImVertexIndex*)indices->currentData;
             src = (RwImVertexIndex*)((U8*)indices->data + indices->stride * numTris);
@@ -93,44 +98,61 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
             data = RxHeapAlloc(params->heap, sizeof(RwImVertexIndex) * 3 * numTris);
             numIndices = numTris * 3;
             indices = RxClusterSetData(indices, data, sizeof(RwImVertexIndex), numIndices);
-            index = (RwImVertexIndex*)((U8*)indices->data + indices->stride * ((numTris - 1) * 3));
-
-            for (i = 0; i < numTris; i++)
             {
-                index[2] = src[1];
-                index[1] = src[0];
-                index[0] = first;
-                src--;
-                index -= 3;
+                U32 i = 0;
+                RwImVertexIndex* index =
+                    (RwImVertexIndex*)((U8*)indices->data + indices->stride * ((numTris - 1) * 3));
+
+                for (; i < numTris; i++)
+                {
+                    index[2] = src[1];
+                    index[1] = src[0];
+                    index[0] = first;
+                    src--;
+                    index -= 3;
+                }
             }
 
             indices->numUsed = numIndices;
             meshData->PrimType = rwPRIMTYPETRILIST;
             break;
+        }
         case rwPRIMTYPETRISTRIP:
+        {
+            U32 odd;
+
             src = (RwImVertexIndex*)((U8*)indices->data + indices->stride * (indices->numUsed - 3));
             numTris = indices->numUsed - 2;
 
             data = RxHeapAlloc(params->heap, sizeof(RwImVertexIndex) * 3 * numTris);
             numIndices = numTris * 3;
             indices = RxClusterSetData(indices, data, sizeof(RwImVertexIndex), numIndices);
-            index = (RwImVertexIndex*)((U8*)indices->data + indices->stride * ((numTris - 1) * 3));
-
-            odd = numTris & 1;
-
-            for (i = 0; i < numTris; i++)
             {
-                index[0] = src[odd ^ 1];
-                index[1] = src[odd];
-                index[2] = src[2];
-                odd ^= 1;
-                src--;
-                index -= 3;
+                U32 i = 0;
+                RwImVertexIndex* index =
+                    (RwImVertexIndex*)((U8*)indices->data + indices->stride * ((numTris - 1) * 3));
+
+                odd = numTris & 1;
+
+                for (; i < numTris; i++)
+                {
+                    RwImVertexIndex i1 = src[odd];
+                    RwImVertexIndex i0 = src[odd ^ 1];
+                    RwImVertexIndex i2 = src[2];
+
+                    index[2] = i2;
+                    index[1] = i1;
+                    index[0] = i0;
+                    odd ^= 1;
+                    src--;
+                    index -= 3;
+                }
             }
 
             indices->numUsed = numIndices;
             meshData->PrimType = rwPRIMTYPETRILIST;
             break;
+        }
         default:
             RxPacketDispatch(packet, 0, self);
 

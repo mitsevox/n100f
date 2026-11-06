@@ -163,20 +163,20 @@ S32 _rpCollBSPTreeStreamGetSize(RpCollBSPTree* tree)
             break;                                                \
         case 4:                                                   \
             delta = (value) - (line).start.y;                     \
-            (point).y = (value);                                  \
             (point).x = (line).start.x + (grad)->dxdy * delta;    \
+            (point).y = (value);                                  \
             (point).z = (line).start.z + (grad)->dzdy * delta;    \
             break;                                                \
         case 8:                                                   \
             delta = (value) - (line).start.z;                     \
-            (point).z = (value);                                  \
             (point).x = (line).start.x + (grad)->dxdz * delta;    \
             (point).y = (line).start.y + (grad)->dydz * delta;    \
+            (point).z = (value);                                  \
             break;                                                \
         }                                                         \
     }
 
-// Visit every leaf the line passes through, splitting the line at each plane it crosses.
+// Splits a collision line at BSP planes and visits each intersected leaf.
 RpCollBSPTree* _rpCollBSPTreeForAllLineLeafNodeIntersections(RpCollBSPTree* tree, RwLine* line,
                                                              RpV3dGradient* grad,
                                                              S32 (*callBack)(S32, S32, void*),
@@ -215,21 +215,23 @@ RpCollBSPTree* _rpCollBSPTreeForAllLineLeafNodeIntersections(RpCollBSPTree* tree
             RwSplitBits lEnd;
             RwSplitBits rStart;
             RwSplitBits rEnd;
+            U32 axis;
             U32 leftType;
             U32 rightType;
             U32 leftNode;
             U32 rightNode;
 
             branch = &tree->branchNodes[node.index];
+            axis = branch->type;
             leftType = branch->leftType;
             rightType = branch->rightType;
             leftNode = branch->leftNode;
             rightNode = branch->rightNode;
 
-            lStart.nReal = AXIS_COMPONENT(currLine.start, branch->type) - branch->leftValue;
-            lEnd.nReal = AXIS_COMPONENT(currLine.end, branch->type) - branch->leftValue;
-            rStart.nReal = AXIS_COMPONENT(currLine.start, branch->type) - branch->rightValue;
-            rEnd.nReal = AXIS_COMPONENT(currLine.end, branch->type) - branch->rightValue;
+            lStart.nReal = AXIS_COMPONENT(currLine.start, axis) - branch->leftValue;
+            lEnd.nReal = AXIS_COMPONENT(currLine.end, axis) - branch->leftValue;
+            rStart.nReal = AXIS_COMPONENT(currLine.start, axis) - branch->rightValue;
+            rEnd.nReal = AXIS_COMPONENT(currLine.end, axis) - branch->rightValue;
 
             if (rStart.nInt < 0 && rEnd.nInt < 0)
             {
@@ -248,18 +250,20 @@ RpCollBSPTree* _rpCollBSPTreeForAllLineLeafNodeIntersections(RpCollBSPTree* tree
                 if (rStart.nInt < rEnd.nInt)
                 {
                     nStack++;
-                    lineStack[nStack] = currLine;
                     nodeStack[nStack].type = rightType;
                     nodeStack[nStack].index = rightNode;
+                    lineStack[nStack].start = currLine.start;
+                    lineStack[nStack].end = currLine.end;
                     node.type = leftType;
                     node.index = leftNode;
                 }
                 else
                 {
                     nStack++;
-                    lineStack[nStack] = currLine;
                     nodeStack[nStack].type = leftType;
                     nodeStack[nStack].index = leftNode;
+                    lineStack[nStack].start = currLine.start;
+                    lineStack[nStack].end = currLine.end;
                     node.type = rightType;
                     node.index = rightNode;
                 }
@@ -270,14 +274,15 @@ RpCollBSPTree* _rpCollBSPTreeForAllLineLeafNodeIntersections(RpCollBSPTree* tree
                 // Only the left side's plane is crossed.
                 RwV3d vLeft;
 
-                LINE_PLANE_POINT(vLeft, currLine, grad, branch->type, branch->leftValue);
+                LINE_PLANE_POINT(vLeft, currLine, grad, axis, branch->leftValue);
 
                 if (lStart.nInt < 0)
                 {
                     nStack++;
-                    lineStack[nStack] = currLine;
                     nodeStack[nStack].type = rightType;
                     nodeStack[nStack].index = rightNode;
+                    lineStack[nStack].start = currLine.start;
+                    lineStack[nStack].end = currLine.end;
                     node.type = leftType;
                     node.index = leftNode;
                     currLine.end = vLeft;
@@ -285,10 +290,10 @@ RpCollBSPTree* _rpCollBSPTreeForAllLineLeafNodeIntersections(RpCollBSPTree* tree
                 else
                 {
                     nStack++;
-                    lineStack[nStack].start = vLeft;
-                    lineStack[nStack].end = currLine.end;
                     nodeStack[nStack].type = leftType;
                     nodeStack[nStack].index = leftNode;
+                    lineStack[nStack].start = vLeft;
+                    lineStack[nStack].end = currLine.end;
                     node.type = rightType;
                     node.index = rightNode;
                 }
@@ -299,24 +304,25 @@ RpCollBSPTree* _rpCollBSPTreeForAllLineLeafNodeIntersections(RpCollBSPTree* tree
                 // Only the right side's plane is crossed.
                 RwV3d vRight;
 
-                LINE_PLANE_POINT(vRight, currLine, grad, branch->type, branch->rightValue);
+                LINE_PLANE_POINT(vRight, currLine, grad, axis, branch->rightValue);
 
                 if (rStart.nInt < 0)
                 {
                     nStack++;
-                    lineStack[nStack].start = vRight;
-                    lineStack[nStack].end = currLine.end;
                     nodeStack[nStack].type = rightType;
                     nodeStack[nStack].index = rightNode;
+                    lineStack[nStack].start = vRight;
+                    lineStack[nStack].end = currLine.end;
                     node.type = leftType;
                     node.index = leftNode;
                 }
                 else
                 {
                     nStack++;
-                    lineStack[nStack] = currLine;
                     nodeStack[nStack].type = leftType;
                     nodeStack[nStack].index = leftNode;
+                    lineStack[nStack].start = currLine.start;
+                    lineStack[nStack].end = currLine.end;
                     node.type = rightType;
                     node.index = rightNode;
                     currLine.end = vRight;
@@ -328,16 +334,16 @@ RpCollBSPTree* _rpCollBSPTreeForAllLineLeafNodeIntersections(RpCollBSPTree* tree
                 RwV3d vLeft;
                 RwV3d vRight;
 
-                LINE_PLANE_POINT(vLeft, currLine, grad, branch->type, branch->leftValue);
-                LINE_PLANE_POINT(vRight, currLine, grad, branch->type, branch->rightValue);
+                LINE_PLANE_POINT(vLeft, currLine, grad, axis, branch->leftValue);
+                LINE_PLANE_POINT(vRight, currLine, grad, axis, branch->rightValue);
 
                 if (lStart.nInt < 0)
                 {
                     nStack++;
-                    lineStack[nStack].start = vRight;
-                    lineStack[nStack].end = currLine.end;
                     nodeStack[nStack].type = rightType;
                     nodeStack[nStack].index = rightNode;
+                    lineStack[nStack].start = vRight;
+                    lineStack[nStack].end = currLine.end;
                     node.type = leftType;
                     node.index = leftNode;
                     currLine.end = vLeft;
@@ -345,10 +351,10 @@ RpCollBSPTree* _rpCollBSPTreeForAllLineLeafNodeIntersections(RpCollBSPTree* tree
                 else
                 {
                     nStack++;
-                    lineStack[nStack].start = vLeft;
-                    lineStack[nStack].end = currLine.end;
                     nodeStack[nStack].type = leftType;
                     nodeStack[nStack].index = leftNode;
+                    lineStack[nStack].start = vLeft;
+                    lineStack[nStack].end = currLine.end;
                     node.type = rightType;
                     node.index = rightNode;
                     currLine.end = vRight;

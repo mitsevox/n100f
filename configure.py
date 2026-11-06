@@ -936,7 +936,7 @@ config.libs: List[Dict[str, Any]] = [
         [
             Object(NonMatching, "rwsdk/plugin/collis/ctgeom.c"),
             Object(NonMatching, "rwsdk/plugin/collis/ctworld.c"),
-            Object(NonMatching, "rwsdk/plugin/collis/ctbsp.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/collis/ctbsp.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/collis/rpcollis.c"),
         ],
     ),
