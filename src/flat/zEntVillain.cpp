@@ -16491,6 +16491,15 @@ static inline en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil)
     return ftype;
 }
 
+// Puffs a flask's particles at the projectile's position (helper name ours).
+static inline void VEFX_mm_flaskPuff(_zParEmitter* emitter, zEntProjectile* prj, F32 dt)
+{
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xEntGetPos(prj);
+    zParEmitterEmitCustom(emitter, dt, &info);
+}
+
 // A broken fire flask's splash grows over its aftermath time and hurts the player inside it;
 // it emits the red flask particles.
 static inline void VPRJ_BMM_redflask(zEntProjectile* prj, F32 dt)
@@ -16501,7 +16510,8 @@ static inline void VPRJ_BMM_redflask(zEntProjectile* prj, F32 dt)
     if (flask->tym_aftermath < 0.1f) return;
 
     rad_oldbnd = prj->bound.sph.r;
-    prj->bound.sph.r = prj->tmr_curstate / flask->tym_aftermath * flask->rad_aftermath;
+    F32 rat = prj->tmr_curstate / flask->tym_aftermath;
+    prj->bound.sph.r = rat * flask->rad_aftermath;
     xBoundHitsBound(&prj->bound, &globals.player.ent.bound, &colrec);
     if (colrec.flags & 1)
     {
@@ -16510,10 +16520,7 @@ static inline void VPRJ_BMM_redflask(zEntProjectile* prj, F32 dt)
     }
     prj->bound.sph.r = rad_oldbnd;
 
-    _zParEmitterCustomSettings info;
-    info.custom_flags = 0x20;
-    info.pos = *xEntGetPos(prj);
-    zParEmitterEmitCustom(sEmitMMRedFlask, dt, &info);
+    VEFX_mm_flaskPuff(sEmitMMRedFlask, prj, dt);
 }
 
 // A broken acid flask's splash, as VPRJ_BMM_redflask, with the green flask particles.
@@ -16525,7 +16532,8 @@ static inline void VPRJ_BMM_greenflask(zEntProjectile* prj, F32 dt)
     if (flask->tym_aftermath < 0.1f) return;
 
     rad_oldbnd = prj->bound.sph.r;
-    prj->bound.sph.r = prj->tmr_curstate / flask->tym_aftermath * flask->rad_aftermath;
+    F32 rat = prj->tmr_curstate / flask->tym_aftermath;
+    prj->bound.sph.r = rat * flask->rad_aftermath;
     xBoundHitsBound(&prj->bound, &globals.player.ent.bound, &colrec);
     if (colrec.flags & 1)
     {
@@ -16534,10 +16542,7 @@ static inline void VPRJ_BMM_greenflask(zEntProjectile* prj, F32 dt)
     }
     prj->bound.sph.r = rad_oldbnd;
 
-    _zParEmitterCustomSettings info;
-    info.custom_flags = 0x20;
-    info.pos = *xEntGetPos(prj);
-    zParEmitterEmitCustom(sEmitMMGreenFlask, dt, &info);
+    VEFX_mm_flaskPuff(sEmitMMGreenFlask, prj, dt);
 }
 
 // A broken smog flask's splash, as VPRJ_BMM_redflask, with the black flask particles.
@@ -16549,7 +16554,8 @@ static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt)
     if (flask->tym_aftermath < 0.1f) return;
 
     rad_oldbnd = prj->bound.sph.r;
-    prj->bound.sph.r = prj->tmr_curstate / flask->tym_aftermath * flask->rad_aftermath;
+    F32 rat = prj->tmr_curstate / flask->tym_aftermath;
+    prj->bound.sph.r = rat * flask->rad_aftermath;
     xBoundHitsBound(&prj->bound, &globals.player.ent.bound, &colrec);
     if (colrec.flags & 1)
     {
@@ -16558,10 +16564,7 @@ static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt)
     }
     prj->bound.sph.r = rad_oldbnd;
 
-    _zParEmitterCustomSettings info;
-    info.custom_flags = 0x20;
-    info.pos = *xEntGetPos(prj);
-    zParEmitterEmitCustom(sEmitMMBlackFlask, dt, &info);
+    VEFX_mm_flaskPuff(sEmitMMBlackFlask, prj, dt);
 }
 
 // Prepare a Redbeard sword entity and its collision targets.
