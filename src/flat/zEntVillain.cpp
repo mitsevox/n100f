@@ -13244,6 +13244,23 @@ static en_ZVILLAIN_HEADBUTT_RESPONSE VOUT_spikey_header(st_zEntVillain* ent)
 {
     en_NPC_QUADRANT quad = ZVIL_QUAD_UNKNOWN;
     en_ZVILLAIN_HEADBUTT_RESPONSE result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
 
     if (!(ent->abl_spyk & 1))
     {
@@ -19538,7 +19555,9 @@ static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent, en_N
 
     if (qdrant)
     {
-        ang_aoi = xAngleClamp(ang_diff + PI / 4);
+        ang_aoi = ang_diff;
+        ang_aoi += PI / 4;
+        ang_aoi = xAngleClamp(ang_aoi);
         if (ang_aoi > 0.0f && ang_aoi <= PI / 2)
         {
             *qdrant = ZVIL_QUAD_FRONT;
