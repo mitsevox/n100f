@@ -1821,12 +1821,12 @@ S32 BinkSetSoundOnOff(Bink* bink, S32 onoff)
                         bink->sound_on = 0;
                     }
                 } else {
+                    ret = (r != 0);
                     if (bink->sound_on == 0) {
                         bink->sound_on = 1;
                         bink->sync_start_time = 0;
                         bink->sync_adjust = 0;
                     }
-                    ret = 1;
                 }
             }
         }
