@@ -18,3 +18,9 @@ extract:
 - symbol: LogoData
   header: bink/LogoData.inc
   header_type: raw
+# setevenodd (yuv.cpp) loads zoom2hodd's address with lis/addi pairs whose addi is shared after a
+# branch; analysis pairs only one lis with it and leaves the lis at 0x80118974 unrelocated.
+add_relocations:
+- source: 0x80118974
+  type: ha
+  target: zoom2hodd__Fl
