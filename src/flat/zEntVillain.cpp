@@ -359,7 +359,7 @@ static void VILN_KookRender(_xEnt* ent);
 void zEntVillain_InitDep(st_zEntVillain* ent, zScene* sc);
 static void zVIL_setup_npcTable();
 static S32 VPRJ_BBK_attach(zEntProjectile* prj);
-static void VPRJ_startup();
+static inline void VPRJ_startup();
 static void VPRJ_BBK_detach(zEntProjectile* prj);
 static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
 static S32 VPRJ_BBK_prjmove(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
@@ -14477,6 +14477,7 @@ static S32 zVIL_chk_pitfall(st_zEntVillain* vil, S32 prev, F32 rand)
 static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
 {
     _xVec3 vec_push = { 0 };
+    _xVec3* dir_push = &vec_push;
     F32 fac_push = VSUP_dot_faceToEnt(vil, &globals.player.ent);
     S32 dmg;
 
@@ -14501,7 +14502,7 @@ static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
     dmg = 0;
     dmg = 0;
     dmg = 0;
-    fac_push = MAX(0.2f, fac_push);
+    fac_push = MAX(fac_push, 0.2f);
     xVec3Copy(&vec_push, &vil->precalc.dir_VtoP);
     fac_push *= g_npcTable[vil->asset->subtype].strength;
     vec_push.x *= fac_push;
@@ -15555,7 +15556,7 @@ static S32 VWEP_lobInitMMFlask(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec
 
 // Registers the four villain projectile categories (Black Knight axe, Green Ghost shockwave,
 // Redbeard sword, Mastermind flask) with their callbacks and properties.
-static void VPRJ_startup()
+static inline void VPRJ_startup()
 {
     st_ZPRJ_CATEGORY_FUNCS fmap_black = { 1, VPRJ_BBK_attach, VPRJ_BBK_detach, VPRJ_BBK_logix,
                                    VPRJ_BBK_prjmove, VPRJ_BBK_notify, NULL,
@@ -20083,6 +20084,12 @@ static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir
     return VSUP_dir_toPos(ent, ctr, dir);
 }
 
+// Unused.
+static void zEntVillain_UnknownTemplate116()
+{
+    S32 lost[29] = { 0 };
+}
+
 // Whether the entity's bound centre is within half the villain's field of view either side of
 // its heading. A villain with no field of view sees nothing.
 static inline S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent)
@@ -20275,6 +20282,12 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
         }
     }
     return hit_something;
+}
+
+// Unused.
+static void zEntVillain_UnknownTemplate12c()
+{
+    _xVec3 lost = { 0 };
 }
 
 // Places a gum blob model at pos, unrotated and scaled by scale.
