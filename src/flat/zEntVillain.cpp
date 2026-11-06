@@ -19353,24 +19353,25 @@ static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplic
     return xsid;
 }
 
-// Stops the villain's talk sounds and makes sfx its current talk. If sfx has a sound asset, the
-// sound queue is cleared and the asset's sound is queued directly, with the zSFX talk flags and
-// start delay and the villain type's noise distance as its radius.
+// Starts a talk sound: stops the villain's other sounds, remembers the talk effect and, when it
+// names a sound asset, empties the sound queue and queues that sound with the talk properties.
 static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
+    S32 flags;
+    S32 i;
 
     xSndStopChildren((U32)vil + 2);
     vil->sfx_curTalk = sfx;
     if (sfx && sfx->asset && sfx->asset->id)
     {
-        S32 flg_vsnd = VSND_findProps(VSND_TYP_ZSFXTALK, &sprop);
-        for (S32 i = 0; i < 4; i++)
+        flags = VSND_findProps(VSND_TYP_ZSFXTALK, &sprop);
+        for (i = 0; i < 4; i++)
         {
             vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
             vil->snd_queue[i].sndDirect = 0;
         }
-        VSND_addQueueEntry(vil, VSND_LISTEND, flg_vsnd, g_npcTable[vil->asset->subtype].dst_noisy,
+        VSND_addQueueEntry(vil, (en_NPC_SOUND)0x8000, flags, g_npcTable[vil->asset->subtype].dst_noisy,
                            sprop->tym_delayStart, -1.0f, 0, sfx->asset->soundAssetID);
     }
 }
