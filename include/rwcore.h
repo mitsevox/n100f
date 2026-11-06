@@ -1814,6 +1814,7 @@ S32 RwFrameDirty(const RwFrame* frame);
 S32 RwFrameDestroyHierarchy(RwFrame* frame);
 RwMatrix* RwMatrixMultiply(RwMatrix* matrixOut, const RwMatrix* MatrixIn1, const RwMatrix* matrixIn2);
 RwMatrix* RwMatrixTransform(RwMatrix* matrix, const RwMatrix* transform, RwOpCombineType combineOp);
+const RwMatrix* RwMatrixQueryRotate(const RwMatrix* matrix, RwV3d* axis, F32* angle, RwV3d* center);
 RwMatrix* RwMatrixRotate(RwMatrix* matrix, const RwV3d* axis, F32 angle, RwOpCombineType combineOp);
 RwMatrix* RwMatrixRotateOneMinusCosineSine(RwMatrix* matrix, const RwV3d* unitAxis,
                                            F32 oneMinusCosine, F32 sine,
