@@ -20105,23 +20105,24 @@ static inline F32 VSUP_ang_ofXZDir(_xVec3 dir)
     return atan2(dir.x, dir.z);
 }
 
-// Squared flat (x and z) distance from the entity to a position.
-static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
+// Squared flat (x and z) distance from the entity's model position to a position. Worker for
+// VSUP_ds2_toPos (helper name ours).
+static F32 VSUP_ds2_inner(const _zEnt* ent, _xVec3 pos)
 {
     _xVec3 delta = { 0 };
 
-    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
+    xVec3Sub(&delta, &pos, &((xMat4x3*)ent->model->Mat)->pos);
     return delta.x * delta.x + delta.z * delta.z;
 }
 
-// Heading (around the y axis) from the entity to a position. If dir is given, it gets the unit
-// direction to the position.
-static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
+// Heading (around the y axis) from the entity's model position to a position. If dir is given,
+// it gets the unit direction to the position. Worker for VSUP_dir_toPos (helper name ours).
+static F32 VSUP_dir_inner(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
 {
     _xVec3 delta = { 0 };
     F32 ang;
 
-    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
+    xVec3Sub(&delta, &pos, &((xMat4x3*)ent->model->Mat)->pos);
     xVec3Normalize(&delta, &delta);
     ang = xAngleClamp(VSUP_ang_ofXZDir(delta));
     if (dir)
@@ -20129,6 +20130,19 @@ static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
         xVec3Normalize(dir, &delta);
     }
     return ang;
+}
+
+// Squared flat (x and z) distance from the entity to a position.
+static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
+{
+    return VSUP_ds2_inner(ent, pos);
+}
+
+// Heading (around the y axis) from the entity to a position. If dir is given, it gets the unit
+// direction to the position.
+static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
+{
+    return VSUP_dir_inner(ent, pos, dir);
 }
 
 // Squared flat (x and z) distance from the villain to another entity's position.
