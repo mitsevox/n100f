@@ -61,6 +61,8 @@ S32 _rxPipelineOpen(void)
     return FALSE;
 }
 
+// Release a node's resources. Locked pipelines also compact their storage and repair output
+// indices that referred to removed or shifted nodes.
 RxPipelineNode* PipelineNodeDestroy(RxPipelineNode* node, RxPipeline* pipeline)
 {
     if (!pipeline->locked)
@@ -116,7 +118,6 @@ RxPipelineNode* PipelineNodeDestroy(RxPipelineNode* node, RxPipeline* pipeline)
 
         if (nodeIndex < pipeline->numNodes - 1)
         {
-            U32 output;
             U32* srcOutputs;
             U32* dstOutputs;
             RxPipelineNodeTopSortData* srcTopSortData;
@@ -159,17 +160,17 @@ RxPipelineNode* PipelineNodeDestroy(RxPipelineNode* node, RxPipeline* pipeline)
 
                 for (j = 0; j < pipeline->nodes[i].numOutputs; j++)
                 {
-                    output = pipeline->nodes[i].outputs[j];
+                    U32* outputSlot = &pipeline->nodes[i].outputs[j];
 
-                    if (output >= nodeIndex)
+                    if (*outputSlot >= nodeIndex)
                     {
-                        if (nodeIndex == output)
+                        if (nodeIndex == *outputSlot)
                         {
-                            pipeline->nodes[i].outputs[j] = (U32)-1;
+                            *outputSlot = (U32)-1;
                         }
                         else
                         {
-                            pipeline->nodes[i].outputs[j] = output - 1;
+                            --*outputSlot;
                         }
                     }
                 }
