@@ -941,11 +941,11 @@ void YUV_16a4m_4x2(S32 n)
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
     S.dst0 += n * 8;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 8;
     a0 = S.a0;
     a1 = S.a1;
     y0 = S.y0;
     y1 = S.y1;
+    S.dst1 += n * 8;
 
     do {
         U32 aa0 = *a0++;
@@ -991,11 +991,11 @@ void YUV_16a4mx2_4x2(S32 n)
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
     S.dst0 += n * 16;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 16;
     a0 = S.a0;
     a1 = S.a1;
     y0 = S.y0;
     y1 = S.y1;
+    S.dst1 += n * 16;
 
     do {
         U32 aa0 = *a0++;
