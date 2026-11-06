@@ -23,13 +23,7 @@ static inline void VtxDescInitFast(GCNVertexArrays* arrays, const RpGameCubeVtxF
 
     if (flags & rpGEOMETRYNORMALS)
     {
-        S32 count = 3;
-
-        if (vtxFmt->frac[1])
-        {
-            count = 9;
-        }
-        arrays->nrmStride = lbl_801DDA48[vtxFmt->compType[1]] * count;
+        arrays->nrmStride = lbl_801DDA48[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
         stride += arrays->nrmStride;
     }
 
@@ -45,7 +39,7 @@ static inline void VtxDescInitFast(GCNVertexArrays* arrays, const RpGameCubeVtxF
 
         for (i = 0; i < numTexCoords; i++)
         {
-            arrays->texStride[i] = (lbl_801DDA48[vtxFmt->compType[i + 2]] * 2) & 0xFE;
+            arrays->texStride[i] = (lbl_801DDA48[(vtxFmt->compType + 2)[i]] * 2) & 0xFE;
             stride += arrays->texStride[i];
         }
     }
@@ -64,15 +58,19 @@ static inline void VtxDescInitFast(GCNVertexArrays* arrays, const RpGameCubeVtxF
     }
 }
 
-// Instances a world sector's vertices into dst in the format's types, one array per attribute
+// Instances a world sector's vertices into buffer in the format's types, one array per attribute
 // in flags (or one interleaved array), and records where each starts.
 void _rwDlWorldSectorInstanceFast(RpWorldSector* sector, GCNVertexArrays* arrays,
                                   const RpGameCubeVtxFmt* vtxFmt, U32 flags, U8 numTexCoords,
-                                  U8* dst)
+                                  U8* buffer)
 {
-    S32 numVerts = RpWorldSectorGetNumVertices(sector);
+    U8* dst;
+    S32 numVerts;
     S32 size;
     S32 i;
+
+    numVerts = RpWorldSectorGetNumVertices(sector);
+    dst = buffer;
 
     if (!vtxFmt)
     {
