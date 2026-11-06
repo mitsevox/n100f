@@ -682,10 +682,10 @@ struct RwModuleInfo
 typedef struct RwMemoryFunctions RwMemoryFunctions;
 struct RwMemoryFunctions
 {
-    void* (*rwmalloc)(U32 size);
+    void* (*rwmalloc)(size_t size);
     void (*rwfree)(void* mem);
-    void* (*rwrealloc)(void* mem, U32 newSize);
-    void* (*rwcalloc)(U32 numObj, U32 sizeObj);
+    void* (*rwrealloc)(void* mem, size_t newSize);
+    void* (*rwcalloc)(size_t numObj, size_t sizeObj);
 };
 
 typedef struct RwFileFunctions RwFileFunctions;

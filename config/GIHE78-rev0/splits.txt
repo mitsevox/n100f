@@ -1642,9 +1642,13 @@ rwsdk/plugin/matfx/gcn/multiTexGcn.c:
 
 rwsdk/plugin/matfx/multiTex.c:
 	.text       start:0x80142C94 end:0x8014366C
+	.bss        start:0x8025D9C8 end:0x8025DA58
+	.sdata      start:0x8025E788 end:0x8025E790
 
 rwsdk/plugin/matfx/multiTexEffect.c:
 	.text       start:0x8014366C end:0x80144154
+	.bss        start:0x8025DA58 end:0x8025DB10
+	.sbss       start:0x8025F6A0 end:0x8025F6A8
 
 rwsdk/plugin/skin2/rpskin.c:
 	.text       start:0x80144154 end:0x80144D5C

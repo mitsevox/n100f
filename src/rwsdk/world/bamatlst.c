@@ -218,7 +218,7 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
             }
             else
             {
-                material = matList->materials[matIndex[i]];
+                material = _rpMaterialListGetMaterial(matList, matIndex[i]);
                 material->refCount++;
             }
 

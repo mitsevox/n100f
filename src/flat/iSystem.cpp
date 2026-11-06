@@ -608,7 +608,7 @@ static void _rwDolphinHeapFree(void* ptr)
     }
 }
 
-static void* _rwDolphinHeapAlloc(U32 size)
+static void* _rwDolphinHeapAlloc(u32 size)
 {
     U32* block;
     void* result;
@@ -655,7 +655,7 @@ static void* _rwDolphinHeapAlloc(U32 size)
     return result;
 }
 
-static void* _rwDolphinHeapCalloc(U32 numObj, U32 sizeObj)
+static void* _rwDolphinHeapCalloc(u32 numObj, u32 sizeObj)
 {
     U32 size = numObj * sizeObj;
     void* mem = _rwDolphinHeapAlloc(size);
@@ -669,7 +669,7 @@ static void* _rwDolphinHeapCalloc(U32 numObj, U32 sizeObj)
 }
 
 // An xMem block cannot grow here: it is recorded and the request fails.
-static void* _rwDolphinHeapRealloc(void* ptr, U32 newSize)
+static void* _rwDolphinHeapRealloc(void* ptr, u32 newSize)
 {
     U32 oldSize;
     void* mem;
