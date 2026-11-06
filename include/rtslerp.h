@@ -4,6 +4,17 @@
 #include "rwcore.h"
 #include "rtquat.h"
 
+typedef struct RtSlerp RtSlerp;
+struct RtSlerp
+{
+    U32 flags;
+    RwMatrix* matrix1;
+    RwMatrix* matrix2;
+    RwV3d axis;
+    F32 angle;
+    S32 useLerp;
+};
+
 typedef struct RtQuatSlerpCache RtQuatSlerpCache;
 struct RtQuatSlerpCache
 {
@@ -51,6 +62,7 @@ struct RtQuatSlerpCache
 extern "C" {
 #endif
 
+RtSlerp* RtSlerpInitialize(RtSlerp* spSlerp, RwMatrix* mpMat1, RwMatrix* mpMat2);
 void RtQuatSetupSlerpCache(RtQuat* qpFrom, RtQuat* qpTo, RtQuatSlerpCache* sCache);
 
 #ifdef __cplusplus
