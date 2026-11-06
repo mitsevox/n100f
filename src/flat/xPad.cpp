@@ -9,17 +9,16 @@
 
 void iPadStartRumble(_tagxPad* pad, _tagxRumble* rumble);
 
-// Two zScene.cpp functions without source yet: a scene flag that turns the menu stick-as-d-pad
-// mode off, and the condition under which the first pad swaps two buttons.
+// The scene controls menu-stick navigation and the first pad's menu button ordering.
 #if VERSION_GIHE78_REV0
-#define SCENE_PAD_DPAD_OFF fn_800CD24C
-#define PAD_SWAP_BUTTONS fn_800CD170
+#define SCENE_PAD_DPAD_OFF zSceneGetMenuStickDisabled
+#define PAD_SWAP_BUTTONS zSceneShouldSwapMenuButtons
 #elif VERSION_GIHE78_REV1
 #define SCENE_PAD_DPAD_OFF fn_800CCE40
 #define PAD_SWAP_BUTTONS fn_800CCD64
-#endif
 extern "C" U32 SCENE_PAD_DPAD_OFF();
 extern "C" S32 PAD_SWAP_BUTTONS();
+#endif
 
 extern _tagxPad mPad[4];
 static _tagxRumble mRumbleList[32];

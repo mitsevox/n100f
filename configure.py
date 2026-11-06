@@ -622,7 +622,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zRenderState.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zRumble.cpp"),
             Object(NonMatching, "flat/zSaveLoad.cpp", cflags=cflags_game_nodeferred),
-            Object(NonMatching, "flat/zScene.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/zScene.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zScript.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zSFX.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zSurface.cpp"),
