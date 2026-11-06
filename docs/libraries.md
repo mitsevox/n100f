@@ -76,7 +76,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/babbox.c` | 3 of 3 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/babincam.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/plcore/bamemory.c` | 8 of 8 | (Matching on GIHE78-rev0, with its complete eight-byte `.sbss`) |
-| `rwsdk/src/pipe/p2/p2altmdl.c` | 0 of 3 | `_rxPacketDestroy` (98.6%), `_rxEmbeddedPacketBetweenPipelines` (94.5%) and `_rxEmbeddedPacketBetweenNodes` (84.0%): the target clears the cluster flags with a word store where this source emits a halfword store, and register choice (text only) |
+| `rwsdk/src/pipe/p2/p2altmdl.c` | 1 of 3 | Destructor body exact; pipeline/node transfers 95.33708% / 93.75676%. Node remains four bytes longer than the target; target-observed flags/stride word reset reconstructed with qualified low-level prefix access. NonMatching, original linked |
 | `rwsdk/tool/slerp/rtslerp.c` | 0 of 1 | `RtQuatSetupSlerpCache` (99.3%: operand and register order in the inlined arc cosine's products; text only) |
 | `rwsdk/src/babintex.c` | 7 of 9 | `_rwStringStreamFindAndRead` (99.0%: register choice in the inlined string readers) and `RwTextureStreamRead` (83.6%: the target keeps the inlined readers' NULL test and allocation path for its name buffers) |
 | `rwsdk/src/baimage.c` | 9 of 18 | `ImageDetermineExtender` (99.1%), `RwImageCopy` (98.9%), `ImagePathForAllFullNames` (97.8%), `RwImageMakeMask` (97.4%), `ImageConvertDepth` (92.4%), `RwImageReadMaskedImage` (92.3%), `RwImageApplyMask` (89.2%), `RwImageAllocatePixels` (83.1%: the target compares the depth unsigned and computes the palette size without a branch) and `RwImageGammaCorrect` (79.1%), register choice and scheduling |
