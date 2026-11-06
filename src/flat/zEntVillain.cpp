@@ -16592,7 +16592,6 @@ static inline xModelInstance* VWEP_rbs_animmodel(st_zEntVillain* vil)
 }
 
 // Prepare a Redbeard sword entity and its collision targets.
-
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
 {
     _xVec3 vec_pos = { 0 };
@@ -17089,7 +17088,6 @@ static inline S32 VPAR_emit_headbutt(st_zEntVillain* ent, F32 dt, st_zEntVillain
                                      S32 idx, _xVec3* pos, _zParEmitterCustomSettings* pecust);
 
 // Emit a villain particle role at its bound, head, or marked model vertices.
-
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F32 dt)
 {
     _zParEmitterCustomSettings pecust = { 0 };
