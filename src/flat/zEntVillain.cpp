@@ -359,7 +359,7 @@ static void VILN_KookRender(_xEnt* ent);
 void zEntVillain_InitDep(st_zEntVillain* ent, zScene* sc);
 static void zVIL_setup_npcTable();
 static S32 VPRJ_BBK_attach(zEntProjectile* prj);
-static void VPRJ_startup();
+static inline void VPRJ_startup();
 static void VPRJ_BBK_detach(zEntProjectile* prj);
 static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
 static S32 VPRJ_BBK_prjmove(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
@@ -7066,7 +7066,8 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
         {
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, ZVIL_GOAL_LOBBING, ZVIL_GSPOT_KICKATTACK);
-            if (VCFG_inDamageWindow(vil, VANM_entTime(vil)) && vil->prj_reserved && vil->cnt_lobSalvo > 0)
+            F32 tym = VANM_entTime(vil);
+            if (VCFG_inDamageWindow(vil, tym) && vil->prj_reserved && vil->cnt_lobSalvo > 0)
             {
                 _xVec3 vec_off = { 0 };
                 vec_off.x = 0.5f - iurand();
@@ -7088,7 +7089,8 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
         }
         break;
     case ZVIL_GOAL_SPELLCAST:
-        if (VCFG_inDamageWindow(vil, VANM_entTime(vil)))
+        F32 tym = VANM_entTime(vil);
+        if (VCFG_inDamageWindow(vil, tym))
             vil->goodattack |= VWEP_extend_particles(vil, dt, &vil->pos_exttgt);
         if (vil->goodattack)
             VWEP_mm_zapPlayer(vil);
@@ -7128,40 +7130,7 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
-            if (vil->ability & 8)
-            {
-                F32 fade = vil->tmr_list[ZVIL_TDUR_DECAY];
-                fade = fade > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] ? fade : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
-                if (fade != 0.0f)
-                {
-                    _zParEmitterCustomSettings info;
-                    info.custom_flags = 0x5a0;
-                    info.color_birth[0] = gVillainPoofColorBirth[vil->asset->subtype][0];
-                    info.color_birth[1] = gVillainPoofColorBirth[vil->asset->subtype][1];
-                    info.color_birth[2] = gVillainPoofColorBirth[vil->asset->subtype][2];
-                    info.color_death[0] = gVillainPoofColorDeath[vil->asset->subtype][0];
-                    info.color_death[1] = gVillainPoofColorDeath[vil->asset->subtype][1];
-                    info.color_death[2] = gVillainPoofColorDeath[vil->asset->subtype][2];
-                    info.color_birth[3] = 0;
-                    info.color_death[3] = 0;
-                    info.pos = *xBoundCenter(&vil->bound);
-                    info.size_death = 5.0f * vil->bound.sph.r;
-                    zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
-                    info.color_birth[0] = gVillainDotsColorBirth[vil->asset->subtype][0];
-                    info.color_birth[1] = gVillainDotsColorBirth[vil->asset->subtype][1];
-                    info.color_birth[2] = gVillainDotsColorBirth[vil->asset->subtype][2];
-                    info.color_death[0] = gVillainDotsColorDeath[vil->asset->subtype][0];
-                    info.color_death[1] = gVillainDotsColorDeath[vil->asset->subtype][1];
-                    info.color_death[2] = gVillainDotsColorDeath[vil->asset->subtype][2];
-                    info.color_birth[3] = 255;
-                    info.color_death[3] = 0;
-                    info.custom_flags = 0x201a0;
-                    info.xzcircle_radius = vil->bound.sph.r;
-                    zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
-                }
-                if (xUtil_yesno(fade)) vil->flags |= 1;
-                else vil->flags &= (U8)~1;
-            }
+            VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
             {
                 VPAR_emit_partype(vil, VPAR_EMIT_POOF, dt);
@@ -11701,7 +11670,8 @@ static S32 VILN_BMM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         }
         else if (vil->anim_playnext == ZVIL_ANIM_MM_BA_ATTACK && vil->anim_playing)
         {
-            if (VCFG_inDamageWindow(vil, VANM_entTime(vil)) && vil->prj_reserved &&
+            F32 tym = VANM_entTime(vil);
+            if (VCFG_inDamageWindow(vil, tym) && vil->prj_reserved &&
                 vil->cnt_lobSalvo > 0)
             {
                 _xVec3 vec_tmp = { 0 };
@@ -14508,6 +14478,7 @@ static S32 zVIL_chk_pitfall(st_zEntVillain* vil, S32 prev, F32 rand)
 static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
 {
     _xVec3 vec_push = { 0 };
+    _xVec3* dir_push = &vec_push;
     F32 fac_push = VSUP_dot_faceToEnt(vil, &globals.player.ent);
     S32 dmg;
 
@@ -14532,7 +14503,7 @@ static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
     dmg = 0;
     dmg = 0;
     dmg = 0;
-    fac_push = MAX(0.2f, fac_push);
+    fac_push = MAX(fac_push, 0.2f);
     xVec3Copy(&vec_push, &vil->precalc.dir_VtoP);
     fac_push *= g_npcTable[vil->asset->subtype].strength;
     vec_push.x *= fac_push;
@@ -15588,7 +15559,7 @@ static S32 VWEP_lobInitMMFlask(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec
 
 // Registers the four villain projectile categories (Black Knight axe, Green Ghost shockwave,
 // Redbeard sword, Mastermind flask) with their callbacks and properties.
-static void VPRJ_startup()
+static inline void VPRJ_startup()
 {
     st_ZPRJ_CATEGORY_FUNCS fmap_black = { 1, VPRJ_BBK_attach, VPRJ_BBK_detach, VPRJ_BBK_logix,
                                    VPRJ_BBK_prjmove, VPRJ_BBK_notify, NULL,
@@ -16681,16 +16652,28 @@ static void VWEP_rbs_bupdate(_xEnt* ent_rbs, _xVec3* pos)
 // Start Redbeard's sword from a tagged point on his model.
 static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs)
 {
+    S32 rc;
+
     rbs->tym_age = 0.0f;
     rbs->dst_far = rbs->rbvil->dst_extend;
     rbs->spd_fly = 1.99999f * rbs->rbvil->dst_extend / 5.0f;
     rbs->dir_end = rbs->rbvil->precalc.dir_VtoP;
     xVec3SMul(&rbs->pos_end, &rbs->dir_end, rbs->dst_far);
     xMat3x3Euler((xMat3x3*)&rbs->frame->mat, 0.0f, 0.0f, 0.0f);
-    if (!VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_SWORDHANDLE, &rbs->frame->mat.pos) &&
-        !VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_ATTACK, &rbs->frame->mat.pos) &&
-        !VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_WEAPON, &rbs->frame->mat.pos) &&
-        !VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_LOSEYEBALL, &rbs->frame->mat.pos))
+    rc = VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_SWORDHANDLE, &rbs->frame->mat.pos);
+    if (!rc)
+    {
+        rc = VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_ATTACK, &rbs->frame->mat.pos);
+    }
+    if (!rc)
+    {
+        rc = VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_WEAPON, &rbs->frame->mat.pos);
+    }
+    if (!rc)
+    {
+        rc = VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_LOSEYEBALL, &rbs->frame->mat.pos);
+    }
+    if (!rc)
     {
         rbs->frame->mat.pos = *xBoundCenter(&rbs->rbvil->bound);
     }
@@ -20104,6 +20087,12 @@ static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir
     return VSUP_dir_toPos(ent, ctr, dir);
 }
 
+// Unused.
+static void zEntVillain_UnknownTemplate116()
+{
+    S32 lost[29] = { 0 };
+}
+
 // Whether the entity's bound centre is within half the villain's field of view either side of
 // its heading. A villain with no field of view sees nothing.
 static inline S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent)
@@ -20296,6 +20285,12 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
         }
     }
     return hit_something;
+}
+
+// Unused.
+static void zEntVillain_UnknownTemplate12c()
+{
+    _xVec3 lost = { 0 };
 }
 
 // Places a gum blob model at pos, unrotated and scaled by scale.
