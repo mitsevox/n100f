@@ -351,6 +351,7 @@ static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt);
 static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS pid, void* vv);
 static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata);
 static void VCFG_readAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata);
+static void VCFG_setAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata, p2EntAsset* asset);
 static S32 zVIL_elcb_event(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
 static void zVIL_elcb_update(_xEnt* ent, _xScene* scn, F32 dt);
 static void zVIL_elcb_bupdate(_xEnt* ent, _xVec3* pos);
@@ -2591,8 +2592,7 @@ void zEntVillain_Init(st_zEntVillain* ent, p2EntAsset* asset)
     else
         ent->link = NULL;
     ent->vhf = &g_npcFuncs[ent->asset->subtype];
-    ent->vilcfg.asset = ent->asset;
-    ent->vilcfg.vilp2ass = (p2EntVillainAsset*)(ent->asset + 1);
+    VCFG_setAsset(&ent->vilcfg, ent->asset);
     VCFG_readParms(&ent->vilcfg);
     VCFG_readAsset(&ent->vilcfg);
     ent->ability = g_npcTable[ent->asset->subtype].ability;
@@ -2737,8 +2737,7 @@ extern "C" void VIL_RESET(st_zEntVillain* ent, zScene* sc)
     else
         ent->link = NULL;
     ent->vhf = &g_npcFuncs[ent->asset->subtype];
-    ent->vilcfg.asset = ent->asset;
-    ent->vilcfg.vilp2ass = (p2EntVillainAsset*)(ent->asset + 1);
+    VCFG_setAsset(&ent->vilcfg, ent->asset);
     VCFG_readParms(&ent->vilcfg);
     VCFG_readAsset(&ent->vilcfg);
     ent->ability = g_npcTable[ent->asset->subtype].ability;
@@ -14360,6 +14359,13 @@ static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
 // (squared), the field of view and turn speed in radians, lobbing and extender settings, and the
 // timer lengths, where the asset gives the dazed, taunt, gum, bubble, extend and reload times and
 // the rest get fixed defaults (-1 for timers with no default).
+// Points the config at the villain's asset and at the villain block that follows it.
+static void VCFG_setAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata, p2EntAsset* asset)
+{
+    cfgdata->asset = asset;
+    cfgdata->vilp2ass = (p2EntVillainAsset*)(asset + 1);
+}
+
 static void VCFG_readAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata)
 {
     p2EntVillainAsset* rawass = cfgdata->vilp2ass;
@@ -19094,44 +19100,47 @@ static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan)
 // Pick a loaded sound of the requested type for this villain.
 static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 {
-    S32 choices[32] = { 0 };
-    F32 weights[32] = { 0 };
-    S32 count = 0;
-    U32 chosen = 0;
-    st_NPC_SOUND_ENTRY* entry = g_npcJukeBox;
+    U32 da_aid_of_sound = 0;
+    en_zEntVillainSubTypeID viltyp = (en_zEntVillainSubTypeID)vil->asset->subtype;
+    st_NPC_SOUND_ENTRY* entry;
+    st_NPC_SOUND_RECORDS* trax;
+    S32 list[32] = { 0 };
+    F32 wts[32] = { 1.0f };
+    S32 cnt = 0;
+    F32 use_wt;
 
+    entry = g_npcJukeBox;
     while (entry->sndList)
     {
-        F32 weight;
-        if (entry->viltyp == vil->asset->subtype)
-            weight = 2.0f;
+        if (entry->viltyp == viltyp)
+            use_wt = 2.0f;
         else if (entry->viltyp == (en_zEntVillainSubTypeID)-1)
-            weight = 1.0f;
+            use_wt = 1.0f;
         else
         {
             entry++;
             continue;
         }
-        st_NPC_SOUND_RECORDS* record = entry->sndList;
-        while (record->typ_sound != VSND_LISTEND && count < 32)
+        for (trax = entry->sndList; trax->typ_sound != VSND_LISTEND; trax++)
         {
-            if (record->typ_sound == sndEvent && record->aid_sound)
+            if (trax->typ_sound == sndEvent && trax->aid_sound)
             {
-                weights[count] = weight;
-                choices[count++] = record->aid_sound;
+                wts[cnt] = use_wt;
+                list[cnt] = trax->aid_sound;
+                cnt++;
             }
-            record++;
+            if (cnt >= 32) break;
         }
-        if (entry->viltyp == vil->asset->subtype || count >= 32) break;
+        if (entry->viltyp == viltyp || cnt >= 32) break;
         entry++;
     }
-    if (count > 0)
+    if (cnt > 0)
     {
-        VSUP_wtadjust(weights, count, 1.0f);
-        chosen = VSUP_choose(choices, weights, count);
-        xSTAssetName(chosen);
+        VSUP_wtadjust(wts, cnt, 1.0f);
+        da_aid_of_sound = VSUP_choose(list, wts, cnt);
+        xSTAssetName(da_aid_of_sound);
     }
-    return chosen;
+    return da_aid_of_sound;
 }
 
 // Queue a sound with the villain type's noise radius and the sound's configured delay.
