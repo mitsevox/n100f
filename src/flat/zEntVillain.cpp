@@ -16771,29 +16771,25 @@ static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bo
     static RwIm3DVertex sStripVert[32];
     _xVec3 offset = { 0.0f, 0.0f, 1.0f };
     _xMat3x3 mat;
+    S32 i;
     _xVec3 vec_in;
     RwIm3DVertex* vert = sStripVert;
-    F32 u;
-    _xVec3 pos;
 
-    for (S32 i = 0; i < 16; i++)
+    for (i = 0; i < 16; i++)
     {
         xMat3x3Euler(&mat, DEG2RAD(22.5f * i), 0.0f, 0.0f);
 
         offset.z = top_radius;
         xMat3x3LMulVec(&vec_in, &mat, &offset);
-        xVec3Add(&pos, from, &vec_in);
-        RwIm3DVertexSetPos(&vert[0], pos.x, pos.y, pos.z);
-        u = 0.0625f * i;
-        RwIm3DVertexSetU(&vert[0], u);
+        RwIm3DVertexSetPos(&vert[0], from->x + vec_in.x, from->y + vec_in.y, from->z + vec_in.z);
+        RwIm3DVertexSetU(&vert[0], 0.0625f * i);
         RwIm3DVertexSetV(&vert[0], 0.0f);
         RwIm3DVertexSetRGBA(&vert[0], 128, 128, 128, 255);
 
         offset.z = bot_radius;
         xMat3x3LMulVec(&vec_in, &mat, &offset);
-        xVec3Add(&pos, to, &vec_in);
-        RwIm3DVertexSetPos(&vert[1], pos.x, pos.y, pos.z);
-        RwIm3DVertexSetU(&vert[1], u);
+        RwIm3DVertexSetPos(&vert[1], to->x + vec_in.x, to->y + vec_in.y, to->z + vec_in.z);
+        RwIm3DVertexSetU(&vert[1], 0.0625f * i);
         RwIm3DVertexSetV(&vert[1], 1.0f);
         RwIm3DVertexSetRGBA(&vert[1], 128, 128, 128, 255);
 
