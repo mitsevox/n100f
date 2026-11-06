@@ -1787,6 +1787,7 @@ rwsdk/world/pipe/p2/gcn/native.c:
 
 rwsdk/tool/slerp/rtslerp.c:
 	.text       start:0x8015FEA4 end:0x80160340
+	.sdata2     start:0x802629E0 end:0x80262A50
 
 rwsdk/src/plcore/babinary.c:
 	.text       start:0x80160340 end:0x80160F60

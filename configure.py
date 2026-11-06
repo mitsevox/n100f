@@ -1018,7 +1018,7 @@ config.libs: List[Dict[str, Any]] = [
     RWLib(
         "rtslerp",
         [
-            Object(NonMatching, "rwsdk/tool/slerp/rtslerp.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/tool/slerp/rtslerp.c"),
         ],
     ),
     RWLib(
