@@ -114,7 +114,7 @@ zMain.cpp	0x800BE608	0x800BF644	4	8	4	4	0x800BE608=zMainLoop (name)	anchored
 zMenu.cpp	0x800BF644	0x800BFD30	8	9	3	0	0x800BF64C=zMenuFMVPlay (calls)	anchored
 zMovePoint.cpp	0x800BFD30	0x800C0524	15	15	2	0	0x800BFED4=zMovePointFindNearest (floats)	anchored
 zMusic.cpp	0x800C0524	0x800C2EB0	8	8	2	0	0x800C05F8=zMusicPause (strings)	anchored
-zParCmd.cpp	0x800C2EB0	0x800C4BE0	32	32	10	4	0x800C30D8=xParCmdTexAnim_Update (name)	anchored
+zParCmd.cpp	0x800C2EB0	0x800C4BE0	31	32	10	4	0x800C30D8=xParCmdTexAnim_Update (name)	anchored
 zParEmitter.cpp	0x800C4BE0	0x800C6708	9	13	4	0	0x800C4D04=zParEmitterEmit (floats+calls)	anchored
 zParSys.cpp	0x800C6708	0x800C7000	8	8	4	2	0x800C6708=zParSysRender (calls)	anchored
 zPendulum.cpp	0x800C7000	0x800C751C	9	9	0	0	-	count-match
