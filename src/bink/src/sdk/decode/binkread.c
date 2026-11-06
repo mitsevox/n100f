@@ -1023,45 +1023,45 @@ U32 BinkGetKeyFrame(Bink* bink, U32 frame, S32 flags)
     S32 i;
     U32 j;
 
-    if (bink) {
-        if (!(flags & 128) && (bink->frameoffsets[frame - 1] & 1))
-            return frame;
+    if (bink == 0)
+        return 0;
 
-        switch (flags & 127) {
-            case 0:
-                for (i = frame - 2; i > 0; i--) {
+    if (!(flags & 128) && (bink->frameoffsets[frame - 1] & 1))
+        return frame;
+
+    switch (flags & 127) {
+        case 0:
+            for (i = frame - 2; i > 0; i--) {
+                if (bink->frameoffsets[i] & 1)
+                    break;
+            }
+            return i + 1;
+
+        case 1:
+            for (j = frame; j < bink->frames;) {
+                if (bink->frameoffsets[j++] & 1)
+                    return j;
+            }
+            break;
+
+        case 2:
+            i = frame - 2;
+            j = frame;
+            for (;;) {
+                if (i >= 0) {
                     if (bink->frameoffsets[i] & 1)
-                        break;
-                }
-                return i + 1;
-
-            case 1:
-                for (j = frame; j < bink->frames;) {
-                    if (bink->frameoffsets[j++] & 1)
-                        return j;
-                }
-                break;
-
-            case 2:
-                i = frame - 2;
-                j = frame;
-                for (;;) {
-                    if (i >= 0) {
-                        if (bink->frameoffsets[i] & 1)
-                            return i + 1;
-                        if (j < bink->frames) {
-                            if (bink->frameoffsets[j++] & 1)
-                                return j;
-                        }
-                    } else {
-                        if (j >= bink->frames)
-                            return 0;
+                        return i + 1;
+                    if (j < bink->frames) {
                         if (bink->frameoffsets[j++] & 1)
                             return j;
                     }
-                    i--;
-                }
-        }
+                } else if (j < bink->frames) {
+                    if (bink->frameoffsets[j++] & 1)
+                        return j;
+                } else
+                    return 0;
+                i--;
+            }
     }
 
     return 0;
@@ -1800,8 +1800,8 @@ S32 BinkSetSoundOnOff(Bink* bink, S32 onoff)
         for (i = 0; i < bink->num_opened; i++) {
             if (bink->tracks[i].set_onoff) {
                 if (!suspended) {
-                    RADCB_suspend_callback(cb_bink_sound, &bink->snd_cb);
                     suspended = 1;
+                    RADCB_suspend_callback(cb_bink_sound, &bink->snd_cb);
                 }
                 r = bink->tracks[i].set_onoff(&bink->tracks[i], onoff ? 1 : 0);
                 if (r == 0) {
