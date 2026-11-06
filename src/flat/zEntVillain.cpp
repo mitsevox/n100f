@@ -14497,16 +14497,10 @@ static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
     dmg = 0;
     dmg = 0;
     dmg = 0;
-    dmg = 0;
-    dmg = 0;
-    dmg = 0;
-    dmg = 0;
-    dmg = 0;
-    fac_push = MAX(fac_push, 0.2f);
+    fac_push = MAX(0.2f, fac_push);
     xVec3Copy(&vec_push, &vil->precalc.dir_VtoP);
-    fac_push *= g_npcTable[vil->asset->subtype].strength;
-    vec_push.x *= fac_push;
-    vec_push.y *= fac_push;
+    vec_push.x *= fac_push * g_npcTable[vil->asset->subtype].strength;
+    vec_push.y *= fac_push * g_npcTable[vil->asset->subtype].strength;
     dmg = g_npcTable[vil->asset->subtype].dmg_give;
     zEntPlayer_Damage(vil, (dmg > 0) ? dmg : 0, NULL);
 }
