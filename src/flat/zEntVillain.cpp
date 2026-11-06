@@ -6943,13 +6943,6 @@ static S32 VILN_kp_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
 
 // Update a killer plant's goal: it waits ready to attack, then swipes, lobs or casts its spell at
 // the player, and fades out as a hologram when it dies.
-static inline void VPAR_copyRGB(U8* dst, const U8* src)
-{
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-}
-
 static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
 {
     st_ZVIL_PRECALC* prec = &vil->precalc;
@@ -7122,31 +7115,7 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
-            if (vil->ability & 8)
-            {
-                F32 fade = MAX(vil->tmr_list[ZVIL_TDUR_DECAY], vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]);
-                if (fade)
-                {
-                    _zParEmitterCustomSettings info;
-                    VPAR_copyRGB(info.color_birth, gVillainPoofColorBirth[vil->asset->subtype]);
-                    VPAR_copyRGB(info.color_death, gVillainPoofColorDeath[vil->asset->subtype]);
-                    info.custom_flags = 0x5a0;
-                    info.pos = *xBoundCenter(&vil->bound);
-                    info.size_death = 5.0f * vil->bound.sph.r;
-                    info.color_birth[3] = 0;
-                    info.color_death[3] = 0;
-                    zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
-                    VPAR_copyRGB(info.color_birth, gVillainDotsColorBirth[vil->asset->subtype]);
-                    info.color_birth[3] = 255;
-                    VPAR_copyRGB(info.color_death, gVillainDotsColorDeath[vil->asset->subtype]);
-                    info.color_death[3] = 0;
-                    info.custom_flags = 0x201a0;
-                    info.xzcircle_radius = vil->bound.sph.r;
-                    zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
-                }
-                if (xUtil_yesno(fade)) vil->flags |= 1;
-                else vil->flags &= (U8)~1;
-            }
+            VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
             {
                 VPAR_emit_partype(vil, VPAR_EMIT_POOF, dt);
