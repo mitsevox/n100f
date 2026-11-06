@@ -16788,34 +16788,45 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
 static void VPAR_emit_extattack(st_zEntVillain* ent, _xVec3* origin, _xVec3* aimdir,
                                 F32 length, F32 slope, F32 dt)
 {
-    F32 along = 0.0f;
-    for (S32 i = 0; i < g_emitlist.cnt; i++)
+    S32 i;
+    S32 j;
+    F32 fv = 0.0f;
+    F32 delta;
+    _zParEmitterCustomSettings* pecust = &sExtSettings;
+    st_zEntVillain_ParEmitRecord* vpar;
+
+    for (i = 0; i < g_emitlist.cnt; i++)
     {
-        st_zEntVillain_ParEmitRecord* rec = (st_zEntVillain_ParEmitRecord*)g_emitlist.list[i];
-        if (!rec->emitctxt || rec->emitrole != VPAR_EMIT_EXTATTACK ||
-            (rec->viltype != (en_zEntVillainSubTypeID)-1 && rec->viltype != ent->asset->subtype) ||
-            (rec->flg_need & ent->flg_misc) != rec->flg_need || (rec->flg_omit & ent->flg_misc))
+        vpar = (st_zEntVillain_ParEmitRecord*)g_emitlist.list[i];
+        if (!vpar->emitctxt || vpar->emitrole != VPAR_EMIT_EXTATTACK ||
+            (vpar->viltype != (en_zEntVillainSubTypeID)-1 && vpar->viltype != ent->asset->subtype) ||
+            (vpar->flg_need & ent->ability) != vpar->flg_need || (ent->ability & vpar->flg_omit))
             continue;
 
-        F32 step = length / 25.0f;
-        sExtSettings.custom_flags = 0x2FE1;
-        sExtSettings.life = 0.75f;
-        sExtSettings.count = 1;
-        sExtSettings.color_birth[0] = sExtSettings.color_birth[1] = sExtSettings.color_birth[2] = 0xAA;
-        sExtSettings.color_birth[3] = 255;
-        sExtSettings.color_death[0] = sExtSettings.color_death[1] =
-            sExtSettings.color_death[2] = sExtSettings.color_death[3] = 0x11;
-        for (S32 j = 0; j < 25; j++)
+        pecust->custom_flags = 0x2FE1;
+        pecust->life = 0.75f;
+        delta = length / 25.0f;
+        pecust->count = 1;
+        pecust->color_birth[0] = 0xAA;
+        pecust->color_birth[1] = 0xAA;
+        pecust->color_birth[2] = 0xAA;
+        pecust->color_birth[3] = 255;
+        pecust->color_death[0] = 0x11;
+        pecust->color_death[1] = 0x11;
+        pecust->color_death[2] = 0x11;
+        pecust->color_death[3] = 0x11;
+        for (j = 0; j < 25; j++)
         {
-            along += step;
-            F32 size = slope * along * (1.0f + (1.0f - iurand()));
-            sExtSettings.size_birth = size;
-            sExtSettings.size_birth_variation = 0.25f * size;
-            sExtSettings.size_death = 0.25f * size;
-            xVec3SMul(&sExtSettings.pos, aimdir, along);
-            xVec3AddTo(&sExtSettings.pos, origin);
-            xVec3SMul(&sExtSettings.vel, aimdir, -ent->spd_extend);
-            zParEmitterEmitCustom(rec->emitctxt, dt, &sExtSettings);
+            fv += delta;
+            pecust->size_birth = slope * fv * (1.0f + (1.0f - iurand()));
+            pecust->size_death = 0.25f * pecust->size_birth;
+            pecust->size_birth_variation = 0.25f * pecust->size_birth;
+            xVec3Copy(&pecust->pos, aimdir);
+            xVec3SMulBy(&pecust->pos, fv);
+            xVec3AddTo(&pecust->pos, origin);
+            xVec3Copy(&pecust->vel, aimdir);
+            xVec3SMulBy(&pecust->vel, -ent->spd_extend);
+            zParEmitterEmitCustom(vpar->emitctxt, dt, pecust);
         }
     }
 }
