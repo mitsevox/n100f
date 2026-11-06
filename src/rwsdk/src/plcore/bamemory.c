@@ -51,8 +51,10 @@ S32 RwFreeListDestroy(RwFreeList* freeList)
     return TRUE;
 }
 
+// Publish the list only after its header and empty free-entry stack are allocated.
 RwFreeList* RwFreeListCreate(S32 entrySize, S32 entriesPerBlock, S32 alignment)
 {
+    RwError err;
     RwFreeList* freeList = (RwFreeList*)RwMalloc(sizeof(RwFreeList));
 
     if (freeList)
@@ -87,7 +89,6 @@ RwFreeList* RwFreeListCreate(S32 entrySize, S32 entriesPerBlock, S32 alignment)
     }
     else
     {
-        RwError err;
         err.pluginID = 1;
         err.errorCode = _rwerror(0x80000013, sizeof(RwFreeList));
         RwErrorSet(&err);
@@ -104,6 +105,7 @@ RwFreeList* _rwFreeListFreeReal(RwFreeList* freeList, void* pData)
     return freeList;
 }
 
+// Commit a new block only after its larger free-entry stack is allocated too.
 void* _rwFreeListAllocReal(RwFreeList* freeList)
 {
     if (freeList->freeListStackTop < freeList->freeListStack)
@@ -144,8 +146,8 @@ void* _rwFreeListAllocReal(RwFreeList* freeList)
         freeList->firstBlock = block;
 
         count = freeList->entriesPerBlock;
-        entry = (U8*)(((U32)block + (freeList->blockSize - freeList->entrySize)) &
-                      ~freeList->alignmentMinusOne);
+        entry = (U8*)block + (freeList->blockSize - freeList->entrySize);
+        entry = (U8*)((U32)entry & ~freeList->alignmentMinusOne);
         while (count--)
         {
             *stack++ = entry;
@@ -158,16 +160,20 @@ void* _rwFreeListAllocReal(RwFreeList* freeList)
     return *freeList->freeListStackTop--;
 }
 
+// Recheck the free-entry stack for each entry because callbacks can change which entries are used.
 RwFreeList* RwFreeListForAllUsed(RwFreeList* freeList, void (*callBack)(void* mem, void* data),
                                  void* data)
 {
+    U8* entry;
     RwFreeBlock* block;
+    S32 count;
 
     for (block = freeList->firstBlock; block; block = block->nextBlock)
     {
-        S32 count = freeList->entriesPerBlock;
-        U8* entry = (U8*)(((U32)block + freeList->alignmentMinusOne + sizeof(RwFreeBlock)) &
-                          ~freeList->alignmentMinusOne);
+        count = freeList->entriesPerBlock;
+        entry = (U8*)((U32)block + freeList->alignmentMinusOne);
+        entry += sizeof(RwFreeBlock);
+        entry = (U8*)((U32)entry & ~freeList->alignmentMinusOne);
 
         while (count--)
         {
