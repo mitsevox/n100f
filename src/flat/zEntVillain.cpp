@@ -8578,20 +8578,21 @@ static S32 VILN_gang_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZV
         }
         break;
     case ZVIL_GOAL_TALK:
-        if (spot == ZVIL_GSPOT_START || spot == ZVIL_GSPOT_FIDGET)
+        if (spot == ZVIL_GSPOT_START)
         {
             VANM_randfour(vil, ZVIL_ANIM_GANG_TALK, ZVIL_ANIM_GANG_TALK1, ZVIL_ANIM_GANG_TALK2, ZVIL_ANIM_GANG_TALK3);
-            if (spot == ZVIL_GSPOT_FIDGET)
-            {
-                vil->anim_loopmult = 4.9700003f;
-                if (xUtil_yesno(0.5f)) vil->anim_loopmult += 2.0f;
-                else if (xUtil_yesno(0.5f)) vil->anim_loopmult += 1.0f;
-            }
         }
         else if (spot == ZVIL_GSPOT_RESUME) VANM_setone(vil, ZVIL_ANIM_GANG_TALK);
         else if (spot == ZVIL_GSPOT_MOVERIGHT)
         {
             VANM_settwo(vil, ZVIL_ANIM_GANG_TALKANDTURN, ZVIL_ANIM_GANG_TALK);
+        }
+        else if (spot == ZVIL_GSPOT_FIDGET)
+        {
+            VANM_randfour(vil, ZVIL_ANIM_GANG_TALK, ZVIL_ANIM_GANG_TALK1, ZVIL_ANIM_GANG_TALK2, ZVIL_ANIM_GANG_TALK3);
+            vil->anim_loopmult = 4.9700003f;
+            if (xUtil_yesno(0.5f)) vil->anim_loopmult += 2.0f;
+            else if (xUtil_yesno(0.5f)) vil->anim_loopmult += 1.0f;
         }
         break;
     case ZVIL_GOAL_ACTION:
@@ -10399,13 +10400,17 @@ static S32 VILN_BGG_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVI
     case ZVIL_GOAL_IDLE: VANM_setone(vil, ZVIL_ANIM_IDLE); break;
     case ZVIL_GOAL_FOLLOW: VANM_setone(vil, ZVIL_ANIM_GG_CHASE); break;
     case ZVIL_GOAL_PATROL:
-        if (spot == ZVIL_GSPOT_START || spot == ZVIL_GSPOT_MOVERIGHT)
+        if (spot == ZVIL_GSPOT_START)
         {
             VANM_settwo(vil, ZVIL_ANIM_GG_CHASERIGHT, ZVIL_ANIM_GG_CHASE);
         }
         else if (spot == ZVIL_GSPOT_MOVELEFT)
         {
             VANM_settwo(vil, ZVIL_ANIM_GG_CHASELEFT, ZVIL_ANIM_GG_CHASE);
+        }
+        else if (spot == ZVIL_GSPOT_MOVERIGHT)
+        {
+            VANM_settwo(vil, ZVIL_ANIM_GG_CHASERIGHT, ZVIL_ANIM_GG_CHASE);
         }
         break;
     case ZVIL_GOAL_TAUNT:
@@ -11087,8 +11092,8 @@ static S32 VILN_BRB_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVI
     case ZVIL_GOAL_IDLE:
         if (spot == ZVIL_GSPOT_START) VANM_setone(vil, ZVIL_ANIM_IDLE);
         else if (spot == ZVIL_GSPOT_FIDGET) VANM_setone(vil, ZVIL_ANIM_RB_IDLEWIND);
-        else if (spot == ZVIL_GSPOT_MOVERIGHT || spot == ZVIL_GSPOT_MOVELEFT)
-            VANM_setone(vil, ZVIL_ANIM_RB_TURN);
+        else if (spot == ZVIL_GSPOT_MOVERIGHT) VANM_setone(vil, ZVIL_ANIM_RB_TURN);
+        else if (spot == ZVIL_GSPOT_MOVELEFT) VANM_setone(vil, ZVIL_ANIM_RB_TURN);
         break;
     case ZVIL_GOAL_FOLLOW: VANM_setone(vil, ZVIL_ANIM_RB_PATROL); break;
     case ZVIL_GOAL_PATROL:
@@ -11112,8 +11117,9 @@ static S32 VILN_BRB_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVI
         else if (spot == ZVIL_GSPOT_STATERECOVER) VANM_setone(vil, ZVIL_ANIM_RB_ATTACKCATCH);
         break;
     case ZVIL_GOAL_HURT:
-        if (spot == ZVIL_GSPOT_START || spot == ZVIL_GSPOT_HURT_ALTA || spot == ZVIL_GSPOT_HURT_ALTB)
-            VANM_setone(vil, ZVIL_ANIM_RB_REACT);
+        if (spot == ZVIL_GSPOT_START) VANM_setone(vil, ZVIL_ANIM_RB_REACT);
+        else if (spot == ZVIL_GSPOT_HURT_ALTA) VANM_setone(vil, ZVIL_ANIM_RB_REACT);
+        else if (spot == ZVIL_GSPOT_HURT_ALTB) VANM_setone(vil, ZVIL_ANIM_RB_REACT);
         break;
     case ZVIL_GOAL_DIE:
         if (spot == ZVIL_GSPOT_START) VANM_setone(vil, ZVIL_ANIM_RB_DEATH_LOOP);
