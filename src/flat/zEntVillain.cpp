@@ -2992,461 +2992,464 @@ S32 zEntVillain_PlayAFXSound(st_zEntVillain* ent, zAnimFxSound* snd, U32* sid_pl
 // Fill each subtype's behavior flags and supply standard handlers where no handler set exists.
 static void zVIL_setup_npcTable()
 {
-    en_NPC_PERSONALITIES personality = ZVIL_PERSON_NORMAL;
-    U32 ability, abl_atak, abl_dtct, abl_move, abl_spyk, abl_vuln;
-    U32 physics, chk, pen, chkby, penby;
-    for (S32 i = 0; i < eEntVillainType_NoMore; i++)
+    S32 vidx;
+    S32 ability;
+    S32 abl_atak;
+    S32 abl_dtct;
+    S32 abl_move;
+    S32 abl_spyk;
+    S32 abl_vuln;
+    en_NPC_PERSONALITIES typ_person = ZVIL_PERSON_NORMAL;
+    U8 flg_physics;
+    U8 flg_chk;
+    U8 flg_pen;
+    U8 flg_penby;
+    U8 flg_chkby;
+
+    for (vidx = 0; vidx < eEntVillainType_NoMore; vidx++)
     {
-        switch (i)
+        switch (vidx)
         {
         case eEntVillainTypeBat:
-        {
             ability = 0x22804A;
             abl_atak = 0x10003;
             abl_dtct = 0x80;
             abl_move = 0xC031BF;
             abl_spyk = 0x0;
             abl_vuln = 0x3F9E7;
-            personality = ZVIL_PERSON_WIMP;
-            physics = 0x1B;
-            chk = 0x10;
-            pen = 0x10;
-            chkby = 0x10;
-            penby = 0x10;
+            typ_person = ZVIL_PERSON_WIMP;
+            flg_physics = 0x1B;
+            flg_chk = 0x10;
+            flg_pen = 0x10;
+            flg_chkby = 0x10;
+            flg_penby = 0x10;
             break;
-        }
-        case eEntVillainTypeBlackKnight:
-        {
-            ability = 0x20014B;
-            abl_atak = 0x40001;
-            abl_dtct = 0x1;
-            abl_move = 0x2137;
-            abl_spyk = 0x0;
-            abl_vuln = 0x9;
-            personality = ZVIL_PERSON_AGGRESSIVE;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
-            break;
-        }
-        case eEntVillainTypeBuckMasters:
-        {
-            ability = 0x281F4A;
-            abl_atak = 0x20001;
-            abl_dtct = 0xB1;
-            abl_move = 0x21BF;
-            abl_spyk = 0x0;
-            abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
-            break;
-        }
-        case eEntVillainTypeCreeper:
-        {
-            ability = 0x281FCA;
-            abl_atak = 0x20001;
-            abl_dtct = 0xB1;
-            abl_move = 0x21BF;
-            abl_spyk = 0x0;
-            abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
-            break;
-        }
-        case eEntVillainTypeSeaCreature:
-        {
-            ability = 0x281FCA;
-            abl_atak = 0x20001;
-            abl_dtct = 0xB1;
-            abl_move = 0x21BF;
-            abl_spyk = 0x0;
-            abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
-            break;
-        }
         case eEntVillainTypeGargoyle:
-        {
             ability = 0x2A1F4A;
             abl_atak = 0x40001;
             abl_dtct = 0x800000B1;
             abl_move = 0x31BF;
             abl_spyk = 0x0;
             abl_vuln = 0x1F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1B;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1B;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
+        case eEntVillainTypeBuckMasters:
+            ability = 0x281F4A;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
+            break;
+        case eEntVillainTypeCreeper:
+            ability = 0x281FCA;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
+            break;
+        case eEntVillainTypeSeaCreature:
+            ability = 0x281FCA;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
+            break;
         case eEntVillainTypeGhost:
-        {
             ability = 0x281F4A;
             abl_atak = 0x10003;
             abl_dtct = 0x80;
             abl_move = 0x4313F;
             abl_spyk = 0x0;
             abl_vuln = 0x61;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1B;
-            chk = 0x2E;
-            pen = 0x0;
-            chkby = 0x1C;
-            penby = 0x0;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1B;
+            flg_chk = 0x2E;
+            flg_pen = 0x0;
+            flg_chkby = 0x1C;
+            flg_penby = 0x0;
             break;
-        }
         case eEntVillainTypeGhostDiver:
-        {
             ability = 0x281F4A;
             abl_atak = 0x20001;
             abl_dtct = 0x80;
             abl_move = 0x213F;
             abl_spyk = 0x0;
             abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
-        case eEntVillainTypeGreenGhost:
-        {
-            ability = 0x20014B;
-            abl_atak = 0x40001;
-            abl_dtct = 0x1;
-            abl_move = 0x43137;
-            abl_spyk = 0x0;
-            abl_vuln = 0x9;
-            personality = ZVIL_PERSON_AGGRESSIVE;
-            physics = 0x1B;
-            chk = 0x2E;
-            pen = 0x0;
-            chkby = 0x1C;
-            penby = 0x0;
-            break;
-        }
         case eEntVillainTypeHeadlessSpecter:
-        {
             ability = 0x299F4A;
             abl_atak = 0x20001;
             abl_dtct = 0x80;
             abl_move = 0x213F;
             abl_spyk = 0x0;
             abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
-        case eEntVillainTypePhantom:
-        {
-            ability = 0x2001C3;
-            abl_atak = 0x40001;
-            abl_dtct = 0x1;
-            abl_move = 0x137;
-            abl_spyk = 0x0;
-            abl_vuln = 0x109;
-            personality = ZVIL_PERSON_AGGRESSIVE;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
-            break;
-        }
-        case eEntVillainTypeRedbeard:
-        {
-            ability = 0x20014B;
-            abl_atak = 0x80001;
-            abl_dtct = 0x1;
-            abl_move = 0x2137;
-            abl_spyk = 0x0;
-            abl_vuln = 0x9;
-            personality = ZVIL_PERSON_AGGRESSIVE;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
-            break;
-        }
         case eEntVillainTypeRobot:
-        {
             ability = 0x281FCA;
             abl_atak = 0x20001;
             abl_dtct = 0xB1;
             abl_move = 0x21BF;
             abl_spyk = 0x0;
             abl_vuln = 0x8001F8E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
         case eEntVillainTypeScarecrow:
-        {
             ability = 0x281F4A;
             abl_atak = 0x20001;
             abl_dtct = 0x80;
             abl_move = 0x213F;
             abl_spyk = 0x0;
             abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
-        case eEntVillainTypeShark:
-        {
-            ability = 0x20000A;
-            abl_atak = 0x0;
-            abl_dtct = 0x0;
-            abl_move = 0x0;
-            abl_spyk = 0x0;
-            abl_vuln = 0x0;
-            personality = ZVIL_PERSON_WIMP;
-            physics = 0x0;
-            chk = 0x20;
-            pen = 0x20;
-            chkby = 0x0;
-            penby = 0x0;
-            break;
-        }
         case eEntVillainTypeSpaceKook:
-        {
             ability = 0x281F4A;
             abl_atak = 0x80001;
             abl_dtct = 0xB1;
             abl_move = 0x21BF;
             abl_spyk = 0x0;
             abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
         case eEntVillainTypeTarMonster:
-        {
             ability = 0x281F4A;
             abl_atak = 0x40001;
             abl_dtct = 0xB1;
             abl_move = 0x29BF;
             abl_spyk = 0x0;
             abl_vuln = 0x4005F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
         case eEntVillainTypeWitch:
-        {
             ability = 0x2A1F4A;
             abl_atak = 0x80001;
             abl_dtct = 0x800000B1;
             abl_move = 0x31BF;
             abl_spyk = 0x0;
             abl_vuln = 0x1F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1B;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1B;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
         case eEntVillainTypeWitchDoctor:
-        {
             ability = 0x281F4A;
             abl_atak = 0x40001;
             abl_dtct = 0xB1;
             abl_move = 0x21BF;
             abl_spyk = 0x0;
             abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
         case eEntVillainTypeWolfman:
-        {
             ability = 0x20014A;
             abl_atak = 0x20001;
             abl_dtct = 0x80;
             abl_move = 0x213F;
             abl_spyk = 0x0;
             abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
         case eEntVillainTypeZombie:
-        {
             ability = 0x281F4A;
             abl_atak = 0x20001;
             abl_dtct = 0xB1;
             abl_move = 0x21BF;
             abl_spyk = 0x0;
             abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
+        case eEntVillainCaptainMoody:
+            ability = 0x281F4A;
+            abl_atak = 0x10001;
+            abl_dtct = 0xB1;
+            abl_move = 0x431BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x1F987;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1B;
+            flg_chk = 0x2E;
+            flg_pen = 0x8;
+            flg_chkby = 0x1C;
+            flg_penby = 0x8;
+            break;
+        case eEntVillainCaveMan:
+            ability = 0x281FCA;
+            abl_atak = 0x20001;
+            abl_dtct = 0xB1;
+            abl_move = 0x21BF;
+            abl_spyk = 0x0;
+            abl_vuln = 0x5F9E7;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
+            break;
         case eEntVillainTypeCrab:
-        {
             ability = 0x2080CA;
             abl_atak = 0x0;
             abl_dtct = 0x80;
             abl_move = 0x613F;
             abl_spyk = 0x0;
             abl_vuln = 0x40107;
-            personality = ZVIL_PERSON_WIMP;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_WIMP;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
+        case eEntVillainTypeShark:
+            ability = 0x20000A;
+            abl_atak = 0x0;
+            abl_dtct = 0x0;
+            abl_move = 0x0;
+            abl_spyk = 0x0;
+            abl_vuln = 0x0;
+            typ_person = ZVIL_PERSON_WIMP;
+            flg_physics = 0x0;
+            flg_chk = 0x20;
+            flg_pen = 0x20;
+            flg_chkby = 0x0;
+            flg_penby = 0x0;
+            break;
         case eEntVillainTypeRat:
-        {
             ability = 0x20804A;
             abl_atak = 0x0;
             abl_dtct = 0x80;
             abl_move = 0x20213F;
             abl_spyk = 0x0;
             abl_vuln = 0x601E7;
-            personality = ZVIL_PERSON_WIMP;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_WIMP;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
         case eEntVillainTypeFlyingFish:
-        {
             ability = 0x20804A;
             abl_atak = 0x0;
             abl_dtct = 0x80;
             abl_move = 0x10253F;
             abl_spyk = 0x0;
             abl_vuln = 0x201E7;
-            personality = ZVIL_PERSON_WIMP;
-            physics = 0x1B;
-            chk = 0x10;
-            pen = 0x10;
-            chkby = 0x10;
-            penby = 0x10;
+            typ_person = ZVIL_PERSON_WIMP;
+            flg_physics = 0x1B;
+            flg_chk = 0x10;
+            flg_pen = 0x10;
+            flg_chkby = 0x10;
+            flg_penby = 0x10;
             break;
-        }
         case eEntVillainTypeSpider:
-        {
             ability = 0x22804A;
             abl_atak = 0x0;
             abl_dtct = 0x80;
             abl_move = 0xA13F;
             abl_spyk = 0x0;
             abl_vuln = 0x601E3;
-            personality = ZVIL_PERSON_WIMP;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_WIMP;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
         case eEntVillainTypeHand:
-        {
             ability = 0x281F4A;
             abl_atak = 0x20001;
             abl_dtct = 0xB1;
             abl_move = 0x31BF;
             abl_spyk = 0x0;
             abl_vuln = 0x0;
-            personality = ZVIL_PERSON_WIMP;
-            physics = 0x1B;
-            chk = 0x2E;
-            pen = 0x0;
-            chkby = 0x1C;
-            penby = 0x0;
+            typ_person = ZVIL_PERSON_WIMP;
+            flg_physics = 0x1B;
+            flg_chk = 0x2E;
+            flg_pen = 0x0;
+            flg_chkby = 0x1C;
+            flg_penby = 0x0;
             break;
-        }
         case eEntVillainTypeKillerPlant:
-        {
             ability = 0x281F4A;
             abl_atak = 0x80001;
             abl_dtct = 0x81;
             abl_move = 0x2012;
             abl_spyk = 0x0;
             abl_vuln = 0x0;
-            personality = ZVIL_PERSON_WIMP;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_WIMP;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
         case eEntVillainTypeBird:
-        {
             ability = 0x22804A;
             abl_atak = 0x10003;
             abl_dtct = 0x80;
             abl_move = 0x40313F;
             abl_spyk = 0x0;
             abl_vuln = 0x1F807;
-            personality = ZVIL_PERSON_WIMP;
-            physics = 0x1B;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_WIMP;
+            flg_physics = 0x1B;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
+        case eEntVillainTypeBlackKnight:
+            typ_person = ZVIL_PERSON_AGGRESSIVE;
+        case eEntVillainBossBlackKnight:
+            if (typ_person == ZVIL_PERSON_NORMAL)
+            {
+                typ_person = ZVIL_PERSON_BOSS;
+            }
+            ability = 0x20014B;
+            abl_atak = 0x40001;
+            abl_dtct = 0x1;
+            abl_move = 0x2137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x9;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
+            break;
+        case eEntVillainTypePhantom:
+            typ_person = ZVIL_PERSON_AGGRESSIVE;
+        case eEntVillainBossMastermind:
+            if (typ_person == ZVIL_PERSON_NORMAL)
+            {
+                typ_person = ZVIL_PERSON_BOSS;
+            }
+            ability = 0x2001C3;
+            abl_atak = 0x40001;
+            abl_dtct = 0x1;
+            abl_move = 0x137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x109;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
+            break;
+        case eEntVillainTypeRedbeard:
+            typ_person = ZVIL_PERSON_AGGRESSIVE;
+        case eEntVillainBossRedbeard:
+            if (typ_person == ZVIL_PERSON_NORMAL)
+            {
+                typ_person = ZVIL_PERSON_BOSS;
+            }
+            ability = 0x20014B;
+            abl_atak = 0x80001;
+            abl_dtct = 0x1;
+            abl_move = 0x2137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x9;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
+            break;
+        case eEntVillainTypeGreenGhost:
+            typ_person = ZVIL_PERSON_AGGRESSIVE;
+        case eEntVillainBossGreenGhost:
+            if (typ_person == ZVIL_PERSON_NORMAL)
+            {
+                typ_person = ZVIL_PERSON_BOSS;
+            }
+            ability = 0x20014B;
+            abl_atak = 0x40001;
+            abl_dtct = 0x1;
+            abl_move = 0x43137;
+            abl_spyk = 0x0;
+            abl_vuln = 0x9;
+            flg_physics = 0x1B;
+            flg_chk = 0x2E;
+            flg_pen = 0x0;
+            flg_chkby = 0x1C;
+            flg_penby = 0x0;
+            break;
         case eEntVillainTypeShaggy0:
         case eEntVillainTypeShaggy1:
         case eEntVillainTypeShaggy2:
@@ -3463,163 +3466,67 @@ static void zVIL_setup_npcTable()
         case eEntVillainHolly:
         case eEntVillainGroundsKeeper:
         case eEntVillainProfessor:
-        {
             ability = 0x48004;
             abl_atak = 0x0;
             abl_dtct = 0x1;
             abl_move = 0x2137;
             abl_spyk = 0x0;
             abl_vuln = 0x0;
-            personality = ZVIL_PERSON_SCOOBYGANG;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_SCOOBYGANG;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
-        }
-        case eEntVillainBossBlackKnight:
-        {
-            ability = 0x20014B;
-            abl_atak = 0x40001;
-            abl_dtct = 0x1;
-            abl_move = 0x2137;
-            abl_spyk = 0x0;
-            abl_vuln = 0x9;
-            if (personality == ZVIL_PERSON_NORMAL) personality = ZVIL_PERSON_BOSS;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
-            break;
-        }
-        case eEntVillainBossGreenGhost:
-        {
-            ability = 0x20014B;
-            abl_atak = 0x40001;
-            abl_dtct = 0x1;
-            abl_move = 0x43137;
-            abl_spyk = 0x0;
-            abl_vuln = 0x9;
-            if (personality == ZVIL_PERSON_NORMAL) personality = ZVIL_PERSON_BOSS;
-            physics = 0x1B;
-            chk = 0x2E;
-            pen = 0x0;
-            chkby = 0x1C;
-            penby = 0x0;
-            break;
-        }
-        case eEntVillainBossRedbeard:
-        {
-            ability = 0x20014B;
-            abl_atak = 0x80001;
-            abl_dtct = 0x1;
-            abl_move = 0x2137;
-            abl_spyk = 0x0;
-            abl_vuln = 0x9;
-            if (personality == ZVIL_PERSON_NORMAL) personality = ZVIL_PERSON_BOSS;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
-            break;
-        }
-        case eEntVillainBossMastermind:
-        {
-            ability = 0x2001C3;
-            abl_atak = 0x40001;
-            abl_dtct = 0x1;
-            abl_move = 0x137;
-            abl_spyk = 0x0;
-            abl_vuln = 0x109;
-            if (personality == ZVIL_PERSON_NORMAL) personality = ZVIL_PERSON_BOSS;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
-            break;
-        }
-        case eEntVillainCaptainMoody:
-        {
-            ability = 0x281F4A;
-            abl_atak = 0x10001;
-            abl_dtct = 0xB1;
-            abl_move = 0x431BF;
-            abl_spyk = 0x0;
-            abl_vuln = 0x1F987;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1B;
-            chk = 0x2E;
-            pen = 0x8;
-            chkby = 0x1C;
-            penby = 0x8;
-            break;
-        }
-        case eEntVillainCaveMan:
-        {
-            ability = 0x281FCA;
-            abl_atak = 0x20001;
-            abl_dtct = 0xB1;
-            abl_move = 0x21BF;
-            abl_spyk = 0x0;
-            abl_vuln = 0x5F9E7;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
-            break;
-        }
         default:
-        {
             ability = 0x81F40;
             abl_atak = 0x0;
             abl_dtct = 0x80;
             abl_move = 0x2;
             abl_spyk = 0x40;
             abl_vuln = 0x1F800;
-            personality = ZVIL_PERSON_NORMAL;
-            physics = 0x1F;
-            chk = 0x2E;
-            pen = 0x6E;
-            chkby = 0x1C;
-            penby = 0x1C;
+            typ_person = ZVIL_PERSON_NORMAL;
+            flg_physics = 0x1F;
+            flg_chk = 0x2E;
+            flg_pen = 0x6E;
+            flg_chkby = 0x1C;
+            flg_penby = 0x1C;
             break;
         }
-        }
-        if (abl_move & 0x40000) pen &= ~0x40;
-        if (abl_move & 0x400) pen &= ~0x20;
-        st_ZVIL_NPCTYPE_LOOKUP* type = &g_npcTable[i];
-        type->typ_person = personality;
-        type->flg_physics = physics;
-        type->flg_chk = chk;
-        type->flg_pen = pen;
-        type->flg_chkby = chkby;
-        type->flg_penby = penby;
-        type->ability = ability;
-        type->abl_atak = abl_atak;
-        type->abl_dtct = abl_dtct;
-        type->abl_move = abl_move;
-        type->abl_spyk = abl_spyk;
-        type->abl_vuln = abl_vuln;
-        st_ZVIL_NPC_HANDLERFUNCS* handlers = &g_npcFuncs[i];
-        if (!(handlers->flg_funcs & 0x1))
+        if (abl_move & 0x40000)
         {
-            handlers->flg_funcs |= 0x2;
-            handlers->flags = VILN_std_flag;
-            handlers->query = VILN_std_query;
-            handlers->sysevent = VILN_std_sysevent;
-            handlers->notice = VILN_std_notice;
-            handlers->aware = VILN_std_aware;
-            handlers->stimulus = VILN_std_stimulus;
-            handlers->trangoal = VILN_std_trangoal;
-            handlers->calcmove = VILN_std_calcmove;
-            handlers->respond = VILN_std_respond;
-            handlers->pickanim = VILN_std_pickanim;
+            flg_pen &= (U8)~0x40;
+        }
+        if (abl_move & 0x400)
+        {
+            flg_pen &= (U8)~0x20;
+        }
+        g_npcTable[vidx].typ_person = typ_person;
+        g_npcTable[vidx].flg_physics = flg_physics;
+        g_npcTable[vidx].flg_chk = flg_chk;
+        g_npcTable[vidx].flg_pen = flg_pen;
+        g_npcTable[vidx].flg_chkby = flg_chkby;
+        g_npcTable[vidx].flg_penby = flg_penby;
+        g_npcTable[vidx].ability = ability;
+        g_npcTable[vidx].abl_atak = abl_atak;
+        g_npcTable[vidx].abl_dtct = abl_dtct;
+        g_npcTable[vidx].abl_move = abl_move;
+        g_npcTable[vidx].abl_spyk = abl_spyk;
+        g_npcTable[vidx].abl_vuln = abl_vuln;
+        if (!(g_npcFuncs[vidx].flg_funcs & 0x1))
+        {
+            g_npcFuncs[vidx].flg_funcs |= 0x2;
+            g_npcFuncs[vidx].flags = VILN_std_flag;
+            g_npcFuncs[vidx].query = VILN_std_query;
+            g_npcFuncs[vidx].sysevent = VILN_std_sysevent;
+            g_npcFuncs[vidx].notice = VILN_std_notice;
+            g_npcFuncs[vidx].aware = VILN_std_aware;
+            g_npcFuncs[vidx].stimulus = VILN_std_stimulus;
+            g_npcFuncs[vidx].trangoal = VILN_std_trangoal;
+            g_npcFuncs[vidx].calcmove = VILN_std_calcmove;
+            g_npcFuncs[vidx].respond = VILN_std_respond;
+            g_npcFuncs[vidx].pickanim = VILN_std_pickanim;
         }
     }
 }
