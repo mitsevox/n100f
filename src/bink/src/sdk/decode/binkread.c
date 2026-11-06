@@ -1693,31 +1693,35 @@ BinkTrack* BinkOpenTrack(Bink* bink, U32 idx)
     void* ac;
     BinkTrack* t;
 
-    if (bink && (idx < bink->num_tracks) &&
-        ((bink->track_types[idx] < 0) || (bink->track_types[idx] & 0x10000000))) {
-        ac = BinkAudioDecompressOpen(TRACKFREQ(bink->track_types[idx]), TRACKCHANS(bink->track_types[idx]),
-                                     ((bink->track_types[idx] >= 0) && (bink->track_types[idx] & 0x10000000)) ? 1 : 0);
-        if (ac == 0)
-            return 0;
+    if (bink == 0)
+        return 0;
+    if (idx >= bink->num_tracks)
+        return 0;
+    if (!((bink->track_types[idx] < 0) || (bink->track_types[idx] & 0x10000000)))
+        return 0;
+    ac = BinkAudioDecompressOpen(TRACKFREQ(bink->track_types[idx]), TRACKCHANS(bink->track_types[idx]),
+                                 ((bink->track_types[idx] >= 0) && (bink->track_types[idx] & 0x10000000)) ? 1 : 0);
+    if (ac == 0)
+        return 0;
 
-        t = bpopmalloc(bink, sizeof(BinkTrack));
-        if (t == 0) {
-            BinkAudioDecompressClose(ac);
-            return 0;
-        }
-
-        memset(t, 0, sizeof(BinkTrack));
-        t->bink = bink;
-        t->decomp = ac;
-        t->freq = TRACKFREQ(bink->track_types[idx]);
-        t->bits = TRACKBITS(bink->track_types[idx]);
-        t->chans = TRACKCHANS(bink->track_types[idx]);
-        t->max_size = (bink->track_max_size[idx] + 3) & ~3;
-        if (t->bits == 8)
-            t->max_size >>= 1;
-        t->track_num = idx;
-        return t;
+    t = bpopmalloc(bink, sizeof(BinkTrack));
+    if (t == 0) {
+        BinkAudioDecompressClose(ac);
+        goto fail;
     }
+
+    memset(t, 0, sizeof(BinkTrack));
+    t->bink = bink;
+    t->decomp = ac;
+    t->freq = TRACKFREQ(bink->track_types[idx]);
+    t->bits = TRACKBITS(bink->track_types[idx]);
+    t->chans = TRACKCHANS(bink->track_types[idx]);
+    t->max_size = (bink->track_max_size[idx] + 3) & ~3;
+    if (t->bits == 8)
+        t->max_size >>= 1;
+    t->track_num = idx;
+    return t;
+fail:
     return 0;
 }
 
