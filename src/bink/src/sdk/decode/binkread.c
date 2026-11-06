@@ -1458,15 +1458,14 @@ left:
     out->w = in->w - x;
 
     if (out->w > 1) {
-        x = w - 1;
-        w = x;
-        for (; x >= 0; x--) {
+        for (x = w - 1; x >= 0; x--) {
             for (y = 0, m = mask + x; y < h; y++, m += pitch) {
                 if (*m)
                     goto right;
             }
         }
     right:
+        w--;
         out->w -= (w - x) * 16;
     }
 
