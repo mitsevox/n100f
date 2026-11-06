@@ -26,7 +26,7 @@ iTime.cpp	0x80016900	0x80016A30	10	13	2	2	0x800169D4=iTimeGet (name)	anchored
 ms4sound.cpp	0x80016A30	0x80016A30	0	25	0	0	-	weak
 xAnim.cpp	0x80016A30	0x8001C088	38	39	11	5	0x80016CA8=xAnimPoolAlloc (name)	anchored
 xBase.cpp	0x8001C088	0x8001C184	5	5	3	3	0x8001C0A0=xBaseLoad (name)	anchored
-xbinio.cpp	0x8001C184	0x8001D1F8	22	26	13	13	0x8001C25C=BFD_read (name)	anchored
+xbinio.cpp	0x8001C184	0x8001D1F8	22	26	16	16	0x8001C25C=BFD_read (name)	anchored
 xBound.cpp	0x8001D1F8	0x8001D9A0	7	7	1	0	0x8001D738=xBoundHitsBound (calls)	anchored
 xCamera.cpp	0x8001D9A0	0x8002086C	29	32	12	8	0x8001DA9C=xCameraPickInitial (name)	anchored
 xClimate.cpp	0x8002086C	0x80020F08	7	7	5	3	0x800208B8=UpdateRain (strings+floats)	anchored

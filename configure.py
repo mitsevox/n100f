@@ -524,7 +524,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/xAnim.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xBase.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xBound.cpp"),
-            Object(NonMatching, "flat/xbinio.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/xbinio.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xCamera.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/xClimate.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xCollide.cpp"),
