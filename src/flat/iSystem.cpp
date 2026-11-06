@@ -834,13 +834,14 @@ static S32 dlFexist(const char* name)
 // rest is large and 32-byte aligned, and otherwise through the buffer in 0x2800-byte reads.
 static U32 dlFread(void* addr, U32 size, U32 count, void* fptr)
 {
-    S32 pos2;
-    S32 posTmp;
-    S32 bytesRead = 0;
-    S32 readSize;
     U32 buffered;
+    S32 bytesRead = 0;
+    S32 loopCount;
+    S32 readSize;
     U32 uVar1;
+    S32 posTmp;
     dlFile* fp = (dlFile*)fptr;
+    S32 pos2;
     U32 numBytesToRead = size * count;
 
     if ((U32)(fp->pos + numBytesToRead) > fp->length)
@@ -887,7 +888,7 @@ static U32 dlFread(void* addr, U32 size, U32 count, void* fptr)
                 numBytesToRead -= bytesRead;
                 uVar1 = 0;
                 posTmp = fp->pos;
-                S32 loopCount = (S32)numBytesToRead / DLFILE_BUF_SIZE + 1;
+                loopCount = (S32)numBytesToRead / DLFILE_BUF_SIZE + 1;
 
                 while (loopCount-- != 0)
                 {
