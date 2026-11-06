@@ -9521,14 +9521,28 @@ static S32 VILN_BBK_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     {
         procgoal = vil->goal;
     }
-    if (procgoal >= ZVIL_GOAL_AFTERLIFE && procgoal <= ZVIL_GOAL_GOONLINE)
-        result = VILN_std_trangoal(vil, stimctxt, dt);
-    else if (procgoal == ZVIL_GOAL_DIE)
+
+    switch (procgoal)
     {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
         result = VILN_std_trangoal(vil, stimctxt, dt);
-        if (stim == ZVIL_STIM_ENTERGOAL) VEFX_zapTheKnight(vil, 0);
-        else if (stim == ZVIL_STIM_EXITGOAL) VEFX_zapTheKnight(vil, 1);
+        break;
+    case ZVIL_GOAL_DIE:
+        result = VILN_std_trangoal(vil, stimctxt, dt);
+        if (stim == ZVIL_STIM_ENTERGOAL)
+        {
+            VEFX_zapTheKnight(vil, 0);
+        }
+        else if (stim == ZVIL_STIM_EXITGOAL)
+        {
+            VEFX_zapTheKnight(vil, 1);
+        }
+        break;
     }
+
     switch (g_pgol = procgoal)
     {
     case ZVIL_GOAL_NONE:
