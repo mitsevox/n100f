@@ -73,7 +73,6 @@ static inline void SkinXform(xVec3* dest, const xVec3* vert, RwMatrix* mat, cons
     U32 catMatFlags[2] = { 0, 0 };
     RwMatrix* catmat = (RwMatrix*)giAnimScratch;
     RwMatrix* rootmat = mat;
-    const xVec3* v = vert;
     mat++;
 
     while (count != 0)
@@ -81,12 +80,11 @@ static inline void SkinXform(xVec3* dest, const xVec3* vert, RwMatrix* mat, cons
         for (U32 i = 0; i < 4; i++)
         {
             U32 midx = (*idx >> (i << 3)) & 0xFF;
-            U32 bit = 1 << (midx & 0x1F);
-            if (!(bit & catMatFlags[midx >> 5]))
+            if (!((1 << (midx & 0x1F)) & catMatFlags[midx >> 5]))
             {
                 xMat4x3Mul((xMat4x3*)(catmat + midx), (const xMat4x3*)(skinmat + midx),
                            (const xMat4x3*)(mat + midx));
-                catMatFlags[midx >> 5] |= bit;
+                catMatFlags[midx >> 5] |= (1 << (midx & 0x1F));
             }
         }
 
@@ -102,12 +100,12 @@ static inline void SkinXform(xVec3* dest, const xVec3* vert, RwMatrix* mat, cons
         {
             pMatrix = catmat + (wtidx & 0xFF);
 
-            accumV.x += *fwt * (pMatrix->right.x * v->x + pMatrix->up.x * v->y +
-                                pMatrix->at.x * v->z + pMatrix->pos.x);
-            accumV.y += *fwt * (pMatrix->right.y * v->x + pMatrix->up.y * v->y +
-                                pMatrix->at.y * v->z + pMatrix->pos.y);
-            accumV.z += *fwt * (pMatrix->right.z * v->x + pMatrix->up.z * v->y +
-                                pMatrix->at.z * v->z + pMatrix->pos.z);
+            accumV.x += *fwt * (pMatrix->right.x * vert->x + pMatrix->up.x * vert->y +
+                                pMatrix->at.x * vert->z + pMatrix->pos.x);
+            accumV.y += *fwt * (pMatrix->right.y * vert->x + pMatrix->up.y * vert->y +
+                                pMatrix->at.y * vert->z + pMatrix->pos.y);
+            accumV.z += *fwt * (pMatrix->right.z * vert->x + pMatrix->up.z * vert->y +
+                                pMatrix->at.z * vert->z + pMatrix->pos.z);
 
             wtidx >>= 8;
             fwt++;
@@ -121,7 +119,7 @@ static inline void SkinXform(xVec3* dest, const xVec3* vert, RwMatrix* mat, cons
         dest->z = rootmat->right.z * accumV.x + rootmat->up.z * accumV.y +
                   rootmat->at.z * accumV.z + rootmat->pos.z;
 
-        v++;
+        vert++;
         idx++;
         wt += 4;
         count--;
@@ -403,6 +401,7 @@ U32 iModelVertCount(RpAtomic* model)
     return model->geometry->numVertices;
 }
 
+// Transform a vertex range through its skin or the supplied model matrix.
 U32 iModelVertEval(RpAtomic* model, U32 index, U32 count, RwMatrix* mat, xVec3* vert, xVec3* dest)
 {
     RpGeometry* geom;
@@ -419,7 +418,8 @@ U32 iModelVertEval(RpAtomic* model, U32 index, U32 count, RwMatrix* mat, xVec3* 
             return 0;
         }
         count = (count < numV - index) ? count : (numV - index);
-        vert = (xVec3*)(geom->morphTarget->verts + index);
+        vert = (xVec3*)geom->morphTarget->verts;
+        vert += index;
     }
 
     skin = RpSkinGeometryGetSkin(geom);
