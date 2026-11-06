@@ -3,15 +3,18 @@
 
 #define CNTLZW(x) ({ U32 _r; __asm__("cntlzw %0,%1" : "=r"(_r) : "r"(x)); _r; })
 
-inline U32 div64(U64 n, U32 d)
+#define SUBMUL64(hi, lo, q, d) __asm__("mulhwu %1,%4,%5\n\tmullw %0,%4,%5\n\tsubfc %3,%0,%3\n\tsubfe %2,%1,%2" : "=&r"(_pl), "=&r"(_ph), "+r"(hi), "+r"(lo) : "r"(q), "r"(d))
+
+inline U32 div64(U32 hi, U32 lo, U32 d)
 {
     U32 inv, q, dh, s, t;
+    U32 _pl, _ph;
     int sh, m;
 
     if ((d & (d - 1)) == 0)
     {
-        s = CNTLZW(d);
-        return ((U32)n >> (31 - s)) | ((U32)(n >> 32) << (s + 1));
+        U32 s = CNTLZW(d);
+        return (lo >> (31 - s)) | (hi << (s + 1));
     }
 
     inv = 0xFFFFFFFF / d;
@@ -19,22 +22,23 @@ inline U32 div64(U64 n, U32 d)
     q = 0;
     if (dh)
     {
-        s = CNTLZW((U32)(n >> 32));
-        q = ((U32)(n >> 32) << s) / dh;
+        s = CNTLZW(hi);
+        q = (hi << s) / dh;
         sh = 16 - s;
         m = sh >> 31;
-        q = (q >> (-sh & m)) << (sh & ~m);
-        n -= (U64)q * d;
+        q >>= -sh & m;
+        q <<= sh & ~m;
+        SUBMUL64(hi, lo, q, d);
     }
 
-    while (n >> 32)
+    while (hi)
     {
-        t = inv * (U32)(n >> 32);
-        n -= (U64)t * d;
+        t = inv * hi;
+        SUBMUL64(hi, lo, t, d);
         q += t;
     }
 
-    return q + (U32)n / d;
+    return q + lo / d;
 }
 
 inline void ReadTimeBase(U64* t)
@@ -54,14 +58,16 @@ inline void ReadTimeBase(U64* t)
 
 U32 mult64anddiv(U32 a, U32 b, U32 d)
 {
-    U64 m = (U64)a * b;
-    return div64(m, d);
+    U32 hi, lo;
+    __asm__("mulhwu %1,%2,%3\n\tmullw %0,%2,%3" : "=&r"(lo), "=&r"(hi) : "r"(a), "r"(b));
+    return div64(hi, lo, d);
 }
 
 U32 mult64andshift(U32 a, U32 b, U32 s)
 {
-    U64 m = (U64)a * b;
-    return ((U32)m >> s) | ((U32)(m >> 32) << (32 - s));
+    U32 hi, lo;
+    __asm__("mulhwu %1,%2,%3\n\tmullw %0,%2,%3" : "=&r"(lo), "=&r"(hi) : "r"(a), "r"(b));
+    return (lo >> s) | (hi << (32 - s));
 }
 
 void radmemset16(void* dest, U16 value, U32 count)
