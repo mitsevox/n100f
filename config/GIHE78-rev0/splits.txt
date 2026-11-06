@@ -1370,6 +1370,7 @@ dolphin/os/OSLink.c: comment:8
 
 dolphin/os/OSMemory.c: comment:8
 	.text       start:0x80106168 end:0x80106448
+	.data       start:0x801CD718 end:0x801CD728
 
 dolphin/os/OSMutex.c: comment:8
 	.text       start:0x80106448 end:0x801064B8
@@ -1381,6 +1382,7 @@ dolphin/os/OSReboot.c: comment:8
 
 dolphin/os/OSReset.c: comment:8
 	.text       start:0x801066C4 end:0x80106AA8
+	.sbss       start:0x8025F498 end:0x8025F4A0
 
 dolphin/os/OSResetSW.c: comment:8
 	.text       start:0x80106AA8 end:0x80106E34
@@ -1388,6 +1390,7 @@ dolphin/os/OSResetSW.c: comment:8
 
 dolphin/os/OSRtc.c: comment:8
 	.text       start:0x80106E34 end:0x8010774C
+	.bss        start:0x8025B260 end:0x8025B2B8
 
 dolphin/os/OSSync.c: comment:8
 	.text       start:0x8010774C end:0x801077D0

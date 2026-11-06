@@ -179,6 +179,9 @@ extern u8 OS_REBOOT_BOOL AT_ADDRESS(0x800030E2);
 
 void OSResetSystem(int reset, u32 resetCode, BOOL forceMenu)
 {
+    BOOL rc;
+    BOOL enabled;
+    OSSram* sram;
     BOOL disableRecalibration;
 
     OSDisableScheduler();
@@ -197,8 +200,8 @@ void OSResetSystem(int reset, u32 resetCode, BOOL forceMenu)
         } while (__OSSyncSram() == 0);
     }
 
-    OSDisableInterrupts();
-    __OSCallResetFunctions(TRUE);
+    enabled = OSDisableInterrupts();
+    rc = __OSCallResetFunctions(TRUE);
 
     LCDisable();
 
