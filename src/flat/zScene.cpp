@@ -1049,29 +1049,13 @@ void zSceneExit()
     globals.sceneCur = NULL;
 }
 
-// Portal scene ids may be stored byte-reversed; a scene id always ends in a digit.
-static void HackSwapIt(char* buf, S32 size)
-{
-    char* end = size + buf;
-    end--;
-
-    for (S32 i = 0; i < size / 2; i++)
-    {
-        char tmp = *buf;
-        *buf = *end;
-        *end = tmp;
-
-        buf++;
-        end--;
-    }
-}
-
 // A portal into the current scene just moves the player to its marker and points the
 // camera there; any other portal stays pending for the scene change.
 void zSceneSwitch(_zPortal* p)
 {
-    zPortalAsset* passet;
-    char* id;
+    char tmp;
+    char* begin;
+    char* end;
     U32 PlayerMarkerStartID;
     U32 PlayerMarkerStartCamID;
     _tagxCam* cam;
@@ -1080,16 +1064,25 @@ void zSceneSwitch(_zPortal* p)
 
     globals.sceneCur->pendingPortal = p;
 
-    passet = globals.sceneCur->pendingPortal->passet;
+    zPortalAsset* passet = globals.sceneCur->pendingPortal->passet;
 
-    id = (char*)&passet->sceneID;
-
-    if (id[3] < '0' || id[3] > '9')
+    // Portal scene ids may be stored byte-reversed; a scene id ends in a digit.
+    end = (char*)&passet->sceneID + 3;
+    if (*end < '0' || *end > '9')
     {
-        HackSwapIt(id, 4);
+        begin = (char*)&passet->sceneID;
+        for (S32 i = 0; i < 2; i++)
+        {
+            tmp = *begin;
+            *begin = *end;
+            *end = tmp;
+            begin++;
+            end--;
+        }
     }
 
-    U32 sid = (id[0] << 24) | (id[1] << 16) | (id[2] << 8) | id[3];
+    const char* sceneName = (const char*)&passet->sceneID;
+    U32 sid = (sceneName[0] << 24) | (sceneName[1] << 16) | (sceneName[2] << 8) | sceneName[3];
 
     if (sid == globals.sceneCur->sceneID)
     {
@@ -1112,7 +1105,7 @@ void zSceneSwitch(_zPortal* p)
             xVec3Copy((xVec3*)&globals.player.ent.model->Mat->pos, &m->pos);
 
             xCameraSetTarget(&globals.camera, &globals.player.ent.frame->mat.pos);
-            xCameraSetTarget(&globals.camera, (xMat4x3*)globals.player.ent.model->Mat);
+            xCameraSetTarget(&globals.camera, xEntGetFrame(&globals.player.ent));
         }
 
         globals.sceneCur->pendingPortal = NULL;
@@ -1923,9 +1916,9 @@ void zSceneUpdate(F32 elapsedSec)
 // destructibles and simple objects among the static and dynamic entities.
 static void zShadowReceivers()
 {
-    _xScene* sc = globals.sceneCur;
-    _xEnt* ep;
     S32 i;
+    _xEnt* ep;
+    _xScene* sc = globals.sceneCur;
 
     for (i = 0; i < sc->num_stats; i++)
     {
@@ -2031,9 +2024,43 @@ static inline void zSceneRenderBillboards()
     }
 }
 
-// Draws one frame of the scene: the environment, the opaque entities, then the
-// see-through ones sorted by their distance from the camera, the effects, the HUD and
-// the UI. In the intro the memory card warning is drawn over everything.
+// Applies the scene-specific draw-order override for one translucent entity.
+static inline void zSceneRenderApplyDistance(F32* distance, _xEnt** entities, zSceneRenderDist* rd, U32 i, S32 sorted_entities, xVec3* camera_pos)
+{
+    switch (rd->mode)
+    {
+    case 0:
+    {
+        xVec3 delta;
+        delta.x = camera_pos->x - rd->x;
+        delta.z = camera_pos->z - rd->z;
+        distance[i] = delta.x * delta.x + delta.z * delta.z;
+        break;
+    }
+    case 2:
+    {
+        U32* refID = &rd->refID;
+        for (U32 k = 0; k < sorted_entities; k++)
+        {
+            if (*refID == entities[k]->id)
+            {
+                F32 value = distance[k];
+                distance[i] = value + rd->offset;
+                break;
+            }
+        }
+        break;
+    }
+    case 1:
+    default:
+        distance[i] = rd->dist;
+        break;
+    }
+}
+
+// Draws the environment and opaque models, then scene effects and the
+// see-through queue sorted by camera distance. The HUD and UI follow;
+// the intro may also draw a memory card warning.
 void zSceneRender()
 {
     zScene* s = globals.sceneCur;
@@ -2066,9 +2093,9 @@ void zSceneRender()
 
     {
         xVec3* camera_pos = &globals.camera.hi_cam.mat.pos;
+        U32 shadowHackCase = 0;
         _xEnt** entptr = &s->act_ents[s->num_act_ents - 1];
         _xEnt** entlast = &s->act_ents[s->baseCount[1] + s->baseCount[4]];
-        U32 shadowHackCase = 0;
         _xEnt* tide_ent = NULL;
         U32 tide_hash = xStrHash("TIDE");
 
@@ -2120,34 +2147,9 @@ void zSceneRender()
 
             for (U32 j = 0; j < 66; j++)
             {
-                zSceneRenderDist* rd = &lbl_801C82A0[j];
-
-                if (globals.sceneCur->sceneID == rd->sceneID && ent->id == rd->entID)
+                if (globals.sceneCur->sceneID == lbl_801C82A0[j].sceneID && ent->id == lbl_801C82A0[j].entID)
                 {
-                    switch (rd->mode)
-                    {
-                    case 0:
-                    {
-                        F32 dz = camera_pos->z - rd->z;
-                        F32 dx = camera_pos->x - rd->x;
-                        distance[i] = dx * dx + dz * dz;
-                        break;
-                    }
-                    case 2:
-                        for (U32 k = 0; k < sorted_entities; k++)
-                        {
-                            if (rd->refID == entities[k]->id)
-                            {
-                                distance[i] = distance[k] + rd->offset;
-                                break;
-                            }
-                        }
-                        break;
-                    case 1:
-                    default:
-                        distance[i] = rd->dist;
-                        break;
-                    }
+                    zSceneRenderApplyDistance(distance, entities, &lbl_801C82A0[j], i, sorted_entities, camera_pos);
 
                     break;
                 }
@@ -2225,19 +2227,18 @@ void zSceneRender()
 
     zRenderState(SDRS_Particles);
 
-    {
-        zParSys* psys = (zParSys*)s->baseList[39];
+    zParSys* psys = (zParSys*)s->baseList[39];
+    S32 i;
 
-        for (S32 i = s->baseCount[39] - 1; i >= 0; i--, psys++)
-        {
-            zParSysRender(psys);
-        }
+    for (i = s->baseCount[39] - 1; i >= 0; i--, psys++)
+    {
+        zParSysRender(psys);
     }
 
     zRenderState(SDRS_AlphaModels);
     iShadowRender();
 
-    for (S32 i = 0; i < sorted_entities; i++)
+    for (i = 0; i < sorted_entities; i++)
     {
         _xEnt* ent = entities[i];
 
@@ -2271,11 +2272,12 @@ void zSceneRender()
 
     if (zGameModeGet() == 1 && (zGameStateGet() == 0 || zGameStateGet() == 1))
     {
-        char strn[256];
         char str[256];
-        S32 available;
+        char strn[256];
         xFontBox* sTrcFullCardFontBox = xFontBoxCreate(0.0f, 0.0f, 640.0f, 480.0f, 1, xColorFromRGBA(255, 230, 0, 255));
         xFontBox* sTrcFullCardFontBox2 = xFontBoxCreate(0.0f, 340.0f, 640.0f, 100.0f, 0, xColorFromRGBA(255, 230, 0, 255));
+
+        S32 available;
 
         available = availOnDisk;
         str[0] = '\0';
@@ -2774,25 +2776,27 @@ void zSceneStats_Clear()
     }
 }
 
-extern "C" void fn_800CD268(S32 on)
+// Sets the flag that disables stick-as-d-pad menu navigation.
+extern "C" void zSceneSetMenuStickDisabled(S32 on)
 {
     lbl_8025F0C0 = on;
 }
 
-extern "C" void fn_800CD254()
+// Copies the two scene-local float values into their saved pair.
+extern "C" void zSceneSnapshotLocalFloats()
 {
     lbl_8025F0C4 = lbl_8025F0B8;
     lbl_8025F0C8 = lbl_8025F0BC;
 }
 
-extern "C" S32 fn_800CD24C()
+// Returns the flag that suppresses stick-as-d-pad menu navigation.
+extern "C" U32 zSceneGetMenuStickDisabled()
 {
     return lbl_8025F0C0;
 }
 
-// Input and text are held back while the intro room plays with the player's controls off,
-// in the menus, while paused and in the pause mode.
-extern "C" S32 fn_800CD170()
+// Keeps controller input and button glyphs on the same menu ordering.
+extern "C" S32 zSceneShouldSwapMenuButtons()
 {
     if (globals.sceneCur && globals.sceneCur->sceneID == zSceneIDFromName("h003") &&
         !globals.player.ControlOn)

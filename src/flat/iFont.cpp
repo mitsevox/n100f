@@ -1,6 +1,7 @@
 #include "xFont.h"
 #include "xString.h"
 #include "xstransvc.h"
+#include "zScene.h"
 #include "rwcore.h"
 
 #include <math.h>
@@ -51,7 +52,6 @@ static RwRaster* sRaster;
 
 static RwRaster* sButtonRaster;
 
-extern "C" S32 fn_800CD170();
 extern "C" S32 fn_800CCD64();
 
 extern "C" {
@@ -171,7 +171,7 @@ void iFontDrawButton(S32 c, F32 x, F32 y, F32 w, F32 h)
     x -= 0.5f * h;
     y -= 0.5f * h;
 
-    if (fn_800CD170())
+    if (zSceneShouldSwapMenuButtons())
     {
         if (c == 'U')
         {

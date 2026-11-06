@@ -55,8 +55,6 @@ extern "C" void fn_800D77EC();
 extern "C" void fn_800D77E0();
 extern "C" void fn_800D77D4();
 extern "C" void fn_800D77B4();
-extern "C" void fn_800CD268(S32);
-extern "C" void fn_800CD254();
 void zSaveLoad_DispatchCB(U32 dispatchEvent, F32* toParam);
 extern "C" void fn_800BF64C(char*, U32, F32);
 extern "C" U32 fn_800D5D74();
@@ -634,11 +632,11 @@ extern "C" S32 fn_8004651C(xBase*, xBase* to, U32 event, F32* param, xBase* widg
         zMusicNotifyEvent(param, widget);
         break;
     case 0x130:
-        fn_800CD268(1);
-        fn_800CD254();
+        zSceneSetMenuStickDisabled(1);
+        zSceneSnapshotLocalFloats();
         break;
     case 0x131:
-        fn_800CD268(0);
+        zSceneSetMenuStickDisabled(0);
         break;
     }
     return 1;
