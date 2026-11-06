@@ -4968,10 +4968,13 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
 static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
                              st_STIMULUS_CONTEXT_DATA* resp)
 {
+    F32 tmp_fv;
     S32 std_mvpt_nav;
     en_NPC_STIMULUS stim = stimctxt->stim;
     switch (g_pgol = vil->goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_AFTERLIFE:
     case ZVIL_GOAL_BASEINIT:
     case ZVIL_GOAL_STARTUP:
@@ -4984,8 +4987,9 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
         case ZVIL_STIM_TRANGOAL:
             break;
         case ZVIL_STIM_GUARDWIDGET:
+            tmp_fv = stimctxt->off_goto;
             vil->tgt_protect = (_zEnt*)stimctxt->widge;
-            vil->ds2_goto_keepaway = SQR(stimctxt->off_goto);
+            vil->ds2_goto_keepaway = SQR(tmp_fv);
             break;
         }
         break;
@@ -4993,9 +4997,13 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     case ZVIL_GOAL_GUMMED:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_GUARDWIDGET:
+            tmp_fv = stimctxt->off_goto;
             vil->tgt_protect = (_zEnt*)stimctxt->widge;
-            vil->ds2_goto_keepaway = SQR(stimctxt->off_goto);
+            vil->ds2_goto_keepaway = SQR(tmp_fv);
             break;
         case ZVIL_STIM_KILLSELF:
             vil->hitpts = 0;
@@ -5046,6 +5054,9 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     case ZVIL_GOAL_TAUNT:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_KILLSELF:
             vil->hitpts = 0;
             resp->trangoal = ZVIL_GOAL_DIE;
@@ -5111,9 +5122,7 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 if ((vil->ability & 0x80000) && !(vil->ability & 0x80))
                 {
                     stimctxt->res_headbutt = ZVIL_HEADBUTT_CONTINUE;
-                    vil->dir_bowling.x = stimctxt->dir_headbutt.x * stimctxt->mag_headbutt;
-                    vil->dir_bowling.y = stimctxt->dir_headbutt.y * stimctxt->mag_headbutt;
-                    vil->dir_bowling.z = stimctxt->dir_headbutt.z * stimctxt->mag_headbutt;
+                    xVec3SMul(&vil->dir_bowling, &stimctxt->dir_headbutt, stimctxt->mag_headbutt);
                 }
                 else
                 {
@@ -5285,17 +5294,19 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             }
             break;
         case ZVIL_STIM_GUARDWIDGET:
+            tmp_fv = stimctxt->off_goto;
             vil->tgt_protect = (_zEnt*)stimctxt->widge;
-            vil->ds2_goto_keepaway = SQR(stimctxt->off_goto);
+            vil->ds2_goto_keepaway = SQR(tmp_fv);
             break;
         case ZVIL_STIM_GOTOPOS:
+            tmp_fv = stimctxt->off_goto;
             vil->allow |= 1;
             vil->need_navpt = 0;
             vil->flg_misc &= ~0x20000000;
             vil->flg_misc &= ~0x40000000;
             vil->flg_misc &= ~0x80000000;
             vil->flg_misc |= 0x10000000;
-            vil->ds2_goto_keepaway = SQR(stimctxt->off_goto);
+            vil->ds2_goto_keepaway = SQR(tmp_fv);
             vil->pos_goto = stimctxt->gotopos;
             resp->trangoal = ZVIL_GOAL_FOLLOW;
             resp->tranmode = ZVIL_MODE_NORMAL;
@@ -5406,6 +5417,8 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 
     switch (g_pgol = vil->goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_AFTERLIFE:
         switch (g_pstm = stim)
         {
@@ -5514,6 +5527,9 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     case ZVIL_GOAL_DAZED:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_HEADBUTT:
             if (vil->abl_vuln & 0x80)
             {
@@ -5578,8 +5594,8 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                     0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_DAZED);
                 if (stimctxt->amt_stun > 0.0f)
                 {
-                    vil->tmr_list[ZVIL_TDUR_DAZED] =
-                        MAX(1.5f, vil->tmr_list[ZVIL_TDUR_DAZED] * stimctxt->amt_stun);
+                    tmp_fv = vil->tmr_list[ZVIL_TDUR_DAZED] * stimctxt->amt_stun;
+                    vil->tmr_list[ZVIL_TDUR_DAZED] = MAX(1.5f, tmp_fv);
                 }
                 vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_DAZED];
                 vil->tmr_list[ZVIL_TTIL_RECOVERY] =
@@ -5647,9 +5663,10 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                           stimctxt->mag_headbutt * g_npcTable[vil->asset->subtype].inv_mass);
                 vec_tmp.y = fabs(vec_tmp.y);
                 xVec3AddTo(&vil->vec_knocked, &vec_tmp);
-                vil->vec_knocked.x = CLAMP(vil->vec_knocked.x, -5.0f, 5.0f);
-                vil->vec_knocked.y = CLAMP(vil->vec_knocked.y, -5.0f, 5.0f);
-                vil->vec_knocked.z = CLAMP(vil->vec_knocked.z, -5.0f, 5.0f);
+                tmp_fv = 5.0f;
+                vil->vec_knocked.x = CLAMP(vil->vec_knocked.x, -tmp_fv, tmp_fv);
+                vil->vec_knocked.y = CLAMP(vil->vec_knocked.y, -tmp_fv, tmp_fv);
+                vil->vec_knocked.z = CLAMP(vil->vec_knocked.z, -tmp_fv, tmp_fv);
                 vil->flg_misc |= 0x100000;
             }
             stimctxt->res_headbutt = ZVIL_HEADBUTT_NONE;
