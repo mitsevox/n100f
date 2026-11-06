@@ -32,12 +32,6 @@ static inline F32 xasin(F32 x)
     return asin(x);
 }
 
-static inline void xMat4x3Toworld(xVec3* o, const xMat4x3* m, const xVec3* v)
-{
-    xMat3x3RMulVec(o, (const xMat3x3*)m, v);
-    xVec3AddTo(o, &m->pos);
-}
-
 void xMath3Init()
 {
     iMath3Init();
@@ -48,18 +42,19 @@ void xMath3Exit()
     iMath3Exit();
 }
 
+// Estimate length from the sorted absolute vector components.
 F32 xVec3LengthFast(F32 x, F32 y, F32 z)
 {
-    F32 min;
+    F32 ax = xabs(x);
+    F32 ay = xabs(y);
+    F32 az = xabs(z);
     F32 max;
     F32 med;
+    F32 min;
 
-    x = xabs(x);
-    y = xabs(y);
-    z = xabs(z);
-    max = x;
-    med = y;
-    min = z;
+    max = ax;
+    med = ay;
+    min = az;
 
     if (med > max)
     {
@@ -464,11 +459,16 @@ void xMat3x3Mul(xMat3x3* o, const xMat3x3* a, const xMat3x3* b)
     }
 }
 
+// Project a vector onto the matrix basis vectors before writing the result.
 void xMat3x3LMulVec(xVec3* o, const xMat3x3* m, const xVec3* v)
 {
-    xVec3Init(o, m->right.x * v->x + m->right.y * v->y + m->right.z * v->z,
-              m->up.x * v->x + m->up.y * v->y + m->up.z * v->z,
-              m->at.x * v->x + m->at.y * v->y + m->at.z * v->z);
+    F32 x = xVec3Dot(&m->right, v);
+    F32 y = xVec3Dot(&m->up, v);
+    F32 z = xVec3Dot(&m->at, v);
+
+    o->x = x;
+    o->y = y;
+    o->z = z;
 }
 
 void xMat3x3RMulVec(xVec3* o, const xMat3x3* m, const xVec3* v)
@@ -481,6 +481,7 @@ void xMat3x3RMulVec(xVec3* o, const xMat3x3* m, const xVec3* v)
     o->z = z;
 }
 
+// Project onto each basis and compensate for its squared length.
 void xMat3x3Tolocal(xVec3* o, const xMat3x3* m, const xVec3* v)
 {
     F32 rlen2 = xVec3Length2(&m->right);
@@ -515,22 +516,35 @@ void xMat4x3Rot(xMat4x3* m, const xVec3* a, F32 t, const xVec3* p)
     xMat4x3Mul(m, &temp, m);
 }
 
+// Compose transforms while preserving inputs that alias the output.
 void xMat4x3Mul(xMat4x3* o, const xMat4x3* a, const xMat4x3* b)
 {
     xVec3 pos;
+    xVec3* position = &pos;
+    F32 ax;
+    F32 az;
 
-    xMat4x3Toworld(&pos, b, &a->pos);
+    position->x = b->right.x * (ax = a->pos.x) + b->up.x * a->pos.y +
+                  b->at.x * (az = a->pos.z);
+    position->y = b->right.y * ax + b->up.y * a->pos.y + b->at.y * az;
+    position->z = b->right.z * ax + b->up.z * a->pos.y + b->at.z * az;
+    xVec3AddTo(position, &b->pos);
     xMat3x3Mul((xMat3x3*)o, (const xMat3x3*)a, (const xMat3x3*)b);
-    xVec3Copy(&o->pos, &pos);
+    xVec3Copy(&o->pos, position);
 }
 
+// Compose the basis and transformed position while allowing an aliased output.
 void xMat4x3LMul3x3(xMat4x3* o, const xMat4x3* m, const xMat3x3* m3x3)
 {
-    xVec3 pos;
+    F32 z;
+    F32 y;
+    F32 x;
 
-    xMat3x3RMulVec(&pos, m3x3, &m->pos);
+    x = m3x3->right.x * m->pos.x + m3x3->up.x * m->pos.y + m3x3->at.x * m->pos.z;
+    y = m3x3->right.y * m->pos.x + m3x3->up.y * m->pos.y + m3x3->at.y * m->pos.z;
+    z = m3x3->right.z * m->pos.x + m3x3->up.z * m->pos.y + m3x3->at.z * m->pos.z;
     xMat3x3Mul((xMat3x3*)o, (const xMat3x3*)m, m3x3);
-    xVec3Copy(&o->pos, &pos);
+    xVec3Init(&o->pos, x, y, z);
 }
 
 void xMat4x3RMul3x3(xMat4x3* o, const xMat3x3* m3x3, const xMat4x3* m)
