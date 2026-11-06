@@ -18,9 +18,10 @@ extern RxClusterDefinition RxClVSteps;
 // Clamps a color channel to 0-255 by comparing its bits with those of 255.0: a negative value has
 // its sign bit set and so compares higher, and becomes zero.
 #define POSTLIGHT_CLAMP(_channel)                                                                  \
-    if (*(U32*)&(_channel) > *(const U32*)&maxColor)                                               \
+    if (((RwSplitBits*)&(_channel))->nUInt > *(const U32*)&maxColor)                                 \
     {                                                                                              \
-        *(U32*)&(_channel) = *(const U32*)&maxColor & ~(*(S32*)&(_channel) >> 31);                 \
+        ((RwSplitBits*)&(_channel))->nUInt =                                                        \
+            *(const U32*)&maxColor & ~(((RwSplitBits*)&(_channel))->nInt >> 31);                       \
     }
 
 // Moves both cursors over the next run of unlit vertices.
@@ -76,18 +77,23 @@ static S32 _PostLightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
             {
                 RxCamSpace3DVertex* camVert = (RxCamSpace3DVertex*)camVerts->currentData;
                 RwIm2DVertex* devVert = (RwIm2DVertex*)devVerts->currentData;
+                RwRGBAReal* color = &camVert->col;
+                RwRGBA* outputColor = &devVert->emissiveColor;
 
-                POSTLIGHT_CLAMP(camVert->col.red);
-                POSTLIGHT_CLAMP(camVert->col.green);
-                POSTLIGHT_CLAMP(camVert->col.blue);
+                POSTLIGHT_CLAMP(color->red);
+                POSTLIGHT_CLAMP(color->green);
+                POSTLIGHT_CLAMP(color->blue);
 
-                devVert->emissiveColor.red = (U8)camVert->col.red;
-                devVert->emissiveColor.green = (U8)camVert->col.green;
-                devVert->emissiveColor.blue = (U8)camVert->col.blue;
-                devVert->emissiveColor.alpha = (U8)camVert->col.alpha;
+                outputColor->red = (U8)color->red;
+                outputColor->green = (U8)color->green;
+                outputColor->blue = (U8)color->blue;
+                outputColor->alpha = (U8)color->alpha;
 
-                POSTLIGHT_SKIP(*step);
-                step += stepInc;
+                {
+                    U32 n = *step;
+                    step += stepInc;
+                    POSTLIGHT_SKIP(n);
+                }
             }
         }
         else
@@ -101,24 +107,29 @@ static S32 _PostLightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
             {
                 RxCamSpace3DVertex* camVert = (RxCamSpace3DVertex*)camVerts->currentData;
                 RwIm2DVertex* devVert = (RwIm2DVertex*)devVerts->currentData;
+                RwRGBA* outputColor = &devVert->emissiveColor;
+                RwRGBAReal* color = &camVert->col;
 
-                camVert->col.red *= redScale;
-                camVert->col.green *= greenScale;
-                camVert->col.blue *= blueScale;
-                camVert->col.alpha *= alphaScale;
+                color->red *= redScale;
+                color->green *= greenScale;
+                color->blue *= blueScale;
+                color->alpha *= alphaScale;
 
-                POSTLIGHT_CLAMP(camVert->col.red);
-                POSTLIGHT_CLAMP(camVert->col.green);
-                POSTLIGHT_CLAMP(camVert->col.blue);
-                POSTLIGHT_CLAMP(camVert->col.alpha);
+                POSTLIGHT_CLAMP(color->red);
+                POSTLIGHT_CLAMP(color->green);
+                POSTLIGHT_CLAMP(color->blue);
+                POSTLIGHT_CLAMP(color->alpha);
 
-                devVert->emissiveColor.red = (U8)camVert->col.red;
-                devVert->emissiveColor.green = (U8)camVert->col.green;
-                devVert->emissiveColor.blue = (U8)camVert->col.blue;
-                devVert->emissiveColor.alpha = (U8)camVert->col.alpha;
+                outputColor->red = (U8)color->red;
+                outputColor->green = (U8)color->green;
+                outputColor->blue = (U8)color->blue;
+                outputColor->alpha = (U8)color->alpha;
 
-                POSTLIGHT_SKIP(*step);
-                step += stepInc;
+                {
+                    U32 n = *step;
+                    step += stepInc;
+                    POSTLIGHT_SKIP(n);
+                }
             }
         }
     }

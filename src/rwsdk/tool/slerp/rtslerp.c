@@ -54,7 +54,9 @@
             F32 z = 0.5f * (_RW_one + (_x));                                                       \
             F32 s = _rwSqrt(z);                                                                    \
                                                                                                    \
-            (_result) = _RW_pi - 2.0f * (s + (ACOSF_RATIO(z) * s - _RW_pio2_lo));                  \
+            F32 r = ACOSF_RATIO(z);                                                                \
+            F32 w = r * s - _RW_pio2_lo;                                                           \
+            (_result) = _RW_pi - 2.0f * (s + w);                                                   \
         }                                                                                          \
         else                                                                                       \
         {                                                                                          \
@@ -65,15 +67,54 @@
             RwSplitBits dfBits;                                                                    \
             F32 df;                                                                                \
             F32 c;                                                                                 \
+            F32 r;                                                                                 \
+            F32 w;                                                                                 \
                                                                                                    \
             sBits.nReal = s;                                                                       \
             dfBits.nInt = sBits.nInt & 0xFFFFF000;                                                 \
             df = dfBits.nReal;                                                                     \
             c = (z - df * df) / (s + df);                                                          \
                                                                                                    \
-            (_result) = 2.0f * (df + (c + ACOSF_RATIO(z) * s));                                    \
+            r = ACOSF_RATIO(z);                                                                    \
+            w = r * s + c;                                                                         \
+            (_result) = 2.0f * (df + w);                                                           \
         }                                                                                          \
     } while (0)
+
+// Stores the endpoint matrices and their relative rotation for matrix interpolation.
+RtSlerp* RtSlerpInitialize(RtSlerp* spSlerp, RwMatrix* mpMat1, RwMatrix* mpMat2)
+{
+    RwMatrix matrix;
+    RwV3d center;
+
+    RwMatrixSetIdentityMacro(&matrix);
+
+    if (spSlerp->flags & 0x1)
+    {
+        spSlerp->matrix1 = mpMat1;
+    }
+    else
+    {
+        *spSlerp->matrix1 = *mpMat1;
+    }
+
+    if (spSlerp->flags & 0x2)
+    {
+        spSlerp->matrix2 = mpMat2;
+    }
+    else
+    {
+        *spSlerp->matrix2 = *mpMat2;
+    }
+
+    RwMatrixInvert(&matrix, spSlerp->matrix1);
+    RwMatrixTransform(&matrix, spSlerp->matrix2, rwCOMBINEPOSTCONCAT);
+    RwMatrixQueryRotate(&matrix, &spSlerp->axis, &spSlerp->angle, &center);
+    // Rotations smaller than two degrees use linear interpolation.
+    spSlerp->useLerp = (spSlerp->angle < 2.0f);
+
+    return spSlerp;
+}
 
 // Fills a slerp cache for interpolating from one rotation to another: the two rotations, with the
 // second negated where that takes the shorter way round, and the angle between them. Unless the
@@ -109,11 +150,10 @@ void RtQuatSetupSlerpCache(RtQuat* qpFrom, RtQuat* qpTo, RtQuatSlerpCache* sCach
 
     if (!sCache->nearlyZeroOm)
     {
-        F32 sinOm;
         F32 recipSinOm;
 
-        RwSinMinusPiToPiMacro(sinOm, sCache->omega);
-        recipSinOm = 1.0f / sinOm;
+        RwSinMinusPiToPiMacro(recipSinOm, sCache->omega);
+        recipSinOm = 1.0f / recipSinOm;
 
         sCache->raFrom.real *= recipSinOm;
         sCache->raFrom.imag.x *= recipSinOm;
