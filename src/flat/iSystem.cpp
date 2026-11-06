@@ -975,9 +975,7 @@ static S32 dlFseek(void* fptr, S32 offset, S32 origin)
         }
         break;
     case 2:
-        offset = fp->length + offset;
-        fp->pos = offset;
-        offset = offset - oldFPos;
+        offset = (fp->pos = fp->length + offset) - oldFPos;
         if ((S32)(fp->bufpos + offset) >= 0 && fp->bufpos + offset <= DLFILE_BUF_SIZE &&
             fp->pos <= fp->length)
         {

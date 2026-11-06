@@ -1,6 +1,3 @@
-// Revision 1 places the arena fill at another address. The label below is the revision 0 one;
-// on revision 1 it stands for that revision's label.
-
 #include "xpkrsvc.h"
 #include "xhipio.h"
 #include "xMemMgr.h"
