@@ -1501,9 +1501,13 @@ rwsdk/plugin/matfx/gcn/multiTexGcn.c:
 
 rwsdk/plugin/matfx/multiTex.c:
 	.text       start:0x80142D88 end:0x80143760
+	.bss        start:0x8026F868 end:0x8026F8F8
+	.sdata      start:0x80270628 end:0x80270630
 
 rwsdk/plugin/matfx/multiTexEffect.c:
-	.text       start:0x80143760 end:0x80143CC4
+	.text       start:0x80143760 end:0x80144284
+	.bss        start:0x8026F8F8 end:0x8026F9B0
+	.sbss       start:0x80271550 end:0x80271558
 
 rwsdk/plugin/skin2/rpskin.c:
 	.text       start:0x80144284 end:0x80144E8C
@@ -1534,7 +1538,7 @@ rwsdk/world/bamateri.c:
 	.text       start:0x8014D0B8 end:0x8014D6A4
 
 rwsdk/world/bamatlst.c:
-	.text       start:0x8014D6A4 end:0x8014D750
+	.text       start:0x8014D6A4 end:0x8014DDD8
 
 rwsdk/world/bamesh.c:
 	.text       start:0x8014E590 end:0x8014E838

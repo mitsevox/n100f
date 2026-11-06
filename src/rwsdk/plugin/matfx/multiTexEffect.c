@@ -239,11 +239,13 @@ void RpMTEffectDestroy(RpMTEffect* effect)
 
     if (effect->refCount == 0)
     {
+        MTEffectRegEntry* regEntry;
+
         RpMTEffectDictRemoveEffect(effect);
 
-        if (effect->platform && EffectRegEntries[effect->platform].destroy)
+        if (effect->platform && (regEntry = &EffectRegEntries[effect->platform])->destroy)
         {
-            EffectRegEntries[effect->platform].destroy(effect);
+            regEntry->destroy(effect);
         }
         else
         {

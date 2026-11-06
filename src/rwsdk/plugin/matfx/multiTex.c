@@ -5,7 +5,7 @@
 #define MULTITEXTURE_PLUGIN_ID 0x12C
 #define MULTITEXTURE_NUMPLATFORMS 9
 
-RwModuleInfo _rpMultiTextureModule;
+RwModuleInfo _rpMultiTextureModule = { 0, 0 };
 MultiTextureRegEntry RegEntries[MULTITEXTURE_NUMPLATFORMS];
 
 #define MULTITEXTUREGETDATA(object, offset) (*(RpMultiTexture**)((U8*)(object) + (offset)))
