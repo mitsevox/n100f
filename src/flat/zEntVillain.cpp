@@ -8834,6 +8834,8 @@ static S32 VILN_sham_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
+        case ZVIL_STIM_HURTBOSS:
+            break;
         case ZVIL_STIM_SOAPED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
         case ZVIL_STIM_GUMMED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
         case ZVIL_STIM_HEADBUTT: stimctxt->res_headbutt = ZVIL_HEADBUTT_DAMAGE; break;
@@ -8916,12 +8918,16 @@ static S32 VILN_sham_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
         }
         break;
     case ZVIL_GOAL_DIE:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_GOTOAFTERLIFE)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_GOTOAFTERLIFE:
             resp->trangoal = ZVIL_GOAL_AFTERLIFE;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     }
@@ -10768,25 +10774,26 @@ static S32 VILN_BRB_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
-        case ZVIL_STIM_SOAPED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
-        case ZVIL_STIM_GUMMED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
-        case ZVIL_STIM_HEADBUTT: stimctxt->res_headbutt = ZVIL_HEADBUTT_DAMAGE; break;
-        case ZVIL_STIM_BOUNCED: stimctxt->res_buttbounce = ZVIL_BOUNCE_DAMAGE; break;
-        case ZVIL_STIM_BUMPED: stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE; break;
         case ZVIL_STIM_HURTBOSS:
             vil->hitpts--;
             if (vil->hitpts < 1)
             {
                 resp->trangoal = ZVIL_GOAL_DIE;
                 resp->tranmode = ZVIL_MODE_DEATH;
+                resp->stim = ZVIL_STIM_TRANGOAL;
             }
             else
             {
                 resp->trangoal = ZVIL_GOAL_HURT;
                 resp->tranmode = ZVIL_MODE_BATTLE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
             }
-            resp->stim = ZVIL_STIM_TRANGOAL;
             break;
+        case ZVIL_STIM_SOAPED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
+        case ZVIL_STIM_GUMMED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
+        case ZVIL_STIM_HEADBUTT: stimctxt->res_headbutt = ZVIL_HEADBUTT_DAMAGE; break;
+        case ZVIL_STIM_BOUNCED: stimctxt->res_buttbounce = ZVIL_BOUNCE_DAMAGE; break;
+        case ZVIL_STIM_BUMPED: stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE; break;
         case ZVIL_STIM_ATTACKHERO:
             if ((vil->allow & 0x8) && (vil->abl_atak & 1))
             {
