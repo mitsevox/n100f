@@ -401,6 +401,7 @@ static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp);
 static inline void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt);
 static inline void VBON_setup_bonusTable();
 static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop_caller);
+static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx);
 static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 flg_vsnd, F32 radius,
                               F32 delay, F32 repeatDelay, S32 repeatCount, U32 useThisSound);
 static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
@@ -8310,6 +8311,7 @@ static S32 VILN_gang_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
     S32 result = 1;
     en_NPC_STIMULUS stim = stimctxt->stim;
     en_BEHAVIOUR_GOAL procgoal;
+    en_NPC_SOUND use_dis;
 
     if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
     {
@@ -8364,10 +8366,9 @@ static S32 VILN_gang_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
             vil->vhf->pickanim(vil, ZVIL_GOAL_TALK, ZVIL_GSPOT_START);
             vil->tmr_list[ZVIL_TTIL_FIDGET] = VCFG_tymref(vil, ZVIL_TTIL_FIDGET) + 0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TTIL_FIDGET);
             vil->tmr_list[ZVIL_TYMR_GENERIC] = 0.5f;
-            zSFX* sfx = stimctxt->talkSFX;
-            if (sfx == (zSFX*)-1)
+            if ((S32)stimctxt->talkSFX == -1)
             {
-                en_NPC_SOUND use_dis = VSND_TYP_CHEERING;
+                use_dis = VSND_TYP_ONELINER;
                 if (vil->asset->subtype == eEntVillainGroundsKeeper && xUtil_yesno(0.1f))
                 {
                     if (!(globals.player.Inv_Specials & 4) && VSND_select_sound(vil, VSND_TYP_NEEDTARBOOTS))
@@ -8381,37 +8382,11 @@ static S32 VILN_gang_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
                         use_dis = VSND_TYP_HAVEFLOAT;
                 }
                 VSND_queueSound(vil, use_dis);
-                vil->sfx_curTalk = sfx;
+                vil->sfx_curTalk = stimctxt->talkSFX;
             }
-            else if (sfx)
+            else if (stimctxt->talkSFX)
             {
-                xSndStopChildren((U32)vil + 2);
-                vil->sfx_curTalk = sfx;
-                if (sfx->asset && sfx->asset->id)
-                {
-                    st_NPC_SOUND_PROPERTIES* props = NULL;
-                    S32 flags = VSND_findProps(VSND_TYP_ZSFXTALK, &props);
-                    for (S32 i = 0; i < 4; i++)
-                    {
-                        vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
-                        vil->snd_queue[i].sndDirect = 0;
-                    }
-                    for (S32 i = 0; i < 4; i++)
-                    {
-                        st_NPC_SOUND_QUEUE* q = &vil->snd_queue[i];
-                        if (q->sndEvent == VSND_TYP_BOGUS)
-                        {
-                            memset(q, 0, sizeof(*q));
-                            q->sndEvent = VSND_LISTEND;
-                            q->sndDirect = sfx->asset->soundAssetID;
-                            q->flg_frolic = flags;
-                            q->tmr_delay = props->tym_delayStart;
-                            q->radius = g_npcTable[vil->asset->subtype].dst_noisy;
-                            q->tym_repeatDelay = -1.0f;
-                            break;
-                        }
-                    }
-                }
+                VSND_playFromSFX(vil, stimctxt->talkSFX);
             }
             break;
         case ZVIL_STIM_EXITGOAL:
@@ -8431,8 +8406,16 @@ static S32 VILN_gang_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
         case ZVIL_STIM_TRANGOAL:
             break;
         case ZVIL_STIM_ENTERGOAL:
-            vil->anim_loopmult = 0.97f;
-            vil->vhf->pickanim(vil, ZVIL_GOAL_ACTION, stimctxt->use_alt_action ? ZVIL_GSPOT_ACTION_ALTA : ZVIL_GSPOT_START);
+            if (stimctxt->use_alt_action)
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_ACTION, ZVIL_GSPOT_ACTION_ALTA);
+            }
+            else
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_ACTION, ZVIL_GSPOT_START);
+            }
             break;
         case ZVIL_STIM_EXITGOAL:
             break;
@@ -19370,6 +19353,28 @@ static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplic
     return xsid;
 }
 
+// Stops the villain's talk sounds and makes sfx its current talk. If sfx has a sound asset, the
+// sound queue is cleared and the asset's sound is queued directly, with the zSFX talk flags and
+// start delay and the villain type's noise distance as its radius.
+static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx)
+{
+    st_NPC_SOUND_PROPERTIES* sprop = NULL;
+
+    xSndStopChildren((U32)vil + 2);
+    vil->sfx_curTalk = sfx;
+    if (sfx && sfx->asset && sfx->asset->id)
+    {
+        S32 flg_vsnd = VSND_findProps(VSND_TYP_ZSFXTALK, &sprop);
+        for (S32 i = 0; i < 4; i++)
+        {
+            vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
+            vil->snd_queue[i].sndDirect = 0;
+        }
+        VSND_addQueueEntry(vil, VSND_LISTEND, flg_vsnd, g_npcTable[vil->asset->subtype].dst_noisy,
+                           sprop->tym_delayStart, -1.0f, 0, sfx->asset->soundAssetID);
+    }
+}
+
 // Finds a sound type's entry in g_sndProps (the VSND_LISTEND entry if it has none), hands it back
 // through sprop_caller when that is given, and returns its play flags.
 static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop_caller)
@@ -19393,13 +19398,17 @@ static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop
     return sprop->flg_vsnd;
 }
 
-// Queues a sound type once, with its play flags (without the top four bits) and start delay from
-// g_sndProps and the villain type's noise distance as its radius.
+// Queues a sound type once, with its play flags and start delay from g_sndProps and the villain
+// type's noise distance as its radius. Only the hologram fade keeps the top four flag bits (its
+// repeat setting); every other sound drops them.
 static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
     S32 flg_vsnd = VSND_findProps(sndEvent, &sprop);
-    flg_vsnd &= 0x0FFFFFFF;
+    if (sndEvent != VSND_TYP_HOLOFADE)
+    {
+        flg_vsnd &= 0x0FFFFFFF;
+    }
     return VSND_addQueueEntry(vil, sndEvent, flg_vsnd, g_npcTable[vil->asset->subtype].dst_noisy,
                               sprop->tym_delayStart, -1.0f, 0, 0);
 }
