@@ -7707,17 +7707,24 @@ static S32 VILN_shagM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_C
 static S32 VILN_shagM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
                                st_STIMULUS_CONTEXT_DATA* resp)
 {
+    S32 std_mvpt_nav;
     en_NPC_STIMULUS stim = stimctxt->stim;
     switch (g_pgol = vil->goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_AFTERLIFE:
     case ZVIL_GOAL_BASEINIT:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_MAKEREADY)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     case ZVIL_GOAL_STARTUP:
@@ -7731,6 +7738,9 @@ static S32 VILN_shagM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* st
     case ZVIL_GOAL_ACTION:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_KILLSELF:
             vil->hitpts = 0;
             resp->trangoal = ZVIL_GOAL_DIE;
@@ -7759,13 +7769,21 @@ static S32 VILN_shagM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* st
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
         case ZVIL_STIM_GOTOWIDGET:
+            if (stimctxt->widge && (vil->abl_move & 0x100))
+            {
+                VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 0);
+                vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+                resp->trangoal = ZVIL_GOAL_FOLLOW;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
         case ZVIL_STIM_FOLLOWWIDGET:
             if (stimctxt->widge && (vil->abl_move & 0x100))
             {
-                S32 follow = stim == ZVIL_STIM_FOLLOWWIDGET;
-                S32 path = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, follow);
+                std_mvpt_nav = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 1);
                 vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
-                if ((follow && path))
+                if (std_mvpt_nav)
                 {
                     resp->trangoal = ZVIL_GOAL_PATROL;
                     resp->tranmode = ZVIL_MODE_NORMAL;
