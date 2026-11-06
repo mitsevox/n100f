@@ -2619,16 +2619,34 @@ void zEntVillain_Init(st_zEntVillain* ent, p2EntAsset* asset)
 }
 
 // Finish setting up the villain after the scene and its move points are available.
+// Clears the villain's bonus-drop permission when the current scene, and optionally this villain's ID,
+// is on the bonus exclusion list.
+static void VBON_checkExclusions(st_zEntVillain* ent)
+{
+    for (st_ZVIL_BONUS_EXCLUSION* exclusion = g_bonusExclusions; exclusion->scene; exclusion++)
+    {
+        if (exclusion->scene == globals.sceneCur->sceneID && (!exclusion->id || exclusion->id == ent->id))
+        {
+            ent->allow &= ~0x800;
+            return;
+        }
+    }
+}
+
+// Returns the first move point of a villain's path, or NULL when it has none.
+static _zMovePoint* VNAV_mvptFromID(U32 aid)
+{
+    _zMovePoint* mvpt = NULL;
+    if (aid) mvpt = zMovePoint_From_xAssetID(aid);
+    return mvpt;
+}
+
 void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
 {
     ent->nav_mvptlist = NULL;
     ent->nav_prev = NULL;
     ent->nav_next = NULL;
-    U32 aid = ent->vilcfg.vilp2ass->movePointAssetID;
-    if (aid)
-    {
-        ent->nav_mvptlist = zMovePoint_From_xAssetID(aid);
-    }
+    ent->nav_mvptlist = VNAV_mvptFromID(ent->vilcfg.vilp2ass->movePointAssetID);
     zVIL_apply_vilcfg(ent, &ent->vilcfg);
 
     if (ent->ability & 0x2)
@@ -2643,17 +2661,7 @@ void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
         }
         else
         {
-            st_ZVIL_BONUS_EXCLUSION* exclusion = g_bonusExclusions;
-            while (exclusion->scene)
-            {
-                if (exclusion->scene == globals.sceneCur->sceneID &&
-                    (!exclusion->id || exclusion->id == ent->id))
-                {
-                    ent->allow &= ~0x800;
-                    break;
-                }
-                exclusion++;
-            }
+            VBON_checkExclusions(ent);
         }
     }
 
