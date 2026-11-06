@@ -738,15 +738,16 @@ S32 BinkCopyToBufferRect(Bink* bink, void* dest, S32 destpitch, U32 destheight, 
                     skipped = 1;
                 } else {
                     bink->io.busy = 0;
-                    bink->skipped++;
                     bink->skip_blit = 1;
+                    bink->skipped++;
                     return 1;
                 }
             } else {
-                bink->skip_blit = 0;
                 bink->skip_count = 0;
+                goto noskip;
             }
         } else {
+        noskip:
             bink->skip_blit = 0;
         }
     }
