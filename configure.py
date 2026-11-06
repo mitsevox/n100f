@@ -955,7 +955,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/plugin/matfx/gcn/multiTexGcnData.c"),
             Object(NonMatching, "rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/plugin/matfx/gcn/multiTexGcn.c"),
-            Object(NonMatching, "rwsdk/plugin/matfx/multiTex.c"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/plugin/matfx/multiTex.c"),
             Object(NonMatching, "rwsdk/plugin/matfx/multiTexEffect.c"),
         ],
     ),

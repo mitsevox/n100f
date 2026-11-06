@@ -14,7 +14,7 @@ void _rwMemoryClose(void);
 static RwLinkList llGAllFreeLists;
 
 // The engine's default calloc, built on malloc.
-static void* FakeCalloc(U32 numObj, U32 sizeObj)
+static void* FakeCalloc(size_t numObj, size_t sizeObj)
 {
     U32 size = numObj * sizeObj;
     void* mem = malloc(size);
@@ -207,10 +207,9 @@ S32 _rwMemoryOpen(const RwMemoryFunctions* memFuncs)
     }
     else
     {
-        // The C library's functions take size_t (unsigned long here), the engine's U32.
-        RWSRCGLOBAL(memoryFuncs).rwmalloc = (void* (*)(U32))malloc;
+        RWSRCGLOBAL(memoryFuncs).rwmalloc = malloc;
         RWSRCGLOBAL(memoryFuncs).rwfree = free;
-        RWSRCGLOBAL(memoryFuncs).rwrealloc = (void* (*)(void*, U32))realloc;
+        RWSRCGLOBAL(memoryFuncs).rwrealloc = realloc;
         RWSRCGLOBAL(memoryFuncs).rwcalloc = FakeCalloc;
     }
 
