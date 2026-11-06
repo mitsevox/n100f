@@ -779,10 +779,10 @@ void YUV_16a4_4x2_even(S32 n)
     S.dst1 += n * 8;
     a0 = S.a0;
     a1 = S.a1;
-    u = S.u;
-    v = S.v;
     y0 = S.y0;
     y1 = S.y1;
+    u = S.u;
+    v = S.v;
 
     do {
         U32 uu = *u++;
@@ -799,9 +799,9 @@ void YUV_16a4_4x2_even(S32 n)
         S32 ya;
         S32 yb;
 
-        r = clamp_b + 256 + YUVTables[3][vv >> 8];
-        b = clamp_r + 256 + YUVTables[0][uu >> 8];
-        g = clamp_g + 256 + (YUVTables[2][uu >> 8] + YUVTables[1][vv >> 8]);
+        b = clampptr(clamp_r + 256, YUVTables[0][uu >> 8]);
+        r = clampptr(clamp_b + 256, YUVTables[3][vv >> 8]);
+        g = clampptr(clamp_g + 256, (YUVTables[2][uu >> 8] + YUVTables[1][vv >> 8]));
         y = yy0 >> 16;
         a = aa0 >> 16;
         ya = ytable[y >> 8];
@@ -814,9 +814,9 @@ void YUV_16a4_4x2_even(S32 n)
         yb = ytable[y & 0xFF];
         d1[0] = ((U16)(clamp_a4[a >> 8] | b[ya] | g[ya] | r[ya]) << 16) |
                 (U16)(clamp_a4[a & 0xFF] | b[yb] | g[yb] | r[yb]);
-        r = clamp_b + 256 + YUVTables[3][vv & 0xFF];
-        b = clamp_r + 256 + YUVTables[0][uu & 0xFF];
-        g = clamp_g + 256 + (YUVTables[2][uu & 0xFF] + YUVTables[1][vv & 0xFF]);
+        b = clampptr(clamp_r + 256, YUVTables[0][uu & 0xFF]);
+        r = clampptr(clamp_b + 256, YUVTables[3][vv & 0xFF]);
+        g = clampptr(clamp_g + 256, (YUVTables[2][uu & 0xFF] + YUVTables[1][vv & 0xFF]));
         y = yy0 & 0xFFFF;
         a = aa0;
         ya = ytable[y >> 8];
@@ -833,10 +833,10 @@ void YUV_16a4_4x2_even(S32 n)
         d1 += 8;
     } while (--n);
 
-    S.u = u;
-    S.v = v;
     S.y0 = y0;
     S.y1 = y1;
+    S.u = u;
+    S.v = v;
     S.a0 = a0;
     S.a1 = a1;
 }
@@ -857,13 +857,13 @@ void YUV_16a4x2_4x2_even(S32 n)
     d0 = GetTiledRgbLoc(S.dst0, tpitch);
     S.dst0 += n * 16;
     d1 = GetTiledRgbLoc(S.dst1, tpitch);
-    S.dst1 += n * 16;
     a0 = S.a0;
     a1 = S.a1;
     u = S.u;
     v = S.v;
     y0 = S.y0;
     y1 = S.y1;
+    S.dst1 += n * 16;
 
     do {
         U32 uu = *u++;
@@ -882,9 +882,9 @@ void YUV_16a4x2_4x2_even(S32 n)
         U16 p;
         U16 q;
 
-        r = clamp_b + 256 + YUVTables[3][vv >> 8];
-        b = clamp_r + 256 + YUVTables[0][uu >> 8];
-        g = clamp_g + 256 + (YUVTables[2][uu >> 8] + YUVTables[1][vv >> 8]);
+        b = clampptr(clamp_r + 256, YUVTables[0][uu >> 8]);
+        r = clampptr(clamp_b + 256, YUVTables[3][vv >> 8]);
+        g = clampptr(clamp_g + 256, (YUVTables[2][uu >> 8] + YUVTables[1][vv >> 8]));
         y = yy0 >> 16;
         a = aa0 >> 16;
         ya = ytable[y >> 8];
@@ -901,9 +901,9 @@ void YUV_16a4x2_4x2_even(S32 n)
         q = (U16)(clamp_a4[a & 0xFF] | b[yb] | g[yb] | r[yb]);
         d1[0] = (p << 16) | p;
         d1[1] = (q << 16) | q;
-        r = clamp_b + 256 + YUVTables[3][vv & 0xFF];
-        b = clamp_r + 256 + YUVTables[0][uu & 0xFF];
-        g = clamp_g + 256 + (YUVTables[2][uu & 0xFF] + YUVTables[1][vv & 0xFF]);
+        b = clampptr(clamp_r + 256, YUVTables[0][uu & 0xFF]);
+        r = clampptr(clamp_b + 256, YUVTables[3][vv & 0xFF]);
+        g = clampptr(clamp_g + 256, (YUVTables[2][uu & 0xFF] + YUVTables[1][vv & 0xFF]));
         y = yy0 & 0xFFFF;
         a = aa0;
         ya = ytable[y >> 8];
@@ -924,10 +924,10 @@ void YUV_16a4x2_4x2_even(S32 n)
         d1 += 16;
     } while (--n);
 
-    S.u = u;
-    S.v = v;
     S.y0 = y0;
     S.y1 = y1;
+    S.u = u;
+    S.v = v;
     S.a0 = a0;
     S.a1 = a1;
 }
