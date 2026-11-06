@@ -382,6 +382,8 @@ static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt);
 static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplicit, S32 flg_vsnd,
                        F32 dist);
 static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
+static en_NPC_SOUND VSND_typeFromHash(st_zEntVillain* vil, U32 aid_snd);
+static S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* xsid_caller);
 static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt);
 static inline void zVIL_send_stim(st_zEntVillain* ent, en_NPC_STIMULUS stim);
 static inline void VEFX_gumBlob_place(xModelInstance* blob, xVec3* pos, F32 scale);
@@ -2950,42 +2952,8 @@ void zEntVillain_Stun(st_zEntVillain* ent, F32 strength)
 // Resolve an animation effect's sound through the villain sound lists and play it.
 S32 zEntVillain_PlayAFXSound(st_zEntVillain* ent, zAnimFxSound* snd, U32* sid_played)
 {
-    if (ent->goal >= ZVIL_GOAL_AFTERLIFE && ent->goal < ZVIL_GOAL_GOONLINE &&
-        ent->goaldflt != ZVIL_GOAL_AMBUSH)
-    {
-        return 1;
-    }
-
-    en_zEntVillainSubTypeID type = (en_zEntVillainSubTypeID)ent->asset->subtype;
-    en_NPC_SOUND event = VSND_TYP_BOGUS;
-    st_NPC_SOUND_ENTRY* entry = g_npcJukeBox;
-    while (entry->sndList)
-    {
-        if (entry->viltyp != type && entry->viltyp == eEntVillainType_Undefined)
-        {
-            entry++;
-            continue;
-        }
-        st_NPC_SOUND_RECORDS* record = entry->sndList;
-        while (record->typ_sound != VSND_LISTEND)
-        {
-            if (record->aid_sound == snd->ID)
-            {
-                event = record->typ_sound;
-                break;
-            }
-            record++;
-        }
-        if (entry->viltyp == type || event != VSND_TYP_BOGUS) break;
-        entry++;
-    }
-    st_NPC_SOUND_PROPERTIES* props = NULL;
-    S32 flags = VSND_findProps(event, &props);
-    F32 radius = g_npcTable[type].dst_noisy;
-    U32 played = event != VSND_TYP_BOGUS ? VSND_goPlay(ent, event, 0, flags, radius) :
-                                          VSND_goPlay(ent, VSND_LISTEND, snd->ID, flags, radius);
-    if (sid_played) *sid_played = played;
-    return 1;
+    S32 rc = VSND_playFromSimilar(ent, snd, sid_played);
+    return rc ? 1 : 0;
 }
 
 // Start the villain system once and register its four boss projectile categories.
@@ -19170,6 +19138,36 @@ static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan)
     return iSndIsPlaying(0, (U32)vil + (flg_chan & 3));
 }
 
+// The sound type of a sound asset in the jukebox, searching the villain type's list first.
+static en_NPC_SOUND VSND_typeFromHash(st_zEntVillain* vil, U32 aid_snd)
+{
+    en_NPC_SOUND typ_sndEvent = VSND_TYP_BOGUS;
+    en_zEntVillainSubTypeID viltyp = (en_zEntVillainSubTypeID)vil->asset->subtype;
+    st_NPC_SOUND_ENTRY* entry;
+    st_NPC_SOUND_RECORDS* trax;
+
+    entry = g_npcJukeBox;
+    while (entry->sndList)
+    {
+        if (entry->viltyp != viltyp && entry->viltyp == eEntVillainType_Undefined)
+        {
+            entry++;
+            continue;
+        }
+        for (trax = entry->sndList; trax->typ_sound != VSND_LISTEND; trax++)
+        {
+            if (trax->aid_sound == aid_snd)
+            {
+                typ_sndEvent = trax->typ_sound;
+                break;
+            }
+        }
+        if (entry->viltyp == viltyp || typ_sndEvent != VSND_TYP_BOGUS) break;
+        entry++;
+    }
+    return typ_sndEvent;
+}
+
 // Pick a loaded sound of the requested type for this villain.
 static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 {
@@ -19214,6 +19212,37 @@ static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
         xSTAssetName(da_aid_of_sound);
     }
     return da_aid_of_sound;
+}
+
+// Play an animation's sound: the jukebox sound of the same type when the asset is in the
+// jukebox, otherwise the asset itself, with the type's properties and the villain's noise radius.
+static S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* xsid_caller)
+{
+    U32 xsid;
+    F32 radius;
+    en_NPC_SOUND sndEvent;
+
+    switch (vil->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+        if (vil->goaldflt != ZVIL_GOAL_AMBUSH)
+        {
+            return -1;
+        }
+        break;
+    }
+
+    sndEvent = VSND_typeFromHash(vil, afxsnd->ID);
+    S32 flg_vsnd = VSND_findProps(sndEvent, NULL);
+    radius = g_npcTable[vil->asset->subtype].dst_noisy;
+    if (sndEvent != VSND_TYP_BOGUS)
+        xsid = VSND_goPlay(vil, sndEvent, 0, flg_vsnd, radius);
+    else
+        xsid = VSND_goPlay(vil, VSND_LISTEND, afxsnd->ID, flg_vsnd, radius);
+    if (xsid_caller) *xsid_caller = xsid;
+    return 1;
 }
 
 // Queue a sound with the villain type's noise radius and the sound's configured delay.
