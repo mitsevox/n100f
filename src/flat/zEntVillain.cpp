@@ -7765,17 +7765,35 @@ static S32 VILN_shagM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* st
                 S32 follow = stim == ZVIL_STIM_FOLLOWWIDGET;
                 S32 path = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, follow);
                 vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
-                resp->trangoal = (follow && path) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
-                resp->tranmode = ZVIL_MODE_NORMAL;
-                resp->stim = ZVIL_STIM_TRANGOAL;
+                if ((follow && path))
+                {
+                    resp->trangoal = ZVIL_GOAL_PATROL;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_FOLLOW;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
             }
             break;
         case ZVIL_STIM_STARTPATROL:
             vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
             if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
-            resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NORMAL;
-            resp->stim = ZVIL_STIM_TRANGOAL;
+            if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                resp->trangoal = ZVIL_GOAL_PATROL;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_IDLE;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
             break;
         case ZVIL_STIM_STOPPATROL:
             resp->trangoal = ZVIL_GOAL_IDLE;
@@ -8279,17 +8297,35 @@ static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
                 S32 follow = stim == ZVIL_STIM_FOLLOWWIDGET;
                 S32 path = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, follow);
                 vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
-                resp->trangoal = (follow && path) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
-                resp->tranmode = ZVIL_MODE_NORMAL;
-                resp->stim = ZVIL_STIM_TRANGOAL;
+                if ((follow && path))
+                {
+                    resp->trangoal = ZVIL_GOAL_PATROL;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_FOLLOW;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
             }
             break;
         case ZVIL_STIM_STARTPATROL:
             vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
             if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
-            resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NORMAL;
-            resp->stim = ZVIL_STIM_TRANGOAL;
+            if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                resp->trangoal = ZVIL_GOAL_PATROL;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_IDLE;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
             break;
         case ZVIL_STIM_STOPPATROL:
         case ZVIL_STIM_STARTGUARD:
@@ -8832,17 +8868,35 @@ static S32 VILN_sham_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
             {
                 std_mvpt_nav = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 1);
                 vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
-                resp->trangoal = std_mvpt_nav ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
-                resp->tranmode = ZVIL_MODE_NORMAL;
-                resp->stim = ZVIL_STIM_TRANGOAL;
+                if (std_mvpt_nav)
+                {
+                    resp->trangoal = ZVIL_GOAL_PATROL;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_FOLLOW;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
             }
             break;
         case ZVIL_STIM_STARTPATROL:
             vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
             if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
-            resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NORMAL;
-            resp->stim = ZVIL_STIM_TRANGOAL;
+            if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                resp->trangoal = ZVIL_GOAL_PATROL;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_IDLE;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
             break;
         case ZVIL_STIM_STOPPATROL:
             resp->trangoal = ZVIL_GOAL_IDLE;
@@ -10770,17 +10824,35 @@ static S32 VILN_BRB_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             {
                 std_mvpt_nav = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 1);
                 vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
-                resp->trangoal = std_mvpt_nav ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
-                resp->tranmode = ZVIL_MODE_NOCHANGE;
-                resp->stim = ZVIL_STIM_TRANGOAL;
+                if (std_mvpt_nav)
+                {
+                    resp->trangoal = ZVIL_GOAL_PATROL;
+                    resp->tranmode = ZVIL_MODE_NOCHANGE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_FOLLOW;
+                    resp->tranmode = ZVIL_MODE_NOCHANGE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
             }
             break;
         case ZVIL_STIM_STARTPATROL:
             vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
             if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
-            resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NOCHANGE;
-            resp->stim = ZVIL_STIM_TRANGOAL;
+            if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                resp->trangoal = ZVIL_GOAL_PATROL;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_IDLE;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
             break;
         case ZVIL_STIM_STOPPATROL:
             resp->trangoal = ZVIL_GOAL_IDLE;
