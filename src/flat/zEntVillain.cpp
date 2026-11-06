@@ -7336,9 +7336,15 @@ static S32 VILN_shark_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* st
     en_NPC_STIMULUS stim = stimctxt->stim;
     switch (g_pgol = vil->goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_AFTERLIFE:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+            break;
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
@@ -7349,6 +7355,10 @@ static S32 VILN_shark_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* st
     case ZVIL_GOAL_BASEINIT:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+            break;
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
@@ -7363,6 +7373,10 @@ static S32 VILN_shark_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* st
     case ZVIL_GOAL_IDLE:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+            break;
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_KILLSELF:
             vil->hitpts = 0;
             resp->trangoal = ZVIL_GOAL_DIE;
@@ -7448,11 +7462,6 @@ static S32 VILN_shark_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal,
         VANM_setone(vil, ZVIL_ANIM_IDLE);
         break;
     }
-    case ZVIL_GOAL_DIE:
-    {
-        VANM_setone(vil, ZVIL_ANIM_IDLE);
-        break;
-    }
     case ZVIL_GOAL_IDLE:
         if (gspot == ZVIL_GSPOT_FIDGET)
         {
@@ -7464,6 +7473,11 @@ static S32 VILN_shark_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal,
             VANM_randtwo(vil, ZVIL_ANIM_BORED, ZVIL_ANIM_IDLE);
         }
         break;
+    case ZVIL_GOAL_DIE:
+    {
+        VANM_setone(vil, ZVIL_ANIM_IDLE);
+        break;
+    }
     }
     return 1;
 }
@@ -9324,16 +9338,16 @@ static S32 VILN_BBK_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
-        case ZVIL_STIM_SOAPED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
-        case ZVIL_STIM_GUMMED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
-        case ZVIL_STIM_HEADBUTT: stimctxt->res_headbutt = ZVIL_HEADBUTT_DAMAGE; break;
-        case ZVIL_STIM_BOUNCED: stimctxt->res_buttbounce = ZVIL_BOUNCE_DAMAGE; break;
-        case ZVIL_STIM_BUMPED: stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE; break;
         case ZVIL_STIM_HURTBOSS:
             resp->trangoal = ZVIL_GOAL_HURT;
             resp->tranmode = ZVIL_MODE_BATTLE;
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
+        case ZVIL_STIM_SOAPED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
+        case ZVIL_STIM_GUMMED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
+        case ZVIL_STIM_HEADBUTT: stimctxt->res_headbutt = ZVIL_HEADBUTT_DAMAGE; break;
+        case ZVIL_STIM_BOUNCED: stimctxt->res_buttbounce = ZVIL_BOUNCE_DAMAGE; break;
+        case ZVIL_STIM_BUMPED: stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE; break;
         case ZVIL_STIM_ATTACKHERO:
             if ((vil->allow & 0x8) && (vil->abl_atak & 1))
             {
@@ -9371,17 +9385,35 @@ static S32 VILN_BBK_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             {
                 std_mvpt_nav = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 1);
                 vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
-                resp->trangoal = std_mvpt_nav ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
-                resp->tranmode = ZVIL_MODE_NOCHANGE;
-                resp->stim = ZVIL_STIM_TRANGOAL;
+                if (std_mvpt_nav)
+                {
+                    resp->trangoal = ZVIL_GOAL_PATROL;
+                    resp->tranmode = ZVIL_MODE_NOCHANGE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_FOLLOW;
+                    resp->tranmode = ZVIL_MODE_NOCHANGE;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
             }
             break;
         case ZVIL_STIM_STARTPATROL:
             vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
             if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
-            resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NOCHANGE;
-            resp->stim = ZVIL_STIM_TRANGOAL;
+            if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                resp->trangoal = ZVIL_GOAL_PATROL;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_IDLE;
+                resp->tranmode = ZVIL_MODE_NOCHANGE;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
             break;
         case ZVIL_STIM_STOPPATROL:
             resp->trangoal = ZVIL_GOAL_IDLE;
@@ -9958,16 +9990,16 @@ static S32 VILN_BGG_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
-        case ZVIL_STIM_SOAPED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
-        case ZVIL_STIM_GUMMED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
-        case ZVIL_STIM_HEADBUTT: stimctxt->res_headbutt = ZVIL_HEADBUTT_DAMAGE; break;
-        case ZVIL_STIM_BOUNCED: stimctxt->res_buttbounce = ZVIL_BOUNCE_DAMAGE; break;
-        case ZVIL_STIM_BUMPED: stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE; break;
         case ZVIL_STIM_HURTBOSS:
             resp->trangoal = ZVIL_GOAL_HURT;
             resp->tranmode = ZVIL_MODE_BATTLE;
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
+        case ZVIL_STIM_SOAPED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
+        case ZVIL_STIM_GUMMED: stimctxt->res_bubble = ZVIL_BUBBLE_BREAK; break;
+        case ZVIL_STIM_HEADBUTT: stimctxt->res_headbutt = ZVIL_HEADBUTT_DAMAGE; break;
+        case ZVIL_STIM_BOUNCED: stimctxt->res_buttbounce = ZVIL_BOUNCE_DAMAGE; break;
+        case ZVIL_STIM_BUMPED: stimctxt->res_bumped = ZVIL_BUMPED_DAMAGE; break;
         case ZVIL_STIM_ATTACKHERO:
             if ((vil->allow & 0x8) && (vil->abl_atak & 1))
             {
@@ -10005,17 +10037,35 @@ static S32 VILN_BGG_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             {
                 std_mvpt_nav = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 1);
                 vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
-                resp->trangoal = std_mvpt_nav ? ZVIL_GOAL_PATROL : ZVIL_GOAL_FOLLOW;
-                resp->tranmode = ZVIL_MODE_NORMAL;
-                resp->stim = ZVIL_STIM_TRANGOAL;
+                if (std_mvpt_nav)
+                {
+                    resp->trangoal = ZVIL_GOAL_PATROL;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
+                else
+                {
+                    resp->trangoal = ZVIL_GOAL_FOLLOW;
+                    resp->tranmode = ZVIL_MODE_NORMAL;
+                    resp->stim = ZVIL_STIM_TRANGOAL;
+                }
             }
             break;
         case ZVIL_STIM_STARTPATROL:
             vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
             if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
-            resp->trangoal = vil->vhf->query(vil, ZVIL_Q_HAVENAV) ? ZVIL_GOAL_PATROL : ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NORMAL;
-            resp->stim = ZVIL_STIM_TRANGOAL;
+            if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
+            {
+                resp->trangoal = ZVIL_GOAL_PATROL;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            else
+            {
+                resp->trangoal = ZVIL_GOAL_IDLE;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
             break;
         case ZVIL_STIM_STOPPATROL:
             resp->trangoal = ZVIL_GOAL_IDLE;
