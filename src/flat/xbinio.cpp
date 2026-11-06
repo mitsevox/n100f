@@ -61,12 +61,11 @@ static S32 BFD_getLength(tag_xFile* bffp, void* xtradata);
 static S32 BFD_startSector(const char* filename);
 st_FILELOADINFO* xBinioLoadCreate(const char* filename);
 
+static st_FILELOADINFO g_loadinst[8] = {};
 static tag_xFile g_xfload[8] = {};
+static st_BINIO_XTRADATA g_xtraload[8] = {};
 
 static st_BINIO_XTRADATA* g_async_context;
-
-static st_FILELOADINFO g_loadinst[8] = {};
-static st_BINIO_XTRADATA g_xtraload[8] = {};
 
 static S32 BFD_getLength(tag_xFile* bffp, void* xtradata)
 {
@@ -413,11 +412,13 @@ static en_BIO_ASYNC_ERRCODES BFD_AsyncReadStatus(st_FILELOADINFO* fli)
     return status;
 }
 
+// Both byte-order callbacks use the same raw-read backend on GameCube.
 static S32 AsyncMRead(st_FILELOADINFO* fli, S32 offset, char* data, S32 size, S32 n)
 {
     return BFD_AsyncRead(fli, offset, data, size, n, 1);
 }
 
+// The little-endian callback keeps its own slot but uses that same GC read path.
 static S32 AsyncIRead(st_FILELOADINFO* fli, S32 offset, char* data, S32 size, S32 n)
 {
     return BFD_AsyncRead(fli, offset, data, size, n, 0);
@@ -503,10 +504,12 @@ static void BFD_close(tag_xFile* bffp, void* xtradata)
 // Only reading uses one of the eight file slots; "wb" is recognised but never opens anything.
 static tag_xFile* BFD_open(const char* filename, const char* mode, U32 lockid, S32, void* xtradata)
 {
-    tag_xFile* bffp;
-    U32 orc;
-    st_BINIO_XTRADATA* xtra = (st_BINIO_XTRADATA*)xtradata;
-    S32 xfflg = IFILE_OPEN_READ;
+    tag_xFile* bffp = NULL;
+    U32 orc = 0;
+    st_BINIO_XTRADATA* xtra = NULL;
+    xtra = (st_BINIO_XTRADATA*)xtradata;
+    S32 xfflg = 0;
+    xfflg = IFILE_OPEN_READ;
 
     if (strcmp(mode, "rb") == 0)
     {
@@ -544,6 +547,8 @@ static tag_xFile* BFD_open(const char* filename, const char* mode, U32 lockid, S
         }
     }
 
+    orc = 0;
+    xfflg = 0;
     return bffp;
 }
 
@@ -636,17 +641,22 @@ static void BFD_cb_GCP2_readasync(tag_xFile* bffp)
 // Only one asynchronous read runs at a time; the endian argument is unused here.
 static S32 BFD_AsyncRead(st_FILELOADINFO* fli, S32 pos, void* data, S32 size, S32 n, S32 endian)
 {
-    tag_xFile* file = (tag_xFile*)fli->privdata;
-    st_BINIO_XTRADATA* xtra = (st_BINIO_XTRADATA*)fli->xtradata;
+    tag_xFile* file = NULL;
+    file = (tag_xFile*)fli->privdata;
+    st_BINIO_XTRADATA* xtra = NULL;
+    xtra = (st_BINIO_XTRADATA*)fli->xtradata;
+    S32 rc = 0;
 
     if (fli->error != FIOERR_NONE)
     {
-        return 0;
+        rc = 0;
+        return rc;
     }
 
     if (g_async_context)
     {
-        return 0;
+        rc = 0;
+        return rc;
     }
 
     g_async_context = xtra;
@@ -660,8 +670,8 @@ static S32 BFD_AsyncRead(st_FILELOADINFO* fli, S32 pos, void* data, S32 size, S3
     iFileSeek(file, pos, IFILE_SEEK_SET);
     xFileSetUserData(file, fli);
 
-    S32 result = iFileReadAsync(file, data, size * n, BFD_cb_GCP2_readasync);
-    S32 rc;
+    S32 result = 0;
+    result = iFileReadAsync(file, data, size * n, BFD_cb_GCP2_readasync);
 
     if (result < 0)
     {
@@ -679,5 +689,6 @@ static S32 BFD_AsyncRead(st_FILELOADINFO* fli, S32 pos, void* data, S32 size, S3
         xtra->asyn_status = BINIO_ASYNC_NOOP;
     }
 
+    file = NULL;
     return rc;
 }
