@@ -13677,9 +13677,9 @@ static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset,
 // it is, the villain picks the nearest move point it can see as its next one.
 static inline S32 VOUT_hit_isWall(st_zEntVillain* vil, _xVec3* dir_trav, _xVec3* vec_fromwall)
 {
-    _xVec3 vec_tmp = { 0.0f, 0.0f, 0.0f };
-    S32 flg_look = 12;
     S32 result = 0;
+    S32 flg_look = 12;
+    _xVec3 vec_tmp = { 0.0f, 0.0f, 0.0f };
 
     if (vil->abl_move & 0x1000) flg_look = 8;
 
@@ -20290,18 +20290,17 @@ static inline F32 VSUP_dot_faceToEnt(const st_zEntVillain* vil, const _zEnt* ent
 // Accumulate collision depenetration and redirect navigation when facing a wall.
 static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
 {
+    S32 i;
+    _xCollis* colrec;
     S32 hit_something = 0;
-    S32 looked = 1;
     _xVec3 dir_trav = { 0.0f, 0.0f, 0.0f };
+    S32 looked = 1;
     if (vil->abl_move & 0x10000)
     {
         looked = 0;
-        F32 angle = vil->frame->rot.angle;
-        dir_trav.x = sin(angle);
-        dir_trav.y = 0.0f;
-        dir_trav.z = cos(angle);
+        VSUP_ang_toXZDir(vil->frame->rot.angle, &dir_trav);
     }
-    _xCollis* colrec = &vil->collis->colls[0];
+    colrec = &vil->collis->colls[0];
     if (colrec->flags & 1)
     {
         hit_something = 1;
@@ -20312,7 +20311,7 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
         hit_something = 1;
         xVec3AddTo(vec_accum, &vil->collis->colls[1].depen);
     }
-    for (S32 i = vil->collis->npc_sidx; i < vil->collis->npc_eidx; i++)
+    for (i = vil->collis->npc_sidx; i < vil->collis->npc_eidx; i++)
     {
         colrec = &vil->collis->colls[i];
         if (colrec->optr && (colrec->flags & 1) && !(colrec->flags & 2))
@@ -20321,7 +20320,7 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
             xVec3AddTo(vec_accum, &colrec->depen);
         }
     }
-    for (S32 i = vil->collis->env_sidx; i < vil->collis->env_eidx; i++)
+    for (i = vil->collis->env_sidx; i < vil->collis->env_eidx; i++)
     {
         hit_something++;
         colrec = &vil->collis->colls[i];
@@ -20331,7 +20330,7 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
             if (!looked) looked = VOUT_hit_isWall(vil, &dir_trav, &colrec->norm);
         }
     }
-    for (S32 i = vil->collis->stat_sidx; i < vil->collis->stat_eidx; i++)
+    for (i = vil->collis->stat_sidx; i < vil->collis->stat_eidx; i++)
     {
         colrec = &vil->collis->colls[i];
         if (colrec->optr && (colrec->flags & 1) && !(colrec->flags & 2))
