@@ -323,6 +323,7 @@ static inline xAnimState* VANM_entState(const _zEnt* ent);
 static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum);
 static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter);
 static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos);
+static inline F32 VSUP_ang_ofXZDir(_xVec3 dir);
 static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir);
 static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt);
 static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir);
@@ -10276,11 +10277,10 @@ static S32 VILN_BGG_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
         case ZVIL_STIM_ENTERGOAL:
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, ZVIL_GOAL_LOBBING, ZVIL_GSPOT_START);
-            VWEP_lobActivatePRJ(vil->prj_reserved, vil, xBoundCenter(&globals.player.ent.bound),
-                                NULL, &vil->vec_lobSpin, vil->fac_lobarc, vil->fac_lobheavy);
+            VWEP_lobAtPlayer(vil->prj_reserved, vil);
             vil->tmr_list[ZVIL_TDUR_BUILDUP] = -1.0f;
             VCFG_getParm(&vil->vilcfg, ZVIL_PARM_LOB_SALVO, &vil->cnt_lobSalvo);
-            if (vil->cnt_lobSalvo < 1) vil->cnt_lobSalvo = 1;
+            vil->cnt_lobSalvo = vil->cnt_lobSalvo = MAX(1, vil->cnt_lobSalvo);
             break;
         case ZVIL_STIM_EXITGOAL:
             if (vil->allow & 8) zEntEvent(vil, vil, 177);
@@ -10334,10 +10334,10 @@ static S32 VILN_BGG_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             {
                 vil->pos_vortex = *zMovePointGetPos((_zMovePoint*)stimctxt->widge);
                 vil->pos_vortex.y = vil->frame->mat.pos.y;
-                _xVec3 delta = { 0 };
-                xVec3Sub(&delta, (_xVec3*)&vil->model->Mat->pos, &vil->pos_vortex);
-                vil->rad_spiral = xVec3Normalize(&delta, &delta);
-                vil->ang_spiral = xAngleClamp((F32)atan2(delta.x, delta.z));
+                _xVec3 delt = { 0 };
+                xVec3Sub(&delt, (_xVec3*)&vil->model->Mat->pos, &vil->pos_vortex);
+                vil->rad_spiral = xVec3Normalize(&delt, &delt);
+                vil->ang_spiral = xAngleClamp(VSUP_ang_ofXZDir(delt));
             }
             break;
         case ZVIL_STIM_EXITGOAL:
