@@ -2618,7 +2618,6 @@ void zEntVillain_Init(st_zEntVillain* ent, p2EntAsset* asset)
     if (ent->subType == eEntVillainTypeSpaceKook) ent->render = VILN_KookRender;
 }
 
-// Finish setting up the villain after the scene and its move points are available.
 // Clears the villain's bonus-drop permission when the current scene, and optionally this villain's ID,
 // is on the bonus exclusion list.
 static void VBON_checkExclusions(st_zEntVillain* ent)
@@ -2641,6 +2640,7 @@ static _zMovePoint* VNAV_mvptFromID(U32 aid)
     return mvpt;
 }
 
+// Finish setting up the villain after the scene and its move points are available.
 void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
 {
     ent->nav_mvptlist = NULL;
@@ -16495,7 +16495,7 @@ static inline en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil)
     return ftype;
 }
 
-// Puffs a flask's particles at the projectile's position (helper name ours).
+// Puffs a flask's particles at the projectile's position.
 static inline void VEFX_mm_flaskPuff(_zParEmitter* emitter, zEntProjectile* prj, F32 dt)
 {
     _zParEmitterCustomSettings info;
@@ -16571,26 +16571,27 @@ static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt)
     VEFX_mm_flaskPuff(sEmitMMBlackFlask, prj, dt);
 }
 
-// Prepare a Redbeard sword entity and its collision targets.
 // The villain's model instance at index idx in its model list, or NULL.
-static inline xModelInstance* VWEP_rbs_findModel(st_zEntVillain* vil)
+static inline xModelInstance* VWEP_rbs_animmodel(st_zEntVillain* vil)
 {
     xModelInstance* minst = vil->model;
-    xModelInstance* found = NULL;
+    xModelInstance* da_minst = NULL;
     S32 idx = 0;
-    while (minst && !found)
+    while (minst && !da_minst)
     {
         switch (idx)
         {
         case 0: break;
-        case 1: found = minst; break;
+        case 1: da_minst = minst; break;
         default: break;
         }
         minst = minst->Next;
         idx++;
     }
-    return found;
+    return da_minst;
 }
+
+// Prepare a Redbeard sword entity and its collision targets.
 
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
 {
@@ -16606,7 +16607,7 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
     memset(rbs, 0, sizeof(st_REDBEARD_SWORD));
     rbs->flg_stat |= 1;
     rbs->rbvil = rbvil;
-    rbs->mdl_animsword = VWEP_rbs_findModel(rbs->rbvil);
+    rbs->mdl_animsword = VWEP_rbs_animmodel(rbs->rbvil);
     rbs->aid_mdlFile = xStrHash("weprb_sword");
     rbs->mdlFile = (RpAtomic*)xSTFindAsset(rbs->aid_mdlFile, NULL);
     rbs->model = xModelInstanceAlloc(rbs->mdlFile, rbs, 0, 0, NULL);
@@ -17084,8 +17085,10 @@ static void VPAR_readyize_emitters()
     sEmitRBFlames = zParEmitterFind("RB STOPPING WALL EMITTER");
 }
 
-static inline void VPAR_emit_headbutt(st_zEntVillain_ParEmitRecord* vpar,
-                                      _zParEmitterCustomSettings* pecust, F32 dt);
+static inline S32 VPAR_emit_headbutt(st_zEntVillain* ent, F32 dt, st_zEntVillain_ParEmitRecord* vpar,
+                                     S32 idx, _xVec3* pos, _zParEmitterCustomSettings* pecust);
+
+// Emit a villain particle role at its bound, head, or marked model vertices.
 
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F32 dt)
 {
@@ -17125,8 +17128,7 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             do_emit = 0;
             break;
         case VPAR_EMIT_HEADBUTT:
-            VPAR_emit_headbutt(vpar, &pecust, dt);
-            do_emit = 0;
+            do_emit = VPAR_emit_headbutt(ent, dt, vpar, idx, &vilctr, &pecust);
             break;
         case VPAR_EMIT_BORED:
         case VPAR_EMIT_GUARD:
@@ -17175,14 +17177,13 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
 }
 
 // Emits a headbutt burst in front of the player, turned to the player's facing. Only the
-// ParEmit_SD_Headbutt2 emitter gets the frame time and a quarter turn more pitch (helper name
-// ours).
-static inline void VPAR_emit_headbutt(st_zEntVillain_ParEmitRecord* vpar,
-                                      _zParEmitterCustomSettings* pecust, F32 dt)
+// ParEmit_SD_Headbutt2 emitter gets the frame time and a quarter turn more pitch.
+static inline S32 VPAR_emit_headbutt(st_zEntVillain* ent, F32 dt, st_zEntVillain_ParEmitRecord* vpar,
+                                     S32 idx, _xVec3* pos, _zParEmitterCustomSettings* pecust)
 {
     _xVec3 angles = { 0 };
-    F32 emitdt = dt;
-    xMat4x3* playerframe = (xMat4x3*)globals.player.ent.model->Mat;
+    _xEnt* player_ent = &globals.player.ent;
+    xMat4x3* playerframe = (xMat4x3*)player_ent->model->Mat;
     pecust->custom_flags = 0x20;
     pecust->pos.x = playerframe->pos.x + playerframe->at.x;
     pecust->pos.y = playerframe->pos.y + 1.1f;
@@ -17195,11 +17196,10 @@ static inline void VPAR_emit_headbutt(st_zEntVillain_ParEmitRecord* vpar,
     if (vpar->emitterID == xStrHash("ParEmit_SD_Headbutt2"))
         pecust->rot[0] += 0x40;
     else
-        emitdt = 0.0f;
-    zParEmitterEmitCustom(vpar->emitctxt, emitdt, pecust);
+        dt = 0.0f;
+    zParEmitterEmitCustom(vpar->emitctxt, dt, pecust);
+    return 0;
 }
-
-// Emit a villain particle role at its bound, head, or marked model vertices.
 
 // Emit particles along a villain's extended attack.
 static void VPAR_emit_extattack(st_zEntVillain* ent, _xVec3* origin, _xVec3* aimdir,
@@ -20068,7 +20068,7 @@ static inline F32 VSUP_ang_ofXZDir(_xVec3 dir)
 }
 
 // Squared flat (x and z) distance from the entity's model position to a position. Worker for
-// VSUP_ds2_toPos (helper name ours).
+// VSUP_ds2_toPos.
 static F32 VSUP_ds2_inner(const _zEnt* ent, _xVec3 pos)
 {
     _xVec3 delta = { 0 };
@@ -20078,7 +20078,7 @@ static F32 VSUP_ds2_inner(const _zEnt* ent, _xVec3 pos)
 }
 
 // Heading (around the y axis) from the entity's model position to a position. If dir is given,
-// it gets the unit direction to the position. Worker for VSUP_dir_toPos (helper name ours).
+// it gets the unit direction to the position. Worker for VSUP_dir_toPos.
 static F32 VSUP_dir_inner(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
 {
     _xVec3 delta = { 0 };
