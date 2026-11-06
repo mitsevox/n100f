@@ -7739,47 +7739,93 @@ static S32 VILN_shagM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* st
 // Shaggy villain type 5 selects animations when entering his movement and action goals.
 static S32 VILN_shagM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
 {
-    en_NPC_STIMULUS stim = stimctxt->stim;
-    en_BEHAVIOUR_GOAL goal = (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
-                                 ? stimctxt->trangoal : vil->goal;
     S32 result = 1;
-    if ((goal >= ZVIL_GOAL_AFTERLIFE && goal <= ZVIL_GOAL_GOONLINE) || goal == ZVIL_GOAL_DIE)
+    en_NPC_STIMULUS stim = stimctxt->stim;
+    en_BEHAVIOUR_GOAL procgoal;
+
+    if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
     {
-        result = VILN_std_trangoal(vil, stimctxt, dt);
+        procgoal = stimctxt->trangoal;
     }
-    switch (g_pgol = goal)
+    else
     {
+        procgoal = vil->goal;
+    }
+
+    switch (procgoal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+    case ZVIL_GOAL_DIE:
+        result = VILN_std_trangoal(vil, stimctxt, dt);
+        break;
+    }
+
+    switch (g_pgol = procgoal)
+    {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_IDLE:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_ENTERGOAL)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+            break;
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
+            break;
+        case ZVIL_STIM_EXITGOAL:
+            break;
         }
         break;
     case ZVIL_GOAL_ACTION:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_ENTERGOAL)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+            break;
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, ZVIL_GOAL_ACTION, ZVIL_GSPOT_START);
+            break;
+        case ZVIL_STIM_EXITGOAL:
+            break;
         }
         break;
     case ZVIL_GOAL_FOLLOW:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_ENTERGOAL)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+            break;
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, ZVIL_GOAL_FOLLOW, ZVIL_GSPOT_START);
+            break;
+        case ZVIL_STIM_EXITGOAL:
+            break;
         }
         break;
     case ZVIL_GOAL_PATROL:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_ENTERGOAL)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+            break;
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_ENTERGOAL:
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, ZVIL_GSPOT_START);
             if (!vil->nav_next) vil->need_navpt = 1;
+            break;
+        case ZVIL_STIM_EXITGOAL:
+            break;
         }
         break;
     }
