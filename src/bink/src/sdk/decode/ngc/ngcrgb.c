@@ -948,12 +948,16 @@ void YUV_16a4m_4x2(S32 n)
     S.dst1 += n * 8;
 
     do {
-        U32 aa0 = *a0++;
-        U32 yy0 = *y0++;
-        U32 aa1 = *a1++;
-        U32 yy1 = *y1++;
+        U32 aa0 = *a0;
+        U32 yy0 = *y0;
+        U32 aa1 = *a1;
+        U32 yy1 = *y1;
         U16 y;
         U16 a;
+        y0++;
+        y1++;
+        a0++;
+        a1++;
 
         y = yy0 >> 16;
         a = aa0 >> 16;
@@ -998,14 +1002,18 @@ void YUV_16a4mx2_4x2(S32 n)
     S.dst1 += n * 16;
 
     do {
-        U32 aa0 = *a0++;
-        U32 yy0 = *y0++;
-        U32 aa1 = *a1++;
-        U32 yy1 = *y1++;
+        U32 aa0 = *a0;
+        U32 yy0 = *y0;
+        U32 aa1 = *a1;
+        U32 yy1 = *y1;
         U16 y;
         U16 a;
         U16 p;
         U16 q;
+        y0++;
+        y1++;
+        a0++;
+        a1++;
 
         y = yy0 >> 16;
         a = aa0 >> 16;
