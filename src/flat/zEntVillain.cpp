@@ -449,6 +449,7 @@ static inline void VPRJ_BMM_greenflask(zEntProjectile* prj, F32 dt);
 static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt);
 static inline void VPRJ_BGG_shockfx(zEntProjectile* prj, F32 dt, F32 radius);
 static inline void VPRJ_BGG_ballfx(zEntProjectile* prj, F32 dt, F32 yoff);
+static inline void VPRJ_BGG_smackfx(zEntProjectile* prj, F32 dt);
 extern "C" U8 gVillainPoofColorBirth[50][4];
 extern "C" U8 gVillainPoofColorDeath[50][4];
 extern "C" U8 gVillainDotsColorBirth[50][4];
@@ -13477,6 +13478,23 @@ static en_ZVILLAIN_HEADBUTT_RESPONSE VOUT_spikey_header(st_zEntVillain* ent)
 {
     en_NPC_QUADRANT quad = ZVIL_QUAD_UNKNOWN;
     en_ZVILLAIN_HEADBUTT_RESPONSE result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
+    result = ZVIL_HEADBUTT_NONE;
 
     if (!(ent->abl_spyk & 1))
     {
@@ -14792,15 +14810,16 @@ static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal)
 // argument (the caller's dt) is not used.
 static S32 VWEP_swipe(st_zEntVillain* vil, F32)
 {
+    S32 hitplyr = 0;
     _xCollis colrec = { 0 };
     _xBound bnd = { 0 };
-    S32 hitplyr = 0;
     if (vil->precalc.ds2_VtoP > 2.2f) return 0;
 
     colrec.oid = globals.player.ent.id;
     colrec.optr = &globals.player.ent;
+    colrec.flags = 0;
     bnd.type = 1;
-    bnd.qcd = globals.player.ent.bound.qcd;
+    memcpy(&bnd.qcd, &globals.player.ent.bound.qcd, sizeof(bnd.qcd));
 #if VERSION_GIHE78_REV0
     iColor_tag color = g_MAROON;
     xDrawSetColor(color);
@@ -14861,15 +14880,17 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
     {
         xSceneID2Name(globals.sceneCur, ent->id);
         shotpos = *xBoundCenter(&ent->bound);
-        shotpos.y += 0.4f;
         shotpos.x += 1.5f * ent->precalc.sin_faceang;
+        shotpos.y += 0.4f;
         shotpos.z += 1.5f * ent->precalc.cos_faceang;
     }
-    tym_elap = MIN(ent->tmr_list[ZVIL_TDUR_EXTEND], ent->tmr_list[ZVIL_TYMR_CURGOAL]);
-    dist = MAX(0.01f, MIN(ent->spd_extend * tym_elap, ent->dst_extend));
+    tym_elap = ent->tmr_list[ZVIL_TYMR_CURGOAL];
+    if (ent->tmr_list[ZVIL_TDUR_EXTEND] < tym_elap) tym_elap = ent->tmr_list[ZVIL_TDUR_EXTEND];
+    dist = MIN(ent->spd_extend * tym_elap, ent->dst_extend);
+    dist = MAX(0.01f, dist);
     conrat = ent->wid_extend / ent->dst_extend;
-    dirvec.x = sin(ent->frame->rot.angle);
-    dirvec.z = cos(ent->frame->rot.angle);
+    VSUP_ang_toXZDir(ent->frame->rot.angle, &dirvec);
+    F32 ang_face = ent->frame->rot.angle;
     if (pos_tgt)
     {
         xVec3Sub(&dltvec, pos_tgt, &shotpos);
@@ -14879,7 +14900,7 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
         else ang_updwn = MAX(-0.25f, MIN(ang_updwn, 0.25f));
         xMat3x3Euler(&mat_rot, 0.0f, ang_updwn, 0.0f);
         xMat3x3LMulVec(&dirvec, &mat_rot, &g_Z3);
-        xMat3x3Euler(&mat_rot, -ent->frame->rot.angle, 0.0f, 0.0f);
+        xMat3x3Euler(&mat_rot, -ang_face, 0.0f, 0.0f);
         xMat3x3LMulVec(&dirvec, &mat_rot, &dirvec);
     }
     if (ent->asset->subtype == eEntVillainTypeKillerPlant)
@@ -14887,15 +14908,16 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
         if (sEmitKillerPlant)
         {
             _zParEmitterCustomSettings settings;
+            _xVec3 dir;
             settings.pos.x = ent->model->Mat->pos.x;
             settings.pos.y = ent->model->Mat->pos.y;
             settings.pos.z = ent->model->Mat->pos.z;
-            settings.pos.y += 1.6f;
             settings.pos.x += 0.25f * ent->model->Mat->at.x;
+            settings.pos.y += 1.6f;
             settings.pos.z += 0.25f * ent->model->Mat->at.z;
-            xVec3Normalize(&tmpvec, &dirvec);
+            xVec3Normalize(&dir, &dirvec);
             settings.custom_flags = 0x60;
-            xVec3SMul(&settings.vel, &tmpvec, 1.0f + 0.25f * iurand());
+            xVec3SMul(&settings.vel, &dir, 1.0f + 0.25f * iurand());
             zParEmitterEmitCustom(sEmitKillerPlant, dt, &settings);
         }
     }
@@ -15061,54 +15083,59 @@ static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3*
 // Notify a projectile's owner and release its reservation when the projectile ends.
 static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*)
 {
+    S32 handled = 0;
     st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
-    S32 audible = !(vil->flg_misc & 1);
-    U32 sound;
+    U32 aid_snd;
+    S32 do_sounds = (vil->ability & 1) ^ 1;
     switch (event)
     {
     case ZPRJ_EVNT_LAUNCH:
-        if (audible)
+        if (do_sounds)
         {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
-        return 1;
+        handled = 1;
+        break;
+    case ZPRJ_EVNT_HITPLYR:
+        zVIL_send_stim(vil, ZVIL_STIM_DOTAUNT);
+        if (do_sounds)
+        {
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        handled = 1;
+        break;
     case ZPRJ_EVNT_INFLIGHT:
-        if (audible && !iSndIsPlaying(0, (U32)prj))
+        if (do_sounds && !iSndIsPlaying(0, (U32)prj))
         {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
-        return 1;
+        handled = 1;
+        break;
     case ZPRJ_EVNT_DETONATE:
-        if (audible)
+        if (do_sounds)
         {
             xSndStopChildren((U32)prj);
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
-        return 1;
-    case ZPRJ_EVNT_HITPLYR:
-    {
-        zVIL_send_stim(vil, ZVIL_STIM_DOTAUNT);
-        if (audible)
-        {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
-        }
-        return 1;
-    }
+        handled = 1;
+        break;
     case ZPRJ_EVNT_TRANSTATE:
         if (prj->state != ZPRJ_STATE_ACTIVE) xSndStopChildren((U32)prj);
-        return 1;
+        handled = 1;
+        break;
     case ZPRJ_EVNT_ABORT:
     case ZPRJ_EVNT_SELFDESTRUCT:
     case ZPRJ_EVNT_DEATH:
         xSndStopChildren((U32)prj);
         if (vil->prj_reserved == prj) vil->prj_reserved = NULL;
-        return 1;
-    default: return 0;
+        handled = 1;
+        break;
     }
+    return handled;
 }
 
 // Unused.
@@ -15152,8 +15179,8 @@ static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3
     {
         xVec3Copy(&aiminf.arrow.pos_tgt, pos_tgt);
     }
-    prj->AimAtTarget(&aiminf, 1);
-    return 1;
+    rc = prj->AimAtTarget(&aiminf, 1);
+    return rc;
 }
 
 // Aims the villain's reserved projectile as a gravity ball from his attack vertex, or else from
@@ -15549,8 +15576,12 @@ static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
             bounce->atRest = 1;
             bounce->acc_gravity = 0.0f;
             VPRJ_zapTheAxe(prj, 0);
-            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->dvel.x = 0.0f;
+            prj->frame->dvel.y = 0.0f;
+            prj->frame->dvel.z = 0.0f;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.y = 0.0f;
+            prj->frame->vel.z = 0.0f;
             prj->frame->mode |= 0xC;
             axfx->flg_stat |= 2;
         }
@@ -15813,7 +15844,9 @@ static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         }
         else
         {
-            xVec3Init(&prj->frame->dvel, 0.0f, -(dt * prj->cat_data.gravball.acc_gravity), 0.0f);
+            prj->frame->dvel.x = 0.0f;
+            prj->frame->dvel.y = -(dt * prj->cat_data.gravball.acc_gravity);
+            prj->frame->dvel.z = 0.0f;
             prj->frame->mode |= 8;
         }
         break;
@@ -15823,15 +15856,16 @@ static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         {
             quake->flg_stat &= ~2;
             prj->tmr_curstate = 0.0f;
-            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->dvel.x = 0.0f;
+            prj->frame->dvel.y = 0.0f;
+            prj->frame->dvel.z = 0.0f;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.y = 0.0f;
+            prj->frame->vel.z = 0.0f;
             prj->frame->mode |= 0xC;
             prj->flg_chk &= (U8)~0x10;
             prj->flg_pen &= (U8)~0x10;
-            _zParEmitterCustomSettings info;
-            info.custom_flags = 0x20;
-            info.pos = *xEntGetPos(prj);
-            zParEmitterEmitCustom(sEmitGreenBallSmack, dt, &info);
+            VPRJ_BGG_smackfx(prj, dt);
             VPRJ_BGG_shockfx(prj, dt, 0.0f);
             prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
         }
@@ -15863,14 +15897,23 @@ static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
         if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         break;
     case ZPRJ_EVNT_INFLIGHT:
+        if (!iSndIsPlaying(0, (U32)prj))
+        {
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        break;
     case ZPRJ_EVNT_DETONATE:
+        if (!iSndIsPlaying(0, (U32)prj))
+        {
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        break;
     case ZPRJ_EVNT_VIL_AFTERMATH:
         if (!iSndIsPlaying(0, (U32)prj))
         {
-            en_NPC_SOUND which = event == ZPRJ_EVNT_INFLIGHT ? VSND_TYP_PRJ_FLIGHT :
-                                 event == ZPRJ_EVNT_DETONATE ? VSND_TYP_PRJ_EXPLODE :
-                                 VSND_TYP_PRJ_SPLAT;
-            sound = VSND_select_sound(vil, which);
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
             if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
         break;
@@ -15889,28 +15932,28 @@ static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
 static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt)
 {
     st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)prj->xtradata;
+    _xVec3 pos_prj = { 0 };
+    _xVec3 pos_plyr = { 0 };
     _xVec3 delta = { 0 };
-    _xVec3 playerpos = { 0 };
-    _xVec3 pos = { 0 };
-    F32 radius;
-    F32 inner;
-    F32 player_radius;
-    F32 dist2;
+    F32 outer = 0.0f;
+    F32 inner = 0.0f;
+    F32 br = 0.0f;
+    F32 fb = 0.0f;
 
     if (quake->tym_shock < 0.1f) return 0;
-    radius = quake->rad_shock * (prj->tmr_curstate / quake->tym_shock);
-    inner = 0.85f * radius;
-    pos = *xEntGetPos(prj);
-    playerpos = *xEntGetPos(&globals.player.ent);
-    xVec3Sub(&delta, &playerpos, &pos);
-    player_radius = globals.player.ent.bound.sph.r;
-    VPRJ_BGG_shockfx(NULL, dt, radius);
+    outer = quake->rad_shock * (prj->tmr_curstate / quake->tym_shock);
+    inner = 0.85f * outer;
+    pos_prj = *xEntGetPos(prj);
+    pos_plyr = *xEntGetPos(&globals.player.ent);
+    xVec3Sub(&delta, &pos_plyr, &pos_prj);
+    br = globals.player.ent.bound.sph.r;
+    VPRJ_BGG_shockfx(NULL, dt, outer);
 
-    dist2 = xVec3Length2(&delta);
-    if (dist2 > SQR(radius + player_radius)) return 1;
-    if (playerpos.y - player_radius > pos.y + 0.5f * quake->hyt_shock) return 1;
-    if (playerpos.y + player_radius < pos.y - 0.5f * quake->hyt_shock) return 1;
-    if (inner > player_radius && dist2 < SQR(inner - player_radius)) return 1;
+    fb = xVec3Length2(&delta);
+    if (fb > SQR(outer + br)) return 1;
+    if (pos_plyr.y - br > pos_prj.y + 0.5f * quake->hyt_shock) return 1;
+    if (pos_plyr.y + br < pos_prj.y - 0.5f * quake->hyt_shock) return 1;
+    if (inner > br && fb < SQR(inner - br)) return 1;
     return 0;
 }
 
@@ -15980,7 +16023,9 @@ static S32 VPRJ_BRB_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
                 prj->cat_data.arrow.ent_stuck = &globals.player.ent;
                 xVec3Sub(&prj->cat_data.arrow.pos_stuck, xEntGetPos(&globals.player.ent),
                          xEntGetPos(prj));
-                xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+                prj->frame->vel.x = 0.0f;
+                prj->frame->vel.y = 0.0f;
+                prj->frame->vel.z = 0.0f;
                 prj->OrientSet(0x10000000);
             }
         }
@@ -16027,7 +16072,9 @@ static S32 VPRJ_BRB_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         {
             prj->cat_data.arrow.amStuck = 1;
             prj->pflags |= 4;
-            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.y = 0.0f;
+            prj->frame->vel.z = 0.0f;
             prj->frame->mode |= 4;
             prj->OrientSet(0);
         }
@@ -16198,8 +16245,12 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
         prj->ColDelaySet(0.4f, 0);
         VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &prj->frame->mat.pos);
         prj->frame->mode |= 1;
-        xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-        xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+        prj->frame->dvel.x = 0.0f;
+        prj->frame->dvel.y = 0.0f;
+        prj->frame->dvel.z = 0.0f;
+        prj->frame->vel.x = 0.0f;
+        prj->frame->vel.y = 0.0f;
+        prj->frame->vel.z = 0.0f;
         prj->frame->mode |= 0xC;
         break;
     case MAST_STAGE_TOSS:
@@ -16212,8 +16263,8 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
             xVec3Sub(&aiminf.dir_base, xEntGetPos(prj), xEntGetPos(&globals.player.ent));
             aiminf.grav.pos_src = *xEntGetPos(prj);
             aiminf.grav.pos_tgt = *xEntGetPos(&globals.player.ent);
-            aiminf.grav.fac_arcness = 1.0f;
             aiminf.grav.acc_gravity = flask->heavy;
+            aiminf.grav.fac_arcness = 1.0f;
             prj->AimAtTarget(&aiminf, 1);
             prj->cat_data.gravball.acc_gravity = flask->heavy;
             prj->SendEvent(ZPRJ_EVNT_LAUNCH, dt);
@@ -16224,7 +16275,9 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
             flask->flg_stat |= 2;
             flask->stage = MAST_STAGE_AFTERMATH;
         }
-        xVec3Init(&prj->frame->dvel, 0.0f, -(dt * prj->cat_data.gravball.acc_gravity), 0.0f);
+        prj->frame->dvel.x = 0.0f;
+        prj->frame->dvel.y = -(dt * prj->cat_data.gravball.acc_gravity);
+        prj->frame->dvel.z = 0.0f;
         prj->frame->mode |= 8;
         if (prj->flg_categ & 0x4000000)
         {
@@ -16239,8 +16292,12 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
             prj->tmr_curstate = 0.0f;
             prj->flags &= (U8)~1;
             prj->flg_prop &= ~8;
-            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->dvel.x = 0.0f;
+            prj->frame->dvel.y = 0.0f;
+            prj->frame->dvel.z = 0.0f;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.y = 0.0f;
+            prj->frame->vel.z = 0.0f;
             prj->frame->mode |= 0xC;
             prj->flg_chk &= (U8)~0x10;
             prj->flg_pen &= (U8)~0x10;
@@ -16400,10 +16457,30 @@ static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt)
 }
 
 // Prepare a Redbeard sword entity and its collision targets.
-static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* vil)
+// The villain's model instance at index idx in its model list, or NULL.
+static inline xModelInstance* VWEP_rbs_findModel(st_zEntVillain* vil)
 {
-    _xVec3 pos = { 0 };
-    _xMat4x3 mat = { 0 };
+    xModelInstance* minst = vil->model;
+    xModelInstance* found = NULL;
+    S32 idx = 0;
+    while (minst && !found)
+    {
+        switch (idx)
+        {
+        case 0: break;
+        case 1: found = minst; break;
+        default: break;
+        }
+        minst = minst->Next;
+        idx++;
+    }
+    return found;
+}
+
+static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
+{
+    _xVec3 vec_pos = { 0 };
+    S32 i;
 
     if (rbs->flg_stat & 1)
     {
@@ -16413,27 +16490,24 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* vil)
     }
     memset(rbs, 0, sizeof(st_REDBEARD_SWORD));
     rbs->flg_stat |= 1;
-    rbs->rbvil = vil;
-
-    xModelInstance* model = vil->model;
-    S32 index = 0;
-    while (model && !rbs->mdl_animsword)
-    {
-        if (index == 1) rbs->mdl_animsword = model;
-        model = model->Next;
-        index++;
-    }
+    rbs->rbvil = rbvil;
+    rbs->mdl_animsword = VWEP_rbs_findModel(rbs->rbvil);
     rbs->aid_mdlFile = xStrHash("weprb_sword");
     rbs->mdlFile = (RpAtomic*)xSTFindAsset(rbs->aid_mdlFile, NULL);
     rbs->model = xModelInstanceAlloc(rbs->mdlFile, rbs, 0, 0, NULL);
     rbs->frame = &rbs->raw_frame;
     rbs->collis = &rbs->raw_collis;
-    pos = *xEntGetPos(vil);
+    vec_pos = *xEntGetPos(rbs->rbvil);
+    _xMat4x3 mat = { 0 };
     xMat3x3Euler((xMat3x3*)&mat, 0.0f, 0.0f, 0.0f);
-    mat.pos = pos;
+    xVec3SMulBy(&mat.right, 1.0f);
+    xVec3SMulBy(&mat.up, 1.0f);
+    xVec3SMulBy(&mat.at, 1.0f);
+    mat.flags = 0;
+    mat.pos = vec_pos;
     rbs->bound.type = 1;
     rbs->bound.sph.r = 0.75f;
-    rbs->bound.sph.center = pos;
+    rbs->bound.sph.center = vec_pos;
     xBoundUpdate(&rbs->bound);
     memcpy(rbs->model->Mat, &mat, sizeof(mat));
     rbs->frame->rot.axis = g_Y3;
@@ -16441,11 +16515,11 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* vil)
     rbs->frame->vel = g_O3;
     rbs->bupdate = VWEP_rbs_bupdate;
     rbs->ent_colchk[0] = &globals.player.ent;
-    for (index = 1; index < 5; index++)
+    for (i = 1; i < 5; i++)
     {
-        rbs->ent_colchk[index] = (_xEnt*)zSceneFindObject(xStrHash(g_strz_rbtgt[index]));
-        if (rbs->ent_colchk[index] && rbs->ent_colchk[index]->baseType != 0x1B)
-            rbs->ent_colchk[index] = NULL;
+        rbs->ent_colchk[i] = (_xEnt*)zSceneFindObject(xStrHash(g_strz_rbtgt[i]));
+        if (rbs->ent_colchk[i] && rbs->ent_colchk[i]->baseType != 0x1B)
+            rbs->ent_colchk[i] = NULL;
     }
     rbs->flg_stat |= 2;
 }
@@ -16711,12 +16785,15 @@ static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup)
     if (cleanup) return;
 
     _tagLightningAdd add = { eLT_Line };
+    add.type = eLT_Line;
     add.start = xBoundCenter(&vil->bound);
     add.end = xBoundCenter(&globals.player.ent.bound);
     add.time = 0.2f;
     add.total_points = 16;
     add.thickness = 0.15f;
-    add.r = add.g = add.b = 255;
+    add.r = 255;
+    add.g = 255;
+    add.b = 255;
     add.rand_radius = 5.0f;
     add.flags = 0x34;
     g_mm_lytstrk[0] = zLightningAdd(&add);
@@ -16724,7 +16801,8 @@ static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup)
     add.type = eLT_Rotating;
     add.total_points = 16;
     add.thickness = 0.1f;
-    add.r = add.g = 80;
+    add.r = 80;
+    add.g = 80;
     add.b = 255;
     add.rand_radius = 3.0f;
     add.setup_degrees = 20.0f + 90.0f * iurand();
@@ -16739,7 +16817,8 @@ static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup)
 static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
 {
     _tagLightningAdd add = { eLT_Line };
-    _xVec3 end = { 0 };
+    _xVec3 loca = { 0 };
+    _xBound* bnd;
     S32 i;
 
     for (i = 0; i < 5; i++)
@@ -16752,16 +16831,19 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
     }
     if (cleanup) return;
 
-    end = *xBoundCenter(&vil->bound);
-    end.y += 20.0f;
-    add.start = xBoundCenter(&vil->bound);
-    add.end = &end;
+    bnd = &vil->bound;
+    loca = *xBoundCenter(bnd);
+    loca.y += 20.0f;
+    add.start = xBoundCenter(bnd);
+    add.end = &loca;
     add.time = vil->tmr_list[ZVIL_TDUR_HURT] > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]
                    ? vil->tmr_list[ZVIL_TDUR_HURT] : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
     add.type = eLT_Line;
     add.total_points = 16;
     add.thickness = 1.25f;
-    add.r = add.g = add.b = 255;
+    add.r = 255;
+    add.g = 255;
+    add.b = 255;
     add.rand_radius = 5.0f;
     add.flags = 0x34;
     g_bk_lytstrk[0] = zLightningAdd(&add);
@@ -16769,7 +16851,8 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
     add.type = eLT_Rotating;
     add.total_points = 16;
     add.thickness = 0.6f;
-    add.r = add.g = 80;
+    add.r = 80;
+    add.g = 80;
     add.b = 255;
     add.rand_radius = 4.0f;
     add.setup_degrees = 20.0f + 90.0f * iurand();
@@ -16789,7 +16872,9 @@ static inline _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 du
     add.time = dur;
     add.total_points = 16;
     add.thickness = 0.25f;
-    add.r = add.g = add.b = 255;
+    add.r = 255;
+    add.g = 255;
+    add.b = 255;
     add.rand_radius = 5.0f;
     add.flags = 0x34;
     _tagLightning* bolt = zLightningAdd(&add);
@@ -16805,7 +16890,8 @@ static inline _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 du
     add.time = dur;
     add.total_points = 16;
     add.thickness = 0.16f;
-    add.r = add.g = 80;
+    add.r = 80;
+    add.g = 80;
     add.b = 255;
     add.rand_radius = 3.0f;
     add.setup_degrees = 20.0f + 90.0f * iurand();
@@ -16960,34 +17046,45 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
 static void VPAR_emit_extattack(st_zEntVillain* ent, _xVec3* origin, _xVec3* aimdir,
                                 F32 length, F32 slope, F32 dt)
 {
-    F32 along = 0.0f;
-    for (S32 i = 0; i < g_emitlist.cnt; i++)
+    S32 i;
+    S32 j;
+    F32 fv = 0.0f;
+    F32 delta;
+    _zParEmitterCustomSettings* pecust = &sExtSettings;
+    st_zEntVillain_ParEmitRecord* vpar;
+
+    for (i = 0; i < g_emitlist.cnt; i++)
     {
-        st_zEntVillain_ParEmitRecord* rec = (st_zEntVillain_ParEmitRecord*)g_emitlist.list[i];
-        if (!rec->emitctxt || rec->emitrole != VPAR_EMIT_EXTATTACK ||
-            (rec->viltype != (en_zEntVillainSubTypeID)-1 && rec->viltype != ent->asset->subtype) ||
-            (rec->flg_need & ent->flg_misc) != rec->flg_need || (rec->flg_omit & ent->flg_misc))
+        vpar = (st_zEntVillain_ParEmitRecord*)g_emitlist.list[i];
+        if (!vpar->emitctxt || vpar->emitrole != VPAR_EMIT_EXTATTACK ||
+            (vpar->viltype != (en_zEntVillainSubTypeID)-1 && vpar->viltype != ent->asset->subtype) ||
+            (vpar->flg_need & ent->ability) != vpar->flg_need || (ent->ability & vpar->flg_omit))
             continue;
 
-        F32 step = length / 25.0f;
-        sExtSettings.custom_flags = 0x2FE1;
-        sExtSettings.life = 0.75f;
-        sExtSettings.count = 1;
-        sExtSettings.color_birth[0] = sExtSettings.color_birth[1] = sExtSettings.color_birth[2] = 0xAA;
-        sExtSettings.color_birth[3] = 255;
-        sExtSettings.color_death[0] = sExtSettings.color_death[1] =
-            sExtSettings.color_death[2] = sExtSettings.color_death[3] = 0x11;
-        for (S32 j = 0; j < 25; j++)
+        pecust->custom_flags = 0x2FE1;
+        pecust->life = 0.75f;
+        delta = length / 25.0f;
+        pecust->count = 1;
+        pecust->color_birth[0] = 0xAA;
+        pecust->color_birth[1] = 0xAA;
+        pecust->color_birth[2] = 0xAA;
+        pecust->color_birth[3] = 255;
+        pecust->color_death[0] = 0x11;
+        pecust->color_death[1] = 0x11;
+        pecust->color_death[2] = 0x11;
+        pecust->color_death[3] = 0x11;
+        for (j = 0; j < 25; j++)
         {
-            along += step;
-            F32 size = slope * along * (1.0f + (1.0f - iurand()));
-            sExtSettings.size_birth = size;
-            sExtSettings.size_birth_variation = 0.25f * size;
-            sExtSettings.size_death = 0.25f * size;
-            xVec3SMul(&sExtSettings.pos, aimdir, along);
-            xVec3AddTo(&sExtSettings.pos, origin);
-            xVec3SMul(&sExtSettings.vel, aimdir, -ent->spd_extend);
-            zParEmitterEmitCustom(rec->emitctxt, dt, &sExtSettings);
+            fv += delta;
+            pecust->size_birth = slope * fv * (1.0f + (1.0f - iurand()));
+            pecust->size_death = 0.25f * pecust->size_birth;
+            pecust->size_birth_variation = 0.25f * pecust->size_birth;
+            xVec3Copy(&pecust->pos, aimdir);
+            xVec3SMulBy(&pecust->pos, fv);
+            xVec3AddTo(&pecust->pos, origin);
+            xVec3Copy(&pecust->vel, aimdir);
+            xVec3SMulBy(&pecust->vel, -ent->spd_extend);
+            zParEmitterEmitCustom(vpar->emitctxt, dt, pecust);
         }
     }
 }
@@ -19786,7 +19883,9 @@ static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent, en_N
 
     if (qdrant)
     {
-        ang_aoi = xAngleClamp(ang_diff + PI / 4);
+        ang_aoi = ang_diff;
+        ang_aoi += PI / 4;
+        ang_aoi = xAngleClamp(ang_aoi);
         if (ang_aoi > 0.0f && ang_aoi <= PI / 2)
         {
             *qdrant = ZVIL_QUAD_FRONT;
@@ -19970,6 +20069,15 @@ static inline void VPRJ_BGG_ballfx(zEntProjectile* prj, F32 dt, F32 yoff)
     info.pos = *xEntGetPos(prj);
     info.pos.y += yoff;
     zParEmitterEmitCustom(sEmitGreenBall, dt, &info);
+}
+
+// Emit the Green Ghost ball's impact burst at the projectile.
+static inline void VPRJ_BGG_smackfx(zEntProjectile* prj, F32 dt)
+{
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xEntGetPos(prj);
+    zParEmitterEmitCustom(sEmitGreenBallSmack, dt, &info);
 }
 
 // Keep the quake ball's landing point for the shockwave, or emit the shockwave ring there
