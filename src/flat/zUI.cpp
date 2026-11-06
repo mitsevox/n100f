@@ -1,4 +1,6 @@
-#include "zEnt.h"
+#include "zUI.h"
+#include "zUIFont.h"
+#include "zScene.h"
 #include "xPad.h"
 #include "xEvent.h"
 #include "xString.h"
@@ -15,51 +17,30 @@
 #include "zVar.h"
 #include <stdlib.h>
 
-struct zUIAsset : p2EntAsset
-{
-    U32 uiFlags;
-    U16 dim[2];
-    U32 textureID;
-    F32 uva[2];
-    F32 uvb[2];
-    F32 uvc[2];
-    F32 uvd[2];
-};
-
-struct _zUI : _zEnt
-{
-    zUIAsset* sasset;
-    U32 uiFlags;
-    U32 uiButton;
-};
-
-struct zScene;
-
-// Only the font flags used during rendering are declared here.
-struct zUIFontAsset : zUIAsset
-{
-    U16 uiFontFlags;
-};
-
-struct zSceneLevel
-{
-    char* desc;
-    char name;
-    S32 index;
-    U32 totalClues;
-};
-
-extern "C" zSceneLevel lbl_801C8BCC[];
-extern "C" F32 lbl_8025E8C4;
-void zSceneForAllBase(xBase* (*func)(xBase*, zScene*, void*), S32 baseType, void* data);
+extern F32 gFontWiggleTime;
 void zUI_Render(_xEnt* ent);
 void zUIFont_Render(_xEnt* e);
 
 static _zUI* sSorted[768];
 static U32 sSortedCount;
-static F32 sTimer;
 static RwIm2DVertex Vertex[4];
 static RwImVertexIndex Index[6] = { 0, 1, 2, 0, 2, 3 };
+static zSceneLevel sLevelTable2[14] = {
+    { "Fishing Village", 'F', 0, 50 },
+    { "Lighthouse", 'L', 1, 50 },
+    { "Shipwreck", 'W', 2, 50 },
+    { "Hedge Maze", 'E', 3, 50 },
+    { "Cliffs & Caves", 'C', 4, 50 },
+    { "Cemetery", 'G', 5, 50 },
+    { "Secret Passages", 'P', 6, 50 },
+    { "Cellars", 'B', 7, 50 },
+    { "Super Secret Lab", 'S', 8, 50 },
+    { "1st Floor", 'I', 9, 50 },
+    { "Attic & Balconies", 'R', 10, 50 },
+    { "Tower", 'O', 11, 50 },
+    { "Hub", 'H', 12, 50 },
+};
+// Cache the key-image identifiers; UI initialization also refreshes them.
 static U32 cKeyUIid1off = xStrHash("KEY OFF 1 UI");
 static U32 cKeyUIid2off = xStrHash("KEY OFF 2 UI");
 static U32 cKeyUIid3off = xStrHash("KEY OFF 3 UI");
@@ -68,6 +49,7 @@ static U32 cKeyUIid1on = xStrHash("KEY ON 1 UI");
 static U32 cKeyUIid2on = xStrHash("KEY ON 2 UI");
 static U32 cKeyUIid3on = xStrHash("KEY ON 3 UI");
 static U32 cKeyUIid4on = xStrHash("KEY ON 4 UI");
+static F32 sTimer;
 
 void zUI_Reset(_zUI* ent);
 
@@ -78,25 +60,12 @@ void zUI_Render(_xEnt* e);
 void zUIRenderAll();
 void zUI_Update(_zUI* ent, _xScene* sc, F32 dt);
 void zUI_PreUpdate(_zUI* ent, _xScene*, F32);
-void zUI_Reset(_zUI* ent);
 void zUI_Load(_zUI* ent, xSerial* s);
 void zUI_Save(_zUI* ent, xSerial* s);
 void zUI_Init(_zUI* ent, p2EntAsset* asset);
 void zUI_Init(void* ent, void* asset);
 
-void zUI_Init(void* ent, void* asset);
-void zUI_Init(_zUI* ent, p2EntAsset* asset);
-void zUI_Save(_zUI* ent, xSerial* s);
-void zUI_Load(_zUI* ent, xSerial* s);
-void zUI_Reset(_zUI* ent);
-void zUI_PreUpdate(_zUI* ent, _xScene*, F32);
-void zUI_Update(_zUI* ent, _xScene* sc, F32 dt);
-void zUIRenderAll();
-void zUI_Render(_xEnt* e);
-xBase* zUIRenderIteratorInsert(xBase* b, zScene*, void*);
-S32 iRenderQSort_Face(const void* a, const void* b);
-S32 zUIEventCB(xBase*, xBase* to, U32 event, F32*, xBase*);
-
+// Route generic scene objects and assets through typed UI initialization.
 void zUI_Init(void* ent, void* asset)
 {
     zUI_Init(static_cast<_zUI*>(ent), static_cast<p2EntAsset*>(asset));
@@ -105,11 +74,14 @@ void zUI_Init(void* ent, void* asset)
 // Initialize the UI entity and its shared key-display identifiers.
 void zUI_Init(_zUI* ent, p2EntAsset* asset)
 {
-    zEntInit(ent, asset, 'UI  ');
+    _zEnt* base = ent;
+    zEntInit(base, asset, 'UI  ');
     zUIAsset* sasset = static_cast<zUIAsset*>(asset);
     ent->sasset = sasset;
     ent->pflags = 0;
-    ent->penby |= 0x10;
+    U8 penby = ent->penby;
+    penby |= 0x10;
+    ent->penby = penby;
     ent->chkby = 0;
     ent->update = (void (*)(_xEnt*, _xScene*, F32))zUI_Update;
     ent->move = 0;
@@ -119,7 +91,7 @@ void zUI_Init(_zUI* ent, p2EntAsset* asset)
     ent->eventFunc = zUIEventCB;
     ent->uiFlags = sasset->uiFlags;
     if (ent->uiFlags & 4) ent->render = 0;
-    zEntReset(ent);
+    zEntReset(base);
     sSortedCount = 0;
     cKeyUIid1off = xStrHash("KEY OFF 1 UI");
     cKeyUIid2off = xStrHash("KEY OFF 2 UI");
@@ -148,7 +120,9 @@ void zUI_Reset(_zUI* ent)
 {
     zEntReset(ent);
     ent->pflags = 0;
-    ent->penby |= 0x10;
+    U8 penby = ent->penby;
+    penby |= 0x10;
+    ent->penby = penby;
     ent->chkby = 0;
     ent->uiFlags = ent->sasset->uiFlags;
     sSortedCount = 0;
@@ -158,25 +132,25 @@ void zUI_Reset(_zUI* ent)
 void zUI_PreUpdate(_zUI* ent, _xScene*, F32)
 {
     ent->uiButton = 0;
-    if (!globals.pad0 || !globals.pad0->pressed || !(ent->uiFlags & 8) ||
-        (!(ent->uiFlags & 2) && !(ent->uiFlags & 1)))
-        return;
-
-    if (globals.pad0->pressed & 0x10) ent->uiButton |= 0x10;
-    else if (globals.pad0->pressed & 0x40) ent->uiButton |= 0x40;
-    else if (globals.pad0->pressed & 0x80) ent->uiButton |= 0x80;
-    else if (globals.pad0->pressed & 0x20) ent->uiButton |= 0x20;
-    if (globals.pad0->pressed & 0x1) ent->uiButton |= 0x1;
-    if (globals.pad0->pressed & 0x2) ent->uiButton |= 0x2;
-    if (globals.pad0->pressed & 0x1000) ent->uiButton |= 0x1000;
-    if (globals.pad0->pressed & 0x2000) ent->uiButton |= 0x2000;
-    if (globals.pad0->pressed & 0x100) ent->uiButton |= 0x100;
-    if (globals.pad0->pressed & 0x200) ent->uiButton |= 0x200;
-    if (globals.pad0->pressed & 0x10000) ent->uiButton |= 0x10000;
-    if (globals.pad0->pressed & 0x20000) ent->uiButton |= 0x20000;
-    if (globals.pad0->pressed & 0x40000) ent->uiButton |= 0x40000;
-    if (globals.pad0->pressed & 0x80000) ent->uiButton |= 0x80000;
-    if (ent->uiButton) ent->uiFlags |= 0x40;
+    if (globals.pad0 && globals.pad0->pressed && (ent->uiFlags & 8) &&
+        ((ent->uiFlags & 2) || (ent->uiFlags & 1)))
+    {
+        if (globals.pad0->pressed & 0x10) ent->uiButton |= 0x10;
+        else if (globals.pad0->pressed & 0x40) ent->uiButton |= 0x40;
+        else if (globals.pad0->pressed & 0x80) ent->uiButton |= 0x80;
+        else if (globals.pad0->pressed & 0x20) ent->uiButton |= 0x20;
+        if (globals.pad0->pressed & 0x1) ent->uiButton |= 0x1;
+        if (globals.pad0->pressed & 0x2) ent->uiButton |= 0x2;
+        if (globals.pad0->pressed & 0x1000) ent->uiButton |= 0x1000;
+        if (globals.pad0->pressed & 0x2000) ent->uiButton |= 0x2000;
+        if (globals.pad0->pressed & 0x100) ent->uiButton |= 0x100;
+        if (globals.pad0->pressed & 0x200) ent->uiButton |= 0x200;
+        if (globals.pad0->pressed & 0x10000) ent->uiButton |= 0x10000;
+        if (globals.pad0->pressed & 0x20000) ent->uiButton |= 0x20000;
+        if (globals.pad0->pressed & 0x40000) ent->uiButton |= 0x40000;
+        if (globals.pad0->pressed & 0x80000) ent->uiButton |= 0x80000;
+        if (ent->uiButton) ent->uiFlags |= 0x40;
+    }
 }
 
 // Dispatch the first pressed UI button in priority order.
@@ -244,18 +218,24 @@ void zUIRenderAll()
             qsort(sSorted, sSortedCount, sizeof(sSorted[0]), iRenderQSort_Face);
     }
 
-    for (S32 i = 0; i < sSortedCount; ++i)
+    for (S32 i = 0; i < (S32)sSortedCount; ++i)
     {
         if (!xEntIsVisible(sSorted[i])) continue;
         if (sSorted[i]->baseType == 0x20)
             zUI_Render(sSorted[i]);
-        else if (!zGameIsPaused() ||
-                 !(static_cast<zUIFontAsset*>(sSorted[i]->sasset)->uiFontFlags & 0x100))
+        else if (zGameIsPaused())
+        {
+            if (!(static_cast<zUIFontAsset*>(sSorted[i]->sasset)->uiFontFlags & 0x100))
+                zUIFont_Render(sSorted[i]);
+        }
+        else
+        {
             zUIFont_Render(sSorted[i]);
+        }
     }
 }
 
-// Partial: textured-quad and model drawing behavior needs further reconstruction.
+// Draw UI images and model previews, including map pulses and warp-item motion.
 void zUI_Render(_xEnt* e)
 {
     _zUI* ent = static_cast<_zUI*>(e);
@@ -294,7 +274,8 @@ void zUI_Render(_xEnt* e)
             if (ent->sasset->textureID == mapID || ent->sasset->textureID == cornerID ||
                 ent->sasset->textureID == tagID)
             {
-                F32 pulse = 1.0f + (F32)sin(15.0f * lbl_8025E8C4);
+                F32 wave = (F32)sin(15.0f * gFontWiggleTime);
+                F32 pulse = 1.0f + wave;
                 F32 dx = pulse * (0.05f * (right - left));
                 F32 dy = pulse * (0.05f * (bottom - top));
                 left -= dx;
@@ -307,14 +288,18 @@ void zUI_Render(_xEnt* e)
             static U32 warpSnackID = xStrHash("warp snack ui");
             if (ent->id == warpTokenID || ent->id == warpSnackID)
             {
-                F32 wave = 0.5f * (F32)sin(5.0f * lbl_8025E8C4 + left);
-                F32 dx = wave * (right - left);
+                F32 wave = (F32)sin(5.0f * gFontWiggleTime + left);
+                F32 dx = (0.5f * wave) * (right - left);
                 F32 center = (640.0f * ent->sasset->pos.x) / 640.0f;
                 left = center - dx;
                 right = center + dx;
             }
 
             F32 z = RwIm2DGetNearScreenZ();
+            RwIm2DVertexSetIntRGBA(&Vertex[0], 255, 255, 255, 255);
+            RwIm2DVertexSetIntRGBA(&Vertex[1], 255, 255, 255, 255);
+            RwIm2DVertexSetIntRGBA(&Vertex[2], 255, 255, 255, 255);
+            RwIm2DVertexSetIntRGBA(&Vertex[3], 255, 255, 255, 255);
             RwIm2DVertexSetScreenX(&Vertex[0], left);
             RwIm2DVertexSetScreenY(&Vertex[0], top);
             RwIm2DVertexSetScreenZ(&Vertex[0], z);
@@ -348,16 +333,16 @@ void zUI_Render(_xEnt* e)
         else if (ent->model)
         {
             zUIAsset* asset = ent->sasset;
-            _xRect rect;
-            rect.x = (640.0f * asset->pos.x) / 640.0f;
-            rect.y = (480.0f * asset->pos.y) / 480.0f;
-            rect.w = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
-            rect.h = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
             xVec3 relfrom = { 0.0f, 1.0f, 5.0f };
             xVec3 relto = { 0.0f, 0.0f, 0.0f };
             xVec3 from;
             xVec3 to;
             xVec3* pos = (xVec3*)&ent->model->Mat->pos;
+            _xRect rect = { 0.0f, 0.0f, 0.0f, 0.0f };
+            rect.x = (640.0f * asset->pos.x) / 640.0f;
+            rect.y = (480.0f * asset->pos.y) / 480.0f;
+            rect.w = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
+            rect.h = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
             xVec3Add(&from, &relfrom, pos);
             xVec3Add(&to, &relto, pos);
             xModelRender2D(ent->model, &rect, &from, &to, 1.5707964f);
@@ -365,7 +350,7 @@ void zUI_Render(_xEnt* e)
     }
     else
     {
-        xEntRender(ent);
+        xEntRender(e);
     }
 }
 
@@ -388,7 +373,7 @@ S32 zUIEventCB(xBase*, xBase* to, U32 event, F32*, xBase*)
         ent->uiFlags |= 2;
         for (S32 i = 0; i < 13; ++i)
         {
-            char level = lbl_801C8BCC[i].name;
+            char level = sLevelTable2[i].name;
             for (S32 j = 0; j < 30; ++j)
             {
                 char uiName[256];
@@ -410,7 +395,7 @@ S32 zUIEventCB(xBase*, xBase* to, U32 event, F32*, xBase*)
         if (ent->uiFlags & 2) ent->uiFlags ^= 2;
         for (S32 i = 0; i < 13; ++i)
         {
-            char level = lbl_801C8BCC[i].name;
+            char level = sLevelTable2[i].name;
             for (S32 j = 0; j < 30; ++j)
             {
                 char uiName[256];
