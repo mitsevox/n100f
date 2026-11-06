@@ -749,8 +749,8 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
     maskpitch = pitch / (16 / scale);
     rowadd = pitch * 8 - width;
     x = 0;
-    vb.cur = data;
     vb.start = data;
+    vb.cur = data;
     vb.bitlen = 0;
     vb.bits = 0;
     readcolors = (flags & 0x8000) ? CheckReadHuff8Bundle : NewCheckReadHuff8Bundle;
