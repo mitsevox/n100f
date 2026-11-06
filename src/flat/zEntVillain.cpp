@@ -5602,7 +5602,8 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                     0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_DAZED);
                 if (stimctxt->amt_stun > 0.0f)
                 {
-                    tmp_fv = vil->tmr_list[ZVIL_TDUR_DAZED] * stimctxt->amt_stun;
+                    tmp_fv = vil->tmr_list[ZVIL_TDUR_DAZED];
+                    tmp_fv *= stimctxt->amt_stun;
                     vil->tmr_list[ZVIL_TDUR_DAZED] = MAX(1.5f, tmp_fv);
                 }
                 vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_DAZED];
