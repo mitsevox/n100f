@@ -14558,11 +14558,13 @@ static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
             case ZVIL_PARM_HIT_POINTS:
                 cfgdata->hitpts = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
                 break;
+            // The bubbled and gummed times land in each other's timer; the asset values do not
+            // (VCFG_readAsset).
             case ZVIL_PARM_BUBBLED_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_SOAP] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
+                cfgdata->tymref_list[ZVIL_TDUR_GUM] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
                 break;
             case ZVIL_PARM_GUMMED_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_GUM] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
+                cfgdata->tymref_list[ZVIL_TDUR_SOAP] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
                 break;
             case ZVIL_PARM_DAZED_TIME:
                 cfgdata->tymref_list[ZVIL_TDUR_DAZED] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
@@ -14597,11 +14599,13 @@ static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
             case ZVIL_PARM_LOB_RELOAD_TIME:
                 cfgdata->tymref_list[ZVIL_TDUR_LOBRELOAD] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
                 break;
+            // The lob arc and heaviness parameters both overwrite the lob range; their asset values
+            // still reach fac_lobarc and fac_lobheavy.
             case ZVIL_PARM_LOB_ARC:
-                cfgdata->fac_lobarc = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
+                cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
                 break;
             case ZVIL_PARM_LOB_HEAVY:
-                cfgdata->fac_lobheavy = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
+                cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
                 break;
             case ZVIL_PARM_DETECT_RADIUS:
             {
