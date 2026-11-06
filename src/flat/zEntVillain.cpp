@@ -39,7 +39,7 @@
 #include <string.h>
 
 // Functions that have no name yet keep their address labels, which differ between the targets:
-// three villain functions with no name in any related build. xDraw's colour setter is named on
+// two villain functions with no name in any related build. xDraw's colour setter is named on
 // rev0 and keeps its rev1 label until the rev1 names catch up.
 #if VERSION_GIHE78_REV0
 #define VIL_QUEUE_PROPSOUND fn_8007BD98
@@ -290,6 +290,7 @@ static xAnimTable* VANM_mktable_STD();
 static xAnimTable* VANM_mktable_GANG();
 static xAnimTable* VANM_mktable_SIMP();
 static xAnimTable* VANM_mktable_SHARK();
+static xAnimTable* VANM_mktable_WITCH();
 static xAnimTable* VANM_mktable_SHAM();
 static xAnimTable* VANM_mktable_MM();
 static xAnimTable* VANM_mktable_RB();
@@ -2531,10 +2532,7 @@ xAnimTable* zEntVillain_AnimTable_Shark()
 
 xAnimTable* zEntVillain_AnimTable_Witch()
 {
-    xAnimTable* table = VANM_mktable_STD();
-    xAnimTableNewState(table, "Shaggy_hold", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
-    Shaggy5_WitchTransitions(table);
-    return table;
+    return VANM_mktable_WITCH();
 }
 
 xAnimTable* zEntVillain_AnimTable_Simple()
@@ -2626,9 +2624,10 @@ void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
     ent->nav_mvptlist = NULL;
     ent->nav_prev = NULL;
     ent->nav_next = NULL;
-    if (ent->vilcfg.vilp2ass->movePointAssetID)
+    U32 aid = ent->vilcfg.vilp2ass->movePointAssetID;
+    if (aid)
     {
-        ent->nav_mvptlist = zMovePoint_From_xAssetID(ent->vilcfg.vilp2ass->movePointAssetID);
+        ent->nav_mvptlist = zMovePoint_From_xAssetID(aid);
     }
     zVIL_apply_vilcfg(ent, &ent->vilcfg);
 
@@ -14508,19 +14507,21 @@ static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
 // Read each villain setting from the model's INI parameters, falling back to the defaults here.
 static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
 {
+    S32 i;
+    zAssetModelParam* pmdata;
+    U32 pmsize = 0;
     _xVec3 vec_zero = { 0 };
     _xVec3 vec_tmp = { 0 };
     _xVec3 scl_dflt = { 1.0f, 1.0f, 1.0f };
     _xVec3 vec_res = { 0 };
-    U32 pmsize = 0;
-    zAssetModelParam* pmdata;
+    F32 fv;
 
     if (cfgdata->asset->modelInfoID &&
         (pmdata = zEntGetModelParams(cfgdata->asset->modelInfoID, &pmsize)))
     {
         if (!pmsize) return;
 
-        for (S32 i = 0; i < ZVIL_PARM_NOMORE; i++)
+        for (i = 0; i < ZVIL_PARM_NOMORE; i++)
         {
             switch (i)
             {
@@ -14605,7 +14606,7 @@ static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
                 break;
             case ZVIL_PARM_DETECT_RADIUS:
             {
-                F32 fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+                fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
                 cfgdata->ds2_detect = SQR(fv);
                 break;
             }
@@ -14617,7 +14618,7 @@ static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
                 break;
             case ZVIL_PARM_PURSUE_RADIUS:
             {
-                F32 fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+                fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
                 cfgdata->ds2_pursue = SQR(fv);
                 break;
             }
@@ -17980,6 +17981,16 @@ static xAnimTable* VANM_mktable_SHAM()
         table, "SHAM_Taunt", "SHAM_Move", (xAnimTransitionConditionalCallback)VANM_dotran,
         (xAnimTransitionCallback)VANM_didtran, 0, 0, 0.0f, 0.0f, 10, 0, 0.1f, NULL);
 
+    return table;
+}
+
+// Builds the witch's animation table: the standard table plus the state that holds Shaggy, with the
+// witch's transitions.
+static xAnimTable* VANM_mktable_WITCH()
+{
+    xAnimTable* table = VANM_mktable_STD();
+    xAnimTableNewState(table, "Shaggy_hold", 0x10, 0x2000004, 1.0f, NULL, NULL, 0.0f, NULL);
+    Shaggy5_WitchTransitions(table);
     return table;
 }
 
