@@ -24,6 +24,14 @@
 
 void iSystemPollResetAndDisc();
 
+// GC-only helpers with no name in any reference build, named for this project: the reset path
+// the TRC code calls, the reset button poll and check, the retrace callback and the arena fill.
+void iSystemReset(S32 toMenu);
+void iSystemCheckReset();
+void iSystemPollResetButton();
+void iSystemPreRetraceCB(u32 retraceCount);
+void iSystemFillResArena();
+
 extern "C" {
 S32 RpWorldPluginAttach();
 S32 RpCollisionPluginAttach();
@@ -35,13 +43,7 @@ S32 RwEngineStop();
 S32 RwEngineClose();
 S32 RwEngineTerm();
 
-// GC-only helpers with no name in any reference build: the reset path the TRC code calls, the
-// reset button poll, the retrace callback, the arena and stack fill, and the DOL entry point.
-void fn_80016698(S32 reset);
-void fn_80016730();
-void fn_80016768();
-void fn_800167A8(u32 retraceCount);
-void fn_800167F0();
+// The DOL entry point: fills the stack, then jumps to __start. GC only, no name in any reference.
 void fn_80016898();
 
 void __start();
@@ -140,7 +142,7 @@ extern "C" void fn_80016898()
 
 // GC only: fills the free part of RenderWare's resource arena with 0xDEADBEEF. Takes the largest
 // entry the arena still gives, in 1 KB steps, and frees it again.
-extern "C" void fn_800167F0()
+void iSystemFillResArena()
 {
     S32 size = RwResourcesGetArenaSize();
     RwResEntry* entry = RwResourcesAllocateResEntry(NULL, NULL, size, NULL);
@@ -166,10 +168,10 @@ extern "C" void fn_800167F0()
 
 // GC only: the retrace callback. Stores the retrace count it is given, polls the reset button and
 // then runs the callback it replaced.
-extern "C" void fn_800167A8(u32 retraceCount)
+void iSystemPreRetraceCB(u32 retraceCount)
 {
     lbl_8025E978 = retraceCount;
-    fn_80016768();
+    iSystemPollResetButton();
 
     if (lbl_8025E974)
     {
@@ -178,7 +180,7 @@ extern "C" void fn_800167A8(u32 retraceCount)
 }
 
 // GC only: notes when the reset button is released after being held.
-extern "C" void fn_80016768()
+void iSystemPollResetButton()
 {
     S32 state = OSGetResetButtonState();
 
@@ -191,18 +193,18 @@ extern "C" void fn_80016768()
 }
 
 // GC only: resets the console once the reset button has been released.
-extern "C" void fn_80016730()
+void iSystemCheckReset()
 {
     if (lbl_8025E970)
     {
         lbl_8025E970 = 0;
-        fn_80016698(0);
+        iSystemReset(0);
     }
 }
 
 // GC only: stops sound, pads and graphics, blacks out the screen and resets. Goes back to the
 // system menu when asked to, or when there is no usable game disc.
-extern "C" void fn_80016698(S32 reset)
+void iSystemReset(S32 toMenu)
 {
     iSndDIEDIEDIE();
     PADRecalibrate(0xF0000000);
@@ -214,7 +216,7 @@ extern "C" void fn_80016698(S32 reset)
 
     _tagTRCState state = iTRCGetDiskState();
 
-    if (reset || state == TRC_DiskInvalid || state == TRC_DiskTrayOpen || !iTRCDiskIdentified())
+    if (toMenu || state == TRC_DiskInvalid || state == TRC_DiskTrayOpen || !iTRCDiskIdentified())
     {
         OSResetSystem(1, 0, TRUE);
     }
@@ -227,8 +229,8 @@ extern "C" void fn_80016698(S32 reset)
 // GC only: polls the reset button, then reports the drive status to the TRC disc state.
 void iSystemPollResetAndDisc()
 {
-    fn_80016768();
-    fn_80016730();
+    iSystemPollResetButton();
+    iSystemCheckReset();
 
     _tagTRCState state;
 
@@ -414,7 +416,7 @@ void iSystemInit()
     xSndInit();
     RenderWareInit();
     xMathInit();
-    lbl_8025E974 = VISetPreRetraceCallback(fn_800167A8);
+    lbl_8025E974 = VISetPreRetraceCallback(iSystemPreRetraceCB);
 }
 
 void iSystemExit()

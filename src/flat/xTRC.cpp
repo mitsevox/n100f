@@ -1,7 +1,6 @@
 // Revision 1 places these functions and data at other addresses. The labels below are the
 // revision 0 ones; on revision 1 each stands for that revision's label.
 #if VERSION_GIHE78_REV1
-#define fn_80016698 fn_80016804
 #define fn_800389FC fn_80038A18
 #define fn_80040FCC fn_80040FE8
 #define fn_800411A8 fn_800411C4
@@ -88,10 +87,10 @@ void zGamePauseIfPossible();
 extern F32 gFontWiggleTime;
 
 void iSystemPollResetAndDisc();
+void iSystemReset(S32 toMenu);
 U32 zGameNickCamActive();
 
 extern "C" {
-void fn_80016698(S32 reset);
 // The localized device, slot and card names.
 char* fn_800389FC(S32 lang, S32 card, S32 which);
 
@@ -1227,7 +1226,7 @@ extern "C" S32 fn_80042774(S32 card)
     iSGSessionEnd(session);
     if (reset)
     {
-        fn_80016698(1);
+        iSystemReset(1);
     }
     return result;
 }
@@ -1351,7 +1350,7 @@ extern "C" S32 fn_800423EC(S32 card)
     iSGSessionEnd(session);
     if (reset)
     {
-        fn_80016698(1);
+        iSystemReset(1);
     }
     return result;
 }

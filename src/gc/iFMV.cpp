@@ -26,13 +26,13 @@
 extern "C" {
 extern GXRenderModeObj* _RwDlRenderMode;
 
-void fn_800167F0();
 S32 fn_800443F8();
 void fn_800443AC();
 void fn_80021CB0(F32, F32, F32, F32);
 }
 
 void iSystemPollResetAndDisc();
+void iSystemFillResArena();
 void xTRCRenderMessage();
 
 static U32 Bink_surface_type[5];
@@ -272,7 +272,7 @@ static void PlayFMV(char* fname, U32 buttons, F32 time)
 
     iScrFxSetBlackoutFrames(0);
     iPadStopRumble(globals.pad0);
-    fn_800167F0();
+    iSystemFillResArena();
 
     entry = RwResourcesAllocateResEntry(NULL, NULL, FMV_WORK_AREA_SIZE,
                                         (RwResEntryDestroyNotify)Rep_entry_destroy);

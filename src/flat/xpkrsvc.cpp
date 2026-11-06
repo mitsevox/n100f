@@ -1,8 +1,5 @@
 // Revision 1 places the arena fill at another address. The label below is the revision 0 one;
 // on revision 1 it stands for that revision's label.
-#if VERSION_GIHE78_REV1
-#define fn_800167F0 fn_80016958
-#endif
 
 #include "xpkrsvc.h"
 #include "xhipio.h"
@@ -21,7 +18,7 @@ enum en_PKR_LAYER_LOAD_DEST
     PKR_LDDEST_RWHANDOFF
 };
 
-extern "C" void fn_800167F0();
+void iSystemFillResArena();
 
 static st_PACKER_READ_DATA* PKR_ReadInit(void* userdata, char* pkgfile, U32 opts, S32* cltver,
                                          st_PACKER_ASSETTYPE* typelist);
@@ -628,7 +625,7 @@ static inline char* PKR_getRWarena(st_PACKER_READ_DATA* pr, S32 amount)
 {
     char* memptr;
 
-    fn_800167F0();
+    iSystemFillResArena();
     RwResourcesGetArenaSize();
 
     g_RWarena_resEntry = RwResourcesAllocateResEntry(pr, &g_RWarena_resOwner, amount + 0x80,

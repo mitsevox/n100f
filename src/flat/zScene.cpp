@@ -160,7 +160,7 @@ void xFontBoxSetInset(xFontBox* box, F32 left, F32 top, F32 right, F32 bottom);
 void DrawScreenSizeRectangle();
 void zEntPickup_RenderList(_zEntPickup* plist, U32 pcount);
 extern _tagFeetSkidMark sPlayerSkidMark[5];
-extern "C" void fn_800167F0();
+void iSystemFillResArena();
 
 // A per-scene override of how far an entity counts from the camera when the see-through
 // entities are sorted for drawing.
@@ -2067,7 +2067,7 @@ void zSceneRender()
 
     if (s->sceneID == zSceneIDFromName("MNU3"))
     {
-        fn_800167F0();
+        iSystemFillResArena();
     }
 
     zRenderState(SDRS_OpaqueModels);
