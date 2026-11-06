@@ -120,7 +120,10 @@ RwStream* RwStreamWrite(RwStream* stream, const void* buffer, U32 length)
     {
     case rwSTREAMFILE:
     case rwSTREAMFILENAME:
-        if (RWSRCGLOBAL(fileFuncs).rwfwrite(buffer, 1, length, stream->Type.file.fpFile) != length)
+    {
+        U32 bytesWritten = RWSRCGLOBAL(fileFuncs).rwfwrite(buffer, 1, length, stream->Type.file.fpFile);
+
+        if (bytesWritten != length)
         {
             RwError err;
 
@@ -132,6 +135,7 @@ RwStream* RwStreamWrite(RwStream* stream, const void* buffer, U32 length)
         }
 
         return stream;
+    }
     case rwSTREAMMEMORY:
         if (!stream->Type.memory.memBlock)
         {
@@ -322,6 +326,130 @@ S32 RwStreamClose(RwStream* stream, void* pData)
     return result;
 }
 
+// Initializes the backing store; the caller releases the allocation if this fails.
+static __inline RwStream* _rwStreamInitialize(RwStream* stream, S32 rwOwned, RwStreamType type,
+    RwStreamAccessType accessType, const void* pData)
+{
+    RwStream* result = NULL;
+    RwError err;
+
+    if (!stream)
+    {
+        return NULL;
+    }
+
+    stream->type = type;
+    stream->accessType = accessType;
+    stream->rwOwned = rwOwned;
+
+    switch (type)
+    {
+    case rwSTREAMFILE:
+        if (RWSRCGLOBAL(fileFuncs).rwftell((void*)pData) == -1)
+        {
+            result = NULL;
+        }
+        else
+        {
+            stream->Type.file.constfpFile = pData;
+            result = stream;
+        }
+        break;
+    case rwSTREAMFILENAME:
+    {
+        void* fp = NULL;
+
+        switch (accessType)
+        {
+        case rwSTREAMREAD:
+            fp = RWSRCGLOBAL(fileFuncs).rwfopen((const char*)pData, "rb");
+            break;
+        case rwSTREAMWRITE:
+            fp = RWSRCGLOBAL(fileFuncs).rwfopen((const char*)pData, "wb");
+            break;
+        case rwSTREAMAPPEND:
+            fp = RWSRCGLOBAL(fileFuncs).rwfopen((const char*)pData, "ab");
+            break;
+        default:
+        {
+            RwError err;
+
+            err.pluginID = 1;
+            err.errorCode = _rwerror(0xD);
+            RwErrorSet(&err);
+            break;
+        }
+        }
+
+        if (fp)
+        {
+            stream->Type.file.fpFile = fp;
+            result = stream;
+        }
+        else
+        {
+            RwError err;
+
+            err.pluginID = 1;
+            err.errorCode = _rwerror(0x80000002, pData);
+            RwErrorSet(&err);
+        }
+        break;
+    }
+    case rwSTREAMMEMORY:
+    {
+        RwStream* opened = NULL;
+
+        switch (accessType)
+        {
+        case rwSTREAMREAD:
+            stream->Type.memory.position = 0;
+            opened = stream;
+            stream->Type.memory.nSize = ((const RwMemory*)pData)->length;
+            stream->Type.memory.memBlock = ((const RwMemory*)pData)->start;
+            break;
+        case rwSTREAMWRITE:
+            stream->Type.memory.position = 0;
+            opened = stream;
+            stream->Type.memory.nSize = 0;
+            stream->Type.memory.memBlock = NULL;
+            break;
+        case rwSTREAMAPPEND:
+            opened = stream;
+            stream->Type.memory.position = ((const RwMemory*)pData)->length;
+            stream->Type.memory.nSize = ((const RwMemory*)pData)->length;
+            stream->Type.memory.memBlock = ((const RwMemory*)pData)->start;
+            break;
+        default:
+        {
+            err.pluginID = 1;
+            err.errorCode = _rwerror(0xD);
+            RwErrorSet(&err);
+            break;
+        }
+        }
+
+        result = opened;
+        break;
+    }
+    case rwSTREAMCUSTOM:
+        memcpy(&stream->Type.custom, pData, sizeof(RwStreamCustom));
+        result = stream;
+        break;
+    default:
+    {
+        RwError err;
+
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0xE);
+        RwErrorSet(&err);
+        break;
+    }
+    }
+
+    return result;
+}
+
 // Opens a stream of the given type and access: an already open file (checked with ftell), a file
 // by name (opened "rb", "wb" or "ab"), a memory block (read from its start, written from empty,
 // or appended after its length), or a custom stream (its callbacks copied). NULL on failure.
@@ -331,122 +459,7 @@ RwStream* RwStreamOpen(RwStreamType type, RwStreamAccessType accessType, const v
     RwStream* result;
 
     stream = (RwStream*)RWSRCGLOBAL(memoryAlloc)(STREAM_DATA(freeList));
-    result = NULL;
-
-    if (stream)
-    {
-        stream->type = type;
-        stream->accessType = accessType;
-        stream->rwOwned = TRUE;
-
-        switch (type)
-        {
-        case rwSTREAMFILE:
-            if (RWSRCGLOBAL(fileFuncs).rwftell((void*)pData) == -1)
-            {
-                result = NULL;
-            }
-            else
-            {
-                stream->Type.file.constfpFile = pData;
-                result = stream;
-            }
-            break;
-        case rwSTREAMFILENAME:
-        {
-            void* fp = NULL;
-
-            switch (accessType)
-            {
-            case rwSTREAMREAD:
-                fp = RWSRCGLOBAL(fileFuncs).rwfopen((const char*)pData, "rb");
-                break;
-            case rwSTREAMWRITE:
-                fp = RWSRCGLOBAL(fileFuncs).rwfopen((const char*)pData, "wb");
-                break;
-            case rwSTREAMAPPEND:
-                fp = RWSRCGLOBAL(fileFuncs).rwfopen((const char*)pData, "ab");
-                break;
-            default:
-            {
-                RwError err;
-
-                err.pluginID = 1;
-                err.errorCode = _rwerror(0xD);
-                RwErrorSet(&err);
-                break;
-            }
-            }
-
-            if (fp)
-            {
-                stream->Type.file.fpFile = fp;
-                result = stream;
-            }
-            else
-            {
-                RwError err;
-
-                err.pluginID = 1;
-                err.errorCode = _rwerror(0x80000002, pData);
-                RwErrorSet(&err);
-            }
-            break;
-        }
-        case rwSTREAMMEMORY:
-        {
-            RwStream* opened = NULL;
-
-            switch (accessType)
-            {
-            case rwSTREAMREAD:
-                stream->Type.memory.position = 0;
-                opened = stream;
-                stream->Type.memory.nSize = ((const RwMemory*)pData)->length;
-                stream->Type.memory.memBlock = ((const RwMemory*)pData)->start;
-                break;
-            case rwSTREAMWRITE:
-                stream->Type.memory.position = 0;
-                opened = stream;
-                stream->Type.memory.nSize = 0;
-                stream->Type.memory.memBlock = NULL;
-                break;
-            case rwSTREAMAPPEND:
-                opened = stream;
-                stream->Type.memory.position = ((const RwMemory*)pData)->length;
-                stream->Type.memory.nSize = ((const RwMemory*)pData)->length;
-                stream->Type.memory.memBlock = ((const RwMemory*)pData)->start;
-                break;
-            default:
-            {
-                RwError err;
-
-                err.pluginID = 1;
-                err.errorCode = _rwerror(0xD);
-                RwErrorSet(&err);
-                break;
-            }
-            }
-
-            result = opened;
-            break;
-        }
-        case rwSTREAMCUSTOM:
-            memcpy(&stream->Type.custom, pData, sizeof(RwStreamCustom));
-            result = stream;
-            break;
-        default:
-        {
-            RwError err;
-
-            err.pluginID = 1;
-            err.errorCode = _rwerror(0xE);
-            RwErrorSet(&err);
-            break;
-        }
-        }
-    }
-
+    result = _rwStreamInitialize(stream, TRUE, type, accessType, pData);
     if (!result)
     {
         RWSRCGLOBAL(memoryFree)(STREAM_DATA(freeList), stream);

@@ -488,14 +488,13 @@ U32 iSGTgtState(st_ISGSESSION* isgdata, S32 tgtidx, const char* dpath)
         }
     }
 
-    if (iSG_mc_isformatted(data) == 0)
+    if (iSG_mc_isformatted(data) != 0)
     {
-        return state | 4;
+        goto formatted;
     }
-    else
-    {
-        return state | 0xE;
-    }
+    return state | 4;
+formatted:
+    return state | 0xE;
 }
 
 static S32 iSG_mc_exists(S32 slot)
@@ -1089,15 +1088,14 @@ S32 iSGLoadFile(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 as
 S32 iSGReadLeader(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 numbytes,
                   S32 async)
 {
+    S32 tmpsize;
+    S32 allocsize;
     char* readbuf;
     S32 bufsize;
     S32 iconsize;
-    S32 allocsize;
-
     S32 readret = 0;
     st_ISG_MEMCARD_DATA* data;
     void* alloc = NULL;
-
     en_ASYNC_OPERR operr = ISG_OPERR_NONE;
     if (isgdata->slot < 0)
     {
@@ -1119,7 +1117,7 @@ S32 iSGReadLeader(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 
     S32 sectorsize200 = data->sectorSize + 0x1FF & -data->sectorSize;
     if ((S32)databuf % 32 != 0 || numbytes % sectorsize200 != 0)
     {
-        S32 tmpsize = numbytes + 0x1FF & ~0x1FF;
+        tmpsize = numbytes + 0x1FF & ~0x1FF;
         allocsize = tmpsize + 0x1F;
         alloc = xMemPushTemp(allocsize);
         memset(alloc, 0, allocsize);
@@ -1785,8 +1783,13 @@ static S32 iSG_mc_format(st_ISG_MEMCARD_DATA* mcdata, S32, S32* canRecover)
             }
             break;
         case CARD_RESULT_FATAL_ERROR:
-        case CARD_RESULT_WRONGDEVICE:
         case CARD_RESULT_NOFILE:
+        case CARD_RESULT_WRONGDEVICE:
+            break;
+        case CARD_RESULT_BUSY:
+        case CARD_RESULT_READY:
+        default:
+            __cntlzw(result);
             break;
         }
     }
@@ -1950,6 +1953,11 @@ static S32 iSG_mc_fdel(st_ISG_MEMCARD_DATA* mcdata, const char* fname)
         case CARD_RESULT_NOPERM:
         case CARD_RESULT_FATAL_ERROR:
         case CARD_RESULT_WRONGDEVICE:
+            break;
+        case CARD_RESULT_BUSY:
+        case CARD_RESULT_READY:
+        default:
+            __cntlzw(result);
             break;
         }
     }
