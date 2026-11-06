@@ -1,5 +1,6 @@
 #include <rwcore.h>
 
+// Transforms parallel-projection vertices and records clip flags for packet routing.
 static S32 TransformNodeParallel(RxPipelineNode* self, RwCamera* camera)
 {
     RwRaster* raster;
@@ -51,6 +52,8 @@ static S32 TransformNodeParallel(RxPipelineNode* self, RwCamera* camera)
     camVerts = RxClusterInitializeData(camVerts, meshData->NumVertices, sizeof(RxCamSpace3DVertex));
     devVerts = RxClusterInitializeData(devVerts, meshData->NumVertices, sizeof(RwIm2DVertex));
 
+    i = meshData->NumVertices;
+
     if (meshData->Flags & 0x100)
     {
         colored = TRUE;
@@ -75,9 +78,12 @@ static S32 TransformNodeParallel(RxPipelineNode* self, RwCamera* camera)
     clipFlagsOr = 0;
     clipFlagsAnd = -1;
 
-    for (i = meshData->NumVertices; i; i--)
+    for (; i; i--)
     {
         RwMatrix* mat = &meshData->Obj2Cam;
+        F32 objX = ((RxObjSpace3DVertex*)objVerts->currentData)->x;
+        F32 objY = ((RxObjSpace3DVertex*)objVerts->currentData)->y;
+        F32 objZ = ((RxObjSpace3DVertex*)objVerts->currentData)->z;
         F32 x;
         F32 y;
         F32 z;
@@ -86,15 +92,15 @@ static S32 TransformNodeParallel(RxPipelineNode* self, RwCamera* camera)
         U8 yClip;
         U8 xClip;
 
-        x = ((RxObjSpace3DVertex*)objVerts->currentData)->x * mat->right.x
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->y * mat->up.x
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->z * mat->at.x + mat->pos.x;
-        y = ((RxObjSpace3DVertex*)objVerts->currentData)->x * mat->right.y
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->y * mat->up.y
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->z * mat->at.y + mat->pos.y;
-        z = ((RxObjSpace3DVertex*)objVerts->currentData)->x * mat->right.z
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->y * mat->up.z
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->z * mat->at.z + mat->pos.z;
+        x = objX * mat->right.x
+          + objY * mat->up.x
+          + objZ * mat->at.x + mat->pos.x;
+        y = objX * mat->right.y
+          + objY * mat->up.y
+          + objZ * mat->at.y + mat->pos.y;
+        z = objX * mat->right.z
+          + objY * mat->up.z
+          + objZ * mat->at.z + mat->pos.z;
 
         ((RxCamSpace3DVertex*)camVerts->currentData)->cameraVertex.x = x;
         ((RxCamSpace3DVertex*)camVerts->currentData)->cameraVertex.y = y;
@@ -174,7 +180,7 @@ static S32 TransformNodeParallel(RxPipelineNode* self, RwCamera* camera)
             xClip = 0;
         }
 
-        ((RxCamSpace3DVertex*)camVerts->currentData)->clipFlags = zClip | yClip | xClip;
+        ((RxCamSpace3DVertex*)camVerts->currentData)->clipFlags = yClip | zClip | xClip;
         clipFlags = ((RxCamSpace3DVertex*)camVerts->currentData)->clipFlags;
         clipFlagsOr |= clipFlags;
         clipFlagsAnd &= clipFlags;
@@ -232,6 +238,7 @@ static S32 TransformNodeParallel(RxPipelineNode* self, RwCamera* camera)
     return TRUE;
 }
 
+// Transforms perspective vertices and projects the vertices inside the view volume.
 static S32 TransformNodePerspective(RxPipelineNode* self, RwCamera* camera)
 {
     RwRaster* raster;
@@ -283,6 +290,8 @@ static S32 TransformNodePerspective(RxPipelineNode* self, RwCamera* camera)
     camVerts = RxClusterInitializeData(camVerts, meshData->NumVertices, sizeof(RxCamSpace3DVertex));
     devVerts = RxClusterInitializeData(devVerts, meshData->NumVertices, sizeof(RwIm2DVertex));
 
+    i = meshData->NumVertices;
+
     if (meshData->Flags & 0x100)
     {
         colored = TRUE;
@@ -307,9 +316,12 @@ static S32 TransformNodePerspective(RxPipelineNode* self, RwCamera* camera)
     clipFlagsOr = 0;
     clipFlagsAnd = -1;
 
-    for (i = meshData->NumVertices; i; i--)
+    for (; i; i--)
     {
         RwMatrix* mat = &meshData->Obj2Cam;
+        F32 objX = ((RxObjSpace3DVertex*)objVerts->currentData)->x;
+        F32 objY = ((RxObjSpace3DVertex*)objVerts->currentData)->y;
+        F32 objZ = ((RxObjSpace3DVertex*)objVerts->currentData)->z;
         F32 x;
         F32 y;
         F32 z;
@@ -318,15 +330,15 @@ static S32 TransformNodePerspective(RxPipelineNode* self, RwCamera* camera)
         U8 yClip;
         U8 xClip;
 
-        x = ((RxObjSpace3DVertex*)objVerts->currentData)->x * mat->right.x
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->y * mat->up.x
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->z * mat->at.x + mat->pos.x;
-        y = ((RxObjSpace3DVertex*)objVerts->currentData)->x * mat->right.y
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->y * mat->up.y
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->z * mat->at.y + mat->pos.y;
-        z = ((RxObjSpace3DVertex*)objVerts->currentData)->x * mat->right.z
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->y * mat->up.z
-          + ((RxObjSpace3DVertex*)objVerts->currentData)->z * mat->at.z + mat->pos.z;
+        x = objX * mat->right.x
+          + objY * mat->up.x
+          + objZ * mat->at.x + mat->pos.x;
+        y = objX * mat->right.y
+          + objY * mat->up.y
+          + objZ * mat->at.y + mat->pos.y;
+        z = objX * mat->right.z
+          + objY * mat->up.z
+          + objZ * mat->at.z + mat->pos.z;
 
         ((RxCamSpace3DVertex*)camVerts->currentData)->cameraVertex.x = x;
         ((RxCamSpace3DVertex*)camVerts->currentData)->cameraVertex.y = y;
@@ -406,7 +418,7 @@ static S32 TransformNodePerspective(RxPipelineNode* self, RwCamera* camera)
             xClip = 0;
         }
 
-        ((RxCamSpace3DVertex*)camVerts->currentData)->clipFlags = zClip | yClip | xClip;
+        ((RxCamSpace3DVertex*)camVerts->currentData)->clipFlags = yClip | zClip | xClip;
         clipFlags = ((RxCamSpace3DVertex*)camVerts->currentData)->clipFlags;
         clipFlagsOr |= clipFlags;
         clipFlagsAnd &= clipFlags;
