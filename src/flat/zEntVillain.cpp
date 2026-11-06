@@ -420,7 +420,7 @@ static S32 VNAV_get_nav(st_zEntVillain* ent);
 static S32 VNAV_chklos_timz(void* usrdata, _xVec3* mypos, const _zMovePoint* mvpt);
 static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base);
 static inline U32 VANM_entStateType(const _zEnt* ent);
-static inline U32 VANM_entMoveType(const _zEnt* ent);
+static inline S32 VANM_entMoveType(const _zEnt* ent);
 static inline void VANM_setSpeed(st_zEntVillain* ent, F32 spd, _xVec3 sanim);
 static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil);
 static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt);
@@ -13939,17 +13939,14 @@ static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base)
             fv = fabsf(ent->spd_chase - ent->spd_move);
             switch (ent->hitpts)
             {
-            case 0:
-            case 1:
-                break;
-            case 2:
-                fv *= 0.66f;
+            case 4:
+                fv *= 0.0f;
                 break;
             case 3:
                 fv *= 0.33f;
                 break;
-            case 4:
-                fv *= 0.0f;
+            case 2:
+                fv *= 0.66f;
                 break;
             }
             rate *= ent->spd_move + fv;
@@ -13965,12 +13962,16 @@ static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base)
     }
     else if (VANM_entMoveType(ent) == 1)
     {
-        if (ent->flg_misc & 0x1 && ent->anim_playing && !(ent->sanim_idle.x < 0.001f))
+        if (ent->flg_misc & 0x1)
         {
-            xAnimSingle* single = VANM_entSingle(ent);
-            if (single)
+            fv = ent->sanim_idle.x;
+            if (ent->anim_playing && !(fv < 0.001f))
             {
-                single->CurrentSpeed = ent->sanim_idle.x;
+                xAnimSingle* single = VANM_entSingle(ent);
+                if (single)
+                {
+                    single->CurrentSpeed = fv;
+                }
             }
         }
     }
@@ -19426,7 +19427,7 @@ static inline U32 VANM_entStateType(const _zEnt* ent)
 
 // The move kind bits (0x1E) of the user flags of the villain's current animation state, or 0 if
 // it has none: 1 idle, 4 move, 6 chase, 10 a fixed fast move.
-static inline U32 VANM_entMoveType(const _zEnt* ent)
+static inline S32 VANM_entMoveType(const _zEnt* ent)
 {
     xAnimState* state = VANM_entState(ent);
     return state ? state->UserFlags & 0x1E : 0;
