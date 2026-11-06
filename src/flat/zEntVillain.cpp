@@ -43,11 +43,9 @@
 // rev0 and keeps its rev1 label until the rev1 names catch up.
 #if VERSION_GIHE78_REV0
 #define VIL_QUEUE_PROPSOUND fn_8007BD98
-#define VIL_HOLO_FLICKER fn_800837D4
 #define VIL_RESET fn_800A8CB8
 #elif VERSION_GIHE78_REV1
 #define VIL_QUEUE_PROPSOUND fn_8007BBA0
-#define VIL_HOLO_FLICKER fn_800835DC
 #define VIL_RESET fn_800A8AC0
 extern "C" void fn_80021FA0(U32* color);
 #endif
@@ -408,7 +406,7 @@ static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 fl
                               F32 delay, F32 repeatDelay, S32 repeatCount, U32 useThisSound);
 static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
-extern "C" void VIL_HOLO_FLICKER(st_zEntVillain* vil, F32 dt);
+static inline void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt);
 static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan);
 static inline F32 VANM_entTime(const _zEnt* ent);
 static inline F32 VCFG_tymref(st_zEntVillain* vil, S32 which);
@@ -4947,7 +4945,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
-            VIL_HOLO_FLICKER(vil, dt);
+            VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
             {
                 VPAR_emit_partype(vil, VPAR_EMIT_POOF, dt);
@@ -8091,7 +8089,7 @@ static S32 VILN_gang_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
         vil->tmr_list[ZVIL_TTIL_QUIP_OK] = VCFG_tymref(vil, ZVIL_TTIL_QUIP_OK) + 0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TTIL_QUIP_OK);
         if (!(vil->allow & 0x400) && !vil->sfx_curTalk) xSceneID2Name(globals.sceneCur, vil->id);
         if (vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f && vil->sfx_curTalk &&
-            !iSndIsPlaying(0, (U32)vil + 2))
+            !VSND_chanIsBusy(vil, 2))
         {
             if (vil->sfx_curTalk != (zSFX*)-1)
             {
@@ -8158,40 +8156,7 @@ static S32 VILN_gang_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
-            if (vil->ability & 8)
-            {
-                F32 fade = vil->tmr_list[ZVIL_TDUR_DECAY];
-                fade = fade > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] ? fade : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
-                if (fade != 0.0f)
-                {
-                    _zParEmitterCustomSettings info;
-                    info.custom_flags = 0x5a0;
-                    info.color_birth[0] = gVillainPoofColorBirth[vil->asset->subtype][0];
-                    info.color_birth[1] = gVillainPoofColorBirth[vil->asset->subtype][1];
-                    info.color_birth[2] = gVillainPoofColorBirth[vil->asset->subtype][2];
-                    info.color_death[0] = gVillainPoofColorDeath[vil->asset->subtype][0];
-                    info.color_death[1] = gVillainPoofColorDeath[vil->asset->subtype][1];
-                    info.color_death[2] = gVillainPoofColorDeath[vil->asset->subtype][2];
-                    info.color_birth[3] = 0;
-                    info.color_death[3] = 0;
-                    info.pos = *xBoundCenter(&vil->bound);
-                    info.size_death = 5.0f * vil->bound.sph.r;
-                    zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
-                    info.color_birth[0] = gVillainDotsColorBirth[vil->asset->subtype][0];
-                    info.color_birth[1] = gVillainDotsColorBirth[vil->asset->subtype][1];
-                    info.color_birth[2] = gVillainDotsColorBirth[vil->asset->subtype][2];
-                    info.color_death[0] = gVillainDotsColorDeath[vil->asset->subtype][0];
-                    info.color_death[1] = gVillainDotsColorDeath[vil->asset->subtype][1];
-                    info.color_death[2] = gVillainDotsColorDeath[vil->asset->subtype][2];
-                    info.color_birth[3] = 255;
-                    info.color_death[3] = 0;
-                    info.custom_flags = 0x201a0;
-                    info.xzcircle_radius = vil->bound.sph.r;
-                    zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
-                }
-                if (xUtil_yesno(fade)) vil->flags |= 1;
-                else vil->flags &= (U8)~1;
-            }
+            VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
             {
                 VPAR_emit_partype(vil, VPAR_EMIT_POOF, dt);
@@ -16719,43 +16684,46 @@ static void VEFX_plop_gum(st_zEntVillain* ent)
 }
 
 // Emit hologram particles and flicker the villain while its hologram flag is set.
-extern "C" void VIL_HOLO_FLICKER(st_zEntVillain* vil, F32 dt)
+static inline void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt)
 {
+    U8* col;
+    _zParEmitterCustomSettings info;
+
     if (!(vil->ability & 8)) return;
 
-    F32 time = vil->tmr_list[ZVIL_TDUR_DECAY] > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]
-                   ? vil->tmr_list[ZVIL_TDUR_DECAY] : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
-    if (time != 0.0f)
+    F32 fade = MAX(vil->tmr_list[ZVIL_TDUR_DECAY], vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]);
+    if (fade)
     {
-        U32 type = vil->asset->subtype;
-        _zParEmitterCustomSettings info;
+        col = gVillainPoofColorBirth[vil->asset->subtype];
+        info.color_birth[0] = col[0];
+        info.color_birth[1] = col[1];
+        info.color_birth[2] = col[2];
+        col = gVillainPoofColorDeath[vil->asset->subtype];
+        info.color_death[0] = col[0];
+        info.color_death[1] = col[1];
+        info.color_death[2] = col[2];
         info.custom_flags = 0x5A0;
-        info.color_birth[0] = gVillainPoofColorBirth[type][0];
-        info.color_birth[1] = gVillainPoofColorBirth[type][1];
-        info.color_birth[2] = gVillainPoofColorBirth[type][2];
-        info.color_death[0] = gVillainPoofColorDeath[type][0];
-        info.color_death[1] = gVillainPoofColorDeath[type][1];
-        info.color_death[2] = gVillainPoofColorDeath[type][2];
         info.pos = *xBoundCenter(&vil->bound);
+        info.size_death = 5.0f * vil->bound.sph.r;
         info.color_birth[3] = 0;
         info.color_death[3] = 0;
-        info.size_death = 5.0f * vil->bound.sph.r;
         zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
 
-        type = vil->asset->subtype;
-        info.custom_flags = 0x201A0;
-        info.color_birth[0] = gVillainDotsColorBirth[type][0];
-        info.color_birth[1] = gVillainDotsColorBirth[type][1];
-        info.color_birth[2] = gVillainDotsColorBirth[type][2];
+        col = gVillainDotsColorBirth[vil->asset->subtype];
+        info.color_birth[0] = col[0];
+        info.color_birth[1] = col[1];
+        info.color_birth[2] = col[2];
         info.color_birth[3] = 255;
-        info.color_death[0] = gVillainDotsColorDeath[type][0];
-        info.color_death[1] = gVillainDotsColorDeath[type][1];
-        info.color_death[2] = gVillainDotsColorDeath[type][2];
+        col = gVillainDotsColorDeath[vil->asset->subtype];
+        info.color_death[0] = col[0];
+        info.color_death[1] = col[1];
+        info.color_death[2] = col[2];
         info.color_death[3] = 0;
+        info.custom_flags = 0x201A0;
         info.xzcircle_radius = vil->bound.sph.r;
         zParEmitterEmitCustom(sEmitHoloDots, dt, &info);
     }
-    if (xUtil_yesno(time)) vil->flags |= 1;
+    if (xUtil_yesno(fade)) vil->flags |= 1;
     else vil->flags &= ~1;
 }
 
