@@ -137,20 +137,15 @@ static void FrameDestroyRecurseDeInitLeaf(RwFrame* frame)
 
     if (frame->object.privateFlags & 3)
     {
-        frame->inDirtyListLink.prev->next = frame->inDirtyListLink.next;
-        frame->inDirtyListLink.next->prev = frame->inDirtyListLink.prev;
+        RwLLLink* link = &frame->inDirtyListLink;
+        link->prev->next = link->next;
+        link->next->prev = link->prev;
     }
 }
 
 static void rwFrameDestroyRecurseDestroyLeaf(RwFrame* frame)
 {
-    _rwPluginRegistryDeInitObject(&frameTKList, frame);
-
-    if (frame->object.privateFlags & 3)
-    {
-        frame->inDirtyListLink.prev->next = frame->inDirtyListLink.next;
-        frame->inDirtyListLink.next->prev = frame->inDirtyListLink.prev;
-    }
+    FrameDestroyRecurseDeInitLeaf(frame);
 
     RWSRCGLOBAL(memoryFree)(FRAME_DATA(freeList), frame);
 }

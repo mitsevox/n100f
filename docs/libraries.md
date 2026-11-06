@@ -37,14 +37,14 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/plcore/baimmedi.c` | 7 of 7 | (Matching) |
 | `rwsdk/src/plcore/batkreg.c` | 10 of 10 | (Matching on GIHE78-rev0, with its `.sbss`) |
 | `rwsdk/src/badevice.c` | 14 of 14 | (Matching on GIHE78-rev0, with `engineTKList` in `.data`, `staticGlobals` in `.bss` and `engineInstancesOpened` and `RwEngineInstance` in `.sbss`) |
-| `rwsdk/src/baframe.c` | 20 of 21 | `rwFrameDestroyRecurse` (91.4%: GC/1.3.2 stops inlining the recursion one level later than the target, which calls `FrameDestroyRecurseDeInitLeaf` there) |
+| `rwsdk/src/baframe.c` | 21 of 21 | (Matching on GIHE78-rev0, including `.data`, `.sbss` and `.sdata2`) |
 | `rwsdk/src/bacamera.c` | 18 of 22 | the four camera builders `CameraSync` calls: `CameraBuildPerspViewMatrix` (94.3%), `CameraBuildParallelViewMatrix` (93.1%), `CameraBuildPerspClipPlanes` (91.9%) and `CameraBuildParallelClipPlanes` (89.1%), float scheduling and register choice |
 | `rwsdk/src/baraster.c` | 11 of 11 | (Matching; ends at `_rwRasterOpen`, `0x8016DD04`) |
 | `rwsdk/src/baimras.c` | 3 of 3 | (Matching) |
 | `rwsdk/src/basync.c` | 7 of 7 | (Matching; starts at `SyncObject`, `0x8016E9E4`) |
 | `rwsdk/src/pipe/p2/baim3d.c` | 9 of 9 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/bapipe.c` | 4 of 4 | (Matching) |
-| `rwsdk/src/pipe/p2/p2core.c` | 11 of 13 | `PipelineNodeDestroy` (99.8%: the output fix-up loop's counters take other registers) and `RxClusterInitializeData` (99.3%: the target restores the saved registers before the link register); its data is not split |
+| `rwsdk/src/pipe/p2/p2core.c` | 12 of 13 | `RxClusterInitializeData` (99.268295%: the target restores the saved registers before the link register); data ownership remains unpromoted |
 | `rwsdk/src/pipe/p2/p2define.c` | 11 of 13 | `RxPipelineLock` (99.7%: the inlined block grow's offset and the node definition take each other's registers) and `RxLockedPipeUnlock` (97.6%: the size sums add the outputs' total at another point and the copy of the sort data to the top of the block subtracts its entry size from the size first, so their values take other registers); `.sdata` `gMemoryLimits` is in the split |
 | `rwsdk/src/pipe/p2/p2dep.c` | 5 of 11 | `_PropDownElimPath` (98.1%), `_AssignClusterSlots` (97.7%), `_ForAllNodesWriteClusterAllocations` (96.8%), `_PropagateDependenciesAndKillDeadPaths` (95.6%), `_TraceClusterScopes` (94.7%) and `_ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields` (90.5%): the inlined entry helpers' values take other registers and some of their stores and constants are scheduled differently |
 | `rwsdk/src/pipe/p2/p2heap.c` | 7 of 8 | `RxHeapRealloc` (99.6%: the rounded size and the inlined shrink path's size difference take each other's registers); its message string is not split |
@@ -70,8 +70,8 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/batextur.c` | 19 of 29 | `TextureDefaultNormalRead` (99.7%), `_rwTextureOpen` (99.6%), `TextureDefaultMipmapRead` (99.6%), `_rwTextureClose` (98.0%), `TextureImageReadAndSize` (97.5%), `PalettizeMipmaps` (94.2%), `RwTextureDestroy` (93.3%: the target loads the return value 1 before reading the reference count as well as at the end), `PalettizeImage` (91.4%), `TextureRasterDefaultBuildMipmaps` (87.0%) and `RwTextureRead` (86.3%), register choice and scheduling |
 | `rwsdk/src/plcore/batkbin.c` | 8 of 8 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/plcore/bamatrix.c` | 15 of 21 | `MatrixOrthoNormalize` (98.2%) and `RwMatrixTransform` (98.0%), register choice and stack traffic; `_rwMatrixDeterminant` (94.3%: register choice), `RwMatrixRotateOneMinusCosineSine` (90.1%), `_rwMatrixOpen` (89.3%: the target loads the default tolerance before it stores the optimization flags) and `RwMatrixOptimize` (72.1%) |
-| `rwsdk/src/plcore/bastream.c` | 5 of 7 | `RwStreamWrite` (99.9%: the operands of the file-write length compare are the other way round) and `RwStreamOpen` (94.5%) |
 | `rwsdk/src/babinfrm.c` | 3 of 3 | (Matching on GIHE78-rev0, with its `.sdata2`) |
+| `rwsdk/src/plcore/bastream.c` | 7 of 7 | (Matching on GIHE78-rev0, including `.sdata` and `.sbss`) |
 | `rwsdk/os/gcn/osintf.c` | 1 of 1 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/babbox.c` | 3 of 3 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/babincam.c` | 2 of 2 | (Matching on GIHE78-rev0) |
