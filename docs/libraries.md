@@ -62,7 +62,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeImmInstance.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/p2clpcom.c` | 13 of 16 | `_rwForAllEdgesWithRxInterpolant` (73.2%), `_rwForAllEdgesWithoutRxInterpolant` (65.6%) and `_rwForOneEdge` (63.6%): the vertex, cursor and ring-index variables take other registers and the loop updates are scheduled differently |
 | `rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c` | 2 of 2 | (Matching on GIHE78-rev0 and GIHE78-rev1; .data 148 bytes plus 4 normal alignment bytes, .sdata 16 bytes) |
-| `rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c` | 1 of 2 | `_ImmMangleTriangleIndicesNode` (87.6%: its locals take other saved registers, and the strip rewrite's source index is scheduled differently) |
+| `rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c` | 1 of 2 | Node 97.31183%, four bytes short; getter and all 168 mapped data bytes exact. Scoped cursors and target-supported strip preloads retained. NonMatching, original linked |
 | `rwsdk/world/pipe/p2/bapipew.c` | 5 of 5 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/pipe/p2/nodeLight.c` | 1 of 7 | `_LightFn` (99.2%) and the five `_rwApply*Light` functions (95.3-99.1%): register choice and the order of a few loads |
 | `rwsdk/world/pipe/p2/nodePostLight.c` | 1 of 2 | `_PostLightFn` (94.6%: the target reloads each color channel after its clamp test; also on GIHE78-rev1) |
@@ -126,7 +126,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c` | 3 of 4 | `DlSubmitNode` (51.3%: the target's loads around the volatile FIFO writes differ; text only) |
 | `rwsdk/plugin/collis/ctgeom.c` | 7 of 7 | (NonMatching: this source pools `1.0` before `0.0` in `.sdata2`, the target the other way round) |
 | `rwsdk/plugin/collis/ctworld.c` | 1 of 10 | the leaf callbacks, the old-sector walks and `WorldSectorForAllBoxedPrimitivePolyIntersections` (98.9-99.8%), register choice; `WorldForAllLineWorldSectorIntersections` (91.5%: the plane-crossing splits) and `RpCollisionWorldForAllIntersections` (96.2%: a 0x3E0-byte frame against the target's 0x3D0); the two static box helpers are `static inline`, as the target inlines them |
-| `rwsdk/plugin/collis/ctbsp.c` | 8 of 8 | All mapped code and actual references exact; text-only object. NonMatching pending canonical source-link integration on GIHE78-rev0 |
+| `rwsdk/plugin/collis/ctbsp.c` | 8 of 8 | Complete text-only object exact; source selected on GIHE78-rev0, with whole-executable validation recorded in the PR |
 | `rwsdk/plugin/collis/rpcollis.c` | 9 of 9 | (Matching on GIHE78-rev0, with its `.sbss`; ends after `RpCollisionPluginAttach`, `0x8013BD2C`) |
 | `rwsdk/tool/intsec/rtintsec.c` | 1 of 2 | `RtIntersectionSphereTriangle` (97.5%: register choice) |
 | `rwsdk/plugin/userdata/rpusrdat.c` | 12 of 17 | `UserDataListCopy`, `UserDataObjectStreamRead`, `UserDataObjectStreamWrite`, `UserDataObjectGetSize` and `RpGeometryGetUserDataArrayCount` (90-99%: the loop counter and the array offset take each other's registers; `UserDataObjectGetSize` also orders the string length sum `addi` then `add`) |
