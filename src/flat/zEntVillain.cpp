@@ -19406,7 +19406,10 @@ static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
     S32 flg_vsnd = VSND_findProps(sndEvent, &sprop);
-    flg_vsnd &= 0x0FFFFFFF;
+    if (sndEvent != VSND_TYP_HOLOFADE)
+    {
+        flg_vsnd &= 0x0FFFFFFF;
+    }
     return VSND_addQueueEntry(vil, sndEvent, flg_vsnd, g_npcTable[vil->asset->subtype].dst_noisy,
                               sprop->tym_delayStart, -1.0f, 0, 0);
 }
