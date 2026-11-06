@@ -50,21 +50,28 @@ U32 GCNDisplayListsGetSize(const RpMeshHeader* header, S32 numTexCoords, S32 ind
 // Builds one indexed display list per mesh of header in dlMem, each vertex sending its index
 // once for every attribute in flags, and records each list in lists.
 void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* header, S32 numTexCoords,
-                 S32 indexSize, U32 flags)
+                          S32 indexSize, U32 flags)
 {
     GXPrimitive primType = GX_TRIANGLES;
-    GXAttrType attrType = GX_INDEX16;
+    GXAttrType attrType;
     U8 numAttrs;
     S32 i;
     const RpMesh* mesh;
     U32 numMeshes;
     U32 normals;
     U32 prelit;
+    const U16* index;
+    U32 numIndices;
+    U32 count;
+    U32 size;
+    U32 dlSize;
+    GCNDisplayList* list;
 
     if (header->flags & rpMESHHEADERTRISTRIP)
     {
         primType = GX_TRIANGLESTRIP;
     }
+    attrType = GX_INDEX16;
     if (indexSize == 1)
     {
         attrType = GX_INDEX8;
@@ -94,15 +101,14 @@ void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* 
         numAttrs++;
     }
 
+    list = lists;
     numMeshes = header->numMeshes;
     mesh = (const RpMesh*)(header + 1);
     while (numMeshes--)
     {
-        const U16* index = mesh->indices;
-        U32 numIndices = mesh->numIndices;
-        U32 count = numIndices;
-        U32 size;
-        U32 dlSize;
+        index = mesh->indices;
+        numIndices = mesh->numIndices;
+        count = numIndices;
 
         if (normals)
         {
@@ -133,7 +139,7 @@ void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* 
         {
             while (numIndices--)
             {
-                U16 vertex = *index;
+                U8 vertex = *index;
                 S32 n;
 
                 for (n = 0; n < numAttrs; n++)
@@ -159,10 +165,10 @@ void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* 
         }
 
         dlSize = GXEndDisplayList();
-        lists->list = dlMem;
+        list->list = dlMem;
         dlMem += dlSize;
-        lists->size = dlSize;
-        lists++;
+        list->size = dlSize;
+        list++;
         mesh++;
     }
 }
