@@ -15308,8 +15308,12 @@ static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
             bounce->atRest = 1;
             bounce->acc_gravity = 0.0f;
             VPRJ_zapTheAxe(prj, 0);
-            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->dvel.x = 0.0f;
+            prj->frame->dvel.y = 0.0f;
+            prj->frame->dvel.z = 0.0f;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.y = 0.0f;
+            prj->frame->vel.z = 0.0f;
             prj->frame->mode |= 0xC;
             axfx->flg_stat |= 2;
         }
@@ -15572,7 +15576,9 @@ static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         }
         else
         {
-            xVec3Init(&prj->frame->dvel, 0.0f, -(dt * prj->cat_data.gravball.acc_gravity), 0.0f);
+            prj->frame->dvel.x = 0.0f;
+            prj->frame->dvel.y = -(dt * prj->cat_data.gravball.acc_gravity);
+            prj->frame->dvel.z = 0.0f;
             prj->frame->mode |= 8;
         }
         break;
@@ -15582,8 +15588,12 @@ static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         {
             quake->flg_stat &= ~2;
             prj->tmr_curstate = 0.0f;
-            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->dvel.x = 0.0f;
+            prj->frame->dvel.y = 0.0f;
+            prj->frame->dvel.z = 0.0f;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.y = 0.0f;
+            prj->frame->vel.z = 0.0f;
             prj->frame->mode |= 0xC;
             prj->flg_chk &= (U8)~0x10;
             prj->flg_pen &= (U8)~0x10;
@@ -15739,7 +15749,9 @@ static S32 VPRJ_BRB_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
                 prj->cat_data.arrow.ent_stuck = &globals.player.ent;
                 xVec3Sub(&prj->cat_data.arrow.pos_stuck, xEntGetPos(&globals.player.ent),
                          xEntGetPos(prj));
-                xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+                prj->frame->vel.x = 0.0f;
+                prj->frame->vel.y = 0.0f;
+                prj->frame->vel.z = 0.0f;
                 prj->OrientSet(0x10000000);
             }
         }
@@ -15786,7 +15798,9 @@ static S32 VPRJ_BRB_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         {
             prj->cat_data.arrow.amStuck = 1;
             prj->pflags |= 4;
-            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.y = 0.0f;
+            prj->frame->vel.z = 0.0f;
             prj->frame->mode |= 4;
             prj->OrientSet(0);
         }
@@ -15957,8 +15971,12 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
         prj->ColDelaySet(0.4f, 0);
         VSUP_vertPos(vil, ZVIL_MDLVERT_ATTACK, &prj->frame->mat.pos);
         prj->frame->mode |= 1;
-        xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-        xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+        prj->frame->dvel.x = 0.0f;
+        prj->frame->dvel.y = 0.0f;
+        prj->frame->dvel.z = 0.0f;
+        prj->frame->vel.x = 0.0f;
+        prj->frame->vel.y = 0.0f;
+        prj->frame->vel.z = 0.0f;
         prj->frame->mode |= 0xC;
         break;
     case MAST_STAGE_TOSS:
@@ -15971,8 +15989,8 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
             xVec3Sub(&aiminf.dir_base, xEntGetPos(prj), xEntGetPos(&globals.player.ent));
             aiminf.grav.pos_src = *xEntGetPos(prj);
             aiminf.grav.pos_tgt = *xEntGetPos(&globals.player.ent);
-            aiminf.grav.fac_arcness = 1.0f;
             aiminf.grav.acc_gravity = flask->heavy;
+            aiminf.grav.fac_arcness = 1.0f;
             prj->AimAtTarget(&aiminf, 1);
             prj->cat_data.gravball.acc_gravity = flask->heavy;
             prj->SendEvent(ZPRJ_EVNT_LAUNCH, dt);
@@ -15983,7 +16001,9 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
             flask->flg_stat |= 2;
             flask->stage = MAST_STAGE_AFTERMATH;
         }
-        xVec3Init(&prj->frame->dvel, 0.0f, -(dt * prj->cat_data.gravball.acc_gravity), 0.0f);
+        prj->frame->dvel.x = 0.0f;
+        prj->frame->dvel.y = -(dt * prj->cat_data.gravball.acc_gravity);
+        prj->frame->dvel.z = 0.0f;
         prj->frame->mode |= 8;
         if (prj->flg_categ & 0x4000000)
         {
@@ -15998,8 +16018,12 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
             prj->tmr_curstate = 0.0f;
             prj->flags &= (U8)~1;
             prj->flg_prop &= ~8;
-            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->dvel.x = 0.0f;
+            prj->frame->dvel.y = 0.0f;
+            prj->frame->dvel.z = 0.0f;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.y = 0.0f;
+            prj->frame->vel.z = 0.0f;
             prj->frame->mode |= 0xC;
             prj->flg_chk &= (U8)~0x10;
             prj->flg_pen &= (U8)~0x10;
@@ -16470,12 +16494,15 @@ static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup)
     if (cleanup) return;
 
     _tagLightningAdd add = { eLT_Line };
+    add.type = eLT_Line;
     add.start = xBoundCenter(&vil->bound);
     add.end = xBoundCenter(&globals.player.ent.bound);
     add.time = 0.2f;
     add.total_points = 16;
     add.thickness = 0.15f;
-    add.r = add.g = add.b = 255;
+    add.r = 255;
+    add.g = 255;
+    add.b = 255;
     add.rand_radius = 5.0f;
     add.flags = 0x34;
     g_mm_lytstrk[0] = zLightningAdd(&add);
@@ -16483,7 +16510,8 @@ static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup)
     add.type = eLT_Rotating;
     add.total_points = 16;
     add.thickness = 0.1f;
-    add.r = add.g = 80;
+    add.r = 80;
+    add.g = 80;
     add.b = 255;
     add.rand_radius = 3.0f;
     add.setup_degrees = 20.0f + 90.0f * iurand();
@@ -16498,7 +16526,8 @@ static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup)
 static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
 {
     _tagLightningAdd add = { eLT_Line };
-    _xVec3 end = { 0 };
+    _xVec3 loca = { 0 };
+    _xBound* bnd;
     S32 i;
 
     for (i = 0; i < 5; i++)
@@ -16511,16 +16540,19 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
     }
     if (cleanup) return;
 
-    end = *xBoundCenter(&vil->bound);
-    end.y += 20.0f;
-    add.start = xBoundCenter(&vil->bound);
-    add.end = &end;
+    bnd = &vil->bound;
+    loca = *xBoundCenter(bnd);
+    loca.y += 20.0f;
+    add.start = xBoundCenter(bnd);
+    add.end = &loca;
     add.time = vil->tmr_list[ZVIL_TDUR_HURT] > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]
                    ? vil->tmr_list[ZVIL_TDUR_HURT] : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
     add.type = eLT_Line;
     add.total_points = 16;
     add.thickness = 1.25f;
-    add.r = add.g = add.b = 255;
+    add.r = 255;
+    add.g = 255;
+    add.b = 255;
     add.rand_radius = 5.0f;
     add.flags = 0x34;
     g_bk_lytstrk[0] = zLightningAdd(&add);
@@ -16528,7 +16560,8 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
     add.type = eLT_Rotating;
     add.total_points = 16;
     add.thickness = 0.6f;
-    add.r = add.g = 80;
+    add.r = 80;
+    add.g = 80;
     add.b = 255;
     add.rand_radius = 4.0f;
     add.setup_degrees = 20.0f + 90.0f * iurand();
