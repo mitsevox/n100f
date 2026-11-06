@@ -9772,9 +9772,18 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
             {
                 _xVec3 delta = { 0 };
-                xVec3Sub(&delta, zMovePointGetPos(vil->nav_next), (_xVec3*)&vil->model->Mat->pos);
-                vil->anim_loopmult = 0.97f;
-                vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, delta.x > 0.0f ? ZVIL_GSPOT_MOVELEFT : ZVIL_GSPOT_MOVERIGHT);
+                xVec3Copy(&delta, zMovePointGetPos(vil->nav_next));
+                xVec3Sub(&delta, &delta, (_xVec3*)&vil->model->Mat->pos);
+                if (delta.x > 0.0f)
+                {
+                    vil->anim_loopmult = 0.97f;
+                    vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, ZVIL_GSPOT_MOVELEFT);
+                }
+                else
+                {
+                    vil->anim_loopmult = 0.97f;
+                    vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, ZVIL_GSPOT_MOVERIGHT);
+                }
             }
             else
             {
@@ -9801,8 +9810,10 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                 _xVec3 offset = { 0.0f, 0.0f, 0.0f };
                 if (!(vil->cnt_lobSalvo & 1))
                 {
-                    offset.x = vil->precalc.vec_VtoP.x * 0.6f;
-                    offset.z = vil->precalc.vec_VtoP.z * 0.6f;
+                    xVec3Copy(&offset, &vil->precalc.vec_VtoP);
+                    offset.x *= 0.6f;
+                    offset.y = 0.0f;
+                    offset.z *= 0.6f;
                 }
                 xVec3Add(&offset, &offset, xBoundCenter(&globals.player.ent.bound));
                 st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)vil->prj_reserved->xtradata;
@@ -9814,8 +9825,9 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                 if (vil->cnt_lobSalvo > 0 && !vil->prj_reserved)
                 {
                     vil->prj_reserved = VWEP_lobReservePRJ(vil);
-                    if (vil->prj_reserved)
-                        VWEP_lobActivatePRJ(vil->prj_reserved, vil, xBoundCenter(&globals.player.ent.bound), NULL,
+                    zEntProjectile* prj = vil->prj_reserved;
+                    if (prj)
+                        VWEP_lobActivatePRJ(prj, vil, xBoundCenter(&globals.player.ent.bound), NULL,
                                             &vil->vec_lobSpin, vil->fac_lobarc, vil->fac_lobheavy);
                 }
             }
@@ -9836,10 +9848,14 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         }
         break;
     case ZVIL_GOAL_HURT:
-        if (vil->hitpts > 0 && (vil->flg_misc & 4) && vil->anim_playing && vil->sanim_chase.y >= 0.001f)
+        if (vil->hitpts > 0 && (vil->flg_misc & 4))
         {
-            xAnimSingle* single = VANM_entSingle(vil);
-            if (single) single->CurrentSpeed = vil->sanim_chase.y;
+            F32 spd = vil->sanim_chase.y;
+            if (vil->anim_playing && !(spd < 0.001f))
+            {
+                xAnimSingle* single = VANM_entSingle(vil);
+                if (single) single->CurrentSpeed = spd;
+            }
         }
         sEmitGGVortexHurt->emit_flags |= 1;
         if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f && vil->tmr_list[ZVIL_TDUR_HURT] <= 0.0f)
@@ -9848,13 +9864,14 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             {
                 resp->trangoal = ZVIL_GOAL_DIE;
                 resp->tranmode = ZVIL_MODE_DEATH;
+                resp->stim = ZVIL_STIM_TRANGOAL;
             }
             else
             {
                 resp->trangoal = ZVIL_GOAL_IDLE;
                 resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
             }
-            resp->stim = ZVIL_STIM_TRANGOAL;
             sEmitGGVortexHurt->emit_flags &= (U8)~1;
         }
         break;
