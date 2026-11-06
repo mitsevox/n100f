@@ -11048,9 +11048,10 @@ static S32 VILN_BRB_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             vil->goodattack = 0;
             vil->tmr_list[ZVIL_TDUR_EXTEND] = 5.0f;
             vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_EXTEND];
-            vil->tmr_list[ZVIL_TTIL_RECOVERY] -= 1.0f;
-            if (vil->tmr_list[ZVIL_TTIL_RECOVERY] < -1.0f)
-                vil->tmr_list[ZVIL_TTIL_RECOVERY] = -1.0f;
+            vil->tmr_list[ZVIL_TTIL_RECOVERY] =
+                (vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f < -1.0f)
+                    ? -1.0f
+                    : vil->tmr_list[ZVIL_TTIL_RECOVERY] + -1.0f;
             VWEP_rbs_throw(&g_rbsword[0]);
             break;
         case ZVIL_STIM_EXITGOAL:
@@ -11089,11 +11090,29 @@ static S32 VILN_BRB_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             break;
         case ZVIL_STIM_ENTERGOAL:
             vil->tmr_list[ZVIL_TDUR_HURT] = VCFG_tymref(vil, ZVIL_TDUR_HURT) + 0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_HURT);
-            en_ZVIL_GOAL_SPOT spot = ZVIL_GSPOT_START;
-            if (vil->hitpts == 3) spot = ZVIL_GSPOT_HURT_ALTA;
-            else if (vil->hitpts == 1 || vil->hitpts == 2) spot = ZVIL_GSPOT_HURT_ALTB;
-            vil->anim_loopmult = 0.97f;
-            vil->vhf->pickanim(vil, ZVIL_GOAL_HURT, spot);
+            switch (vil->hitpts)
+            {
+            case 4:
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_HURT, ZVIL_GSPOT_START);
+                break;
+            case 3:
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_HURT, ZVIL_GSPOT_HURT_ALTA);
+                break;
+            case 2:
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_HURT, ZVIL_GSPOT_HURT_ALTB);
+                break;
+            case 1:
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_HURT, ZVIL_GSPOT_HURT_ALTB);
+                break;
+            default:
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_HURT, ZVIL_GSPOT_START);
+                break;
+            }
             break;
         case ZVIL_STIM_EXITGOAL:
             break;
