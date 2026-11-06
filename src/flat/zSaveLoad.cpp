@@ -54,7 +54,7 @@ extern "C" S32 fn_80041310(S32 card, S32 mode);
 extern "C" S32 fn_800411A8(S32 card, S32 repair, S32* files, S32* repaired);
 extern "C" S32 fn_80040FCC(S32 card, S32 game);
 void iSystemPollResetAndDisc();
-extern "C" void fn_80016698(S32 reset);
+void iSystemReset(S32 toMenu);
 // The memory card's file counts, from the save-game layer.
 extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree);
 // The per-frame helpers the front-end loops share.
@@ -1063,7 +1063,7 @@ S32 zSaveLoad_SaveGame()
             fn_80041CC4(1, 23);
             if (zSaveLoad_MessagePrompt(0, 3, (S32(*)(S32))zSaveLoad_poll, 0) == 3)
             {
-                fn_80016698(1);
+                iSystemReset(1);
             }
         }
     }
@@ -1465,7 +1465,7 @@ S32 zSaveLoad_CardCheckSpace(S32 cardNumber, S32 mode, S32 checkSlots)
             fn_80041CC4(1, 23);
             if (zSaveLoad_MessagePrompt(mode, 3, (S32(*)(S32))zSaveLoad_poll, 0) == 3)
             {
-                fn_80016698(1);
+                iSystemReset(1);
             }
             return 2;
         }
