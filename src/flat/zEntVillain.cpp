@@ -19810,38 +19810,94 @@ static void VBON_drop_bonusItem(st_zEntVillain* vil)
 // Select an available bonus using the player's supplies and the scene's drop rules.
 static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp)
 {
+    S32 i;
+    st_NPC_BONUS* bon;
     S32 list[11] = { 0 };
     F32 wts[11] = { 0 };
-    _xVec3 farfar = { 0.0f, 0.0f, 0.0f };
     S32 cnt = 0;
+    S32 choice;
+    F32 rat;
+    F32 soap_weight;
+    F32 gum_weight;
+    F32 food_weight;
     S32 soap_always = 0;
-    U32 area = globals.sceneCur->sceneID & 0xff000000;
-    S32 wt_ramp = area == 0x50000000 || area == 0x42000000 || area == 0x53000000;
+    _xVec3 farfar = { -9999.0f, -8888.0f, -7777.0f };
+    S32 wt_ramp = 0;
+
+    if ((globals.sceneCur->sceneID & 0xff000000) == 'P' << 24 ||
+        (globals.sceneCur->sceneID & 0xff000000) == 'B' << 24 ||
+        (globals.sceneCur->sceneID & 0xff000000) == 'S' << 24)
+    {
+        wt_ramp = 1;
+    }
+
     if (g_scene_is_a_boss_battle)
     {
         if (g_scene_is_a_boss_battle != 4 && !xUtil_yesno(0.8f)) return NULL;
     }
-    else if (vtyp == 0 && area == 0x50000000)
-        soap_always = 1;
-    else if (!xUtil_yesno(wt_ramp ? 0.8f : 0.4f))
-        return NULL;
-
-    F32 rat = (F32)globals.player.Inv_Ammo[0] / (F32)globals.player.Inv_AmmoMax[0];
-    F32 gum_weight = rat < 0.2f ? 1.5f : (rat > 0.8f ? 0.5f : 1.0f);
-    rat = (F32)globals.player.Inv_Ammo[1] / (F32)globals.player.Inv_AmmoMax[1];
-    F32 soap_weight = rat < 0.2f ? 1.5f : (rat > 0.8f ? 0.5f : 1.0f);
-    F32 food_weight = globals.player.Health == 1 ? 2.0f : (globals.player.Health == 4 ? 0.5f : 1.0f);
-    if (soap_always) { gum_weight = 0.0f; soap_weight = 100.0f; food_weight = 0.0f; }
-    else if (g_scene_is_a_boss_battle) { gum_weight = soap_weight = food_weight = 1.0f; }
-    else if (wt_ramp) { gum_weight *= 4.0f; soap_weight *= 4.0f; food_weight *= 0.25f; }
-
-    for (S32 i = 0; i < 11; i++)
+    else if (vtyp == 0 && (globals.sceneCur->sceneID & 0xff000000) == 'P' << 24)
     {
-        st_NPC_BONUS* bon = &g_npcBonus[i];
+        soap_always = 1;
+    }
+    else if (wt_ramp)
+    {
+        if (!xUtil_yesno(0.8f)) return NULL;
+    }
+    else if (!xUtil_yesno(0.4f))
+    {
+        return NULL;
+    }
+
+    rat = (F32)globals.player.Inv_Ammo[0] / (F32)globals.player.Inv_AmmoMax[0];
+    if (rat < 0.2f)
+        gum_weight = 1.5f;
+    else if (rat > 0.8f)
+        gum_weight = 0.5f;
+    else
+        gum_weight = 1.0f;
+    rat = (F32)globals.player.Inv_Ammo[1] / (F32)globals.player.Inv_AmmoMax[1];
+    if (rat < 0.2f)
+        soap_weight = 1.5f;
+    else if (rat > 0.8f)
+        soap_weight = 0.5f;
+    else
+        soap_weight = 1.0f;
+    if (globals.player.Health == 1)
+        food_weight = 2.0f;
+    else if (globals.player.Health == 4)
+        food_weight = 0.5f;
+    else
+        food_weight = 1.0f;
+    if (soap_always)
+    {
+        gum_weight = 0.0f;
+        soap_weight = 100.0f;
+        food_weight = gum_weight;
+    }
+    else if (g_scene_is_a_boss_battle)
+    {
+        gum_weight = 1.0f;
+        soap_weight = gum_weight;
+        food_weight = gum_weight;
+    }
+    else if (wt_ramp)
+    {
+        gum_weight *= 4.0f;
+        soap_weight *= 4.0f;
+        food_weight *= 0.25f;
+    }
+
+    for (i = 0; i < 11; i++)
+    {
+        bon = &g_npcBonus[i];
         if (!bon->pickup) continue;
         if (soap_always && !(bon->flg_info & 0x20000)) continue;
-        if ((bon->flg_info & 0x10000) && (!globals.player.Inv_AmmoMax[0] || globals.player.Inv_Ammo[0] == globals.player.Inv_AmmoMax[0])) continue;
-        if ((bon->flg_info & 0x20000) && (!globals.player.Inv_AmmoMax[1] || globals.player.Inv_Ammo[1] == globals.player.Inv_AmmoMax[1])) continue;
+        if ((bon->flg_info & 0x10000) &&
+            (!globals.player.Inv_AmmoMax[0] || globals.player.Inv_Ammo[0] == globals.player.Inv_AmmoMax[0]))
+            continue;
+        if ((bon->flg_info & 0x20000) &&
+            (!globals.player.Inv_AmmoMax[1] || globals.player.Inv_Ammo[1] == globals.player.Inv_AmmoMax[1]))
+            continue;
         if ((bon->flg_info & 0x40000) && globals.player.Health == 5) continue;
         if ((bon->flg_info & 1) && (bon->pickup->state & 8))
         {
@@ -19853,35 +19909,64 @@ static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp)
         gum_weight *= 4.0f;
         soap_weight *= 4.0f;
         food_weight *= 0.25f;
-        F32 weight;
         switch (i)
         {
-        case 0: weight = food_weight; break;
-        case 1: if (!(globals.player.Inv_Specials & 4)) continue; weight = food_weight + 0.25f; break;
-        case 2: if (!(globals.player.Inv_Specials & 0x1000)) continue; weight = food_weight + 0.75f; break;
-        case 3: if (!(globals.player.Inv_Specials & 0x200)) continue; weight = food_weight + 0.5f; break;
-        case 4: if (!(globals.player.Inv_Specials & 0x20)) continue; weight = food_weight + 1.0f; break;
-        case 5: case 6: case 7: if (!(globals.player.Inv_Specials & 2)) continue; weight = soap_weight; break;
-        default: if (!(globals.player.Inv_Specials & 1)) continue; weight = gum_weight; break;
+        case 8:
+        case 9:
+        case 10:
+            if (globals.player.Inv_Specials & 1)
+            {
+                wts[cnt] = gum_weight;
+                list[cnt++] = i;
+            }
+            break;
+        case 5:
+        case 6:
+        case 7:
+            if (globals.player.Inv_Specials & 2)
+            {
+                wts[cnt] = soap_weight;
+                list[cnt++] = i;
+            }
+            break;
+        case 0:
+            wts[cnt] = food_weight;
+            list[cnt++] = 0;
+            break;
+        case 1:
+            if (globals.player.Inv_Specials & 4)
+            {
+                wts[cnt] = food_weight + 0.25f;
+                list[cnt++] = 1;
+            }
+            break;
+        case 3:
+            if (globals.player.Inv_Specials & 0x200)
+            {
+                wts[cnt] = food_weight + 0.5f;
+                list[cnt++] = 3;
+            }
+            break;
+        case 4:
+            if (globals.player.Inv_Specials & 0x20)
+            {
+                wts[cnt] = food_weight + 1.0f;
+                list[cnt++] = 4;
+            }
+            break;
+        case 2:
+            if (globals.player.Inv_Specials & 0x1000)
+            {
+                wts[cnt] = food_weight + 0.75f;
+                list[cnt++] = 2;
+            }
+            break;
         }
-        list[cnt] = i;
-        wts[cnt++] = weight;
     }
     if (cnt < 1) return NULL;
-    F32 sum = 0.0f;
-    for (S32 i = 0; i < cnt; i++) { if (wts[i] < 0.0f) wts[i] = -wts[i]; sum += wts[i]; }
-    F32 scale = 1.0f / sum;
-    for (S32 i = 0; i < cnt; i++) wts[i] *= scale;
-    F32 pt = iurand();
-    F32 hi = 0.0f;
-    S32 choice = 0;
-    for (S32 i = 0; i < cnt; i++)
-    {
-        F32 lo = hi;
-        hi += wts[i];
-        if (pt >= lo && pt <= hi) { choice = i; break; }
-    }
-    return &g_npcBonus[list[choice]];
+    VSUP_wtadjust(wts, cnt, 1.0f);
+    choice = VSUP_choose(list, wts, cnt);
+    return &g_npcBonus[choice];
 }
 
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
