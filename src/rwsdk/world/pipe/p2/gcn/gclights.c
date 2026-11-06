@@ -24,8 +24,13 @@ GXLightID GCLightIDTable[8] = {
 
 void _rwGCLightsGlobalEnable(U8 flags, GCNObjectData* data)
 {
-    RwLLLink* cur = rwLinkListGetFirstLLLink(&((RpWorld*)RWSRCGLOBAL(curWorld))->directionalLightList);
-    RwLLLink* end = rwLinkListGetTerminator(&((RpWorld*)RWSRCGLOBAL(curWorld))->directionalLightList);
+    RpWorld* world = (RpWorld*)RWSRCGLOBAL(curWorld);
+    S32 index;
+    RwLLLink* cur = rwLinkListGetFirstLLLink(&world->directionalLightList);
+    RwLLLink* end = rwLinkListGetTerminator(&world->directionalLightList);
+    GXLightObj* obj;
+    RwV3d dir;
+    GXColor color;
 
     while (cur != end)
     {
@@ -35,10 +40,7 @@ void _rwGCLightsGlobalEnable(U8 flags, GCNObjectData* data)
         {
             if (RpLightGetType(light) == rpLIGHTDIRECTIONAL)
             {
-                S32 index = data->numLights;
-                RwV3d dir;
-                GXLightObj* obj;
-                GXColor color;
+                index = data->numLights;
 
                 RwV3dTransformVectors(&dir, &RwFrameGetLTM(RpLightGetFrame(light))->at, 1,
                                       &lbl_8025E304);

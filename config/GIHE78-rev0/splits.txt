@@ -1781,6 +1781,7 @@ rwsdk/world/pipe/p2/gcn/gclights.c:
 	.text       start:0x8015F0A4 end:0x8015F51C
 	.data       start:0x801DDB40 end:0x801DDB60
 	.bss        start:0x8025DB38 end:0x8025DD38
+	.sdata2     start:0x802629C8 end:0x802629E0
 
 rwsdk/world/pipe/p2/gcn/native.c:
 	.text       start:0x8015F51C end:0x8015FEA4
@@ -1829,6 +1830,8 @@ rwsdk/src/plcore/batkreg.c:
 
 rwsdk/src/plcore/bavector.c:
 	.text       start:0x801658F8 end:0x801662AC
+	.sbss       start:0x8025F7B8 end:0x8025F7C0
+	.sdata2     start:0x80262A60 end:0x80262A90
 
 rwsdk/src/plcore/resmem.c:
 	.text       start:0x801662AC end:0x801664F8
