@@ -7618,6 +7618,14 @@ static S32 VILN_shagM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_C
             }
         }
         break;
+    case ZVIL_GOAL_ACTION:
+        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
+        {
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+        }
+        break;
     case ZVIL_GOAL_FOLLOW:
         if (!vil->vhf->query(vil, ZVIL_Q_DOFOLLOW))
         {
@@ -7629,14 +7637,6 @@ static S32 VILN_shagM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_C
     case ZVIL_GOAL_PATROL:
         if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
         if (!vil->vhf->query(vil, ZVIL_Q_HAVENAV))
-        {
-            resp->trangoal = ZVIL_GOAL_IDLE;
-            resp->tranmode = ZVIL_MODE_NORMAL;
-            resp->stim = ZVIL_STIM_TRANGOAL;
-        }
-        break;
-    case ZVIL_GOAL_ACTION:
-        if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
         {
             resp->trangoal = ZVIL_GOAL_IDLE;
             resp->tranmode = ZVIL_MODE_NORMAL;
