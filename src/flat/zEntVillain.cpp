@@ -14552,15 +14552,16 @@ static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal)
 // argument (the caller's dt) is not used.
 static S32 VWEP_swipe(st_zEntVillain* vil, F32)
 {
+    S32 hitplyr = 0;
     _xCollis colrec = { 0 };
     _xBound bnd = { 0 };
-    S32 hitplyr = 0;
     if (vil->precalc.ds2_VtoP > 2.2f) return 0;
 
     colrec.oid = globals.player.ent.id;
     colrec.optr = &globals.player.ent;
+    colrec.flags = 0;
     bnd.type = 1;
-    bnd.qcd = globals.player.ent.bound.qcd;
+    memcpy(&bnd.qcd, &globals.player.ent.bound.qcd, sizeof(bnd.qcd));
 #if VERSION_GIHE78_REV0
     iColor_tag color = g_MAROON;
     xDrawSetColor(color);
@@ -14621,15 +14622,17 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
     {
         xSceneID2Name(globals.sceneCur, ent->id);
         shotpos = *xBoundCenter(&ent->bound);
-        shotpos.y += 0.4f;
         shotpos.x += 1.5f * ent->precalc.sin_faceang;
+        shotpos.y += 0.4f;
         shotpos.z += 1.5f * ent->precalc.cos_faceang;
     }
-    tym_elap = MIN(ent->tmr_list[ZVIL_TDUR_EXTEND], ent->tmr_list[ZVIL_TYMR_CURGOAL]);
-    dist = MAX(0.01f, MIN(ent->spd_extend * tym_elap, ent->dst_extend));
+    tym_elap = ent->tmr_list[ZVIL_TYMR_CURGOAL];
+    if (ent->tmr_list[ZVIL_TDUR_EXTEND] < tym_elap) tym_elap = ent->tmr_list[ZVIL_TDUR_EXTEND];
+    dist = MIN(ent->spd_extend * tym_elap, ent->dst_extend);
+    dist = MAX(0.01f, dist);
     conrat = ent->wid_extend / ent->dst_extend;
-    dirvec.x = sin(ent->frame->rot.angle);
-    dirvec.z = cos(ent->frame->rot.angle);
+    VSUP_ang_toXZDir(ent->frame->rot.angle, &dirvec);
+    F32 ang_face = ent->frame->rot.angle;
     if (pos_tgt)
     {
         xVec3Sub(&dltvec, pos_tgt, &shotpos);
@@ -14639,7 +14642,7 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
         else ang_updwn = MAX(-0.25f, MIN(ang_updwn, 0.25f));
         xMat3x3Euler(&mat_rot, 0.0f, ang_updwn, 0.0f);
         xMat3x3LMulVec(&dirvec, &mat_rot, &g_Z3);
-        xMat3x3Euler(&mat_rot, -ent->frame->rot.angle, 0.0f, 0.0f);
+        xMat3x3Euler(&mat_rot, -ang_face, 0.0f, 0.0f);
         xMat3x3LMulVec(&dirvec, &mat_rot, &dirvec);
     }
     if (ent->asset->subtype == eEntVillainTypeKillerPlant)
@@ -14647,15 +14650,16 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
         if (sEmitKillerPlant)
         {
             _zParEmitterCustomSettings settings;
+            _xVec3 dir;
             settings.pos.x = ent->model->Mat->pos.x;
             settings.pos.y = ent->model->Mat->pos.y;
             settings.pos.z = ent->model->Mat->pos.z;
-            settings.pos.y += 1.6f;
             settings.pos.x += 0.25f * ent->model->Mat->at.x;
+            settings.pos.y += 1.6f;
             settings.pos.z += 0.25f * ent->model->Mat->at.z;
-            xVec3Normalize(&tmpvec, &dirvec);
+            xVec3Normalize(&dir, &dirvec);
             settings.custom_flags = 0x60;
-            xVec3SMul(&settings.vel, &tmpvec, 1.0f + 0.25f * iurand());
+            xVec3SMul(&settings.vel, &dir, 1.0f + 0.25f * iurand());
             zParEmitterEmitCustom(sEmitKillerPlant, dt, &settings);
         }
     }
@@ -16195,10 +16199,30 @@ static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt)
 }
 
 // Prepare a Redbeard sword entity and its collision targets.
-static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* vil)
+// The villain's model instance at index idx in its model list, or NULL.
+static inline xModelInstance* VWEP_rbs_findModel(st_zEntVillain* vil)
 {
-    _xVec3 pos = { 0 };
-    _xMat4x3 mat = { 0 };
+    xModelInstance* minst = vil->model;
+    xModelInstance* found = NULL;
+    S32 idx = 0;
+    while (minst && !found)
+    {
+        switch (idx)
+        {
+        case 0: break;
+        case 1: found = minst; break;
+        default: break;
+        }
+        minst = minst->Next;
+        idx++;
+    }
+    return found;
+}
+
+static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
+{
+    _xVec3 vec_pos = { 0 };
+    S32 i;
 
     if (rbs->flg_stat & 1)
     {
@@ -16208,27 +16232,24 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* vil)
     }
     memset(rbs, 0, sizeof(st_REDBEARD_SWORD));
     rbs->flg_stat |= 1;
-    rbs->rbvil = vil;
-
-    xModelInstance* model = vil->model;
-    S32 index = 0;
-    while (model && !rbs->mdl_animsword)
-    {
-        if (index == 1) rbs->mdl_animsword = model;
-        model = model->Next;
-        index++;
-    }
+    rbs->rbvil = rbvil;
+    rbs->mdl_animsword = VWEP_rbs_findModel(rbs->rbvil);
     rbs->aid_mdlFile = xStrHash("weprb_sword");
     rbs->mdlFile = (RpAtomic*)xSTFindAsset(rbs->aid_mdlFile, NULL);
     rbs->model = xModelInstanceAlloc(rbs->mdlFile, rbs, 0, 0, NULL);
     rbs->frame = &rbs->raw_frame;
     rbs->collis = &rbs->raw_collis;
-    pos = *xEntGetPos(vil);
+    vec_pos = *xEntGetPos(rbs->rbvil);
+    _xMat4x3 mat = { 0 };
     xMat3x3Euler((xMat3x3*)&mat, 0.0f, 0.0f, 0.0f);
-    mat.pos = pos;
+    xVec3SMulBy(&mat.right, 1.0f);
+    xVec3SMulBy(&mat.up, 1.0f);
+    xVec3SMulBy(&mat.at, 1.0f);
+    mat.flags = 0;
+    mat.pos = vec_pos;
     rbs->bound.type = 1;
     rbs->bound.sph.r = 0.75f;
-    rbs->bound.sph.center = pos;
+    rbs->bound.sph.center = vec_pos;
     xBoundUpdate(&rbs->bound);
     memcpy(rbs->model->Mat, &mat, sizeof(mat));
     rbs->frame->rot.axis = g_Y3;
@@ -16236,11 +16257,11 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* vil)
     rbs->frame->vel = g_O3;
     rbs->bupdate = VWEP_rbs_bupdate;
     rbs->ent_colchk[0] = &globals.player.ent;
-    for (index = 1; index < 5; index++)
+    for (i = 1; i < 5; i++)
     {
-        rbs->ent_colchk[index] = (_xEnt*)zSceneFindObject(xStrHash(g_strz_rbtgt[index]));
-        if (rbs->ent_colchk[index] && rbs->ent_colchk[index]->baseType != 0x1B)
-            rbs->ent_colchk[index] = NULL;
+        rbs->ent_colchk[i] = (_xEnt*)zSceneFindObject(xStrHash(g_strz_rbtgt[i]));
+        if (rbs->ent_colchk[i] && rbs->ent_colchk[i]->baseType != 0x1B)
+            rbs->ent_colchk[i] = NULL;
     }
     rbs->flg_stat |= 2;
 }
