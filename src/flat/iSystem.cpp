@@ -118,7 +118,7 @@ static S32 DolphinInstallFileSystem();
 S32 DolphinInitMemorySystem(RwMemoryFunctions* memoryFuncs);
 void null_func();
 _tagTRCState iTRCGetDiskState();
-U8 iTRCDiskIdentified();
+U32 iTRCDiskIdentified();
 
 // RenderWare's memory functions (see DolphinInitMemorySystem).
 RwMemoryFunctions* psGetMemoryFunctions()
@@ -972,8 +972,9 @@ static S32 dlFseek(void* fptr, S32 offset, S32 origin)
         }
         break;
     case 2:
-        fp->pos = fp->length + offset;
-        offset = fp->pos - oldFPos;
+        offset = fp->length + offset;
+        fp->pos = offset;
+        offset = offset - oldFPos;
         if ((S32)(fp->bufpos + offset) >= 0 && fp->bufpos + offset <= DLFILE_BUF_SIZE &&
             fp->pos <= fp->length)
         {
@@ -1058,7 +1059,7 @@ static char* dlFgets(char* buffer, S32 maxLen, void* fptr)
         }
     }
 
-    if (numBytesRead < maxLen && fp->pos == fp->length)
+    if (numBytesRead < maxLen && fp->pos == ((dlFile*)fptr)->length)
     {
         buffer[numBytesRead] = '\0';
     }
