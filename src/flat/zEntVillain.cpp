@@ -14719,10 +14719,6 @@ static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
     }
 }
 
-// Copies the villain asset's settings into its config: speeds, detection and pursuit ranges
-// (squared), the field of view and turn speed in radians, lobbing and extender settings, and the
-// timer lengths, where the asset gives the dazed, taunt, gum, bubble, extend and reload times and
-// the rest get fixed defaults (-1 for timers with no default).
 // Points the config at the villain's asset and at the villain block that follows it.
 static void VCFG_setAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata, p2EntAsset* asset)
 {
@@ -14730,6 +14726,10 @@ static void VCFG_setAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata, p2EntAsset* asset)
     cfgdata->vilp2ass = (p2EntVillainAsset*)(asset + 1);
 }
 
+// Copies the villain asset's settings into its config: speeds, detection and pursuit ranges
+// (squared), the field of view and turn speed in radians, lobbing and extender settings, and the
+// timer lengths, where the asset gives the dazed, taunt, gum, bubble, extend and reload times and
+// the rest get fixed defaults (-1 for timers with no default).
 static void VCFG_readAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata)
 {
     p2EntVillainAsset* rawass = cfgdata->vilp2ass;
