@@ -4507,7 +4507,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
                 resp->tranmode = ZVIL_MODE_BATTLE;
                 resp->stim = ZVIL_STIM_TRANGOAL;
             }
-            else if (fabs(vil->frame->rot.angle - vil->ang_listen) <= 0.2f)
+            else if (fabsf(vil->frame->rot.angle - vil->ang_listen) <= 0.2f)
             {
                 resp->trangoal = ZVIL_GOAL_LOOKFORHERO;
                 resp->tranmode = ZVIL_MODE_NOCHANGE;
@@ -4572,7 +4572,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         if (!(vil->abl_move & 0x4000) && vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] < 0.3f)
         {
             fv = vil->frame->rot.angle;
-            if (fabs(fv - prec->ang_VtoP) <= 0.1f)
+            if (fabsf(fv - prec->ang_VtoP) <= 0.1f)
             {
                 vil->anim_loopmult = 0.97f;
                 vil->vhf->pickanim(vil, ZVIL_GOAL_ATTACKREADY, ZVIL_GSPOT_START);
@@ -4584,9 +4584,9 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
             }
         }
         if (vil->anim_playing != ZVIL_ANIM_TURN ||
-            fabs(fv - prec->ang_VtoP) <= 0.5 * MAX(vil->fov_detect, 0.2f))
+            !(fabsf(fv - prec->ang_VtoP) <= 0.5 * MAX(vil->fov_detect, 0.2f)))
         {
-            if (!g_scene_is_a_boss_battle || vil->asset->subtype != eEntVillainTypeWitchDoctor ||
+            if (!g_scene_is_a_boss_battle || vil->asset->subtype != eEntVillainTypeWitch ||
                 vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
             {
                 if (!vil->vhf->query(vil, ZVIL_Q_CANDETECT))
@@ -4601,29 +4601,37 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
                     {
                         vil->tmr_list[ZVIL_TDUR_ALERT] = VCFG_tymref(vil, ZVIL_TDUR_ALERT) + 0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_ALERT);
                     }
-                    iv = vil->vhf->query(vil, ZVIL_Q_CANATTACK);
-                    if (iv && (prec->flg_plyr & 0x10) && (vil->abl_atak & 0x20000))
+                    if (vil->vhf->query(vil, ZVIL_Q_CANATTACK))
                     {
-                        resp->trangoal = ZVIL_GOAL_CQCATTACK;
-                        resp->tranmode = ZVIL_MODE_BATTLE;
-                        resp->stim = ZVIL_STIM_TRANGOAL;
+                        if ((prec->flg_plyr & 0x10) && (vil->abl_atak & 0x20000))
+                        {
+                            resp->trangoal = ZVIL_GOAL_CQCATTACK;
+                            resp->tranmode = ZVIL_MODE_BATTLE;
+                            resp->stim = ZVIL_STIM_TRANGOAL;
+                            break;
+                        }
+                        else if ((prec->flg_plyr & 0x20) && (vil->abl_atak & 0x40000) &&
+                                 vil->tmr_list[ZVIL_TDUR_LOBRELOAD] <= 0.0f)
+                        {
+                            vil->prj_reserved = VWEP_lobReservePRJ(vil);
+                            if (vil->prj_reserved)
+                            {
+                                resp->trangoal = ZVIL_GOAL_LOBBING;
+                                resp->tranmode = ZVIL_MODE_BATTLE;
+                                resp->stim = ZVIL_STIM_TRANGOAL;
+                                break;
+                            }
+                        }
+                        else if ((prec->flg_plyr & 0x40) && (vil->abl_atak & 0x80000) &&
+                                 vil->tmr_list[ZVIL_TDUR_EXTRELOAD] <= 0.0f)
+                        {
+                            resp->trangoal = ZVIL_GOAL_SPELLCAST;
+                            resp->tranmode = ZVIL_MODE_BATTLE;
+                            resp->stim = ZVIL_STIM_TRANGOAL;
+                            break;
+                        }
                     }
-                    else if (iv && (prec->flg_plyr & 0x20) && (vil->abl_atak & 0x40000) &&
-                             vil->tmr_list[ZVIL_TDUR_LOBRELOAD] <= 0.0f &&
-                             (vil->prj_reserved = VWEP_lobReservePRJ(vil)))
-                    {
-                        resp->trangoal = ZVIL_GOAL_LOBBING;
-                        resp->tranmode = ZVIL_MODE_BATTLE;
-                        resp->stim = ZVIL_STIM_TRANGOAL;
-                    }
-                    else if (iv && (prec->flg_plyr & 0x40) && (vil->abl_atak & 0x80000) &&
-                             vil->tmr_list[ZVIL_TDUR_EXTRELOAD] <= 0.0f)
-                    {
-                        resp->trangoal = ZVIL_GOAL_SPELLCAST;
-                        resp->tranmode = ZVIL_MODE_BATTLE;
-                        resp->stim = ZVIL_STIM_TRANGOAL;
-                    }
-                    else if (vil->vhf->query(vil, ZVIL_Q_CANCHASE) &&
+                    if (vil->vhf->query(vil, ZVIL_Q_CANCHASE) &&
                              vil->tmr_list[ZVIL_TTIL_NEXTCHASE] <= 0.0f &&
                              vil->vhf->query(vil, ZVIL_Q_CANPURSUE) &&
                              ((vil->abl_atak & 0x10000) || (vil->abl_atak & 0x20000) ||
