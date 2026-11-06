@@ -9105,9 +9105,16 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
     case ZVIL_GOAL_IDLE:
     {
         F32 angle = vil->frame->rot.angle;
-        vil->anim_loopmult = 0.97f;
-        vil->vhf->pickanim(vil, vil->goal, fabsf(angle - vil->precalc.ang_VtoP) <= 0.2f ?
-                           ZVIL_GSPOT_START : ZVIL_GSPOT_MOVERIGHT);
+        if (fabsf(angle - vil->precalc.ang_VtoP) <= 0.2f)
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
+        }
+        else
+        {
+            vil->anim_loopmult = 0.97f;
+            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_MOVERIGHT);
+        }
         if (vil->tmr_list[ZVIL_TDUR_LOBRELOAD] <= 0.0f)
         {
             if (vil->vhf->query(vil, ZVIL_Q_CANATTACK) && fabsf(angle - vil->precalc.ang_VtoP) <= 0.4f)
@@ -10419,10 +10426,16 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
     case ZVIL_GOAL_IDLE:
         if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] < 0.3f)
         {
-            vil->anim_loopmult = 0.97f;
-            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE,
-                               fabsf(vil->frame->rot.angle - vil->precalc.ang_VtoP) <= 0.2f ?
-                               ZVIL_GSPOT_START : ZVIL_GSPOT_MOVERIGHT);
+            if (fabsf(vil->frame->rot.angle - vil->precalc.ang_VtoP) <= 0.2f)
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
+            }
+            else
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_MOVERIGHT);
+            }
         }
         if (vil->vhf->query(vil, ZVIL_Q_CANATTACK) && vil->cnt_lobSalvo > 0)
         {
