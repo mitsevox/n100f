@@ -39,7 +39,7 @@
 #include <string.h>
 
 // Functions that have no name yet keep their address labels, which differ between the targets:
-// three villain functions with no name in any related build. xDraw's colour setter is named on
+// two villain functions with no name in any related build. xDraw's colour setter is named on
 // rev0 and keeps its rev1 label until the rev1 names catch up.
 #if VERSION_GIHE78_REV0
 #define VIL_QUEUE_PROPSOUND fn_8007BD98
