@@ -28,7 +28,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 
 | Unit | Exact | Not yet |
 | --- | --- | --- |
-| `rwsdk/src/plcore/bavector.c` | 11 of 12 | `_rwVectorOpen` (99.90323%: 30 stack-offset operands); `.sbss` and aligned `.sdata2` ownership are split, but the source still emits two out-of-line table helpers whose removal is not yet link-proved |
+| `rwsdk/src/plcore/bavector.c` | 11 of 12 | `_rwVectorOpen` (99.90323%: 30 stack-offset operands); `.sbss` and aligned `.sdata2` compare at 100%; a private normal-link diagnostic removes the two out-of-line table helpers and preserves all data addresses, but the unit remains NonMatching |
 | `rwsdk/src/plcore/rwstring.c` | 7 of 7 | (Matching on GIHE78-rev0 and GIHE78-rev1) |
 | `rwsdk/src/plcore/baerr.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.sbss` `errorModule`) |
 | `rwsdk/src/plcore/bafsys.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.sdata` mode string) |
