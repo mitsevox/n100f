@@ -445,6 +445,7 @@ static inline void VPRJ_BMM_greenflask(zEntProjectile* prj, F32 dt);
 static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt);
 static inline void VPRJ_BGG_shockfx(zEntProjectile* prj, F32 dt, F32 radius);
 static inline void VPRJ_BGG_ballfx(zEntProjectile* prj, F32 dt, F32 yoff);
+static inline void VPRJ_BGG_smackfx(zEntProjectile* prj, F32 dt);
 extern "C" U8 gVillainPoofColorBirth[50][4];
 extern "C" U8 gVillainPoofColorDeath[50][4];
 extern "C" U8 gVillainDotsColorBirth[50][4];
@@ -15597,10 +15598,7 @@ static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
             prj->frame->mode |= 0xC;
             prj->flg_chk &= (U8)~0x10;
             prj->flg_pen &= (U8)~0x10;
-            _zParEmitterCustomSettings info;
-            info.custom_flags = 0x20;
-            info.pos = *xEntGetPos(prj);
-            zParEmitterEmitCustom(sEmitGreenBallSmack, dt, &info);
+            VPRJ_BGG_smackfx(prj, dt);
             VPRJ_BGG_shockfx(prj, dt, 0.0f);
             prj->SendEvent(ZPRJ_EVNT_DETONATE, dt);
         }
@@ -15658,28 +15656,28 @@ static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
 static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt)
 {
     st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)prj->xtradata;
+    _xVec3 pos_prj = { 0 };
+    _xVec3 pos_plyr = { 0 };
     _xVec3 delta = { 0 };
-    _xVec3 playerpos = { 0 };
-    _xVec3 pos = { 0 };
-    F32 radius;
-    F32 inner;
-    F32 player_radius;
-    F32 dist2;
+    F32 outer = 0.0f;
+    F32 inner = 0.0f;
+    F32 br = 0.0f;
+    F32 fb = 0.0f;
 
     if (quake->tym_shock < 0.1f) return 0;
-    radius = quake->rad_shock * (prj->tmr_curstate / quake->tym_shock);
-    inner = 0.85f * radius;
-    pos = *xEntGetPos(prj);
-    playerpos = *xEntGetPos(&globals.player.ent);
-    xVec3Sub(&delta, &playerpos, &pos);
-    player_radius = globals.player.ent.bound.sph.r;
-    VPRJ_BGG_shockfx(NULL, dt, radius);
+    outer = quake->rad_shock * (prj->tmr_curstate / quake->tym_shock);
+    inner = 0.85f * outer;
+    pos_prj = *xEntGetPos(prj);
+    pos_plyr = *xEntGetPos(&globals.player.ent);
+    xVec3Sub(&delta, &pos_plyr, &pos_prj);
+    br = globals.player.ent.bound.sph.r;
+    VPRJ_BGG_shockfx(NULL, dt, outer);
 
-    dist2 = xVec3Length2(&delta);
-    if (dist2 > SQR(radius + player_radius)) return 1;
-    if (playerpos.y - player_radius > pos.y + 0.5f * quake->hyt_shock) return 1;
-    if (playerpos.y + player_radius < pos.y - 0.5f * quake->hyt_shock) return 1;
-    if (inner > player_radius && dist2 < SQR(inner - player_radius)) return 1;
+    fb = xVec3Length2(&delta);
+    if (fb > SQR(outer + br)) return 1;
+    if (pos_plyr.y - br > pos_prj.y + 0.5f * quake->hyt_shock) return 1;
+    if (pos_plyr.y + br < pos_prj.y - 0.5f * quake->hyt_shock) return 1;
+    if (inner > br && fb < SQR(inner - br)) return 1;
     return 0;
 }
 
@@ -19675,6 +19673,15 @@ static inline void VPRJ_BGG_ballfx(zEntProjectile* prj, F32 dt, F32 yoff)
     info.pos = *xEntGetPos(prj);
     info.pos.y += yoff;
     zParEmitterEmitCustom(sEmitGreenBall, dt, &info);
+}
+
+// Emit the Green Ghost ball's impact burst at the projectile.
+static inline void VPRJ_BGG_smackfx(zEntProjectile* prj, F32 dt)
+{
+    _zParEmitterCustomSettings info;
+    info.custom_flags = 0x20;
+    info.pos = *xEntGetPos(prj);
+    zParEmitterEmitCustom(sEmitGreenBallSmack, dt, &info);
 }
 
 // Keep the quake ball's landing point for the shockwave, or emit the shockwave ring there
