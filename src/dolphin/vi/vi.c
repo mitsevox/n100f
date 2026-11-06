@@ -7,6 +7,8 @@
 #include "dolphin/os/__os.h"
 #include "dolphin/vi/__vi.h"
 
+#pragma auto_inline off
+
 #define CLAMP(val, min, max)                                                   \
 	((val) > (max) ? (max) : (val) < (min) ? (min) : (val))
 
@@ -123,7 +125,7 @@ static u16 taps[25]
 	    0x00E2, 0x00CB, 0x00C0, 0x00C4, 0x00CF, 0x00DE, 0x00EC, 0x00FC, 0x0008,
 	    0x000F, 0x0013, 0x0013, 0x000F, 0x000C, 0x0008, 0x0001 };
 
-static u32 getCurrentFieldEvenOdd(void);
+inline static u32 getCurrentFieldEvenOdd(void);
 
 inline static u32 getEncoderType(void) { return 1; }
 
@@ -851,12 +853,16 @@ inline static u32 getCurrentHalfLine(void)
 	return ((vcount - 1) * 2) + ((hcount - 1) / CurrTiming->hlw);
 }
 
-static u32 getCurrentFieldEvenOdd(void)
+inline static u32 getCurrentFieldEvenOdd(void)
 {
+	u32 field;
+
 	if (getCurrentHalfLine() < CurrTiming->nhlines) {
-		return 1U;
+		field = 1U;
+	} else {
+		field = 0U;
 	}
-	return 0U;
+	return field;
 }
 
 u32 VIGetNextField(void)

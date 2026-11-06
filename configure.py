@@ -870,7 +870,7 @@ config.libs: List[Dict[str, Any]] = [
     DolphinLib(
         "vi",
         [
-            Object(NonMatching, "dolphin/vi/vi.c"),
+            Object(MatchingFor("GIHE78-rev0"), "dolphin/vi/vi.c"),
         ],
     ),
     DolphinLib(
