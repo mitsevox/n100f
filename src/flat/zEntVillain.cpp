@@ -5680,12 +5680,15 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 {
     en_NPC_STIMULUS stim = stimctxt->stim;
     en_BEHAVIOUR_GOAL goal;
+    st_ZVIL_NPC_HANDLERFUNCS* myfun;
     if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
         goal = stimctxt->trangoal;
     else
         goal = vil->goal;
     switch (g_pgol = goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_AFTERLIFE:
         switch (g_pstm = stim)
         {
@@ -5758,9 +5761,10 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             vil->nav_mvptlist = NULL;
             vil->nav_prev = NULL;
             vil->nav_next = NULL;
-            vil->nav_mvptlist = vil->vilcfg.vilp2ass->pathAssetID
-                                    ? zMovePoint_From_xAssetID(vil->vilcfg.vilp2ass->pathAssetID)
-                                    : NULL;
+            if (vil->vilcfg.vilp2ass->movePointAssetID)
+            {
+                vil->nav_mvptlist = zMovePoint_From_xAssetID(vil->vilcfg.vilp2ass->movePointAssetID);
+            }
             zVIL_apply_vilcfg(vil, &vil->vilcfg);
             if (vil->ability & 0x2)
             {
@@ -6315,8 +6319,9 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 {
                     VEFX_gumBlob_place(blob, xEntGetPos(vil), 1.0f);
                     if (vil->asset->subtype == eEntVillainTypeBat) vil->mdl_gumBlob->Mat->pos.y -= 0.3f;
-                    if (!g_npcFuncs[vil->asset->subtype].xtrarend)
-                        g_npcFuncs[vil->asset->subtype].xtrarend = VILN_std_xtrarend;
+                    myfun = &g_npcFuncs[vil->asset->subtype];
+                    if (!myfun->xtrarend)
+                        myfun->xtrarend = VILN_std_xtrarend;
                 }
             }
             if (!(vil->abl_move & 0x100000))
