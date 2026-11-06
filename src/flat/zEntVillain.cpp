@@ -320,28 +320,28 @@ static xAnimTransition* VANM_findtran(st_zEntVillain* ent, xAnimTable* table, xA
 static xAnimSingle* VANM_entSingle(const _zEnt* ent);
 static inline xAnimState* VANM_entState(const _zEnt* ent);
 static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum);
-static inline void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter);
-static inline F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos);
+static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter);
+static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos);
 static inline F32 VSUP_ang_ofXZDir(_xVec3 dir);
-static inline F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir);
+static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir);
 static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt);
 static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir);
 static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent,
                                en_NPC_QUADRANT* qdrant);
-static inline S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent);
-static inline S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand);
-static inline S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand);
+static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent);
+static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand);
+static S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand);
 static S32 zVIL_chk_pitfall(st_zEntVillain* vil, S32 prev, F32 rand);
 static inline S32 VSUP_vertPos(const st_zEntVillain* vil, en_ZVIL_MODEL_VERTEX vert, _xVec3* pos);
-static inline S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
-static inline S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil);
-static inline S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil);
-static inline S32 VOUT_chase_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
-static inline S32 VOUT_follow_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
-static inline S32 VOUT_chkdo_followArrived(st_zEntVillain* vil);
+static S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
+static S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil);
+static S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil);
+static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
+static S32 VOUT_follow_move(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame);
+static S32 VOUT_chkdo_followArrived(st_zEntVillain* vil);
 
-static inline S32 VSUP_choose(S32* list, F32* wts, S32 cnt);
-static inline void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
+static S32 VSUP_choose(S32* list, F32* wts, S32 cnt);
+static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
 
 static void zVIL_tag_verts(st_zEntVillain* ent);
 static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt);
@@ -414,7 +414,7 @@ static inline F32 VANM_entTime(const _zEnt* ent);
 static inline F32 VCFG_tymref(st_zEntVillain* vil, S32 which);
 static inline bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym);
 static inline void VPRJ_BMM_toss(zEntProjectile* prj, const _xVec3* pos_tgt);
-static inline S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force);
+static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force);
 static S32 VNAV_get_nav(st_zEntVillain* ent);
 static S32 VNAV_chklos_timz(void* usrdata, _xVec3* mypos, const _zMovePoint* mvpt);
 static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base);
@@ -13207,7 +13207,7 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
 // direction toward it, domove bit 0x4 if move ability bit 0x1000 or 0x400 is set, and domove bits
 // 0x800, 0x1, 0xA and 0x80000000. Without a next point it only looks up his name (nothing is done
 // with it) and returns 0; otherwise it returns 1.
-static inline S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
+static S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
 {
     if (!vil->nav_next)
     {
@@ -13236,7 +13236,7 @@ static inline S32 VOUT_patrol_move(st_zEntVillain* vil, _xScene*, F32, const _xE
 // unless flg_misc bit 0x40000000 is set, he gets the point's wait time on his path delay timer,
 // asks for a new path point, sets his path-check timer to -1 and sends the point an arrive event.
 // Returns 1 on arrival, 0 otherwise.
-static inline S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil)
+static S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil)
 {
     _xVec3 entpos = { 0 };
     F32 dy;
@@ -13272,7 +13272,7 @@ static inline S32 VOUT_chkdo_patrolArrived(st_zEntVillain* vil)
 // must not exceed his type's squared arrival distance plus his squared stand-off. On arrival it
 // clears flg_misc bit 0x80000000 if he has an anchor, otherwise bit 0x40000000. Returns 1 on
 // arrival, 0 otherwise.
-static inline S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil)
+static S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil)
 {
     _xVec3 entpos = { 0 };
     F32 dy = 0.0f;
@@ -13309,7 +13309,7 @@ static inline S32 VOUT_chkdo_minipatrolArrived(st_zEntVillain* vil)
 // entity he trails (bit 0x20000000), or else his next path point. It sets his heading and
 // direction toward it and the same domove bits as a patrol move. With none of the three it returns
 // 0; otherwise 1.
-static inline S32 VOUT_follow_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
+static S32 VOUT_follow_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
 {
     if (!vil->nav_next && !(vil->flg_misc & 0x10000000) && !(vil->flg_misc & 0x20000000))
     {
@@ -13348,7 +13348,7 @@ static inline S32 VOUT_follow_move(st_zEntVillain* vil, _xScene*, F32, const _xE
 // unless flg_misc bit 0x40000000 is set. If he was sent to a spot or trails an entity, the
 // stand-off and those two flg_misc bits are cleared along with allow bit 0x1; otherwise he waits
 // at the path point as on patrol. Returns 1 on arrival, 0 otherwise.
-static inline S32 VOUT_chkdo_followArrived(st_zEntVillain* vil)
+static S32 VOUT_chkdo_followArrived(st_zEntVillain* vil)
 {
     _xVec3 entpos = { 0 };
     F32 dy;
@@ -13393,7 +13393,7 @@ static inline S32 VOUT_chkdo_followArrived(st_zEntVillain* vil)
 // flg_plyr bit 0x400 is set, otherwise the centre of the player's bound. His heading is the one
 // toward the player, and it sets domove bits 0x800, 0x1, 0xA, 0x4 (if move ability bit 0x1000 or
 // 0x400 is set) and 0x80000000. Returns 1.
-static inline S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
+static S32 VOUT_chase_move(st_zEntVillain* vil, _xScene*, F32, const _xEntFrame*)
 {
     if (vil->precalc.flg_plyr & 0x400)
     {
@@ -13905,7 +13905,7 @@ static _zMovePoint* VNAV_find_telepoint(st_zEntVillain* vil, S32 force)
 // point his previous one, and looks for a teleport point. A point other than his next one becomes
 // his next one, and he teleports; otherwise he needs a navigation point. Either way his
 // navigation check timer restarts at its configured time, plus or minus 12.5 percent.
-static inline S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force)
+static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force)
 {
     S32 do_teleport = 0;
     _zMovePoint* telepoint;
@@ -19975,7 +19975,7 @@ static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp)
     return &g_npcBonus[choice];
 }
 
-static inline S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
+static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
 {
     S32 idx = 0;
     F32 dlta = 1.0f / cnt;
@@ -20004,7 +20004,7 @@ static inline S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
     return list[idx];
 }
 
-static inline void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
+static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
 {
     F32 sum = 0.0f;
     S32 i;
@@ -20033,7 +20033,7 @@ static inline F32 VSUP_ang_ofXZDir(_xVec3 dir)
 
 // Squared flat (x and z) distance from the entity's model position to a position. Worker for
 // VSUP_ds2_toPos (helper name ours).
-static inline F32 VSUP_ds2_inner(const _zEnt* ent, _xVec3 pos)
+static F32 VSUP_ds2_inner(const _zEnt* ent, _xVec3 pos)
 {
     _xVec3 delta = { 0 };
 
@@ -20043,7 +20043,7 @@ static inline F32 VSUP_ds2_inner(const _zEnt* ent, _xVec3 pos)
 
 // Heading (around the y axis) from the entity's model position to a position. If dir is given,
 // it gets the unit direction to the position. Worker for VSUP_dir_toPos (helper name ours).
-static inline F32 VSUP_dir_inner(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
+static F32 VSUP_dir_inner(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
 {
     _xVec3 delta = { 0 };
     F32 ang;
@@ -20059,14 +20059,14 @@ static inline F32 VSUP_dir_inner(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
 }
 
 // Squared flat (x and z) distance from the entity to a position.
-static inline F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
+static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
 {
     return VSUP_ds2_inner(ent, pos);
 }
 
 // Heading (around the y axis) from the entity to a position. If dir is given, it gets the unit
 // direction to the position.
-static inline F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
+static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
 {
     return VSUP_dir_inner(ent, pos, dir);
 }
@@ -20097,7 +20097,7 @@ static void zEntVillain_UnknownTemplate116()
 
 // Whether the entity's bound centre is within half the villain's field of view either side of
 // its heading. A villain with no field of view sees nothing.
-static inline S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent)
+static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent)
 {
     S32 result = 0;
     F32 ang = VSUP_dir_toEnt(vil, ent, NULL);
@@ -20151,7 +20151,7 @@ static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent, en_N
 // Whether nothing in the scene blocks a ray from the villain's bound centre toward the entity's,
 // starting just outside the villain's bound and reaching no farther than its detection range.
 // The ray is cast only with chance rand; otherwise the previous answer (prev) stands.
-static inline S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
+static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
 {
     S32 result;
 
@@ -20189,13 +20189,13 @@ static inline S32 VSUP_vertPos(const st_zEntVillain* vil, en_ZVIL_MODEL_VERTEX v
 }
 
 // Line of sight from the villain to the entity; see VSUP_ent_inLOS_timz.
-static inline S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
+static S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
 {
     return VSUP_ent_inLOS_timz(vil, ent, prev, rand);
 }
 
 // Flips each component of out that points against the matching component of alter.
-static inline void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
+static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
 {
     if (alter->x < 0.0f && out->x > 0.0f)
         out->x *= -1.0f;
