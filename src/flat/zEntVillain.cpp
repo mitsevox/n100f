@@ -7053,7 +7053,8 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
         {
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, ZVIL_GOAL_LOBBING, ZVIL_GSPOT_KICKATTACK);
-            if (VCFG_inDamageWindow(vil, VANM_entTime(vil)) && vil->prj_reserved && vil->cnt_lobSalvo > 0)
+            F32 tym = VANM_entTime(vil);
+            if (VCFG_inDamageWindow(vil, tym) && vil->prj_reserved && vil->cnt_lobSalvo > 0)
             {
                 _xVec3 vec_off = { 0 };
                 vec_off.x = 0.5f - iurand();
@@ -7075,7 +7076,8 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
         }
         break;
     case ZVIL_GOAL_SPELLCAST:
-        if (VCFG_inDamageWindow(vil, VANM_entTime(vil)))
+        F32 tym = VANM_entTime(vil);
+        if (VCFG_inDamageWindow(vil, tym))
             vil->goodattack |= VWEP_extend_particles(vil, dt, &vil->pos_exttgt);
         if (vil->goodattack)
             VWEP_mm_zapPlayer(vil);
@@ -7117,9 +7119,8 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
             }
             if (vil->ability & 8)
             {
-                F32 fade = vil->tmr_list[ZVIL_TDUR_DECAY];
-                fade = fade > vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] ? fade : vil->tmr_list[ZVIL_TYMR_MINANIMPLAY];
-                if (fade != 0.0f)
+                F32 fade = MAX(vil->tmr_list[ZVIL_TDUR_DECAY], vil->tmr_list[ZVIL_TYMR_MINANIMPLAY]);
+                if (fade)
                 {
                     _zParEmitterCustomSettings info;
                     info.custom_flags = 0x5a0;
@@ -7129,10 +7130,10 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
                     info.color_death[0] = gVillainPoofColorDeath[vil->asset->subtype][0];
                     info.color_death[1] = gVillainPoofColorDeath[vil->asset->subtype][1];
                     info.color_death[2] = gVillainPoofColorDeath[vil->asset->subtype][2];
-                    info.color_birth[3] = 0;
-                    info.color_death[3] = 0;
                     info.pos = *xBoundCenter(&vil->bound);
                     info.size_death = 5.0f * vil->bound.sph.r;
+                    info.color_birth[3] = 0;
+                    info.color_death[3] = 0;
                     zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
                     info.color_birth[0] = gVillainDotsColorBirth[vil->asset->subtype][0];
                     info.color_birth[1] = gVillainDotsColorBirth[vil->asset->subtype][1];
@@ -11548,7 +11549,8 @@ static S32 VILN_BMM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         }
         else if (vil->anim_playnext == ZVIL_ANIM_MM_BA_ATTACK && vil->anim_playing)
         {
-            if (VCFG_inDamageWindow(vil, VANM_entTime(vil)) && vil->prj_reserved &&
+            F32 tym = VANM_entTime(vil);
+            if (VCFG_inDamageWindow(vil, tym) && vil->prj_reserved &&
                 vil->cnt_lobSalvo > 0)
             {
                 _xVec3 vec_tmp = { 0 };
