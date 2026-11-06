@@ -10354,11 +10354,12 @@ static S32 VILN_BRB_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
 static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS_CONTEXT_DATA*)
 {
     static F32 flame_timer = 0.0f;
-    S32 idx = 0;
+    static _xVec3 pos_arena = { -0.5f, 0.0f, 0.0f };
     xModelInstance* model = vil->model;
+    S32 idx = 0;
     if (sEmitRBFlames)
     {
-        if ((vil->goal >= ZVIL_GOAL_NONE && vil->goal <= ZVIL_GOAL_IDLE) || vil->goal == ZVIL_GOAL_DIE)
+        if ((U32)(vil->goal - ZVIL_GOAL_NONE) <= ZVIL_GOAL_IDLE - ZVIL_GOAL_NONE || vil->goal == ZVIL_GOAL_DIE)
         {
             zEntEvent(zSceneFindObject(xStrHash("FIREBALL_LOOP_SFX")), eEventStop);
             sEmitRBFlames->emit_flags &= (U8)~1;
@@ -10395,28 +10396,27 @@ static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
         vil->mode = ZVIL_MODE_BATTLE;
         vil->vec_lobSpin.y = 6.2831855f;
         vil->vilcfg.tymref_list[ZVIL_TDUR_HURT] = -1.0f;
-        vil->model->Mat->pos.x = -0.5f;
-        vil->model->Mat->pos.y = 0.0f;
-        vil->model->Mat->pos.z = 0.0f;
+        xVec3Copy((_xVec3*)&vil->model->Mat->pos, &pos_arena);
     }
     if (note == ZVIL_NOTE_PREPARE) VWEP_rbs_setup(&g_rbsword[0], vil);
     if (note == ZVIL_NOTE_PREPARE)
     {
         while (model)
         {
-            if (idx == 0)
+            switch (idx)
             {
+            case 0:
                 model->Flags |= 1;
                 model->Flags |= 2;
                 model->Flags |= 4;
-            }
-            else if (idx == 1)
-            {
+                break;
+            case 1:
                 model->Flags &= (U16)~0x20;
                 model->Flags |= 8;
                 model->Flags |= 1;
                 model->Flags |= 2;
                 model->Flags |= 4;
+                break;
             }
             model = model->Next;
             idx++;
@@ -10427,6 +10427,8 @@ static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     case ZVIL_NOTE_PREPARE: zVIL_tag_verts(vil); break;
     case ZVIL_NOTE_PRECALC:
         if (vil->mode >= ZVIL_MODE_NORMAL) zVIL_precalc(vil, 0xf);
+        break;
+    case ZVIL_NOTE_OLDTIME:
         break;
     }
     return 1;
