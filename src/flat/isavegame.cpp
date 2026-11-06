@@ -51,7 +51,7 @@ struct TPLPalette
     TPLDescriptor* descriptorArray;
 };
 
-extern "C" void fn_80016768();
+void iSystemPollResetButton();
 
 static S32 g_isginit;
 static TPLPalette* g_rawicon;
@@ -219,7 +219,7 @@ char* iSGMakeName(en_NAMEGEN_TYPE type, const char* base, S32 idx)
 // Both arguments are ignored on this platform.
 st_ISGSESSION* iSGSessionBegin(void* cltdata, void (*chgfunc)(void*, en_CHGCODE))
 {
-    fn_80016768();
+    iSystemPollResetButton();
     memset(&g_isgdata_MAIN, 0, sizeof(st_ISGSESSION));
     g_isgdata_MAIN.slot = -1;
     return &g_isgdata_MAIN;
@@ -228,7 +228,7 @@ st_ISGSESSION* iSGSessionBegin(void* cltdata, void (*chgfunc)(void*, en_CHGCODE)
 // Unmounts every mounted card and clears the session.
 void iSGSessionEnd(st_ISGSESSION* isgdata)
 {
-    fn_80016768();
+    iSystemPollResetButton();
     for (S32 i = 0; i < ISG_NUM_SLOTS; i++)
     {
         if (isgdata->mcdata[i].unk_0)
@@ -254,7 +254,7 @@ S32 iSGTgtCount(st_ISGSESSION* isgdata, S32* max)
 
     for (S32 i = 0; i < ISG_NUM_SLOTS; ++i)
     {
-        fn_80016768();
+        iSystemPollResetButton();
         s32 result;
         do
         {
@@ -286,7 +286,7 @@ S32 iSGCheckMemoryCard(st_ISGSESSION* isgdata, S32 slot)
     S32 rc = 0;
     s32 memSize = 0;
     s32 sectorSize = 0;
-    fn_80016768();
+    iSystemPollResetButton();
 
     s32 result;
     do
@@ -383,7 +383,7 @@ char* iSG_UnusedCardMessages(char* buf, S32 err)
 S32 iSGTgtFormat(st_ISGSESSION* isgdata, S32 tgtidx, S32 async, S32* canRecover)
 {
     S32 slot = 0;
-    fn_80016768();
+    iSystemPollResetButton();
     if (iSG_mc_exists(isgdata->slot) == 0)
     {
         return 0;
@@ -422,7 +422,7 @@ U32 iSGTgtState(st_ISGSESSION* isgdata, S32 tgtidx, const char* dpath)
     S32 slot = 0;
     S32 x = 0;
     S32 y = 0;
-    fn_80016768();
+    iSystemPollResetButton();
 
     iSG_mcidx2slot(tgtidx, &slot, NULL);
     if (slot != isgdata->slot)
@@ -542,7 +542,7 @@ S32 iSGTgtFreeSpace(st_ISGSESSION* isgdata, S32 tidx, S32* sectorSize, S32* file
         return 0;
     }
     st_ISG_MEMCARD_DATA* data = &isgdata->mcdata[isgdata->slot];
-    fn_80016768();
+    iSystemPollResetButton();
     if (iSGTgtState(isgdata, tidx, NULL) == 0)
     {
         return 0;
@@ -566,7 +566,7 @@ S32 iSGTgtSetActive(st_ISGSESSION* isgdata, S32 tgtidx)
     S32 slot = 0;
     iSG_mcidx2slot(tgtidx, &slot, NULL);
     st_ISG_MEMCARD_DATA* data = &isgdata->mcdata[slot];
-    fn_80016768();
+    iSystemPollResetButton();
     if (data->unk_0)
     {
         ret = 1;
@@ -680,7 +680,7 @@ S32 iSGTgtHaveRoom(st_ISGSESSION* isgdata, S32 tidx, S32 fsize, const char* dpat
     {
         for (S32 i = 0; i < 8; ++i)
         {
-            fn_80016768();
+            iSystemPollResetButton();
             fname = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, i);
             if (iSG_get_finfo(data, fname) != 0)
             {
@@ -704,7 +704,7 @@ S32 iSGGameFileCount(st_ISGSESSION* isgdata)
     {
         return 0;
     }
-    fn_80016768();
+    iSystemPollResetButton();
     S32 count = 0;
     iSG_find_gamefile(data, -1, NULL, &count);
     return count;
@@ -719,7 +719,7 @@ S32 iSGFileSize(st_ISGSESSION* isgdata, const char* fname)
         return -1;
     }
     st_ISG_MEMCARD_DATA* data = &isgdata->mcdata[isgdata->slot];
-    fn_80016768();
+    iSystemPollResetButton();
     ret = iSG_get_fsize(data, fname);
     if (ret >= 0)
     {
@@ -976,7 +976,7 @@ S32 iSGSaveFile(st_ISGSESSION* isgdata, const char* fname, char* data, S32 n, S3
         return 0;
     }
 
-    fn_80016768();
+    iSystemPollResetButton();
     iconsize = iSG_cubeicon_size(isgdata->slot, mcdata->sectorSize);
     S32 sectorsize200 = mcdata->sectorSize + 0x1FF & -mcdata->sectorSize;
     iconsize += n + sectorsize200 - 1 & -sectorsize200;
@@ -987,7 +987,7 @@ S32 iSGSaveFile(st_ISGSESSION* isgdata, const char* fname, char* data, S32 n, S3
     icondata = (char*)((U32)alloc + 0x1F & 0xFFFFFFE0);
 
     memcpy(iSG_bfr_icondata(icondata, &statA, label, mcdata->sectorSize), data, n);
-    fn_80016768();
+    iSystemPollResetButton();
 
     if (iSG_mc_fopen(mcdata, fname, iconsize, ISG_IOMODE_WRITE, &operr) != 0)
     {
@@ -1034,7 +1034,7 @@ S32 iSGSaveFile(st_ISGSESSION* isgdata, const char* fname, char* data, S32 n, S3
         iSG_mc_fdel(mcdata, fname);
     }
 
-    fn_80016768();
+    iSystemPollResetButton();
 
     isgdata->as_operr = ISG_OPERR_NONE;
     if (writeret != 0)
@@ -1112,7 +1112,7 @@ S32 iSGReadLeader(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 
         return 0;
     }
 
-    fn_80016768();
+    iSystemPollResetButton();
     iconsize = iSG_cubeicon_size(data->chan, data->sectorSize);
     S32 sectorsize200 = data->sectorSize + 0x1FF & -data->sectorSize;
     if ((S32)databuf % 32 != 0 || numbytes % sectorsize200 != 0)
@@ -1130,7 +1130,7 @@ S32 iSGReadLeader(st_ISGSESSION* isgdata, const char* fname, char* databuf, S32 
         bufsize = numbytes;
     }
 
-    fn_80016768();
+    iSystemPollResetButton();
 
     if (iSG_mc_fopen(data, fname, -1, ISG_IOMODE_READ, &operr) != 0)
     {
@@ -2012,7 +2012,7 @@ static S32 iSG_mc_fread(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len, S32 off
             result = CARDGetResultCode(mcdata->chan);
             x = 0;
         }
-        fn_80016768();
+        iSystemPollResetButton();
     } while (result == CARD_RESULT_BUSY);
 
     if (result == CARD_RESULT_READY)
@@ -2070,7 +2070,7 @@ static S32 iSG_mc_fwrite(st_ISG_MEMCARD_DATA* mcdata, char* buf, S32 len)
             xferBytes = CARDGetXferredBytes(mcdata->chan);
             x = 0;
         }
-        fn_80016768();
+        iSystemPollResetButton();
     } while (result == CARD_RESULT_BUSY);
 
     if (asynresult == CARD_RESULT_READY)
