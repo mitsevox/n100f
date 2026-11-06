@@ -2619,16 +2619,34 @@ void zEntVillain_Init(st_zEntVillain* ent, p2EntAsset* asset)
 }
 
 // Finish setting up the villain after the scene and its move points are available.
+// Clears the villain's bonus-drop permission when the current scene, and optionally this villain's ID,
+// is on the bonus exclusion list.
+static void VBON_checkExclusions(st_zEntVillain* ent)
+{
+    for (st_ZVIL_BONUS_EXCLUSION* exclusion = g_bonusExclusions; exclusion->scene; exclusion++)
+    {
+        if (exclusion->scene == globals.sceneCur->sceneID && (!exclusion->id || exclusion->id == ent->id))
+        {
+            ent->allow &= ~0x800;
+            return;
+        }
+    }
+}
+
+// Returns the first move point of a villain's path, or NULL when it has none.
+static _zMovePoint* VNAV_mvptFromID(U32 aid)
+{
+    _zMovePoint* mvpt = NULL;
+    if (aid) mvpt = zMovePoint_From_xAssetID(aid);
+    return mvpt;
+}
+
 void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
 {
     ent->nav_mvptlist = NULL;
     ent->nav_prev = NULL;
     ent->nav_next = NULL;
-    U32 aid = ent->vilcfg.vilp2ass->movePointAssetID;
-    if (aid)
-    {
-        ent->nav_mvptlist = zMovePoint_From_xAssetID(aid);
-    }
+    ent->nav_mvptlist = VNAV_mvptFromID(ent->vilcfg.vilp2ass->movePointAssetID);
     zVIL_apply_vilcfg(ent, &ent->vilcfg);
 
     if (ent->ability & 0x2)
@@ -2643,17 +2661,7 @@ void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
         }
         else
         {
-            st_ZVIL_BONUS_EXCLUSION* exclusion = g_bonusExclusions;
-            while (exclusion->scene)
-            {
-                if (exclusion->scene == globals.sceneCur->sceneID &&
-                    (!exclusion->id || exclusion->id == ent->id))
-                {
-                    ent->allow &= ~0x800;
-                    break;
-                }
-                exclusion++;
-            }
+            VBON_checkExclusions(ent);
         }
     }
 
@@ -3066,7 +3074,8 @@ static void zVIL_setup_npcTable()
             ability = 0x281F4A;
             abl_atak = 0x20001;
             abl_dtct = 0x80;
-            abl_move = 0x213F;
+            abl_move = 0x21BF;
+            abl_move &= ~0x80;
             abl_spyk = 0x0;
             abl_vuln = 0x5F9E7;
             typ_person = ZVIL_PERSON_NORMAL;
@@ -3109,6 +3118,7 @@ static void zVIL_setup_npcTable()
             abl_atak = 0x20001;
             abl_dtct = 0x80;
             abl_move = 0x213F;
+            abl_move &= ~0x80;
             abl_spyk = 0x0;
             abl_vuln = 0x5F9E7;
             typ_person = ZVIL_PERSON_NORMAL;
@@ -3179,6 +3189,7 @@ static void zVIL_setup_npcTable()
             abl_atak = 0x20001;
             abl_dtct = 0x80;
             abl_move = 0x213F;
+            abl_move &= ~0x80;
             abl_spyk = 0x0;
             abl_vuln = 0x5F9E7;
             typ_person = ZVIL_PERSON_NORMAL;
@@ -13011,19 +13022,21 @@ static void zVIL_apply_vilcfg(st_zEntVillain* ent, st_ZVIL_CONFIG_REFERENCE* cfg
     VCFG_getParm(cfg, ZVIL_PARM_SANIM_MOVE, &ent->sanim_move);
     VCFG_getParm(cfg, ZVIL_PARM_SANIM_CHASE, &ent->sanim_chase);
 
-    st_ZVIL_NPCTYPE_LOOKUP* type = &g_npcTable[ent->asset->subtype];
-    if (type->vec_bndoff.x != cfg->vec_bndoffset.x ||
-        type->vec_bndoff.y != cfg->vec_bndoffset.y ||
-        type->vec_bndoff.z != cfg->vec_bndoffset.z)
     {
-        type->vec_bndoff = cfg->vec_bndoffset;
+        st_ZVIL_NPCTYPE_LOOKUP* vilrec = &g_npcTable[ent->asset->subtype];
+        if (vilrec->vec_bndoff.x != cfg->vec_bndoffset.x ||
+            vilrec->vec_bndoff.y != cfg->vec_bndoffset.y ||
+            vilrec->vec_bndoff.z != cfg->vec_bndoffset.z)
+        {
+            vilrec->vec_bndoff = cfg->vec_bndoffset;
+        }
+        if (vilrec->rad_bound != cfg->rad_bound)
+        {
+            vilrec->rad_bound = cfg->rad_bound;
+        }
+        vilrec->rad_bound2 = cfg->rad_bound2;
+        vilrec->vec_bnd2off = cfg->vec_bnd2offset;
     }
-    if (type->rad_bound != cfg->rad_bound)
-    {
-        type->rad_bound = cfg->rad_bound;
-    }
-    type->rad_bound2 = cfg->rad_bound2;
-    type->vec_bnd2off = cfg->vec_bnd2offset;
 
     VCFG_getParm(cfg, ZVIL_PARM_WANDER_ARC, &ent->ang_wander);
     VCFG_getParm(cfg, ZVIL_PARM_HIT_POINTS, &ent->hitpts);
@@ -13044,10 +13057,8 @@ static void zVIL_apply_vilcfg(st_zEntVillain* ent, st_ZVIL_CONFIG_REFERENCE* cfg
     VCFG_getParm(cfg, ZVIL_PARM_EXTEND_RANGE, &ent->dst_extend);
     VCFG_getParm(cfg, ZVIL_PARM_EXTEND_WIDTH, &ent->wid_extend);
     VCFG_getParm(cfg, ZVIL_PARM_EXTEND_RATE, &ent->spd_extend);
-    if (cfg->tymref_list[ZVIL_TDUR_DECAY] < type->decay)
-    {
-        cfg->tymref_list[ZVIL_TDUR_DECAY] = type->decay;
-    }
+    cfg->tymref_list[ZVIL_TDUR_DECAY] =
+        MAX(g_npcTable[ent->asset->subtype].decay, cfg->tymref_list[ZVIL_TDUR_DECAY]);
 }
 
 // Runs the villain's timers for a frame. The standby, animation, generic, reload, navigation,
@@ -17032,29 +17043,34 @@ static inline _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 du
 // Find the particle emitters used by villains in this scene.
 static void VPAR_readyize_emitters()
 {
-    st_zEntVillain_ParEmitInfo* info = g_emitinfo;
-    while (info->emitname)
+    en_VPAR_EMITTER_ROLE emitrole;
+    U32 emitid;
+    S32 flg_need;
+    S32 flg_omit;
+    xBase* pebase;
+    st_zEntVillain_ParEmitInfo* vinf = g_emitinfo;
+    en_zEntVillainSubTypeID viltype;
+    while (vinf->emitname)
     {
-        U32 id = xStrHash(info->emitname);
-        en_VPAR_EMITTER_ROLE role = info->emitrole;
-        en_zEntVillainSubTypeID type = info->viltype;
-        S32 need = info->flg_need;
-        S32 omit = info->flg_omit;
-        info++;
-        xBase* object = zSceneFindObject(id);
-        if (object && object->baseType == 0x26)
+        emitid = xStrHash(vinf->emitname);
+        emitrole = vinf->emitrole;
+        viltype = vinf->viltype;
+        flg_need = vinf->flg_need;
+        flg_omit = vinf->flg_omit;
+        vinf++;
+        pebase = zSceneFindObject(emitid);
+        if (pebase && pebase->baseType == 0x26)
         {
-            st_zEntVillain_ParEmitRecord* rec = NULL;
-            if (g_emitnext < 32) rec = &g_emitpool[g_emitnext++];
+            st_zEntVillain_ParEmitRecord* rec = (g_emitnext >= 32) ? NULL : &g_emitpool[g_emitnext++];
             if (rec)
             {
-                rec->emitrole = role;
-                rec->viltype = type;
+                rec->emitrole = emitrole;
+                rec->viltype = viltype;
                 rec->vilowner = 0;
-                rec->emitterID = id;
-                rec->emitctxt = (_zParEmitter*)object;
-                rec->flg_need = need;
-                rec->flg_omit = omit;
+                rec->emitterID = emitid;
+                rec->emitctxt = (_zParEmitter*)pebase;
+                rec->flg_need = flg_need;
+                rec->flg_omit = flg_omit;
                 XOrdAppend(&g_emitlist, rec);
             }
         }
@@ -17083,6 +17099,10 @@ static void VPAR_readyize_emitters()
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F32 dt)
 {
     _zParEmitterCustomSettings pecust = { 0 };
+    st_zEntVillain_ParEmitRecord* vpar;
+    S32 i;
+    S32 do_emit = 0;
+    S32 idx;
     _xVec3 vilctr = { 0 };
     _xVec3 vilhed = { 0 };
     vilctr = *xBoundCenter(&ent->bound);
@@ -17093,41 +17113,39 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
     }
     vilhed.y += 0.1f;
 
-    S32 do_emit = 0;
-    for (S32 i = 0; i < g_emitlist.cnt; i++)
+    for (i = 0; i < g_emitlist.cnt; i++)
     {
-        st_zEntVillain_ParEmitRecord* vpar = (st_zEntVillain_ParEmitRecord*)g_emitlist.list[i];
+        vpar = (st_zEntVillain_ParEmitRecord*)g_emitlist.list[i];
         if (!vpar->emitctxt || vpar->emitrole != role ||
             (vpar->viltype != (en_zEntVillainSubTypeID)-1 && vpar->viltype != ent->asset->subtype) ||
-            (vpar->flg_need & ent->flg_misc) != vpar->flg_need || (vpar->flg_omit & ent->flg_misc))
+            (vpar->flg_need & ent->ability) != vpar->flg_need || (ent->ability & vpar->flg_omit))
             continue;
         pecust.custom_flags = 0;
         switch (role)
         {
         case VPAR_EMIT_EXTATTACK:
-        case VPAR_EMIT_POOF:
-        case VPAR_EMIT_TELEPORT:
             do_emit = 0;
             break;
         case VPAR_EMIT_GUMMY:
             pecust.custom_flags = 0x20;
-            for (S32 idx = 0; idx <= 4; idx++)
+            for (idx = 0; idx <= 4; idx++)
                 if (VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)idx, &pecust.pos))
                     zParEmitterEmitCustom(vpar->emitctxt, dt, &pecust);
             do_emit = 0;
             break;
         case VPAR_EMIT_HEADBUTT:
         {
-            xMat4x3* playerframe = (xMat4x3*)globals.player.ent.model->Mat;
             _xVec3 angles = { 0 };
             F32 emitdt = dt;
+            xMat4x3* playerframe = (xMat4x3*)globals.player.ent.model->Mat;
+            pecust.custom_flags = 0x20;
             pecust.pos.x = playerframe->pos.x + playerframe->at.x;
             pecust.pos.y = playerframe->pos.y + 1.1f;
             pecust.pos.z = playerframe->pos.z + playerframe->at.z;
-            pecust.custom_flags = 0x10020;
+            pecust.custom_flags |= 0x10000;
             xMat3x3GetEuler((xMat3x3*)playerframe, &angles);
-            pecust.rot[0] = (U8)(S32)(255.0f * (angles.x / (2.0f * PI)));
             pecust.rot[1] = 0x40;
+            pecust.rot[0] = (U8)(S32)(255.0f * (angles.x / (2.0f * PI)));
             pecust.rot[2] = (U8)(S32)(255.0f * (angles.z / (2.0f * PI)));
             if (vpar->emitterID == xStrHash("ParEmit_SD_Headbutt2"))
                 pecust.rot[0] += 0x40;
@@ -17144,8 +17162,8 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             if (vpar->emitterID == xStrHash("ParEmit_Vil_Bored"))
             {
                 pecust.color_birth[3] = 0;
-                pecust.color_death[3] = 0;
                 pecust.custom_flags |= 0x180;
+                pecust.color_death[3] = 0;
             }
             do_emit = 1;
             break;
@@ -17158,9 +17176,24 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             pecust.custom_flags = 0x20;
             do_emit = 1;
             break;
-        default:
-            pecust.pos = vilctr;
+        case VPAR_EMIT_WALLPRINT:
+        case VPAR_EMIT_SOAPY:
+        case VPAR_EMIT_POPSOAP:
+        case VPAR_EMIT_POPGUM:
+        case VPAR_EMIT_DYING:
+        case VPAR_EMIT_DECAY:
             pecust.custom_flags = 0x20;
+            pecust.pos = vilctr;
+            do_emit = 1;
+            break;
+        case VPAR_EMIT_POOF:
+        case VPAR_EMIT_TELEPORT:
+            do_emit = 0;
+            break;
+        case VPAR_EMIT_RESPAWN:
+        default:
+            pecust.custom_flags = 0x20;
+            pecust.pos = vilctr;
             do_emit = 1;
             break;
         }
