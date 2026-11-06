@@ -2452,11 +2452,11 @@ S32 zEntVillain_Startup()
     memset(g_datablock, 0, 0x20000);
 
     S32 i = 0;
-    while (g_npcTable[i].enabled) i++;
+    while (g_npcTable[i++].enabled) {}
     i = 0;
-    while (g_npcFuncs[i].flg_funcs & 0x1) i++;
+    while (g_npcFuncs[i++].flg_funcs & 0x1) {}
     i = 0;
-    while (g_animname[i]) i++;
+    while (g_animname[i++]) {}
     for (i = 0; i < ZVIL_ANIM_NOMORE; i++) g_anamhash[i] = xStrHash(g_animname[i]);
     zVIL_setup_npcTable();
     for (i = 0; i < ZVIL_ANIM_NOMORE; i++) g_anamhash[i] = xStrHash(g_animname[i]);
@@ -9622,6 +9622,8 @@ static S32 VILN_BGG_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     }
     switch (note)
     {
+    case ZVIL_NOTE_OLDTIME:
+        break;
     case ZVIL_NOTE_PREPARE:
         zVIL_tag_verts(vil);
         break;
