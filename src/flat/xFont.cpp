@@ -1,4 +1,5 @@
 #include "xFont.h"
+#include "xColor.h"
 #include "xstransvc.h"
 #include "xutil.h"
 
@@ -13,8 +14,8 @@ void iFontDrawBackdrop(xFontBox* box);
 xFontGlobals_t gFontGlobals = { 0.0f, 0.0f, 0, 0.0f };
 
 static char* blankText = "";
-xFontBox gBoxList[4];
 xFontInfo gFontList[4];
+xFontBox gBoxList[4];
 
 // Loads the FONT scene's assets in one go, clears the font and text box tables and hands over to
 // the platform layer.
@@ -110,25 +111,19 @@ xFontBox* xFontBoxCreate(F32 x, F32 y, F32 w, F32 h, U32 id, iColor_tag color)
     return box;
 }
 
-// Reads one escape-code digit: a digit gives its value, anything else is taken as it is and left
-// in the text.
-static inline char xFontReadDigit(char*& s)
+// Reads a fixed-width decimal field into an integer. Single-digit escapes accept a literal
+// character without consuming it; RGB fields consume three characters and narrow at color creation.
+static inline S32 xFontReadDigits(char*& s, S32 count, S32 literalFallback)
 {
-    char c = *s;
-    if (c < '0' || c > '9')
+    S32 n = 0;
+    for (S32 i = 0; i < count; i++)
     {
-        return c;
-    }
-    s++;
-    return c - '0';
-}
-
-static inline char xFontReadNumber3(char*& s)
-{
-    char n = 0;
-    for (S32 i = 0; i < 3; i++)
-    {
-        n = n * 10 + (*s++ - '0');
+        if (literalFallback && (*s < '0' || *s > '9'))
+        {
+            n = *s;
+            break;
+        }
+        n = n * 10 + *s++ - '0';
     }
     return n;
 }
@@ -137,13 +132,14 @@ static inline char xFontReadNumber3(char*& s)
 // a line break ('\n' or '@') or the end, stopping early once the width would pass maxw (0 means no
 // limit). Escape codes inside the text change the font ($B<digit>), the colour ($A<rrr><ggg><bbb>,
 // $C for the box's saved colour, $D<digit> for one of the preset colours); a drawn word leaves the
-// box with the last font and colour.
+// box with the last font and colour. Spacing within the word uses its initial font.
 static char* ProcessWord(xFontBox* box, char* text, F32* width, F32* height, F32 maxw)
 {
     char* s = text;
     U32 fontID = box->font;
     xFontInfo* font = &gFontList[fontID];
-    iColor_tag color = box->color;
+    iColor_tag color;
+    color = box->color;
     F32 dx;
 
     *width = 0.0f;
@@ -158,48 +154,45 @@ static char* ProcessWord(xFontBox* box, char* text, F32* width, F32* height, F32
             switch (c)
             {
             case 'B':
-                fontID = xFontReadDigit(s);
+                fontID = xFontReadDigits(s, 1, 1);
                 break;
             case 'A':
             {
-                iColor_tag rgb;
-                rgb.r = xFontReadNumber3(s);
-                rgb.g = xFontReadNumber3(s);
-                rgb.b = xFontReadNumber3(s);
-                rgb.a = 0xFF;
-                color = rgb;
+                S32 r = xFontReadDigits(s, 3, 0);
+                S32 g = xFontReadDigits(s, 3, 0);
+                S32 b = xFontReadDigits(s, 3, 0);
+                color = xColorFromRGBA(r, g, b, 0xFF);
                 break;
             }
             case 'C':
                 color = box->saved_color;
                 break;
             case 'D':
-                switch (xFontReadDigit(s))
+                switch (xFontReadDigits(s, 1, 1))
                 {
                 case 0:
                 case '#':
                 {
-                    iColor_tag green = { 0x0C, 0xB3, 0x5F, 0xFF };
-                    color = green;
+                    color = xColorFromRGBA(0x0C, 0xB3, 0x5F, 0xFF);
                     break;
                 }
                 case 1:
                 case '{':
                 {
-                    iColor_tag red = { 0xCD, 0x07, 0x00, 0xFF };
-                    color = red;
+                    color = xColorFromRGBA(0xCD, 0x07, 0x00, 0xFF);
                     break;
                 }
                 case 2:
+                case '}':
+                case '~':
                 {
-                    iColor_tag blue = { 0x99, 0xBD, 0xEE, 0xFF };
-                    color = blue;
+                    color = xColorFromRGBA(0x99, 0xBD, 0xEE, 0xFF);
                     break;
                 }
                 case '|':
+                default:
                 {
-                    iColor_tag white = { 0xFF, 0xFF, 0xFF, 0xFF };
-                    color = white;
+                    color = xColorFromRGBA(0xFF, 0xFF, 0xFF, 0xFF);
                     break;
                 }
                 }
@@ -213,7 +206,8 @@ static char* ProcessWord(xFontBox* box, char* text, F32* width, F32* height, F32
         }
         else
         {
-            dx = (font->pspc[*s].dx + 3) * (box->x_spacing / font->char_width);
+            dx = font->pspc[*s].dx + 3U;
+            dx *= box->x_spacing / font->char_width;
         }
 
         if (*s == '\n' || *s == '@' || *s == '\0' || *s == ' ' || *s == '\t')
@@ -245,48 +239,20 @@ static char* ProcessWord(xFontBox* box, char* text, F32* width, F32* height, F32
     return s;
 }
 
-// The width of a space or a tab (eight spaces), or 0 for other characters.
-static inline F32 xFontWhitespace(xFontBox* box, xFontInfo* font, char c, F32 width)
-{
-    if (font->flags & 4)
-    {
-        if (c == ' ')
-        {
-            width += box->x_spacing;
-        }
-        if (c == '\t')
-        {
-            width += 8.0f * box->x_spacing;
-        }
-    }
-    else
-    {
-        F32 space = ((font->pspc[' '].dx + 3) * box->x_spacing) / font->char_width;
-        if (c == ' ')
-        {
-            width += space;
-        }
-        if (c == '\t')
-        {
-            width += 8.0f * space;
-        }
-    }
-    return width;
-}
-
 // Fits as many words as the line has room for, then draws them with the box's justification
 // (flag 0x20 right, 0x40 centred). Returns where the next line starts; the text itself when not
 // even one word fits.
 static char* JustifyLine(xFontBox* box, char* text, F32 maxwidth, F32 maxheight)
 {
-    xFontInfo* font = &gFontList[box->font];
-    char* s;
-    char* end;
     F32 width;
     F32 height;
     F32 whitespace_width;
     F32 testwidth;
     F32 testheight;
+    char* s;
+    char* t;
+    char* end;
+    xFontInfo* font = &gFontList[box->font];
 
     if (text == NULL)
     {
@@ -296,8 +262,7 @@ static char* JustifyLine(xFontBox* box, char* text, F32 maxwidth, F32 maxheight)
     height = 0.0f;
     width = 0.0f;
     gFontGlobals.draw = 0;
-    end = text;
-    s = text;
+    s = end = text;
 
     while (width <= maxwidth && height <= maxheight && s != NULL)
     {
@@ -314,7 +279,29 @@ static char* JustifyLine(xFontBox* box, char* text, F32 maxwidth, F32 maxheight)
         whitespace_width = 0.0f;
         while (*s == ' ' || *s == '\t')
         {
-            whitespace_width = xFontWhitespace(box, font, *s, whitespace_width);
+            if (font->flags & 4)
+            {
+                if (*s == ' ')
+                {
+                    whitespace_width += box->x_spacing;
+                }
+                if (*s == '\t')
+                {
+                    whitespace_width += 8.0f * box->x_spacing;
+                }
+            }
+            else
+            {
+                F32 space = ((font->pspc[' '].dx + 3U) * box->x_spacing) / font->char_width;
+                if (*s == ' ')
+                {
+                    whitespace_width += space;
+                }
+                if (*s == '\t')
+                {
+                    whitespace_width += 8.0f * space;
+                }
+            }
             s++;
         }
 
@@ -333,7 +320,7 @@ static char* JustifyLine(xFontBox* box, char* text, F32 maxwidth, F32 maxheight)
             whitespace_width = 0.0f;
         }
 
-        char* t = ProcessWord(box, s, &testwidth, &testheight, 0.0f);
+        t = ProcessWord(box, s, &testwidth, &testheight, 0.0f);
         if (testwidth + (width + whitespace_width) > maxwidth)
         {
             if (testwidth > maxwidth)
@@ -347,8 +334,7 @@ static char* JustifyLine(xFontBox* box, char* text, F32 maxwidth, F32 maxheight)
             break;
         }
 
-        end = t;
-        s = end;
+        s = end = t;
         width += whitespace_width + testwidth;
         height = (height > testheight) ? height : testheight;
     }
@@ -379,7 +365,29 @@ static char* JustifyLine(xFontBox* box, char* text, F32 maxwidth, F32 maxheight)
         whitespace_width = 0.0f;
         while (*s == ' ' || *s == '\t')
         {
-            whitespace_width = xFontWhitespace(box, font, *s, whitespace_width);
+            if (font->flags & 4)
+            {
+                if (*s == ' ')
+                {
+                    whitespace_width += box->x_spacing;
+                }
+                if (*s == '\t')
+                {
+                    whitespace_width += 8.0f * box->x_spacing;
+                }
+            }
+            else
+            {
+                F32 space = ((font->pspc[' '].dx + 3U) * box->x_spacing) / font->char_width;
+                if (*s == ' ')
+                {
+                    whitespace_width += space;
+                }
+                if (*s == '\t')
+                {
+                    whitespace_width += 8.0f * space;
+                }
+            }
             s++;
         }
 
@@ -428,8 +436,7 @@ char* xFontBoxRender(xFontBox* box)
         iFontDrawBackdrop(box);
     }
 
-    s = box->text;
-    if (s == NULL)
+    if (box->text == NULL)
     {
         return NULL;
     }
@@ -443,6 +450,7 @@ char* xFontBoxRender(xFontBox* box)
         return NULL;
     }
 
+    s = box->text;
     gFontGlobals.dpx = minx;
     gFontGlobals.dpy = miny;
     iFontSetCharRenderState(box);
