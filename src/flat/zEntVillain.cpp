@@ -360,7 +360,7 @@ static void VILN_KookRender(_xEnt* ent);
 void zEntVillain_InitDep(st_zEntVillain* ent, zScene* sc);
 static void zVIL_setup_npcTable();
 static S32 VPRJ_BBK_attach(zEntProjectile* prj);
-static inline void VPRJ_startup();
+static void VPRJ_startup();
 static void VPRJ_BBK_detach(zEntProjectile* prj);
 static S32 VPRJ_BBK_logix(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
 static S32 VPRJ_BBK_prjmove(zEntProjectile* prj, F32 dt, zScene* scn, _xEntFrame* frame);
@@ -15551,7 +15551,7 @@ static S32 VWEP_lobInitMMFlask(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3* vec
 
 // Registers the four villain projectile categories (Black Knight axe, Green Ghost shockwave,
 // Redbeard sword, Mastermind flask) with their callbacks and properties.
-static inline void VPRJ_startup()
+static void VPRJ_startup()
 {
     st_ZPRJ_CATEGORY_FUNCS fmap_black = { 1, VPRJ_BBK_attach, VPRJ_BBK_detach, VPRJ_BBK_logix,
                                    VPRJ_BBK_prjmove, VPRJ_BBK_notify, NULL,
