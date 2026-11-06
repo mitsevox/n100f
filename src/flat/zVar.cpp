@@ -188,7 +188,6 @@ U32 zVarEntryCB_eVarCin14();
 inline char* zVarGameSlotInfo(S32 i);
 
 char txt[64];
-S32 sVarMagicInit;
 
 zVarEntry zVarEntryTable[108] = {
     { 0, 0, "Chances", zVarEntryCB_PCChances },
@@ -343,19 +342,20 @@ zVarMagicEntry sVarMagicEntryTrable[39] = {
     { 0, NULL, NULL },
 };
 
-static U32 sSnackGateValue;
-static U32 selSceneID;
-static U32 allmovies;
-static U32 endgame;
-static U32 MMDefeated;
-static U32 F001Unlocked;
-static U32 E001Unlocked;
-static U32 S001Unlocked;
-static U32 R001Unlocked;
 static U32 hasMap;
+static U32 R001Unlocked;
+static U32 S001Unlocked;
+static U32 E001Unlocked;
+static U32 F001Unlocked;
+static U32 MMDefeated;
+static U32 endgame;
+static U32 allmovies;
+static U32 selSceneID;
+static U32 sSnackGateValue;
+S32 sVarMagicInit;
 
 // Upper-cases a scene letter.
-static inline S32 zVarToUpper(S32 c)
+static inline S32 zVarToUpper(char c)
 {
     bool lower = false;
 
@@ -363,12 +363,17 @@ static inline S32 zVarToUpper(S32 c)
     {
         lower = true;
     }
-    if (lower)
-    {
-        c -= 'a' - 'A';
-    }
+    return lower ? c - ('a' - 'A') : c;
+}
 
-    return c;
+static inline void zVarMagicInitTable()
+{
+    zVarMagicEntry* e;
+
+    for (e = sVarMagicEntryTrable; e->varName; e++)
+    {
+        e->varNameID = xStrHash(e->varName);
+    }
 }
 
 // Copies src to dst, replacing each "$V<name>$" with the text its magic-variable callback writes.
@@ -381,10 +386,7 @@ void zVarMagicProcessText(char* src, char* dst)
 
     if (!sVarMagicInit)
     {
-        for (e = sVarMagicEntryTrable; e->varName; e++)
-        {
-            e->varNameID = xStrHash(e->varName);
-        }
+        zVarMagicInitTable();
         sVarMagicInit = 1;
     }
 
@@ -480,21 +482,24 @@ U32 zVarEntryCB_SndMode()
 // A volume as the 0-10 menu setting: the average of the left and right levels, rounded.
 U32 zVarEntryCB_SndMasterVol()
 {
-    F64 vol = (gSnd.mastervol.volL + gSnd.mastervol.volR) * 0.5f * 10.0;
+    F64 vol = (gSnd.mastervol.volL + gSnd.mastervol.volR) / 2.0f;
+    vol *= 10.0;
 
     return (U32)(0.5 + vol);
 }
 
 U32 zVarEntryCB_SndMusicVol()
 {
-    F64 vol = (gSnd.streamvol.volL + gSnd.streamvol.volR) * 0.5f * 10.0;
+    F64 vol = (gSnd.streamvol.volL + gSnd.streamvol.volR) / 2.0f;
+    vol *= 10.0;
 
     return (U32)(0.5 + vol);
 }
 
 U32 zVarEntryCB_SndFXVol()
 {
-    F64 vol = (gSnd.fxvol.volL + gSnd.fxvol.volR) * 0.5f * 10.0;
+    F64 vol = (gSnd.fxvol.volL + gSnd.fxvol.volR) / 2.0f;
+    vol *= 10.0;
 
     return (U32)(0.5 + vol);
 }
@@ -714,14 +719,16 @@ char* zVMCB_PlayerChancesCount(char* dst)
 
 char* zVMCB_SoundMusicVolume(char* dst)
 {
-    F64 vol = (gSnd.streamvol.volL + gSnd.streamvol.volR) * 0.5f * 10.0;
+    F64 vol = (gSnd.streamvol.volL + gSnd.streamvol.volR) / 2.0f;
+    vol *= 10.0;
 
     return dst + sprintf(dst, "%d", (U32)(0.5 + vol));
 }
 
 char* zVMCB_SoundFXVolume(char* dst)
 {
-    F64 vol = (gSnd.fxvol.volL + gSnd.fxvol.volR) * 0.5f * 10.0;
+    F64 vol = (gSnd.fxvol.volL + gSnd.fxvol.volR) / 2.0f;
+    vol *= 10.0;
 
     return dst + sprintf(dst, "%d", (U32)(0.5 + vol));
 }
