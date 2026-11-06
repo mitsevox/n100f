@@ -14821,54 +14821,59 @@ static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3*
 // Notify a projectile's owner and release its reservation when the projectile ends.
 static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*)
 {
+    S32 handled = 0;
     st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
-    S32 audible = !(vil->flg_misc & 1);
-    U32 sound;
+    U32 aid_snd;
+    S32 do_sounds = (vil->ability & 1) ^ 1;
     switch (event)
     {
     case ZPRJ_EVNT_LAUNCH:
-        if (audible)
+        if (do_sounds)
         {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
-        return 1;
+        handled = 1;
+        break;
+    case ZPRJ_EVNT_HITPLYR:
+        zVIL_send_stim(vil, ZVIL_STIM_DOTAUNT);
+        if (do_sounds)
+        {
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        handled = 1;
+        break;
     case ZPRJ_EVNT_INFLIGHT:
-        if (audible && !iSndIsPlaying(0, (U32)prj))
+        if (do_sounds && !iSndIsPlaying(0, (U32)prj))
         {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
-        return 1;
+        handled = 1;
+        break;
     case ZPRJ_EVNT_DETONATE:
-        if (audible)
+        if (do_sounds)
         {
             xSndStopChildren((U32)prj);
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
-        return 1;
-    case ZPRJ_EVNT_HITPLYR:
-    {
-        zVIL_send_stim(vil, ZVIL_STIM_DOTAUNT);
-        if (audible)
-        {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
-        }
-        return 1;
-    }
+        handled = 1;
+        break;
     case ZPRJ_EVNT_TRANSTATE:
         if (prj->state != ZPRJ_STATE_ACTIVE) xSndStopChildren((U32)prj);
-        return 1;
+        handled = 1;
+        break;
     case ZPRJ_EVNT_ABORT:
     case ZPRJ_EVNT_SELFDESTRUCT:
     case ZPRJ_EVNT_DEATH:
         xSndStopChildren((U32)prj);
         if (vil->prj_reserved == prj) vil->prj_reserved = NULL;
-        return 1;
-    default: return 0;
+        handled = 1;
+        break;
     }
+    return handled;
 }
 
 // Unused.
@@ -14912,8 +14917,8 @@ static inline S32 VWEP_lobInitArrow(st_zEntVillain* vil, _xVec3* pos_tgt, _xVec3
     {
         xVec3Copy(&aiminf.arrow.pos_tgt, pos_tgt);
     }
-    prj->AimAtTarget(&aiminf, 1);
-    return 1;
+    rc = prj->AimAtTarget(&aiminf, 1);
+    return rc;
 }
 
 // Aims the villain's reserved projectile as a gravity ball from his attack vertex, or else from
@@ -15630,14 +15635,23 @@ static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
         if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         break;
     case ZPRJ_EVNT_INFLIGHT:
+        if (!iSndIsPlaying(0, (U32)prj))
+        {
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        break;
     case ZPRJ_EVNT_DETONATE:
+        if (!iSndIsPlaying(0, (U32)prj))
+        {
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
+            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        }
+        break;
     case ZPRJ_EVNT_VIL_AFTERMATH:
         if (!iSndIsPlaying(0, (U32)prj))
         {
-            en_NPC_SOUND which = event == ZPRJ_EVNT_INFLIGHT ? VSND_TYP_PRJ_FLIGHT :
-                                 event == ZPRJ_EVNT_DETONATE ? VSND_TYP_PRJ_EXPLODE :
-                                 VSND_TYP_PRJ_SPLAT;
-            sound = VSND_select_sound(vil, which);
+            sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
             if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
         break;
@@ -16579,7 +16593,9 @@ static inline _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 du
     add.time = dur;
     add.total_points = 16;
     add.thickness = 0.25f;
-    add.r = add.g = add.b = 255;
+    add.r = 255;
+    add.g = 255;
+    add.b = 255;
     add.rand_radius = 5.0f;
     add.flags = 0x34;
     _tagLightning* bolt = zLightningAdd(&add);
@@ -16595,7 +16611,8 @@ static inline _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 du
     add.time = dur;
     add.total_points = 16;
     add.thickness = 0.16f;
-    add.r = add.g = 80;
+    add.r = 80;
+    add.g = 80;
     add.b = 255;
     add.rand_radius = 3.0f;
     add.setup_degrees = 20.0f + 90.0f * iurand();
