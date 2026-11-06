@@ -17091,7 +17091,9 @@ static void VPAR_readyize_emitters()
     sEmitRBFlames = zParEmitterFind("RB STOPPING WALL EMITTER");
 }
 
-// Emit a villain particle role at its bound, head, or marked model vertices.
+static inline void VPAR_emit_headbutt(st_zEntVillain_ParEmitRecord* vpar,
+                                      _zParEmitterCustomSettings* pecust, F32 dt);
+
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F32 dt)
 {
     _zParEmitterCustomSettings pecust = { 0 };
@@ -17130,27 +17132,9 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             do_emit = 0;
             break;
         case VPAR_EMIT_HEADBUTT:
-        {
-            _xVec3 angles = { 0 };
-            F32 emitdt = dt;
-            xMat4x3* playerframe = (xMat4x3*)globals.player.ent.model->Mat;
-            pecust.custom_flags = 0x20;
-            pecust.pos.x = playerframe->pos.x + playerframe->at.x;
-            pecust.pos.y = playerframe->pos.y + 1.1f;
-            pecust.pos.z = playerframe->pos.z + playerframe->at.z;
-            pecust.custom_flags |= 0x10000;
-            xMat3x3GetEuler((xMat3x3*)playerframe, &angles);
-            pecust.rot[1] = 0x40;
-            pecust.rot[0] = (U8)(S32)(255.0f * (angles.x / (2.0f * PI)));
-            pecust.rot[2] = (U8)(S32)(255.0f * (angles.z / (2.0f * PI)));
-            if (vpar->emitterID == xStrHash("ParEmit_SD_Headbutt2"))
-                pecust.rot[0] += 0x40;
-            else
-                emitdt = 0.0f;
-            zParEmitterEmitCustom(vpar->emitctxt, emitdt, &pecust);
+            VPAR_emit_headbutt(vpar, &pecust, dt);
             do_emit = 0;
             break;
-        }
         case VPAR_EMIT_BORED:
         case VPAR_EMIT_GUARD:
             pecust.pos = vilhed;
@@ -17196,6 +17180,33 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
         if (do_emit) zParEmitterEmitCustom(vpar->emitctxt, dt, &pecust);
     }
 }
+
+// Emits a headbutt burst in front of the player, turned to the player's facing. Only the
+// ParEmit_SD_Headbutt2 emitter gets the frame time and a quarter turn more pitch (helper name
+// ours).
+static inline void VPAR_emit_headbutt(st_zEntVillain_ParEmitRecord* vpar,
+                                      _zParEmitterCustomSettings* pecust, F32 dt)
+{
+    _xVec3 angles = { 0 };
+    F32 emitdt = dt;
+    xMat4x3* playerframe = (xMat4x3*)globals.player.ent.model->Mat;
+    pecust->custom_flags = 0x20;
+    pecust->pos.x = playerframe->pos.x + playerframe->at.x;
+    pecust->pos.y = playerframe->pos.y + 1.1f;
+    pecust->pos.z = playerframe->pos.z + playerframe->at.z;
+    pecust->custom_flags |= 0x10000;
+    xMat3x3GetEuler((xMat3x3*)playerframe, &angles);
+    pecust->rot[1] = 0x40;
+    pecust->rot[0] = (U8)(S32)(255.0f * (angles.x / (2.0f * PI)));
+    pecust->rot[2] = (U8)(S32)(255.0f * (angles.z / (2.0f * PI)));
+    if (vpar->emitterID == xStrHash("ParEmit_SD_Headbutt2"))
+        pecust->rot[0] += 0x40;
+    else
+        emitdt = 0.0f;
+    zParEmitterEmitCustom(vpar->emitctxt, emitdt, pecust);
+}
+
+// Emit a villain particle role at its bound, head, or marked model vertices.
 
 // Emit particles along a villain's extended attack.
 static void VPAR_emit_extattack(st_zEntVillain* ent, _xVec3* origin, _xVec3* aimdir,
