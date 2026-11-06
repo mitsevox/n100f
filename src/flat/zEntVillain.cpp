@@ -9161,10 +9161,14 @@ static S32 VILN_BBK_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     {
         while (model)
         {
-            if (idx == 0)
+            switch (idx)
             {
+            case 0:
                 model->Flags |= 1;
                 model->Flags |= 2;
+                break;
+            case 1:
+                break;
             }
             model = model->Next;
             idx++;
@@ -9172,6 +9176,7 @@ static S32 VILN_BBK_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     }
     switch (note)
     {
+    case ZVIL_NOTE_OLDTIME: break;
     case ZVIL_NOTE_PREPARE: zVIL_tag_verts(vil); break;
     case ZVIL_NOTE_PRECALC:
         if (vil->mode >= ZVIL_MODE_NORMAL) zVIL_precalc(vil, 0xf);
