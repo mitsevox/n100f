@@ -288,9 +288,9 @@ struct st_ZVIL_BONUS_EXCLUSION
 
 static xAnimTable* VANM_mktable_STD();
 static xAnimTable* VANM_mktable_GANG();
-static xAnimTable* VANM_mktable_SIMP();
+static inline xAnimTable* VANM_mktable_SIMP();
 static xAnimTable* VANM_mktable_SHARK();
-static xAnimTable* VANM_mktable_SHAM();
+static inline xAnimTable* VANM_mktable_SHAM();
 static xAnimTable* VANM_mktable_MM();
 static xAnimTable* VANM_mktable_RB();
 static xAnimTable* VANM_mktable_GG();
@@ -316,7 +316,7 @@ static inline en_NPC_ANIMSTATES VANM_randthree(st_zEntVillain* ent, en_NPC_ANIMS
                                                en_NPC_ANIMSTATES b, en_NPC_ANIMSTATES c);
 static xAnimTransition* VANM_findtran(st_zEntVillain* ent, xAnimTable* table, xAnimState* from,
                                       xAnimState* to, S32 autoslamit, xAnimTransition** newtran);
-static xAnimSingle* VANM_entSingle(const _zEnt* ent);
+static inline xAnimSingle* VANM_entSingle(const _zEnt* ent);
 static inline xAnimState* VANM_entState(const _zEnt* ent);
 static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum);
 static inline void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter);
@@ -342,7 +342,7 @@ static inline S32 VOUT_chkdo_followArrived(st_zEntVillain* vil);
 static inline S32 VSUP_choose(S32* list, F32* wts, S32 cnt);
 static inline void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref);
 
-static void zVIL_tag_verts(st_zEntVillain* ent);
+static inline void zVIL_tag_verts(st_zEntVillain* ent);
 static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt);
 static void zVIL_apply_vilcfg(st_zEntVillain* ent, st_ZVIL_CONFIG_REFERENCE* cfg);
 static void zVIL_apply_move(st_zEntVillain* ent, _xScene* scn, F32 dt, _xEntFrame* frame);
@@ -350,7 +350,7 @@ static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt);
 static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS pid, void* vv);
 static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata);
 static void VCFG_readAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata);
-static void VCFG_setAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata, p2EntAsset* asset);
+static inline void VCFG_setAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata, p2EntAsset* asset);
 static S32 zVIL_elcb_event(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget);
 static void zVIL_elcb_update(_xEnt* ent, _xScene* scn, F32 dt);
 static void zVIL_elcb_bupdate(_xEnt* ent, _xVec3* pos);
@@ -381,19 +381,19 @@ static S32 VSND_procQueue(st_zEntVillain* vil, F32 dt);
 static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplicit, S32 flg_vsnd,
                        F32 dist);
 static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
-static en_NPC_SOUND VSND_typeFromHash(st_zEntVillain* vil, U32 aid_snd);
-static S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* xsid_caller);
-static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx);
-static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt);
+static inline en_NPC_SOUND VSND_typeFromHash(st_zEntVillain* vil, U32 aid_snd);
+static inline S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* xsid_caller);
+static inline void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx);
+static inline void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt);
 static inline void zVIL_send_stim(st_zEntVillain* ent, en_NPC_STIMULUS stim);
 static inline void VEFX_gumBlob_place(xModelInstance* blob, xVec3* pos, F32 scale);
 static inline S32 VOUT_hit_isWall(st_zEntVillain* vil, _xVec3* dir_trav, _xVec3* vec_fromwall);
-static S32 zVIL_cond_spawn_ok(st_zEntVillain* vil);
+static inline S32 zVIL_cond_spawn_ok(st_zEntVillain* vil);
 static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo);
 static void VPRJ_zapTheAxe(zEntProjectile* prj, S32 cleanup);
 static en_BEHAVIOUR_GOAL VGOL_set(st_zEntVillain* ent, en_BEHAVIOUR_GOAL goal);
-static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser);
-static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser);
+static inline S32 VSAV_load(st_zEntVillain* ent, xSerial* xser);
+static inline S32 VSAV_save(st_zEntVillain* ent, xSerial* xser);
 static void VEFX_plop_gum(st_zEntVillain* ent);
 static void VPAR_emit_extattack(st_zEntVillain*, _xVec3*, _xVec3*, F32, F32, F32);
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE emittype, F32 dt);
@@ -402,8 +402,8 @@ static void VBON_drop_bonusItem(st_zEntVillain* vil);
 static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp);
 static inline void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt);
 static inline void VBON_setup_bonusTable();
-static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop_caller);
-static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 flg_vsnd, F32 radius,
+static inline S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop_caller);
+static inline S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 flg_vsnd, F32 radius,
                               F32 delay, F32 repeatDelay, S32 repeatCount, U32 useThisSound);
 static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
@@ -6675,7 +6675,7 @@ static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _x
 
 
 // Unused.
-static void zEntVillain_UnknownTemplate12()
+static inline void zEntVillain_UnknownTemplate12()
 {
     _xVec3 lost = { 0 };
 }
@@ -12945,7 +12945,7 @@ static void zVIL_elcb_move(_xEnt* xe, _xScene* scn, F32 dt, _xEntFrame* frame)
 
 // Whether the villain may spawn: not when its minimum difficulty is negative, nor unless the
 // player has every special its spawn mask asks for.
-static S32 zVIL_cond_spawn_ok(st_zEntVillain* vil)
+static inline S32 zVIL_cond_spawn_ok(st_zEntVillain* vil)
 {
     S32 result = 1;
     S32 msk_condspawn = 0;
@@ -12976,7 +12976,7 @@ static inline void zVIL_send_stim(st_zEntVillain* ent, en_NPC_STIMULUS stim)
 
 // Passes a stimulus to the villain's type, unless it is on standby and its standby time has not
 // run out. If the type answers with a stimulus of its own, the villain changes goal to suit it.
-static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt)
+static inline void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt)
 {
     st_STIMULUS_CONTEXT_DATA stimresp = { ZVIL_STIM_NONE };
 
@@ -12994,7 +12994,7 @@ static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CO
 
 // Sets up a model tag for each of the villain's configured vertex positions that is not zero, and
 // marks it in flg_vert.
-static void zVIL_tag_verts(st_zEntVillain* ent)
+static inline void zVIL_tag_verts(st_zEntVillain* ent)
 {
     _xVec3* tmp_pos;
     S32 i;
@@ -13835,7 +13835,7 @@ static F32 VNAV_get_movespeed(st_zEntVillain* ent, F32 base)
 }
 
 // Unused.
-static void zEntVillain_UnknownTemplate128()
+static inline void zEntVillain_UnknownTemplate128()
 {
     S32 lost[32] = { 0 };
 }
@@ -14758,7 +14758,7 @@ static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
 // timer lengths, where the asset gives the dazed, taunt, gum, bubble, extend and reload times and
 // the rest get fixed defaults (-1 for timers with no default).
 // Points the config at the villain's asset and at the villain block that follows it.
-static void VCFG_setAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata, p2EntAsset* asset)
+static inline void VCFG_setAsset(st_ZVIL_CONFIG_REFERENCE* cfgdata, p2EntAsset* asset)
 {
     cfgdata->asset = asset;
     cfgdata->vilp2ass = (p2EntVillainAsset*)(asset + 1);
@@ -14995,7 +14995,7 @@ static S32 VWEP_swipe(st_zEntVillain* vil, F32)
 }
 
 // Unused.
-static void zEntVillain_UnknownTemplate108()
+static inline void zEntVillain_UnknownTemplate108()
 {
     S32 lost[27] = { 0 };
 }
@@ -15108,7 +15108,7 @@ static zEntProjectile* VWEP_lobReservePRJ(st_zEntVillain* vil)
 
 // Writes the villain's saved state as two bits: bit 0 when its goal is the afterlife or base
 // setup, bit 1 when it is active and its asset says it starts unborn (prebirth).
-static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser)
+static inline S32 VSAV_save(st_zEntVillain* ent, xSerial* xser)
 {
     S32 iv;
     en_BEHAVIOUR_GOAL gol;
@@ -15142,7 +15142,7 @@ static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser)
 
 // Reads the villain's saved state back. Bit 0 shuts it down at base setup, hides it and stops
 // anything from colliding with it; bit 1 shuts it down at startup.
-static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser)
+static inline S32 VSAV_load(st_zEntVillain* ent, xSerial* xser)
 {
     S32 iv = 0;
 
@@ -15284,7 +15284,7 @@ static S32 VWEP_prjOwnerNotify(zEntProjectile* prj, en_PROJECTILE_EVENT event, v
 }
 
 // Unused.
-static void zEntVillain_UnknownTemplate56()
+static inline void zEntVillain_UnknownTemplate56()
 {
     S32 lost[14] = { 0 };
 }
@@ -15617,7 +15617,7 @@ static void VPRJ_startup()
 }
 
 // Unused.
-static void zEntVillain_UnknownTemplate36()
+static inline void zEntVillain_UnknownTemplate36()
 {
     _xVec3 lost_a = { 0.0f, 0.0f, PI / 2 };
     _xVec3 lost_b = { 0.0f, 0.0f, PI / 2 };
@@ -16103,7 +16103,7 @@ static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt)
 }
 
 // Unused.
-static void zEntVillain_UnknownTemplate24()
+static inline void zEntVillain_UnknownTemplate24()
 {
     _xVec3 lost_a = { 0 };
     _xVec3 lost_b = { 0 };
@@ -16462,7 +16462,7 @@ static S32 VPRJ_BMM_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fram
 }
 
 // Unused.
-static void zEntVillain_UnknownTemplate12b()
+static inline void zEntVillain_UnknownTemplate12b()
 {
     _xVec3 lost = { 0 };
 }
@@ -17973,7 +17973,7 @@ static xAnimTable* VANM_mktable_MM()
 }
 
 // Builds the Sham boss's animation table: idle, move and taunt.
-static xAnimTable* VANM_mktable_SHAM()
+static inline xAnimTable* VANM_mktable_SHAM()
 {
     xAnimTable* table;
     char* strptrz[32] = {NULL};
@@ -18094,7 +18094,7 @@ static xAnimTable* VANM_mktable_SHARK()
 }
 
 // Builds the animation table for simple villains: idle and one action.
-static xAnimTable* VANM_mktable_SIMP()
+static inline xAnimTable* VANM_mktable_SIMP()
 {
     xAnimTable* table;
     char* strptrz[32] = {NULL};
@@ -18121,7 +18121,7 @@ static xAnimTable* VANM_mktable_SIMP()
 }
 
 // Unused.
-static void zEntVillain_UnknownTemplate716()
+static inline void zEntVillain_UnknownTemplate716()
 {
     S32 lost[179] = { 0 };
 }
@@ -18906,7 +18906,7 @@ static inline en_NPC_ANIMSTATES VANM_randfour(st_zEntVillain* ent, en_NPC_ANIMST
 }
 
 // Unused.
-static void zEntVillain_UnknownTemplate20()
+static inline void zEntVillain_UnknownTemplate20()
 {
     S32 lost[5] = { 0 };
 }
@@ -19252,7 +19252,7 @@ static xAnimTransition* VANM_findtran(st_zEntVillain* ent, xAnimTable* table, xA
     return da_tran;
 }
 
-static xAnimSingle* VANM_entSingle(const _zEnt* ent)
+static inline xAnimSingle* VANM_entSingle(const _zEnt* ent)
 {
     if (ent->model == NULL)
     {
@@ -19346,7 +19346,7 @@ static inline bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym)
 // Adds a sound to the first free slot of the villain's sound queue (a slot whose sound is -1),
 // cleared first. A sound to play directly is queued as VSND_LISTEND. Returns 1 if a slot was
 // free, 0 if not or if the sound is VSND_TYP_BOGUS.
-static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 flg_vsnd, F32 radius,
+static inline S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 flg_vsnd, F32 radius,
                               F32 delay, F32 repeatDelay, S32 repeatCount, U32 useThisSound)
 {
     S32 added = 0;
@@ -19538,7 +19538,7 @@ static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplic
 
 // Finds a sound type's entry in g_sndProps (the VSND_LISTEND entry if it has none), hands it back
 // through sprop_caller when that is given, and returns its play flags.
-static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop_caller)
+static inline S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop_caller)
 {
     st_NPC_SOUND_PROPERTIES* sprop = g_sndProps;
 
@@ -19582,7 +19582,7 @@ static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan)
 }
 
 // The sound type of a sound asset in the jukebox, searching the villain type's list first.
-static en_NPC_SOUND VSND_typeFromHash(st_zEntVillain* vil, U32 aid_snd)
+static inline en_NPC_SOUND VSND_typeFromHash(st_zEntVillain* vil, U32 aid_snd)
 {
     en_NPC_SOUND typ_sndEvent = VSND_TYP_BOGUS;
     en_zEntVillainSubTypeID viltyp = (en_zEntVillainSubTypeID)vil->asset->subtype;
@@ -19661,7 +19661,7 @@ static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 // jukebox, otherwise the asset itself, with the type's properties and the villain's noise radius.
 // Starts a talk sound: stops the villain's other sounds, remembers the talk effect and, when it
 // names a sound asset, empties the sound queue and queues that sound with the talk properties.
-static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx)
+static inline void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
     S32 flags;
@@ -19682,7 +19682,7 @@ static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx)
     }
 }
 
-static S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* xsid_caller)
+static inline S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* xsid_caller)
 {
     U32 xsid;
     F32 radius;
