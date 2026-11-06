@@ -6744,23 +6744,18 @@ static S32 VILN_std_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVI
         VANM_setone(vil, ZVIL_ANIM_MOVE);
         break;
     case ZVIL_GOAL_GUARD:
-        switch (gspot)
+        if (gspot == ZVIL_GSPOT_START)
         {
-        case ZVIL_GSPOT_START:
             VANM_setone(vil, ZVIL_ANIM_IDLE);
-            break;
-        case ZVIL_GSPOT_FIDGET:
+        }
+        else if (gspot == ZVIL_GSPOT_FIDGET)
         {
             VANM_randtwo(vil, ZVIL_ANIM_FIDGET_IDLE1, ZVIL_ANIM_FIDGET_IDLE2);
             vil->anim_playsync = 1;
-            break;
         }
-        case ZVIL_GSPOT_MOVELEFT:
-        case ZVIL_GSPOT_MOVERIGHT:
+        else if (gspot == ZVIL_GSPOT_MOVELEFT || gspot == ZVIL_GSPOT_MOVERIGHT)
         {
             VANM_settwo(vil, ZVIL_ANIM_TURN, ZVIL_ANIM_IDLE);
-            break;
-        }
         }
         break;
     case ZVIL_GOAL_AMBUSH:
@@ -6817,19 +6812,13 @@ static S32 VILN_std_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVI
         }
         break;
     case ZVIL_GOAL_ATTACKREADY:
-        switch (gspot)
-        {
-        case ZVIL_GSPOT_START:
+        if (gspot == ZVIL_GSPOT_START)
         {
             VANM_settwo(vil, ZVIL_ANIM_ATTACKIDLE, ZVIL_ANIM_IDLE);
-            break;
         }
-        case ZVIL_GSPOT_MOVELEFT:
-        case ZVIL_GSPOT_MOVERIGHT:
+        else if (gspot == ZVIL_GSPOT_MOVELEFT || gspot == ZVIL_GSPOT_MOVERIGHT)
         {
             VANM_setthree(vil, ZVIL_ANIM_TURN, ZVIL_ANIM_ATTACKIDLE, ZVIL_ANIM_IDLE);
-            break;
-        }
         }
         break;
     case ZVIL_GOAL_CHASE:
@@ -6855,59 +6844,47 @@ static S32 VILN_std_pickanim(st_zEntVillain* vil, en_BEHAVIOUR_GOAL goal, en_ZVI
         }
         break;
     case ZVIL_GOAL_GUMMED:
-        switch (gspot)
+        if (gspot == ZVIL_GSPOT_START)
         {
-        case ZVIL_GSPOT_START:
             VANM_setone(vil, ZVIL_ANIM_GUMMED);
-            break;
-        case ZVIL_GSPOT_BUBHIT:
+        }
+        else if (gspot == ZVIL_GSPOT_BUBHIT)
         {
             VANM_setthree(vil, ZVIL_ANIM_HIT_WHEN_GUMMED, ZVIL_ANIM_BOUNCED_WHEN_GUMMED, ZVIL_ANIM_GUMMED);
-            break;
         }
-        case ZVIL_GSPOT_BUBBOUNCE:
+        else if (gspot == ZVIL_GSPOT_BUBBOUNCE)
         {
             VANM_setthree(vil, ZVIL_ANIM_BOUNCED_WHEN_GUMMED, ZVIL_ANIM_HIT_WHEN_GUMMED, ZVIL_ANIM_GUMMED);
-            break;
         }
-        case ZVIL_GSPOT_BUBRESIST:
+        else if (gspot == ZVIL_GSPOT_BUBRESIST)
         {
             VANM_settwo(vil, ZVIL_ANIM_GUMMED_RESIST, ZVIL_ANIM_GUMMED);
-            break;
         }
-        case ZVIL_GSPOT_BUBBREAKFREE:
+        else if (gspot == ZVIL_GSPOT_BUBBREAKFREE)
         {
             VANM_setthree(vil, ZVIL_ANIM_GUMMED_BREAKFREE, ZVIL_ANIM_GUMMED_RESIST, ZVIL_ANIM_GUMMED);
-            break;
-        }
         }
         break;
     case ZVIL_GOAL_SOAPED:
-        switch (gspot)
+        if (gspot == ZVIL_GSPOT_START)
         {
-        case ZVIL_GSPOT_START:
             VANM_setone(vil, ZVIL_ANIM_SOAPED);
-            break;
-        case ZVIL_GSPOT_BUBHIT:
+        }
+        else if (gspot == ZVIL_GSPOT_BUBHIT)
         {
             VANM_setthree(vil, ZVIL_ANIM_HIT_WHEN_SOAPED, ZVIL_ANIM_BOUNCED_WHEN_SOAPED, ZVIL_ANIM_SOAPED);
-            break;
         }
-        case ZVIL_GSPOT_BUBBOUNCE:
+        else if (gspot == ZVIL_GSPOT_BUBBOUNCE)
         {
             VANM_setthree(vil, ZVIL_ANIM_BOUNCED_WHEN_SOAPED, ZVIL_ANIM_HIT_WHEN_SOAPED, ZVIL_ANIM_SOAPED);
-            break;
         }
-        case ZVIL_GSPOT_BUBRESIST:
+        else if (gspot == ZVIL_GSPOT_BUBRESIST)
         {
             VANM_settwo(vil, ZVIL_ANIM_SOAPED_RESIST, ZVIL_ANIM_SOAPED);
-            break;
         }
-        case ZVIL_GSPOT_BUBBREAKFREE:
+        else if (gspot == ZVIL_GSPOT_BUBBREAKFREE)
         {
             VANM_setthree(vil, ZVIL_ANIM_SOAPED_BREAKFREE, ZVIL_ANIM_SOAPED_RESIST, ZVIL_ANIM_SOAPED);
-            break;
-        }
         }
         break;
     case ZVIL_GOAL_DIE:
