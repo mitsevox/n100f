@@ -747,7 +747,7 @@ void YUV_init(S32 layout)
             }
             else
             {
-                S32 y = ((i - 16) * 255) / 219;
+                U32 y = ((i - 16) * 255) / 219;
                 U32 m = (y >> rr) | ((y >> gr) << gshift) | ((y >> br) << bshift);
 
                 mono16x2[i] = m | (m << 16);
@@ -785,7 +785,7 @@ void YUV_init(S32 layout)
             clamp_gg[i + 512] = gmax + (gmax << 16);
             clamp_bb[i + 512] = bmax + (bmax << 16);
 
-            clamp_a4[i] = (i << 7) & 0xf000;
+            clamp_a4[i] = (i >> 5) << 12;
         }
     }
 }
