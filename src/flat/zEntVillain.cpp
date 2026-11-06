@@ -16527,16 +16527,28 @@ static void VWEP_rbs_bupdate(_xEnt* ent_rbs, _xVec3* pos)
 // Start Redbeard's sword from a tagged point on his model.
 static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs)
 {
+    S32 rc;
+
     rbs->tym_age = 0.0f;
     rbs->dst_far = rbs->rbvil->dst_extend;
     rbs->spd_fly = 1.99999f * rbs->rbvil->dst_extend / 5.0f;
     rbs->dir_end = rbs->rbvil->precalc.dir_VtoP;
     xVec3SMul(&rbs->pos_end, &rbs->dir_end, rbs->dst_far);
     xMat3x3Euler((xMat3x3*)&rbs->frame->mat, 0.0f, 0.0f, 0.0f);
-    if (!VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_SWORDHANDLE, &rbs->frame->mat.pos) &&
-        !VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_ATTACK, &rbs->frame->mat.pos) &&
-        !VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_WEAPON, &rbs->frame->mat.pos) &&
-        !VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_LOSEYEBALL, &rbs->frame->mat.pos))
+    rc = VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_SWORDHANDLE, &rbs->frame->mat.pos);
+    if (!rc)
+    {
+        rc = VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_ATTACK, &rbs->frame->mat.pos);
+    }
+    if (!rc)
+    {
+        rc = VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_WEAPON, &rbs->frame->mat.pos);
+    }
+    if (!rc)
+    {
+        rc = VSUP_vertPos(rbs->rbvil, ZVIL_MDLVERT_LOSEYEBALL, &rbs->frame->mat.pos);
+    }
+    if (!rc)
     {
         rbs->frame->mat.pos = *xBoundCenter(&rbs->rbvil->bound);
     }
