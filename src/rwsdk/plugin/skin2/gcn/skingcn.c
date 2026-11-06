@@ -8,7 +8,7 @@
 // all-in-one node then draws in place of the instanced arrays.
 
 // The draw sync token to issue next.
-extern U16 lbl_8025E800;
+extern volatile U16 lbl_8025E800;
 
 // The all-in-one node's reinstance callback before the skin pipeline replaced it.
 extern GCNAllInOneCallBack lbl_8025F6A8;

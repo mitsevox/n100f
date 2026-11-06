@@ -100,8 +100,8 @@ extern S32 lbl_8025E7F8;
 extern DlDeviceState lbl_8025F864;
 
 // The draw sync token to issue next, and the last token the GPU has passed.
-extern U16 lbl_8025E800;
-extern U16 lbl_8025F890;
+extern volatile U16 lbl_8025E800;
+extern volatile U16 lbl_8025F890;
 
 extern DlVideoModes lbl_801DDF90;
 
