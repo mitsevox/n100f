@@ -829,10 +829,11 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                 {
                     U8* d0 = dest;
                     U8* d1 = dest + pitch;
+                    U8* s = (U8*)tmp;
                     if (!((U32)dest & 7)) {
-                        ROWS8C(ROWFC, d0, d1, pitch, tmp);
+                        ROWS8C(ROWFC, d0, d1, pitch, s);
                     } else {
-                        ROWS8C(ROWWC, d0, d1, pitch, tmp);
+                        ROWS8C(ROWWC, d0, d1, pitch, s);
                     }
                 }
                 break;
