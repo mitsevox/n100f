@@ -10,12 +10,6 @@ void _rxGCResEntryWaitDone(RwResEntry* resEntry);
 #define SKINSTREAM_PLATFORMGCN 6
 #define SKINSTREAM_PLUGINID 0x116
 
-// The bytes of a skin chunk: the chunk header, the platform word, the bone count, a bone index
-// word and four weights per vertex and a matrix per bone.
-#define SKINSTREAM_SIZE(_geometry, _skin)                                                          \
-    ((_geometry)->numVertices * (S32)(sizeof(U32) + sizeof(RwMatrixWeights)) +                    \
-     (S32)(sizeof(U32) * 5) + (_skin)->numBones * sizeof(RwMatrix))
-
 // Hands back the instanced arrays a skin kept from streaming to the geometry's resource entry,
 // which then waits for the GPU before it is freed.
 #define SKINSTREAM_RESTOREARRAYS(_geometry, _skin)                                                 \
@@ -30,16 +24,21 @@ void _rxGCResEntryWaitDone(RwResEntry* resEntry);
         (_skin)->savedNrm = NULL;                                                                  \
     }
 
+// The native chunk size includes its header, platform word and bone count.
 S32 _rpSkinGeometryNativeSize(const RpGeometry* geometry)
 {
+    S32 size = geometry->numVertices * (sizeof(U32) + sizeof(RwMatrixWeights));
     RpSkin* skin = SKINGEOMETRYGETDATA(geometry);
-    S32 size = SKINSTREAM_SIZE(geometry, skin);
+
+    size += sizeof(U32) * 5;
+    size += skin->numBones * sizeof(RwMatrix);
 
     SKINSTREAM_RESTOREARRAYS(geometry, skin);
 
     return size;
 }
 
+// The platform and bone count precede the indices, weights and matrices.
 RwStream* _rpSkinGeometryNativeWrite(RwStream* stream, const RpGeometry* geometry)
 {
     S32 platform = SKINSTREAM_PLATFORMGCN;
@@ -48,7 +47,7 @@ RwStream* _rpSkinGeometryNativeWrite(RwStream* stream, const RpGeometry* geometr
 
     if (!_rwStreamWriteVersionedChunkHeader(stream, rwID_STRUCT,
                                             _rpSkinGeometryNativeSize(geometry) - sizeof(U32) * 3,
-                                            0x33002, 0xFFFF))
+                                            rwLIBRARYCURRENTVERSION, 0xFFFF))
     {
         return NULL;
     }
@@ -84,20 +83,21 @@ RwStream* _rpSkinGeometryNativeWrite(RwStream* stream, const RpGeometry* geometr
     return stream;
 }
 
+// The three bone arrays share the streamed payload allocation.
 RwStream* _rpSkinGeometryNativeRead(RwStream* stream, RpGeometry* geometry)
 {
-    U32 size;
     U32 version;
+    U32 size;
     S32 platform;
-    RpSkin* skin;
     S32 numVertices;
+    RpSkin* skin;
 
     if (!RwStreamFindChunk(stream, rwID_STRUCT, &size, &version))
     {
         return NULL;
     }
 
-    if (version < 0x31000 || version > 0x33002)
+    if (version < rwLIBRARYBASEVERSION || version > rwLIBRARYCURRENTVERSION)
     {
         RwError err;
         err.pluginID = SKINSTREAM_PLUGINID;

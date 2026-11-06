@@ -943,7 +943,7 @@ config.libs: List[Dict[str, Any]] = [
     RWLib(
         "rphanim",
         [
-            Object(NonMatching, "rwsdk/plugin/hanim/stdkey.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/hanim/stdkey.c"),
             Object(NonMatching, "rwsdk/plugin/hanim/rphanim.c"),
         ],
     ),
@@ -964,7 +964,7 @@ config.libs: List[Dict[str, Any]] = [
         [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/skin2/rpskin.c"),
             Object(NonMatching, "rwsdk/plugin/skin2/gcn/skingcn.c"),
-            Object(NonMatching, "rwsdk/plugin/skin2/gcn/skinstream.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/skin2/gcn/skinstream.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/plugin/skin2/gcn/skingcng.c"),
         ],
     ),
