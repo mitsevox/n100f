@@ -516,7 +516,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMorph.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iPad.cpp"),
             Object(NonMatching, "flat/iParMgr.cpp"),
-            Object(NonMatching, "flat/isavegame.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/isavegame.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iScrFX.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iShadow.cpp"),
             Object(NonMatching, "flat/iSystem.cpp", cflags=cflags_game_noinline),
