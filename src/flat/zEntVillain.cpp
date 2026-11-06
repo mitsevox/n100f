@@ -384,6 +384,7 @@ static U32 VSND_goPlay(st_zEntVillain* vil, en_NPC_SOUND sndEvent, U32 sndExplic
 static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 static en_NPC_SOUND VSND_typeFromHash(st_zEntVillain* vil, U32 aid_snd);
 static S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* xsid_caller);
+static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx);
 static void zVIL_input_stim(st_zEntVillain* ent, en_NPC_STIMULUS, st_STIMULUS_CONTEXT_DATA* stimctxt);
 static inline void zVIL_send_stim(st_zEntVillain* ent, en_NPC_STIMULUS stim);
 static inline void VEFX_gumBlob_place(xModelInstance* blob, xVec3* pos, F32 scale);
@@ -8210,17 +8211,36 @@ static S32 VILN_gang_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
 static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt,
                               st_STIMULUS_CONTEXT_DATA* resp)
 {
+    S32 std_mvpt_nav;
     en_NPC_STIMULUS stim = stimctxt->stim;
     switch (g_pgol = vil->goal)
     {
+    case ZVIL_GOAL_NONE:
+        break;
     case ZVIL_GOAL_AFTERLIFE:
-    case ZVIL_GOAL_BASEINIT:
-        g_pstm = stim;
-        if (stim == ZVIL_STIM_MAKEREADY)
+        switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
             resp->trangoal = ZVIL_GOAL_STARTUP;
             resp->tranmode = ZVIL_MODE_SHUTDOWN;
             resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
+        }
+        break;
+    case ZVIL_GOAL_BASEINIT:
+        switch (g_pstm = stim)
+        {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
+        case ZVIL_STIM_MAKEREADY:
+            resp->trangoal = ZVIL_GOAL_STARTUP;
+            resp->tranmode = ZVIL_MODE_SHUTDOWN;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         }
         break;
     case ZVIL_GOAL_STARTUP:
@@ -8235,6 +8255,9 @@ static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
     case ZVIL_GOAL_ACTION:
         switch (g_pstm = stim)
         {
+        case ZVIL_STIM_NONE:
+        case ZVIL_STIM_TRANGOAL:
+            break;
         case ZVIL_STIM_KILLSELF:
             vil->hitpts = 0;
             resp->trangoal = ZVIL_GOAL_DIE;
@@ -8253,23 +8276,7 @@ static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
             if (!(vil->ability & 0x40000)) break;
             if (vil->goal == ZVIL_GOAL_TALK)
             {
-                zSFX* talk = stimctxt->talkSFX;
-                xSndStopChildren((U32)vil + 2);
-                vil->sfx_curTalk = talk;
-                if (talk && talk->asset && talk->asset->id)
-                {
-                    st_NPC_SOUND_PROPERTIES* props = NULL;
-                    S32 flags = VSND_findProps(VSND_TYP_ZSFXTALK, &props);
-                    for (S32 i = 0; i < 4; i++)
-                    {
-                        vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
-                        vil->snd_queue[i].sndDirect = 0;
-                    }
-                    VSND_addQueueEntry(vil, (en_NPC_SOUND)0x8000, flags,
-                                       g_npcTable[vil->asset->subtype].dst_noisy,
-                                       props->tym_delayStart, -1.0f, 0,
-                                       talk->asset->soundAssetID);
-                }
+                VSND_playFromSFX(vil, stimctxt->talkSFX);
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 0.5f;
                 if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
                 {
@@ -8309,13 +8316,21 @@ static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
             resp->stim = ZVIL_STIM_TRANGOAL;
             break;
         case ZVIL_STIM_GOTOWIDGET:
+            if (stimctxt->widge && (vil->abl_move & 0x100))
+            {
+                VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 0);
+                vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
+                resp->trangoal = ZVIL_GOAL_FOLLOW;
+                resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
+            }
+            break;
         case ZVIL_STIM_FOLLOWWIDGET:
             if (stimctxt->widge && (vil->abl_move & 0x100))
             {
-                S32 follow = stim == ZVIL_STIM_FOLLOWWIDGET;
-                S32 path = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, follow);
+                std_mvpt_nav = VOUT_dogoto_widget(vil, stimctxt->widge, stimctxt->off_goto, 1);
                 vil->tmr_list[ZVIL_TDUR_NAVDELAY] = -1.0f;
-                if ((follow && path))
+                if (std_mvpt_nav)
                 {
                     resp->trangoal = ZVIL_GOAL_PATROL;
                     resp->tranmode = ZVIL_MODE_NORMAL;
@@ -8346,7 +8361,15 @@ static S32 VILN_gang_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* sti
             }
             break;
         case ZVIL_STIM_STOPPATROL:
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         case ZVIL_STIM_STARTGUARD:
+            resp->trangoal = ZVIL_GOAL_IDLE;
+            resp->tranmode = ZVIL_MODE_NORMAL;
+            resp->stim = ZVIL_STIM_TRANGOAL;
+            break;
         case ZVIL_STIM_STOPGUARD:
             resp->trangoal = ZVIL_GOAL_IDLE;
             resp->tranmode = ZVIL_MODE_NORMAL;
@@ -19363,6 +19386,29 @@ static U32 VSND_select_sound(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 
 // Play an animation's sound: the jukebox sound of the same type when the asset is in the
 // jukebox, otherwise the asset itself, with the type's properties and the villain's noise radius.
+// Starts a talk sound: stops the villain's other sounds, remembers the talk effect and, when it
+// names a sound asset, empties the sound queue and queues that sound with the talk properties.
+static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx)
+{
+    st_NPC_SOUND_PROPERTIES* sprop = NULL;
+    S32 flags;
+    S32 i;
+
+    xSndStopChildren((U32)vil + 2);
+    vil->sfx_curTalk = sfx;
+    if (sfx && sfx->asset && sfx->asset->id)
+    {
+        flags = VSND_findProps(VSND_TYP_ZSFXTALK, &sprop);
+        for (i = 0; i < 4; i++)
+        {
+            vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
+            vil->snd_queue[i].sndDirect = 0;
+        }
+        VSND_addQueueEntry(vil, (en_NPC_SOUND)0x8000, flags, g_npcTable[vil->asset->subtype].dst_noisy,
+                           sprop->tym_delayStart, -1.0f, 0, sfx->asset->soundAssetID);
+    }
+}
+
 static S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* xsid_caller)
 {
     U32 xsid;
