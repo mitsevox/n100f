@@ -1427,8 +1427,9 @@ static S32 smallestrect(BinkRect* out, U8* mask, S32 pitch, BinkRect* in)
 top:
     mask += pitch * y;
     h -= y;
-    out->y = in->y + y * 16;
-    out->h = in->h - y * 16;
+    y *= 16;
+    out->y = y + in->y;
+    out->h = in->h - y;
 
     if (out->h > 1) {
         for (y = 0, m = mask + (h - 1) * pitch; y < h; y++, m -= pitch) {
@@ -1452,12 +1453,14 @@ top:
 left:
     w -= x;
     mask += x;
-    out->x = in->x + x * 16;
-    out->w = in->w - x * 16;
+    x *= 16;
+    out->x = x + in->x;
+    out->w = in->w - x;
 
     if (out->w > 1) {
-        w--;
-        for (x = w; x >= 0; x--) {
+        x = w - 1;
+        w = x;
+        for (; x >= 0; x--) {
             for (y = 0, m = mask + x; y < h; y++, m += pitch) {
                 if (*m)
                     goto right;
