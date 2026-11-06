@@ -289,14 +289,14 @@ static void setevenodd(unsigned long flags, unsigned long* pitch, unsigned long 
 }
 
 #define NEXTROWS(n)                         \
-    S.dst0 = S.dst1 + skip;                 \
-    S.dst1 = S.dst0 + pitch;               \
     S.y0 = S.y1 + yskip;                    \
     S.y1 = S.y0 + width;                    \
     S.a0 = S.a1 + yskip;                    \
     S.a1 = S.a0 + width;                    \
     S.u += uvskip;                          \
-    S.v += uvskip;
+    S.v += uvskip;                          \
+    S.dst0 = S.dst1 + skip;                 \
+    S.dst1 = S.dst0 + pitch;
 
 static void YUV_blit(void* dest, unsigned long destx, unsigned long desty, unsigned long pitch,
                      void* src, unsigned long srcx, unsigned long srcy, unsigned long srcw,
@@ -306,7 +306,6 @@ static void YUV_blit(void* dest, unsigned long destx, unsigned long desty, unsig
     unsigned long opitch = pitch;
     unsigned long skip;
     unsigned long yskip, uvskip;
-    unsigned long uvw;
     S32 y, last;
     unsigned long lead;
 
@@ -354,30 +353,29 @@ static void YUV_blit(void* dest, unsigned long destx, unsigned long desty, unsig
 
     setevenodd(flags, &pitch, srcw, srch, b, &skip);
 
+    S.dst1 = S.dst0 + pitch;
     S.y0 = (U8*)src + srcx + srcy * width;
     S.y1 = S.y0 + width;
     S.a0 = (U8*)alpha + srcx + srcy * width;
     S.a1 = S.a0 + width;
-    S.dst1 = S.dst0 + pitch;
 
-    uvw = width >> 1;
     yskip = width - srcw;
-    uvskip = uvw - (srcw >> 1);
+    uvskip = (width >> 1) - (srcw >> 1);
     if ((srcw & 1) && (srcx & 1))
         uvskip--;
 
     if (flags & 0x10000)
     {
         S.u = (U8*)src + width * height;
-        S.v = S.u + uvw * (height >> 1);
+        S.v = S.u + (width >> 1) * (height >> 1);
     }
     else
     {
         S.v = (U8*)src + width * height;
-        S.u = S.v + uvw * (height >> 1);
+        S.u = S.v + (width >> 1) * (height >> 1);
     }
-    S.u = S.u + (srcx >> 1) + (srcy >> 1) * uvw;
-    S.v = S.v + (srcx >> 1) + (srcy >> 1) * uvw;
+    S.u = S.u + (srcx >> 1) + (srcy >> 1) * (width >> 1);
+    S.v = S.v + (srcx >> 1) + (srcy >> 1) * (width >> 1);
 
     y = srcy;
     last = srcy + srch - 1;
@@ -386,14 +384,14 @@ static void YUV_blit(void* dest, unsigned long destx, unsigned long desty, unsig
     {
         dounalignedrow(srcx, srcw);
         y++;
-        S.dst0 += skip;
-        S.dst1 = S.dst0 + pitch;
         S.y0 += yskip;
         S.y1 = S.y0 + width;
         S.a0 += yskip;
         S.a1 = S.a0 + width;
         S.u += uvskip;
         S.v += uvskip;
+        S.dst0 += skip;
+        S.dst1 = S.dst0 + pitch;
     }
 
     lead = (4 - (destx & 3)) & 3;
