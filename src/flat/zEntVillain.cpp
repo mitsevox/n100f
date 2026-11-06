@@ -9170,9 +9170,18 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
         {
             _xVec3 delta = { 0 };
-            xVec3Sub(&delta, zMovePointGetPos(vil->nav_next), (_xVec3*)&vil->model->Mat->pos);
-            vil->anim_loopmult = 0.97f;
-            vil->vhf->pickanim(vil, vil->goal, delta.x > 0.0f ? ZVIL_GSPOT_MOVELEFT : ZVIL_GSPOT_MOVERIGHT);
+            xVec3Copy(&delta, zMovePointGetPos(vil->nav_next));
+            xVec3Sub(&delta, &delta, (_xVec3*)&vil->model->Mat->pos);
+            if (delta.x > 0.0f)
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, ZVIL_GSPOT_MOVELEFT);
+            }
+            else
+            {
+                vil->anim_loopmult = 0.97f;
+                vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, ZVIL_GSPOT_MOVERIGHT);
+            }
         }
         else
         {
@@ -9219,13 +9228,14 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             {
                 resp->trangoal = ZVIL_GOAL_DIE;
                 resp->tranmode = ZVIL_MODE_DEATH;
+                resp->stim = ZVIL_STIM_TRANGOAL;
             }
             else
             {
                 resp->trangoal = ZVIL_GOAL_IDLE;
                 resp->tranmode = ZVIL_MODE_NORMAL;
+                resp->stim = ZVIL_STIM_TRANGOAL;
             }
-            resp->stim = ZVIL_STIM_TRANGOAL;
         }
         break;
     case ZVIL_GOAL_DIE:
