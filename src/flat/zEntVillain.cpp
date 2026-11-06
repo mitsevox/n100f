@@ -5761,6 +5761,7 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 {
     en_NPC_STIMULUS stim = stimctxt->stim;
     en_BEHAVIOUR_GOAL goal;
+    F32 tmp_fv;
     st_ZVIL_NPC_HANDLERFUNCS* myfun;
     if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
         goal = stimctxt->trangoal;
@@ -5842,10 +5843,7 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             vil->nav_mvptlist = NULL;
             vil->nav_prev = NULL;
             vil->nav_next = NULL;
-            if (vil->vilcfg.vilp2ass->movePointAssetID)
-            {
-                vil->nav_mvptlist = zMovePoint_From_xAssetID(vil->vilcfg.vilp2ass->movePointAssetID);
-            }
+            vil->nav_mvptlist = VNAV_mvptFromID(vil->vilcfg.vilp2ass->movePointAssetID);
             zVIL_apply_vilcfg(vil, &vil->vilcfg);
             if (vil->ability & 0x2)
             {
@@ -5859,17 +5857,7 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 }
                 else
                 {
-                    st_ZVIL_BONUS_EXCLUSION* exclusion = g_bonusExclusions;
-                    while (exclusion->scene)
-                    {
-                        if (exclusion->scene == globals.sceneCur->sceneID &&
-                            (!exclusion->id || exclusion->id == vil->id))
-                        {
-                            vil->allow &= ~0x800;
-                            break;
-                        }
-                        exclusion++;
-                    }
+                    VBON_checkExclusions(vil);
                 }
             }
             xAnimPlaySetState(vil->model->Anim->Single, vil->model->Anim->Table->StateList, 0.0f);
@@ -6304,8 +6292,8 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             vil->tmr_list[ZVIL_TDUR_DAZED] = VCFG_tymref(vil, ZVIL_TDUR_DAZED) + 0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_DAZED);
             if (stimctxt->amt_stun > 0.0f)
             {
-                vil->tmr_list[ZVIL_TDUR_DAZED] =
-                    MAX(1.5f, vil->tmr_list[ZVIL_TDUR_DAZED] * stimctxt->amt_stun);
+                tmp_fv = vil->tmr_list[ZVIL_TDUR_DAZED] * stimctxt->amt_stun;
+                vil->tmr_list[ZVIL_TDUR_DAZED] = MAX(1.5f, tmp_fv);
             }
             vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_DAZED];
             vil->tmr_list[ZVIL_TTIL_RECOVERY] =
