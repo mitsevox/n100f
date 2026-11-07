@@ -126,17 +126,17 @@ static S32 GeomLeafNodeForAllSphereIntersections(S32 numTriangles, S32 triOffset
 
 // Calls back for each triangle of the geometry's base morph target the line hits, through the
 // collision tree when the geometry has one.
-// Returns 1 / value, or 0 for a zero value.
-static F32 GeomRecip(F32 value)
+// Returns numerator / denominator, or 0 for a zero denominator.
+static F32 GeomSafeDivide(F32 numerator, F32 denominator)
 {
-    F32 recip = 0.0f;
+    F32 result = 0.0f;
 
-    if (value != 0.0f)
+    if (denominator != 0.0f)
     {
-        recip = 1.0f / value;
+        result = numerator / denominator;
     }
 
-    return recip;
+    return result;
 }
 
 static RpGeometry* GeometryForAllLineIntersections(RpGeometry* geometry, RwLine* testLine,
@@ -155,15 +155,15 @@ static RpGeometry* GeometryForAllLineIntersections(RpGeometry* geometry, RwLine*
         isData.line = testLine;
         RwV3dSubMacro(&isData.delta, &testLine->end, &testLine->start);
 
-        recip = GeomRecip(isData.delta.x);
+        recip = GeomSafeDivide(1.0f, isData.delta.x);
         grad.dydx = isData.delta.y * recip;
         grad.dzdx = isData.delta.z * recip;
 
-        recip = GeomRecip(isData.delta.y);
+        recip = GeomSafeDivide(1.0f, isData.delta.y);
         grad.dxdy = isData.delta.x * recip;
         grad.dzdy = isData.delta.z * recip;
 
-        recip = GeomRecip(isData.delta.z);
+        recip = GeomSafeDivide(1.0f, isData.delta.z);
         grad.dxdz = isData.delta.x * recip;
         grad.dydz = isData.delta.y * recip;
 

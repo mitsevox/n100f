@@ -44,6 +44,19 @@
         }                                                                                          \
     } while (0)
 
+// Returns numerator / denominator, or 0 for a zero denominator.
+static F32 WorldSafeDivide(F32 numerator, F32 denominator)
+{
+    F32 result = 0.0f;
+
+    if (denominator != 0.0f)
+    {
+        result = numerator / denominator;
+    }
+
+    return result;
+}
+
 typedef union IntersectionCallBack IntersectionCallBack;
 union IntersectionCallBack
 {
@@ -767,15 +780,15 @@ RpWorld* RpCollisionWorldForAllIntersections(RpWorld* world, RpIntersection* int
         RwV3dSubMacro(&isData.delta, &intersection->t.line.end, &intersection->t.line.start);
         isData.cbParam = &cbParam;
 
-        recip = (isData.delta.x != 0.0f) ? 1.0f / isData.delta.x : 0.0f;
+        recip = WorldSafeDivide(1.0f, isData.delta.x);
         isData.grad.dydx = isData.delta.y * recip;
         isData.grad.dzdx = isData.delta.z * recip;
 
-        recip = (isData.delta.y != 0.0f) ? 1.0f / isData.delta.y : 0.0f;
+        recip = WorldSafeDivide(1.0f, isData.delta.y);
         isData.grad.dxdy = isData.delta.x * recip;
         isData.grad.dzdy = isData.delta.z * recip;
 
-        recip = (isData.delta.z != 0.0f) ? 1.0f / isData.delta.z : 0.0f;
+        recip = WorldSafeDivide(1.0f, isData.delta.z);
         isData.grad.dxdz = isData.delta.x * recip;
         isData.grad.dydz = isData.delta.y * recip;
 
