@@ -643,12 +643,14 @@ static RwRaster* TextureRasterDefaultBuildMipmaps(RwRaster* raster, RwImage* ima
     RwImage* images[TEXTURE_MAXMIPLEVELS];
     RwRGBA palette[256];
     U8 autoMipmap;
-    S32 numLevels;
     S32 i;
+    S32 numLevels;
+    S32 width = raster->width;
+    S32 height = raster->height;
 
     if (!image)
     {
-        images[0] = RwImageCreate(raster->width, raster->height, 32);
+        images[0] = RwImageCreate(width, height, 32);
 
         if (images[0])
         {
@@ -662,7 +664,7 @@ static RwRaster* TextureRasterDefaultBuildMipmaps(RwRaster* raster, RwImage* ima
     }
     else if (image->depth != 32)
     {
-        images[0] = RwImageCreate(image->width, image->height, 32);
+        images[0] = RwImageCreate(width, height, 32);
 
         if (images[0])
         {
@@ -716,29 +718,37 @@ static RwRaster* TextureRasterDefaultBuildMipmaps(RwRaster* raster, RwImage* ima
 
     if (RwRasterGetFormat(raster) & (rwRASTERFORMATPAL4 | rwRASTERFORMATPAL8))
     {
-        S32 result;
-
+        // The clean-up returns on its first pass, so only the top level is destroyed.
         if (RwRasterGetFormat(raster) & rwRASTERFORMATPAL4)
         {
-            result = PalettizeMipmaps(palette, image, images, numLevels, 4);
+            if (!PalettizeMipmaps(palette, image, images, numLevels, 4))
+            {
+                for (i = 0; i < numLevels; i++)
+                {
+                    if (images[i] != image)
+                    {
+                        RwImageDestroy(images[i]);
+                    }
+
+                    raster->cFormat |= autoMipmap;
+                    return NULL;
+                }
+            }
         }
         else
         {
-            result = PalettizeMipmaps(palette, image, images, numLevels, 8);
-        }
-
-        if (!result)
-        {
-            // The clean-up returns on its first pass, so only the top level is destroyed.
-            for (i = 0; i < numLevels; i++)
+            if (!PalettizeMipmaps(palette, image, images, numLevels, 8))
             {
-                if (images[i] != image)
+                for (i = 0; i < numLevels; i++)
                 {
-                    RwImageDestroy(images[i]);
-                }
+                    if (images[i] != image)
+                    {
+                        RwImageDestroy(images[i]);
+                    }
 
-                raster->cFormat |= autoMipmap;
-                return NULL;
+                    raster->cFormat |= autoMipmap;
+                    return NULL;
+                }
             }
         }
 
