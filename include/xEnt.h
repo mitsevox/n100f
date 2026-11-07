@@ -257,7 +257,7 @@ inline void xEntAddToPos(_xEnt* ent, const xVec3* v)
 
 inline xVec3* xEntGetPos(const _xEnt* ent)
 {
-    return (xVec3*)&ent->model->Mat->pos;
+    return &xModelGetFrame(ent->model)->pos;
 }
 
 inline xMat4x3* xEntGetFrame(const _xEnt* ent)
