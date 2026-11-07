@@ -24,14 +24,31 @@ struct AtomicInstanceMesh
 
 #define OBJVERTEXNEXT(_vert, _stride) ((RxObjSpace3DVertex*)((U8*)(_vert) + (_stride)))
 
+// Writes the point t of the way from a to b (project-own name; inlined into its caller).
+static void BlendV3d(RwV3d* out, const RwV3d* a, const RwV3d* b, F32 t)
+{
+    F32 x = b->x - a->x;
+    F32 y = b->y - a->y;
+    F32 z = b->z - a->z;
+    x *= t;
+    y *= t;
+    z *= t;
+    x += a->x;
+    y += a->y;
+    z += a->z;
+    out->x = x;
+    out->y = y;
+    out->z = z;
+}
+
 // Writes each vertex's position and normal (zero without normals) from the atomic's current
 // morph target, or blended between its start and end targets at the interpolator's position.
 static void fn_80154994(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometry* geometry,
                         S32 stride)
 {
     static const RwV3d zeroNormal = { 0.0f, 0.0f, 0.0f };
-    S16 start = atomic->interpolator.startMorphTarget;
-    S16 end = atomic->interpolator.endMorphTarget;
+    S32 start = atomic->interpolator.startMorphTarget;
+    S32 end = atomic->interpolator.endMorphTarget;
     S32 numVerts = geometry->numVertices;
 
     if (start >= geometry->numMorphTargets || end >= geometry->numMorphTargets)
@@ -88,17 +105,25 @@ static void fn_80154994(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometr
         {
             const RwV3d* startNormal = startTarget->normals;
             const RwV3d* endNormal = endTarget->normals;
+            F32 nx, ny, nz;
 
             while (numVerts--)
             {
-                objVert->x = (endPos->x - startPos->x) * scale + startPos->x;
-                objVert->y = (endPos->y - startPos->y) * scale + startPos->y;
-                objVert->z = (endPos->z - startPos->z) * scale + startPos->z;
+                BlendV3d((RwV3d*)&objVert->x, startPos, endPos, scale);
                 startPos++;
                 endPos++;
-                objVert->nx = (endNormal->x - startNormal->x) * scale + startNormal->x;
-                objVert->ny = (endNormal->y - startNormal->y) * scale + startNormal->y;
-                objVert->nz = (endNormal->z - startNormal->z) * scale + startNormal->z;
+                nx = endNormal->x - startNormal->x;
+                ny = endNormal->y - startNormal->y;
+                nz = endNormal->z - startNormal->z;
+                nx *= scale;
+                ny *= scale;
+                nz *= scale;
+                nx += startNormal->x;
+                ny += startNormal->y;
+                nz += startNormal->z;
+                objVert->nx = nx;
+                objVert->ny = ny;
+                objVert->nz = nz;
                 startNormal++;
                 endNormal++;
                 objVert = OBJVERTEXNEXT(objVert, stride);
@@ -108,9 +133,7 @@ static void fn_80154994(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometr
         {
             while (numVerts--)
             {
-                objVert->x = (endPos->x - startPos->x) * scale + startPos->x;
-                objVert->y = (endPos->y - startPos->y) * scale + startPos->y;
-                objVert->z = (endPos->z - startPos->z) * scale + startPos->z;
+                BlendV3d((RwV3d*)&objVert->x, startPos, endPos, scale);
                 startPos++;
                 endPos++;
                 objVert->nx = zeroNormal.x;
@@ -128,13 +151,19 @@ static void fn_80154E8C(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeomet
                         S32 stride)
 {
     static const RwRGBA defaultColor = { 0, 0, 0, 255 };
-    U32 flags = geometry->flags;
+    RxObjSpace3DVertex* objVert;
+    U32 flags;
+    const RwTexCoords* texCoord;
+    U32 numVerts;
+    const RwRGBA* color;
+
+    flags = geometry->flags;
 
     if (flags & rpGEOMETRYTEXTURED)
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RwTexCoords* texCoord = geometry->texCoords[0];
-        S32 numVerts = geometry->numVertices;
+        objVert = objVerts;
+        texCoord = geometry->texCoords[0];
+        numVerts = geometry->numVertices;
 
         while (numVerts--)
         {
@@ -147,9 +176,9 @@ static void fn_80154E8C(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeomet
 
     if (flags & rpGEOMETRYPRELIT)
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RwRGBA* color = geometry->preLitLum;
-        S32 numVerts = geometry->numVertices;
+        objVert = objVerts;
+        color = geometry->preLitLum;
+        numVerts = geometry->numVertices;
 
         while (numVerts--)
         {
@@ -163,8 +192,8 @@ static void fn_80154E8C(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeomet
     }
     else
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        S32 numVerts = geometry->numVertices;
+        objVert = objVerts;
+        numVerts = geometry->numVertices;
 
         while (numVerts--)
         {

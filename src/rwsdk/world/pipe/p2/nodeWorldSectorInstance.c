@@ -39,13 +39,21 @@ static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSec
                         S32 stride)
 {
     static const RwRGBA defaultColor = { 0, 0, 0, 255 };
-    U32 flags = ((RpWorld*)RWSRCGLOBAL(curWorld))->flags;
+    RxObjSpace3DVertex* objVert;
+    U32 flags;
+    const RwTexCoords* texCoord;
+    U32 numVerts;
+    const RwRGBA* color;
+    const RpVertexNormal* normal;
+    const RwV3d* pos;
+
+    flags = ((RpWorld*)RWSRCGLOBAL(curWorld))->flags;
 
     if (flags & (rpWORLDTEXTURED | rpWORLDTEXTURED2))
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RwTexCoords* texCoord = sector->texCoords[0];
-        U32 numVerts = sector->numVertices;
+        objVert = objVerts;
+        texCoord = sector->texCoords[0];
+        numVerts = sector->numVertices;
 
         while (numVerts--)
         {
@@ -58,9 +66,9 @@ static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSec
 
     if (flags & rpWORLDPRELIT)
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RwRGBA* color = sector->preLitLum;
-        U32 numVerts = sector->numVertices;
+        objVert = objVerts;
+        color = sector->preLitLum;
+        numVerts = sector->numVertices;
 
         while (numVerts--)
         {
@@ -74,8 +82,8 @@ static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSec
     }
     else
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        U32 numVerts = sector->numVertices;
+        objVert = objVerts;
+        numVerts = sector->numVertices;
 
         while (numVerts--)
         {
@@ -89,33 +97,35 @@ static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSec
 
     if (flags & rpWORLDNORMALS)
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RpVertexNormal* normal = sector->normals;
-        U32 numVerts = sector->numVertices;
+        objVert = objVerts;
+        normal = sector->normals;
+        numVerts = sector->numVertices;
 
         while (numVerts--)
         {
-            objVert->nx = SECTOR_NORMALSCALE * normal->x;
-            objVert->ny = SECTOR_NORMALSCALE * normal->y;
-            objVert->nz = SECTOR_NORMALSCALE * normal->z;
+            F32 x = SECTOR_NORMALSCALE * normal->x;
+            F32 y = SECTOR_NORMALSCALE * normal->y;
+            F32 z = SECTOR_NORMALSCALE * normal->z;
+
+            objVert->nx = x;
+            objVert->ny = y;
+            objVert->nz = z;
             normal++;
             objVert = OBJVERTEXNEXT(objVert, stride);
         }
     }
 
-    {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RwV3d* pos = sector->vertices;
-        U32 numVerts = sector->numVertices;
+    objVert = objVerts;
+    pos = sector->vertices;
+    numVerts = sector->numVertices;
 
-        while (numVerts--)
-        {
-            objVert->x = pos->x;
-            objVert->y = pos->y;
-            objVert->z = pos->z;
-            pos++;
-            objVert = OBJVERTEXNEXT(objVert, stride);
-        }
+    while (numVerts--)
+    {
+        objVert->x = pos->x;
+        objVert->y = pos->y;
+        objVert->z = pos->z;
+        pos++;
+        objVert = OBJVERTEXNEXT(objVert, stride);
     }
 }
 
