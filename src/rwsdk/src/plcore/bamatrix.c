@@ -268,12 +268,14 @@ S32 RwEngineSetMatrixTolerances(const RwMatrixTolerance* const tolerance)
     return 1;
 }
 
+// Sets the matrix's normal, orthogonal and identity flags by how far it is from each, under the
+// given tolerances or the defaults. The identity test uses the orthogonal tolerance, not the
+// identity one.
 RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
 {
     S32 identity;
     S32 normal;
     S32 orthogonal;
-    S32 both;
     U32 flags;
 
     if (!tolerance)
@@ -283,18 +285,7 @@ RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
 
     normal = tolerance->Normal >= _rwMatrixNormalError(matrix);
     orthogonal = tolerance->Orthogonal >= _rwMatrixOrthogonalError(matrix);
-    identity = 0;
-    both = normal && orthogonal;
-
-    if (both)
-    {
-        F32 error = _rwMatrixIdentityError(matrix);
-
-        if (tolerance->Identity >= error)
-        {
-            identity = 1;
-        }
-    }
+    identity = normal && orthogonal && tolerance->Orthogonal >= _rwMatrixIdentityError(matrix);
 
     flags = matrix->flags;
     flags = normal ? (flags | rwMATRIXTYPENORMAL) : (flags & ~rwMATRIXTYPENORMAL);
@@ -341,45 +332,44 @@ RwMatrix* RwMatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMatrix)
     return MatrixOrthoNormalize(dstMatrix, srcMatrix);
 }
 
+// Builds the rotation about a unit axis from one minus the cosine and the sine of the angle, then
+// replaces the matrix with it or multiplies it in before or after, as the combine operation says.
 RwMatrix* RwMatrixRotateOneMinusCosineSine(RwMatrix* matrix, const RwV3d* unitAxis,
                                            F32 oneMinusCosine, F32 sine,
                                            RwOpCombineType combineOp)
 {
     RwMatrix rotate;
     RwMatrix result;
-    F32 x = unitAxis->x;
-    F32 y = unitAxis->y;
-    F32 z = unitAxis->z;
-    F32 xy;
-    F32 yz;
-    F32 zx;
-    F32 xSine;
-    F32 ySine;
-    F32 zSine;
+    RwV3d leading;
+    RwV3d crossed;
+    RwV3d scaled;
 
-    rotate.flags = rwMATRIXTYPEORTHONORMAL;
-    rotate.flags &= ~rwMATRIXINTERNALIDENTITY;
+    leading.x = 1.0f - unitAxis->x * unitAxis->x;
+    leading.y = 1.0f - unitAxis->y * unitAxis->y;
+    leading.z = 1.0f - unitAxis->z * unitAxis->z;
+    RwV3dScaleMacro(&leading, &leading, oneMinusCosine);
+
+    crossed.x = unitAxis->y * unitAxis->z;
+    crossed.y = unitAxis->z * unitAxis->x;
+    crossed.z = unitAxis->x * unitAxis->y;
+    RwV3dScaleMacro(&crossed, &crossed, oneMinusCosine);
+
+    RwV3dScaleMacro(&scaled, unitAxis, sine);
+
+    rotate.right.x = 1.0f - leading.x;
+    rotate.right.y = crossed.z + scaled.z;
+    rotate.right.z = crossed.y - scaled.y;
+    rotate.up.x = crossed.z - scaled.z;
+    rotate.up.y = 1.0f - leading.y;
+    rotate.up.z = crossed.x + scaled.x;
+    rotate.at.x = crossed.y + scaled.y;
+    rotate.at.y = crossed.x - scaled.x;
+    rotate.at.z = 1.0f - leading.z;
     rotate.pos.x = 0.0f;
     rotate.pos.y = 0.0f;
     rotate.pos.z = 0.0f;
-
-    rotate.right.x = 1.0f - (1.0f - x * x) * oneMinusCosine;
-    rotate.up.y = 1.0f - (1.0f - y * y) * oneMinusCosine;
-    rotate.at.z = 1.0f - (1.0f - z * z) * oneMinusCosine;
-
-    yz = y * z * oneMinusCosine;
-    zx = z * x * oneMinusCosine;
-    xy = x * y * oneMinusCosine;
-    xSine = x * sine;
-    ySine = y * sine;
-    zSine = z * sine;
-
-    rotate.up.z = yz + xSine;
-    rotate.at.y = yz - xSine;
-    rotate.right.z = zx - ySine;
-    rotate.at.x = zx + ySine;
-    rotate.right.y = xy + zSine;
-    rotate.up.x = xy - zSine;
+    rotate.flags = rwMATRIXTYPEORTHONORMAL;
+    rotate.flags &= ~rwMATRIXINTERNALIDENTITY;
 
     switch (combineOp)
     {
@@ -406,7 +396,8 @@ RwMatrix* RwMatrixRotateOneMinusCosineSine(RwMatrix* matrix, const RwV3d* unitAx
         err.pluginID = 1;
         err.errorCode = _rwerror(0x80000003, "Invalid combination type");
         RwErrorSet(&err);
-        return NULL;
+        matrix = NULL;
+        break;
     }
     }
 

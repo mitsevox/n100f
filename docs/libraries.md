@@ -45,8 +45,8 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/baim3d.c` | 9 of 9 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/bapipe.c` | 4 of 4 | (Matching) |
 | `rwsdk/src/pipe/p2/p2core.c` | 13 of 13 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/pipe/p2/p2define.c` | 11 of 13 | `RxPipelineLock` (99.7%: the inlined block grow's offset and the node definition take each other's registers) and `RxLockedPipeUnlock` (97.6%: the size sums add the outputs' total at another point and the copy of the sort data to the top of the block subtracts its entry size from the size first, so their values take other registers); `.sdata` `gMemoryLimits` is in the split |
-| `rwsdk/src/pipe/p2/p2dep.c` | 5 of 11 | `_PropDownElimPath` (98.1%), `_AssignClusterSlots` (97.7%), `_ForAllNodesWriteClusterAllocations` (96.8%), `_PropagateDependenciesAndKillDeadPaths` (95.6%), `_TraceClusterScopes` (94.7%) and `_ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields` (90.5%): the inlined entry helpers' values take other registers and some of their stores and constants are scheduled differently |
+| `rwsdk/src/pipe/p2/p2define.c` | 12 of 13 | `RxLockedPipeUnlock` (97.6%: the size sums add the outputs' total at another point and the copy of the sort data to the top of the block subtracts its entry size from the size first, so their values take other registers); `.sdata` `gMemoryLimits` is in the split |
+| `rwsdk/src/pipe/p2/p2dep.c` | 6 of 11 | `_PropDownElimPath` (98.1%), `_ForAllNodesWriteClusterAllocations` (96.8%), `_PropagateDependenciesAndKillDeadPaths` (95.6%), `_TraceClusterScopes` (94.7%) and `_ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields` (90.5%): the inlined entry helpers' values take other registers and some of their stores and constants are scheduled differently |
 | `rwsdk/src/pipe/p2/p2heap.c` | 7 of 8 | `RxHeapRealloc` (99.6%: the rounded size and the inlined shrink path's size difference take each other's registers); its message string is not split |
 | `rwsdk/src/pipe/p2/p2renderstate.c` | 4 of 4 | (Matching on GIHE78-rev0; split by hand) |
 | `rwsdk/src/pipe/p2/p2resort.c` | 2 of 2 | (Matching on GIHE78-rev0; GIHE78-rev1 remains NonMatching because its insertion pass is outlined before the wrapper) |
@@ -59,7 +59,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeClipLine.c` | 2 of 4 | `PerspectiveClipProcessPacket` (98.5%) and `ParallelClipProcessPacket` (98.4%): the saved registers of the loop counter, the result flag, the doubled stride and the keep flag differ, and the set-up schedules i = 0 and the line count load differently |
 | `rwsdk/src/pipe/p2/nodeClipTriangle.c` | 2 of 4 | `PerspectiveClipProcessPacket` (99.9%) and `ParallelClipProcessPacket` (99.8%): the loop counter, the new-triangle count and the first new vertex take each other's saved registers |
 | `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 2 of 4 | Parallel 98.46328%, Perspective 94.606606%; no supported source gain. Raw data 252 emitted bytes plus four target zero tail bytes; local-function source-layout addresses differ. NonMatching, original linked |
-| `rwsdk/src/pipe/p2/nodeTransform.c` | 2 of 4 | `TransformNodeParallel` (99.03189%) and `TransformNodePerspective` (99.03628%): packet lifetime/copy and loop register allocation; each is four bytes short. The 232-byte `.data` and 32-byte `.sdata2` remain exact; NonMatching |
+| `rwsdk/src/pipe/p2/nodeTransform.c` | 2 of 4 | `TransformNodeParallel` (99.78%) and `TransformNodePerspective` (99.78%): the clip flag accumulators and the three strides take each other's registers. The 232-byte `.data` and 32-byte `.sdata2` remain exact; NonMatching |
 | `rwsdk/src/pipe/p2/nodeImmInstance.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/p2clpcom.c` | 16 of 16 | (Matching on GIHE78-rev0, with its `.bss` gClipInfo and `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c` | 2 of 2 | (Matching on GIHE78-rev0 and GIHE78-rev1; .data 148 bytes plus 4 normal alignment bytes, .sdata 16 bytes) |
@@ -68,9 +68,9 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/nodeLight.c` | 1 of 7 | `_LightFn` (99.2%) and the five `_rwApply*Light` functions (95.3-99.1%): register choice and the order of a few loads |
 | `rwsdk/world/pipe/p2/nodePostLight.c` | 1 of 2 | `_PostLightFn` (94.6%: the target reloads each color channel after its clamp test; also on GIHE78-rev1) |
 | `rwsdk/world/pipe/p2/gcn/wrldpipe.c` | 7 of 7 | (Matching on GIHE78-rev0; starts at `_rxWorldDevicePluginAttach`, `0x8015D830`) |
-| `rwsdk/src/batextur.c` | 19 of 29 | `TextureDefaultNormalRead` (99.7%), `_rwTextureOpen` (99.6%), `TextureDefaultMipmapRead` (99.6%), `_rwTextureClose` (98.0%), `TextureImageReadAndSize` (97.5%), `PalettizeMipmaps` (94.2%), `RwTextureDestroy` (93.3%: the target loads the return value 1 before reading the reference count as well as at the end), `PalettizeImage` (91.4%), `TextureRasterDefaultBuildMipmaps` (87.0%) and `RwTextureRead` (86.3%), register choice and scheduling |
+| `rwsdk/src/batextur.c` | 29 of 29 | (Matching on GIHE78-rev0; `.rodata` and `.data` exact, `.sdata`, `.sbss` and `.sdata2` exact up to alignment padding) |
 | `rwsdk/src/plcore/batkbin.c` | 8 of 8 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/plcore/bamatrix.c` | 18 of 21 | `MatrixOrthoNormalize` (99.6%), `RwMatrixRotateOneMinusCosineSine` (97.1%) and `RwMatrixOptimize` (91.1%), register choice and scheduling |
+| `rwsdk/src/plcore/bamatrix.c` | 19 of 21 | `MatrixOrthoNormalize` (99.6%) and `RwMatrixOptimize` (92.2%), register choice and scheduling |
 | `rwsdk/src/babinfrm.c` | 3 of 3 | (Matching on GIHE78-rev0, with its `.sdata2`) |
 | `rwsdk/src/plcore/bastream.c` | 7 of 7 | (Matching on GIHE78-rev0, including `.sdata` and `.sbss`) |
 | `rwsdk/os/gcn/osintf.c` | 1 of 1 | (Matching on GIHE78-rev0) |
@@ -80,7 +80,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/p2altmdl.c` | 3 of 3 | (Matching on GIHE78-rev0, with its `.bss` _rxExecCtxGlobal) |
 | `rwsdk/tool/slerp/rtslerp.c` | 0 of 1 | `RtQuatSetupSlerpCache` (99.3%: operand and register order in the inlined arc cosine's products; text only) |
 | `rwsdk/src/babintex.c` | 7 of 9 (rev0) | `_rwStringStreamFindAndRead` (99.0%) and `RwTextureStreamRead` (97.6%): the inlined string readers keep their pointers alive longer in the target; NonMatching, with its `.sdata2` |
-| `rwsdk/src/baimage.c` | 9 of 18 | `ImageDetermineExtender` (99.1%), `RwImageCopy` (98.9%), `ImagePathForAllFullNames` (97.8%), `RwImageMakeMask` (97.4%), `ImageConvertDepth` (92.4%), `RwImageReadMaskedImage` (92.3%), `RwImageApplyMask` (89.2%), `RwImageAllocatePixels` (83.1%: the target compares the depth unsigned and computes the palette size without a branch) and `RwImageGammaCorrect` (79.1%), register choice and scheduling |
+| `rwsdk/src/baimage.c` | 16 of 18 | `RwImageApplyMask` (98.5%) and `ImagePathForAllFullNames` (98.3%), register choice |
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/src/plcore/bacolor.c` | 2 of 2 | (Matching, with `colorModule` in `.sbss`) |

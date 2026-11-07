@@ -69,10 +69,11 @@ static RwTexDictionary* dummyTexDict;
 // level 0 and levels past 15 leave the names alone.
 static S32 TextureDefaultMipmapName(char* name, char* maskName, U8 mipLevel, S32 format)
 {
+    static const char digits[] = "0123456789abcdef";
     char suffix[3];
 
     suffix[0] = 'm';
-    suffix[1] = (mipLevel > 0 && mipLevel < 16) ? "0123456789abcdef"[mipLevel] : '\0';
+    suffix[1] = (mipLevel > 0 && mipLevel < 16) ? digits[mipLevel] : '\0';
     suffix[2] = '\0';
 
     if (suffix[1])
@@ -1045,9 +1046,12 @@ static S32 StringCompare(const char* name, const char* other)
 // Finds a texture in a dictionary by name.
 RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dict, const char* name)
 {
-    RwLLLink* end = rwLinkListGetTerminator(&dict->texturesInDict);
-    RwLLLink* cur = rwLinkListGetFirstLLLink(&dict->texturesInDict);
     RwTexture* texture;
+    RwLLLink* cur;
+    RwLLLink* end;
+
+    cur = rwLinkListGetFirstLLLink(&dict->texturesInDict);
+    end = rwLinkListGetTerminator(&dict->texturesInDict);
 
     while (cur != end)
     {
@@ -1064,40 +1068,43 @@ RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dict, const char* na
     return NULL;
 }
 
-// Looks a texture up by name in the current dictionary, or in every dictionary when there is no
-// current one. Returns NULL when no dictionary holds it.
+// Looks a texture up by name in every dictionary, for when there is no current one. Returns NULL
+// when no dictionary holds it.
 static RwTexture* TextureFind(const char* name)
 {
-    if (TEXTURE_DATA(currentDict))
-    {
-        return RwTexDictionaryFindNamedTexture(TEXTURE_DATA(currentDict), name);
-    }
-    else
-    {
-        RwLLLink* cur = rwLinkListGetFirstLLLink(&TEXTURE_DATA(texDictList));
+    RwLLLink* cur = rwLinkListGetFirstLLLink(&TEXTURE_DATA(texDictList));
 
-        while (cur != rwLinkListGetTerminator(&TEXTURE_DATA(texDictList)))
+    while (cur != rwLinkListGetTerminator(&TEXTURE_DATA(texDictList)))
+    {
+        RwTexDictionary* dict = rwLLLinkGetData(cur, RwTexDictionary, lInInstance);
+        RwTexture* texture = RwTexDictionaryFindNamedTexture(dict, name);
+
+        if (texture)
         {
-            RwTexDictionary* dict = rwLLLinkGetData(cur, RwTexDictionary, lInInstance);
-            RwTexture* texture = RwTexDictionaryFindNamedTexture(dict, name);
-
-            if (texture)
-            {
-                return texture;
-            }
-
-            cur = rwLLLinkGetNext(cur);
+            return texture;
         }
+
+        cur = rwLLLinkGetNext(cur);
     }
 
     return NULL;
 }
 
-// Returns a texture by name with its reference count raised when a dictionary already holds it;
-// otherwise reads it through the read callback and adds it to the current dictionary, if any.
+// Returns a texture by name with its reference count raised when the current dictionary holds it
+// (or, with no current dictionary, any dictionary); otherwise reads it through the read callback
+// and adds it to the current dictionary, if any.
 RwTexture* RwTextureRead(const char* name, const char* maskName)
 {
-    RwTexture* texture = TextureFind(name);
+    RwTexture* texture;
+
+    if (TEXTURE_DATA(currentDict))
+    {
+        texture = RwTexDictionaryFindNamedTexture(TEXTURE_DATA(currentDict), name);
+    }
+    else
+    {
+        texture = TextureFind(name);
+    }
 
     if (texture)
     {
