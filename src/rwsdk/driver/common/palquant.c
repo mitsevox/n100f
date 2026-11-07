@@ -111,11 +111,18 @@ static PalQuantLeaf* AllocateToLeaf(PalQuant* pq, PalQuantBranch* root, U32 cell
 // Adds an image's colours to the tree with the given weight.
 void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
 {
-    S32 depth = image->depth;
-    RwRGBA* palette = image->palette;
-    S32 y = image->height;
-    S32 stride = image->stride;
-    U8* pixels = image->cpPixels;
+    S32 x;
+    S32 depth;
+    S32 y;
+    S32 stride;
+    U8* pixels;
+    RwRGBA* palette;
+
+    depth = image->depth;
+    stride = image->stride;
+    pixels = image->cpPixels;
+    palette = image->palette;
+    y = image->height;
 
     switch (depth)
     {
@@ -123,8 +130,9 @@ void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
     case 8:
         while (y--)
         {
-            S32 x = image->width;
             U8* pixel = pixels;
+
+            x = image->width;
 
             while (x--)
             {
@@ -138,10 +146,14 @@ void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
 
                 pixel++;
 
-                red = PALQUANT_TOUNIT * color->red * weight;
-                green = PALQUANT_TOUNIT * color->green * weight;
-                blue = PALQUANT_TOUNIT * color->blue * weight;
-                alpha = PALQUANT_TOUNIT * color->alpha * weight;
+                red = PALQUANT_TOUNIT * color->red;
+                red *= weight;
+                green = PALQUANT_TOUNIT * color->green;
+                green *= weight;
+                blue = PALQUANT_TOUNIT * color->blue;
+                blue *= weight;
+                alpha = PALQUANT_TOUNIT * color->alpha;
+                alpha *= weight;
                 leaf->weight += weight;
                 leaf->red += red;
                 leaf->green += green;
@@ -157,7 +169,8 @@ void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
         while (y--)
         {
             RwRGBA* color = (RwRGBA*)pixels;
-            S32 x = image->width;
+
+            x = image->width;
 
             while (x--)
             {
@@ -168,10 +181,14 @@ void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
                 F32 blue;
                 F32 alpha;
 
-                red = PALQUANT_TOUNIT * color->red * weight;
-                green = PALQUANT_TOUNIT * color->green * weight;
-                blue = PALQUANT_TOUNIT * color->blue * weight;
-                alpha = PALQUANT_TOUNIT * color->alpha * weight;
+                red = PALQUANT_TOUNIT * color->red;
+                red *= weight;
+                green = PALQUANT_TOUNIT * color->green;
+                green *= weight;
+                blue = PALQUANT_TOUNIT * color->blue;
+                blue *= weight;
+                alpha = PALQUANT_TOUNIT * color->alpha;
+                alpha *= weight;
                 leaf->weight += weight;
                 leaf->red += red;
                 leaf->green += green;
@@ -250,6 +267,19 @@ static void assignindex(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuan
     }
 }
 
+// Gives every leaf inside a box the box's palette index, walking the whole tree from the colour
+// origin.
+static inline void nAssign(PalQuantBranch* root, PalQuantBox* region, S32 index)
+{
+    RwRGBA origin;
+
+    origin.red = 0;
+    origin.green = 0;
+    origin.blue = 0;
+    origin.alpha = 0;
+    assignindex(root, &origin, PALQUANT_DEPTH, region, index);
+}
+
 // Sums the weights and colours of the leaves inside a box.
 static void addvolume(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuantBox* region,
                       PalQuantLeaf* volume)
@@ -320,7 +350,7 @@ static void addvolume(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuantB
 }
 
 // Sums the leaves inside a box into volume.
-static void nVol(PalQuantBranch* root, PalQuantBox* region, PalQuantLeaf* volume)
+static inline void nVol(PalQuantBranch* root, PalQuantBox* region, PalQuantLeaf* volume)
 {
     RwRGBA origin;
 
@@ -335,6 +365,15 @@ static void nVol(PalQuantBranch* root, PalQuantBox* region, PalQuantLeaf* volume
 #define PALQUANT_DOT(_v)                                                                           \
     ((_v)->red * (_v)->red + (_v)->green * (_v)->green + (_v)->blue * (_v)->blue +                 \
      (_v)->alpha * (_v)->alpha)
+
+// The variance of the colours inside a box.
+static inline F32 nVar(PalQuantBranch* root, PalQuantBox* region)
+{
+    PalQuantLeaf volume;
+
+    nVol(root, region, &volume);
+    return volume.var - PALQUANT_DOT(&volume) / volume.weight;
+}
 
 // Tries every cut of a box along one channel and returns the best split's score, with the cut in
 // *cut (-1 if no cut leaves weight on both sides).
@@ -657,7 +696,6 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
     }
     else
     {
-        PalQuantLeaf volume;
         S32 i;
 
         pq->boxes[0].lower.red = 0;
@@ -668,8 +706,7 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
         pq->boxes[0].upper.green = 32;
         pq->boxes[0].upper.blue = 32;
         pq->boxes[0].upper.alpha = 32;
-        nVol(pq->root, &pq->boxes[0], &volume);
-        pq->variances[0] = volume.var - PALQUANT_DOT(&volume) / volume.weight;
+        pq->variances[0] = nVar(pq->root, &pq->boxes[0]);
 
         for (i = 1; i < maxcols; i++)
         {
@@ -693,13 +730,8 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
 
             if (nCut(pq->root, &pq->boxes[next], &pq->boxes[i]))
             {
-                PalQuantLeaf upper;
-                PalQuantLeaf lower;
-
-                nVol(pq->root, &pq->boxes[next], &lower);
-                pq->variances[next] = lower.var - PALQUANT_DOT(&lower) / lower.weight;
-                nVol(pq->root, &pq->boxes[i], &upper);
-                pq->variances[i] = upper.var - PALQUANT_DOT(&upper) / upper.weight;
+                pq->variances[next] = nVar(pq->root, &pq->boxes[next]);
+                pq->variances[i] = nVar(pq->root, &pq->boxes[i]);
             }
             else
             {
@@ -712,23 +744,13 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
         {
             if (i < numcols)
             {
-                RwRGBA origin;
                 PalQuantLeaf mean;
                 F32 scale;
 
-                origin.red = 0;
-                origin.green = 0;
-                origin.blue = 0;
-                origin.alpha = 0;
-                assignindex(pq->root, &origin, PALQUANT_DEPTH, &pq->boxes[i], i);
+                nAssign(pq->root, &pq->boxes[i], i);
                 nVol(pq->root, &pq->boxes[i], &mean);
 
-                scale = 0.0f;
-
-                if (mean.weight > 0.0f)
-                {
-                    scale = PALQUANT_TOCHANNEL / mean.weight;
-                }
+                scale = (mean.weight > 0.0f) ? PALQUANT_TOCHANNEL / mean.weight : 0.0f;
 
                 palette[i].red = (U8)(mean.red * scale);
                 palette[i].green = (U8)(mean.green * scale);
@@ -764,6 +786,10 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
 {
     S32 stride = image->stride;
     U8* pixels = image->cpPixels;
+    U32 width;
+    U32 x;
+    U32 y;
+    U8* dst;
 
     if (dstDepth == 4 && dstPacked)
     {
@@ -773,14 +799,14 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
         case 8:
         {
             RwRGBA* palette = image->palette;
-            U32 y = image->height;
+            y = image->height;
 
             while (y--)
             {
-                U32 x;
-                U32 width = image->width;
-                U8* dst = dstPixels;
                 U8* src = pixels;
+
+                dst = dstPixels;
+                width = image->width;
 
                 for (x = 0; x < width; x++)
                 {
@@ -807,14 +833,14 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
         }
         case 32:
         {
-            U32 y = image->height;
+            y = image->height;
 
             while (y--)
             {
                 RwRGBA* color = (RwRGBA*)pixels;
-                U32 x;
-                U32 width = image->width;
-                U8* dst = dstPixels;
+
+                dst = dstPixels;
+                width = image->width;
 
                 for (x = 0; x < width; x++)
                 {
@@ -852,13 +878,14 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
         case 8:
         {
             RwRGBA* palette = image->palette;
-            U32 y = image->height;
+            y = image->height;
 
             while (y--)
             {
                 U8* src = pixels;
-                U32 x = image->width;
-                U8* dst = dstPixels;
+
+                x = image->width;
+                dst = dstPixels;
 
                 while (x--)
                 {
@@ -874,13 +901,14 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
         }
         case 32:
         {
-            U32 y = image->height;
+            y = image->height;
 
             while (y--)
             {
                 RwRGBA* color = (RwRGBA*)pixels;
-                U8* dst = dstPixels;
-                U32 x = image->width;
+
+                dst = dstPixels;
+                x = image->width;
 
                 while (x--)
                 {

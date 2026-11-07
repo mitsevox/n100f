@@ -298,13 +298,20 @@ void _rwDlRenderModeSelect(GXRenderModeObj* renderMode, S32 pixelFormat)
 {
     if (renderMode != NULL)
     {
-        S32 format;
+        GXPixelFmt format;
 
         lbl_8025E2C8 = *renderMode;
         _RwDlRenderMode = &lbl_8025E2C8;
         lbl_8025F804 = 0x2A;
 
-        format = !_RwDlRenderMode->aa ? pixelFormat : GX_PF_RGB565_Z16;
+        if (_RwDlRenderMode->aa)
+        {
+            format = GX_PF_RGB565_Z16;
+        }
+        else
+        {
+            format = pixelFormat;
+        }
 
         lbl_8025F7FC = format;
         lbl_8025F800 = format;
