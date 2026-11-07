@@ -60,7 +60,8 @@ struct iSystemDeviceConfig
     S32 unk8;
 };
 
-// The globals keep their dtk labels; bfbb's names are given beside them.
+// gVsyncCount has its SLUS-20349 DWARF name; the other globals keep their dtk labels, with bfbb's
+// names or their roles beside them.
 volatile U32 gVsyncCount;                         // the retrace count zGame waits on
 iSystemDeviceConfig lbl_801FE3B8;                 // deviceConfig
 RwVideoMode lbl_801FE3C4;                         // sVideoMode
@@ -838,8 +839,8 @@ static S32 dlFexist(const char* name)
 static U32 dlFread(void* addr, U32 size, U32 count, void* fptr)
 {
     U32 buffered;
-    S32 readSize;
     S32 bytesRead = 0;
+    S32 readSize;
     S32 loopCount;
     S32 left;
     U32 uVar1;
