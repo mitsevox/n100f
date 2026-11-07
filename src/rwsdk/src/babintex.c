@@ -31,6 +31,7 @@ extern RwPluginRegistry texDictTKList;
 S32 _rwStringStreamGetSize(const char* string);
 const char* _rwStringStreamWrite(const char* string, RwStream* stream);
 static char* StringStreamRead(char* nativeString, RwStream* stream, U32 length);
+// FAKEMATCH: the length is passed by pointer; see the definition.
 static char* UnicodeStringStreamRead(char* nativeString, RwStream* stream, const U32* lengthIn);
 char* _rwStringStreamFindAndRead(char* string, RwStream* stream);
 U32 RwTextureStreamGetSize(const RwTexture* texture);
@@ -92,9 +93,9 @@ static char* StringStreamRead(char* nativeString, RwStream* stream, U32 length)
     return nativeString;
 }
 
-// FAKEMATCH: the length arrives through a pointer and is copied into a local, so that the copy
-// takes the target's saved register; real form believed to be a `U32 length` parameter like
-// StringStreamRead's.
+// FAKEMATCH: the length arrives through a pointer and is copied into a local declared after
+// `allocated`, so that the copy takes the target's saved register; real form believed to be a
+// `U32 length` parameter like StringStreamRead's.
 static char* UnicodeStringStreamRead(char* nativeString, RwStream* stream, const U32* lengthIn)
 {
     U16 buffer[STRING_READCHUNK];

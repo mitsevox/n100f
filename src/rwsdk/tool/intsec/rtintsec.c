@@ -253,13 +253,14 @@ S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const 
         SPHERETRIANGLE_VERTEXREJECT(1, 0, 2, d1);
     }
 
-    // FAKEMATCH: the first edge test is written out, keeping its squared distance in the
-    // function's length2, so that it is numbered below nearest; real form believed to be
+    // FAKEMATCH: the first edge test is written out so that its squared distance can use
+    // RwV3dDotProductMacro instead of SphereTriangleDot (see below); real form believed to be
     // `SPHERETRIANGLE_EDGEREJECT(0, 1, 2);` like the other two.
     {
         RwV3d edge;
         RwV3d nearest;
         F32 t;
+        F32 length2;
         F32 scaled;
 
         RwV3dSubMacro(&edge, &vc1, &vc0);
@@ -271,6 +272,9 @@ S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const 
         scaled *= t;
         nearest.y = vc0.y - scaled;
         nearest.z = vc0.z - edge.z * t;
+        // FAKEMATCH: the squared distance uses RwV3dDotProductMacro, so that nearest takes the
+        // target's FPRs; real form believed to be `SphereTriangleDot(&nearest, &nearest)` as in
+        // SPHERETRIANGLE_EDGEREJECT.
         length2 = RwV3dDotProductMacro(&nearest, &nearest);
 
         if (length2 > sphereRadiusSquared && length2 < SphereTriangleDot(&nearest, &vc2))
