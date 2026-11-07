@@ -17,7 +17,7 @@ GXTexFilter lbl_801DE5B8[7][2] = {
 };
 GXTexWrapMode lbl_801DE5F0[5] = { GX_CLAMP, GX_REPEAT, GX_MIRROR, GX_CLAMP, GX_CLAMP };
 
-// The texture each GX texture map holds.
+// The texture each of the eight GX texture maps holds; the table has a ninth entry.
 RwTexture* lbl_801DE604[9] = { NULL };
 
 // The draw sync token of the current frame.
