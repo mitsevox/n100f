@@ -409,7 +409,8 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
     U8* pixels;
     S32 rowWidth;
 
-    // FAKEMATCH: (continued) the initializers split from the declarations above.
+    // FAKEMATCH: (continued) the initializers split from the declarations above; real form
+    // believed to initialize these locals at their declarations.
     raster = (RwRaster*)rasterIn;
     level = (flags >> 8) & 0xFF;
     top = raster->parent;
@@ -431,7 +432,8 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
         // stride is a named local; real form believed to be that helper inlined. It also shifts
         // by the shift copy of level (real form believed to shift by level).
         rowWidth = DLRASTER_LEVELSIZE(top->width, shift);
-        // FAKEMATCH: (continued) the written-out row-bytes helper.
+        // FAKEMATCH: (continued) the written-out row-bytes helper; real form believed to be that
+        // helper inlined.
         switch (raster->depth)
         {
         case 4:
@@ -465,7 +467,7 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
 
         if (ext->format != GX_TF_CMPR && !(flags & rwRASTERLOCKRAW))
         {
-            // FAKEMATCH: DlRasterShift twice; real form believed to be
+            // FAKEMATCH: DlRasterShift twice, taking the shift copy of level; real form believed to be
             // DLRASTER_LEVELSIZE(top->height, level).
             ext->lockBuffer = RwMalloc(
                 stride * (DlRasterShift(top->height, shift) ? DlRasterShift(top->height, shift) : 1));
@@ -480,6 +482,7 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
         {
             // FAKEMATCH: the shift copy of level; real form believed to shift by level.
             S32 width = raster->width >> shift;
+            // FAKEMATCH: the shift copy of level; real form believed to shift by level.
             S32 height = raster->height >> shift;
 
             width = width ? width : 1;
