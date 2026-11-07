@@ -66,7 +66,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c` | 2 of 2 | (Matching on GIHE78-rev0; .data 152 bytes, .sdata 16 bytes) |
 | `rwsdk/world/pipe/p2/bapipew.c` | 5 of 5 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/pipe/p2/nodeLight.c` | 7 of 7 | (Matching on GIHE78-rev0) |
-| `rwsdk/world/pipe/p2/nodePostLight.c` | 2 of 2 | (Matching on GIHE78-rev0) |
+| `rwsdk/world/pipe/p2/nodePostLight.c` | 2 of 2 | (Matching on GIHE78-rev0; both functions also compile exact on GIHE78-rev1, not promoted there) |
 | `rwsdk/world/pipe/p2/gcn/wrldpipe.c` | 7 of 7 | (Matching on GIHE78-rev0; starts at `_rxWorldDevicePluginAttach`, `0x8015D830`) |
 | `rwsdk/src/batextur.c` | 29 of 29 | (Matching on GIHE78-rev0; `.rodata` and `.data` exact, `.sdata`, `.sbss` and `.sdata2` exact up to alignment padding) |
 | `rwsdk/src/plcore/batkbin.c` | 8 of 8 | (Matching on GIHE78-rev0) |
