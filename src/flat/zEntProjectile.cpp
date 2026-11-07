@@ -24,6 +24,7 @@ struct zSFX;
 
 static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd_limit, F32 dst_range,
                             xVec3* vec_vel);
+static S32 ZPRJ_autocalc(st_ZPRJ_AUTOCALC_INFO* autinf);
 static S32 ZPRJ_bounce_calcmove(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame);
 static S32 ZPRJ_bounce_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame);
 static S32 ZPRJ_bounce_attach(zEntProjectile* prj);
@@ -540,7 +541,7 @@ void zEntProjectile::SyncFrame(S32 applyToModel)
             }
         }
 
-        ent->frame->mode = 0;
+        frame->mode = 0;
     }
 }
 
@@ -1794,6 +1795,8 @@ void zEntProjectile_softReflect(xVec3* dir_new, xVec3* dir_cur, xVec3* oppose, F
     }
 }
 
+// Aims a projectile: an arrow flies straight at its target, a gravity ball gets a lobbed launch
+// velocity from the autocalc solver. With apply set, it also places and launches the projectile.
 S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 apply)
 {
     st_ZPRJ_SOLV_METHOD_A* metha;
@@ -1824,7 +1827,6 @@ S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 appl
 
         grav = &info->grav;
         metha = &autinf.metha;
-        didit = 0;
 
         xVec3Sub(&info->dir_base, &grav->pos_tgt, &grav->pos_src);
         metha->spd_muzzle = info->spd_base;
@@ -1835,25 +1837,7 @@ S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 appl
         metha->acc_gravity = grav->acc_gravity;
         xVec3SMul(&metha->vel_launch, &metha->dir_launch, metha->spd_muzzle);
 
-        switch (autinf.method)
-        {
-        case ZPRJ_ATGTSOLV_METHA:
-        {
-            xVec3 vec_tgt = {};
-
-            xVec3Sub(&vec_tgt, &metha->pos_target, &metha->pos_launch);
-            didit = ZPRJ_solv_velvec(vec_tgt, metha->acc_gravity, metha->fac_arcness, metha->spd_muzzle,
-                                     metha->dst_range, &metha->vel_launch) +
-                    1;
-            break;
-        }
-        case ZPRJ_ATGTSOLV_METHB:
-            didit = 0;
-            break;
-        case ZPRJ_ATGTSOLV_METHC:
-            didit = 0;
-            break;
-        }
+        didit = ZPRJ_autocalc(&autinf);
 
         if (didit)
         {
@@ -1877,6 +1861,37 @@ S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 appl
     }
 
     return didit;
+}
+
+// Runs an aimer's autocalc request through its solver method and returns nonzero when it found a
+// launch velocity; only method A has a solver.
+static inline S32 ZPRJ_autocalc(st_ZPRJ_AUTOCALC_INFO* autinf)
+{
+    S32 rc = 0;
+    st_ZPRJ_SOLV_METHOD_A* metha;
+
+    switch (autinf->method)
+    {
+    case ZPRJ_ATGTSOLV_METHA:
+    {
+        xVec3 vec_tgt = {};
+
+        metha = &autinf->metha;
+        xVec3Sub(&vec_tgt, &metha->pos_target, &metha->pos_launch);
+        rc = ZPRJ_solv_velvec(vec_tgt, metha->acc_gravity, metha->fac_arcness, metha->spd_muzzle, metha->dst_range,
+                              &metha->vel_launch) +
+             1;
+        break;
+    }
+    case ZPRJ_ATGTSOLV_METHB:
+        rc = 0;
+        break;
+    case ZPRJ_ATGTSOLV_METHC:
+        rc = 0;
+        break;
+    }
+
+    return rc;
 }
 
 // Solves the launch velocity that lands a lobbed projectile on a target offset under gravity, limited
