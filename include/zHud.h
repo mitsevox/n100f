@@ -189,7 +189,7 @@ struct zHudStatusColor
     eHudInterpType interp;
 };
 
-// One model on the HUD. renderStyle picks the lighting preset the model is drawn with.
+// One model on the HUD. renderStyle selects its distance, scale and yaw framing preset.
 struct zHudItem
 {
     xModelInstance* model;

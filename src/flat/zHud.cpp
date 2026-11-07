@@ -185,6 +185,8 @@ void zHud_sceneReset();
 void zHud_UIRender(char* asset, F32 xPos, F32 yPos, F32 w, F32 h, U8 alpha);
 void zHud_DrawText(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 alpha,
                    eHudDropShadowMode shadow);
+static inline void zHudDrawTextImpl(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 alpha,
+                   eHudDropShadowMode shadow);
 void zHudElementsCB_GameStatsRender();
 void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt);
 void zHudElementsCB_GameStatsSetup(_xScene* sc);
@@ -236,11 +238,22 @@ void zHud_Update(_xScene* sc, F32 dt);
 void zHud_Setup(_xScene* sc);
 void zHud_Init();
 
+// Resolves the model-name hashes used by HUD item initialization.
+static inline void zHudInitModelIDs()
+{
+    zHudModel* entry;
+    S32 i;
+
+    for (i = 0; i < eHudModelCount; i++)
+    {
+        entry = &zHudModelTable[i];
+        entry->modelNameID = xStrHash(entry->modelName);
+    }
+}
+
+// Sets HUD presentation defaults, resolves model IDs, and initializes each item.
 void zHud_Init()
 {
-    S32 i;
-    zHudModel* entry;
-
     widthAspect = 1.3333334f;
     heightAspect = 0.75f;
 
@@ -253,11 +266,7 @@ void zHud_Init()
     clrDropShadow.b = 139;
     clrDropShadow.a = 200;
 
-    for (i = 0; i < eHudModelCount; i++)
-    {
-        entry = &zHudModelTable[i];
-        entry->modelNameID = xStrHash(entry->modelName);
-    }
+    zHudInitModelIDs();
 
     for (S32 i = 0; i < eHudCount; i++)
     {
@@ -459,6 +468,7 @@ void zHudElementsCB_PlayerStatusSetup(_xScene* sc)
     }
 }
 
+// Updates the health/status icons and advances their animation frames.
 void zHudElementsCB_PlayerStatusUpdate(_xScene* sc, F32 dt)
 {
     S32 i;
@@ -598,6 +608,9 @@ void zHudElementsCB_PlayerStatusUpdate(_xScene* sc, F32 dt)
         item->hframe.ang.z += item->hframe.dang.z * dt;
         xModelUpdate(item->model, dt);
         xModelEval(item->model);
+
+        F32 unitRate = 1.0f;
+        fabsf(unitRate * dt);
     }
 }
 
@@ -997,7 +1010,7 @@ void zHudElementsCB_SnacksRender()
     char str[256] = "";
 
     sprintf(str, "x%d", globals.player.Inv_ScoobySnacks);
-    zHud_DrawText(sHudSnackArray[0].hframe.pos.x, sHudSnackArray[0].hframe.pos.y, 150.0f, 100.0f,
+    zHudDrawTextImpl(sHudSnackArray[0].hframe.pos.x, sHudSnackArray[0].hframe.pos.y, 150.0f, 100.0f,
                   str, 0x10, 1.0f, sHudSnackArray[0].hframe.color.a, DROPSHADOW_NORMAL);
 
     xRect r = { -45.0f + (sHudSnackArray[0].hframe.pos.x - 0.5f * sHudSnackArray[0].hframe.size.x),
@@ -1117,6 +1130,7 @@ void zHudElementsCB_GumSetup(_xScene* sc)
     }
 }
 
+// Updates the gum inventory display and advances its animation frames.
 void zHudElementsCB_GumUpdate(_xScene* sc, F32 dt)
 {
     S32 i;
@@ -1290,6 +1304,9 @@ void zHudElementsCB_GumUpdate(_xScene* sc, F32 dt)
         item->hframe.ang.z += item->hframe.dang.z * dt;
         xModelUpdate(item->model, dt);
         xModelEval(item->model);
+
+        F32 unitRate = 1.0f;
+        fabsf(unitRate * dt);
     }
 }
 
@@ -1667,7 +1684,7 @@ void zHudElementsCB_SoapRender()
     char str[256] = "";
 
     sprintf(str, "%dx", globals.player.Inv_Ammo[1]);
-    zHud_DrawText(sHudSoapArray[0].hframe.pos.x, sHudSoapArray[0].hframe.pos.y, 150.0f, 100.0f,
+    zHudDrawTextImpl(sHudSoapArray[0].hframe.pos.x, sHudSoapArray[0].hframe.pos.y, 150.0f, 100.0f,
                   str, 0x20, 1.0f, 200, DROPSHADOW_NORMAL);
 
     xRect r = { sHudSoapArray[0].hframe.pos.x - 0.5f * sHudSoapArray[0].hframe.size.x,
@@ -1830,6 +1847,7 @@ void zHudElementsCB_SoapboxSetup(_xScene* sc)
     }
 }
 
+// Updates the soap-box indicator as inventory and display timers change.
 void zHudElementsCB_SoapboxUpdate(_xScene* sc, F32 dt)
 {
     zHudItem* item = &sHudSoapboxArray[0];
@@ -1925,8 +1943,9 @@ void zHudElementsCB_SoapboxUpdate(_xScene* sc, F32 dt)
                      eHudInterpTypeLinear);
         break;
     case eHudStatusSizeZero:
-        item->hframe.size.x = item->zHudStatusSizeTable[eHudStatusSizeZero].x;
         item->hframe.size.y = item->zHudStatusSizeTable[eHudStatusSizeZero].y;
+        item->hframe.size.x = item->zHudStatusSizeTable[eHudStatusSizeZero].x;
+        fabsf(item->hframe.size.x);
         break;
     case eHudStatusSizeSmall:
         break;
@@ -1994,7 +2013,7 @@ void zHudElementsCB_SoapboxRender()
             S32 textOffset[2] = { -20, -70 };
 
             sprintf(str, "%d", (globals.player.Inv_Ammo[1] - 1) / 5);
-            zHud_DrawText(item->hframe.pos.x + textOffset[0],
+            zHudDrawTextImpl(item->hframe.pos.x + textOffset[0],
                           item->hframe.pos.y + textOffset[1], 90.0f, 100.0f, str, 0x40, 1.0f,
                           item->hframe.color.a, DROPSHADOW_NORMAL);
         }
@@ -2095,6 +2114,7 @@ void zHudElementsCB_GumpackSetup(_xScene* sc)
     }
 }
 
+// Updates the gum-pack indicator as inventory and display timers change.
 void zHudElementsCB_GumpackUpdate(_xScene* sc, F32 dt)
 {
     zHudItem* item = &sHudGumpackArray[0];
@@ -2192,8 +2212,9 @@ void zHudElementsCB_GumpackUpdate(_xScene* sc, F32 dt)
                      eHudInterpTypeLinear);
         break;
     case eHudStatusSizeZero:
-        item->hframe.size.x = item->zHudStatusSizeTable[eHudStatusSizeZero].x;
         item->hframe.size.y = item->zHudStatusSizeTable[eHudStatusSizeZero].y;
+        item->hframe.size.x = item->zHudStatusSizeTable[eHudStatusSizeZero].x;
+        fabsf(item->hframe.size.x);
         break;
     case eHudStatusSizeSmall:
         break;
@@ -2258,7 +2279,7 @@ void zHudElementsCB_GumpackRender()
         S32 textOffset[2] = { 17, -70 };
 
         sprintf(str, "%d", (globals.player.Inv_Ammo[0] - 1) / 5);
-        zHud_DrawText(item->hframe.pos.x + textOffset[0], item->hframe.pos.y + textOffset[1],
+        zHudDrawTextImpl(item->hframe.pos.x + textOffset[0], item->hframe.pos.y + textOffset[1],
                       90.0f, 70.0f, str, 0x40, 1.0f, item->hframe.color.a, DROPSHADOW_NORMAL);
     }
 }
@@ -2951,8 +2972,7 @@ void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt)
     }
 }
 
-// The end-of-area stats screen: the snack, clue and enemy counts and the time, with their
-// icons.
+// Draws the stats counts and icons; the time-text row is skipped.
 void zHudElementsCB_GameStatsRender()
 {
     S32 i;
@@ -2969,7 +2989,7 @@ void zHudElementsCB_GameStatsRender()
             {
                 if (i != 3)
                 {
-                    zHud_DrawText(item->hframe.pos.x,
+                    zHudDrawTextImpl(item->hframe.pos.x,
                                   item->hframe.pos.y, 300.0f, 50.0f,
                                   item->text, 0x10, 1.0f,
                                   item->hframe.color.a, DROPSHADOW_NORMAL);
@@ -3009,11 +3029,47 @@ void zHudElementsCB_GameStatsRender()
 }
 
 // Draws s in the HUD font, first offset as a drop shadow when asked.
+static inline void zHudDrawTextImpl(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 alpha,
+                   eHudDropShadowMode shadow)
+{
+    F32 drawSizeX = 24.0f * size;
+    F32 drawSizeY = 32.0f * size;
+
+    clr.a = alpha;
+    clrDropShadow.a = alpha;
+
+    if (shadow == DROPSHADOW_NORMAL)
+    {
+        F32 offsetX = -3.0f;
+        F32 offsetY = 3.0f;
+        fontBox = xFontBoxCreate(x + offsetX, y + offsetY, w, h, 0, clrDropShadow);
+        xFontBoxSetJustification(fontBox, just);
+        xFontBoxSetDrawSize(fontBox, drawSizeX, drawSizeY);
+        xFontBoxSetDrawSpacing(fontBox, drawSizeX, drawSizeY);
+        xFontBoxSetColor(fontBox, clrDropShadow);
+        xFontBoxSetText(fontBox, s);
+        xFontBoxRender(fontBox);
+        xFontBoxDestroy(fontBox);
+    }
+
+    fontBox = xFontBoxCreate(x, y, w, h, 0, clr);
+    xFontBoxSetJustification(fontBox, just);
+    xFontBoxSetDrawSize(fontBox, drawSizeX, drawSizeY);
+    xFontBoxSetDrawSpacing(fontBox, drawSizeX, drawSizeY);
+    xFontBoxSetColor(fontBox, clr);
+    xFontBoxSetText(fontBox, s);
+    xFontBoxRender(fontBox);
+    xFontBoxDestroy(fontBox);
+}
+
+// Draws the supplied string with the HUD font and optional drop shadow.
 void zHud_DrawText(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 alpha,
                    eHudDropShadowMode shadow)
 {
     F32 drawSizeX = 24.0f * size;
     F32 drawSizeY = 32.0f * size;
+    fabsf(drawSizeX);
+    fabsf(drawSizeY);
 
     clr.a = alpha;
     clrDropShadow.a = alpha;
@@ -3191,9 +3247,7 @@ void zHudInterp1d(F32 dt, F32* src, F32 dst, F32 speed, S32 type)
     }
 }
 
-// Moves (*srcx, *srcy) toward (dstx, dsty) at speed units a second: at a steady rate
-// (linear), slowing as it closes in (decel) or by the inverse square of the distance
-// (accel). It never overshoots.
+// Moves a 2D point toward its destination using the selected speed curve.
 void zHudInterp2d(F32 dt, F32* srcx, F32* srcy, F32 dstx, F32 dsty, F32 speed, S32 type)
 {
     if (speed)
