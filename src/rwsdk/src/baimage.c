@@ -222,13 +222,13 @@ RwImage* RwImageAllocatePixels(RwImage* image)
     S32 pixelSize;
     S32 size;
 
-    if (image->depth == 4 || image->depth == 8)
+    if (image->depth == 4U || image->depth == 8U)
     {
         palettized = TRUE;
     }
 
-    image->stride = (image->depth + 7) >> 3;
     paletteSize = palettized ? (1 << image->depth) * sizeof(RwRGBA) : 0;
+    image->stride = (image->depth + 7) >> 3;
     image->stride *= image->width;
     image->stride = (image->stride + 3) & ~3;
 
