@@ -1042,8 +1042,7 @@ static S32 StringCompare(const char* name, const char* other)
     return FALSE;
 }
 
-// Finds a texture in a dictionary by name. The target inlines it into RwTextureRead and has no
-// copy of its own.
+// Finds a texture in a dictionary by name.
 RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dict, const char* name)
 {
     RwLLLink* end = rwLinkListGetTerminator(&dict->texturesInDict);
