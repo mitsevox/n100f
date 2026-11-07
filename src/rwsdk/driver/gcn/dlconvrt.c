@@ -70,7 +70,7 @@ static U32 _rwDlConv8888ToDl8888(const RwRGBA* rgba)
 
 S32 _rwDlRGBToPixel(U32* pixelOut, const RwRGBA* rgba, S32 format)
 {
-    U32 pixel;
+    S32 pixel;
 
     switch (format & rwRASTERFORMATPIXELFORMATMASK)
     {
@@ -111,7 +111,7 @@ S32 _rwDlRGBToPixel(U32* pixelOut, const RwRGBA* rgba, S32 format)
     }
     }
 
-    *pixelOut = pixel;
+    *pixelOut = *(U32*)&pixel;
 
     return TRUE;
 }
@@ -185,8 +185,13 @@ S32 _rwDlPixelToRGB(RwRGBA* rgba, const U32* pixelIn, S32 format)
     switch (format & rwRASTERFORMATPIXELFORMATMASK)
     {
     case rwRASTERFORMATDEFAULT:
-        _rwDlConv565To8888(rgba, pixel);
+    {
+        // The default format reads as 565, through a converter pointer as the image readers use.
+        void (*convert)(RwRGBA*, U32) = _rwDlConv565To8888;
+
+        convert(rgba, pixel);
         break;
+    }
     case rwRASTERFORMATLUM8:
     {
         RwError err;
@@ -1162,10 +1167,14 @@ S32 _rwDlImageFindFormat(RwImage* image)
 
                         if (depth == 4)
                         {
-                            return format | rwRASTERFORMATPAL4;
+                            format |= rwRASTERFORMATPAL4;
+                        }
+                        else
+                        {
+                            format |= rwRASTERFORMATPAL8;
                         }
 
-                        return format | rwRASTERFORMATPAL8;
+                        return format;
                     }
                 }
 
@@ -1206,12 +1215,7 @@ S32 _rwDlImageFindFormat(RwImage* image)
         }
     }
 
-    format = rwRASTERFORMAT565;
-
-    if (hasAlpha)
-    {
-        format = rwRASTERFORMAT1555;
-    }
+    format = hasAlpha ? rwRASTERFORMAT1555 : rwRASTERFORMAT565;
 
     if (depth == 4)
     {
