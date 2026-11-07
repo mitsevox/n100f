@@ -506,19 +506,14 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     setevenodd(flags, &tmp, 16, srch, b, &skip16);
     setevenodd(flags, &pitch, 32, srch, b, &skip32);
 
-    // FAKEMATCH: overlapping mode groups retain the target's repeated mode-3 branch; real form believed to test modes 3, 5 and 4 once.
-    if (((flags & 0x70000000) == 0x30000000 || (flags & 0x70000000) == 0x50000000) ? 1 :
-        // FAKEMATCH: this second group deliberately repeats mode 3; real form believed to use one combined mode predicate.
-        (((flags & 0x70000000) == 0x30000000 || (flags & 0x70000000) == 0x40000000) ? 1 : 0))
+    if ((flags & 0x70000000) == 0x30000000 || (flags & 0x70000000) == 0x50000000 ||
+        (flags & 0x70000000) == 0x40000000)
         xs = 2;
     else
         xs = 1;
 
     bx = (b->bpp * xs) << 4;
-    // FAKEMATCH: use the real later uvskip16 value as the UV-width producer before its destructive update; real form believed to compute uvw directly.
-    uvskip16 = width >> 1;
-    // FAKEMATCH: retain the full UV width while the producer becomes its real later skip value; real form believed to use the direct width-half value.
-    uvw = uvskip16;
+    uvw = width >> 1;
     S.y0 = (U8*)src + srcx + srcy * width;
     S.y1 = S.y0 + width;
     S.a0 = (U8*)alpha + srcx + srcy * width;
@@ -527,16 +522,11 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
 
     yskip16 = width - 16;
     yskip32 = width - 32;
-    // FAKEMATCH: derive both real skip values from the staged UV width; real form believed to subtract each directly from uvw.
-    uvskip32 = uvskip16 - 16;
-    // FAKEMATCH: destructively reuse the producer for its real skip role; real form believed to assign uvw minus eight.
-    uvskip16 -= 8;
+    uvskip16 = uvw - 8;
+    uvskip32 = uvw - 16;
     tmp = width - srcw;
     ybandskip = tmp + (srcw & 15) + width * 14;
-    // FAKEMATCH: split UV band-step expression exposes the target intermediate lifetime; real form believed to compute the complete band step in one expression.
-    uvbandskip = uvw - (srcw >> 1) + ((srcw & 15) >> 1);
-    // FAKEMATCH: complete the deliberately staged UV band step; real form believed to use the single complete expression.
-    uvbandskip += uvw * 7;
+    uvbandskip = uvw - (srcw >> 1) + ((srcw & 15) >> 1) + uvw * 7;
     dbandskip = pitch - srcw * (bx / 16) + (srcw & 15) * (bx / 16) + pitch * 14;
 
     if (flags & 0x10000)
@@ -553,12 +543,8 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     S.v = S.v + (srcx >> 1) + (srcy >> 1) * uvw;
 
     lasty = srch + srcy - 1;
-    // FAKEMATCH: pre-use the real x counter for the target's signed srcx working copy at 0x80119300; real form believed to use srcx directly in setup.
-    x = srcx;
-    // FAKEMATCH: range setup consumes the working copy; real form believed to add srcw and srcx directly.
-    lastx = srcw + x - 1;
-    // FAKEMATCH: mask setup consumes the same signed working copy; real form believed to divide the signed srcx conversion directly.
-    mask += mpitch * (srcy >> 4) + x / 16;
+    lastx = srcw + srcx - 1;
+    mask += mpitch * (srcy >> 4) + (S32)srcx / 16;
 
     for (y = srcy; y + 15 <= lasty; y += 16)
     {
