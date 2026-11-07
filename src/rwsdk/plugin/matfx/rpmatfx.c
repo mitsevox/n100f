@@ -139,21 +139,23 @@ static void* MatFXMaterialDestructor(void* object, S32 offset, S32 size)
 // textures are shared (their reference counts raised), the others set through the setters.
 static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offset, S32 size)
 {
-    U8 i;
     MatFXMaterialData* dstData;
+    const RpMaterial* srcMaterial = (const RpMaterial*)srcObject;
     MatFXMaterialData* srcData;
+    RpMaterial* dstMaterial = (RpMaterial*)dstObject;
+    U8 i;
     MatFXEffect* srcEffect;
 
-    srcData = MATFXMATERIALGETDATA(srcObject);
+    srcData = MATFXMATERIALGETDATA(srcMaterial);
     if (!srcData)
     {
         return NULL;
     }
 
-    dstData = MATFXMATERIALGETDATA(dstObject);
+    dstData = MATFXMATERIALGETDATA(dstMaterial);
     if (!dstData)
     {
-        dstData = MatFXMaterialDataCreate((RpMaterial*)dstObject);
+        dstData = MatFXMaterialDataCreate(dstMaterial);
     }
 
     if (!dstData)
@@ -161,7 +163,7 @@ static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offse
         return NULL;
     }
 
-    RpMatFXMaterialSetEffects((RpMaterial*)dstObject, srcData->flags);
+    RpMatFXMaterialSetEffects(dstMaterial, srcData->flags);
 
     for (i = 0; i < MATFX_NUMSLOTS; i++)
     {
@@ -174,11 +176,11 @@ static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offse
         case rpMATFXEFFECTBUMPMAP:
         {
             MatFXEffect* dstEffect = &dstData->effects[i];
-            RwFrame* frame = RpMatFXMaterialGetBumpMapFrame((const RpMaterial*)srcObject);
-            F32 coef = RpMatFXMaterialGetBumpMapCoefficient((const RpMaterial*)srcObject);
+            RwFrame* frame = RpMatFXMaterialGetBumpMapFrame(srcMaterial);
+            F32 coef = RpMatFXMaterialGetBumpMapCoefficient(srcMaterial);
 
-            RpMatFXMaterialSetBumpMapFrame((RpMaterial*)dstObject, frame);
-            RpMatFXMaterialSetBumpMapCoefficient((RpMaterial*)dstObject, coef);
+            RpMatFXMaterialSetBumpMapFrame(dstMaterial, frame);
+            RpMatFXMaterialSetBumpMapCoefficient(dstMaterial, coef);
 
             dstEffect->data.bumpMap.bumpTexture = srcEffect->data.bumpMap.bumpTexture;
             dstEffect->data.bumpMap.texture = srcEffect->data.bumpMap.texture;
@@ -195,34 +197,33 @@ static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offse
         }
         case rpMATFXEFFECTENVMAP:
         {
-            RwTexture* texture = RpMatFXMaterialGetEnvMapTexture((const RpMaterial*)srcObject);
-            RwFrame* frame = RpMatFXMaterialGetEnvMapFrame((const RpMaterial*)srcObject);
-            F32 coef = RpMatFXMaterialGetEnvMapCoefficient((const RpMaterial*)srcObject);
+            RwTexture* texture = RpMatFXMaterialGetEnvMapTexture(srcMaterial);
+            RwFrame* frame = RpMatFXMaterialGetEnvMapFrame(srcMaterial);
+            F32 coef = RpMatFXMaterialGetEnvMapCoefficient(srcMaterial);
             S32 useFrameBufferAlpha =
-                RpMatFXMaterialGetEnvMapFrameBufferAlpha((const RpMaterial*)srcObject);
+                RpMatFXMaterialGetEnvMapFrameBufferAlpha(srcMaterial);
 
             if (texture)
             {
-                RpMatFXMaterialSetEnvMapTexture((RpMaterial*)dstObject, texture);
+                RpMatFXMaterialSetEnvMapTexture(dstMaterial, texture);
             }
-            RpMatFXMaterialSetEnvMapFrame((RpMaterial*)dstObject, frame);
-            RpMatFXMaterialSetEnvMapFrameBufferAlpha((RpMaterial*)dstObject, useFrameBufferAlpha);
-            RpMatFXMaterialSetEnvMapCoefficient((RpMaterial*)dstObject, coef);
+            RpMatFXMaterialSetEnvMapFrame(dstMaterial, frame);
+            RpMatFXMaterialSetEnvMapFrameBufferAlpha(dstMaterial, useFrameBufferAlpha);
+            RpMatFXMaterialSetEnvMapCoefficient(dstMaterial, coef);
             break;
         }
         case rpMATFXEFFECTDUAL:
         {
-            RwTexture* texture = RpMatFXMaterialGetDualTexture((const RpMaterial*)srcObject);
+            RwTexture* texture = RpMatFXMaterialGetDualTexture(srcMaterial);
             RwBlendFunction srcBlendMode;
             RwBlendFunction dstBlendMode;
 
-            RpMatFXMaterialGetDualBlendModes((const RpMaterial*)srcObject, &srcBlendMode,
-                                             &dstBlendMode);
+            RpMatFXMaterialGetDualBlendModes(srcMaterial, &srcBlendMode, &dstBlendMode);
             if (texture)
             {
-                RpMatFXMaterialSetDualTexture((RpMaterial*)dstObject, texture);
+                RpMatFXMaterialSetDualTexture(dstMaterial, texture);
             }
-            RpMatFXMaterialSetDualBlendModes((RpMaterial*)dstObject, srcBlendMode, dstBlendMode);
+            RpMatFXMaterialSetDualBlendModes(dstMaterial, srcBlendMode, dstBlendMode);
             break;
         }
         }
@@ -301,7 +302,7 @@ static RwStream* fn_8013DEC4(RwStream* stream, S32 binaryLength, const void* obj
     RpMatFXMaterialFlags flags;
     U8 i;
 
-    flags = data ? data->flags : rpMATFXEFFECTNULL;
+    flags = (data == NULL) ? rpMATFXEFFECTNULL : data->flags;
 
     if (!RwStreamWrite(stream, &flags, sizeof(flags)))
     {
@@ -377,10 +378,10 @@ static RwStream* fn_8013DEC4(RwStream* stream, S32 binaryLength, const void* obj
 static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S32 offset,
                              S32 size)
 {
-    RpMaterial* material = (RpMaterial*)object;
-    MatFXMaterialData* data = MATFXMATERIALGETDATA(material);
-    RpMatFXMaterialFlags flags;
     U8 i;
+    RpMaterial* material = (RpMaterial*)object;
+    RpMatFXMaterialFlags flags;
+    MatFXMaterialData* data = MATFXMATERIALGETDATA(material);
 
     if (!data)
     {
@@ -420,10 +421,10 @@ static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S
         {
         case rpMATFXEFFECTBUMPMAP:
         {
-            RwTexture* bumpTexture = NULL;
-            RwTexture* texture = NULL;
             MatFXEffect* effect = &data->effects[i];
             F32 coef;
+            RwTexture* bumpTexture = NULL;
+            RwTexture* texture = NULL;
 
             if (!RwStreamRead(stream, &coef, sizeof(coef)))
             {
@@ -440,7 +441,7 @@ static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S
                 effect->data.bumpMap.bumpTexture = bumpTexture;
                 effect->data.bumpMap.texture = texture;
                 effect->data.bumpMap.invBumpWidth =
-                    1.0f / (U32)effect->data.bumpMap.bumpTexture->raster->width;
+                    1.0f / effect->data.bumpMap.bumpTexture->raster->width;
             }
             else if (texture)
             {
@@ -531,6 +532,7 @@ static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S
 // The bytes fn_8013DEC4 writes for the material: 0 when it has no effects.
 static S32 fn_8013E5CC(const void* object, S32 offset, S32 size)
 {
+    MatFXEffect* effect;
     MatFXMaterialData* data = MATFXMATERIALGETDATA(object);
     S32 total;
     U8 i;
@@ -540,11 +542,9 @@ static S32 fn_8013E5CC(const void* object, S32 offset, S32 size)
         return 0;
     }
 
-    total = sizeof(RpMatFXMaterialFlags);
-
-    for (i = 0; i < MATFX_NUMSLOTS; i++)
+    for (i = 0, total = sizeof(RpMatFXMaterialFlags); i < MATFX_NUMSLOTS; i++)
     {
-        MatFXEffect* effect = &data->effects[i];
+        effect = &data->effects[i];
 
         total += sizeof(RpMatFXMaterialFlags);
 
@@ -595,10 +595,11 @@ static void* fn_8013E72C(void* dstObject, const void* srcObject, S32 offset, S32
     return dstObject;
 }
 
+// Writes the atomic's effects-enabled flag.
 static RwStream* fn_8013E76C(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
                              S32 size)
 {
-    if (!RwStreamWrite(stream, (const S32*)((const U8*)object + MatFXAtomicDataOffset), sizeof(S32)))
+    if (RwStreamWrite(stream, (const S32*)((const U8*)object + MatFXAtomicDataOffset), sizeof(S32)) == NULL)
     {
         return NULL;
     }
@@ -655,10 +656,11 @@ static void* fn_8013E854(void* dstObject, const void* srcObject, S32 offset, S32
     return dstObject;
 }
 
+// Writes the world sector's effects-enabled flag.
 static RwStream* fn_8013E894(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
                              S32 size)
 {
-    if (!RwStreamWrite(stream, (const S32*)((const U8*)object + MatFXWorldSectorDataOffset), sizeof(S32)))
+    if (RwStreamWrite(stream, (const S32*)((const U8*)object + MatFXWorldSectorDataOffset), sizeof(S32)) == NULL)
     {
         return NULL;
     }
@@ -692,10 +694,17 @@ static S32 fn_8013E954(const void* object, S32 offset, S32 size)
 }
 
 // The addressing mode a texture uses in both directions, or 0 when the two differ.
-#define MATFXTEXTUREADDRESSING(_tex)                                                               \
-    ((((_tex)->filterAddressing >> 8) & 0xF) == (((_tex)->filterAddressing >> 12) & 0xF)           \
-         ? (((_tex)->filterAddressing >> 12) & 0xF)                                                \
-         : 0)
+static U32 MatFXTextureGetAddressing(const RwTexture* texture)
+{
+    U32 addressing = 0;
+
+    if (((texture->filterAddressing >> 8) & 0xF) == ((texture->filterAddressing >> 12) & 0xF))
+    {
+        addressing = (texture->filterAddressing >> 12) & 0xF;
+    }
+
+    return addressing;
+}
 
 // Builds a bump map texture: the base texture's image (or plain white without one) masked by the
 // effect texture's image, resampled to the base size, in a raster of the base raster's mipmap
@@ -703,8 +712,8 @@ static S32 fn_8013E954(const void* object, S32 offset, S32 size)
 // there is no base) and a name interleaving the two textures' names.
 RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTexture* effectTexture)
 {
-    RwRaster* effectRaster = effectTexture->raster;
     RwRaster* baseRaster = NULL;
+    RwRaster* effectRaster = effectTexture->raster;
     S32 effectWidth = effectRaster->width;
     S32 effectHeight = effectRaster->height;
     S32 width;
@@ -768,16 +777,9 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
     RwImageFindRasterFormat(image, rwRASTERTYPETEXTURE, &rasterWidth, &rasterHeight, &rasterDepth,
                             &rasterFormat);
 
-    if (baseTexture)
-    {
-        rasterFormat |= RwRasterGetFormat(baseRaster) &
-                        (rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP);
-    }
-    else
-    {
-        rasterFormat |= RwRasterGetFormat(effectRaster) &
-                        (rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP);
-    }
+    rasterFormat |=
+        (baseTexture ? RwRasterGetFormat(baseRaster) : RwRasterGetFormat(effectRaster)) &
+        (rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP);
 
     raster = RwRasterCreate(rasterWidth, rasterHeight, rasterDepth, rasterFormat);
     RwRasterSetFromImage(raster, image);
@@ -785,13 +787,13 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 
     if (baseTexture)
     {
-        addressing = MATFXTEXTUREADDRESSING(baseTexture);
         filter = baseTexture->filterAddressing & rwTEXTUREFILTERMODEMASK;
+        addressing = MatFXTextureGetAddressing(baseTexture);
     }
     else
     {
-        addressing = MATFXTEXTUREADDRESSING(effectTexture);
         filter = effectTexture->filterAddressing & rwTEXTUREFILTERMODEMASK;
+        addressing = MatFXTextureGetAddressing(effectTexture);
     }
 
     RwTextureSetAddressing(texture, addressing);
@@ -801,40 +803,37 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
     RwImageDestroy(maskImage);
 
     {
+        // The name takes one character from each texture's name in turn, as long as either has
+        // characters left.
         char name[32] = "";
-        const char* baseName;
-        const char* effectName;
-        char* dst;
-        S32 i;
+        const char* names[2];
+        S32 i = 0;
+        char* dst = name;
+        S32 j;
 
-    if (baseTexture)
-    {
-        baseName = baseTexture->name;
-        effectName = effectTexture->name;
-    }
-    else
-    {
-        baseName = effectName = effectTexture->name;
-    }
-
-    dst = name;
-    i = 0;
-    while (i < 31 && (*baseName || *effectName))
-    {
-        if (*baseName)
+        if (baseTexture)
         {
-            *dst++ = *baseName++;
-            i++;
+            names[0] = baseTexture->name;
+            names[1] = effectTexture->name;
+        }
+        else
+        {
+            names[0] = names[1] = effectTexture->name;
         }
 
-        if (*effectName)
+        while (i < 31 && (*names[0] || *names[1]))
         {
-            *dst++ = *effectName++;
-            i++;
+            for (j = 0; j < 2; j++)
+            {
+                if (*names[j])
+                {
+                    *dst++ = *names[j]++;
+                    i++;
+                }
+            }
         }
-    }
 
-    RwTextureSetName(texture, name);
+        RwTextureSetName(texture, name);
     }
 
     return texture;
