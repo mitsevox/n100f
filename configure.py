@@ -949,7 +949,7 @@ config.libs: List[Dict[str, Any]] = [
         "rphanim",
         [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/hanim/stdkey.c"),
-            Object(NonMatching, "rwsdk/plugin/hanim/rphanim.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/hanim/rphanim.c"),
         ],
     ),
     RWLib(
