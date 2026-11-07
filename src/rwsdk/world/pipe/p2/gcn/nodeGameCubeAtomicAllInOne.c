@@ -309,6 +309,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
         if ((locked & ALLINONE_LOCKTEXCOORDS) && (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2)))
         {
+            // FAKEMATCH: the texture coordinate loop called as a helper; real form believed to be inline.
             AllInOneReinstanceTexCoords(geometry, arrays, locked);
         }
 
