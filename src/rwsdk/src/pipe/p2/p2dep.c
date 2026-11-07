@@ -171,7 +171,7 @@ static rxScope* _ScopeTraceCreate(rxScope** scopeList)
     return NULL;
 }
 
-static void _ScopeTraceMerge(rxScope** scopeList, rxScope* scope0, rxScope* scope1)
+static void _ScopeTraceMerge(rxScope* scope0, rxScope* scope1, rxScope** scopeList)
 {
     while (scope0->parent)
     {
@@ -202,7 +202,7 @@ static void _ScopeTraceMerge(rxScope** scopeList, rxScope* scope0, rxScope* scop
             scopeList = &(*scopeList)->nextInList;
         }
 
-        *scopeList = scope1->nextInList;
+        *scopeList = (*scopeList)->nextInList;
     }
 }
 
@@ -443,6 +443,7 @@ static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
 {
     U32 n;
     U32 i;
+    U32 j;
     RxPipelineNode* node;
 
     n = pipeline->numNodes;
@@ -450,11 +451,11 @@ static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
 
     do
     {
-        for (i = 0; i < node->topSortData->req->numEntries; i++)
+        for (j = 0; j < node->topSortData->req->numEntries; j++)
         {
             rxReqEntry* entry;
 
-            entry = REQGETENTRY(node->topSortData->req, i);
+            entry = REQGETENTRY(node->topSortData->req, j);
 
             if (!entry->scope)
             {
@@ -482,7 +483,6 @@ static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
         {
             if (node->outputs[i] != (U32)-1)
             {
-                U32 j;
                 RxPipelineNode* next;
 
                 next = &pipeline->nodes[node->outputs[i]];
@@ -512,7 +512,7 @@ static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
                             }
                             else
                             {
-                                _ScopeTraceMerge(scopeList, nextEntry->scope, entry->scope);
+                                _ScopeTraceMerge(nextEntry->scope, entry->scope, scopeList);
                             }
                         }
                     }
