@@ -397,11 +397,12 @@ static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser);
 static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser);
 static void VEFX_plop_gum(st_zEntVillain* ent);
 static void VPAR_emit_extattack(st_zEntVillain*, _xVec3*, _xVec3*, F32, F32, F32);
+static void VPAR_emit_killerplant(st_zEntVillain* ent, _xVec3* aimdir, F32 dt);
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE emittype, F32 dt);
 static void VPAR_readyize_emitters();
 static void VBON_drop_bonusItem(st_zEntVillain* vil);
 static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp);
-static inline void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt);
+static void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt);
 static inline void VBON_setup_bonusTable();
 static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop_caller);
 static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 flg_vsnd, F32 radius,
@@ -413,7 +414,7 @@ static void VEFX_holo_begin(st_zEntVillain* vil);
 static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan);
 static inline F32 VANM_entTime(const _zEnt* ent);
 static inline F32 VCFG_tymref(st_zEntVillain* vil, S32 which);
-static inline bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym);
+static bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym);
 static inline void VPRJ_BMM_toss(zEntProjectile* prj, const _xVec3* pos_tgt);
 static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force);
 static S32 VNAV_get_nav(st_zEntVillain* ent);
@@ -438,14 +439,14 @@ static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3*
                                _xVec3* vec_off, _xVec3* vec_spin, F32 arcness, F32 heavy);
 static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup);
 static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup);
-static inline _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 dur);
-static inline _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 dur);
+static _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 dur);
+static _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 dur);
 static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bot_radius);
 static void VWEP_rbs_chkCollide(st_REDBEARD_SWORD* rbs, F32 dt);
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* sword, st_zEntVillain* vil);
 static inline void VWEP_rbs_place(st_REDBEARD_SWORD* rbs, _xVec3* pos);
 static void VWEP_rbs_bupdate(_xEnt* ent_rbs, _xVec3* pos);
-static inline en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil);
+static en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil);
 static inline void VPRJ_BMM_redflask(zEntProjectile* prj, F32 dt);
 static inline void VPRJ_BMM_greenflask(zEntProjectile* prj, F32 dt);
 static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt);
@@ -14895,6 +14896,22 @@ static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS
     return found;
 }
 
+// Whether a time into the attack animation is inside the villain's damage window, from its
+// configured start and end times (-1 and -2 when it has none).
+static bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym)
+{
+    F32 tym_beg = -1.0f;
+    F32 tym_end = -2.0f;
+    VCFG_getParm(&vil->vilcfg, ZVIL_PARM_DMG_BEGTIME, &tym_beg);
+    VCFG_getParm(&vil->vilcfg, ZVIL_PARM_DMG_ENDTIME, &tym_end);
+    bool inwin = tym >= tym_beg;
+    if (inwin)
+    {
+        inwin = tym <= tym_end;
+    }
+    return inwin;
+}
+
 // Set the villain's behaviour goal and, when it has links, send them the event for the kind of
 // goal it entered (idle, patrol, guard, dazed, search, listen, investigate, chase, attack and
 // mini-patrol each have one; bored sends its event only while the villain is asleep).
@@ -15008,9 +15025,10 @@ static S32 VWEP_swipe(st_zEntVillain* vil, F32)
 }
 
 // Unused.
-static void zEntVillain_UnknownTemplate108()
+static void zEntVillain_UnknownTemplate108(F32* out)
 {
     S32 lost[27] = { 0 };
+    *out = 0.7f;
 }
 
 // Aim the extended attack from its tagged vertex and emit its trail.
@@ -15065,21 +15083,7 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
     }
     if (ent->asset->subtype == eEntVillainTypeKillerPlant)
     {
-        if (sEmitKillerPlant)
-        {
-            _zParEmitterCustomSettings settings;
-            _xVec3 dir;
-            settings.pos.x = ent->model->Mat->pos.x;
-            settings.pos.y = ent->model->Mat->pos.y;
-            settings.pos.z = ent->model->Mat->pos.z;
-            settings.pos.x += 0.25f * ent->model->Mat->at.x;
-            settings.pos.y += 1.6f;
-            settings.pos.z += 0.25f * ent->model->Mat->at.z;
-            xVec3Normalize(&dir, &dirvec);
-            settings.custom_flags = 0x60;
-            xVec3SMul(&settings.vel, &dir, 1.0f + 0.25f * iurand());
-            zParEmitterEmitCustom(sEmitKillerPlant, dt, &settings);
-        }
+        VPAR_emit_killerplant(ent, &dirvec, dt);
     }
     else VPAR_emit_extattack(ent, &shotpos, &dirvec, dist, conrat, dt);
     return 0;
@@ -16529,7 +16533,7 @@ static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
 
 // The Mastermind's flask type for his next throw: smog at 4 hit points, acid at 3, fire at 2 and a
 // random one of the three at 1; smog otherwise.
-static inline en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil)
+static en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil)
 {
     en_ZVMM_FLASK_TYPE ftype;
     S32 typlist[3] = { MAST_FLSK_SMOG, MAST_FLSK_ACID, MAST_FLSK_FIRE };
@@ -16745,7 +16749,7 @@ static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs)
 
 // Spins the flying sword 25.132742 radians (8 pi) per second about x and moves it along its end
 // direction at its flight speed, outward before 2.5 seconds of age and back afterwards.
-static inline void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt)
+static void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt)
 {
     _xMat3x3 mat_rot = { 0 };
     _xVec3 vec_rot = { 25.132742f, 0.0f, 0.0f };
@@ -17050,7 +17054,7 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
 }
 
 // Start a straight white bolt from one point to another.
-static inline _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 dur)
+static _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 dur)
 {
     _tagLightningAdd add = { eLT_Line };
     add.start = from;
@@ -17068,7 +17072,7 @@ static inline _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 du
 }
 
 // Start a blue bolt that spins around the line from one point to another.
-static inline _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 dur)
+static _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 dur)
 {
     _tagLightningAdd add = { eLT_Line };
     add.start = from;
@@ -17312,6 +17316,25 @@ static void VPAR_emit_extattack(st_zEntVillain* ent, _xVec3* origin, _xVec3* aim
     }
 }
 
+// Emit the Killer Plant's cloud from just above its model, along aimdir.
+static void VPAR_emit_killerplant(st_zEntVillain* ent, _xVec3* aimdir, F32 dt)
+{
+    if (sEmitKillerPlant)
+    {
+        _zParEmitterCustomSettings settings;
+        _xVec3 dir;
+        settings.pos.x = ent->model->Mat->pos.x;
+        settings.pos.y = ent->model->Mat->pos.y;
+        settings.pos.z = ent->model->Mat->pos.z;
+        settings.pos.x += 0.25f * ent->model->Mat->at.x;
+        settings.pos.y += 1.6f;
+        settings.pos.z += 0.25f * ent->model->Mat->at.z;
+        xVec3Normalize(&dir, aimdir);
+        settings.custom_flags = 0x60;
+        xVec3SMul(&settings.vel, &dir, 1.0f + 0.25f * iurand());
+        zParEmitterEmitCustom(sEmitKillerPlant, dt, &settings);
+    }
+}
 
 // Builds the Black Knight's animation table: patrol, shock, attack and gloat states.
 static xAnimTable* VANM_mktable_BK()
@@ -19410,22 +19433,6 @@ static inline F32 VANM_entTime(const _zEnt* ent)
 static inline F32 VCFG_tymref(st_zEntVillain* vil, S32 which)
 {
     return vil->vilcfg.tymref_list[which];
-}
-
-// Whether a time into the attack animation is inside the villain's damage window, from its
-// configured start and end times (-1 and -2 when it has none).
-static inline bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym)
-{
-    F32 tym_beg = -1.0f;
-    F32 tym_end = -2.0f;
-    VCFG_getParm(&vil->vilcfg, ZVIL_PARM_DMG_BEGTIME, &tym_beg);
-    VCFG_getParm(&vil->vilcfg, ZVIL_PARM_DMG_ENDTIME, &tym_end);
-    bool inwin = tym >= tym_beg;
-    if (inwin)
-    {
-        inwin = tym <= tym_end;
-    }
-    return inwin;
 }
 
 // Adds a sound to the first free slot of the villain's sound queue (a slot whose sound is -1),
