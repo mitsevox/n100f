@@ -47,7 +47,7 @@ static char* StringStreamRead(char* nativeString, RwStream* stream, U32 length)
     char buffer[STRING_READCHUNK];
     char* dst;
 
-    if (!nativeString)
+    if (nativeString == NULL)
     {
         nativeString = (char*)RwMalloc(length);
 
@@ -98,7 +98,7 @@ static char* UnicodeStringStreamRead(char* nativeString, RwStream* stream, U32 l
     char* dst;
     S32 allocated = 0;
 
-    if (!nativeString)
+    if (nativeString == NULL)
     {
         nativeString = (char*)RwMalloc(length);
 
@@ -214,14 +214,12 @@ char* _rwStringStreamFindAndRead(char* string, RwStream* stream)
 
         if (type == rwID_STRING)
         {
-            string = StringStreamRead(string, stream, length);
-            return string;
+            return StringStreamRead(string, stream, length);
         }
 
         if (type == rwID_UNICODESTRING)
         {
-            string = UnicodeStringStreamRead(string, stream, length);
-            return string;
+            return UnicodeStringStreamRead(string, stream, length);
         }
 
         if (!RwStreamSkip(stream, length))

@@ -422,16 +422,22 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
 
 // Sets the quantization registers for the vertex format, blends the arrays and flushes them out
 // of the data cache for the GPU.
-static inline void SkinBlendArrays(void* dstPos, void* dstNrm, const void* srcPos,
-                                   const void* srcNrm, const U32* indices,
-                                   const RwMatrixWeights* weights, const RwMatrix* matrices,
-                                   S32 numVertices, const RpGameCubeVtxFmt* vtxFmt)
+static inline void SkinBlendArrays(void* dstPos, void* dstNrm, const RwMatrixWeights* weights,
+                                   const void* srcPos, const void* srcNrm, const U32* indices,
+                                   const RwMatrix* matrices, S32 numVertices,
+                                   const RpGameCubeVtxFmt* vtxFmt)
 {
-    U32 posSize = sizeof(F32);
-    U32 nrmSize = sizeof(F32);
-    S32 nbtSize = 0;
-    register U32 gqr6 = 0;
-    register U32 gqr7 = 0;
+    S32 nbtSize;
+    U32 nrmSize;
+    U32 posSize;
+    register U32 gqr6;
+    register U32 gqr7;
+
+    nbtSize = 0;
+    gqr6 = 0;
+    gqr7 = 0;
+    posSize = sizeof(F32);
+    nrmSize = sizeof(F32);
 
     if (vtxFmt)
     {
@@ -465,10 +471,9 @@ static inline void SkinBlendArrays(void* dstPos, void* dstNrm, const void* srcPo
 // Builds the bone matrices for this frame in the matrix cache.
 static inline void SkinBuildMatrices(RpAtomic* atomic, RpSkin* skin)
 {
-    const RwMatrix* skinToBone;
-    S32 i;
-    RwMatrix* ltm;
     RpHAnimHierarchy* hierarchy;
+    RwMatrix* ltm;
+    const RwMatrix* skinToBone;
     RwMatrix* matrix;
 
     hierarchy = SKINATOMICGETDATA(atomic);
@@ -482,39 +487,37 @@ static inline void SkinBuildMatrices(RpAtomic* atomic, RpSkin* skin)
         {
             RwMatrix inverse;
             RwMatrix tmp;
+            S32 i;
 
             RwMatrixInvert(&inverse, ltm);
 
             for (i = 0; i < hierarchy->numNodes; i++)
             {
-                RwMatrixMultiply(&tmp, skinToBone, RwFrameGetLTM(hierarchy->pNodeInfo[i].pFrame));
-                RwMatrixMultiply(matrix, &tmp, &inverse);
-                skinToBone++;
-                matrix++;
+                RwMatrixMultiply(&tmp, &skinToBone[i], RwFrameGetLTM(hierarchy->pNodeInfo[i].pFrame));
+                RwMatrixMultiply(&matrix[i], &tmp, &inverse);
             }
         }
         else if (hierarchy->flags & rpHANIMHIERARCHYLOCALSPACEMATRICES)
         {
+            S32 i;
+
             for (i = 0; i < hierarchy->numNodes; i++)
             {
-                RwMatrixMultiply(matrix, skinToBone, &hierarchy->pMatrixArray[i]);
-                skinToBone++;
-                matrix++;
+                RwMatrixMultiply(&matrix[i], &skinToBone[i], &hierarchy->pMatrixArray[i]);
             }
         }
         else
         {
             RwMatrix inverse;
             RwMatrix tmp;
+            S32 i;
 
             RwMatrixInvert(&inverse, ltm);
 
             for (i = 0; i < hierarchy->numNodes; i++)
             {
-                RwMatrixMultiply(&tmp, skinToBone, &hierarchy->pMatrixArray[i]);
-                RwMatrixMultiply(matrix, &tmp, &inverse);
-                skinToBone++;
-                matrix++;
+                RwMatrixMultiply(&tmp, &skinToBone[i], &hierarchy->pMatrixArray[i]);
+                RwMatrixMultiply(&matrix[i], &tmp, &inverse);
             }
         }
     }
@@ -565,8 +568,8 @@ void* fn_80145598(void* object, GCNObjectData* objectData)
     numVertices = geometry->numVertices;
     vtxFmt = fn_8015D818(geometry);
 
-    SkinBlendArrays(arrays->pos, arrays->nrm, skin->savedPos, skin->savedNrm,
-                    skin->vertexBoneIndices, skin->vertexBoneWeights, _rpSkinGlobals.matrixCache,
+    SkinBlendArrays(arrays->pos, arrays->nrm, skin->vertexBoneWeights, skin->savedPos,
+                    skin->savedNrm, skin->vertexBoneIndices, _rpSkinGlobals.matrixCache,
                     numVertices, vtxFmt);
 
     return object;

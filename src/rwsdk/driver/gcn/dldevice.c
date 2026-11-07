@@ -61,15 +61,15 @@ extern GXFifoObj* lbl_8025F858;
 
 // The ring's read and write positions, the token ring's write and read positions, whether the
 // FIFO breakpoint is armed, whether a frame waits for its token, whether a frame waits for the
-// retrace, whether a retrace has passed since, and which half a two-half frame is on. The ring
-// positions and the breakpoint flag are shared between the game thread and the breakpoint
-// interrupt, so they are volatile.
+// retrace, whether a retrace has passed since, and which half a two-half frame is on. The frame
+// ring's positions and the breakpoint flag are shared between the game thread and the breakpoint
+// interrupt; they, the token ring's positions and the token wait flag are volatile.
 extern volatile S32 lbl_8025F810;
 extern volatile S32 lbl_8025F814;
-extern S32 lbl_8025F818;
-extern S32 lbl_8025F81C;
+extern volatile S32 lbl_8025F818;
+extern volatile S32 lbl_8025F81C;
 extern volatile S32 lbl_8025F820;
-extern S32 lbl_8025F824;
+extern volatile S32 lbl_8025F824;
 extern S32 lbl_8025F828;
 extern S32 lbl_8025F82C;
 extern S32 lbl_8025F830;
@@ -439,9 +439,9 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
     case 2:
     {
         S32 pixelFormat = lbl_8025F7FC;
-        GXRenderModeObj* renderMode = _RwDlRenderMode;
+        GXRenderModeObj* renderMode;
 
-        VIConfigure(renderMode);
+        VIConfigure(renderMode = _RwDlRenderMode);
         VISetBlack(TRUE);
         VIFlush();
 
@@ -767,7 +767,7 @@ S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags)
     void* readPtr;
     void* writePtr;
     BOOL enabled;
-    S32 full;
+    volatile S32 full;
     U32 stride;
 
     enabled = OSDisableInterrupts();

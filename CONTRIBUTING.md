@@ -36,9 +36,11 @@ Do not manufacture a match through unsupported compiler or comparison manipulati
 
 - No per-function flags, optimization pragmas or compiler attributes introduced to force code generation.
 - No inline assembly, embedded instruction bytes or patched compiler output substituting for originally compiled source.
-- No invented helpers, casts, volatile qualifiers, padding or control flow whose only justification is obtaining matching bytes.
+- No invented helpers, casts, padding or control flow whose only justification is obtaining matching bytes.
 - No altered symbol boundaries, excluded comparisons or progress categories that conceal mismatches.
 - No behavioral changes made to satisfy the compiler.
+
+A `volatile` qualifier is accepted when the target's code needs it to match, for example a reload after each store or accesses kept in source order. The project owner approved this on 2026-11-07. Record the access that requires it in the unit's evidence row.
 
 Compiler versions and flags need evidence at the original compilation-unit or library level. A function-specific exception requires evidence that the original used it and the project owner's explicit approval. Originally handwritten assembly likewise requires provenance.
 
