@@ -384,6 +384,7 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
     U32 biindex[2];
     U32 biplus[2];
     F32 tmpf;
+    F32* fptr;
     xQuat* q0;
     xVec3* t0;
     xQuat* q1;
@@ -392,7 +393,7 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
 
     fileflags = data->FileFlags;
 
-    time = (time < 0.0f) ? 0.0f : ((time < data->Duration) ? time : data->Duration);
+    time = CLAMP(time, 0.0f, data->Duration);
     rawTime = xAnimFileRawTime(data, time);
 
     if (fileflags & 0x8000)
@@ -401,8 +402,8 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
         {
             if (data->Physics)
             {
-                iAnimEval(data->Physics, rawTime, 0, tran, quat);
-                *yaw = CalcYaw(quat);
+                iAnimEval(data->Physics, rawTime, 1, tran, quat);
+                tmpyaw = CalcYaw(quat);
             }
             else
             {
@@ -449,8 +450,7 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
     {
         for (i = 0; i < 2; i++)
         {
-            tmpf = bilinear[i];
-            tmpf = (tmpf < 0.0f) ? 0.0f : ((tmpf < data->NumAnims[i] - 1) ? tmpf : data->NumAnims[i] - 1);
+            tmpf = CLAMP(bilinear[i], 0.0f, data->NumAnims[i] - 1);
             F32 t = floor(tmpf);
             bilerp[i] = tmpf - t;
             biindex[i] = t;
@@ -509,24 +509,26 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
     {
         if (data->Physics)
         {
-            iAnimEval(data->Physics, rawTime, 0, tran - 1, quat - 1);
+            iAnimEval(data->Physics, rawTime, 1, tran - 1, quat - 1);
             tmpyaw = CalcYaw(quat - 1);
         }
         else
         {
+            fptr = (F32*)(tran - 1);
+
             for (i = 0; i < 3; i++)
             {
                 if (fileflags & (0x10 << i))
                 {
-                    (&tran[-1].x)[i] = data->PhysBase[i];
+                    fptr[i] = data->PhysBase[i];
                 }
                 else if (fileflags & (0x100 << i))
                 {
-                    (&tran[-1].x)[i] = time * data->PhysDelta[i] + data->PhysBase[i];
+                    fptr[i] = time * data->PhysDelta[i] + data->PhysBase[i];
                 }
                 else
                 {
-                    (&tran[-1].x)[i] = time * data->PhysDelta[i] + data->PhysBase[i] + (&tran->x)[i];
+                    fptr[i] = time * data->PhysDelta[i] + data->PhysBase[i] + fptr[i + sizeof(xVec3) / sizeof(F32)];
                 }
             }
 
@@ -540,7 +542,7 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
             }
             else
             {
-                tmpyaw = time * data->PhysDelta[3] + data->PhysBase[3] + CalcYaw(quat);
+                tmpyaw = time * data->PhysBase[3] + data->PhysBase[3] + CalcYaw(quat);
             }
 
             quat[-1].v.x = 0.0f;
