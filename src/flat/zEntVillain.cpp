@@ -4140,6 +4140,8 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         vil->tgt_stat = 0x0400887C;
     switch (vil->goal)
     {
+    case ZVIL_GOAL_AFTERLIFE:
+        break;
     case ZVIL_GOAL_BASEINIT:
         vil->collis->chk = 0x26;
         vil->collis->pen = 0x66;
@@ -5941,7 +5943,7 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 vil->pflags &= (U8)~0x4;
                 break;
             case eEntVillainTypeGargoyle:
-            case eEntVillainTypeWitchDoctor:
+            case eEntVillainTypeWitch:
                 vil->pflags |= 0x4;
                 break;
             default:
