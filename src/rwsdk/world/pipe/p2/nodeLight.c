@@ -148,13 +148,11 @@ RxNodeDefinition* RxNodeDefinitionGetLight(void)
 #define LIGHT_BEGIN(_objStride)                                                                    \
     if (vSteps && (vSteps->flags & CLUSTER_VALID))                                                 \
     {                                                                                              \
-        U8 _first;                                                                                 \
-                                                                                                   \
         step = (U8*)vSteps->data;                                                                  \
         numVerts = vSteps->numUsed;                                                                \
-        _first = *step++;                                                                          \
-        objVert = (RxObjSpace3DVertex*)((U8*)objVert + _first * (_objStride));                     \
-        camVert += _first;                                                                         \
+        objVert = (RxObjSpace3DVertex*)((U8*)objVert + *step * (_objStride));                      \
+        camVert += *step;                                                                          \
+        step++;                                                                                    \
     }                                                                                              \
     else                                                                                           \
     {                                                                                              \
@@ -277,6 +275,7 @@ static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, RpL
     if (RpLightGetFrame(light))
     {
         RwV3d dir = RwFrameGetLTM(RpLightGetFrame(light))->at;
+        U8 noChroma;
 
         if (inverseMat)
         {
@@ -284,11 +283,12 @@ static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, RpL
             _rwV3dNormalize(&dir, &dir);
         }
 
+        noChroma = light->object.object.privateFlags & LIGHT_PRIVATENOCHROMA;
         dir.x = -1.0f * dir.x;
         dir.y = -1.0f * dir.y;
         dir.z = -1.0f * dir.z;
 
-        if (light->object.object.privateFlags & LIGHT_PRIVATENOCHROMA)
+        if (noChroma)
         {
             F32 scale = LIGHT_COLORSCALE * light->color.red * surfaceProps->diffuse;
             S32 i;
