@@ -75,6 +75,16 @@ void iFXWarbUpdate(F32 dt)
     }
 }
 
+static inline F32 WarbAngle(F32 a)
+{
+    return fmod(a, 2 * PI);
+}
+
+static inline F32 WarbSin(F32 a)
+{
+    return sin(a);
+}
+
 static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
 {
     if (geom != NULL && RpGeometryLock(geom, 6))
@@ -91,10 +101,10 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
         case IFX_WARB_WATER_WAVE:
             for (i = 0; i < geom->numVertices; i++, ov++, nv++)
             {
-                F32 x = fmod(warbc[1] * (ov->x + t), 2 * PI);
-                F32 y = fmod(warbc[3] * (ov->z + t), 2 * PI);
-                y = sin(y);
-                x = sin(x);
+                F32 x = WarbAngle(warbc[1] * (ov->x + t));
+                F32 y = WarbAngle(warbc[3] * (ov->z + t));
+                y = WarbSin(y);
+                x = WarbSin(x);
                 nv->y = warbc[0] * x + ov->y + warbc[2] * y;
             }
             break;
@@ -103,7 +113,7 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
             for (i = 0; i < geom->numVertices; i++, ov++, nv++)
             {
                 F32 x = sqrtf(ov->x * ov->x + ov->y * ov->y + ov->z * ov->z);
-                F32 y = fmod(warbc[1] * (x + t), 2 * PI);
+                F32 y = WarbAngle(warbc[1] * (x + t));
                 F32 a = cos(y);
                 nv->y = warbc[0] * a + ov->y;
             }
@@ -112,8 +122,8 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
         case IFX_WARB_DAN1:
             for (i = 0; i < geom->numVertices; i++, ov++, nv++)
             {
-                F32 x = fmod(warbc[1] * (ov->x + t), 2 * PI);
-                F32 a = sin(x);
+                F32 x = WarbAngle(warbc[1] * (ov->x + t));
+                F32 a = WarbSin(x);
                 nv->y = warbc[0] * a + ov->y;
             }
             break;
@@ -121,8 +131,8 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
         case IFX_WARB_DAN2:
             for (i = 0; i < geom->numVertices; i++, ov++, nv++)
             {
-                F32 x = fmod(warbc[1] * (ov->x + t), 2 * PI);
-                F32 a = sin(x);
+                F32 x = WarbAngle(warbc[1] * (ov->x + t));
+                F32 a = WarbSin(x);
                 nv->y = warbc[0] * a + ov->y;
             }
             break;
@@ -149,7 +159,7 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
                 {
                     F32 percent = ooy * (ov->y - miny);
                     F32 x = warbc[1] * (0.4 * percent + t);
-                    x = fmod(x, 2 * PI);
+                    x = WarbAngle(x);
                     x = sin(x);
                     mul = 0.5f * (percent * (warbc[0] * x));
                 }
@@ -184,8 +194,8 @@ static void iFXwarb(xVec3* orig_verts, xVec3* orig_normals, RpGeometry* geom)
                 {
                     F32 percent = MIN(ov->y - miny, maxy - ov->y);
                     F32 x = warbc[1] * (nt + percent);
-                    F32 b = fmod(x, 2 * PI);
-                    F32 a = sin(b);
+                    F32 b = WarbAngle(x);
+                    F32 a = WarbSin(b);
                     mul = percent * (warbc[0] * a);
                 }
                 else
