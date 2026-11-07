@@ -380,7 +380,7 @@ cflags_game_noinline = [
     "-inline off,deferred" if f == "-inline auto,deferred" else f for f in cflags_game
 ]
 
-# Game flags without the cpp_extensions pragma (xEntMotion, xEnt, ngcrad3d; see the compiler rows in evidence.tsv).
+# Game flags without the cpp_extensions pragma (xEntMotion, xEnt, zParEmitter, ngcrad3d; see the compiler rows in evidence.tsv).
 # With the pragma, a value an inlined test loads is reused by the code after the test; without it,
 # that code loads the value again, as the target does.
 cflags_game_nocppext = [f for f in cflags_game if f != '-pragma "cpp_extensions on"']
@@ -515,7 +515,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "flat/iModel.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iMorph.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iPad.cpp"),
-            Object(NonMatching, "flat/iParMgr.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/iParMgr.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/isavegame.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iScrFX.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/iShadow.cpp"),
@@ -537,7 +537,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEntMotion.cpp", cflags=cflags_game_nocppext),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xEnv.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xFFX.cpp"),
-            Object(NonMatching, "flat/xFX.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xFX.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xFilter.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/xFont.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xhipio.cpp"),
@@ -589,7 +589,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "flat/zEntProjectile.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/zEntShaggy.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEntSimpleObj.cpp"),
-            Object(NonMatching, "flat/zEntVillain.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/zEntVillain.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/zEntVillainCol.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zEnv.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zFeet.cpp"),
@@ -602,7 +602,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zGroup.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zGust.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zHologram.cpp"),
-            Object(NonMatching, "flat/zHud.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/zHud.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zLaugh.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zLight.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zLightEffect.cpp"),
@@ -613,7 +613,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zMovePoint.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zMusic.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/zParCmd.cpp"),
-            Object(NonMatching, "flat/zParEmitter.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zParEmitter.cpp", cflags=cflags_game_nocppext),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zParSys.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zPitchChange.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zPendulum.cpp"),
@@ -1062,7 +1062,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/driver/gcn/dlsprite.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dltexdic.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dltextur.c"),
-            Object(NonMatching, "rwsdk/driver/gcn/dltoken.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dltoken.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/baim3d.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/pipe/p2/bapipe.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/nodeClipLine.c"),

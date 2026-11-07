@@ -1,21 +1,19 @@
 #include <rwcore.h>
 #include <dolphin/gx/GXManage.h>
 
-// The draw sync token last issued to the GPU, and the one last read back.
-extern U16 lbl_8025E800;
-extern U16 lbl_8025F890;
+// Interrupt-visible GPU state: the current allocation token and the last completion token read.
+extern volatile U16 lbl_8025E800;
+extern volatile U16 lbl_8025F890;
 
-// Returns TRUE once the GPU has passed the given draw sync token. Tokens wrap around, so the
-// test depends on whether the issued token has wrapped past the one last read.
+// Tests whether the GPU has passed a token, accounting for token wraparound.
 S32 _rwDlTokenQueryDone(U16 token)
 {
     S32 done;
 
-    lbl_8025F890 = GXReadDrawSync();
-    if (lbl_8025E800 >= lbl_8025F890)
+    if (lbl_8025E800 >= (lbl_8025F890 = GXReadDrawSync()))
     {
         done = FALSE;
-        if ((U16)token <= lbl_8025F890 || (U16)token > lbl_8025E800)
+        if (token <= lbl_8025F890 || token > lbl_8025E800)
         {
             done = TRUE;
         }
@@ -23,7 +21,7 @@ S32 _rwDlTokenQueryDone(U16 token)
     else
     {
         done = FALSE;
-        if ((U16)token > lbl_8025E800 && (U16)token <= lbl_8025F890)
+        if (token > lbl_8025E800 && token <= lbl_8025F890)
         {
             done = TRUE;
         }

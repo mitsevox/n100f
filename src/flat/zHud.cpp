@@ -185,6 +185,8 @@ void zHud_sceneReset();
 void zHud_UIRender(char* asset, F32 xPos, F32 yPos, F32 w, F32 h, U8 alpha);
 void zHud_DrawText(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 alpha,
                    eHudDropShadowMode shadow);
+static inline void zHudDrawTextImpl(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 alpha,
+                   eHudDropShadowMode shadow);
 void zHudElementsCB_GameStatsRender();
 void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt);
 void zHudElementsCB_GameStatsSetup(_xScene* sc);
@@ -236,10 +238,22 @@ void zHud_Update(_xScene* sc, F32 dt);
 void zHud_Setup(_xScene* sc);
 void zHud_Init();
 
-void zHud_Init()
+// Resolves the model-name hashes used by HUD item initialization.
+static inline void zHudInitModelIDs()
 {
+    zHudModel* entry;
     S32 i;
 
+    for (i = 0; i < eHudModelCount; i++)
+    {
+        entry = &zHudModelTable[i];
+        entry->modelNameID = xStrHash(entry->modelName);
+    }
+}
+
+// Sets HUD presentation defaults, resolves model IDs, and initializes each item.
+void zHud_Init()
+{
     widthAspect = 1.3333334f;
     heightAspect = 0.75f;
 
@@ -252,12 +266,9 @@ void zHud_Init()
     clrDropShadow.b = 139;
     clrDropShadow.a = 200;
 
-    for (i = 0; i < eHudModelCount; i++)
-    {
-        zHudModelTable[i].modelNameID = xStrHash(zHudModelTable[i].modelName);
-    }
+    zHudInitModelIDs();
 
-    for (i = 0; i < eHudCount; i++)
+    for (S32 i = 0; i < eHudCount; i++)
     {
         sHudElements[i].hudInit();
     }
@@ -392,6 +403,7 @@ void zHudElementsCB_PlayerStatusInit()
     }
 }
 
+// Place the player-status icons and reset their idle animations.
 void zHudElementsCB_PlayerStatusSetup(_xScene* sc)
 {
     S32 i;
@@ -403,61 +415,60 @@ void zHudElementsCB_PlayerStatusSetup(_xScene* sc)
 
     for (i = 0; i < 6; i++)
     {
-        zHudItem* item = &sHudPlayerStatusArray[i];
+        sHudPlayerStatusArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].x = 44.0f;
+        sHudPlayerStatusArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].y = 65.0f;
+        sHudPlayerStatusArray[i].zHudStatusPosTable[eHudStatusPosOffScreenDefault].x = -44.0f;
+        sHudPlayerStatusArray[i].zHudStatusPosTable[eHudStatusPosOffScreenDefault].y = -35.0f;
+        sHudPlayerStatusArray[i].zHudStatusPosTable[eHudStatusPosMiddleOfScreen].x = 100.0f;
+        sHudPlayerStatusArray[i].zHudStatusPosTable[eHudStatusPosMiddleOfScreen].y = 300.0f;
+        sHudPlayerStatusArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].x = 80.0f;
+        sHudPlayerStatusArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].y = 80.0f;
+        sHudPlayerStatusArray[i].zHudStatusSizeTable[eHudStatusSizeZero].x = 0.0f;
+        sHudPlayerStatusArray[i].zHudStatusSizeTable[eHudStatusSizeZero].y = 0.0f;
+        sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngStop].x = 0.0f;
+        sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngStop].y = 0.0f;
+        sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngStop].z = 0.0f;
+        sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngIdle].x = 1.5915494f;
+        sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngIdle].y = 0.0f;
+        sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngIdle].z = 0.0f;
+        sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngTest1].x = 1.5915494f;
+        sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngTest1].y = 15.915494f;
+        sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngTest1].z = 0.0f;
+        sHudPlayerStatusArray[i].zHudStatusColorTable[eHudStatusColorSolid].rm = 1.0f;
+        sHudPlayerStatusArray[i].zHudStatusColorTable[eHudStatusColorSolid].gm = 1.0f;
+        sHudPlayerStatusArray[i].zHudStatusColorTable[eHudStatusColorSolid].bm = 1.0f;
+        sHudPlayerStatusArray[i].zHudStatusColorTable[eHudStatusColorSolid].a = 255.0f;
+        sHudPlayerStatusArray[i].zHudStatusColorTable[eHudStatusColorTransparent].rm = 1.0f;
+        sHudPlayerStatusArray[i].zHudStatusColorTable[eHudStatusColorTransparent].gm = 1.0f;
+        sHudPlayerStatusArray[i].zHudStatusColorTable[eHudStatusColorTransparent].bm = 1.0f;
+        sHudPlayerStatusArray[i].zHudStatusColorTable[eHudStatusColorTransparent].a = 0.0f;
 
-        item->zHudStatusPosTable[eHudStatusPosOnScreen].x = 44.0f;
-        item->zHudStatusPosTable[eHudStatusPosOnScreen].y = 65.0f;
-        item->zHudStatusPosTable[eHudStatusPosOffScreenDefault].x = -44.0f;
-        item->zHudStatusPosTable[eHudStatusPosOffScreenDefault].y = -35.0f;
-        item->zHudStatusPosTable[eHudStatusPosMiddleOfScreen].x = 100.0f;
-        item->zHudStatusPosTable[eHudStatusPosMiddleOfScreen].y = 300.0f;
-        item->zHudStatusSizeTable[eHudStatusSizeDefault].x = 80.0f;
-        item->zHudStatusSizeTable[eHudStatusSizeDefault].y = 80.0f;
-        item->zHudStatusSizeTable[eHudStatusSizeZero].x = 0.0f;
-        item->zHudStatusSizeTable[eHudStatusSizeZero].y = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngStop].x = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngStop].y = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngStop].z = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngIdle].x = 1.5915494f;
-        item->zHudStatusAngTable[eHudStatusAngIdle].y = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngIdle].z = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngTest1].x = 1.5915494f;
-        item->zHudStatusAngTable[eHudStatusAngTest1].y = 15.915494f;
-        item->zHudStatusAngTable[eHudStatusAngTest1].z = 0.0f;
-        item->zHudStatusColorTable[eHudStatusColorSolid].rm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorSolid].gm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorSolid].bm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorSolid].a = 255.0f;
-        item->zHudStatusColorTable[eHudStatusColorTransparent].rm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorTransparent].gm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorTransparent].bm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorTransparent].a = 0.0f;
+        sHudPlayerStatusArray[i].statusPos = eHudStatusPosOnScreen;
+        sHudPlayerStatusArray[i].statusAng = eHudStatusAngStop;
+        sHudPlayerStatusArray[i].statusSize = eHudStatusSizeDefault;
+        sHudPlayerStatusArray[i].statusColor = eHudStatusColorSolid;
 
-        item->statusPos = eHudStatusPosOnScreen;
-        item->statusAng = eHudStatusAngStop;
-        item->statusSize = eHudStatusSizeDefault;
-        item->statusColor = eHudStatusColorSolid;
+        sHudPlayerStatusArray[i].hframe.pos.x = sHudPlayerStatusArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].x;
+        sHudPlayerStatusArray[i].hframe.pos.y = sHudPlayerStatusArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].y;
+        sHudPlayerStatusArray[i].hframe.dang.x = sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngStop].x;
+        sHudPlayerStatusArray[i].hframe.dang.y = sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngStop].y;
+        sHudPlayerStatusArray[i].hframe.dang.z = sHudPlayerStatusArray[i].zHudStatusAngTable[eHudStatusAngStop].z;
+        sHudPlayerStatusArray[i].hframe.size.x = sHudPlayerStatusArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].x;
+        sHudPlayerStatusArray[i].hframe.size.y = sHudPlayerStatusArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].y;
+        sHudPlayerStatusArray[i].hframe.color.a = sHudPlayerStatusArray[i].zHudStatusColorTable[eHudStatusColorTransparent].a;
 
-        item->hframe.pos.x = item->zHudStatusPosTable[eHudStatusPosOnScreen].x;
-        item->hframe.pos.y = item->zHudStatusPosTable[eHudStatusPosOnScreen].y;
-        item->hframe.dang.x = item->zHudStatusAngTable[eHudStatusAngStop].x;
-        item->hframe.dang.y = item->zHudStatusAngTable[eHudStatusAngStop].y;
-        item->hframe.dang.z = item->zHudStatusAngTable[eHudStatusAngStop].z;
-        item->hframe.size.x = item->zHudStatusSizeTable[eHudStatusSizeDefault].x;
-        item->hframe.size.y = item->zHudStatusSizeTable[eHudStatusSizeDefault].y;
-        item->hframe.color.a = item->zHudStatusColorTable[eHudStatusColorTransparent].a;
-
-        aplay = item->model->Anim;
+        aplay = sHudPlayerStatusArray[i].model->Anim;
         if (aplay)
         {
             asing = aplay->Single;
             asing->Time = 0.0f;
             asing->CurrentSpeed = 1.0f;
-            xAnimPlaySetState(aplay->Single, item->model->Anim->Table->StateList, 0.0f);
+            xAnimPlaySetState(aplay->Single, sHudPlayerStatusArray[i].model->Anim->Table->StateList, 0.0f);
         }
     }
 }
 
+// Updates the health/status icons and advances their animation frames.
 void zHudElementsCB_PlayerStatusUpdate(_xScene* sc, F32 dt)
 {
     S32 i;
@@ -597,6 +608,9 @@ void zHudElementsCB_PlayerStatusUpdate(_xScene* sc, F32 dt)
         item->hframe.ang.z += item->hframe.dang.z * dt;
         xModelUpdate(item->model, dt);
         xModelEval(item->model);
+
+        F32 unitRate = 1.0f;
+        fabsf(unitRate * dt);
     }
 }
 
@@ -613,8 +627,10 @@ void zHudElementsCB_PlayerStatusRender()
 {
     S32 i;
 
-    zHud_UIRender("scooby_head_bg", sHudPlayerStatusArray[0].hframe.pos.x + -30.0f,
-                  sHudPlayerStatusArray[0].hframe.pos.y + -50.0f, 65.0f * widthAspect, 85.0f,
+    F32 offsetX = -30.0f;
+    F32 offsetY = -50.0f;
+    zHud_UIRender("scooby_head_bg", sHudPlayerStatusArray[0].hframe.pos.x + offsetX,
+                  sHudPlayerStatusArray[0].hframe.pos.y + offsetY, 65.0f * widthAspect, 85.0f,
                   sHudPlayerStatusArray[0].hframe.color.a);
     zRenderState(SDRS_HUD);
 
@@ -627,6 +643,7 @@ void zHudElementsCB_PlayerStatusRender()
             xRect r = { item->hframe.pos.x - 0.5f * item->hframe.size.x,
                         item->hframe.pos.y - 0.5f * item->hframe.size.y,
                         item->hframe.size.x * widthAspect, item->hframe.size.y };
+            xVec3 zero = { 0.0f, 0.0f, 0.0f };
             xVec3 from = { -0.8f, 0.22f, 0.8f };
             xVec3 to = { 0.0f, 0.0f, 0.0f };
             xMat4x3 frame;
@@ -818,8 +835,10 @@ void zHudElementsCB_SnacksSetup(_xScene* sc)
         sHudSnackArray[0].zHudStatusColorTable[eHudStatusColorTransparent].a;
 }
 
+// Show the snack counter while its count changes, then slide it away.
 void zHudElementsCB_SnacksUpdate(_xScene* sc, F32 dt)
 {
+    S32 i;
     zHudItem* item = &sHudSnackArray[0];
 
     if (zGameModeGet() == eGameMode_Pause)
@@ -838,15 +857,18 @@ void zHudElementsCB_SnacksUpdate(_xScene* sc, F32 dt)
     }
     else
     {
-        if (globals.player.Inv_ScoobySnacks > 999)
+        for (i = 0; i < 1; i++)
         {
-            sHudSnackArray[0].statusColor = eHudStatusColorSolid;
-            sHudSnackArray[0].statusPos = eHudStatusPosOnScreenAlt1;
-        }
-        else
-        {
-            sHudSnackArray[0].statusColor = eHudStatusColorSolid;
-            sHudSnackArray[0].statusPos = eHudStatusPosOnScreen;
+            if (globals.player.Inv_ScoobySnacks > 999)
+            {
+                sHudSnackArray[i].statusColor = eHudStatusColorSolid;
+                sHudSnackArray[i].statusPos = eHudStatusPosOnScreenAlt1;
+            }
+            else
+            {
+                sHudSnackArray[i].statusColor = eHudStatusColorSolid;
+                sHudSnackArray[i].statusPos = eHudStatusPosOnScreen;
+            }
         }
 
         sHudDisplayTimer_snacks -= dt;
@@ -988,12 +1010,13 @@ void zHudElementsCB_SnacksRender()
     char str[256] = "";
 
     sprintf(str, "x%d", globals.player.Inv_ScoobySnacks);
-    zHud_DrawText(sHudSnackArray[0].hframe.pos.x, sHudSnackArray[0].hframe.pos.y, 150.0f, 100.0f,
+    zHudDrawTextImpl(sHudSnackArray[0].hframe.pos.x, sHudSnackArray[0].hframe.pos.y, 150.0f, 100.0f,
                   str, 0x10, 1.0f, sHudSnackArray[0].hframe.color.a, DROPSHADOW_NORMAL);
 
     xRect r = { -45.0f + (sHudSnackArray[0].hframe.pos.x - 0.5f * sHudSnackArray[0].hframe.size.x),
                 22.0f + (sHudSnackArray[0].hframe.pos.y - 0.5f * sHudSnackArray[0].hframe.size.y),
                 sHudSnackArray[0].hframe.size.x * widthAspect, sHudSnackArray[0].hframe.size.y };
+    xVec3 zero = { 0.0f, 0.0f, 0.0f };
     xVec3 from = { 0.0f, 0.0f, 0.8f };
     xVec3 to = { 0.0f, 0.0f, 0.0f };
     xMat4x3 frame;
@@ -1013,7 +1036,6 @@ void zHudElementsCB_SnacksRender()
 // Loads the five gum piece models, one per gum in a pack, and their idle animations.
 void zHudElementsCB_GumInit()
 {
-    xAnimFile* afile;
     U32 size;
     void* buff;
     S32 i;
@@ -1036,7 +1058,7 @@ void zHudElementsCB_GumInit()
         buff = xSTFindAsset(xStrHash("bat_fly.anm"), &size);
         if (buff)
         {
-            afile = xAnimFileNew(buff, "", 0, NULL);
+            xAnimFile* afile = xAnimFileNew(buff, "", 0, NULL);
             item->atbl = xAnimTableNew("", NULL);
             xAnimTableNewState(item->atbl, "Idle", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
             xAnimTableAddFile(item->atbl, afile, "Idle");
@@ -1045,69 +1067,70 @@ void zHudElementsCB_GumInit()
     }
 }
 
+// Place the gum icons and reset their idle animations.
 void zHudElementsCB_GumSetup(_xScene* sc)
 {
     S32 i;
-    xAnimPlay* aplay;
-    xAnimSingle* asing;
 
     oldGumCnt = globals.player.Inv_Ammo[0];
 
     for (i = 0; i < 5; i++)
     {
-        zHudItem* item = &sHudGumArray[i];
+        sHudGumArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].x = 80.0f;
+        sHudGumArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].y = 435.0f;
+        sHudGumArray[i].zHudStatusPosTable[eHudStatusPosMiddleOfScreen].x = 100.0f;
+        sHudGumArray[i].zHudStatusPosTable[eHudStatusPosMiddleOfScreen].y = 300.0f;
+        sHudGumArray[i].zHudStatusPosTable[eHudStatusPosOnScreenAlt1].x = 40.0f;
+        sHudGumArray[i].zHudStatusPosTable[eHudStatusPosOnScreenAlt1].y = 435.0f;
+        sHudGumArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].x = 50.0f;
+        sHudGumArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].y = 50.0f;
+        sHudGumArray[i].zHudStatusAngTable[eHudStatusAngStop].x = 0.0f;
+        sHudGumArray[i].zHudStatusAngTable[eHudStatusAngStop].y = 0.0f;
+        sHudGumArray[i].zHudStatusAngTable[eHudStatusAngStop].z = 0.0f;
+        sHudGumArray[i].zHudStatusAngTable[eHudStatusAngIdle].x = 1.5915494f;
+        sHudGumArray[i].zHudStatusAngTable[eHudStatusAngIdle].y = 0.0f;
+        sHudGumArray[i].zHudStatusAngTable[eHudStatusAngIdle].z = 0.0f;
+        sHudGumArray[i].zHudStatusAngTable[eHudStatusAngTest1].x = 1.5915494f;
+        sHudGumArray[i].zHudStatusAngTable[eHudStatusAngTest1].y = 15.915494f;
+        sHudGumArray[i].zHudStatusAngTable[eHudStatusAngTest1].z = 0.0f;
+        sHudGumArray[i].zHudStatusColorTable[eHudStatusColorSolid].rm = 1.0f;
+        sHudGumArray[i].zHudStatusColorTable[eHudStatusColorSolid].gm = 1.0f;
+        sHudGumArray[i].zHudStatusColorTable[eHudStatusColorSolid].bm = 1.0f;
+        sHudGumArray[i].zHudStatusColorTable[eHudStatusColorSolid].a = 255.0f;
+        sHudGumArray[i].zHudStatusColorTable[eHudStatusColorTransparent].rm = 1.0f;
+        sHudGumArray[i].zHudStatusColorTable[eHudStatusColorTransparent].gm = 1.0f;
+        sHudGumArray[i].zHudStatusColorTable[eHudStatusColorTransparent].bm = 1.0f;
+        sHudGumArray[i].zHudStatusColorTable[eHudStatusColorTransparent].a = 0.0f;
 
-        item->zHudStatusPosTable[eHudStatusPosOnScreen].x = 80.0f;
-        item->zHudStatusPosTable[eHudStatusPosOnScreen].y = 435.0f;
-        item->zHudStatusPosTable[eHudStatusPosMiddleOfScreen].x = 100.0f;
-        item->zHudStatusPosTable[eHudStatusPosMiddleOfScreen].y = 300.0f;
-        item->zHudStatusPosTable[eHudStatusPosOnScreenAlt1].x = 40.0f;
-        item->zHudStatusPosTable[eHudStatusPosOnScreenAlt1].y = 435.0f;
-        item->zHudStatusSizeTable[eHudStatusSizeDefault].x = 50.0f;
-        item->zHudStatusSizeTable[eHudStatusSizeDefault].y = 50.0f;
-        item->zHudStatusAngTable[eHudStatusAngStop].x = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngStop].y = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngStop].z = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngIdle].x = 1.5915494f;
-        item->zHudStatusAngTable[eHudStatusAngIdle].y = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngIdle].z = 0.0f;
-        item->zHudStatusAngTable[eHudStatusAngTest1].x = 1.5915494f;
-        item->zHudStatusAngTable[eHudStatusAngTest1].y = 15.915494f;
-        item->zHudStatusAngTable[eHudStatusAngTest1].z = 0.0f;
-        item->zHudStatusColorTable[eHudStatusColorSolid].rm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorSolid].gm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorSolid].bm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorSolid].a = 255.0f;
-        item->zHudStatusColorTable[eHudStatusColorTransparent].rm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorTransparent].gm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorTransparent].bm = 1.0f;
-        item->zHudStatusColorTable[eHudStatusColorTransparent].a = 0.0f;
+        sHudGumArray[i].statusPos = eHudStatusPosOnScreen;
+        sHudGumArray[i].statusAng = eHudStatusAngStop;
+        sHudGumArray[i].statusSize = eHudStatusSizeDefault;
+        sHudGumArray[i].statusColor = eHudStatusColorSolid;
 
-        item->statusPos = eHudStatusPosOnScreen;
-        item->statusAng = eHudStatusAngStop;
-        item->statusSize = eHudStatusSizeDefault;
-        item->statusColor = eHudStatusColorSolid;
+        sHudGumArray[i].hframe.pos.x = sHudGumArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].x;
+        sHudGumArray[i].hframe.pos.y = sHudGumArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].y;
+        sHudGumArray[i].hframe.dang.x = sHudGumArray[i].zHudStatusAngTable[eHudStatusAngIdle].x;
+        sHudGumArray[i].hframe.dang.y = sHudGumArray[i].zHudStatusAngTable[eHudStatusAngIdle].y;
+        sHudGumArray[i].hframe.dang.z = sHudGumArray[i].zHudStatusAngTable[eHudStatusAngIdle].z;
+        sHudGumArray[i].hframe.size.x =
+            sHudGumArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].x;
+        sHudGumArray[i].hframe.size.y =
+            sHudGumArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].y;
+        sHudGumArray[i].hframe.color.a =
+            sHudGumArray[i].zHudStatusColorTable[eHudStatusColorTransparent].a;
 
-        item->hframe.pos.x = item->zHudStatusPosTable[eHudStatusPosOnScreen].x;
-        item->hframe.pos.y = item->zHudStatusPosTable[eHudStatusPosOnScreen].y;
-        item->hframe.dang.x = item->zHudStatusAngTable[eHudStatusAngIdle].x;
-        item->hframe.dang.y = item->zHudStatusAngTable[eHudStatusAngIdle].y;
-        item->hframe.dang.z = item->zHudStatusAngTable[eHudStatusAngIdle].z;
-        item->hframe.size.x = item->zHudStatusSizeTable[eHudStatusSizeDefault].x;
-        item->hframe.size.y = item->zHudStatusSizeTable[eHudStatusSizeDefault].y;
-        item->hframe.color.a = item->zHudStatusColorTable[eHudStatusColorTransparent].a;
-
-        aplay = item->model->Anim;
+        xAnimPlay* aplay = sHudGumArray[i].model->Anim;
         if (aplay)
         {
-            asing = aplay->Single;
+            xAnimSingle* asing = aplay->Single;
             asing->Time = 0.0f;
             asing->CurrentSpeed = 1.0f;
-            xAnimPlaySetState(aplay->Single, item->model->Anim->Table->StateList, 0.0f);
+            xAnimPlaySetState(aplay->Single, sHudGumArray[i].model->Anim->Table->StateList, 0.0f);
         }
     }
 }
 
+// Updates the gum inventory display and advances its animation frames.
 void zHudElementsCB_GumUpdate(_xScene* sc, F32 dt)
 {
     S32 i;
@@ -1281,6 +1304,9 @@ void zHudElementsCB_GumUpdate(_xScene* sc, F32 dt)
         item->hframe.ang.z += item->hframe.dang.z * dt;
         xModelUpdate(item->model, dt);
         xModelEval(item->model);
+
+        F32 unitRate = 1.0f;
+        fabsf(unitRate * dt);
     }
 }
 
@@ -1304,6 +1330,7 @@ void zHudElementsCB_GumRender()
                 xRect r = { item->hframe.pos.x - 0.5f * item->hframe.size.x,
                             item->hframe.pos.y - 0.5f * item->hframe.size.y,
                             item->hframe.size.x * widthAspect, item->hframe.size.y };
+                xVec3 zero = { 0.0f, 0.0f, 0.0f };
                 xVec3 from = { 2.0f, 0.08f, 0.0f };
                 xVec3 to = { 0.0f, 0.0f, 0.0f };
                 xMat4x3 frame;
@@ -1458,6 +1485,7 @@ void zHudElementsCB_SoapSetup(_xScene* sc)
     }
 }
 
+// Update the soap counters and their transitions as ammunition changes.
 void zHudElementsCB_SoapUpdate(_xScene* sc, F32 dt)
 {
     S32 i;
@@ -1656,12 +1684,13 @@ void zHudElementsCB_SoapRender()
     char str[256] = "";
 
     sprintf(str, "%dx", globals.player.Inv_Ammo[1]);
-    zHud_DrawText(sHudSoapArray[0].hframe.pos.x, sHudSoapArray[0].hframe.pos.y, 150.0f, 100.0f,
+    zHudDrawTextImpl(sHudSoapArray[0].hframe.pos.x, sHudSoapArray[0].hframe.pos.y, 150.0f, 100.0f,
                   str, 0x20, 1.0f, 200, DROPSHADOW_NORMAL);
 
     xRect r = { sHudSoapArray[0].hframe.pos.x - 0.5f * sHudSoapArray[0].hframe.size.x,
                 sHudSoapArray[0].hframe.pos.y - 0.5f * sHudSoapArray[0].hframe.size.y,
                 sHudSoapArray[0].hframe.size.x * widthAspect, sHudSoapArray[0].hframe.size.y };
+    xVec3 zero = { 0.0f, 0.0f, 0.0f };
     xVec3 from = { 0.0f, -0.35f, 0.4f };
     xVec3 to = { 0.0f, 0.0f, 0.0f };
     xMat4x3 frame;
@@ -1686,6 +1715,7 @@ void zHudElementsCB_SoapRender()
                         item->hframe.pos.y - 0.5f * item->hframe.size.y,
                         item->hframe.size.x * widthAspect,
                         item->hframe.size.y };
+            xVec3 zero = { 0.0f, 0.0f, 0.0f };
             xVec3 from = { 0.0f, 0.0f, 2.0f };
             xVec3 to = { 0.0f, 0.0f, 0.0f };
             xMat4x3 frame;
@@ -1726,6 +1756,7 @@ void zHudElementsCB_MessageRender()
 // Loads the soap box model and its idle animation.
 void zHudElementsCB_SoapboxInit()
 {
+    zHudItem* item;
     xAnimFile* afile;
     U32 size;
     void* buff;
@@ -1733,27 +1764,29 @@ void zHudElementsCB_SoapboxInit()
     sHudSoapboxArray[0].model = zHudLoadModel(eHudModelBoxSoap);
     sHudSoapboxArray[0].renderStyle = 13;
 
+    item = &sHudSoapboxArray[0];
+
     buff = xSTFindAsset(xStrHash("bat_fly.anm"), &size);
     if (buff)
     {
         afile = xAnimFileNew(buff, "", 0, NULL);
-        sHudSoapboxArray[0].atbl = xAnimTableNew("", NULL);
-        xAnimTableNewState(sHudSoapboxArray[0].atbl, "Idle", 0x10, 0, 1.0f, NULL, NULL, 0.0f,
-                           NULL);
-        xAnimTableAddFile(sHudSoapboxArray[0].atbl, afile, "Idle");
-        xAnimPoolAlloc(&globals.sceneCur->mempool, &sHudSoapboxArray[0],
-                       sHudSoapboxArray[0].atbl, sHudSoapboxArray[0].model);
+        item->atbl = xAnimTableNew("", NULL);
+        xAnimTableNewState(item->atbl, "Idle", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+        xAnimTableAddFile(item->atbl, afile, "Idle");
+        xAnimPoolAlloc(&globals.sceneCur->mempool, item, item->atbl, item->model);
     }
 }
 
+// Place the soap-box display and reset its idle animation.
 void zHudElementsCB_SoapboxSetup(_xScene* sc)
 {
-    zHudItem* item = &sHudSoapboxArray[0];
     xAnimPlay* aplay;
     xAnimSingle* asing;
 
     oldSoapCnt2 = globals.player.Inv_Ammo[1];
     sHudDisplayTimer_soap = 1.5f;
+
+    zHudItem* item = &sHudSoapboxArray[0];
 
     item->zHudStatusPosTable[eHudStatusPosOnScreen].x = 492.0f;
     item->zHudStatusPosTable[eHudStatusPosOnScreen].y = 475.0f;
@@ -1814,17 +1847,18 @@ void zHudElementsCB_SoapboxSetup(_xScene* sc)
     }
 }
 
+// Updates the soap-box indicator as inventory and display timers change.
 void zHudElementsCB_SoapboxUpdate(_xScene* sc, F32 dt)
 {
     zHudItem* item = &sHudSoapboxArray[0];
 
     if (!(globals.player.Inv_Specials & 2))
     {
-        item->statusPos = eHudStatusPosOffScreenDefault;
+        sHudSoapboxArray[0].statusPos = eHudStatusPosOffScreenDefault;
     }
     else
     {
-        item->statusPos = eHudStatusPosOffScreenDefault;
+        sHudSoapboxArray[0].statusPos = eHudStatusPosOffScreenDefault;
     }
 
     if ((globals.player.Inv_Specials & 2) && (globals.player.Inv_Ammo[1] - 1) / 5 > 0)
@@ -1909,8 +1943,9 @@ void zHudElementsCB_SoapboxUpdate(_xScene* sc, F32 dt)
                      eHudInterpTypeLinear);
         break;
     case eHudStatusSizeZero:
-        item->hframe.size.x = item->zHudStatusSizeTable[eHudStatusSizeZero].x;
         item->hframe.size.y = item->zHudStatusSizeTable[eHudStatusSizeZero].y;
+        item->hframe.size.x = item->zHudStatusSizeTable[eHudStatusSizeZero].x;
+        fabsf(item->hframe.size.x);
         break;
     case eHudStatusSizeSmall:
         break;
@@ -1952,6 +1987,7 @@ void zHudElementsCB_SoapboxRender()
         xRect r = { 23.0f + (item->hframe.pos.x - 0.5f * item->hframe.size.x),
                     17.0f + (item->hframe.pos.y - 0.5f * item->hframe.size.y),
                     item->hframe.size.x * widthAspect, item->hframe.size.y };
+        xVec3 zero = { 0.0f, 0.0f, 0.0f };
         xVec3 from = { -1.3f, 0.3f, 2.0f };
         xVec3 to = { 0.0f, 0.0f, 0.0f };
         xMat4x3 frame;
@@ -1977,7 +2013,7 @@ void zHudElementsCB_SoapboxRender()
             S32 textOffset[2] = { -20, -70 };
 
             sprintf(str, "%d", (globals.player.Inv_Ammo[1] - 1) / 5);
-            zHud_DrawText(item->hframe.pos.x + textOffset[0],
+            zHudDrawTextImpl(item->hframe.pos.x + textOffset[0],
                           item->hframe.pos.y + textOffset[1], 90.0f, 100.0f, str, 0x40, 1.0f,
                           item->hframe.color.a, DROPSHADOW_NORMAL);
         }
@@ -1987,6 +2023,7 @@ void zHudElementsCB_SoapboxRender()
 // Loads the gum pack model and its idle animation.
 void zHudElementsCB_GumpackInit()
 {
+    zHudItem* item;
     xAnimFile* afile;
     U32 size;
     void* buff;
@@ -1994,27 +2031,29 @@ void zHudElementsCB_GumpackInit()
     sHudGumpackArray[0].model = zHudLoadModel(eHudModelSphere);
     sHudGumpackArray[0].renderStyle = 7;
 
+    item = &sHudGumpackArray[0];
+
     buff = xSTFindAsset(xStrHash("bat_fly.anm"), &size);
     if (buff)
     {
         afile = xAnimFileNew(buff, "", 0, NULL);
-        sHudGumpackArray[0].atbl = xAnimTableNew("", NULL);
-        xAnimTableNewState(sHudGumpackArray[0].atbl, "Idle", 0x10, 0, 1.0f, NULL, NULL, 0.0f,
-                           NULL);
-        xAnimTableAddFile(sHudGumpackArray[0].atbl, afile, "Idle");
-        xAnimPoolAlloc(&globals.sceneCur->mempool, &sHudGumpackArray[0],
-                       sHudGumpackArray[0].atbl, sHudGumpackArray[0].model);
+        item->atbl = xAnimTableNew("", NULL);
+        xAnimTableNewState(item->atbl, "Idle", 0x10, 0, 1.0f, NULL, NULL, 0.0f, NULL);
+        xAnimTableAddFile(item->atbl, afile, "Idle");
+        xAnimPoolAlloc(&globals.sceneCur->mempool, item, item->atbl, item->model);
     }
 }
 
+// Place the gum-pack display and reset its idle animation.
 void zHudElementsCB_GumpackSetup(_xScene* sc)
 {
-    zHudItem* item = &sHudGumpackArray[0];
     xAnimPlay* aplay;
     xAnimSingle* asing;
 
     oldGumCnt2 = globals.player.Inv_Ammo[0];
     sHudDisplayTimer_gum = 1.5f;
+
+    zHudItem* item = &sHudGumpackArray[0];
 
     item->zHudStatusPosTable[eHudStatusPosOnScreen].x = 1.0f;
     item->zHudStatusPosTable[eHudStatusPosOnScreen].y = 480.0f;
@@ -2075,6 +2114,7 @@ void zHudElementsCB_GumpackSetup(_xScene* sc)
     }
 }
 
+// Updates the gum-pack indicator as inventory and display timers change.
 void zHudElementsCB_GumpackUpdate(_xScene* sc, F32 dt)
 {
     zHudItem* item = &sHudGumpackArray[0];
@@ -2172,8 +2212,9 @@ void zHudElementsCB_GumpackUpdate(_xScene* sc, F32 dt)
                      eHudInterpTypeLinear);
         break;
     case eHudStatusSizeZero:
-        item->hframe.size.x = item->zHudStatusSizeTable[eHudStatusSizeZero].x;
         item->hframe.size.y = item->zHudStatusSizeTable[eHudStatusSizeZero].y;
+        item->hframe.size.x = item->zHudStatusSizeTable[eHudStatusSizeZero].x;
+        fabsf(item->hframe.size.x);
         break;
     case eHudStatusSizeSmall:
         break;
@@ -2210,6 +2251,7 @@ void zHudElementsCB_GumpackRender()
     xRect r = { 33.0f + (item->hframe.pos.x - 0.5f * item->hframe.size.x),
                 21.0f + (item->hframe.pos.y - 0.5f * item->hframe.size.y),
                 item->hframe.size.x * widthAspect, item->hframe.size.y };
+    xVec3 zero = { 0.0f, 0.0f, 0.0f };
     xVec3 from = { 1.8f, 0.0f, 0.0f };
     xVec3 to = { 0.0f, 0.0f, 0.0f };
     xMat4x3 frame;
@@ -2237,14 +2279,15 @@ void zHudElementsCB_GumpackRender()
         S32 textOffset[2] = { 17, -70 };
 
         sprintf(str, "%d", (globals.player.Inv_Ammo[0] - 1) / 5);
-        zHud_DrawText(item->hframe.pos.x + textOffset[0], item->hframe.pos.y + textOffset[1],
+        zHudDrawTextImpl(item->hframe.pos.x + textOffset[0], item->hframe.pos.y + textOffset[1],
                       90.0f, 70.0f, str, 0x40, 1.0f, item->hframe.color.a, DROPSHADOW_NORMAL);
     }
 }
 
-// Loads the collar model the health bar shows and its idle animation.
+// Loads the health collars, then initializes animations on the first five player-status items.
 void zHudElementsCB_HealthbarInit()
 {
+    zHudItem* item;
     xAnimFile* afile;
     U32 size;
     void* buff;
@@ -2261,6 +2304,7 @@ void zHudElementsCB_HealthbarInit()
 
     for (i = 0; i < 5; i++)
     {
+        item = &sHudPlayerStatusArray[i];
         switch (i)
         {
         case 0:
@@ -2283,18 +2327,20 @@ void zHudElementsCB_HealthbarInit()
         if (buff)
         {
             afile = xAnimFileNew(buff, "", 0, NULL);
-            sHudHealthbarArray[i].atbl = xAnimTableNew("", NULL);
-            xAnimTableNewState(sHudHealthbarArray[i].atbl, "Idle", 0x10, 0, 1.0f, NULL, NULL,
+            item->atbl = xAnimTableNew("", NULL);
+            xAnimTableNewState(item->atbl, "Idle", 0x10, 0, 1.0f, NULL, NULL,
                                0.0f, NULL);
-            xAnimTableAddFile(sHudHealthbarArray[i].atbl, afile, "Idle");
-            xAnimPoolAlloc(&globals.sceneCur->mempool, &sHudHealthbarArray[i],
-                           sHudHealthbarArray[i].atbl, sHudHealthbarArray[i].model);
+            xAnimTableAddFile(item->atbl, afile, "Idle");
+            xAnimPoolAlloc(&globals.sceneCur->mempool, item,
+                           item->atbl, item->model);
         }
     }
 }
 
+// Place the health collars and start them transparent.
 void zHudElementsCB_HealthbarSetup(_xScene* sc)
 {
+    zHudItem* item;
     S32 i;
     xAnimPlay* aplay;
     xAnimSingle* asing;
@@ -2303,70 +2349,72 @@ void zHudElementsCB_HealthbarSetup(_xScene* sc)
 
     for (i = 0; i < 5; i++)
     {
-        sHudHealthbarArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].x = 17.0f * i + 20.0f;
-        sHudHealthbarArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].y = 115.0f;
-        sHudHealthbarArray[i].zHudStatusPosTable[eHudStatusPosOffScreenDefault].x =
-            sHudHealthbarArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].x - 100.0f;
-        sHudHealthbarArray[i].zHudStatusPosTable[eHudStatusPosOffScreenDefault].y = 115.0f;
-        sHudHealthbarArray[i].zHudStatusPosTable[eHudStatusPosMiddleOfScreen].x = 300.0f;
-        sHudHealthbarArray[i].zHudStatusPosTable[eHudStatusPosMiddleOfScreen].y = 200.0f;
-        sHudHealthbarArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].x = 17.0f;
-        sHudHealthbarArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].y = 17.0f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngStop].x = 0.0f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngStop].y = 0.0f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngStop].z = 0.0f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngIdle].x = 1.5915494f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngIdle].y = 0.0f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngIdle].z = 0.0f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngFast].x = 6.3661976f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngFast].y = 0.0f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngFast].z = 0.0f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngTest1].x = 1.5915494f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngTest1].y = 15.915494f;
-        sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngTest1].z = 0.0f;
-        sHudHealthbarArray[i].zHudStatusColorTable[eHudStatusColorSolid].rm = 1.0f;
-        sHudHealthbarArray[i].zHudStatusColorTable[eHudStatusColorSolid].gm = 1.0f;
-        sHudHealthbarArray[i].zHudStatusColorTable[eHudStatusColorSolid].bm = 1.0f;
-        sHudHealthbarArray[i].zHudStatusColorTable[eHudStatusColorSolid].a = 255.0f;
-        sHudHealthbarArray[i].zHudStatusColorTable[eHudStatusColorTransparent].rm = 1.0f;
-        sHudHealthbarArray[i].zHudStatusColorTable[eHudStatusColorTransparent].gm = 1.0f;
-        sHudHealthbarArray[i].zHudStatusColorTable[eHudStatusColorTransparent].bm = 1.0f;
-        sHudHealthbarArray[i].zHudStatusColorTable[eHudStatusColorTransparent].a = 0.0f;
+        item = &sHudHealthbarArray[i];
+        item->zHudStatusPosTable[eHudStatusPosOnScreen].x = 17.0f * i + 20.0f;
+        item->zHudStatusPosTable[eHudStatusPosOnScreen].y = 115.0f;
+        item->zHudStatusPosTable[eHudStatusPosOffScreenDefault].x =
+            item->zHudStatusPosTable[eHudStatusPosOnScreen].x - 100.0f;
+        item->zHudStatusPosTable[eHudStatusPosOffScreenDefault].y = 115.0f;
+        item->zHudStatusPosTable[eHudStatusPosMiddleOfScreen].x = 300.0f;
+        item->zHudStatusPosTable[eHudStatusPosMiddleOfScreen].y = 200.0f;
+        item->zHudStatusSizeTable[eHudStatusSizeDefault].x = 17.0f;
+        item->zHudStatusSizeTable[eHudStatusSizeDefault].y = 17.0f;
+        item->zHudStatusAngTable[eHudStatusAngStop].x = 0.0f;
+        item->zHudStatusAngTable[eHudStatusAngStop].y = 0.0f;
+        item->zHudStatusAngTable[eHudStatusAngStop].z = 0.0f;
+        item->zHudStatusAngTable[eHudStatusAngIdle].x = 1.5915494f;
+        item->zHudStatusAngTable[eHudStatusAngIdle].y = 0.0f;
+        item->zHudStatusAngTable[eHudStatusAngIdle].z = 0.0f;
+        item->zHudStatusAngTable[eHudStatusAngFast].x = 6.3661976f;
+        item->zHudStatusAngTable[eHudStatusAngFast].y = 0.0f;
+        item->zHudStatusAngTable[eHudStatusAngFast].z = 0.0f;
+        item->zHudStatusAngTable[eHudStatusAngTest1].x = 1.5915494f;
+        item->zHudStatusAngTable[eHudStatusAngTest1].y = 15.915494f;
+        item->zHudStatusAngTable[eHudStatusAngTest1].z = 0.0f;
+        item->zHudStatusColorTable[eHudStatusColorSolid].rm = 1.0f;
+        item->zHudStatusColorTable[eHudStatusColorSolid].gm = 1.0f;
+        item->zHudStatusColorTable[eHudStatusColorSolid].bm = 1.0f;
+        item->zHudStatusColorTable[eHudStatusColorSolid].a = 255.0f;
+        item->zHudStatusColorTable[eHudStatusColorTransparent].rm = 1.0f;
+        item->zHudStatusColorTable[eHudStatusColorTransparent].gm = 1.0f;
+        item->zHudStatusColorTable[eHudStatusColorTransparent].bm = 1.0f;
+        item->zHudStatusColorTable[eHudStatusColorTransparent].a = 0.0f;
 
-        sHudHealthbarArray[i].statusPos = eHudStatusPosOnScreen;
-        sHudHealthbarArray[i].statusAng = eHudStatusAngStop;
-        sHudHealthbarArray[i].statusSize = eHudStatusSizeDefault;
-        sHudHealthbarArray[i].statusColor = eHudStatusColorSolid;
+        item->statusPos = eHudStatusPosOnScreen;
+        item->statusAng = eHudStatusAngStop;
+        item->statusSize = eHudStatusSizeDefault;
+        item->statusColor = eHudStatusColorSolid;
 
-        sHudHealthbarArray[i].hframe.pos.x =
-            sHudHealthbarArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].x;
-        sHudHealthbarArray[i].hframe.pos.y =
-            sHudHealthbarArray[i].zHudStatusPosTable[eHudStatusPosOnScreen].y;
-        sHudHealthbarArray[i].hframe.dang.x =
-            sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngStop].x;
-        sHudHealthbarArray[i].hframe.dang.y =
-            sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngStop].y;
-        sHudHealthbarArray[i].hframe.dang.z =
-            sHudHealthbarArray[i].zHudStatusAngTable[eHudStatusAngStop].z;
-        sHudHealthbarArray[i].hframe.size.x =
-            sHudHealthbarArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].x;
-        sHudHealthbarArray[i].hframe.size.y =
-            sHudHealthbarArray[i].zHudStatusSizeTable[eHudStatusSizeDefault].y;
-        sHudHealthbarArray[i].hframe.color.a =
-            sHudHealthbarArray[i].zHudStatusColorTable[eHudStatusColorSolid].a;
+        item->hframe.pos.x =
+            item->zHudStatusPosTable[eHudStatusPosOnScreen].x;
+        item->hframe.pos.y =
+            item->zHudStatusPosTable[eHudStatusPosOnScreen].y;
+        item->hframe.dang.x =
+            item->zHudStatusAngTable[eHudStatusAngStop].x;
+        item->hframe.dang.y =
+            item->zHudStatusAngTable[eHudStatusAngStop].y;
+        item->hframe.dang.z =
+            item->zHudStatusAngTable[eHudStatusAngStop].z;
+        item->hframe.size.x =
+            item->zHudStatusSizeTable[eHudStatusSizeDefault].x;
+        item->hframe.size.y =
+            item->zHudStatusSizeTable[eHudStatusSizeDefault].y;
+        item->hframe.color.a =
+            item->zHudStatusColorTable[eHudStatusColorTransparent].a;
 
-        aplay = sHudHealthbarArray[i].model->Anim;
+        aplay = item->model->Anim;
         if (aplay)
         {
             asing = aplay->Single;
             asing->Time = 0.0f;
             asing->CurrentSpeed = 1.0f;
-            xAnimPlaySetState(aplay->Single, sHudHealthbarArray[i].model->Anim->Table->StateList,
+            xAnimPlaySetState(aplay->Single, item->model->Anim->Table->StateList,
                               0.0f);
         }
     }
 }
 
+// Animate the health collars as the health count changes.
 void zHudElementsCB_HealthbarUpdate(_xScene* sc, F32 dt)
 {
     S32 i;
@@ -2428,7 +2476,7 @@ void zHudElementsCB_HealthbarUpdate(_xScene* sc, F32 dt)
         }
     }
 
-    dynOffset = (5 - globals.player.Health) * sHudHealthbarArray[0].hframe.size.x * 0.5f;
+    dynOffset = (5 - globals.player.Health) * sHudHealthbarArray[0].hframe.size.x / 2.0f;
 
     for (i = 0; i < 5; i++)
     {
@@ -2489,6 +2537,8 @@ void zHudElementsCB_HealthbarUpdate(_xScene* sc, F32 dt)
                          item->zHudStatusAngTable[eHudStatusAngTest1].z, 1.0f,
                          eHudInterpTypeLinear);
             break;
+        case eHudStatusAngTest2:
+            break;
         }
 
         switch (item->statusSize)
@@ -2508,6 +2558,8 @@ void zHudElementsCB_HealthbarUpdate(_xScene* sc, F32 dt)
             zHudInterp1d(dt, &item->hframe.size.y,
                          item->zHudStatusSizeTable[eHudStatusSizeZero].y, 50.0f,
                          eHudInterpTypeLinear);
+            break;
+        case eHudStatusSizeSmall:
             break;
         }
 
@@ -2542,7 +2594,7 @@ void zHudElementsCB_HealthbarRender()
     for (i = 0; i < 5; i++)
     {
         zHudItem* item = &sHudHealthbarArray[i];
-        if (item->hframe.color.a)
+        if (0.0f != item->hframe.color.a)
         {
             xRect r = { item->hframe.pos.x -
                             0.5f * item->hframe.size.x,
@@ -2550,6 +2602,7 @@ void zHudElementsCB_HealthbarRender()
                             0.5f * item->hframe.size.y,
                         item->hframe.size.x * widthAspect,
                         item->hframe.size.y };
+            xVec3 zero = { 0.0f, 0.0f, 0.0f };
             xVec3 from = { 0.0f, 0.0f, 1.0f };
             xVec3 to = { 0.0f, 0.0f, 0.0f };
             xMat4x3 frame;
@@ -2573,6 +2626,7 @@ void zHudElementsCB_HealthbarRender()
 // status items an idle animation.
 void zHudElementsCB_GameStatsInit()
 {
+    zHudItem* item;
     xAnimFile* afile;
     U32 size;
     void* buff;
@@ -2589,6 +2643,7 @@ void zHudElementsCB_GameStatsInit()
 
     for (i = 4; i < 6; i++)
     {
+        item = &sHudPlayerStatusArray[i];
         switch (i)
         {
         case 4:
@@ -2605,12 +2660,12 @@ void zHudElementsCB_GameStatsInit()
         if (buff)
         {
             afile = xAnimFileNew(buff, "", 0, NULL);
-            sHudPlayerStatusArray[i].atbl = xAnimTableNew("", NULL);
-            xAnimTableNewState(sHudPlayerStatusArray[i].atbl, "Idle", 0x10, 0, 1.0f, NULL, NULL,
+            item->atbl = xAnimTableNew("", NULL);
+            xAnimTableNewState(item->atbl, "Idle", 0x10, 0, 1.0f, NULL, NULL,
                                0.0f, NULL);
-            xAnimTableAddFile(sHudPlayerStatusArray[i].atbl, afile, "Idle");
-            xAnimPoolAlloc(&globals.sceneCur->mempool, &sHudPlayerStatusArray[i],
-                           sHudPlayerStatusArray[i].atbl, sHudPlayerStatusArray[i].model);
+            xAnimTableAddFile(item->atbl, afile, "Idle");
+            xAnimPoolAlloc(&globals.sceneCur->mempool, item,
+                           item->atbl, item->model);
         }
     }
 }
@@ -2733,6 +2788,7 @@ void zHudElementsCB_GameStatsSetup(_xScene* sc)
     }
 }
 
+// Updates the statistics overlay, its transition fade, and the displayed counts.
 void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt)
 {
     S32 i;
@@ -2743,10 +2799,9 @@ void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt)
     {
         if (!sStatInit)
         {
+            sStatInit = 1;
             iColor_tag clear = { 0, 0, 0, 0 };
             iColor_tag black = { 0, 0, 0, 255 };
-
-            sStatInit = 1;
             xScrFxFade(&clear, &black, 0.9f, NULL, 1, 1);
             zEntEventAllOfType(8, 3);
         }
@@ -2840,6 +2895,8 @@ void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt)
                          item->zHudStatusAngTable[eHudStatusAngTest1].z, 1.0f,
                          eHudInterpTypeLinear);
             break;
+        case eHudStatusAngTest2:
+            break;
         }
 
         switch (item->statusSize)
@@ -2859,6 +2916,8 @@ void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt)
             zHudInterp1d(dt, &item->hframe.size.y,
                          item->zHudStatusSizeTable[eHudStatusSizeZero].y, 90.0f,
                          eHudInterpTypeLinear);
+            break;
+        case eHudStatusSizeSmall:
             break;
         }
 
@@ -2885,16 +2944,19 @@ void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt)
         case 0:
             collected = globals.stats.snacks;
             total = globals.stats.snacks_tot;
+            fabsf(collected);
             sprintf(item->text, "x %d%/%d", (S32)collected, (S32)total);
             break;
         case 1:
             collected = globals.stats.clues;
             total = globals.stats.clues_tot;
+            fabsf(collected);
             sprintf(item->text, "x %d%/%d", (S32)collected, (S32)total);
             break;
         case 2:
             collected = globals.stats.enemyKills;
             total = globals.stats.enemyCount;
+            fabsf(collected);
             sprintf(item->text, "x %d%/%d", (S32)collected, (S32)total);
             break;
         case 3:
@@ -2910,22 +2972,24 @@ void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt)
     }
 }
 
-// The end-of-area stats screen: the snack, clue and enemy counts and the time, with their
-// icons.
+// Draws the stats counts and icons; the time-text row is skipped.
 void zHudElementsCB_GameStatsRender()
 {
     S32 i;
+    fabsf(sHudDisplayTimer_plrStatus + 15.0f * sHudDisplayTimer_healthBar);
+    fabsf(sHudDisplayTimer_plrStatus + 20.0f * sHudDisplayTimer_healthBar);
+    fabsf(sHudDisplayTimer_plrStatus + 5.0f * sHudDisplayTimer_healthBar);
 
     if (zGameStateGet() == 4)
     {
         for (i = 0; i < 7; i++)
         {
             zHudItem* item = &sHudGameStatsArray[i];
-            if (!item->hframe.color.a)
+            if (0.0f == item->hframe.color.a)
             {
                 if (i != 3)
                 {
-                    zHud_DrawText(item->hframe.pos.x,
+                    zHudDrawTextImpl(item->hframe.pos.x,
                                   item->hframe.pos.y, 300.0f, 50.0f,
                                   item->text, 0x10, 1.0f,
                                   item->hframe.color.a, DROPSHADOW_NORMAL);
@@ -2939,8 +3003,10 @@ void zHudElementsCB_GameStatsRender()
                                     0.5f * item->hframe.size.y,
                                 item->hframe.size.x * widthAspect,
                                 item->hframe.size.y };
+                    xVec3 zero = { 0.0f, 0.0f, 0.0f };
                     xVec3 from = { 0.0f, 0.0f, 0.8f };
                     xVec3 to = { 0.0f, 0.0f, 0.0f };
+                    char str[256] = "";
                     xMat4x3 frame;
 
                     xMat3x3Euler((xMat3x3*)&frame, item->hframe.ang.x,
@@ -2963,7 +3029,7 @@ void zHudElementsCB_GameStatsRender()
 }
 
 // Draws s in the HUD font, first offset as a drop shadow when asked.
-void zHud_DrawText(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 alpha,
+static inline void zHudDrawTextImpl(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 alpha,
                    eHudDropShadowMode shadow)
 {
     F32 drawSizeX = 24.0f * size;
@@ -2974,7 +3040,45 @@ void zHud_DrawText(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 a
 
     if (shadow == DROPSHADOW_NORMAL)
     {
-        fontBox = xFontBoxCreate(x + -3.0f, y + 3.0f, w, h, 0, clrDropShadow);
+        F32 offsetX = -3.0f;
+        F32 offsetY = 3.0f;
+        fontBox = xFontBoxCreate(x + offsetX, y + offsetY, w, h, 0, clrDropShadow);
+        xFontBoxSetJustification(fontBox, just);
+        xFontBoxSetDrawSize(fontBox, drawSizeX, drawSizeY);
+        xFontBoxSetDrawSpacing(fontBox, drawSizeX, drawSizeY);
+        xFontBoxSetColor(fontBox, clrDropShadow);
+        xFontBoxSetText(fontBox, s);
+        xFontBoxRender(fontBox);
+        xFontBoxDestroy(fontBox);
+    }
+
+    fontBox = xFontBoxCreate(x, y, w, h, 0, clr);
+    xFontBoxSetJustification(fontBox, just);
+    xFontBoxSetDrawSize(fontBox, drawSizeX, drawSizeY);
+    xFontBoxSetDrawSpacing(fontBox, drawSizeX, drawSizeY);
+    xFontBoxSetColor(fontBox, clr);
+    xFontBoxSetText(fontBox, s);
+    xFontBoxRender(fontBox);
+    xFontBoxDestroy(fontBox);
+}
+
+// Draws the supplied string with the HUD font and optional drop shadow.
+void zHud_DrawText(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 alpha,
+                   eHudDropShadowMode shadow)
+{
+    F32 drawSizeX = 24.0f * size;
+    F32 drawSizeY = 32.0f * size;
+    fabsf(drawSizeX);
+    fabsf(drawSizeY);
+
+    clr.a = alpha;
+    clrDropShadow.a = alpha;
+
+    if (shadow == DROPSHADOW_NORMAL)
+    {
+        F32 offsetX = -3.0f;
+        F32 offsetY = 3.0f;
+        fontBox = xFontBoxCreate(x + offsetX, y + offsetY, w, h, 0, clrDropShadow);
         xFontBoxSetJustification(fontBox, just);
         xFontBoxSetDrawSize(fontBox, drawSizeX, drawSizeY);
         xFontBoxSetDrawSpacing(fontBox, drawSizeX, drawSizeY);
@@ -3054,6 +3158,8 @@ void zHud_UIRender(char* asset, F32 xPos, F32 yPos, F32 w, F32 h, U8 alpha)
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
     RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
     RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vert, 4, Idx, 6);
+    fabsf(heightAspect + 0.75f * widthAspect);
+    fabs(4503601774854144.0);
 }
 
 void zHud_sceneReset()
@@ -3133,14 +3239,15 @@ void zHudInterp1d(F32 dt, F32* src, F32 dst, F32 speed, S32 type)
         }
         break;
     case eHudInterpTypeDecel:
-        *src += fabsf(diff * speed * dt) > fabsf(diff) ? diff : diff * speed * dt;
+    {
+        F32 amount = diff * speed * dt;
+        *src += fabsf(amount) > fabsf(diff) ? diff : amount;
         break;
+    }
     }
 }
 
-// Moves (*srcx, *srcy) toward (dstx, dsty) at speed units a second: at a steady rate
-// (linear), slowing as it closes in (decel) or by the inverse square of the distance
-// (accel). It never overshoots.
+// Moves a 2D point toward its destination using the selected speed curve.
 void zHudInterp2d(F32 dt, F32* srcx, F32* srcy, F32 dstx, F32 dsty, F32 speed, S32 type)
 {
     if (speed)

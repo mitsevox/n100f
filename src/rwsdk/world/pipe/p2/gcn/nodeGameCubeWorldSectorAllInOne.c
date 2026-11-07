@@ -8,7 +8,7 @@
 // reinstanced.
 
 // The last draw sync token the GPU has passed.
-extern U16 lbl_8025F890;
+extern volatile U16 lbl_8025F890;
 
 // The node definition.
 extern RxNodeDefinition lbl_801DDAFC;
