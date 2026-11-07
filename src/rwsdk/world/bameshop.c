@@ -960,13 +960,11 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
         // before it.
         for (strip = rest; strip; strip = strip->next)
         {
-            U16* end = &joined->indices[joined->numIndices];
-
-            if (strip->indices[0] == end[-1])
+            if (strip->indices[0] == joined->indices[joined->numIndices - 1])
             {
                 if ((joined->numIndices & 1) && keepWinding)
                 {
-                    end[0] = strip->indices[0];
+                    joined->indices[joined->numIndices] = strip->indices[0];
                     joined->numIndices++;
                 }
 
@@ -978,19 +976,17 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
         {
             for (strip = rest; strip; strip = strip->next)
             {
-                U16* end = &joined->indices[joined->numIndices];
-
-                if (strip->indices[0] == end[-2])
+                if (strip->indices[0] == joined->indices[joined->numIndices - 2])
                 {
                     if (!(joined->numIndices & 1) && keepWinding)
                     {
-                        end[0] = strip->indices[0];
+                        joined->indices[joined->numIndices] = strip->indices[0];
                         joined->indices[joined->numIndices + 1] = strip->indices[0];
                         joined->numIndices += 2;
                     }
                     else
                     {
-                        end[0] = strip->indices[0];
+                        joined->indices[joined->numIndices] = strip->indices[0];
                         joined->numIndices++;
                     }
 
