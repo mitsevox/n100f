@@ -15,8 +15,8 @@
 // pixel weighted by how much of it the span covers.
 static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, RwRGBAReal* result)
 {
-    S32 first = x0 >> 16;
     S32 last = x1 >> 16;
+    S32 first = x0 >> 16;
     F32 width = RESAMPLE_TOREAL * (F32)(x1 - x0);
     const RwRGBA* pixel = (const RwRGBA*)(image->cpPixels + (y >> 16) * image->stride + first * 4);
     F32 scale;
@@ -38,6 +38,10 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
         S32 x = (S32)(RESAMPLE_TOFIXED * (F32)(first + 1));
         S32 i;
         F32 part;
+        U8 red;
+        U8 green;
+        U8 blue;
+        U8 alpha;
 
         result->red = RESAMPLE_TOUNIT * pixel->red;
         result->green = RESAMPLE_TOUNIT * pixel->green;
@@ -54,19 +58,27 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
 
         for (i = x >> 16; i != last; i++)
         {
-            result->red += RESAMPLE_TOUNIT * pixel->red;
-            result->green += RESAMPLE_TOUNIT * pixel->green;
-            result->blue += RESAMPLE_TOUNIT * pixel->blue;
-            result->alpha += RESAMPLE_TOUNIT * pixel->alpha;
+            red = pixel->red;
+            green = pixel->green;
+            blue = pixel->blue;
+            alpha = pixel->alpha;
             pixel++;
             x += RESAMPLE_ONE;
+            result->red += RESAMPLE_TOUNIT * red;
+            result->green += RESAMPLE_TOUNIT * green;
+            result->blue += RESAMPLE_TOUNIT * blue;
+            result->alpha += RESAMPLE_TOUNIT * alpha;
         }
 
+        red = pixel->red;
+        green = pixel->green;
+        blue = pixel->blue;
+        alpha = pixel->alpha;
         part = RESAMPLE_TOREAL * (F32)(x1 - x);
-        result->red += RESAMPLE_TOUNIT * pixel->red * part;
-        result->green += RESAMPLE_TOUNIT * pixel->green * part;
-        result->blue += RESAMPLE_TOUNIT * pixel->blue * part;
-        result->alpha += RESAMPLE_TOUNIT * pixel->alpha * part;
+        result->red += RESAMPLE_TOUNIT * red * part;
+        result->green += RESAMPLE_TOUNIT * green * part;
+        result->blue += RESAMPLE_TOUNIT * blue * part;
+        result->alpha += RESAMPLE_TOUNIT * alpha * part;
     }
 
     scale = 1.0f / width;
@@ -148,10 +160,10 @@ RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage)
     S32 yStep;
     S32 y;
 
-    dstImage->flags |= srcImage->flags & IMAGE_GAMMACORRECTED;
-
     xStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcImage->width / (F32)width));
     yStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcImage->height / (F32)height));
+
+    dstImage->flags |= srcImage->flags & IMAGE_GAMMACORRECTED;
 
     for (y = 0; y < height; y++)
     {
