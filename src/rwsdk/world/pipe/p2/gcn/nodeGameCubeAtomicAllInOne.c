@@ -147,11 +147,11 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 // the instanced arrays, or copies one morph target when both are the same.
 void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* interpolator)
 {
+    S32 start = interpolator->startMorphTarget;
     S32 end = interpolator->endMorphTarget;
     S32 numVertices = geometry->numVertices;
     RwV3d* dstPos = (RwV3d*)arrays->pos;
     U8* dstNrm = (U8*)arrays->nrm;
-    S32 start = interpolator->startMorphTarget;
 
     if (start >= geometry->numMorphTargets || end >= geometry->numMorphTargets)
     {
@@ -190,15 +190,16 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
     }
     else
     {
-        RpMorphTarget* morphTargets = geometry->morphTarget;
+        RpMorphTarget* startTarget = &geometry->morphTarget[start];
+        RpMorphTarget* endTarget = &geometry->morphTarget[end];
         F32 scale = interpolator->recipTime * interpolator->position;
-        RwV3d* startPos = morphTargets[start].verts;
-        RwV3d* endPos = morphTargets[end].verts;
+        RwV3d* startPos = startTarget->verts;
+        RwV3d* endPos = endTarget->verts;
 
         if (geometry->flags & rpGEOMETRYNORMALS)
         {
-            RwV3d* startNrm = morphTargets[start].normals;
-            RwV3d* endNrm = morphTargets[end].normals;
+            RwV3d* startNrm = startTarget->normals;
+            RwV3d* endNrm = endTarget->normals;
 
             while (numVertices--)
             {
@@ -233,25 +234,44 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
     GXInvalidateVtxCache();
 }
 
+// Re-instances each texture coordinate set whose lock bit (0x10 << set) is in locked.
+// FAKEMATCH: the loop is moved into an inline helper; real form believed to be the loop written
+// inline in fn_8015E054.
+static inline void AllInOneReinstanceTexCoords(RpGeometry* geometry, GCNVertexArrays* arrays, U32 locked)
+{
+    S32 i;
+
+    for (i = 0; i < geometry->numTexCoordSets; i++)
+    {
+        if ((0x10 << i) & locked)
+        {
+            DCFlushRange(arrays->tex[i],
+                         _rwGCNVtxFmtInstTex(fn_8015D818(geometry), i, arrays->tex[i],
+                                             geometry->texCoords[i],
+                                             geometry->numVertices,
+                                             arrays->texStride[i]));
+        }
+    }
+}
+
 // The default reinstance callback: re-instances the attributes locked since the last instance,
 // and the morph targets when the interpolator changed, once the GPU is done with the arrays.
 RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 {
-    S32 i;
     S32 numVertices;
-    GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
+    U32 flags;
     U32 locked;
     RpGeometry* geometry = atomic->geometry;
+    GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
 
     if (geometry->lockedSinceLastInst)
     {
-        U32 flags;
-
         ALLINONE_WAITDONE(arrays);
 
+        flags = geometry->flags | rpGEOMETRYPOSITIONS;
+        flags &= ~objectData->privateData->clearFlags;
         locked = geometry->lockedSinceLastInst;
         numVertices = geometry->numVertices;
-        flags = (geometry->flags | rpGEOMETRYPOSITIONS) & ~objectData->privateData->clearFlags;
 
         if ((locked & ALLINONE_LOCKVERTICES) && (flags & rpGEOMETRYPOSITIONS))
         {
@@ -279,17 +299,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
         if ((locked & ALLINONE_LOCKTEXCOORDS) && (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2)))
         {
-            for (i = 0; i < geometry->numTexCoordSets; i++)
-            {
-                if ((0x10 << i) & locked)
-                {
-                    DCFlushRange(arrays->tex[i],
-                                 _rwGCNVtxFmtInstTex(fn_8015D818(geometry), i, arrays->tex[i],
-                                                     geometry->texCoords[i],
-                                                     geometry->numVertices,
-                                                     arrays->texStride[i]));
-                }
-            }
+            AllInOneReinstanceTexCoords(geometry, arrays, locked);
         }
 
         GXInvalidateVtxCache();
