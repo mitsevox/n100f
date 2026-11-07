@@ -16678,8 +16678,8 @@ static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs)
     }
     memcpy(rbs->model->Mat, &rbs->frame->mat, sizeof(xMat4x3));
     rbs->bound.sph.center = rbs->frame->mat.pos;
-    rbs->mdl_animsword->Flags &= ~1;
-    rbs->model->Flags |= 1;
+    rbs->mdl_animsword->Flags &= (U16)~1;
+    rbs->model->Flags |= (U16)1;
     rbs->flg_stat |= 4;
 }
 
