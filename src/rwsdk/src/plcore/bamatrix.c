@@ -201,6 +201,31 @@ F32 _rwMatrixNormalError(const RwMatrix* matrix)
     return right * right + up * up + at * at;
 }
 
+F32 _rwMatrixIdentityError(const RwMatrix* matrix)
+{
+    RwV3d vTmp;
+    F32 result;
+
+    vTmp.x = matrix->right.x - 1.0f;
+    vTmp.y = matrix->right.y;
+    vTmp.z = matrix->right.z;
+    result = RwV3dDotProductMacro(&vTmp, &vTmp);
+
+    vTmp.x = matrix->up.x;
+    vTmp.y = matrix->up.y - 1.0f;
+    vTmp.z = matrix->up.z;
+    result += RwV3dDotProductMacro(&vTmp, &vTmp);
+
+    vTmp.x = matrix->at.x;
+    vTmp.y = matrix->at.y;
+    vTmp.z = matrix->at.z - 1.0f;
+    result += RwV3dDotProductMacro(&vTmp, &vTmp);
+
+    result += RwV3dDotProductMacro(&matrix->pos, &matrix->pos);
+
+    return result;
+}
+
 void* _rwMatrixClose(void* instance, S32 offset, S32 size)
 {
     if (MATRIX_DATA(freeList))
@@ -247,9 +272,10 @@ S32 RwEngineSetMatrixTolerances(const RwMatrixTolerance* const tolerance)
 
 RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
 {
+    S32 identity;
     S32 normal;
     S32 orthogonal;
-    S32 identity;
+    S32 both;
     U32 flags;
 
     if (!tolerance)
@@ -260,17 +286,11 @@ RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
     normal = tolerance->Normal >= _rwMatrixNormalError(matrix);
     orthogonal = tolerance->Orthogonal >= _rwMatrixOrthogonalError(matrix);
     identity = 0;
+    both = normal && orthogonal;
 
-    if (normal && orthogonal)
+    if (both)
     {
-        F32 rightX = matrix->right.x - 1.0f;
-        F32 upY = matrix->up.y - 1.0f;
-        F32 atZ = matrix->at.z - 1.0f;
-        F32 error = rightX * rightX + matrix->right.y * matrix->right.y +
-                    matrix->right.z * matrix->right.z + matrix->up.x * matrix->up.x +
-                    upY * upY + matrix->up.z * matrix->up.z + matrix->at.x * matrix->at.x +
-                    matrix->at.y * matrix->at.y + atZ * atZ + matrix->pos.x * matrix->pos.x +
-                    matrix->pos.y * matrix->pos.y + matrix->pos.z * matrix->pos.z;
+        F32 error = _rwMatrixIdentityError(matrix);
 
         if (tolerance->Identity >= error)
         {
@@ -340,38 +360,47 @@ RwMatrix* RwMatrixRotateOneMinusCosineSine(RwMatrix* matrix, const RwV3d* unitAx
     F32 zSine;
 
     rotate.flags = rwMATRIXTYPEORTHONORMAL;
+    rotate.flags &= ~rwMATRIXINTERNALIDENTITY;
     rotate.pos.x = 0.0f;
     rotate.pos.y = 0.0f;
     rotate.pos.z = 0.0f;
 
-    yz = y * z * oneMinusCosine;
-    xSine = x * sine;
     rotate.right.x = 1.0f - (1.0f - x * x) * oneMinusCosine;
-    zx = z * x * oneMinusCosine;
-    ySine = y * sine;
     rotate.up.y = 1.0f - (1.0f - y * y) * oneMinusCosine;
     rotate.at.z = 1.0f - (1.0f - z * z) * oneMinusCosine;
-    rotate.up.z = yz + xSine;
+
+    yz = y * z * oneMinusCosine;
+    zx = z * x * oneMinusCosine;
     xy = x * y * oneMinusCosine;
+    xSine = x * sine;
+    ySine = y * sine;
     zSine = z * sine;
+
+    rotate.up.z = yz + xSine;
+    rotate.at.y = yz - xSine;
     rotate.right.z = zx - ySine;
     rotate.at.x = zx + ySine;
-    rotate.at.y = yz - xSine;
     rotate.right.y = xy + zSine;
     rotate.up.x = xy - zSine;
 
     switch (combineOp)
     {
     case rwCOMBINEREPLACE:
+        rotate.flags = matrix->flags;
         *matrix = rotate;
+        matrix->flags &= ~rwMATRIXINTERNALIDENTITY;
         break;
     case rwCOMBINEPRECONCAT:
         RwMatrixMultiply(&result, &rotate, matrix);
+        result.flags = matrix->flags;
         *matrix = result;
+        matrix->flags &= ~rwMATRIXINTERNALIDENTITY;
         break;
     case rwCOMBINEPOSTCONCAT:
         RwMatrixMultiply(&result, matrix, &rotate);
+        result.flags = matrix->flags;
         *matrix = result;
+        matrix->flags &= ~rwMATRIXINTERNALIDENTITY;
         break;
     default:
     {
@@ -382,8 +411,6 @@ RwMatrix* RwMatrixRotateOneMinusCosineSine(RwMatrix* matrix, const RwV3d* unitAx
         return NULL;
     }
     }
-
-    matrix->flags &= ~rwMATRIXINTERNALIDENTITY;
 
     return matrix;
 }
