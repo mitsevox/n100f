@@ -8,20 +8,20 @@
 // straight into the GX FIFO, then puts the camera's projection, viewport and scissor back.
 
 // The GX primitive for each RenderWare primitive type (none for rwPRIMTYPENAPRIMTYPE).
-GXPrimitive lbl_801DDCC0[7] = {
+GXPrimitive DlIm2DPrimTypeMap[7] = {
     (GXPrimitive)0, GX_LINES, GX_LINESTRIP, GX_TRIANGLES, GX_TRIANGLESTRIP, GX_TRIANGLEFAN,
     GX_POINTS,
 };
 
 // The position matrix 2D vertices use: identity with the Z axis flipped.
-Mtx lbl_801DDCDC = {
+Mtx DlIm2DViewMatrix = {
     {1.0f, 0.0f, 0.0f, 0.0f},
     {0.0f, 1.0f, 0.0f, 0.0f},
     {0.0f, 0.0f, -1.0f, 0.0f},
 };
 
 // The camera's projection, saved while 2D drawing replaces it.
-F32 lbl_8025E290[7];
+F32 DlIm2DSavedProjection[7];
 
 // Whether the frame is drawn in two halves, which half is being drawn, and the line where the
 // halves meet (dldevice.c).
@@ -113,9 +113,9 @@ void _rw2DRenderPrimitiveInit(void)
 
     C_MTXOrtho(projection, 0.0f, _RwDlRenderMode->xfbHeight - 1, 0.0f,
                _RwDlRenderMode->fbWidth - 1, 0.0f, 1.0f);
-    GXGetProjectionv(lbl_8025E290);
+    GXGetProjectionv(DlIm2DSavedProjection);
     GXSetProjection(projection, GX_ORTHOGRAPHIC);
-    GXLoadPosMtxImm(lbl_801DDCDC, GX_PNMTX0);
+    GXLoadPosMtxImm(DlIm2DViewMatrix, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
 }
 
@@ -197,7 +197,7 @@ void _rw2DRenderPrimativeTerm(void)
         }
     }
 
-    GXSetProjectionv(lbl_8025E290);
+    GXSetProjectionv(DlIm2DSavedProjection);
 }
 
 S32 _rwDlIm2DRenderTriangle(RwIm2DVertex* vertices, S32 numVertices, S32 vert1, S32 vert2,
@@ -266,7 +266,7 @@ S32 _rwDlIm2DRenderPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices, S
     S32 count;
 
     _rw2DRenderPrimitiveInit();
-    GXBegin(lbl_801DDCC0[primType], GX_VTXFMT0, numVertices);
+    GXBegin(DlIm2DPrimTypeMap[primType], GX_VTXFMT0, numVertices);
 
     switch (primType)
     {
@@ -357,7 +357,7 @@ S32 _rwDlIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vert
     S32 count;
 
     _rw2DRenderPrimitiveInit();
-    GXBegin(lbl_801DDCC0[primType], GX_VTXFMT0, numIndices);
+    GXBegin(DlIm2DPrimTypeMap[primType], GX_VTXFMT0, numIndices);
 
     switch (primType)
     {

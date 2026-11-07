@@ -8,7 +8,7 @@
 // drawing a quad that writes the color and/or depth; a texture context is cleared on the CPU.
 
 // The raster that rendering and clears go to (_rwDlSetRasterContext).
-RwRaster* lbl_8025F880;
+RwRaster* DlSpriteRasterContext;
 
 // Whether the frame is drawn in two halves, which half is being drawn, and the line where the
 // halves meet (dldevice.c).
@@ -47,8 +47,8 @@ RwRGBA* RwRGBASetFromPixel(RwRGBA* rgbOut, U32 pixelValue, S32 rasterFormat);
 
 // The blit quad's orthographic projection (its x and y scales are set to the frame size) and its
 // view matrix, the identity with the Z axis flipped.
-F32 lbl_801DE478[7] = {1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f};
-Mtx lbl_801DE494 = {
+F32 DlSpriteBlitProjection[7] = {1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f};
+Mtx DlSpriteBlitViewMatrix = {
     {1.0f, 0.0f, 0.0f, 0.0f},
     {0.0f, 1.0f, 0.0f, 0.0f},
     {0.0f, 0.0f, -1.0f, 0.0f},
@@ -87,16 +87,16 @@ void _rwDlRasterRenderQuadInit(RwRect* rect)
 
     if (!lbl_8025F808)
     {
-        GXSetScissor(lbl_8025F880->nOffsetX + rect->x, lbl_8025F880->nOffsetY + rect->y, rect->w,
-                     rect->h);
+        GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x,
+                     DlSpriteRasterContext->nOffsetY + rect->y, rect->w, rect->h);
     }
     else if (lbl_8025E7F0)
     {
-        S32 y = (lbl_8025F880->nOffsetY << 1) + rect->y;
+        S32 y = (DlSpriteRasterContext->nOffsetY << 1) + rect->y;
 
         if (rect->h + y <= (lbl_8025F85C + 2))
         {
-            GXSetScissor(lbl_8025F880->nOffsetX + rect->x, y, rect->w, rect->h);
+            GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x, y, rect->w, rect->h);
         }
         else if (y > lbl_8025F85C + 2)
         {
@@ -104,18 +104,19 @@ void _rwDlRasterRenderQuadInit(RwRect* rect)
         }
         else
         {
-            GXSetScissor(lbl_8025F880->nOffsetX + rect->x, y, rect->w, (lbl_8025F85C + 2) - y);
+            GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x, y, rect->w,
+                         (lbl_8025F85C + 2) - y);
         }
 
         GXSetScissorBoxOffset(0, 0);
     }
     else
     {
-        S32 y = (lbl_8025F880->nOffsetY << 1) + rect->y;
+        S32 y = (DlSpriteRasterContext->nOffsetY << 1) + rect->y;
 
         if (y >= lbl_8025F85C - 2)
         {
-            GXSetScissor(lbl_8025F880->nOffsetX + rect->x, y, rect->w, rect->h);
+            GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x, y, rect->w, rect->h);
         }
         else if (rect->h + y < lbl_8025F85C - 2)
         {
@@ -123,17 +124,17 @@ void _rwDlRasterRenderQuadInit(RwRect* rect)
         }
         else
         {
-            GXSetScissor(lbl_8025F880->nOffsetX + rect->x, lbl_8025F85C - 2, rect->w,
+            GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x, lbl_8025F85C - 2, rect->w,
                          rect->h + y - (lbl_8025F85C - 2));
         }
 
         GXSetScissorBoxOffset(0, lbl_8025F85C - 2);
     }
 
-    lbl_801DE478[1] = 2.0f / (F32)(_RwDlRenderMode->fbWidth - 1);
-    lbl_801DE478[3] = -2.0f / (F32)(_RwDlRenderMode->xfbHeight - 1);
-    GXSetProjectionv(lbl_801DE478);
-    GXLoadPosMtxImm(lbl_801DE494, GX_PNMTX0);
+    DlSpriteBlitProjection[1] = 2.0f / (F32)(_RwDlRenderMode->fbWidth - 1);
+    DlSpriteBlitProjection[3] = -2.0f / (F32)(_RwDlRenderMode->xfbHeight - 1);
+    GXSetProjectionv(DlSpriteBlitProjection);
+    GXLoadPosMtxImm(DlSpriteBlitViewMatrix, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
 }
 
@@ -184,21 +185,21 @@ void _rwDlRasterRenderQuad(RwRaster* raster, RwRect* rect, S32 scaled, S32 alpha
         scaleU = 1.0f / top->width;
         scaleV = 1.0f / top->height;
 
-        GXPosition3f32(lbl_8025F880->nOffsetX + rect->x, lbl_8025F880->nOffsetY + rect->y,
-                       DLSPRITE_Z);
+        GXPosition3f32(DlSpriteRasterContext->nOffsetX + rect->x,
+                       DlSpriteRasterContext->nOffsetY + rect->y, DLSPRITE_Z);
         GXTexCoord2f32(raster->nOffsetX * scaleU, raster->nOffsetY * scaleV);
 
-        GXPosition3f32(lbl_8025F880->nOffsetX + rect->x, lbl_8025F880->nOffsetY + rect->y + rect->h,
-                       DLSPRITE_Z);
+        GXPosition3f32(DlSpriteRasterContext->nOffsetX + rect->x,
+                       DlSpriteRasterContext->nOffsetY + rect->y + rect->h, DLSPRITE_Z);
         GXTexCoord2f32(raster->nOffsetX * scaleU, scaleV * (raster->nOffsetY + raster->height));
 
-        GXPosition3f32(lbl_8025F880->nOffsetX + rect->x + rect->w,
-                       lbl_8025F880->nOffsetY + rect->y + rect->h, DLSPRITE_Z);
+        GXPosition3f32(DlSpriteRasterContext->nOffsetX + rect->x + rect->w,
+                       DlSpriteRasterContext->nOffsetY + rect->y + rect->h, DLSPRITE_Z);
         GXTexCoord2f32(scaleU * (raster->nOffsetX + raster->width),
                        scaleV * (raster->nOffsetY + raster->height));
 
-        GXPosition3f32(lbl_8025F880->nOffsetX + rect->x + rect->w, lbl_8025F880->nOffsetY + rect->y,
-                       DLSPRITE_Z);
+        GXPosition3f32(DlSpriteRasterContext->nOffsetX + rect->x + rect->w,
+                       DlSpriteRasterContext->nOffsetY + rect->y, DLSPRITE_Z);
         GXTexCoord2f32(scaleU * (raster->nOffsetX + raster->width), raster->nOffsetY * scaleV);
     }
     else
@@ -206,21 +207,21 @@ void _rwDlRasterRenderQuad(RwRaster* raster, RwRect* rect, S32 scaled, S32 alpha
         scaleU = 1.0f / top->width;
         scaleV = 1.0f / top->height;
 
-        GXPosition3f32(lbl_8025F880->nOffsetX + rect->x, lbl_8025F880->nOffsetY + rect->y,
-                       DLSPRITE_Z);
+        GXPosition3f32(DlSpriteRasterContext->nOffsetX + rect->x,
+                       DlSpriteRasterContext->nOffsetY + rect->y, DLSPRITE_Z);
         GXTexCoord2f32(raster->nOffsetX * scaleU, raster->nOffsetY * scaleV);
 
-        GXPosition3f32(lbl_8025F880->nOffsetX + rect->x,
-                       lbl_8025F880->nOffsetY + rect->y + raster->height, DLSPRITE_Z);
+        GXPosition3f32(DlSpriteRasterContext->nOffsetX + rect->x,
+                       DlSpriteRasterContext->nOffsetY + rect->y + raster->height, DLSPRITE_Z);
         GXTexCoord2f32(raster->nOffsetX * scaleU, scaleV * (raster->nOffsetY + raster->height));
 
-        GXPosition3f32(lbl_8025F880->nOffsetX + rect->x + raster->width,
-                       lbl_8025F880->nOffsetY + rect->y + raster->height, DLSPRITE_Z);
+        GXPosition3f32(DlSpriteRasterContext->nOffsetX + rect->x + raster->width,
+                       DlSpriteRasterContext->nOffsetY + rect->y + raster->height, DLSPRITE_Z);
         GXTexCoord2f32(scaleU * (raster->nOffsetX + raster->width),
                        scaleV * (raster->nOffsetY + raster->height));
 
-        GXPosition3f32(lbl_8025F880->nOffsetX + rect->x + raster->width,
-                       lbl_8025F880->nOffsetY + rect->y, DLSPRITE_Z);
+        GXPosition3f32(DlSpriteRasterContext->nOffsetX + rect->x + raster->width,
+                       DlSpriteRasterContext->nOffsetY + rect->y, DLSPRITE_Z);
         GXTexCoord2f32(scaleU * (raster->nOffsetX + raster->width), raster->nOffsetY * scaleV);
     }
 
@@ -252,7 +253,7 @@ S32 _rwDlRasterRenderGeneric(RwRaster* raster, RwRect* rect, S32 scaled, S32 alp
         dst.h = raster->height;
     }
 
-    switch (lbl_8025F880->cType)
+    switch (DlSpriteRasterContext->cType)
     {
     case rwRASTERTYPENORMAL:
     case rwRASTERTYPETEXTURE:
@@ -315,8 +316,8 @@ S32 _rwDlRasterRenderScaled(void* raster, void* rect, S32 flags)
 
 // The clear quad's orthographic projection and its view matrix, the identity with the Z axis
 // flipped.
-F32 lbl_801DE4F8[7] = {1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f};
-Mtx lbl_801DE514 = {
+F32 DlSpriteClearProjection[7] = {1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f};
+Mtx DlSpriteClearViewMatrix = {
     {1.0f, 0.0f, 0.0f, 0.0f},
     {0.0f, 1.0f, 0.0f, 0.0f},
     {0.0f, 0.0f, -1.0f, 0.0f},
@@ -355,8 +356,8 @@ void _rwDlRasterCamera_ZClearRectInit(RwRaster* raster, RwRect* rect)
 
         GXSetViewport(0.0f, 0.0f, 640.0f, 528.0f, 0.0f, 1.0f);
         GXSetScissor(0, 0, 640, 528);
-        lbl_801DE4F8[1] = 2.0f / 639.0f;
-        lbl_801DE4F8[3] = -2.0f / 527.0f;
+        DlSpriteClearProjection[1] = 2.0f / 639.0f;
+        DlSpriteClearProjection[3] = -2.0f / 527.0f;
     }
     else
     {
@@ -395,12 +396,12 @@ void _rwDlRasterCamera_ZClearRectInit(RwRaster* raster, RwRect* rect)
             GXSetScissorBoxOffset(0, lbl_8025F85C - 2);
         }
 
-        lbl_801DE4F8[1] = 2.0f / (F32)(_RwDlRenderMode->fbWidth - 1);
-        lbl_801DE4F8[3] = -2.0f / (F32)(_RwDlRenderMode->xfbHeight - 1);
+        DlSpriteClearProjection[1] = 2.0f / (F32)(_RwDlRenderMode->fbWidth - 1);
+        DlSpriteClearProjection[3] = -2.0f / (F32)(_RwDlRenderMode->xfbHeight - 1);
     }
 
-    GXSetProjectionv(lbl_801DE4F8);
-    GXLoadPosMtxImm(lbl_801DE514, GX_PNMTX0);
+    GXSetProjectionv(DlSpriteClearProjection);
+    GXLoadPosMtxImm(DlSpriteClearViewMatrix, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
 }
 
@@ -478,21 +479,21 @@ S32 _rwDlRasterClearGeneric(RwRaster* raster, RwRect* rect, S32 pixelValue)
 {
     S32 locked;
 
-    switch (lbl_8025F880->cType)
+    switch (DlSpriteRasterContext->cType)
     {
     case rwRASTERTYPECAMERA:
     {
         RwRGBA color;
 
-        RwRGBASetFromPixel(&color, pixelValue, RwRasterGetFormat(lbl_8025F880));
-        rect->x += lbl_8025F880->nOffsetX;
-        rect->y += lbl_8025F880->nOffsetY;
+        RwRGBASetFromPixel(&color, pixelValue, RwRasterGetFormat(DlSpriteRasterContext));
+        rect->x += DlSpriteRasterContext->nOffsetX;
+        rect->y += DlSpriteRasterContext->nOffsetY;
         _rwDlRasterCamera_ZClearRect(raster, rect, &color, 1);
         break;
     }
     case rwRASTERTYPEZBUFFER:
-        rect->x += lbl_8025F880->nOffsetX;
-        rect->y += lbl_8025F880->nOffsetY;
+        rect->x += DlSpriteRasterContext->nOffsetX;
+        rect->y += DlSpriteRasterContext->nOffsetY;
         _rwDlRasterCamera_ZClearRect(raster, rect, NULL, 2);
         break;
     case rwRASTERTYPENORMAL:
@@ -500,36 +501,36 @@ S32 _rwDlRasterClearGeneric(RwRaster* raster, RwRect* rect, S32 pixelValue)
     case rwRASTERTYPECAMERATEXTURE:
         locked = FALSE;
 
-        if (lbl_8025F880->parent == lbl_8025F880 && !lbl_8025F880->nOffsetX &&
-            !lbl_8025F880->nOffsetY && lbl_8025F880->width == rect->w &&
-            lbl_8025F880->height == rect->h)
+        if (DlSpriteRasterContext->parent == DlSpriteRasterContext &&
+            !DlSpriteRasterContext->nOffsetX && !DlSpriteRasterContext->nOffsetY &&
+            DlSpriteRasterContext->width == rect->w && DlSpriteRasterContext->height == rect->h)
         {
-            if (!(lbl_8025F880->privateFlags & rwRASTERPIXELLOCKEDWRITE))
+            if (!(DlSpriteRasterContext->privateFlags & rwRASTERPIXELLOCKEDWRITE))
             {
                 locked = TRUE;
-                RwRasterLock(lbl_8025F880, 0, rwRASTERLOCKWRITE | rwRASTERLOCKRAW);
+                RwRasterLock(DlSpriteRasterContext, 0, rwRASTERLOCKWRITE | rwRASTERLOCKRAW);
             }
 
             if (pixelValue == 0 || pixelValue == -1)
             {
-                memset(lbl_8025F880->cpPixels, pixelValue,
-                       lbl_8025F880->stride * lbl_8025F880->height);
+                memset(DlSpriteRasterContext->cpPixels, pixelValue,
+                       DlSpriteRasterContext->stride * DlSpriteRasterContext->height);
 
                 if (locked)
                 {
-                    RwRasterUnlock(lbl_8025F880);
+                    RwRasterUnlock(DlSpriteRasterContext);
                 }
 
                 return TRUE;
             }
         }
-        else if (!(lbl_8025F880->privateFlags & rwRASTERPIXELLOCKEDWRITE))
+        else if (!(DlSpriteRasterContext->privateFlags & rwRASTERPIXELLOCKEDWRITE))
         {
             locked = TRUE;
-            RwRasterLock(lbl_8025F880, 0, rwRASTERLOCKREADWRITE);
+            RwRasterLock(DlSpriteRasterContext, 0, rwRASTERLOCKREADWRITE);
         }
 
-        switch (lbl_8025F880->depth)
+        switch (DlSpriteRasterContext->depth)
         {
         case 4:
         {
@@ -539,8 +540,8 @@ S32 _rwDlRasterClearGeneric(RwRaster* raster, RwRect* rect, S32 pixelValue)
 
             for (y = 0; y < rect->h; y++)
             {
-                memset(lbl_8025F880->cpPixels + lbl_8025F880->stride * (rect->y + y) +
-                           (rect->x >> 1),
+                memset(DlSpriteRasterContext->cpPixels +
+                           DlSpriteRasterContext->stride * (rect->y + y) + (rect->x >> 1),
                        pixelValue, rect->w >> 1);
             }
             break;
@@ -553,7 +554,8 @@ S32 _rwDlRasterClearGeneric(RwRaster* raster, RwRect* rect, S32 pixelValue)
 
             for (y = 0; y < rect->h; y++)
             {
-                memset(lbl_8025F880->cpPixels + lbl_8025F880->stride * (rect->y + y) + rect->x,
+                memset(DlSpriteRasterContext->cpPixels +
+                           DlSpriteRasterContext->stride * (rect->y + y) + rect->x,
                        pixelValue, rect->w);
             }
             break;
@@ -565,8 +567,9 @@ S32 _rwDlRasterClearGeneric(RwRaster* raster, RwRect* rect, S32 pixelValue)
 
             for (y = 0; y < rect->h; y++)
             {
-                U16* pixels = (U16*)(lbl_8025F880->cpPixels +
-                                     lbl_8025F880->stride * (rect->y + y) + (rect->x << 1));
+                U16* pixels =
+                    (U16*)(DlSpriteRasterContext->cpPixels +
+                           DlSpriteRasterContext->stride * (rect->y + y) + (rect->x << 1));
                 U32 x;
 
                 for (x = 0; x < rect->w; x++)
@@ -582,8 +585,9 @@ S32 _rwDlRasterClearGeneric(RwRaster* raster, RwRect* rect, S32 pixelValue)
 
             for (y = 0; y < rect->h; y++)
             {
-                U32* pixels = (U32*)(lbl_8025F880->cpPixels +
-                                     lbl_8025F880->stride * (rect->y + y) + (rect->x << 2));
+                U32* pixels =
+                    (U32*)(DlSpriteRasterContext->cpPixels +
+                           DlSpriteRasterContext->stride * (rect->y + y) + (rect->x << 2));
                 U32 x;
 
                 for (x = 0; x < rect->w; x++)
@@ -601,7 +605,7 @@ S32 _rwDlRasterClearGeneric(RwRaster* raster, RwRect* rect, S32 pixelValue)
 
         if (locked)
         {
-            RwRasterUnlock(lbl_8025F880);
+            RwRasterUnlock(DlSpriteRasterContext);
         }
         break;
     default:
@@ -614,7 +618,7 @@ S32 _rwDlRasterClearGeneric(RwRaster* raster, RwRect* rect, S32 pixelValue)
 
 S32 _rwDlRasterClearRect(void* raster, void* rect, S32 pixelValue)
 {
-    return _rwDlRasterClearGeneric(lbl_8025F880, (RwRect*)rect, pixelValue);
+    return _rwDlRasterClearGeneric(DlSpriteRasterContext, (RwRect*)rect, pixelValue);
 }
 
 S32 _rwDlRasterClear(void* raster, void* unused, S32 pixelValue)
@@ -623,15 +627,15 @@ S32 _rwDlRasterClear(void* raster, void* unused, S32 pixelValue)
 
     rect.x = 0;
     rect.y = 0;
-    rect.w = lbl_8025F880->width;
-    rect.h = lbl_8025F880->height;
+    rect.w = DlSpriteRasterContext->width;
+    rect.h = DlSpriteRasterContext->height;
 
-    return _rwDlRasterClearGeneric(lbl_8025F880, &rect, pixelValue);
+    return _rwDlRasterClearGeneric(DlSpriteRasterContext, &rect, pixelValue);
 }
 
 S32 _rwDlSetRasterContext(void* out, void* raster, S32 flags)
 {
-    lbl_8025F880 = (RwRaster*)raster;
+    DlSpriteRasterContext = (RwRaster*)raster;
 
     return TRUE;
 }
