@@ -385,11 +385,9 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* 
             if (lambert > 0.0f && RwV3dDotProductMacro(&vec, &vec) < radiusSquared)
             {
                 F32 dist = _rwSqrt(RwV3dDotProductMacro(&vec, &vec));
-                F32 recipDist;
                 F32 amount;
 
-                recipDist = (dist > 0.0f) ? (1.0f / dist) : 0.0f;
-                amount = scale * lambert * (recipDist - invRadius);
+                amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
                 LIGHT_ADDGREY(camVert, amount);
             }
 
@@ -413,11 +411,9 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* 
             if (lambert > 0.0f && RwV3dDotProductMacro(&vec, &vec) < radiusSquared)
             {
                 F32 dist = _rwSqrt(RwV3dDotProductMacro(&vec, &vec));
-                F32 recipDist;
                 F32 amount;
 
-                recipDist = (dist > 0.0f) ? (1.0f / dist) : 0.0f;
-                amount = scale * lambert * (recipDist - invRadius);
+                amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
                 LIGHT_ADDCOLOR(camVert, amount, light);
             }
 
@@ -478,22 +474,23 @@ static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* l
             vec.z = pos.z - objVert->z;
             lambert = vec.x * objVert->nx + vec.y * objVert->ny + vec.z * objVert->nz;
 
-            if (lambert > 0.0f && RwV3dDotProductMacro(&vec, &vec) < radiusSquared)
+            if (lambert > 0.0f)
             {
-                F32 dist = _rwSqrt(RwV3dDotProductMacro(&vec, &vec));
-
-                if (RwV3dDotProductMacro(&vec, &at) < dist * light->minusCosAngle)
+                if (RwV3dDotProductMacro(&vec, &vec) < radiusSquared)
                 {
-                    F32 recipDist;
-                    F32 amount;
+                    F32 dist = _rwSqrt(RwV3dDotProductMacro(&vec, &vec));
 
-                    recipDist = (dist > 0.0f) ? (1.0f / dist) : 0.0f;
-                    amount = scale * lambert * (recipDist - invRadius);
-                    LIGHT_ADDGREY(camVert, amount);
+                    if (RwV3dDotProductMacro(&vec, &at) < dist * light->minusCosAngle)
+                    {
+                        F32 amount;
+
+                        amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
+                        LIGHT_ADDGREY(camVert, amount);
+                    }
                 }
-            }
 
-            LIGHT_NEXT(objStride);
+                LIGHT_NEXT(objStride);
+            }
         }
     }
     else
@@ -516,11 +513,9 @@ static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* l
 
                 if (RwV3dDotProductMacro(&vec, &at) < dist * light->minusCosAngle)
                 {
-                    F32 recipDist;
                     F32 amount;
 
-                    recipDist = (dist > 0.0f) ? (1.0f / dist) : 0.0f;
-                    amount = scale * lambert * (recipDist - invRadius);
+                    amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
                     LIGHT_ADDCOLOR(camVert, amount, light);
                 }
             }
@@ -590,19 +585,18 @@ static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, RpLigh
 
                 if (alongAt < cone)
                 {
-                    F32 recipDist;
                     F32 amount;
                     F32 edge;
 
-                    recipDist = (dist > 0.0f) ? (1.0f / dist) : 0.0f;
+                    amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
                     edge = dist + cone;
-                    amount = scale * lambert * (recipDist - invRadius);
 
                     if (edge > 0.0f)
                     {
                         F32 falloff = (dist + alongAt) / edge;
 
-                        amount *= 1.0f - falloff * falloff;
+                        falloff *= falloff;
+                        amount *= 1.0f - falloff;
                     }
 
                     LIGHT_ADDGREY(camVert, amount);
@@ -634,19 +628,18 @@ static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, RpLigh
 
                 if (alongAt < cone)
                 {
-                    F32 recipDist;
                     F32 amount;
                     F32 edge;
 
-                    recipDist = (dist > 0.0f) ? (1.0f / dist) : 0.0f;
+                    amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
                     edge = dist + cone;
-                    amount = scale * lambert * (recipDist - invRadius);
 
                     if (edge > 0.0f)
                     {
                         F32 falloff = (dist + alongAt) / edge;
 
-                        amount *= 1.0f - falloff * falloff;
+                        falloff *= falloff;
+                        amount *= 1.0f - falloff;
                     }
 
                     LIGHT_ADDCOLOR(camVert, amount, light);
