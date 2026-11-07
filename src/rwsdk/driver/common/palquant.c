@@ -332,6 +332,19 @@ static void nVol(PalQuantBranch* root, PalQuantBox* region, PalQuantLeaf* volume
     addvolume(root, &origin, PALQUANT_DEPTH, region, volume);
 }
 
+// Gives every leaf inside a box the box's palette index, walking the whole tree from the colour
+// origin.
+static void nAssign(PalQuantBranch* root, PalQuantBox* region, S32 index)
+{
+    RwRGBA origin;
+
+    origin.red = 0;
+    origin.green = 0;
+    origin.blue = 0;
+    origin.alpha = 0;
+    assignindex(root, &origin, PALQUANT_DEPTH, region, index);
+}
+
 #define PALQUANT_DOT(_v)                                                                           \
     ((_v)->red * (_v)->red + (_v)->green * (_v)->green + (_v)->blue * (_v)->blue +                 \
      (_v)->alpha * (_v)->alpha)
@@ -657,6 +670,7 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
     }
     else
     {
+        PalQuantLeaf mean;
         PalQuantLeaf volume;
         S32 i;
 
@@ -693,8 +707,8 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
 
             if (nCut(pq->root, &pq->boxes[next], &pq->boxes[i]))
             {
-                PalQuantLeaf upper;
                 PalQuantLeaf lower;
+                PalQuantLeaf upper;
 
                 nVol(pq->root, &pq->boxes[next], &lower);
                 pq->variances[next] = lower.var - PALQUANT_DOT(&lower) / lower.weight;
@@ -712,23 +726,12 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
         {
             if (i < numcols)
             {
-                RwRGBA origin;
-                PalQuantLeaf mean;
                 F32 scale;
 
-                origin.red = 0;
-                origin.green = 0;
-                origin.blue = 0;
-                origin.alpha = 0;
-                assignindex(pq->root, &origin, PALQUANT_DEPTH, &pq->boxes[i], i);
+                nAssign(pq->root, &pq->boxes[i], i);
                 nVol(pq->root, &pq->boxes[i], &mean);
 
-                scale = 0.0f;
-
-                if (mean.weight > 0.0f)
-                {
-                    scale = PALQUANT_TOCHANNEL / mean.weight;
-                }
+                scale = (mean.weight > 0.0f) ? PALQUANT_TOCHANNEL / mean.weight : 0.0f;
 
                 palette[i].red = (U8)(mean.red * scale);
                 palette[i].green = (U8)(mean.green * scale);
