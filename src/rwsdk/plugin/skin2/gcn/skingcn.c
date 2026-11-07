@@ -342,7 +342,6 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
     RwResEntry* repEntry;
     S32 size;
     S32 nrmSize;
-    S32 numNrm;
 
     RwResourcesUseResEntry(*entryRef);
     (*entryRef)->destroyNotify = fn_801450A8;
@@ -381,15 +380,9 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
 
             if (geometry->flags & rpGEOMETRYNORMALS)
             {
-                numNrm = 1;
-
-                if (vtxFmt->frac[1])
-                {
-                    numNrm = 3;
-                }
-
                 size += SKINGCN_ALIGN32(geometry->numVertices *
-                                        (sizes.value[vtxFmt->compType[1]] * numNrm));
+                                        (sizes.value[vtxFmt->compType[1]] *
+                                         (vtxFmt->frac[1] ? 3 : 1)));
             }
         }
         else
