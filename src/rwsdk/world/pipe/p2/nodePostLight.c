@@ -40,8 +40,8 @@ static S32 _PostLightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
     static const F32 maxColor = 255.0f;
 
-    RxPacket* packet = RxPacketFetch(self);
-    RxCluster* meshState = RxClusterLockRead(packet, POSTLIGHTCL_MESHSTATE);
+    RxPacket* packet;
+    RxCluster* meshState = RxClusterLockRead(packet = RxPacketFetch(self), POSTLIGHTCL_MESHSTATE);
     RxMeshStateVector* meshData = (RxMeshStateVector*)meshState->currentData;
 
     if (!meshData->ClipFlagsAnd)

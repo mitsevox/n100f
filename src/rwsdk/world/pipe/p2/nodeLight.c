@@ -35,8 +35,8 @@ static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, RpLigh
 // mesh that is not at the world origin gets the lights moved into its object space.
 static S32 _LightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
-    RxPacket* packet = RxPacketFetch(self);
-    RxCluster* meshState = RxClusterLockRead(packet, LIGHTCL_MESHSTATE);
+    RxPacket* packet;
+    RxCluster* meshState = RxClusterLockRead(packet = RxPacketFetch(self), LIGHTCL_MESHSTATE);
     RxMeshStateVector* meshData = (RxMeshStateVector*)meshState->currentData;
 
     if (!meshData->ClipFlagsAnd)
@@ -208,7 +208,8 @@ static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight
     {
         step = (U8*)vSteps->data;
         numVerts = vSteps->numUsed;
-        camVert += *step++;
+        camVert += *step;
+        step++;
     }
     else
     {
@@ -227,7 +228,8 @@ static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight
 
             if (step)
             {
-                camVert += *step++;
+                camVert += *step;
+                step++;
             }
             else
             {
@@ -246,7 +248,8 @@ static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight
 
             if (step)
             {
-                camVert += *step++;
+                camVert += *step;
+                step++;
             }
             else
             {

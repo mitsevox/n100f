@@ -356,21 +356,37 @@ struct AtomicInstanceHeader
 // with its vertices, indices, mesh state and render state.
 static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
-    RpAtomic* atomic = (RpAtomic*)params->dataParam;
-    RpGeometry* geometry = atomic->geometry;
-    S32 numVerts = geometry->numVertices;
-    RpMeshHeader* meshHeader;
-    U16 numMeshes;
-    U32 flags;
+    S32 vertSize;
+    RpGeometry* geometry;
+    RwResEntry** ownerRef;
     U32 textured;
+    RpAtomic* atomic;
     RwResEntry* repEntry;
     void* owner;
-    RwResEntry** ownerRef;
-    S32 numTris;
     AtomicInstanceHeader* header;
     RxObjSpace3DVertex* verts;
-    U16* indices;
+    RpMeshHeader* meshHeader;
+    U32 numMeshes;
+    U32 flags;
+    S32 stride;
     AtomicInstanceMesh* instMesh;
+    S32 numTris;
+    U16* indices;
+    U32 numVerts;
+    U32 dirty;
+    RxPacket* packet;
+    RxCluster* objVertsCl;
+    RxCluster* indicesCl;
+    RxCluster* meshStateCl;
+    RxCluster* renderStateCl;
+    RxMeshStateVector* meshState;
+    RxRenderStateVector* renderState;
+    RpMaterial* material;
+    RwTexture* texture;
+
+    atomic = (RpAtomic*)params->dataParam;
+    geometry = atomic->geometry;
+    numVerts = geometry->numVertices;
 
     if (!numVerts)
     {
@@ -400,7 +416,19 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         ownerRef = &geometry->repEntry;
     }
 
+    stride = sizeof(RxObjSpace3DVertex);
+
+    if (flags & rpGEOMETRYNORMALS)
+    {
+        stride = sizeof(RxObjSpace3DVertex);
+    }
+
     textured = flags & rpGEOMETRYTEXTURED;
+
+    if (textured)
+    {
+        stride = sizeof(RxObjSpace3DVertex);
+    }
 
     if (meshHeader->flags & rpMESHHEADERTRISTRIP)
     {
@@ -415,7 +443,7 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
     {
         header = (AtomicInstanceHeader*)(repEntry + 1);
         verts = (RxObjSpace3DVertex*)&header->meshes[numMeshes];
-        indices = (U16*)(verts + numVerts);
+        indices = (U16*)((U8*)verts + numVerts * stride);
 
         if (header->serialNum != meshHeader->serialNum)
         {
@@ -426,7 +454,7 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 
     if (!repEntry)
     {
-        S32 vertSize = numVerts * sizeof(RxObjSpace3DVertex);
+        vertSize = numVerts * stride;
 
         repEntry = RwResourcesAllocateResEntry(owner, ownerRef,
                                                sizeof(AtomicInstanceHeader) +
@@ -437,19 +465,17 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         header->serialNum = meshHeader->serialNum;
         verts = (RxObjSpace3DVertex*)&header->meshes[numMeshes];
 
-        fn_80154E8C(verts, atomic, geometry, sizeof(RxObjSpace3DVertex));
+        fn_80154E8C(verts, atomic, geometry, stride);
         fn_801551A8(header->meshes, meshHeader, (U16*)((U8*)verts + vertSize), verts,
-                    sizeof(RxObjSpace3DVertex));
+                    stride);
 
         geometry->lockedSinceLastInst = 0;
     }
     else
     {
-        U32 dirty;
+        dirty = geometry->lockedSinceLastInst;
 
         RwResourcesUseResEntry(repEntry);
-
-        dirty = geometry->lockedSinceLastInst;
 
         if (atomic->interpolator.flags & rpINTERPOLATORDIRTYINSTANCE)
         {
@@ -464,11 +490,11 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         case GEOMETRY_LOCKVERTICES:
         case GEOMETRY_LOCKNORMALS:
         case GEOMETRY_LOCKVERTICES | GEOMETRY_LOCKNORMALS:
-            fn_80154994(verts, atomic, geometry, sizeof(RxObjSpace3DVertex));
+            fn_80154994(verts, atomic, geometry, stride);
             break;
         default:
-            fn_80154E8C(verts, atomic, geometry, sizeof(RxObjSpace3DVertex));
-            fn_801551A8(header->meshes, meshHeader, indices, verts, sizeof(RxObjSpace3DVertex));
+            fn_80154E8C(verts, atomic, geometry, stride);
+            fn_801551A8(header->meshes, meshHeader, indices, verts, stride);
             break;
         }
 
@@ -481,14 +507,11 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
     {
         if (instMesh->numVerts && instMesh->numIndices)
         {
-            RxPacket* packet = RxPacketCreate(self);
-            RxCluster* objVertsCl = RxClusterLockWrite(packet, 0, self);
-            RxCluster* indicesCl = RxClusterLockWrite(packet, 1, self);
-            RxCluster* meshStateCl = RxClusterLockWrite(packet, 2, self);
-            RxCluster* renderStateCl = RxClusterLockWrite(packet, 3, self);
-            RxMeshStateVector* meshState;
-            RxRenderStateVector* renderState;
-            RpMaterial* material;
+            packet = RxPacketCreate(self);
+            objVertsCl = RxClusterLockWrite(packet, 0, self);
+            indicesCl = RxClusterLockWrite(packet, 1, self);
+            meshStateCl = RxClusterLockWrite(packet, 2, self);
+            renderStateCl = RxClusterLockWrite(packet, 3, self);
 
             meshStateCl = RxClusterInitializeData(meshStateCl, 1, sizeof(RxMeshStateVector));
             renderStateCl = RxClusterInitializeData(renderStateCl, 1, sizeof(RxRenderStateVector));
@@ -526,7 +549,7 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 
             if (textured)
             {
-                RwTexture* texture = meshState->Texture;
+                texture = meshState->Texture;
 
                 if (texture)
                 {
