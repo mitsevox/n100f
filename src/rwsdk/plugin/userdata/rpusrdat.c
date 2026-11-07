@@ -340,60 +340,10 @@ static void UserDataListDestroy(UserDataList* list)
     list->numElements = 0;
 }
 
-// Copies the array at index of src into the same slot of dst: name, format, element count and a
-// fresh copy of the data (each string duplicated for string arrays).
-static inline void UserDataArrayCopy(UserDataList* dst, const UserDataList* src, S32 index)
-{
-    S32 size;
-    const RpUserDataArray* srcArray = &src->userData[index];
-    RpUserDataArray* dstArray = &dst->userData[index];
-    char** dstStrings;
-    char** srcStrings;
-    S32 j;
-
-    dstArray->format = srcArray->format;
-    dstArray->numElements = srcArray->numElements;
-
-    if (srcArray->name)
-    {
-        UserDataStringCopy(dstArray->name, srcArray->name);
-    }
-
-    if (srcArray->data)
-    {
-        size = dstArray->numElements * RpUserDataGetFormatSize(dstArray->format);
-
-        dstArray->data = RwMalloc(size);
-
-        if (dstArray->format == rpSTRINGUSERDATA)
-        {
-            srcStrings = (char**)srcArray->data;
-            dstStrings = (char**)dstArray->data;
-
-            for (j = 0; j < dstArray->numElements; j++)
-            {
-                if (!*srcStrings)
-                {
-                    *dstStrings = NULL;
-                }
-                else
-                {
-                    UserDataStringCopy(*dstStrings, *srcStrings);
-                }
-
-                srcStrings++;
-                dstStrings++;
-            }
-        }
-        else
-        {
-            memcpy(dstArray->data, srcArray->data, size);
-        }
-    }
-}
-
 static void UserDataListCopy(UserDataList* dst, const UserDataList* src)
 {
+    const RpUserDataArray* srcArray;
+    RpUserDataArray* dstArray;
     S32 i;
 
     UserDataListDestroy(dst);
@@ -406,7 +356,49 @@ static void UserDataListCopy(UserDataList* dst, const UserDataList* src)
 
         for (i = 0; i < dst->numElements; i++)
         {
-            UserDataArrayCopy(dst, src, i);
+            srcArray = &src->userData[i];
+            dstArray = &dst->userData[i];
+
+            dstArray->format = srcArray->format;
+            dstArray->numElements = srcArray->numElements;
+
+            if (srcArray->name)
+            {
+                UserDataStringCopy(dstArray->name, srcArray->name);
+            }
+
+            if (srcArray->data)
+            {
+                S32 size = dstArray->numElements * RpUserDataGetFormatSize(dstArray->format);
+
+                dstArray->data = RwMalloc(size);
+
+                if (dstArray->format == rpSTRINGUSERDATA)
+                {
+                    char** srcStrings = (char**)srcArray->data;
+                    S32 j;
+                    char** dstStrings = (char**)dstArray->data;
+
+                    for (j = 0; j < dstArray->numElements; j++)
+                    {
+                        if (!*srcStrings)
+                        {
+                            *dstStrings = NULL;
+                        }
+                        else
+                        {
+                            UserDataStringCopy(*dstStrings, *srcStrings);
+                        }
+
+                        srcStrings++;
+                        dstStrings++;
+                    }
+                }
+                else
+                {
+                    memcpy(dstArray->data, srcArray->data, size);
+                }
+            }
         }
     }
 }
