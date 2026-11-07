@@ -20,8 +20,9 @@ extern RxClusterDefinition RxClVSteps;
 #define POSTLIGHT_CLAMP(_channel)                                                                  \
     if (((RwSplitBits*)&(_channel))->nUInt > *(const U32*)&maxColor)                                 \
     {                                                                                              \
-        ((RwSplitBits*)&(_channel))->nUInt =                                                        \
-            *(const U32*)&maxColor & ~(((RwSplitBits*)&(_channel))->nInt >> 31);                       \
+        U32 _bits = *(const U32*)&maxColor & ~(((RwSplitBits*)&(_channel))->nInt >> 31);           \
+                                                                                                   \
+        ((RwSplitBits*)&(_channel))->nUInt = _bits;                                                \
     }
 
 // Moves both cursors over the next run of unlit vertices.
@@ -77,8 +78,8 @@ static S32 _PostLightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
             {
                 RxCamSpace3DVertex* camVert = (RxCamSpace3DVertex*)camVerts->currentData;
                 RwIm2DVertex* devVert = (RwIm2DVertex*)devVerts->currentData;
-                RwRGBAReal* color = &camVert->col;
                 RwRGBA* outputColor = &devVert->emissiveColor;
+                RwRGBAReal* color = &camVert->col;
 
                 POSTLIGHT_CLAMP(color->red);
                 POSTLIGHT_CLAMP(color->green);
