@@ -232,55 +232,44 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
     }
 }
 
-// Whether a mesh's material has a GameCube effect whose texture coordinates need the NBT.
-static S32 MeshNeedsNBTs(RpMesh* mesh)
-{
-    RpMultiTexture* multiTexture = RpMaterialGetMultiTexture(mesh->material, MTGCN_PLATFORM);
-
-    if (multiTexture && multiTexture->effect &&
-        multiTexture->effect->platform == MTGCN_PLATFORM)
-    {
-        GCNMTConfig* config = RpGameCubeMTEffectGetConfig(multiTexture->effect);
-        S32 i;
-
-        for (i = 0; i < config->numTexCoordGens; i++)
-        {
-            if (MTGCN_TEXGENNEEDSNBT(&config->texCoordGens[i]))
-            {
-                return TRUE;
-            }
-        }
-    }
-
-    return FALSE;
-}
-
 // Recomputes the binormals and tangents of an instanced object for the meshes that need them.
 void fn_80141D20(GCNObjectData* objectData, RpGameCubeVtxFmt* vtxFmt, S32 numVertices)
 {
-    RpMeshHeader* meshHeader = objectData->meshHeader;
+    S32 i;
     GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
-    GCNMTNBT* nbt = (GCNMTNBT*)arrays->nrm;
+    RpMeshHeader* meshHeader = objectData->meshHeader;
     RwPrimitiveType primType =
         MESHGLOBAL(meshFlagsToPrimType)[meshHeader->flags & rpMESHHEADERPRIMMASK];
+    GCNMTNBT* nbt = (GCNMTNBT*)arrays->nrm;
     RpMesh* mesh;
-    S32 i;
 
     for (i = 0; i < numVertices; i++)
     {
-        nbt[i].binormal.x = MTGCN_NBTUNSET;
+        nbt->binormal.x = MTGCN_NBTUNSET;
+        nbt++;
     }
 
     mesh = (RpMesh*)(meshHeader + 1);
 
-    for (i = 0; i < meshHeader->numMeshes; i++)
+    for (i = 0; i < meshHeader->numMeshes; i++, mesh++)
     {
-        if (MeshNeedsNBTs(mesh))
-        {
-            fn_80141958(mesh, arrays, primType);
-        }
+        RpMultiTexture* multiTexture = RpMaterialGetMultiTexture(mesh->material, MTGCN_PLATFORM);
 
-        mesh++;
+        if (multiTexture && multiTexture->effect &&
+            multiTexture->effect->platform == MTGCN_PLATFORM)
+        {
+            GCNMTConfig* config = RpGameCubeMTEffectGetConfig(multiTexture->effect);
+            S32 j;
+
+            for (j = 0; j < config->numTexCoordGens; j++)
+            {
+                if (MTGCN_TEXGENNEEDSNBT(&config->texCoordGens[j]))
+                {
+                    fn_80141958(mesh, arrays, primType);
+                    break;
+                }
+            }
+        }
     }
 
     DCFlushRange(arrays->nrm, numVertices * arrays->nrmStride);
