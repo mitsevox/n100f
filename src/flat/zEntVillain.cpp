@@ -5110,7 +5110,7 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 resp->trangoal = ZVIL_GOAL_SOAPED;
                 resp->tranmode = ZVIL_MODE_ALERT;
                 resp->stim = ZVIL_STIM_TRANGOAL;
-                g_stattally[vil->asset->subtype].cnt_hitsoap++;
+                g_stattally[vil->asset->subtype].cnt_hitsoap = g_stattally[vil->asset->subtype].cnt_hitsoap + 1;
                 g_stattally[eEntVillainType_NoMore].cnt_hitsoap++;
             }
             else
@@ -5650,7 +5650,7 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 resp->trangoal = ZVIL_GOAL_SOAPED;
                 resp->tranmode = ZVIL_MODE_NOCHANGE;
                 resp->stim = ZVIL_STIM_TRANGOAL;
-                g_stattally[vil->asset->subtype].cnt_hitsoap++;
+                g_stattally[vil->asset->subtype].cnt_hitsoap = g_stattally[vil->asset->subtype].cnt_hitsoap + 1;
                 g_stattally[eEntVillainType_NoMore].cnt_hitsoap++;
             }
             break;
