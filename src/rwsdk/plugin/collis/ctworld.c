@@ -263,12 +263,14 @@ static RpWorldSector* OldWorldSectorForAllLinePolyIntersections(RpWorldSector* w
     {
         CallBackParam* cbParam = isData->cbParam;
         RwV3d* vertices = worldSector->vertices;
-        S32 cut = 1;
-        S32 nStack = 0;
+        S32 nStack;
+        S32 cut;
         S32 cutStack[COLLSECTOR_STACK_SIZE];
         RwLine line;
         RwLine lineStack[COLLSECTOR_STACK_SIZE];
 
+        cut = 1;
+        nStack = 0;
         line = isData->clippedLine;
 
         while (nStack >= 0)
@@ -311,8 +313,8 @@ static RpWorldSector* OldWorldSectorForAllLinePolyIntersections(RpWorldSector* w
             {
                 polyOffset = sector->start;
                 numPolygons = sector->cType;
-                line = lineStack[nStack];
                 cut = cutStack[nStack];
+                line = lineStack[nStack];
                 nStack--;
             }
 
@@ -609,9 +611,12 @@ static inline RpWorldSector* OldWorldSectorForAllBoxedPrimitivePolyIntersections
     if (collSector)
     {
         RwV3d* vertices = worldSector->vertices;
-        S32 cut = 1;
-        S32 nStack = 0;
+        S32 nStack;
+        S32 cut;
         S32 cutStack[COLLSECTOR_STACK_SIZE];
+
+        cut = 1;
+        nStack = 0;
 
         while (nStack >= 0)
         {
@@ -786,12 +791,12 @@ RpWorld* RpCollisionWorldForAllIntersections(RpWorld* world, RpIntersection* int
 
         isData.bbox.sup = intersection->t.sphere.center;
         isData.bbox.inf = intersection->t.sphere.center;
+        testSphere.recipRadius = 1.0f / intersection->t.sphere.radius;
         testSphere.sphere = &intersection->t.sphere;
         isData.leafTest = LeafNodeForAllSpherePolyIntersections;
         isData.v303leafTest = OldLeafNodeForAllSpherePolyIntersections;
         isData.leafTestData = &testSphere;
         isData.cbParam = &cbParam;
-        testSphere.recipRadius = 1.0f / intersection->t.sphere.radius;
         isData.bbox.inf.x -= intersection->t.sphere.radius;
         isData.bbox.inf.y -= intersection->t.sphere.radius;
         isData.bbox.inf.z -= intersection->t.sphere.radius;
@@ -827,7 +832,7 @@ RpWorld* RpCollisionWorldForAllIntersections(RpWorld* world, RpIntersection* int
 
         sphere = *RpAtomicGetWorldBoundingSphere(atomic);
         isData.bbox.sup = sphere.center;
-        isData.bbox.inf = sphere.center;
+        isData.bbox.inf = isData.bbox.sup;
         testSphere.sphere = &sphere;
         testSphere.recipRadius = 1.0f / sphere.radius;
         isData.bbox.inf.x -= sphere.radius;

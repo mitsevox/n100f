@@ -301,7 +301,7 @@ static RwStream* fn_8013DEC4(RwStream* stream, S32 binaryLength, const void* obj
     RpMatFXMaterialFlags flags;
     U8 i;
 
-    flags = data ? data->flags : rpMATFXEFFECTNULL;
+    flags = (data == NULL) ? rpMATFXEFFECTNULL : data->flags;
 
     if (!RwStreamWrite(stream, &flags, sizeof(flags)))
     {
@@ -377,10 +377,10 @@ static RwStream* fn_8013DEC4(RwStream* stream, S32 binaryLength, const void* obj
 static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S32 offset,
                              S32 size)
 {
-    RpMaterial* material = (RpMaterial*)object;
-    MatFXMaterialData* data = MATFXMATERIALGETDATA(material);
-    RpMatFXMaterialFlags flags;
     U8 i;
+    RpMaterial* material = (RpMaterial*)object;
+    RpMatFXMaterialFlags flags;
+    MatFXMaterialData* data = MATFXMATERIALGETDATA(material);
 
     if (!data)
     {
@@ -420,10 +420,10 @@ static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S
         {
         case rpMATFXEFFECTBUMPMAP:
         {
-            RwTexture* bumpTexture = NULL;
-            RwTexture* texture = NULL;
             MatFXEffect* effect = &data->effects[i];
             F32 coef;
+            RwTexture* bumpTexture = NULL;
+            RwTexture* texture = NULL;
 
             if (!RwStreamRead(stream, &coef, sizeof(coef)))
             {
@@ -440,7 +440,7 @@ static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S
                 effect->data.bumpMap.bumpTexture = bumpTexture;
                 effect->data.bumpMap.texture = texture;
                 effect->data.bumpMap.invBumpWidth =
-                    1.0f / (U32)effect->data.bumpMap.bumpTexture->raster->width;
+                    1.0f / effect->data.bumpMap.bumpTexture->raster->width;
             }
             else if (texture)
             {
