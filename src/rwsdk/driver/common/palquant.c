@@ -111,11 +111,18 @@ static PalQuantLeaf* AllocateToLeaf(PalQuant* pq, PalQuantBranch* root, U32 cell
 // Adds an image's colours to the tree with the given weight.
 void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
 {
-    S32 depth = image->depth;
-    RwRGBA* palette = image->palette;
-    S32 y = image->height;
-    S32 stride = image->stride;
-    U8* pixels = image->cpPixels;
+    S32 x;
+    S32 depth;
+    S32 y;
+    S32 stride;
+    U8* pixels;
+    RwRGBA* palette;
+
+    depth = image->depth;
+    stride = image->stride;
+    pixels = image->cpPixels;
+    palette = image->palette;
+    y = image->height;
 
     switch (depth)
     {
@@ -123,8 +130,9 @@ void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
     case 8:
         while (y--)
         {
-            S32 x = image->width;
             U8* pixel = pixels;
+
+            x = image->width;
 
             while (x--)
             {
@@ -138,10 +146,14 @@ void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
 
                 pixel++;
 
-                red = PALQUANT_TOUNIT * color->red * weight;
-                green = PALQUANT_TOUNIT * color->green * weight;
-                blue = PALQUANT_TOUNIT * color->blue * weight;
-                alpha = PALQUANT_TOUNIT * color->alpha * weight;
+                red = PALQUANT_TOUNIT * color->red;
+                red *= weight;
+                green = PALQUANT_TOUNIT * color->green;
+                green *= weight;
+                blue = PALQUANT_TOUNIT * color->blue;
+                blue *= weight;
+                alpha = PALQUANT_TOUNIT * color->alpha;
+                alpha *= weight;
                 leaf->weight += weight;
                 leaf->red += red;
                 leaf->green += green;
@@ -157,7 +169,8 @@ void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
         while (y--)
         {
             RwRGBA* color = (RwRGBA*)pixels;
-            S32 x = image->width;
+
+            x = image->width;
 
             while (x--)
             {
@@ -168,10 +181,14 @@ void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
                 F32 blue;
                 F32 alpha;
 
-                red = PALQUANT_TOUNIT * color->red * weight;
-                green = PALQUANT_TOUNIT * color->green * weight;
-                blue = PALQUANT_TOUNIT * color->blue * weight;
-                alpha = PALQUANT_TOUNIT * color->alpha * weight;
+                red = PALQUANT_TOUNIT * color->red;
+                red *= weight;
+                green = PALQUANT_TOUNIT * color->green;
+                green *= weight;
+                blue = PALQUANT_TOUNIT * color->blue;
+                blue *= weight;
+                alpha = PALQUANT_TOUNIT * color->alpha;
+                alpha *= weight;
                 leaf->weight += weight;
                 leaf->red += red;
                 leaf->green += green;
