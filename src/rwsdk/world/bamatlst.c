@@ -59,6 +59,15 @@ S32 _rpMaterialListFindMaterialIndex(const RpMaterialList* matList, const RpMate
 
 RpMaterial* RpMaterialStreamRead(RwStream* stream);
 
+// Reports a failed allocation of size bytes (project-own name; inlined).
+static void MaterialListNoMemory(U32 size)
+{
+    RwError err;
+    err.pluginID = 2;
+    err.errorCode = _rwerror(0x80000013, size);
+    RwErrorSet(&err);
+}
+
 // Makes room for space materials, keeping the ones already listed.
 static RpMaterialList* MaterialListAlloc(RpMaterialList* matList, S32 space)
 {
@@ -92,52 +101,18 @@ static RpMaterialList* MaterialListAlloc(RpMaterialList* matList, S32 space)
     return matList;
 }
 
-static S32 _rpMaterialListAppendMaterial(RpMaterialList* matList, RpMaterial* material)
-{
-    if (matList->space > matList->numMaterials)
-    {
-        matList->materials[matList->numMaterials] = material;
-        material->refCount++;
-
-        return matList->numMaterials++;
-    }
-    else
-    {
-        U32 size = (matList->space + MATERIALLIST_GROWBY) * sizeof(RpMaterial*);
-        RpMaterial** materials;
-
-        if (matList->materials)
-        {
-            materials = (RpMaterial**)RwRealloc(matList->materials, size);
-        }
-        else
-        {
-            materials = (RpMaterial**)RwMalloc(size);
-        }
-
-        if (!materials)
-        {
-            RwError err;
-            err.pluginID = 2;
-            err.errorCode = _rwerror(0x80000013, size);
-            RwErrorSet(&err);
-            return -1;
-        }
-
-        matList->materials = materials;
-        matList->space += MATERIALLIST_GROWBY;
-
-        materials[matList->numMaterials] = material;
-        material->refCount++;
-
-        return matList->numMaterials++;
-    }
-}
-
+// Reads a material list chunk: the count, the index array, then each new material. An index
+// below zero means a material follows in the stream; any other index shares an earlier one.
+// The append is written out in the loop, and status also holds the index array's byte count.
 RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matList)
 {
     S32 len;
     U32 size;
+    S32* index;
+    S32 i;
+    S32* matIndex;
+    RpMaterial* material;
+    S32 status;
     U32 version;
 
     if (!RwStreamFindChunk(stream, rwID_STRUCT, &size, &version))
@@ -147,10 +122,7 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
 
     if (version >= rwLIBRARYBASEVERSION && version <= rwLIBRARYCURRENTVERSION)
     {
-        S32* matIndex;
-        S32 i;
-
-        S32 status = (RwStreamReadInt32(stream, &len, sizeof(len)) != NULL);
+        status = (RwStreamReadInt32(stream, &len, sizeof(len)) != NULL);
 
         if (!status)
         {
@@ -170,7 +142,8 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
             return NULL;
         }
 
-        matIndex = (S32*)RwMalloc(len * sizeof(S32));
+        status = len * sizeof(S32);
+        matIndex = (S32*)RwMalloc(status);
 
         status = (RwStreamReadInt32(stream, matIndex, len * sizeof(S32)) != NULL);
 
@@ -181,11 +154,11 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
             return NULL;
         }
 
+        index = matIndex;
+
         for (i = 0; i < len; i++)
         {
-            RpMaterial* material;
-
-            if (matIndex[i] < 0)
+            if (*index < 0)
             {
                 if (!RwStreamFindChunk(stream, rwID_MATERIAL, NULL, &version))
                 {
@@ -196,9 +169,9 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
 
                 if (version >= rwLIBRARYBASEVERSION && version <= rwLIBRARYCURRENTVERSION)
                 {
-                    material = RpMaterialStreamRead(stream);
+                    RpMaterial* newMaterial = RpMaterialStreamRead(stream);
 
-                    if (!material)
+                    if ((material = newMaterial) == NULL)
                     {
                         RwFree(matIndex);
                         _rpMaterialListDeinitialize(matList);
@@ -218,12 +191,46 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
             }
             else
             {
-                material = _rpMaterialListGetMaterial(matList, matIndex[i]);
+                material = _rpMaterialListGetMaterial(matList, *index);
                 material->refCount++;
             }
 
-            _rpMaterialListAppendMaterial(matList, material);
+            if (matList->space > matList->numMaterials)
+            {
+                matList->materials[matList->numMaterials] = material;
+                material->refCount++;
+                matList->numMaterials++;
+            }
+            else
+            {
+                U32 size = (matList->space + MATERIALLIST_GROWBY) * sizeof(RpMaterial*);
+                RpMaterial** materials;
+
+                if (matList->materials)
+                {
+                    materials = (RpMaterial**)RwRealloc(matList->materials, size);
+                }
+                else
+                {
+                    materials = (RpMaterial**)RwMalloc(size);
+                }
+
+                if (!materials)
+                {
+                    MaterialListNoMemory(size);
+                }
+                else
+                {
+                    matList->materials = materials;
+                    matList->space += MATERIALLIST_GROWBY;
+
+                    materials[matList->numMaterials] = material;
+                    material->refCount++;
+                    matList->numMaterials++;
+                }
+            }
             RpMaterialDestroy(material);
+            index++;
         }
 
         RwFree(matIndex);
