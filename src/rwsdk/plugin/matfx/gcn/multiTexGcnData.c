@@ -452,22 +452,26 @@ S32 _rpGameCubeMTDataPluginAttach(void)
 // The element arrays follow the effect in the same allocation, each 4-byte aligned.
 #define MTGCN_ALIGN4(_size) (((_size) + 3) & ~3)
 
+// Creates a GameCube multi-texture effect with room for the given numbers of TEV stages, texture
+// coordinate generators, texture matrices, indirect stages and indirect matrices, all in one
+// allocation after the effect. The running size aligns each array's start before adding it.
 RpMTEffect* RpGameCubeMTEffectCreate(U32 numTevStages, U32 numTexCoordGens, U32 numTexMatrices,
                                      U32 numIndStages, U32 numIndMatrices)
 {
-    S32 texCoordGenSize = numTexCoordGens * sizeof(GCNMTTexCoordGen);
-    S32 indStageSize = numIndStages * sizeof(GCNMTIndStage);
     S32 texMatrixSize = numTexMatrices * sizeof(GCNMTTexMatrix);
+    S32 texCoordGenSize = numTexCoordGens * sizeof(GCNMTTexCoordGen);
     S32 indMatrixSize = numIndMatrices * sizeof(GCNMTIndMatrix);
+    S32 indStageSize = numIndStages * sizeof(GCNMTIndStage);
     S32 size;
     GCNMTEffect* effect;
     U8* mem;
 
-    size = MTGCN_ALIGN4(sizeof(GCNMTEffect) + texCoordGenSize);
-    size = MTGCN_ALIGN4(size + numTevStages * (S32)sizeof(GCNMTTevStage));
-    size = MTGCN_ALIGN4(size + indStageSize);
-    size = MTGCN_ALIGN4(size + texMatrixSize);
-    size = MTGCN_ALIGN4(size + indMatrixSize);
+    size = sizeof(GCNMTEffect) + texCoordGenSize;
+    size = MTGCN_ALIGN4(size) + numTevStages * (S32)sizeof(GCNMTTevStage);
+    size = MTGCN_ALIGN4(size) + indStageSize;
+    size = MTGCN_ALIGN4(size) + texMatrixSize;
+    size = MTGCN_ALIGN4(size) + indMatrixSize;
+    size = MTGCN_ALIGN4(size);
 
     effect = (GCNMTEffect*)RwMalloc(size);
 
