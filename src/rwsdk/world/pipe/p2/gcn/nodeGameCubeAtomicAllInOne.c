@@ -234,6 +234,13 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
     GXInvalidateVtxCache();
 }
 
+// Flushes a freshly instanced vertex array from the data cache.
+// FAKEMATCH: the flushes go through this inline wrapper; real form believed to be direct DCFlushRange calls.
+static inline void AllInOneFlush(void* p, U32 size)
+{
+    DCFlushRange(p, size);
+}
+
 // Re-instances each texture coordinate set whose lock bit (0x10 << set) is in locked.
 // FAKEMATCH: the loop is moved into an inline helper; real form believed to be the loop written
 // inline in fn_8015E054.
@@ -245,11 +252,11 @@ static inline void AllInOneReinstanceTexCoords(RpGeometry* geometry, GCNVertexAr
     {
         if ((0x10 << i) & locked)
         {
-            DCFlushRange(arrays->tex[i],
-                         _rwGCNVtxFmtInstTex(fn_8015D818(geometry), i, arrays->tex[i],
-                                             geometry->texCoords[i],
-                                             geometry->numVertices,
-                                             arrays->texStride[i]));
+            AllInOneFlush(arrays->tex[i],
+                          _rwGCNVtxFmtInstTex(fn_8015D818(geometry), i, arrays->tex[i],
+                                              geometry->texCoords[i],
+                                              geometry->numVertices,
+                                              arrays->texStride[i]));
         }
     }
 }
@@ -268,33 +275,32 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
     {
         ALLINONE_WAITDONE(arrays);
 
-        flags = geometry->flags | rpGEOMETRYPOSITIONS;
-        flags &= ~objectData->privateData->clearFlags;
+        flags = (geometry->flags | rpGEOMETRYPOSITIONS) & ~objectData->privateData->clearFlags;
         locked = geometry->lockedSinceLastInst;
         numVertices = geometry->numVertices;
 
         if ((locked & ALLINONE_LOCKVERTICES) && (flags & rpGEOMETRYPOSITIONS))
         {
-            DCFlushRange(arrays->pos,
-                         _rwGCNVtxFmtInstPos3D(fn_8015D818(geometry), arrays->pos,
-                                               geometry->morphTarget->verts, numVertices,
-                                               arrays->posStride));
+            AllInOneFlush(arrays->pos,
+                          _rwGCNVtxFmtInstPos3D(fn_8015D818(geometry), arrays->pos,
+                                                geometry->morphTarget->verts, numVertices,
+                                                arrays->posStride));
         }
 
         if ((locked & ALLINONE_LOCKNORMALS) && (flags & rpGEOMETRYNORMALS))
         {
-            DCFlushRange(arrays->nrm,
-                         _rwGCNVtxFmtInstNrm(fn_8015D818(geometry), arrays->nrm,
-                                             geometry->morphTarget->normals,
-                                             geometry->numVertices, arrays->nrmStride));
+            AllInOneFlush(arrays->nrm,
+                          _rwGCNVtxFmtInstNrm(fn_8015D818(geometry), arrays->nrm,
+                                              geometry->morphTarget->normals,
+                                              geometry->numVertices, arrays->nrmStride));
         }
 
         if ((locked & ALLINONE_LOCKPRELIGHT) && (flags & rpGEOMETRYPRELIT))
         {
-            DCFlushRange(arrays->clr,
-                         _rwGCNVtxFmtInstClr(fn_8015D818(geometry), arrays->clr,
-                                             geometry->preLitLum, geometry->numVertices,
-                                             arrays->clrStride));
+            AllInOneFlush(arrays->clr,
+                          _rwGCNVtxFmtInstClr(fn_8015D818(geometry), arrays->clr,
+                                              geometry->preLitLum, geometry->numVertices,
+                                              arrays->clrStride));
         }
 
         if ((locked & ALLINONE_LOCKTEXCOORDS) && (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2)))
