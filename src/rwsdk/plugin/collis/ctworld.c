@@ -361,8 +361,8 @@ static RpWorldSector* OldWorldSectorForAllLinePolyIntersections(RpWorldSector* w
 static S32 OldLeafNodeForAllBoxPolyIntersections(S32 numPolygons, S32 polyOffset, void* data)
 {
     PolyTestParam* isData = (PolyTestParam*)data;
-    RpWorldSector* worldSector = isData->worldSector;
     CallBackParam* cbParam = isData->cbParam;
+    RpWorldSector* worldSector = isData->worldSector;
     RwV3d* vertices = worldSector->vertices;
     RpPolygon* poly = &worldSector->polygons[polyOffset];
 
@@ -401,9 +401,9 @@ static S32 OldLeafNodeForAllBoxPolyIntersections(S32 numPolygons, S32 polyOffset
 static S32 OldLeafNodeForAllSpherePolyIntersections(S32 numPolygons, S32 polyOffset, void* data)
 {
     PolyTestParam* isData = (PolyTestParam*)data;
-    RpWorldSector* worldSector = isData->worldSector;
     TestSphere* testSphere = (TestSphere*)isData->leafTestData;
     CallBackParam* cbParam = isData->cbParam;
+    RpWorldSector* worldSector = isData->worldSector;
     RwV3d* vertices = worldSector->vertices;
     RpPolygon* poly = &worldSector->polygons[polyOffset];
 
@@ -443,8 +443,8 @@ static S32 OldLeafNodeForAllSpherePolyIntersections(S32 numPolygons, S32 polyOff
 static S32 LeafNodeForAllLinePolyIntersections(S32 numPolygons, S32 polyOffset, void* data)
 {
     PolyLineTestParam* isData = (PolyLineTestParam*)data;
-    RpWorldSector* worldSector = isData->worldSector;
     CallBackParam* cbParam = isData->cbParam;
+    RpWorldSector* worldSector = isData->worldSector;
     RwV3d* vertices = worldSector->vertices;
     RpPolygon* polygons = worldSector->polygons;
     U16* polyIndex =
@@ -490,9 +490,9 @@ static S32 LeafNodeForAllLinePolyIntersections(S32 numPolygons, S32 polyOffset, 
 static S32 LeafNodeForAllSpherePolyIntersections(S32 numPolygons, S32 polyOffset, void* data)
 {
     PolyTestParam* isData = (PolyTestParam*)data;
-    RpWorldSector* worldSector = isData->worldSector;
     CallBackParam* cbParam = isData->cbParam;
     TestSphere* testSphere = (TestSphere*)isData->leafTestData;
+    RpWorldSector* worldSector = isData->worldSector;
     RwV3d* vertices = worldSector->vertices;
     RpPolygon* polygons = worldSector->polygons;
     U16* polyIndex =
@@ -535,8 +535,8 @@ static S32 LeafNodeForAllSpherePolyIntersections(S32 numPolygons, S32 polyOffset
 static S32 LeafNodeForAllBoxPolyIntersections(S32 numPolygons, S32 polyOffset, void* data)
 {
     PolyTestParam* isData = (PolyTestParam*)data;
-    RpWorldSector* worldSector = isData->worldSector;
     CallBackParam* cbParam = isData->cbParam;
+    RpWorldSector* worldSector = isData->worldSector;
     RwV3d* vertices = worldSector->vertices;
     RpPolygon* polygons = worldSector->polygons;
     U16* polyIndex =

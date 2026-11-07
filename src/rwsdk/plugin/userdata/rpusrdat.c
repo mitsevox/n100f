@@ -565,10 +565,12 @@ static RwStream* UserDataObjectStreamWrite(RwStream* stream, S32 binaryLength,
     return UserDataListStreamWrite(list, stream);
 }
 
-static S32 UserDataArrayGetSize(const RpUserDataArray* array)
+static S32 UserDataArrayGetSize(const UserDataList* list, S32 index)
 {
-    S32 size = 0;
+    char** strings;
+    const RpUserDataArray* array = &list->userData[index];
     S32 i;
+    S32 size = 0;
 
     if (array)
     {
@@ -591,7 +593,7 @@ static S32 UserDataArrayGetSize(const RpUserDataArray* array)
             break;
         case rpSTRINGUSERDATA:
         {
-            char** strings = (char**)array->data;
+            strings = (char**)array->data;
 
             for (i = 0; i < array->numElements; i++)
             {
@@ -626,7 +628,7 @@ static S32 UserDataListGetSize(const UserDataList* list)
 
         for (i = 0; i < list->numElements; i++)
         {
-            totalSize += UserDataArrayGetSize(&list->userData[i]);
+            totalSize += UserDataArrayGetSize(list, i);
         }
     }
 

@@ -531,6 +531,7 @@ static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S
 // The bytes fn_8013DEC4 writes for the material: 0 when it has no effects.
 static S32 fn_8013E5CC(const void* object, S32 offset, S32 size)
 {
+    MatFXEffect* effect;
     MatFXMaterialData* data = MATFXMATERIALGETDATA(object);
     S32 total;
     U8 i;
@@ -540,11 +541,9 @@ static S32 fn_8013E5CC(const void* object, S32 offset, S32 size)
         return 0;
     }
 
-    total = sizeof(RpMatFXMaterialFlags);
-
-    for (i = 0; i < MATFX_NUMSLOTS; i++)
+    for (i = 0, total = sizeof(RpMatFXMaterialFlags); i < MATFX_NUMSLOTS; i++)
     {
-        MatFXEffect* effect = &data->effects[i];
+        effect = &data->effects[i];
 
         total += sizeof(RpMatFXMaterialFlags);
 
