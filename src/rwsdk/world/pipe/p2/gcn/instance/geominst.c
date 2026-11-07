@@ -484,13 +484,15 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
                         const RwTexCoords* src, S32 numVerts, U8 stride)
 {
     U8 compType;
+    const U8* type;
 
     if (!vtxFmt)
     {
         vtxFmt = &_RpDlVtxFmtDefault;
     }
 
-    compType = vtxFmt->compType[index + 2];
+    type = vtxFmt->compType + index + 2;
+    compType = *type;
     switch (compType)
     {
     case COMP_U8:
@@ -568,14 +570,14 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
         }
         else
         {
-            memcpy(dst, src, numVerts * lbl_801DDA48[vtxFmt->compType[index + 2]] * 2);
+            memcpy(dst, src, numVerts * lbl_801DDA48[*type] * 2);
         }
         break;
     }
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
     {
-        return lbl_801DDA48[vtxFmt->compType[index + 2]] * 2;
+        return lbl_801DDA48[*type] * 2;
     }
-    return ALIGN32(numVerts * lbl_801DDA48[vtxFmt->compType[index + 2]] * 2);
+    return ALIGN32(numVerts * lbl_801DDA48[*type] * 2);
 }
