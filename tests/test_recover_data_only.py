@@ -130,12 +130,68 @@ class CarveDataOnly(unittest.TestCase):
         self.assertEqual(hosted, {"zA.cpp": [("zACol.cpp", ".data", 0x1010, 0x1018)]})
         self.assertIn("already hosts", refused[0])
 
+    def test_claim_ends_inside_an_item(self):
+        data = [(0x1000, 0x10, ".data", "sLocal"), (0x1010, 0x08, ".data", "gTable"),
+                (0x1018, 0x08, ".data", "sNext")]
+        final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1018, 0x1020)}
+        hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1014))],
+                                                  self.ONLY, data, final, self.ORDER)
+        self.assertEqual(hosted, {})
+        self.assertIn("crosses its edge", refused[0])
+
+    def test_tail_then_gap_on_one_host(self):
+        only = {"zACol.cpp": {"gTable"}, "zADat.cpp": {"gTable"}}
+        data = [(0x1000, 0x08, ".data", "sLocal"), (0x1008, 0x08, ".data", "gTable"),
+                (0x1010, 0x08, ".data", "gTable"), (0x1018, 0x08, ".data", "sNext")]
+        final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1018, 0x1020)}
+        hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1008, 0x1010)),
+                                                   (("zADat.cpp", ".data"), (0x1010, 0x1018))],
+                                                  only, data, final, self.ORDER)
+        self.assertEqual(hosted, {"zA.cpp": [("zACol.cpp", ".data", 0x1008, 0x1010)]})
+        self.assertIn("already hosts", refused[0])
+
+    def test_gap_with_no_later_range(self):
+        data = [(0x1000, 0x10, ".data", "sLocal"), (0x1010, 0x04, ".data", "gTable")]
+        final = {("zA.cpp", ".data"): (0x1000, 0x1010)}
+        gaps = set()
+        hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018))],
+                                                  self.ONLY, data, final, self.ORDER, gaps)
+        self.assertEqual(refused, [])
+        self.assertEqual(gaps, {("zACol.cpp", ".data")})
+
     def test_gap_reached_by_a_range(self):
         final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1014, 0x1020)}
         hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018))],
                                                   self.ONLY, DATA, final, self.ORDER)
         self.assertEqual(hosted, {})
         self.assertIn("neither a tail", refused[0])
+
+
+class DataEdgeRows(unittest.TestCase):
+    HOSTED = [("zACol.cpp", ".data", 0x1010, 0x1018)]
+
+    def test_gap_claim_fills_the_gap(self):
+        rows = recover.data_edge_rows(".data", "zA.cpp", "zB.cpp", (0x1000, 0x1010), (0x1018, 0x1020),
+                                      "open: 2 items between aligned candidates; 3 in-range loads by "
+                                      "functions outside the written units", 5, self.HOSTED,
+                                      {("zACol.cpp", ".data")})
+        self.assertEqual(rows, [
+            (".data", "zA.cpp", "zACol.cpp", "0x00001010", "0x00001010",
+             "data-only unit claimed by a data row in evidence.tsv", 0),
+            (".data", "zACol.cpp", "zB.cpp", "0x00001018", "0x00001018",
+             "data-only unit claim fills the gap; 3 in-range loads by functions outside the written units", 3)])
+
+    def test_tail_claim_keeps_the_class(self):
+        rows = recover.data_edge_rows(".data", "zA.cpp", "zB.cpp", (0x1000, 0x1010), (0x1018, 0x1020),
+                                      "cut at the fewest crossing references", 1, self.HOSTED, set())
+        self.assertEqual(rows[1], (".data", "zACol.cpp", "zB.cpp", "0x00001018", "0x00001018",
+                                   "cut at the fewest crossing references", 1))
+
+    def test_no_claim(self):
+        rows = recover.data_edge_rows(".data", "zA.cpp", "zB.cpp", (0x1000, 0x1010), None,
+                                      "open", 0, [], set())
+        self.assertEqual(rows, [(".data", "zA.cpp", "zB.cpp", "0x00001010", "-",
+                                 "open; a side left unsplit", 0)])
 
 
 if __name__ == "__main__":

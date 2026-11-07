@@ -465,8 +465,8 @@ def carve_data_only(data_claims, data_only, data, final, order, gaps=None):
     in the gap after that range, where no unit's range in the section reaches (xColor.cpp's
     colors, which only other units load, so the run places them nowhere); `final` then stays as
     it is.  A gap claim must start where that range ends and leave no item before the next
-    range, and a host takes one claim per section.  A claim is refused when it is neither such
-    a tail nor such a gap, when it takes the
+    range, and a host takes one claim per section.  A claim is refused when an item crosses
+    either of its edges, when it is neither such a tail nor such a gap, when it takes the
     whole range, or when it holds an item whose name the PS2 DWARF does not list as a global of
     the claiming unit.  Each claim taken from a gap is added to `gaps`, when given, as
     (unit, section).  Returns ({host unit: [(unit, section, start, end)]}, messages)."""
@@ -484,6 +484,8 @@ def carve_data_only(data_claims, data_only, data, final, order, gaps=None):
         nxt = min([a for (_, s), (a, b) in final.items() if s == sec and a >= hi], default=None)
         gap = bool(r) and r[1] == lo and not any(
             s == sec and a < hi and r[1] < b for (_, s), (a, b) in final.items())
+        straddle = [d for d, item in enumerate(data) if item[2] == sec and any(
+            item[0] < e < item[0] + item[1] for e in (lo, hi))]
         left = [d for d, item in enumerate(data)
                 if item[2] == sec and hi <= item[0] and (nxt is None or item[0] < nxt)]
         if not r:
@@ -494,6 +496,8 @@ def carve_data_only(data_claims, data_only, data, final, order, gaps=None):
             why = f'it is neither a tail of {host} {sec} 0x{r[0]:08X}-0x{r[1]:08X} nor in a gap no range reaches'
         elif gap and left:
             why = f'it leaves 0x{data[left[0]][0]:08X} {data[left[0]][3]} between it and the next range'
+        elif straddle:
+            why = f'0x{data[straddle[0]][0]:08X} {data[straddle[0]][3]} crosses its edge'
         elif not items:
             why = 'it holds no item'
         else:
@@ -509,6 +513,31 @@ def carve_data_only(data_claims, data_only, data, final, order, gaps=None):
             gaps.add((u, sec))
         hosted[host].append((u, sec, lo, hi))
     return dict(hosted), refused
+
+
+def data_edge_rows(sec, u, v, a, b, cls, conflicts, hosted_u, gap_claims):
+    """The split_edges.tsv rows for the data edge from u to v in `sec`: (section, left unit,
+    right unit, left end, right start, class, crossing refs).  `a` and `b` are u's and v's
+    ranges (None when unsplit).  A data-only unit carved off u's range, or claimed in the gap
+    after it (`gap_claims`), sits between u and v.  A gap claim takes every item between the
+    two ranges (carve_data_only refuses one that does not), so the edge's base class gives way
+    to "data-only unit claim fills the gap" and its count to the in-range loads its note
+    records; the note itself is kept."""
+    rows = []
+    for w, wsec, lo, hi in hosted_u:
+        if wsec != sec:
+            continue
+        rows.append((sec, u, w, '0x%08X' % a[1] if a else '-', f'0x{lo:08X}',
+                     'data-only unit claimed by a data row in evidence.tsv', 0))
+        if (w, sec) in gap_claims:
+            base, sep, notes = cls.partition('; ')
+            m = re.search(r'(\d+) in-range loads by functions outside the written units', notes)
+            cls = 'data-only unit claim fills the gap' + sep + notes
+            conflicts = int(m.group(1)) if m else 0
+        u, a = w, (lo, hi)
+    rows.append((sec, u, v, '0x%08X' % a[1] if a else '-', '0x%08X' % b[0] if b else '-',
+                 cls if a and b else cls + '; a side left unsplit', conflicts))
+    return rows
 
 
 class Dsu:
@@ -1332,17 +1361,8 @@ def main():
             b = final.get((v, sec)) if status(v) != 'weak' else None
             # A data-only unit carved off u's range, or claimed in the gap after it, sits
             # between u and v.
-            for w, wsec, lo, hi in hosted.get(u, []):
-                if wsec == sec:
-                    out.write(f'{sec}\t{u}\t{w}\t{"0x%08X" % a[1] if a else "-"}\t0x{lo:08X}\t'
-                              'data-only unit claimed by a data row in evidence.tsv\t0\n')
-                    # A gap claim takes every item the old edge's class counted (it is refused
-                    # otherwise), so nothing is left between it and v.
-                    if (w, sec) in gap_claims:
-                        cls, conflicts = 'data-only unit claim fills the gap', 0
-                    u, a = w, (lo, hi)
-            out.write(f'{sec}\t{u}\t{v}\t{"0x%08X" % a[1] if a else "-"}\t{"0x%08X" % b[0] if b else "-"}\t'
-                      f'{cls if a and b else cls + "; a side left unsplit"}\t{conflicts}\n')
+            for row in data_edge_rows(sec, u, v, a, b, cls, conflicts, hosted.get(u, []), gap_claims):
+                out.write('\t'.join(map(str, row)) + '\n')
     def anchor_kind(g, i):
         if i in named:
             return 'name'
