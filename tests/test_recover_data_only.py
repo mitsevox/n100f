@@ -103,6 +103,33 @@ class CarveDataOnly(unittest.TestCase):
         self.assertEqual(hosted, {})
         self.assertIn("neither a tail", refused[0])
 
+    def test_gap_not_at_host_end(self):
+        final = {("zA.cpp", ".data"): (0x1000, 0x1008), ("zB.cpp", ".data"): (0x1018, 0x1020)}
+        hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018))],
+                                                  self.ONLY, DATA, final, self.ORDER)
+        self.assertEqual(hosted, {})
+        self.assertIn("neither a tail", refused[0])
+
+    def test_gap_leaves_items(self):
+        data = [(0x1000, 0x10, ".data", "sLocal"), (0x1010, 0x04, ".data", "gTable"),
+                (0x1014, 0x04, ".data", "sLeft"), (0x1018, 0x08, ".data", "sNext")]
+        final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1018, 0x1020)}
+        hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1014))],
+                                                  self.ONLY, data, final, self.ORDER)
+        self.assertEqual(hosted, {})
+        self.assertIn("sLeft", refused[0])
+
+    def test_second_claim_on_one_host(self):
+        only = {"zACol.cpp": {"gTable"}, "zADat.cpp": {"gTable"}}
+        data = [(0x1000, 0x10, ".data", "sLocal"), (0x1010, 0x04, ".data", "gTable"),
+                (0x1014, 0x04, ".data", "gTable"), (0x1018, 0x08, ".data", "sNext")]
+        final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1018, 0x1020)}
+        hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018)),
+                                                   (("zADat.cpp", ".data"), (0x1014, 0x1018))],
+                                                  only, data, final, self.ORDER)
+        self.assertEqual(hosted, {"zA.cpp": [("zACol.cpp", ".data", 0x1010, 0x1018)]})
+        self.assertIn("already hosts", refused[0])
+
     def test_gap_reached_by_a_range(self):
         final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1014, 0x1020)}
         hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018))],

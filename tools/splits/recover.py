@@ -464,7 +464,9 @@ def carve_data_only(data_claims, data_only, data, final, order, gaps=None):
     is case-insensitive by name): `final` is changed in place.  A claim may instead lie wholly
     in the gap after that range, where no unit's range in the section reaches (xColor.cpp's
     colors, which only other units load, so the run places them nowhere); `final` then stays as
-    it is.  A claim is refused when it is neither such a tail nor such a gap, when it takes the
+    it is.  A gap claim must start where that range ends and leave no item before the next
+    range, and a host takes one claim per section.  A claim is refused when it is neither such
+    a tail nor such a gap, when it takes the
     whole range, or when it holds an item whose name the PS2 DWARF does not list as a global of
     the claiming unit.  Each claim taken from a gap is added to `gaps`, when given, as
     (unit, section).  Returns ({host unit: [(unit, section, start, end)]}, messages)."""
@@ -475,14 +477,23 @@ def carve_data_only(data_claims, data_only, data, final, order, gaps=None):
         host = before[-1] if before else None
         r = final.get((host, sec)) if host else None
         items = [d for d, item in enumerate(data) if item[2] == sec and lo <= item[0] < hi]
-        # A gap claim may not reach any range: none in the section may end after the host's
-        # range and start before the claim's end (one that starts inside or before the claim).
-        gap = bool(r) and r[1] <= lo and not any(
+        # A gap claim starts where the host's range ends, reaches no range (none in the section
+        # may end after the host's range and start before the claim's end) and leaves no item
+        # between its end and the next range, so it fills the gap; a host takes one claim per
+        # section, so claims cannot overlap or run against link order.
+        nxt = min([a for (_, s), (a, b) in final.items() if s == sec and a >= hi], default=None)
+        gap = bool(r) and r[1] == lo and not any(
             s == sec and a < hi and r[1] < b for (_, s), (a, b) in final.items())
+        left = [d for d, item in enumerate(data)
+                if item[2] == sec and hi <= item[0] and (nxt is None or item[0] < nxt)]
         if not r:
             why = f'no unit linked before it has a {sec} range'
+        elif any(h[1] == sec for h in hosted.get(host, [])):
+            why = f'{host} {sec} already hosts a data-only claim'
         elif not gap and (r[1] != hi or not r[0] < lo):
             why = f'it is neither a tail of {host} {sec} 0x{r[0]:08X}-0x{r[1]:08X} nor in a gap no range reaches'
+        elif gap and left:
+            why = f'it leaves 0x{data[left[0]][0]:08X} {data[left[0]][3]} between it and the next range'
         elif not items:
             why = 'it holds no item'
         else:
@@ -1325,10 +1336,10 @@ def main():
                 if wsec == sec:
                     out.write(f'{sec}\t{u}\t{w}\t{"0x%08X" % a[1] if a else "-"}\t0x{lo:08X}\t'
                               'data-only unit claimed by a data row in evidence.tsv\t0\n')
-                    # A claim in the gap takes the items the old edge's class counted; when it
-                    # reaches v's range nothing is left between the two.
-                    if (w, sec) in gap_claims and b and hi == b[0]:
-                        cls, conflicts = 'data-only unit claim ends at the next range', 0
+                    # A gap claim takes every item the old edge's class counted (it is refused
+                    # otherwise), so nothing is left between it and v.
+                    if (w, sec) in gap_claims:
+                        cls, conflicts = 'data-only unit claim fills the gap', 0
                     u, a = w, (lo, hi)
             out.write(f'{sec}\t{u}\t{v}\t{"0x%08X" % a[1] if a else "-"}\t{"0x%08X" % b[0] if b else "-"}\t'
                       f'{cls if a and b else cls + "; a side left unsplit"}\t{conflicts}\n')
