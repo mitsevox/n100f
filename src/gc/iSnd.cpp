@@ -175,12 +175,7 @@ static void arqcb(u32 pointerToARQRequest)
     iSndStream* data = (iSndStream*)request->owner;
     U32 left = data->x8c - data->x90;
 
-    if (request->length == 0)
-    {
-        return;
-    }
-
-    if (data->vinf.voice == NULL)
+    if (request->length == 0 || data->vinf.voice == NULL)
     {
         return;
     }
@@ -649,7 +644,7 @@ void iSndPause(U32 snd, U32 pause)
                 AXSetVoiceState(streams[i].vinf.voice, 0);
                 streams[i].vinf.flags |= 0x2;
             }
-            else if (!fn_800443F8() && gTrcDisk[1] == TRC_DiskIdentified)
+            else if (!fn_800443F8() && (U32)gTrcDisk[1] == TRC_DiskIdentified)
             {
                 AXSetVoiceState(streams[i].vinf.voice, 1);
                 streams[i].vinf.flags &= ~0x2;
@@ -677,8 +672,9 @@ void iSndPause(U32 snd, U32 pause)
 
 void iSndStop(U32 snd)
 {
-    BOOL enabled = OSDisableInterrupts();
-    S32 i;
+    BOOL enabled = FALSE;
+    S32 i = 0;
+    enabled = OSDisableInterrupts();
     for (i = 0; i < 64; i++)
     {
         if (gSnd.voice[i].sndID == snd)
@@ -1173,8 +1169,8 @@ void iSndStereo(U32 stereo)
 
 void iSndWaitForDeadSounds()
 {
-    fc = 0;
-    while (fc < 0x8C)
+    S32 begin = fc = 0;
+    while (fc < begin + 0x8C)
     {
         S32 start = fc;
         while (fc < start + 0xE)
@@ -1211,8 +1207,8 @@ void iSndSceneExit()
     }
     OSRestoreInterrupts(enabled);
 
-    fc = 0;
-    while (!done && fc < 400)
+    S32 begin = fc = 0;
+    while (!done && fc < begin + 400)
     {
         done = TRUE;
         S32 start = fc;
