@@ -148,7 +148,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .bss	xFont.cpp	xFX.cpp	0x801FFA40	0x801FFA40	single aligned candidate	0
 .bss	xFX.cpp	xMemMgr.cpp	0x801FFC00	0x801FFC00	single aligned candidate	0
 .bss	xMemMgr.cpp	xPad.cpp	0x801FFE08	0x801FFE08	single aligned candidate	0
-.bss	xPad.cpp	xPar.cpp	0x80200008	0x802001A8	open: 1 items loaded by unassigned functions	0
+.bss	xPad.cpp	xPar.cpp	0x802001A8	0x802001A8	single aligned candidate; 1 in-range loads by functions outside the written units	1
 .bss	xPar.cpp	xParGroup.cpp	0x802272A8	0x802272A8	single aligned candidate	0
 .bss	xParGroup.cpp	xScrFx.cpp	0x802276A8	0x802276A8	single aligned candidate	0
 .bss	xScrFx.cpp	xShadow.cpp	0x80227738	0x80227738	single aligned candidate	0
@@ -306,11 +306,13 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	xAnim.cpp	xbinio.cpp	0x8025E9B0	0x8025E9B0	single aligned candidate	0
 .sbss	xbinio.cpp	xCamera.cpp	0x8025E9B8	0x8025E9B8	single aligned candidate	0
 .sbss	xCamera.cpp	xClimate.cpp	0x8025E9F0	0x8025E9F0	single aligned candidate	0
-.sbss	xClimate.cpp	xEnt.cpp	0x8025E9F8	0x8025EA00	open: 2 items between aligned candidates	0
+.sbss	xClimate.cpp	xDebug.cpp	0x8025E9F8	0x8025E9F8	single aligned candidate	0
+.sbss	xDebug.cpp	xEnt.cpp	0x8025EA00	0x8025EA00	single aligned candidate	0
 .sbss	xEnt.cpp	xEntMotion.cpp	0x8025EA40	0x8025EA40	single aligned candidate	0
 .sbss	xEntMotion.cpp	xEnv.cpp	0x8025EA48	0x8025EA48	single aligned candidate	0
 .sbss	xEnv.cpp	xFFX.cpp	0x8025EA50	0x8025EA50	single aligned candidate	0
-.sbss	xFFX.cpp	xFX.cpp	0x8025EA78	0x8025EA80	open: 2 items between aligned candidates	0
+.sbss	xFFX.cpp	xFont.cpp	0x8025EA78	0x8025EA78	single aligned candidate	0
+.sbss	xFont.cpp	xFX.cpp	0x8025EA80	0x8025EA80	single aligned candidate	0
 .sbss	xFX.cpp	xhipio.cpp	0x8025EAB0	0x8025EAB0	single aligned candidate	0
 .sbss	xhipio.cpp	xMemMgr.cpp	0x8025EAB8	0x8025EAB8	single aligned candidate	0
 .sbss	xMemMgr.cpp	xModel.cpp	0x8025EAC0	0x8025EAC0	single aligned candidate; 1 in-range loads by functions outside the written units	1
@@ -321,13 +323,14 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	xParMgr.cpp	xpkrsvc.cpp	0x8025EAF0	0x8025EAF0	single aligned candidate	0
 .sbss	xpkrsvc.cpp	xQuickCull.cpp	0x8025EB18	0x8025EB18	single aligned candidate	0
 .sbss	xQuickCull.cpp	xsavegame.cpp	0x8025EB70	0x8025EB70	single aligned candidate	0
-.sbss	xsavegame.cpp	xScrFx.cpp	0x8025EB78	0x8025EB80	open: 2 items between aligned candidates	0
+.sbss	xsavegame.cpp	xScene.cpp	0x8025EB78	0x8025EB78	single aligned candidate	0
+.sbss	xScene.cpp	xScrFx.cpp	0x8025EB80	0x8025EB80	single aligned candidate	0
 .sbss	xScrFx.cpp	xserializer.cpp	0x8025EB88	0x8025EB88	single aligned candidate	0
 .sbss	xserializer.cpp	xShadow.cpp	0x8025EB90	0x8025EB90	single aligned candidate	0
 .sbss	xShadow.cpp	xstransvc.cpp	0x8025EBC0	0x8025EBC0	single aligned candidate	0
 .sbss	xstransvc.cpp	xSurface.cpp	0x8025EBD0	0x8025EBD0	single aligned candidate	0
-.sbss	xSurface.cpp	xTRC.cpp	0x8025EBD8	0x8025EBE0	open: 1 items loaded by unassigned functions	0
-.sbss	xTRC.cpp	xutil.cpp	0x8025EBF8	0x8025EBF8	single aligned candidate	0
+.sbss	xSurface.cpp	xTRC.cpp	0x8025EBD8	0x8025EBD8	single aligned candidate	0
+.sbss	xTRC.cpp	xutil.cpp	0x8025EBF8	0x8025EBF8	single aligned candidate; 2 in-range loads by functions outside the written units	2
 .sbss	xutil.cpp	zActionLine.cpp	0x8025EC00	0x8025EC00	single aligned candidate	0
 .sbss	zActionLine.cpp	zAnimList.cpp	0x8025EC08	0x8025EC08	single aligned candidate	0
 .sbss	zAnimList.cpp	zCutsceneMgr.cpp	0x8025EC18	0x8025EC18	single aligned candidate	0
@@ -342,7 +345,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	zEntShaggy.cpp	zEntVillain.cpp	0x8025EE18	0x8025EE18	single aligned candidate	0
 .sbss	zEntVillain.cpp	zFeet.cpp	0x8025EEB8	0x8025EEB8	single aligned candidate	0
 .sbss	zFeet.cpp	zFMV.cpp	0x8025EEC8	0x8025EEC8	single aligned candidate	0
-.sbss	zFMV.cpp	zGame.cpp	0x8025EED0	0x8025EED8	open: 2 items between aligned candidates	0
+.sbss	zFMV.cpp	zFX.cpp	0x8025EED0	0x8025EED0	single aligned candidate	0
+.sbss	zFX.cpp	zGame.cpp	0x8025EED8	0x8025EED8	single aligned candidate	0
 .sbss	zGame.cpp	zGameExtras.cpp	0x8025EF28	0x8025EF28	single aligned candidate	0
 .sbss	zGameExtras.cpp	zGameState.cpp	0x8025EF80	0x8025EF80	single aligned candidate	0
 .sbss	zGameState.cpp	zGust.cpp	0x8025EF88	0x8025EF88	single aligned candidate	0
@@ -428,7 +432,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	xCamera.cpp	xClimate.cpp	0x8025FC70	0x8025FC70	single aligned candidate	0
 .sdata2	xClimate.cpp	xCollide.cpp	0x8025FCB8	0x8025FCB8	single aligned candidate	0
 .sdata2	xCollide.cpp	xCollideFast.cpp	0x8025FCD8	0x8025FCD8	single aligned candidate	0
-.sdata2	xCollideFast.cpp	xEnt.cpp	0x8025FCF0	0x8025FD08	open: 6 items between aligned candidates	0
+.sdata2	xCollideFast.cpp	xColor.cpp	0x8025FCF0	0x8025FCF0	data-only unit claimed by a data row in evidence.tsv	0
+.sdata2	xColor.cpp	xEnt.cpp	0x8025FD08	0x8025FD08	data-only unit claim fills the gap	0
 .sdata2	xEnt.cpp	xEntDrive.cpp	0x8025FE50	0x8025FE50	single aligned candidate	0
 .sdata2	xEntDrive.cpp	xEntMotion.cpp	0x8025FE58	0x8025FE58	single aligned candidate	0
 .sdata2	xEntMotion.cpp	xFFX.cpp	0x8025FEE8	0x8025FEE8	single aligned candidate	0

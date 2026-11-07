@@ -5,6 +5,10 @@
 #include "xString.h"
 #include "zScene.h"
 
+// Surface effect flags of the material xFX_SceneEnter is setting environment and bump maps up
+// for.
+U32 gFXSurfaceFlags;
+
 // Set up scene effects and warping for the tide or tree entity.
 void zFX_SceneEnter(RpWorld* world)
 {

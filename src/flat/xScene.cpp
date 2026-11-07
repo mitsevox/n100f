@@ -15,6 +15,9 @@ void xAnimTempTransitionInit(U32 count);
 void xAnimPoolInit(xMemPool* pool, U32 count, U32 singles, U32 blendFlags, U32 effectMax);
 void xEnvSetup(_xEnv* env);
 
+// The scene being played.
+_xScene* g_xSceneCur;
+
 // Allocates the scene's entity lists and sets up the animation, model and collision pools.
 // The model pools grow with the scene's NPC, dynamic and static counts.
 void xSceneInit(_xScene* sc, U16 num_trigs, U16 num_stats, U16 num_dyns, U16 num_npcs)

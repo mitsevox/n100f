@@ -17,6 +17,9 @@ static char* blankText = "";
 xFontInfo gFontList[4];
 xFontBox gBoxList[4];
 
+// The debug font's id; iFont sets it when it loads the font.
+U32 gDBfont;
+
 // Loads the FONT scene's assets in one go, clears the font and text box tables and hands over to
 // the platform layer.
 void xFontInit()
