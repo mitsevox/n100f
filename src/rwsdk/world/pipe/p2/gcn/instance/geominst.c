@@ -320,7 +320,7 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
     }
     case COMP_S16:
     {
-        U8* out = (U8*)dst;
+        S16* out = (S16*)dst;
 
         for (i = numVerts; i > 0; i--)
         {
@@ -329,11 +329,11 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
             n.x = (1.0f / 128.0f) * (F32)src->x;
             n.y = (1.0f / 128.0f) * (F32)src->y;
             n.z = (1.0f / 128.0f) * (F32)src->z;
-            ((S16*)out)[0] = n.x * 16384.0f;
-            ((S16*)out)[1] = n.y * 16384.0f;
-            ((S16*)out)[2] = n.z * 16384.0f;
+            out[0] = n.x * 16384.0f;
+            out[1] = n.y * 16384.0f;
+            out[2] = n.z * 16384.0f;
             src++;
-            out += stride;
+            out = (S16*)((U8*)out + stride);
         }
         break;
     }
@@ -351,12 +351,7 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
     {
-        count = 3;
-        if (vtxFmt->frac[1])
-        {
-            count = 9;
-        }
-        return lbl_801DDA48[vtxFmt->compType[1]] * count;
+        return lbl_801DDA48[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
     }
 
     count = 3;
