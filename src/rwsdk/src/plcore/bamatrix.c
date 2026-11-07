@@ -561,6 +561,8 @@ RwMatrix* RwMatrixTransform(RwMatrix* matrix, const RwMatrix* transform, RwOpCom
 {
     RwMatrix result;
 
+    result.flags = rwMATRIXTYPENORMAL;
+
     switch (combineOp)
     {
     case rwCOMBINEREPLACE:
@@ -569,11 +571,13 @@ RwMatrix* RwMatrixTransform(RwMatrix* matrix, const RwMatrix* transform, RwOpCom
         break;
     case rwCOMBINEPRECONCAT:
         RwMatrixMultiply(&result, transform, matrix);
+        result.flags = matrix->flags;
         *matrix = result;
         matrix->flags &= ~(rwMATRIXTYPEMASK | rwMATRIXINTERNALIDENTITY);
         break;
     case rwCOMBINEPOSTCONCAT:
         RwMatrixMultiply(&result, matrix, transform);
+        result.flags = matrix->flags;
         *matrix = result;
         matrix->flags &= ~(rwMATRIXTYPEMASK | rwMATRIXINTERNALIDENTITY);
         break;
