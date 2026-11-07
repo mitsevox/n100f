@@ -171,6 +171,7 @@ void zEntProjectile_scenePrepare()
     }
 }
 
+// Recycles every projectile still in use, returning all of them to the free pool.
 void zEntProjectile_sceneReset()
 {
     st_PROJECTILE_DEPOT* depot = &g_prjdepot;
@@ -179,7 +180,8 @@ void zEntProjectile_sceneReset()
     while (depot->prjinuse.head->next != NULL)
     {
         link = (st_ZPRJ_LINKNODE*)RemHead(&depot->prjinuse);
-        link->backref->Recycle();
+        zEntProjectile* prj = link->backref;
+        prj->Recycle();
     }
 }
 
@@ -366,7 +368,7 @@ static st_ZPRJ_TYPERECORD* ZPRJ_findType(U32 aid)
 
     for (i = 0; i < depot->typeidx; i++)
     {
-        rec = &depot->typetable[i];
+        rec = &g_prjdepot.typetable[i];
         if (rec->aid_ptype == aid)
         {
             da_type = rec;
@@ -377,6 +379,7 @@ static st_ZPRJ_TYPERECORD* ZPRJ_findType(U32 aid)
     return da_type;
 }
 
+// Returns the category registered for a projectile type, or prefer when the type is unknown or has none.
 en_ZPRJ_CATEGORY zEntProjectile_catFromPrjType(U32 ptypeID, en_ZPRJ_CATEGORY prefer)
 {
     st_ZPRJ_TYPERECORD* ptype = ZPRJ_findType(ptypeID);
@@ -394,6 +397,8 @@ en_ZPRJ_CATEGORY zEntProjectile_catFromPrjType(U32 ptypeID, en_ZPRJ_CATEGORY pre
     return prefer;
 }
 
+// Takes a projectile from the free pool, puts it in use and initializes it; returns NULL if the pool
+// is empty, or if Init fails, in which case the projectile is marked dead for the next update.
 zEntProjectile* zEntProjectile_acquire(en_ZPRJ_CATEGORY cat, U32 ptypeID)
 {
     zEntProjectile* prj;
@@ -663,16 +668,14 @@ zEntProjectile* ZPRJ_getNextAvail()
         {
             warned = 1;
         }
-        prj = NULL;
+        return NULL;
     }
-    else
-    {
-        warned = 0;
-        link = (st_ZPRJ_LINKNODE*)RemHead(&depot->prjpool);
-        prj = link->backref;
-        memset(prj, 0, sizeof(zEntProjectile));
-        prj->linknode.backref = prj;
-    }
+
+    warned = 0;
+    link = (st_ZPRJ_LINKNODE*)RemHead(&depot->prjpool);
+    prj = link->backref;
+    memset(prj, 0, sizeof(zEntProjectile));
+    prj->linknode.backref = prj;
 
     return prj;
 }
