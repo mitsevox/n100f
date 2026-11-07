@@ -77,13 +77,13 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 // Offsets each vertex's base texture coordinates along the bump map light direction, into dst:
 // the light (the bump map frame's at axis, or the camera's) is taken into the object's space,
 // and each vertex's offset comes from the texture space of one of its triangles. Both offsets
-// are computed before either store (the normal and light loads come before the first stfsx), and
-// each index branch sets up its own vertex pointers (the pointer arithmetic appears in both).
+// are computed before either store (the normal and light loads come before the first stfsx),
+// each index branch sets up its own vertex pointers (the pointer arithmetic appears in both), and
+// the indices are read as indices[i] (the compiler's own walking pointer, r26).
 void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMesh* mesh,
                  RwV3d* positions, RwV3d* normals, RwTexCoords* texCoords, S32 numVertices,
                  S32 flags)
 {
-    U16* index;
     U8* done = (U8*)RwMalloc(numVertices);
 
     memset(done, 0, numVertices);
@@ -121,11 +121,10 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
         RwV3dNormalize(&light, &light);
 
         indices = mesh->indices;
-        index = indices;
 
         for (i = 0; i < mesh->numIndices; i++)
         {
-            U16 v0 = *index;
+            U16 v0 = indices[i];
 
             if (!done[v0])
             {
@@ -182,26 +181,24 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
                     v2 = indices[i2];
 
                     p0 = &positions[v0];
+                    p1 = &positions[v1];
+                    p2 = &positions[v2];
                     n = &normals[v0];
                     t0 = &texCoords[v0];
-                    p1 = &positions[v1];
                     t1 = &texCoords[v1];
-                    p2 = &positions[v2];
                     t2 = &texCoords[v2];
                 }
                 else
                 {
-                    S32 base = (i / 3) * 3;
-
-                    v1 = indices[(i + 1) % 3 + base];
-                    v2 = indices[(i + 2) % 3 + base];
+                    v1 = indices[(i + 1) % 3 + (i / 3) * 3];
+                    v2 = indices[(i + 2) % 3 + (i / 3) * 3];
 
                     p0 = &positions[v0];
+                    p1 = &positions[v1];
+                    p2 = &positions[v2];
                     n = &normals[v0];
                     t0 = &texCoords[v0];
-                    p1 = &positions[v1];
                     t1 = &texCoords[v1];
-                    p2 = &positions[v2];
                     t2 = &texCoords[v2];
                 }
 
@@ -218,16 +215,15 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
 
                 uOffset = RwV3dDotProductMacro(&s, &light);
                 vOffset = RwV3dDotProductMacro(&b, &light);
-                dst[*index].u = t0->u - uOffset * scale;
-                dst[*index].v = t0->v - vOffset * scale;
+                dst[indices[i]].u = t0->u - uOffset * scale;
+                dst[indices[i]].v = t0->v - vOffset * scale;
 
-                minIndex = ((S32)*index < minIndex) ? *index : minIndex;
-                maxIndex = ((S32)*index > maxIndex) ? *index : maxIndex;
+                minIndex = ((S32)indices[i] < minIndex) ? indices[i] : minIndex;
+                maxIndex = ((S32)indices[i] > maxIndex) ? indices[i] : maxIndex;
 
-                done[*index] = TRUE;
+                done[indices[i]] = TRUE;
             }
 
-            index++;
         }
 
         DCFlushRange(&dst[minIndex], (maxIndex - minIndex + 1) * sizeof(RwTexCoords));
