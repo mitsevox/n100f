@@ -1999,8 +1999,7 @@ rwsdk/driver/gcn/dldevice.c:
 	.rodata     start:0x801AD2D0 end:0x801AD3A8
 	.data       start:0x801DDF90 end:0x801DE0A0
 	.bss        start:0x8025E2B0 end:0x8025E348
-	.sdata      start:0x8025E7F0 end:0x8025E808
-	.sbss       start:0x8025F7F8 end:0x8025F878
+	.sbss       start:0x8025F7F8 end:0x8025F870
 	.sdata2     start:0x80262B50 end:0x80262B70
 
 rwsdk/driver/gcn/dlraster.c:
