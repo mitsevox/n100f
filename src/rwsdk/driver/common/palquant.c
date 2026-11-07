@@ -784,6 +784,10 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
 {
     S32 stride = image->stride;
     U8* pixels = image->cpPixels;
+    U32 width;
+    U32 x;
+    U32 y;
+    U8* dst;
 
     if (dstDepth == 4 && dstPacked)
     {
@@ -793,14 +797,14 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
         case 8:
         {
             RwRGBA* palette = image->palette;
-            U32 y = image->height;
+            y = image->height;
 
             while (y--)
             {
-                U32 x;
-                U32 width = image->width;
-                U8* dst = dstPixels;
                 U8* src = pixels;
+
+                dst = dstPixels;
+                width = image->width;
 
                 for (x = 0; x < width; x++)
                 {
@@ -827,14 +831,14 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
         }
         case 32:
         {
-            U32 y = image->height;
+            y = image->height;
 
             while (y--)
             {
                 RwRGBA* color = (RwRGBA*)pixels;
-                U32 x;
-                U32 width = image->width;
-                U8* dst = dstPixels;
+
+                dst = dstPixels;
+                width = image->width;
 
                 for (x = 0; x < width; x++)
                 {
@@ -872,13 +876,14 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
         case 8:
         {
             RwRGBA* palette = image->palette;
-            U32 y = image->height;
+            y = image->height;
 
             while (y--)
             {
                 U8* src = pixels;
-                U32 x = image->width;
-                U8* dst = dstPixels;
+
+                dst = dstPixels;
+                x = image->width;
 
                 while (x--)
                 {
@@ -894,13 +899,14 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
         }
         case 32:
         {
-            U32 y = image->height;
+            y = image->height;
 
             while (y--)
             {
                 RwRGBA* color = (RwRGBA*)pixels;
-                U8* dst = dstPixels;
-                U32 x = image->width;
+
+                dst = dstPixels;
+                x = image->width;
 
                 while (x--)
                 {
