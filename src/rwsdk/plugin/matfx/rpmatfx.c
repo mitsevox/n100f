@@ -595,6 +595,7 @@ static void* fn_8013E72C(void* dstObject, const void* srcObject, S32 offset, S32
     return dstObject;
 }
 
+// Writes the atomic's effects-enabled flag.
 static RwStream* fn_8013E76C(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
                              S32 size)
 {
@@ -655,6 +656,7 @@ static void* fn_8013E854(void* dstObject, const void* srcObject, S32 offset, S32
     return dstObject;
 }
 
+// Writes the world sector's effects-enabled flag.
 static RwStream* fn_8013E894(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
                              S32 size)
 {

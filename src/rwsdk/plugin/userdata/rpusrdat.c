@@ -530,6 +530,7 @@ static RwStream* UserDataListStreamRead(UserDataList* list, RwStream* stream)
     return stream;
 }
 
+// Reads an object's user data list from the plugin chunk.
 static RwStream* UserDataObjectStreamRead(RwStream* stream, S32 binaryLength, void* object,
                                           S32 offset, S32 size)
 {
@@ -557,6 +558,7 @@ static RwStream* UserDataListStreamWrite(const UserDataList* list, RwStream* str
     return stream;
 }
 
+// Writes an object's user data list to the plugin chunk.
 static RwStream* UserDataObjectStreamWrite(RwStream* stream, S32 binaryLength,
                                            const void* object, S32 offset, S32 size)
 {
@@ -635,6 +637,7 @@ static S32 UserDataListGetSize(const UserDataList* list)
     return totalSize;
 }
 
+// The size of an object's user data list in the stream.
 static S32 UserDataObjectGetSize(const void* object, S32 offset, S32 size)
 {
     const UserDataList* list = (const UserDataList*)((const U8*)object + offset);
@@ -649,6 +652,7 @@ S32 RpGeometryAddUserDataArray(RpGeometry* geometry, char* name, RpUserDataForma
                                   format, numElements);
 }
 
+// The number of user data arrays on the geometry.
 S32 RpGeometryGetUserDataArrayCount(const RpGeometry* geometry)
 {
     const UserDataList* list = (const UserDataList*)((const U8*)geometry + userDataGeometryOffset);
