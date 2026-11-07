@@ -196,12 +196,12 @@ S32 _rwGCNVtxFmtInstPos3D(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d
     return ALIGN32(numVerts * lbl_801DDA48[vtxFmt->compType[0]] * 3);
 }
 
-// Writes numVerts normals: bytes scaled by 64, shorts scaled by 16384, or floats.
+// Writes numVerts normals: signed bytes scaled by 64, signed shorts scaled by 16384, or floats
+// (copied per vertex when interleaved or fractional, else in one block); unsigned formats write nothing.
 S32 _rwGCNVtxFmtInstNrm(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* src,
                         S32 numVerts, U8 stride)
 {
     U8 compType;
-    S32 i;
     S32 count;
 
     if (!vtxFmt)
@@ -213,10 +213,12 @@ S32 _rwGCNVtxFmtInstNrm(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* 
     switch (compType)
     {
     case COMP_U8:
-    case COMP_S8:
     case COMP_U16:
+        break;
+    case COMP_S8:
     {
         S8* out = (S8*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
@@ -230,45 +232,42 @@ S32 _rwGCNVtxFmtInstNrm(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* 
     }
     case COMP_S16:
     {
-        U8* out = (U8*)dst;
+        S16* out = (S16*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
-            ((S16*)out)[0] = src->x * 16384.0f;
-            ((S16*)out)[1] = src->y * 16384.0f;
-            ((S16*)out)[2] = src->z * 16384.0f;
+            out[0] = src->x * 16384.0f;
+            out[1] = src->y * 16384.0f;
+            out[2] = src->z * 16384.0f;
             src++;
-            out += stride;
+            out = (S16*)((U8*)out + stride);
         }
         break;
     }
     case COMP_F32:
-        if (vtxFmt->flags & VTXFMT_INTERLEAVED)
+        if ((vtxFmt->flags & VTXFMT_INTERLEAVED) || vtxFmt->frac[1])
         {
-            U8* out = (U8*)dst;
+            RwV3d* out = (RwV3d*)dst;
+            S32 i;
 
             for (i = 0; i < numVerts; i++)
             {
-                *(RwV3d*)out = *src;
+                *out = *src;
                 src++;
-                out += stride;
+                out = (RwV3d*)((U8*)out + stride);
             }
         }
         else
         {
-            memcpy(dst, src, numVerts * (lbl_801DDA48[compType] * 3));
+            memcpy(dst, src, numVerts * lbl_801DDA48[compType] * 3);
         }
         break;
     }
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
     {
-        count = 3;
-        if (vtxFmt->frac[1])
-        {
-            count = 9;
-        }
-        return lbl_801DDA48[vtxFmt->compType[1]] * count;
+        return lbl_801DDA48[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
     }
 
     count = 3;
