@@ -128,6 +128,7 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
         for (i = 0; i < meshData->NumElements; i++)
         {
             RwImVertexIndex* index;
+            RwSplitBits area;
             RxCamSpace3DVertex* v0;
             RxCamSpace3DVertex* v1;
             RxCamSpace3DVertex* v2;
@@ -171,7 +172,6 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     RwIm2DVertex* d0;
                     RwIm2DVertex* d1;
                     RwIm2DVertex* d2;
-                    RwSplitBits area;
 
                     d0 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[0]);
                     d1 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[1]);
