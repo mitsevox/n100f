@@ -36,12 +36,12 @@ struct GCNMTTevStage
     S32 colorOp;
     S32 colorBias;
     S32 colorScale;
-    U8 colorClamp; // GXBool
+    S8 colorClamp; // GXBool
     S32 colorOut;
     S32 alphaOp;
     S32 alphaBias;
     S32 alphaScale;
-    U8 alphaClamp; // GXBool
+    S8 alphaClamp; // GXBool
     S32 alphaOut;
     S32 kColorSel;
     S32 kAlphaSel;
