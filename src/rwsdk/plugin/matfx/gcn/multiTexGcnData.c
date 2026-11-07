@@ -126,14 +126,6 @@ struct GCNMTStreamIndStage
         (_stage)->flags = (_rec)->value[23];                                                      \
     } while (0)
 
-// The size of an effect's stream data.
-#define MTGCN_STREAMSIZE(_config)                                                                  \
-    ((_config)->numTexMatrices * (sizeof(GCNMTStreamTexMatrix) + sizeof(F32) * 12) +             \
-     sizeof(GCNMTStreamHeader) +                                                                   \
-     (_config)->numTexCoordGens * sizeof(GCNMTStreamTexCoordGen) +                                 \
-     (_config)->numIndMatrices * (sizeof(GCNMTStreamIndMatrix) + sizeof(F32) * 6) +              \
-     (_config)->numIndStages * sizeof(GCNMTStreamIndStage) +                                       \
-     (_config)->numTevStages * sizeof(GCNMTStreamTevStage))
 
 
 U32 GameCubeMTEffectStreamGetSize(RpMTEffect* effect)
@@ -164,13 +156,13 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
         return NULL;
     }
 
+    header.blend = ((config->srcBlend << 4) & 0xF0) | (config->destBlend & 0xF);
     header.numTexCoordGens = config->numTexCoordGens;
     header.numTevStages = config->numTevStages;
     header.flags = config->flags;
     header.numTexMatrices = config->numTexMatrices;
     header.numIndMatrices = config->numIndMatrices;
     header.numIndStages = config->numIndStages;
-    header.blend = ((config->srcBlend << 4) & 0xF0) | (config->destBlend & 0xF);
     memcpy(header.kColors, config->kColors, sizeof(header.kColors));
     memcpy(header.tevColors, config->tevColors, sizeof(header.tevColors));
     RwMemLittleEndian16(header.tevColors, sizeof(header.tevColors));
