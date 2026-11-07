@@ -309,19 +309,25 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 // morphs, else by the geometry), builds the display lists and instances the vertex arrays.
 RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
 {
-    RpGeometry* geometry = atomic->geometry;
-    void* owner;
-    RpMeshHeader* meshHeader = geometry->mesh;
-    RwResEntry** ownerRef;
-    U32 geometryFlags;
-    U32 numVertices = geometry->numVertices;
-    S32 headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
-    U32 flags;
+    GCNAllInOnePrivateData* privateData;
     U32 dlSize;
+    S32 headerSize;
+    void* owner;
+    RpGeometry* geometry;
+    RwResEntry** ownerRef;
+    RpMeshHeader* meshHeader;
+    U32 numVertices;
+    U32 geometryFlags;
+    U32 flags;
     S32 size;
     RwResEntry* entry;
     GCNVertexArrays* arrays;
     U8* mem;
+
+    geometry = atomic->geometry;
+    meshHeader = geometry->mesh;
+    numVertices = geometry->numVertices;
+    headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
 
     if (geometry->numMorphTargets != 1)
     {
@@ -335,9 +341,11 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     }
 
     geometryFlags = geometry->flags | rpGEOMETRYPOSITIONS;
-    flags = geometryFlags & ~objectData->privateData->clearFlags;
+    privateData = objectData->privateData;
+    flags = geometryFlags & ~privateData->clearFlags;
     dlSize = GCNDisplayListsGetSize(meshHeader, geometry->numTexCoordSets,
                                     numVertices < 0xFF ? 1 : 2, geometryFlags);
+
     size = ALLINONE_ALIGN32(sizeof(GCNVertexArrays) + headerSize) + dlSize;
     size = ALLINONE_ALIGN32(size) + fn_80159380(fn_8015D818(geometry), flags, numVertices,
                                                 geometry->numTexCoordSets);
