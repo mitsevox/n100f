@@ -1256,6 +1256,8 @@ void iSndLoadSounds(void* data)
 {
     iSndSoundInfo* sounds;
     U32 i;
+    iSndSoundInfo* snd;
+    U32 j;
     U32 highest;
     tag_xFile* file;
     U32 total;
@@ -1288,7 +1290,8 @@ void iSndLoadSounds(void* data)
     for (i = 0; i < bank->num_sounds; i++)
     {
         st_xST_XASSETINFO ainfo;
-        xSTGetAssetInfo(sounds[i].assetID, &ainfo);
+        snd = &sounds[i];
+        xSTGetAssetInfo(snd->assetID, &ainfo);
         U32 offset = ainfo.plus_offset + ((ainfo.sector - file->ps.fileInfo.startAddr) << 5);
         U32 end = ainfo.size + offset;
         if (lowest > offset)
@@ -1300,18 +1303,18 @@ void iSndLoadSounds(void* data)
             highest = end;
         }
         total += ainfo.size;
-        sounds[i].dsp.sa += offset * 2;
-        sounds[i].dsp.ea += offset * 2;
-        sounds[i].dsp.ca += offset * 2;
+        snd->dsp.sa += offset * 2;
+        snd->dsp.ea += offset * 2;
+        snd->dsp.ca += offset * 2;
     }
 
-    for (i = 0; i < bank->num_streams; i++)
+    for (j = 0; j < bank->num_streams; j++)
     {
         st_xST_XASSETINFO ainfo;
-        xSTGetAssetInfo(sounds[i + bank->num_sounds].assetID, &ainfo);
+        xSTGetAssetInfo(sounds[j + bank->num_sounds].assetID, &ainfo);
         if (sinfo_array_max < 2)
         {
-            sounds[i + bank->num_sounds].dsp.sa =
+            sounds[j + bank->num_sounds].dsp.sa =
                 ainfo.plus_offset + ((ainfo.sector - file->ps.fileInfo.startAddr) << 5);
         }
         else
@@ -1327,9 +1330,9 @@ void iSndLoadSounds(void* data)
                 highest = end;
             }
             total += ainfo.size;
-            sounds[i + bank->num_sounds].dsp.sa += offset * 2;
-            sounds[i + bank->num_sounds].dsp.ea += offset * 2;
-            sounds[i + bank->num_sounds].dsp.ca += offset * 2;
+            sounds[j + bank->num_sounds].dsp.sa += offset * 2;
+            sounds[j + bank->num_sounds].dsp.ea += offset * 2;
+            sounds[j + bank->num_sounds].dsp.ca += offset * 2;
         }
     }
 
@@ -1337,7 +1340,9 @@ void iSndLoadSounds(void* data)
     {
         bank->size = total;
         U32 aram = ARAlloc(total);
-        U32 delta = (aram - lowest) * 2;
+        U32 delta = -lowest;
+        delta += aram;
+        delta *= 2;
 
         for (i = 0; i < bank->num_sounds; i++)
         {
