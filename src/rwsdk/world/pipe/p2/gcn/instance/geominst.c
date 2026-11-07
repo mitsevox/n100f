@@ -43,13 +43,7 @@ S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numT
 
         if (flags & rpGEOMETRYNORMALS)
         {
-            S32 count = 3;
-
-            if (vtxFmt->frac[1])
-            {
-                count = 9;
-            }
-            stride += lbl_801DDA48[vtxFmt->compType[1]] * count;
+            stride += lbl_801DDA48[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
         }
 
         if (flags & rpGEOMETRYPRELIT)
@@ -78,13 +72,7 @@ S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numT
 
         if (flags & rpGEOMETRYNORMALS)
         {
-            S32 count = 3;
-
-            if (vtxFmt->frac[1])
-            {
-                count = 9;
-            }
-            size += ALIGN32(numVerts * (lbl_801DDA48[vtxFmt->compType[1]] * count));
+            size += ALIGN32(numVerts * (lbl_801DDA48[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3)));
         }
 
         if (flags & rpGEOMETRYPRELIT)
@@ -305,15 +293,23 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
 
     switch (vtxFmt->compType[1])
     {
+    case COMP_U8:
+    case COMP_U16:
+        break;
     case COMP_S8:
     {
         S8* out = (S8*)dst;
 
         for (i = numVerts; i > 0; i--)
         {
-            out[0] = (F32)src->x * (1.0f / 128.0f) * 64.0f;
-            out[1] = (F32)src->y * (1.0f / 128.0f) * 64.0f;
-            out[2] = (F32)src->z * (1.0f / 128.0f) * 64.0f;
+            RpVertexNormal n;
+
+            n.x = (1.0f / 128.0f) * (F32)src->x;
+            n.y = (1.0f / 128.0f) * (F32)src->y;
+            n.z = (1.0f / 128.0f) * (F32)src->z;
+            out[0] = n.x * 64.0f;
+            out[1] = n.y * 64.0f;
+            out[2] = n.z * 64.0f;
             src++;
             out += stride;
         }
@@ -325,28 +321,29 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
 
         for (i = numVerts; i > 0; i--)
         {
-            ((S16*)out)[0] = (F32)src->x * (1.0f / 128.0f) * 16384.0f;
-            ((S16*)out)[1] = (F32)src->y * (1.0f / 128.0f) * 16384.0f;
-            ((S16*)out)[2] = (F32)src->z * (1.0f / 128.0f) * 16384.0f;
+            RpVertexNormal n;
+
+            n.x = (1.0f / 128.0f) * (F32)src->x;
+            n.y = (1.0f / 128.0f) * (F32)src->y;
+            n.z = (1.0f / 128.0f) * (F32)src->z;
+            ((S16*)out)[0] = n.x * 16384.0f;
+            ((S16*)out)[1] = n.y * 16384.0f;
+            ((S16*)out)[2] = n.z * 16384.0f;
             src++;
             out += stride;
         }
         break;
     }
     case COMP_F32:
-    {
-        U8* out = (U8*)dst;
-
         for (i = 0; i < numVerts; i++)
         {
-            ((F32*)out)[0] = (1.0f / 128.0f) * (F32)src->x;
-            ((F32*)out)[1] = (1.0f / 128.0f) * (F32)src->y;
-            ((F32*)out)[2] = (1.0f / 128.0f) * (F32)src->z;
+            ((F32*)dst)[0] = (1.0f / 128.0f) * (F32)src->x;
+            ((F32*)dst)[1] = (1.0f / 128.0f) * (F32)src->y;
+            ((F32*)dst)[2] = (1.0f / 128.0f) * (F32)src->z;
             src++;
-            out += stride;
+            dst = (U8*)dst + stride;
         }
         break;
-    }
     }
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
