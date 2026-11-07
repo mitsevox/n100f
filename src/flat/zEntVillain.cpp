@@ -6474,6 +6474,28 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 //   for the next point and on arrival takes the following one and sends an arrive event;
 // - dying: with ability bit 0x80000 and flg_misc bit 0x100000, he moves at half his bowling
 //   direction.
+// Mini-patrol step: head for the pursuit anchor if the villain has one, else its guard home.
+static inline void VOUT_minipatrol_move(st_zEntVillain* vil)
+{
+    if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+    {
+        xVec3Copy(&vil->pos_moveto, &vil->pos_pursue_home);
+    }
+    else
+    {
+        xVec3Copy(&vil->pos_moveto, &vil->pos_guard_home);
+    }
+    vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        vil->domove |= 0x4;
+    }
+    vil->domove |= 0x800;
+    vil->domove |= 0x1;
+    vil->domove |= 0xA;
+    vil->domove |= 0x80000000;
+}
+
 static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
 {
     _zMovePoint* nav_tmp;
@@ -6545,23 +6567,7 @@ static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _x
         VOUT_chkdo_patrolArrived(vil);
         break;
     case ZVIL_GOAL_MINIPATROL:
-        if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
-        {
-            xVec3Copy(&vil->pos_moveto, &vil->pos_pursue_home);
-        }
-        else
-        {
-            xVec3Copy(&vil->pos_moveto, &vil->pos_guard_home);
-        }
-        vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
-        if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
-        {
-            vil->domove |= 0x4;
-        }
-        vil->domove |= 0x800;
-        vil->domove |= 0x1;
-        vil->domove |= 0xA;
-        vil->domove |= 0x80000000;
+        VOUT_minipatrol_move(vil);
         VOUT_chkdo_minipatrolArrived(vil);
         break;
     case ZVIL_GOAL_LISTEN:
