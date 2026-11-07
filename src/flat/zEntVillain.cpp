@@ -325,8 +325,8 @@ static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos);
 static inline F32 VSUP_ang_ofXZDir(_xVec3 dir);
 static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir);
 static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt);
-static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir);
-static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent,
+static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _zEnt* tgt, _xVec3* dir);
+static F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent,
                                en_NPC_QUADRANT* qdrant);
 static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent);
 static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand);
@@ -397,22 +397,24 @@ static S32 VSAV_load(st_zEntVillain* ent, xSerial* xser);
 static S32 VSAV_save(st_zEntVillain* ent, xSerial* xser);
 static void VEFX_plop_gum(st_zEntVillain* ent);
 static void VPAR_emit_extattack(st_zEntVillain*, _xVec3*, _xVec3*, F32, F32, F32);
+static void VPAR_emit_killerplant(st_zEntVillain* ent, _xVec3* aimdir, F32 dt);
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE emittype, F32 dt);
 static void VPAR_readyize_emitters();
 static void VBON_drop_bonusItem(st_zEntVillain* vil);
 static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp);
-static inline void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt);
+static void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt);
 static inline void VBON_setup_bonusTable();
 static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop_caller);
 static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 flg_vsnd, F32 radius,
                               F32 delay, F32 repeatDelay, S32 repeatCount, U32 useThisSound);
 static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
-static inline void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt);
+static void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt);
+static void VEFX_holo_begin(st_zEntVillain* vil);
 static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan);
 static inline F32 VANM_entTime(const _zEnt* ent);
 static inline F32 VCFG_tymref(st_zEntVillain* vil, S32 which);
-static inline bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym);
+static bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym);
 static inline void VPRJ_BMM_toss(zEntProjectile* prj, const _xVec3* pos_tgt);
 static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force);
 static S32 VNAV_get_nav(st_zEntVillain* ent);
@@ -437,13 +439,14 @@ static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3*
                                _xVec3* vec_off, _xVec3* vec_spin, F32 arcness, F32 heavy);
 static void VEFX_mm_zapper(st_zEntVillain* vil, S32 cleanup);
 static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup);
-static inline _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 dur);
-static inline _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 dur);
+static _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 dur);
+static _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 dur);
 static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bot_radius);
 static void VWEP_rbs_chkCollide(st_REDBEARD_SWORD* rbs, F32 dt);
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* sword, st_zEntVillain* vil);
+static inline void VWEP_rbs_place(st_REDBEARD_SWORD* rbs, _xVec3* pos);
 static void VWEP_rbs_bupdate(_xEnt* ent_rbs, _xVec3* pos);
-static inline en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil);
+static en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil);
 static inline void VPRJ_BMM_redflask(zEntProjectile* prj, F32 dt);
 static inline void VPRJ_BMM_greenflask(zEntProjectile* prj, F32 dt);
 static inline void VPRJ_BMM_blackflask(zEntProjectile* prj, F32 dt);
@@ -460,7 +463,7 @@ static inline void VOUT_dogoto_pos(st_zEntVillain* vil, const _xVec3* pos, F32 d
 static en_ZVILLAIN_HEADBUTT_RESPONSE VOUT_spikey_header(st_zEntVillain* ent);
 static S32 VOUT_apply_anchor(st_zEntVillain* vil);
 static S32 VILN_std_xtrarend(st_zEntVillain* vil);
-static void VWEP_mm_zapPlayer(st_zEntVillain* vil);
+static void VWEP_mm_zapPlayer(const st_zEntVillain* vil);
 static inline void VSUP_ang_toXZDir(F32 angle, _xVec3* dir);
 static inline F32 VSUP_dot_faceToEnt(const st_zEntVillain* vil, const _zEnt* ent);
 static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs);
@@ -2449,6 +2452,13 @@ static char* g_stz_mmftyp_name[3] = { "_PRJ_VWEP_FLASK", "_PRJ_VWEP_FLASK", "_PR
 static st_ZVMM_FLASK_DATA g_mmflask[10] = { 0 };
 
 
+// The entity's model position.
+static xVec3* VSUP_posEnt(const _xEnt* ent)
+{
+    return &xModelGetFrame(ent->model)->pos;
+}
+
+
 S32 zEntVillain_Startup()
 {
     if (g_npcinit++) return g_npcinit;
@@ -4132,6 +4142,8 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         vil->tgt_stat = 0x0400887C;
     switch (vil->goal)
     {
+    case ZVIL_GOAL_AFTERLIFE:
+        break;
     case ZVIL_GOAL_BASEINIT:
         vil->collis->chk = 0x26;
         vil->collis->pen = 0x66;
@@ -4582,7 +4594,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         if (!(vil->abl_move & 0x4000) && vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] < 0.3f)
         {
             fv = vil->frame->rot.angle;
-            if (fabsf(fv - prec->ang_VtoP) <= 0.1f)
+            if (fabsf(vil->frame->rot.angle - prec->ang_VtoP) <= 0.1f)
             {
                 vil->anim_loopmult = 0.97f;
                 vil->vhf->pickanim(vil, ZVIL_GOAL_ATTACKREADY, ZVIL_GSPOT_START);
@@ -4946,7 +4958,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         }
         break;
     case ZVIL_GOAL_DIE:
-        if (vil->asset->subtype == eEntVillainTypeWitchDoctor && sEmitWitchDying)
+        if (vil->asset->subtype == eEntVillainTypeWitch && sEmitWitchDying)
         {
             _zParEmitterCustomSettings info;
             info.custom_flags = 0x20;
@@ -5110,7 +5122,7 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 resp->trangoal = ZVIL_GOAL_SOAPED;
                 resp->tranmode = ZVIL_MODE_ALERT;
                 resp->stim = ZVIL_STIM_TRANGOAL;
-                g_stattally[vil->asset->subtype].cnt_hitsoap++;
+                g_stattally[vil->asset->subtype].cnt_hitsoap = g_stattally[vil->asset->subtype].cnt_hitsoap + 1;
                 g_stattally[eEntVillainType_NoMore].cnt_hitsoap++;
             }
             else
@@ -5650,7 +5662,7 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 resp->trangoal = ZVIL_GOAL_SOAPED;
                 resp->tranmode = ZVIL_MODE_NOCHANGE;
                 resp->stim = ZVIL_STIM_TRANGOAL;
-                g_stattally[vil->asset->subtype].cnt_hitsoap++;
+                g_stattally[vil->asset->subtype].cnt_hitsoap = g_stattally[vil->asset->subtype].cnt_hitsoap + 1;
                 g_stattally[eEntVillainType_NoMore].cnt_hitsoap++;
             }
             break;
@@ -5933,7 +5945,7 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 vil->pflags &= (U8)~0x4;
                 break;
             case eEntVillainTypeGargoyle:
-            case eEntVillainTypeWitchDoctor:
+            case eEntVillainTypeWitch:
                 vil->pflags |= 0x4;
                 break;
             default:
@@ -6292,7 +6304,8 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             vil->tmr_list[ZVIL_TDUR_DAZED] = VCFG_tymref(vil, ZVIL_TDUR_DAZED) + 0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_DAZED);
             if (stimctxt->amt_stun > 0.0f)
             {
-                tmp_fv = vil->tmr_list[ZVIL_TDUR_DAZED] * stimctxt->amt_stun;
+                tmp_fv = vil->tmr_list[ZVIL_TDUR_DAZED];
+                tmp_fv *= stimctxt->amt_stun;
                 vil->tmr_list[ZVIL_TDUR_DAZED] = MAX(1.5f, tmp_fv);
             }
             vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_DAZED];
@@ -6465,6 +6478,28 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 //   for the next point and on arrival takes the following one and sends an arrive event;
 // - dying: with ability bit 0x80000 and flg_misc bit 0x100000, he moves at half his bowling
 //   direction.
+// Mini-patrol step: head for the pursuit anchor if the villain has one, else its guard home.
+static inline void VOUT_minipatrol_move(st_zEntVillain* vil)
+{
+    if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
+    {
+        xVec3Copy(&vil->pos_moveto, &vil->pos_pursue_home);
+    }
+    else
+    {
+        xVec3Copy(&vil->pos_moveto, &vil->pos_guard_home);
+    }
+    vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
+    if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
+    {
+        vil->domove |= 0x4;
+    }
+    vil->domove |= 0x800;
+    vil->domove |= 0x1;
+    vil->domove |= 0xA;
+    vil->domove |= 0x80000000;
+}
+
 static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _xEntFrame* frame)
 {
     _zMovePoint* nav_tmp;
@@ -6536,23 +6571,7 @@ static S32 VILN_std_calcmove(st_zEntVillain* vil, _xScene* scn, F32 dt, const _x
         VOUT_chkdo_patrolArrived(vil);
         break;
     case ZVIL_GOAL_MINIPATROL:
-        if (vil->vhf->query(vil, ZVIL_Q_HAVEANCHOR))
-        {
-            xVec3Copy(&vil->pos_moveto, &vil->pos_pursue_home);
-        }
-        else
-        {
-            xVec3Copy(&vil->pos_moveto, &vil->pos_guard_home);
-        }
-        vil->ang_moveto = VSUP_dir_toPos(vil, vil->pos_moveto, &vil->dir_moveto);
-        if (vil->abl_move & 0x1000 || vil->abl_move & 0x400)
-        {
-            vil->domove |= 0x4;
-        }
-        vil->domove |= 0x800;
-        vil->domove |= 0x1;
-        vil->domove |= 0xA;
-        vil->domove |= 0x80000000;
+        VOUT_minipatrol_move(vil);
         VOUT_chkdo_minipatrolArrived(vil);
         break;
     case ZVIL_GOAL_LISTEN:
@@ -6953,6 +6972,16 @@ static S32 VILN_kp_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
     return result;
 }
 
+// Starts a dying villain's hologram fade: adds the hologram, queues the fade sound and runs the
+// decay timer from its configured time, holding the generic timer so this happens once.
+static void VEFX_holo_begin(st_zEntVillain* vil)
+{
+    zHologramAdd(vil);
+    VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
+    vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
+    vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+}
+
 // Update a killer plant's goal: it waits ready to attack, then swipes, lobs or casts its spell at
 // the player, and fades out as a hologram when it dies.
 static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
@@ -7122,10 +7151,7 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -7629,10 +7655,7 @@ static S32 VILN_shagM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_C
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -8056,9 +8079,8 @@ static S32 VILN_gang_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
         }
         if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f && vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
         {
-            en_NPC_ANIMSTATES anim = vil->anim_playnext;
-            if (anim == ZVIL_ANIM_GANG_FIDGET || anim == ZVIL_ANIM_GANG_FIDGET1 ||
-                anim == ZVIL_ANIM_GANG_FIDGET2 || anim == ZVIL_ANIM_GANG_FIDGET3)
+            if (vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET || vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET1 ||
+                vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET2 || vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET3)
             {
                 vil->anim_loopmult = 0.97f;
                 vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_RESUME);
@@ -8145,10 +8167,7 @@ static S32 VILN_gang_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -8753,10 +8772,7 @@ static S32 VILN_sham_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -9187,6 +9203,24 @@ static S32 VILN_BBK_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     return 1;
 }
 
+// Idle facing: plays the idle start when the villain faces the player to within tol radians,
+// otherwise the turn (move-right) idle. Returns the facing angle it tested.
+static inline F32 VILN_idle_turn(st_zEntVillain* vil, F32 tol)
+{
+    F32 angle = vil->frame->rot.angle;
+    if (fabsf(angle - vil->precalc.ang_VtoP) <= tol)
+    {
+        vil->anim_loopmult = 0.97f;
+        vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
+    }
+    else
+    {
+        vil->anim_loopmult = 0.97f;
+        vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_MOVERIGHT);
+    }
+    return angle;
+}
+
 // Update the Black Knight boss's navigation, axe attack and fade-out.
 static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
 {
@@ -9207,21 +9241,12 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         break;
     case ZVIL_GOAL_IDLE:
     {
-        F32 angle = vil->frame->rot.angle;
-        if (fabsf(angle - vil->precalc.ang_VtoP) <= 0.2f)
-        {
-            vil->anim_loopmult = 0.97f;
-            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
-        }
-        else
-        {
-            vil->anim_loopmult = 0.97f;
-            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_MOVERIGHT);
-        }
+        F32 angle = VILN_idle_turn(vil, 0.2f);
         if (vil->tmr_list[ZVIL_TDUR_LOBRELOAD] <= 0.0f)
         {
-            if (vil->vhf->query(vil, ZVIL_Q_CANATTACK) && fabsf(angle - vil->precalc.ang_VtoP) <= 0.4f)
+            if (vil->vhf->query(vil, ZVIL_Q_CANATTACK))
             {
+                if (!(fabsf(angle - vil->precalc.ang_VtoP) <= 0.4f)) break;
                 vil->prj_reserved = VWEP_lobReservePRJ(vil);
                 if (vil->prj_reserved)
                 {
@@ -9347,10 +9372,7 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -9976,10 +9998,7 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                 if (vil->cnt_lobSalvo > 0 && !vil->prj_reserved)
                 {
                     vil->prj_reserved = VWEP_lobReservePRJ(vil);
-                    zEntProjectile* prj = vil->prj_reserved;
-                    if (prj)
-                        VWEP_lobActivatePRJ(prj, vil, xBoundCenter(&globals.player.ent.bound), NULL,
-                                            &vil->vec_lobSpin, vil->fac_lobarc, vil->fac_lobheavy);
+                    if (vil->prj_reserved) VWEP_lobAtPlayer(vil->prj_reserved, vil);
                 }
             }
         }
@@ -10031,10 +10050,7 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -10638,6 +10654,23 @@ static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     return 1;
 }
 
+// Runs Redbeard's thrown sword for a frame: ages it (flagging it once it is older than 2.5
+// seconds), flies it, keeps its flight sound playing and checks it for hits.
+static void VWEP_rbs_update(F32 dt)
+{
+    st_REDBEARD_SWORD* rbs = &g_rbsword[0];
+    rbs->tym_age += dt;
+    if (rbs->tym_age > 2.5f) rbs->flg_stat |= 8;
+    else rbs->flg_stat &= ~8;
+    VWEP_rbs_flight(rbs, dt);
+    if (!iSndIsPlaying(0, (U32)rbs))
+    {
+        U32 snd = VSND_select_sound(rbs->rbvil, VSND_TYP_PRJ_FLIGHT);
+        if (snd) xSndPlay3D(snd, 0.5f, 0.0f, 128, 0x202, (_xEnt*)rbs, 25.0f);
+    }
+    VWEP_rbs_chkCollide(rbs, dt);
+}
+
 // Update Redbeard's navigation, sword movement and fade-out.
 static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
 {
@@ -10659,16 +10692,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
     case ZVIL_GOAL_IDLE:
         if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] < 0.3f)
         {
-            if (fabsf(vil->frame->rot.angle - vil->precalc.ang_VtoP) <= 0.2f)
-            {
-                vil->anim_loopmult = 0.97f;
-                vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
-            }
-            else
-            {
-                vil->anim_loopmult = 0.97f;
-                vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_MOVERIGHT);
-            }
+            VILN_idle_turn(vil, 0.2f);
         }
         if (vil->vhf->query(vil, ZVIL_Q_CANATTACK) && vil->cnt_lobSalvo > 0)
         {
@@ -10728,17 +10752,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         break;
     case ZVIL_GOAL_SPELLCAST:
     {
-        st_REDBEARD_SWORD* sword = &g_rbsword[0];
-        sword->tym_age += dt;
-        if (sword->tym_age > 2.5f) sword->flg_stat |= 8;
-        else sword->flg_stat &= ~8;
-        VWEP_rbs_flight(sword, dt);
-        if (!iSndIsPlaying(0, (U32)sword))
-        {
-            U32 snd = VSND_select_sound(sword->rbvil, VSND_TYP_PRJ_FLIGHT);
-            if (snd) xSndPlay3D(snd, 0.5f, 0.0f, 128, 0x202, (_xEnt*)sword, 25.0f);
-        }
-        VWEP_rbs_chkCollide(sword, dt);
+        VWEP_rbs_update(dt);
         if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
         {
             if (vil->tmr_list[ZVIL_TTIL_RECOVERY] <= 0.0f)
@@ -10787,10 +10801,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -12125,6 +12136,13 @@ static S32 VILN_BMM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     return 1;
 }
 
+// The goal change of the goals every villain type shares (startup, going online, death and the
+// afterlife), done by the standard villain's goal-change step.
+static inline S32 VILN_base_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    return VILN_std_trangoal(vil, stimctxt, dt);
+}
+
 // The Mastermind's goal changes. The standard handler takes the lifeless, starting-up and dying
 // goals, and he queues his death sound when he enters the dying goal. On entering a goal he picks
 // its animation and sets it up: patrolling without a next navigation point asks for one;
@@ -12138,9 +12156,9 @@ static S32 VILN_BMM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 // drops the reserved flask.
 static S32 VILN_BMM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
 {
-    en_BEHAVIOUR_GOAL procgoal;
     S32 result = 1;
     en_NPC_STIMULUS stim = stimctxt->stim;
+    en_BEHAVIOUR_GOAL procgoal;
 
     if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
     {
@@ -12158,7 +12176,7 @@ static S32 VILN_BMM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     case ZVIL_GOAL_STARTUP:
     case ZVIL_GOAL_GOONLINE:
     case ZVIL_GOAL_DIE:
-        result = VILN_std_trangoal(vil, stimctxt, dt);
+        result = VILN_base_trangoal(vil, stimctxt, dt);
         if (procgoal == ZVIL_GOAL_DIE && stim == ZVIL_STIM_ENTERGOAL)
         {
             VSND_queueSound(vil, VSND_TYP_MMDIE);
@@ -12990,167 +13008,14 @@ static inline void VTMR_countDown(F32* tmr, F32 dt)
     *tmr = (*tmr - dt < -1.0f) ? -1.0f : *tmr - dt;
 }
 
-// Apply the asset configuration to the villain and its subtype's collision bounds.
-static void zVIL_apply_vilcfg(st_zEntVillain* ent, st_ZVIL_CONFIG_REFERENCE* cfg)
+// Empties the villain's sound queue: every entry gets the bogus sound and no direct sound.
+static inline void VSND_clearQueue(st_zEntVillain* vil)
 {
-    U32 flags = cfg->vilp2ass->villFlags;
-    S32 allow = 0;
-    if (flags & 1) allow |= 1;
-    if (flags & 2) allow |= 2;
-    if (flags & 4) allow |= 4;
-    if (flags & 8) allow |= 0x10;
-    if (flags & 0x10) allow |= 8;
-    if (flags & 0x80) allow |= 0x100;
-    if (flags & 0x100) allow |= 0x200;
-    if (flags & 0x20) allow |= 0x40;
-    if (flags & 0x40) allow |= 0x80;
-    ent->allow = allow;
-    ent->flg_misc = cfg->misc_flags;
-    VCFG_getParm(cfg, ZVIL_PARM_SANIM_IDLE, &ent->sanim_idle);
-    VCFG_getParm(cfg, ZVIL_PARM_SANIM_MOVE, &ent->sanim_move);
-    VCFG_getParm(cfg, ZVIL_PARM_SANIM_CHASE, &ent->sanim_chase);
-
+    S32 i;
+    for (i = 0; i < 4; i++)
     {
-        st_ZVIL_NPCTYPE_LOOKUP* vilrec = &g_npcTable[ent->asset->subtype];
-        if (vilrec->vec_bndoff.x != cfg->vec_bndoffset.x ||
-            vilrec->vec_bndoff.y != cfg->vec_bndoffset.y ||
-            vilrec->vec_bndoff.z != cfg->vec_bndoffset.z)
-        {
-            vilrec->vec_bndoff = cfg->vec_bndoffset;
-        }
-        if (vilrec->rad_bound != cfg->rad_bound)
-        {
-            vilrec->rad_bound = cfg->rad_bound;
-        }
-        vilrec->rad_bound2 = cfg->rad_bound2;
-        vilrec->vec_bnd2off = cfg->vec_bnd2offset;
-    }
-
-    VCFG_getParm(cfg, ZVIL_PARM_WANDER_ARC, &ent->ang_wander);
-    VCFG_getParm(cfg, ZVIL_PARM_HIT_POINTS, &ent->hitpts);
-    VCFG_getParm(cfg, ZVIL_PARM_MOVE_RATE, &ent->spd_move);
-    VCFG_getParm(cfg, ZVIL_PARM_CHASE_RATE, &ent->spd_chase);
-    VCFG_getParm(cfg, ZVIL_PARM_TURN_RATE, &ent->spd_turn);
-    VCFG_getParm(cfg, ZVIL_PARM_DETECT_RADIUS, &ent->ds2_detect);
-    VCFG_getParm(cfg, ZVIL_PARM_DETECT_HEIGHT, &ent->hyt_detect);
-    VCFG_getParm(cfg, ZVIL_PARM_DETECT_HYTOFF, &ent->hyt_dtctoff);
-    VCFG_getParm(cfg, ZVIL_PARM_FOV_ANGLE, &ent->fov_detect);
-    VCFG_getParm(cfg, ZVIL_PARM_PURSUE_RADIUS, &ent->ds2_pursue);
-    VCFG_getParm(cfg, ZVIL_PARM_LOB_RANGE, &ent->dst_lob);
-    VCFG_getParm(cfg, ZVIL_PARM_LOB_SPEED, &ent->spd_lob);
-    VCFG_getParm(cfg, ZVIL_PARM_LOB_SALVO, &ent->cnt_lobSalvo);
-    VCFG_getParm(cfg, ZVIL_PARM_LOB_ARC, &ent->fac_lobarc);
-    VCFG_getParm(cfg, ZVIL_PARM_LOB_HEAVY, &ent->fac_lobheavy);
-    VCFG_getParm(cfg, ZVIL_PARM_LOB_PRJTYPE, &ent->prjTypeID);
-    VCFG_getParm(cfg, ZVIL_PARM_EXTEND_RANGE, &ent->dst_extend);
-    VCFG_getParm(cfg, ZVIL_PARM_EXTEND_WIDTH, &ent->wid_extend);
-    VCFG_getParm(cfg, ZVIL_PARM_EXTEND_RATE, &ent->spd_extend);
-    cfg->tymref_list[ZVIL_TDUR_DECAY] =
-        MAX(g_npcTable[ent->asset->subtype].decay, cfg->tymref_list[ZVIL_TDUR_DECAY]);
-}
-
-// Runs the villain's timers for a frame. The standby, animation, generic, reload, navigation,
-// sound, voice and sneak timers always count down, and the goal timer counts up. The rest count
-// down only in the goals that use them: guarding the look timer and then the idle ones; idle the
-// boredom timer and then the bored ones; bored the fidget, navigation-check, navigation-delay and
-// quip timers; patrolling, mini-patrolling and following the navigation timers; talking the
-// fidget timer; looking, listening and investigating their own durations; taunting the taunt
-// duration; readying an attack the alert, taunt and next-chase timers; chasing the
-// navigation-check timer; lobbing and casting the extend and build-up timers and then the
-// post-attack window, which a close attack also counts; dazed, soaped and gummed their durations
-// with the fidget and recovery timers (gummed also the minimum-gum window); hurt the hurt
-// duration; dying the decay duration. Every count-down stops at -1.
-static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
-{
-    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_STDBY], dt);
-    VTMR_countDown(&ent->tmr_list[ZVIL_TYMR_MINANIMPLAY], dt);
-    ent->tmr_list[ZVIL_TYMR_CURGOAL] = (ent->tmr_list[ZVIL_TYMR_CURGOAL] + dt < -1.0f) ?
-                                           -1.0f :
-                                           ent->tmr_list[ZVIL_TYMR_CURGOAL] + dt;
-    VTMR_countDown(&ent->tmr_list[ZVIL_TYMR_GENERIC], dt);
-    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_LOBRELOAD], dt);
-    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_EXTRELOAD], dt);
-    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_NAVDELAY], dt);
-    VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_ANIMSOUND], dt);
-    VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_NEXTVOICE], dt);
-    VTMR_countDown(&ent->tmr_list[ZVIL_TWIN_IGNORESNEAK], dt);
-
-    switch (ent->goal)
-    {
-    case ZVIL_GOAL_AFTERLIFE:
-    case ZVIL_GOAL_BASEINIT:
-    case ZVIL_GOAL_STARTUP:
-    case ZVIL_GOAL_GOONLINE:
-        break;
-    case ZVIL_GOAL_GUARD:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_LOOK], dt);
-    case ZVIL_GOAL_IDLE:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_BORED], dt);
-    case ZVIL_GOAL_BORED:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_CHKFORNAV], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_NAVDELAY], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_QUIP_OK], dt);
-        break;
-    case ZVIL_GOAL_PATROL:
-    case ZVIL_GOAL_MINIPATROL:
-    case ZVIL_GOAL_FOLLOW:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_CHKFORNAV], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_NAVDELAY], dt);
-        break;
-    case ZVIL_GOAL_TALK:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
-        break;
-    case ZVIL_GOAL_LOOKFORHERO:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_LOOK], dt);
-        break;
-    case ZVIL_GOAL_LISTEN:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_HEAR], dt);
-        break;
-    case ZVIL_GOAL_INVESTIGATE:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_SEARCH], dt);
-        break;
-    case ZVIL_GOAL_TAUNT:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_TAUNT], dt);
-        break;
-    case ZVIL_GOAL_ATTACKREADY:
-    case ZVIL_GOAL_BULLREADY:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_ALERT], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_TAUNT], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_NEXTCHASE], dt);
-        break;
-    case ZVIL_GOAL_CHASE:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_CHKFORNAV], dt);
-        break;
-    case ZVIL_GOAL_LOBBING:
-    case ZVIL_GOAL_SPELLCAST:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_EXTEND], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_BUILDUP], dt);
-    case ZVIL_GOAL_CQCATTACK:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TWIN_POSTATTACK], dt);
-        break;
-    case ZVIL_GOAL_DAZED:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_DAZED], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_RECOVERY], dt);
-        break;
-    case ZVIL_GOAL_GUMMED:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_GUM], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TWIN_MINGUM], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_RECOVERY], dt);
-        break;
-    case ZVIL_GOAL_SOAPED:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_SOAP], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
-        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_RECOVERY], dt);
-        break;
-    case ZVIL_GOAL_HURT:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_HURT], dt);
-        break;
-    case ZVIL_GOAL_DIE:
-        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_DECAY], dt);
-        break;
+        vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
+        vil->snd_queue[i].sndDirect = 0;
     }
 }
 
@@ -13161,22 +13026,19 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
 {
     S32 rc = 0;
     S32 result = 1;
-    S32 i = 0;
     static S32 trangoal_safety_nest = 0;
     st_STIMULUS_CONTEXT_DATA tranctxt = { ZVIL_STIM_NONE };
 
     if (stimctxt->stim == ZVIL_STIM_TRANGOAL && stimctxt->trangoal != ent->goal)
     {
+        rc = 0;
         if (stimctxt->tranmode)
         {
             ent->mode = stimctxt->tranmode;
         }
 
-        for (i = 0; i < 4; i++)
-        {
-            ent->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
-            ent->snd_queue[i].sndDirect = 0;
-        }
+        rc = 0;
+        VSND_clearQueue(ent);
 
         rc = 0;
         tranctxt.stim = ZVIL_STIM_EXITGOAL;
@@ -13185,6 +13047,7 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
         if (!rc)
         {
             result = 0;
+            rc = 0;
         }
 
         rc = 0;
@@ -13193,9 +13056,12 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
         if (!rc)
         {
             result = 0;
+            rc = 0;
         }
 
+        rc = 0;
         VGOL_set(ent, stimctxt->trangoal);
+        rc = 0;
         ent->tmr_list[ZVIL_TYMR_CURGOAL] = 0.0f;
     }
 
@@ -13501,31 +13367,21 @@ static inline S32 VOUT_hit_isWall(st_zEntVillain* vil, _xVec3* dir_trav, _xVec3*
 
     if (vil->abl_move & 0x1000) flg_look = 8;
 
-    if (fabsf(vec_fromwall->y) > 0.01f)
+    // Not a wall: tilted, the villain is not in its normal mode, or the normal is straight up.
+    if (fabsf(vec_fromwall->y) > 0.01f) return 0;
+    if (vil->mode > ZVIL_MODE_NORMAL) return 0;
+    if (!(vec_fromwall->x * vec_fromwall->x + vec_fromwall->z * vec_fromwall->z > 0.0f)) return 0;
+
+    vec_tmp.x = vec_fromwall->x;
+    vec_tmp.z = vec_fromwall->z;
+    xVec3Normalize(&vec_tmp, &vec_tmp);
+    if (dir_trav && fabsf(xVec3Dot(dir_trav, &vec_tmp)) > 0.8f)
     {
-        result = 0;
-    }
-    else if (vil->mode > ZVIL_MODE_NORMAL)
-    {
-        result = 0;
-    }
-    else if (!(vec_fromwall->x * vec_fromwall->x + vec_fromwall->z * vec_fromwall->z > 0.0f))
-    {
-        result = 0;
-    }
-    else
-    {
-        vec_tmp.x = vec_fromwall->x;
-        vec_tmp.z = vec_fromwall->z;
-        xVec3Normalize(&vec_tmp, &vec_tmp);
-        if (fabsf(xVec3Dot(dir_trav, &vec_tmp)) > 0.8f)
-        {
-            flg_look |= 0x11;
-            result = 1;
-            _zMovePoint* pt = zMovePointFindNearest(flg_look, xBoundCenter(&vil->bound), vil, VNAV_chklos_timz);
-            vil->need_navpt = 0;
-            if (pt && pt != vil->nav_next) vil->nav_next = pt;
-        }
+        flg_look = flg_look | 0x11U;
+        result = 1;
+        _zMovePoint* pt = zMovePointFindNearest(flg_look, xEntGetCenter(vil), vil, VNAV_chklos_timz);
+        vil->need_navpt = 0;
+        if (pt && pt != vil->nav_next) vil->nav_next = pt;
     }
     return result;
 }
@@ -13937,6 +13793,200 @@ static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force)
     return do_teleport;
 }
 
+// The player's entity.
+static inline _zEnt* VSUP_plyrEnt()
+{
+    return &globals.player.ent;
+}
+
+// Apply the asset configuration to the villain and its subtype's collision bounds.
+static void zVIL_apply_vilcfg(st_zEntVillain* ent, st_ZVIL_CONFIG_REFERENCE* cfg)
+{
+    U32 flags = cfg->vilp2ass->villFlags;
+    S32 allow = 0;
+    if (flags & 1) allow |= 1;
+    if (flags & 2) allow |= 2;
+    if (flags & 4) allow |= 4;
+    if (flags & 8) allow |= 0x10;
+    if (flags & 0x10) allow |= 8;
+    if (flags & 0x80) allow |= 0x100;
+    if (flags & 0x100) allow |= 0x200;
+    if (flags & 0x20) allow |= 0x40;
+    if (flags & 0x40) allow |= 0x80;
+    ent->allow = allow;
+    ent->flg_misc = cfg->misc_flags;
+    VCFG_getParm(cfg, ZVIL_PARM_SANIM_IDLE, &ent->sanim_idle);
+    VCFG_getParm(cfg, ZVIL_PARM_SANIM_MOVE, &ent->sanim_move);
+    VCFG_getParm(cfg, ZVIL_PARM_SANIM_CHASE, &ent->sanim_chase);
+
+    {
+        st_ZVIL_NPCTYPE_LOOKUP* vilrec = &g_npcTable[ent->asset->subtype];
+        if (vilrec->vec_bndoff.x != cfg->vec_bndoffset.x ||
+            vilrec->vec_bndoff.y != cfg->vec_bndoffset.y ||
+            vilrec->vec_bndoff.z != cfg->vec_bndoffset.z)
+        {
+            vilrec->vec_bndoff = cfg->vec_bndoffset;
+        }
+        if (vilrec->rad_bound != cfg->rad_bound)
+        {
+            vilrec->rad_bound = cfg->rad_bound;
+        }
+        vilrec->rad_bound2 = cfg->rad_bound2;
+        vilrec->vec_bnd2off = cfg->vec_bnd2offset;
+    }
+
+    VCFG_getParm(cfg, ZVIL_PARM_WANDER_ARC, &ent->ang_wander);
+    VCFG_getParm(cfg, ZVIL_PARM_HIT_POINTS, &ent->hitpts);
+    VCFG_getParm(cfg, ZVIL_PARM_MOVE_RATE, &ent->spd_move);
+    VCFG_getParm(cfg, ZVIL_PARM_CHASE_RATE, &ent->spd_chase);
+    VCFG_getParm(cfg, ZVIL_PARM_TURN_RATE, &ent->spd_turn);
+    VCFG_getParm(cfg, ZVIL_PARM_DETECT_RADIUS, &ent->ds2_detect);
+    VCFG_getParm(cfg, ZVIL_PARM_DETECT_HEIGHT, &ent->hyt_detect);
+    VCFG_getParm(cfg, ZVIL_PARM_DETECT_HYTOFF, &ent->hyt_dtctoff);
+    VCFG_getParm(cfg, ZVIL_PARM_FOV_ANGLE, &ent->fov_detect);
+    VCFG_getParm(cfg, ZVIL_PARM_PURSUE_RADIUS, &ent->ds2_pursue);
+    VCFG_getParm(cfg, ZVIL_PARM_LOB_RANGE, &ent->dst_lob);
+    VCFG_getParm(cfg, ZVIL_PARM_LOB_SPEED, &ent->spd_lob);
+    VCFG_getParm(cfg, ZVIL_PARM_LOB_SALVO, &ent->cnt_lobSalvo);
+    VCFG_getParm(cfg, ZVIL_PARM_LOB_ARC, &ent->fac_lobarc);
+    VCFG_getParm(cfg, ZVIL_PARM_LOB_HEAVY, &ent->fac_lobheavy);
+    VCFG_getParm(cfg, ZVIL_PARM_LOB_PRJTYPE, &ent->prjTypeID);
+    VCFG_getParm(cfg, ZVIL_PARM_EXTEND_RANGE, &ent->dst_extend);
+    VCFG_getParm(cfg, ZVIL_PARM_EXTEND_WIDTH, &ent->wid_extend);
+    VCFG_getParm(cfg, ZVIL_PARM_EXTEND_RATE, &ent->spd_extend);
+    cfg->tymref_list[ZVIL_TDUR_DECAY] =
+        MAX(g_npcTable[ent->asset->subtype].decay, cfg->tymref_list[ZVIL_TDUR_DECAY]);
+}
+
+// Runs the villain's timers for a frame. The standby, animation, generic, reload, navigation,
+// sound, voice and sneak timers always count down, and the goal timer counts up. The rest count
+// down only in the goals that use them: guarding the look timer and then the idle ones; idle the
+// boredom timer and then the bored ones; bored the fidget, navigation-check, navigation-delay and
+// quip timers; patrolling, mini-patrolling and following the navigation timers; talking the
+// fidget timer; looking, listening and investigating their own durations; taunting the taunt
+// duration; readying an attack the alert, taunt and next-chase timers; chasing the
+// navigation-check timer; lobbing and casting the extend and build-up timers and then the
+// post-attack window, which a close attack also counts; dazed, soaped and gummed their durations
+// with the fidget and recovery timers (gummed also the minimum-gum window); hurt the hurt
+// duration; dying the decay duration. Every count-down stops at -1.
+static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
+{
+    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_STDBY], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TYMR_MINANIMPLAY], dt);
+    ent->tmr_list[ZVIL_TYMR_CURGOAL] = (ent->tmr_list[ZVIL_TYMR_CURGOAL] + dt < -1.0f) ?
+                                           -1.0f :
+                                           ent->tmr_list[ZVIL_TYMR_CURGOAL] + dt;
+    VTMR_countDown(&ent->tmr_list[ZVIL_TYMR_GENERIC], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_LOBRELOAD], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_EXTRELOAD], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_NAVDELAY], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_ANIMSOUND], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_NEXTVOICE], dt);
+    VTMR_countDown(&ent->tmr_list[ZVIL_TWIN_IGNORESNEAK], dt);
+
+    switch (ent->goal)
+    {
+    case ZVIL_GOAL_AFTERLIFE:
+    case ZVIL_GOAL_BASEINIT:
+    case ZVIL_GOAL_STARTUP:
+    case ZVIL_GOAL_GOONLINE:
+        break;
+    case ZVIL_GOAL_GUARD:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_LOOK], dt);
+    case ZVIL_GOAL_IDLE:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_BORED], dt);
+    case ZVIL_GOAL_BORED:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_CHKFORNAV], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_NAVDELAY], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_QUIP_OK], dt);
+        break;
+    case ZVIL_GOAL_PATROL:
+    case ZVIL_GOAL_MINIPATROL:
+    case ZVIL_GOAL_FOLLOW:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_CHKFORNAV], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_NAVDELAY], dt);
+        break;
+    case ZVIL_GOAL_TALK:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
+        break;
+    case ZVIL_GOAL_LOOKFORHERO:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_LOOK], dt);
+        break;
+    case ZVIL_GOAL_LISTEN:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_HEAR], dt);
+        break;
+    case ZVIL_GOAL_INVESTIGATE:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_SEARCH], dt);
+        break;
+    case ZVIL_GOAL_TAUNT:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_TAUNT], dt);
+        break;
+    case ZVIL_GOAL_ATTACKREADY:
+    case ZVIL_GOAL_BULLREADY:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_ALERT], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_TAUNT], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_NEXTCHASE], dt);
+        break;
+    case ZVIL_GOAL_CHASE:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_CHKFORNAV], dt);
+        break;
+    case ZVIL_GOAL_LOBBING:
+    case ZVIL_GOAL_SPELLCAST:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_EXTEND], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_BUILDUP], dt);
+    case ZVIL_GOAL_CQCATTACK:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TWIN_POSTATTACK], dt);
+        break;
+    case ZVIL_GOAL_DAZED:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_DAZED], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_RECOVERY], dt);
+        break;
+    case ZVIL_GOAL_GUMMED:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_GUM], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TWIN_MINGUM], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_RECOVERY], dt);
+        break;
+    case ZVIL_GOAL_SOAPED:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_SOAP], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_FIDGET], dt);
+        VTMR_countDown(&ent->tmr_list[ZVIL_TTIL_RECOVERY], dt);
+        break;
+    case ZVIL_GOAL_HURT:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_HURT], dt);
+        break;
+    case ZVIL_GOAL_DIE:
+        VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_DECAY], dt);
+        break;
+    }
+}
+
+// Squared flat distance from the villain to the player.
+static inline F32 VSUP_ds2_toPlyr(const _zEnt* ent)
+{
+    return VSUP_ds2_toEnt(ent, &globals.player.ent);
+}
+
+// Heading from the villain to the player's bound centre; see VSUP_dir_toEnt.
+static inline F32 VSUP_dir_toPlyr(const _zEnt* ent, _xVec3* dir)
+{
+    return VSUP_dir_toEnt(ent, &globals.player.ent, dir);
+}
+
+// Whether the player is in the villain's field of view.
+static inline S32 VSUP_plyr_inFOV(const st_zEntVillain* vil)
+{
+    return VSUP_ent_inFOV(vil, &globals.player.ent);
+}
+
+// Line of sight from the villain to the player; see VSUP_ent_inLOS.
+static inline S32 VSUP_plyr_inLOS(const st_zEntVillain* vil, S32 prev, F32 rand)
+{
+    return VSUP_ent_inLOS(vil, &globals.player.ent, prev, rand);
+}
+
 // Works out the villain's per-frame facts about itself and the player (prec). flg_needinfo picks
 // what: 0x1 the distance (squared and plain), heading, direction and offset to the player and the
 // player's move info, whose sneak bits (0xFF00) are cleared in a boss battle and while the
@@ -13981,14 +14031,14 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
 
     xVec3Copy(&pos_vil, xEntGetPos(vil));
     xVec3Copy(&ctr_vil, xBoundCenter(&vil->bound));
-    xVec3Copy(&pos_plyr, xEntGetPos(&globals.player.ent));
-    xVec3Copy(&ctr_plyr, xBoundCenter(&globals.player.ent.bound));
+    xVec3Copy(&pos_plyr, xEntGetPos(VSUP_plyrEnt()));
+    xVec3Copy(&ctr_plyr, xBoundCenter(&VSUP_plyrEnt()->bound));
 
     if (flg_needinfo & 0x1)
     {
-        prec->ds2_VtoP = VSUP_ds2_toEnt(vil, &globals.player.ent);
+        prec->ds2_VtoP = VSUP_ds2_toPlyr(vil);
         prec->dst_VtoP = xsqrt(prec->ds2_VtoP);
-        prec->ang_VtoP = VSUP_dir_toEnt(vil, &globals.player.ent, &prec->dir_VtoP);
+        prec->ang_VtoP = VSUP_dir_toPlyr(vil, &prec->dir_VtoP);
         xVec3Sub(&prec->vec_VtoP, &pos_plyr, &pos_vil);
         prec->plyr_mvinf = zEntPlayer_MoveInfo();
         if (g_scene_is_a_boss_battle)
@@ -14054,7 +14104,7 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
                 {
                     prec->flg_plyr |= 0x1;
                 }
-                if (VSUP_ent_inFOV(vil, &globals.player.ent))
+                if (VSUP_plyr_inFOV(vil))
                 {
                     prec->flg_plyr |= 0x4;
                 }
@@ -14062,7 +14112,7 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
                 {
                     prec->flg_plyr |= 0x8;
                 }
-                else if (VSUP_ent_inLOS(vil, &globals.player.ent, was_inlos, 0.1f))
+                else if (VSUP_plyr_inLOS(vil, was_inlos, 0.1f))
                 {
                     prec->flg_plyr |= 0x8;
                 }
@@ -14085,7 +14135,7 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
         {
             if (!(prec->flg_plyr & 0x1))
             {
-                if (VSUP_ent_inFOV(vil, &globals.player.ent))
+                if (VSUP_plyr_inFOV(vil))
                 {
                     prec->flg_plyr |= 0x4;
                 }
@@ -14093,7 +14143,7 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
                 {
                     prec->flg_plyr |= 0x8;
                 }
-                else if (VSUP_ent_inLOS(vil, &globals.player.ent, was_inlos, 0.1f))
+                else if (VSUP_plyr_inLOS(vil, was_inlos, 0.1f))
                 {
                     prec->flg_plyr |= 0x8;
                 }
@@ -14472,7 +14522,7 @@ static S32 zVIL_chk_pitfall(st_zEntVillain* vil, S32 prev, F32 rand)
 // The Mastermind's zap hurts the player by the villain type's damage. A push along the line from
 // the villain is worked out (stronger the more squarely he faces the player, at least a fifth,
 // times the type's strength) but not passed on: the damage call gets no direction.
-static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
+static void VWEP_mm_zapPlayer(const st_zEntVillain* vil)
 {
     _xVec3 vec_push = { 0 };
     _xVec3* dir_push = &vec_push;
@@ -14493,14 +14543,12 @@ static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
     dmg = 0;
     dmg = 0;
     dmg = 0;
-    dmg = 0;
-    dmg = 0;
     fac_push = MAX(0.2f, fac_push);
     xVec3Copy(&vec_push, &vil->precalc.dir_VtoP);
     vec_push.x *= fac_push * g_npcTable[vil->asset->subtype].strength;
     vec_push.y *= fac_push * g_npcTable[vil->asset->subtype].strength;
     dmg = g_npcTable[vil->asset->subtype].dmg_give;
-    zEntPlayer_Damage(vil, (dmg > 0) ? dmg : 0, NULL);
+    zEntPlayer_Damage((xBase*)vil, (dmg > 0) ? dmg : 0, NULL);
 }
 
 // Read each villain setting from the model's INI parameters, falling back to the defaults here.
@@ -14515,206 +14563,204 @@ static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
     _xVec3 vec_res = { 0 };
     F32 fv;
 
-    if (cfgdata->asset->modelInfoID &&
-        (pmdata = zEntGetModelParams(cfgdata->asset->modelInfoID, &pmsize)))
-    {
-        if (!pmsize) return;
+    if (!cfgdata->asset->modelInfoID) return;
+    pmdata = zEntGetModelParams(cfgdata->asset->modelInfoID, &pmsize);
+    if (!pmdata || !pmsize) return;
 
-        for (i = 0; i < ZVIL_PARM_NOMORE; i++)
+    for (i = 0; i < ZVIL_PARM_NOMORE; i++)
+    {
+        switch (i)
         {
-            switch (i)
-            {
-            case ZVIL_PARM_MDLSCL_BASE:
-                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
-                    cfgdata->misc_flags |= 8;
-                else
-                    cfgdata->misc_flags &= ~8;
-                cfgdata->scl_modelBase = vec_res;
-                break;
-            case ZVIL_PARM_SANIM_IDLE:
-                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
-                    cfgdata->misc_flags |= 1;
-                else
-                    cfgdata->misc_flags &= ~1;
-                cfgdata->sanim_idle = vec_res;
-                break;
-            case ZVIL_PARM_SANIM_MOVE:
-                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
-                    cfgdata->misc_flags |= 2;
-                else
-                    cfgdata->misc_flags &= ~2;
-                cfgdata->sanim_move = vec_res;
-                break;
-            case ZVIL_PARM_SANIM_CHASE:
-                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res))
-                    cfgdata->misc_flags |= 4;
-                else
-                    cfgdata->misc_flags &= ~4;
-                cfgdata->sanim_chase = vec_res;
-                break;
-            case ZVIL_PARM_WANDER_ARC:
-                cfgdata->ang_wander = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
-                break;
-            case ZVIL_PARM_HIT_POINTS:
-                cfgdata->hitpts = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
-                break;
-            // The bubbled and gummed times land in each other's timer; the asset values do not
-            // (VCFG_readAsset).
-            case ZVIL_PARM_BUBBLED_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_GUM] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
-                break;
-            case ZVIL_PARM_GUMMED_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_SOAP] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
-                break;
-            case ZVIL_PARM_DAZED_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_DAZED] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
-                break;
-            case ZVIL_PARM_EXTEND_RANGE:
-                cfgdata->dst_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            case ZVIL_PARM_EXTEND_RATE:
-                cfgdata->spd_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            case ZVIL_PARM_EXTEND_WIDTH:
-                cfgdata->wid_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            case ZVIL_PARM_EXTEND_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_EXTEND] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 2.0f);
-                break;
-            case ZVIL_PARM_FOV_ANGLE:
-                cfgdata->fov_detect = PI * zParamGetFloat(pmdata, pmsize, g_parmname[i], 50.0f) / 180.0f;
-                break;
-            case ZVIL_PARM_GLOAT_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_TAUNT] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 3.0f);
-                break;
-            case ZVIL_PARM_LOB_RANGE:
-                cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
-                break;
-            case ZVIL_PARM_LOB_SPEED:
-                cfgdata->spd_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], 2.0f);
-                break;
-            case ZVIL_PARM_LOB_SALVO:
-                cfgdata->cnt_lobSalvo = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
-                break;
-            case ZVIL_PARM_LOB_RELOAD_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_LOBRELOAD] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            // The lob arc and heaviness parameters both overwrite the lob range; their asset values
-            // still reach fac_lobarc and fac_lobheavy.
-            case ZVIL_PARM_LOB_ARC:
-                cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
-                break;
-            case ZVIL_PARM_LOB_HEAVY:
-                cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
-                break;
-            case ZVIL_PARM_DETECT_RADIUS:
-            {
-                fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
-                cfgdata->ds2_detect = SQR(fv);
-                break;
-            }
-            case ZVIL_PARM_DETECT_HEIGHT:
-                cfgdata->hyt_detect = zParamGetFloat(pmdata, pmsize, g_parmname[i], 6.0f);
-                break;
-            case ZVIL_PARM_DETECT_HYTOFF:
-                cfgdata->hyt_dtctoff = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.0f);
-                break;
-            case ZVIL_PARM_PURSUE_RADIUS:
-            {
-                fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
-                cfgdata->ds2_pursue = SQR(fv);
-                break;
-            }
-            case ZVIL_PARM_MOVE_RATE:
-                cfgdata->spd_move = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            case ZVIL_PARM_CHASE_RATE:
-                cfgdata->spd_chase = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            case ZVIL_PARM_TURN_RATE:
-                cfgdata->spd_turn = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.235988f);
-                break;
-            case ZVIL_PARM_VERT_GUM_LFOOT:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_LFOOT] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_GUM_RFOOT:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_RFOOT] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_GUM_ELBOW:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_ELBOW] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_GUM_CUSTA:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_CUSTA] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_GUM_CUSTB:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_CUSTB] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_WEAPON:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_WEAPON] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_ATTACK:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_ATTACK] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_ATTACKALT:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_ATTACKALT] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_DMG_BOUNCE:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_DMG_BOUNCE] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_LOSEYEBALL:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_LOSEYEBALL] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_RBSWORDHANDLE:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_SWORDHANDLE] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_RBSWORDPIVOT:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_SWORDPIVOT] = vec_res;
-                break;
-            case ZVIL_PARM_BND_SPH_CENTER:
-                vec_tmp.x = 0.0f;
-                vec_tmp.y = 0.7f;
-                vec_tmp.z = 0.0f;
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_tmp, &vec_res);
-                cfgdata->vec_bndoffset = vec_res;
-                break;
-            case ZVIL_PARM_BND_SPH_RADIUS:
-                cfgdata->rad_bound = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.7f);
-                break;
-            case ZVIL_PARM_BND2_SPH_CENTER:
-                vec_tmp.x = 0.0f;
-                vec_tmp.y = 2.1f;
-                vec_tmp.z = 0.0f;
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_tmp, &vec_res);
-                cfgdata->vec_bnd2offset = vec_res;
-                break;
-            case ZVIL_PARM_BND2_SPH_RADIUS:
-                cfgdata->rad_bound2 = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.0f);
-                break;
-            case ZVIL_PARM_SPAWNMASK:
-                cfgdata->msk_condspawn = zParamGetInt(pmdata, pmsize, g_parmname[i], 0);
-                break;
-            case ZVIL_PARM_MINDIFFICULTY:
-                cfgdata->minDifficulty = zParamGetInt(pmdata, pmsize, g_parmname[i], 0);
-                break;
-            case ZVIL_PARM_DMG_BEGTIME:
-                cfgdata->tym_attack_begin = zParamGetInt(pmdata, pmsize, g_parmname[i], -1) / 30.0f;
-                break;
-            case ZVIL_PARM_DMG_ENDTIME:
-                cfgdata->tym_attack_end = zParamGetInt(pmdata, pmsize, g_parmname[i], 1000) / 30.0f;
-                break;
-            }
+        case ZVIL_PARM_MDLSCL_BASE:
+            if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
+                cfgdata->misc_flags |= 8;
+            else
+                cfgdata->misc_flags &= ~8;
+            cfgdata->scl_modelBase = vec_res;
+            break;
+        case ZVIL_PARM_SANIM_IDLE:
+            if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
+                cfgdata->misc_flags |= 1;
+            else
+                cfgdata->misc_flags &= ~1;
+            cfgdata->sanim_idle = vec_res;
+            break;
+        case ZVIL_PARM_SANIM_MOVE:
+            if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
+                cfgdata->misc_flags |= 2;
+            else
+                cfgdata->misc_flags &= ~2;
+            cfgdata->sanim_move = vec_res;
+            break;
+        case ZVIL_PARM_SANIM_CHASE:
+            if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res))
+                cfgdata->misc_flags |= 4;
+            else
+                cfgdata->misc_flags &= ~4;
+            cfgdata->sanim_chase = vec_res;
+            break;
+        case ZVIL_PARM_WANDER_ARC:
+            cfgdata->ang_wander = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+            break;
+        case ZVIL_PARM_HIT_POINTS:
+            cfgdata->hitpts = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
+            break;
+        // The bubbled and gummed times land in each other's timer; the asset values do not
+        // (VCFG_readAsset).
+        case ZVIL_PARM_BUBBLED_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_GUM] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
+            break;
+        case ZVIL_PARM_GUMMED_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_SOAP] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
+            break;
+        case ZVIL_PARM_DAZED_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_DAZED] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+            break;
+        case ZVIL_PARM_EXTEND_RANGE:
+            cfgdata->dst_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        case ZVIL_PARM_EXTEND_RATE:
+            cfgdata->spd_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        case ZVIL_PARM_EXTEND_WIDTH:
+            cfgdata->wid_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        case ZVIL_PARM_EXTEND_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_EXTEND] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 2.0f);
+            break;
+        case ZVIL_PARM_FOV_ANGLE:
+            cfgdata->fov_detect = PI * zParamGetFloat(pmdata, pmsize, g_parmname[i], 50.0f) / 180.0f;
+            break;
+        case ZVIL_PARM_GLOAT_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_TAUNT] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 3.0f);
+            break;
+        case ZVIL_PARM_LOB_RANGE:
+            cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+            break;
+        case ZVIL_PARM_LOB_SPEED:
+            cfgdata->spd_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], 2.0f);
+            break;
+        case ZVIL_PARM_LOB_SALVO:
+            cfgdata->cnt_lobSalvo = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
+            break;
+        case ZVIL_PARM_LOB_RELOAD_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_LOBRELOAD] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        // The lob arc and heaviness parameters both overwrite the lob range; their asset values
+        // still reach fac_lobarc and fac_lobheavy.
+        case ZVIL_PARM_LOB_ARC:
+            cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
+            break;
+        case ZVIL_PARM_LOB_HEAVY:
+            cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
+            break;
+        case ZVIL_PARM_DETECT_RADIUS:
+        {
+            fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+            cfgdata->ds2_detect = SQR(fv);
+            break;
+        }
+        case ZVIL_PARM_DETECT_HEIGHT:
+            cfgdata->hyt_detect = zParamGetFloat(pmdata, pmsize, g_parmname[i], 6.0f);
+            break;
+        case ZVIL_PARM_DETECT_HYTOFF:
+            cfgdata->hyt_dtctoff = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.0f);
+            break;
+        case ZVIL_PARM_PURSUE_RADIUS:
+        {
+            fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+            cfgdata->ds2_pursue = SQR(fv);
+            break;
+        }
+        case ZVIL_PARM_MOVE_RATE:
+            cfgdata->spd_move = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        case ZVIL_PARM_CHASE_RATE:
+            cfgdata->spd_chase = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        case ZVIL_PARM_TURN_RATE:
+            cfgdata->spd_turn = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.235988f);
+            break;
+        case ZVIL_PARM_VERT_GUM_LFOOT:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_GUM_LFOOT] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_GUM_RFOOT:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_GUM_RFOOT] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_GUM_ELBOW:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_GUM_ELBOW] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_GUM_CUSTA:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_GUM_CUSTA] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_GUM_CUSTB:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_GUM_CUSTB] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_WEAPON:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_WEAPON] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_ATTACK:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_ATTACK] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_ATTACKALT:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_ATTACKALT] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_DMG_BOUNCE:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_DMG_BOUNCE] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_LOSEYEBALL:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_LOSEYEBALL] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_RBSWORDHANDLE:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_SWORDHANDLE] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_RBSWORDPIVOT:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_SWORDPIVOT] = vec_res;
+            break;
+        case ZVIL_PARM_BND_SPH_CENTER:
+            vec_tmp.x = 0.0f;
+            vec_tmp.y = 0.7f;
+            vec_tmp.z = 0.0f;
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_tmp, &vec_res);
+            cfgdata->vec_bndoffset = vec_res;
+            break;
+        case ZVIL_PARM_BND_SPH_RADIUS:
+            cfgdata->rad_bound = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.7f);
+            break;
+        case ZVIL_PARM_BND2_SPH_CENTER:
+            vec_tmp.x = 0.0f;
+            vec_tmp.y = 2.1f;
+            vec_tmp.z = 0.0f;
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_tmp, &vec_res);
+            cfgdata->vec_bnd2offset = vec_res;
+            break;
+        case ZVIL_PARM_BND2_SPH_RADIUS:
+            cfgdata->rad_bound2 = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.0f);
+            break;
+        case ZVIL_PARM_SPAWNMASK:
+            cfgdata->msk_condspawn = zParamGetInt(pmdata, pmsize, g_parmname[i], 0);
+            break;
+        case ZVIL_PARM_MINDIFFICULTY:
+            cfgdata->minDifficulty = zParamGetInt(pmdata, pmsize, g_parmname[i], 0);
+            break;
+        case ZVIL_PARM_DMG_BEGTIME:
+            cfgdata->tym_attack_begin = zParamGetInt(pmdata, pmsize, g_parmname[i], -1) / 30.0f;
+            break;
+        case ZVIL_PARM_DMG_ENDTIME:
+            cfgdata->tym_attack_end = zParamGetInt(pmdata, pmsize, g_parmname[i], 1000) / 30.0f;
+            break;
         }
     }
 }
@@ -14848,6 +14894,22 @@ static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS
     return found;
 }
 
+// Whether a time into the attack animation is inside the villain's damage window, from its
+// configured start and end times (-1 and -2 when it has none).
+static bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym)
+{
+    F32 tym_beg = -1.0f;
+    F32 tym_end = -2.0f;
+    VCFG_getParm(&vil->vilcfg, ZVIL_PARM_DMG_BEGTIME, &tym_beg);
+    VCFG_getParm(&vil->vilcfg, ZVIL_PARM_DMG_ENDTIME, &tym_end);
+    bool inwin = tym >= tym_beg;
+    if (inwin)
+    {
+        inwin = tym <= tym_end;
+    }
+    return inwin;
+}
+
 // Set the villain's behaviour goal and, when it has links, send them the event for the kind of
 // goal it entered (idle, patrol, guard, dazed, search, listen, investigate, chase, attack and
 // mini-patrol each have one; bored sends its event only while the villain is asleep).
@@ -14961,9 +15023,10 @@ static S32 VWEP_swipe(st_zEntVillain* vil, F32)
 }
 
 // Unused.
-static void zEntVillain_UnknownTemplate108()
+static void zEntVillain_UnknownTemplate108(F32* out)
 {
     S32 lost[27] = { 0 };
+    *out = 0.7f;
 }
 
 // Aim the extended attack from its tagged vertex and emit its trail.
@@ -14997,8 +15060,9 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
     }
     dist = ent->spd_extend;
     tym_elap = ent->tmr_list[ZVIL_TYMR_CURGOAL];
-    if (ent->tmr_list[ZVIL_TDUR_EXTEND] < tym_elap) tym_elap = ent->tmr_list[ZVIL_TDUR_EXTEND];
-    dist = MIN(tym_elap * dist, ent->dst_extend);
+    conrat = ent->tmr_list[ZVIL_TDUR_EXTEND];
+    if (conrat < tym_elap) tym_elap = conrat;
+    dist = MIN(dist * tym_elap, ent->dst_extend);
     dist = MAX(0.01f, dist);
     conrat = ent->wid_extend / ent->dst_extend;
     VSUP_ang_toXZDir(ent->frame->rot.angle, &dirvec);
@@ -15017,21 +15081,7 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
     }
     if (ent->asset->subtype == eEntVillainTypeKillerPlant)
     {
-        if (sEmitKillerPlant)
-        {
-            _zParEmitterCustomSettings settings;
-            _xVec3 dir;
-            settings.pos.x = ent->model->Mat->pos.x;
-            settings.pos.y = ent->model->Mat->pos.y;
-            settings.pos.z = ent->model->Mat->pos.z;
-            settings.pos.x += 0.25f * ent->model->Mat->at.x;
-            settings.pos.y += 1.6f;
-            settings.pos.z += 0.25f * ent->model->Mat->at.z;
-            xVec3Normalize(&dir, &dirvec);
-            settings.custom_flags = 0x60;
-            xVec3SMul(&settings.vel, &dir, 1.0f + 0.25f * iurand());
-            zParEmitterEmitCustom(sEmitKillerPlant, dt, &settings);
-        }
+        VPAR_emit_killerplant(ent, &dirvec, dt);
     }
     else VPAR_emit_extattack(ent, &shotpos, &dirvec, dist, conrat, dt);
     return 0;
@@ -16063,8 +16113,10 @@ static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt)
 
     fb = xVec3Length2(&delta);
     if (fb > SQR(outer + br)) return 1;
-    if (pos_plyr.y - br > pos_prj.y + 0.5f * quake->hyt_shock) return 1;
-    if (pos_plyr.y + br < pos_prj.y - 0.5f * quake->hyt_shock) return 1;
+    outer = pos_prj.y + 0.5f * quake->hyt_shock;
+    if (pos_plyr.y - br > outer) return 1;
+    outer = pos_prj.y - 0.5f * quake->hyt_shock;
+    if (pos_plyr.y + br < outer) return 1;
     if (inner > br && fb < SQR(inner - br)) return 1;
     return 0;
 }
@@ -16479,7 +16531,7 @@ static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
 
 // The Mastermind's flask type for his next throw: smog at 4 hit points, acid at 3, fire at 2 and a
 // random one of the three at 1; smog otherwise.
-static inline en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil)
+static en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil)
 {
     en_ZVMM_FLASK_TYPE ftype;
     S32 typlist[3] = { MAST_FLSK_SMOG, MAST_FLSK_ACID, MAST_FLSK_FIRE };
@@ -16613,18 +16665,7 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
     rbs->frame = &rbs->raw_frame;
     rbs->collis = &rbs->raw_collis;
     vec_pos = *xEntGetPos(rbs->rbvil);
-    _xMat4x3 mat = { 0 };
-    xMat3x3Euler((xMat3x3*)&mat, 0.0f, 0.0f, 0.0f);
-    xVec3SMulBy(&mat.right, 1.0f);
-    xVec3SMulBy(&mat.up, 1.0f);
-    xVec3SMulBy(&mat.at, 1.0f);
-    mat.flags = 0;
-    mat.pos = vec_pos;
-    rbs->bound.type = 1;
-    rbs->bound.sph.r = 0.75f;
-    rbs->bound.sph.center = vec_pos;
-    xBoundUpdate(&rbs->bound);
-    memcpy(rbs->model->Mat, &mat, sizeof(mat));
+    VWEP_rbs_place(rbs, &vec_pos);
     rbs->frame->rot.axis = g_Y3;
     rbs->frame->rot.angle = 0.0f;
     rbs->frame->vel = g_O3;
@@ -16637,6 +16678,27 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
             rbs->ent_colchk[i] = NULL;
     }
     rbs->flg_stat |= 2;
+}
+
+// Puts a Redbeard sword's model, unrotated and unscaled, and its collision
+// sphere (radius 0.75) at pos when one is given.
+static inline void VWEP_rbs_place(st_REDBEARD_SWORD* rbs, _xVec3* pos)
+{
+    _xMat4x3 mat = { 0 };
+    xMat3x3Euler((xMat3x3*)&mat, 0.0f, 0.0f, 0.0f);
+    xVec3SMulBy(&mat.right, 1.0f);
+    xVec3SMulBy(&mat.up, 1.0f);
+    xVec3SMulBy(&mat.at, 1.0f);
+    mat.flags = 0;
+    if (pos)
+    {
+        mat.pos = *pos;
+        rbs->bound.type = 1;
+        rbs->bound.sph.r = 0.75f;
+        rbs->bound.sph.center = *pos;
+        xBoundUpdate(&rbs->bound);
+    }
+    memcpy(rbs->model->Mat, &mat, sizeof(mat));
 }
 
 // Keeps a Redbeard sword's collision sphere (radius 0.75) on its position.
@@ -16678,14 +16740,14 @@ static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs)
     }
     memcpy(rbs->model->Mat, &rbs->frame->mat, sizeof(xMat4x3));
     rbs->bound.sph.center = rbs->frame->mat.pos;
-    rbs->mdl_animsword->Flags &= ~1;
-    rbs->model->Flags |= 1;
+    rbs->mdl_animsword->Flags &= (U16)~1;
+    rbs->model->Flags |= (U16)1;
     rbs->flg_stat |= 4;
 }
 
 // Spins the flying sword 25.132742 radians (8 pi) per second about x and moves it along its end
 // direction at its flight speed, outward before 2.5 seconds of age and back afterwards.
-static inline void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt)
+static void VWEP_rbs_flight(st_REDBEARD_SWORD* rbs, F32 dt)
 {
     _xMat3x3 mat_rot = { 0 };
     _xVec3 vec_rot = { 25.132742f, 0.0f, 0.0f };
@@ -16852,8 +16914,16 @@ static void VEFX_plop_gum(st_zEntVillain* ent)
     }
 }
 
+// Copies a particle color's red, green and blue from col into dst.
+static inline void VPAR_copyColor(U8* dst, const U8* col)
+{
+    dst[0] = col[0];
+    dst[1] = col[1];
+    dst[2] = col[2];
+}
+
 // Emit hologram particles and flicker the villain while its hologram flag is set.
-static inline void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt)
+static void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt)
 {
     U8* col;
     _zParEmitterCustomSettings info;
@@ -16864,13 +16934,9 @@ static inline void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt)
     if (fade)
     {
         col = gVillainPoofColorBirth[vil->asset->subtype];
-        info.color_birth[0] = col[0];
-        info.color_birth[1] = col[1];
-        info.color_birth[2] = col[2];
+        VPAR_copyColor(info.color_birth, col);
         col = gVillainPoofColorDeath[vil->asset->subtype];
-        info.color_death[0] = col[0];
-        info.color_death[1] = col[1];
-        info.color_death[2] = col[2];
+        VPAR_copyColor(info.color_death, col);
         info.custom_flags = 0x5A0;
         info.pos = *xBoundCenter(&vil->bound);
         info.size_death = 5.0f * vil->bound.sph.r;
@@ -16879,14 +16945,10 @@ static inline void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt)
         zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
 
         col = gVillainDotsColorBirth[vil->asset->subtype];
-        info.color_birth[0] = col[0];
-        info.color_birth[1] = col[1];
-        info.color_birth[2] = col[2];
+        VPAR_copyColor(info.color_birth, col);
         info.color_birth[3] = 255;
         col = gVillainDotsColorDeath[vil->asset->subtype];
-        info.color_death[0] = col[0];
-        info.color_death[1] = col[1];
-        info.color_death[2] = col[2];
+        VPAR_copyColor(info.color_death, col);
         info.color_death[3] = 0;
         info.custom_flags = 0x201A0;
         info.xzcircle_radius = vil->bound.sph.r;
@@ -16990,7 +17052,7 @@ static void VEFX_zapTheKnight(st_zEntVillain* vil, S32 cleanup)
 }
 
 // Start a straight white bolt from one point to another.
-static inline _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 dur)
+static _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 dur)
 {
     _tagLightningAdd add = { eLT_Line };
     add.start = from;
@@ -17008,7 +17070,7 @@ static inline _tagLightning* VEFX_zapper_type_A(_xVec3* from, _xVec3* to, F32 du
 }
 
 // Start a blue bolt that spins around the line from one point to another.
-static inline _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 dur)
+static _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 dur)
 {
     _tagLightningAdd add = { eLT_Line };
     add.start = from;
@@ -17087,6 +17149,17 @@ static void VPAR_readyize_emitters()
 static inline S32 VPAR_emit_headbutt(st_zEntVillain* ent, F32 dt, st_zEntVillain_ParEmitRecord* vpar,
                                      S32 idx, _xVec3* pos, _zParEmitterCustomSettings* pecust);
 
+// Emits a gummy burst at each of the five gum vertices the villain's model has.
+static inline S32 VPAR_emit_gummy(st_zEntVillain* ent, F32 dt, st_zEntVillain_ParEmitRecord* vpar,
+                                  S32 idx, _xVec3* pos, _zParEmitterCustomSettings* pecust)
+{
+    pecust->custom_flags = 0x20;
+    for (idx = 0; idx <= 4; idx++)
+        if (VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)idx, &pecust->pos))
+            zParEmitterEmitCustom(vpar->emitctxt, dt, pecust);
+    return 0;
+}
+
 // Emit a villain particle role at its bound, head, or marked model vertices.
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F32 dt)
 {
@@ -17119,11 +17192,7 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             do_emit = 0;
             break;
         case VPAR_EMIT_GUMMY:
-            pecust.custom_flags = 0x20;
-            for (idx = 0; idx <= 4; idx++)
-                if (VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)idx, &pecust.pos))
-                    zParEmitterEmitCustom(vpar->emitctxt, dt, &pecust);
-            do_emit = 0;
+            do_emit = VPAR_emit_gummy(ent, dt, vpar, idx, &vilctr, &pecust);
             break;
         case VPAR_EMIT_HEADBUTT:
             do_emit = VPAR_emit_headbutt(ent, dt, vpar, idx, &vilctr, &pecust);
@@ -17134,8 +17203,8 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             pecust.custom_flags = 0x20;
             if (vpar->emitterID == xStrHash("ParEmit_Vil_Bored"))
             {
-                pecust.color_birth[3] = 0;
                 pecust.custom_flags |= 0x180;
+                pecust.color_birth[3] = 0;
                 pecust.color_death[3] = 0;
             }
             do_emit = 1;
@@ -17145,8 +17214,8 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             if (g_scene_is_a_boss_battle) break;
         case VPAR_EMIT_BUTTBOUNCE:
         case VPAR_EMIT_STUN:
-            pecust.pos = vilhed;
             pecust.custom_flags = 0x20;
+            pecust.pos = vilhed;
             do_emit = 1;
             break;
         case VPAR_EMIT_WALLPRINT:
@@ -17181,13 +17250,12 @@ static inline S32 VPAR_emit_headbutt(st_zEntVillain* ent, F32 dt, st_zEntVillain
 {
     _xVec3 angles = { 0 };
     _xEnt* player_ent = &globals.player.ent;
-    xMat4x3* playerframe = (xMat4x3*)player_ent->model->Mat;
     pecust->custom_flags = 0x20;
-    pecust->pos.x = playerframe->pos.x + playerframe->at.x;
-    pecust->pos.y = playerframe->pos.y + 1.1f;
-    pecust->pos.z = playerframe->pos.z + playerframe->at.z;
+    pecust->pos.x = ((xMat4x3*)player_ent->model->Mat)->pos.x + ((xMat4x3*)player_ent->model->Mat)->at.x;
+    pecust->pos.y = ((xMat4x3*)player_ent->model->Mat)->pos.y + 1.1f;
+    pecust->pos.z = ((xMat4x3*)player_ent->model->Mat)->pos.z + ((xMat4x3*)player_ent->model->Mat)->at.z;
     pecust->custom_flags |= 0x10000;
-    xMat3x3GetEuler((xMat3x3*)playerframe, &angles);
+    xMat3x3GetEuler((xMat3x3*)player_ent->model->Mat, &angles);
     pecust->rot[1] = 0x40;
     pecust->rot[0] = (U8)(S32)(255.0f * (angles.x / (2.0f * PI)));
     pecust->rot[2] = (U8)(S32)(255.0f * (angles.z / (2.0f * PI)));
@@ -17246,6 +17314,25 @@ static void VPAR_emit_extattack(st_zEntVillain* ent, _xVec3* origin, _xVec3* aim
     }
 }
 
+// Emit the Killer Plant's cloud from just above its model, along aimdir.
+static void VPAR_emit_killerplant(st_zEntVillain* ent, _xVec3* aimdir, F32 dt)
+{
+    if (sEmitKillerPlant)
+    {
+        _zParEmitterCustomSettings settings;
+        _xVec3 dir;
+        settings.pos.x = ent->model->Mat->pos.x;
+        settings.pos.y = ent->model->Mat->pos.y;
+        settings.pos.z = ent->model->Mat->pos.z;
+        settings.pos.x += 0.25f * ent->model->Mat->at.x;
+        settings.pos.y += 1.6f;
+        settings.pos.z += 0.25f * ent->model->Mat->at.z;
+        xVec3Normalize(&dir, aimdir);
+        settings.custom_flags = 0x60;
+        xVec3SMul(&settings.vel, &dir, 1.0f + 0.25f * iurand());
+        zParEmitterEmitCustom(sEmitKillerPlant, dt, &settings);
+    }
+}
 
 // Builds the Black Knight's animation table: patrol, shock, attack and gloat states.
 static xAnimTable* VANM_mktable_BK()
@@ -19346,22 +19433,6 @@ static inline F32 VCFG_tymref(st_zEntVillain* vil, S32 which)
     return vil->vilcfg.tymref_list[which];
 }
 
-// Whether a time into the attack animation is inside the villain's damage window, from its
-// configured start and end times (-1 and -2 when it has none).
-static inline bool VCFG_inDamageWindow(st_zEntVillain* vil, F32 tym)
-{
-    F32 tym_beg = -1.0f;
-    F32 tym_end = -2.0f;
-    VCFG_getParm(&vil->vilcfg, ZVIL_PARM_DMG_BEGTIME, &tym_beg);
-    VCFG_getParm(&vil->vilcfg, ZVIL_PARM_DMG_ENDTIME, &tym_end);
-    bool inwin = tym >= tym_beg;
-    if (inwin)
-    {
-        inwin = tym <= tym_end;
-    }
-    return inwin;
-}
-
 // Adds a sound to the first free slot of the villain's sound queue (a slot whose sound is -1),
 // cleared first. A sound to play directly is queued as VSND_LISTEND. Returns 1 if a slot was
 // free, 0 if not or if the sound is VSND_TYP_BOGUS.
@@ -19684,18 +19755,13 @@ static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
     S32 flags;
-    S32 i;
 
     xSndStopChildren((U32)vil + 2);
     vil->sfx_curTalk = sfx;
     if (sfx && sfx->asset && sfx->asset->id)
     {
         flags = VSND_findProps(VSND_TYP_ZSFXTALK, &sprop);
-        for (i = 0; i < 4; i++)
-        {
-            vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
-            vil->snd_queue[i].sndDirect = 0;
-        }
+        VSND_clearQueue(vil);
         VSND_addQueueEntry(vil, (en_NPC_SOUND)0x8000, flags, g_npcTable[vil->asset->subtype].dst_noisy,
                            sprop->tym_delayStart, -1.0f, 0, sfx->asset->soundAssetID);
     }
@@ -19730,20 +19796,27 @@ static S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* 
     return 1;
 }
 
-// Queue a sound with the villain type's noise radius and the sound's configured delay.
+// Queue a sound with the villain type's noise radius and the sound's configured delay, played once
+// (no repeat delay, no repeat count) and not as a direct sound.
 extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
-    S32 flags = VSND_findProps(sndEvent, &sprop);
-    if (sndEvent != VSND_TYP_HOLOFADE) flags &= 0x0FFFFFFF;
-    VSND_addQueueEntry(vil, sndEvent, flags, g_npcTable[vil->asset->subtype].dst_noisy,
-                       sprop->tym_delayStart, -1.0f, 0, 0);
+    S32 flg_vsnd = 0;
+    F32 tym_repeat = -1.0f;
+    S32 cnt_repeat = 0;
+    U32 snd_direct = 0;
+
+    flg_vsnd = VSND_findProps(sndEvent, &sprop);
+    if (sndEvent != VSND_TYP_HOLOFADE) flg_vsnd &= 0x0FFFFFFF;
+    VSND_addQueueEntry(vil, sndEvent, flg_vsnd, g_npcTable[vil->asset->subtype].dst_noisy,
+                       sprop->tym_delayStart, tym_repeat, cnt_repeat, snd_direct);
 }
 
 // Fill the bonus item table: find each bonus pickup of the scene, make it droppable (parked far
 // away) and mark its kind (food, soap ammo or gum ammo).
 static inline void VBON_setup_bonusTable()
 {
+    st_NPC_BONUS* bon;
     U32 aid_pick;
     S32 i;
     _xVec3 farfar = { 867.0f, -5309.0f, 2469.0f };
@@ -19751,29 +19824,30 @@ static inline void VBON_setup_bonusTable()
     memset(g_npcBonus, 0, sizeof(g_npcBonus));
     for (i = 0; i < 11; i++)
     {
+        bon = &g_npcBonus[i];
         aid_pick = xStrHash(g_strz_npcBonus[i]);
-        g_npcBonus[i].pickup = (_zEntPickup*)zSceneFindObject(aid_pick);
-        if (g_npcBonus[i].pickup)
+        bon->pickup = (_zEntPickup*)zSceneFindObject(aid_pick);
+        if (bon->pickup)
         {
-            zEntPickup_MakeDroppable(g_npcBonus[i].pickup, &farfar, NULL);
+            zEntPickup_MakeDroppable(bon->pickup, &farfar, NULL);
             switch (i)
             {
             case 8:
             case 9:
             case 10:
-                g_npcBonus[i].flg_info |= 0x10000;
+                bon->flg_info |= 0x10000;
                 break;
             case 5:
             case 6:
             case 7:
-                g_npcBonus[i].flg_info |= 0x20000;
+                bon->flg_info |= 0x20000;
                 break;
             case 0:
             case 1:
             case 2:
             case 3:
             case 4:
-                g_npcBonus[i].flg_info |= 0x40000;
+                bon->flg_info |= 0x40000;
                 break;
             }
         }
@@ -20009,6 +20083,193 @@ static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp)
     return &g_npcBonus[choice];
 }
 
+// Heading (around the y axis) of a direction, from its x and z.
+static inline F32 VSUP_ang_ofXZDir(_xVec3 dir)
+{
+    return atan2(dir.x, dir.z);
+}
+
+// Squared flat (x and z) distance from the entity's model position to a position. Worker for
+// VSUP_ds2_toPos.
+static F32 VSUP_ds2_inner(const _zEnt* ent, _xVec3 pos)
+{
+    _xVec3 delta = { 0 };
+
+    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
+    return delta.x * delta.x + delta.z * delta.z;
+}
+
+// Heading (around the y axis) from the entity's model position to a position. If dir is given,
+// it gets the unit direction to the position. Worker for VSUP_dir_toPos.
+static F32 VSUP_dir_inner(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
+{
+    _xVec3 delta = { 0 };
+    F32 ang;
+
+    xVec3Sub(&delta, &pos, VSUP_posEnt(ent));
+    xVec3Normalize(&delta, &delta);
+    ang = xAngleClamp(VSUP_ang_ofXZDir(delta));
+    if (dir)
+    {
+        xVec3Normalize(dir, &delta);
+    }
+    return ang;
+}
+
+// Squared flat (x and z) distance from the entity to a position.
+static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
+{
+    return VSUP_ds2_inner(ent, pos);
+}
+
+// Heading (around the y axis) from the entity to a position. If dir is given, it gets the unit
+// direction to the position.
+static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
+{
+    return VSUP_dir_inner(ent, pos, dir);
+}
+
+// Squared flat (x and z) distance from the villain to another entity's position.
+static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt)
+{
+    _xVec3 pos = { 0 };
+
+    xVec3Copy(&pos, xEntGetPos(tgt));
+    return VSUP_ds2_toPos(ent, pos);
+}
+
+// Heading from the entity to the centre of another entity's bound; see VSUP_dir_toPos.
+static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _zEnt* tgt, _xVec3* dir)
+{
+    _xVec3 ctr = { 0 };
+
+    xVec3Copy(&ctr, xBoundCenter(&tgt->bound));
+    return VSUP_dir_toPos(ent, ctr, dir);
+}
+
+// Heading from the entity to another entity's bound centre.
+static inline F32 VSUP_ang_toEnt(const _zEnt* ent, const _zEnt* tgt)
+{
+    return VSUP_dir_toEnt(ent, tgt, NULL);
+}
+
+// Unused.
+static void zEntVillain_UnknownTemplate116()
+{
+    S32 lost[29] = { 0 };
+}
+
+// Whether the entity's bound centre is within half the villain's field of view either side of
+// its heading. A villain with no field of view sees nothing.
+static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent)
+{
+    S32 result = 0;
+    F32 ang = VSUP_ang_toEnt(vil, ent);
+    F32 ang_face = vil->frame->rot.angle;
+
+    if (vil->fov_detect <= 0.0f)
+    {
+        result = 0;
+    }
+    else if (fabsf(ang_face - ang) < 0.5f * vil->fov_detect)
+    {
+        result = 1;
+    }
+    return result;
+}
+
+// Puts the world position of one of the villain's model vertices in pos and returns 1, or returns 0
+// when that vertex is not set up.
+static inline S32 VSUP_vertPos(const st_zEntVillain* vil, en_ZVIL_MODEL_VERTEX vert, _xVec3* pos)
+{
+    if (!(vil->flg_vert & (1 << vert)))
+    {
+        return 0;
+    }
+
+    iModelTagEval(vil->model->Data, (iModelTag*)&vil->tag_vert[vert], vil->model->Mat, pos);
+    return 1;
+}
+
+// Line of sight from the villain to the entity; see VSUP_ent_inLOS_timz.
+static S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
+{
+    return VSUP_ent_inLOS_timz(vil, ent, prev, rand);
+}
+
+// Whether nothing in the scene blocks a ray from the villain's bound centre toward the entity's,
+// starting just outside the villain's bound and reaching no farther than its detection range.
+// The ray is cast only with chance rand; otherwise the previous answer (prev) stands.
+static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
+{
+    S32 result;
+
+    if (!xUtil_yesno(rand))
+    {
+        return prev;
+    }
+
+    _xRay3 r = { 0 };
+    _xVec3 mypos = { 0 };
+
+    xVec3Copy(&mypos, xBoundCenter(&vil->bound));
+    r.min_t = 0.001f + vil->bound.sph.r;
+    xVec3Sub(&r.dir, xBoundCenter(&ent->bound), &mypos);
+    r.max_t = xVec3Normalize(&r.dir, &r.dir);
+    r.max_t = MIN(xsqrt(vil->ds2_detect), r.max_t);
+    xVec3SMul(&r.origin, &r.dir, r.min_t);
+    xVec3AddTo(&r.origin, &mypos);
+    r.flags = 0x800;
+    result = !xRayHitsSceneFast(&r, globals.sceneCur);
+    return result;
+}
+
+// Unused.
+static void zEntVillain_UnknownConstA(F32* a)
+{
+    *a = 0.1f;
+}
+
+// Heading from the villain's facing to the entity, clamped. If qdrant is given, it gets the
+// entity's quadrant: front within 45 degrees either side of the facing, then right, back and
+// left. The left test repeats the front range's bounds, so left is never given and qdrant stays
+// as it was for an angle there.
+static F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent, en_NPC_QUADRANT* qdrant)
+{
+    F32 ang_diff = VSUP_dir_toEnt(vil, ent, NULL) - vil->frame->rot.angle;
+    F32 ang_aoi;
+
+    if (qdrant)
+    {
+        ang_aoi = ang_diff;
+        ang_aoi += PI / 4;
+        ang_aoi = xAngleClamp(ang_aoi);
+        if (ang_aoi > 0.0f && ang_aoi <= PI / 2)
+        {
+            *qdrant = ZVIL_QUAD_FRONT;
+        }
+        else if (ang_aoi > PI / 2 && ang_aoi <= PI)
+        {
+            *qdrant = ZVIL_QUAD_RIGHT;
+        }
+        else if (ang_aoi > PI && ang_aoi < 3 * PI / 2)
+        {
+            *qdrant = ZVIL_QUAD_BACK;
+        }
+        else if (ang_aoi > 0.0f && ang_aoi < PI / 2)
+        {
+            *qdrant = ZVIL_QUAD_LEFT;
+        }
+    }
+    return xAngleClamp(ang_diff);
+}
+
+// Unused.
+static void zEntVillain_UnknownConstB(F32* a)
+{
+    *a = 9.0f;
+}
+
 static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
 {
     S32 idx = 0;
@@ -20057,194 +20318,6 @@ static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
     {
         wts[i] *= fac;
     }
-}
-
-// Heading (around the y axis) of a direction, from its x and z.
-static inline F32 VSUP_ang_ofXZDir(_xVec3 dir)
-{
-    return atan2(dir.x, dir.z);
-}
-
-// Squared flat (x and z) distance from the entity's model position to a position. Worker for
-// VSUP_ds2_toPos.
-static F32 VSUP_ds2_inner(const _zEnt* ent, _xVec3 pos)
-{
-    _xVec3 delta = { 0 };
-
-    xVec3Sub(&delta, &pos, &((xMat4x3*)ent->model->Mat)->pos);
-    return delta.x * delta.x + delta.z * delta.z;
-}
-
-// Heading (around the y axis) from the entity's model position to a position. If dir is given,
-// it gets the unit direction to the position. Worker for VSUP_dir_toPos.
-static F32 VSUP_dir_inner(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
-{
-    _xVec3 delta = { 0 };
-    F32 ang;
-
-    xVec3Sub(&delta, &pos, &((xMat4x3*)ent->model->Mat)->pos);
-    xVec3Normalize(&delta, &delta);
-    ang = xAngleClamp(VSUP_ang_ofXZDir(delta));
-    if (dir)
-    {
-        xVec3Normalize(dir, &delta);
-    }
-    return ang;
-}
-
-// Squared flat (x and z) distance from the entity to a position.
-static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos)
-{
-    return VSUP_ds2_inner(ent, pos);
-}
-
-// Heading (around the y axis) from the entity to a position. If dir is given, it gets the unit
-// direction to the position.
-static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
-{
-    return VSUP_dir_inner(ent, pos, dir);
-}
-
-// Squared flat (x and z) distance from the villain to another entity's position.
-static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt)
-{
-    _xVec3 pos = { 0 };
-
-    xVec3Copy(&pos, xEntGetPos(tgt));
-    return VSUP_ds2_toPos(ent, pos);
-}
-
-// Heading from the entity to the centre of another entity's bound; see VSUP_dir_toPos.
-static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir)
-{
-    _xVec3 ctr = { 0 };
-
-    xVec3Copy(&ctr, xBoundCenter(&tgt->bound));
-    return VSUP_dir_toPos(ent, ctr, dir);
-}
-
-// Unused.
-static void zEntVillain_UnknownTemplate116()
-{
-    S32 lost[29] = { 0 };
-}
-
-// Whether the entity's bound centre is within half the villain's field of view either side of
-// its heading. A villain with no field of view sees nothing.
-static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent)
-{
-    S32 result = 0;
-    F32 ang = VSUP_dir_toEnt(vil, ent, NULL);
-    F32 ang_face = vil->frame->rot.angle;
-
-    if (vil->fov_detect <= 0.0f)
-    {
-        result = 0;
-    }
-    else if (fabsf(ang_face - ang) < 0.5f * vil->fov_detect)
-    {
-        result = 1;
-    }
-    return result;
-}
-
-// Heading from the villain's facing to the entity, clamped. If qdrant is given, it gets the
-// entity's quadrant: front within 45 degrees either side of the facing, then right, back and
-// left. The left test repeats the front range's bounds, so left is never given and qdrant stays
-// as it was for an angle there.
-static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent, en_NPC_QUADRANT* qdrant)
-{
-    F32 ang_diff = VSUP_dir_toEnt(vil, ent, NULL) - vil->frame->rot.angle;
-    F32 ang_aoi;
-
-    if (qdrant)
-    {
-        ang_aoi = ang_diff;
-        ang_aoi += PI / 4;
-        ang_aoi = xAngleClamp(ang_aoi);
-        if (ang_aoi > 0.0f && ang_aoi <= PI / 2)
-        {
-            *qdrant = ZVIL_QUAD_FRONT;
-        }
-        else if (ang_aoi > PI / 2 && ang_aoi <= PI)
-        {
-            *qdrant = ZVIL_QUAD_RIGHT;
-        }
-        else if (ang_aoi > PI && ang_aoi < 3 * PI / 2)
-        {
-            *qdrant = ZVIL_QUAD_BACK;
-        }
-        else if (ang_aoi > 0.0f && ang_aoi < PI / 2)
-        {
-            *qdrant = ZVIL_QUAD_LEFT;
-        }
-    }
-    return xAngleClamp(ang_diff);
-}
-
-// Whether nothing in the scene blocks a ray from the villain's bound centre toward the entity's,
-// starting just outside the villain's bound and reaching no farther than its detection range.
-// The ray is cast only with chance rand; otherwise the previous answer (prev) stands.
-static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
-{
-    S32 result;
-
-    if (!xUtil_yesno(rand))
-    {
-        return prev;
-    }
-
-    _xRay3 r = { 0 };
-    _xVec3 mypos = { 0 };
-
-    xVec3Copy(&mypos, xBoundCenter(&vil->bound));
-    r.min_t = 0.001f + vil->bound.sph.r;
-    xVec3Sub(&r.dir, xBoundCenter(&ent->bound), &mypos);
-    r.max_t = xVec3Normalize(&r.dir, &r.dir);
-    r.max_t = MIN(xsqrt(vil->ds2_detect), r.max_t);
-    xVec3SMul(&r.origin, &r.dir, r.min_t);
-    xVec3AddTo(&r.origin, &mypos);
-    r.flags = 0x800;
-    result = !xRayHitsSceneFast(&r, globals.sceneCur);
-    return result;
-}
-
-// Puts the world position of one of the villain's model vertices in pos and returns 1, or returns 0
-// when that vertex is not set up.
-static inline S32 VSUP_vertPos(const st_zEntVillain* vil, en_ZVIL_MODEL_VERTEX vert, _xVec3* pos)
-{
-    if (!(vil->flg_vert & (1 << vert)))
-    {
-        return 0;
-    }
-
-    iModelTagEval(vil->model->Data, (iModelTag*)&vil->tag_vert[vert], vil->model->Mat, pos);
-    return 1;
-}
-
-// Line of sight from the villain to the entity; see VSUP_ent_inLOS_timz.
-static S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
-{
-    return VSUP_ent_inLOS_timz(vil, ent, prev, rand);
-}
-
-// Flips each component of out that points against the matching component of alter.
-static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
-{
-    if (alter->x < 0.0f && out->x > 0.0f)
-        out->x *= -1.0f;
-    else if (alter->x > 0.0f && out->x < 0.0f)
-        out->x *= -1.0f;
-
-    if (alter->y < 0.0f && out->y > 0.0f)
-        out->y *= -1.0f;
-    else if (alter->y > 0.0f && out->y < 0.0f)
-        out->y *= -1.0f;
-
-    if (alter->z < 0.0f && out->z > 0.0f)
-        out->z *= -1.0f;
-    else if (alter->z > 0.0f && out->z < 0.0f)
-        out->z *= -1.0f;
 }
 
 // The flat (x and z) unit direction of a heading.
@@ -20323,10 +20396,31 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
     return hit_something;
 }
 
+// Flips each component of out that points against the matching component of alter.
+static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
+{
+    if (alter->x < 0.0f && out->x > 0.0f)
+        out->x *= -1.0f;
+    else if (alter->x > 0.0f && out->x < 0.0f)
+        out->x *= -1.0f;
+
+    if (alter->y < 0.0f && out->y > 0.0f)
+        out->y *= -1.0f;
+    else if (alter->y > 0.0f && out->y < 0.0f)
+        out->y *= -1.0f;
+
+    if (alter->z < 0.0f && out->z > 0.0f)
+        out->z *= -1.0f;
+    else if (alter->z > 0.0f && out->z < 0.0f)
+        out->z *= -1.0f;
+}
+
 // Unused.
-static void zEntVillain_UnknownTemplate12c()
+static void zEntVillain_UnknownTemplate12c(_xVec3* out)
 {
     _xVec3 lost = { 0 };
+    lost.y = 1.0f;
+    *out = lost;
 }
 
 // Places a gum blob model at pos, unrotated and scaled by scale.
