@@ -884,8 +884,8 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
             {
                 U8* src = pixels;
 
-                dst = dstPixels;
                 x = image->width;
+                dst = dstPixels;
 
                 while (x--)
                 {
