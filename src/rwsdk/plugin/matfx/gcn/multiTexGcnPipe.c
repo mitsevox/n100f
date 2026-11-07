@@ -83,18 +83,20 @@ void* fn_80141954(void* instance, S32 offset, S32 size)
 // the positions, the normal and the first texture coordinates of one of its triangles.
 void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType)
 {
+    GCNMTNBT* nbt;
     RwV3d* positions = (RwV3d*)arrays->pos;
-    GCNMTNBT* nbts = (GCNMTNBT*)arrays->nrm;
     RwTexCoords* texCoords = (RwTexCoords*)arrays->tex[0];
+    GCNMTNBT* nbts = (GCNMTNBT*)arrays->nrm;
     U16* indices = mesh->indices;
-    U32 i;
     U16 a;
     U16 b;
+    S32 i;
 
     for (i = 0; i < mesh->numIndices; i++)
     {
         U16 index = indices[i];
-        GCNMTNBT* nbt = &nbts[index];
+
+        nbt = &nbts[index];
 
         if (nbt->binormal.x == MTGCN_NBTUNSET)
         {
@@ -104,6 +106,8 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
             RwTexCoords* t0;
             RwTexCoords* t1;
             RwTexCoords* t2;
+            RwV3d e1;
+            RwV3d e2;
             RwV3d s;
             F32 du1;
             F32 du2;
@@ -114,9 +118,9 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
 
             if (primType == rwPRIMTYPETRISTRIP)
             {
-                if ((S32)i < 2)
+                if (i < 2)
                 {
-                    if ((S32)i == 0)
+                    if (i == 0)
                     {
                         a = indices[1];
                         b = indices[2];
@@ -192,11 +196,13 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
 
             dv2 = t2->v - t0->v;
             dv1 = t1->v - t0->v;
-            s.x = (p2->x - p0->x) * dv1 - (p1->x - p0->x) * dv2;
-            s.y = (p2->y - p0->y) * dv1 - (p1->y - p0->y) * dv2;
-            s.z = (p2->z - p0->z) * dv1 - (p1->z - p0->z) * dv2;
             du2 = t2->u - t0->u;
             du1 = t1->u - t0->u;
+            RwV3dSubMacro(&e1, p1, p0);
+            RwV3dSubMacro(&e2, p2, p0);
+            RwV3dScaleMacro(&e1, &e1, dv2);
+            RwV3dScaleMacro(&e2, &e2, dv1);
+            RwV3dSubMacro(&s, &e2, &e1);
 
             dot = -(s.x * nbt->normal.x + s.y * nbt->normal.y + s.z * nbt->normal.z);
             s.x += dot * nbt->normal.x;
@@ -232,75 +238,76 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
     }
 }
 
-// Whether a mesh's material has a GameCube effect whose texture coordinates need the NBT.
-static S32 MeshNeedsNBTs(RpMesh* mesh)
-{
-    RpMultiTexture* multiTexture = RpMaterialGetMultiTexture(mesh->material, MTGCN_PLATFORM);
-
-    if (multiTexture && multiTexture->effect &&
-        multiTexture->effect->platform == MTGCN_PLATFORM)
-    {
-        GCNMTConfig* config = RpGameCubeMTEffectGetConfig(multiTexture->effect);
-        S32 i;
-
-        for (i = 0; i < config->numTexCoordGens; i++)
-        {
-            if (MTGCN_TEXGENNEEDSNBT(&config->texCoordGens[i]))
-            {
-                return TRUE;
-            }
-        }
-    }
-
-    return FALSE;
-}
-
 // Recomputes the binormals and tangents of an instanced object for the meshes that need them.
 void fn_80141D20(GCNObjectData* objectData, RpGameCubeVtxFmt* vtxFmt, S32 numVertices)
 {
-    RpMeshHeader* meshHeader = objectData->meshHeader;
+    S32 i;
     GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
-    GCNMTNBT* nbt = (GCNMTNBT*)arrays->nrm;
+    RpMeshHeader* meshHeader = objectData->meshHeader;
     RwPrimitiveType primType =
         MESHGLOBAL(meshFlagsToPrimType)[meshHeader->flags & rpMESHHEADERPRIMMASK];
+    GCNMTNBT* nbt = (GCNMTNBT*)arrays->nrm;
     RpMesh* mesh;
-    S32 i;
 
     for (i = 0; i < numVertices; i++)
     {
-        nbt[i].binormal.x = MTGCN_NBTUNSET;
+        nbt->binormal.x = MTGCN_NBTUNSET;
+        nbt++;
     }
 
     mesh = (RpMesh*)(meshHeader + 1);
 
-    for (i = 0; i < meshHeader->numMeshes; i++)
+    for (i = 0; i < meshHeader->numMeshes; i++, mesh++)
     {
-        if (MeshNeedsNBTs(mesh))
-        {
-            fn_80141958(mesh, arrays, primType);
-        }
+        RpMultiTexture* multiTexture = RpMaterialGetMultiTexture(mesh->material, MTGCN_PLATFORM);
 
-        mesh++;
+        if (multiTexture && multiTexture->effect &&
+            multiTexture->effect->platform == MTGCN_PLATFORM)
+        {
+            GCNMTConfig* config = RpGameCubeMTEffectGetConfig(multiTexture->effect);
+            S32 j;
+
+            for (j = 0; j < config->numTexCoordGens; j++)
+            {
+                if (MTGCN_TEXGENNEEDSNBT(&config->texCoordGens[j]))
+                {
+                    fn_80141958(mesh, arrays, primType);
+                    break;
+                }
+            }
+        }
     }
 
     DCFlushRange(arrays->nrm, numVertices * arrays->nrmStride);
     GXInvalidateVtxCache();
 }
 
+// Whether any mesh of an instanced object has a GameCube effect with a texture coordinate
+// generator that needs the binormals and tangents.
 S32 _rpGameCubeMTPipeDataQueryNBTs(GCNObjectData* objectData)
 {
     RpMeshHeader* meshHeader = objectData->meshHeader;
     RpMesh* mesh = (RpMesh*)(meshHeader + 1);
     S32 i;
 
-    for (i = 0; i < meshHeader->numMeshes; i++)
+    for (i = 0; i < meshHeader->numMeshes; i++, mesh++)
     {
-        if (MeshNeedsNBTs(mesh))
-        {
-            return TRUE;
-        }
+        RpMultiTexture* multiTexture = RpMaterialGetMultiTexture(mesh->material, MTGCN_PLATFORM);
 
-        mesh++;
+        if (multiTexture && multiTexture->effect &&
+            multiTexture->effect->platform == MTGCN_PLATFORM)
+        {
+            GCNMTConfig* config = RpGameCubeMTEffectGetConfig(multiTexture->effect);
+            S32 j;
+
+            for (j = 0; j < config->numTexCoordGens; j++)
+            {
+                if (MTGCN_TEXGENNEEDSNBT(&config->texCoordGens[j]))
+                {
+                    return TRUE;
+                }
+            }
+        }
     }
 
     return FALSE;
@@ -311,64 +318,75 @@ S32 _rpGameCubeMTPipeDataQueryNBTs(GCNObjectData* objectData)
 // object's matrix. Returns NULL when the texture matrix is used as it is.
 RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
 {
+    RwMatrix* out;
+
     if (frame >= 0x10)
     {
         U32 index = frame - 0x10;
+        RwFrame** frames = GCNMTGLOBAL(frames);
 
-        if (index < GCNMTGLOBAL(numFrames) && GCNMTGLOBAL(frames) && GCNMTGLOBAL(frames)[index])
+        if (index < GCNMTGLOBAL(numFrames) && frames && frames[index])
         {
             if (matrix)
             {
                 RwMatrix inverse;
 
-                RwMatrixInvert(&inverse, RwFrameGetLTM(GCNMTGLOBAL(frames)[index]));
+                RwMatrixInvert(&inverse, RwFrameGetLTM(frames[index]));
                 RwMatrixMultiply(result, matrix, &inverse);
             }
             else
             {
-                RwMatrixInvert(result, RwFrameGetLTM(GCNMTGLOBAL(frames)[index]));
+                RwMatrixInvert(result, RwFrameGetLTM(frames[index]));
             }
 
-            return result;
+            out = result;
         }
-
-        if (matrix)
+        else if (matrix)
         {
-            return (RwMatrix*)matrix;
+            out = (RwMatrix*)matrix;
         }
-
-        RwMatrixSetIdentityMacro(result);
-
-        return result;
+        else
+        {
+            RwMatrixSetIdentityMacro(result);
+            out = result;
+        }
     }
-
-    switch (frame)
+    else if (frame == 3)
     {
-    case 3:
         if (matrix)
         {
             RwMatrixMultiply(result, matrix, &lbl_8025E304);
-            return result;
+            out = result;
         }
-
-        return &lbl_8025E304;
-    case 2:
+        else
+        {
+            out = &lbl_8025E304;
+        }
+    }
+    else if (frame == 2)
+    {
         if (matrix)
         {
-            return (RwMatrix*)matrix;
+            out = (RwMatrix*)matrix;
         }
-
-        return NULL;
-    default:
-        return NULL;
+        else
+        {
+            out = NULL;
+        }
     }
+    else
+    {
+        out = NULL;
+    }
+
+    return out;
 }
 
 // Sends an effect's TEV setup to GX: colors, texture and indirect matrices, indirect stages, TEV
 // stages and texture coordinate generators, then the alpha compare and blend modes. With
 // lighting, one or two stages first add the lit color channels.
-void _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTextures,
-                             const U8* coords, const RwMatrix* matrix)
+RpMTEffect* _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTextures,
+                                    const U8* coords, const RwMatrix* matrix)
 {
     GCNMTConfig* config = RpGameCubeMTEffectGetConfig(effect);
     S8 texMapOfCoord[8];
@@ -396,7 +414,7 @@ void _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTexture
     {
         RwMatrix tmp;
         const RwMatrix* env;
-        F32 mtx[2][4];
+        F32 mtx[3][4];
 
         if (matrix)
         {
@@ -508,10 +526,10 @@ void _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTexture
             GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR1A1);
             GXSetTevColorIn(GX_TEVSTAGE1, GX_CC_RASC, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV);
             GXSetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE,
-                            GX_TEVPREV);
+                            GX_TEVREG2);
             GXSetTevAlphaIn(GX_TEVSTAGE1, GX_CA_RASA, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
             GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE,
-                            GX_TEVPREV);
+                            GX_TEVREG2);
             firstStage = 2;
             lighting = 3;
         }
@@ -652,6 +670,42 @@ void _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTexture
         RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)config->srcBlend);
         RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)config->destBlend);
     }
+
+    return effect;
+}
+
+// Puts back the GX state an effect changed that the next draw does not set itself: manual texture
+// coordinate scaling, the indirect stages and indirect TEV stages.
+static void MTResetEffectState(RpMTEffect* effect)
+{
+    GCNMTConfig* config = RpGameCubeMTEffectGetConfig(effect);
+    S32 j;
+
+    for (j = 0; j < config->numTexCoordGens; j++)
+    {
+        if (config->texCoordGens[j].flags & GCNMTTEXGEN_MANUALSCALE)
+        {
+            GXSetTexCoordScaleManually(j, GX_FALSE, 0, 0);
+        }
+    }
+
+    if (config->numIndStages)
+    {
+        GXSetNumIndStages(0);
+
+        for (j = 0; j < config->numIndStages; j++)
+        {
+            GXSetIndTexCoordScale(j, GX_ITS_1, GX_ITS_1);
+        }
+
+        for (j = 0; j < config->numTevStages; j++)
+        {
+            if (config->tevStages[j].indirect)
+            {
+                GXSetTevDirect(j);
+            }
+        }
+    }
 }
 
 // Draws one mesh with its material's multitexture: sets the textures, runs the pre-render
@@ -660,11 +714,11 @@ void _rpGameCubeMTMeshRenderCallBack(GCNDisplayList* displayList, RpMaterial* ma
                                      void* object, GCNObjectData* objectData,
                                      const RwMatrix* matrix)
 {
+    S32 srcBlend;
+    U32 i;
     RpMultiTexture* multiTexture = RpMaterialGetMultiTexture(material, MTGCN_PLATFORM);
     GCNMTPlatformData* platformData = (GCNMTPlatformData*)multiTexture->platformData;
-    S32 srcBlend;
     S32 destBlend;
-    U32 i;
 
     RwRenderStateGet(rwRENDERSTATESRCBLEND, &srcBlend);
     RwRenderStateGet(rwRENDERSTATEDESTBLEND, &destBlend);
@@ -681,9 +735,7 @@ void _rpGameCubeMTMeshRenderCallBack(GCNDisplayList* displayList, RpMaterial* ma
 
     if (multiTexture->effect)
     {
-        GCNMTConfig* config;
         S32 twoChannels = FALSE;
-        S32 j;
 
         if (objectData->globalMask && objectData->localMask)
         {
@@ -694,33 +746,7 @@ void _rpGameCubeMTMeshRenderCallBack(GCNDisplayList* displayList, RpMaterial* ma
                                 multiTexture->numTextures, multiTexture->coords, matrix);
         GXCallDisplayList(displayList->list, displayList->size);
 
-        config = RpGameCubeMTEffectGetConfig(multiTexture->effect);
-
-        for (j = 0; j < config->numTexCoordGens; j++)
-        {
-            if (config->texCoordGens[j].flags & GCNMTTEXGEN_MANUALSCALE)
-            {
-                GXSetTexCoordScaleManually(j, GX_FALSE, 0, 0);
-            }
-        }
-
-        if (config->numIndStages)
-        {
-            GXSetNumIndStages(0);
-
-            for (j = 0; j < config->numIndStages; j++)
-            {
-                GXSetIndTexCoordScale(j, GX_ITS_1, GX_ITS_1);
-            }
-
-            for (j = 0; j < config->numTevStages; j++)
-            {
-                if (config->tevStages[j].indirect)
-                {
-                    GXSetTevDirect(j);
-                }
-            }
-        }
+        MTResetEffectState(multiTexture->effect);
     }
     else
     {

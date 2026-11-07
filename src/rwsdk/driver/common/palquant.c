@@ -112,10 +112,10 @@ static PalQuantLeaf* AllocateToLeaf(PalQuant* pq, PalQuantBranch* root, U32 cell
 void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
 {
     S32 depth = image->depth;
-    S32 stride = image->stride;
-    U8* pixels = image->cpPixels;
     RwRGBA* palette = image->palette;
     S32 y = image->height;
+    S32 stride = image->stride;
+    U8* pixels = image->cpPixels;
 
     switch (depth)
     {
@@ -123,8 +123,8 @@ void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
     case 8:
         while (y--)
         {
-            U8* pixel = pixels;
             S32 x = image->width;
+            U8* pixel = pixels;
 
             while (x--)
             {
@@ -355,11 +355,11 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
     case 1:
         for (i = set->lower.red; i < set->upper.red; i++)
         {
+            F32 restAlpha;
             F32 restWeight;
             F32 restRed;
             F32 restGreen;
             F32 restBlue;
-            F32 restAlpha;
 
             sub.upper.red = i;
             nVol(root, &sub, &half);
@@ -393,11 +393,11 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
     case 2:
         for (i = set->lower.green; i < set->upper.green; i++)
         {
-            F32 restWeight;
             F32 restRed;
             F32 restGreen;
             F32 restBlue;
             F32 restAlpha;
+            F32 restWeight;
 
             sub.upper.green = i;
             nVol(root, &sub, &half);
@@ -431,11 +431,11 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
     case 3:
         for (i = set->lower.blue; i < set->upper.blue; i++)
         {
-            F32 restWeight;
             F32 restRed;
             F32 restGreen;
             F32 restBlue;
             F32 restAlpha;
+            F32 restWeight;
 
             sub.upper.blue = i;
             nVol(root, &sub, &half);
@@ -469,11 +469,11 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
     case 4:
         for (i = set->lower.alpha; i < set->upper.alpha; i++)
         {
-            F32 restWeight;
             F32 restRed;
             F32 restGreen;
             F32 restBlue;
             F32 restAlpha;
+            F32 restWeight;
 
             sub.upper.alpha = i;
             nVol(root, &sub, &half);
@@ -692,8 +692,8 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
 
             if (nCut(pq->root, &pq->boxes[next], &pq->boxes[i]))
             {
-                PalQuantLeaf lower;
                 PalQuantLeaf upper;
+                PalQuantLeaf lower;
 
                 nVol(pq->root, &pq->boxes[next], &lower);
                 pq->variances[next] = lower.var - PALQUANT_DOT(&lower) / lower.weight;
@@ -778,10 +778,10 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
 
             while (y--)
             {
-                U32 width = image->width;
-                U8* src = pixels;
-                U8* dst = dstPixels;
                 U32 x;
+                U32 width = image->width;
+                U8* dst = dstPixels;
+                U8* src = pixels;
 
                 for (x = 0; x < width; x++)
                 {
@@ -812,10 +812,10 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
 
             while (y--)
             {
-                U32 width = image->width;
                 RwRGBA* color = (RwRGBA*)pixels;
-                U8* dst = dstPixels;
                 U32 x;
+                U32 width = image->width;
+                U8* dst = dstPixels;
 
                 for (x = 0; x < width; x++)
                 {
@@ -857,8 +857,8 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
 
             while (y--)
             {
-                U32 x = image->width;
                 U8* src = pixels;
+                U32 x = image->width;
                 U8* dst = dstPixels;
 
                 while (x--)
@@ -879,9 +879,9 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
 
             while (y--)
             {
-                U32 x = image->width;
                 RwRGBA* color = (RwRGBA*)pixels;
                 U8* dst = dstPixels;
+                U32 x = image->width;
 
                 while (x--)
                 {
