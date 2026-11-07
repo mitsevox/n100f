@@ -73,6 +73,8 @@ typedef RpAtomic* (*AllInOneAtomicCB)(RpAtomic* atomic, GCNObjectData* objectDat
 // local lights of every sector the atomic is in, once each, and clamps the summed ambient color.
 RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 {
+    U32 flags = atomic->geometry->flags;
+
     objectData->globalMask = 0;
     objectData->localMask = 0;
     objectData->ambient.red = 0.0f;
@@ -82,10 +84,14 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
     objectData->ambientUsed = FALSE;
     objectData->numLights = 0;
 
-    if ((atomic->geometry->flags & rpGEOMETRYLIGHT) && RWSRCGLOBAL(curWorld))
+    if ((flags & rpGEOMETRYLIGHT) && RWSRCGLOBAL(curWorld))
     {
+        RwLinkList* lights;
         RwLLLink* cur;
         RwLLLink* end;
+        RwLLLink* lightEnd;
+        RwLLLink* lightCur;
+        LightTie* tie;
 
         _rwGCLightsGlobalEnable(rpLIGHTLIGHTATOMICS, objectData);
         RWSRCGLOBAL(lightFrame)++;
@@ -95,19 +101,18 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 
         while (cur != end)
         {
-            RpWorldSector* sector = rwLLLinkGetData(cur, WorldTie, atomicLink)->sector;
-            RwLLLink* lightCur = rwLinkListGetFirstLLLink(&sector->lightsInWorldSector);
-            RwLLLink* lightEnd = rwLinkListGetTerminator(&sector->lightsInWorldSector);
+            lights = &rwLLLinkGetData(cur, WorldTie, atomicLink)->sector->lightsInWorldSector;
+            lightEnd = rwLinkListGetTerminator(lights);
+            lightCur = rwLinkListGetFirstLLLink(lights);
 
             while (lightCur != lightEnd)
             {
-                RpLight* light = rwLLLinkGetData(lightCur, LightTie, sectorLink)->light;
-
-                if (light && light->lightFrame != RWSRCGLOBAL(lightFrame) &&
-                    rwObjectTestFlags(light, rpLIGHTLIGHTATOMICS))
+                tie = rwLLLinkGetData(lightCur, LightTie, sectorLink);
+                if (tie->light && tie->light->lightFrame != RWSRCGLOBAL(lightFrame) &&
+                    rwObjectTestFlags(tie->light, rpLIGHTLIGHTATOMICS))
                 {
-                    light->lightFrame = RWSRCGLOBAL(lightFrame);
-                    _rwGCLightsLocalEnable(light, objectData);
+                    tie->light->lightFrame = RWSRCGLOBAL(lightFrame);
+                    _rwGCLightsLocalEnable(tie->light, objectData);
                 }
 
                 lightCur = rwLLLinkGetNext(lightCur);
@@ -306,19 +311,25 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 // morphs, else by the geometry), builds the display lists and instances the vertex arrays.
 RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
 {
-    RpGeometry* geometry = atomic->geometry;
-    void* owner;
-    RpMeshHeader* meshHeader = geometry->mesh;
-    RwResEntry** ownerRef;
-    U32 geometryFlags;
-    U32 numVertices = geometry->numVertices;
-    S32 headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
-    U32 flags;
+    GCNAllInOnePrivateData* privateData;
     U32 dlSize;
+    S32 headerSize;
+    void* owner;
+    RpGeometry* geometry;
+    RwResEntry** ownerRef;
+    RpMeshHeader* meshHeader;
+    U32 numVertices;
+    U32 geometryFlags;
+    U32 flags;
     S32 size;
     RwResEntry* entry;
     GCNVertexArrays* arrays;
     U8* mem;
+
+    geometry = atomic->geometry;
+    meshHeader = geometry->mesh;
+    numVertices = geometry->numVertices;
+    headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
 
     if (geometry->numMorphTargets != 1)
     {
@@ -332,9 +343,11 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     }
 
     geometryFlags = geometry->flags | rpGEOMETRYPOSITIONS;
-    flags = geometryFlags & ~objectData->privateData->clearFlags;
+    privateData = objectData->privateData;
+    flags = geometryFlags & ~privateData->clearFlags;
     dlSize = GCNDisplayListsGetSize(meshHeader, geometry->numTexCoordSets,
                                     numVertices < 0xFF ? 1 : 2, geometryFlags);
+
     size = ALLINONE_ALIGN32(sizeof(GCNVertexArrays) + headerSize) + dlSize;
     size = ALLINONE_ALIGN32(size) + fn_80159380(fn_8015D818(geometry), flags, numVertices,
                                                 geometry->numTexCoordSets);
