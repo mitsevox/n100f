@@ -4,8 +4,8 @@
 // clusters. The GameCube build uses its own all-in-one node instead; this one stays linked from
 // the shared pipeline code.
 
-// fn_80157A3C and fn_80157FB8 are the node's helpers (the June 2001 prototype names
-// instanceVerts and instanceMeshes among them); they keep their labels.
+// The helpers instanceVerts and instanceMeshes take their names from the PS2 prototype symbol
+// tables, which list them in this order before WorldSectorInstanceNodeFn.
 
 // The per-mesh record the instance node builds, as in nodeAtomicInstance.c (project-own names).
 typedef struct SectorInstanceMesh SectorInstanceMesh;
@@ -35,8 +35,8 @@ struct SectorInstanceHeader
 
 // Writes each vertex's texture coordinates (when the world is textured), prelit color (opaque
 // black when not prelit), unpacked normal (when the world has normals) and position.
-static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSector* sector,
-                        S32 stride)
+static void instanceVerts(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSector* sector,
+                          S32 stride)
 {
     static const RwRGBA defaultColor = { 0, 0, 0, 255 };
     RxObjSpace3DVertex* objVert;
@@ -132,8 +132,8 @@ static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSec
 // Builds a record per mesh: its indices copied (rebased to the lowest vertex the mesh uses, with
 // strips unrolled to triangles and degenerate triangles dropped) or generated for unindexed
 // meshes, and the range of vertices they use.
-static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, U16* indices,
-                        RxObjSpace3DVertex* verts, S32 stride)
+static void instanceMeshes(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, U16* indices,
+                           RxObjSpace3DVertex* verts, S32 stride)
 {
     U32 numIndices;
     U32 numMeshes;
@@ -353,9 +353,9 @@ static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* 
         header->serialNum = meshHeader->serialNum;
         verts = (RxObjSpace3DVertex*)&header->meshes[numMeshes];
 
-        fn_80157A3C(verts, world, sector, stride);
-        fn_80157FB8(header->meshes, meshHeader, (U16*)((U8*)verts + numVerts * stride), verts,
-                    stride);
+        instanceVerts(verts, world, sector, stride);
+        instanceMeshes(header->meshes, meshHeader, (U16*)((U8*)verts + numVerts * stride), verts,
+                       stride);
     }
     else
     {

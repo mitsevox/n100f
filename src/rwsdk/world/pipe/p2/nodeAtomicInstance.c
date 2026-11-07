@@ -4,9 +4,9 @@
 // atomic is between two) and its meshes into the packet's clusters. The GameCube build uses its
 // own all-in-one node instead; this one stays linked from the shared pipeline code.
 
-// fn_80154994, fn_80154E8C and fn_801551A8 are the node's helpers (the June 2001 prototype names
-// instanceVertPos and instanceMeshes among them); which label is which is not established, so they
-// keep their labels.
+// The helpers instanceVertPos, instanceVerts and instanceMeshes take their names from the PS2
+// January 2001 prototype symbol table, which lists three local functions of those names, in this
+// order, before AtomicInstanceNode.
 
 // The per-mesh record the instance node builds for each mesh: its indices, the vertices they use
 // and the mesh it came from (project-own names).
@@ -43,8 +43,8 @@ static void BlendV3d(RwV3d* out, const RwV3d* a, const RwV3d* b, F32 t)
 
 // Writes each vertex's position and normal (zero without normals) from the atomic's current
 // morph target, or blended between its start and end targets at the interpolator's position.
-static void fn_80154994(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometry* geometry,
-                        S32 stride)
+static void instanceVertPos(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometry* geometry,
+                            S32 stride)
 {
     static const RwV3d zeroNormal = { 0.0f, 0.0f, 0.0f };
     S32 start = atomic->interpolator.startMorphTarget;
@@ -147,8 +147,8 @@ static void fn_80154994(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometr
 
 // Writes each vertex's texture coordinates (when textured) and prelit color (opaque black when not
 // prelit), then its position and normal.
-static void fn_80154E8C(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeometry* geometry,
-                        S32 stride)
+static void instanceVerts(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeometry* geometry,
+                          S32 stride)
 {
     static const RwRGBA defaultColor = { 0, 0, 0, 255 };
     RxObjSpace3DVertex* objVert;
@@ -205,14 +205,14 @@ static void fn_80154E8C(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeomet
         }
     }
 
-    fn_80154994(objVerts, atomic, geometry, stride);
+    instanceVertPos(objVerts, atomic, geometry, stride);
 }
 
 // Builds a record per mesh: its indices copied (rebased to the lowest vertex the mesh uses, with
 // strips unrolled to triangles and degenerate triangles dropped) or generated for unindexed
 // meshes, and the range of vertices they use.
-static void fn_801551A8(AtomicInstanceMesh* instMesh, RpMeshHeader* meshHeader, U16* indices,
-                        RxObjSpace3DVertex* verts, S32 stride)
+static void instanceMeshes(AtomicInstanceMesh* instMesh, RpMeshHeader* meshHeader, U16* indices,
+                           RxObjSpace3DVertex* verts, S32 stride)
 {
     U32 numIndices;
     U32 numMeshes;
@@ -463,9 +463,9 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         header->serialNum = meshHeader->serialNum;
         verts = (RxObjSpace3DVertex*)&header->meshes[numMeshes];
 
-        fn_80154E8C(verts, atomic, geometry, stride);
-        fn_801551A8(header->meshes, meshHeader, (U16*)((U8*)verts + vertSize), verts,
-                    stride);
+        instanceVerts(verts, atomic, geometry, stride);
+        instanceMeshes(header->meshes, meshHeader, (U16*)((U8*)verts + vertSize), verts,
+                       stride);
 
         geometry->lockedSinceLastInst = 0;
     }
@@ -488,11 +488,11 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         case GEOMETRY_LOCKVERTICES:
         case GEOMETRY_LOCKNORMALS:
         case GEOMETRY_LOCKVERTICES | GEOMETRY_LOCKNORMALS:
-            fn_80154994(verts, atomic, geometry, stride);
+            instanceVertPos(verts, atomic, geometry, stride);
             break;
         default:
-            fn_80154E8C(verts, atomic, geometry, stride);
-            fn_801551A8(header->meshes, meshHeader, indices, verts, stride);
+            instanceVerts(verts, atomic, geometry, stride);
+            instanceMeshes(header->meshes, meshHeader, indices, verts, stride);
             break;
         }
 
