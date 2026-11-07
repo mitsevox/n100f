@@ -32,8 +32,6 @@ struct MatrixModuleData
 
 static RwModuleInfo matrixModule;
 
-static const RwMatrixTolerance defaultTolerance = { 0.01f, 0.01f, 0.01f };
-
 static void MatrixMultiply(RwMatrix* dstMatrix, const RwMatrix* matA, const RwMatrix* matB)
 {
     dstMatrix->right.x = matA->right.x * matB->right.x + matA->right.y * matB->up.x +
@@ -251,10 +249,9 @@ void* _rwMatrixOpen(void* instance, S32 offset, S32 size)
     }
     else
     {
-        RwMatrixTolerance tolerance;
+        const RwMatrixTolerance tolerance = { 0.01f, 0.01f, 0.01f };
 
         MATRIX_DATA(optimizations) = rwMATRIXINTERNALIDENTITY;
-        tolerance = defaultTolerance;
         MATRIX_DATA(multiplyFunc) = MatrixMultiply;
         RwEngineSetMatrixTolerances(&tolerance);
         matrixModule.numInstances++;
