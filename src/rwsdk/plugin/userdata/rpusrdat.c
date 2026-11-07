@@ -342,8 +342,9 @@ static void UserDataListDestroy(UserDataList* list)
 
 static void UserDataListCopy(UserDataList* dst, const UserDataList* src)
 {
+    const RpUserDataArray* srcArray;
+    RpUserDataArray* dstArray;
     S32 i;
-    S32 j;
 
     UserDataListDestroy(dst);
 
@@ -355,8 +356,8 @@ static void UserDataListCopy(UserDataList* dst, const UserDataList* src)
 
         for (i = 0; i < dst->numElements; i++)
         {
-            const RpUserDataArray* srcArray = &src->userData[i];
-            RpUserDataArray* dstArray = &dst->userData[i];
+            srcArray = &src->userData[i];
+            dstArray = &dst->userData[i];
 
             dstArray->format = srcArray->format;
             dstArray->numElements = srcArray->numElements;
@@ -375,6 +376,7 @@ static void UserDataListCopy(UserDataList* dst, const UserDataList* src)
                 if (dstArray->format == rpSTRINGUSERDATA)
                 {
                     char** srcStrings = (char**)srcArray->data;
+                    S32 j;
                     char** dstStrings = (char**)dstArray->data;
 
                     for (j = 0; j < dstArray->numElements; j++)
@@ -463,6 +465,22 @@ static S32 UserDataListAddElement(UserDataList* list, char* name, RpUserDataForm
     return index;
 }
 
+static S32 UserDataListGetCount(const UserDataList* list)
+{
+    S32 count = 0;
+    S32 i;
+
+    for (i = 0; i < list->numElements; i++)
+    {
+        if (list->userData[i].data)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
 static void* UserDataObjectConstruct(void* object, S32 offset, S32 size)
 {
     UserDataList* list = (UserDataList*)((U8*)object + offset);
@@ -488,13 +506,11 @@ static void* UserDataObjectCopy(void* dstObject, const void* srcObject, S32 offs
     return dstObject;
 }
 
-static RwStream* UserDataObjectStreamRead(RwStream* stream, S32 binaryLength, void* object,
-                                          S32 offset, S32 size)
+static RwStream* UserDataListStreamRead(UserDataList* list, RwStream* stream)
 {
     S32 numElements;
     RwStream* curStream = stream;
     S32 i;
-    UserDataList* list = (UserDataList*)((U8*)object + offset);
 
     if (list)
     {
@@ -514,12 +530,18 @@ static RwStream* UserDataObjectStreamRead(RwStream* stream, S32 binaryLength, vo
     return stream;
 }
 
-static RwStream* UserDataObjectStreamWrite(RwStream* stream, S32 binaryLength,
-                                           const void* object, S32 offset, S32 size)
+static RwStream* UserDataObjectStreamRead(RwStream* stream, S32 binaryLength, void* object,
+                                          S32 offset, S32 size)
+{
+    UserDataList* list = (UserDataList*)((U8*)object + offset);
+
+    return UserDataListStreamRead(list, stream);
+}
+
+static RwStream* UserDataListStreamWrite(const UserDataList* list, RwStream* stream)
 {
     RwStream* curStream = stream;
     S32 i;
-    const UserDataList* list = (const UserDataList*)((const U8*)object + offset);
 
     if (list && list->numElements > 0)
     {
@@ -533,6 +555,14 @@ static RwStream* UserDataObjectStreamWrite(RwStream* stream, S32 binaryLength,
     }
 
     return stream;
+}
+
+static RwStream* UserDataObjectStreamWrite(RwStream* stream, S32 binaryLength,
+                                           const void* object, S32 offset, S32 size)
+{
+    const UserDataList* list = (const UserDataList*)((const U8*)object + offset);
+
+    return UserDataListStreamWrite(list, stream);
 }
 
 static S32 UserDataArrayGetSize(const RpUserDataArray* array)
@@ -569,7 +599,9 @@ static S32 UserDataArrayGetSize(const RpUserDataArray* array)
 
                 if (*strings)
                 {
-                    size += rwstrlen(*strings) + 1;
+                    S32 len = rwstrlen(*strings) + 1;
+
+                    size += len;
                 }
 
                 strings++;
@@ -583,15 +615,14 @@ static S32 UserDataArrayGetSize(const RpUserDataArray* array)
     return size;
 }
 
-static S32 UserDataObjectGetSize(const void* object, S32 offset, S32 size)
+static S32 UserDataListGetSize(const UserDataList* list)
 {
-    const UserDataList* list = (const UserDataList*)((const U8*)object + offset);
-    S32 totalSize = 0;
     S32 i;
+    S32 totalSize = 0;
 
     if (list && list->numElements > 0)
     {
-        totalSize = sizeof(S32);
+        totalSize += sizeof(S32);
 
         for (i = 0; i < list->numElements; i++)
         {
@@ -600,6 +631,13 @@ static S32 UserDataObjectGetSize(const void* object, S32 offset, S32 size)
     }
 
     return totalSize;
+}
+
+static S32 UserDataObjectGetSize(const void* object, S32 offset, S32 size)
+{
+    const UserDataList* list = (const UserDataList*)((const U8*)object + offset);
+
+    return UserDataListGetSize(list);
 }
 
 S32 RpGeometryAddUserDataArray(RpGeometry* geometry, char* name, RpUserDataFormat format,
@@ -612,18 +650,8 @@ S32 RpGeometryAddUserDataArray(RpGeometry* geometry, char* name, RpUserDataForma
 S32 RpGeometryGetUserDataArrayCount(const RpGeometry* geometry)
 {
     const UserDataList* list = (const UserDataList*)((const U8*)geometry + userDataGeometryOffset);
-    S32 count = 0;
-    S32 i;
 
-    for (i = 0; i < list->numElements; i++)
-    {
-        if (list->userData[i].data)
-        {
-            count++;
-        }
-    }
-
-    return count;
+    return UserDataListGetCount(list);
 }
 
 RpUserDataArray* RpGeometryGetUserDataArray(const RpGeometry* geometry, S32 data)
