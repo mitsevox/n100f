@@ -86,8 +86,12 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 
     if ((flags & rpGEOMETRYLIGHT) && RWSRCGLOBAL(curWorld))
     {
-        RwLLLink* end;
+        RwLinkList* lights;
         RwLLLink* cur;
+        RwLLLink* end;
+        RwLLLink* lightEnd;
+        RwLLLink* lightCur;
+        LightTie* tie;
 
         _rwGCLightsGlobalEnable(rpLIGHTLIGHTATOMICS, objectData);
         RWSRCGLOBAL(lightFrame)++;
@@ -97,15 +101,13 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 
         while (cur != end)
         {
-            RwLinkList* lights =
-                &rwLLLinkGetData(cur, WorldTie, atomicLink)->sector->lightsInWorldSector;
-            RwLLLink* lightEnd = rwLinkListGetTerminator(lights);
-            RwLLLink* lightCur = rwLinkListGetFirstLLLink(lights);
+            lights = &rwLLLinkGetData(cur, WorldTie, atomicLink)->sector->lightsInWorldSector;
+            lightEnd = rwLinkListGetTerminator(lights);
+            lightCur = rwLinkListGetFirstLLLink(lights);
 
             while (lightCur != lightEnd)
             {
-                LightTie* tie = rwLLLinkGetData(lightCur, LightTie, sectorLink);
-
+                tie = rwLLLinkGetData(lightCur, LightTie, sectorLink);
                 if (tie->light && tie->light->lightFrame != RWSRCGLOBAL(lightFrame) &&
                     rwObjectTestFlags(tie->light, rpLIGHTLIGHTATOMICS))
                 {
