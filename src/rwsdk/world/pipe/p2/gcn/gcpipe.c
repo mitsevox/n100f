@@ -13,6 +13,11 @@ void _rwDlVtxFmtSetup(RpGameCubeVtxFmt* vtxFmt, GCNObjectData* objectData);
 void _rwDlTransformSetup(const RwMatrix* matrix, S32 normals);
 void _rwDlTextureSet(RwTexture* texture, U32 stage);
 
+// The lights cluster: the lights that the lighting nodes collect and apply to an object, with no
+// default stride, attributes or attribute set.
+static char _Lights_csl[] = "Lights.csl";
+RxClusterDefinition RxClLights = { _Lights_csl, 0, 0, NULL };
+
 // Draw sync tokens wrap at this value; an atomic's object type. Written for this project.
 #define GCPIPE_TOKENWRAP 0xE000
 #define GCPIPE_ATOMIC 1

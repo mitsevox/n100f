@@ -102,7 +102,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/gcn/instance/ibuffer.c` | 1 of 2 | `GCNDisplayListsBuild` (95.4%: count copy, redundant halfword narrowing and register allocation; remains `NonMatching`) |
 | `rwsdk/world/pipe/p2/gcn/gclights.c` | 1 of 2 | `_rwGCLightsGlobalEnable` (99.9375%: seven stack offsets exchanging the working color and its argument copy); `.data`, `.bss` and `.sdata2` are split |
 | `rwsdk/world/pipe/p2/gcn/native.c` | 3 of 8 | `_rpNativeRead` (92.4%), `_rpNativeWrite` (90.2%), `_rpGeometryNativeSize` (86.4%), `_rpWorldSectorNativeSize` (90.8%) and `_rpWorldSectorNativeWrite` (90.0%): the target associates the instance size and alignment arithmetic differently, and register choice (text only) |
-| `rwsdk/world/pipe/p2/gcn/gcpipe.c` | 9 of 10 | Consistent interrupt-visible token declarations add exact bodies; remaining routines partial. NonMatching, original linked |
+| `rwsdk/world/pipe/p2/gcn/gcpipe.c` | 10 of 10 | Matching on GIHE78-rev0: the token waits, the instance and draw callbacks, and the `RxClLights` cluster and its name in `.data` |
 | `rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c` | 4 of 4 | (Matching on GIHE78-rev0 and GIHE78-rev1; `.data` 98.5%: the four bytes of padding at its end) |
 | `rwsdk/world/pipe/p2/nodeMaterialScatter.c` | 2 of 2 | (Matching on GIHE78-rev0; `.data` 98.8%, as `nodeAtomicEnumerateLights.c`) |
 | `rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c` | 3 of 3 | all 3 functions; .data 136 bytes and .sdata 8 bytes; Matching on GIHE78-rev0 and GIHE78-rev1 |
