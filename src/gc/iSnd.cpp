@@ -1027,6 +1027,7 @@ static U32 iSndPlayStream(xSndVoiceInfo* vp)
     return 0;
 }
 
+// Start a bank-loaded sound on an AX voice, applying its pitch and volume before playback.
 static U32 iSndPlaySound(xSndVoiceInfo* vp)
 {
     if (vp->flags & 0x200)
