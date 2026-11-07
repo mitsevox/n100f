@@ -139,21 +139,25 @@ static void* MatFXMaterialDestructor(void* object, S32 offset, S32 size)
 // textures are shared (their reference counts raised), the others set through the setters.
 static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offset, S32 size)
 {
-    U8 i;
+    // Material locals for the two objects: the target colors dstData r31, srcObject r30, srcData r29,
+    // dstObject r28 and i r27, the declaration order below.
     MatFXMaterialData* dstData;
+    const RpMaterial* srcMaterial = (const RpMaterial*)srcObject;
     MatFXMaterialData* srcData;
+    RpMaterial* dstMaterial = (RpMaterial*)dstObject;
+    U8 i;
     MatFXEffect* srcEffect;
 
-    srcData = MATFXMATERIALGETDATA(srcObject);
+    srcData = MATFXMATERIALGETDATA(srcMaterial);
     if (!srcData)
     {
         return NULL;
     }
 
-    dstData = MATFXMATERIALGETDATA(dstObject);
+    dstData = MATFXMATERIALGETDATA(dstMaterial);
     if (!dstData)
     {
-        dstData = MatFXMaterialDataCreate((RpMaterial*)dstObject);
+        dstData = MatFXMaterialDataCreate(dstMaterial);
     }
 
     if (!dstData)
@@ -161,7 +165,7 @@ static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offse
         return NULL;
     }
 
-    RpMatFXMaterialSetEffects((RpMaterial*)dstObject, srcData->flags);
+    RpMatFXMaterialSetEffects(dstMaterial, srcData->flags);
 
     for (i = 0; i < MATFX_NUMSLOTS; i++)
     {
@@ -174,11 +178,11 @@ static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offse
         case rpMATFXEFFECTBUMPMAP:
         {
             MatFXEffect* dstEffect = &dstData->effects[i];
-            RwFrame* frame = RpMatFXMaterialGetBumpMapFrame((const RpMaterial*)srcObject);
-            F32 coef = RpMatFXMaterialGetBumpMapCoefficient((const RpMaterial*)srcObject);
+            RwFrame* frame = RpMatFXMaterialGetBumpMapFrame(srcMaterial);
+            F32 coef = RpMatFXMaterialGetBumpMapCoefficient(srcMaterial);
 
-            RpMatFXMaterialSetBumpMapFrame((RpMaterial*)dstObject, frame);
-            RpMatFXMaterialSetBumpMapCoefficient((RpMaterial*)dstObject, coef);
+            RpMatFXMaterialSetBumpMapFrame(dstMaterial, frame);
+            RpMatFXMaterialSetBumpMapCoefficient(dstMaterial, coef);
 
             dstEffect->data.bumpMap.bumpTexture = srcEffect->data.bumpMap.bumpTexture;
             dstEffect->data.bumpMap.texture = srcEffect->data.bumpMap.texture;
@@ -195,34 +199,33 @@ static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offse
         }
         case rpMATFXEFFECTENVMAP:
         {
-            RwTexture* texture = RpMatFXMaterialGetEnvMapTexture((const RpMaterial*)srcObject);
-            RwFrame* frame = RpMatFXMaterialGetEnvMapFrame((const RpMaterial*)srcObject);
-            F32 coef = RpMatFXMaterialGetEnvMapCoefficient((const RpMaterial*)srcObject);
+            RwTexture* texture = RpMatFXMaterialGetEnvMapTexture(srcMaterial);
+            RwFrame* frame = RpMatFXMaterialGetEnvMapFrame(srcMaterial);
+            F32 coef = RpMatFXMaterialGetEnvMapCoefficient(srcMaterial);
             S32 useFrameBufferAlpha =
-                RpMatFXMaterialGetEnvMapFrameBufferAlpha((const RpMaterial*)srcObject);
+                RpMatFXMaterialGetEnvMapFrameBufferAlpha(srcMaterial);
 
             if (texture)
             {
-                RpMatFXMaterialSetEnvMapTexture((RpMaterial*)dstObject, texture);
+                RpMatFXMaterialSetEnvMapTexture(dstMaterial, texture);
             }
-            RpMatFXMaterialSetEnvMapFrame((RpMaterial*)dstObject, frame);
-            RpMatFXMaterialSetEnvMapFrameBufferAlpha((RpMaterial*)dstObject, useFrameBufferAlpha);
-            RpMatFXMaterialSetEnvMapCoefficient((RpMaterial*)dstObject, coef);
+            RpMatFXMaterialSetEnvMapFrame(dstMaterial, frame);
+            RpMatFXMaterialSetEnvMapFrameBufferAlpha(dstMaterial, useFrameBufferAlpha);
+            RpMatFXMaterialSetEnvMapCoefficient(dstMaterial, coef);
             break;
         }
         case rpMATFXEFFECTDUAL:
         {
-            RwTexture* texture = RpMatFXMaterialGetDualTexture((const RpMaterial*)srcObject);
+            RwTexture* texture = RpMatFXMaterialGetDualTexture(srcMaterial);
             RwBlendFunction srcBlendMode;
             RwBlendFunction dstBlendMode;
 
-            RpMatFXMaterialGetDualBlendModes((const RpMaterial*)srcObject, &srcBlendMode,
-                                             &dstBlendMode);
+            RpMatFXMaterialGetDualBlendModes(srcMaterial, &srcBlendMode, &dstBlendMode);
             if (texture)
             {
-                RpMatFXMaterialSetDualTexture((RpMaterial*)dstObject, texture);
+                RpMatFXMaterialSetDualTexture(dstMaterial, texture);
             }
-            RpMatFXMaterialSetDualBlendModes((RpMaterial*)dstObject, srcBlendMode, dstBlendMode);
+            RpMatFXMaterialSetDualBlendModes(dstMaterial, srcBlendMode, dstBlendMode);
             break;
         }
         }
