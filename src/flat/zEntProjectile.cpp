@@ -420,44 +420,44 @@ zEntProjectile* zEntProjectile_acquire(en_ZPRJ_CATEGORY cat, U32 ptypeID)
 en_ZPRJ_STATES zEntProjectile::StateSet(en_ZPRJ_STATES state)
 {
     en_ZPRJ_STATES oldstate = this->state;
+    en_ZPRJ_STATES newstate = state;
+    F32 dt = globals.update_dt;
 
-    if (this->state == state)
+    if (oldstate == state)
     {
-        return this->state;
+        return oldstate;
     }
 
     switch (this->state)
     {
     case ZPRJ_STATE_DEAD:
-        oldstate = ZPRJ_STATE_DEAD;
         break;
     case ZPRJ_STATE_ACTIVE:
     case ZPRJ_STATE_STANDBY:
         flg_stat &= 0xFFFF;
         flg_stat |= 0x10000;
-        oldstate = this->state;
         break;
     case ZPRJ_STATE_UNUSED:
-        oldstate = ZPRJ_STATE_UNUSED;
-        break;
-    default:
-        oldstate = this->state;
         break;
     }
 
     oldstate = this->state;
-    this->state = state;
+    this->state = newstate;
     tmr_curstate = 0.0f;
 
     switch (this->state)
     {
     case ZPRJ_STATE_ACTIVE:
+    {
         tmr_alive = 0.0f;
         tmr_emit = 0.0f;
-        xVec3Copy(&pos_home, (xVec3*)&model->Mat->pos);
+        xModelInstance* mdl = model;
+        xVec3* pos = (xVec3*)&mdl->Mat->pos;
+        xVec3Copy(&pos_home, pos);
         flg_stat |= 0x20000;
-        SendEvent(ZPRJ_EVNT_ACTIVE, globals.update_dt, NULL, NULL);
+        SendEvent(ZPRJ_EVNT_ACTIVE, dt, NULL, NULL);
         break;
+    }
     case ZPRJ_STATE_DEAD:
         flg_stat |= 0x80000000;
         this->state = ZPRJ_STATE_DEAD;
@@ -470,7 +470,7 @@ en_ZPRJ_STATES zEntProjectile::StateSet(en_ZPRJ_STATES state)
 
     if (oldstate != state)
     {
-        SendEvent(ZPRJ_EVNT_TRANSTATE, globals.update_dt, (void*)oldstate, NULL);
+        SendEvent(ZPRJ_EVNT_TRANSTATE, dt, (void*)oldstate, NULL);
     }
 
     return this->state;
