@@ -404,8 +404,8 @@ static S32 fn_8013D4B8(RpHAnimInterpolatorInfo* interpolatorInfo)
 RpHAnimHierarchy* RpHAnimHierarchyCreate(S32 numNodes, U32* nodeFlags, S32* nodeIDs,
                                          RpHAnimHierarchyFlag flags, S32 maxKeyFrameSize)
 {
-    RpHAnimHierarchy* hierarchy =
-        (RpHAnimHierarchy*)RwMalloc(sizeof(RpHAnimHierarchy) + numNodes * maxKeyFrameSize * 3);
+    void* mem = RwMalloc(sizeof(RpHAnimHierarchy) + numNodes * maxKeyFrameSize * 3);
+    RpHAnimHierarchy* hierarchy = (RpHAnimHierarchy*)mem;
     S32 i;
 
     hierarchy->flags = flags;

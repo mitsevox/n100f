@@ -181,7 +181,8 @@ void fn_80158B20(GCNObjectData* objectData, RpMaterial* material)
             }
             else
             {
-                F32 scale = ambient * 255.0f;
+                F32 scale = ambient;
+                scale *= 255.0f;
 
                 color.r = (U8)(scale * objectData->ambient.red);
                 color.g = (U8)(scale * objectData->ambient.green);

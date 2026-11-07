@@ -4,7 +4,6 @@
 // Each node has room for this many outputs after the pipeline's node array.
 #define NODE_MAXOUTPUTS 32
 
-RxExecContext _rxExecCtxGlobal;
 RxHeap* _rxHeapGlobal;
 S32 RxPipelineInstanced;
 U32 _rxHeapInitialSize = 0x1000;
@@ -250,7 +249,7 @@ RxCluster* RxClusterInitializeData(RxCluster* cluster, U32 numElements, U16 stri
     cluster->currentData = cluster->data = RxHeapAlloc(_rxHeapGlobal, size);
     cluster->numAlloced = numElements;
     cluster->numUsed = 0;
-    cluster->flags |= CLUSTER_VALID;
+    cluster->flags |= (U16)CLUSTER_VALID;
     cluster->stride = stride;
 
     return cluster;
