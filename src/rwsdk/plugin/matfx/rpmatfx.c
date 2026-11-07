@@ -276,6 +276,7 @@ S32 _rpMatFXStreamReadTexture(RwStream* stream, RwTexture** texture)
     S32 size;
     S32 hasTexture;
     U32 chunkSize;
+    RwTexture* tex;
 
     RwStreamRead(stream, &hasTexture, sizeof(S32));
     size = sizeof(S32);
@@ -284,7 +285,8 @@ S32 _rpMatFXStreamReadTexture(RwStream* stream, RwTexture** texture)
     {
         if (RwStreamFindChunk(stream, rwID_TEXTURE, &chunkSize, NULL))
         {
-            *texture = RwTextureStreamRead(stream);
+            tex = RwTextureStreamRead(stream);
+            *texture = tex;
         }
 
         size = chunkSize + 12 + sizeof(S32);
@@ -396,14 +398,29 @@ static RwStream* fn_8013DEC4(RwStream* stream, S32 binaryLength, const void* obj
 static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S32 offset,
                              S32 size)
 {
-    U8 i;
-    RpMaterial* material = (RpMaterial*)object;
+    MatFXMaterialData* data;
     RpMatFXMaterialFlags flags;
-    MatFXMaterialData* data = MATFXMATERIALGETDATA(material);
+    RpMaterial* material;
+    U8 i;
+
+    material = (RpMaterial*)object;
+    data = MATFXMATERIALGETDATA(material);
 
     if (!data)
     {
-        data = MatFXMaterialDataCreate(material);
+        // FAKEMATCH: MatFXMaterialDataCreate written out by hand, with a redundant data = NULL
+        // standing in for its return NULL, so the allocation lands in data's register; real form
+        // believed to be data = MatFXMaterialDataCreate(material).
+        data = (MatFXMaterialData*)RWSRCGLOBAL(memoryAlloc)(MatFXInfo.materialFreeList);
+        if (!data)
+        {
+            data = NULL;
+        }
+        else
+        {
+            memset(data, 0, sizeof(MatFXMaterialData));
+            MATFXMATERIALGETDATA(material) = data;
+        }
     }
 
     if (!data)
@@ -439,10 +456,14 @@ static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S
         {
         case rpMATFXEFFECTBUMPMAP:
         {
-            MatFXEffect* effect = &data->effects[i];
+            RwTexture* bumpTexture;
             F32 coef;
-            RwTexture* bumpTexture = NULL;
-            RwTexture* texture = NULL;
+            RwTexture* texture;
+            MatFXEffect* effect;
+
+            effect = &data->effects[i];
+            bumpTexture = NULL;
+            texture = NULL;
 
             if (!RwStreamRead(stream, &coef, sizeof(coef)))
             {
