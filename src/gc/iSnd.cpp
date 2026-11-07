@@ -1260,16 +1260,18 @@ static void sndloadcb(tag_xFile*)
 // Load the bank's samples and retain its file information for sound lookup.
 void iSndLoadSounds(void* data)
 {
-    iSndSoundInfo* sounds;
-    U32 i;
-    iSndSoundInfo* snd;
     U32 j;
+    U32 done;
     U32 highest;
-    tag_xFile* file;
-    U32 total;
-    U32 lowest;
     char* name;
     iSndBank* bank;
+    BOOL enabled;
+    tag_xFile* file;
+    iSndSoundInfo* snd;
+    U32 i;
+    iSndSoundInfo* sounds;
+    U32 total;
+    U32 lowest;
 
     bank = (iSndBank*)data;
     total = 0;
@@ -1370,16 +1372,19 @@ void iSndLoadSounds(void* data)
         }
 
         sinfo_array[sinfo_array_max].base = lowest;
-        for (U32 done = 0; done < total;)
+        for (done = 0; done < total;)
         {
-            U32 size = 0x11940;
+            U32 size;
             if (done + 0x11940 >= total)
             {
                 size = total - done;
             }
-
-            SoundFlags |= 0x1;
+            else
+            {
+                size = 0x11940;
+            }
             U32 dest = aram + done;
+            SoundFlags |= 0x1;
             iFileSeek(file, lowest + done, IFILE_SEEK_SET);
             iFileReadAsync(file, stream_buffer, size, sndloadcb);
             while (SoundFlags != 0)
@@ -1392,7 +1397,7 @@ void iSndLoadSounds(void* data)
                 }
             }
 
-            BOOL enabled = OSDisableInterrupts();
+            enabled = OSDisableInterrupts();
             DCStoreRange(stream_buffer, size);
             ARQRequest request;
             ARQPostRequest(&request, 0, 0, 1, (u32)stream_buffer, dest, size, arq_callback);
