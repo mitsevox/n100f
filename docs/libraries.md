@@ -45,8 +45,8 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/baim3d.c` | 9 of 9 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/bapipe.c` | 4 of 4 | (Matching) |
 | `rwsdk/src/pipe/p2/p2core.c` | 13 of 13 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/pipe/p2/p2define.c` | 12 of 13 | `RxLockedPipeUnlock` (97.6%: the size sums add the outputs' total at another point and the copy of the sort data to the top of the block subtracts its entry size from the size first, so their values take other registers); `.sdata` `gMemoryLimits` is in the split |
-| `rwsdk/src/pipe/p2/p2dep.c` | 6 of 11 | `_PropDownElimPath` (98.1%), `_ForAllNodesWriteClusterAllocations` (96.8%), `_PropagateDependenciesAndKillDeadPaths` (95.6%), `_TraceClusterScopes` (94.7%) and `_ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields` (90.5%): the inlined entry helpers' values take other registers and some of their stores and constants are scheduled differently |
+| `rwsdk/src/pipe/p2/p2define.c` | 12 of 13 | `RxLockedPipeUnlock` (98.3%: the size sum adds the sort-data allowance at another point and with its operands reversed; the sort index is coalesced with its numNodes - 1 temporary where the target copies it; the size, sort index, new sort pointer, the second growth's superBlock pointer and grown size and the numNodes * numUnique product take other registers; volatile registers differ in the entry check, the inlined cluster count, the size sums, the first realloc call and the inlined top sort's two counting loops); `.sdata` `gMemoryLimits` is in the split |
+| `rwsdk/src/pipe/p2/p2dep.c` | 10 of 11 | `_PropagateDependenciesAndKillDeadPaths` (99.8%): only the volatile registers of its first loop, the clusters-of-interest duplicate check, differ |
 | `rwsdk/src/pipe/p2/p2heap.c` | 7 of 8 | `RxHeapRealloc` (99.6%: the rounded size and the inlined shrink path's size difference take each other's registers); its message string is not split |
 | `rwsdk/src/pipe/p2/p2renderstate.c` | 4 of 4 | (Matching on GIHE78-rev0; split by hand) |
 | `rwsdk/src/pipe/p2/p2resort.c` | 2 of 2 | (Matching on GIHE78-rev0; GIHE78-rev1 remains NonMatching because its insertion pass is outlined before the wrapper) |
@@ -56,9 +56,9 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeImmStash.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeSubmitLine.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeSubmitTriangle.c` | 2 of 2 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/pipe/p2/nodeClipLine.c` | 2 of 4 | `PerspectiveClipProcessPacket` (98.5%) and `ParallelClipProcessPacket` (98.4%): the saved registers of the loop counter, the result flag, the doubled stride and the keep flag differ, and the set-up schedules i = 0 and the line count load differently |
+| `rwsdk/src/pipe/p2/nodeClipLine.c` | 4 of 4 | (Matching on GIHE78-rev0, with its 240-byte `.data`, 48-byte `.rodata`, 16-byte `.sdata` and 16-byte `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeClipTriangle.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.data` 268 bytes plus 4 normal alignment bytes, 48-byte `.rodata`, 16-byte `.sdata` and 16-byte `.sdata2`) |
-| `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 3 of 4 | `PerspectiveCullProcessPacket` (99.087%: float register choice). Raw data 252 emitted bytes plus four target zero tail bytes; local-function source-layout addresses differ. NonMatching, original linked |
+| `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.data` 244 bytes plus 4 normal alignment bytes and 8-byte `.sdata`) |
 | `rwsdk/src/pipe/p2/nodeTransform.c` | 4 of 4 | (Matching on GIHE78-rev0, with its 232-byte `.data` and 32-byte `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeImmInstance.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/p2clpcom.c` | 16 of 16 | (Matching on GIHE78-rev0, with its `.bss` gClipInfo and `.sdata2`) |
@@ -96,7 +96,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/bamesh.c` | 11 of 11 | (Matching on GIHE78-rev0, with `meshModule` and `MeshStatic`) |
 | `rwsdk/world/bameshop.c` | 11 of 11 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/babinwor.c` | 11 of 11 | Rev0 source-selected. The related original two-argument `Polygon4byteTo8ByteConvert` context and ordinary base/walker order close the sector reader; surface-property pointer and size sequencing close world reading. All 24 module/rights bytes and the four-byte literal payload agree; normal alignment supplies the remaining four mapped bytes. Private complete-game replacement is byte-identical. No filler, symbol shrink or compiler override; rev1 keeps original linkage. |
-| `rwsdk/world/pipe/p2/gcn/instance/geominst.c` | 3 of 6 | `fn_80159380`, the vertex data sizer (97.6%: the unrolled texture coordinate address form), `_rwGCNVtxFmtInstNrmCmp` (97.9%: one constant load and a pointer step) and `_rwGCNVtxFmtInstTex` (94.6%: where the set's component type address is kept); its `.data` holds the vertex component size tables |
+| `rwsdk/world/pipe/p2/gcn/instance/geominst.c` | 4 of 6 | `fn_80159380`, the vertex data sizer (97.6%: the unrolled texture coordinate address form) and `_rwGCNVtxFmtInstTex` (99.7%: the register that holds the set's component type address); its `.data` holds the vertex component size tables |
 | `rwsdk/world/pipe/p2/gcn/instance/instancegeom.c` | 0 of 1 | `_rwDlGeometryInstanceFast` (98.48605%: nonvolatile register allocation); related vertex-count and texture-coordinate API inline context is reconstructed, with its exact GC spelling/placement inferred; text only, NonMatching |
 | `rwsdk/world/pipe/p2/gcn/instance/instanceworld.c` | 1 of 1 | (Matching on GIHE78-rev0; sole 1004-byte function, text only) |
 | `rwsdk/world/pipe/p2/gcn/instance/ibuffer.c` | 1 of 2 | `GCNDisplayListsBuild` (98.2%: the index-count copy and register choice; remains `NonMatching`) |
@@ -122,7 +122,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 4 of 7 | `GameCubeMTEffectStreamRead` (98.2%), `GameCubeMTEffectStreamWrite` (86.5%) and `RpGameCubeMTEffectCreate` (85.5%), not diagnosed yet |
 | `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 3 of 9 | `_rpGameCubeMTMeshRenderCallBack` (94.7%), `GetTexFrameMatrix` (90.2%), `fn_80141958` (90.1%), `_rpGameCubeMTPipeDataQueryNBTs` (89.6%), `fn_80141D20` (82.8%) and `_rpGameCubeMTEffectSend` (68.7%), not diagnosed yet (text only) |
 | `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 11 of 15 | Consistent interrupt-visible token declarations add exact bodies; remaining routines partial. NonMatching, original linked |
-| `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 4 of 7 | `fn_8015DBA4` (96.9%), `fn_8015E054` (97.5%) and `fn_8015E2E8`, the instance callback (96.5%: the first loads' order) (text only) |
+| `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 4 of 7 | `fn_8015DBA4` (96.9%), `fn_8015E054` (97.5%) and `fn_8015E2E8`, the instance callback (98.4%: the first loads' order) (text only) |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c` | 3 of 5 | `_rxGCWorldSectorAllInOneNode` (97.9%) and `fn_8015E908`, the instance callback (93.2%: register choice and the first loads' order) (text only) |
 | `rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c` | 4 of 4 (rev0) | (Matching on GIHE78-rev0, with its `.data` and `.sbss`; vertices go through the GX vertex functions) |
 | `rwsdk/plugin/collis/ctgeom.c` | 7 of 7 | (NonMatching: this source pools `1.0` before `0.0` in `.sdata2`, the target the other way round) |
@@ -131,7 +131,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/collis/rpcollis.c` | 9 of 9 | (Matching on GIHE78-rev0, with its `.sbss`; ends after `RpCollisionPluginAttach`, `0x8013BD2C`) |
 | `rwsdk/tool/intsec/rtintsec.c` | 1 of 2 | `RtIntersectionSphereTriangle` (97.5%: register choice) |
 | `rwsdk/plugin/userdata/rpusrdat.c` | 17 of 17 (rev0) | (Matching on GIHE78-rev0, with its `.sbss`) |
-| `rwsdk/driver/common/palquant.c` | 12 of 17 | `ExtractNodes` (99.8%: one register swap), `nMaximize` (99.4%) and `_rwPalQuantMatchImage` (97.7%), register choice; `_rwPalQuantAddImage` and `_rwPalQuantResolvePalette` (94.0% and 93.9%: reloads and product order); starts at `InitLeaf`, `0x801714EC` |
+| `rwsdk/driver/common/palquant.c` | 12 of 17 | `ExtractNodes` (99.8%: one register swap), `nMaximize` (99.4%) and `_rwPalQuantMatchImage` (97.7%), register choice; `_rwPalQuantAddImage` (94.0%: reloads and product order) and `_rwPalQuantResolvePalette` (96.2%: register choice and stack offsets); starts at `InitLeaf`, `0x801714EC` |
 | `rwsdk/driver/gcn/dltoken.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.sdata` and `.sbss`: the current and last-seen GPU tokens) |
 | `rwsdk/driver/gcn/dl2drend.c` | 6 of 6 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.bss` and `.sdata2`; the vertex helpers take a plain `RwIm2DVertex*`) |
 | `rwsdk/driver/gcn/dlconvrt.c` | 23 of 25 | `_rwDlPixelToRGB` (92.7%: the target calls `_rwDlConv565To8888` out of line for the default format) and `_rwDlRGBToPixel` (88.3%: the target keeps the pixel in a stack slot); the image readers and raster writers take their converter from the inlined `DlRGBAConverter` and `DlPixelConverter`, and the two device entry points take the standard-function signature. NonMatching, original linked |
