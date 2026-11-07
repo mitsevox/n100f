@@ -1070,7 +1070,7 @@ RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dict, const char* na
 
 // Looks a texture up by name in every dictionary, for when there is no current one. Returns NULL
 // when no dictionary holds it.
-static RwTexture* TextureFindInAllDictionaries(const char* name)
+static RwTexture* TextureFind(const char* name)
 {
     RwLLLink* cur = rwLinkListGetFirstLLLink(&TEXTURE_DATA(texDictList));
 
@@ -1102,7 +1102,7 @@ RwTexture* RwTextureRead(const char* name, const char* maskName)
     }
     else
     {
-        texture = TextureFindInAllDictionaries(name);
+        texture = TextureFind(name);
     }
 
     if (texture)
