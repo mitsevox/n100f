@@ -502,7 +502,9 @@ void iSndInit()
         u32 buf = ARAlloc(0x5DC0);
         streams[i].dest_a = buf;
         streams[i].dest_b = buf + 0x2EE0;
-        streams[i].source_a = (u32)stream_buffer + i * 0x2EE0;
+        u32 src = (u32)stream_buffer;
+        src += i * 0x2EE0;
+        streams[i].source_a = src;
     }
     AXRegisterCallback(fcb);
 }
