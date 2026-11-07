@@ -639,21 +639,14 @@ RwRGBA* RwRGBASetFromPixel(RwRGBA* rgbOut, U32 pixelValue, S32 rasterFormat)
 // palette; anything else is an error.
 S32 ImageConvertDepth(RwImage* destImage, const RwImage* sourceImage)
 {
+    S32 result = FALSE;
+    S32 width = destImage->width;
+    S32 height = destImage->height;
+    const RwRGBA* palette = sourceImage->palette;
+    const U8* srcRow = sourceImage->cpPixels;
+    U8* dstRow = destImage->cpPixels;
     S32 x;
-    S32 result;
-    S32 width;
-    S32 height;
-    const RwRGBA* palette;
-    U8* dstRow;
-    const U8* srcRow;
     S32 y;
-
-    result = FALSE;
-    width = destImage->width;
-    height = destImage->height;
-    palette = sourceImage->palette;
-    srcRow = sourceImage->cpPixels;
-    dstRow = destImage->cpPixels;
 
     switch ((sourceImage->depth << 8) | destImage->depth)
     {
@@ -687,9 +680,6 @@ S32 ImageConvertDepth(RwImage* destImage, const RwImage* sourceImage)
 
         result = TRUE;
         break;
-    case (8 << 8) | 4:
-    case (32 << 8) | 4:
-    case (32 << 8) | 8:
     default:
         ImageError(0x80000009);
         break;
@@ -776,6 +766,7 @@ RwImage* RwImageGammaCorrect(RwImage* image)
     {
         U8* row = image->cpPixels;
         S32 width = image->width;
+        S32 height = image->height;
         S32 y;
 
         if (!row)
@@ -784,7 +775,7 @@ RwImage* RwImageGammaCorrect(RwImage* image)
             return NULL;
         }
 
-        for (y = 0; y < image->height; y++)
+        for (y = 0; y < height; y++)
         {
             ImageGammaCorrectPixels((RwRGBA*)row, (const RwRGBA*)row, width);
             row += image->stride;
@@ -847,9 +838,9 @@ const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
 
         rwstrcpy(fullName, imageName);
         callBack(fullName, data);
-        return imageName;
     }
-
+    else
+    {
     while (path && *path)
     {
         const char* next;
@@ -886,6 +877,7 @@ const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
         }
 
         path = next;
+    }
     }
 
     return imageName;
