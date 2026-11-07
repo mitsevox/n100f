@@ -2093,6 +2093,7 @@ rwsdk/src/pipe/p2/nodeTransform.c:
 
 rwsdk/src/pipe/p2/p2altmdl.c:
 	.text       start:0x80184918 end:0x80184C50
+	.bss        start:0x8025E388 end:0x8025E3A0
 
 rwsdk/src/pipe/p2/p2clpcom.c:
 	.text       start:0x80184C50 end:0x801869A8

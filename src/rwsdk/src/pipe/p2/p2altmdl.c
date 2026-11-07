@@ -1,5 +1,8 @@
 #include <rwcore.h>
 
+// The context of the pipeline being executed, which RxPipelineExecute sets up and the nodes read.
+RxExecContext _rxExecCtxGlobal;
+
 // Embedded packets: each pipeline owns one packet, which its nodes pass along to each other and
 // which one pipeline can hand its clusters on to the next.
 
