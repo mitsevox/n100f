@@ -375,6 +375,15 @@ static inline F32 nVar(PalQuantBranch* root, PalQuantBox* region)
     return volume.var - PALQUANT_DOT(&volume) / volume.weight;
 }
 
+// FAKEMATCH: helper exists only to steer register allocation in nMaximize; real form believed to be a plain a + b
+static inline F32 nSum(F32 a, F32 b)
+{
+    F32 r = a;
+
+    r += b;
+    return r;
+}
+
 // Tries every cut of a box along one channel and returns the best split's score, with the cut in
 // *cut (-1 if no cut leaves weight on both sides).
 static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
@@ -443,10 +452,11 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
 
             if (half.weight > 0.0f && restWeight > 0.0f)
             {
-                F32 temp = PALQUANT_DOT(&half) / half.weight +
-                           (restRed * restRed + restGreen * restGreen + restBlue * restBlue +
-                            restAlpha * restAlpha) /
-                               restWeight;
+                // FAKEMATCH: nSum keeps the score in the first quotient's register; real form believed to be one expression adding the two quotients
+                F32 temp = nSum(PALQUANT_DOT(&half) / half.weight,
+                                (restRed * restRed + restGreen * restGreen + restBlue * restBlue +
+                                 restAlpha * restAlpha) /
+                                    restWeight);
 
                 if (temp > max)
                 {
@@ -481,10 +491,11 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
 
             if (half.weight > 0.0f && restWeight > 0.0f)
             {
-                F32 temp = PALQUANT_DOT(&half) / half.weight +
-                           (restRed * restRed + restGreen * restGreen + restBlue * restBlue +
-                            restAlpha * restAlpha) /
-                               restWeight;
+                // FAKEMATCH: nSum keeps the score in the first quotient's register; real form believed to be one expression adding the two quotients
+                F32 temp = nSum(PALQUANT_DOT(&half) / half.weight,
+                                (restRed * restRed + restGreen * restGreen + restBlue * restBlue +
+                                 restAlpha * restAlpha) /
+                                    restWeight);
 
                 if (temp > max)
                 {
@@ -519,10 +530,11 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
 
             if (half.weight > 0.0f && restWeight > 0.0f)
             {
-                F32 temp = PALQUANT_DOT(&half) / half.weight +
-                           (restRed * restRed + restGreen * restGreen + restBlue * restBlue +
-                            restAlpha * restAlpha) /
-                               restWeight;
+                // FAKEMATCH: nSum keeps the score in the first quotient's register; real form believed to be one expression adding the two quotients
+                F32 temp = nSum(PALQUANT_DOT(&half) / half.weight,
+                                (restRed * restRed + restGreen * restGreen + restBlue * restBlue +
+                                 restAlpha * restAlpha) /
+                                    restWeight);
 
                 if (temp > max)
                 {
