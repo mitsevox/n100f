@@ -3,8 +3,6 @@
 // Embedded packets: each pipeline owns one packet, which its nodes pass along to each other and
 // which one pipeline can hand its clusters on to the next.
 
-// Releases a packet's clusters (frees the heap data of those the packet owns) and marks the
-// pipeline's embedded packet unused.
 void _rxPacketDestroy(RxPacket* packet);
 
 // Hands the clusters the second pipeline requires from the first pipeline's embedded packet over
@@ -21,8 +19,9 @@ void _rxEmbeddedPacketBetweenPipelines(RxPipeline* fromPipeline, RxPipeline* toP
         {
             RxPipelineRequiresCluster* requirement = &toPipeline->inputRequirements[i];
             U32 j;
+            U32 numClusters = fromPacket->numClusters;
 
-            for (j = 0; j < fromPacket->numClusters; j++)
+            for (j = 0; j < numClusters; j++)
             {
                 RxPipelineCluster* clusterRef = fromPacket->clusters[j].clusterRef;
 
@@ -32,16 +31,14 @@ void _rxEmbeddedPacketBetweenPipelines(RxPipeline* fromPipeline, RxPipeline* toP
                 }
             }
 
-            if (j != fromPacket->numClusters)
+            if (j != numClusters)
             {
-                RxCluster* fromCluster = &fromPacket->clusters[j];
-
-                if (fromCluster->data)
+                if (fromPacket->clusters[j].data)
                 {
-                    toPacket->clusters[requirement->slotIndex] = *fromCluster;
+                    toPacket->clusters[requirement->slotIndex] = fromPacket->clusters[j];
                     toPacket->clusters[requirement->slotIndex].clusterRef =
                         toPipeline->nodes[0].slotClusterRefs[requirement->slotIndex];
-                    fromCluster->data = NULL;
+                    fromPacket->clusters[j].data = NULL;
                 }
             }
         }
@@ -75,10 +72,11 @@ RxPipelineNode* _rxEmbeddedPacketBetweenNodes(RxPipeline* pipeline, RxPipelineNo
             if (!(packet->slotsContinue[0] & outputMask))
             {
                 U32 i = packet->numClusters;
-                RxCluster* cluster = &packet->clusters[i - 1];
+                RxCluster* cluster = &packet->clusters[i];
 
                 do
                 {
+                    cluster--;
                     if (!(outputMask & packet->slotsContinue[i]) && cluster->clusterRef)
                     {
                         if (cluster->data && !(cluster->flags & CLUSTER_EXTERNAL))
@@ -86,14 +84,12 @@ RxPipelineNode* _rxEmbeddedPacketBetweenNodes(RxPipeline* pipeline, RxPipelineNo
                             RxHeapFree(_rxHeapGlobal, cluster->data);
                         }
 
-                        packet->clusters[i - 1].flags = 0;
+                        *(U32*)&packet->clusters[i - 1] = 0;
                         cluster->data = NULL;
                         cluster->numAlloced = 0;
                         cluster->numUsed = 0;
                         cluster->clusterRef = NULL;
                     }
-
-                    cluster--;
                 } while (--i);
             }
 
@@ -109,6 +105,8 @@ RxPipelineNode* _rxEmbeddedPacketBetweenNodes(RxPipeline* pipeline, RxPipelineNo
     return NULL;
 }
 
+// Releases owned cluster buffers, clears each released cluster's flags and stride, and marks
+// the pipeline's embedded packet unused.
 void _rxPacketDestroy(RxPacket* packet)
 {
     U32 i;
@@ -126,7 +124,7 @@ void _rxPacketDestroy(RxPacket* packet)
                 RxHeapFree(_rxHeapGlobal, cluster->data);
             }
 
-            cluster->flags = 0;
+            *(U32*)cluster = 0;
             cluster->data = NULL;
             cluster->numAlloced = 0;
             cluster->numUsed = 0;
