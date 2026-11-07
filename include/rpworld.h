@@ -603,7 +603,7 @@ struct GCNAllInOnePrivateData
     void* reinstanceCB;
     void* lightingCB;
     void* renderCB;
-    U32 clearFlags;
+    S32 clearFlags;
 };
 
 // What an all-in-one node passes its callbacks for one object: the instanced entry, the mesh
