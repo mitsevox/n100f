@@ -87,6 +87,22 @@ class CarveDataOnly(unittest.TestCase):
         self.assertEqual(hosted, {"zA.cpp": [("zACol.cpp", ".data", 0x1010, 0x1018)]})
         self.assertEqual(final[("zA.cpp", ".data")], (0x1000, 0x1010))
 
+    def test_gap_claim_is_recorded(self):
+        final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1018, 0x1020)}
+        gaps = set()
+        recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018))],
+                                self.ONLY, DATA, final, self.ORDER, gaps)
+        self.assertEqual(gaps, {("zACol.cpp", ".data")})
+
+    def test_gap_past_a_later_range(self):
+        # zB.cpp's range lies between zA.cpp's and the claim, so the claim breaks link order.
+        data = DATA + [(0x1030, 0x04, ".data", "gTable")]
+        final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1018, 0x1020)}
+        hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1030, 0x1038))],
+                                                  self.ONLY, data, final, self.ORDER)
+        self.assertEqual(hosted, {})
+        self.assertIn("neither a tail", refused[0])
+
     def test_gap_reached_by_a_range(self):
         final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1014, 0x1020)}
         hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018))],

@@ -457,7 +457,7 @@ def data_only_units(variables_tsv, function_units, prefix_dir='E:\\SD2\\Game\\fl
     return dict(out)
 
 
-def carve_data_only(data_claims, data_only, data, final, order):
+def carve_data_only(data_claims, data_only, data, final, order, gaps=None):
     """Section ranges for the data-only units (data_only_units) that `data` rows claim, and a
     message for each refused claim.  The run gives a data-only unit's items to a neighbour, so a
     claim carves them off the end of the range of the unit linked right before it (link order
@@ -466,7 +466,8 @@ def carve_data_only(data_claims, data_only, data, final, order):
     colors, which only other units load, so the run places them nowhere); `final` then stays as
     it is.  A claim is refused when it is neither such a tail nor such a gap, when it takes the
     whole range, or when it holds an item whose name the PS2 DWARF does not list as a global of
-    the claiming unit.  Returns ({host unit: [(unit, section, start, end)]}, messages)."""
+    the claiming unit.  Each claim taken from a gap is added to `gaps`, when given, as
+    (unit, section).  Returns ({host unit: [(unit, section, start, end)]}, messages)."""
     hosted, refused = collections.defaultdict(list), []
     for (u, sec), (lo, hi) in sorted(data_claims, key=lambda c: (c[0][1], c[1], c[0][0])):
         why = None
@@ -474,8 +475,10 @@ def carve_data_only(data_claims, data_only, data, final, order):
         host = before[-1] if before else None
         r = final.get((host, sec)) if host else None
         items = [d for d, item in enumerate(data) if item[2] == sec and lo <= item[0] < hi]
+        # A gap claim may not reach any range: none in the section may end after the host's
+        # range and start before the claim's end (one that starts inside or before the claim).
         gap = bool(r) and r[1] <= lo and not any(
-            s == sec and a < hi and lo < b for (_, s), (a, b) in final.items())
+            s == sec and a < hi and r[1] < b for (_, s), (a, b) in final.items())
         if not r:
             why = f'no unit linked before it has a {sec} range'
         elif not gap and (r[1] != hi or not r[0] < lo):
@@ -491,6 +494,8 @@ def carve_data_only(data_claims, data_only, data, final, order):
             continue
         if not gap:
             final[(host, sec)] = (r[0], lo)
+        elif gaps is not None:
+            gaps.add((u, sec))
         hosted[host].append((u, sec, lo, hi))
     return dict(hosted), refused
 
@@ -1215,9 +1220,12 @@ def main():
     for msg in refused + claim_warnings(claimed, data, users, emitted_units, free_extra):
         print(msg, file=sys.stderr)
     extra, conflicts, dclass, stray, placed, final = settle(claimed)
-    # Data-only units take their claimed ranges off the end of the unit linked before them.
+    # Data-only units take their claimed ranges off the end of the unit linked before them,
+    # or from the gap after it.
+    gap_claims = set()
     hosted, refused = carve_data_only([c for c in data_claims if c[0][0] in data_only],
-                                      data_only, data, final, [u for u in order if status(u) != 'weak'])
+                                      data_only, data, final, [u for u in order if status(u) != 'weak'],
+                                      gap_claims)
     for msg in refused:
         print(msg, file=sys.stderr)
     # A claim the link-order run then leaves out (its unit is out of order there) is reported.
@@ -1251,8 +1259,10 @@ def main():
             tclass[key], tconf[key] = tclass[key] + note, tconf[key] + n
 
     # Target-only checks on the result.  MW pools .sdata2 literals per unit, so
-    # no function may load a literal inside another unit's .sdata2 range (a global
-    # const in .sdata2 would break this; none has turned up).  As advice only, a
+    # no function may load a literal inside another unit's .sdata2 range.  A global
+    # const in .sdata2 would break this: xColor.cpp's colors are such consts, and they
+    # pass only because a data-only unit's claimed range is not in sd_owner (it holds
+    # no functions, and other units load its colors).  As advice only, a
     # unit range holding the same float twice is reported: pooled literals are
     # merged, but a named static const is not merged with a literal.
     emitted = [u for u in order if status(u) != 'weak']
@@ -1315,6 +1325,10 @@ def main():
                 if wsec == sec:
                     out.write(f'{sec}\t{u}\t{w}\t{"0x%08X" % a[1] if a else "-"}\t0x{lo:08X}\t'
                               'data-only unit claimed by a data row in evidence.tsv\t0\n')
+                    # A claim in the gap takes the items the old edge's class counted; when it
+                    # reaches v's range nothing is left between the two.
+                    if (w, sec) in gap_claims and b and hi == b[0]:
+                        cls, conflicts = 'data-only unit claim ends at the next range', 0
                     u, a = w, (lo, hi)
             out.write(f'{sec}\t{u}\t{v}\t{"0x%08X" % a[1] if a else "-"}\t{"0x%08X" % b[0] if b else "-"}\t'
                       f'{cls if a and b else cls + "; a side left unsplit"}\t{conflicts}\n')

@@ -9,8 +9,7 @@ struct lconv __lconv = {
     CHAR_MAX, CHAR_MAX, CHAR_MAX, CHAR_MAX, CHAR_MAX, CHAR_MAX,
 };
 
-// Only the "C" locale exists. Nothing in the game calls this, so the linker strips it, but its
-// "C" stays in the unit's string pool after the two strings __lconv uses.
+// Only the "C" locale exists.
 char* setlocale(int category, const char* locale)
 {
     if (locale == NULL || strcmp(locale, "C") == 0 || strcmp(locale, "") == 0)
