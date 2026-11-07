@@ -47,7 +47,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/p2core.c` | 13 of 13 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/p2define.c` | 12 of 13 | `RxLockedPipeUnlock` (98.3%: the size sum adds the sort-data allowance at another point and with its operands reversed; the sort index is coalesced with its numNodes - 1 temporary where the target copies it; the size, sort index, new sort pointer, the second growth's superBlock pointer and grown size and the numNodes * numUnique product take other registers; volatile registers differ in the entry check, the inlined cluster count, the size sums, the first realloc call and the inlined top sort's two counting loops); `.sdata` `gMemoryLimits` is in the split |
 | `rwsdk/src/pipe/p2/p2dep.c` | 10 of 11 | `_PropagateDependenciesAndKillDeadPaths` (99.8%): only the volatile registers of its first loop, the clusters-of-interest duplicate check, differ |
-| `rwsdk/src/pipe/p2/p2heap.c` | 7 of 8 | `RxHeapRealloc` (99.6%: the rounded size and the inlined shrink path's size difference take each other's registers); its message string is not split |
+| `rwsdk/src/pipe/p2/p2heap.c` | 8 of 8 | (Matching on GIHE78-rev0, with its `.data` message string) |
 | `rwsdk/src/pipe/p2/p2renderstate.c` | 4 of 4 | (Matching on GIHE78-rev0; split by hand) |
 | `rwsdk/src/pipe/p2/p2resort.c` | 2 of 2 | (Matching on GIHE78-rev0; GIHE78-rev1 remains NonMatching because its insertion pass is outlined before the wrapper) |
 | `rwsdk/src/pipe/p2/p2stdcls.c` | data only | (Matching on GIHE78-rev0: the standard cluster definitions; the linker drops the five the game does not reference) |
@@ -101,7 +101,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/gcn/instance/instanceworld.c` | 1 of 1 | (Matching on GIHE78-rev0; sole 1004-byte function, text only) |
 | `rwsdk/world/pipe/p2/gcn/instance/ibuffer.c` | 1 of 2 | `GCNDisplayListsBuild` (98.2%: the index-count copy and register choice; remains `NonMatching`) |
 | `rwsdk/world/pipe/p2/gcn/gclights.c` | 2 of 2 | (Matching on GIHE78-rev0, with its `.data`, `.bss` and `.sdata2`; the light color comes from the inlined `GCLightsColor`) |
-| `rwsdk/world/pipe/p2/gcn/native.c` | 4 of 8 | `_rpNativeRead` (98.2%), `_rpNativeWrite` (91.3%), `_rpGeometryNativeSize` (95.7%) and `_rpWorldSectorNativeSize` (97.1%): the target associates some of the instance size and alignment arithmetic differently, `_rpNativeWrite` keeps one more saved register, and register choice (text only) |
+| `rwsdk/world/pipe/p2/gcn/native.c` | 4 of 8 | `_rpNativeRead` (98.2%), `_rpNativeWrite` (94.8%), `_rpGeometryNativeSize` (95.7%) and `_rpWorldSectorNativeSize` (97.1%): the target associates some of the instance size and alignment arithmetic differently, `_rpNativeWrite` keeps one more saved register, and register choice (text only) |
 | `rwsdk/world/pipe/p2/gcn/gcpipe.c` | 10 of 10 | (Matching on GIHE78-rev0, with the `RxClLights` cluster and its name in `.data`) |
 | `rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c` | 4 of 4 | (Matching on GIHE78-rev0 and GIHE78-rev1; `.data` 98.5%: the four bytes of padding at its end) |
 | `rwsdk/world/pipe/p2/nodeMaterialScatter.c` | 2 of 2 | (Matching on GIHE78-rev0; `.data` 98.8%, as `nodeAtomicEnumerateLights.c`) |

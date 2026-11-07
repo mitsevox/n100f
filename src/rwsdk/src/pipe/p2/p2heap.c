@@ -299,13 +299,14 @@ static void* _rxHeapReallocLarger(RxHeap* heap, void* block, U32 newSize,
     return NULL;
 }
 
+// Shrinks a block in place; sizeDelta is the size change, zero or negative.
 static void* _rxHeapReallocSmaller(RxHeap* heap, void* block, U32 newSize,
                                    rxHeapBlockHeader* header, S32 sizeDelta)
 {
     rxHeapFreeBlock* entry;
     rxHeapBlockHeader* newHeader;
 
-    if (sizeDelta < HEAP_MINFREE)
+    if (-sizeDelta < HEAP_MINFREE)
     {
         return block;
     }
@@ -319,7 +320,7 @@ static void* _rxHeapReallocSmaller(RxHeap* heap, void* block, U32 newSize,
 
     newHeader = (rxHeapBlockHeader*)((U8*)(header + 1) + newSize);
 
-    newHeader->size = sizeDelta - sizeof(rxHeapBlockHeader);
+    newHeader->size = -sizeDelta - sizeof(rxHeapBlockHeader);
     newHeader->prev = header;
     newHeader->next = header->next;
     newHeader->freeEntry = entry;
@@ -441,8 +442,9 @@ void* RxHeapAlloc(RxHeap* heap, U32 size)
     return NULL;
 }
 
-static void* _rxHeapRealloc(RxHeap* heap, void* block, U32 newSize)
+static void* _rxHeapRealloc(RxHeap* heap, void* block, U32 size)
 {
+    U32 newSize = (size + (HEAP_ALIGNMENT - 1)) & ~(HEAP_ALIGNMENT - 1);
     rxHeapBlockHeader* header = (rxHeapBlockHeader*)block - 1;
     S32 sizeDelta = newSize - header->size;
 
@@ -451,13 +453,14 @@ static void* _rxHeapRealloc(RxHeap* heap, void* block, U32 newSize)
         return _rxHeapReallocLarger(heap, block, newSize, header, sizeDelta);
     }
 
-    return _rxHeapReallocSmaller(heap, block, newSize, header, -sizeDelta);
+    return _rxHeapReallocSmaller(heap, block, newSize, header, sizeDelta);
 }
 
+// Resizes a heap block to newSize bytes, rounded up to the heap alignment: it grows in place into
+// a free neighbour or moves the block, and shrinks in place by splitting off a free block.
+// allowCopy is not read.
 void* RxHeapRealloc(RxHeap* heap, void* block, U32 newSize, S32 allowCopy)
 {
-    newSize = (newSize + (HEAP_ALIGNMENT - 1)) & ~(HEAP_ALIGNMENT - 1);
-
     return _rxHeapRealloc(heap, block, newSize);
 }
 
