@@ -124,8 +124,6 @@ static S32 GeomLeafNodeForAllSphereIntersections(S32 numTriangles, S32 triOffset
     return TRUE;
 }
 
-// Calls back for each triangle of the geometry's base morph target the line hits, through the
-// collision tree when the geometry has one.
 // Returns numerator / denominator, or 0 for a zero denominator.
 static F32 GeomSafeDivide(F32 numerator, F32 denominator)
 {
@@ -139,6 +137,8 @@ static F32 GeomSafeDivide(F32 numerator, F32 denominator)
     return result;
 }
 
+// Calls back for each triangle of the geometry's base morph target the line hits, through the
+// collision tree when the geometry has one.
 static RpGeometry* GeometryForAllLineIntersections(RpGeometry* geometry, RwLine* testLine,
                                                    GeomCallBack* cb)
 {

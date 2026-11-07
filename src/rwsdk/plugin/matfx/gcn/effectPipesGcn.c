@@ -76,10 +76,7 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 
 // Offsets each vertex's base texture coordinates along the bump map light direction, into dst:
 // the light (the bump map frame's at axis, or the camera's) is taken into the object's space,
-// and each vertex's offset comes from the texture space of one of its triangles. Both offsets
-// are computed before either store (the normal and light loads come before the first stfsx),
-// each index branch sets up its own vertex pointers (the pointer arithmetic appears in both), and
-// the indices are read as indices[i].
+// and each vertex's offset comes from the texture space of one of its triangles.
 void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMesh* mesh,
                  RwV3d* positions, RwV3d* normals, RwTexCoords* texCoords, S32 numVertices,
                  S32 flags)
@@ -276,8 +273,7 @@ RpAtomic* fn_8013FF48(RpAtomic* atomic, GCNObjectData* objectData)
 
 // The atomic pipeline's reinstance callback: chains to the node's own reinstance, then recomputes
 // the normal, binormal and tangent data when the geometry's vertices or normals were locked or the
-// atomic is morphing. Both conditions are read into values before the test (the lock mask loads
-// first, then the morph flag is built as 0 or 1).
+// atomic is morphing.
 RpAtomic* _rpGCMatFXAtomicReinstanceCallBack(RpAtomic* atomic, GCNObjectData* objectData)
 {
     RpGeometry* geometry = atomic->geometry;
@@ -326,8 +322,7 @@ RpWorldSector* fn_801400F8(RpWorldSector* sector, GCNObjectData* objectData)
     return sector;
 }
 
-// The alpha compare mode for a texture: 3 when its raster's parent has alpha, otherwise 1. The
-// mode starts at 1.
+// The alpha compare mode for a texture: 3 when its raster's parent has alpha, otherwise 1.
 static S32 MatFXGCNAlphaRef(RwTexture* texture)
 {
     S32 ref = 1;
@@ -342,7 +337,7 @@ static S32 MatFXGCNAlphaRef(RwTexture* texture)
 
 // Loads the environment map texture matrix: the inverse of the map's frame (or lbl_8025E304),
 // after the object's matrix, scaled and offset into texture space. The matrix is a full 3x4 Mtx
-// of which the 2x4 load reads two rows (each inlined copy reserves 0x30 bytes).
+// of which the 2x4 load reads two rows.
 static void LoadEnvMapMatrix(RwFrame* frame, const RwMatrix* matrix)
 {
     RwMatrix tmp;
@@ -378,7 +373,7 @@ static void LoadEnvMapMatrix(RwFrame* frame, const RwMatrix* matrix)
 }
 
 // Sets up the lighting channels of an environment map pass: unlit, with a material color whose
-// alpha is the map's coefficient. The coefficient is read after the channel setup.
+// alpha is the map's coefficient.
 static void SetupEnvMapChannels(GXColor* color, MatFXEnvMapData* envMap)
 {
     GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_CLAMP,
@@ -721,6 +716,8 @@ static RxPipeline* MatFXGCNWorldSectorPipelineCreate(void)
     return NULL;
 }
 
+// Creates the vertex format and the atomic and world sector pipelines; the counterpart of
+// _rpMatFXPipelinesDestroy.
 S32 fn_80140AF4(void)
 {
     lbl_8025F680 = RpGameCubeVtxFmtCreate();

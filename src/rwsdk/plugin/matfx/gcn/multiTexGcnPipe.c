@@ -674,7 +674,6 @@ RpMTEffect* _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 num
     return effect;
 }
 
-// Draws one mesh with its material's multitexture: sets the textures, runs the pre-render
 // Puts back the GX state an effect changed that the next draw does not set itself: manual texture
 // coordinate scaling, the indirect stages and indirect TEV stages.
 static void MTResetEffectState(RpMTEffect* effect)
@@ -709,6 +708,7 @@ static void MTResetEffectState(RpMTEffect* effect)
     }
 }
 
+// Draws one mesh with its material's multitexture: sets the textures, runs the pre-render
 // callback, sends the effect, draws the display list and undoes what the effect set.
 void _rpGameCubeMTMeshRenderCallBack(GCNDisplayList* displayList, RpMaterial* material,
                                      void* object, GCNObjectData* objectData,
