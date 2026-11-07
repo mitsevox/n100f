@@ -394,26 +394,21 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
     case 1:
         for (i = set->lower.red; i < set->upper.red; i++)
         {
-            F32 restAlpha;
-            F32 restWeight;
-            F32 restRed;
-            F32 restGreen;
-            F32 restBlue;
+            PalQuantLeaf rest;
 
             sub.upper.red = i;
             nVol(root, &sub, &half);
-            restWeight = whole->weight - half.weight;
-            restRed = whole->red - half.red;
-            restGreen = whole->green - half.green;
-            restBlue = whole->blue - half.blue;
-            restAlpha = whole->alpha - half.alpha;
+            rest.red = whole->red - half.red;
+            rest.green = whole->green - half.green;
+            rest.blue = whole->blue - half.blue;
+            rest.alpha = whole->alpha - half.alpha;
+            rest.weight = whole->weight - half.weight;
 
-            if (half.weight > 0.0f && restWeight > 0.0f)
+            if (half.weight > 0.0f && rest.weight > 0.0f)
             {
-                F32 temp = PALQUANT_DOT(&half) / half.weight +
-                           (restRed * restRed + restGreen * restGreen + restBlue * restBlue +
-                            restAlpha * restAlpha) /
-                               restWeight;
+                F32 temp = PALQUANT_DOT(&half) / half.weight;
+
+                temp += PALQUANT_DOT(&rest) / rest.weight;
 
                 if (temp > max)
                 {
