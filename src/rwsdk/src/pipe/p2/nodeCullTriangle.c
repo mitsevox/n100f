@@ -1,5 +1,8 @@
 #include <rwcore.h>
 
+// Drops the back-facing triangles of a parallel-projection packet: a triangle whose camera-space
+// area is negative is overwritten by the last triangle and the count shrinks. The packet goes to
+// output 1 when every triangle is culled, else to output 0.
 static S32 ParallelCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
 {
     RxCluster* camVerts;
@@ -24,19 +27,20 @@ static S32 ParallelCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
 
     for (i = 0; i < meshData->NumElements; i++)
     {
-        v0 = (RxCamSpace3DVertex*)((U8*)camVerts->data
-                                   + camVerts->stride * ((RwImVertexIndex*)indices->currentData)[0]);
-        v1 = (RxCamSpace3DVertex*)((U8*)camVerts->data
-                                   + camVerts->stride * ((RwImVertexIndex*)indices->currentData)[1]);
-        v2 = (RxCamSpace3DVertex*)((U8*)camVerts->data
-                                   + camVerts->stride * ((RwImVertexIndex*)indices->currentData)[2]);
+        RwImVertexIndex* index;
+
+        index = (RwImVertexIndex*)indices->currentData;
+
+        v0 = (RxCamSpace3DVertex*)((U8*)camVerts->data + camVerts->stride * index[0]);
+        v1 = (RxCamSpace3DVertex*)((U8*)camVerts->data + camVerts->stride * index[1]);
+        v2 = (RxCamSpace3DVertex*)((U8*)camVerts->data + camVerts->stride * index[2]);
 
         area.nReal = (v0->cameraVertex.x - v1->cameraVertex.x) * (v2->cameraVertex.y - v1->cameraVertex.y)
              - (v0->cameraVertex.y - v1->cameraVertex.y) * (v2->cameraVertex.x - v1->cameraVertex.x);
 
         if (area.nInt < 0)
         {
-            src = (RwImVertexIndex*)indices->data + (meshData->NumElements * 3 - 3);
+            src = (RwImVertexIndex*)indices->data + ((meshData->NumElements << 1) + meshData->NumElements - 3);
 
             ((RwImVertexIndex*)indices->currentData)[0] = src[0];
             ((RwImVertexIndex*)indices->currentData)[1] = src[1];
@@ -90,23 +94,23 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
     {
         for (i = 0; i < meshData->NumElements; i++)
         {
+            RwImVertexIndex* index;
             RwIm2DVertex* v0;
             RwIm2DVertex* v1;
             RwIm2DVertex* v2;
             RwSplitBits area;
 
-            v0 = (RwIm2DVertex*)((U8*)devVerts->data
-                                 + devVerts->stride * ((RwImVertexIndex*)indices->currentData)[0]);
-            v1 = (RwIm2DVertex*)((U8*)devVerts->data
-                                 + devVerts->stride * ((RwImVertexIndex*)indices->currentData)[1]);
-            v2 = (RwIm2DVertex*)((U8*)devVerts->data
-                                 + devVerts->stride * ((RwImVertexIndex*)indices->currentData)[2]);
+            index = (RwImVertexIndex*)indices->currentData;
+
+            v0 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[0]);
+            v1 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[1]);
+            v2 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[2]);
 
             area.nReal = (v0->x - v1->x) * (v2->y - v1->y) - (v0->y - v1->y) * (v2->x - v1->x);
 
             if (area.nInt <= 0)
             {
-                src = (RwImVertexIndex*)indices->data + (meshData->NumElements * 3 - 3);
+                src = (RwImVertexIndex*)indices->data + ((meshData->NumElements << 1) + meshData->NumElements - 3);
                 ((RwImVertexIndex*)indices->currentData)[0] = src[0];
                 ((RwImVertexIndex*)indices->currentData)[1] = src[1];
                 ((RwImVertexIndex*)indices->currentData)[2] = src[2];
@@ -124,6 +128,7 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
         for (i = 0; i < meshData->NumElements; i++)
         {
             RwImVertexIndex* index;
+            RwSplitBits area;
             RxCamSpace3DVertex* v0;
             RxCamSpace3DVertex* v1;
             RxCamSpace3DVertex* v2;
@@ -150,7 +155,7 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
 
                     if (dot.nInt <= 0)
                     {
-                        src = (RwImVertexIndex*)indices->data + (meshData->NumElements * 3 - 3);
+                        src = (RwImVertexIndex*)indices->data + ((meshData->NumElements << 1) + meshData->NumElements - 3);
                         ((RwImVertexIndex*)indices->currentData)[0] = src[0];
                         ((RwImVertexIndex*)indices->currentData)[1] = src[1];
                         ((RwImVertexIndex*)indices->currentData)[2] = src[2];
@@ -167,7 +172,6 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     RwIm2DVertex* d0;
                     RwIm2DVertex* d1;
                     RwIm2DVertex* d2;
-                    RwSplitBits area;
 
                     d0 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[0]);
                     d1 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[1]);
@@ -177,7 +181,7 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
 
                     if (area.nInt <= 0)
                     {
-                        src = (RwImVertexIndex*)indices->data + (meshData->NumElements * 3 - 3);
+                        src = (RwImVertexIndex*)indices->data + ((meshData->NumElements << 1) + meshData->NumElements - 3);
                         ((RwImVertexIndex*)indices->currentData)[0] = src[0];
                         ((RwImVertexIndex*)indices->currentData)[1] = src[1];
                         ((RwImVertexIndex*)indices->currentData)[2] = src[2];
@@ -192,7 +196,7 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
             }
             else
             {
-                src = (RwImVertexIndex*)indices->data + (meshData->NumElements * 3 - 3);
+                src = (RwImVertexIndex*)indices->data + ((meshData->NumElements << 1) + meshData->NumElements - 3);
                 ((RwImVertexIndex*)indices->currentData)[0] = src[0];
                 ((RwImVertexIndex*)indices->currentData)[1] = src[1];
                 ((RwImVertexIndex*)indices->currentData)[2] = src[2];

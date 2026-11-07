@@ -38,7 +38,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/plcore/batkreg.c` | 10 of 10 | (Matching on GIHE78-rev0, with its `.sbss`) |
 | `rwsdk/src/badevice.c` | 14 of 14 | (Matching on GIHE78-rev0, with `engineTKList` in `.data`, `staticGlobals` in `.bss` and `engineInstancesOpened` and `RwEngineInstance` in `.sbss`) |
 | `rwsdk/src/baframe.c` | 21 of 21 | (Matching on GIHE78-rev0, including `.data`, `.sbss` and `.sdata2`) |
-| `rwsdk/src/bacamera.c` | 20 of 22 | two of the camera builders `CameraSync` calls: `CameraBuildParallelClipPlanes` (98.9%: float register choice) and `CameraBuildPerspClipPlanes` (91.9%: the target indexes the far corners through a loop counter) |
+| `rwsdk/src/bacamera.c` | 21 of 22 | one of the camera builders `CameraSync` calls: `CameraBuildPerspClipPlanes` (99.4%), float register choice |
 | `rwsdk/src/baraster.c` | 11 of 11 | (Matching; ends at `_rwRasterOpen`, `0x8016DD04`) |
 | `rwsdk/src/baimras.c` | 3 of 3 | (Matching) |
 | `rwsdk/src/basync.c` | 7 of 7 | (Matching; starts at `SyncObject`, `0x8016E9E4`) |
@@ -58,7 +58,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeSubmitTriangle.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeClipLine.c` | 4 of 4 | (Matching on GIHE78-rev0, with its 240-byte `.data`, 48-byte `.rodata`, 16-byte `.sdata` and 16-byte `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeClipTriangle.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.data` 268 bytes plus 4 normal alignment bytes, 48-byte `.rodata`, 16-byte `.sdata` and 16-byte `.sdata2`) |
-| `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 2 of 4 | Parallel 98.46328%, Perspective 94.606606%; no supported source gain. Raw data 252 emitted bytes plus four target zero tail bytes; local-function source-layout addresses differ. NonMatching, original linked |
+| `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 3 of 4 | `PerspectiveCullProcessPacket` (99.087%: float register choice). Raw data 252 emitted bytes plus four target zero tail bytes; local-function source-layout addresses differ. NonMatching, original linked |
 | `rwsdk/src/pipe/p2/nodeTransform.c` | 4 of 4 | (Matching on GIHE78-rev0, with its 232-byte `.data` and 32-byte `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeImmInstance.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/p2clpcom.c` | 16 of 16 | (Matching on GIHE78-rev0, with its `.bss` gClipInfo and `.sdata2`) |
@@ -70,7 +70,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/gcn/wrldpipe.c` | 7 of 7 | (Matching on GIHE78-rev0; starts at `_rxWorldDevicePluginAttach`, `0x8015D830`) |
 | `rwsdk/src/batextur.c` | 29 of 29 | (Matching on GIHE78-rev0; `.rodata` and `.data` exact, `.sdata`, `.sbss` and `.sdata2` exact up to alignment padding) |
 | `rwsdk/src/plcore/batkbin.c` | 8 of 8 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/plcore/bamatrix.c` | 19 of 21 | `MatrixOrthoNormalize` (99.6%) and `RwMatrixOptimize` (92.2%), register choice and scheduling |
+| `rwsdk/src/plcore/bamatrix.c` | 19 of 21 | `MatrixOrthoNormalize` (99.6%) and `RwMatrixOptimize` (98.3%), register choice |
 | `rwsdk/src/babinfrm.c` | 3 of 3 | (Matching on GIHE78-rev0, with its `.sdata2`) |
 | `rwsdk/src/plcore/bastream.c` | 7 of 7 | (Matching on GIHE78-rev0, including `.sdata` and `.sbss`) |
 | `rwsdk/os/gcn/osintf.c` | 1 of 1 | (Matching on GIHE78-rev0) |
