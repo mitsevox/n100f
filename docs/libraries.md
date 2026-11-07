@@ -45,7 +45,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/baim3d.c` | 9 of 9 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/bapipe.c` | 4 of 4 | (Matching) |
 | `rwsdk/src/pipe/p2/p2core.c` | 13 of 13 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/pipe/p2/p2define.c` | 12 of 13 | `RxLockedPipeUnlock` (97.6%: the size sums add the outputs' total at another point and the copy of the sort data to the top of the block subtracts its entry size from the size first, so their values take other registers); `.sdata` `gMemoryLimits` is in the split |
+| `rwsdk/src/pipe/p2/p2define.c` | 12 of 13 | `RxLockedPipeUnlock` (98.3%: the size sum adds the sort-data allowance at another point, and the size, sort index and new sort pointer take other saved registers); `.sdata` `gMemoryLimits` is in the split |
 | `rwsdk/src/pipe/p2/p2dep.c` | 10 of 11 | `_PropagateDependenciesAndKillDeadPaths` (99.8%): only the volatile registers of its first loop, the clusters-of-interest duplicate check, differ |
 | `rwsdk/src/pipe/p2/p2heap.c` | 7 of 8 | `RxHeapRealloc` (99.6%: the rounded size and the inlined shrink path's size difference take each other's registers); its message string is not split |
 | `rwsdk/src/pipe/p2/p2renderstate.c` | 4 of 4 | (Matching on GIHE78-rev0; split by hand) |
