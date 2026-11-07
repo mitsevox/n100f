@@ -1127,51 +1127,61 @@ void ZPRJ_wrap_bupdate(_xEnt* prjent, xVec3* pos)
     xBoundUpdate(&prj->bound);
 }
 
+// Draws an active projectile through its category's render callback, then its shadow:
+// a full shadow when close to the camera or the player, a projected blob otherwise.
 S32 zEntProjectile::ZPRJ_render()
 {
+    S32 rc = 1;
+    zEntProjectile* prj = this;
     xVec3 vec_tmp = {};
-    F32 dst;
-    F32 dst_plyr;
+    F32 dst = 0.0f;
+    F32 dst_plyr = 0.0f;
 
-    if (!(flg_stat & 0x20000))
+    if (!(prj->flg_stat & 0x20000))
     {
-        return 1;
+        return rc;
     }
 
-    if (state <= ZPRJ_STATE_STANDBY)
+    if (prj->state <= ZPRJ_STATE_STANDBY)
     {
-        return 1;
+        return rc;
     }
 
-    ZPRJ_catFuncs(this)->render(this);
+    st_ZPRJ_CATEGORY_FUNCS* funcs = ZPRJ_catFuncs(prj);
+    funcs->render(prj);
 
-    if (flg_prop & 0x8)
+    if (prj->flg_prop & 0x8)
     {
-        xShadowRender(this);
+        xShadowRender(prj);
     }
-    else if (xEntIsVisible(this) && (flg_prop & 0x4))
+    else
     {
-        xVec3Sub(&vec_tmp, &globals.camera.hi_cam.mat.pos, (xVec3*)&model->Mat->pos);
-        dst = xVec3Length2(&vec_tmp);
-        xVec3Sub(&vec_tmp, (xVec3*)&globals.player.ent.model->Mat->pos, (xVec3*)&model->Mat->pos);
-        dst_plyr = xVec3Length2(&vec_tmp);
-        dst = (dst < dst_plyr) ? dst : dst_plyr;
-
-        xVec3Copy(&ent_shadow->pos, &bound.sph.center);
-        ent_shadow->pos.y += 2.0f * bound.sph.r;
-
-        if (dst < 100.0f)
+        U32 vis = xEntIsVisible(prj);
+        if (vis && (prj->flg_prop & 0x4))
         {
-            xShadowRender(this);
-        }
-        else
-        {
-            iShadowCollide(&ishadow, this, 0.75f, 1.0f);
-            iShadowAdd(&ishadow, 0x50);
+            xVec3Sub(&vec_tmp, &globals.camera.hi_cam.mat.pos, (xVec3*)&prj->model->Mat->pos);
+            dst = xVec3Length2(&vec_tmp);
+            xVec3Sub(&vec_tmp, (xVec3*)&globals.player.ent.model->Mat->pos, (xVec3*)&prj->model->Mat->pos);
+            dst_plyr = xVec3Length2(&vec_tmp);
+            dst = (dst < dst_plyr) ? dst : dst_plyr;
+
+            xVec3* center = &prj->bound.sph.center;
+            xVec3Copy(&prj->ent_shadow->pos, center);
+            prj->ent_shadow->pos.y += 2.0f * prj->bound.sph.r;
+
+            if (dst < 100.0f)
+            {
+                xShadowRender(prj);
+            }
+            else
+            {
+                iShadowCollide(&prj->ishadow, prj, 0.75f, 1.0f);
+                iShadowAdd(&prj->ishadow, 0x50);
+            }
         }
     }
 
-    return 1;
+    return rc;
 }
 
 S32 zEntProjectile::LookForFloorRoof(_xScene*, F32)
