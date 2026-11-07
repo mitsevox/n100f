@@ -2453,7 +2453,7 @@ static st_ZVMM_FLASK_DATA g_mmflask[10] = { 0 };
 // The entity's model position.
 static xVec3* VSUP_posEnt(const _xEnt* ent)
 {
-    return xEntGetPos(ent);
+    return &xModelGetFrame(ent->model)->pos;
 }
 
 
@@ -13962,6 +13962,30 @@ static inline _zEnt* VSUP_plyrEnt()
     return &globals.player.ent;
 }
 
+// Squared flat distance from the villain to the player.
+static inline F32 VSUP_ds2_toPlyr(const _zEnt* ent)
+{
+    return VSUP_ds2_toEnt(ent, &globals.player.ent);
+}
+
+// Heading from the villain to the player's bound centre; see VSUP_dir_toEnt.
+static inline F32 VSUP_dir_toPlyr(const _zEnt* ent, _xVec3* dir)
+{
+    return VSUP_dir_toEnt(ent, &globals.player.ent, dir);
+}
+
+// Whether the player is in the villain's field of view.
+static inline S32 VSUP_plyr_inFOV(const st_zEntVillain* vil)
+{
+    return VSUP_ent_inFOV(vil, &globals.player.ent);
+}
+
+// Line of sight from the villain to the player; see VSUP_ent_inLOS.
+static inline S32 VSUP_plyr_inLOS(const st_zEntVillain* vil, S32 prev, F32 rand)
+{
+    return VSUP_ent_inLOS(vil, &globals.player.ent, prev, rand);
+}
+
 // Works out the villain's per-frame facts about itself and the player (prec). flg_needinfo picks
 // what: 0x1 the distance (squared and plain), heading, direction and offset to the player and the
 // player's move info, whose sneak bits (0xFF00) are cleared in a boss battle and while the
@@ -14011,9 +14035,9 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
 
     if (flg_needinfo & 0x1)
     {
-        prec->ds2_VtoP = VSUP_ds2_toEnt(vil, &globals.player.ent);
+        prec->ds2_VtoP = VSUP_ds2_toPlyr(vil);
         prec->dst_VtoP = xsqrt(prec->ds2_VtoP);
-        prec->ang_VtoP = VSUP_dir_toEnt(vil, &globals.player.ent, &prec->dir_VtoP);
+        prec->ang_VtoP = VSUP_dir_toPlyr(vil, &prec->dir_VtoP);
         xVec3Sub(&prec->vec_VtoP, &pos_plyr, &pos_vil);
         prec->plyr_mvinf = zEntPlayer_MoveInfo();
         if (g_scene_is_a_boss_battle)
@@ -14079,7 +14103,7 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
                 {
                     prec->flg_plyr |= 0x1;
                 }
-                if (VSUP_ent_inFOV(vil, &globals.player.ent))
+                if (VSUP_plyr_inFOV(vil))
                 {
                     prec->flg_plyr |= 0x4;
                 }
@@ -14087,7 +14111,7 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
                 {
                     prec->flg_plyr |= 0x8;
                 }
-                else if (VSUP_ent_inLOS(vil, &globals.player.ent, was_inlos, 0.1f))
+                else if (VSUP_plyr_inLOS(vil, was_inlos, 0.1f))
                 {
                     prec->flg_plyr |= 0x8;
                 }
@@ -14110,7 +14134,7 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
         {
             if (!(prec->flg_plyr & 0x1))
             {
-                if (VSUP_ent_inFOV(vil, &globals.player.ent))
+                if (VSUP_plyr_inFOV(vil))
                 {
                     prec->flg_plyr |= 0x4;
                 }
@@ -14118,7 +14142,7 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
                 {
                     prec->flg_plyr |= 0x8;
                 }
-                else if (VSUP_ent_inLOS(vil, &globals.player.ent, was_inlos, 0.1f))
+                else if (VSUP_plyr_inLOS(vil, was_inlos, 0.1f))
                 {
                     prec->flg_plyr |= 0x8;
                 }
