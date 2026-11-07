@@ -83,11 +83,11 @@ void* fn_80141954(void* instance, S32 offset, S32 size)
 // the positions, the normal and the first texture coordinates of one of its triangles.
 void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType)
 {
+    S32 i;
     RwV3d* positions = (RwV3d*)arrays->pos;
-    GCNMTNBT* nbts = (GCNMTNBT*)arrays->nrm;
     RwTexCoords* texCoords = (RwTexCoords*)arrays->tex[0];
+    GCNMTNBT* nbts = (GCNMTNBT*)arrays->nrm;
     U16* indices = mesh->indices;
-    U32 i;
     U16 a;
     U16 b;
 
@@ -104,6 +104,8 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
             RwTexCoords* t0;
             RwTexCoords* t1;
             RwTexCoords* t2;
+            RwV3d e1;
+            RwV3d e2;
             RwV3d s;
             F32 du1;
             F32 du2;
@@ -114,9 +116,9 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
 
             if (primType == rwPRIMTYPETRISTRIP)
             {
-                if ((S32)i < 2)
+                if (i < 2)
                 {
-                    if ((S32)i == 0)
+                    if (i == 0)
                     {
                         a = indices[1];
                         b = indices[2];
@@ -192,11 +194,13 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
 
             dv2 = t2->v - t0->v;
             dv1 = t1->v - t0->v;
-            s.x = (p2->x - p0->x) * dv1 - (p1->x - p0->x) * dv2;
-            s.y = (p2->y - p0->y) * dv1 - (p1->y - p0->y) * dv2;
-            s.z = (p2->z - p0->z) * dv1 - (p1->z - p0->z) * dv2;
             du2 = t2->u - t0->u;
             du1 = t1->u - t0->u;
+            RwV3dSubMacro(&e1, p1, p0);
+            RwV3dSubMacro(&e2, p2, p0);
+            RwV3dScaleMacro(&e1, &e1, dv2);
+            RwV3dScaleMacro(&e2, &e2, dv1);
+            RwV3dSubMacro(&s, &e2, &e1);
 
             dot = -(s.x * nbt->normal.x + s.y * nbt->normal.y + s.z * nbt->normal.z);
             s.x += dot * nbt->normal.x;
