@@ -20,8 +20,8 @@ extern "C" U32 SCENE_PAD_DPAD_OFF();
 extern "C" S32 PAD_SWAP_BUTTONS();
 #endif
 
-extern _tagxPad mPad[4];
 static _tagxRumble mRumbleList[32];
+_tagxPad mPad[4];
 _tagxPad* gDebugPad;
 _tagxPad* gPlayerPad;
 

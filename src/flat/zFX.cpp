@@ -5,6 +5,9 @@
 #include "xString.h"
 #include "zScene.h"
 
+// Surface effect flags of the effect being set up; xFX tests 0x10 when it renders.
+U32 gFXSurfaceFlags;
+
 // Set up scene effects and warping for the tide or tree entity.
 void zFX_SceneEnter(RpWorld* world)
 {

@@ -461,10 +461,12 @@ def carve_data_only(data_claims, data_only, data, final, order):
     """Section ranges for the data-only units (data_only_units) that `data` rows claim, and a
     message for each refused claim.  The run gives a data-only unit's items to a neighbour, so a
     claim carves them off the end of the range of the unit linked right before it (link order
-    is case-insensitive by name): `final` is changed in place.  A claim is refused when it does
-    not end where that range ends, when it takes the whole range, or when it holds an item whose
-    name the PS2 DWARF does not list as a global of the claiming unit.  Returns
-    ({host unit: [(unit, section, start, end)]}, messages)."""
+    is case-insensitive by name): `final` is changed in place.  A claim may instead lie wholly
+    in the gap after that range, where no unit's range in the section reaches (xColor.cpp's
+    colors, which only other units load, so the run places them nowhere); `final` then stays as
+    it is.  A claim is refused when it is neither such a tail nor such a gap, when it takes the
+    whole range, or when it holds an item whose name the PS2 DWARF does not list as a global of
+    the claiming unit.  Returns ({host unit: [(unit, section, start, end)]}, messages)."""
     hosted, refused = collections.defaultdict(list), []
     for (u, sec), (lo, hi) in sorted(data_claims, key=lambda c: (c[0][1], c[1], c[0][0])):
         why = None
@@ -472,10 +474,12 @@ def carve_data_only(data_claims, data_only, data, final, order):
         host = before[-1] if before else None
         r = final.get((host, sec)) if host else None
         items = [d for d, item in enumerate(data) if item[2] == sec and lo <= item[0] < hi]
+        gap = bool(r) and r[1] <= lo and not any(
+            s == sec and a < hi and lo < b for (_, s), (a, b) in final.items())
         if not r:
             why = f'no unit linked before it has a {sec} range'
-        elif r[1] != hi or not r[0] < lo:
-            why = f'it is not a tail of {host} {sec} 0x{r[0]:08X}-0x{r[1]:08X}'
+        elif not gap and (r[1] != hi or not r[0] < lo):
+            why = f'it is neither a tail of {host} {sec} 0x{r[0]:08X}-0x{r[1]:08X} nor in a gap no range reaches'
         elif not items:
             why = 'it holds no item'
         else:
@@ -485,7 +489,8 @@ def carve_data_only(data_claims, data_only, data, final, order):
         if why:
             refused.append(f'check: data claim {u} {sec} 0x{lo:08X}-0x{hi:08X} refused: {why}')
             continue
-        final[(host, sec)] = (r[0], lo)
+        if not gap:
+            final[(host, sec)] = (r[0], lo)
         hosted[host].append((u, sec, lo, hi))
     return dict(hosted), refused
 
@@ -1304,10 +1309,11 @@ def main():
         for (u, v, sec), (cls, conflicts) in sorted(dclass.items(), key=lambda kv: (kv[0][2], order.index(kv[0][0]))):
             a = final.get((u, sec)) if status(u) != 'weak' else None
             b = final.get((v, sec)) if status(v) != 'weak' else None
-            # A data-only unit carved off u's range sits between u and v.
+            # A data-only unit carved off u's range, or claimed in the gap after it, sits
+            # between u and v.
             for w, wsec, lo, hi in hosted.get(u, []):
                 if wsec == sec:
-                    out.write(f'{sec}\t{u}\t{w}\t0x{lo:08X}\t0x{lo:08X}\t'
+                    out.write(f'{sec}\t{u}\t{w}\t{"0x%08X" % a[1] if a else "-"}\t0x{lo:08X}\t'
                               'data-only unit claimed by a data row in evidence.tsv\t0\n')
                     u, a = w, (lo, hi)
             out.write(f'{sec}\t{u}\t{v}\t{"0x%08X" % a[1] if a else "-"}\t{"0x%08X" % b[0] if b else "-"}\t'

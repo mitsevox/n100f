@@ -1,6 +1,7 @@
 """tools/splits/recover.py gives a PS2 compile unit with globals and no functions (a data-only
 unit, such as zEntVillainCol.cpp) the range a `data` row claims for it, carved off the end of
-the range of the unit linked right before it.
+the range of the unit linked right before it, or placed in the gap after that range when no
+unit's range reaches it.
 
     python3 -m unittest tests/test_recover_data_only.py
 """
@@ -61,7 +62,7 @@ class CarveDataOnly(unittest.TestCase):
         hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018))],
                                                   self.ONLY, DATA, final, self.ORDER)
         self.assertEqual(hosted, {})
-        self.assertIn("not a tail", refused[0])
+        self.assertIn("neither a tail", refused[0])
         self.assertEqual(final[("zA.cpp", ".data")], (0x1000, 0x1020))
 
     def test_foreign_item(self):
@@ -76,7 +77,22 @@ class CarveDataOnly(unittest.TestCase):
         hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018))],
                                                   self.ONLY, DATA, final, self.ORDER)
         self.assertEqual(hosted, {})
-        self.assertIn("not a tail", refused[0])
+        self.assertIn("neither a tail", refused[0])
+
+    def test_gap_is_claimed(self):
+        final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1018, 0x1020)}
+        hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018))],
+                                                  self.ONLY, DATA, final, self.ORDER)
+        self.assertEqual(refused, [])
+        self.assertEqual(hosted, {"zA.cpp": [("zACol.cpp", ".data", 0x1010, 0x1018)]})
+        self.assertEqual(final[("zA.cpp", ".data")], (0x1000, 0x1010))
+
+    def test_gap_reached_by_a_range(self):
+        final = {("zA.cpp", ".data"): (0x1000, 0x1010), ("zB.cpp", ".data"): (0x1014, 0x1020)}
+        hosted, refused = recover.carve_data_only([(("zACol.cpp", ".data"), (0x1010, 0x1018))],
+                                                  self.ONLY, DATA, final, self.ORDER)
+        self.assertEqual(hosted, {})
+        self.assertIn("neither a tail", refused[0])
 
 
 if __name__ == "__main__":
