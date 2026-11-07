@@ -201,12 +201,13 @@ F32 _rwMatrixNormalError(const RwMatrix* matrix)
 
 F32 _rwMatrixIdentityError(const RwMatrix* matrix)
 {
+    const RwV3d* right = &matrix->right;
     RwV3d vTmp;
     F32 result;
 
-    vTmp.x = matrix->right.x - 1.0f;
-    vTmp.y = matrix->right.y;
-    vTmp.z = matrix->right.z;
+    vTmp.x = right->x - 1.0f;
+    vTmp.y = right->y;
+    vTmp.z = right->z;
     result = RwV3dDotProductMacro(&vTmp, &vTmp);
 
     vTmp.x = matrix->up.x;
@@ -273,10 +274,10 @@ S32 RwEngineSetMatrixTolerances(const RwMatrixTolerance* const tolerance)
 // identity one.
 RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
 {
+    U32 flags;
     S32 identity;
     S32 normal;
     S32 orthogonal;
-    U32 flags;
 
     if (!tolerance)
     {
