@@ -17,7 +17,7 @@ struct TextureModuleData
     S32 mipmapping;
     S32 autoMipmapping;
     void* buffer;
-    S32 bufferSize;
+    S16 bufferSize;
     TextureBuildMipmapsFn buildMipmapsFn;
     TextureMipmapNameFn mipmapNameFn;
 };
@@ -210,21 +210,22 @@ static S32 PalettizeMipmaps(RwRGBA* palette, RwImage* keepImage, RwImage** image
 }
 
 // Copies a name into a file name buffer, cutting it short (with an error) when it does not fit.
-static void TextureCopyFileName(char* buffer, const char* name)
-{
-    rwstrncpy(buffer, name, TEXTURE_FILENAMESIZE);
-
-    if (rwstrlen(name) >= TEXTURE_FILENAMESIZE)
-    {
-        RwError err;
-
-        err.pluginID = 1;
-        err.errorCode = _rwerror(0x8000001E, name, TEXTURE_FILENAMESIZE, TEXTURE_FILENAMESIZE - 1,
-                                 name[TEXTURE_FILENAMESIZE - 1]);
-        RwErrorSet(&err);
-        buffer[TEXTURE_FILENAMESIZE - 1] = '\0';
-    }
-}
+#define TextureCopyFileName(buffer, name)                                                         \
+    do                                                                                            \
+    {                                                                                             \
+        rwstrncpy(buffer, name, TEXTURE_FILENAMESIZE);                                            \
+                                                                                                  \
+        if (rwstrlen(name) >= TEXTURE_FILENAMESIZE)                                               \
+        {                                                                                         \
+            RwError err;                                                                          \
+                                                                                                  \
+            err.pluginID = 1;                                                                     \
+            err.errorCode = _rwerror(0x8000001E, name, TEXTURE_FILENAMESIZE,                      \
+                                     TEXTURE_FILENAMESIZE - 1, (name)[TEXTURE_FILENAMESIZE - 1]); \
+            RwErrorSet(&err);                                                                     \
+            (buffer)[TEXTURE_FILENAMESIZE - 1] = '\0';                                       \
+        }                                                                                         \
+    } while (0)
 
 // Reads the image (and mask) behind a texture name with the file extender found for each, picks
 // a raster size and format for it when the caller has none, and resamples the image to that size
@@ -287,7 +288,7 @@ static RwImage* TextureImageReadAndSize(const char* name, const char* maskName, 
 
         if (origDepth != 32)
         {
-            image = RwImageCreate(origImage->width, origImage->height, 32);
+            image = RwImageCreate(image->width, image->height, 32);
 
             if (!image)
             {
@@ -325,7 +326,11 @@ static RwImage* TextureImageReadAndSize(const char* name, const char* maskName, 
         RwImageDestroy(image);
         image = resampled;
 
-        if (origDepth == 4 || origDepth == 8)
+        if (origDepth == 4)
+        {
+            PalettizeImage(&image, origDepth);
+        }
+        else if (origDepth == 8)
         {
             PalettizeImage(&image, origDepth);
         }
@@ -342,8 +347,8 @@ static RwTexture* TextureDefaultNormalRead(const char* name, const char* maskNam
     char texName[TEXTURE_FILENAMESIZE];
     char texMask[TEXTURE_FILENAMESIZE];
     RwImage* image;
-    RwRaster* raster;
     RwTexture* texture;
+    RwRaster* raster;
     S32 width;
     S32 height;
     S32 depth;
@@ -497,8 +502,8 @@ static RwTexture* TextureDefaultMipmapRead(const char* name, const char* maskNam
         }
         else
         {
-            S32 numLevels = RwRasterGetNumLevels(raster);
             S32 i;
+            S32 numLevels = RwRasterGetNumLevels(raster);
 
             for (i = 1; i < numLevels; i++)
             {
@@ -516,7 +521,7 @@ static RwTexture* TextureDefaultMipmapRead(const char* name, const char* maskNam
                 width = raster->width;
                 height = raster->height;
                 depth = raster->depth;
-                format = raster->cType | RwRasterGetFormat(raster);
+                format = RwRasterGetFormat(raster) | raster->cType;
                 RwRasterUnlock(raster);
 
                 images[i] = TextureImageReadAndSize(texName, texMask, rasterType, &width, &height,
@@ -1124,7 +1129,6 @@ void* _rwTextureClose(void* instance, S32 offset, S32 size)
 
     if (TEXTURE_DATA(textureFreeList) && TEXTURE_DATA(texDictFreeList))
     {
-        RwTexDictionary* dummy = dummyTexDict;
         RwLLLink* cur = rwLinkListGetFirstLLLink(&TEXTURE_DATA(texDictList));
 
         while (cur != rwLinkListGetTerminator(&TEXTURE_DATA(texDictList)))
@@ -1133,9 +1137,9 @@ void* _rwTextureClose(void* instance, S32 offset, S32 size)
 
             cur = rwLLLinkGetNext(cur);
 
-            if (dict == dummy)
+            if (dict == dummyTexDict)
             {
-                RwTexDictionaryDestroy(dummy);
+                RwTexDictionaryDestroy(dummyTexDict);
                 dummyTexDict = NULL;
                 break;
             }
