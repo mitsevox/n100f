@@ -510,6 +510,76 @@ static char* ImageGetScratchMem(S32 size)
     return IMAGE_DATA(nameBuf);
 }
 
+// Calls callBack with the image name as it is when it is absolute or there is no image path, or
+// else with the name behind each entry of the semicolon-separated path until callBack returns
+// NULL. maxLength is the room to leave after the name. Returns NULL when the scratch buffer cannot
+// grow, or else the image name.
+const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
+                                     ImagePathCallBack callBack, void* data)
+{
+    S32 size;
+    const char* path = IMAGE_DATA(searchPath);
+
+    if (_rwpathisabsolute(imageName) || !path || !*path)
+    {
+        char* fullName;
+
+        size = rwstrlen(imageName) + maxLength;
+        fullName = ImageGetScratchMem(size);
+
+        if (!fullName)
+        {
+            return NULL;
+        }
+
+        rwstrcpy(fullName, imageName);
+        callBack(fullName, data);
+    }
+    else
+    {
+        while (path && *path)
+        {
+            const char* next;
+            S32 pathLength;
+            char* fullName;
+
+            // The target makes this call twice and keeps only the second result.
+            rwstrchr(path, ';');
+            next = rwstrchr(path, ';');
+
+            if (next)
+            {
+                pathLength = next - path;
+                next++;
+            }
+            else
+            {
+                pathLength = rwstrlen(path);
+            }
+
+            size = pathLength + rwstrlen(imageName) + maxLength;
+            fullName = ImageGetScratchMem(size);
+
+            if (!fullName)
+            {
+                return NULL;
+            }
+
+            memcpy(fullName, path, pathLength);
+            rwstrcpy(fullName + pathLength, imageName);
+
+            if (!callBack(fullName, data))
+            {
+                return imageName;
+            }
+
+            path = next;
+        }
+    }
+
+    return imageName;
+}
+
 const char* ImageAttempRead(const char* fullName, void* data)
 {
     ImageReadData* readData = (ImageReadData*)data;
@@ -874,74 +944,3 @@ S32 RwImageSetGamma(F32 gammaValue)
 
     return TRUE;
 }
-// Calls callBack with the image name as it is when it is absolute or there is no image path, or
-// else with the name behind each entry of the semicolon-separated path until callBack returns
-// NULL. maxLength is the room to leave after the name. Returns NULL when the scratch buffer cannot
-// grow, or else the image name.
-//
-// The target places this function before ImageAttempRead, but defined there the compiler inlines
-// it into RwImageFindFileType and RwImageRead, which the target does not. It stays at the end of
-// the file until the cause is found; the unit is not linked, so only its order in the object
-// differs.
-const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
-                                     ImagePathCallBack callBack, void* data)
-{
-    const char* path = IMAGE_DATA(searchPath);
-
-    if (_rwpathisabsolute(imageName) || !path || !*path)
-    {
-        char* fullName = ImageGetScratchMem(rwstrlen(imageName) + maxLength);
-
-        if (!fullName)
-        {
-            return NULL;
-        }
-
-        rwstrcpy(fullName, imageName);
-        callBack(fullName, data);
-        return imageName;
-    }
-    else
-    {
-        while (path && *path)
-        {
-            const char* next;
-            S32 pathLength;
-            char* fullName;
-
-            // The target makes this call twice and keeps only the second result.
-            rwstrchr(path, ';');
-            next = rwstrchr(path, ';');
-
-            if (next)
-            {
-                pathLength = next - path;
-                next++;
-            }
-            else
-            {
-                pathLength = rwstrlen(path);
-            }
-
-            fullName = ImageGetScratchMem(pathLength + rwstrlen(imageName) + maxLength);
-
-            if (!fullName)
-            {
-                return NULL;
-            }
-
-            memcpy(fullName, path, pathLength);
-            rwstrcpy(fullName + pathLength, imageName);
-
-            if (!callBack(fullName, data))
-            {
-                return imageName;
-            }
-
-            path = next;
-        }
-
-        return imageName;
-    }
-}
-
