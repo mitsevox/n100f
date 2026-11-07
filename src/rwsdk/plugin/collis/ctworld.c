@@ -755,6 +755,8 @@ static inline RpWorld* WorldForAllBoxWorldSectorIntersections(RpWorld* world, Rw
     return world;
 }
 
+// The sphere case sets the test parameters after it widens the box: the target colors 1.0 (for
+// the reciprocal radius) in f0, below the box corners, so its load comes after theirs.
 RpWorld* RpCollisionWorldForAllIntersections(RpWorld* world, RpIntersection* intersection,
                                              RpIntersectionCallBackWorldTriangle callBack,
                                              void* data)
@@ -809,18 +811,18 @@ RpWorld* RpCollisionWorldForAllIntersections(RpWorld* world, RpIntersection* int
 
         isData.bbox.sup = intersection->t.sphere.center;
         isData.bbox.inf = intersection->t.sphere.center;
-        testSphere.recipRadius = 1.0f / intersection->t.sphere.radius;
-        testSphere.sphere = &intersection->t.sphere;
-        isData.leafTest = LeafNodeForAllSpherePolyIntersections;
-        isData.v303leafTest = OldLeafNodeForAllSpherePolyIntersections;
-        isData.leafTestData = &testSphere;
-        isData.cbParam = &cbParam;
         isData.bbox.inf.x -= intersection->t.sphere.radius;
         isData.bbox.inf.y -= intersection->t.sphere.radius;
         isData.bbox.inf.z -= intersection->t.sphere.radius;
         isData.bbox.sup.x += intersection->t.sphere.radius;
         isData.bbox.sup.y += intersection->t.sphere.radius;
         isData.bbox.sup.z += intersection->t.sphere.radius;
+        testSphere.recipRadius = 1.0f / intersection->t.sphere.radius;
+        testSphere.sphere = &intersection->t.sphere;
+        isData.leafTest = LeafNodeForAllSpherePolyIntersections;
+        isData.v303leafTest = OldLeafNodeForAllSpherePolyIntersections;
+        isData.leafTestData = &testSphere;
+        isData.cbParam = &cbParam;
 
         WorldForAllBoxWorldSectorIntersections(world, &isData.bbox,
                                                WorldSectorForAllBoxedPrimitivePolyIntersections,
