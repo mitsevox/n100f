@@ -171,6 +171,7 @@ void zEntProjectile_scenePrepare()
     }
 }
 
+// Recycles every projectile still in use, returning all of them to the free pool.
 void zEntProjectile_sceneReset()
 {
     st_PROJECTILE_DEPOT* depot = &g_prjdepot;
@@ -179,7 +180,8 @@ void zEntProjectile_sceneReset()
     while (depot->prjinuse.head->next != NULL)
     {
         link = (st_ZPRJ_LINKNODE*)RemHead(&depot->prjinuse);
-        link->backref->Recycle();
+        zEntProjectile* prj = link->backref;
+        prj->Recycle();
     }
 }
 
@@ -366,7 +368,7 @@ static st_ZPRJ_TYPERECORD* ZPRJ_findType(U32 aid)
 
     for (i = 0; i < depot->typeidx; i++)
     {
-        rec = &depot->typetable[i];
+        rec = &g_prjdepot.typetable[i];
         if (rec->aid_ptype == aid)
         {
             da_type = rec;
@@ -377,6 +379,7 @@ static st_ZPRJ_TYPERECORD* ZPRJ_findType(U32 aid)
     return da_type;
 }
 
+// Returns the category registered for a projectile type, or prefer when the type is unknown or has none.
 en_ZPRJ_CATEGORY zEntProjectile_catFromPrjType(U32 ptypeID, en_ZPRJ_CATEGORY prefer)
 {
     st_ZPRJ_TYPERECORD* ptype = ZPRJ_findType(ptypeID);
