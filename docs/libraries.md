@@ -57,7 +57,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeSubmitLine.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeSubmitTriangle.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeClipLine.c` | 2 of 4 | `PerspectiveClipProcessPacket` (98.5%) and `ParallelClipProcessPacket` (98.4%): the saved registers of the loop counter, the result flag, the doubled stride and the keep flag differ, and the set-up schedules i = 0 and the line count load differently |
-| `rwsdk/src/pipe/p2/nodeClipTriangle.c` | 4 of 4 | (Matching on GIHE78-rev0, with its 272-byte `.data`, 48-byte `.rodata`, 16-byte `.sdata` and 16-byte `.sdata2`) |
+| `rwsdk/src/pipe/p2/nodeClipTriangle.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.data` 268 bytes plus 4 normal alignment bytes, 48-byte `.rodata`, 16-byte `.sdata` and 16-byte `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 2 of 4 | Parallel 98.46328%, Perspective 94.606606%; no supported source gain. Raw data 252 emitted bytes plus four target zero tail bytes; local-function source-layout addresses differ. NonMatching, original linked |
 | `rwsdk/src/pipe/p2/nodeTransform.c` | 4 of 4 | (Matching on GIHE78-rev0, with its 232-byte `.data` and 32-byte `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeImmInstance.c` | 2 of 2 | (Matching on GIHE78-rev0) |
