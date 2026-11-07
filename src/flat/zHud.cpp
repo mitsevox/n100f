@@ -2767,6 +2767,7 @@ void zHudElementsCB_GameStatsSetup(_xScene* sc)
     }
 }
 
+// Updates the statistics overlay, its transition fade, and the displayed counts.
 void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt)
 {
     S32 i;
@@ -2922,16 +2923,19 @@ void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt)
         case 0:
             collected = globals.stats.snacks;
             total = globals.stats.snacks_tot;
+            fabsf(collected);
             sprintf(item->text, "x %d%/%d", (S32)collected, (S32)total);
             break;
         case 1:
             collected = globals.stats.clues;
             total = globals.stats.clues_tot;
+            fabsf(collected);
             sprintf(item->text, "x %d%/%d", (S32)collected, (S32)total);
             break;
         case 2:
             collected = globals.stats.enemyKills;
             total = globals.stats.enemyCount;
+            fabsf(collected);
             sprintf(item->text, "x %d%/%d", (S32)collected, (S32)total);
             break;
         case 3:
@@ -2952,6 +2956,9 @@ void zHudElementsCB_GameStatsUpdate(_xScene* sc, F32 dt)
 void zHudElementsCB_GameStatsRender()
 {
     S32 i;
+    fabsf(sHudDisplayTimer_plrStatus + 15.0f * sHudDisplayTimer_healthBar);
+    fabsf(sHudDisplayTimer_plrStatus + 20.0f * sHudDisplayTimer_healthBar);
+    fabsf(sHudDisplayTimer_plrStatus + 5.0f * sHudDisplayTimer_healthBar);
 
     if (zGameStateGet() == 4)
     {
@@ -3095,6 +3102,8 @@ void zHud_UIRender(char* asset, F32 xPos, F32 yPos, F32 w, F32 h, U8 alpha)
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
     RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
     RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vert, 4, Idx, 6);
+    fabsf(heightAspect + 0.75f * widthAspect);
+    fabs(4503601774854144.0);
 }
 
 void zHud_sceneReset()
