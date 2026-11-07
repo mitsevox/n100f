@@ -131,10 +131,10 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/collis/rpcollis.c` | 9 of 9 | (Matching on GIHE78-rev0, with its `.sbss`; ends after `RpCollisionPluginAttach`, `0x8013BD2C`) |
 | `rwsdk/tool/intsec/rtintsec.c` | 1 of 2 | `RtIntersectionSphereTriangle` (97.5%: register choice) |
 | `rwsdk/plugin/userdata/rpusrdat.c` | 17 of 17 (rev0) | (Matching on GIHE78-rev0, with its `.sbss`) |
-| `rwsdk/driver/common/palquant.c` | 15 of 17 | `ExtractNodes` (99.8%: one register swap) and `nMaximize` (99.4%), register choice; starts at `InitLeaf`, `0x801714EC` |
+| `rwsdk/driver/common/palquant.c` | 15 of 17 | `ExtractNodes` (99.8%: one register swap) and `nMaximize` (99.8%), register choice; starts at `InitLeaf`, `0x801714EC` |
 | `rwsdk/driver/gcn/dltoken.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.sdata` and `.sbss`: the current and last-seen GPU tokens) |
 | `rwsdk/driver/gcn/dl2drend.c` | 6 of 6 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.bss` and `.sdata2`; the vertex helpers take a plain `RwIm2DVertex*`) |
-| `rwsdk/driver/gcn/dlconvrt.c` | 24 of 25 | `_rwDlPixelToRGB` (92.7%: the target calls `_rwDlConv565To8888` out of line for the default format); the image readers and raster writers take their converter from the inlined `DlRGBAConverter` and `DlPixelConverter`, and the two device entry points take the standard-function signature. NonMatching, original linked |
+| `rwsdk/driver/gcn/dlconvrt.c` | 25 of 25 | `_rwDlPixelToRGB` is a FAKEMATCH (a converter pointer keeps the default-format call out of line, as in the target); the image readers and raster writers take their converter from the inlined `DlRGBAConverter` and `DlPixelConverter`, and the two device entry points take the standard-function signature. (Matching on GIHE78-rev0, with its `.data` and `.sdata2`) |
 | `rwsdk/driver/gcn/dldevice.c` | 12 of 13 | System 99.8% (a register swap in the standards table copy). NonMatching, original linked |
 | `rwsdk/driver/gcn/dlraster.c` | 16 of 17 | `fn_80179198` (98.1%: register choice; its row size comes from the inlined `DlRasterRowBytes`). NonMatching, original linked |
 | `rwsdk/driver/gcn/dlrendst.c` | 7 of 7 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.bss`, `.sbss` and `.sdata2`; the fog setter is the inlined `DlRenderStateSetFog`) |
