@@ -40,10 +40,10 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
     }
     else
     {
-        U8 alpha;
-        U8 blue;
-        U8 green;
-        U8 red;
+        F32 alpha;
+        F32 blue;
+        F32 green;
+        F32 red;
         S32 i;
         S32 x;
 
@@ -167,6 +167,7 @@ RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage)
     S32 yStep;
     S32 width;
     S32 height;
+    S32 srcHeight;
     RwRGBAReal colour;
 
     width = dstImage->width;
@@ -174,9 +175,11 @@ RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage)
     srcY = 0;
 
     xStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcImage->width / (F32)width));
-    yStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcImage->height / (F32)height));
+    srcHeight = srcImage->height;
 
     dstImage->flags |= srcImage->flags & IMAGE_GAMMACORRECTED;
+
+    yStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcHeight / (F32)height));
 
     for (y = 0; y < height; y++)
     {

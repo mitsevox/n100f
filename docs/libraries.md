@@ -45,7 +45,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/baim3d.c` | 9 of 9 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/bapipe.c` | 4 of 4 | (Matching) |
 | `rwsdk/src/pipe/p2/p2core.c` | 13 of 13 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/pipe/p2/p2define.c` | 12 of 13 | `RxLockedPipeUnlock` (98.3%: the size sum adds the sort-data allowance at another point and with its operands reversed; the sort index is coalesced with its numNodes - 1 temporary where the target copies it; the size, sort index, new sort pointer, the second growth's superBlock pointer and grown size and the numNodes * numUnique product take other registers; volatile registers differ in the entry check, the inlined cluster count, the size sums, the first realloc call and the inlined top sort's two counting loops); `.sdata` `gMemoryLimits` is in the split |
+| `rwsdk/src/pipe/p2/p2define.c` | 12 of 13 | `RxLockedPipeUnlock` (98.4%: the size sum adds the sort-data allowance at another point and with its operands reversed; the sort index is coalesced with its numNodes - 1 temporary where the target copies it; the size, sort index and new sort pointer take other saved registers, and the numNodes * numUnique multiply has its operands swapped; volatile registers differ in the entry check, the inlined cluster count, the size sums, the first realloc call and the inlined top sort's two counting loops); `.sdata` `gMemoryLimits` is in the split |
 | `rwsdk/src/pipe/p2/p2dep.c` | 10 of 11 | `_PropagateDependenciesAndKillDeadPaths` (99.8%): only the volatile registers of its first loop, the clusters-of-interest duplicate check, differ |
 | `rwsdk/src/pipe/p2/p2heap.c` | 8 of 8 | (Matching on GIHE78-rev0, with its `.data` message string) |
 | `rwsdk/src/pipe/p2/p2renderstate.c` | 4 of 4 | (Matching on GIHE78-rev0; split by hand) |
@@ -84,7 +84,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/src/plcore/bacolor.c` | 2 of 2 | (Matching, with `colorModule` in `.sbss`) |
-| `rwsdk/src/baresamp.c` | 1 of 4 | `ImageResampleGetSpan` (97.9%: the shift order of y, x0 and x1, register choice and the order of the conversion stack slots), `RwImageResample` (98.5%) and `RwImageCreateResample` (97.1%), register choice |
+| `rwsdk/src/baresamp.c` | 1 of 4 | `ImageResampleGetSpan` (98.0%: the shift order of y, x0 and x1, register choice and the order of the conversion stack slots), `RwImageResample` (98.9%) and `RwImageCreateResample` (97.4%), register choice |
 | `rwsdk/world/basector.c` | 6 of 6 | (Matching on GIHE78-rev0, with `sectorTKList` and `sectorModule`) |
 | `rwsdk/world/bamateri.c` | 8 of 8 | (starts at `0x8014D044` now that `_rpLightOpen` is in `balight.c`; Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |
 | `rwsdk/world/balight.c` | 13 of 13 | (Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |
@@ -136,7 +136,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/driver/gcn/dl2drend.c` | 6 of 6 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.bss` and `.sdata2`; the vertex helpers take a plain `RwIm2DVertex*`) |
 | `rwsdk/driver/gcn/dlconvrt.c` | 25 of 25 | `_rwDlPixelToRGB` is a FAKEMATCH (a converter pointer keeps the default-format call out of line, as in the target); the image readers and raster writers take their converter from the inlined `DlRGBAConverter` and `DlPixelConverter`, and the two device entry points take the standard-function signature. (Matching on GIHE78-rev0, with its `.data` and `.sdata2`) |
 | `rwsdk/driver/gcn/dldevice.c` | 13 of 13 | All exact; `_rwDlSystem` through FAKEMATCH standards-table helpers (Matching on GIHE78-rev0, with its `.rodata`, `.data`, `.bss`, `.sdata`, `.sbss` and `.sdata2`) |
-| `rwsdk/driver/gcn/dlraster.c` | 16 of 17 | `fn_80179198` (98.1%: register choice; its row size comes from the inlined `DlRasterRowBytes`). NonMatching, original linked |
+| `rwsdk/driver/gcn/dlraster.c` | 17 of 17 | (Matching on GIHE78-rev0, with its `.data` and `.sbss`; `fn_80179198` is a tagged FAKEMATCH: its row size written out by hand, separated declarations, a separate `shift` copy of the level, the countdown's copy set early and three one-line helpers) |
 | `rwsdk/driver/gcn/dlrendst.c` | 7 of 7 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.bss`, `.sbss` and `.sdata2`; the fog setter is the inlined `DlRenderStateSetFog`) |
 | `rwsdk/driver/gcn/dlsprite.c` | 12 of 12 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`; vertices go through the `GXVert.h` inlines) |
 | `rwsdk/driver/gcn/dltexdic.c` | 3 of 3 (rev0) | (Matching on GIHE78-rev0, with its `.sdata2`; `RwGameCubeTextureSetLOD` takes the LOD bias second, as the reader's call evaluates it) |
