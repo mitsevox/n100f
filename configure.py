@@ -1040,7 +1040,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/plcore/bastream.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/plcore/batkbin.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/plcore/batkreg.c"),
-            Object(NonMatching, "rwsdk/src/plcore/bavector.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/plcore/bavector.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/plcore/resmem.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/plcore/rwstring.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/os/gcn/osintf.c"),
