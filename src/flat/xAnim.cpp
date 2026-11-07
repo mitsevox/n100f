@@ -60,13 +60,17 @@ static void CalcPhysFromKeys(xAnimFile* af, F32* rootStart, F32* rootEnd, F32* p
 
     if (af->FileFlags & 0x1000)
     {
-        F32* temp = rootStart;
-        rootStart = rootEnd;
-        rootEnd = temp;
+        {
+            F32* temp = rootStart;
+            rootStart = rootEnd;
+            rootEnd = temp;
+        }
 
-        temp = physStart;
-        physStart = physEnd;
-        physEnd = temp;
+        {
+            F32* temp = physStart;
+            physStart = physEnd;
+            physEnd = temp;
+        }
     }
 
     if (af->FileFlags & 0x2000)
@@ -396,12 +400,7 @@ void xAnimFileSetPoses(xAnimFile* data, void* startPose, F32 startTime, void* en
     F32 physEnd[4];
     xQuat tempQ;
 
-    if (data->Physics)
-    {
-        return;
-    }
-
-    if (data->FileFlags & 0x8000)
+    if (data->Physics || (data->FileFlags & 0x8000))
     {
         return;
     }
