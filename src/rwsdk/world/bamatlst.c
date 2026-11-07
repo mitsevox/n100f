@@ -107,7 +107,6 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
 {
     S32 len;
     U32 size;
-    S32* index;
     S32 i;
     S32* matIndex;
     RpMaterial* material;
@@ -153,11 +152,9 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
             return NULL;
         }
 
-        index = matIndex;
-
         for (i = 0; i < len; i++)
         {
-            if (*index < 0)
+            if (matIndex[i] < 0)
             {
                 if (!RwStreamFindChunk(stream, rwID_MATERIAL, NULL, &version))
                 {
@@ -190,7 +187,7 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
             }
             else
             {
-                material = _rpMaterialListGetMaterial(matList, *index);
+                material = _rpMaterialListGetMaterial(matList, matIndex[i]);
                 material->refCount++;
             }
 
@@ -229,7 +226,6 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
                 }
             }
             RpMaterialDestroy(material);
-            index++;
         }
 
         RwFree(matIndex);

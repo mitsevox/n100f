@@ -31,9 +31,8 @@ static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, const 
                                   RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                   F32 invScale);
 
-// Stand-in for a function the target no longer contains (inferred). The target's constants put
-// 255.0f, -1.0f and 0.0f ahead of the 1.0f that _LightFn loads, which suggests a function before
-// _LightFn used them first. Nothing calls this one.
+// Unused: stands in for a function the target no longer contains (project-own name; body
+// inferred).
 static void LightPoolStandIn(F32* scale, F32* sign, F32* lambert)
 {
     *scale *= LIGHT_COLORSCALE;
@@ -289,7 +288,6 @@ static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, con
     if (RpLightGetFrame(light))
     {
         RwV3d dir = RwFrameGetLTM(RpLightGetFrame(light))->at;
-        U8 noChroma;
 
         if (inverseMat)
         {
@@ -297,12 +295,11 @@ static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, con
             _rwV3dNormalize(&dir, &dir);
         }
 
-        noChroma = light->object.object.privateFlags & LIGHT_PRIVATENOCHROMA;
         dir.x = -1.0f * dir.x;
         dir.y = -1.0f * dir.y;
         dir.z = -1.0f * dir.z;
 
-        if (noChroma)
+        if (light->object.object.privateFlags & LIGHT_PRIVATENOCHROMA)
         {
             F32 scale = LIGHT_COLORSCALE * light->color.red * surfaceProps->diffuse;
             S32 i;
@@ -488,6 +485,7 @@ static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, const RpLi
             vec.z = pos.z - objVert->z;
             lambert = vec.x * objVert->nx + vec.y * objVert->ny + vec.z * objVert->nz;
 
+            // Unlike the other loops, a vertex facing away does not move the cursors on here.
             if (lambert > 0.0f)
             {
                 if (RwV3dDotProductMacro(&vec, &vec) < radiusSquared)
