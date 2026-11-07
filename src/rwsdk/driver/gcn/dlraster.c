@@ -70,72 +70,121 @@ S32 _rwDlRasterPluginAttach(void)
 // green and blue.
 void DlRasterTile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stride)
 {
-    S32 x;
-    S32 y;
-    S32 tilesW;
-
     switch (depth)
     {
     case 4:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 7) & ~7) >> 3;
 
         for (y = 0; y < height; y++)
         {
+            row = src + y * stride;
+            tileRow = tilesW * (y >> 3);
+            texelRow = (y & 7) << 3;
+
             for (x = 0; x < width; x += 8)
             {
-                memcpy(dst + ((U32)(((tilesW * (y >> 3) + (x >> 3)) << 6) + ((y & 7) << 3)) >> 1),
-                       src + y * stride + (x >> 1), 4);
+                memcpy(dst + ((U32)(((tileRow + (x >> 3)) << 6) + texelRow) >> 1),
+                       row + (x >> 1), 4);
             }
         }
         break;
+    }
     case 8:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 7) & ~7) >> 3;
 
         for (y = 0; y < height; y++)
         {
+            row = src + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 3;
+
             for (x = 0; x < width; x += 8)
             {
-                memcpy(dst + (((tilesW * (y >> 2) + (x >> 3)) << 5) + ((y & 3) << 3)),
-                       src + y * stride + x, 8);
+                memcpy(dst + (((tileRow + (x >> 3)) << 5) + texelRow),
+                       row + x, 8);
             }
         }
         break;
+    }
     case 16:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 3) & ~3) >> 2;
 
         for (y = 0; y < height; y++)
         {
+            row = src + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 2;
+
             for (x = 0; x < width; x += 4)
             {
-                memcpy(dst + ((((tilesW * (y >> 2) + (x >> 2)) << 4) + ((y & 3) << 2)) << 1),
-                       src + y * stride + (x << 1), 8);
+                memcpy(dst + ((((tileRow + (x >> 2)) << 4) + texelRow) << 1),
+                       row + (x << 1), 8);
             }
         }
         break;
+    }
     case 32:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 3) & ~3) >> 2;
 
         for (y = 0; y < height; y++)
         {
-            U8* row = src + y * stride;
-            S32 tile = 0;
+            S32 tile;
+
+            row = src + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 2;
+            tile = 0;
 
             for (x = 0; x < width; x++)
             {
                 S32 texel;
-                U8* pixel = row + (x << 2);
+                S32 offset;
 
                 if (!(x & 3))
                 {
-                    tile = (tilesW * (y >> 2) + (x >> 2)) << 4;
+                    tile = (tileRow + (x >> 2)) << 4;
                 }
 
-                texel = ((y & 3) << 2) + (x & 3);
-                *(U16*)(dst + (tile << 2) + (texel << 1)) = *(U16*)pixel;
-                *(U16*)(dst + (tile << 2) + (texel << 1) + 0x20) = *(U16*)(pixel + 2);
+                texel = texelRow + (x & 3);
+                offset = (tile << 2) + (texel << 1);
+                *(U16*)&dst[offset] = ((U16*)row)[x << 1];
+                *(U16*)&dst[offset + 0x20] = ((U16*)row)[(x << 1) + 1];
             }
         }
         break;
+    }
     case 24:
     default:
         DLRASTER_ERROR((0x8000000C));
@@ -146,72 +195,121 @@ void DlRasterTile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stride
 // The reverse of DlRasterTile.
 void DlRasterUntile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stride)
 {
-    S32 x;
-    S32 y;
-    S32 tilesW;
-
     switch (depth)
     {
     case 4:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 7) & ~7) >> 3;
 
         for (y = 0; y < height; y++)
         {
+            row = dst + y * stride;
+            tileRow = tilesW * (y >> 3);
+            texelRow = (y & 7) << 3;
+
             for (x = 0; x < width; x += 8)
             {
-                memcpy(dst + y * stride + (x >> 1),
-                       src + ((U32)(((tilesW * (y >> 3) + (x >> 3)) << 6) + ((y & 7) << 3)) >> 1), 4);
+                memcpy(row + (x >> 1),
+                       src + ((U32)(((tileRow + (x >> 3)) << 6) + texelRow) >> 1), 4);
             }
         }
         break;
+    }
     case 8:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 7) & ~7) >> 3;
 
         for (y = 0; y < height; y++)
         {
+            row = dst + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 3;
+
             for (x = 0; x < width; x += 8)
             {
-                memcpy(dst + y * stride + x,
-                       src + (((tilesW * (y >> 2) + (x >> 3)) << 5) + ((y & 3) << 3)), 8);
+                memcpy(row + x,
+                       src + (((tileRow + (x >> 3)) << 5) + texelRow), 8);
             }
         }
         break;
+    }
     case 16:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 3) & ~3) >> 2;
 
         for (y = 0; y < height; y++)
         {
+            row = dst + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 2;
+
             for (x = 0; x < width; x += 4)
             {
-                memcpy(dst + y * stride + (x << 1),
-                       src + ((((tilesW * (y >> 2) + (x >> 2)) << 4) + ((y & 3) << 2)) << 1), 8);
+                memcpy(row + (x << 1),
+                       src + ((((tileRow + (x >> 2)) << 4) + texelRow) << 1), 8);
             }
         }
         break;
+    }
     case 32:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 3) & ~3) >> 2;
 
         for (y = 0; y < height; y++)
         {
-            U8* row = dst + y * stride;
-            S32 tile = 0;
+            S32 tile;
+
+            row = dst + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 2;
+            tile = 0;
 
             for (x = 0; x < width; x++)
             {
                 S32 texel;
-                U8* pixel = row + (x << 2);
+                S32 offset;
 
                 if (!(x & 3))
                 {
-                    tile = (tilesW * (y >> 2) + (x >> 2)) << 4;
+                    tile = (tileRow + (x >> 2)) << 4;
                 }
 
-                texel = ((y & 3) << 2) + (x & 3);
-                *(U16*)pixel = *(U16*)(src + (tile << 2) + (texel << 1));
-                *(U16*)(pixel + 2) = *(U16*)(src + (tile << 2) + (texel << 1) + 0x20);
+                texel = texelRow + (x & 3);
+                offset = (tile << 2) + (texel << 1);
+                ((U16*)row)[x << 1] = *(U16*)&src[offset];
+                ((U16*)row)[(x << 1) + 1] = *(U16*)&src[offset + 0x20];
             }
         }
         break;
+    }
     case 24:
     default:
         DLRASTER_ERROR((0x8000000C));

@@ -70,7 +70,7 @@ static U32 _rwDlConv8888ToDl8888(const RwRGBA* rgba)
 
 S32 _rwDlRGBToPixel(U32* pixelOut, const RwRGBA* rgba, S32 format)
 {
-    U32 pixel;
+    volatile U32 pixel;
 
     switch (format & rwRASTERFORMATPIXELFORMATMASK)
     {

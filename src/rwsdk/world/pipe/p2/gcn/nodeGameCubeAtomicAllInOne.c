@@ -309,8 +309,9 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
 // The default instance callback: allocates the entry (owned by the atomic when the geometry
 // morphs, else by the geometry), builds the display lists and instances the vertex arrays.
-RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
+void* fn_8015E2E8(void* object, GCNObjectData* objectData)
 {
+    RpAtomic* atomic = (RpAtomic*)object;
     GCNAllInOnePrivateData* privateData;
     U32 dlSize;
     S32 headerSize;
@@ -387,7 +388,7 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     DCFlushRange(objectData->repEntry + 1, objectData->repEntry->size);
     geometry->lockedSinceLastInst = 0;
 
-    return atomic;
+    return object;
 }
 
 // The node body: instances the atomic when its entry is missing or its meshes changed (else

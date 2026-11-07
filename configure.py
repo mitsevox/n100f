@@ -976,7 +976,7 @@ config.libs: List[Dict[str, Any]] = [
     RWLib(
         "rpusrdat",
         [
-            Object(NonMatching, "rwsdk/plugin/userdata/rpusrdat.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/userdata/rpusrdat.c"),
         ],
     ),
     RWLib(

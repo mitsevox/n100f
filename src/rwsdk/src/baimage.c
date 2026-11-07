@@ -874,6 +874,7 @@ const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
 
         rwstrcpy(fullName, imageName);
         callBack(fullName, data);
+        return imageName;
     }
     else
     {
@@ -897,7 +898,7 @@ const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
                 pathLength = rwstrlen(path);
             }
 
-            fullName = ImageGetScratchMem(pathLength + (rwstrlen(imageName) + maxLength));
+            fullName = ImageGetScratchMem(pathLength + rwstrlen(imageName) + maxLength);
 
             if (!fullName)
             {
@@ -914,8 +915,8 @@ const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
 
             path = next;
         }
-    }
 
-    return imageName;
+        return imageName;
+    }
 }
 
