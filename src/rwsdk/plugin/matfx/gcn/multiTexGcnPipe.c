@@ -370,8 +370,8 @@ RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
 // Sends an effect's TEV setup to GX: colors, texture and indirect matrices, indirect stages, TEV
 // stages and texture coordinate generators, then the alpha compare and blend modes. With
 // lighting, one or two stages first add the lit color channels.
-void _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTextures,
-                             const U8* coords, const RwMatrix* matrix)
+RpMTEffect* _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTextures,
+                                    const U8* coords, const RwMatrix* matrix)
 {
     GCNMTConfig* config = RpGameCubeMTEffectGetConfig(effect);
     S8 texMapOfCoord[8];
@@ -399,7 +399,7 @@ void _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTexture
     {
         RwMatrix tmp;
         const RwMatrix* env;
-        F32 mtx[2][4];
+        F32 mtx[3][4];
 
         if (matrix)
         {
@@ -511,10 +511,10 @@ void _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTexture
             GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR1A1);
             GXSetTevColorIn(GX_TEVSTAGE1, GX_CC_RASC, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV);
             GXSetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE,
-                            GX_TEVPREV);
+                            GX_TEVREG2);
             GXSetTevAlphaIn(GX_TEVSTAGE1, GX_CA_RASA, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
             GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE,
-                            GX_TEVPREV);
+                            GX_TEVREG2);
             firstStage = 2;
             lighting = 3;
         }
@@ -655,6 +655,8 @@ void _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTexture
         RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)config->srcBlend);
         RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)config->destBlend);
     }
+
+    return effect;
 }
 
 // Draws one mesh with its material's multitexture: sets the textures, runs the pre-render
