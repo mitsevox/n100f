@@ -61,15 +61,15 @@ extern GXFifoObj* lbl_8025F858;
 
 // The ring's read and write positions, the token ring's write and read positions, whether the
 // FIFO breakpoint is armed, whether a frame waits for its token, whether a frame waits for the
-// retrace, whether a retrace has passed since, and which half a two-half frame is on. The ring
-// positions and the breakpoint flag are shared between the game thread and the breakpoint
-// interrupt, so they are volatile.
+// retrace, whether a retrace has passed since, and which half a two-half frame is on. The frame
+// ring's positions and the breakpoint flag are shared between the game thread and the breakpoint
+// interrupt; they, the token ring's positions and the token wait flag are volatile.
 extern volatile S32 lbl_8025F810;
 extern volatile S32 lbl_8025F814;
-extern S32 lbl_8025F818;
-extern S32 lbl_8025F81C;
+extern volatile S32 lbl_8025F818;
+extern volatile S32 lbl_8025F81C;
 extern volatile S32 lbl_8025F820;
-extern S32 lbl_8025F824;
+extern volatile S32 lbl_8025F824;
 extern S32 lbl_8025F828;
 extern S32 lbl_8025F82C;
 extern S32 lbl_8025F830;
@@ -298,13 +298,20 @@ void _rwDlRenderModeSelect(GXRenderModeObj* renderMode, S32 pixelFormat)
 {
     if (renderMode != NULL)
     {
-        S32 format;
+        GXPixelFmt format;
 
         lbl_8025E2C8 = *renderMode;
         _RwDlRenderMode = &lbl_8025E2C8;
         lbl_8025F804 = 0x2A;
 
-        format = !_RwDlRenderMode->aa ? pixelFormat : GX_PF_RGB565_Z16;
+        if (_RwDlRenderMode->aa)
+        {
+            format = GX_PF_RGB565_Z16;
+        }
+        else
+        {
+            format = pixelFormat;
+        }
 
         lbl_8025F7FC = format;
         lbl_8025F800 = format;
@@ -767,7 +774,7 @@ S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags)
     void* readPtr;
     void* writePtr;
     BOOL enabled;
-    S32 full;
+    volatile S32 full;
     U32 stride;
 
     enabled = OSDisableInterrupts();
