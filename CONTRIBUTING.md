@@ -40,7 +40,7 @@ Do not manufacture a match through unsupported compiler or comparison manipulati
 - No altered symbol boundaries, excluded comparisons or progress categories that conceal mismatches.
 - No behavioral changes made to satisfy the compiler.
 
-A `volatile` qualifier is accepted when the target's code needs it to match, for example a reload after each store or accesses kept in source order. The project owner approved this on 2026-11-07. Record the access that requires it in the unit's evidence row.
+A `volatile` qualifier is accepted when the target's code needs it to match, for example a reload after each store or accesses kept in source order. The project owner approved this on 2026-11-07. Record the access that requires it in the unit's evidence row. It ships only when it makes a function or a unit exact; when it only raises a percentage, the plain declaration stays.
 
 Compiler versions and flags need evidence at the original compilation-unit or library level. A function-specific exception requires evidence that the original used it and the project owner's explicit approval. Originally handwritten assembly likewise requires provenance.
 
@@ -51,6 +51,7 @@ The project owner authorized one standing exception on 2026-11-07: RenderWare (`
 - It applies to RenderWare units only, and only after the lane's notes or the PR show which plausible forms were tried.
 - Every fake construct carries a comment on the line directly above it, `// FAKEMATCH: <what is fake>; real form believed to be <...>`, so `grep -rn FAKEMATCH src/rwsdk` lists everything left to heal.
 - The unit's evidence row says FAKEMATCH and quotes the deciding construct.
+- It ships only when it makes a function or a unit exact. When it only raises a percentage, the plain form stays.
 - The Hostile review checks that every fake construct is tagged and that each tag accurately describes it. It does not judge whether the form is plausible.
 
 Outside RenderWare, or without the tag and evidence row, the paragraph above still applies.
