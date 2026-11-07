@@ -62,15 +62,14 @@ extern GXFifoObj* lbl_8025F858;
 // The ring's read and write positions, the token ring's write and read positions, whether the
 // FIFO breakpoint is armed, whether a frame waits for its token, whether a frame waits for the
 // retrace, whether a retrace has passed since, and which half a two-half frame is on. The ring
-// positions, the token ring positions and the token wait flag are volatile: the breakpoint and
-// retrace interrupts move them, and the target reloads them after each write and keeps their
-// stores in order (_rwDlBreakPtCallback, _rwDlVIPreRetraceCallback, _rwDlRasterShowRaster).
+// positions and the breakpoint flag are shared between the game thread and the breakpoint
+// interrupt, so they are volatile.
 extern volatile S32 lbl_8025F810;
 extern volatile S32 lbl_8025F814;
-extern volatile S32 lbl_8025F818;
-extern volatile S32 lbl_8025F81C;
-extern S32 lbl_8025F820;
-extern volatile S32 lbl_8025F824;
+extern S32 lbl_8025F818;
+extern S32 lbl_8025F81C;
+extern volatile S32 lbl_8025F820;
+extern S32 lbl_8025F824;
 extern S32 lbl_8025F828;
 extern S32 lbl_8025F82C;
 extern S32 lbl_8025F830;
@@ -96,9 +95,7 @@ extern DlDeviceState lbl_8025F864;
 extern volatile U16 lbl_8025E800;
 extern volatile U16 lbl_8025F890;
 
-// The device's video modes: NTSC, PAL, MPAL and the application's own render mode. Defined here
-// so its accesses use the unit's data anchor; the two error strings of _rwDlRenderModeSelect
-// follow it in .data.
+// The device's video modes: NTSC, PAL, MPAL and the application's own render mode.
 RwVideoMode lbl_801DDF90[4] = {
     {640, 480, 24, rwVIDEOMODEEXCLUSIVE},
     {640, 528, 24, rwVIDEOMODEEXCLUSIVE},

@@ -70,7 +70,7 @@ static U32 _rwDlConv8888ToDl8888(const RwRGBA* rgba)
 
 S32 _rwDlRGBToPixel(U32* pixelOut, const RwRGBA* rgba, S32 format)
 {
-    S32 pixel;
+    U32 pixel;
 
     switch (format & rwRASTERFORMATPIXELFORMATMASK)
     {
@@ -111,7 +111,7 @@ S32 _rwDlRGBToPixel(U32* pixelOut, const RwRGBA* rgba, S32 format)
     }
     }
 
-    *pixelOut = *(U32*)&pixel;
+    *pixelOut = pixel;
 
     return TRUE;
 }
@@ -185,13 +185,8 @@ S32 _rwDlPixelToRGB(RwRGBA* rgba, const U32* pixelIn, S32 format)
     switch (format & rwRASTERFORMATPIXELFORMATMASK)
     {
     case rwRASTERFORMATDEFAULT:
-    {
-        // The default format reads as 565, through a converter pointer as the image readers use.
-        void (*convert)(RwRGBA*, U32) = _rwDlConv565To8888;
-
-        convert(rgba, pixel);
+        _rwDlConv565To8888(rgba, pixel);
         break;
-    }
     case rwRASTERFORMATLUM8:
     {
         RwError err;
