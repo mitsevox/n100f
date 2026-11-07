@@ -156,7 +156,7 @@ S32 _rwDlRasterRenderScaled(void* raster, void* rect, S32 flags);
 S32 _rwDlRasterRenderFast(void* raster, void* rect, S32 flags);
 S32 _rwDlSetRasterContext(void* out, void* raster, S32 flags);
 S32 _rwDlRasterSubRaster(RwRaster* raster, RwRaster* parent, S32 flags);
-S32 _rwDlNativeTextureGetSize(S32* size, RwTexture* texture);
+S32 _rwDlNativeTextureGetSize(void* sizeOut, void* textureIn, S32 unused);
 S32 fn_8017C9E4(RwStream* stream, RwTexture* texture);
 S32 fn_8017CCBC(RwStream* stream, RwTexture** textureRef);
 S32 fn_80179BDC(void* out, void* inOut, S32 flags);

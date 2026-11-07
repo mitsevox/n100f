@@ -215,8 +215,8 @@ void _rwDlTextureSet(RwTexture* texture, U32 texMap)
     lbl_801DE604[texMap] = texture;
 }
 
-void RwGameCubeTextureSetLOD(RwTexture* texture, S32 biasClamp, S32 edgeLOD,
-                             GXAnisotropy maxAniso, F32 lodBias)
+void RwGameCubeTextureSetLOD(RwTexture* texture, F32 lodBias, S32 biasClamp, S32 edgeLOD,
+                             GXAnisotropy maxAniso)
 {
     DlTextureInitObj(texture, 0, biasClamp, edgeLOD, maxAniso, lodBias);
 }
