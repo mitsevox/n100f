@@ -58,7 +58,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeSubmitTriangle.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeClipLine.c` | 4 of 4 | (Matching on GIHE78-rev0, with its 240-byte `.data`, 48-byte `.rodata`, 16-byte `.sdata` and 16-byte `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeClipTriangle.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.data` 268 bytes plus 4 normal alignment bytes, 48-byte `.rodata`, 16-byte `.sdata` and 16-byte `.sdata2`) |
-| `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 3 of 4 | `PerspectiveCullProcessPacket` (99.087%: float register choice). Raw data 252 emitted bytes plus four target zero tail bytes; local-function source-layout addresses differ. NonMatching, original linked |
+| `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.data` 244 bytes plus 4 normal alignment bytes and 8-byte `.sdata`) |
 | `rwsdk/src/pipe/p2/nodeTransform.c` | 4 of 4 | (Matching on GIHE78-rev0, with its 232-byte `.data` and 32-byte `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeImmInstance.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/p2clpcom.c` | 16 of 16 | (Matching on GIHE78-rev0, with its `.bss` gClipInfo and `.sdata2`) |
