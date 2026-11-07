@@ -73,56 +73,63 @@ static RpWorldSector* WorldFindSector(RpWorldSector* worldSector, void* data)
     return worldSector;
 }
 
+// Render each atomic at most once during the current engine frame.
+static void WorldSectorRenderAtomics(RpWorldSector* worldSector)
+{
+    RwLLLink* cur;
+    RwLLLink* end;
+
+    cur = rwLinkListGetFirstLLLink(&worldSector->collAtomicsInWorldSector);
+    end = rwLinkListGetTerminator(&worldSector->collAtomicsInWorldSector);
+
+    while (cur != end)
+    {
+        RpAtomic* atomic = ((WorldTie*)cur)->atomic;
+
+        if (rwObjectTestFlags(atomic, rpATOMICRENDER) &&
+            atomic->renderFrame != RWSRCGLOBAL(renderFrame))
+        {
+            if (RwCameraFrustumTestSphere((RwCamera*)RWSRCGLOBAL(curCamera),
+                                          RpAtomicGetWorldBoundingSphere(atomic)))
+            {
+                atomic->renderCallBack(atomic);
+            }
+
+            atomic->renderFrame = RWSRCGLOBAL(renderFrame);
+        }
+
+        cur = rwLLLinkGetNext(cur);
+    }
+
+    cur = rwLinkListGetFirstLLLink(&worldSector->noCollAtomicsInWorldSector);
+    end = rwLinkListGetTerminator(&worldSector->noCollAtomicsInWorldSector);
+
+    while (cur != end)
+    {
+        RpAtomic* atomic = ((WorldTie*)cur)->atomic;
+
+        if (rwObjectTestFlags(atomic, rpATOMICRENDER) &&
+            atomic->renderFrame != RWSRCGLOBAL(renderFrame))
+        {
+            if (RwCameraFrustumTestSphere((RwCamera*)RWSRCGLOBAL(curCamera),
+                                          RpAtomicGetWorldBoundingSphere(atomic)))
+            {
+                atomic->renderCallBack(atomic);
+            }
+
+            atomic->renderFrame = RWSRCGLOBAL(renderFrame);
+        }
+
+        cur = rwLLLinkGetNext(cur);
+    }
+}
+
+// Render visible atomics once this frame when sector rendering succeeds.
 static RpWorldSector* WorldSectorRender(RpWorldSector* worldSector, void* data)
 {
     if (RpWorldSectorRender(worldSector))
     {
-        RwLLLink* end;
-        RwLLLink* cur;
-
-        cur = rwLinkListGetFirstLLLink(&worldSector->collAtomicsInWorldSector);
-        end = rwLinkListGetTerminator(&worldSector->collAtomicsInWorldSector);
-
-        while (cur != end)
-        {
-            RpAtomic* atomic = ((WorldTie*)cur)->atomic;
-
-            if (rwObjectTestFlags(atomic, rpATOMICRENDER) &&
-                atomic->renderFrame != RWSRCGLOBAL(renderFrame))
-            {
-                if (RwCameraFrustumTestSphere((RwCamera*)RWSRCGLOBAL(curCamera),
-                                              RpAtomicGetWorldBoundingSphere(atomic)))
-                {
-                    atomic->renderCallBack(atomic);
-                }
-
-                atomic->renderFrame = RWSRCGLOBAL(renderFrame);
-            }
-
-            cur = rwLLLinkGetNext(cur);
-        }
-
-        cur = rwLinkListGetFirstLLLink(&worldSector->noCollAtomicsInWorldSector);
-        end = rwLinkListGetTerminator(&worldSector->noCollAtomicsInWorldSector);
-
-        while (cur != end)
-        {
-            RpAtomic* atomic = ((WorldTie*)cur)->atomic;
-
-            if (rwObjectTestFlags(atomic, rpATOMICRENDER) &&
-                atomic->renderFrame != RWSRCGLOBAL(renderFrame))
-            {
-                if (RwCameraFrustumTestSphere((RwCamera*)RWSRCGLOBAL(curCamera),
-                                              RpAtomicGetWorldBoundingSphere(atomic)))
-                {
-                    atomic->renderCallBack(atomic);
-                }
-
-                atomic->renderFrame = RWSRCGLOBAL(renderFrame);
-            }
-
-            cur = rwLLLinkGetNext(cur);
-        }
+        WorldSectorRenderAtomics(worldSector);
     }
 
     return worldSector;
@@ -528,57 +535,45 @@ void _rpWorldUnregisterWorld(RpWorld* world)
     }
 }
 
-static RpWorld* WorldBuildMeshAtomicSector(RpWorld* world, RpWorldSector* sector)
+// Uses the caller's temporary build mesh to create a sector's render mesh.
+static RpWorld* WorldBuildMeshAtomicSector(RpWorld* world, RpBuildMesh* buildMesh,
+                                         RpWorldSector* sector, RpMaterial** materials)
 {
-    RpMaterial** materials = world->matList.materials + sector->matListWindowBase;
+    RpMeshHeader* mesh;
+    S32 i;
 
-    if (!sector->mesh)
+    for (i = 0; i < sector->numPolygons; i++)
     {
-        RpMeshHeader* mesh;
-        RpBuildMesh* buildMesh;
-        S32 i;
+        RpPolygon* polygon = &sector->polygons[i];
 
-        buildMesh = _rpBuildMeshCreate(sector->numPolygons);
+        _rpBuildMeshAddTriangle(buildMesh, materials[polygon->matIndex],
+                                polygon->vertIndex[0], polygon->vertIndex[1],
+                                polygon->vertIndex[2]);
+    }
 
-        if (buildMesh)
-        {
-            for (i = 0; i < sector->numPolygons; i++)
-            {
-                RpPolygon* polygon = &sector->polygons[i];
+    if (world->flags & rpWORLDTRISTRIP)
+    {
+        mesh = _rpMeshOptimise(buildMesh, 1);
+    }
+    else
+    {
+        mesh = _rpMeshOptimise(buildMesh, 0);
+    }
 
-                _rpBuildMeshAddTriangle(buildMesh, materials[polygon->matIndex],
-                                        polygon->vertIndex[0], polygon->vertIndex[1],
-                                        polygon->vertIndex[2]);
-            }
-
-            if (world->flags & rpWORLDTRISTRIP)
-            {
-                mesh = _rpMeshOptimise(buildMesh, 1);
-            }
-            else
-            {
-                mesh = _rpMeshOptimise(buildMesh, 0);
-            }
-
-            if (mesh)
-            {
-                sector->mesh = mesh;
-            }
-            else
-            {
-                _rpBuildMeshDestroy(buildMesh);
-                return NULL;
-            }
-        }
-        else
-        {
-            return NULL;
-        }
+    if (mesh)
+    {
+        sector->mesh = mesh;
+    }
+    else
+    {
+        _rpBuildMeshDestroy(buildMesh);
+        return NULL;
     }
 
     return world;
 }
 
+// Builds meshes only for sectors that do not already have one.
 RpWorld* RpWorldUnlock(RpWorld* world)
 {
     RpSector* stack[SECTOR_STACK_SIZE];
@@ -589,11 +584,26 @@ RpWorld* RpWorldUnlock(RpWorld* world)
     {
         if (sector->type < 0)
         {
-            world = WorldBuildMeshAtomicSector(world, (RpWorldSector*)sector);
+            RpWorldSector* worldSector = (RpWorldSector*)sector;
+            RpMaterial** materials = world->matList.materials + worldSector->matListWindowBase;
 
-            if (!world)
+            if (!worldSector->mesh)
             {
-                return NULL;
+                RpBuildMesh* buildMesh = _rpBuildMeshCreate(worldSector->numPolygons);
+
+                if (buildMesh)
+                {
+                    world = WorldBuildMeshAtomicSector(world, buildMesh, worldSector, materials);
+
+                    if (!world)
+                    {
+                        return NULL;
+                    }
+                }
+                else
+                {
+                    return NULL;
+                }
             }
 
             sector = stack[nStack--];
@@ -698,13 +708,12 @@ RpWorld* RpWorldRender(RpWorld* world)
     return world;
 }
 
-S32 RpWorldDestroy(RpWorld* world)
+// Discards cached sector meshes so unlocking can rebuild them.
+RpWorld* RpWorldLock(RpWorld* world)
 {
     RpSector* stack[SECTOR_STACK_SIZE];
-    S32 nStack;
     RpSector* sector;
-
-    _rpWorldUnregisterWorld(world);
+    S32 nStack;
 
     nStack = 0;
     sector = world->rootSector;
@@ -731,6 +740,16 @@ S32 RpWorldDestroy(RpWorld* world)
             sector = plane->leftSubTree;
         }
     } while (nStack >= 0);
+
+    return world;
+}
+
+// Releases sector meshes, materials, plugin state and the world's storage.
+S32 RpWorldDestroy(RpWorld* world)
+{
+    _rpWorldUnregisterWorld(world);
+
+    RpWorldLock(world);
 
     _rpMaterialListDeinitialize(&world->matList);
 
@@ -762,6 +781,7 @@ RpWorld* RpWorldSetSectorRenderCallBack(RpWorld* world, RpWorldSectorCallBackRen
     return world;
 }
 
+// Creates a world with one empty sector covering the supplied bounds.
 RpWorld* RpWorldCreate(RwBBox* boundingBox)
 {
     RpWorld* world;
@@ -824,9 +844,7 @@ RpWorld* RpWorldCreate(RwBBox* boundingBox)
 
     world->rootSector = (RpSector*)sector;
     world->numTexCoordSets = 0;
-    world->worldOrigin.x = 0.0f;
-    world->worldOrigin.y = 0.0f;
-    world->worldOrigin.z = 0.0f;
+    world->worldOrigin.x = world->worldOrigin.y = world->worldOrigin.z = 0.0f;
     world->boundingBox.inf = boundingBox->inf;
     world->boundingBox.sup = boundingBox->sup;
     rwLinkListInitialize(&world->clumpList);

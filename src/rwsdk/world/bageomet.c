@@ -33,6 +33,35 @@ struct MorphTargetStreamData
 static RwPluginRegistry geometryTKList = { sizeof(RpGeometry), sizeof(RpGeometry) };
 static RwModuleInfo geometryModule;
 
+// Release the resources and plugin state owned by the geometry.
+static S32 GeometryAnnihilate(RpGeometry* geometry)
+{
+    if (geometry->repEntry)
+    {
+        RwResourcesFreeResEntry(geometry->repEntry);
+    }
+
+    geometry->refCount++;
+
+    RpGeometryLock(geometry, GEOMLOCK_ALL);
+
+    _rwPluginRegistryDeInitObject(&geometryTKList, geometry);
+
+    if (geometry->morphTarget)
+    {
+        RwFree(geometry->morphTarget);
+        geometry->morphTarget = NULL;
+    }
+
+    _rpMaterialListDeinitialize(&geometry->matList);
+
+    geometry->refCount--;
+
+    RwFree(geometry);
+
+    return 1;
+}
+
 void* _rpGeometryOpen(void* instance, S32 offset, S32 size)
 {
     geometryModule.globalsOffset = offset;
@@ -247,11 +276,14 @@ RpGeometry* RpGeometryUnlock(RpGeometry* geometry)
     return geometry;
 }
 
+// Allocate the geometry and its per-vertex data, then add the first morph target.
 RpGeometry* RpGeometryCreate(S32 numVerts, S32 numTriangles, U32 format)
 {
     U32 numTexCoordSets;
     U32 native;
     U32 flags;
+    U32 formatFlags;
+    U32 geometryFlags;
     U32 texFlags;
     U32 size;
     RpGeometry* geometry;
@@ -271,6 +303,7 @@ RpGeometry* RpGeometryCreate(S32 numVerts, S32 numTriangles, U32 format)
     }
 
     size = geometryTKList.sizeOfStruct;
+    formatFlags = format & rpGEOMETRYFLAGSMASK;
 
     if (format & GEOMETRY_TEXCOORDSETSMASK)
     {
@@ -285,6 +318,8 @@ RpGeometry* RpGeometryCreate(S32 numVerts, S32 numTriangles, U32 format)
         numTexCoordSets = (format & rpGEOMETRYTEXTURED) >> 2;
     }
 
+    geometryFlags = formatFlags & ~(rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2);
+
     if (numTexCoordSets == 1)
     {
         texFlags = rpGEOMETRYTEXTURED;
@@ -295,8 +330,7 @@ RpGeometry* RpGeometryCreate(S32 numVerts, S32 numTriangles, U32 format)
     }
 
     native = format & rpGEOMETRYNATIVE;
-    flags = (format & rpGEOMETRYFLAGSMASK) & ~(rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2);
-    flags |= texFlags;
+    flags = geometryFlags | texFlags;
 
     if (!native)
     {
@@ -395,36 +429,18 @@ void _rpGeometryAddRef(RpGeometry* geometry)
     geometry->refCount++;
 }
 
+// Release the geometry after its last reference is dropped.
 S32 RpGeometryDestroy(RpGeometry* geometry)
 {
+    S32 result = 1;
+
     geometry->refCount--;
     if (geometry->refCount <= 0)
     {
-        if (geometry->repEntry)
-        {
-            RwResourcesFreeResEntry(geometry->repEntry);
-        }
-
-        geometry->refCount++;
-
-        RpGeometryLock(geometry, GEOMLOCK_ALL);
-
-        _rwPluginRegistryDeInitObject(&geometryTKList, geometry);
-
-        if (geometry->morphTarget)
-        {
-            RwFree(geometry->morphTarget);
-            geometry->morphTarget = NULL;
-        }
-
-        _rpMaterialListDeinitialize(&geometry->matList);
-
-        geometry->refCount--;
-
-        RwFree(geometry);
+        result = GeometryAnnihilate(geometry);
     }
 
-    return 1;
+    return result;
 }
 
 S32 RpGeometryRegisterPlugin(S32 size, U32 pluginID, RwPluginObjectConstructor constructCB,
@@ -442,6 +458,7 @@ S32 RpGeometryRegisterPluginStream(U32 pluginID, RwPluginDataChunkReadCallBack r
                                             getSizeCB);
 }
 
+// Read the geometry and morph targets, then its materials and plugin data.
 RpGeometry* RpGeometryStreamRead(RwStream* stream)
 {
     U32 version;
@@ -553,50 +570,54 @@ RpGeometry* RpGeometryStreamRead(RwStream* stream)
         }
     }
 
-    for (i = 0; i < geometry->numMorphTargets; i++)
     {
-        RpMorphTarget* morphTarget = &geometry->morphTarget[i];
+        S32 morphIndex;
 
-        if (RwStreamRead(stream, &mtData, sizeof(mtData)) != sizeof(mtData))
+        for (morphIndex = 0; morphIndex < geometry->numMorphTargets; morphIndex++)
         {
-            RpGeometryDestroy(geometry);
-            return NULL;
-        }
+            RpMorphTarget* morphTarget = &geometry->morphTarget[morphIndex];
 
-        RwMemFloat32ToReal(&mtData.boundingSphere.center, sizeof(mtData.boundingSphere.center));
-        RwMemFloat32ToReal(&mtData.boundingSphere.radius, sizeof(mtData.boundingSphere.radius));
-        RwMemNative32(&mtData, sizeof(mtData));
-
-        morphTarget->boundingSphere = mtData.boundingSphere;
-
-        if (mtData.pointsPresent && mtData.normalsPresent)
-        {
-            if (!RwStreamReadReal(stream, (F32*)morphTarget->verts,
-                                  geometry->numVertices * sizeof(RwV3d) * 2))
+            if (RwStreamRead(stream, &mtData, sizeof(mtData)) != sizeof(mtData))
             {
                 RpGeometryDestroy(geometry);
                 return NULL;
             }
-        }
-        else
-        {
-            if (mtData.pointsPresent)
+
+            RwMemFloat32ToReal(&mtData.boundingSphere.center, sizeof(mtData.boundingSphere.center));
+            RwMemFloat32ToReal(&mtData.boundingSphere.radius, sizeof(mtData.boundingSphere.radius));
+            RwMemNative32(&mtData, sizeof(mtData));
+
+            morphTarget->boundingSphere = mtData.boundingSphere;
+
+            if (mtData.pointsPresent && mtData.normalsPresent)
             {
                 if (!RwStreamReadReal(stream, (F32*)morphTarget->verts,
-                                      geometry->numVertices * sizeof(RwV3d)))
+                                      geometry->numVertices * sizeof(RwV3d) * 2))
                 {
                     RpGeometryDestroy(geometry);
                     return NULL;
                 }
             }
-
-            if (mtData.normalsPresent)
+            else
             {
-                if (!RwStreamReadReal(stream, (F32*)morphTarget->normals,
-                                      geometry->numVertices * sizeof(RwV3d)))
+                if (mtData.pointsPresent)
                 {
-                    RpGeometryDestroy(geometry);
-                    return NULL;
+                    if (!RwStreamReadReal(stream, (F32*)morphTarget->verts,
+                                          geometry->numVertices * sizeof(RwV3d)))
+                    {
+                        RpGeometryDestroy(geometry);
+                        return NULL;
+                    }
+                }
+
+                if (mtData.normalsPresent)
+                {
+                    if (!RwStreamReadReal(stream, (F32*)morphTarget->normals,
+                                          geometry->numVertices * sizeof(RwV3d)))
+                    {
+                        RpGeometryDestroy(geometry);
+                        return NULL;
+                    }
                 }
             }
         }

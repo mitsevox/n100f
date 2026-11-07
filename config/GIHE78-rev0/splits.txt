@@ -1672,12 +1672,17 @@ rwsdk/plugin/userdata/rpusrdat.c:
 
 rwsdk/world/babinwor.c:
 	.text       start:0x8014707C end:0x801484D4
+	.sbss       start:0x8025F6F0 end:0x8025F708
+	.sdata2     start:0x802628C8 end:0x802628D0
 
 rwsdk/world/baclump.c:
 	.text       start:0x801484D4 end:0x8014AFC4
 
 rwsdk/world/bageomet.c:
 	.text       start:0x8014AFC4 end:0x8014C7DC
+	.data       start:0x801DD4C8 end:0x801DD4E0
+	.sbss       start:0x8025F720 end:0x8025F728
+	.sdata2     start:0x802628D8 end:0x802628E0
 
 rwsdk/world/balight.c:
 	.text       start:0x8014C7DC end:0x8014D044
@@ -1709,6 +1714,10 @@ rwsdk/world/basector.c:
 
 rwsdk/world/baworld.c:
 	.text       start:0x80151038 end:0x8015275C
+	.data       start:0x801DD550 end:0x801DD568
+	.bss        start:0x8025DB10 end:0x8025DB20
+	.sbss       start:0x8025F748 end:0x8025F750
+	.sdata2     start:0x80262940 end:0x80262948
 
 rwsdk/world/baworobj.c:
 	.text       start:0x8015275C end:0x80154264
