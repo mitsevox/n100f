@@ -433,7 +433,7 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sdata2	xClimate.cpp	xCollide.cpp	0x8025FCB8	0x8025FCB8	single aligned candidate	0
 .sdata2	xCollide.cpp	xCollideFast.cpp	0x8025FCD8	0x8025FCD8	single aligned candidate	0
 .sdata2	xCollideFast.cpp	xColor.cpp	0x8025FCF0	0x8025FCF0	data-only unit claimed by a data row in evidence.tsv	0
-.sdata2	xColor.cpp	xEnt.cpp	0x8025FD08	0x8025FD08	data-only unit claim ends at the next range	0
+.sdata2	xColor.cpp	xEnt.cpp	0x8025FD08	0x8025FD08	data-only unit claim fills the gap	0
 .sdata2	xEnt.cpp	xEntDrive.cpp	0x8025FE50	0x8025FE50	single aligned candidate	0
 .sdata2	xEntDrive.cpp	xEntMotion.cpp	0x8025FE58	0x8025FE58	single aligned candidate	0
 .sdata2	xEntMotion.cpp	xFFX.cpp	0x8025FEE8	0x8025FEE8	single aligned candidate	0
