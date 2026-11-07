@@ -889,6 +889,13 @@ S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
     return 1;
 }
 
+// Unused. Stands in for removed code: its zeroed local leaves 264 bytes of zero initializer in
+// .rodata at this point of the file, as the target has.
+static void SetupUnusedData()
+{
+    xVec3 tmp[22] = {};
+}
+
 void zEntProjectile::OrientSet(S32 orient)
 {
     flg_prop &= ~0x70000000;
@@ -1922,6 +1929,13 @@ static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd
     xVec3Copy(vec_vel, &vec_tmp);
 
     return limit_tally;
+}
+
+// Unused. Stands in for removed code: its zeroed local leaves 24 bytes of zero initializer in
+// .rodata at this point of the file, as the target has.
+static void SolvUnusedData()
+{
+    xVec3 tmp[2] = {};
 }
 
 void zEntProjectile::DoEffects(en_PROJECTILE_EVENT event, F32 dt)
