@@ -239,6 +239,7 @@ void zHud_Init();
 void zHud_Init()
 {
     S32 i;
+    zHudModel* entry;
 
     widthAspect = 1.3333334f;
     heightAspect = 0.75f;
@@ -254,10 +255,11 @@ void zHud_Init()
 
     for (i = 0; i < eHudModelCount; i++)
     {
-        zHudModelTable[i].modelNameID = xStrHash(zHudModelTable[i].modelName);
+        entry = &zHudModelTable[i];
+        entry->modelNameID = xStrHash(entry->modelName);
     }
 
-    for (i = 0; i < eHudCount; i++)
+    for (S32 i = 0; i < eHudCount; i++)
     {
         sHudElements[i].hudInit();
     }
@@ -612,8 +614,10 @@ void zHudElementsCB_PlayerStatusRender()
 {
     S32 i;
 
-    zHud_UIRender("scooby_head_bg", sHudPlayerStatusArray[0].hframe.pos.x + -30.0f,
-                  sHudPlayerStatusArray[0].hframe.pos.y + -50.0f, 65.0f * widthAspect, 85.0f,
+    F32 offsetX = -30.0f;
+    F32 offsetY = -50.0f;
+    zHud_UIRender("scooby_head_bg", sHudPlayerStatusArray[0].hframe.pos.x + offsetX,
+                  sHudPlayerStatusArray[0].hframe.pos.y + offsetY, 65.0f * widthAspect, 85.0f,
                   sHudPlayerStatusArray[0].hframe.color.a);
     zRenderState(SDRS_HUD);
 
@@ -626,6 +630,7 @@ void zHudElementsCB_PlayerStatusRender()
             xRect r = { item->hframe.pos.x - 0.5f * item->hframe.size.x,
                         item->hframe.pos.y - 0.5f * item->hframe.size.y,
                         item->hframe.size.x * widthAspect, item->hframe.size.y };
+            xVec3 zero = { 0.0f, 0.0f, 0.0f };
             xVec3 from = { -0.8f, 0.22f, 0.8f };
             xVec3 to = { 0.0f, 0.0f, 0.0f };
             xMat4x3 frame;
@@ -998,6 +1003,7 @@ void zHudElementsCB_SnacksRender()
     xRect r = { -45.0f + (sHudSnackArray[0].hframe.pos.x - 0.5f * sHudSnackArray[0].hframe.size.x),
                 22.0f + (sHudSnackArray[0].hframe.pos.y - 0.5f * sHudSnackArray[0].hframe.size.y),
                 sHudSnackArray[0].hframe.size.x * widthAspect, sHudSnackArray[0].hframe.size.y };
+    xVec3 zero = { 0.0f, 0.0f, 0.0f };
     xVec3 from = { 0.0f, 0.0f, 0.8f };
     xVec3 to = { 0.0f, 0.0f, 0.0f };
     xMat4x3 frame;
@@ -1307,6 +1313,7 @@ void zHudElementsCB_GumRender()
                 xRect r = { item->hframe.pos.x - 0.5f * item->hframe.size.x,
                             item->hframe.pos.y - 0.5f * item->hframe.size.y,
                             item->hframe.size.x * widthAspect, item->hframe.size.y };
+                xVec3 zero = { 0.0f, 0.0f, 0.0f };
                 xVec3 from = { 2.0f, 0.08f, 0.0f };
                 xVec3 to = { 0.0f, 0.0f, 0.0f };
                 xMat4x3 frame;
@@ -1666,6 +1673,7 @@ void zHudElementsCB_SoapRender()
     xRect r = { sHudSoapArray[0].hframe.pos.x - 0.5f * sHudSoapArray[0].hframe.size.x,
                 sHudSoapArray[0].hframe.pos.y - 0.5f * sHudSoapArray[0].hframe.size.y,
                 sHudSoapArray[0].hframe.size.x * widthAspect, sHudSoapArray[0].hframe.size.y };
+    xVec3 zero = { 0.0f, 0.0f, 0.0f };
     xVec3 from = { 0.0f, -0.35f, 0.4f };
     xVec3 to = { 0.0f, 0.0f, 0.0f };
     xMat4x3 frame;
@@ -1690,6 +1698,7 @@ void zHudElementsCB_SoapRender()
                         item->hframe.pos.y - 0.5f * item->hframe.size.y,
                         item->hframe.size.x * widthAspect,
                         item->hframe.size.y };
+            xVec3 zero = { 0.0f, 0.0f, 0.0f };
             xVec3 from = { 0.0f, 0.0f, 2.0f };
             xVec3 to = { 0.0f, 0.0f, 0.0f };
             xMat4x3 frame;
@@ -1959,6 +1968,7 @@ void zHudElementsCB_SoapboxRender()
         xRect r = { 23.0f + (item->hframe.pos.x - 0.5f * item->hframe.size.x),
                     17.0f + (item->hframe.pos.y - 0.5f * item->hframe.size.y),
                     item->hframe.size.x * widthAspect, item->hframe.size.y };
+        xVec3 zero = { 0.0f, 0.0f, 0.0f };
         xVec3 from = { -1.3f, 0.3f, 2.0f };
         xVec3 to = { 0.0f, 0.0f, 0.0f };
         xMat4x3 frame;
@@ -2220,6 +2230,7 @@ void zHudElementsCB_GumpackRender()
     xRect r = { 33.0f + (item->hframe.pos.x - 0.5f * item->hframe.size.x),
                 21.0f + (item->hframe.pos.y - 0.5f * item->hframe.size.y),
                 item->hframe.size.x * widthAspect, item->hframe.size.y };
+    xVec3 zero = { 0.0f, 0.0f, 0.0f };
     xVec3 from = { 1.8f, 0.0f, 0.0f };
     xVec3 to = { 0.0f, 0.0f, 0.0f };
     xMat4x3 frame;
@@ -2570,6 +2581,7 @@ void zHudElementsCB_HealthbarRender()
                             0.5f * item->hframe.size.y,
                         item->hframe.size.x * widthAspect,
                         item->hframe.size.y };
+            xVec3 zero = { 0.0f, 0.0f, 0.0f };
             xVec3 from = { 0.0f, 0.0f, 1.0f };
             xVec3 to = { 0.0f, 0.0f, 0.0f };
             xMat4x3 frame;
@@ -2964,8 +2976,10 @@ void zHudElementsCB_GameStatsRender()
                                     0.5f * item->hframe.size.y,
                                 item->hframe.size.x * widthAspect,
                                 item->hframe.size.y };
+                    xVec3 zero = { 0.0f, 0.0f, 0.0f };
                     xVec3 from = { 0.0f, 0.0f, 0.8f };
                     xVec3 to = { 0.0f, 0.0f, 0.0f };
+                    char str[256] = "";
                     xMat4x3 frame;
 
                     xMat3x3Euler((xMat3x3*)&frame, item->hframe.ang.x,
@@ -2999,7 +3013,9 @@ void zHud_DrawText(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 a
 
     if (shadow == DROPSHADOW_NORMAL)
     {
-        fontBox = xFontBoxCreate(x + -3.0f, y + 3.0f, w, h, 0, clrDropShadow);
+        F32 offsetX = -3.0f;
+        F32 offsetY = 3.0f;
+        fontBox = xFontBoxCreate(x + offsetX, y + offsetY, w, h, 0, clrDropShadow);
         xFontBoxSetJustification(fontBox, just);
         xFontBoxSetDrawSize(fontBox, drawSizeX, drawSizeY);
         xFontBoxSetDrawSpacing(fontBox, drawSizeX, drawSizeY);
