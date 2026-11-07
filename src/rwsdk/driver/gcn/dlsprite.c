@@ -25,8 +25,8 @@ RwRGBA* RwRGBASetFromPixel(RwRGBA* rgbOut, U32 pixelValue, S32 rasterFormat);
 // The depth of the quads, just in front of the far plane. Written for this project.
 #define DLSPRITE_Z 0.99999994f
 
-// The GX alpha compare, z mode and blend mode the render state cache holds. Written for this
-// project.
+// Puts back the GX z mode, blend mode and cull mode the render state cache holds. Written for
+// this project.
 #define DLSPRITE_RESTORESTATES()                                                                   \
     do                                                                                             \
     {                                                                                              \
@@ -46,7 +46,7 @@ RwRGBA* RwRGBASetFromPixel(RwRGBA* rgbOut, U32 pixelValue, S32 rasterFormat);
     } while (0)
 
 // The blit quad's orthographic projection (its x and y scales are set to the frame size) and its
-// identity view matrix.
+// view matrix, the identity with the Z axis flipped.
 F32 lbl_801DE478[7] = {1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f};
 Mtx lbl_801DE494 = {
     {1.0f, 0.0f, 0.0f, 0.0f},
@@ -313,7 +313,8 @@ S32 _rwDlRasterRenderScaled(void* raster, void* rect, S32 flags)
     return _rwDlRasterRenderGeneric((RwRaster*)raster, (RwRect*)rect, TRUE, TRUE);
 }
 
-// The clear quad's orthographic projection and identity view matrix.
+// The clear quad's orthographic projection and its view matrix, the identity with the Z axis
+// flipped.
 F32 lbl_801DE4F8[7] = {1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f};
 Mtx lbl_801DE514 = {
     {1.0f, 0.0f, 0.0f, 0.0f},

@@ -29,7 +29,7 @@ extern S32 lbl_8025F808;
 extern S32 lbl_8025E7F0;
 extern S32 lbl_8025F85C;
 
-// The texture set for drawing; it has no raster when drawing is untextured (dltextur.c).
+// The texture set for drawing; it has no raster when drawing is untextured (dlrendst.c).
 extern RwTexture* lbl_8025F87C;
 
 void GXSetProjectionv(const f32* ptr);
@@ -119,8 +119,8 @@ void _rw2DRenderPrimitiveInit(void)
     GXSetCurrentMtx(GX_PNMTX0);
 }
 
-// Puts back the camera's projection, and its viewport and scissor when it draws to the frame
-// buffer (a raster that is its own parent keeps the full-frame settings).
+// Puts back the camera's projection, and its viewport and scissor when the camera raster is a
+// sub-raster (a raster that is its own parent keeps the full-frame settings).
 void _rw2DRenderPrimativeTerm(void)
 {
     RwRaster* raster = RwCameraGetCurrentCamera()->frameBuffer;
