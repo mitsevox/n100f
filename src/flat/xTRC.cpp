@@ -621,9 +621,7 @@ extern "C" S32 fn_80043E20(TRCCardWatch* watch)
 }
 
 // Hook the card dialogs call before they show a problem message. On GameCube it returns 2 at
-// once, so the dialog goes ahead; its message buffer is never filled. The two card checks after
-// the early return are a reconstruction: the target keeps the hook out of line, which this
-// compiler does only for a body this size, and they reuse the card-check dialog's messages.
+// once, so the dialog goes ahead; the card checks after the return never run.
 extern "C" S32 fn_80043E18(S32 card, st_ISGSESSION* session)
 {
     S32 result = 2;
