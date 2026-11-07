@@ -52,6 +52,8 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
     U8* data;
     GCNDisplayList* lists;
     S32 i;
+    GCNDisplayList* list;
+    U32 count;
 
     if (!RwStreamFindChunk(stream, rwID_STRUCT, &size, &version))
     {
@@ -103,6 +105,9 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
         return NULL;
     }
 
+    count = numMeshes;
+    list = lists;
+
     (*entryRef)->link.next = NULL;
     (*entryRef)->link.prev = NULL;
     (*entryRef)->owner = object;
@@ -132,10 +137,10 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
         arrays->tex[i] = data + (U32)arrays->tex[i];
     }
 
-    for (i = numMeshes; i; i--)
+    for (; count; count--)
     {
-        lists->list = data + (U32)lists->list;
-        lists++;
+        list->list = data + (U32)list->list;
+        list++;
     }
 
     DCFlushRange(NATIVE_ARRAYS(*entryRef), (*entryRef)->size);
