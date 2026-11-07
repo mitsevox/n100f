@@ -351,15 +351,17 @@ static void ZPRJ_insertType(zProjectileTypeAsset* ptype)
 
 static st_ZPRJ_TYPERECORD* ZPRJ_findType(U32 aid)
 {
+    st_ZPRJ_TYPERECORD* rec;
     st_ZPRJ_TYPERECORD* da_type = NULL;
     S32 i;
     st_PROJECTILE_DEPOT* depot = &g_prjdepot;
 
     for (i = 0; i < depot->typeidx; i++)
     {
-        if (depot->typetable[i].aid_ptype == aid)
+        rec = &depot->typetable[i];
+        if (rec->aid_ptype == aid)
         {
-            da_type = &depot->typetable[i];
+            da_type = rec;
             break;
         }
     }
@@ -695,9 +697,9 @@ void zEntProjectile::Recycle()
 
 S32 zEntProjectile::Init(en_ZPRJ_CATEGORY cat, U32 ptypeID)
 {
-    S32 rc;
-    S32 status = 1;
     st_ZPRJ_CATEGORY_FUNCS* catf = NULL;
+    S32 status = 1;
+    S32 rc;
 
     rc = SetupPrelim(cat, ptypeID);
     if (!rc)
@@ -790,22 +792,26 @@ S32 zEntProjectile::SetupPrelim(en_ZPRJ_CATEGORY cat, U32 ptaid)
 
     if (ptaid == 0)
     {
-        return 0;
+        isok = 0;
     }
-
-    ptype = ZPRJ_findType(ptaid);
-    if (ptype == NULL)
+    else
     {
-        return 0;
-    }
+        ptype = ZPRJ_findType(ptaid);
+        if (ptype == NULL)
+        {
+            isok = 0;
+        }
+        else
+        {
+            this->ptype = ptype;
+            tym_maxlife = this->ptype->src_ptype->destructTime;
+            ds2_maxlife = this->ptype->src_ptype->destructDist * this->ptype->src_ptype->destructDist;
 
-    this->ptype = ptype;
-    tym_maxlife = this->ptype->src_ptype->destructTime;
-    ds2_maxlife = this->ptype->src_ptype->destructDist * this->ptype->src_ptype->destructDist;
-
-    if (this->ptype->src_ptype->oriented)
-    {
-        OrientSet(0x30000000);
+            if (this->ptype->src_ptype->oriented)
+            {
+                OrientSet(0x30000000);
+            }
+        }
     }
 
     return isok;
@@ -853,9 +859,9 @@ S32 zEntProjectile::Setup_xEnt()
 
 S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
 {
-    xMat4x3 initmat = {};
-    xVec3 vel_dflt = { 0.0f, 0.0f, 0.0f };
     xVec3 pos_dflt = { 0.0f, 0.0f, 0.0f };
+    xVec3 vel_dflt = { 0.0f, 0.0f, 0.0f };
+    xMat4x3 initmat = {};
 
     if (pos == NULL)
     {
@@ -868,9 +874,9 @@ S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
     }
 
     xMat3x3Euler((xMat3x3*)&initmat, 0.0f, 0.0f, 0.0f);
-    xVec3SMul(&initmat.right, &initmat.right, 1.0f);
-    xVec3SMul(&initmat.up, &initmat.up, 1.0f);
-    xVec3SMul(&initmat.at, &initmat.at, 1.0f);
+    xVec3SMulBy(&initmat.right, 1.0f);
+    xVec3SMulBy(&initmat.up, 1.0f);
+    xVec3SMulBy(&initmat.at, 1.0f);
     initmat.flags = 0;
     xVec3Copy(&initmat.pos, pos);
     xVec3Copy(&frame->oldpos, pos);
@@ -882,7 +888,7 @@ S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
 
     xVec3Copy(&frame->rot.axis, &g_Y3);
     frame->rot.angle = 0.0f;
-    frame->oldrot = frame->rot;
+    xRotCopy(&frame->oldrot, &frame->rot);
     xVec3Copy(&frame->vel, veloc);
     xVec3Copy(&frame->oldvel, veloc);
 
