@@ -439,9 +439,9 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
     case 2:
     {
         S32 pixelFormat = lbl_8025F7FC;
-        GXRenderModeObj* renderMode = _RwDlRenderMode;
+        GXRenderModeObj* renderMode;
 
-        VIConfigure(renderMode);
+        VIConfigure(renderMode = _RwDlRenderMode);
         VISetBlack(TRUE);
         VIFlush();
 
