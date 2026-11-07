@@ -179,7 +179,7 @@ class DataEdgeRows(unittest.TestCase):
             (".data", "zA.cpp", "zACol.cpp", "0x00001010", "0x00001010",
              "data-only unit claimed by a data row in evidence.tsv", 0),
             (".data", "zACol.cpp", "zB.cpp", "0x00001018", "0x00001018",
-             "data-only unit claim fills the gap; 3 in-range loads by functions outside the written units", 3)])
+             "data-only unit claim fills the gap; 3 in-range loads by functions outside the written units", 5)])
 
     def test_tail_claim_keeps_the_class(self):
         rows = recover.data_edge_rows(".data", "zA.cpp", "zB.cpp", (0x1000, 0x1010), (0x1018, 0x1020),

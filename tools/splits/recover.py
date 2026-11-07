@@ -521,8 +521,8 @@ def data_edge_rows(sec, u, v, a, b, cls, conflicts, hosted_u, gap_claims):
     ranges (None when unsplit).  A data-only unit carved off u's range, or claimed in the gap
     after it (`gap_claims`), sits between u and v.  A gap claim takes every item between the
     two ranges (carve_data_only refuses one that does not), so the edge's base class gives way
-    to "data-only unit claim fills the gap" and its count to the in-range loads its note
-    records; the note itself is kept."""
+    to "data-only unit claim fills the gap"; its notes and its crossing count, which can hold
+    loads across the cut that the claim does not remove, are kept."""
     rows = []
     for w, wsec, lo, hi in hosted_u:
         if wsec != sec:
@@ -531,9 +531,7 @@ def data_edge_rows(sec, u, v, a, b, cls, conflicts, hosted_u, gap_claims):
                      'data-only unit claimed by a data row in evidence.tsv', 0))
         if (w, sec) in gap_claims:
             base, sep, notes = cls.partition('; ')
-            m = re.search(r'(\d+) in-range loads by functions outside the written units', notes)
             cls = 'data-only unit claim fills the gap' + sep + notes
-            conflicts = int(m.group(1)) if m else 0
         u, a = w, (lo, hi)
     rows.append((sec, u, v, '0x%08X' % a[1] if a else '-', '0x%08X' % b[0] if b else '-',
                  cls if a and b else cls + '; a side left unsplit', conflicts))
