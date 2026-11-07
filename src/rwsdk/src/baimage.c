@@ -555,7 +555,15 @@ RwImage* RwImageRead(const char* imageName)
     ImageFileFormat* format;
 
     separator = rwstrrchr(imageName, ':');
-    name = separator ? separator : imageName;
+
+    if (separator)
+    {
+        name = separator;
+    }
+    else
+    {
+        name = imageName;
+    }
 
     separator = rwstrrchr(name, '/');
 
@@ -565,36 +573,34 @@ RwImage* RwImageRead(const char* imageName)
     }
 
     separator = rwstrrchr(name, '\\');
-
-    if (separator)
-    {
-        name = separator;
-    }
+    name = separator ? separator : name;
 
     extender = rwstrrchr(name, '.');
 
-    if (!extender)
+    if (extender)
     {
-        return NULL;
-    }
-
-    for (format = IMAGE_DATA(formats); format; format = format->next)
-    {
-        if (!rwstrcmp(format->extLower, extender) || !rwstrcmp(format->extUpper, extender))
+        for (format = IMAGE_DATA(formats); format; format = format->next)
         {
-            ImageReadData readData;
-
-            if (!format->readFunc)
+            if (!rwstrcmp(format->extLower, extender) || !rwstrcmp(format->extUpper, extender))
             {
-                return NULL;
+                if (format->readFunc)
+                {
+                    ImageReadData readData;
+
+                    readData.readFunc = format->readFunc;
+                    readData.image = NULL;
+                    ImagePathForAllFullNames(imageName, 5, ImageAttempRead, &readData);
+
+                    return readData.image;
+                }
+                else
+                {
+                    return NULL;
+                }
             }
-
-            readData.readFunc = format->readFunc;
-            readData.image = NULL;
-            ImagePathForAllFullNames(imageName, 5, ImageAttempRead, &readData);
-
-            return readData.image;
         }
+
+        return NULL;
     }
 
     return NULL;
@@ -606,39 +612,39 @@ RwImage* RwImageReadMaskedImage(const char* imageName, const char* maskName)
 {
     RwImage* image = RwImageRead(imageName);
 
-    if (!image)
+    if (image)
     {
-        return NULL;
+        if (maskName && *maskName)
+        {
+            RwImage* mask = RwImageRead(maskName);
+
+            if (!mask)
+            {
+                RwImageDestroy(image);
+                return NULL;
+            }
+
+            if (!RwImageMakeMask(mask))
+            {
+                RwImageDestroy(image);
+                RwImageDestroy(mask);
+                return NULL;
+            }
+
+            if (!RwImageApplyMask(image, mask))
+            {
+                RwImageDestroy(image);
+                RwImageDestroy(mask);
+                return NULL;
+            }
+
+            RwImageDestroy(mask);
+        }
+
+        return image;
     }
 
-    if (maskName && *maskName)
-    {
-        RwImage* mask = RwImageRead(maskName);
-
-        if (!mask)
-        {
-            RwImageDestroy(image);
-            return NULL;
-        }
-
-        if (!RwImageMakeMask(mask))
-        {
-            RwImageDestroy(image);
-            RwImageDestroy(mask);
-            return NULL;
-        }
-
-        if (!RwImageApplyMask(image, mask))
-        {
-            RwImageDestroy(image);
-            RwImageDestroy(mask);
-            return NULL;
-        }
-
-        RwImageDestroy(mask);
-    }
-
-    return image;
+    return NULL;
 }
 
 RwRGBA* RwRGBASetFromPixel(RwRGBA* rgbOut, U32 pixelValue, S32 rasterFormat)
@@ -653,14 +659,21 @@ RwRGBA* RwRGBASetFromPixel(RwRGBA* rgbOut, U32 pixelValue, S32 rasterFormat)
 // palette; anything else is an error.
 S32 ImageConvertDepth(RwImage* destImage, const RwImage* sourceImage)
 {
-    S32 result = FALSE;
-    S32 width = destImage->width;
-    S32 height = destImage->height;
-    const RwRGBA* palette = sourceImage->palette;
-    const U8* srcRow = sourceImage->cpPixels;
-    U8* dstRow = destImage->cpPixels;
     S32 x;
+    S32 result;
+    S32 width;
+    S32 height;
+    const RwRGBA* palette;
+    U8* dstRow;
+    const U8* srcRow;
     S32 y;
+
+    result = FALSE;
+    width = destImage->width;
+    height = destImage->height;
+    palette = sourceImage->palette;
+    srcRow = sourceImage->cpPixels;
+    dstRow = destImage->cpPixels;
 
     switch ((sourceImage->depth << 8) | destImage->depth)
     {
@@ -694,6 +707,9 @@ S32 ImageConvertDepth(RwImage* destImage, const RwImage* sourceImage)
 
         result = TRUE;
         break;
+    case (8 << 8) | 4:
+    case (32 << 8) | 4:
+    case (32 << 8) | 8:
     default:
         ImageError(0x80000009);
         break;
