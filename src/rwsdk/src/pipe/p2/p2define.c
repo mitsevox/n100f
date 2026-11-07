@@ -663,8 +663,8 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
                                                            + RXPIPELINEGLOBAL(maxNodesPerPipeline)
                                                                  * NODE_MAXOUTPUTS);
                 topSortData += pipeline->numNodes - 1;
-                newTopSortData = (RxPipelineNodeTopSortData*)((U8*)pipeline->superBlock + size);
-                newTopSortData--;
+                newTopSortData = (RxPipelineNodeTopSortData*)((U8*)pipeline->superBlock + size
+                                                              - sizeof(RxPipelineNodeTopSortData));
 
                 for (i = pipeline->numNodes - 1; i >= 0; i--)
                 {
