@@ -61,15 +61,15 @@ extern GXFifoObj* lbl_8025F858;
 
 // The ring's read and write positions, the token ring's write and read positions, whether the
 // FIFO breakpoint is armed, whether a frame waits for its token, whether a frame waits for the
-// retrace, whether a retrace has passed since, and which half a two-half frame is on. The ring
-// positions and the breakpoint flag are shared between the game thread and the breakpoint
-// interrupt, so they are volatile.
+// retrace, whether a retrace has passed since, and which half a two-half frame is on. The frame
+// ring's positions and the breakpoint flag are shared between the game thread and the breakpoint
+// interrupt; they, the token ring's positions and the token wait flag are volatile.
 extern volatile S32 lbl_8025F810;
 extern volatile S32 lbl_8025F814;
-extern S32 lbl_8025F818;
-extern S32 lbl_8025F81C;
+extern volatile S32 lbl_8025F818;
+extern volatile S32 lbl_8025F81C;
 extern volatile S32 lbl_8025F820;
-extern S32 lbl_8025F824;
+extern volatile S32 lbl_8025F824;
 extern S32 lbl_8025F828;
 extern S32 lbl_8025F82C;
 extern S32 lbl_8025F830;
@@ -218,14 +218,6 @@ void _rwDlBreakPtCallback(void)
     }
 }
 
-// Moves a ring position (the frame ring's write position, or the token ring's read or write
-// position) on by one, wrapping at the ring size. The frame ring's positions are volatile, since
-// the interrupts share them, so it takes a volatile one.
-static inline void DlRingAdvance(volatile S32* pos)
-{
-    *pos = (*pos + 1) % DLDEVICE_RING;
-}
-
 // Before each retrace: once the waiting frame's token has passed, shows the other frame buffer
 // (unblanking the screen after the first frame).
 void _rwDlVIPreRetraceCallback(u32 retraceCount)
@@ -244,7 +236,7 @@ void _rwDlVIPreRetraceCallback(u32 retraceCount)
         }
 
         VIFlush();
-        DlRingAdvance(&lbl_8025F81C);
+        lbl_8025F81C = (lbl_8025F81C + 1) % DLDEVICE_RING;
         lbl_8025F824 = 0;
         lbl_8025F82C = 1;
     }
@@ -775,7 +767,7 @@ S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags)
     void* readPtr;
     void* writePtr;
     BOOL enabled;
-    S32 full;
+    volatile S32 full;
     U32 stride;
 
     enabled = OSDisableInterrupts();
@@ -795,8 +787,8 @@ S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags)
         lbl_8025E2B0[lbl_8025F814].fifoPos = writePtr;
         lbl_8025E2B0[lbl_8025F814].frameBuffer = lbl_8025F848;
         lbl_8025F83C[lbl_8025F818] = lbl_8025E800;
-        DlRingAdvance(&lbl_8025F814);
-        DlRingAdvance(&lbl_8025F818);
+        lbl_8025F814 = (lbl_8025F814 + 1) % DLDEVICE_RING;
+        lbl_8025F818 = (lbl_8025F818 + 1) % DLDEVICE_RING;
         OSRestoreInterrupts(enabled);
 
         if (lbl_8025F820 == 0)
@@ -819,7 +811,7 @@ S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags)
         enabled = OSDisableInterrupts();
         lbl_8025E2B0[lbl_8025F814].fifoPos = writePtr;
         lbl_8025E2B0[lbl_8025F814].frameBuffer = lbl_8025F848;
-        DlRingAdvance(&lbl_8025F814);
+        lbl_8025F814 = (lbl_8025F814 + 1) % DLDEVICE_RING;
         OSRestoreInterrupts(enabled);
 
         if (lbl_8025F820 == 0)
@@ -842,8 +834,8 @@ S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags)
         lbl_8025E2B0[lbl_8025F814].fifoPos = writePtr;
         lbl_8025E2B0[lbl_8025F814].frameBuffer = lbl_8025F848;
         lbl_8025F83C[lbl_8025F818] = lbl_8025E800;
-        DlRingAdvance(&lbl_8025F814);
-        DlRingAdvance(&lbl_8025F818);
+        lbl_8025F814 = (lbl_8025F814 + 1) % DLDEVICE_RING;
+        lbl_8025F818 = (lbl_8025F818 + 1) % DLDEVICE_RING;
         OSRestoreInterrupts(enabled);
 
         if (lbl_8025F820 == 0)
