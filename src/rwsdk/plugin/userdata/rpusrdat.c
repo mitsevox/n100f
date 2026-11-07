@@ -340,10 +340,18 @@ static void UserDataListDestroy(UserDataList* list)
     list->numElements = 0;
 }
 
+// Returns the list's array at index.
+static inline RpUserDataArray* UserDataListGetArray(const UserDataList* list, S32 index)
+{
+    return &list->userData[index];
+}
+
+// Replaces dst's user data with a deep copy of src's: each array's name, its data and, for
+// string arrays, every string.
 static void UserDataListCopy(UserDataList* dst, const UserDataList* src)
 {
-    const RpUserDataArray* srcArray;
     RpUserDataArray* dstArray;
+    const RpUserDataArray* srcArray;
     S32 i;
 
     UserDataListDestroy(dst);
@@ -356,8 +364,8 @@ static void UserDataListCopy(UserDataList* dst, const UserDataList* src)
 
         for (i = 0; i < dst->numElements; i++)
         {
-            srcArray = &src->userData[i];
-            dstArray = &dst->userData[i];
+            dstArray = UserDataListGetArray(dst, i);
+            srcArray = UserDataListGetArray(src, i);
 
             dstArray->format = srcArray->format;
             dstArray->numElements = srcArray->numElements;
@@ -369,15 +377,18 @@ static void UserDataListCopy(UserDataList* dst, const UserDataList* src)
 
             if (srcArray->data)
             {
-                S32 size = dstArray->numElements * RpUserDataGetFormatSize(dstArray->format);
+                char** srcStrings;
+                S32 j;
+                char** dstStrings;
+                S32 size;
 
-                dstArray->data = RwMalloc(size);
+                dstArray->data =
+                    RwMalloc(size = dstArray->numElements * RpUserDataGetFormatSize(dstArray->format));
 
                 if (dstArray->format == rpSTRINGUSERDATA)
                 {
-                    char** srcStrings = (char**)srcArray->data;
-                    S32 j;
-                    char** dstStrings = (char**)dstArray->data;
+                    srcStrings = (char**)srcArray->data;
+                    dstStrings = (char**)dstArray->data;
 
                     for (j = 0; j < dstArray->numElements; j++)
                     {
