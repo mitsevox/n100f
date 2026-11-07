@@ -1056,14 +1056,14 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
 static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdges,
                                           S32 keepWinding)
 {
-    U16 numMeshes = 0;
     RpBuildMeshTriangle** sorted;
-    RpBuildMeshTriangle** next;
+    U16 numMeshes;
+    RpMesh* mesh;
     RpMesh** meshes;
     RpMesh* runs;
     RpMesh* run;
     RpMeshHeader* meshHeader;
-    RpMesh* mesh;
+    RpBuildMeshTriangle** next;
     U16* indices;
     TriStripList* stripList;
     U32 numRuns;
@@ -1071,6 +1071,7 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
     U32 totalIndices;
     U32 i;
 
+    numMeshes = 0;
     sorted =
         (RpBuildMeshTriangle**)RwMalloc(buildMesh->numTriangles * sizeof(RpBuildMeshTriangle*));
 
@@ -1136,28 +1137,28 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
 
     stripList = NULL;
     next = sorted;
-    run = runs;
 
-    for (i = 0; i < numRuns; i++, run++)
+    for (i = 0; i < numRuns; i++)
     {
         RpBuildMeshTriangle* triangles =
-            (RpBuildMeshTriangle*)RwMalloc(run->numIndices * sizeof(RpBuildMeshTriangle));
+            (RpBuildMeshTriangle*)RwMalloc(runs[i].numIndices * sizeof(RpBuildMeshTriangle));
         TriStripList* strip;
         U32 j;
 
-        for (j = 0; j < run->numIndices; j++)
+        for (j = 0; j < runs[i].numIndices; j++)
         {
-            triangles[j] = **next++;
+            triangles[j] = **next;
+            next++;
         }
 
-        TriStripStripTris(triangles, run->numIndices, &stripList, tryAllEdges);
+        TriStripStripTris(triangles, runs[i].numIndices, &stripList, tryAllEdges);
         TriStripJoin(&stripList, keepWinding);
 
         for (strip = stripList; strip; strip = strip->next)
         {
             RpMesh* stripMesh = (RpMesh*)RwMalloc(sizeof(RpMesh) + strip->numIndices * sizeof(U16));
 
-            stripMesh->material = run->material;
+            stripMesh->material = runs[i].material;
             stripMesh->numIndices = strip->numIndices;
             stripMesh->indices = (U16*)(stripMesh + 1);
 
@@ -1204,13 +1205,14 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
     mesh = (RpMesh*)(meshHeader + 1);
     indices = (U16*)(mesh + numMeshes);
 
-    for (i = 0; i < numMeshes; i++, mesh++)
+    for (i = 0; i < numMeshes; i++)
     {
         mesh->indices = indices;
         mesh->numIndices = meshes[i]->numIndices;
         mesh->material = meshes[i]->material;
         memcpy(indices, meshes[i]->indices, meshes[i]->numIndices * sizeof(U16));
         indices += mesh->numIndices;
+        mesh++;
         RwFree(meshes[i]);
         meshes[i] = NULL;
     }
