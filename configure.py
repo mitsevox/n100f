@@ -1091,7 +1091,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/pipe/p2/p2renderstate.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/p2resort.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/gcn/im3dpipe.c"),
-            Object(NonMatching, "rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c"),
         ],
     ),
 ]

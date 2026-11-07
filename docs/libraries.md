@@ -124,7 +124,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 11 of 15 | Consistent interrupt-visible token declarations add exact bodies; remaining routines partial. NonMatching, original linked |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 3 of 7 | `fn_8015DBA4` (95.3%), `fn_8015E054` (97.3%), `fn_8015DA50`, the lighting callback (86.3%), and `fn_8015E2E8`, the instance callback (73.6%), not diagnosed yet (text only) |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c` | 3 of 5 | `_rxGCWorldSectorAllInOneNode` (97.9%) and `fn_8015E908`, the instance callback (75.6%), not diagnosed yet (text only) |
-| `rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c` | 3 of 4 | `DlSubmitNode` (51.3%: the target's loads around the volatile FIFO writes differ; text only) |
+| `rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c` | 4 of 4 (rev0) | (Matching on GIHE78-rev0, with its `.data` and `.sbss`; vertices go through the GX vertex functions) |
 | `rwsdk/plugin/collis/ctgeom.c` | 7 of 7 | (NonMatching: this source pools `1.0` before `0.0` in `.sdata2`, the target the other way round) |
 | `rwsdk/plugin/collis/ctworld.c` | 1 of 10 | the leaf callbacks, the old-sector walks and `WorldSectorForAllBoxedPrimitivePolyIntersections` (98.9-99.8%), register choice; `WorldForAllLineWorldSectorIntersections` (91.5%: the plane-crossing splits) and `RpCollisionWorldForAllIntersections` (96.2%: a 0x3E0-byte frame against the target's 0x3D0); the two static box helpers are `static inline`, as the target inlines them |
 | `rwsdk/plugin/collis/ctbsp.c` | 8 of 8 | Complete text-only object exact; source selected on GIHE78-rev0, with whole-executable validation recorded in the PR |

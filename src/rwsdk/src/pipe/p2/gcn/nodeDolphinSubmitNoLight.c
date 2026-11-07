@@ -5,51 +5,66 @@
 // submit node, which sends the pool's vertices (position, color and, when textured, texture
 // coordinates) straight to the GX FIFO, unlit, as the pool's primitive.
 
-// The vertex pool the instance node passed on.
-extern rwIm3DPool* lbl_8025F8B8;
-
-// The GX primitive for each RenderWare primitive type.
-extern const GXPrimitive lbl_801DF0E8[7];
-
-// The node definitions.
-extern RxNodeDefinition lbl_801DF114;
-extern RxNodeDefinition lbl_801DF168;
-
+S32 _rwDlImmInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params);
+S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params);
 void _rwDlTransformSetup(const RwMatrix* matrix, S32 normals);
 void _rwDlTextureRasterFlush(void);
+
+// The GX primitive for each RenderWare primitive type (none, line list, polyline, triangle
+// list, triangle strip, triangle fan, point list).
+GXPrimitive lbl_801DF0E8[7] = {
+    0, GX_LINES, GX_LINESTRIP, GX_TRIANGLES, GX_TRIANGLESTRIP, GX_TRIANGLEFAN, GX_POINTS,
+};
+
+// The node definitions: each names its node and points at its node body; neither has clusters,
+// outputs or private data.
+char lbl_801DF104[] = "ImmInstance.csl";
+
+RxNodeDefinition lbl_801DF114 = {
+    lbl_801DF104,
+    { _rwDlImmInstanceNode, NULL, NULL, NULL, NULL, NULL, NULL },
+    { 0, NULL, NULL, 0, NULL },
+    0,
+    rxNODEDEFCONST,
+    0,
+};
+
+char lbl_801DF154[] = "SubmitNoLight.csl";
+
+RxNodeDefinition lbl_801DF168 = {
+    lbl_801DF154,
+    { DlSubmitNode, NULL, NULL, NULL, NULL, NULL, NULL },
+    { 0, NULL, NULL, 0, NULL },
+    0,
+    rxNODEDEFCONST,
+    0,
+};
+
+// The vertex pool the instance node passed on.
+rwIm3DPool* lbl_8025F8B8;
 
 // The pool flag for textured vertices. Written for this project.
 #define DLSUBMIT_VERTEXUV 0x01
 
-// One vertex into the FIFO: position and color, and texture coordinates when textured.
+// One vertex into the FIFO through the GX vertex functions: position and color, and texture
+// coordinates when textured.
 #define DLSUBMIT_POSCOLOR(_vert)                                                                   \
     do                                                                                             \
     {                                                                                              \
-        const RwIm3DVertex* _v = (_vert);                                                          \
+        RwIm3DVertex* _v = (_vert);                                                                \
                                                                                                    \
-        GXWGFifo.f32 = _v->x;                                                                      \
-        GXWGFifo.f32 = _v->y;                                                                      \
-        GXWGFifo.f32 = _v->z;                                                                      \
-        GXWGFifo.u8 = _v->r;                                                                       \
-        GXWGFifo.u8 = _v->g;                                                                       \
-        GXWGFifo.u8 = _v->b;                                                                       \
-        GXWGFifo.u8 = _v->a;                                                                       \
+        GXPosition3f32(_v->x, _v->y, _v->z);                                                       \
+        GXColor4u8(_v->r, _v->g, _v->b, _v->a);                                                    \
     } while (0)
 
 #define DLSUBMIT_POSCOLORUV(_vert)                                                                 \
     do                                                                                             \
     {                                                                                              \
-        const RwIm3DVertex* _v = (_vert);                                                          \
+        RwIm3DVertex* _v = (_vert);                                                                \
                                                                                                    \
-        GXWGFifo.f32 = _v->x;                                                                      \
-        GXWGFifo.f32 = _v->y;                                                                      \
-        GXWGFifo.f32 = _v->z;                                                                      \
-        GXWGFifo.u8 = _v->r;                                                                       \
-        GXWGFifo.u8 = _v->g;                                                                       \
-        GXWGFifo.u8 = _v->b;                                                                       \
-        GXWGFifo.u8 = _v->a;                                                                       \
-        GXWGFifo.f32 = _v->u;                                                                      \
-        GXWGFifo.f32 = _v->v;                                                                      \
+        GXPosition3f32(_v->x, _v->y, _v->z);                                                       \
+        GXColor4u8(_v->r, _v->g, _v->b, _v->a);                                                    \
+        GXTexCoord2f32(_v->u, _v->v);                                                              \
     } while (0)
 
 S32 _rwDlImmInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
@@ -113,58 +128,6 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 
         switch (stash->primType)
         {
-        case rwPRIMTYPELINELIST:
-        {
-            U16 n = stash->numIndices / 2;
-
-            if (stash->flags & DLSUBMIT_VERTEXUV)
-            {
-                while (n--)
-                {
-                    DLSUBMIT_POSCOLORUV(&verts[index[0]]);
-                    DLSUBMIT_POSCOLORUV(&verts[index[1]]);
-                    index += 2;
-                }
-            }
-            else
-            {
-                while (n--)
-                {
-                    DLSUBMIT_POSCOLOR(&verts[index[0]]);
-                    DLSUBMIT_POSCOLOR(&verts[index[1]]);
-                    index += 2;
-                }
-            }
-
-            break;
-        }
-        case rwPRIMTYPETRILIST:
-        {
-            S32 n = stash->numIndices / 3;
-
-            if (stash->flags & DLSUBMIT_VERTEXUV)
-            {
-                while (n--)
-                {
-                    DLSUBMIT_POSCOLORUV(&verts[index[0]]);
-                    DLSUBMIT_POSCOLORUV(&verts[index[1]]);
-                    DLSUBMIT_POSCOLORUV(&verts[index[2]]);
-                    index += 3;
-                }
-            }
-            else
-            {
-                while (n--)
-                {
-                    DLSUBMIT_POSCOLOR(&verts[index[0]]);
-                    DLSUBMIT_POSCOLOR(&verts[index[1]]);
-                    DLSUBMIT_POSCOLOR(&verts[index[2]]);
-                    index += 3;
-                }
-            }
-
-            break;
-        }
         case rwPRIMTYPEPOLYLINE:
         case rwPRIMTYPETRISTRIP:
         case rwPRIMTYPETRIFAN:
@@ -190,6 +153,58 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 
             break;
         }
+        case rwPRIMTYPETRILIST:
+        {
+            U16 n = stash->numIndices / 3;
+
+            if (stash->flags & DLSUBMIT_VERTEXUV)
+            {
+                while (n--)
+                {
+                    DLSUBMIT_POSCOLORUV(&verts[index[0]]);
+                    DLSUBMIT_POSCOLORUV(&verts[index[1]]);
+                    DLSUBMIT_POSCOLORUV(&verts[index[2]]);
+                    index += 3;
+                }
+            }
+            else
+            {
+                while (n--)
+                {
+                    DLSUBMIT_POSCOLOR(&verts[index[0]]);
+                    DLSUBMIT_POSCOLOR(&verts[index[1]]);
+                    DLSUBMIT_POSCOLOR(&verts[index[2]]);
+                    index += 3;
+                }
+            }
+
+            break;
+        }
+        case rwPRIMTYPELINELIST:
+        {
+            U16 n = stash->numIndices >> 1;
+
+            if (stash->flags & DLSUBMIT_VERTEXUV)
+            {
+                while (n--)
+                {
+                    DLSUBMIT_POSCOLORUV(&verts[index[0]]);
+                    DLSUBMIT_POSCOLORUV(&verts[index[1]]);
+                    index += 2;
+                }
+            }
+            else
+            {
+                while (n--)
+                {
+                    DLSUBMIT_POSCOLOR(&verts[index[0]]);
+                    DLSUBMIT_POSCOLOR(&verts[index[1]]);
+                    index += 2;
+                }
+            }
+
+            break;
+        }
         default:
         {
             RwError err;
@@ -207,26 +222,26 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 
         switch (stash->primType)
         {
-        case rwPRIMTYPELINELIST:
+        case rwPRIMTYPEPOLYLINE:
+        case rwPRIMTYPETRISTRIP:
+        case rwPRIMTYPETRIFAN:
         {
-            U16 n = lbl_8025F8B8->numElements / 2;
+            U16 n = lbl_8025F8B8->numElements;
 
             if (stash->flags & DLSUBMIT_VERTEXUV)
             {
                 while (n--)
                 {
-                    DLSUBMIT_POSCOLORUV(&verts[0]);
-                    DLSUBMIT_POSCOLORUV(&verts[1]);
-                    verts += 2;
+                    DLSUBMIT_POSCOLORUV(verts);
+                    verts++;
                 }
             }
             else
             {
                 while (n--)
                 {
-                    DLSUBMIT_POSCOLOR(&verts[0]);
-                    DLSUBMIT_POSCOLOR(&verts[1]);
-                    verts += 2;
+                    DLSUBMIT_POSCOLOR(verts);
+                    verts++;
                 }
             }
 
@@ -234,7 +249,7 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         }
         case rwPRIMTYPETRILIST:
         {
-            S32 n = lbl_8025F8B8->numElements / 3;
+            U16 n = lbl_8025F8B8->numElements / 3;
 
             if (stash->flags & DLSUBMIT_VERTEXUV)
             {
@@ -259,26 +274,26 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 
             break;
         }
-        case rwPRIMTYPEPOLYLINE:
-        case rwPRIMTYPETRISTRIP:
-        case rwPRIMTYPETRIFAN:
+        case rwPRIMTYPELINELIST:
         {
-            U16 n = lbl_8025F8B8->numElements;
+            U16 n = lbl_8025F8B8->numElements >> 1;
 
             if (stash->flags & DLSUBMIT_VERTEXUV)
             {
                 while (n--)
                 {
-                    DLSUBMIT_POSCOLORUV(verts);
-                    verts++;
+                    DLSUBMIT_POSCOLORUV(&verts[0]);
+                    DLSUBMIT_POSCOLORUV(&verts[1]);
+                    verts += 2;
                 }
             }
             else
             {
                 while (n--)
                 {
-                    DLSUBMIT_POSCOLOR(verts);
-                    verts++;
+                    DLSUBMIT_POSCOLOR(&verts[0]);
+                    DLSUBMIT_POSCOLOR(&verts[1]);
+                    verts += 2;
                 }
             }
 
