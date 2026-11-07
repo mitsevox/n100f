@@ -612,38 +612,27 @@ static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEn
     return numAdded;
 }
 
-// Adds an empty strip with room for space indices to the head of a strip list.
-static TriStripList* TriStripListAdd(TriStripList** stripList, U32 space)
-{
-    TriStripList* strip =
-        (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
-
-    strip->next = *stripList;
-    *stripList = strip;
-    strip->space = space;
-    strip->numIndices = 0;
-    strip->indices = (U16*)RwMalloc(strip->space * sizeof(U32));
-
-    return strip;
-}
-
 // Covers the triangles with strips, starting each one at a triangle with the fewest free
 // neighbours. With tryAllEdges each start is tried along all three of its edges first.
 static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStripList** stripList,
                              S32 tryAllEdges)
 {
-    TriStripEdge* edgeList = NULL;
+    TriStripEdge* forwardEdge;
     TriStripBinEntry* bins[4];
     TriStripFreeLists freeLists;
     TriStripBinEntry** entries;
     TriStripList* forward;
     TriStripList* backward;
+    U32 numUsed;
+    TriStripEdge* edgeList;
+    TriStripEdge* backwardEdge;
     TriStripEdge* edge;
-    TriStripEdge* forwardEdge = NULL;
-    TriStripEdge* backwardEdge = NULL;
-    U32 numUsed = 0;
     U32 i;
 
+    edgeList = NULL;
+    forwardEdge = NULL;
+    backwardEdge = NULL;
+    numUsed = 0;
     bins[0] = NULL;
     bins[1] = NULL;
     bins[2] = NULL;
@@ -676,7 +665,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
         if (bins[0])
         {
             // A triangle with no free neighbours is a strip of its own.
-            TriStripBinEntry* entry = bins[0];
+            U32 triIndex = bins[0]->triIndex;
             TriStripList* strip =
                 (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
             U16* vertIndex;
@@ -687,7 +676,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
             strip->numIndices = 3;
             strip->indices = (U16*)RwMalloc(3 * sizeof(U32));
 
-            vertIndex = triangles[entry->triIndex].vertIndex;
+            vertIndex = triangles[triIndex].vertIndex;
             strip->indices[0] = vertIndex[0];
             strip->indices[1] = vertIndex[1];
             strip->indices[2] = vertIndex[2];
@@ -825,19 +814,17 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
                 if (backwardFree)
                 {
-                    U32 numStart;
-
                     backward->indices[0] = forward->indices[1];
                     backward->indices[1] = forward->indices[0];
                     backward->numIndices = 2;
-                    numStart = backward->numIndices;
 
                     numUsed += TriStripFollow(backward, backwardEdge, bins, triangles, pass);
 
                     // Keep the winding when the backward strip is reversed onto the front.
-                    if (numStart & 1)
+                    if (backward->numIndices & 1)
                     {
-                        backward->indices[numStart] = backward->indices[numStart - 2];
+                        backward->indices[backward->numIndices] =
+                            backward->indices[backward->numIndices - 2];
                         backward->numIndices++;
                     }
 
@@ -849,8 +836,14 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
                     if (pass >= TRISTRIPNUMPASSES)
                     {
-                        TriStripList* strip = TriStripListAdd(
-                            stripList, forward->numIndices + (backward->numIndices - 2));
+                        TriStripList* strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(
+                            MESHGLOBAL(triStripListEntryFreeList));
+
+                        strip->next = *stripList;
+                        *stripList = strip;
+                        strip->space = forward->numIndices + backward->numIndices - 2;
+                        strip->numIndices = 0;
+                        strip->indices = (U16*)RwMalloc(strip->space * sizeof(U32));
 
                         while (backward->numIndices > 2)
                         {
