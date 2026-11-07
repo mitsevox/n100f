@@ -278,6 +278,10 @@ RpAtomic* fn_8013FF48(RpAtomic* atomic, GCNObjectData* objectData)
     return (RpAtomic*)lbl_8025F694(atomic, objectData);
 }
 
+// The atomic pipeline's reinstance callback: chains to the node's own reinstance, then recomputes
+// the normal, binormal and tangent data when the geometry's vertices or normals were locked or the
+// atomic is morphing. Both conditions are read into values before the test (the lock mask loads
+// first, then the morph flag is built as 0 or 1).
 RpAtomic* _rpGCMatFXAtomicReinstanceCallBack(RpAtomic* atomic, GCNObjectData* objectData)
 {
     RpGeometry* geometry = atomic->geometry;
@@ -286,15 +290,11 @@ RpAtomic* _rpGCMatFXAtomicReinstanceCallBack(RpAtomic* atomic, GCNObjectData* ob
 
     if (vtxFmt && vtxFmt->frac[1] && (geometry->flags & rpGEOMETRYNORMALS))
     {
-        U32 morphing = FALSE;
+        U32 locked = geometry->lockedSinceLastInst & 0x17;
+        U32 morphing = geometry->numMorphTargets != 1 &&
+                       (atomic->interpolator.flags & rpINTERPOLATORDIRTYINSTANCE);
 
-        if (geometry->numMorphTargets != 1 &&
-            (atomic->interpolator.flags & rpINTERPOLATORDIRTYINSTANCE))
-        {
-            morphing = TRUE;
-        }
-
-        recompute = (geometry->lockedSinceLastInst & 0x17) || morphing;
+        recompute = locked || morphing;
     }
 
     if (!lbl_8025F690(atomic, objectData))
