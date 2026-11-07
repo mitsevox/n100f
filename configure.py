@@ -977,7 +977,7 @@ config.libs: List[Dict[str, Any]] = [
     RWLib(
         "rpworld",
         [
-            Object(NonMatching, "rwsdk/world/babinwor.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/babinwor.c"),
             Object(NonMatching, "rwsdk/world/baclump.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/bageomet.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/balight.c"),

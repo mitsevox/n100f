@@ -1672,6 +1672,8 @@ rwsdk/plugin/userdata/rpusrdat.c:
 
 rwsdk/world/babinwor.c:
 	.text       start:0x8014707C end:0x801484D4
+	.sbss       start:0x8025F6F0 end:0x8025F708
+	.sdata2     start:0x802628C8 end:0x802628D0
 
 rwsdk/world/baclump.c:
 	.text       start:0x801484D4 end:0x8014AFC4

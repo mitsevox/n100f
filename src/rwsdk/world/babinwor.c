@@ -194,6 +194,32 @@ static void* BinWorldTake(U8** memory, U32 size)
     return piece;
 }
 
+// Widens legacy byte-sized polygon indices using a temporary copy of the packed data.
+static void Polygon4byteTo8ByteConvert(RpPolygon* polygons, S32 numPolygons)
+{
+    S32 i;
+    OldPolygon* oldPolygons;
+    OldPolygon* oldPolygon;
+    S32 oldSize;
+
+    oldSize = numPolygons * sizeof(OldPolygon);
+    oldPolygons = (OldPolygon*)RwMalloc(oldSize);
+    oldPolygon = oldPolygons;
+
+    memcpy(oldPolygons, polygons, oldSize);
+
+    for (i = 0; i < numPolygons; i++)
+    {
+        polygons[i].matIndex = oldPolygon->matIndex;
+        polygons[i].vertIndex[0] = oldPolygon->vertIndex[0];
+        polygons[i].vertIndex[1] = oldPolygon->vertIndex[1];
+        polygons[i].vertIndex[2] = oldPolygon->vertIndex[2];
+        oldPolygon++;
+    }
+
+    RwFree(oldPolygons);
+}
+
 // Reads a world sector from its chunk into the world's single allocation (memory is the next
 // free byte): its header, then, unless the world is native, its vertices, normals, prelight
 // colors, texture coordinates and polygons (widening old byte-indexed polygons), then its
@@ -377,31 +403,7 @@ RpWorldSector* WorldSectorStreamRead(RwStream* stream, U8** memory, RpWorld* wor
 
             if (version < BINWORLD_U16POLYGONVERSION)
             {
-                S32 i;
-                OldPolygon* oldPolygon;
-                OldPolygon* oldPolygons;
-                RpPolygon* polygons;
-                S32 oldSize;
-                S32 numPolygons;
-
-                numPolygons = sector->numPolygons;
-                oldSize = numPolygons * sizeof(OldPolygon);
-                polygons = sector->polygons;
-                oldPolygons = (OldPolygon*)RwMalloc(oldSize);
-                oldPolygon = oldPolygons;
-
-                memcpy(oldPolygons, polygons, oldSize);
-
-                for (i = 0; i < numPolygons; i++)
-                {
-                    polygons[i].matIndex = oldPolygon->matIndex;
-                    polygons[i].vertIndex[0] = oldPolygon->vertIndex[0];
-                    polygons[i].vertIndex[1] = oldPolygon->vertIndex[1];
-                    polygons[i].vertIndex[2] = oldPolygon->vertIndex[2];
-                    oldPolygon++;
-                }
-
-                RwFree(oldPolygons);
+                Polygon4byteTo8ByteConvert(sector->polygons, sector->numPolygons);
             }
             else
             {
