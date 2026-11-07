@@ -93,6 +93,7 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
 static void ImageResampleGetAvgPixel(const RwImage* image, S32 x0, S32 x1, S32 y0, S32 y1,
                                      RwRGBAReal* result)
 {
+    S32 i;
     S32 first = y0 >> 16;
     S32 last = y1 >> 16;
     F32 height = RESAMPLE_TOREAL * (F32)(y1 - y0);
@@ -110,7 +111,6 @@ static void ImageResampleGetAvgPixel(const RwImage* image, S32 x0, S32 x1, S32 y
     else
     {
         S32 y = (S32)(RESAMPLE_TOFIXED * (F32)(first + 1));
-        S32 i;
         F32 part;
         RwRGBAReal span;
 
@@ -126,10 +126,10 @@ static void ImageResampleGetAvgPixel(const RwImage* image, S32 x0, S32 x1, S32 y
         {
             ImageResampleGetSpan(image, x0, x1, y, &span);
             y += RESAMPLE_ONE;
-            result->red += span.red;
-            result->green += span.green;
-            result->blue += span.blue;
-            result->alpha += span.alpha;
+            result->red = span.red + result->red;
+            result->green = span.green + result->green;
+            result->blue = span.blue + result->blue;
+            result->alpha = span.alpha + result->alpha;
         }
 
         ImageResampleGetSpan(image, x0, x1, y, &span);
