@@ -468,13 +468,12 @@ Local changes, all as the target requires:
 > commercial products, provided that all warranty or liability claims are
 > assumed by the product vendor.
 
-Changes and inferred organization relative to the original transforms:
+Changes to the original files, all as the target requires:
 - Only the two transforms are kept; they are rewritten as Bink's functions (`FastFDCT8x8` and `FastFDCTs8x8` for the forward transform, `fastidct8x8`, `fastidct8x8d` and `FastmIDCT8x8WithMotion` for the inverse) with Bink's argument lists, and none of IJG's headers, macros or other files are used.
 - The fixed-point constants are 11-bit (`CONST_BITS` 11: 1448, 784, 1108, 2676 and 2896, 3784, 2217, -5352) instead of 8-bit, with `MUL(x, c)` as `((x) * (c)) >> 11`.
 - The forward transform reads 8-bit samples (`unsigned char` in `FastFDCT8x8`, `signed char` in `FastFDCTs8x8`) in rows of 8, scales the first-stage sums and differences by `<< 8`, and writes a separate `int` block, where IJG's works in place on a prepared `DCTELEM` block.
 - The inverse transform dequantises with Bink's tables (`ifiquantlevels8` and `ifimquantlevels8`, indexed by a quality level) as `(in * q) >> 11`, tests the AC terms with a single `|` chain, keeps the even- and odd-part results of both passes, the column pass and the row pass, in a `t[8]` array, and rounds outputs as `(x + 127) >> 8` with no range-limit table.
 - `fastidct8x8d` writes each output pixel twice across and each row twice down, and `FastmIDCT8x8WithMotion` adds each output pixel to an 8-byte-stride motion block.
-- The ordinary inverse row pass stages `w[4]` in its existing butterfly accumulator before independent arithmetic and the addition of `w[0]`. This statement ordering is inferred; it is not recovered IJG or RAD source syntax.
 - The three inverse transforms are not yet byte-exact; see [Bink](docs/libraries.md#bink).
 
 ## RenderWare unit map

@@ -832,29 +832,7 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                     U8* d1 = dest + pitch;
                     U8* s = (U8*)tmp;
                     if (!((U32)dest & 7)) {
-                        F64 row_value;
-                        row_value = tmp[0];
-                        *(F64*)d0 = row_value;
-                        d0 = d1 + pitch;
-                        row_value = tmp[1];
-                        *(F64*)d1 = row_value;
-                        d1 = d0 + pitch;
-                        row_value = tmp[2];
-                        *(F64*)d0 = row_value;
-                        d0 = d1 + pitch;
-                        row_value = tmp[3];
-                        *(F64*)d1 = row_value;
-                        d1 = d0 + pitch;
-                        row_value = tmp[4];
-                        *(F64*)d0 = row_value;
-                        d0 = d1 + pitch;
-                        row_value = tmp[5];
-                        *(F64*)d1 = row_value;
-                        d1 = d0 + pitch;
-                        row_value = tmp[6];
-                        *(F64*)d0 = row_value;
-                        row_value = tmp[7];
-                        *(F64*)d1 = row_value;
+                        ROWS8C(ROWFC, d0, d1, pitch, s);
                     } else {
                         ROWS8C(ROWWC, d0, d1, pitch, s);
                     }
