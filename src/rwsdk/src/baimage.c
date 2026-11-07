@@ -357,7 +357,32 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
     case 4:
     case 8:
     {
-        RwImage* tempImage = RwImageCreate(image->width, image->height, image->depth);
+        // FAKEMATCH: RwImageCreate written out by hand, with its parameters as reversed locals and
+        // a redundant NULL store on the failure path, so that tempImage takes the target's saved
+        // register; real form believed to be
+        // `RwImage* tempImage = RwImageCreate(image->width, image->height, image->depth);`.
+        S32 depth = image->depth;
+        S32 height = image->height;
+        S32 width = image->width;
+        RwImage* tempImage;
+
+        tempImage = (RwImage*)RWSRCGLOBAL(memoryAlloc)(IMAGE_DATA(freeList));
+
+        if (!tempImage)
+        {
+            tempImage = NULL;
+        }
+        else
+        {
+            tempImage->width = width;
+            tempImage->height = height;
+            tempImage->depth = depth;
+            tempImage->cpPixels = NULL;
+            tempImage->palette = NULL;
+            tempImage->flags = 0;
+
+            _rwPluginRegistryInitObject(&imageTKList, tempImage);
+        }
 
         if (!tempImage)
         {
@@ -388,9 +413,10 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
     case 32:
     {
         S32 y;
-        U8* imageRow;
+        S32 x;
         const U8* maskRow;
         const RwRGBA* palette;
+        U8* imageRow;
 
         maskRow = mask->cpPixels;
         palette = mask->palette;
@@ -406,11 +432,11 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
             case 8:
             {
                 const U8* maskPixel = maskRow;
-                S32 x;
 
                 for (x = 0; x < image->width; x++)
                 {
-                    pixel->alpha = palette[*maskPixel++].alpha;
+                    pixel->alpha = palette[*maskPixel].alpha;
+                    maskPixel++;
                     pixel++;
                 }
 
@@ -419,7 +445,6 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
             case 32:
             {
                 const RwRGBA* maskPixel = (const RwRGBA*)maskRow;
-                S32 x;
 
                 for (x = 0; x < image->width; x++)
                 {
