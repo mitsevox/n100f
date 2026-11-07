@@ -108,18 +108,20 @@ static S32 PalettizeImage(RwImage** image, S32 depth)
 
     palImage = RwImageCreate((*image)->width, (*image)->height, depth);
 
-    if (!palImage)
+    if (palImage)
+    {
+        RwImageAllocatePixels(palImage);
+        _rwPalQuantMatchImage(palImage->cpPixels, palImage->stride, palImage->depth, FALSE,
+                              &palQuant, *image);
+        memcpy(palImage->palette, palette, numColours * sizeof(RwRGBA));
+
+        RwImageDestroy(*image);
+        *image = palImage;
+    }
+    else
     {
         return FALSE;
     }
-
-    RwImageAllocatePixels(palImage);
-    _rwPalQuantMatchImage(palImage->cpPixels, palImage->stride, palImage->depth, FALSE, &palQuant,
-                          *image);
-    memcpy(palImage->palette, palette, numColours * sizeof(RwRGBA));
-
-    RwImageDestroy(*image);
-    *image = palImage;
 
     _rwPalQuantTerm(&palQuant);
 
@@ -134,11 +136,12 @@ static S32 PalettizeMipmaps(RwRGBA* palette, RwImage* keepImage, RwImage** image
 {
     PalQuant palQuant;
     RwRGBA* firstPalette = images[0]->palette;
+    S32 numColours;
     S32 i;
 
     if (firstPalette)
     {
-        S32 numColours = 1 << depth;
+        numColours = 1 << depth;
 
         for (i = 1; i < numLevels; i++)
         {
@@ -147,6 +150,7 @@ static S32 PalettizeMipmaps(RwRGBA* palette, RwImage* keepImage, RwImage** image
             if (!firstPalette || !levelPalette)
             {
                 i = 64;
+                break;
             }
             else
             {
@@ -187,20 +191,22 @@ static S32 PalettizeMipmaps(RwRGBA* palette, RwImage* keepImage, RwImage** image
         RwImage* image = images[i];
         RwImage* palImage = RwImageCreate(image->width, image->height, depth);
 
-        if (!palImage)
+        if (palImage)
+        {
+            RwImageAllocatePixels(palImage);
+            _rwPalQuantMatchImage(palImage->cpPixels, palImage->stride, palImage->depth, FALSE,
+                                  &palQuant, image);
+            palImage->palette = palette;
+            images[i] = palImage;
+
+            if (image != keepImage)
+            {
+                RwImageDestroy(image);
+            }
+        }
+        else
         {
             return FALSE;
-        }
-
-        RwImageAllocatePixels(palImage);
-        _rwPalQuantMatchImage(palImage->cpPixels, palImage->stride, palImage->depth, FALSE,
-                              &palQuant, image);
-        palImage->palette = palette;
-        images[i] = palImage;
-
-        if (image != keepImage)
-        {
-            RwImageDestroy(image);
         }
     }
 
@@ -875,33 +881,42 @@ RwTexture* RwTextureCreate(RwRaster* raster)
     return texture;
 }
 
+static S32 TextureAnnihilate(RwTexture* texture)
+{
+    texture->refCount++;
+
+    _rwPluginRegistryDeInitObject(&textureTKList, texture);
+
+    if (texture->dict)
+    {
+        rwLinkListRemoveLLLink(&texture->lInDictionary);
+    }
+
+    if (texture->raster)
+    {
+        RwRasterDestroy(texture->raster);
+        texture->raster = NULL;
+    }
+
+    texture->refCount--;
+
+    RWSRCGLOBAL(memoryFree)(TEXTURE_DATA(textureFreeList), texture);
+
+    return 1;
+}
+
 S32 RwTextureDestroy(RwTexture* texture)
 {
+    S32 result = 1;
+
     texture->refCount--;
 
     if (texture->refCount <= 0)
     {
-        texture->refCount++;
-
-        _rwPluginRegistryDeInitObject(&textureTKList, texture);
-
-        if (texture->dict)
-        {
-            rwLinkListRemoveLLLink(&texture->lInDictionary);
-        }
-
-        if (texture->raster)
-        {
-            RwRasterDestroy(texture->raster);
-            texture->raster = NULL;
-        }
-
-        texture->refCount--;
-
-        RWSRCGLOBAL(memoryFree)(TEXTURE_DATA(textureFreeList), texture);
+        result = TextureAnnihilate(texture);
     }
 
-    return 1;
+    return result;
 }
 
 RwTexture* RwTextureSetName(RwTexture* texture, const char* name)
@@ -985,11 +1000,6 @@ S32 RwTextureGenerateMipmapName(char* name, char* maskName, U8 mipLevel, S32 for
 // Compares two texture names ignoring the case of ASCII letters.
 static S32 TextureNamesMatch(const char* name, const char* other)
 {
-    if (!name)
-    {
-        return FALSE;
-    }
-
     while (*name && *other)
     {
         char c1 = *name;
@@ -1014,20 +1024,27 @@ static S32 TextureNamesMatch(const char* name, const char* other)
         other++;
     }
 
-    return *name == *other;
+    if (*name == *other)
+    {
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 // Finds a texture in a dictionary by name. The target inlines it into RwTextureRead and has no
 // copy of its own.
 RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dict, const char* name)
 {
+    RwLLLink* end = rwLinkListGetTerminator(&dict->texturesInDict);
     RwLLLink* cur = rwLinkListGetFirstLLLink(&dict->texturesInDict);
+    RwTexture* texture;
 
-    while (cur != rwLinkListGetTerminator(&dict->texturesInDict))
+    while (cur != end)
     {
-        RwTexture* texture = TEXTUREFROMDICTLINK(cur);
+        texture = TEXTUREFROMDICTLINK(cur);
 
-        if (TextureNamesMatch(texture->name, name))
+        if (texture->name && TextureNamesMatch(texture->name, name))
         {
             return texture;
         }
@@ -1041,34 +1058,36 @@ RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dict, const char* na
 // Returns a texture by name: from the current dictionary, or from any dictionary when there is
 // no current one, with its reference count raised; otherwise read through the read callback and
 // added to the current dictionary.
-RwTexture* RwTextureRead(const char* name, const char* maskName)
+static RwTexture* TextureFind(const char* name)
 {
-    RwTexture* texture;
-
     if (TEXTURE_DATA(currentDict))
     {
-        texture = RwTexDictionaryFindNamedTexture(TEXTURE_DATA(currentDict), name);
+        return RwTexDictionaryFindNamedTexture(TEXTURE_DATA(currentDict), name);
     }
     else
     {
         RwLLLink* cur = rwLinkListGetFirstLLLink(&TEXTURE_DATA(texDictList));
 
-        texture = NULL;
-
         while (cur != rwLinkListGetTerminator(&TEXTURE_DATA(texDictList)))
         {
             RwTexDictionary* dict = rwLLLinkGetData(cur, RwTexDictionary, lInInstance);
-
-            texture = RwTexDictionaryFindNamedTexture(dict, name);
+            RwTexture* texture = RwTexDictionaryFindNamedTexture(dict, name);
 
             if (texture)
             {
-                break;
+                return texture;
             }
 
             cur = rwLLLinkGetNext(cur);
         }
     }
+
+    return NULL;
+}
+
+RwTexture* RwTextureRead(const char* name, const char* maskName)
+{
+    RwTexture* texture = TextureFind(name);
 
     if (texture)
     {
@@ -1080,16 +1099,18 @@ RwTexture* RwTextureRead(const char* name, const char* maskName)
 
     if (!texture)
     {
-        RwError err;
-
         if (maskName)
         {
+            RwError err;
+
             err.pluginID = 1;
             err.errorCode = _rwerror(0x16, name, maskName);
             RwErrorSet(&err);
         }
         else
         {
+            RwError err;
+
             err.pluginID = 1;
             err.errorCode = _rwerror(0x16, name, "(null)");
             RwErrorSet(&err);
