@@ -193,17 +193,31 @@ void zEntProjectile_sceneFinish()
     }
 }
 
+// Clears pool entry idx and adds it to the free list.
+static inline void ZPRJ_poolAdd(S32 idx)
+{
+    st_PROJECTILE_DEPOT* depot = &g_prjdepot;
+    zEntProjectile* prj = &depot->rawpool[idx];
+
+    memset(prj, 0, sizeof(zEntProjectile));
+    prj->linknode.backref = prj;
+    AddTail(&depot->prjpool, &prj->linknode.node);
+}
+
+// Allocates size bytes from the active heap and fills them with val.
+static inline void* ZPRJ_heapFill(S32 cnt, U32 size, S32 val)
+{
+    void* mem = xMemAlloc(gActiveHeap, cnt * size);
+    memset(mem, val, cnt * (S32)size);
+    return mem;
+}
+
 void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
 {
-    S32 i;
     st_PROJECTILE_DEPOT* depot = &g_prjdepot;
+    S32 i;
 
-    if (depot->typetable != NULL)
-    {
-        return;
-    }
-
-    if (depot->rawpool != NULL)
+    if (depot->typetable != NULL || depot->rawpool != NULL)
     {
         return;
     }
@@ -211,9 +225,7 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
     if (num_ptype != 0)
     {
         depot->typetable =
-            (num_ptype < 1) ? NULL
-                            : (st_ZPRJ_TYPERECORD*)memset(xMemAlloc(gActiveHeap, num_ptype * sizeof(st_ZPRJ_TYPERECORD)),
-                                                          0, num_ptype * sizeof(st_ZPRJ_TYPERECORD));
+            (num_ptype < 1) ? NULL : (st_ZPRJ_TYPERECORD*)ZPRJ_heapFill(num_ptype, sizeof(st_ZPRJ_TYPERECORD), 0);
         if (depot->typetable != NULL)
         {
             depot->typecnt = num_ptype;
@@ -222,8 +234,7 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
 
     if (depot->typetable != NULL)
     {
-        depot->rawpool = (zEntProjectile*)memset(xMemAlloc(gActiveHeap, 100 * sizeof(zEntProjectile)), 0x33,
-                                                 100 * sizeof(zEntProjectile));
+        depot->rawpool = (zEntProjectile*)ZPRJ_heapFill(100, sizeof(zEntProjectile), 0x33);
         if (depot->rawpool != NULL)
         {
             depot->rawcnt = 100;
@@ -233,9 +244,7 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
 
     for (i = 0; i < depot->rawcnt; i++)
     {
-        memset(&depot->rawpool[i], 0, sizeof(zEntProjectile));
-        depot->rawpool[i].linknode.backref = &depot->rawpool[i];
-        AddTail(&depot->prjpool, &depot->rawpool[i].linknode.node);
+        ZPRJ_poolAdd(i);
     }
 
     if (g_sfxnames[0] == NULL)
@@ -298,8 +307,8 @@ S32 zEntProjectile_poolUpdate(en_ZPRJ_CATEGORY, zScene* scn, F32 dt)
 
 void zEntProjectile_poolRender(en_ZPRJ_CATEGORY cat)
 {
-    zEntProjectile* tmpprj;
     st_ZPRJ_LINKNODE* tmplink;
+    zEntProjectile* tmpprj;
 
     for (tmplink = (st_ZPRJ_LINKNODE*)g_prjdepot.prjinuse.head; tmplink->node.next != NULL;
          tmplink = (st_ZPRJ_LINKNODE*)tmplink->node.next)
@@ -325,16 +334,17 @@ static void ZPRJ_insertType(zProjectileTypeAsset* ptype)
     if (depot->typeidx < depot->typecnt)
     {
         idx = depot->typeidx++;
-        depot->typetable[idx].src_ptype = ptype;
-        depot->typetable[idx].aid_ptype = ptype->id;
-        depot->typetable[idx].mdlFile[ZPRJ_MDLIDX_STD] = (RpAtomic*)xSTFindAsset(ptype->modelID, NULL);
+        st_ZPRJ_TYPERECORD* rec = &depot->typetable[idx];
+        rec->src_ptype = ptype;
+        rec->aid_ptype = ptype->id;
+        rec->mdlFile[ZPRJ_MDLIDX_STD] = (RpAtomic*)xSTFindAsset(ptype->modelID, NULL);
         if (ptype->atRestModelID != 0)
         {
-            depot->typetable[idx].mdlFile[ZPRJ_MDLIDX_POSTHIT] = (RpAtomic*)xSTFindAsset(ptype->atRestModelID, NULL);
+            rec->mdlFile[ZPRJ_MDLIDX_POSTHIT] = (RpAtomic*)xSTFindAsset(ptype->atRestModelID, NULL);
         }
         else
         {
-            depot->typetable[idx].mdlFile[ZPRJ_MDLIDX_POSTHIT] = NULL;
+            rec->mdlFile[ZPRJ_MDLIDX_POSTHIT] = NULL;
         }
     }
 }
