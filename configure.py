@@ -989,7 +989,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/bamateri.c"),
             Object(NonMatching, "rwsdk/world/bamatlst.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/bamesh.c"),
-            Object(NonMatching, "rwsdk/world/bameshop.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/bameshop.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/basector.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/baworld.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/baworobj.c"),

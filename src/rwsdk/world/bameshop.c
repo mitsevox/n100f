@@ -376,43 +376,47 @@ static void TriStripMarkTriUsed(TriStripBinEntry* entry, TriStripBinEntry** bins
     }
 }
 
-// Whether no triangle on an edge is free for the pass, so a strip crossing it ends.
-static S32 TriStripEdgeIsDeadEnd(TriStripEdge* edge, S32 pass)
+// Whether no triangle on an edge is free in a trial pass, so a strip crossing it ends
+// (project-own name; inlined).
+static S32 TriStripEdgeIsDeadEndTrial(TriStripEdge* edge)
 {
-    if (pass < TRISTRIPNUMPASSES)
+    S32 deadEnd;
+    S32 result = TRUE;
+
+    deadEnd = TRUE;
+
+    if (edge && TRISTRIPEDGEFREE(edge, trialUsed))
     {
-        S32 result = TRUE;
-        S32 deadEnd = TRUE;
-
-        if (edge && TRISTRIPEDGEFREE(edge, trialUsed))
-        {
-            deadEnd = FALSE;
-        }
-
-        if (!deadEnd)
-        {
-            result = FALSE;
-        }
-
-        return result;
+        deadEnd = FALSE;
     }
-    else
+
+    if (!deadEnd)
     {
-        S32 result = TRUE;
-        S32 deadEnd = TRUE;
-
-        if (edge && TRISTRIPEDGEFREE(edge, used))
-        {
-            deadEnd = FALSE;
-        }
-
-        if (!deadEnd)
-        {
-            result = FALSE;
-        }
-
-        return result;
+        result = FALSE;
     }
+
+    return result;
+}
+
+// The same for the final pass, which looks at the used flags (project-own name; inlined).
+static S32 TriStripEdgeIsDeadEndUsed(TriStripEdge* edge)
+{
+    S32 deadEnd;
+    S32 result = TRUE;
+
+    deadEnd = TRUE;
+
+    if (edge && TRISTRIPEDGEFREE(edge, used))
+    {
+        deadEnd = FALSE;
+    }
+
+    if (!deadEnd)
+    {
+        result = FALSE;
+    }
+
+    return result;
 }
 
 // Whether a triangle on an edge is free for the pass.
@@ -489,9 +493,8 @@ static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEn
     TriStripEdge* inEdge;
     U16 vertA;
     U16 vertB;
-    U16 lastVert;
     U16 newVert;
-    U16* vertIndex;
+    S32 deadEnd;
 
     numAdded = 0;
     swapEdge = NULL;
@@ -543,29 +546,34 @@ static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEn
         numAdded++;
         TriStripMarkTriUsed(tri, bins, pass);
 
-        vertIndex = triangles[tri->triIndex].vertIndex;
-
-        if (vertA != vertIndex[0] && vertB != vertIndex[0])
+        if (vertA != triangles[tri->triIndex].vertIndex[0] && vertB != triangles[tri->triIndex].vertIndex[0])
         {
-            newVert = vertIndex[0];
+            newVert = triangles[tri->triIndex].vertIndex[0];
         }
 
-        if (vertA != vertIndex[1] && vertB != vertIndex[1])
+        if (vertA != triangles[tri->triIndex].vertIndex[1] && vertB != triangles[tri->triIndex].vertIndex[1])
         {
-            newVert = vertIndex[1];
+            newVert = triangles[tri->triIndex].vertIndex[1];
         }
 
-        if (vertA != vertIndex[2] && vertB != vertIndex[2])
+        if (vertA != triangles[tri->triIndex].vertIndex[2] && vertB != triangles[tri->triIndex].vertIndex[2])
         {
-            newVert = vertIndex[2];
+            newVert = triangles[tri->triIndex].vertIndex[2];
         }
 
         inEdge = edge;
-        lastVert = strip->indices[strip->numIndices - 1];
+        edge = TriStripNextEdge(tri, strip->indices[strip->numIndices - 1], newVert);
 
-        edge = TriStripNextEdge(tri, lastVert, newVert);
+        if (pass < TRISTRIPNUMPASSES)
+        {
+            deadEnd = TriStripEdgeIsDeadEndTrial(edge);
+        }
+        else
+        {
+            deadEnd = TriStripEdgeIsDeadEndUsed(edge);
+        }
 
-        if (TriStripEdgeIsDeadEnd(edge, pass))
+        if (deadEnd)
         {
 
             if (tri->edge[0] != inEdge && tri->edge[0] != edge)
