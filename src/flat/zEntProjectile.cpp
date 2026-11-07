@@ -206,7 +206,7 @@ static inline void ZPRJ_poolAdd(zEntProjectile* prj)
     AddTail(&g_prjdepot.prjpool, &prj->linknode.node);
 }
 
-// Allocates size bytes from the active heap and fills them with val.
+// Allocates cnt entries of size bytes from the active heap and fills them with val.
 static inline void* ZPRJ_heapFill(S32 cnt, U32 size, S32 val)
 {
     void* mem = xMemAlloc(gActiveHeap, cnt * size);
@@ -912,8 +912,7 @@ S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
     return 1;
 }
 
-// Unused. Stands in for removed code: its zeroed local leaves 12 bytes of zero initializer in
-// .rodata at this point of the file, as the target has.
+// Unused.
 static void SetupUnusedData()
 {
     xVec3 tmp = {};
@@ -1087,8 +1086,7 @@ S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
     return 1;
 }
 
-// Unused. Stands in for removed code: its zeroed local leaves 252 bytes of zero initializer in
-// .rodata after ZPRJ_update's, as the target has.
+// Unused.
 static void UpdateUnusedData()
 {
     xVec3 tmp[21] = {};
@@ -2002,9 +2000,7 @@ static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd
     return limit_tally;
 }
 
-// Unused. Stands in for removed code: its zeroed local leaves 24 bytes of zero initializer in
-// .rodata at this point of the file, as the target has, and the 0.5f it stores pools ahead of
-// ZPRJ_solv_velvec's literals in .sdata2, also as the target has.
+// Unused.
 static void SolvUnusedData(F32* scale)
 {
     xVec3 tmp[2] = {};
