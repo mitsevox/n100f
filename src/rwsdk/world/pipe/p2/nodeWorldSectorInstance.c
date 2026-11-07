@@ -271,14 +271,14 @@ static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* 
     RpWorld* world;
     SectorInstanceHeader* header;
     RpMeshHeader* meshHeader;
-    S32 stride;
+    U32 textured;
     U32 numMeshes;
     U32 numVerts;
+    SectorInstanceMesh* instMesh;
     U32 flags;
-    U32 textured;
+    S32 stride;
     RxObjSpace3DVertex* verts;
     S32 numTris;
-    SectorInstanceMesh* instMesh;
     RwResEntry* repEntry;
     RxPacket* packet;
     RxCluster* objVertsCl;

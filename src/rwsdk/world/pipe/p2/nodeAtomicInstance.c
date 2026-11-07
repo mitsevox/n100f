@@ -366,13 +366,13 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
     AtomicInstanceHeader* header;
     RxObjSpace3DVertex* verts;
     RpMeshHeader* meshHeader;
-    U32 numMeshes;
-    U32 flags;
-    S32 stride;
-    AtomicInstanceMesh* instMesh;
-    S32 numTris;
     U16* indices;
     U32 numVerts;
+    U32 numMeshes;
+    AtomicInstanceMesh* instMesh;
+    U32 flags;
+    S32 numTris;
+    S32 stride;
     U32 dirty;
     RxPacket* packet;
     RxCluster* objVertsCl;
