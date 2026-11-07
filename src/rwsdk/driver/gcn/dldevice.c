@@ -218,6 +218,13 @@ void _rwDlBreakPtCallback(void)
     }
 }
 
+// Moves a ring position (the frame ring's or the token ring's, read or write) on by one, wrapping
+// at the ring size. The positions the interrupts share are volatile, so it takes a volatile one.
+static void DlRingAdvance(volatile S32* pos)
+{
+    *pos = (*pos + 1) % DLDEVICE_RING;
+}
+
 // Before each retrace: once the waiting frame's token has passed, shows the other frame buffer
 // (unblanking the screen after the first frame).
 void _rwDlVIPreRetraceCallback(u32 retraceCount)
@@ -236,7 +243,7 @@ void _rwDlVIPreRetraceCallback(u32 retraceCount)
         }
 
         VIFlush();
-        lbl_8025F81C = (lbl_8025F81C + 1) % DLDEVICE_RING;
+        DlRingAdvance(&lbl_8025F81C);
         lbl_8025F824 = 0;
         lbl_8025F82C = 1;
     }
@@ -787,8 +794,8 @@ S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags)
         lbl_8025E2B0[lbl_8025F814].fifoPos = writePtr;
         lbl_8025E2B0[lbl_8025F814].frameBuffer = lbl_8025F848;
         lbl_8025F83C[lbl_8025F818] = lbl_8025E800;
-        lbl_8025F814 = (lbl_8025F814 + 1) % DLDEVICE_RING;
-        lbl_8025F818 = (lbl_8025F818 + 1) % DLDEVICE_RING;
+        DlRingAdvance(&lbl_8025F814);
+        DlRingAdvance(&lbl_8025F818);
         OSRestoreInterrupts(enabled);
 
         if (lbl_8025F820 == 0)
@@ -811,7 +818,7 @@ S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags)
         enabled = OSDisableInterrupts();
         lbl_8025E2B0[lbl_8025F814].fifoPos = writePtr;
         lbl_8025E2B0[lbl_8025F814].frameBuffer = lbl_8025F848;
-        lbl_8025F814 = (lbl_8025F814 + 1) % DLDEVICE_RING;
+        DlRingAdvance(&lbl_8025F814);
         OSRestoreInterrupts(enabled);
 
         if (lbl_8025F820 == 0)
@@ -834,8 +841,8 @@ S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags)
         lbl_8025E2B0[lbl_8025F814].fifoPos = writePtr;
         lbl_8025E2B0[lbl_8025F814].frameBuffer = lbl_8025F848;
         lbl_8025F83C[lbl_8025F818] = lbl_8025E800;
-        lbl_8025F814 = (lbl_8025F814 + 1) % DLDEVICE_RING;
-        lbl_8025F818 = (lbl_8025F818 + 1) % DLDEVICE_RING;
+        DlRingAdvance(&lbl_8025F814);
+        DlRingAdvance(&lbl_8025F818);
         OSRestoreInterrupts(enabled);
 
         if (lbl_8025F820 == 0)
