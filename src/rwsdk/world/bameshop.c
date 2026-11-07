@@ -70,7 +70,7 @@ static MeshOpStatic MeshOp = { { 0, 0, 0, 0, 0 }, RpBuildMeshGenerateDefaultTriS
 
 // The number of triangles on an edge that a pass has not used yet.
 #define TRISTRIPEDGEFREE(_edge, _flag)                                                             \
-    (((_edge)->tri[1] && !(_edge)->tri[1]->_flag) + ((_edge)->tri[0] && !(_edge)->tri[0]->_flag))
+    (((_edge)->tri[0] && !(_edge)->tri[0]->_flag) + ((_edge)->tri[1] && !(_edge)->tri[1]->_flag))
 
 // Takes a triangle out of its bin.
 #define TRISTRIPBINREMOVE(_bins, _entry)                                                           \
@@ -195,12 +195,22 @@ static S32 SortPolygons(const void* pA, const void* pB)
 // first free triangle each time.
 static RpMesh* SortPolygonsInTriListMesh(RpMesh* mesh, RpMeshHeader* meshHeader, void* pData)
 {
-    U16* indices = mesh->indices;
-    U32 numTris = mesh->numIndices / 3;
-    U32 maxIndex = 0;
-    U32 i;
     U32 size;
     U32* usedVerts;
+    U32 numTris;
+    U32 maxIndex;
+    U16* indices;
+    U32 i;
+    U32 copySize;
+    U16* copy;
+    U8* bytes;
+    U16* tri;
+    U32 numPlaced;
+    U32 j;
+
+    indices = mesh->indices;
+    numTris = mesh->numIndices / 3;
+    maxIndex = 0;
 
     for (i = 0; i < mesh->numIndices; i++)
     {
@@ -212,27 +222,26 @@ static RpMesh* SortPolygonsInTriListMesh(RpMesh* mesh, RpMeshHeader* meshHeader,
 
     if (usedVerts)
     {
-        U32 copySize = mesh->numIndices * sizeof(U16);
-        U16* copy = (U16*)RwMalloc(copySize);
+        copySize = mesh->numIndices * sizeof(U16);
+        copy = (U16*)RwMalloc(copySize);
 
         if (copy)
         {
-            U32 numPlaced;
-
             memcpy(copy, indices, copySize);
 
             numPlaced = 0;
 
             while (numPlaced < numTris)
             {
-                U8* bytes = (U8*)usedVerts;
-                U16* tri = copy;
-                U32 j = size;
+                bytes = (U8*)usedVerts;
+                j = size;
 
                 while (j--)
                 {
                     *bytes++ = 0;
                 }
+
+                tri = copy;
 
                 for (j = 0; j < numTris; j++, tri += 3)
                 {
@@ -269,9 +278,11 @@ static RpMesh* SortPolygonsInTriListMesh(RpMesh* mesh, RpMeshHeader* meshHeader,
     return mesh;
 }
 
-// Finds the edge from vert0 to vert1 among the edges so far, or adds it.
-static TriStripEdge* rpTriStripAddEdge(TriStripFreeLists* freeLists, TriStripEdge** edgeList,
-                                     TriStripBinEntry* entry, U16 vert0, U16 vert1)
+// Gives the triangle an edge from vert0 to vert1: an earlier edge stored the other way round
+// (vert1 to vert0) with no second triangle yet takes this one as its second; otherwise a new edge
+// is added.
+static TriStripEdge* rpTriStripAddEdge(RwFreeList* edgeFreeList, TriStripEdge** edgeList,
+                                     TriStripBinEntry** entry, U16 vert0, U16 vert1)
 {
     TriStripEdge* edge;
 
@@ -280,17 +291,17 @@ static TriStripEdge* rpTriStripAddEdge(TriStripFreeLists* freeLists, TriStripEdg
         if (vert0 == edge->vert[1] && vert1 == edge->vert[0] && !edge->tri[1])
         {
             edge->tri[0]->numNeighbours++;
-            entry->numNeighbours++;
-            edge->tri[1] = entry;
+            (*entry)->numNeighbours++;
+            edge->tri[1] = *entry;
 
             return edge;
         }
     }
 
-    edge = (TriStripEdge*)RWSRCGLOBAL(memoryAlloc)(freeLists->edgeFreeList);
+    edge = (TriStripEdge*)RWSRCGLOBAL(memoryAlloc)(edgeFreeList);
     edge->vert[0] = vert0;
     edge->vert[1] = vert1;
-    edge->tri[0] = entry;
+    edge->tri[0] = *entry;
     edge->tri[1] = NULL;
     edge->next = *edgeList;
     *edgeList = edge;
@@ -309,7 +320,7 @@ static TriStripBinEntry** TriStripBinEntryArrayCreate(U32 numTris, TriStripFreeL
     freeLists->binEntryFreeList = RwFreeListCreate(sizeof(TriStripBinEntry), numTris, 0);
     freeLists->edgeFreeList = RwFreeListCreate(sizeof(TriStripEdge), numTris / 2 + 1, 0);
 
-    for (i = 0; i < numTris; i++, triangles++)
+    for (i = 0; i < numTris; i++)
     {
         entries[i] = (TriStripBinEntry*)RWSRCGLOBAL(memoryAlloc)(freeLists->binEntryFreeList);
         entries[i]->numNeighbours = 0;
@@ -318,12 +329,12 @@ static TriStripBinEntry** TriStripBinEntryArrayCreate(U32 numTris, TriStripFreeL
         entries[i]->next = NULL;
         entries[i]->used = FALSE;
 
-        entries[i]->edge[0] = rpTriStripAddEdge(freeLists, edgeList, entries[i],
-                                              triangles->vertIndex[0], triangles->vertIndex[1]);
-        entries[i]->edge[1] = rpTriStripAddEdge(freeLists, edgeList, entries[i],
-                                              triangles->vertIndex[1], triangles->vertIndex[2]);
-        entries[i]->edge[2] = rpTriStripAddEdge(freeLists, edgeList, entries[i],
-                                              triangles->vertIndex[2], triangles->vertIndex[0]);
+        entries[i]->edge[0] = rpTriStripAddEdge(freeLists->edgeFreeList, edgeList, &entries[i],
+                                              triangles[i].vertIndex[0], triangles[i].vertIndex[1]);
+        entries[i]->edge[1] = rpTriStripAddEdge(freeLists->edgeFreeList, edgeList, &entries[i],
+                                              triangles[i].vertIndex[1], triangles[i].vertIndex[2]);
+        entries[i]->edge[2] = rpTriStripAddEdge(freeLists->edgeFreeList, edgeList, &entries[i],
+                                              triangles[i].vertIndex[2], triangles[i].vertIndex[0]);
     }
 
     return entries;
@@ -367,31 +378,47 @@ static void TriStripMarkTriUsed(TriStripBinEntry* entry, TriStripBinEntry** bins
     }
 }
 
-// Whether no triangle on an edge is free for the pass, so a strip crossing it ends.
-static S32 TriStripEdgeIsDeadEnd(TriStripEdge* edge, S32 pass)
+// Whether no triangle on an edge is free in a trial pass, so a strip crossing it ends
+// (project-own name).
+static S32 TriStripEdgeIsDeadEndTrial(TriStripEdge* edge)
 {
-    if (pass < TRISTRIPNUMPASSES)
+    S32 deadEnd;
+    S32 result = TRUE;
+
+    deadEnd = TRUE;
+
+    if (edge && TRISTRIPEDGEFREE(edge, trialUsed))
     {
-        S32 deadEnd = TRUE;
-
-        if (edge && TRISTRIPEDGEFREE(edge, trialUsed))
-        {
-            deadEnd = FALSE;
-        }
-
-        return deadEnd;
+        deadEnd = FALSE;
     }
-    else
+
+    if (!deadEnd)
     {
-        S32 deadEnd = TRUE;
-
-        if (edge && TRISTRIPEDGEFREE(edge, used))
-        {
-            deadEnd = FALSE;
-        }
-
-        return deadEnd;
+        result = FALSE;
     }
+
+    return result;
+}
+
+// The same for the final pass, which looks at the used flags (project-own name).
+static S32 TriStripEdgeIsDeadEndUsed(TriStripEdge* edge)
+{
+    S32 deadEnd;
+    S32 result = TRUE;
+
+    deadEnd = TRUE;
+
+    if (edge && TRISTRIPEDGEFREE(edge, used))
+    {
+        deadEnd = FALSE;
+    }
+
+    if (!deadEnd)
+    {
+        result = FALSE;
+    }
+
+    return result;
 }
 
 // Whether a triangle on an edge is free for the pass.
@@ -399,6 +426,7 @@ static S32 TriStripEdgeHasFreeTri(TriStripEdge* edge, S32 pass)
 {
     if (pass < TRISTRIPNUMPASSES)
     {
+        S32 result = FALSE;
         S32 hasFree = FALSE;
 
         if (edge && TRISTRIPEDGEFREE(edge, trialUsed))
@@ -406,10 +434,16 @@ static S32 TriStripEdgeHasFreeTri(TriStripEdge* edge, S32 pass)
             hasFree = TRUE;
         }
 
-        return hasFree;
+        if (hasFree)
+        {
+            result = TRUE;
+        }
+
+        return result;
     }
     else
     {
+        S32 result = FALSE;
         S32 hasFree = FALSE;
 
         if (edge && TRISTRIPEDGEFREE(edge, used))
@@ -417,27 +451,62 @@ static S32 TriStripEdgeHasFreeTri(TriStripEdge* edge, S32 pass)
             hasFree = TRUE;
         }
 
-        return hasFree;
+        if (hasFree)
+        {
+            result = TRUE;
+        }
+
+        return result;
     }
 }
 
-// Extends a strip across edge for as long as a free triangle lies beyond it, swapping to the
-// third edge of a triangle when the strip would end there. Returns the triangles it adds.
+// The edge of a triangle that joins two vertices, or NULL (project-own name).
+static TriStripEdge* TriStripNextEdge(TriStripBinEntry* tri, U16 vert0, U16 vert1)
+{
+    if ((tri->edge[0]->vert[0] == vert0 && tri->edge[0]->vert[1] == vert1) ||
+        (tri->edge[0]->vert[0] == vert1 && tri->edge[0]->vert[1] == vert0))
+    {
+        return tri->edge[0];
+    }
+
+    if ((tri->edge[1]->vert[0] == vert0 && tri->edge[1]->vert[1] == vert1) ||
+        (tri->edge[1]->vert[0] == vert1 && tri->edge[1]->vert[1] == vert0))
+    {
+        return tri->edge[1];
+    }
+
+    if ((tri->edge[2]->vert[0] == vert0 && tri->edge[2]->vert[1] == vert1) ||
+        (tri->edge[2]->vert[0] == vert1 && tri->edge[2]->vert[1] == vert0))
+    {
+        return tri->edge[2];
+    }
+
+    return NULL;
+}
+
+// Extends a strip across edge for as long as a free triangle lies beyond it. When the next edge
+// is a dead end but the triangle's third edge still has a free triangle, a strip with an even
+// number of indices repeats a vertex and turns onto that edge; with an odd number it appends the
+// new vertex and stops. Returns the triangles it adds.
 static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEntry** bins,
                           RpBuildMeshTriangle* triangles, S32 pass)
 {
-    U32 numAdded = 0;
-    TriStripEdge* swapEdge = NULL;
+    U32 numAdded;
+    TriStripEdge* swapEdge;
+    TriStripBinEntry* tri;
+    TriStripEdge* inEdge;
+    U16 vertA;
+    U16 vertB;
+    U16 newVert;
+    S32 deadEnd;
+
+    numAdded = 0;
+    swapEdge = NULL;
 
     while (edge)
     {
-        TriStripBinEntry* tri = NULL;
-        TriStripEdge* inEdge;
-        U16 newVert = 0;
-        U16 vertA;
-        U16 vertB;
-        U16 lastVert;
-        U16* vertIndex;
+        tri = NULL;
+        newVert = 0;
 
         if (strip->numIndices & 1)
         {
@@ -475,55 +544,41 @@ static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEn
 
         if (!tri)
         {
-            break;
+            return numAdded;
         }
 
         numAdded++;
         TriStripMarkTriUsed(tri, bins, pass);
 
-        vertIndex = triangles[tri->triIndex].vertIndex;
-
-        if (vertA != vertIndex[0] && vertB != vertIndex[0])
+        if (vertA != triangles[tri->triIndex].vertIndex[0] && vertB != triangles[tri->triIndex].vertIndex[0])
         {
-            newVert = vertIndex[0];
+            newVert = triangles[tri->triIndex].vertIndex[0];
         }
 
-        if (vertA != vertIndex[1] && vertB != vertIndex[1])
+        if (vertA != triangles[tri->triIndex].vertIndex[1] && vertB != triangles[tri->triIndex].vertIndex[1])
         {
-            newVert = vertIndex[1];
+            newVert = triangles[tri->triIndex].vertIndex[1];
         }
 
-        if (vertA != vertIndex[2] && vertB != vertIndex[2])
+        if (vertA != triangles[tri->triIndex].vertIndex[2] && vertB != triangles[tri->triIndex].vertIndex[2])
         {
-            newVert = vertIndex[2];
+            newVert = triangles[tri->triIndex].vertIndex[2];
         }
 
         inEdge = edge;
-        lastVert = strip->indices[strip->numIndices - 1];
+        edge = TriStripNextEdge(tri, strip->indices[strip->numIndices - 1], newVert);
 
-        if ((tri->edge[0]->vert[0] == lastVert && tri->edge[0]->vert[1] == newVert) ||
-            (tri->edge[0]->vert[0] == newVert && tri->edge[0]->vert[1] == lastVert))
+        if (pass < TRISTRIPNUMPASSES)
         {
-            edge = tri->edge[0];
-        }
-        else if ((tri->edge[1]->vert[0] == lastVert && tri->edge[1]->vert[1] == newVert) ||
-                 (tri->edge[1]->vert[0] == newVert && tri->edge[1]->vert[1] == lastVert))
-        {
-            edge = tri->edge[1];
-        }
-        else if ((tri->edge[2]->vert[0] == lastVert && tri->edge[2]->vert[1] == newVert) ||
-                 (tri->edge[2]->vert[0] == newVert && tri->edge[2]->vert[1] == lastVert))
-        {
-            edge = tri->edge[2];
+            deadEnd = TriStripEdgeIsDeadEndTrial(edge);
         }
         else
         {
-            edge = NULL;
+            deadEnd = TriStripEdgeIsDeadEndUsed(edge);
         }
 
-        if (TriStripEdgeIsDeadEnd(edge, pass))
+        if (deadEnd)
         {
-
             if (tri->edge[0] != inEdge && tri->edge[0] != edge)
             {
                 swapEdge = tri->edge[0];
@@ -572,38 +627,39 @@ static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEn
     return numAdded;
 }
 
-// Adds an empty strip with room for space indices to the head of a strip list.
-static TriStripList* TriStripListAdd(TriStripList** stripList, U32 space)
-{
-    TriStripList* strip =
-        (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
-
-    strip->next = *stripList;
-    *stripList = strip;
-    strip->space = space;
-    strip->numIndices = 0;
-    strip->indices = (U16*)RwMalloc(strip->space * sizeof(U32));
-
-    return strip;
-}
-
 // Covers the triangles with strips, starting each one at a triangle with the fewest free
 // neighbours. With tryAllEdges each start is tried along all three of its edges first.
 static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStripList** stripList,
                              S32 tryAllEdges)
 {
-    TriStripEdge* edgeList = NULL;
-    TriStripBinEntry* bins[4];
-    TriStripFreeLists freeLists;
-    TriStripBinEntry** entries;
+    U32 edgeIndex;
     TriStripList* forward;
     TriStripList* backward;
+    U32 numUsed;
+    U32 startUsed;
+    TriStripBinEntry** entries;
+    TriStripEdge* forwardEdge;
+    TriStripEdge* backwardEdge;
+    U32 bestEdge;
+    S32 pass;
+    U32 bestUsed;
+    TriStripBinEntry* bins[4];
+    TriStripFreeLists freeLists;
+    TriStripEdge* edgeList;
     TriStripEdge* edge;
-    TriStripEdge* forwardEdge = NULL;
-    TriStripEdge* backwardEdge = NULL;
-    U32 numUsed = 0;
+    U32 start;
+    long bin;
+    S32 backwardFree;
+    U32 triIndex;
+    TriStripList* strip;
+    U16* vertIndex;
+    TriStripEdge* next;
     U32 i;
 
+    edgeList = NULL;
+    numUsed = 0;
+    forwardEdge = NULL;
+    backwardEdge = NULL;
     bins[0] = NULL;
     bins[1] = NULL;
     bins[2] = NULL;
@@ -630,16 +686,14 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
     while (numUsed < numTris)
     {
-        U32 bestUsed = 0;
-        S32 pass = tryAllEdges ? 0 : TRISTRIPNUMPASSES - 1;
+        bestUsed = 0;
+        pass = tryAllEdges ? 0 : TRISTRIPNUMPASSES - 1;
 
         if (bins[0])
         {
             // A triangle with no free neighbours is a strip of its own.
-            TriStripBinEntry* entry = bins[0];
-            TriStripList* strip =
-                (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
-            U16* vertIndex;
+            triIndex = bins[0]->triIndex;
+            strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
 
             strip->next = *stripList;
             *stripList = strip;
@@ -647,7 +701,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
             strip->numIndices = 3;
             strip->indices = (U16*)RwMalloc(3 * sizeof(U32));
 
-            vertIndex = triangles[entry->triIndex].vertIndex;
+            vertIndex = triangles[triIndex].vertIndex;
             strip->indices[0] = vertIndex[0];
             strip->indices[1] = vertIndex[1];
             strip->indices[2] = vertIndex[2];
@@ -665,41 +719,35 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
         }
         else
         {
-            TriStripBinEntry* entry;
-            U32 startUsed;
-            S32 bin = 1;
-            U32 start;
-            U32 bestEdge;
+            bin = 1;
 
             while (!bins[bin])
             {
                 bin++;
             }
 
-            entry = bins[bin];
-
             // Start along an edge whose neighbours both lead on, or else towards the most
             // free neighbours.
-            if (TRISTRIPEDGEFREE(entry->edge[2], used) >= 2 &&
-                TRISTRIPEDGEFREE(entry->edge[1], used) >= 2)
+            if (TRISTRIPEDGEFREE(bins[bin]->edge[2], used) >= 2 &&
+                TRISTRIPEDGEFREE(bins[bin]->edge[1], used) >= 2)
             {
                 start = 1;
             }
-            else if (TRISTRIPEDGEFREE(entry->edge[0], used) >= 2 &&
-                     TRISTRIPEDGEFREE(entry->edge[2], used) >= 2)
+            else if (TRISTRIPEDGEFREE(bins[bin]->edge[0], used) >= 2 &&
+                     TRISTRIPEDGEFREE(bins[bin]->edge[2], used) >= 2)
             {
                 start = 2;
             }
-            else if (TRISTRIPEDGEFREE(entry->edge[1], used) >= 2 &&
-                     TRISTRIPEDGEFREE(entry->edge[0], used) >= 2)
+            else if (TRISTRIPEDGEFREE(bins[bin]->edge[1], used) >= 2 &&
+                     TRISTRIPEDGEFREE(bins[bin]->edge[0], used) >= 2)
             {
                 start = 0;
             }
-            else if (TRISTRIPEDGEFREE(entry->edge[0], used) >
-                     TRISTRIPEDGEFREE(entry->edge[1], used))
+            else if (TRISTRIPEDGEFREE(bins[bin]->edge[0], used) >
+                     TRISTRIPEDGEFREE(bins[bin]->edge[1], used))
             {
-                if (TRISTRIPEDGEFREE(entry->edge[0], used) >
-                    TRISTRIPEDGEFREE(entry->edge[2], used))
+                if (TRISTRIPEDGEFREE(bins[bin]->edge[0], used) >
+                    TRISTRIPEDGEFREE(bins[bin]->edge[2], used))
                 {
                     start = 2;
                 }
@@ -708,8 +756,8 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
                     start = 1;
                 }
             }
-            else if (TRISTRIPEDGEFREE(entry->edge[1], used) >
-                     TRISTRIPEDGEFREE(entry->edge[2], used))
+            else if (TRISTRIPEDGEFREE(bins[bin]->edge[1], used) >
+                     TRISTRIPEDGEFREE(bins[bin]->edge[2], used))
             {
                 start = 0;
             }
@@ -721,12 +769,8 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
             startUsed = numUsed;
             bestEdge = start;
 
-            do
+            for (;;)
             {
-                U32 edgeIndex;
-                U16* vertIndex;
-                S32 backwardFree;
-
                 for (i = 0; i < numTris; i++)
                 {
                     entries[i]->trialUsed = entries[i]->used;
@@ -771,8 +815,9 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
                 forward->numIndices = 3;
 
                 TriStripMarkTriUsed(bins[bin], bins, pass);
-                numUsed =
-                    startUsed + 1 + TriStripFollow(forward, forwardEdge, bins, triangles, pass);
+                numUsed = startUsed;
+                numUsed++;
+                numUsed += TriStripFollow(forward, forwardEdge, bins, triangles, pass);
 
                 if (pass < TRISTRIPNUMPASSES)
                 {
@@ -785,19 +830,17 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
                 if (backwardFree)
                 {
-                    U32 numStart;
-
                     backward->indices[0] = forward->indices[1];
                     backward->indices[1] = forward->indices[0];
                     backward->numIndices = 2;
-                    numStart = backward->numIndices;
 
                     numUsed += TriStripFollow(backward, backwardEdge, bins, triangles, pass);
 
                     // Keep the winding when the backward strip is reversed onto the front.
-                    if (numStart & 1)
+                    if (backward->numIndices & 1)
                     {
-                        backward->indices[numStart] = backward->indices[numStart - 2];
+                        backward->indices[backward->numIndices] =
+                            backward->indices[backward->numIndices - 2];
                         backward->numIndices++;
                     }
 
@@ -809,8 +852,14 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
                     if (pass >= TRISTRIPNUMPASSES)
                     {
-                        TriStripList* strip = TriStripListAdd(
-                            stripList, forward->numIndices + (backward->numIndices - 2));
+                        strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(
+                            MESHGLOBAL(triStripListEntryFreeList));
+
+                        strip->next = *stripList;
+                        *stripList = strip;
+                        strip->space = forward->numIndices + backward->numIndices - 2;
+                        strip->numIndices = 0;
+                        strip->indices = (U16*)RwMalloc(strip->space * sizeof(U32));
 
                         while (backward->numIndices > 2)
                         {
@@ -823,6 +872,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
                         memcpy(&strip->indices[strip->numIndices], forward->indices,
                                forward->numIndices * sizeof(U32));
                         strip->numIndices = strip->space;
+                        break;
                     }
                 }
                 else
@@ -835,7 +885,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
                     if (pass >= TRISTRIPNUMPASSES)
                     {
-                        TriStripList* strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(
+                        strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(
                             MESHGLOBAL(triStripListEntryFreeList));
 
                         strip->next = *stripList;
@@ -844,9 +894,10 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
                         strip->numIndices = forward->numIndices;
                         strip->indices = (U16*)RwMalloc(forward->numIndices * sizeof(U32));
                         memcpy(strip->indices, forward->indices, forward->numIndices * sizeof(U32));
+                        break;
                     }
                 }
-            } while (pass < TRISTRIPNUMPASSES);
+            }
         }
     }
 
@@ -860,7 +911,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
     for (edge = edgeList; edge;)
     {
-        TriStripEdge* next = edge->next;
+        next = edge->next;
 
         RWSRCGLOBAL(memoryFree)(freeLists.edgeFreeList, edge);
         edge = next;
@@ -869,10 +920,15 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
     RwFreeListDestroy(freeLists.edgeFreeList);
     freeLists.edgeFreeList = NULL;
 
-    for (i = 0; i < numTris; i++)
     {
-        RWSRCGLOBAL(memoryFree)(freeLists.binEntryFreeList, entries[i]);
-        entries[i] = NULL;
+        TriStripBinEntry** entry = entries;
+
+        for (i = 0; i < numTris; i++)
+        {
+            RWSRCGLOBAL(memoryFree)(freeLists.binEntryFreeList, *entry);
+            *entry = NULL;
+            entry++;
+        }
     }
 
     RwFreeListDestroy(freeLists.binEntryFreeList);
@@ -891,8 +947,11 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
     TriStripList* strip;
     TriStripList* rest;
     U32 i;
+    U32 j;
 
-    if (!*stripList)
+    rest = *stripList;
+
+    if (!rest)
     {
         return FALSE;
     }
@@ -908,17 +967,23 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
 
     joined->indices = (U16*)RwMalloc(joined->space * sizeof(U32));
 
-    strip = *stripList;
+    rest = *stripList;
+    strip = rest;
 
     for (i = 0; i < strip->numIndices; i++)
     {
-        joined->indices[joined->numIndices++] = strip->indices[i];
+        joined->indices[joined->numIndices] = strip->indices[i];
+        joined->numIndices++;
     }
 
     RwFree(strip->indices);
     strip->indices = NULL;
-    rest = strip->next;
-    RWSRCGLOBAL(memoryFree)(MESHGLOBAL(triStripListEntryFreeList), strip);
+    {
+        TriStripList* next = strip->next;
+
+        RWSRCGLOBAL(memoryFree)(MESHGLOBAL(triStripListEntryFreeList), strip);
+        rest = next;
+    }
 
     while (rest)
     {
@@ -926,13 +991,11 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
         // before it.
         for (strip = rest; strip; strip = strip->next)
         {
-            U16* end = &joined->indices[joined->numIndices];
-
-            if (strip->indices[0] == end[-1])
+            if (strip->indices[0] == joined->indices[joined->numIndices - 1])
             {
                 if ((joined->numIndices & 1) && keepWinding)
                 {
-                    end[0] = strip->indices[0];
+                    joined->indices[joined->numIndices] = strip->indices[0];
                     joined->numIndices++;
                 }
 
@@ -944,19 +1007,17 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
         {
             for (strip = rest; strip; strip = strip->next)
             {
-                U16* end = &joined->indices[joined->numIndices];
-
-                if (strip->indices[0] == end[-2])
+                if (strip->indices[0] == joined->indices[joined->numIndices - 2])
                 {
                     if (!(joined->numIndices & 1) && keepWinding)
                     {
-                        end[0] = strip->indices[0];
+                        joined->indices[joined->numIndices] = strip->indices[0];
                         joined->indices[joined->numIndices + 1] = strip->indices[0];
                         joined->numIndices += 2;
                     }
                     else
                     {
-                        end[0] = strip->indices[0];
+                        joined->indices[joined->numIndices] = strip->indices[0];
                         joined->numIndices++;
                     }
 
@@ -967,28 +1028,27 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
 
         if (!strip)
         {
-            U16* end = &joined->indices[joined->numIndices];
-
             strip = rest;
 
             if (!(joined->numIndices & 1) || !keepWinding)
             {
-                end[0] = end[-1];
+                joined->indices[joined->numIndices] = joined->indices[joined->numIndices - 1];
                 joined->indices[joined->numIndices + 1] = strip->indices[0];
                 joined->numIndices += 2;
             }
             else
             {
-                end[0] = end[-1];
+                joined->indices[joined->numIndices] = joined->indices[joined->numIndices - 1];
                 joined->indices[joined->numIndices + 1] = strip->indices[0];
                 joined->indices[joined->numIndices + 2] = strip->indices[0];
                 joined->numIndices += 3;
             }
         }
 
-        for (i = 0; i < strip->numIndices; i++)
+        for (j = 0; j < strip->numIndices; j++)
         {
-            joined->indices[joined->numIndices++] = strip->indices[i];
+            joined->indices[joined->numIndices] = strip->indices[j];
+            joined->numIndices++;
         }
 
         RwFree(strip->indices);
@@ -1023,21 +1083,18 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
 static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdges,
                                           S32 keepWinding)
 {
-    U16 numMeshes = 0;
     RpBuildMeshTriangle** sorted;
-    RpBuildMeshTriangle** next;
+    U16 numMeshes;
+    RpMesh* mesh;
     RpMesh** meshes;
     RpMesh* runs;
-    RpMesh* run;
     RpMeshHeader* meshHeader;
-    RpMesh* mesh;
-    U16* indices;
+    RpBuildMeshTriangle** next;
     TriStripList* stripList;
     U32 numRuns;
-    U32 size;
-    U32 totalIndices;
     U32 i;
 
+    numMeshes = 0;
     sorted =
         (RpBuildMeshTriangle**)RwMalloc(buildMesh->numTriangles * sizeof(RpBuildMeshTriangle*));
 
@@ -1080,18 +1137,15 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
 
     if (buildMesh->numTriangles >= 2)
     {
-        run = &runs[1];
-
         for (i = 0; i < buildMesh->numTriangles - 1; i++)
         {
             if (sorted[i]->material != sorted[i + 1]->material)
             {
-                run->material = sorted[i + 1]->material;
+                runs[numRuns].material = sorted[i + 1]->material;
+                runs[numRuns].numIndices = i + 1;
+                runs[numRuns].indices = NULL;
+                runs[numRuns - 1].numIndices = (i + 1) - runs[numRuns - 1].numIndices;
                 numRuns++;
-                run->numIndices = i + 1;
-                run->indices = NULL;
-                run[-1].numIndices = (i + 1) - run[-1].numIndices;
-                run++;
             }
         }
     }
@@ -1103,28 +1157,28 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
 
     stripList = NULL;
     next = sorted;
-    run = runs;
 
-    for (i = 0; i < numRuns; i++, run++)
+    for (i = 0; i < numRuns; i++)
     {
         RpBuildMeshTriangle* triangles =
-            (RpBuildMeshTriangle*)RwMalloc(run->numIndices * sizeof(RpBuildMeshTriangle));
+            (RpBuildMeshTriangle*)RwMalloc(runs[i].numIndices * sizeof(RpBuildMeshTriangle));
         TriStripList* strip;
         U32 j;
 
-        for (j = 0; j < run->numIndices; j++)
+        for (j = 0; j < runs[i].numIndices; j++)
         {
-            triangles[j] = **next++;
+            triangles[j] = **next;
+            next++;
         }
 
-        TriStripStripTris(triangles, run->numIndices, &stripList, tryAllEdges);
+        TriStripStripTris(triangles, runs[i].numIndices, &stripList, tryAllEdges);
         TriStripJoin(&stripList, keepWinding);
 
         for (strip = stripList; strip; strip = strip->next)
         {
             RpMesh* stripMesh = (RpMesh*)RwMalloc(sizeof(RpMesh) + strip->numIndices * sizeof(U16));
 
-            stripMesh->material = run->material;
+            stripMesh->material = runs[i].material;
             stripMesh->numIndices = strip->numIndices;
             stripMesh->indices = (U16*)(stripMesh + 1);
 
@@ -1151,35 +1205,43 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
     RwFreeListDestroy(MESHGLOBAL(triStripListEntryFreeList));
     MESHGLOBAL(triStripListEntryFreeList) = NULL;
 
-    size = sizeof(RpMeshHeader);
-    totalIndices = 0;
-
-    for (i = 0; i < numMeshes; i++)
+    // The header comes first, then the meshes, then all their indices.
     {
-        size += sizeof(RpMesh) + meshes[i]->numIndices * sizeof(U16);
-        totalIndices += meshes[i]->numIndices;
-    }
+        U32 size;
+        U16* indices;
+        U32 totalIndices;
 
-    meshHeader = _rpMeshHeaderCreate(size);
-    meshHeader->flags = rpMESHHEADERTRISTRIP;
-    meshHeader->numMeshes = numMeshes;
-    meshHeader->serialNum = MESHGLOBAL(nextSerialNum);
-    meshHeader->firstMeshOffset = 0;
-    meshHeader->totalIndicesInMesh = totalIndices;
-    MESHGLOBAL(nextSerialNum)++;
+        size = sizeof(RpMeshHeader);
+        totalIndices = 0;
 
-    mesh = (RpMesh*)(meshHeader + 1);
-    indices = (U16*)(mesh + numMeshes);
+        for (i = 0; i < numMeshes; i++)
+        {
+            size += sizeof(RpMesh) + meshes[i]->numIndices * sizeof(U16);
+            totalIndices += meshes[i]->numIndices;
+        }
 
-    for (i = 0; i < numMeshes; i++, mesh++)
-    {
-        mesh->indices = indices;
-        mesh->numIndices = meshes[i]->numIndices;
-        mesh->material = meshes[i]->material;
-        memcpy(indices, meshes[i]->indices, meshes[i]->numIndices * sizeof(U16));
-        indices += mesh->numIndices;
-        RwFree(meshes[i]);
-        meshes[i] = NULL;
+        meshHeader = _rpMeshHeaderCreate(size);
+        meshHeader->flags = rpMESHHEADERTRISTRIP;
+        meshHeader->numMeshes = numMeshes;
+        meshHeader->serialNum = MESHGLOBAL(nextSerialNum);
+        meshHeader->firstMeshOffset = 0;
+        meshHeader->totalIndicesInMesh = totalIndices;
+        MESHGLOBAL(nextSerialNum)++;
+
+        mesh = (RpMesh*)(meshHeader + 1);
+        indices = (U16*)(mesh + numMeshes);
+
+        for (i = 0; i < numMeshes; i++)
+        {
+            mesh->indices = indices;
+            mesh->numIndices = meshes[i]->numIndices;
+            mesh->material = meshes[i]->material;
+            memcpy(indices, meshes[i]->indices, meshes[i]->numIndices * sizeof(U16));
+            indices += mesh->numIndices;
+            mesh++;
+            RwFree(meshes[i]);
+            meshes[i] = NULL;
+        }
     }
 
     RwFree(sorted);

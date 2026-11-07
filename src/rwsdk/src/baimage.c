@@ -222,13 +222,13 @@ RwImage* RwImageAllocatePixels(RwImage* image)
     S32 pixelSize;
     S32 size;
 
-    if (image->depth == 4 || image->depth == 8)
+    if (image->depth == 4U || image->depth == 8U)
     {
         palettized = TRUE;
     }
 
-    image->stride = (image->depth + 7) >> 3;
     paletteSize = palettized ? (1 << image->depth) * sizeof(RwRGBA) : 0;
+    image->stride = (image->depth + 7) >> 3;
     image->stride *= image->width;
     image->stride = (image->stride + 3) & ~3;
 
@@ -266,61 +266,66 @@ RwImage* RwImageFreePixels(RwImage* image)
 
 RwImage* RwImageMakeMask(RwImage* image)
 {
-    switch (image->depth)
+    RwRGBA* rgba;
+    S32 depth = image->depth;
+
+    switch (depth)
     {
     case 4:
     case 8:
     {
-        RwRGBA* palette = image->palette;
-        S32 numColours = 1 << image->depth;
+        S32 numColours = 1 << depth;
         S32 i;
+
+        rgba = image->palette;
 
         for (i = 0; i < numColours; i++)
         {
-            S32 alpha = palette->red;
+            S32 alpha = rgba->red;
 
-            if (palette->green > alpha)
+            if (rgba->green > alpha)
             {
-                alpha = palette->green;
+                alpha = rgba->green;
             }
 
-            if (palette->blue > alpha)
+            if (rgba->blue > alpha)
             {
-                alpha = palette->blue;
+                alpha = rgba->blue;
             }
 
-            palette->alpha = alpha;
-            palette++;
+            rgba->alpha = alpha;
+            rgba++;
         }
 
         break;
     }
     case 32:
     {
-        U8* row = image->cpPixels;
         S32 y;
+        U8* row = image->cpPixels;
 
         for (y = 0; y < image->height; y++)
         {
-            RwRGBA* pixel = (RwRGBA*)row;
             S32 x;
+
+            rgba = (RwRGBA*)row;
 
             for (x = 0; x < image->width; x++)
             {
-                S32 alpha = pixel->red;
+                S32 alpha = rgba->red;
 
-                if (pixel->green > alpha)
+                if (rgba->green > alpha)
                 {
-                    alpha = pixel->green;
+                    alpha = rgba->green;
                 }
 
-                if (pixel->blue > alpha)
+                if (rgba->blue > alpha)
                 {
-                    alpha = pixel->blue;
+                    alpha = rgba->blue;
                 }
 
-                pixel->alpha = alpha;
-                pixel++;
+                rgba->alpha = alpha;
+                rgba++;
             }
 
             row += image->stride;
@@ -337,12 +342,13 @@ RwImage* RwImageMakeMask(RwImage* image)
 // first converted to 32 bits through a temporary copy; the mask can be palettized or 32-bit.
 RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
 {
-    S32 width = image->width;
-    S32 height = image->height;
-
-    if (width != mask->width || height != mask->height)
+    if (image->width != mask->width || image->height != mask->height)
     {
-        ImageError(0x8000000A);
+        RwError err;
+
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000A);
+        RwErrorSet(&err);
         return NULL;
     }
 
@@ -351,7 +357,7 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
     case 4:
     case 8:
     {
-        RwImage* tempImage = RwImageCreate(width, height, image->depth);
+        RwImage* tempImage = RwImageCreate(image->width, image->height, image->depth);
 
         if (!tempImage)
         {
@@ -381,9 +387,14 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
         // Fall through to apply the mask to the converted image.
     case 32:
     {
-        const U8* maskRow = mask->cpPixels;
-        U8* imageRow = image->cpPixels;
         S32 y;
+        U8* imageRow;
+        const U8* maskRow;
+        const RwRGBA* palette;
+
+        maskRow = mask->cpPixels;
+        palette = mask->palette;
+        imageRow = image->cpPixels;
 
         for (y = 0; y < image->height; y++)
         {
@@ -399,7 +410,7 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
 
                 for (x = 0; x < image->width; x++)
                 {
-                    pixel->alpha = mask->palette[*maskPixel++].alpha;
+                    pixel->alpha = palette[*maskPixel++].alpha;
                     pixel++;
                 }
 
@@ -425,16 +436,24 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
             maskRow += mask->stride;
         }
 
-        return image;
+        break;
     }
     default:
-        ImageError(0x80000009);
+    {
+        RwError err;
+
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x80000009);
+        RwErrorSet(&err);
         return NULL;
     }
+    }
+
+    return image;
 }
 
 // Returns the scratch buffer grown to at least size bytes, or NULL when it cannot grow.
-static char* ImageGetScratch(S32 size)
+static char* ImageGetScratchMem(S32 size)
 {
     if (size > IMAGE_DATA(nameBufSize))
     {
@@ -487,8 +506,11 @@ const char* ImageAttempRead(const char* fullName, void* data)
 // a file exists, stores the extender through data and stops the search.
 const char* ImageDetermineExtender(const char* fullName, void* data)
 {
-    char* end = (char*)fullName + rwstrlen(fullName);
-    ImageFileFormat* format = IMAGE_DATA(formats);
+    ImageFileFormat* format;
+    char* end;
+
+    end = (char*)fullName + rwstrlen(fullName);
+    format = IMAGE_DATA(formats);
 
     while (format)
     {
@@ -533,7 +555,15 @@ RwImage* RwImageRead(const char* imageName)
     ImageFileFormat* format;
 
     separator = rwstrrchr(imageName, ':');
-    name = separator ? separator : imageName;
+
+    if (separator)
+    {
+        name = separator;
+    }
+    else
+    {
+        name = imageName;
+    }
 
     separator = rwstrrchr(name, '/');
 
@@ -543,36 +573,34 @@ RwImage* RwImageRead(const char* imageName)
     }
 
     separator = rwstrrchr(name, '\\');
-
-    if (separator)
-    {
-        name = separator;
-    }
+    name = separator ? separator : name;
 
     extender = rwstrrchr(name, '.');
 
-    if (!extender)
+    if (extender)
     {
-        return NULL;
-    }
-
-    for (format = IMAGE_DATA(formats); format; format = format->next)
-    {
-        if (!rwstrcmp(format->extLower, extender) || !rwstrcmp(format->extUpper, extender))
+        for (format = IMAGE_DATA(formats); format; format = format->next)
         {
-            ImageReadData readData;
-
-            if (!format->readFunc)
+            if (!rwstrcmp(format->extLower, extender) || !rwstrcmp(format->extUpper, extender))
             {
-                return NULL;
+                if (format->readFunc)
+                {
+                    ImageReadData readData;
+
+                    readData.readFunc = format->readFunc;
+                    readData.image = NULL;
+                    ImagePathForAllFullNames(imageName, 5, ImageAttempRead, &readData);
+
+                    return readData.image;
+                }
+                else
+                {
+                    return NULL;
+                }
             }
-
-            readData.readFunc = format->readFunc;
-            readData.image = NULL;
-            ImagePathForAllFullNames(imageName, 5, ImageAttempRead, &readData);
-
-            return readData.image;
         }
+
+        return NULL;
     }
 
     return NULL;
@@ -584,39 +612,39 @@ RwImage* RwImageReadMaskedImage(const char* imageName, const char* maskName)
 {
     RwImage* image = RwImageRead(imageName);
 
-    if (!image)
+    if (image)
     {
-        return NULL;
+        if (maskName && *maskName)
+        {
+            RwImage* mask = RwImageRead(maskName);
+
+            if (!mask)
+            {
+                RwImageDestroy(image);
+                return NULL;
+            }
+
+            if (!RwImageMakeMask(mask))
+            {
+                RwImageDestroy(image);
+                RwImageDestroy(mask);
+                return NULL;
+            }
+
+            if (!RwImageApplyMask(image, mask))
+            {
+                RwImageDestroy(image);
+                RwImageDestroy(mask);
+                return NULL;
+            }
+
+            RwImageDestroy(mask);
+        }
+
+        return image;
     }
 
-    if (maskName && *maskName)
-    {
-        RwImage* mask = RwImageRead(maskName);
-
-        if (!mask)
-        {
-            RwImageDestroy(image);
-            return NULL;
-        }
-
-        if (!RwImageMakeMask(mask))
-        {
-            RwImageDestroy(image);
-            RwImageDestroy(mask);
-            return NULL;
-        }
-
-        if (!RwImageApplyMask(image, mask))
-        {
-            RwImageDestroy(image);
-            RwImageDestroy(mask);
-            return NULL;
-        }
-
-        RwImageDestroy(mask);
-    }
-
-    return image;
+    return NULL;
 }
 
 RwRGBA* RwRGBASetFromPixel(RwRGBA* rgbOut, U32 pixelValue, S32 rasterFormat)
@@ -631,14 +659,21 @@ RwRGBA* RwRGBASetFromPixel(RwRGBA* rgbOut, U32 pixelValue, S32 rasterFormat)
 // palette; anything else is an error.
 S32 ImageConvertDepth(RwImage* destImage, const RwImage* sourceImage)
 {
-    S32 result = FALSE;
-    S32 width = destImage->width;
-    S32 height = destImage->height;
-    const RwRGBA* palette = sourceImage->palette;
-    const U8* srcRow = sourceImage->cpPixels;
-    U8* dstRow = destImage->cpPixels;
     S32 x;
+    S32 result;
+    S32 width;
+    S32 height;
+    const RwRGBA* palette;
+    U8* dstRow;
+    const U8* srcRow;
     S32 y;
+
+    result = FALSE;
+    width = destImage->width;
+    height = destImage->height;
+    palette = sourceImage->palette;
+    srcRow = sourceImage->cpPixels;
+    dstRow = destImage->cpPixels;
 
     switch ((sourceImage->depth << 8) | destImage->depth)
     {
@@ -672,6 +707,9 @@ S32 ImageConvertDepth(RwImage* destImage, const RwImage* sourceImage)
 
         result = TRUE;
         break;
+    case (8 << 8) | 4:
+    case (32 << 8) | 4:
+    case (32 << 8) | 8:
     default:
         ImageError(0x80000009);
         break;
@@ -680,31 +718,37 @@ S32 ImageConvertDepth(RwImage* destImage, const RwImage* sourceImage)
     return result;
 }
 
+// Copies an image of the same depth: the palette when both have one, then the pixels row by row.
+static void ImageStraightCopy(RwImage* destImage, const RwImage* sourceImage)
+{
+    S32 y;
+    const U8* srcPixels;
+    U8* dstPixels;
+    S32 rowBytes;
+
+    if (destImage->palette && sourceImage->palette && sourceImage->depth <= 8)
+    {
+        memcpy(destImage->palette, sourceImage->palette,
+               (1 << sourceImage->depth) * sizeof(RwRGBA));
+    }
+
+    rowBytes = ((destImage->depth + 7) >> 3) * destImage->width;
+    srcPixels = sourceImage->cpPixels;
+    dstPixels = destImage->cpPixels;
+
+    for (y = 0; y < destImage->height; y++)
+    {
+        memcpy(dstPixels, srcPixels, rowBytes);
+        dstPixels += destImage->stride;
+        srcPixels += sourceImage->stride;
+    }
+}
+
 RwImage* RwImageCopy(RwImage* destImage, const RwImage* sourceImage)
 {
     if (destImage->depth == sourceImage->depth)
     {
-        S32 y;
-        const U8* srcPixels;
-        U8* dstPixels;
-        S32 rowBytes;
-
-        if (destImage->palette && sourceImage->palette && sourceImage->depth <= 8)
-        {
-            memcpy(destImage->palette, sourceImage->palette,
-                   (1 << sourceImage->depth) * sizeof(RwRGBA));
-        }
-
-        rowBytes = ((destImage->depth + 7) >> 3) * destImage->width;
-        srcPixels = sourceImage->cpPixels;
-        dstPixels = destImage->cpPixels;
-
-        for (y = 0; y < destImage->height; y++)
-        {
-            memcpy(dstPixels, srcPixels, rowBytes);
-            dstPixels += destImage->stride;
-            srcPixels += sourceImage->stride;
-        }
+        ImageStraightCopy(destImage, sourceImage);
     }
     else if (!ImageConvertDepth(destImage, sourceImage))
     {
@@ -718,7 +762,7 @@ RwImage* RwImageCopy(RwImage* destImage, const RwImage* sourceImage)
 }
 
 // Runs numPixels colors through the gamma table, keeping their alpha.
-static void ImageGammaCorrectPixels(RwRGBA* out, const RwRGBA* in, S32 numPixels)
+void _rwImageGammaCorrectArrayOfRGBA(RwRGBA* out, RwRGBA* in, S32 numPixels)
 {
     const U8* table = IMAGE_DATA(gammaLut);
 
@@ -751,13 +795,14 @@ RwImage* RwImageGammaCorrect(RwImage* image)
             return NULL;
         }
 
-        ImageGammaCorrectPixels(palette, palette, numColours);
+        _rwImageGammaCorrectArrayOfRGBA(palette, palette, numColours);
         break;
     }
     case 32:
     {
         U8* row = image->cpPixels;
         S32 width = image->width;
+        S32 height = image->height;
         S32 y;
 
         if (!row)
@@ -766,9 +811,9 @@ RwImage* RwImageGammaCorrect(RwImage* image)
             return NULL;
         }
 
-        for (y = 0; y < image->height; y++)
+        for (y = 0; y < height; y++)
         {
-            ImageGammaCorrectPixels((RwRGBA*)row, (const RwRGBA*)row, width);
+            _rwImageGammaCorrectArrayOfRGBA((RwRGBA*)row, (RwRGBA*)row, width);
             row += image->stride;
         }
 
@@ -820,7 +865,7 @@ const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
 
     if (_rwpathisabsolute(imageName) || !path || !*path)
     {
-        char* fullName = ImageGetScratch(rwstrlen(imageName) + maxLength);
+        char* fullName = ImageGetScratchMem(rwstrlen(imageName) + maxLength);
 
         if (!fullName)
         {
@@ -829,45 +874,46 @@ const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
 
         rwstrcpy(fullName, imageName);
         callBack(fullName, data);
-        return imageName;
     }
-
-    while (path && *path)
+    else
     {
-        const char* next;
-        S32 pathLength;
-        char* fullName;
-
-        // The target makes this call twice and keeps only the second result.
-        rwstrchr(path, ';');
-        next = rwstrchr(path, ';');
-
-        if (next)
+        while (path && *path)
         {
-            pathLength = next - path;
-            next++;
+            const char* next;
+            S32 pathLength;
+            char* fullName;
+
+            // The target makes this call twice and keeps only the second result.
+            rwstrchr(path, ';');
+            next = rwstrchr(path, ';');
+
+            if (next)
+            {
+                pathLength = next - path;
+                next++;
+            }
+            else
+            {
+                pathLength = rwstrlen(path);
+            }
+
+            fullName = ImageGetScratchMem(pathLength + (rwstrlen(imageName) + maxLength));
+
+            if (!fullName)
+            {
+                return NULL;
+            }
+
+            memcpy(fullName, path, pathLength);
+            rwstrcpy(fullName + pathLength, imageName);
+
+            if (!callBack(fullName, data))
+            {
+                return imageName;
+            }
+
+            path = next;
         }
-        else
-        {
-            pathLength = rwstrlen(path);
-        }
-
-        fullName = ImageGetScratch(pathLength + (rwstrlen(imageName) + maxLength));
-
-        if (!fullName)
-        {
-            return NULL;
-        }
-
-        memcpy(fullName, path, pathLength);
-        rwstrcpy(fullName + pathLength, imageName);
-
-        if (!callBack(fullName, data))
-        {
-            return imageName;
-        }
-
-        path = next;
     }
 
     return imageName;

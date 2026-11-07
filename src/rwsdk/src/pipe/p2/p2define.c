@@ -815,6 +815,11 @@ fail:
     return NULL;
 }
 
+static RxNodeDefinition* PipelineNodeGetDef(RxPipeline* pipeline, U32 index)
+{
+    return pipeline->nodes[index].nodeDef;
+}
+
 RxLockedPipe* RxPipelineLock(RxPipeline* pipeline)
 {
     if (!pipeline->locked)
@@ -866,7 +871,7 @@ RxLockedPipe* RxPipelineLock(RxPipeline* pipeline)
         {
             for (i = 0; i < pipeline->numNodes; i++)
             {
-                nodeDef = pipeline->nodes[i].nodeDef;
+                nodeDef = PipelineNodeGetDef(pipeline, i);
 
                 if (nodeDef->nodeMethods.pipelineNodeTerm)
                 {

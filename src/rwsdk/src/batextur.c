@@ -17,7 +17,7 @@ struct TextureModuleData
     S32 mipmapping;
     S32 autoMipmapping;
     void* buffer;
-    S32 bufferSize;
+    S16 bufferSize;
     TextureBuildMipmapsFn buildMipmapsFn;
     TextureMipmapNameFn mipmapNameFn;
 };
@@ -69,10 +69,11 @@ static RwTexDictionary* dummyTexDict;
 // level 0 and levels past 15 leave the names alone.
 static S32 TextureDefaultMipmapName(char* name, char* maskName, U8 mipLevel, S32 format)
 {
+    static const char digits[] = "0123456789abcdef";
     char suffix[3];
 
     suffix[0] = 'm';
-    suffix[1] = (mipLevel > 0 && mipLevel < 16) ? "0123456789abcdef"[mipLevel] : '\0';
+    suffix[1] = (mipLevel > 0 && mipLevel < 16) ? digits[mipLevel] : '\0';
     suffix[2] = '\0';
 
     if (suffix[1])
@@ -108,18 +109,20 @@ static S32 PalettizeImage(RwImage** image, S32 depth)
 
     palImage = RwImageCreate((*image)->width, (*image)->height, depth);
 
-    if (!palImage)
+    if (palImage)
+    {
+        RwImageAllocatePixels(palImage);
+        _rwPalQuantMatchImage(palImage->cpPixels, palImage->stride, palImage->depth, FALSE,
+                              &palQuant, *image);
+        memcpy(palImage->palette, palette, numColours * sizeof(RwRGBA));
+
+        RwImageDestroy(*image);
+        *image = palImage;
+    }
+    else
     {
         return FALSE;
     }
-
-    RwImageAllocatePixels(palImage);
-    _rwPalQuantMatchImage(palImage->cpPixels, palImage->stride, palImage->depth, FALSE, &palQuant,
-                          *image);
-    memcpy(palImage->palette, palette, numColours * sizeof(RwRGBA));
-
-    RwImageDestroy(*image);
-    *image = palImage;
 
     _rwPalQuantTerm(&palQuant);
 
@@ -134,11 +137,12 @@ static S32 PalettizeMipmaps(RwRGBA* palette, RwImage* keepImage, RwImage** image
 {
     PalQuant palQuant;
     RwRGBA* firstPalette = images[0]->palette;
+    S32 numColours;
     S32 i;
 
     if (firstPalette)
     {
-        S32 numColours = 1 << depth;
+        numColours = 1 << depth;
 
         for (i = 1; i < numLevels; i++)
         {
@@ -147,6 +151,7 @@ static S32 PalettizeMipmaps(RwRGBA* palette, RwImage* keepImage, RwImage** image
             if (!firstPalette || !levelPalette)
             {
                 i = 64;
+                break;
             }
             else
             {
@@ -187,20 +192,22 @@ static S32 PalettizeMipmaps(RwRGBA* palette, RwImage* keepImage, RwImage** image
         RwImage* image = images[i];
         RwImage* palImage = RwImageCreate(image->width, image->height, depth);
 
-        if (!palImage)
+        if (palImage)
+        {
+            RwImageAllocatePixels(palImage);
+            _rwPalQuantMatchImage(palImage->cpPixels, palImage->stride, palImage->depth, FALSE,
+                                  &palQuant, image);
+            palImage->palette = palette;
+            images[i] = palImage;
+
+            if (image != keepImage)
+            {
+                RwImageDestroy(image);
+            }
+        }
+        else
         {
             return FALSE;
-        }
-
-        RwImageAllocatePixels(palImage);
-        _rwPalQuantMatchImage(palImage->cpPixels, palImage->stride, palImage->depth, FALSE,
-                              &palQuant, image);
-        palImage->palette = palette;
-        images[i] = palImage;
-
-        if (image != keepImage)
-        {
-            RwImageDestroy(image);
         }
     }
 
@@ -210,21 +217,22 @@ static S32 PalettizeMipmaps(RwRGBA* palette, RwImage* keepImage, RwImage** image
 }
 
 // Copies a name into a file name buffer, cutting it short (with an error) when it does not fit.
-static void TextureCopyFileName(char* buffer, const char* name)
-{
-    rwstrncpy(buffer, name, TEXTURE_FILENAMESIZE);
-
-    if (rwstrlen(name) >= TEXTURE_FILENAMESIZE)
-    {
-        RwError err;
-
-        err.pluginID = 1;
-        err.errorCode = _rwerror(0x8000001E, name, TEXTURE_FILENAMESIZE, TEXTURE_FILENAMESIZE - 1,
-                                 name[TEXTURE_FILENAMESIZE - 1]);
-        RwErrorSet(&err);
-        buffer[TEXTURE_FILENAMESIZE - 1] = '\0';
-    }
-}
+#define TextureCopyFileName(buffer, name)                                                         \
+    do                                                                                            \
+    {                                                                                             \
+        rwstrncpy(buffer, name, TEXTURE_FILENAMESIZE);                                            \
+                                                                                                  \
+        if (rwstrlen(name) >= TEXTURE_FILENAMESIZE)                                               \
+        {                                                                                         \
+            RwError err;                                                                          \
+                                                                                                  \
+            err.pluginID = 1;                                                                     \
+            err.errorCode = _rwerror(0x8000001E, name, TEXTURE_FILENAMESIZE,                      \
+                                     TEXTURE_FILENAMESIZE - 1, (name)[TEXTURE_FILENAMESIZE - 1]); \
+            RwErrorSet(&err);                                                                     \
+            (buffer)[TEXTURE_FILENAMESIZE - 1] = '\0';                                            \
+        }                                                                                         \
+    } while (0)
 
 // Reads the image (and mask) behind a texture name with the file extender found for each, picks
 // a raster size and format for it when the caller has none, and resamples the image to that size
@@ -287,7 +295,7 @@ static RwImage* TextureImageReadAndSize(const char* name, const char* maskName, 
 
         if (origDepth != 32)
         {
-            image = RwImageCreate(origImage->width, origImage->height, 32);
+            image = RwImageCreate(image->width, image->height, 32);
 
             if (!image)
             {
@@ -325,7 +333,11 @@ static RwImage* TextureImageReadAndSize(const char* name, const char* maskName, 
         RwImageDestroy(image);
         image = resampled;
 
-        if (origDepth == 4 || origDepth == 8)
+        if (origDepth == 4)
+        {
+            PalettizeImage(&image, origDepth);
+        }
+        else if (origDepth == 8)
         {
             PalettizeImage(&image, origDepth);
         }
@@ -342,8 +354,8 @@ static RwTexture* TextureDefaultNormalRead(const char* name, const char* maskNam
     char texName[TEXTURE_FILENAMESIZE];
     char texMask[TEXTURE_FILENAMESIZE];
     RwImage* image;
-    RwRaster* raster;
     RwTexture* texture;
+    RwRaster* raster;
     S32 width;
     S32 height;
     S32 depth;
@@ -497,8 +509,8 @@ static RwTexture* TextureDefaultMipmapRead(const char* name, const char* maskNam
         }
         else
         {
-            S32 numLevels = RwRasterGetNumLevels(raster);
             S32 i;
+            S32 numLevels = RwRasterGetNumLevels(raster);
 
             for (i = 1; i < numLevels; i++)
             {
@@ -516,7 +528,7 @@ static RwTexture* TextureDefaultMipmapRead(const char* name, const char* maskNam
                 width = raster->width;
                 height = raster->height;
                 depth = raster->depth;
-                format = raster->cType | RwRasterGetFormat(raster);
+                format = RwRasterGetFormat(raster) | raster->cType;
                 RwRasterUnlock(raster);
 
                 images[i] = TextureImageReadAndSize(texName, texMask, rasterType, &width, &height,
@@ -632,12 +644,14 @@ static RwRaster* TextureRasterDefaultBuildMipmaps(RwRaster* raster, RwImage* ima
     RwImage* images[TEXTURE_MAXMIPLEVELS];
     RwRGBA palette[256];
     U8 autoMipmap;
-    S32 numLevels;
     S32 i;
+    S32 numLevels;
+    S32 width = raster->width;
+    S32 height = raster->height;
 
     if (!image)
     {
-        images[0] = RwImageCreate(raster->width, raster->height, 32);
+        images[0] = RwImageCreate(width, height, 32);
 
         if (images[0])
         {
@@ -651,7 +665,7 @@ static RwRaster* TextureRasterDefaultBuildMipmaps(RwRaster* raster, RwImage* ima
     }
     else if (image->depth != 32)
     {
-        images[0] = RwImageCreate(image->width, image->height, 32);
+        images[0] = RwImageCreate(width, height, 32);
 
         if (images[0])
         {
@@ -705,29 +719,37 @@ static RwRaster* TextureRasterDefaultBuildMipmaps(RwRaster* raster, RwImage* ima
 
     if (RwRasterGetFormat(raster) & (rwRASTERFORMATPAL4 | rwRASTERFORMATPAL8))
     {
-        S32 result;
-
+        // The clean-up returns on its first pass, so only the top level is destroyed.
         if (RwRasterGetFormat(raster) & rwRASTERFORMATPAL4)
         {
-            result = PalettizeMipmaps(palette, image, images, numLevels, 4);
+            if (!PalettizeMipmaps(palette, image, images, numLevels, 4))
+            {
+                for (i = 0; i < numLevels; i++)
+                {
+                    if (images[i] != image)
+                    {
+                        RwImageDestroy(images[i]);
+                    }
+
+                    raster->cFormat |= autoMipmap;
+                    return NULL;
+                }
+            }
         }
         else
         {
-            result = PalettizeMipmaps(palette, image, images, numLevels, 8);
-        }
-
-        if (!result)
-        {
-            // The clean-up returns on its first pass, so only the top level is destroyed.
-            for (i = 0; i < numLevels; i++)
+            if (!PalettizeMipmaps(palette, image, images, numLevels, 8))
             {
-                if (images[i] != image)
+                for (i = 0; i < numLevels; i++)
                 {
-                    RwImageDestroy(images[i]);
-                }
+                    if (images[i] != image)
+                    {
+                        RwImageDestroy(images[i]);
+                    }
 
-                raster->cFormat |= autoMipmap;
-                return NULL;
+                    raster->cFormat |= autoMipmap;
+                    return NULL;
+                }
             }
         }
 
@@ -870,33 +892,42 @@ RwTexture* RwTextureCreate(RwRaster* raster)
     return texture;
 }
 
+static S32 TextureAnnihilate(RwTexture* texture)
+{
+    texture->refCount++;
+
+    _rwPluginRegistryDeInitObject(&textureTKList, texture);
+
+    if (texture->dict)
+    {
+        rwLinkListRemoveLLLink(&texture->lInDictionary);
+    }
+
+    if (texture->raster)
+    {
+        RwRasterDestroy(texture->raster);
+        texture->raster = NULL;
+    }
+
+    texture->refCount--;
+
+    RWSRCGLOBAL(memoryFree)(TEXTURE_DATA(textureFreeList), texture);
+
+    return 1;
+}
+
 S32 RwTextureDestroy(RwTexture* texture)
 {
+    S32 result = 1;
+
     texture->refCount--;
 
     if (texture->refCount <= 0)
     {
-        texture->refCount++;
-
-        _rwPluginRegistryDeInitObject(&textureTKList, texture);
-
-        if (texture->dict)
-        {
-            rwLinkListRemoveLLLink(&texture->lInDictionary);
-        }
-
-        if (texture->raster)
-        {
-            RwRasterDestroy(texture->raster);
-            texture->raster = NULL;
-        }
-
-        texture->refCount--;
-
-        RWSRCGLOBAL(memoryFree)(TEXTURE_DATA(textureFreeList), texture);
+        result = TextureAnnihilate(texture);
     }
 
-    return 1;
+    return result;
 }
 
 RwTexture* RwTextureSetName(RwTexture* texture, const char* name)
@@ -978,13 +1009,8 @@ S32 RwTextureGenerateMipmapName(char* name, char* maskName, U8 mipLevel, S32 for
 }
 
 // Compares two texture names ignoring the case of ASCII letters.
-static S32 TextureNamesMatch(const char* name, const char* other)
+static S32 StringCompare(const char* name, const char* other)
 {
-    if (!name)
-    {
-        return FALSE;
-    }
-
     while (*name && *other)
     {
         char c1 = *name;
@@ -1009,20 +1035,29 @@ static S32 TextureNamesMatch(const char* name, const char* other)
         other++;
     }
 
-    return *name == *other;
+    if (*name == *other)
+    {
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
-// Finds a texture in a dictionary by name. The target inlines it into RwTextureRead and has no
-// copy of its own.
+// Finds a texture in a dictionary by name.
 RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dict, const char* name)
 {
-    RwLLLink* cur = rwLinkListGetFirstLLLink(&dict->texturesInDict);
+    RwTexture* texture;
+    RwLLLink* cur;
+    RwLLLink* end;
 
-    while (cur != rwLinkListGetTerminator(&dict->texturesInDict))
+    cur = rwLinkListGetFirstLLLink(&dict->texturesInDict);
+    end = rwLinkListGetTerminator(&dict->texturesInDict);
+
+    while (cur != end)
     {
-        RwTexture* texture = TEXTUREFROMDICTLINK(cur);
+        texture = TEXTUREFROMDICTLINK(cur);
 
-        if (TextureNamesMatch(texture->name, name))
+        if (texture->name && StringCompare(texture->name, name))
         {
             return texture;
         }
@@ -1033,9 +1068,31 @@ RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dict, const char* na
     return NULL;
 }
 
-// Returns a texture by name: from the current dictionary, or from any dictionary when there is
-// no current one, with its reference count raised; otherwise read through the read callback and
-// added to the current dictionary.
+// Looks a texture up by name in every dictionary, for when there is no current one. Returns NULL
+// when no dictionary holds it.
+static RwTexture* TextureFind(const char* name)
+{
+    RwLLLink* cur = rwLinkListGetFirstLLLink(&TEXTURE_DATA(texDictList));
+
+    while (cur != rwLinkListGetTerminator(&TEXTURE_DATA(texDictList)))
+    {
+        RwTexDictionary* dict = rwLLLinkGetData(cur, RwTexDictionary, lInInstance);
+        RwTexture* texture = RwTexDictionaryFindNamedTexture(dict, name);
+
+        if (texture)
+        {
+            return texture;
+        }
+
+        cur = rwLLLinkGetNext(cur);
+    }
+
+    return NULL;
+}
+
+// Returns a texture by name with its reference count raised when the current dictionary holds it
+// (or, with no current dictionary, any dictionary); otherwise reads it through the read callback
+// and adds it to the current dictionary, if any.
 RwTexture* RwTextureRead(const char* name, const char* maskName)
 {
     RwTexture* texture;
@@ -1046,23 +1103,7 @@ RwTexture* RwTextureRead(const char* name, const char* maskName)
     }
     else
     {
-        RwLLLink* cur = rwLinkListGetFirstLLLink(&TEXTURE_DATA(texDictList));
-
-        texture = NULL;
-
-        while (cur != rwLinkListGetTerminator(&TEXTURE_DATA(texDictList)))
-        {
-            RwTexDictionary* dict = rwLLLinkGetData(cur, RwTexDictionary, lInInstance);
-
-            texture = RwTexDictionaryFindNamedTexture(dict, name);
-
-            if (texture)
-            {
-                break;
-            }
-
-            cur = rwLLLinkGetNext(cur);
-        }
+        texture = TextureFind(name);
     }
 
     if (texture)
@@ -1075,16 +1116,18 @@ RwTexture* RwTextureRead(const char* name, const char* maskName)
 
     if (!texture)
     {
-        RwError err;
-
         if (maskName)
         {
+            RwError err;
+
             err.pluginID = 1;
             err.errorCode = _rwerror(0x16, name, maskName);
             RwErrorSet(&err);
         }
         else
         {
+            RwError err;
+
             err.pluginID = 1;
             err.errorCode = _rwerror(0x16, name, "(null)");
             RwErrorSet(&err);
@@ -1124,7 +1167,6 @@ void* _rwTextureClose(void* instance, S32 offset, S32 size)
 
     if (TEXTURE_DATA(textureFreeList) && TEXTURE_DATA(texDictFreeList))
     {
-        RwTexDictionary* dummy = dummyTexDict;
         RwLLLink* cur = rwLinkListGetFirstLLLink(&TEXTURE_DATA(texDictList));
 
         while (cur != rwLinkListGetTerminator(&TEXTURE_DATA(texDictList)))
@@ -1133,9 +1175,9 @@ void* _rwTextureClose(void* instance, S32 offset, S32 size)
 
             cur = rwLLLinkGetNext(cur);
 
-            if (dict == dummy)
+            if (dict == dummyTexDict)
             {
-                RwTexDictionaryDestroy(dummy);
+                RwTexDictionaryDestroy(dummyTexDict);
                 dummyTexDict = NULL;
                 break;
             }

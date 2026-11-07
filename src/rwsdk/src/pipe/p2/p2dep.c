@@ -525,8 +525,8 @@ static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
 // Gives each scope the lowest slot that none of its nodes uses yet.
 static U32 _AssignClusterSlots(RxPipeline* pipeline, rxScope** scopeList)
 {
-    rxScope* scope;
     U32 numSlots;
+    rxScope* scope;
 
     numSlots = 0;
 
@@ -535,13 +535,14 @@ static U32 _AssignClusterSlots(RxPipeline* pipeline, rxScope** scopeList)
         rxScope* merged;
         U32 slot;
         U32 usedSlots;
-        rxReqEntry* entry;
 
         usedSlots = 0;
         merged = scope;
 
         do
         {
+            rxReqEntry* entry;
+
             for (entry = merged->entries; entry; entry = entry->nextInScope)
             {
                 usedSlots |= entry->req->usedSlots;
@@ -567,6 +568,8 @@ static U32 _AssignClusterSlots(RxPipeline* pipeline, rxScope** scopeList)
 
         do
         {
+            rxReqEntry* entry;
+
             for (entry = merged->entries; entry; entry = entry->nextInScope)
             {
                 entry->slot = slot;

@@ -59,6 +59,17 @@ S32 _rpMaterialListFindMaterialIndex(const RpMaterialList* matList, const RpMate
 
 RpMaterial* RpMaterialStreamRead(RwStream* stream);
 
+#if VERSION_GIHE78_REV0
+// Reports a failed allocation of size bytes (project-own name).
+static void MaterialListNoMemory(U32 size)
+{
+    RwError err;
+    err.pluginID = 2;
+    err.errorCode = _rwerror(0x80000013, size);
+    RwErrorSet(&err);
+}
+#endif
+
 // Makes room for space materials, keeping the ones already listed.
 static RpMaterialList* MaterialListAlloc(RpMaterialList* matList, S32 space)
 {
@@ -92,6 +103,9 @@ static RpMaterialList* MaterialListAlloc(RpMaterialList* matList, S32 space)
     return matList;
 }
 
+#if VERSION_GIHE78_REV1
+// Adds a material to the list, growing it by MATERIALLIST_GROWBY slots when full. Returns the
+// material's index, or -1 when the list cannot grow.
 static S32 _rpMaterialListAppendMaterial(RpMaterialList* matList, RpMaterial* material)
 {
     if (matList->space > matList->numMaterials)
@@ -134,6 +148,8 @@ static S32 _rpMaterialListAppendMaterial(RpMaterialList* matList, RpMaterial* ma
     }
 }
 
+// Reads a material list chunk: the count, the index array, then each new material. An index
+// below zero means a material follows in the stream; any other index shares an earlier one.
 RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matList)
 {
     S32 len;
@@ -240,3 +256,148 @@ RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matL
 
     return NULL;
 }
+#endif
+
+#if VERSION_GIHE78_REV0
+// Reads a material list chunk: the count, the index array, then each new material. An index
+// below zero means a material follows in the stream; any other index shares an earlier one.
+RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matList)
+{
+    S32 len;
+    U32 size;
+    S32 i;
+    S32* matIndex;
+    RpMaterial* material;
+    S32 status;
+    U32 version;
+
+    if (!RwStreamFindChunk(stream, rwID_STRUCT, &size, &version))
+    {
+        return NULL;
+    }
+
+    if (version >= rwLIBRARYBASEVERSION && version <= rwLIBRARYCURRENTVERSION)
+    {
+        status = (RwStreamReadInt32(stream, &len, sizeof(len)) != NULL);
+
+        if (!status)
+        {
+            return NULL;
+        }
+
+        _rpMaterialListInitialize(matList);
+
+        if (len == 0)
+        {
+            return matList;
+        }
+
+        if (!MaterialListAlloc(matList, len))
+        {
+            _rpMaterialListDeinitialize(matList);
+            return NULL;
+        }
+
+        status = len * sizeof(S32);
+        matIndex = (S32*)RwMalloc(status);
+
+        status = (RwStreamReadInt32(stream, matIndex, len * sizeof(S32)) != NULL);
+
+        if (!status)
+        {
+            RwFree(matIndex);
+            _rpMaterialListDeinitialize(matList);
+            return NULL;
+        }
+
+        for (i = 0; i < len; i++)
+        {
+            if (matIndex[i] < 0)
+            {
+                if (!RwStreamFindChunk(stream, rwID_MATERIAL, NULL, &version))
+                {
+                    RwFree(matIndex);
+                    _rpMaterialListDeinitialize(matList);
+                    return NULL;
+                }
+
+                if (version >= rwLIBRARYBASEVERSION && version <= rwLIBRARYCURRENTVERSION)
+                {
+                    RpMaterial* newMaterial = RpMaterialStreamRead(stream);
+
+                    if ((material = newMaterial) == NULL)
+                    {
+                        RwFree(matIndex);
+                        _rpMaterialListDeinitialize(matList);
+                        return NULL;
+                    }
+                }
+                else
+                {
+                    RwError err;
+                    err.pluginID = 2;
+                    err.errorCode = _rwerror(0x80000004);
+                    RwErrorSet(&err);
+                    RwFree(matIndex);
+                    _rpMaterialListDeinitialize(matList);
+                    return NULL;
+                }
+            }
+            else
+            {
+                material = _rpMaterialListGetMaterial(matList, matIndex[i]);
+                material->refCount++;
+            }
+
+            if (matList->space > matList->numMaterials)
+            {
+                matList->materials[matList->numMaterials] = material;
+                material->refCount++;
+                matList->numMaterials++;
+            }
+            else
+            {
+                U32 size = (matList->space + MATERIALLIST_GROWBY) * sizeof(RpMaterial*);
+                RpMaterial** materials;
+
+                if (matList->materials)
+                {
+                    materials = (RpMaterial**)RwRealloc(matList->materials, size);
+                }
+                else
+                {
+                    materials = (RpMaterial**)RwMalloc(size);
+                }
+
+                if (!materials)
+                {
+                    MaterialListNoMemory(size);
+                }
+                else
+                {
+                    matList->materials = materials;
+                    matList->space += MATERIALLIST_GROWBY;
+
+                    materials[matList->numMaterials] = material;
+                    material->refCount++;
+                    matList->numMaterials++;
+                }
+            }
+            RpMaterialDestroy(material);
+        }
+
+        RwFree(matIndex);
+
+        return matList;
+    }
+
+    {
+        RwError err;
+        err.pluginID = 2;
+        err.errorCode = _rwerror(0x80000004);
+        RwErrorSet(&err);
+    }
+
+    return NULL;
+}
+#endif

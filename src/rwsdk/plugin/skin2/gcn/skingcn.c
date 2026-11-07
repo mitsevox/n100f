@@ -13,25 +13,6 @@ extern volatile U16 lbl_8025E800;
 // The all-in-one node's reinstance callback before the skin pipeline replaced it.
 extern GCNAllInOneCallBack lbl_8025F6A8;
 
-// Per vertex component type (u8, s8, u16, s16, f32): the GQR load type, the size of one
-// component, and the GQR scale for normals; and the size of a three-component vertex.
-typedef struct SkinCompTable SkinCompTable;
-struct SkinCompTable
-{
-    U8 value[5];
-};
-
-typedef struct SkinVertexSizes SkinVertexSizes;
-struct SkinVertexSizes
-{
-    S32 value[5];
-};
-
-extern const SkinCompTable lbl_802628B0;
-extern const SkinCompTable lbl_802628B8;
-extern const SkinCompTable lbl_802628C0;
-extern const SkinVertexSizes lbl_801AD280;
-
 S32 _rwDlTokenQueryDone(U16 token);
 
 // Draw sync tokens wrap at this value. Written for this project.
@@ -342,7 +323,6 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
     RwResEntry* repEntry;
     S32 size;
     S32 nrmSize;
-    S32 numNrm;
 
     RwResourcesUseResEntry(*entryRef);
     (*entryRef)->destroyNotify = fn_801450A8;
@@ -375,21 +355,16 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
 
         if (vtxFmt)
         {
-            SkinVertexSizes sizes = lbl_801AD280;
+            // The size of a three-component vertex per component type (u8, s8, u16, s16, f32).
+            S32 sizes[5] = { 3, 3, 6, 6, 12 };
 
-            size = SKINGCN_ALIGN32(geometry->numVertices * sizes.value[vtxFmt->compType[0]]) + 6;
+            size = SKINGCN_ALIGN32(geometry->numVertices * sizes[vtxFmt->compType[0]]) + 6;
 
             if (geometry->flags & rpGEOMETRYNORMALS)
             {
-                numNrm = 1;
-
-                if (vtxFmt->frac[1])
-                {
-                    numNrm = 3;
-                }
-
                 size += SKINGCN_ALIGN32(geometry->numVertices *
-                                        (sizes.value[vtxFmt->compType[1]] * numNrm));
+                                        (sizes[vtxFmt->compType[1]] *
+                                         (vtxFmt->frac[1] ? 3 : 1)));
             }
         }
         else
@@ -445,61 +420,56 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
     return TRUE;
 }
 
-// The skin pipeline's reinstance callback: reinstance the original arrays when needed, build the
-// bone matrices for this frame and blend the skinned arrays from them.
-RpAtomic* fn_80145598(RpAtomic* atomic, GCNObjectData* objectData)
+// Sets the quantization registers for the vertex format, blends the arrays and flushes them out
+// of the data cache for the GPU.
+static inline void SkinBlendArrays(void* dstPos, void* dstNrm, const void* srcPos,
+                                   const void* srcNrm, const U32* indices,
+                                   const RwMatrixWeights* weights, const RwMatrix* matrices,
+                                   S32 numVertices, const RpGameCubeVtxFmt* vtxFmt)
 {
-    RpGeometry* geometry = atomic->geometry;
-    RpSkin* skin = SKINGEOMETRYGETDATA(geometry);
-    GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
-    RpHAnimHierarchy* hierarchy;
-    RwMatrix* ltm;
-    const RwMatrix* skinToBone;
-    RwMatrix* matrix;
-    RpGameCubeVtxFmt* vtxFmt;
-    void* dstPos;
-    void* srcNrm;
-    S32 numVertices;
+    U32 posSize = sizeof(F32);
+    U32 nrmSize = sizeof(F32);
+    S32 nbtSize = 0;
+    register U32 gqr6 = 0;
+    register U32 gqr7 = 0;
+
+    if (vtxFmt)
+    {
+        // Per component type (u8, s8, u16, s16, f32): the GQR load type, the size of one
+        // component and the GQR scale for normals.
+        U8 types[5] = { 4, 6, 5, 7, 0 };
+        U8 sizes[5] = { 1, 1, 2, 2, 4 };
+        U8 scales[5] = { 0, 6, 0, 14, 0 };
+
+        posSize = sizes[vtxFmt->compType[0]];
+        nrmSize = sizes[vtxFmt->compType[1]];
+        nbtSize = vtxFmt->frac[1] ? nrmSize * 6 : 0;
+        gqr6 = types[vtxFmt->compType[0]] | (vtxFmt->frac[0] << 8);
+        gqr7 = types[vtxFmt->compType[1]] | (scales[vtxFmt->compType[1]] << 8);
+        gqr6 |= gqr6 << 16;
+        gqr7 |= gqr7 << 16;
+    }
+
+    asm
+    {
+        mtspr 918, gqr6
+        mtspr 919, gqr7
+    }
+
+    fn_80144D5C(weights, srcPos, dstNrm ? srcNrm : srcPos, dstPos, dstNrm, matrices, indices,
+                numVertices, posSize, nrmSize, nbtSize);
+
+    DCFlushRange(((RwResEntry**)dstPos)[-1] + 1, ((RwResEntry**)dstPos)[-1]->size);
+}
+
+// Builds the bone matrices for this frame in the matrix cache.
+static inline void SkinBuildMatrices(RpAtomic* atomic, RpSkin* skin)
+{
+    RpHAnimHierarchy* hierarchy = SKINATOMICGETDATA(atomic);
+    RwMatrix* ltm = RwFrameGetLTM(RpAtomicGetFrame(atomic));
+    const RwMatrix* skinToBone = RpSkinGetSkinToBoneMatrices(skin);
+    RwMatrix* matrix = _rpSkinGlobals.matrixCache;
     S32 i;
-    U32 posSize;
-    U32 nrmSize;
-    S32 nbtSize;
-    register U32 gqr6;
-    register U32 gqr7;
-
-    if (!skin->savedPos)
-    {
-        if (!(geometry->flags & rpGEOMETRYNATIVE))
-        {
-            lbl_8025F6A8(atomic, objectData);
-        }
-
-        skin->savedPos = arrays->pos;
-        skin->savedNrm = arrays->nrm;
-        arrays->pos = NULL;
-        arrays->nrm = NULL;
-    }
-    else if (!(geometry->flags & rpGEOMETRYNATIVE))
-    {
-        void* pos = arrays->pos;
-        void* nrm = arrays->nrm;
-
-        arrays->pos = skin->savedPos;
-        arrays->nrm = skin->savedNrm;
-        lbl_8025F6A8(atomic, objectData);
-        arrays->pos = pos;
-        arrays->nrm = nrm;
-    }
-
-    if (!fn_80145228(skin, atomic, arrays, &objectData->repEntry))
-    {
-        return NULL;
-    }
-
-    hierarchy = SKINATOMICGETDATA(atomic);
-    ltm = RwFrameGetLTM(RpAtomicGetFrame(atomic));
-    skinToBone = RpSkinGetSkinToBoneMatrices(skin);
-    matrix = _rpSkinGlobals.matrixCache;
 
     if (hierarchy)
     {
@@ -543,50 +513,58 @@ RpAtomic* fn_80145598(RpAtomic* atomic, GCNObjectData* objectData)
             }
         }
     }
+}
+
+// The skin pipeline's reinstance callback: reinstance the original arrays when needed, build the
+// bone matrices for this frame and blend the skinned arrays from them.
+void* fn_80145598(void* object, GCNObjectData* objectData)
+{
+    RpAtomic* atomic = (RpAtomic*)object;
+    RpGeometry* geometry = atomic->geometry;
+    GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
+    RpSkin* skin = SKINGEOMETRYGETDATA(geometry);
+    RpGameCubeVtxFmt* vtxFmt;
+    S32 numVertices;
+
+    if (!skin->savedPos)
+    {
+        if (!(geometry->flags & rpGEOMETRYNATIVE))
+        {
+            lbl_8025F6A8(atomic, objectData);
+        }
+
+        skin->savedPos = arrays->pos;
+        skin->savedNrm = arrays->nrm;
+        arrays->pos = NULL;
+        arrays->nrm = NULL;
+    }
+    else if (!(geometry->flags & rpGEOMETRYNATIVE))
+    {
+        void* pos = arrays->pos;
+        void* nrm = arrays->nrm;
+
+        arrays->pos = skin->savedPos;
+        arrays->nrm = skin->savedNrm;
+        lbl_8025F6A8(atomic, objectData);
+        arrays->pos = pos;
+        arrays->nrm = nrm;
+    }
+
+    if (!fn_80145228(skin, atomic, arrays, &objectData->repEntry))
+    {
+        return NULL;
+    }
+
+    SkinBuildMatrices(atomic, skin);
 
     numVertices = geometry->numVertices;
     vtxFmt = fn_8015D818(geometry);
-    posSize = sizeof(F32);
-    nrmSize = sizeof(F32);
-    srcNrm = skin->savedNrm;
-    nbtSize = 0;
-    dstPos = arrays->pos;
-    gqr6 = 0;
-    gqr7 = 0;
 
-    if (vtxFmt)
-    {
-        SkinCompTable types = lbl_802628B0;
-        SkinCompTable sizes = lbl_802628B8;
-        SkinCompTable scales = lbl_802628C0;
+    SkinBlendArrays(arrays->pos, arrays->nrm, skin->savedPos, skin->savedNrm,
+                    skin->vertexBoneIndices, skin->vertexBoneWeights, _rpSkinGlobals.matrixCache,
+                    numVertices, vtxFmt);
 
-        posSize = sizes.value[vtxFmt->compType[0]];
-        nrmSize = sizes.value[vtxFmt->compType[1]];
-        nbtSize = vtxFmt->frac[1] ? nrmSize * 6 : 0;
-        gqr6 = types.value[vtxFmt->compType[0]] | (vtxFmt->frac[0] << 8);
-        gqr7 = types.value[vtxFmt->compType[1]] | (scales.value[vtxFmt->compType[1]] << 8);
-        gqr6 |= gqr6 << 16;
-        gqr7 |= gqr7 << 16;
-    }
-
-    asm
-    {
-        mtspr 918, gqr6
-        mtspr 919, gqr7
-    }
-
-    if (!arrays->nrm)
-    {
-        srcNrm = skin->savedPos;
-    }
-
-    fn_80144D5C(skin->vertexBoneWeights, skin->savedPos, srcNrm, dstPos, arrays->nrm,
-                _rpSkinGlobals.matrixCache, skin->vertexBoneIndices, numVertices, posSize, nrmSize,
-                nbtSize);
-
-    DCFlushRange(SKINGCN_ENTRY(arrays) + 1, SKINGCN_ENTRY(arrays)->size);
-
-    return atomic;
+    return object;
 }
 
 RpGeometry* _rpSkinInitialize(RpGeometry* geometry)
