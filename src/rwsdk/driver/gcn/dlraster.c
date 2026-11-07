@@ -318,11 +318,12 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
     case rwRASTERTYPENORMAL:
     case rwRASTERTYPETEXTURE:
     case rwRASTERTYPECAMERATEXTURE:
+        l = level;
         stride = DlRasterRowBytes(DLRASTER_LEVELSIZE(top->width, level), raster->depth);
 
         offset = 0;
 
-        for (l = level; l--;)
+        for (; l--;)
         {
             offset += fn_80179064(raster, l);
         }
