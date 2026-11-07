@@ -1,5 +1,7 @@
 #include <rwcore.h>
 
+RwModuleInfo resourcesModule;
+
 // Allocates and initializes the resource arena (none when its size is 0) and empties both entry
 // lists; NULL when the arena cannot be allocated or set up.
 static inline RwResourcesGlobals* ResourcesGlobalsInit(RwResourcesGlobals* globals, U32 arenaSize)
