@@ -452,8 +452,9 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
     return image;
 }
 
-// Returns the scratch buffer grown to at least size bytes, or NULL when it cannot grow.
-static char* ImageGetScratch(S32 size)
+// Returns the scratch buffer grown to at least size bytes, or NULL when it cannot grow. The name is
+// a LOCAL baimage function in the PS2 prototype symbol table; GC inlines it.
+static char* ImageGetScratchMem(S32 size)
 {
     if (size > IMAGE_DATA(nameBufSize))
     {
@@ -718,31 +719,38 @@ S32 ImageConvertDepth(RwImage* destImage, const RwImage* sourceImage)
     return result;
 }
 
+// Copies an image of the same depth: the palette when both have one, then the pixels row by row.
+// The PS2 prototype keeps this as its own LOCAL function directly before RwImageCopy; GC inlines it.
+static void ImageStraightCopy(RwImage* destImage, const RwImage* sourceImage)
+{
+    S32 y;
+    const U8* srcPixels;
+    U8* dstPixels;
+    S32 rowBytes;
+
+    if (destImage->palette && sourceImage->palette && sourceImage->depth <= 8)
+    {
+        memcpy(destImage->palette, sourceImage->palette,
+               (1 << sourceImage->depth) * sizeof(RwRGBA));
+    }
+
+    rowBytes = ((destImage->depth + 7) >> 3) * destImage->width;
+    srcPixels = sourceImage->cpPixels;
+    dstPixels = destImage->cpPixels;
+
+    for (y = 0; y < destImage->height; y++)
+    {
+        memcpy(dstPixels, srcPixels, rowBytes);
+        dstPixels += destImage->stride;
+        srcPixels += sourceImage->stride;
+    }
+}
+
 RwImage* RwImageCopy(RwImage* destImage, const RwImage* sourceImage)
 {
     if (destImage->depth == sourceImage->depth)
     {
-        S32 y;
-        const U8* srcPixels;
-        U8* dstPixels;
-        S32 rowBytes;
-
-        if (destImage->palette && sourceImage->palette && sourceImage->depth <= 8)
-        {
-            memcpy(destImage->palette, sourceImage->palette,
-                   (1 << sourceImage->depth) * sizeof(RwRGBA));
-        }
-
-        rowBytes = ((destImage->depth + 7) >> 3) * destImage->width;
-        srcPixels = sourceImage->cpPixels;
-        dstPixels = destImage->cpPixels;
-
-        for (y = 0; y < destImage->height; y++)
-        {
-            memcpy(dstPixels, srcPixels, rowBytes);
-            dstPixels += destImage->stride;
-            srcPixels += sourceImage->stride;
-        }
+        ImageStraightCopy(destImage, sourceImage);
     }
     else if (!ImageConvertDepth(destImage, sourceImage))
     {
@@ -860,7 +868,7 @@ const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
 
     if (_rwpathisabsolute(imageName) || !path || !*path)
     {
-        char* fullName = ImageGetScratch(rwstrlen(imageName) + maxLength);
+        char* fullName = ImageGetScratchMem(rwstrlen(imageName) + maxLength);
 
         if (!fullName)
         {
@@ -892,7 +900,7 @@ const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
             pathLength = rwstrlen(path);
         }
 
-        fullName = ImageGetScratch(pathLength + (rwstrlen(imageName) + maxLength));
+        fullName = ImageGetScratchMem(pathLength + (rwstrlen(imageName) + maxLength));
 
         if (!fullName)
         {
