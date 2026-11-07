@@ -380,7 +380,7 @@ cflags_game_noinline = [
     "-inline off,deferred" if f == "-inline auto,deferred" else f for f in cflags_game
 ]
 
-# Game flags without the cpp_extensions pragma (xEntMotion, xEnt, ngcrad3d; see the compiler rows in evidence.tsv).
+# Game flags without the cpp_extensions pragma (xEntMotion, xEnt, zParEmitter, ngcrad3d; see the compiler rows in evidence.tsv).
 # With the pragma, a value an inlined test loads is reused by the code after the test; without it,
 # that code loads the value again, as the target does.
 cflags_game_nocppext = [f for f in cflags_game if f != '-pragma "cpp_extensions on"']
@@ -613,7 +613,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zMovePoint.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zMusic.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/zParCmd.cpp"),
-            Object(NonMatching, "flat/zParEmitter.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zParEmitter.cpp", cflags=cflags_game_nocppext),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zParSys.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zPitchChange.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zPendulum.cpp"),
