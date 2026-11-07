@@ -76,11 +76,14 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 
 // Offsets each vertex's base texture coordinates along the bump map light direction, into dst:
 // the light (the bump map frame's at axis, or the camera's) is taken into the object's space,
-// and each vertex's offset comes from the texture space of one of its triangles.
+// and each vertex's offset comes from the texture space of one of its triangles. Both offsets
+// are computed before either store (the normal and light loads come before the first stfsx), and
+// each index branch sets up its own vertex pointers (the pointer arithmetic appears in both).
 void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMesh* mesh,
                  RwV3d* positions, RwV3d* normals, RwTexCoords* texCoords, S32 numVertices,
-                 U32 flags)
+                 S32 flags)
 {
+    U16* index;
     U8* done = (U8*)RwMalloc(numVertices);
 
     memset(done, 0, numVertices);
@@ -88,14 +91,13 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
     if (done)
     {
         RwFrame* frame = bumpMap->frame;
-        S32 minIndex = 0x7FFFFFFF;
-        S32 maxIndex = 0x80000000;
         F32 scale = bumpMap->coef * bumpMap->invBumpWidth;
         RwV3d* at;
         RwV3d light;
+        S32 i;
+        S32 minIndex = 0x7FFFFFFF;
+        S32 maxIndex = 0x80000000;
         U16* indices;
-        U16* index;
-        U32 i;
 
         if (!frame)
         {
@@ -134,21 +136,24 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
                 RwTexCoords* t0;
                 RwTexCoords* t1;
                 RwTexCoords* t2;
+                RwV3d e1;
+                RwV3d e2;
                 RwV3d s;
-                F32 dv1;
-                F32 dv2;
+                RwV3d b;
+                F32 uOffset;
+                F32 vOffset;
                 F32 recip;
-                U16 v1;
-                U16 v2;
+                S32 v1;
+                S32 v2;
 
                 if (flags & rpGEOMETRYTRISTRIP)
                 {
                     S32 i1;
                     S32 i2;
 
-                    if ((S32)i < 2)
+                    if (i < 2)
                     {
-                        if ((S32)i % 2)
+                        if (i % 2)
                         {
                             i1 = i + 2;
                             i2 = i + 1;
@@ -161,7 +166,7 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
                     }
                     else
                     {
-                        if ((S32)i % 2)
+                        if (i % 2)
                         {
                             i1 = i - 1;
                             i2 = i - 2;
@@ -175,6 +180,14 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
 
                     v1 = indices[i1];
                     v2 = indices[i2];
+
+                    p0 = &positions[v0];
+                    n = &normals[v0];
+                    t0 = &texCoords[v0];
+                    p1 = &positions[v1];
+                    t1 = &texCoords[v1];
+                    p2 = &positions[v2];
+                    t2 = &texCoords[v2];
                 }
                 else
                 {
@@ -182,42 +195,34 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
 
                     v1 = indices[(i + 1) % 3 + base];
                     v2 = indices[(i + 2) % 3 + base];
+
+                    p0 = &positions[v0];
+                    n = &normals[v0];
+                    t0 = &texCoords[v0];
+                    p1 = &positions[v1];
+                    t1 = &texCoords[v1];
+                    p2 = &positions[v2];
+                    t2 = &texCoords[v2];
                 }
 
-                p0 = &positions[v0];
-                n = &normals[v0];
-                t0 = &texCoords[v0];
-                p1 = &positions[v1];
-                t1 = &texCoords[v1];
-                p2 = &positions[v2];
-                t2 = &texCoords[v2];
 
-                dv2 = t2->v - t0->v;
-                dv1 = t1->v - t0->v;
-                s.x = (p1->x - p0->x) * dv2 - (p2->x - p0->x) * dv1;
-                s.y = (p1->y - p0->y) * dv2 - (p2->y - p0->y) * dv1;
-                s.z = (p1->z - p0->z) * dv2 - (p2->z - p0->z) * dv1;
+                RwV3dSubMacro(&e1, p1, p0);
+                RwV3dSubMacro(&e2, p2, p0);
+                RwV3dScaleMacro(&e1, &e1, t2->v - t0->v);
+                RwV3dScaleMacro(&e2, &e2, t1->v - t0->v);
+                RwV3dSubMacro(&s, &e1, &e2);
 
-                recip = _rwInvSqrt(s.x * s.x + s.y * s.y + s.z * s.z);
-                s.x *= recip;
-                s.y *= recip;
-                s.z *= recip;
+                recip = _rwInvSqrt(RwV3dDotProductMacro(&s, &s));
+                RwV3dScaleMacro(&s, &s, recip);
+                RwV3dCrossProductMacro(&b, &s, n);
 
-                dst[*index].u = t0->u - (s.x * light.x + s.y * light.y + s.z * light.z) * scale;
-                dst[*index].v = t0->v - ((s.y * n->z - s.z * n->y) * light.x +
-                                         (s.z * n->x - s.x * n->z) * light.y +
-                                         (s.x * n->y - s.y * n->x) * light.z) *
-                                            scale;
+                uOffset = RwV3dDotProductMacro(&s, &light);
+                vOffset = RwV3dDotProductMacro(&b, &light);
+                dst[*index].u = t0->u - uOffset * scale;
+                dst[*index].v = t0->v - vOffset * scale;
 
-                if ((S32)*index < minIndex)
-                {
-                    minIndex = *index;
-                }
-
-                if ((S32)*index > maxIndex)
-                {
-                    maxIndex = *index;
-                }
+                minIndex = ((S32)*index < minIndex) ? *index : minIndex;
+                maxIndex = ((S32)*index > maxIndex) ? *index : maxIndex;
 
                 done[*index] = TRUE;
             }
@@ -502,8 +507,8 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
             }
             case rpMATFXEFFECTDUAL:
             {
-                MatFXDualData* dual = &MATFXMATERIALGETDATA(mesh->material)->effects[0].data.dual;
                 RwTexture* texture;
+                MatFXDualData* dual = &MATFXMATERIALGETDATA(mesh->material)->effects[0].data.dual;
                 S32 srcBlend;
                 S32 destBlend;
 
@@ -537,7 +542,8 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
             }
             case rpMATFXEFFECTBUMPMAP:
             {
-                MatFXBumpMapData* bumpMap = &MATFXMATERIALGETDATA(mesh->material)->effects[0].data.bumpMap;
+                MatFXMaterialData* data = MATFXMATERIALGETDATA(mesh->material);
+                MatFXBumpMapData* bumpMap = &data->effects[0].data.bumpMap;
                 S32 srcBlend;
                 S32 destBlend;
 
