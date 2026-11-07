@@ -46,7 +46,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/bapipe.c` | 4 of 4 | (Matching) |
 | `rwsdk/src/pipe/p2/p2core.c` | 13 of 13 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/p2define.c` | 12 of 13 | `RxLockedPipeUnlock` (97.6%: the size sums add the outputs' total at another point and the copy of the sort data to the top of the block subtracts its entry size from the size first, so their values take other registers); `.sdata` `gMemoryLimits` is in the split |
-| `rwsdk/src/pipe/p2/p2dep.c` | 6 of 11 | `_PropDownElimPath` (98.1%), `_ForAllNodesWriteClusterAllocations` (96.8%), `_PropagateDependenciesAndKillDeadPaths` (95.6%), `_TraceClusterScopes` (94.7%) and `_ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields` (90.5%): the inlined entry helpers' values take other registers and some of their stores and constants are scheduled differently |
+| `rwsdk/src/pipe/p2/p2dep.c` | 10 of 11 | `_PropagateDependenciesAndKillDeadPaths` (99.8%): only the volatile registers of its first loop, the clusters-of-interest duplicate check, differ |
 | `rwsdk/src/pipe/p2/p2heap.c` | 7 of 8 | `RxHeapRealloc` (99.6%: the rounded size and the inlined shrink path's size difference take each other's registers); its message string is not split |
 | `rwsdk/src/pipe/p2/p2renderstate.c` | 4 of 4 | (Matching on GIHE78-rev0; split by hand) |
 | `rwsdk/src/pipe/p2/p2resort.c` | 2 of 2 | (Matching on GIHE78-rev0; GIHE78-rev1 remains NonMatching because its insertion pass is outlined before the wrapper) |
@@ -56,7 +56,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeImmStash.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeSubmitLine.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/nodeSubmitTriangle.c` | 2 of 2 | (Matching on GIHE78-rev0) |
-| `rwsdk/src/pipe/p2/nodeClipLine.c` | 2 of 4 | `PerspectiveClipProcessPacket` (98.5%) and `ParallelClipProcessPacket` (98.4%): the saved registers of the loop counter, the result flag, the doubled stride and the keep flag differ, and the set-up schedules i = 0 and the line count load differently |
+| `rwsdk/src/pipe/p2/nodeClipLine.c` | 4 of 4 | (Matching on GIHE78-rev0, with its 240-byte `.data`, 48-byte `.rodata`, 16-byte `.sdata` and 16-byte `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeClipTriangle.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.data` 268 bytes plus 4 normal alignment bytes, 48-byte `.rodata`, 16-byte `.sdata` and 16-byte `.sdata2`) |
 | `rwsdk/src/pipe/p2/nodeCullTriangle.c` | 2 of 4 | Parallel 98.46328%, Perspective 94.606606%; no supported source gain. Raw data 252 emitted bytes plus four target zero tail bytes; local-function source-layout addresses differ. NonMatching, original linked |
 | `rwsdk/src/pipe/p2/nodeTransform.c` | 4 of 4 | (Matching on GIHE78-rev0, with its 232-byte `.data` and 32-byte `.sdata2`) |
