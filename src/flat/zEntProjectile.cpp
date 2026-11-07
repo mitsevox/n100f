@@ -1867,6 +1867,8 @@ S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 appl
     return didit;
 }
 
+// Solves the launch velocity that lands a lobbed projectile on a target offset under gravity, limited
+// by range and speed. Returns how many limits it hit.
 static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd_limit, F32 dst_range,
                             xVec3* vec_vel)
 {
@@ -1902,9 +1904,10 @@ static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd
     c = -0.5f * grav;
     b = sqrtf(2.0f * grav * (1.5f * arc_factor));
 
+    dst_tgt = -vec_tgt.y;
     xVec3Init(vec_vel, 0.0f, 0.0f, 0.0f);
 
-    solcnt = xMathSolveQuadratic(c, b, -vec_tgt.y, &sol[0], &sol[1]);
+    solcnt = xMathSolveQuadratic(c, b, dst_tgt, &sol[0], &sol[1]);
     if (solcnt == 2)
     {
         tym_ariv = MAX(sol[0], sol[1]);
