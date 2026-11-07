@@ -1007,8 +1007,9 @@ S32 RwTextureGenerateMipmapName(char* name, char* maskName, U8 mipLevel, S32 for
     return 0;
 }
 
-// Compares two texture names ignoring the case of ASCII letters.
-static S32 TextureNamesMatch(const char* name, const char* other)
+// Compares two texture names ignoring the case of ASCII letters. The name is the PS2 prototype's
+// LOCAL batextur function between TextureAnnihilate and TextureFind; GC inlines it.
+static S32 StringCompare(const char* name, const char* other)
 {
     while (*name && *other)
     {
@@ -1054,7 +1055,7 @@ RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dict, const char* na
     {
         texture = TEXTUREFROMDICTLINK(cur);
 
-        if (texture->name && TextureNamesMatch(texture->name, name))
+        if (texture->name && StringCompare(texture->name, name))
         {
             return texture;
         }
