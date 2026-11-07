@@ -465,11 +465,16 @@ static inline void SkinBlendArrays(void* dstPos, void* dstNrm, const void* srcPo
 // Builds the bone matrices for this frame in the matrix cache.
 static inline void SkinBuildMatrices(RpAtomic* atomic, RpSkin* skin)
 {
-    RpHAnimHierarchy* hierarchy = SKINATOMICGETDATA(atomic);
-    RwMatrix* ltm = RwFrameGetLTM(RpAtomicGetFrame(atomic));
-    const RwMatrix* skinToBone = RpSkinGetSkinToBoneMatrices(skin);
-    RwMatrix* matrix = _rpSkinGlobals.matrixCache;
+    const RwMatrix* skinToBone;
     S32 i;
+    RwMatrix* ltm;
+    RpHAnimHierarchy* hierarchy;
+    RwMatrix* matrix;
+
+    hierarchy = SKINATOMICGETDATA(atomic);
+    ltm = RwFrameGetLTM(RpAtomicGetFrame(atomic));
+    skinToBone = RpSkinGetSkinToBoneMatrices(skin);
+    matrix = _rpSkinGlobals.matrixCache;
 
     if (hierarchy)
     {
