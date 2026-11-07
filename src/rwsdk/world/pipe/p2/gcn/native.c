@@ -33,11 +33,14 @@ RpWorldSector* _rpWorldSectorNativeRead(RwStream* stream, RpWorldSector* sector)
     ((U8*)NATIVE_ALIGN32((U32)(_entry) + sizeof(RwResEntry) + sizeof(GCNVertexArrays) +           \
                          (_numMeshes) * sizeof(GCNDisplayList)))
 
+// The bytes of an instance entry's data, after its vertex arrays header and display list records.
+#define NATIVE_DATASIZE(_entry, _numMeshes)                                                        \
+    ((_entry)->size - (NATIVE_DATA(_entry, _numMeshes) - (U8*)NATIVE_ARRAYS(_entry)))
+
 // The bytes an instance entry takes in a stream: the chunk header, the platform and the two sizes,
 // the vertex arrays header and display list records and the data.
 #define NATIVE_STREAMSIZE(_entry, _numMeshes)                                                      \
-    (((_entry)->size - (NATIVE_DATA(_entry, _numMeshes) - (U8*)NATIVE_ARRAYS(_entry))) +           \
-     (_numMeshes) * sizeof(GCNDisplayList) +                                                       \
+    (NATIVE_DATASIZE(_entry, _numMeshes) + (_numMeshes) * sizeof(GCNDisplayList) +                 \
      (NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3 + sizeof(GCNVertexArrays)))
 
 static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef, U32 numMeshes,
@@ -152,15 +155,25 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
 static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeVtxFmt* vtxFmt,
                                 U32 numMeshes, S32 numVerts)
 {
-    GCNVertexArrays* arrays = NATIVE_ARRAYS(entry);
-    GCNDisplayList* lists = (GCNDisplayList*)(arrays + 1);
-    GCNDisplayList* list = lists;
-    U32 count = numMeshes;
-    U8* data = (U8*)NATIVE_ALIGN32((U32)lists + numMeshes * sizeof(GCNDisplayList));
-    S32 chunkSize = NATIVE_STREAMSIZE(entry, numMeshes) - NATIVE_CHUNKHEADERSIZE;
+    GCNDisplayList* list;
+    U32 count;
+    S32 size;
+    U8* data;
+    S32 chunkSize;
+    GCNVertexArrays* arrays;
+    GCNDisplayList* lists;
     S32 headerSize;
     S32 dataSize;
     S32 i;
+
+    arrays = NATIVE_ARRAYS(entry);
+    lists = (GCNDisplayList*)(arrays + 1);
+    list = lists;
+    count = numMeshes;
+    data = (U8*)NATIVE_ALIGN32((U32)lists + numMeshes * sizeof(GCNDisplayList));
+    size = sizeof(GCNVertexArrays) + numMeshes * sizeof(GCNDisplayList);
+    chunkSize = size + (NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3) +
+                NATIVE_DATASIZE(entry, numMeshes) - NATIVE_CHUNKHEADERSIZE;
 
     if (!vtxFmt)
     {
