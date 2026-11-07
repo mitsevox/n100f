@@ -362,11 +362,10 @@ static st_ZPRJ_TYPERECORD* ZPRJ_findType(U32 aid)
     st_ZPRJ_TYPERECORD* rec;
     st_ZPRJ_TYPERECORD* da_type = NULL;
     S32 i;
-    st_PROJECTILE_DEPOT* depot = &g_prjdepot;
 
-    for (i = 0; i < depot->typeidx; i++)
+    for (i = 0; i < g_prjdepot.typeidx; i++)
     {
-        rec = &depot->typetable[i];
+        rec = &g_prjdepot.typetable[i];
         if (rec->aid_ptype == aid)
         {
             da_type = rec;
@@ -377,6 +376,8 @@ static st_ZPRJ_TYPERECORD* ZPRJ_findType(U32 aid)
     return da_type;
 }
 
+// Returns the projectile category registered for a projectile type asset, or prefer when the type
+// is unknown or has no category.
 en_ZPRJ_CATEGORY zEntProjectile_catFromPrjType(U32 ptypeID, en_ZPRJ_CATEGORY prefer)
 {
     st_ZPRJ_TYPERECORD* ptype = ZPRJ_findType(ptypeID);
