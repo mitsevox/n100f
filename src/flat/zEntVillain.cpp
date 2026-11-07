@@ -17132,8 +17132,8 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             pecust.custom_flags = 0x20;
             if (vpar->emitterID == xStrHash("ParEmit_Vil_Bored"))
             {
-                pecust.color_birth[3] = 0;
                 pecust.custom_flags |= 0x180;
+                pecust.color_birth[3] = 0;
                 pecust.color_death[3] = 0;
             }
             do_emit = 1;
@@ -17143,8 +17143,8 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             if (g_scene_is_a_boss_battle) break;
         case VPAR_EMIT_BUTTBOUNCE:
         case VPAR_EMIT_STUN:
-            pecust.pos = vilhed;
             pecust.custom_flags = 0x20;
+            pecust.pos = vilhed;
             do_emit = 1;
             break;
         case VPAR_EMIT_WALLPRINT:
@@ -17179,13 +17179,12 @@ static inline S32 VPAR_emit_headbutt(st_zEntVillain* ent, F32 dt, st_zEntVillain
 {
     _xVec3 angles = { 0 };
     _xEnt* player_ent = &globals.player.ent;
-    xMat4x3* playerframe = (xMat4x3*)player_ent->model->Mat;
     pecust->custom_flags = 0x20;
-    pecust->pos.x = playerframe->pos.x + playerframe->at.x;
-    pecust->pos.y = playerframe->pos.y + 1.1f;
-    pecust->pos.z = playerframe->pos.z + playerframe->at.z;
+    pecust->pos.x = ((xMat4x3*)player_ent->model->Mat)->pos.x + ((xMat4x3*)player_ent->model->Mat)->at.x;
+    pecust->pos.y = ((xMat4x3*)player_ent->model->Mat)->pos.y + 1.1f;
+    pecust->pos.z = ((xMat4x3*)player_ent->model->Mat)->pos.z + ((xMat4x3*)player_ent->model->Mat)->at.z;
     pecust->custom_flags |= 0x10000;
-    xMat3x3GetEuler((xMat3x3*)playerframe, &angles);
+    xMat3x3GetEuler((xMat3x3*)player_ent->model->Mat, &angles);
     pecust->rot[1] = 0x40;
     pecust->rot[0] = (U8)(S32)(255.0f * (angles.x / (2.0f * PI)));
     pecust->rot[2] = (U8)(S32)(255.0f * (angles.z / (2.0f * PI)));
