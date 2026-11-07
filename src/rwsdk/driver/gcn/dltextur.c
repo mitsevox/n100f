@@ -20,6 +20,9 @@ GXTexWrapMode lbl_801DE5F0[5] = { GX_CLAMP, GX_REPEAT, GX_MIRROR, GX_CLAMP, GX_C
 // The texture each of the eight GX texture maps holds.
 RwTexture* lbl_801DE604[GX_MAX_TEXMAP] = { NULL };
 
+// The offset of the plugin's extension in each texture.
+S32 lbl_8025F888;
+
 // The draw sync token of the current frame.
 extern volatile U16 lbl_8025E800;
 
@@ -30,6 +33,15 @@ extern RwTexture* lbl_8025F87C;
 
 #define DLTEXTUR_PALETTED(_raster)                                                                 \
     (RwRasterGetFormat(_raster) & (rwRASTERFORMATPAL4 | rwRASTERFORMATPAL8))
+
+// Stores the three LOD bias conversion constants. Nothing calls it (project-own name and body).
+// FAKEMATCH: unreferenced stand-in that only places these constants ahead of 0.0f in .sdata2; real form believed to be code not in this build that used them first
+static void DlLODBiasPoolStandIn(F32* offset, F32* scale, F32* step)
+{
+    *offset = 4096.0f;
+    *scale = -1024.0f;
+    *step = 1.0f / 1024.0f;
+}
 
 // The texture's LOD bias as GX reports it, rescaled: (4096 + bias) / -1024 when negative,
 // bias / 1024 otherwise.
@@ -79,75 +91,78 @@ S32 _rwDlTexturePluginAttach(void)
 
 // Rebuilds the texture's GX texture object for its raster, filter and addressing modes and the
 // given LOD settings; a palettized raster uses the given palette slot unless it is preloaded.
+#define DLTEXTUR_REBUILD(texture, tlut, biasClamp, edgeLOD, maxAniso, lodBias)                      \
+    RwRaster* raster = texture->raster;                                                             \
+    RwGCTextureExt* textureExt = RWGCTEXTUREEXT(texture);                                           \
+    RwGCRasterExt* rasterExt = RWGCRASTEREXT(raster->parent);                                       \
+    U32 format = RwRasterGetFormat(raster);                                                         \
+    GXTexFilter minFilter;                                                                          \
+    GXTexFilter magFilter;                                                                          \
+                                                                                                    \
+    if (format & (rwRASTERFORMATPAL4 | rwRASTERFORMATPAL8))                                         \
+    {                                                                                               \
+        S32 filter;                                                                                 \
+        U32 tlutName;                                                                               \
+                                                                                                    \
+        if (textureExt->flags & RWGCTEXTURE_PRELOADED)                                              \
+        {                                                                                           \
+            tlutName = GXGetTexObjTlut(&textureExt->texObj);                                        \
+        }                                                                                           \
+        else                                                                                        \
+        {                                                                                           \
+            tlutName = tlut;                                                                        \
+        }                                                                                           \
+                                                                                                    \
+        GXInitTexObjCI(&textureExt->texObj, rasterExt->pixels, raster->width, raster->height,       \
+                       rasterExt->format,                                                           \
+                       lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGUMASK) >> 8],   \
+                       lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGVMASK) >> 12],  \
+                       (format & rwRASTERFORMATMIPMAP) != 0, tlutName);                             \
+                                                                                                    \
+        filter = texture->filterAddressing & rwTEXTUREFILTERMODEMASK;                               \
+                                                                                                    \
+        if (filter == rwFILTERLINEARMIPLINEAR || filter == rwFILTERLINEARMIPNEAREST)                \
+        {                                                                                           \
+            minFilter = lbl_801DE5B8[rwFILTERLINEARMIPNEAREST - 1][0];                              \
+            magFilter = lbl_801DE5B8[rwFILTERLINEARMIPNEAREST - 1][1];                              \
+        }                                                                                           \
+        else                                                                                        \
+        {                                                                                           \
+            minFilter = lbl_801DE5B8[filter][0];                                                    \
+            magFilter = lbl_801DE5B8[filter][1];                                                    \
+        }                                                                                           \
+    }                                                                                               \
+    else                                                                                            \
+    {                                                                                               \
+        GXInitTexObj(&textureExt->texObj, rasterExt->pixels, raster->width, raster->height,         \
+                     rasterExt->format,                                                             \
+                     lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGUMASK) >> 8],     \
+                     lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGVMASK) >> 12],    \
+                     (format & rwRASTERFORMATMIPMAP) ? GX_TRUE : GX_FALSE);                         \
+        minFilter = lbl_801DE5B8[texture->filterAddressing & rwTEXTUREFILTERMODEMASK][0];           \
+        magFilter = lbl_801DE5B8[texture->filterAddressing & rwTEXTUREFILTERMODEMASK][1];           \
+    }                                                                                               \
+                                                                                                    \
+    GXInitTexObjLOD(&textureExt->texObj, minFilter, magFilter, 0.0f, rasterExt->maxLevel, lodBias,  \
+                    biasClamp, edgeLOD, maxAniso);                                                  \
+    textureExt->flags = ((textureExt->flags & 0xFFFF0000) | (texture->filterAddressing & 0xFFFF)) & \
+                        ~RWGCTEXTURE_DEFAULTLOD;
+
+// Rebuilds the texture object with the given LOD settings.
 static inline void DlTextureInitObj(RwTexture* texture, U32 tlut, S32 biasClamp, S32 edgeLOD,
                                     GXAnisotropy maxAniso, F32 lodBias)
 {
-    RwRaster* raster = texture->raster;
-    RwGCTextureExt* textureExt = RWGCTEXTUREEXT(texture);
-    RwGCRasterExt* rasterExt = RWGCRASTEREXT(raster->parent);
-    U32 format = RwRasterGetFormat(raster);
-    GXTexFilter minFilter;
-    GXTexFilter magFilter;
-
-    if (format & (rwRASTERFORMATPAL4 | rwRASTERFORMATPAL8))
-    {
-        S32 filter;
-        U32 tlutName;
-
-        if (textureExt->flags & RWGCTEXTURE_PRELOADED)
-        {
-            tlutName = GXGetTexObjTlut(&textureExt->texObj);
-        }
-        else
-        {
-            tlutName = tlut;
-        }
-
-        GXInitTexObjCI(&textureExt->texObj, rasterExt->pixels, raster->width, raster->height,
-                       rasterExt->format,
-                       lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGUMASK) >> 8],
-                       lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGVMASK) >> 12],
-                       (format & rwRASTERFORMATMIPMAP) != 0, tlutName);
-
-        filter = texture->filterAddressing & rwTEXTUREFILTERMODEMASK;
-
-        if (filter == rwFILTERLINEARMIPLINEAR || filter == rwFILTERLINEARMIPNEAREST)
-        {
-            minFilter = lbl_801DE5B8[rwFILTERLINEARMIPNEAREST - 1][0];
-            magFilter = lbl_801DE5B8[rwFILTERLINEARMIPNEAREST - 1][1];
-        }
-        else
-        {
-            minFilter = lbl_801DE5B8[filter][0];
-            magFilter = lbl_801DE5B8[filter][1];
-        }
-    }
-    else
-    {
-        GXInitTexObj(&textureExt->texObj, rasterExt->pixels, raster->width, raster->height,
-                     rasterExt->format,
-                     lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGUMASK) >> 8],
-                     lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGVMASK) >> 12],
-                     (format & rwRASTERFORMATMIPMAP) != 0);
-        minFilter = lbl_801DE5B8[texture->filterAddressing & rwTEXTUREFILTERMODEMASK][0];
-        magFilter = lbl_801DE5B8[texture->filterAddressing & rwTEXTUREFILTERMODEMASK][1];
-    }
-
-    GXInitTexObjLOD(&textureExt->texObj, minFilter, magFilter, 0.0f, rasterExt->maxLevel, lodBias,
-                    biasClamp, edgeLOD, maxAniso);
-    textureExt->flags = ((textureExt->flags & 0xFFFF0000) | (texture->filterAddressing & 0xFFFF)) &
-                        ~RWGCTEXTURE_DEFAULTLOD;
+    DLTEXTUR_REBUILD(texture, tlut, biasClamp, edgeLOD, maxAniso, lodBias)
 }
 
-// Rebuilds the texture object with its current LOD settings.
-static inline void DlTextureRefresh(RwTexture* texture, RwGCTextureExt* textureExt, U32 tlut)
+// Rebuilds the texture object, keeping the LOD settings its current texture object holds.
+static inline void DlTextureRefresh(RwTexture* texture, RwGCTextureExt* current, U32 tlut)
 {
-    GXAnisotropy maxAniso = GXGetTexObjMaxAniso(&textureExt->texObj);
-    S32 edgeLOD = GXGetTexObjEdgeLOD(&textureExt->texObj);
-    S32 biasClamp = GXGetTexObjBiasClamp(&textureExt->texObj);
-    F32 lodBias = fn_8017CF40(&textureExt->texObj);
-
-    DlTextureInitObj(texture, tlut, biasClamp, edgeLOD, maxAniso, lodBias);
+    GXAnisotropy maxAniso = GXGetTexObjMaxAniso(&current->texObj);
+    S32 edgeLOD = GXGetTexObjEdgeLOD(&current->texObj);
+    S32 biasClamp = GXGetTexObjBiasClamp(&current->texObj);
+    F32 lodBias = fn_8017CF40(&current->texObj);
+    DLTEXTUR_REBUILD(texture, tlut, biasClamp, edgeLOD, maxAniso, lodBias)
 }
 
 // Loads the texture into the given GX texture map (no texture loads the stand-in), rebuilding its
