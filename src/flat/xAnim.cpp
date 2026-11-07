@@ -844,13 +844,15 @@ void xAnimTableAddTransition(xAnimTable* table, xAnimTransition* tran, char* sou
     U8* buffer = giAnimScratch;
     xAnimState** stateList = (xAnimState**)(giAnimScratch + 0x400);
     U32 i;
-    U32 stateCount = 0;
-    U32 allocCount = 0;
+    U32 allocCount;
+    U32 stateCount;
     U32 flags = tran->Flags;
     char* stateName;
     xAnimTransitionList* tlist;
     xAnimTransitionList* curr;
 
+    stateCount = 0;
+    allocCount = 0;
     stateName = xStrTokBuffer(source, " ,\t\n\r", buffer);
 
     while (stateName)
@@ -880,16 +882,11 @@ void xAnimTableAddTransition(xAnimTable* table, xAnimTransition* tran, char* sou
 
     if (stateCount)
     {
-        if (gxAnimUseGrowAlloc)
-        {
-            tlist = (xAnimTransitionList*)xMemGrowAlloc(gActiveHeap,
-                                                         stateCount * sizeof(xAnimTransitionList));
-        }
-        else
-        {
-            tlist = (xAnimTransitionList*)xMemAlloc(gActiveHeap,
-                                                     stateCount * sizeof(xAnimTransitionList));
-        }
+        tlist = (xAnimTransitionList*)(gxAnimUseGrowAlloc
+                                           ? xMemGrowAlloc(gActiveHeap,
+                                                           stateCount * sizeof(xAnimTransitionList))
+                                           : xMemAlloc(gActiveHeap,
+                                                       stateCount * sizeof(xAnimTransitionList)));
     }
 
     if (flags & 0x10)
