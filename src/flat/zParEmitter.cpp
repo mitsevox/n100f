@@ -175,7 +175,7 @@ static void zParEmitterEmitCircle(xPar* p, zParEmitterAsset* a, F32 dt)
 }
 
 // The emit-type helpers below (point, rect, line, volume, offset point) and zParEmitterCull are
-// this project's names; GC/1.3.2 inlines them and the SLUS-20349 build has no out-of-line copy.
+// this project's names; the SLUS-20349 build has no out-of-line copy.
 
 // Emit from the emitter's own position.
 static void zParEmitterEmitPoint(xPar* p, zParEmitterAsset* a, F32 dt)
