@@ -236,8 +236,7 @@ static void fn_801551A8(AtomicInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
         instMesh->material = mesh->material;
         instMesh->mesh = mesh;
 
-        count = mesh->numIndices;
-        numIndices = count;
+        count = numIndices = mesh->numIndices;
 
         if (meshHeader->flags & rpMESHHEADERUNINDEXED)
         {
@@ -246,12 +245,11 @@ static void fn_801551A8(AtomicInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
 
             if (triStrip)
             {
-                U32 numTris = numIndices - 2;
                 U16 i;
 
-                instMesh->numIndices = numTris * 3;
+                instMesh->numIndices = (numIndices - 2) * 3;
 
-                for (i = 0; i < numTris; i++)
+                for (i = 0; i < numIndices - 2; i++)
                 {
                     U32 odd = i & 1;
 
