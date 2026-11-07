@@ -459,6 +459,8 @@ static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
 
             if (!entry->scope)
             {
+                rxScope* scope;
+
                 if (!(entry->scope = _ScopeTraceCreate(scopeList)))
                 {
                     RwError err;
@@ -469,13 +471,9 @@ static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
                     return 0x20;
                 }
 
-                {
-                    rxScope* scope;
-
-                    scope = entry->scope;
-                    entry->nextInScope = scope->entries;
-                    scope->entries = entry;
-                }
+                scope = entry->scope;
+                entry->nextInScope = scope->entries;
+                scope->entries = entry;
             }
         }
 
