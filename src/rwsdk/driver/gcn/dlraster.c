@@ -409,6 +409,7 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
     U8* pixels;
     S32 rowWidth;
 
+    // FAKEMATCH: (continued) the initializers split from the declarations above.
     raster = (RwRaster*)rasterIn;
     level = (flags >> 8) & 0xFF;
     top = raster->parent;
@@ -427,7 +428,8 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
 
         // The bytes of one row of the level, rounded up to whole tiles.
         // FAKEMATCH: this statement and the switch below are a row-bytes helper written out so
-        // stride is a named local; real form believed to be that helper inlined.
+        // stride is a named local; real form believed to be that helper inlined. It also shifts
+        // by the shift copy of level (real form believed to shift by level).
         rowWidth = DLRASTER_LEVELSIZE(top->width, shift);
         // FAKEMATCH: (continued) the written-out row-bytes helper.
         switch (raster->depth)
@@ -452,6 +454,7 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
 
         offset = 0;
 
+        // FAKEMATCH: (continued) the countdown, with its copy of level set above.
         while (l--)
         {
             offset += fn_80179064(raster, l);
@@ -475,6 +478,7 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
 
         if (top == raster)
         {
+            // FAKEMATCH: the shift copy of level; real form believed to shift by level.
             S32 width = raster->width >> shift;
             S32 height = raster->height >> shift;
 
