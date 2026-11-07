@@ -3,6 +3,11 @@
 
 #define MATFX_PLUGIN_ID 0x120
 
+MatFXModuleInfo MatFXInfo = { 0 };
+S32 MatFXWorldSectorDataOffset;
+S32 MatFXAtomicDataOffset;
+S32 MatFXMaterialDataOffset;
+
 static MatFXEffect* MatFXMaterialFindEffect(const RpMaterial* material,
                                             RpMatFXMaterialFlags effect)
 {

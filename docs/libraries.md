@@ -111,7 +111,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/gcn/vtxfmt.c` | 14 of 14 | (Matching on GIHE78-rev0, with its `.bss` and `.sbss`; the start edge stays open) |
 | `rwsdk/plugin/hanim/stdkey.c` | 8 of 8 | Source-linked on rev0, including the 104-byte `.sdata2` pool; ordered slerp threshold and scratch lifetimes recovered |
 | `rwsdk/plugin/hanim/rphanim.c` | 14 of 14 | (Matching on GIHE78-rev0) |
-| `rwsdk/plugin/matfx/rpmatfx.c` | 47 of 48 | `fn_8013E188` (99.2%), register choice; `.sdata2` and `.rodata` match, `.data` (MatFXInfo, declared but not defined) and `.sbss` do not |
+| `rwsdk/plugin/matfx/rpmatfx.c` | 48 of 48 | (Matching on GIHE78-rev0, with `MatFXInfo` in `.data` and the three plugin offsets in `.sbss`; `MatFXMaterialCopy` and `fn_8013E188` are tagged fake matches) |
 | `rwsdk/plugin/matfx/multiTex.c` | 17 of 17 | Matching on GIHE78-rev0 and GIHE78-rev1, with all 2,520 code bytes, `.bss` RegEntries and `.sdata` _rpMultiTextureModule (152 data bytes) |
 | `rwsdk/plugin/matfx/multiTexEffect.c` | 13 of 14 (rev0) | `RpMTEffectFind` is 99.02% (register choice); `.bss` and `.sbss` are 50% (not matched yet); NonMatching. Rev1 has 13 of 15 exact functions in its 2,852-byte mapped range; it remains NonMatching |
 | `rwsdk/plugin/skin2/rpskin.c` | 26 of 26 | (Matching on GIHE78-rev0; `_rpSkinGlobals` stays unsplit, since the source only declares it; the skin code after it reads it; starts at `SkinOpen`, `0x80144154`, since `SkinCreate` is inlined; ends after `RpSkinAtomicSetType`, `0x80144D5C`, an edge the unsplit code after it abuts) |
