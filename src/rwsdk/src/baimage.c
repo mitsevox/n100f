@@ -487,8 +487,11 @@ const char* ImageAttempRead(const char* fullName, void* data)
 // a file exists, stores the extender through data and stops the search.
 const char* ImageDetermineExtender(const char* fullName, void* data)
 {
-    char* end = (char*)fullName + rwstrlen(fullName);
-    ImageFileFormat* format = IMAGE_DATA(formats);
+    ImageFileFormat* format;
+    char* end;
+
+    end = (char*)fullName + rwstrlen(fullName);
+    format = IMAGE_DATA(formats);
 
     while (format)
     {
