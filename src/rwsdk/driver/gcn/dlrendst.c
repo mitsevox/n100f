@@ -7,12 +7,20 @@
 // the current texture raster.
 
 // The GX fog type for each RenderWare fog type, and the GX blend factor for each blend mode.
-extern const GXFogType lbl_801DE390[4];
-extern const GXBlendFactor lbl_801DE3A0[12];
+GXFogType lbl_801DE390[4] = {
+    GX_FOG_NONE, GX_FOG_LIN, GX_FOG_EXP, GX_FOG_EXP2
+};
+GXBlendFactor lbl_801DE3A0[12] = {
+    GX_BL_ZERO, GX_BL_ZERO, GX_BL_ONE, GX_BL_SRCCLR,
+    GX_BL_INVSRCCLR, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_BL_DSTALPHA,
+    GX_BL_INVDSTALPHA, GX_BL_SRCCLR, GX_BL_INVSRCCLR, GX_BL_ZERO
+};
+
+RwGcnRenderStateCache lbl_8025E348;
 
 // The 4x4 white raster, and the placeholder texture that holds the texture states.
-extern RwRaster* lbl_8025F878;
-extern RwTexture* lbl_8025F87C;
+RwTexture* lbl_8025F87C;
+RwRaster* lbl_8025F878;
 
 // The alpha test modes: none, alpha above the reference, and alpha above the reference with the
 // depth test after texturing. Written for this project.
@@ -173,7 +181,16 @@ S32 _rwDlRenderStateFogEnable(S32 enable)
     {
         if (!lbl_8025E348.fogEnable)
         {
-            F32 fogEnd = (0.0f > lbl_8025E348.fogEnd) ? camera->farPlane : lbl_8025E348.fogEnd;
+            F32 fogEnd;
+
+            if (0.0f > lbl_8025E348.fogEnd)
+            {
+                fogEnd = camera->farPlane;
+            }
+            else
+            {
+                fogEnd = lbl_8025E348.fogEnd;
+            }
 
             GXSetFog(lbl_801DE390[lbl_8025E348.fogType], camera->fogPlane, fogEnd,
                      camera->nearPlane, camera->farPlane, lbl_8025E348.gxFogColor);
@@ -192,7 +209,7 @@ S32 _rwDlRenderStateFogEnable(S32 enable)
 
 // Loads the placeholder texture and sets the alpha test for its raster: a raster with alpha
 // tests alpha after texturing.
-void fn_8017ABB4(void)
+void _rwDlTextureRasterFlush(void)
 {
     S32 mode = DLRENDST_ALPHAALWAYS;
 
@@ -207,12 +224,15 @@ void fn_8017ABB4(void)
     RwGameCubeSetAlphaCompare(mode);
 }
 
+// Update the cached alpha mode and configure the supported GX comparisons.
 void RwGameCubeSetAlphaCompare(S32 mode)
 {
     if (lbl_8025E348.alphaTest != mode)
     {
         switch (mode)
         {
+        case 4:
+            break;
         case DLRENDST_ALPHAALWAYS:
             GXSetAlphaCompare(GX_ALWAYS, lbl_8025E348.alphaRef0, GX_AOP_AND, GX_ALWAYS,
                               lbl_8025E348.alphaRef1);
@@ -242,47 +262,51 @@ void RwGameCubeSetAlphaCompare(S32 mode)
 S32 _rwDlSetRenderState(RwRenderState state, void* param)
 {
     S32 result = FALSE;
-    S32 value = (S32)param;
 
     switch (state)
     {
     case rwRENDERSTATEFOGENABLE:
-        result = _rwDlRenderStateFogEnable(value);
+        result = _rwDlRenderStateFogEnable((S32)param);
         break;
     case rwRENDERSTATEFOGCOLOR:
-        if ((U32)value != lbl_8025E348.fogColor)
+        if ((U32)param != lbl_8025E348.fogColor)
         {
             RwCamera* camera = RwCameraGetCurrentCamera();
 
-            lbl_8025E348.gxFogColor.r = ((U32)value >> 16) & 0xFF;
-            lbl_8025E348.gxFogColor.a = (U32)value >> 24;
-            lbl_8025E348.gxFogColor.g = ((U32)value >> 8) & 0xFF;
-            lbl_8025E348.gxFogColor.b = (U32)value & 0xFF;
+            lbl_8025E348.gxFogColor.a = (U32)param >> 24;
+            lbl_8025E348.gxFogColor.r = ((U32)param >> 16) & 0xFF;
+            lbl_8025E348.gxFogColor.g = ((U32)param >> 8) & 0xFF;
+            lbl_8025E348.gxFogColor.b = (U32)param & 0xFF;
             DLRENDST_SETFOG(lbl_801DE390[lbl_8025E348.fogType], camera);
-            lbl_8025E348.fogColor = value;
+            lbl_8025E348.fogColor = (S32)param;
         }
 
         result = TRUE;
         break;
     case rwRENDERSTATEFOGTYPE:
-        if ((S32)value != lbl_8025E348.fogType)
-        {
-            if (value == rwFOGTYPELINEAR)
-            {
-                RwCamera* camera = RwCameraGetCurrentCamera();
+    {
+        S32 accepted;
 
-                DLRENDST_SETFOG(lbl_801DE390[value], camera);
-                lbl_8025E348.fogType = value;
-            }
-            else
+        if ((S32)param != lbl_8025E348.fogType)
+        {
+            RwCamera* camera;
+
+            if ((S32)param != rwFOGTYPELINEAR)
             {
-                result = FALSE;
-                break;
+                accepted = FALSE;
+                goto fogtypeDone;
             }
+
+            camera = RwCameraGetCurrentCamera();
+            DLRENDST_SETFOG(lbl_801DE390[(S32)param], camera);
+            lbl_8025E348.fogType = (S32)param;
         }
 
-        result = TRUE;
+        accepted = TRUE;
+fogtypeDone:
+        result = accepted;
         break;
+    }
     case rwRENDERSTATEFOGDENSITY:
         result = FALSE;
         break;
@@ -290,60 +314,71 @@ S32 _rwDlSetRenderState(RwRenderState state, void* param)
         result = FALSE;
         break;
     case rwRENDERSTATETEXTUREADDRESS:
-        if (value == rwTEXTUREADDRESSBORDER)
+    {
+        S32 accepted;
+
+        if ((S32)param == rwTEXTUREADDRESSBORDER)
         {
-            result = FALSE;
+            accepted = FALSE;
         }
         else
         {
-            lbl_8025F87C->filterAddressing =
-                (lbl_8025F87C->filterAddressing & ~rwTEXTUREADDRESSINGMASK) |
-                ((value << 12) & rwTEXTUREADDRESSINGVMASK) | ((value << 8) & rwTEXTUREADDRESSINGUMASK);
-            result = TRUE;
+            RwTextureSetAddressing(lbl_8025F87C, param);
+            accepted = TRUE;
         }
+        result = accepted;
         break;
+    }
     case rwRENDERSTATETEXTUREADDRESSU:
-        if (value == rwTEXTUREADDRESSBORDER)
+    {
+        S32 accepted;
+
+        if ((S32)param == rwTEXTUREADDRESSBORDER)
         {
-            result = FALSE;
+            accepted = FALSE;
         }
         else
         {
             lbl_8025F87C->filterAddressing =
                 (lbl_8025F87C->filterAddressing & ~rwTEXTUREADDRESSINGUMASK) |
-                ((value << 8) & rwTEXTUREADDRESSINGUMASK);
-            result = TRUE;
+                (((S32)param << 8) & rwTEXTUREADDRESSINGUMASK);
+            accepted = TRUE;
         }
+        result = accepted;
         break;
+    }
     case rwRENDERSTATETEXTUREADDRESSV:
-        if (value == rwTEXTUREADDRESSBORDER)
+    {
+        S32 accepted;
+
+        if ((S32)param == rwTEXTUREADDRESSBORDER)
         {
-            result = FALSE;
+            accepted = FALSE;
         }
         else
         {
             lbl_8025F87C->filterAddressing =
                 (lbl_8025F87C->filterAddressing & ~rwTEXTUREADDRESSINGVMASK) |
-                ((value << 12) & rwTEXTUREADDRESSINGVMASK);
-            result = TRUE;
+                (((S32)param << 12) & rwTEXTUREADDRESSINGVMASK);
+            accepted = TRUE;
         }
+        result = accepted;
         break;
+    }
     case rwRENDERSTATETEXTUREFILTER:
-        lbl_8025F87C->filterAddressing =
-            (lbl_8025F87C->filterAddressing & ~rwTEXTUREFILTERMODEMASK) |
-            (value & rwTEXTUREFILTERMODEMASK);
+        RwTextureSetFilterMode(lbl_8025F87C, param);
         result = TRUE;
         break;
     case rwRENDERSTATETEXTURERASTER:
-        if ((RwRaster*)param != lbl_8025F87C->raster)
+        if (param != lbl_8025F87C->raster)
         {
-            _rwDlTextureSetRaster(lbl_8025F87C, (RwRaster*)param, 0);
+            _rwDlTextureSetRaster(lbl_8025F87C, param, 0);
         }
 
         result = TRUE;
         break;
     case rwRENDERSTATEZWRITEENABLE:
-        if (value)
+        if ((S32)param)
         {
             if (!lbl_8025E348.zWriteEnable)
             {
@@ -360,7 +395,7 @@ S32 _rwDlSetRenderState(RwRenderState state, void* param)
         result = TRUE;
         break;
     case rwRENDERSTATEZTESTENABLE:
-        if (value)
+        if ((S32)param)
         {
             if (!lbl_8025E348.zTestEnable)
             {
@@ -379,9 +414,12 @@ S32 _rwDlSetRenderState(RwRenderState state, void* param)
         result = TRUE;
         break;
     case rwRENDERSTATESRCBLEND:
-        if ((S32)value != lbl_8025E348.srcBlend)
+    {
+        S32 accepted;
+
+        if ((S32)param != lbl_8025E348.srcBlend)
         {
-            switch (value)
+            switch ((S32)param)
             {
             case rwBLENDZERO:
             case rwBLENDONE:
@@ -392,25 +430,32 @@ S32 _rwDlSetRenderState(RwRenderState state, void* param)
             case rwBLENDDESTCOLOR:
             case rwBLENDINVDESTCOLOR:
             {
-                GXBlendFactor factor = lbl_801DE3A0[value];
+                GXBlendFactor factor = lbl_801DE3A0[(S32)param];
 
                 GXSetBlendMode(GX_BM_BLEND, factor, lbl_8025E348.gxDestBlend, GX_LO_CLEAR);
-                lbl_8025E348.srcBlend = value;
+                lbl_8025E348.srcBlend = (S32)param;
                 lbl_8025E348.gxSrcBlend = factor;
                 break;
             }
+            case rwBLENDSRCALPHASAT:
             default:
-                result = FALSE;
-                goto done;
+                accepted = FALSE;
+                goto srcblendDone;
             }
         }
 
-        result = TRUE;
+        accepted = TRUE;
+srcblendDone:
+        result = accepted;
         break;
+    }
     case rwRENDERSTATEDESTBLEND:
-        if ((S32)value != lbl_8025E348.destBlend)
+    {
+        S32 accepted;
+
+        if ((S32)param != lbl_8025E348.destBlend)
         {
-            switch (value)
+            switch ((S32)param)
             {
             case rwBLENDZERO:
             case rwBLENDONE:
@@ -421,44 +466,49 @@ S32 _rwDlSetRenderState(RwRenderState state, void* param)
             case rwBLENDDESTALPHA:
             case rwBLENDINVDESTALPHA:
             {
-                GXBlendFactor factor = lbl_801DE3A0[value];
+                GXBlendFactor factor = lbl_801DE3A0[(S32)param];
 
                 GXSetBlendMode(GX_BM_BLEND, lbl_8025E348.gxSrcBlend, factor, GX_LO_CLEAR);
-                lbl_8025E348.destBlend = value;
+                lbl_8025E348.destBlend = (S32)param;
                 lbl_8025E348.gxDestBlend = factor;
                 break;
             }
+            case rwBLENDDESTCOLOR:
+            case rwBLENDINVDESTCOLOR:
+            case rwBLENDSRCALPHASAT:
             default:
-                result = FALSE;
-                goto done;
+                accepted = FALSE;
+                goto destblendDone;
             }
         }
 
-        result = TRUE;
+        accepted = TRUE;
+destblendDone:
+        result = accepted;
         break;
+    }
     case rwRENDERSTATESHADEMODE:
-        result = (value == rwSHADEMODEGOURAUD);
+        result = ((S32)param == rwSHADEMODEGOURAUD);
         break;
     case rwRENDERSTATEBORDERCOLOR:
         result = FALSE;
         break;
     case rwRENDERSTATETEXTUREPERSPECTIVE:
-        result = value;
+        result = (S32)param;
         break;
     case 19:
-        result = (value == 0);
+        result = (param == NULL);
         break;
     case rwRENDERSTATECULLMODE:
-        if ((S32)value != lbl_8025E348.cullMode)
+        if ((S32)param != lbl_8025E348.cullMode)
         {
-            GXSetCullMode(value - 1);
-            lbl_8025E348.cullMode = value;
+            GXSetCullMode((S32)param - 1);
+            lbl_8025E348.cullMode = (S32)param;
         }
 
         result = TRUE;
         break;
     }
 
-done:
     return result;
 }

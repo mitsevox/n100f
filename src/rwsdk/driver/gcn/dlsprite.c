@@ -175,7 +175,7 @@ void _rwDlRasterRenderQuad(RwRaster* raster, RwRect* rect, S32 scaled, S32 alpha
                         (void*)(scaled ? rwFILTERLINEAR : rwFILTERNEAREST));
     _rwDlSetRenderState(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
     _rwDlSetRenderState(rwRENDERSTATETEXTURERASTER, top);
-    fn_8017ABB4();
+    _rwDlTextureRasterFlush();
     _rwDlRasterRenderQuadInit(rect);
 
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
