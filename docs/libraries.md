@@ -79,7 +79,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/plcore/bamemory.c` | 8 of 8 | (Matching on GIHE78-rev0, with its complete eight-byte `.sbss`) |
 | `rwsdk/src/pipe/p2/p2altmdl.c` | 3 of 3 | (Matching on GIHE78-rev0, with its `.bss` _rxExecCtxGlobal) |
 | `rwsdk/tool/slerp/rtslerp.c` | 0 of 1 | `RtQuatSetupSlerpCache` (99.3%: operand and register order in the inlined arc cosine's products; text only) |
-| `rwsdk/src/babintex.c` | 7 of 9 (rev0) | `_rwStringStreamFindAndRead` (99.0%: register choice and one extra register copy) and `RwTextureStreamRead` (99.2%: the inlined string readers keep their pointers in different saved registers); NonMatching, with its `.sdata2` |
+| `rwsdk/src/babintex.c` | 8 of 9 (rev0) | `RwTextureStreamRead` (99.2%: the inlined string readers keep their pointers in different saved registers); NonMatching, with its `.sdata2`; `_rwStringStreamFindAndRead` is a tagged fake match |
 | `rwsdk/src/baimage.c` | 18 of 18 | (Matching on GIHE78-rev0; `RwImageApplyMask` is a tagged fake match) |
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
@@ -129,7 +129,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/collis/ctworld.c` | 1 of 10 | the leaf callbacks, the old-sector walks and `WorldSectorForAllBoxedPrimitivePolyIntersections` (98.9-99.8%), register choice; `WorldForAllLineWorldSectorIntersections` (91.5%: the plane-crossing splits) and `RpCollisionWorldForAllIntersections` (96.2%: a 0x3E0-byte frame against the target's 0x3D0); the two static box helpers are `static inline`, as the target inlines them |
 | `rwsdk/plugin/collis/ctbsp.c` | 8 of 8 | Complete text-only object exact; source selected on GIHE78-rev0, with whole-executable validation recorded in the PR |
 | `rwsdk/plugin/collis/rpcollis.c` | 9 of 9 | (Matching on GIHE78-rev0, with its `.sbss`; ends after `RpCollisionPluginAttach`, `0x8013BD2C`) |
-| `rwsdk/tool/intsec/rtintsec.c` | 1 of 2 | `RtIntersectionSphereTriangle` (97.5%: register choice) |
+| `rwsdk/tool/intsec/rtintsec.c` | 2 of 2 | (Matching on GIHE78-rev0; `RtIntersectionSphereTriangle` is a tagged fake match) |
 | `rwsdk/plugin/userdata/rpusrdat.c` | 17 of 17 (rev0) | (Matching on GIHE78-rev0, with its `.sbss`) |
 | `rwsdk/driver/common/palquant.c` | 15 of 17 | `ExtractNodes` (99.8%: one register swap) and `nMaximize` (99.8%), register choice; starts at `InitLeaf`, `0x801714EC` |
 | `rwsdk/driver/gcn/dltoken.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.sdata` and `.sbss`: the current and last-seen GPU tokens) |
