@@ -381,6 +381,7 @@ static S32 TriStripEdgeIsDeadEnd(TriStripEdge* edge, S32 pass)
 {
     if (pass < TRISTRIPNUMPASSES)
     {
+        S32 result = TRUE;
         S32 deadEnd = TRUE;
 
         if (edge && TRISTRIPEDGEFREE(edge, trialUsed))
@@ -390,13 +391,14 @@ static S32 TriStripEdgeIsDeadEnd(TriStripEdge* edge, S32 pass)
 
         if (!deadEnd)
         {
-            return FALSE;
+            result = FALSE;
         }
 
-        return TRUE;
+        return result;
     }
     else
     {
+        S32 result = TRUE;
         S32 deadEnd = TRUE;
 
         if (edge && TRISTRIPEDGEFREE(edge, used))
@@ -406,10 +408,10 @@ static S32 TriStripEdgeIsDeadEnd(TriStripEdge* edge, S32 pass)
 
         if (!deadEnd)
         {
-            return FALSE;
+            result = FALSE;
         }
 
-        return TRUE;
+        return result;
     }
 }
 
@@ -418,6 +420,7 @@ static S32 TriStripEdgeHasFreeTri(TriStripEdge* edge, S32 pass)
 {
     if (pass < TRISTRIPNUMPASSES)
     {
+        S32 result = FALSE;
         S32 hasFree = FALSE;
 
         if (edge && TRISTRIPEDGEFREE(edge, trialUsed))
@@ -427,13 +430,14 @@ static S32 TriStripEdgeHasFreeTri(TriStripEdge* edge, S32 pass)
 
         if (hasFree)
         {
-            return TRUE;
+            result = TRUE;
         }
 
-        return FALSE;
+        return result;
     }
     else
     {
+        S32 result = FALSE;
         S32 hasFree = FALSE;
 
         if (edge && TRISTRIPEDGEFREE(edge, used))
@@ -443,10 +447,10 @@ static S32 TriStripEdgeHasFreeTri(TriStripEdge* edge, S32 pass)
 
         if (hasFree)
         {
-            return TRUE;
+            result = TRUE;
         }
 
-        return FALSE;
+        return result;
     }
 }
 
