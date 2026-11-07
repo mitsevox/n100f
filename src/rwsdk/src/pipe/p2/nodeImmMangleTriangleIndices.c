@@ -136,7 +136,7 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
                 RwImVertexIndex* index =
                     (RwImVertexIndex*)((U8*)indices->data + indices->stride * ((numTris - 1) * 3));
 
-                odd = numTris & 1;
+                odd = (numTris & 1) != 0;
 
                 for (; i < numTris; i++)
                 {
@@ -173,6 +173,7 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
     return TRUE;
 }
 
+// Returns the node definition for the triangle-index mangler, whose one output feeds render setup.
 RxNodeDefinition* RxNodeDefinitionGetImmMangleTriangleIndices(void)
 {
     static RxClusterRef N1clofinterest[] = {
