@@ -266,61 +266,66 @@ RwImage* RwImageFreePixels(RwImage* image)
 
 RwImage* RwImageMakeMask(RwImage* image)
 {
-    switch (image->depth)
+    RwRGBA* rgba;
+    S32 depth = image->depth;
+
+    switch (depth)
     {
     case 4:
     case 8:
     {
-        RwRGBA* palette = image->palette;
-        S32 numColours = 1 << image->depth;
+        S32 numColours = 1 << depth;
         S32 i;
+
+        rgba = image->palette;
 
         for (i = 0; i < numColours; i++)
         {
-            S32 alpha = palette->red;
+            S32 alpha = rgba->red;
 
-            if (palette->green > alpha)
+            if (rgba->green > alpha)
             {
-                alpha = palette->green;
+                alpha = rgba->green;
             }
 
-            if (palette->blue > alpha)
+            if (rgba->blue > alpha)
             {
-                alpha = palette->blue;
+                alpha = rgba->blue;
             }
 
-            palette->alpha = alpha;
-            palette++;
+            rgba->alpha = alpha;
+            rgba++;
         }
 
         break;
     }
     case 32:
     {
-        U8* row = image->cpPixels;
         S32 y;
+        U8* row = image->cpPixels;
 
         for (y = 0; y < image->height; y++)
         {
-            RwRGBA* pixel = (RwRGBA*)row;
             S32 x;
+
+            rgba = (RwRGBA*)row;
 
             for (x = 0; x < image->width; x++)
             {
-                S32 alpha = pixel->red;
+                S32 alpha = rgba->red;
 
-                if (pixel->green > alpha)
+                if (rgba->green > alpha)
                 {
-                    alpha = pixel->green;
+                    alpha = rgba->green;
                 }
 
-                if (pixel->blue > alpha)
+                if (rgba->blue > alpha)
                 {
-                    alpha = pixel->blue;
+                    alpha = rgba->blue;
                 }
 
-                pixel->alpha = alpha;
-                pixel++;
+                rgba->alpha = alpha;
+                rgba++;
             }
 
             row += image->stride;
