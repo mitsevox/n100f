@@ -84,7 +84,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/src/plcore/bacolor.c` | 2 of 2 | (Matching, with `colorModule` in `.sbss`) |
-| `rwsdk/src/baresamp.c` | 1 of 4 | `ImageResampleGetSpan` (97.3%), `RwImageResample` (97.2%) and `RwImageCreateResample` (97.1%), register choice |
+| `rwsdk/src/baresamp.c` | 1 of 4 | `ImageResampleGetSpan` (97.3%), `RwImageResample` (98.5%) and `RwImageCreateResample` (97.1%), register choice |
 | `rwsdk/world/basector.c` | 6 of 6 | (Matching on GIHE78-rev0, with `sectorTKList` and `sectorModule`) |
 | `rwsdk/world/bamateri.c` | 8 of 8 | (starts at `0x8014D044` now that `_rpLightOpen` is in `balight.c`; Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |
 | `rwsdk/world/balight.c` | 13 of 13 | (Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |

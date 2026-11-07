@@ -153,12 +153,21 @@ static void ImageResampleGetAvgPixel(const RwImage* image, S32 x0, S32 x1, S32 y
 
 RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage)
 {
-    S32 width = dstImage->width;
-    S32 height = dstImage->height;
-    S32 srcY = 0;
-    S32 xStep;
-    S32 yStep;
+    S32 srcX;
+    S32 lastY;
+    S32 x;
     S32 y;
+    S32 xStep;
+    RwRGBA* pixel;
+    S32 srcY;
+    S32 yStep;
+    S32 width;
+    S32 height;
+    RwRGBAReal colour;
+
+    width = dstImage->width;
+    height = dstImage->height;
+    srcY = 0;
 
     xStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcImage->width / (F32)width));
     yStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcImage->height / (F32)height));
@@ -167,15 +176,13 @@ RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage)
 
     for (y = 0; y < height; y++)
     {
-        S32 srcX = 0;
-        S32 x;
-        RwRGBA* pixel = (RwRGBA*)(dstImage->cpPixels + dstImage->stride * y);
+        srcX = 0;
+        lastY = srcY + yStep - 1;
+        pixel = (RwRGBA*)(dstImage->cpPixels + dstImage->stride * y);
 
         for (x = 0; x < width; x++)
         {
-            RwRGBAReal colour;
-
-            ImageResampleGetAvgPixel(srcImage, srcX, srcX + xStep - 1, srcY, srcY + yStep - 1,
+            ImageResampleGetAvgPixel(srcImage, srcX, srcX + xStep - 1, srcY, lastY,
                                      &colour);
             srcX += xStep;
 
