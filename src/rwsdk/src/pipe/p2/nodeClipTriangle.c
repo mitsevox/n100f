@@ -1,5 +1,7 @@
 #include <rwcore.h>
 
+// Clips a perspective camera's triangles to the view volume: a triangle partly outside is
+// rewritten as a fan of the clipped polygon, one wholly outside is dropped.
 static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 {
     S32 result;
@@ -460,6 +462,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
     return result;
 }
 
+// Clips a parallel camera's triangles the same way, projecting new vertices without dividing by z.
 static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 {
     S32 result;
