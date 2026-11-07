@@ -775,6 +775,17 @@ S32 fn_80179D54(RwRaster* raster, S32 format, S32 tlutFormat, S32 flags, U8 dept
     return TRUE;
 }
 
+// The GX color-index texel format of a palettized raster format: 4-bit or 8-bit indices.
+static S32 DlRasterIndexFormat(U32 format)
+{
+    if (format & rwRASTERFORMATPAL4)
+    {
+        return GX_TF_C4;
+    }
+
+    return GX_TF_C8;
+}
+
 // Picks the GX texel and palette formats for the raster's format and allocates its texels.
 S32 fn_80179FA0(RwRaster* raster)
 {
@@ -782,11 +793,12 @@ S32 fn_80179FA0(RwRaster* raster)
     S32 texFormat = 0;
     S32 tlutFormat = 0;
     U32 alpha = 0;
-    S32 numLevels;
+    U8 numLevels;
+    U32 pixelFormat = format & rwRASTERFORMATPIXELFORMATMASK;
 
     if (format & (rwRASTERFORMATPAL4 | rwRASTERFORMATPAL8))
     {
-        switch (format & rwRASTERFORMATPIXELFORMATMASK)
+        switch (pixelFormat)
         {
         case rwRASTERFORMAT555:
             tlutFormat = GX_TL_RGB5A3;
@@ -806,11 +818,11 @@ S32 fn_80179FA0(RwRaster* raster)
             break;
         }
 
-        texFormat = GX_TF_C8 - ((format & rwRASTERFORMATPAL4) >> 14);
+        texFormat = DlRasterIndexFormat(format);
     }
     else
     {
-        switch (format & rwRASTERFORMATPIXELFORMATMASK)
+        switch (pixelFormat)
         {
         case rwRASTERFORMAT555:
             texFormat = GX_TF_RGB5A3;
@@ -849,10 +861,9 @@ S32 fn_80179FA0(RwRaster* raster)
 // Creates a raster: sets its format and, for a texture with a size, allocates its texels.
 S32 fn_8017A374(void* out, RwRaster* raster, S32 flags)
 {
-    RwGCRasterExt* ext;
+    RwGCRasterExt* ext = RWGCRASTEREXT(raster);
 
     raster->stride = 0;
-    ext = RWGCRASTEREXT(raster);
     ext->format = 0xFF;
     ext->tlutFormat = 0xFF;
     ext->flags = 0;
