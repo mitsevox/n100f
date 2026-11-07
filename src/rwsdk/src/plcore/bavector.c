@@ -22,104 +22,14 @@ struct VectorModuleData
 
 static RwModuleInfo vectorModule;
 
-static S32 SqrtTableCreate(void)
+// FAKEMATCH: unreferenced stand-in at the table builders' place in the file, so their constants
+// (1.0f, then sqrt's 0.0, 0.5 and 3.0, then 1.0) pool first in .sdata2; real form believed to be
+// the SqrtTableCreate and InvSqrtTableCreate helpers that _rwVectorOpen inlines. The linker strips it.
+static void SqrtTablePoolStandIn(RwSplitBits* num, RwSplitBits* root)
 {
-    RwSplitBits* table =
-        (RwSplitBits*)RWSRCGLOBAL(memoryFuncs).rwmalloc(SQRTTABLE_SIZE * sizeof(RwSplitBits));
-
-    if (!table)
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(0x80000013, SQRTTABLE_SIZE * sizeof(RwSplitBits));
-        RwErrorSet(&err);
-        return FALSE;
-    }
-    else
-    {
-        RwSplitBits num;
-        RwSplitBits* entry = table + SQRTTABLE_SIZE / 2;
-        S32 i;
-
-        num.nReal = 1.0f;
-
-        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
-        {
-            RwSplitBits root;
-            RwSplitBits value;
-
-            root.nReal = (F32)sqrt(num.nReal);
-            value.nUInt = root.nUInt - 0x1FC00000;
-            (entry++)->nUInt = value.nUInt;
-            num.nUInt += 0x1000;
-        }
-
-        entry = table;
-
-        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
-        {
-            RwSplitBits root;
-            RwSplitBits value;
-
-            root.nReal = (F32)sqrt(num.nReal);
-            value.nUInt = root.nUInt - 0x20000000;
-            (entry++)->nUInt = value.nUInt;
-            num.nUInt += 0x1000;
-        }
-
-        VECTOR_DATA(sqrtLookup) = table;
-        return TRUE;
-    }
-}
-
-static S32 InvSqrtTableCreate(void)
-{
-    RwSplitBits* table =
-        (RwSplitBits*)RWSRCGLOBAL(memoryFuncs).rwmalloc(SQRTTABLE_SIZE * sizeof(RwSplitBits));
-
-    if (!table)
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(0x80000013, SQRTTABLE_SIZE * sizeof(RwSplitBits));
-        RwErrorSet(&err);
-        return FALSE;
-    }
-    else
-    {
-        RwSplitBits num;
-        RwSplitBits* entry = table + SQRTTABLE_SIZE / 2;
-        S32 i;
-
-        num.nReal = 1.0f;
-
-        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
-        {
-            RwSplitBits root;
-            RwSplitBits value;
-
-            root.nReal = (F32)(1.0 / sqrt(num.nReal));
-            value.nUInt = root.nUInt - 0x20000000;
-            (entry++)->nUInt = value.nUInt;
-            num.nUInt += 0x1000;
-        }
-
-        entry = table;
-
-        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
-        {
-            RwSplitBits root;
-            RwSplitBits value;
-
-            root.nReal = (F32)(1.0 / sqrt(num.nReal));
-            value.nUInt = root.nUInt - 0x1FC00000;
-            (entry++)->nUInt = value.nUInt;
-            num.nUInt += 0x1000;
-        }
-
-        VECTOR_DATA(invSqrtLookup) = table;
-        return TRUE;
-    }
+    num->nReal = 1.0f;
+    root[0].nReal = (F32)sqrt(num->nReal);
+    root[1].nReal = (F32)(1.0 / sqrt(num->nReal));
 }
 
 static RwV3d* VectorMultPoint(RwV3d* pointsOut, const RwV3d* pointsIn, S32 numPoints,
@@ -302,19 +212,116 @@ void* _rwVectorClose(void* instance)
     return instance;
 }
 
+// Opens the vector module: installs the default point and vector transform functions and builds
+// the square root and inverse square root lookup tables. Returns NULL when a table cannot be allocated.
 void* _rwVectorOpen(void* instance, S32 offset, S32 size)
 {
+    // FAKEMATCH: the two lookup-table builders are written out by hand, with every table local at
+    // function scope in this order and an ok flag standing in for their return value; real form
+    // believed to be calls to static SqrtTableCreate and InvSqrtTableCreate helpers that the
+    // compiler inlines (the inlined form places the stack slots in a different order).
+    RwSplitBits sqrtRoot1;
+    RwSplitBits sqrtNum;
+    RwSplitBits invRoot1;
+    RwSplitBits invNum;
+    RwSplitBits sqrtValue2;
+    RwSplitBits sqrtRoot2;
+    RwSplitBits sqrtValue1;
+    RwSplitBits invValue2;
+    RwSplitBits invRoot2;
+    RwSplitBits invValue1;
+    RwSplitBits* table;
+    RwSplitBits* entry;
+    S32 i;
+    S32 ok;
+
     vectorModule.globalsOffset = offset;
 
     VECTOR_DATA(pointsFn) = VectorMultPoint;
     VECTOR_DATA(vectorsFn) = VectorMultVector;
 
-    if (!SqrtTableCreate())
+    // Square root table.
+    table = (RwSplitBits*)RWSRCGLOBAL(memoryFuncs).rwmalloc(SQRTTABLE_SIZE * sizeof(RwSplitBits));
+
+    if (!table)
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x80000013, SQRTTABLE_SIZE * sizeof(RwSplitBits));
+        RwErrorSet(&err);
+        ok = FALSE;
+    }
+    else
+    {
+        entry = table + SQRTTABLE_SIZE / 2;
+        sqrtNum.nReal = 1.0f;
+
+        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
+        {
+            sqrtRoot1.nReal = (F32)sqrt(sqrtNum.nReal);
+            sqrtValue1.nUInt = sqrtRoot1.nUInt - 0x1FC00000;
+            (entry++)->nUInt = sqrtValue1.nUInt;
+            sqrtNum.nUInt += 0x1000;
+        }
+
+        entry = table;
+
+        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
+        {
+            sqrtRoot2.nReal = (F32)sqrt(sqrtNum.nReal);
+            sqrtValue2.nUInt = sqrtRoot2.nUInt - 0x20000000;
+            (entry++)->nUInt = sqrtValue2.nUInt;
+            sqrtNum.nUInt += 0x1000;
+        }
+
+        VECTOR_DATA(sqrtLookup) = table;
+        ok = TRUE;
+    }
+
+    if (!ok)
     {
         return NULL;
     }
 
-    if (!InvSqrtTableCreate())
+    // Inverse square root table, in the same layout.
+    table = (RwSplitBits*)RWSRCGLOBAL(memoryFuncs).rwmalloc(SQRTTABLE_SIZE * sizeof(RwSplitBits));
+
+    if (!table)
+    {
+        RwError err;
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x80000013, SQRTTABLE_SIZE * sizeof(RwSplitBits));
+        RwErrorSet(&err);
+        ok = FALSE;
+    }
+    else
+    {
+        entry = table + SQRTTABLE_SIZE / 2;
+        invNum.nReal = 1.0f;
+
+        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
+        {
+            invRoot1.nReal = (F32)(1.0 / sqrt(invNum.nReal));
+            invValue1.nUInt = invRoot1.nUInt - 0x20000000;
+            (entry++)->nUInt = invValue1.nUInt;
+            invNum.nUInt += 0x1000;
+        }
+
+        entry = table;
+
+        for (i = 0; i < SQRTTABLE_SIZE / 2; i++)
+        {
+            invRoot2.nReal = (F32)(1.0 / sqrt(invNum.nReal));
+            invValue2.nUInt = invRoot2.nUInt - 0x1FC00000;
+            (entry++)->nUInt = invValue2.nUInt;
+            invNum.nUInt += 0x1000;
+        }
+
+        VECTOR_DATA(invSqrtLookup) = table;
+        ok = TRUE;
+    }
+
+    if (!ok)
     {
         return NULL;
     }
