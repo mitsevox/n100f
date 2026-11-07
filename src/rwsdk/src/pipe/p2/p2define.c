@@ -564,11 +564,6 @@ static inline RxPipeline* PipelineUnlockTopSort(RxPipeline* pipeline)
     return pipeline;
 }
 
-static inline RxPipelineNode* PipelineFirstNode(RxPipeline* pipeline)
-{
-    return pipeline->nodes;
-}
-
 static inline U32 PipelineNodesSize(RxPipeline* pipeline, RxPipelineNode* node)
 {
     U32 size;
@@ -617,7 +612,7 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
                 return NULL;
             }
 
-            node = PipelineFirstNode(pipeline);
+            node = pipeline->nodes;
             numUnique = PipelineCalcNumUniqueClusters(pipeline);
 
             maxSize = RXPIPELINEGLOBAL(maxNodesPerPipeline) * sizeof(RxPipelineNode)
@@ -677,7 +672,6 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
             }
 
             {
-
                 // Move the sort data to the top of the block, then pack the outputs in after
                 // the nodes.
                 outputs = (U32*)&pipeline->nodes[RXPIPELINEGLOBAL(maxNodesPerPipeline)];
