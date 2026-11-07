@@ -79,12 +79,12 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/plcore/bamemory.c` | 8 of 8 | (Matching on GIHE78-rev0, with its complete eight-byte `.sbss`) |
 | `rwsdk/src/pipe/p2/p2altmdl.c` | 3 of 3 | (Matching on GIHE78-rev0, with its `.bss` _rxExecCtxGlobal) |
 | `rwsdk/tool/slerp/rtslerp.c` | 0 of 1 | `RtQuatSetupSlerpCache` (99.3%: operand and register order in the inlined arc cosine's products; text only) |
-| `rwsdk/src/babintex.c` | 7 of 9 (rev0) | `_rwStringStreamFindAndRead` (99.0%) and `RwTextureStreamRead` (97.6%): the inlined string readers keep their pointers alive longer in the target; NonMatching, with its `.sdata2` |
-| `rwsdk/src/baimage.c` | 16 of 18 | `RwImageApplyMask` (98.5%) and `ImagePathForAllFullNames` (98.3%), register choice |
+| `rwsdk/src/babintex.c` | 7 of 9 (rev0) | `_rwStringStreamFindAndRead` (99.0%: register choice and one extra register copy) and `RwTextureStreamRead` (99.2%: the inlined string readers keep their pointers in different saved registers); NonMatching, with its `.sdata2` |
+| `rwsdk/src/baimage.c` | 16 of 18 | `RwImageApplyMask` (98.5%) and `ImagePathForAllFullNames` (98.8%), register choice; `ImagePathForAllFullNames` also has one extra register copy |
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/src/plcore/bacolor.c` | 2 of 2 | (Matching, with `colorModule` in `.sbss`) |
-| `rwsdk/src/baresamp.c` | 1 of 4 | `ImageResampleGetSpan` (97.3%), `RwImageResample` (97.2%) and `RwImageCreateResample` (97.1%), register choice |
+| `rwsdk/src/baresamp.c` | 1 of 4 | `ImageResampleGetSpan` (97.9%: the shift order of y, x0 and x1, register choice and the order of the conversion stack slots), `RwImageResample` (98.5%) and `RwImageCreateResample` (97.1%), register choice |
 | `rwsdk/world/basector.c` | 6 of 6 | (Matching on GIHE78-rev0, with `sectorTKList` and `sectorModule`) |
 | `rwsdk/world/bamateri.c` | 8 of 8 | (starts at `0x8014D044` now that `_rpLightOpen` is in `balight.c`; Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |
 | `rwsdk/world/balight.c` | 13 of 13 | (Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |
@@ -111,19 +111,19 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/gcn/vtxfmt.c` | 14 of 14 | (Matching on GIHE78-rev0, with its `.bss` and `.sbss`; the start edge stays open) |
 | `rwsdk/plugin/hanim/stdkey.c` | 8 of 8 | Source-linked on rev0, including the 104-byte `.sdata2` pool; ordered slerp threshold and scratch lifetimes recovered |
 | `rwsdk/plugin/hanim/rphanim.c` | 14 of 14 | (Matching on GIHE78-rev0) |
-| `rwsdk/plugin/matfx/rpmatfx.c` | 41 of 48 | `MatFXMaterialCopy` (98.6%), `fn_8013E188` (98.2%), `fn_8013E5CC` (98.0%), `fn_8013DEC4` (97.7%), `_rpMatFXTextureMaskCreate` (85.2%), `fn_8013E76C` and `fn_8013E894` (78.4%), register choice and scheduling; data open (`.sdata2` and `MatFXInfo` not split) |
+| `rwsdk/plugin/matfx/rpmatfx.c` | 46 of 48 | `MatFXMaterialCopy` (99.3%) and `fn_8013E188` (99.2%), register choice; `.sdata2` and `.rodata` match, `.data` (MatFXInfo, declared but not defined) and `.sbss` do not |
 | `rwsdk/plugin/matfx/multiTex.c` | 17 of 17 | Matching on GIHE78-rev0 and GIHE78-rev1, with all 2,520 code bytes, `.bss` RegEntries and `.sdata` _rpMultiTextureModule (152 data bytes) |
-| `rwsdk/plugin/matfx/multiTexEffect.c` | 13 of 14 (rev0) | `RpMTEffectFind` remains 98.35366%; NonMatching. Rev1 has 13 of 15 exact functions in its 2,852-byte mapped range; it remains NonMatching |
+| `rwsdk/plugin/matfx/multiTexEffect.c` | 13 of 14 (rev0) | `RpMTEffectFind` is 99.02% (register choice); `.bss` and `.sbss` are 50% (not matched yet); NonMatching. Rev1 has 13 of 15 exact functions in its 2,852-byte mapped range; it remains NonMatching |
 | `rwsdk/plugin/skin2/rpskin.c` | 26 of 26 | (Matching on GIHE78-rev0; `_rpSkinGlobals` stays unsplit, since the source only declares it; the skin code after it reads it; starts at `SkinOpen`, `0x80144154`, since `SkinCreate` is inlined; ends after `RpSkinAtomicSetType`, `0x80144D5C`, an edge the unsplit code after it abuts) |
-| `rwsdk/plugin/skin2/gcn/skingcn.c` | 6 of 8 | Consistent interrupt-visible token declarations add exact bodies; remaining routines partial. NonMatching, original linked |
+| `rwsdk/plugin/skin2/gcn/skingcn.c` | 7 of 8 | `fn_80145598` (94.5%: register choice, the order of its table loads and stores); `.sdata2` matches, `.rodata` (90.9%) and `.sbss` do not; NonMatching, original linked |
 | `rwsdk/plugin/skin2/gcn/skinstream.c` | 3 of 3 | Source-linked on rev0; cumulative native-chunk sizing and independent read locals, text-only object |
 | `rwsdk/plugin/skin2/gcn/skingcng.c` | 3 of 3 | all 3 functions; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
 | `rwsdk/plugin/matfx/gcn/multiTexGcn.c` | 1 of 1 | one function; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
-| `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 4 of 7 | `GameCubeMTEffectStreamRead` (98.2%), `GameCubeMTEffectStreamWrite` (86.5%) and `RpGameCubeMTEffectCreate` (85.5%), not diagnosed yet |
-| `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 3 of 9 | `_rpGameCubeMTMeshRenderCallBack` (94.7%), `GetTexFrameMatrix` (90.2%), `fn_80141958` (90.1%), `_rpGameCubeMTPipeDataQueryNBTs` (89.6%), `fn_80141D20` (82.8%) and `_rpGameCubeMTEffectSend` (68.7%), not diagnosed yet (text only) |
-| `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 11 of 15 | Consistent interrupt-visible token declarations add exact bodies; remaining routines partial. NonMatching, original linked |
-| `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 4 of 7 | `fn_8015DBA4` (96.9%), `fn_8015E054` (97.5%) and `fn_8015E2E8`, the instance callback (98.4%: the first loads' order) (text only) |
-| `rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c` | 3 of 5 | `_rxGCWorldSectorAllInOneNode` (97.9%) and `fn_8015E908`, the instance callback (93.2%: register choice and the first loads' order) (text only) |
+| `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 6 of 7 | `GameCubeMTEffectStreamWrite` (98.4%: the header loads' order and registers) |
+| `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 8 of 9 | `_rpGameCubeMTEffectSend` (98.6%: register choice and one argument load); `.data`, `.sbss` and `.sdata2` (90.9%) do not match yet |
+| `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 14 of 15 | `fn_80140178` (99.4%: register choice and the argument setup order at two calls); `.bss`, `.sbss`, `.sdata` and `.sdata2` (85.7%) do not match yet; NonMatching, original linked |
+| `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 5 of 7 | `fn_8015DBA4` (96.9%) and `fn_8015E054` (97.5%) (text only) |
+| `rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c` | 4 of 5 | `_rxGCWorldSectorAllInOneNode` (97.9%) (text only) |
 | `rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c` | 4 of 4 (rev0) | (Matching on GIHE78-rev0, with its `.data` and `.sbss`; vertices go through the GX vertex functions) |
 | `rwsdk/plugin/collis/ctgeom.c` | 7 of 7 | (NonMatching: this source pools `1.0` before `0.0` in `.sdata2`, the target the other way round) |
 | `rwsdk/plugin/collis/ctworld.c` | 1 of 10 | the leaf callbacks, the old-sector walks and `WorldSectorForAllBoxedPrimitivePolyIntersections` (98.9-99.8%), register choice; `WorldForAllLineWorldSectorIntersections` (91.5%: the plane-crossing splits) and `RpCollisionWorldForAllIntersections` (96.2%: a 0x3E0-byte frame against the target's 0x3D0); the two static box helpers are `static inline`, as the target inlines them |
@@ -135,8 +135,8 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/driver/gcn/dltoken.c` | 4 of 4 | (Matching on GIHE78-rev0, with its `.sdata` and `.sbss`: the current and last-seen GPU tokens) |
 | `rwsdk/driver/gcn/dl2drend.c` | 6 of 6 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.bss` and `.sdata2`; the vertex helpers take a plain `RwIm2DVertex*`) |
 | `rwsdk/driver/gcn/dlconvrt.c` | 23 of 25 | `_rwDlPixelToRGB` (92.7%: the target calls `_rwDlConv565To8888` out of line for the default format) and `_rwDlRGBToPixel` (88.3%: the target keeps the pixel in a stack slot); the image readers and raster writers take their converter from the inlined `DlRGBAConverter` and `DlPixelConverter`, and the two device entry points take the standard-function signature. NonMatching, original linked |
-| `rwsdk/driver/gcn/dldevice.c` | 9 of 13 | RasterShowRaster 79.6% (the target keeps the ring-full flag in a stack slot and orders the ring stores differently), PreRetraceCallback 95.5% (the token wait flag clear is stored first, where the target stores it last), System 99.5% (two register swaps), RenderModeSelect three words from exact, the anti-aliased test's copy and constant in the other order with the branch flipped (objdiff shows 42.8% because that swap makes it pair a 34-instruction block as inserted and deleted). NonMatching, original linked |
-| `rwsdk/driver/gcn/dlraster.c` | 14 of 17 | `DlRasterTile` (84.2%) and `DlRasterUntile` (82.3%), `fn_80179198` (98.1%: register choice; its row size comes from the inlined `DlRasterRowBytes`). NonMatching, original linked |
+| `rwsdk/driver/gcn/dldevice.c` | 9 of 13 | RasterShowRaster 79.6% (the target keeps the ring-full flag in a stack slot and orders the ring stores differently), PreRetraceCallback 95.5% (the token wait flag clear is stored first, where the target stores it last), System 99.8% (a register swap in the standards table copy), RenderModeSelect three words from exact, the anti-aliased test's copy and constant in the other order with the branch flipped (objdiff shows 42.8% because that swap makes it pair a 34-instruction block as inserted and deleted). NonMatching, original linked |
+| `rwsdk/driver/gcn/dlraster.c` | 16 of 17 | `fn_80179198` (98.1%: register choice; its row size comes from the inlined `DlRasterRowBytes`). NonMatching, original linked |
 | `rwsdk/driver/gcn/dlrendst.c` | 7 of 7 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.bss`, `.sbss` and `.sdata2`; the fog setter is the inlined `DlRenderStateSetFog`) |
 | `rwsdk/driver/gcn/dlsprite.c` | 12 of 12 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`; vertices go through the `GXVert.h` inlines) |
 | `rwsdk/driver/gcn/dltexdic.c` | 3 of 3 (rev0) | (Matching on GIHE78-rev0, with its `.sdata2`; `RwGameCubeTextureSetLOD` takes the LOD bias second, as the reader's call evaluates it) |

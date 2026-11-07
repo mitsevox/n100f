@@ -256,11 +256,14 @@ void RpMTEffectDestroy(RpMTEffect* effect)
 
 static RpMTEffect* MTEffectDictFindNamedEffect(RpMTEffectDict* dict, const char* name)
 {
-    RwLLLink* cur = rwLinkListGetFirstLLLink(&dict->effectList);
+    RpMTEffect* effect;
+    RwLLLink* cur;
+
+    cur = rwLinkListGetFirstLLLink(&dict->effectList);
 
     while (cur != rwLinkListGetTerminator(&dict->effectList))
     {
-        RpMTEffect* effect = rwLLLinkGetData(cur, RpMTEffect, inDictLink);
+        effect = rwLLLinkGetData(cur, RpMTEffect, inDictLink);
 
         if (!rwstrcmp(effect->name, name))
         {
@@ -321,10 +324,15 @@ static RpMTEffect* MTEffectStreamRead(RwStream* stream)
 
 RpMTEffect* RpMTEffectFind(const char* name)
 {
-    MTEffectGlobals* globals = MTEFFECTGLOBALS();
-    RpMTEffect* effect = NULL;
+    MTEffectGlobals* globals;
     RwStream* stream;
     char* fullPath;
+    RwLLLink* cur;
+    RpMTEffectDict* dict;
+    RpMTEffect* effect;
+
+    globals = MTEFFECTGLOBALS();
+    effect = NULL;
 
     if (globals->currentDict)
     {
@@ -332,11 +340,11 @@ RpMTEffect* RpMTEffectFind(const char* name)
     }
     else
     {
-        RwLLLink* cur = rwLinkListGetFirstLLLink(&globals->dictList);
+        cur = rwLinkListGetFirstLLLink(&globals->dictList);
 
         while (cur != rwLinkListGetTerminator(&globals->dictList))
         {
-            RpMTEffectDict* dict = rwLLLinkGetData(cur, RpMTEffectDict, inGlobalsLink);
+            dict = rwLLLinkGetData(cur, RpMTEffectDict, inGlobalsLink);
 
             effect = MTEffectDictFindNamedEffect(dict, name);
 

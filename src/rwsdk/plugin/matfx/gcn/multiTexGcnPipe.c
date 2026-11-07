@@ -84,13 +84,18 @@ void* fn_80141954(void* instance, S32 offset, S32 size)
 void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType)
 {
     GCNMTNBT* nbt;
-    RwV3d* positions = (RwV3d*)arrays->pos;
-    RwTexCoords* texCoords = (RwTexCoords*)arrays->tex[0];
-    GCNMTNBT* nbts = (GCNMTNBT*)arrays->nrm;
-    U16* indices = mesh->indices;
+    RwV3d* positions;
+    RwTexCoords* texCoords;
+    GCNMTNBT* nbts;
+    U16* indices;
     U16 a;
     U16 b;
     S32 i;
+
+    positions = (RwV3d*)arrays->pos;
+    nbts = (GCNMTNBT*)arrays->nrm;
+    texCoords = (RwTexCoords*)arrays->tex[0];
+    indices = mesh->indices;
 
     for (i = 0; i < mesh->numIndices; i++)
     {
@@ -100,12 +105,6 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
 
         if (nbt->binormal.x == MTGCN_NBTUNSET)
         {
-            RwV3d* p0;
-            RwV3d* p1;
-            RwV3d* p2;
-            RwTexCoords* t0;
-            RwTexCoords* t1;
-            RwTexCoords* t2;
             RwV3d e1;
             RwV3d e2;
             RwV3d s;
@@ -138,9 +137,7 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
 
                     if (a == b)
                     {
-                        U16 next = indices[i + 1];
-
-                        if (index == next)
+                        if (index == indices[i + 1])
                         {
                             i++;
                             a = indices[i + 1];
@@ -156,7 +153,7 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
                         else
                         {
                             a = b;
-                            b = next;
+                            b = indices[i + 1];
                         }
                     }
 
@@ -187,19 +184,12 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
                 }
             }
 
-            p0 = &positions[index];
-            p1 = &positions[a];
-            p2 = &positions[b];
-            t0 = &texCoords[index];
-            t1 = &texCoords[a];
-            t2 = &texCoords[b];
-
-            dv2 = t2->v - t0->v;
-            dv1 = t1->v - t0->v;
-            du2 = t2->u - t0->u;
-            du1 = t1->u - t0->u;
-            RwV3dSubMacro(&e1, p1, p0);
-            RwV3dSubMacro(&e2, p2, p0);
+            RwV3dSubMacro(&e1, &positions[a], &positions[index]);
+            RwV3dSubMacro(&e2, &positions[b], &positions[index]);
+            dv2 = texCoords[b].v - texCoords[index].v;
+            dv1 = texCoords[a].v - texCoords[index].v;
+            du2 = texCoords[b].u - texCoords[index].u;
+            du1 = texCoords[a].u - texCoords[index].u;
             RwV3dScaleMacro(&e1, &e1, dv2);
             RwV3dScaleMacro(&e2, &e2, dv1);
             RwV3dSubMacro(&s, &e2, &e1);
