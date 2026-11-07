@@ -949,7 +949,7 @@ config.libs: List[Dict[str, Any]] = [
         "rphanim",
         [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/hanim/stdkey.c"),
-            Object(NonMatching, "rwsdk/plugin/hanim/rphanim.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/hanim/rphanim.c"),
         ],
     ),
     RWLib(
@@ -1001,7 +1001,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/world/pipe/p2/nodePostLight.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/nodeWorldSectorInstance.c"),
-            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/gcpipe.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/gcpipe.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/instance/geominst.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/instance/instancegeom.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/instance/instanceworld.c"),
@@ -1083,7 +1083,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/pipe/p2/nodeTransform.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/p2altmdl.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/p2clpcom.c"),
-            Object(NonMatching, "rwsdk/src/pipe/p2/p2core.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/p2core.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/p2define.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/p2dep.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/p2heap.c"),
