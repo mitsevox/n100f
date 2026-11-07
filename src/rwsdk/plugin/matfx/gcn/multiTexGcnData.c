@@ -20,7 +20,7 @@ struct GCNMTStreamHeader
 {
     U8 numTexCoordGens;
     U8 numTevStages;
-    S8 flags;
+    U8 flags;
     U8 blend;
     U16 tevColors[16];
     U8 kColors[16];
@@ -157,7 +157,8 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
     GCNMTStreamHeader header;
     U32 i;
 
-    if (!_rwStreamWriteVersionedChunkHeader(stream, rwID_STRUCT, MTGCN_STREAMSIZE(config), 0x33002,
+    if (!_rwStreamWriteVersionedChunkHeader(stream, rwID_EXTENSION,
+                                            GameCubeMTEffectStreamGetSize(effect), 0x33002,
                                             0xFFFF))
     {
         return NULL;
@@ -169,7 +170,7 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
     header.numTexMatrices = config->numTexMatrices;
     header.numIndMatrices = config->numIndMatrices;
     header.numIndStages = config->numIndStages;
-    header.blend = (config->destBlend & 0xF) | ((config->srcBlend << 4) & 0xF0);
+    header.blend = ((config->srcBlend << 4) & 0xF0) | (config->destBlend & 0xF);
     memcpy(header.kColors, config->kColors, sizeof(header.kColors));
     memcpy(header.tevColors, config->tevColors, sizeof(header.tevColors));
     RwMemLittleEndian16(header.tevColors, sizeof(header.tevColors));
@@ -279,14 +280,17 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
     return (RwStream*)effect;
 }
 
+// Reads a GameCube multi-texture effect: the header (without the last three counts in streams
+// older than 0x33002), then one record per texture coordinate generator, TEV stage, texture
+// matrix, indirect matrix and indirect stage. Frees the effect and returns NULL on a short read.
 RpMTEffect* GameCubeMTEffectStreamRead(RwStream* stream, S32 platform, U32 version, U32 length)
 {
-    S32 old = version < 0x33002;
-    GCNMTStreamHeader header;
-    RpMTEffect* effect;
-    GCNMTConfig* config;
     U32 size;
     U32 i;
+    RpMTEffect* effect;
+    GCNMTConfig* config;
+    S32 old = version < 0x33002;
+    GCNMTStreamHeader header;
 
     if (old)
     {
