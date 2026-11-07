@@ -995,7 +995,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/baworobj.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/bapipew.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c"),
-            Object(NonMatching, "rwsdk/world/pipe/p2/nodeAtomicInstance.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/nodeAtomicInstance.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/nodeLight.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/nodeMaterialScatter.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/nodePostLight.c"),
