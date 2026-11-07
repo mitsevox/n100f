@@ -1386,9 +1386,11 @@ static inline void TransitionTimeInit(xAnimSingle* single, xAnimTransition* tran
 {
     if (tran->Flags & 0x20)
     {
-        if ((tran->Dest->Data->FileFlags ^ single->State->Data->FileFlags) & 0x1000)
+        xAnimFile* dest = tran->Dest->Data;
+        xAnimFile* src = single->State->Data;
+        if ((src->FileFlags ^ dest->FileFlags) & 0x1000)
         {
-            single->Time = tran->Dest->Data->Duration - single->Time;
+            single->Time = dest->Duration - single->Time;
         }
     }
     else
