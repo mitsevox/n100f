@@ -409,7 +409,7 @@ zEntProjectile* zEntProjectile_acquire(en_ZPRJ_CATEGORY cat, U32 ptypeID)
 
 en_ZPRJ_STATES zEntProjectile::StateSet(en_ZPRJ_STATES state)
 {
-    en_ZPRJ_STATES oldstate;
+    en_ZPRJ_STATES oldstate = this->state;
 
     if (this->state == state)
     {
@@ -419,13 +419,19 @@ en_ZPRJ_STATES zEntProjectile::StateSet(en_ZPRJ_STATES state)
     switch (this->state)
     {
     case ZPRJ_STATE_DEAD:
+        oldstate = ZPRJ_STATE_DEAD;
         break;
     case ZPRJ_STATE_ACTIVE:
     case ZPRJ_STATE_STANDBY:
         flg_stat &= 0xFFFF;
         flg_stat |= 0x10000;
+        oldstate = this->state;
         break;
     case ZPRJ_STATE_UNUSED:
+        oldstate = ZPRJ_STATE_UNUSED;
+        break;
+    default:
+        oldstate = this->state;
         break;
     }
 
