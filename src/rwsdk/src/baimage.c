@@ -755,8 +755,9 @@ RwImage* RwImageCopy(RwImage* destImage, const RwImage* sourceImage)
     return destImage;
 }
 
-// Runs numPixels colors through the gamma table, keeping their alpha.
-static void ImageGammaCorrectPixels(RwRGBA* out, const RwRGBA* in, S32 numPixels)
+// Runs numPixels colors through the gamma table, keeping their alpha. Named in the PS2 prototype
+// symbol tables; the GC build inlines it into RwImageGammaCorrect and keeps no copy.
+void _rwImageGammaCorrectArrayOfRGBA(RwRGBA* out, RwRGBA* in, S32 numPixels)
 {
     const U8* table = IMAGE_DATA(gammaLut);
 
@@ -789,7 +790,7 @@ RwImage* RwImageGammaCorrect(RwImage* image)
             return NULL;
         }
 
-        ImageGammaCorrectPixels(palette, palette, numColours);
+        _rwImageGammaCorrectArrayOfRGBA(palette, palette, numColours);
         break;
     }
     case 32:
@@ -807,7 +808,7 @@ RwImage* RwImageGammaCorrect(RwImage* image)
 
         for (y = 0; y < height; y++)
         {
-            ImageGammaCorrectPixels((RwRGBA*)row, (const RwRGBA*)row, width);
+            _rwImageGammaCorrectArrayOfRGBA((RwRGBA*)row, (RwRGBA*)row, width);
             row += image->stride;
         }
 
