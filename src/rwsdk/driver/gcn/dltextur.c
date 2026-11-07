@@ -13,7 +13,7 @@ extern const GXTexWrapMode lbl_801DE5F0[5];
 extern RwTexture* lbl_801DE604[9];
 
 // The draw sync token of the current frame.
-extern U16 lbl_8025E800;
+extern volatile U16 lbl_8025E800;
 
 // The texture and raster that stand in for no texture.
 extern RwRaster* lbl_8025F878;

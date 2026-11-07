@@ -6,7 +6,7 @@
 // memory is reused, and the callbacks the all-in-one nodes run to instance and draw objects.
 
 // The draw sync token to issue next.
-extern U16 lbl_8025E800;
+extern volatile U16 lbl_8025E800;
 
 S32 _rwDlTokenQueryDone(U16 token);
 void _rwDlVtxFmtSetup(RpGameCubeVtxFmt* vtxFmt, GCNObjectData* objectData);

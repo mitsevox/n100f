@@ -7,7 +7,7 @@
 // pointers stored as offsets from the start of the data.
 
 extern S32 lbl_8025E7C0;
-extern U16 lbl_8025E800;
+extern volatile U16 lbl_8025E800;
 
 void _rxGCResEntryWaitDone(RwResEntry* resEntry);
 RpGameCubeVtxFmt* _rpGameCubeVtxFmtGetDefault(void);
