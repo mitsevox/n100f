@@ -851,9 +851,10 @@ static void fastidct8x8(unsigned char* out, int stride, short* in, const int* q)
     o = out;
     for (ctr = 8; ctr > 0; ctr--)
     {
-        tmp10 = w[0] + w[4];
+        tmp10 = w[4];
         tmp11 = w[0] - w[4];
         tmp13 = w[2] + w[6];
+        tmp10 = w[0] + tmp10;
         tmp12 = MUL(w[2] - w[6], 2896) - tmp13;
         t[0] = tmp10 + tmp13;
         t[3] = tmp10 - tmp13;
