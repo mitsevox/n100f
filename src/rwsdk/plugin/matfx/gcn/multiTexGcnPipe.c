@@ -658,16 +658,50 @@ void _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTexture
 }
 
 // Draws one mesh with its material's multitexture: sets the textures, runs the pre-render
+// Puts back the GX state an effect changed that the next draw does not set itself: manual texture
+// coordinate scaling, the indirect stages and indirect TEV stages.
+static void MTResetEffectState(RpMTEffect* effect)
+{
+    GCNMTConfig* config = RpGameCubeMTEffectGetConfig(effect);
+    S32 j;
+
+    for (j = 0; j < config->numTexCoordGens; j++)
+    {
+        if (config->texCoordGens[j].flags & GCNMTTEXGEN_MANUALSCALE)
+        {
+            GXSetTexCoordScaleManually(j, GX_FALSE, 0, 0);
+        }
+    }
+
+    if (config->numIndStages)
+    {
+        GXSetNumIndStages(0);
+
+        for (j = 0; j < config->numIndStages; j++)
+        {
+            GXSetIndTexCoordScale(j, GX_ITS_1, GX_ITS_1);
+        }
+
+        for (j = 0; j < config->numTevStages; j++)
+        {
+            if (config->tevStages[j].indirect)
+            {
+                GXSetTevDirect(j);
+            }
+        }
+    }
+}
+
 // callback, sends the effect, draws the display list and undoes what the effect set.
 void _rpGameCubeMTMeshRenderCallBack(GCNDisplayList* displayList, RpMaterial* material,
                                      void* object, GCNObjectData* objectData,
                                      const RwMatrix* matrix)
 {
+    S32 srcBlend;
+    U32 i;
     RpMultiTexture* multiTexture = RpMaterialGetMultiTexture(material, MTGCN_PLATFORM);
     GCNMTPlatformData* platformData = (GCNMTPlatformData*)multiTexture->platformData;
-    S32 srcBlend;
     S32 destBlend;
-    U32 i;
 
     RwRenderStateGet(rwRENDERSTATESRCBLEND, &srcBlend);
     RwRenderStateGet(rwRENDERSTATEDESTBLEND, &destBlend);
@@ -684,9 +718,7 @@ void _rpGameCubeMTMeshRenderCallBack(GCNDisplayList* displayList, RpMaterial* ma
 
     if (multiTexture->effect)
     {
-        GCNMTConfig* config;
         S32 twoChannels = FALSE;
-        S32 j;
 
         if (objectData->globalMask && objectData->localMask)
         {
@@ -697,33 +729,7 @@ void _rpGameCubeMTMeshRenderCallBack(GCNDisplayList* displayList, RpMaterial* ma
                                 multiTexture->numTextures, multiTexture->coords, matrix);
         GXCallDisplayList(displayList->list, displayList->size);
 
-        config = RpGameCubeMTEffectGetConfig(multiTexture->effect);
-
-        for (j = 0; j < config->numTexCoordGens; j++)
-        {
-            if (config->texCoordGens[j].flags & GCNMTTEXGEN_MANUALSCALE)
-            {
-                GXSetTexCoordScaleManually(j, GX_FALSE, 0, 0);
-            }
-        }
-
-        if (config->numIndStages)
-        {
-            GXSetNumIndStages(0);
-
-            for (j = 0; j < config->numIndStages; j++)
-            {
-                GXSetIndTexCoordScale(j, GX_ITS_1, GX_ITS_1);
-            }
-
-            for (j = 0; j < config->numTevStages; j++)
-            {
-                if (config->tevStages[j].indirect)
-                {
-                    GXSetTevDirect(j);
-                }
-            }
-        }
+        MTResetEffectState(multiTexture->effect);
     }
     else
     {
