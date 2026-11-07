@@ -11,4 +11,10 @@ void xRayHitsBound(const _xRay3* r, const xQCData* q, const _xBound* b, _xCollis
 void xVecHitsBound(const xVec3* v, const _xBound* b, _xCollis* c);
 void xBoundHitsModel(const _xBound* b, const xModelInstance* m, _xCollis* colls, U8 ncolls, F32 sth);
 
+// The center of an entity's bound.
+inline xVec3* xEntGetCenter(const _xEnt* ent)
+{
+    return (xVec3*)xBoundCenter(&ent->bound);
+}
+
 #endif

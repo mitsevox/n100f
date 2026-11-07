@@ -13529,31 +13529,21 @@ static inline S32 VOUT_hit_isWall(st_zEntVillain* const vil, _xVec3* dir_trav, _
 
     if (vil->abl_move & 0x1000) flg_look = 8;
 
-    if (fabsf(vec_fromwall->y) > 0.01f)
+    // Not a wall: tilted, the villain is not in its normal mode, or the normal is straight up.
+    if (fabsf(vec_fromwall->y) > 0.01f) return 0;
+    if (vil->mode > ZVIL_MODE_NORMAL) return 0;
+    if (!(vec_fromwall->x * vec_fromwall->x + vec_fromwall->z * vec_fromwall->z > 0.0f)) return 0;
+
+    vec_tmp.x = vec_fromwall->x;
+    vec_tmp.z = vec_fromwall->z;
+    xVec3Normalize(&vec_tmp, &vec_tmp);
+    if (dir_trav && fabsf(xVec3Dot(dir_trav, &vec_tmp)) > 0.8f)
     {
-        result = 0;
-    }
-    else if (vil->mode > ZVIL_MODE_NORMAL)
-    {
-        result = 0;
-    }
-    else if (!(vec_fromwall->x * vec_fromwall->x + vec_fromwall->z * vec_fromwall->z > 0.0f))
-    {
-        result = 0;
-    }
-    else
-    {
-        vec_tmp.x = vec_fromwall->x;
-        vec_tmp.z = vec_fromwall->z;
-        xVec3Normalize(&vec_tmp, &vec_tmp);
-        if (dir_trav && fabsf(xVec3Dot(dir_trav, &vec_tmp)) > 0.8f)
-        {
-            flg_look = flg_look | 0x11U;
-            result = 1;
-            _zMovePoint* pt = zMovePointFindNearest(flg_look, xBoundCenter(&vil->bound), vil, VNAV_chklos_timz);
-            vil->need_navpt = 0;
-            if (pt && pt != vil->nav_next) vil->nav_next = pt;
-        }
+        flg_look = flg_look | 0x11U;
+        result = 1;
+        _zMovePoint* pt = zMovePointFindNearest(flg_look, xEntGetCenter(vil), vil, VNAV_chklos_timz);
+        vil->need_navpt = 0;
+        if (pt && pt != vil->nav_next) vil->nav_next = pt;
     }
     return result;
 }
