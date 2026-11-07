@@ -778,10 +778,10 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
 
             while (y--)
             {
-                S32 width = image->width;
+                U32 width = image->width;
                 U8* src = pixels;
                 U8* dst = dstPixels;
-                S32 x;
+                U32 x;
 
                 for (x = 0; x < width; x++)
                 {
@@ -812,16 +812,18 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
 
             while (y--)
             {
-                S32 width = image->width;
+                U32 width = image->width;
                 RwRGBA* color = (RwRGBA*)pixels;
                 U8* dst = dstPixels;
-                S32 x;
+                U32 x;
 
                 for (x = 0; x < width; x++)
                 {
-                    U8 index = GetIndex(pq->root, PALQUANT_INDEX(color), PALQUANT_DEPTH);
+                    U32 cellIndex = PALQUANT_INDEX(color);
+                    U8 index;
 
                     color++;
+                    index = GetIndex(pq->root, cellIndex, PALQUANT_DEPTH);
 
                     if (x & 1)
                     {
@@ -883,8 +885,10 @@ void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPa
 
                 while (x--)
                 {
-                    *dst++ = GetIndex(pq->root, PALQUANT_INDEX(color), PALQUANT_DEPTH);
+                    U32 cellIndex = PALQUANT_INDEX(color);
+
                     color++;
+                    *dst++ = GetIndex(pq->root, cellIndex, PALQUANT_DEPTH);
                 }
 
                 pixels += stride;
