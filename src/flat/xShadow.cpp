@@ -17,31 +17,13 @@
 
 #include <rwcore.h>
 #include <rpworld.h>
+#include <rpcollis.h>
 
 #include <math.h>
 #include <string.h>
 
-// The shadow pass renders one entity's model, white on clear, into a small camera's raster seen
-// from the light, then projects that raster down onto the world triangles and receiving models
-// under the entity.
-
-struct RpIntersection
-{
-    union
-    {
-        RwSphere sphere;
-        U8 pad[0x18];
-    } t;
-    S32 type;
-};
-
-struct RpCollisionTriangle
-{
-    RwV3d normal;
-    RwV3d point;
-    S32 index;
-    RwV3d* vertices[3];
-};
+// The shadow pass renders an entity's model against clear white into a small camera's raster,
+// inverts the image, then projects it onto world triangles and selected receiving models.
 
 // Shared by ShadowRender and its triangle callback: the projection from world space into the
 // shadow raster's 0..1 texture space.
@@ -58,11 +40,6 @@ extern "C" RwMatrix* RwMatrixInvert(RwMatrix* matrixOut, const RwMatrix* matrixI
 extern "C" RwMatrix* RwMatrixTranslate(RwMatrix* matrix, const RwV3d* translation,
                                        RwOpCombineType combineOp);
 extern "C" F32 RwV3dLength(const RwV3d* in);
-extern "C" RpWorld* RpCollisionWorldForAllIntersections(
-    RpWorld* world, RpIntersection* intersection,
-    RpCollisionTriangle* (*callBack)(RpIntersection*, RpWorldSector*, RpCollisionTriangle*, F32,
-                                     void*),
-    void* data);
 extern "C" void fn_80178A3C(RwRaster* raster);
 
 static S32 ShadowRender(RwCamera* shadowCamera, RwRaster* shadowRaster, RpWorld* world,
@@ -219,8 +196,8 @@ void xShadowSetLight(xVec3* target_pos, xVec3* in_vec, F32 strength)
     RwFrameUpdateObjects(camFrame);
 }
 
-// Cast three short rays along the light under the entity. When they reach the world geometry
-// before any entity, project the shadow onto the world triangles in a sphere round the hit.
+// Tighten the allowed world/entity separation near two scene-specific spots before probing
+// shadow receivers.
 static inline void xShadowRenderWorldNear(xVec3* center, F32 radius)
 {
     U32 sceneID = globals.sceneCur->sceneID;
@@ -248,6 +225,8 @@ static inline void xShadowRenderWorldNear(xVec3* center, F32 radius)
     xShadowRenderWorld(center, radius);
 }
 
+// Probe along the light with three rays, allowing both world and entity receivers when their
+// hits are close together.
 void xShadowRenderWorld(xVec3* center, F32 radius)
 {
     xSphere _s;
@@ -360,7 +339,7 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
         return;
     }
 
-    shadowZone.type = 3;
+    shadowZone.type = rpINTERSECTSPHERE;
     shadowZone.t.sphere.center = *(RwV3d*)&_s.center;
     shadowZone.t.sphere.radius = _s.r;
     ShadowRender(ShadowCamera, ShadowRenderRaster, globals.sceneCur->env->geom->world,
@@ -626,7 +605,7 @@ void xShadowReceiveShadow(_xEnt* ent)
 }
 
 // Fit the shadow camera's parallel view round a sphere of the given radius.
-static inline RwCamera* ShadowCameraSetSpherePersp(RwCamera* camera, xVec3* center, F32 radius)
+static inline RwCamera* ShadowCameraSetSpherePersp(RwCamera* const camera, xVec3* center, F32 radius)
 {
     RwV2d vw;
 
@@ -660,8 +639,8 @@ static inline void GCSaveFrameBuffer()
 
 static void GCRestoreFrameBuffer();
 
-// Render the model white on clear into the shadow camera's raster, then invert it, keeping the
-// main camera's frame buffer intact.
+// Render the model against clear white into the shadow camera's raster, then invert the image
+// and restore the saved screen rectangle.
 static inline RwCamera* ShadowCameraUpdate(RwCamera* shadowCamera, xModelInstance* model)
 {
     RwRGBA bgColor = { 255, 255, 255, 0 };
@@ -703,7 +682,7 @@ static inline void xShadowCameraUpdate(xModelInstance* model, xVec3* center, F32
     ShadowCameraUpdate(ShadowCamera, model);
 }
 
-// Projects the entity's shadow onto world triangles and nearby receiving models.
+// Capture the model's shadow, project it onto the world, and select potential entity receivers.
 // Two scenes tighten the entity/world distance that still counts as one surface near a spot.
 void xShadowRender(_xEnt* ent)
 {
@@ -764,7 +743,7 @@ S32 Im2DRenderQuad(F32 x1, F32 y1, F32 x2, F32 y2, F32 z, F32 recipCamZ, F32 uvO
     return 1;
 }
 
-// Invert the rendered silhouette: the model drew white on clear, and the shadow is its inverse.
+// Invert the rendered shadow-camera image with destination-color blending.
 void InvertRaster(RwCamera* cam)
 {
     RwIm2DVertex vx[4];
