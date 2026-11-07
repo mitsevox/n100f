@@ -66,6 +66,7 @@ static zSFX* g_sounds[1] = {};
 static char* g_sfxnames[1] = {};
 static S32 g_prj_init;
 
+// Registers the callback table and the collision properties of the four projectile categories.
 void zEntProjectile_Startup()
 {
     st_ZPRJ_CATEGORY_FUNCS fmap_gen = {
@@ -89,16 +90,17 @@ void zEntProjectile_Startup()
     st_ZPRJ_CATEGORY_PROPS prop_grav = { 0xB0000021, 0x03, 0x3F, 0x7E, 0, 0 };
     st_ZPRJ_CATEGORY_PROPS prop_bounce = { 0xB0000021, 0x03, 0x3F, 0x7E, 0, 0x02000000 };
 
-    zEntProjectile_addCat(ZPRJ_CAT_UNKNOWN, &fmap_gen);
+    en_ZPRJ_CATEGORY cat = ZPRJ_CAT_UNKNOWN;
+    zEntProjectile_addCat(cat, &fmap_gen);
     zEntProjectile_addProps(ZPRJ_CAT_UNKNOWN, &prop_gen);
-
-    zEntProjectile_addCat(ZPRJ_CAT_ARROW, &fmap_arrow);
+    cat = ZPRJ_CAT_ARROW;
+    zEntProjectile_addCat(cat, &fmap_arrow);
     zEntProjectile_addProps(ZPRJ_CAT_ARROW, &prop_arrow);
-
-    zEntProjectile_addCat(ZPRJ_CAT_GRAVBALL, &fmap_grav);
+    cat = ZPRJ_CAT_GRAVBALL;
+    zEntProjectile_addCat(cat, &fmap_grav);
     zEntProjectile_addProps(ZPRJ_CAT_GRAVBALL, &prop_grav);
-
-    zEntProjectile_addCat(ZPRJ_CAT_BOUNCEBALL, &fmap_bounce);
+    cat = ZPRJ_CAT_BOUNCEBALL;
+    zEntProjectile_addCat(cat, &fmap_bounce);
     zEntProjectile_addProps(ZPRJ_CAT_BOUNCEBALL, &prop_bounce);
 }
 
