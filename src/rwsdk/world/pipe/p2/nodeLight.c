@@ -15,21 +15,35 @@
 extern RxClusterDefinition RxClLights;
 extern RxClusterDefinition RxClVSteps;
 
-static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                  RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                  F32 invScale);
-static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                      RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                      F32 invScale);
-static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                F32 invScale);
-static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                               RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                               F32 invScale);
-static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                   RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                   F32 invScale);
+
+// Stand-in for lost code. The target pools 255.0f, -1.0f and 0.0f ahead of the 1.0f that
+// _LightFn loads, so a function compiled before _LightFn used them first. Nothing calls this one,
+// and the linker strips it as it stripped the original.
+static void LightPoolStandIn(F32* scale, F32* sign, F32* lambert)
+{
+    *scale *= LIGHT_COLORSCALE;
+    *sign *= -1.0f;
+
+    if (*lambert > 0.0f)
+    {
+        *lambert = 0.0f;
+    }
+}
 
 // Lights the mesh with every light in the lights cluster, unless the mesh is wholly clipped. A
 // mesh that is not at the world origin gets the lights moved into its object space.
@@ -192,7 +206,7 @@ RxNodeDefinition* RxNodeDefinitionGetLight(void)
         (_vert)->col.blue += (_amount) * (_light)->color.blue;                                     \
     }
 
-static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                  RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                  F32 invScale)
 {
@@ -257,7 +271,7 @@ static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight
     }
 }
 
-static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                      RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                      F32 invScale)
 {
@@ -345,7 +359,7 @@ static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, RpL
         invRadius = 1.0f / light->radius;                                                          \
     }
 
-static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                F32 invScale)
 {
@@ -422,7 +436,7 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* 
     }
 }
 
-static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                               RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                               F32 invScale)
 {
@@ -525,7 +539,7 @@ static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* l
     }
 }
 
-static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                   RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                   F32 invScale)
 {
