@@ -233,6 +233,17 @@ static inline void zSaveLoad_CardPoll(S32 i)
     }
 }
 
+// Waits for an answer to the shown prompt, polling the card meanwhile.
+static inline void zSaveLoad_PromptWait(S32 i)
+{
+    promptSel = -1;
+    while (promptSel == -1)
+    {
+        zSaveLoad_Tick();
+        zSaveLoad_CardPoll(i);
+    }
+}
+
 // The target index of the given card: the card itself with both slots filled, 0 with one.
 static inline S32 CardtoTgt(S32 card)
 {
@@ -403,19 +414,16 @@ static inline S32 zSaveLoad_CardCheckSlotEmpty_hasGame_doCheck(st_XSAVEGAME_DATA
     xSGTgtSelect(xsgdata, cardNumber);
     if (xSGTgtIsFormat(xsgdata, cardNumber, &badEncode) == 0)
     {
-        rc = -1;
+        return -1;
     }
-    else
+    rc = xSGGameIsEmpty(xsgdata, gameNumber);
+    if (rc != 0)
     {
-        rc = xSGGameIsEmpty(xsgdata, gameNumber);
-        if (rc != 0)
-        {
-            rc = 0;
-        }
-        else if (rc == 0)
-        {
-            rc = 1;
-        }
+        rc = 0;
+    }
+    else if (rc == 0)
+    {
+        rc = 1;
     }
     return rc;
 }
@@ -618,7 +626,11 @@ extern "C" S32 fn_800C9710(char* dst)
 U32 zSaveLoad_slotIsEmpty(U32 i)
 {
     // Empty slots are identified by their displayed label.
-    return strcmp(zSaveLoadGameTable[i].label, "Empty") == 0;
+    if (strcmp(zSaveLoadGameTable[i].label, "Empty") == 0)
+    {
+        return 1;
+    }
+    return 0;
 }
 
 S32 xSGT_LoadPrefsCB(void* vp, st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_READCONTEXT* rctxt,
@@ -659,6 +671,16 @@ S32 xSGT_LoadLoadCB(void* vp, st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_READCONTE
     return compdiff == 0;
 }
 
+// Reads the saved scene ID without the length check. Nothing calls it.
+static inline void zSaveLoad_ReadSceneID(st_XSAVEGAME_DATA* xsgdata,
+                                         st_XSAVEGAME_READCONTEXT* rctxt)
+{
+    char bigbuf[32] = {};
+
+    xSGReadData(xsgdata, rctxt, bigbuf, 1, strlen(currSceneStr));
+    strcpy(sceneRead, bigbuf);
+}
+
 S32 xSGT_SaveProcPrefsCB(void* vp, st_XSAVEGAME_DATA* xsgdata,
                          st_XSAVEGAME_WRITECONTEXT* wctxt)
 {
@@ -673,6 +695,7 @@ S32 xSGT_SaveProcPrefsCB(void* vp, st_XSAVEGAME_DATA* xsgdata,
     return sum + 1;
 }
 
+// Reports the bytes the preferences record needs (24) and its largest size (48).
 S32 xSGT_SaveInfoPrefsCB(void* vp, st_XSAVEGAME_DATA* xsgdata, S32* need, S32* most)
 {
     // Six four-byte preference values are written by the save callback.
@@ -688,6 +711,7 @@ S32 xSGT_SaveProcCB(void* vp, st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_WRITECONT
     return xSGWriteData(xsgdata, wctxt, currSceneStr, 1, strlen(currSceneStr)) + 1;
 }
 
+// Reports the bytes the scene record needs: the scene ID string, at most twice that.
 S32 xSGT_SaveInfoCB(void* vp, st_XSAVEGAME_DATA* xsgdata, S32* need, S32* most)
 {
     *need = xSGWriteStrLen(currSceneStr);
@@ -695,6 +719,7 @@ S32 xSGT_SaveInfoCB(void* vp, st_XSAVEGAME_DATA* xsgdata, S32* need, S32* most)
     return 1;
 }
 
+// Turns the save menu's dispatcher events into the prompt answer or the chosen card or slot.
 void zSaveLoad_DispatchCB(U32 dispatchEvent, F32* toParam)
 {
     switch (dispatchEvent)
@@ -898,17 +923,18 @@ U32 zSaveLoad_LoadLoop()
 // Loads the game from the chosen slot. Returns 1 when it was loaded.
 S32 zSaveLoad_LoadGame()
 {
+    st_XSAVEGAME_DATA* xsgdata;
     S32 success = 0;
     S32 teststat = 1;
-    en_XSGASYNC_STATUS asstat = XSG_ASTAT_NOOP;
-    S32 use_tgt = CardtoTgt(currentCard);
-    en_XSG_WHYFAIL whyFail = XSG_WHYERR_NONE;
     S32 rc;
+    en_XSGASYNC_STATUS asstat = XSG_ASTAT_NOOP;
+    en_XSG_WHYFAIL whyFail = XSG_WHYERR_NONE;
+    S32 use_tgt = CardtoTgt(currentCard);
 
     zSaveLoad_UIEvent(40, eEventUIFocusOn);
     zSaveLoad_Tick();
 
-    st_XSAVEGAME_DATA* xsgdata = xSGInit(XSG_MODE_LOAD);
+    xsgdata = xSGInit(XSG_MODE_LOAD);
     xSGTgtSelect(xsgdata, use_tgt);
     xSGGameSet(xsgdata, currentGame);
     if (xsgdata == NULL)
@@ -939,6 +965,8 @@ S32 zSaveLoad_LoadGame()
         {
             switch (asstat)
             {
+            case XSG_ASTAT_INPROG:
+                break;
             case XSG_ASTAT_SUCCESS:
                 success = 1;
                 break;
@@ -969,18 +997,21 @@ S32 zSaveLoad_LoadGame()
 // Saves the game to the chosen slot. Returns 1 when it was saved.
 S32 zSaveLoad_SaveGame()
 {
+    st_XSAVEGAME_DATA* xsgdata;
     S32 success = 0;
     S32 teststat = 1;
-    en_XSGASYNC_STATUS asstat = XSG_ASTAT_NOOP;
-    S32 use_tgt = CardtoTgt(currentCard);
-    en_XSG_WHYFAIL whyFail = XSG_WHYERR_NONE;
     S32 rc;
+    en_XSGASYNC_STATUS asstat = XSG_ASTAT_NOOP;
+    en_XSG_WHYFAIL whyFail = XSG_WHYERR_NONE;
+    S32 use_tgt = CardtoTgt(currentCard);
+    U32 progress;
     char label[64];
+    char* area;
 
     zSaveLoad_UIEvent(40, eEventUIFocusOn);
     zSaveLoad_Tick();
 
-    st_XSAVEGAME_DATA* xsgdata = xSGInit(XSG_MODE_SAVE);
+    xsgdata = xSGInit(XSG_MODE_SAVE);
     xSGTgtSelect(xsgdata, use_tgt);
     xSGGameSet(xsgdata, currentGame);
     if (xsgdata == NULL)
@@ -993,8 +1024,9 @@ S32 zSaveLoad_SaveGame()
     xSGAddSaveClient(xsgdata, 'PREF', NULL, xSGT_SaveInfoPrefsCB, xSGT_SaveProcPrefsCB);
     xSerial_svgame_register(xsgdata, XSG_MODE_SAVE);
 
-    S32 progress = zSceneCalcProgress();
-    strncpy(label, zSceneGetAreaname(globals.sceneCur->sceneID), sizeof(label));
+    progress = zSceneCalcProgress();
+    area = zSceneGetAreaname(globals.sceneCur->sceneID);
+    strncpy(label, area, sizeof(label));
     label[63] = '\0';
     if (!xSGSetup(xsgdata, currentGame, label, progress, 0))
     {
@@ -1018,6 +1050,8 @@ S32 zSaveLoad_SaveGame()
         {
             switch (asstat)
             {
+            case XSG_ASTAT_INPROG:
+                break;
             case XSG_ASTAT_SUCCESS:
                 success = 1;
                 break;
@@ -1079,10 +1113,9 @@ S32 zSaveLoad_GameSelect(S32 mode)
     badCard = 1;
     while (badCard)
     {
-        S32 tgt = currentCard;
         currentGame = -1;
         promptSel = -1;
-        tgt = CardtoTgt(tgt);
+        S32 tgt = CardtoTgt(currentCard);
 
         if (mode == 1)
         {
@@ -1090,9 +1123,10 @@ S32 zSaveLoad_GameSelect(S32 mode)
             zSaveLoad_UIEvent(0, eEventUIFocusOn);
         }
 
+        st_XSAVEGAME_DATA* ldinst;
         for (S32 i = 0; i < 3; i++)
         {
-            st_XSAVEGAME_DATA* ldinst = xSGInit(XSG_MODE_LOAD);
+            ldinst = xSGInit(XSG_MODE_LOAD);
             xSGTgtSelect(ldinst, tgt);
             if (xSGGameIsEmpty(ldinst, i))
             {
@@ -1141,30 +1175,43 @@ S32 zSaveLoad_GameSelect(S32 mode)
                     continue;
                 }
                 done = zSaveLoad_CardCheckFormatted(currentCard, mode);
-                switch (done)
+                if (done != 1)
                 {
-                case 5:
-                    done = 0;
-                    promptSel = -1;
-                    break;
-                case 2:
-                    currentGame = -1;
-                    break;
-                case 1:
-                    done = zSaveLoad_CardCheckValid(currentCard, mode, 0);
                     switch (done)
                     {
+                    case 5:
+                        done = 0;
+                        promptSel = -1;
+                        break;
                     case 2:
                         currentGame = -1;
                         break;
-                    case 1:
-                        if (badCard == 0)
+                    }
+                }
+                else
+                {
+                    done = zSaveLoad_CardCheckValid(currentCard, mode, 0);
+                    if (done != 1)
+                    {
+                        switch (done)
                         {
-                            done = zSaveLoad_CardCheckGameSlot(currentCard, currentGame, mode);
+                        case 5:
+                        case 6:
+                            done = 0;
+                            promptSel = -1;
+                            break;
+                        case 2:
+                            currentGame = -1;
+                            break;
+                        }
+                    }
+                    else if (badCard == 0)
+                    {
+                        done = zSaveLoad_CardCheckGameSlot(currentCard, currentGame, mode);
+                        if (done != 1)
+                        {
                             switch (done)
                             {
-                            case 1:
-                                break;
                             case 5:
                             case -1:
                                 done = 0;
@@ -1175,18 +1222,12 @@ S32 zSaveLoad_GameSelect(S32 mode)
                                 break;
                             }
                         }
-                        else
-                        {
-                            done = 0;
-                            currentGame = -1;
-                        }
-                        break;
-                    default:
-                        done = 0;
-                        promptSel = -1;
-                        break;
                     }
-                    break;
+                    else
+                    {
+                        done = 0;
+                        currentGame = -1;
+                    }
                 }
             }
         }
@@ -1198,17 +1239,10 @@ S32 zSaveLoad_GameSelect(S32 mode)
     }
     zSaveLoad_UIEvent(zSaveLoad_ModeUI(mode, 0, 21), eEventUIFocusOff_Unselect);
 
-    if (done == 1)
-    {
-        return done;
-    }
-    if (promptSel != -1)
-    {
-        return promptSel;
-    }
     return done;
 }
 
+// Builds the label shown for a save slot, numbering it when an earlier slot has the same label.
 void zSaveLoad_BuildName(char* name_txt, S32 idx)
 {
     char desired[64];
@@ -1245,8 +1279,8 @@ S32 zSaveLoad_CardPick(S32 mode)
     currentCard = -1;
     promptSel = -1;
 
-    zSaveLoad_UIEvent(zSaveLoad_ModeUI(mode, 1, 22), eEventUIFocusOn);
-    zSaveLoad_UIEvent(zSaveLoad_ModeUI(mode, 4, 23), eEventUISelect);
+    zSaveLoad_UIEvent(mode == 1 ? 1 : 22, eEventUIFocusOn);
+    zSaveLoad_UIEvent(mode == 1 ? 4 : 23, eEventUISelect);
 
     while (done == 0 && promptSel == -1)
     {
@@ -1258,64 +1292,55 @@ S32 zSaveLoad_CardPick(S32 mode)
             case 2:
                 currentCard = -1;
                 promptSel = -1;
-                break;
+                continue;
             case -1:
                 done = 0;
                 promptSel = -1;
-                break;
-            default:
-                done = zSaveLoad_CardCheckFormatted(currentCard, mode);
-                switch (done)
+                continue;
+            }
+
+            done = zSaveLoad_CardCheckFormatted(currentCard, mode);
+            switch (done)
+            {
+            case 5:
+            case 6:
+                promptSel = -1;
+                done = 0;
+                continue;
+            case 2:
+            case 4:
+                currentCard = -1;
+                promptSel = -1;
+                continue;
+            case -1:
+                promptSel = -1;
+                done = 0;
+                continue;
+            }
+
+            done = zSaveLoad_CardCheckValid(currentCard, mode, 1);
+            switch (done)
+            {
+            case 5:
+            case 6:
+                promptSel = -1;
+                done = 0;
+                continue;
+            case 2:
+            case 4:
+                promptSel = -1;
+                if (done != 1)
                 {
-                case 5:
-                case 6:
-                    promptSel = -1;
-                    done = 0;
-                    break;
-                case 2:
-                case 4:
-                    currentCard = -1;
-                    promptSel = -1;
-                    break;
-                case -1:
-                    promptSel = -1;
-                    done = 0;
-                    break;
-                default:
-                    done = zSaveLoad_CardCheckValid(currentCard, mode, 1);
-                    switch (done)
-                    {
-                    case 5:
-                    case 6:
-                        promptSel = -1;
-                        done = 0;
-                        break;
-                    case 2:
-                    case 4:
-                        promptSel = -1;
-                        if (done != 1)
-                        {
-                            currentGame = -1;
-                        }
-                        zSaveLoad_Tick();
-                        break;
-                    case -1:
-                        promptSel = -1;
-                        done = 0;
-                        break;
-                    default:
-                        zSaveLoad_Tick();
-                        break;
-                    }
-                    break;
+                    currentGame = -1;
                 }
                 break;
+            case -1:
+                promptSel = -1;
+                done = 0;
+                continue;
             }
         }
-        else
-        {
-            zSaveLoad_Tick();
-        }
+        zSaveLoad_Tick();
     }
 
     zSaveLoad_UIEvent(zSaveLoad_ModeUI(mode, 1, 22), eEventUIFocusOff_Unselect);
@@ -1343,19 +1368,14 @@ S32 zSaveLoad_CardCheckSlotOverwrite(S32 cardNumber, S32 gameNumber)
 
         zSaveLoad_UIEvent(21, eEventUIFocusOff_Unselect);
         zSaveLoad_UIEvent(34, eEventUIFocusOn_Select);
-        promptSel = -1;
-        while (promptSel == -1)
-        {
-            zSaveLoad_Tick();
-            zSaveLoad_CardPoll(5);
-        }
+        zSaveLoad_PromptWait(5);
         zSaveLoad_UIEvent(34, eEventUIFocusOff_Unselect);
-        switch (promptSel)
+        if (promptSel == 5)
         {
-        case 5:
             return promptSel;
-        case 2:
-        case 4:
+        }
+        if (promptSel == 2 || promptSel == 4)
+        {
             return 2;
         }
         break;
@@ -1389,6 +1409,7 @@ S32 zSaveLoad_CardCheckSlotEmpty(S32 cardNumber, S32 gameNumber)
     return 1;
 }
 
+// Checks the chosen slot: for a load that it holds a game, for a save that it may be overwritten.
 S32 zSaveLoad_CardCheckGameSlot(S32 cardNumber, S32 gameNumber, S32 mode)
 {
     if (mode == 1)
@@ -1413,12 +1434,7 @@ S32 zSaveLoad_CardCheckGames(S32 cardNumber, S32 mode)
         zSaveLoad_UIEvent(zSaveLoad_ModeUI(mode, 0, 21), eEventUIFocusOff_Unselect);
         zSaveLoad_UIEvent(1, eEventUIFocusOff_Unselect);
         zSaveLoad_UIEvent(18, eEventUIFocusOn_Select);
-        promptSel = -1;
-        while (promptSel == -1)
-        {
-            zSaveLoad_Tick();
-            zSaveLoad_CardPoll(3);
-        }
+        zSaveLoad_PromptWait(3);
         zSaveLoad_UIEvent(18, eEventUIFocusOff_Unselect);
         if (promptSel == 2 || promptSel == 4)
         {
@@ -1429,7 +1445,7 @@ S32 zSaveLoad_CardCheckGames(S32 cardNumber, S32 mode)
 }
 
 // Checks for room on the card, letting the player continue without saving. Returns 1 when
-// there is room, 2 when the player backed out.
+// there is room, 2 when the player backed out, or the failed check's -1, 5 or 6.
 S32 zSaveLoad_CardCheckSpace(S32 cardNumber, S32 mode, S32 checkSlots)
 {
     S32 slotsFull = 0;
@@ -1437,7 +1453,15 @@ S32 zSaveLoad_CardCheckSpace(S32 cardNumber, S32 mode, S32 checkSlots)
     while (result != 1)
     {
         badCard = 1;
-        if (result == -1 || result == 6 || result == 5)
+        if (result == -1)
+        {
+            return result;
+        }
+        if (result == 6)
+        {
+            return result;
+        }
+        if (result == 5)
         {
             return result;
         }
@@ -1454,18 +1478,20 @@ S32 zSaveLoad_CardCheckSpace(S32 cardNumber, S32 mode, S32 checkSlots)
         }
         zSaveLoad_UIEvent(36, eEventUIFocusOff_Unselect);
 
-        if (slotsFull && promptSel == 4)
+        S32 sel = promptSel;
+        if (slotsFull && sel == 4)
         {
             return 1;
         }
         sSkipAllowed = 0;
-        if (promptSel == 2)
+        if (sel == 2)
         {
             fn_80041CE8(1, cardNumber, cardNumber);
             fn_80041CC4(1, 23);
             if (zSaveLoad_MessagePrompt(mode, 3, (S32(*)(S32))zSaveLoad_poll, 0) == 3)
             {
                 iSystemReset(1);
+                return 2;
             }
             return 2;
         }
@@ -1479,6 +1505,7 @@ S32 zSaveLoad_CardCheckSpace(S32 cardNumber, S32 mode, S32 checkSlots)
     return 1;
 }
 
+// Checks the card's contents: a saved game to load, or room to save.
 S32 zSaveLoad_CardCheckValid(S32 cardNumber, S32 mode, S32 checkSlots)
 {
     if (mode == 1)
@@ -1489,7 +1516,7 @@ S32 zSaveLoad_CardCheckValid(S32 cardNumber, S32 mode, S32 checkSlots)
 }
 
 // Checks the card, offering to repair or format it. Returns 1 when it can be used, 2 when the
-// player backed out, -1 when it was pulled.
+// player backed out, -1 when it was pulled, or format's result when formatting failed.
 S32 zSaveLoad_CardCheckFormatted(S32 cardNumber, S32 mode)
 {
     S32 badEncode = 0;
@@ -1559,7 +1586,6 @@ S32 zSaveLoad_CardCheckFormatted(S32 cardNumber, S32 mode)
         fn_80041CE8(1, cardNumber, cardNumber);
         fn_80041CC4(1, 20);
         zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
-        return 1;
     }
 
     fn_80041D58(1);
@@ -1595,23 +1621,26 @@ S32 zSaveLoad_CardCheckFormatted(S32 cardNumber, S32 mode)
         zSaveLoad_Tick();
         S32 result = fn_800411A8(cardNumber, 1, NULL, &repaired);
         zSaveLoad_UIEvent(40, eEventUIFocusOff);
-        if (result <= 0)
+        if (result > 0)
         {
-            if (result == 0 && repaired)
-            {
-                fn_80041CE8(1, cardNumber, cardNumber);
-                fn_80041CC4(1, 11);
-                zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
-                return 2;
-            }
+            fn_80041CE8(1, cardNumber, cardNumber);
+            fn_80041CC4(1, 11);
+            zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
+        }
+        else if (result == 0 && repaired)
+        {
+            fn_80041CE8(1, cardNumber, cardNumber);
+            fn_80041CC4(1, 11);
+            zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
+            return 2;
+        }
+        else
+        {
             fn_80041CE8(1, cardNumber, cardNumber);
             fn_80041CC4(1, 12);
             zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
             return 2;
         }
-        fn_80041CE8(1, cardNumber, cardNumber);
-        fn_80041CC4(1, 11);
-        zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
     }
     fn_80041D58(1);
     iSystemPollResetAndDisc();
@@ -1644,7 +1673,7 @@ S32 zSaveLoad_CardCheck(S32 cardNumber, S32 mode)
 
         if (prompted == 0)
         {
-            if (zSaveLoad_CardCheckSingle(cardNumber) == 0)
+            while (zSaveLoad_CardCheckSingle(cardNumber) == 0)
             {
                 badCard = 1;
                 fn_80041CE8(1, cardNumber, cardNumber);
@@ -1655,6 +1684,7 @@ S32 zSaveLoad_CardCheck(S32 cardNumber, S32 mode)
                     return 2;
                 }
                 prompted = 1;
+                break;
             }
 
             if (prompted == 0)
@@ -1698,7 +1728,10 @@ S32 zSaveLoad_CardCheckSpaceSingle_doCheck(st_XSAVEGAME_DATA* xsgdata, S32 cardN
     }
 
     xSGTgtSelect(xsgdata, cardNumber);
-    xSGTgtIsFormat(xsgdata, cardNumber, &badEncode);
+    if (xSGTgtIsFormat(xsgdata, cardNumber, &badEncode) == 0)
+    {
+        return 6;
+    }
     S32 hasDir = xSGTgtHasGameDir(xsgdata, cardNumber);
     fn_80038948(xsgdata, cardNumber, &files, &filesNeeded);
     if (hasDir == 1)
@@ -1787,7 +1820,8 @@ S32 zSaveLoad_CardCheckFormattedSingle(S32 cardNumber, S32* badEncode)
         }
         else if (!(idx ^ cardNumber))
         {
-            if (xSGTgtIsFormat(ldinst, 0, badEncode) == 0)
+            rc = xSGTgtIsFormat(ldinst, 0, badEncode);
+            if (rc == 0)
             {
                 rc = 0;
             }
@@ -1807,14 +1841,19 @@ S32 zSaveLoad_CardCheckFormattedSingle(S32 cardNumber, S32* badEncode)
     return rc;
 }
 
+// Shows the busy message and starts a memory-card session.
+static inline st_XSAVEGAME_DATA* zSaveLoad_BusyInit(en_SAVEGAME_MODE mode)
+{
+    zSaveLoad_UIEvent(40, eEventUIFocusOn);
+    zSaveLoad_Tick();
+    return xSGInit(mode);
+}
+
 // Formats the card, then shows the result. Returns 1 when the card was formatted, 0 when it was
 // not, 5 when it was pulled.
 S32 format(S32 num, S32 mode)
 {
-    zSaveLoad_UIEvent(40, eEventUIFocusOn);
-    zSaveLoad_Tick();
-
-    st_XSAVEGAME_DATA* data = xSGInit(XSG_MODE_LOAD);
+    st_XSAVEGAME_DATA* data = zSaveLoad_BusyInit(XSG_MODE_LOAD);
     S32 tgtmax;
     S32 canRecover = 0;
     S32 rc = 0;
@@ -1912,6 +1951,7 @@ S32 zSaveLoad_getgame()
     return currentGame;
 }
 
+// Runs one frame of the game while a save/load menu waits.
 void zSaveLoad_Tick()
 {
     time_current = 1.0f / (F32)(OS_BUS_CLOCK >> 2) * iTimeGet();
