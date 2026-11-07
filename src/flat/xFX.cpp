@@ -670,7 +670,7 @@ void xFXanimUV2PSetTexture(RwTexture* texture)
 }
 
 // Rewrite an atomic's first UV layer from a saved copy as scale * (rotation * saved) +
-// translation. Inlined into its one caller; the unneeded atomic test is the helper's own.
+// translation.
 static void xFXanimUVApply(RpAtomic* atomic, RwTexCoords* src)
 {
     if (atomic && src)
