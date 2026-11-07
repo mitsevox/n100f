@@ -903,21 +903,24 @@ S32 BinkDoFrame(Bink* bink)
                 RADCB_suspend_callback(cb_bink_sound, &bink->snd_cb);
             }
             while (left) {
+                U32 count;
                 room = bink->tracks[j].buf_size - bink->tracks[j].buffered;
                 BinkAudioDecompress(bink->tracks[j].decomp, &out, &outlen, src, (void**)&src);
                 if (outlen > left)
                     outlen = left;
                 left -= outlen;
+                count = outlen;
 
                 if (outlen > room) {
-                    room = outlen - room;
+                    room = count - room;
                     bink->tracks[j].read_ptr += room;
                     bink->tracks[j].buffered -= room;
                     if (bink->tracks[j].read_ptr > bink->tracks[j].buf_end)
                         bink->tracks[j].read_ptr -= bink->tracks[j].buf_size;
+                    count = outlen;
                 }
 
-                bink->tracks[j].buffered += outlen;
+                bink->tracks[j].buffered += count;
 
                 room = bink->tracks[j].buf_end - bink->tracks[j].write_ptr;
                 if (room < outlen) {
