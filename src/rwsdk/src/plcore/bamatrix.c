@@ -61,10 +61,10 @@ static void MatrixMultiply(RwMatrix* dstMatrix, const RwMatrix* matA, const RwMa
 
 static RwMatrix* MatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMatrix)
 {
-    RwV3d pos;
-    RwV3d at;
-    RwV3d up;
     RwV3d right;
+    RwV3d up;
+    RwV3d at;
+    RwV3d pos;
     F32 recipRight;
     F32 recipUp;
     F32 recipAt;
@@ -92,15 +92,9 @@ static RwMatrix* MatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMa
             if (recipAt > 0.0f)
             {
                 // Keep the pair of axes nearest to perpendicular and rebuild the third.
-                F32 upAt = RwV3dDotProductMacro(&up, &at);
-                F32 atRight;
-                F32 rightUp;
-
-                upAt = MATRIX_ABS(upAt);
-                atRight = RwV3dDotProductMacro(&at, &right);
-                atRight = MATRIX_ABS(atRight);
-                rightUp = RwV3dDotProductMacro(&right, &up);
-                rightUp = MATRIX_ABS(rightUp);
+                F32 upAt = MATRIX_ABS(RwV3dDotProductMacro(&up, &at));
+                F32 atRight = MATRIX_ABS(RwV3dDotProductMacro(&at, &right));
+                F32 rightUp = MATRIX_ABS(RwV3dDotProductMacro(&right, &up));
 
                 if (upAt < atRight)
                 {
