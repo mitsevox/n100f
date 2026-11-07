@@ -562,7 +562,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xScene.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xScrFx.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xserializer.cpp", cflags=cflags_game_nodeferred),
-            Object(NonMatching, "flat/xShadow.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/xShadow.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/xSnd.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xSpline.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/xstransvc.cpp"),
@@ -637,7 +637,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "gc/ngcrad3d.c", cflags=cflags_game_nocppext),
             Object(MatchingFor("GIHE78-rev0"), "gc/iFMV.cpp"),
             Object(NonMatching, "gc/iSnd.cpp"),
-            Object(NonMatching, "gc/iFX.cpp"),
+            Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "gc/iFX.cpp"),
         ],
     ),
     # Library units: config/GIHE78-rev0/lib_units.tsv and docs/splits.md "Library units".

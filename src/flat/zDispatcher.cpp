@@ -422,8 +422,8 @@ static S32 ZDSP_doCommand(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* cmdCtxt)
 }
 
 // Build a command context and run it.
-static void ZDSP_injectCmd(st_ZDISPATCH_DATA* dspdata, en_DISPATCH_COMMAND cmd, void* indata,
-                           void* inxtra, void* result)
+void ZDSP_injectCmd(st_ZDISPATCH_DATA* dspdata, en_DISPATCH_COMMAND cmd, void* indata,
+                    void* inxtra, void* result)
 {
     st_ZDISPATCH_CONTEXT cmdctxt = { ZDSP_CMD_INITDFLT, NULL, NULL, NULL };
 
@@ -463,6 +463,10 @@ static S32 ZDSP_elcb_event(xBase*, xBase* xb, U32 toEvent, F32* toParam, xBase* 
         xSceneID2Name(globals.sceneCur, dspdata->id);
         break;
     }
+    // Events the dispatcher ignores.
+    case 0x1:
+    case 0x2:
+        break;
     case 0x10c:
         zLaughNotify(13);
         break;
@@ -480,6 +484,12 @@ static S32 ZDSP_elcb_event(xBase*, xBase* xb, U32 toEvent, F32* toParam, xBase* 
         break;
     case 0x129:
         zMusicNotifyEvent(toParam, toParamWidget);
+        break;
+    // Events the dispatcher ignores.
+    case 0x57:
+    case 0x58:
+    case 0x59:
+    case 0x5a:
         break;
     case 0x60:
         ZDSP_injectCmd(dspdata, ZDSP_CMD_CTRL_CFGSET, 0);
@@ -522,13 +532,6 @@ static S32 ZDSP_elcb_event(xBase*, xBase* xb, U32 toEvent, F32* toParam, xBase* 
         break;
     case 0x6d:
         ZDSP_injectCmd(dspdata, ZDSP_CMD_SFXVOL_DECR);
-        break;
-    // Events the dispatcher lists but ignores (enable/disable and two UI events).
-    case 0x1:
-    case 0x2:
-        break;
-    case 0x59:
-    case 0x5a:
         break;
     case 0x89:
     case 0x8a:
