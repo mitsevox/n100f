@@ -1017,7 +1017,7 @@ config.libs: List[Dict[str, Any]] = [
     RWLib(
         "rtintsec",
         [
-            Object(NonMatching, "rwsdk/tool/intsec/rtintsec.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/tool/intsec/rtintsec.c"),
         ],
     ),
     RWLib(
