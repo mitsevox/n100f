@@ -249,13 +249,16 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
         ZPRJ_poolAdd(i);
     }
 
-    if (g_sfxnames[0] == NULL)
+    for (i = 0; i < 1; i++)
     {
-        g_sounds[0] = NULL;
-    }
-    else
-    {
-        g_sounds[0] = (zSFX*)zSceneFindObject(xStrHash(g_sfxnames[0]));
+        if (g_sfxnames[i] == NULL)
+        {
+            g_sounds[i] = NULL;
+        }
+        else
+        {
+            g_sounds[i] = (zSFX*)zSceneFindObject(xStrHash(g_sfxnames[i]));
+        }
     }
 
     for (i = 0; i < 32; i++)
@@ -271,15 +274,17 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
     }
 }
 
+// Updates every projectile in use, then returns the ones flagged for removal to the free pool.
 S32 zEntProjectile_poolUpdate(en_ZPRJ_CATEGORY, zScene* scn, F32 dt)
 {
-    st_ELIST holdlist;
-    S32 cnt = 0;
-    zEntProjectile* tmpprj;
-    st_ZPRJ_LINKNODE* tmplink;
     st_PROJECTILE_DEPOT* depot = &g_prjdepot;
+    st_ELIST* inuse = &depot->prjinuse;
+    st_ZPRJ_LINKNODE* tmplink;
+    zEntProjectile* tmpprj;
+    S32 cnt = 0;
+    st_ELIST holdlist;
 
-    for (tmplink = (st_ZPRJ_LINKNODE*)depot->prjinuse.head; tmplink->node.next != NULL;
+    for (tmplink = (st_ZPRJ_LINKNODE*)inuse->head; tmplink->node.next != NULL;
          tmplink = (st_ZPRJ_LINKNODE*)tmplink->node.next)
     {
         tmplink->backref->ZPRJ_update(scn, dt);
@@ -300,7 +305,7 @@ S32 zEntProjectile_poolUpdate(en_ZPRJ_CATEGORY, zScene* scn, F32 dt)
         }
         else
         {
-            AddTail(&depot->prjinuse, &tmpprj->linknode.node);
+            AddTail(inuse, &tmpprj->linknode.node);
         }
     }
 
