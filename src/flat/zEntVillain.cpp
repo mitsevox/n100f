@@ -20084,7 +20084,7 @@ static F32 VSUP_ds2_inner(const _zEnt* ent, _xVec3 pos)
 {
     _xVec3 delta = { 0 };
 
-    xVec3Sub(&delta, &pos, &((xMat4x3*)ent->model->Mat)->pos);
+    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
     return delta.x * delta.x + delta.z * delta.z;
 }
 
@@ -20095,7 +20095,7 @@ static F32 VSUP_dir_inner(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
     _xVec3 delta = { 0 };
     F32 ang;
 
-    xVec3Sub(&delta, &pos, &((xMat4x3*)ent->model->Mat)->pos);
+    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
     xVec3Normalize(&delta, &delta);
     ang = xAngleClamp(VSUP_ang_ofXZDir(delta));
     if (dir)
