@@ -113,15 +113,15 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/hanim/rphanim.c` | 14 of 14 | (Matching on GIHE78-rev0) |
 | `rwsdk/plugin/matfx/rpmatfx.c` | 46 of 48 | `MatFXMaterialCopy` (99.3%) and `fn_8013E188` (99.2%), register choice; `.sdata2` and `.rodata` match, `.data` (MatFXInfo, declared but not defined) and `.sbss` do not |
 | `rwsdk/plugin/matfx/multiTex.c` | 17 of 17 | Matching on GIHE78-rev0 and GIHE78-rev1, with all 2,520 code bytes, `.bss` RegEntries and `.sdata` _rpMultiTextureModule (152 data bytes) |
-| `rwsdk/plugin/matfx/multiTexEffect.c` | 13 of 14 (rev0) | `RpMTEffectFind` is 99.02% (register choice); NonMatching. Rev1 has 13 of 15 exact functions in its 2,852-byte mapped range; it remains NonMatching |
+| `rwsdk/plugin/matfx/multiTexEffect.c` | 13 of 14 (rev0) | `RpMTEffectFind` is 99.02% (register choice); `.bss` and `.sbss` are 50% (not matched yet); NonMatching. Rev1 has 13 of 15 exact functions in its 2,852-byte mapped range; it remains NonMatching |
 | `rwsdk/plugin/skin2/rpskin.c` | 26 of 26 | (Matching on GIHE78-rev0; `_rpSkinGlobals` stays unsplit, since the source only declares it; the skin code after it reads it; starts at `SkinOpen`, `0x80144154`, since `SkinCreate` is inlined; ends after `RpSkinAtomicSetType`, `0x80144D5C`, an edge the unsplit code after it abuts) |
-| `rwsdk/plugin/skin2/gcn/skingcn.c` | 7 of 8 | `fn_80145598` (94.5%: register choice, the order of its table loads and stores); NonMatching, original linked |
+| `rwsdk/plugin/skin2/gcn/skingcn.c` | 7 of 8 | `fn_80145598` (94.5%: register choice, the order of its table loads and stores); `.sdata2` matches, `.rodata` (90.9%) and `.sbss` do not; NonMatching, original linked |
 | `rwsdk/plugin/skin2/gcn/skinstream.c` | 3 of 3 | Source-linked on rev0; cumulative native-chunk sizing and independent read locals, text-only object |
 | `rwsdk/plugin/skin2/gcn/skingcng.c` | 3 of 3 | all 3 functions; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
 | `rwsdk/plugin/matfx/gcn/multiTexGcn.c` | 1 of 1 | one function; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
 | `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 6 of 7 | `GameCubeMTEffectStreamWrite` (98.4%: the header loads' order and registers) |
-| `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 8 of 9 | `_rpGameCubeMTEffectSend` (98.6%: register choice and one argument load) (text only) |
-| `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 14 of 15 | `fn_80140178` (99.4%: register choice and the argument setup order at two calls); NonMatching, original linked |
+| `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 8 of 9 | `_rpGameCubeMTEffectSend` (98.6%: register choice and one argument load); `.data`, `.sbss` and `.sdata2` (90.9%) do not match yet |
+| `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 14 of 15 | `fn_80140178` (99.4%: register choice and the argument setup order at two calls); `.bss`, `.sbss`, `.sdata` and `.sdata2` (85.7%) do not match yet; NonMatching, original linked |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 4 of 7 | `fn_8015DBA4` (96.9%), `fn_8015E054` (97.5%) and `fn_8015E2E8`, the instance callback (98.4%: the first loads' order) (text only) |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c` | 3 of 5 | `_rxGCWorldSectorAllInOneNode` (97.9%) and `fn_8015E908`, the instance callback (93.2%: register choice and the first loads' order) (text only) |
 | `rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c` | 4 of 4 (rev0) | (Matching on GIHE78-rev0, with its `.data` and `.sbss`; vertices go through the GX vertex functions) |
