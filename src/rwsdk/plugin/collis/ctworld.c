@@ -623,10 +623,11 @@ static RpWorldSector* WorldSectorForAllLinePolyIntersections(RpWorldSector* worl
 static inline RpWorldSector* OldWorldSectorForAllBoxedPrimitivePolyIntersections(
     RpWorldSector* worldSector, PolyTestParam* isData)
 {
-    RpCollSector* collSector = worldSector->colSectorRoot;
-
-    if (collSector)
+    // collSector is a block local: at function scope it colored above the caller's hoisted
+    // &box->inf (r24/r23 swapped in RpCollisionWorldForAllIntersections).
+    if (worldSector->colSectorRoot)
     {
+        RpCollSector* collSector = worldSector->colSectorRoot;
         RwV3d* vertices = worldSector->vertices;
         S32 nStack;
         S32 cut;
