@@ -483,14 +483,14 @@ static TriStripEdge* TriStripNextEdge(TriStripBinEntry* tri, U16 vert0, U16 vert
 static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEntry** bins,
                           RpBuildMeshTriangle* triangles, S32 pass)
 {
-    U16 newVert;
+    U32 numAdded;
     TriStripEdge* swapEdge;
-    U16 lastVert;
+    TriStripBinEntry* tri;
     TriStripEdge* inEdge;
     U16 vertA;
     U16 vertB;
-    TriStripBinEntry* tri;
-    U32 numAdded;
+    U16 lastVert;
+    U16 newVert;
     U16* vertIndex;
 
     numAdded = 0;
