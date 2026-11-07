@@ -232,13 +232,14 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
 // and the morph targets when the interpolator changed, once the GPU is done with the arrays.
 RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 {
-    RpGeometry* geometry = atomic->geometry;
+    S32 i;
+    S32 numVertices;
     GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
+    U32 locked;
+    RpGeometry* geometry = atomic->geometry;
 
     if (geometry->lockedSinceLastInst)
     {
-        U32 locked;
-        S32 numVertices;
         U32 flags;
 
         ALLINONE_WAITDONE(arrays);
@@ -273,8 +274,6 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
         if ((locked & ALLINONE_LOCKTEXCOORDS) && (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2)))
         {
-            S32 i;
-
             for (i = 0; i < geometry->numTexCoordSets; i++)
             {
                 if ((0x10 << i) & locked)

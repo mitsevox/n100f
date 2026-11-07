@@ -18,16 +18,6 @@ struct DlFrame
     void* fifoPos;
 };
 
-// The device's video modes (NTSC, PAL, MPAL and the application's own render mode) and the two
-// errors _rwDlRenderModeSelect raises. Type and member names written for this project.
-typedef struct DlVideoModes DlVideoModes;
-struct DlVideoModes
-{
-    RwVideoMode modes[4];
-    char badPixelFormat[0x18];
-    char badTvFormat[0x14];
-};
-
 // The camera being updated and the device's open parameter. Type and member names written for
 // this project.
 typedef struct DlDeviceState DlDeviceState;
@@ -106,7 +96,15 @@ extern DlDeviceState lbl_8025F864;
 extern volatile U16 lbl_8025E800;
 extern volatile U16 lbl_8025F890;
 
-extern DlVideoModes lbl_801DDF90;
+// The device's video modes: NTSC, PAL, MPAL and the application's own render mode. Defined here
+// so its accesses use the unit's data anchor; the two error strings of _rwDlRenderModeSelect
+// follow it in .data.
+RwVideoMode lbl_801DDF90[4] = {
+    {640, 480, 24, rwVIDEOMODEEXCLUSIVE},
+    {640, 528, 24, rwVIDEOMODEEXCLUSIVE},
+    {640, 480, 24, rwVIDEOMODEEXCLUSIVE},
+    {0, 0, 0, rwVIDEOMODEEXCLUSIVE},
+};
 
 // The GX projection the camera sets.
 extern F32 lbl_801DE04C[7];
@@ -301,37 +299,32 @@ S32 _rwDlNullStandard(void* out, void* inOut, S32 flags)
 // format asked for), or else the TV format's default.
 void _rwDlRenderModeSelect(GXRenderModeObj* renderMode, S32 pixelFormat)
 {
-    DlVideoModes* modes = &lbl_801DDF90;
-    S32 format;
-
     if (renderMode != NULL)
     {
-        format = pixelFormat;
+        S32 format;
+
         lbl_8025E2C8 = *renderMode;
         _RwDlRenderMode = &lbl_8025E2C8;
         lbl_8025F804 = 0x2A;
 
-        if (lbl_8025E2C8.aa)
-        {
-            format = GX_PF_RGB565_Z16;
-        }
+        format = !_RwDlRenderMode->aa ? pixelFormat : GX_PF_RGB565_Z16;
 
         lbl_8025F7FC = format;
         lbl_8025F800 = format;
-        modes->modes[3].width = lbl_8025E2C8.fbWidth;
-        modes->modes[3].height = lbl_8025E2C8.efbHeight;
+        lbl_801DDF90[3].width = _RwDlRenderMode->fbWidth;
+        lbl_801DDF90[3].height = _RwDlRenderMode->efbHeight;
 
         switch (pixelFormat)
         {
         case GX_PF_RGB8_Z24:
         case GX_PF_RGBA6_Z24:
-            modes->modes[3].depth = 24;
+            lbl_801DDF90[3].depth = 24;
             break;
         case GX_PF_RGB565_Z16:
-            modes->modes[3].depth = 16;
+            lbl_801DDF90[3].depth = 16;
             break;
         default:
-            DLDEVICE_ERROR(2, modes->badPixelFormat);
+            DLDEVICE_ERROR(2, "Invalid pixel format");
             break;
         }
     }
@@ -340,20 +333,20 @@ void _rwDlRenderModeSelect(GXRenderModeObj* renderMode, S32 pixelFormat)
         switch (VIGetTvFormat())
         {
         case VI_NTSC:
-            lbl_8025F804 = 0;
             _RwDlRenderMode = &GXNtsc480IntDf;
+            lbl_8025F804 = 0;
             break;
         case VI_PAL:
         case VI_EURGB60:
-            lbl_8025F804 = 1;
             _RwDlRenderMode = &GXPal528IntDf;
+            lbl_8025F804 = 1;
             break;
         case VI_MPAL:
-            lbl_8025F804 = 2;
             _RwDlRenderMode = &GXMpal480IntDf;
+            lbl_8025F804 = 2;
             break;
         default:
-            DLDEVICE_ERROR(2, modes->badTvFormat);
+            DLDEVICE_ERROR(2, "Invalid TV format");
             break;
         }
     }
@@ -376,17 +369,17 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             switch (lbl_8025F804)
             {
             case 0:
-                *(RwVideoMode*)out = lbl_801DDF90.modes[0];
+                *(RwVideoMode*)out = lbl_801DDF90[0];
                 break;
             case 1:
             case 5:
-                *(RwVideoMode*)out = lbl_801DDF90.modes[1];
+                *(RwVideoMode*)out = lbl_801DDF90[1];
                 break;
             case 2:
-                *(RwVideoMode*)out = lbl_801DDF90.modes[2];
+                *(RwVideoMode*)out = lbl_801DDF90[2];
                 break;
             case 0x2A:
-                *(RwVideoMode*)out = lbl_801DDF90.modes[3];
+                *(RwVideoMode*)out = lbl_801DDF90[3];
                 break;
             }
 
