@@ -138,13 +138,13 @@ S32 _rwDlCameraEndUpdate(void* out, void* camera, S32 flags);
 S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags);
 S32 _rwDlRGBToPixel(U32* pixelOut, const RwRGBA* rgba, S32 format);
 S32 _rwDlPixelToRGB(RwRGBA* rgba, const U32* pixelIn, S32 format);
-S32 _rwDlRasterSetFromImage(RwRaster* raster, RwImage* image);
-S32 _rwDlImageGetFromRaster(RwImage* image, RwRaster* raster);
+S32 _rwDlRasterSetFromImage(void* rasterIn, void* imageIn, S32 flags);
+S32 _rwDlImageGetFromRaster(void* imageIn, void* rasterIn, S32 flags);
 S32 fn_8017A4D8(void* out, RwRaster* raster, S32 flags);
 S32 fn_8017A374(void* out, RwRaster* raster, S32 flags);
 S32 fn_801771C4(void* out, void* inOut, S32 flags);
-S32 fn_80179198(void** pixelsOut, RwRaster* raster, S32 flags);
-S32 fn_80179614(void* out, RwRaster* raster, S32 flags);
+S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags);
+S32 fn_80179614(void* out, void* rasterIn, S32 flags);
 S32 fn_801797E0(void** paletteOut, RwRaster* raster, S32 flags);
 S32 fn_8017989C(void* out, RwRaster* raster, S32 flags);
 S32 _rwDlRasterClear(void* raster, void* unused, S32 pixelValue);
@@ -513,14 +513,14 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             {20, _rwDlRasterShowRaster},
             {2, (RwStandardFunc)_rwDlRGBToPixel},
             {3, (RwStandardFunc)_rwDlPixelToRGB},
-            {7, (RwStandardFunc)_rwDlRasterSetFromImage},
-            {6, (RwStandardFunc)_rwDlImageGetFromRaster},
+            {7, _rwDlRasterSetFromImage},
+            {6, _rwDlImageGetFromRaster},
             {5, (RwStandardFunc)fn_8017A4D8},
             {4, (RwStandardFunc)fn_8017A374},
             {9, fn_801771C4},
             {8, (RwStandardFunc)_rwDlTextureSetRaster},
-            {15, (RwStandardFunc)fn_80179198},
-            {16, (RwStandardFunc)fn_80179614},
+            {15, fn_80179198},
+            {16, fn_80179614},
             {23, (RwStandardFunc)fn_801797E0},
             {24, (RwStandardFunc)fn_8017989C},
             {14, _rwDlRasterClear},

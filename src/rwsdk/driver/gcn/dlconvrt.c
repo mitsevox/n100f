@@ -577,8 +577,10 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
 
 // Reads a raster into an image of the image's depth, locking the raster's pixels and palette for
 // reading if they are not locked already.
-S32 _rwDlImageGetFromRaster(RwImage* image, RwRaster* raster)
+S32 _rwDlImageGetFromRaster(void* imageIn, void* rasterIn, S32 flags)
 {
+    RwImage* image = (RwImage*)imageIn;
+    RwRaster* raster = (RwRaster*)rasterIn;
     S32 pixelsLocked = FALSE;
     S32 paletteLocked = FALSE;
 
@@ -1052,10 +1054,12 @@ void _rwDlRaster32SetFromImage(RwRaster* raster, RwImage* image)
 
 // Writes an image into a raster of the raster's depth, locking the raster's pixels and palette for
 // writing if they are not locked already.
-S32 _rwDlRasterSetFromImage(RwRaster* raster, RwImage* image)
+S32 _rwDlRasterSetFromImage(void* rasterIn, void* imageIn, S32 flags)
 {
-    S32 paletteLocked = FALSE;
+    RwRaster* raster = (RwRaster*)rasterIn;
+    RwImage* image = (RwImage*)imageIn;
     S32 pixelsLocked = FALSE;
+    S32 paletteLocked = FALSE;
     S32 format = RwRasterGetFormat(raster);
 
     if (raster->privateFlags & rwRASTERPIXELLOCKEDWRITE)

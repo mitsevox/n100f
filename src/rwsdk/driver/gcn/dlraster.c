@@ -274,15 +274,16 @@ S32 fn_80179064(RwRaster* raster, U8 level)
 
 // Locks one mipmap level ((flags >> 8) & 0xFF) for reading or writing; a raw lock hands out the
 // tiled texels themselves.
-S32 fn_80179198(void** pixelsOut, RwRaster* raster, S32 flags)
+S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
 {
-    RwRaster* top = raster->parent;
+    S32 stride;
     U8* pixels;
+    RwRaster* raster = (RwRaster*)rasterIn;
     U8 level = (flags >> 8) & 0xFF;
+    RwRaster* top = raster->parent;
     RwGCRasterExt* ext = RWGCRASTEREXT(top);
     U8 l;
     S32 offset;
-    S32 stride;
 
     switch (raster->cType & rwRASTERTYPEMASK)
     {
@@ -427,15 +428,16 @@ S32 fn_80179198(void** pixelsOut, RwRaster* raster, S32 flags)
         return FALSE;
     }
 
-    *pixelsOut = raster->cpPixels;
+    *(void**)pixelsOut = raster->cpPixels;
 
     return TRUE;
 }
 
 // Unlocks the raster: tiles back what was written, frees the linear copy and, after a write to
 // the top level of an automipmapped raster, rebuilds the other levels.
-S32 fn_80179614(void* out, RwRaster* raster, S32 flags)
+S32 fn_80179614(void* out, void* rasterIn, S32 flags)
 {
+    RwRaster* raster = (RwRaster*)rasterIn;
     RwRaster* top = raster->parent;
     RwGCRasterExt* ext = RWGCRASTEREXT(top);
 

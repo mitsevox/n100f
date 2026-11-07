@@ -112,9 +112,9 @@ static PalQuantLeaf* AllocateToLeaf(PalQuant* pq, PalQuantBranch* root, U32 cell
 void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
 {
     S32 depth = image->depth;
-    S32 stride = image->stride;
-    S32 y = image->height;
     RwRGBA* palette = image->palette;
+    S32 y = image->height;
+    S32 stride = image->stride;
     U8* pixels = image->cpPixels;
 
     switch (depth)
@@ -355,11 +355,11 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
     case 1:
         for (i = set->lower.red; i < set->upper.red; i++)
         {
-            F32 restRed;
+            F32 restAlpha;
             F32 restWeight;
+            F32 restRed;
             F32 restGreen;
             F32 restBlue;
-            F32 restAlpha;
 
             sub.upper.red = i;
             nVol(root, &sub, &half);
