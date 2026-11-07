@@ -631,8 +631,8 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
     }
 }
 
-// The reciprocal of the longest blend in a blend-offset table (pairs of start time in ms and
-// 1024ths of a second, ending with 0xFFFF).
+// The reciprocal of the longest blend in a blend-offset table (pairs of start time and blend
+// length, both in 1024ths of a second, ending with 0xFFFF).
 static F32 CalcRecipBlendMax(U16* offset)
 {
     F32 max = 0.0f;
@@ -647,10 +647,10 @@ static F32 CalcRecipBlendMax(U16* offset)
         }
         else
         {
-            blend = 1.0f / (offset[1] * (1.0f / 1024.0f));
+            blend = 1.0f / (offset[1] / 1024.0f);
         }
 
-        blend = offset[0] * 0.001f + blend;
+        blend = offset[0] / 1024.0f + blend;
 
         if (blend > max)
         {
