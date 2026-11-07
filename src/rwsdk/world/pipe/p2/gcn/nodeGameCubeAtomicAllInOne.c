@@ -252,6 +252,7 @@ static inline void AllInOneReinstanceTexCoords(RpGeometry* geometry, GCNVertexAr
     {
         if ((0x10 << i) & locked)
         {
+            // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
             AllInOneFlush(arrays->tex[i],
                           _rwGCNVtxFmtInstTex(fn_8015D818(geometry), i, arrays->tex[i],
                                               geometry->texCoords[i],
@@ -281,6 +282,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
         if ((locked & ALLINONE_LOCKVERTICES) && (flags & rpGEOMETRYPOSITIONS))
         {
+            // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
             AllInOneFlush(arrays->pos,
                           _rwGCNVtxFmtInstPos3D(fn_8015D818(geometry), arrays->pos,
                                                 geometry->morphTarget->verts, numVertices,
@@ -289,6 +291,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
         if ((locked & ALLINONE_LOCKNORMALS) && (flags & rpGEOMETRYNORMALS))
         {
+            // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
             AllInOneFlush(arrays->nrm,
                           _rwGCNVtxFmtInstNrm(fn_8015D818(geometry), arrays->nrm,
                                               geometry->morphTarget->normals,
@@ -297,6 +300,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
         if ((locked & ALLINONE_LOCKPRELIGHT) && (flags & rpGEOMETRYPRELIT))
         {
+            // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
             AllInOneFlush(arrays->clr,
                           _rwGCNVtxFmtInstClr(fn_8015D818(geometry), arrays->clr,
                                               geometry->preLitLum, geometry->numVertices,
@@ -305,6 +309,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
         if ((locked & ALLINONE_LOCKTEXCOORDS) && (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2)))
         {
+            // FAKEMATCH: the texture coordinate loop called as a helper; real form believed to be inline.
             AllInOneReinstanceTexCoords(geometry, arrays, locked);
         }
 
