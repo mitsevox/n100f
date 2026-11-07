@@ -12134,6 +12134,13 @@ static S32 VILN_BMM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     return 1;
 }
 
+// The goal change of the goals every villain type shares (startup, going online, death and the
+// afterlife), done by the standard villain's goal-change step.
+static inline S32 VILN_base_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    return VILN_std_trangoal(vil, stimctxt, dt);
+}
+
 // The Mastermind's goal changes. The standard handler takes the lifeless, starting-up and dying
 // goals, and he queues his death sound when he enters the dying goal. On entering a goal he picks
 // its animation and sets it up: patrolling without a next navigation point asks for one;
@@ -12147,9 +12154,9 @@ static S32 VILN_BMM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 // drops the reserved flask.
 static S32 VILN_BMM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
 {
-    en_BEHAVIOUR_GOAL procgoal;
     S32 result = 1;
     en_NPC_STIMULUS stim = stimctxt->stim;
+    en_BEHAVIOUR_GOAL procgoal;
 
     if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
     {
@@ -12167,7 +12174,7 @@ static S32 VILN_BMM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     case ZVIL_GOAL_STARTUP:
     case ZVIL_GOAL_GOONLINE:
     case ZVIL_GOAL_DIE:
-        result = VILN_std_trangoal(vil, stimctxt, dt);
+        result = VILN_base_trangoal(vil, stimctxt, dt);
         if (procgoal == ZVIL_GOAL_DIE && stim == ZVIL_STIM_ENTERGOAL)
         {
             VSND_queueSound(vil, VSND_TYP_MMDIE);
