@@ -46,15 +46,15 @@ Compiler versions and flags need evidence at the original compilation-unit or li
 
 A suspected fake match remains a local experiment, outside accepted source, unless the project owner explicitly authorizes a documented exception. A `fake match` label is not permission. Otherwise leave the original assembly linked and the recovery unresolved.
 
-The project owner authorized one standing exception on 2026-11-07: RenderWare (`src/rwsdk/`) may take a fake match once plausible forms are exhausted. The conditions are:
+The project owner authorized one standing exception on 2026-11-07: RenderWare (`src/rwsdk/`) and Bink (`src/bink/`) may take a fake match once plausible forms are exhausted. The owner added Bink later the same day. The conditions are:
 
-- It applies to RenderWare units only, and only after the lane's notes or the PR show which plausible forms were tried.
-- Every fake construct carries a comment on the line directly above it, `// FAKEMATCH: <what is fake>; real form believed to be <...>`, so `grep -rn FAKEMATCH src/rwsdk` lists everything left to heal.
+- It applies to RenderWare and Bink units only, and only after the lane's notes or the PR show which plausible forms were tried.
+- Every fake construct carries a comment on the line directly above it, `// FAKEMATCH: <what is fake>; real form believed to be <...>`, so `grep -rn FAKEMATCH src/rwsdk src/bink` lists everything left to heal.
 - The unit's evidence row says FAKEMATCH and quotes the deciding construct.
 - It ships only when it makes a function or a unit exact. When it only raises a percentage, the plain form stays.
 - The Hostile review checks that every fake construct is tagged and that each tag accurately describes it. It does not judge whether the form is plausible.
 
-Outside RenderWare, or without the tag and evidence row, the paragraph above still applies.
+Outside RenderWare and Bink, or without the tag and evidence row, the paragraph above still applies.
 
 Put compiler reasoning, exception evidence and matching experiments in metadata or the PR, not explanatory matching comments in reconstructed source. The `FAKEMATCH` tag is the one exception. Preserve original assertions and diagnostics when the target requires them.
 
