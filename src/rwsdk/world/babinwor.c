@@ -1,4 +1,5 @@
 #include <rpworld.h>
+#include <string.h>
 
 static RwModuleInfo binWorldModule;
 static U32 lastSeenWorldRightsPluginId;

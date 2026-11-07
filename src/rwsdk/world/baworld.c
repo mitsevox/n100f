@@ -705,13 +705,12 @@ RpWorld* RpWorldRender(RpWorld* world)
     return world;
 }
 
-S32 RpWorldDestroy(RpWorld* world)
+// Discards cached sector meshes so unlocking can rebuild them.
+RpWorld* RpWorldLock(RpWorld* world)
 {
     RpSector* stack[SECTOR_STACK_SIZE];
-    S32 nStack;
     RpSector* sector;
-
-    _rpWorldUnregisterWorld(world);
+    S32 nStack;
 
     nStack = 0;
     sector = world->rootSector;
@@ -738,6 +737,16 @@ S32 RpWorldDestroy(RpWorld* world)
             sector = plane->leftSubTree;
         }
     } while (nStack >= 0);
+
+    return world;
+}
+
+// Releases sector meshes, materials, plugin state and the world's storage.
+S32 RpWorldDestroy(RpWorld* world)
+{
+    _rpWorldUnregisterWorld(world);
+
+    RpWorldLock(world);
 
     _rpMaterialListDeinitialize(&world->matList);
 
