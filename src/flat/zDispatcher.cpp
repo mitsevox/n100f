@@ -14,6 +14,10 @@
 #include "zFMV.h"
 #include "xScene.h"
 #include "xScrFx.h"
+#include "xMath.h"
+#include "xPad.h"
+#include "zVar.h"
+#include "zMenu.h"
 
 #include <string.h>
 
@@ -29,40 +33,58 @@ struct st_ZDISPATCH_DEPOT
     S32 raw_cnt;
 };
 
+enum en_DISPATCH_COMMAND
+{
+    ZDSP_CMD_INITDFLT = -1,
+    ZDSP_CMD_CTRL_CFGGET = 0,
+    ZDSP_CMD_CTRL_CFGSET = 1,
+    ZDSP_CMD_CTRL_VIBEGET = 2,
+    ZDSP_CMD_CTRL_VIBESET = 3,
+    ZDSP_CMD_SNDMOD_GET = 4,
+    ZDSP_CMD_SNDMOD_SET = 5,
+    ZDSP_CMD_SNDVOL_GET = 6,
+    ZDSP_CMD_SNDVOL_SET = 7,
+    ZDSP_CMD_SNDVOL_INCR = 8,
+    ZDSP_CMD_SNDVOL_DECR = 9,
+    ZDSP_CMD_MUSVOL_GET = 10,
+    ZDSP_CMD_MUSVOL_SET = 11,
+    ZDSP_CMD_MUSVOL_INCR = 12,
+    ZDSP_CMD_MUSVOL_DECR = 13,
+    ZDSP_CMD_SFXVOL_GET = 14,
+    ZDSP_CMD_SFXVOL_SET = 15,
+    ZDSP_CMD_SFXVOL_INCR = 16,
+    ZDSP_CMD_SFXVOL_DECR = 17,
+    ZDSP_CMD_GSTATE_GET = 18,
+    ZDSP_CMD_GSTATE_SET = 19,
+    ZDSP_CMD_GMODE_GET = 20,
+    ZDSP_CMD_GMODE_SET = 21,
+    ZDSP_CHECKPNT_SET = 22,
+    ZDSP_CMD_NOMORE = 23
+};
+
 struct st_ZDISPATCH_CONTEXT
 {
-    S32 cmd;
+    en_DISPATCH_COMMAND cmd;
     void* indata;
     void* inxtra;
     void* result;
 };
 
-void zDispatcher_Init(st_ZDISPATCH_DATA*, p2BaseAsset*);
-extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT*);
-extern "C" void fn_80032254(S32, S32);
+U32 zVarEntryCB_VibrationOn();
+U32 zVarEntryCB_SndMode();
+U32 zVarEntryCB_SndMasterVol();
+U32 zVarEntryCB_SndMusicVol();
+U32 zVarEntryCB_SndFXVol();
+U32 finishedGame();
 void xSndSetMasterVol(F32 left, F32 right);
 void xSndSetStreamVol(F32 left, F32 right);
 void xSndSetFXVol(F32 left, F32 right);
-extern "C" S32 fn_800D7AEC();
-extern "C" S32 fn_800D7810();
-extern "C" S32 fn_800D7AA0();
-extern "C" S32 fn_800D7A54();
-extern "C" S32 fn_800D7A08();
-extern "C" void fn_800AF8D8(S32);
-extern "C" void fn_800D7804();
-extern "C" void fn_800D77F8();
-extern "C" void fn_800D77EC();
-extern "C" void fn_800D77E0();
-extern "C" void fn_800D77D4();
-extern "C" void fn_800D77B4();
 void zSaveLoad_DispatchCB(U32 dispatchEvent, F32* toParam);
-extern "C" void fn_800BF64C(char*, U32, F32);
-extern "C" U32 fn_800D5D74();
 void zGameStateSwitchEvent(S32);
 void zEntPlayer_StoreCheckPoint(F32*);
 
-extern "C" S32 fn_8004651C(xBase*, xBase* to, U32 event, F32* param, xBase* widget);
-extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context);
+static S32 ZDSP_elcb_event(xBase*, xBase* xb, U32 toEvent, F32* toParam, xBase* toParamWidget);
+static F32 ZDSP_volScale(S32 iv);
 void zDispatcher_InitDep(st_ZDISPATCH_DATA* data, zScene*);
 void zDispatcher_Init(st_ZDISPATCH_DATA* data, p2BaseAsset* asset);
 void zDispatcher_Load(st_ZDISPATCH_DATA* data, xSerial* serial);
@@ -135,7 +157,7 @@ void zDispatcher_Init(st_ZDISPATCH_DATA* data, p2BaseAsset* asset)
 {
     xBaseInit(data, asset);
     data->rawass = asset;
-    data->eventFunc = fn_8004651C;
+    data->eventFunc = ZDSP_elcb_event;
     if (data->linkCount)
     {
         data->link = (p2LinkAsset*)(data->rawass + 1);
@@ -165,353 +187,352 @@ void zDispatcher_Load(st_ZDISPATCH_DATA* data, xSerial* serial)
     xBaseLoad(data, serial);
 }
 
-// Dispatch control, sound, and game-state commands.
-extern "C" S32 fn_80046E18(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* context)
+// Run one dispatcher command: read or change the controller, sound mode, the three volumes,
+// the game state or the game mode.
+static S32 ZDSP_doCommand(st_ZDISPATCH_DATA*, st_ZDISPATCH_CONTEXT* cmdCtxt)
 {
-    S32* input = (S32*)context->indata;
-    S32* result = (S32*)context->result;
+    en_DISPATCH_COMMAND cmd = cmdCtxt->cmd;
+    S32* indata = (S32*)cmdCtxt->indata;
+    S32* result = (S32*)cmdCtxt->result;
+    S32 iv;
     static S32 warned = 0;
+
     if (!warned)
     {
         warned = 1;
     }
-    switch (context->cmd)
+
+    switch (cmd)
     {
-    case 0:
+    case ZDSP_CMD_CTRL_CFGGET:
         *result = 0;
         break;
-    case 1:
+    case ZDSP_CMD_CTRL_CFGSET:
         if (result)
         {
             *result = 0;
         }
         break;
-    case 2:
-        *result = fn_800D7810();
+    case ZDSP_CMD_CTRL_VIBEGET:
+        *result = zVarEntryCB_VibrationOn();
         break;
-    case 3:
-        globals.option_vibration = *input;
-        fn_80032254(0, *input);
+    case ZDSP_CMD_CTRL_VIBESET:
+        globals.option_vibration = *indata;
+        xPadRumbleEnable(0, *indata);
         zRumbleStart(0, SDR_Test);
         break;
-    case 4:
-        *result = fn_800D7AEC();
+    case ZDSP_CMD_SNDMOD_GET:
+        *result = zVarEntryCB_SndMode();
         break;
-    case 5:
-        if (*input == 0)
+    case ZDSP_CMD_SNDMOD_SET:
+        if (*indata == 0)
         {
             iSndStereo(0);
         }
-        else if (*input == 1)
+        else if (*indata == 1)
         {
             iSndStereo(1);
         }
         if (result)
         {
-            *result = fn_800D7AEC();
+            *result = zVarEntryCB_SndMode();
         }
         break;
-    case 6:
-        *result = fn_800D7AA0();
+    case ZDSP_CMD_SNDVOL_GET:
+        *result = zVarEntryCB_SndMasterVol();
         break;
-    case 7:
+    case ZDSP_CMD_SNDVOL_SET:
     {
-        F32 volume = 0.1f * (*input);
-        if (volume < 0.0f)
-        {
-            volume = 0.0f;
-        }
-        else if (volume > 1.0f)
-        {
-            volume = 1.0f;
-        }
-        xSndSetMasterVol(volume, volume);
+        iv = *indata;
+        F32 vol = ZDSP_volScale(iv);
+        xSndSetMasterVol(vol, vol);
         if (result)
         {
-            *result = fn_800D7AA0();
+            *result = zVarEntryCB_SndMasterVol();
         }
         break;
     }
-    case 8:
+    case ZDSP_CMD_SNDVOL_INCR:
     {
-        F32 volume = 0.1f * (fn_800D7AA0() + (input ? *input : 1));
-        if (volume < 0.0f)
+        iv = zVarEntryCB_SndMasterVol();
+        if (indata)
         {
-            volume = 0.0f;
+            iv += *indata;
         }
-        else if (volume > 1.0f)
+        else
         {
-            volume = 1.0f;
+            iv++;
         }
-        xSndSetMasterVol(volume, volume);
+        F32 vol = ZDSP_volScale(iv);
+        xSndSetMasterVol(vol, vol);
         if (result)
         {
-            *result = fn_800D7AA0();
+            *result = zVarEntryCB_SndMasterVol();
         }
         break;
     }
-    case 9:
+    case ZDSP_CMD_SNDVOL_DECR:
     {
-        F32 volume = 0.1f * (fn_800D7AA0() - (input ? *input : 1));
-        if (volume < 0.0f)
+        iv = zVarEntryCB_SndMasterVol();
+        if (indata)
         {
-            volume = 0.0f;
+            iv -= *indata;
         }
-        else if (volume > 1.0f)
+        else
         {
-            volume = 1.0f;
+            iv--;
         }
-        xSndSetMasterVol(volume, volume);
+        F32 vol = ZDSP_volScale(iv);
+        xSndSetMasterVol(vol, vol);
         if (result)
         {
-            *result = fn_800D7AA0();
+            *result = zVarEntryCB_SndMasterVol();
         }
         break;
     }
-    case 10:
-        *result = fn_800D7A54();
+    case ZDSP_CMD_MUSVOL_GET:
+        *result = zVarEntryCB_SndMusicVol();
         break;
-    case 11:
+    case ZDSP_CMD_MUSVOL_SET:
     {
-        F32 volume = 0.1f * (*input);
-        if (volume < 0.0f)
-        {
-            volume = 0.0f;
-        }
-        else if (volume > 1.0f)
-        {
-            volume = 1.0f;
-        }
-        xSndSetStreamVol(volume, volume);
+        iv = *indata;
+        F32 vol = ZDSP_volScale(iv);
+        xSndSetStreamVol(vol, vol);
         if (result)
         {
-            *result = fn_800D7A54();
+            *result = zVarEntryCB_SndMusicVol();
         }
         break;
     }
-    case 12:
+    case ZDSP_CMD_MUSVOL_INCR:
     {
-        F32 volume = 0.1f * (fn_800D7A54() + (input ? *input : 1));
-        if (volume < 0.0f)
+        iv = zVarEntryCB_SndMusicVol();
+        if (indata)
         {
-            volume = 0.0f;
+            iv += *indata;
         }
-        else if (volume > 1.0f)
+        else
         {
-            volume = 1.0f;
+            iv++;
         }
-        xSndSetStreamVol(volume, volume);
+        F32 vol = ZDSP_volScale(iv);
+        xSndSetStreamVol(vol, vol);
         if (result)
         {
-            *result = fn_800D7A54();
+            *result = zVarEntryCB_SndMusicVol();
         }
         break;
     }
-    case 13:
+    case ZDSP_CMD_MUSVOL_DECR:
     {
-        F32 volume = 0.1f * (fn_800D7A54() - (input ? *input : 1));
-        if (volume < 0.0f)
+        iv = zVarEntryCB_SndMusicVol();
+        if (indata)
         {
-            volume = 0.0f;
+            iv -= *indata;
         }
-        else if (volume > 1.0f)
+        else
         {
-            volume = 1.0f;
+            iv--;
         }
-        xSndSetStreamVol(volume, volume);
+        F32 vol = ZDSP_volScale(iv);
+        xSndSetStreamVol(vol, vol);
         if (result)
         {
-            *result = fn_800D7A54();
+            *result = zVarEntryCB_SndMusicVol();
         }
         break;
     }
-    case 14:
-        *result = fn_800D7A08();
+    case ZDSP_CMD_SFXVOL_GET:
+        *result = zVarEntryCB_SndFXVol();
         break;
-    case 15:
+    case ZDSP_CMD_SFXVOL_SET:
     {
-        F32 volume = 0.1f * (*input);
-        if (volume < 0.0f)
-        {
-            volume = 0.0f;
-        }
-        else if (volume > 1.0f)
-        {
-            volume = 1.0f;
-        }
-        xSndSetFXVol(volume, volume);
+        iv = *indata;
+        F32 vol = ZDSP_volScale(iv);
+        xSndSetFXVol(vol, vol);
         if (result)
         {
-            *result = fn_800D7A08();
+            *result = zVarEntryCB_SndFXVol();
         }
         break;
     }
-    case 16:
+    case ZDSP_CMD_SFXVOL_INCR:
     {
-        F32 volume = 0.1f * (fn_800D7A08() + (input ? *input : 1));
-        if (volume < 0.0f)
+        iv = zVarEntryCB_SndFXVol();
+        if (indata)
         {
-            volume = 0.0f;
+            iv += *indata;
         }
-        else if (volume > 1.0f)
+        else
         {
-            volume = 1.0f;
+            iv++;
         }
-        xSndSetFXVol(volume, volume);
+        F32 vol = ZDSP_volScale(iv);
+        xSndSetFXVol(vol, vol);
         if (result)
         {
-            *result = fn_800D7A08();
+            *result = zVarEntryCB_SndFXVol();
         }
         break;
     }
-    case 17:
+    case ZDSP_CMD_SFXVOL_DECR:
     {
-        F32 volume = 0.1f * (fn_800D7A08() - (input ? *input : 1));
-        if (volume < 0.0f)
+        iv = zVarEntryCB_SndFXVol();
+        if (indata)
         {
-            volume = 0.0f;
+            iv -= *indata;
         }
-        else if (volume > 1.0f)
+        else
         {
-            volume = 1.0f;
+            iv--;
         }
-        xSndSetFXVol(volume, volume);
+        F32 vol = ZDSP_volScale(iv);
+        xSndSetFXVol(vol, vol);
         if (result)
         {
-            *result = fn_800D7A08();
+            *result = zVarEntryCB_SndFXVol();
         }
         break;
     }
-    case 18:
+    case ZDSP_CMD_GSTATE_GET:
         *result = zGameStateGet();
         break;
-    case 19:
-        zGameStateSwitch(*input);
+    case ZDSP_CMD_GSTATE_SET:
+        zGameStateSwitch(*indata);
         if (result)
         {
             *result = zGameStateGet();
         }
         break;
-    case 20:
+    case ZDSP_CMD_GMODE_GET:
         *result = zGameModeGet();
         break;
-    case 21:
-        fn_800AF8D8(*input);
+    case ZDSP_CMD_GMODE_SET:
+        zGameModeSwitch((eGameMode)*indata);
         if (result)
         {
             *result = zGameModeGet();
         }
         break;
+    case ZDSP_CHECKPNT_SET:
+        break;
     }
+
     return 1;
 }
 
-extern "C" S32 fn_8004651C(xBase*, xBase* to, U32 event, F32* param, xBase* widget)
+// Build a command context and run it.
+void ZDSP_injectCmd(st_ZDISPATCH_DATA* dspdata, en_DISPATCH_COMMAND cmd, void* indata,
+                    void* inxtra, void* result)
 {
-    switch (event)
+    st_ZDISPATCH_CONTEXT cmdctxt = { ZDSP_CMD_INITDFLT, NULL, NULL, NULL };
+
+    cmdctxt.cmd = cmd;
+    cmdctxt.indata = indata;
+    cmdctxt.inxtra = inxtra;
+    cmdctxt.result = result;
+    ZDSP_doCommand(dspdata, &cmdctxt);
+}
+
+// Send a command that takes no input.
+static void ZDSP_injectCmd(st_ZDISPATCH_DATA* dspdata, en_DISPATCH_COMMAND cmd)
+{
+    ZDSP_injectCmd(dspdata, cmd, NULL, NULL, NULL);
+}
+
+// Send a command whose input is one integer value.
+static void ZDSP_injectCmd(st_ZDISPATCH_DATA* dspdata, en_DISPATCH_COMMAND cmd, S32 iv)
+{
+    ZDSP_injectCmd(dspdata, cmd, &iv, NULL, NULL);
+}
+
+// The dispatcher's event handler: turns menu and script events into dispatcher commands,
+// game-state switches, save and load requests, unlocks, music and movie playback.
+static S32 ZDSP_elcb_event(xBase*, xBase* xb, U32 toEvent, F32* toParam, xBase* toParamWidget)
+{
+    st_ZDISPATCH_DATA* dspdata = (st_ZDISPATCH_DATA*)xb;
+
+    switch (toEvent)
     {
     case 0xa:
     {
-        st_ZDISPATCH_DATA* data = (st_ZDISPATCH_DATA*)to;
-        p2BaseAsset* asset = data->rawass;
-        xBaseReset(data, asset);
-        memset(&data->rawass, 0, sizeof(*data) - sizeof(xBase));
-        zDispatcher_Init(data, asset);
-        xSceneID2Name(globals.sceneCur, data->id);
+        p2BaseAsset* asset = dspdata->rawass;
+        xBaseReset(dspdata, asset);
+        memset(&dspdata->rawass, 0, sizeof(*dspdata) - sizeof(xBase));
+        zDispatcher_Init(dspdata, asset);
+        xSceneID2Name(globals.sceneCur, dspdata->id);
         break;
     }
+    // Events the dispatcher ignores.
+    case 0x1:
+    case 0x2:
+        break;
+    case 0x10c:
+        zLaughNotify(13);
+        break;
+    case 0x10d:
+        zMusicNotify(3);
+        break;
+    case 0x10e:
+        zMusicNotify(3);
+        break;
+    case 0x10f:
+        zMusicNotify(3);
+        break;
+    case 0x110:
+        zMusicNotify(3);
+        break;
+    case 0x129:
+        zMusicNotifyEvent(toParam, toParamWidget);
+        break;
+    // Events the dispatcher ignores.
+    case 0x57:
+    case 0x58:
+    case 0x59:
+    case 0x5a:
+        break;
     case 0x60:
-    {
-        S32 value = 0;
-        st_ZDISPATCH_CONTEXT context = { 1, &value, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_CTRL_CFGSET, 0);
         break;
-    }
     case 0x61:
-    {
-        S32 value = 1;
-        st_ZDISPATCH_CONTEXT context = { 1, &value, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_CTRL_CFGSET, 1);
         break;
-    }
     case 0x62:
-    {
-        S32 value = 2;
-        st_ZDISPATCH_CONTEXT context = { 1, &value, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_CTRL_CFGSET, 2);
         break;
-    }
     case 0x63:
-    {
-        S32 value = 3;
-        st_ZDISPATCH_CONTEXT context = { 1, &value, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_CTRL_CFGSET, 3);
         break;
-    }
     case 0x64:
-    {
-        S32 value = 1;
-        st_ZDISPATCH_CONTEXT context = { 3, &value, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_CTRL_VIBESET, 1);
         break;
-    }
     case 0x65:
-    {
-        S32 value = 0;
-        st_ZDISPATCH_CONTEXT context = { 3, &value, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_CTRL_VIBESET, 0);
         break;
-    }
     case 0x66:
-    {
-        S32 value = 0;
-        st_ZDISPATCH_CONTEXT context = { 5, &value, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_SNDMOD_SET, 0);
         break;
-    }
     case 0x67:
-    {
-        S32 value = 1;
-        st_ZDISPATCH_CONTEXT context = { 5, &value, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_SNDMOD_SET, 1);
         break;
-    }
     case 0x68:
-    {
-        st_ZDISPATCH_CONTEXT context = { 8, NULL, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_SNDVOL_INCR);
         break;
-    }
     case 0x69:
-    {
-        st_ZDISPATCH_CONTEXT context = { 9, NULL, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_SNDVOL_DECR);
         break;
-    }
     case 0x6a:
-    {
-        st_ZDISPATCH_CONTEXT context = { 12, NULL, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_MUSVOL_INCR);
         break;
-    }
     case 0x6b:
-    {
-        st_ZDISPATCH_CONTEXT context = { 13, NULL, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_MUSVOL_DECR);
         break;
-    }
     case 0x6c:
-    {
-        st_ZDISPATCH_CONTEXT context = { 16, NULL, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_SFXVOL_INCR);
         break;
-    }
     case 0x6d:
-    {
-        st_ZDISPATCH_CONTEXT context = { 17, NULL, NULL, NULL };
-        fn_80046E18((st_ZDISPATCH_DATA*)to, &context);
+        ZDSP_injectCmd(dspdata, ZDSP_CMD_SFXVOL_DECR);
         break;
-    }
     case 0x89:
     case 0x8a:
     case 0x8b:
@@ -541,7 +562,7 @@ extern "C" S32 fn_8004651C(xBase*, xBase* to, U32 event, F32* param, xBase* widg
     case 0xa3:
     case 0xa5:
     case 0xa6:
-        zGameStateSwitchEvent(event);
+        zGameStateSwitchEvent(toEvent);
         break;
     case 0xa8:
     case 0xa9:
@@ -549,34 +570,25 @@ extern "C" S32 fn_8004651C(xBase*, xBase* to, U32 event, F32* param, xBase* widg
     case 0xab:
     case 0xac:
     case 0xad:
-        zSaveLoad_DispatchCB(event, param);
+        zSaveLoad_DispatchCB(toEvent, toParam);
         break;
     case 0xc2:
-        zEntPlayer_StoreCheckPoint(param);
+        zEntPlayer_StoreCheckPoint(toParam);
         break;
     case 0x101:
-        fn_800D7804();
+        zVarGiveMap();
         break;
     case 0x102:
-        fn_800D77F8();
+        zVarUnlockR001();
         break;
     case 0x103:
-        fn_800D77EC();
+        zVarUnlockS001();
         break;
     case 0x104:
-        fn_800D77E0();
+        zVarUnlockE001();
         break;
     case 0x105:
-        fn_800D77D4();
-        break;
-    case 0x10c:
-        zLaughNotify(13);
-        break;
-    case 0x10d:
-    case 0x10e:
-    case 0x10f:
-    case 0x110:
-        zMusicNotify(3);
+        zVarUnlockF001();
         break;
     case 0x11e:
         zHudShow();
@@ -586,50 +598,47 @@ extern "C" S32 fn_8004651C(xBase*, xBase* to, U32 event, F32* param, xBase* widg
         break;
     case 0x120:
     {
-        iColor_tag black = { 0, 0, 0, 0 };
-        iColor_tag clear = { 0, 0, 0, 255 };
-        xScrFxFade(&black, &clear, param[0], NULL, 1, 1);
+        iColor_tag black = { 0, 0, 0, 255 };
+        iColor_tag clear = { 0, 0, 0, 0 };
+        xScrFxFade(&clear, &black, toParam[0], NULL, 1, 1);
         break;
     }
     case 0x126:
-        switch ((U32)param[0])
+        switch ((U32)toParam[0])
         {
         case 0:
-            fn_800BF64C(zFMVFileGetName(eFMVFile_WBExtra0), 1, 0.1f);
+            zMenuFMVPlay(zFMVFileGetName(eFMVFile_WBExtra0), 1, 0.1f);
             break;
         case 1:
-            fn_800BF64C(zFMVFileGetName(eFMVFile_WBExtra1), 1, 0.1f);
+            zMenuFMVPlay(zFMVFileGetName(eFMVFile_WBExtra1), 1, 0.1f);
             break;
         case 2:
-            fn_800BF64C(zFMVFileGetName(eFMVFile_Cin11), 0, 0.0f);
+            zMenuFMVPlay(zFMVFileGetName(eFMVFile_Cin11), 0, 0.0f);
             break;
         case 3:
-            fn_800BF64C(zFMVFileGetName(eFMVFile_EndCredits), 0, 0.0f);
+            zMenuFMVPlay(zFMVFileGetName(eFMVFile_EndCredits), 0, 0.0f);
             zMusicKill();
             break;
         case 4:
             zFMVPlay(zFMVFileGetName(eFMVFile_EndCredits), 1, 0.1f);
             break;
         case 5:
-            if (fn_800D5D74())
+            if (finishedGame())
             {
-                fn_800BF64C(zFMVFileGetName(eFMVFile_EndCredits), 1, 0.1f);
+                zMenuFMVPlay(zFMVFileGetName(eFMVFile_EndCredits), 1, 0.1f);
             }
             else
             {
-                fn_800BF64C(zFMVFileGetName(eFMVFile_Credits), 0x10001, 0.1f);
+                zMenuFMVPlay(zFMVFileGetName(eFMVFile_Credits), 0x10001, 0.1f);
             }
             break;
         case 6:
-            zFMVPlay(zFMVFileGetName((eFMVFile)((param[1] + 27.0f) - 1.0f)), 1, 0.1f);
+            zFMVPlay(zFMVFileGetName((eFMVFile)(eFMVFile_Cin1 + toParam[1] - 1.0f)), 1, 0.1f);
             break;
         }
         break;
     case 0x127:
-        fn_800D77B4();
-        break;
-    case 0x129:
-        zMusicNotifyEvent(param, widget);
+        zVarDefeatMasterMind();
         break;
     case 0x130:
         zSceneSetMenuStickDisabled(1);
@@ -639,7 +648,15 @@ extern "C" S32 fn_8004651C(xBase*, xBase* to, U32 event, F32* param, xBase* widg
         zSceneSetMenuStickDisabled(0);
         break;
     }
+
     return 1;
+}
+
+// Scale a 0-10 volume setting to 0-1.
+static F32 ZDSP_volScale(S32 iv)
+{
+    F32 vol = 0.1f * iv;
+    return CLAMP(vol, 0.0f, 1.0f);
 }
 
 #endif
