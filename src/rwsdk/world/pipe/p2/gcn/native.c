@@ -36,20 +36,20 @@ RpWorldSector* _rpWorldSectorNativeRead(RwStream* stream, RpWorldSector* sector)
 // The bytes an instance entry takes in a stream: the chunk header, the platform and the two sizes,
 // the vertex arrays header and display list records and the data.
 #define NATIVE_STREAMSIZE(_entry, _numMeshes)                                                      \
-    ((_numMeshes) * sizeof(GCNDisplayList) +                                                       \
-     (NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3 + sizeof(GCNVertexArrays)) +                        \
-     ((_entry)->size - (NATIVE_DATA(_entry, _numMeshes) - (U8*)NATIVE_ARRAYS(_entry))))
+    (((_entry)->size - (NATIVE_DATA(_entry, _numMeshes) - (U8*)NATIVE_ARRAYS(_entry))) +           \
+     (_numMeshes) * sizeof(GCNDisplayList) +                                                       \
+     (NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3 + sizeof(GCNVertexArrays)))
 
-static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef, U16 numMeshes,
+static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef, U32 numMeshes,
                            S32 numVerts)
 {
-    U8* data;
     U32 version;
     U32 size;
-    S32 platform;
-    S32 dataSize;
     S32 headerSize;
+    S32 dataSize;
+    S32 platform;
     GCNVertexArrays* arrays;
+    U8* data;
     GCNDisplayList* lists;
     S32 i;
 
@@ -87,8 +87,8 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
         return NULL;
     }
 
-    *entryRef = (RwResEntry*)RwMalloc(NATIVE_ALIGN32(sizeof(RwResEntry) + headerSize) + dataSize +
-                                      0x20);
+    *entryRef = (RwResEntry*)RwMalloc(0x20 + NATIVE_ALIGN32(sizeof(RwResEntry) + headerSize) +
+                                      dataSize);
 
     arrays = NATIVE_ARRAYS(*entryRef);
     if (RwStreamRead(stream, arrays, headerSize) != headerSize)
@@ -144,16 +144,27 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
     return object;
 }
 
+// The bytes an instance entry takes in a stream, from the size of its vertex arrays header and
+// display list records.
+static S32 _rpNativeStreamSize(RwResEntry* entry, U32 numMeshes)
+{
+    S32 headerSize = sizeof(GCNVertexArrays) + numMeshes * sizeof(GCNDisplayList);
+
+    return (entry->size - (NATIVE_DATA(entry, numMeshes) - (U8*)NATIVE_ARRAYS(entry))) +
+           (headerSize + (NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3));
+}
+
 static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeVtxFmt* vtxFmt,
-                                U16 numMeshes, S32 numVerts)
+                                U32 numMeshes, S32 numVerts)
 {
     GCNVertexArrays* arrays = NATIVE_ARRAYS(entry);
     GCNDisplayList* lists = (GCNDisplayList*)(arrays + 1);
+    GCNDisplayList* list = lists;
+    U32 count = numMeshes;
     U8* data = (U8*)NATIVE_ALIGN32((U32)lists + numMeshes * sizeof(GCNDisplayList));
-    S32 chunkSize = NATIVE_STREAMSIZE(entry, numMeshes) - NATIVE_CHUNKHEADERSIZE;
-    S32 headerSize = sizeof(GCNVertexArrays) + numMeshes * sizeof(GCNDisplayList);
+    S32 chunkSize = _rpNativeStreamSize(entry, numMeshes) - NATIVE_CHUNKHEADERSIZE;
+    S32 headerSize;
     S32 dataSize;
-    GCNDisplayList* list;
     S32 i;
 
     if (!vtxFmt)
@@ -181,8 +192,7 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
         arrays->tex[i] = (void*)((U8*)arrays->tex[i] - data);
     }
 
-    list = lists;
-    for (i = numMeshes; i; i--)
+    for (; count; count--)
     {
         list->list = (void*)((U8*)list->list - data);
         list++;
@@ -199,6 +209,7 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
         return NULL;
     }
 
+    headerSize = sizeof(GCNVertexArrays) + numMeshes * sizeof(GCNDisplayList);
     if (!RwStreamWriteInt32(stream, &headerSize, sizeof(headerSize)))
     {
         return NULL;
@@ -240,10 +251,11 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
         arrays->tex[i] = data + (U32)arrays->tex[i];
     }
 
-    for (i = numMeshes; i; i--)
+    list = lists;
+    for (count = numMeshes; count; count--)
     {
-        lists->list = data + (U32)lists->list;
-        lists++;
+        list->list = data + (U32)list->list;
+        list++;
     }
 
     DCFlushRange(NATIVE_ARRAYS(entry), entry->size);
@@ -295,10 +307,8 @@ RwStream* _rpWorldSectorNativeWrite(RwStream* stream, const RpWorldSector* secto
 
     if (world->flags & rpWORLDNATIVE)
     {
-        S32 numVerts = RpWorldSectorGetNumVertices(sector);
-
         _rpNativeWrite(stream, sector->repEntry, fn_8015D824(world), sector->mesh->numMeshes,
-                       numVerts);
+                       RpWorldSectorGetNumVertices(sector));
     }
 
     return stream;

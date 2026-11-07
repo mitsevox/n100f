@@ -101,7 +101,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/gcn/instance/instanceworld.c` | 1 of 1 | (Matching on GIHE78-rev0; sole 1004-byte function, text only) |
 | `rwsdk/world/pipe/p2/gcn/instance/ibuffer.c` | 1 of 2 | `GCNDisplayListsBuild` (98.2%: the index-count copy and register choice; remains `NonMatching`) |
 | `rwsdk/world/pipe/p2/gcn/gclights.c` | 2 of 2 | (Matching on GIHE78-rev0, with its `.data`, `.bss` and `.sdata2`; the light color comes from the inlined `GCLightsColor`) |
-| `rwsdk/world/pipe/p2/gcn/native.c` | 3 of 8 | `_rpNativeRead` (92.9%), `_rpNativeWrite` (90.4%), `_rpGeometryNativeSize` (87.9%), `_rpWorldSectorNativeSize` (91.8%) and `_rpWorldSectorNativeWrite` (90.0%): the target associates the instance size and alignment arithmetic differently, and register choice (text only) |
+| `rwsdk/world/pipe/p2/gcn/native.c` | 4 of 8 | `_rpNativeRead` (95.0%), `_rpNativeWrite` (93.7%), `_rpGeometryNativeSize` (95.7%) and `_rpWorldSectorNativeSize` (97.1%): the target associates some of the instance size and alignment arithmetic differently, `_rpNativeWrite` keeps one more saved register, and register choice (text only) |
 | `rwsdk/world/pipe/p2/gcn/gcpipe.c` | 10 of 10 | (Matching on GIHE78-rev0, with the `RxClLights` cluster and its name in `.data`) |
 | `rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c` | 4 of 4 | (Matching on GIHE78-rev0 and GIHE78-rev1; `.data` 98.5%: the four bytes of padding at its end) |
 | `rwsdk/world/pipe/p2/nodeMaterialScatter.c` | 2 of 2 | (Matching on GIHE78-rev0; `.data` 98.8%, as `nodeAtomicEnumerateLights.c`) |
