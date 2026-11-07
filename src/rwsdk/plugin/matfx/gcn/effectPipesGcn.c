@@ -416,6 +416,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
     S32 numVertices;
     U32 flags;
     S32 numMeshes;
+    S32 bumpSize;
 
     arrays->syncToken = lbl_8025E800;
 
@@ -445,6 +446,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
     numMeshes = meshHeader->numMeshes;
     mesh = (RpMesh*)(meshHeader + 1);
+    bumpSize = numVertices * sizeof(RwTexCoords);
 
     while (numMeshes--)
     {
@@ -538,8 +540,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
             }
             case rpMATFXEFFECTBUMPMAP:
             {
-                MatFXMaterialData* data = MATFXMATERIALGETDATA(mesh->material);
-                MatFXBumpMapData* bumpMap = &data->effects[0].data.bumpMap;
+                MatFXBumpMapData* bumpMap = &MATFXMATERIALGETDATA(mesh->material)->effects[0].data.bumpMap;
                 S32 srcBlend;
                 S32 destBlend;
 
@@ -556,7 +557,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 if (!bumpEntry)
                 {
                     bumpEntry = RwResourcesAllocateResEntry(
-                        lbl_8025D958, NULL, numVertices * sizeof(RwTexCoords) + 6, fn_8013FEC0);
+                        lbl_8025D958, NULL, bumpSize + 6, fn_8013FEC0);
                     MATFXGCN_TOKEN(bumpEntry) = lbl_8025E800;
                     bumpTexCoords =
                         (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 2 + 0x1F) & ~0x1F);
@@ -574,9 +575,8 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
             }
             case rpMATFXEFFECTBUMPENVMAP:
             {
-                MatFXMaterialData* data = MATFXMATERIALGETDATA(mesh->material);
-                MatFXBumpMapData* bumpMap = &data->effects[0].data.bumpMap;
-                MatFXEnvMapData* envMap = &data->effects[1].data.envMap;
+                MatFXBumpMapData* bumpMap = &MATFXMATERIALGETDATA(mesh->material)->effects[0].data.bumpMap;
+                MatFXEnvMapData* envMap = &MATFXMATERIALGETDATA(mesh->material)->effects[1].data.envMap;
                 S32 srcBlend;
                 S32 destBlend;
 
@@ -593,7 +593,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 if (!bumpEntry)
                 {
                     bumpEntry = RwResourcesAllocateResEntry(
-                        lbl_8025D958, NULL, numVertices * sizeof(RwTexCoords) + 6, fn_8013FEC0);
+                        lbl_8025D958, NULL, bumpSize + 6, fn_8013FEC0);
                     MATFXGCN_TOKEN(bumpEntry) = lbl_8025E800;
                     bumpTexCoords =
                         (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 2 + 0x1F) & ~0x1F);
