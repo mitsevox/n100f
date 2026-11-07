@@ -144,16 +144,6 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
     return object;
 }
 
-// The bytes an instance entry takes in a stream, from the size of its vertex arrays header and
-// display list records.
-static S32 _rpNativeStreamSize(RwResEntry* entry, U32 numMeshes)
-{
-    S32 headerSize = sizeof(GCNVertexArrays) + numMeshes * sizeof(GCNDisplayList);
-
-    return (entry->size - (NATIVE_DATA(entry, numMeshes) - (U8*)NATIVE_ARRAYS(entry))) +
-           (headerSize + (NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3));
-}
-
 static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeVtxFmt* vtxFmt,
                                 U32 numMeshes, S32 numVerts)
 {
@@ -162,7 +152,7 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
     GCNDisplayList* list = lists;
     U32 count = numMeshes;
     U8* data = (U8*)NATIVE_ALIGN32((U32)lists + numMeshes * sizeof(GCNDisplayList));
-    S32 chunkSize = _rpNativeStreamSize(entry, numMeshes) - NATIVE_CHUNKHEADERSIZE;
+    S32 chunkSize = NATIVE_STREAMSIZE(entry, numMeshes) - NATIVE_CHUNKHEADERSIZE;
     S32 headerSize;
     S32 dataSize;
     S32 i;
@@ -301,6 +291,7 @@ S32 _rpWorldSectorNativeSize(const RpWorldSector* sector)
     return 0;
 }
 
+// Writes a world sector's native instance data when its world is native.
 RwStream* _rpWorldSectorNativeWrite(RwStream* stream, const RpWorldSector* sector)
 {
     const RpWorld* world = RpWorldSectorGetWorld(sector);
