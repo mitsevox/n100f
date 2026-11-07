@@ -100,7 +100,6 @@ S32 _rwGCNVtxFmtInstPos3D(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d
                           S32 numVerts, U8 stride)
 {
     U8 compType;
-    S32 i;
 
     if (!vtxFmt)
     {
@@ -114,6 +113,7 @@ S32 _rwGCNVtxFmtInstPos3D(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d
     {
         F32 scale = (F32)(1 << vtxFmt->frac[0]);
         U8* out = (U8*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
@@ -129,6 +129,7 @@ S32 _rwGCNVtxFmtInstPos3D(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d
     {
         F32 scale = (F32)(1 << vtxFmt->frac[0]);
         S8* out = (S8*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
@@ -143,48 +144,51 @@ S32 _rwGCNVtxFmtInstPos3D(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d
     case COMP_U16:
     {
         F32 scale = (F32)(1 << vtxFmt->frac[0]);
-        U8* out = (U8*)dst;
+        U16* out = (U16*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
-            ((U16*)out)[0] = src->x * scale;
-            ((U16*)out)[1] = src->y * scale;
-            ((U16*)out)[2] = src->z * scale;
+            out[0] = src->x * scale;
+            out[1] = src->y * scale;
+            out[2] = src->z * scale;
             src++;
-            out += stride;
+            out = (U16*)((U8*)out + stride);
         }
         break;
     }
     case COMP_S16:
     {
         F32 scale = (F32)(1 << vtxFmt->frac[0]);
-        U8* out = (U8*)dst;
+        S16* out = (S16*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
-            ((S16*)out)[0] = src->x * scale;
-            ((S16*)out)[1] = src->y * scale;
-            ((S16*)out)[2] = src->z * scale;
+            out[0] = src->x * scale;
+            out[1] = src->y * scale;
+            out[2] = src->z * scale;
             src++;
-            out += stride;
+            out = (S16*)((U8*)out + stride);
         }
         break;
     }
     case COMP_F32:
         if (vtxFmt->flags & VTXFMT_INTERLEAVED)
         {
-            U8* out = (U8*)dst;
+            RwV3d* out = (RwV3d*)dst;
+            S32 i;
 
             for (i = 0; i < numVerts; i++)
             {
-                *(RwV3d*)out = *src;
+                *out = *src;
                 src++;
-                out += stride;
+                out = (RwV3d*)((U8*)out + stride);
             }
         }
         else
         {
-            memcpy(dst, src, numVerts * (lbl_801DDA48[compType] * 3));
+            memcpy(dst, src, numVerts * lbl_801DDA48[vtxFmt->compType[0]] * 3);
         }
         break;
     }
@@ -260,7 +264,7 @@ S32 _rwGCNVtxFmtInstNrm(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* 
         }
         else
         {
-            memcpy(dst, src, numVerts * lbl_801DDA48[compType] * 3);
+            memcpy(dst, src, numVerts * lbl_801DDA48[vtxFmt->compType[1]] * 3);
         }
         break;
     }
@@ -368,7 +372,6 @@ S32 _rwGCNVtxFmtInstClr(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwRGBA*
                         S32 numVerts, U8 stride)
 {
     U8 compType;
-    S32 i;
 
     if (!vtxFmt)
     {
@@ -380,20 +383,22 @@ S32 _rwGCNVtxFmtInstClr(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwRGBA*
     {
     case CLR_RGB565:
     {
-        U8* out = (U8*)dst;
+        U16* out = (U16*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
-            *(U16*)out = ((src->red << 8) & 0xF800) | ((src->green << 3) & 0x7E0) |
+            *out = ((src->red << 8) & 0xF800) | ((src->green << 3) & 0x7E0) |
                          ((src->blue >> 3) & 0x1F);
             src++;
-            out += stride;
+            out = (U16*)((U8*)out + stride);
         }
         break;
     }
     case CLR_RGB8:
     {
         U8* out = (U8*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
@@ -407,20 +412,22 @@ S32 _rwGCNVtxFmtInstClr(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwRGBA*
     }
     case CLR_RGBA4:
     {
-        U8* out = (U8*)dst;
+        U16* out = (U16*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
-            *(U16*)out = ((src->red << 8) & 0xF000) | ((src->green << 4) & 0xF00) |
+            *out = ((src->red << 8) & 0xF000) | ((src->green << 4) & 0xF00) |
                          (src->blue & 0xF0) | ((src->alpha >> 4) & 0xF);
             src++;
-            out += stride;
+            out = (U16*)((U8*)out + stride);
         }
         break;
     }
     case CLR_RGBA6:
     {
         U8* out = (U8*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
@@ -436,18 +443,19 @@ S32 _rwGCNVtxFmtInstClr(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwRGBA*
     case CLR_RGBX8:
         if (vtxFmt->flags & VTXFMT_INTERLEAVED)
         {
-            U8* out = (U8*)dst;
+            RwRGBA* out = (RwRGBA*)dst;
+            S32 i;
 
             for (i = 0; i < numVerts; i++)
             {
-                *(U32*)out = *(const U32*)src;
+                *out = *src;
                 src++;
-                out += stride;
+                out = (RwRGBA*)((U8*)out + stride);
             }
         }
         else
         {
-            memcpy(dst, src, numVerts * lbl_801DDA5C[compType]);
+            memcpy(dst, src, numVerts * lbl_801DDA5C[vtxFmt->compType[10]]);
         }
         break;
     }
@@ -464,7 +472,6 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
                         const RwTexCoords* src, S32 numVerts, U8 stride)
 {
     U8 compType;
-    S32 i;
 
     if (!vtxFmt)
     {
@@ -478,6 +485,7 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
     {
         F32 scale = (F32)(1 << vtxFmt->frac[index + 2]);
         U8* out = (U8*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
@@ -492,6 +500,7 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
     {
         F32 scale = (F32)(1 << vtxFmt->frac[index + 2]);
         S8* out = (S8*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
@@ -505,46 +514,49 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
     case COMP_U16:
     {
         F32 scale = (F32)(1 << vtxFmt->frac[index + 2]);
-        U8* out = (U8*)dst;
+        U16* out = (U16*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
-            ((U16*)out)[0] = src->u * scale;
-            ((U16*)out)[1] = src->v * scale;
+            out[0] = src->u * scale;
+            out[1] = src->v * scale;
             src++;
-            out += stride;
+            out = (U16*)((U8*)out + stride);
         }
         break;
     }
     case COMP_S16:
     {
         F32 scale = (F32)(1 << vtxFmt->frac[index + 2]);
-        U8* out = (U8*)dst;
+        S16* out = (S16*)dst;
+        S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
-            ((S16*)out)[0] = src->u * scale;
-            ((S16*)out)[1] = src->v * scale;
+            out[0] = src->u * scale;
+            out[1] = src->v * scale;
             src++;
-            out += stride;
+            out = (S16*)((U8*)out + stride);
         }
         break;
     }
     case COMP_F32:
         if (vtxFmt->flags & VTXFMT_INTERLEAVED)
         {
-            U8* out = (U8*)dst;
+            RwTexCoords* out = (RwTexCoords*)dst;
+            S32 i;
 
             for (i = 0; i < numVerts; i++)
             {
-                *(RwTexCoords*)out = *src;
+                *out = *src;
                 src++;
-                out += stride;
+                out = (RwTexCoords*)((U8*)out + stride);
             }
         }
         else
         {
-            memcpy(dst, src, numVerts * lbl_801DDA48[compType] * 2);
+            memcpy(dst, src, numVerts * lbl_801DDA48[vtxFmt->compType[index + 2]] * 2);
         }
         break;
     }
