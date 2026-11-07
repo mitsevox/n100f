@@ -198,15 +198,12 @@ void zEntProjectile_sceneFinish()
     }
 }
 
-// Clears pool entry idx and adds it to the free list.
-static inline void ZPRJ_poolAdd(S32 idx)
+// Clears a pool entry and adds it to the free list.
+static inline void ZPRJ_poolAdd(zEntProjectile* prj)
 {
-    st_PROJECTILE_DEPOT* depot = &g_prjdepot;
-    zEntProjectile* prj = &depot->rawpool[idx];
-
     memset(prj, 0, sizeof(zEntProjectile));
     prj->linknode.backref = prj;
-    AddTail(&depot->prjpool, &prj->linknode.node);
+    AddTail(&g_prjdepot.prjpool, &prj->linknode.node);
 }
 
 // Allocates size bytes from the active heap and fills them with val.
@@ -217,8 +214,12 @@ static inline void* ZPRJ_heapFill(S32 cnt, U32 size, S32 val)
     return mem;
 }
 
+// Builds the projectile system for a scene: allocates the type table and the
+// 100-entry projectile pool, links every pool entry into the free list and
+// looks up the projectile sound and particle emitters by name.
 void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
 {
+    st_PROJECTILE_DEPOT* pooldepot;
     st_PROJECTILE_DEPOT* depot = &g_prjdepot;
     S32 i;
 
@@ -247,9 +248,10 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
         }
     }
 
+    pooldepot = &g_prjdepot;
     for (i = 0; i < depot->rawcnt; i++)
     {
-        ZPRJ_poolAdd(i);
+        ZPRJ_poolAdd(&pooldepot->rawpool[i]);
     }
 
     for (i = 0; i < 1; i++)
