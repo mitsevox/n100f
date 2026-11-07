@@ -68,7 +68,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/nodeLight.c` | 1 of 7 | `_LightFn` (99.2%) and the five `_rwApply*Light` functions (95.3-99.1%): register choice and the order of a few loads |
 | `rwsdk/world/pipe/p2/nodePostLight.c` | 1 of 2 | `_PostLightFn` (94.6%: the target reloads each color channel after its clamp test; also on GIHE78-rev1) |
 | `rwsdk/world/pipe/p2/gcn/wrldpipe.c` | 7 of 7 | (Matching on GIHE78-rev0; starts at `_rxWorldDevicePluginAttach`, `0x8015D830`) |
-| `rwsdk/src/batextur.c` | 29 of 29 | (Matching on GIHE78-rev0, with its `.rodata`, `.data`, `.sdata`, `.sbss` and `.sdata2`) |
+| `rwsdk/src/batextur.c` | 29 of 29 | (Matching on GIHE78-rev0; `.rodata` and `.data` exact, `.sdata`, `.sbss` and `.sdata2` exact up to alignment padding) |
 | `rwsdk/src/plcore/batkbin.c` | 8 of 8 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/plcore/bamatrix.c` | 19 of 21 | `MatrixOrthoNormalize` (99.6%) and `RwMatrixOptimize` (92.2%), register choice and scheduling |
 | `rwsdk/src/babinfrm.c` | 3 of 3 | (Matching on GIHE78-rev0, with its `.sdata2`) |

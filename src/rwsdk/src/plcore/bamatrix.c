@@ -268,6 +268,9 @@ S32 RwEngineSetMatrixTolerances(const RwMatrixTolerance* const tolerance)
     return 1;
 }
 
+// Sets the matrix's normal, orthogonal and identity flags by how far it is from each, under the
+// given tolerances or the defaults. The identity test uses the orthogonal tolerance, not the
+// identity one.
 RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
 {
     S32 identity;

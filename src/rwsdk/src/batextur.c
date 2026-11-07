@@ -1090,8 +1090,9 @@ static RwTexture* TextureFind(const char* name)
     return NULL;
 }
 
-// Returns a texture by name with its reference count raised when a dictionary already holds it;
-// otherwise reads it through the read callback and adds it to the current dictionary, if any.
+// Returns a texture by name with its reference count raised when the current dictionary holds it
+// (or, with no current dictionary, any dictionary); otherwise reads it through the read callback
+// and adds it to the current dictionary, if any.
 RwTexture* RwTextureRead(const char* name, const char* maskName)
 {
     RwTexture* texture;
