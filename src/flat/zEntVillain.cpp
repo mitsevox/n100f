@@ -16611,6 +16611,27 @@ static inline xModelInstance* VWEP_rbs_animmodel(st_zEntVillain* vil)
     return da_minst;
 }
 
+// Puts a Redbeard sword's model, unrotated and unscaled, and its collision
+// sphere (radius 0.75) at pos when one is given.
+static inline void VWEP_rbs_place(st_REDBEARD_SWORD* rbs, _xVec3* pos)
+{
+    _xMat4x3 mat = { 0 };
+    xMat3x3Euler((xMat3x3*)&mat, 0.0f, 0.0f, 0.0f);
+    xVec3SMulBy(&mat.right, 1.0f);
+    xVec3SMulBy(&mat.up, 1.0f);
+    xVec3SMulBy(&mat.at, 1.0f);
+    mat.flags = 0;
+    if (pos)
+    {
+        mat.pos = *pos;
+        rbs->bound.type = 1;
+        rbs->bound.sph.r = 0.75f;
+        rbs->bound.sph.center = *pos;
+        xBoundUpdate(&rbs->bound);
+    }
+    memcpy(rbs->model->Mat, &mat, sizeof(mat));
+}
+
 // Prepare a Redbeard sword entity and its collision targets.
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
 {
@@ -16633,18 +16654,7 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
     rbs->frame = &rbs->raw_frame;
     rbs->collis = &rbs->raw_collis;
     vec_pos = *xEntGetPos(rbs->rbvil);
-    _xMat4x3 mat = { 0 };
-    xMat3x3Euler((xMat3x3*)&mat, 0.0f, 0.0f, 0.0f);
-    xVec3SMulBy(&mat.right, 1.0f);
-    xVec3SMulBy(&mat.up, 1.0f);
-    xVec3SMulBy(&mat.at, 1.0f);
-    mat.flags = 0;
-    mat.pos = vec_pos;
-    rbs->bound.type = 1;
-    rbs->bound.sph.r = 0.75f;
-    rbs->bound.sph.center = vec_pos;
-    xBoundUpdate(&rbs->bound);
-    memcpy(rbs->model->Mat, &mat, sizeof(mat));
+    VWEP_rbs_place(rbs, &vec_pos);
     rbs->frame->rot.axis = g_Y3;
     rbs->frame->rot.angle = 0.0f;
     rbs->frame->vel = g_O3;
