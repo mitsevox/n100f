@@ -617,22 +617,34 @@ static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEn
 static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStripList** stripList,
                              S32 tryAllEdges)
 {
-    TriStripEdge* forwardEdge;
-    TriStripBinEntry* bins[4];
-    TriStripFreeLists freeLists;
+    U32 edgeIndex;
     TriStripList* forward;
     TriStripList* backward;
     U32 numUsed;
-    TriStripEdge* edgeList;
-    TriStripEdge* backwardEdge;
+    U32 startUsed;
     TriStripBinEntry** entries;
+    TriStripEdge* forwardEdge;
+    TriStripEdge* backwardEdge;
+    U32 bestEdge;
+    S32 pass;
+    U32 bestUsed;
+    TriStripBinEntry* bins[4];
+    TriStripFreeLists freeLists;
+    TriStripEdge* edgeList;
     TriStripEdge* edge;
+    U32 start;
+    S32 bin;
+    S32 backwardFree;
+    U32 triIndex;
+    TriStripList* strip;
+    U16* vertIndex;
+    TriStripEdge* next;
     U32 i;
 
     edgeList = NULL;
+    numUsed = 0;
     forwardEdge = NULL;
     backwardEdge = NULL;
-    numUsed = 0;
     bins[0] = NULL;
     bins[1] = NULL;
     bins[2] = NULL;
@@ -659,16 +671,14 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
     while (numUsed < numTris)
     {
-        U32 bestUsed = 0;
-        S32 pass = tryAllEdges ? 0 : TRISTRIPNUMPASSES - 1;
+        bestUsed = 0;
+        pass = tryAllEdges ? 0 : TRISTRIPNUMPASSES - 1;
 
         if (bins[0])
         {
             // A triangle with no free neighbours is a strip of its own.
-            U32 triIndex = bins[0]->triIndex;
-            TriStripList* strip =
-                (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
-            U16* vertIndex;
+            triIndex = bins[0]->triIndex;
+            strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(MESHGLOBAL(triStripListEntryFreeList));
 
             strip->next = *stripList;
             *stripList = strip;
@@ -694,41 +704,35 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
         }
         else
         {
-            TriStripBinEntry* entry;
-            U32 startUsed;
-            S32 bin = 1;
-            U32 start;
-            U32 bestEdge;
+            bin = 1;
 
             while (!bins[bin])
             {
                 bin++;
             }
 
-            entry = bins[bin];
-
             // Start along an edge whose neighbours both lead on, or else towards the most
             // free neighbours.
-            if (TRISTRIPEDGEFREE(entry->edge[2], used) >= 2 &&
-                TRISTRIPEDGEFREE(entry->edge[1], used) >= 2)
+            if (TRISTRIPEDGEFREE(bins[bin]->edge[2], used) >= 2 &&
+                TRISTRIPEDGEFREE(bins[bin]->edge[1], used) >= 2)
             {
                 start = 1;
             }
-            else if (TRISTRIPEDGEFREE(entry->edge[0], used) >= 2 &&
-                     TRISTRIPEDGEFREE(entry->edge[2], used) >= 2)
+            else if (TRISTRIPEDGEFREE(bins[bin]->edge[0], used) >= 2 &&
+                     TRISTRIPEDGEFREE(bins[bin]->edge[2], used) >= 2)
             {
                 start = 2;
             }
-            else if (TRISTRIPEDGEFREE(entry->edge[1], used) >= 2 &&
-                     TRISTRIPEDGEFREE(entry->edge[0], used) >= 2)
+            else if (TRISTRIPEDGEFREE(bins[bin]->edge[1], used) >= 2 &&
+                     TRISTRIPEDGEFREE(bins[bin]->edge[0], used) >= 2)
             {
                 start = 0;
             }
-            else if (TRISTRIPEDGEFREE(entry->edge[0], used) >
-                     TRISTRIPEDGEFREE(entry->edge[1], used))
+            else if (TRISTRIPEDGEFREE(bins[bin]->edge[0], used) >
+                     TRISTRIPEDGEFREE(bins[bin]->edge[1], used))
             {
-                if (TRISTRIPEDGEFREE(entry->edge[0], used) >
-                    TRISTRIPEDGEFREE(entry->edge[2], used))
+                if (TRISTRIPEDGEFREE(bins[bin]->edge[0], used) >
+                    TRISTRIPEDGEFREE(bins[bin]->edge[2], used))
                 {
                     start = 2;
                 }
@@ -737,8 +741,8 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
                     start = 1;
                 }
             }
-            else if (TRISTRIPEDGEFREE(entry->edge[1], used) >
-                     TRISTRIPEDGEFREE(entry->edge[2], used))
+            else if (TRISTRIPEDGEFREE(bins[bin]->edge[1], used) >
+                     TRISTRIPEDGEFREE(bins[bin]->edge[2], used))
             {
                 start = 0;
             }
@@ -752,10 +756,6 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
             for (;;)
             {
-                U32 edgeIndex;
-                U16* vertIndex;
-                S32 backwardFree;
-
                 for (i = 0; i < numTris; i++)
                 {
                     entries[i]->trialUsed = entries[i]->used;
@@ -836,7 +836,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
                     if (pass >= TRISTRIPNUMPASSES)
                     {
-                        TriStripList* strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(
+                        strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(
                             MESHGLOBAL(triStripListEntryFreeList));
 
                         strip->next = *stripList;
@@ -869,7 +869,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
                     if (pass >= TRISTRIPNUMPASSES)
                     {
-                        TriStripList* strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(
+                        strip = (TriStripList*)RWSRCGLOBAL(memoryAlloc)(
                             MESHGLOBAL(triStripListEntryFreeList));
 
                         strip->next = *stripList;
@@ -895,7 +895,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
 
     for (edge = edgeList; edge;)
     {
-        TriStripEdge* next = edge->next;
+        next = edge->next;
 
         RWSRCGLOBAL(memoryFree)(freeLists.edgeFreeList, edge);
         edge = next;
