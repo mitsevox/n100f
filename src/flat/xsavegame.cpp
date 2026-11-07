@@ -125,7 +125,7 @@ S32 xSGTgtPhysSlotIdx(st_XSAVEGAME_DATA* xsgdata, S32 tidx)
     return iSGTgtPhysSlotIdx(xsgdata->isgsess, tidx);
 }
 
-// Picks the message text for a memory card failure: the card in slot tidx is named in it.
+// Names the memory card in slot tidx in the wording the failure message needs.
 extern "C" char* fn_800389FC(st_XSAVEGAME_DATA* xsgdata, S32 tidx, en_XSG_WHYFAIL whyFail)
 {
     switch (whyFail)
@@ -985,23 +985,20 @@ S32 xSG_sv_flipproc(st_XSAVEGAME_DATA* xsgdata)
             clt->buf_sizepos = xsgdata->buf_curpos;
             xSGWriteData(xsgdata, NULL, (char*)&fill, 4, 1);
             xUtil_idtag2string(clt->idtag, 0);
-            rc = 1;
         }
-        if (rc != 0)
-        {
-            rc = clt->cltproc(clt->cltdata, xsgdata, (st_XSAVEGAME_WRITECONTEXT*)clt);
-            if (rc == 0)
-            {
-                xUtil_idtag2string(clt->idtag, 0);
-                result = 0;
-            }
 
-            S32 needfill = clt->maxamt - clt->realamt;
+        rc = clt->cltproc(clt->cltdata, xsgdata, (st_XSAVEGAME_WRITECONTEXT*)clt);
+        if (rc == 0)
+        {
             xUtil_idtag2string(clt->idtag, 0);
-            while (needfill-- > 0)
-            {
-                xSGWriteData(xsgdata, NULL, &bfill, 1, 1);
-            }
+            result = 0;
+        }
+
+        S32 needfill = clt->maxamt - clt->realamt;
+        xUtil_idtag2string(clt->idtag, 0);
+        while (needfill-- > 0)
+        {
+            xSGWriteData(xsgdata, NULL, &bfill, 1, 1);
         }
 
         if (rc != 0 && xSG_smem_cltclose(xsgdata, clt) == 0)
