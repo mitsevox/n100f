@@ -15007,8 +15007,9 @@ static S32 VWEP_extend_particles(st_zEntVillain* ent, F32 dt, _xVec3* pos_tgt)
     }
     dist = ent->spd_extend;
     tym_elap = ent->tmr_list[ZVIL_TYMR_CURGOAL];
-    if (ent->tmr_list[ZVIL_TDUR_EXTEND] < tym_elap) tym_elap = ent->tmr_list[ZVIL_TDUR_EXTEND];
-    dist = MIN(tym_elap * dist, ent->dst_extend);
+    conrat = ent->tmr_list[ZVIL_TDUR_EXTEND];
+    if (conrat < tym_elap) tym_elap = conrat;
+    dist = MIN(dist * tym_elap, ent->dst_extend);
     dist = MAX(0.01f, dist);
     conrat = ent->wid_extend / ent->dst_extend;
     VSUP_ang_toXZDir(ent->frame->rot.angle, &dirvec);
