@@ -804,7 +804,8 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
                 forward->numIndices = 3;
 
                 TriStripMarkTriUsed(bins[bin], bins, pass);
-                numUsed = startUsed + 1;
+                numUsed = startUsed;
+                numUsed++;
                 numUsed += TriStripFollow(forward, forwardEdge, bins, triangles, pass);
 
                 if (pass < TRISTRIPNUMPASSES)
