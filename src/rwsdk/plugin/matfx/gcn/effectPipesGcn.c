@@ -79,7 +79,7 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 // and each vertex's offset comes from the texture space of one of its triangles. Both offsets
 // are computed before either store (the normal and light loads come before the first stfsx),
 // each index branch sets up its own vertex pointers (the pointer arithmetic appears in both), and
-// the indices are read as indices[i] (the compiler's own walking pointer, r26).
+// the indices are read as indices[i].
 void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMesh* mesh,
                  RwV3d* positions, RwV3d* normals, RwTexCoords* texCoords, S32 numVertices,
                  S32 flags)
@@ -327,7 +327,7 @@ RpWorldSector* fn_801400F8(RpWorldSector* sector, GCNObjectData* objectData)
 }
 
 // The alpha compare mode for a texture: 3 when its raster's parent has alpha, otherwise 1. The
-// mode starts at 1 (li r3, 1 before the first test in each caller).
+// mode starts at 1.
 static S32 MatFXGCNAlphaRef(RwTexture* texture)
 {
     S32 ref = 1;

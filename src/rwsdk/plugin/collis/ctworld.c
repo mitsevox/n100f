@@ -623,8 +623,6 @@ static RpWorldSector* WorldSectorForAllLinePolyIntersections(RpWorldSector* worl
 static inline RpWorldSector* OldWorldSectorForAllBoxedPrimitivePolyIntersections(
     RpWorldSector* worldSector, PolyTestParam* isData)
 {
-    // collSector is a block local: at function scope it colored above the caller's hoisted
-    // &box->inf (r24/r23 swapped in RpCollisionWorldForAllIntersections).
     if (worldSector->colSectorRoot)
     {
         RpCollSector* collSector = worldSector->colSectorRoot;
@@ -755,8 +753,8 @@ static inline RpWorld* WorldForAllBoxWorldSectorIntersections(RpWorld* world, Rw
     return world;
 }
 
-// The sphere case sets the test parameters after it widens the box: the target colors 1.0 (for
-// the reciprocal radius) in f0, below the box corners, so its load comes after theirs.
+// Calls back for every world triangle the intersection touches: a line walks the sectors along
+// itself, a sphere or box walks the sectors its bounding box reaches.
 RpWorld* RpCollisionWorldForAllIntersections(RpWorld* world, RpIntersection* intersection,
                                              RpIntersectionCallBackWorldTriangle callBack,
                                              void* data)

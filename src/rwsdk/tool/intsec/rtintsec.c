@@ -159,8 +159,6 @@ static F32 SphereTriangleDot(const RwV3d* a, const RwV3d* b)
 S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const RwV3d* v1,
                                  const RwV3d* v2, RwV3d* normal, F32* distance)
 {
-    // Three locals, not an array: the target keeps v0 - centre at 0x68(r1), v1 at 0x5C and
-    // v2 at 0x50, the reverse of an array's order.
     RwV3d vc0;
     RwV3d vc1;
     RwV3d vc2;

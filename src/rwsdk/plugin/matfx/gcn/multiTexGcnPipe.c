@@ -316,7 +316,6 @@ S32 _rpGameCubeMTPipeDataQueryNBTs(GCNObjectData* objectData)
 // The matrix a texture matrix is relative to: 16 and up are the plugin's frames (the inverse of
 // the frame's LTM, after the object's matrix when there is one), 3 is lbl_8025E304 and 2 the
 // object's matrix. Returns NULL when the texture matrix is used as it is.
-// One exit through out: the lbl_8025E304 path goes through r0 (addi r0, mr r3 at 0x801420C4).
 RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
 {
     RwMatrix* out;

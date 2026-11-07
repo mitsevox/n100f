@@ -139,8 +139,6 @@ static void* MatFXMaterialDestructor(void* object, S32 offset, S32 size)
 // textures are shared (their reference counts raised), the others set through the setters.
 static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offset, S32 size)
 {
-    // Material locals for the two objects: the target colors dstData r31, srcObject r30, srcData r29,
-    // dstObject r28 and i r27, the declaration order below.
     MatFXMaterialData* dstData;
     const RpMaterial* srcMaterial = (const RpMaterial*)srcObject;
     MatFXMaterialData* srcData;

@@ -156,8 +156,6 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
         return NULL;
     }
 
-    // The target reads every header value before the first store (lwz flags, then lbz each count),
-    // so they go through locals. flags still lands in r0 here and in r11 in the target.
     {
         U8 numIndStages;
         U8 numIndMatrices;
