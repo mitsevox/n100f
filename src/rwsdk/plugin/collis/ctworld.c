@@ -170,14 +170,16 @@ static RpWorld* WorldForAllLineWorldSectorIntersections(RpWorld* world, RwLine* 
                 {
                     nStack++;
                     sectorStack[nStack] = plane->rightSubTree;
-                    lineStack[nStack] = line;
+                    lineStack[nStack].start = line.start;
+                    lineStack[nStack].end = line.end;
                     sector = plane->leftSubTree;
                 }
                 else
                 {
                     nStack++;
                     sectorStack[nStack] = plane->leftSubTree;
-                    lineStack[nStack] = line;
+                    lineStack[nStack].start = line.start;
+                    lineStack[nStack].end = line.end;
                     sector = plane->rightSubTree;
                 }
             }
@@ -193,7 +195,8 @@ static RpWorld* WorldForAllLineWorldSectorIntersections(RpWorld* world, RwLine* 
                 {
                     nStack++;
                     sectorStack[nStack] = plane->rightSubTree;
-                    lineStack[nStack] = line;
+                    lineStack[nStack].start = line.start;
+                    lineStack[nStack].end = line.end;
                     sector = plane->leftSubTree;
                     line.end = vSplit;
                 }
@@ -226,7 +229,8 @@ static RpWorld* WorldForAllLineWorldSectorIntersections(RpWorld* world, RwLine* 
                 {
                     nStack++;
                     sectorStack[nStack] = plane->leftSubTree;
-                    lineStack[nStack] = line;
+                    lineStack[nStack].start = line.start;
+                    lineStack[nStack].end = line.end;
                     sector = plane->rightSubTree;
                     line.end = vSplit;
                 }
