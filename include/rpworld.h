@@ -603,6 +603,8 @@ struct GCNAllInOnePrivateData
     void* reinstanceCB;
     void* lightingCB;
     void* renderCB;
+    // Signed: the instance callbacks' ~clearFlags mask is nor then and in the target, which a
+    // signed word gives (an unsigned one gives andc).
     S32 clearFlags;
 };
 
