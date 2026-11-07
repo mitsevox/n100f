@@ -908,10 +908,15 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
     RwFreeListDestroy(freeLists.edgeFreeList);
     freeLists.edgeFreeList = NULL;
 
-    for (i = 0; i < numTris; i++)
     {
-        RWSRCGLOBAL(memoryFree)(freeLists.binEntryFreeList, entries[i]);
-        entries[i] = NULL;
+        TriStripBinEntry** entry = entries;
+
+        for (i = 0; i < numTris; i++)
+        {
+            RWSRCGLOBAL(memoryFree)(freeLists.binEntryFreeList, *entry);
+            *entry = NULL;
+            entry++;
+        }
     }
 
     RwFreeListDestroy(freeLists.binEntryFreeList);
