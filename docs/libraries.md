@@ -115,13 +115,13 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/matfx/multiTex.c` | 17 of 17 | Matching on GIHE78-rev0 and GIHE78-rev1, with all 2,520 code bytes, `.bss` RegEntries and `.sdata` _rpMultiTextureModule (152 data bytes) |
 | `rwsdk/plugin/matfx/multiTexEffect.c` | 13 of 14 (rev0) | `RpMTEffectFind` is 99.02% (register choice); NonMatching. Rev1 has 13 of 15 exact functions in its 2,852-byte mapped range; it remains NonMatching |
 | `rwsdk/plugin/skin2/rpskin.c` | 26 of 26 | (Matching on GIHE78-rev0; `_rpSkinGlobals` stays unsplit, since the source only declares it; the skin code after it reads it; starts at `SkinOpen`, `0x80144154`, since `SkinCreate` is inlined; ends after `RpSkinAtomicSetType`, `0x80144D5C`, an edge the unsplit code after it abuts) |
-| `rwsdk/plugin/skin2/gcn/skingcn.c` | 6 of 8 | Consistent interrupt-visible token declarations add exact bodies; remaining routines partial. NonMatching, original linked |
+| `rwsdk/plugin/skin2/gcn/skingcn.c` | 7 of 8 | `fn_80145598` (94.5%), register choice; NonMatching, original linked |
 | `rwsdk/plugin/skin2/gcn/skinstream.c` | 3 of 3 | Source-linked on rev0; cumulative native-chunk sizing and independent read locals, text-only object |
 | `rwsdk/plugin/skin2/gcn/skingcng.c` | 3 of 3 | all 3 functions; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
 | `rwsdk/plugin/matfx/gcn/multiTexGcn.c` | 1 of 1 | one function; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
-| `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 4 of 7 | `GameCubeMTEffectStreamRead` (98.2%), `GameCubeMTEffectStreamWrite` (86.5%) and `RpGameCubeMTEffectCreate` (85.5%), not diagnosed yet |
+| `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 6 of 7 | `GameCubeMTEffectStreamWrite` (98.4%: the header loads' order and registers) |
 | `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 8 of 9 | `_rpGameCubeMTEffectSend` (98.6%: register choice and one argument load) (text only) |
-| `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 11 of 15 | Consistent interrupt-visible token declarations add exact bodies; remaining routines partial. NonMatching, original linked |
+| `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 14 of 15 | `fn_80140178` (99.4%), register choice; NonMatching, original linked |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 4 of 7 | `fn_8015DBA4` (96.9%), `fn_8015E054` (97.5%) and `fn_8015E2E8`, the instance callback (96.5%: the first loads' order) (text only) |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c` | 3 of 5 | `_rxGCWorldSectorAllInOneNode` (97.9%) and `fn_8015E908`, the instance callback (93.2%: register choice and the first loads' order) (text only) |
 | `rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c` | 4 of 4 (rev0) | (Matching on GIHE78-rev0, with its `.data` and `.sbss`; vertices go through the GX vertex functions) |
