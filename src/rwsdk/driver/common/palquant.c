@@ -634,8 +634,8 @@ static S32 ExtractNodes(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32
     return palIndex;
 }
 
-// Chooses up to maxcols palette entries for the colours added so far and returns how many it
-// chose; every leaf then knows its entry.
+// Chooses up to maxcols palette entries for the colours added so far; every leaf then knows its
+// entry. Returns the leaf count when the colours fit, else maxcols.
 S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
 {
     S32 numcols = maxcols;
