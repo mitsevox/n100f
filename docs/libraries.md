@@ -122,7 +122,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 4 of 7 | `GameCubeMTEffectStreamRead` (98.2%), `GameCubeMTEffectStreamWrite` (86.5%) and `RpGameCubeMTEffectCreate` (85.5%), not diagnosed yet |
 | `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 3 of 9 | `_rpGameCubeMTMeshRenderCallBack` (94.7%), `GetTexFrameMatrix` (90.2%), `fn_80141958` (90.1%), `_rpGameCubeMTPipeDataQueryNBTs` (89.6%), `fn_80141D20` (82.8%) and `_rpGameCubeMTEffectSend` (68.7%), not diagnosed yet (text only) |
 | `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 11 of 15 | Consistent interrupt-visible token declarations add exact bodies; remaining routines partial. NonMatching, original linked |
-| `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 4 of 7 | `fn_8015DBA4` (96.9%), `fn_8015E054` (97.5%) and `fn_8015E2E8`, the instance callback (98.4%: the first loads' order) (text only) |
+| `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 5 of 7 | `fn_8015DBA4` (96.9%) and `fn_8015E054` (97.5%) (text only) |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c` | 4 of 5 | `_rxGCWorldSectorAllInOneNode` (97.9%) (text only) |
 | `rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c` | 4 of 4 (rev0) | (Matching on GIHE78-rev0, with its `.data` and `.sbss`; vertices go through the GX vertex functions) |
 | `rwsdk/plugin/collis/ctgeom.c` | 7 of 7 | (NonMatching: this source pools `1.0` before `0.0` in `.sdata2`, the target the other way round) |
