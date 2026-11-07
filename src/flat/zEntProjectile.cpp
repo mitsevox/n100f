@@ -706,11 +706,17 @@ void zEntProjectile::Recycle()
     AddTail(&g_prjdepot.prjpool, &linknode.node);
 }
 
+// Sets a pooled projectile up as the given type: category flags, the type record, the entity, the
+// motion frame and collision settings, then runs the category's attach. Returns 0 when the type is
+// unknown or a step fails.
 S32 zEntProjectile::Init(en_ZPRJ_CATEGORY cat, U32 ptypeID)
 {
     st_ZPRJ_CATEGORY_FUNCS* catf = NULL;
     S32 status = 1;
     S32 rc;
+
+    flg_stat |= 0x10000;
+    state = ZPRJ_STATE_STANDBY;
 
     rc = SetupPrelim(cat, ptypeID);
     if (!rc)
@@ -791,8 +797,6 @@ S32 zEntProjectile::SetupPrelim(en_ZPRJ_CATEGORY cat, U32 ptaid)
     st_ZPRJ_TYPERECORD* ptype;
     S32 isok = 1;
 
-    flg_stat |= 0x10000;
-    state = ZPRJ_STATE_STANDBY;
     cat_proj = cat;
 
     prop = &g_iniProps[cat_proj];
