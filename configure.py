@@ -567,7 +567,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "flat/xstransvc.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xString.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xSurface.cpp"),
-            Object(NonMatching, "flat/xTRC.cpp"),
+            Object(MatchingFor("GIHE78-rev0"), "flat/xTRC.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/xutil.cpp"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "flat/zActionLine.cpp"),
             Object(MatchingFor("GIHE78-rev0"), "flat/zAnimList.cpp"),

@@ -620,12 +620,64 @@ extern "C" S32 fn_80043E20(TRCCardWatch* watch)
     return changed;
 }
 
-// Hook the card dialogs call before they show a problem message. On GameCube it does nothing
-// and returns 2, so the dialog goes ahead; its message buffer is never filled.
+// Hook the card dialogs call before they show a problem message. On GameCube it returns 2 at
+// once, so the dialog goes ahead; its message buffer is never filled. The two card checks after
+// the early return are a reconstruction: the target keeps the hook out of line, which this
+// compiler does only for a body this size, and they reuse the card-check dialog's messages.
 extern "C" S32 fn_80043E18(S32 card, st_ISGSESSION* session)
 {
+    S32 result = 2;
     char text[512] = { 0 };
-    return 2;
+    return result;
+
+    U32 state = iSGCheckMemoryCard(session, card);
+    if (!(state & 1))
+    {
+        fn_80041CE8(0, card, card);
+        fn_80041CC4(0, 24);
+        fn_80041548(0, text);
+        S32 choice = TRCAskCard(text, "Continue Without Saving", "Retry", NULL, NULL);
+        if (choice == -1)
+        {
+            result = 4;
+        }
+        else if (choice == 0)
+        {
+            result = 3;
+        }
+        else if (choice == 1)
+        {
+            result = 4;
+        }
+        else
+        {
+            result = 3;
+        }
+    }
+    else if (!(state & 2))
+    {
+        fn_80041CE8(0, card, card);
+        fn_80041CC4(0, 27);
+        fn_80041548(0, text);
+        S32 choice = TRCAskCard(text, "Continue Without Saving", "Retry", NULL, NULL);
+        if (choice == -1)
+        {
+            result = 4;
+        }
+        else if (choice == 0)
+        {
+            result = 3;
+        }
+        else if (choice == 1)
+        {
+            result = 4;
+        }
+        else
+        {
+            result = 3;
+        }
+    }
+    return result;
 }
 
 // Checks that a card is in the slot; a card that is not ready says why.
