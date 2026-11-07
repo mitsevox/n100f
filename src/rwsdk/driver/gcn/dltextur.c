@@ -155,8 +155,7 @@ static inline void DlTextureInitObj(RwTexture* texture, U32 tlut, S32 biasClamp,
     DLTEXTUR_REBUILD(texture, tlut, biasClamp, edgeLOD, maxAniso, lodBias)
 }
 
-// Rebuilds the texture object, keeping the LOD settings the current texture object (in current)
-// holds.
+// Rebuilds the texture object, keeping the LOD settings its current texture object holds.
 static inline void DlTextureRefresh(RwTexture* texture, RwGCTextureExt* current, U32 tlut)
 {
     GXAnisotropy maxAniso = GXGetTexObjMaxAniso(&current->texObj);
