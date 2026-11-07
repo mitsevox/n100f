@@ -1465,7 +1465,7 @@ dolphin/pad/Pad.c: comment:8
 
 dolphin/dvd/dvdlow.c: comment:8
 	.text       start:0x8010DA44 end:0x8010E898
-	.bss        start:0x8025C038 end:0x8025C108
+	.bss        start:0x8025C038 end:0x8025C120
 	.sdata      start:0x8025E6D0 end:0x8025E6D8
 	.sbss       start:0x8025F560 end:0x8025F5A8
 
@@ -1525,7 +1525,7 @@ bink/src/sdk/decode/yuv.cpp:
 
 bink/src/sdk/decode/binkacd.c:
 	.text       start:0x8011F78C end:0x80120470
-	.rodata     start:0x801A8730 end:0x801A8790
+	.rodata     start:0x801A8730 end:0x801A87A0
 	.data       start:0x801DC240 end:0x801DC380
 
 bink/shared/time/radcb.c:
@@ -1533,7 +1533,7 @@ bink/shared/time/radcb.c:
 
 bink/src/sdk/decode/expand.c:
 	.text       start:0x80120B54 end:0x801241E0
-	.rodata     start:0x801A87A0 end:0x801A8C20
+	.rodata     start:0x801A87A0 end:0x801A8C40 align:32
 	.data       start:0x801DC380 end:0x801DC3C0
 	.sdata2     start:0x80262780 end:0x80262798
 
@@ -1554,11 +1554,11 @@ bink/src/sdk/varbits.c:
 
 bink/src/sdk/fft.c:
 	.text       start:0x801281AC end:0x8012C490
-	.rodata     start:0x801A8DC0 end:0x801A8E18
+	.rodata     start:0x801A8DC0 end:0x801A8E20
 
 bink/src/sdk/dct.c:
 	.text       start:0x8012C490 end:0x8012D564
-	.rodata     start:0x801A8E20 end:0x801ACE20
+	.rodata     start:0x801A8E20 end:0x801ACE20 align:32
 
 bink/src/sdk/bitplane.c:
 	.text       start:0x8012D564 end:0x80130990
