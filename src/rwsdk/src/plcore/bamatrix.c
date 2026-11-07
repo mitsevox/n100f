@@ -182,9 +182,11 @@ S32 _rwMatrixSetMultFn(MatrixMultiplyFunc multiplyFunc)
 
 F32 _rwMatrixDeterminant(const RwMatrix* matrix)
 {
-    return matrix->right.x * (matrix->up.y * matrix->at.z - matrix->up.z * matrix->at.y) +
-           matrix->right.y * (matrix->up.z * matrix->at.x - matrix->up.x * matrix->at.z) +
-           matrix->right.z * (matrix->up.x * matrix->at.y - matrix->up.y * matrix->at.x);
+    RwV3d cross;
+
+    RwV3dCrossProductMacro(&cross, &matrix->up, &matrix->at);
+
+    return RwV3dDotProductMacro(&cross, &matrix->right);
 }
 
 F32 _rwMatrixOrthogonalError(const RwMatrix* matrix)
