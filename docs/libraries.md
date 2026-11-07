@@ -79,12 +79,12 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/plcore/bamemory.c` | 8 of 8 | (Matching on GIHE78-rev0, with its complete eight-byte `.sbss`) |
 | `rwsdk/src/pipe/p2/p2altmdl.c` | 3 of 3 | (Matching on GIHE78-rev0, with its `.bss` _rxExecCtxGlobal) |
 | `rwsdk/tool/slerp/rtslerp.c` | 0 of 1 | `RtQuatSetupSlerpCache` (99.3%: operand and register order in the inlined arc cosine's products; text only) |
-| `rwsdk/src/babintex.c` | 7 of 9 (rev0) | `_rwStringStreamFindAndRead` (99.0%) and `RwTextureStreamRead` (97.6%): the inlined string readers keep their pointers alive longer in the target; NonMatching, with its `.sdata2` |
-| `rwsdk/src/baimage.c` | 16 of 18 | `RwImageApplyMask` (98.5%) and `ImagePathForAllFullNames` (98.3%), register choice |
+| `rwsdk/src/babintex.c` | 7 of 9 (rev0) | `_rwStringStreamFindAndRead` (99.0%: register choice and one extra register copy) and `RwTextureStreamRead` (99.2%: the inlined string readers keep their pointers in different saved registers); NonMatching, with its `.sdata2` |
+| `rwsdk/src/baimage.c` | 16 of 18 | `RwImageApplyMask` (98.5%) and `ImagePathForAllFullNames` (98.8%), register choice; `ImagePathForAllFullNames` also has one extra register copy |
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/src/plcore/bacolor.c` | 2 of 2 | (Matching, with `colorModule` in `.sbss`) |
-| `rwsdk/src/baresamp.c` | 1 of 4 | `ImageResampleGetSpan` (97.3%), `RwImageResample` (97.2%) and `RwImageCreateResample` (97.1%), register choice |
+| `rwsdk/src/baresamp.c` | 1 of 4 | `ImageResampleGetSpan` (97.9%: the shift order of y, x0 and x1, register choice and the order of the conversion stack slots), `RwImageResample` (98.5%) and `RwImageCreateResample` (97.1%), register choice |
 | `rwsdk/world/basector.c` | 6 of 6 | (Matching on GIHE78-rev0, with `sectorTKList` and `sectorModule`) |
 | `rwsdk/world/bamateri.c` | 8 of 8 | (starts at `0x8014D044` now that `_rpLightOpen` is in `balight.c`; Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |
 | `rwsdk/world/balight.c` | 13 of 13 | (Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |
@@ -136,7 +136,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/driver/gcn/dl2drend.c` | 6 of 6 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.bss` and `.sdata2`; the vertex helpers take a plain `RwIm2DVertex*`) |
 | `rwsdk/driver/gcn/dlconvrt.c` | 23 of 25 | `_rwDlPixelToRGB` (92.7%: the target calls `_rwDlConv565To8888` out of line for the default format) and `_rwDlRGBToPixel` (88.3%: the target keeps the pixel in a stack slot); the image readers and raster writers take their converter from the inlined `DlRGBAConverter` and `DlPixelConverter`, and the two device entry points take the standard-function signature. NonMatching, original linked |
 | `rwsdk/driver/gcn/dldevice.c` | 9 of 13 | RasterShowRaster 79.6% (the target keeps the ring-full flag in a stack slot and orders the ring stores differently), PreRetraceCallback 95.5% (the token wait flag clear is stored first, where the target stores it last), System 99.8% (a register swap in the standards table copy), RenderModeSelect three words from exact, the anti-aliased test's copy and constant in the other order with the branch flipped (objdiff shows 42.8% because that swap makes it pair a 34-instruction block as inserted and deleted). NonMatching, original linked |
-| `rwsdk/driver/gcn/dlraster.c` | 14 of 17 | `DlRasterTile` (84.2%) and `DlRasterUntile` (82.3%), `fn_80179198` (98.1%: register choice; its row size comes from the inlined `DlRasterRowBytes`). NonMatching, original linked |
+| `rwsdk/driver/gcn/dlraster.c` | 16 of 17 | `fn_80179198` (98.1%: register choice; its row size comes from the inlined `DlRasterRowBytes`). NonMatching, original linked |
 | `rwsdk/driver/gcn/dlrendst.c` | 7 of 7 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.bss`, `.sbss` and `.sdata2`; the fog setter is the inlined `DlRenderStateSetFog`) |
 | `rwsdk/driver/gcn/dlsprite.c` | 12 of 12 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`; vertices go through the `GXVert.h` inlines) |
 | `rwsdk/driver/gcn/dltexdic.c` | 3 of 3 (rev0) | (Matching on GIHE78-rev0, with its `.sdata2`; `RwGameCubeTextureSetLOD` takes the LOD bias second, as the reader's call evaluates it) |
