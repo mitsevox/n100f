@@ -315,19 +315,20 @@ RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
     if (frame >= 0x10)
     {
         U32 index = frame - 0x10;
+        RwFrame** frames = GCNMTGLOBAL(frames);
 
-        if (index < GCNMTGLOBAL(numFrames) && GCNMTGLOBAL(frames) && GCNMTGLOBAL(frames)[index])
+        if (index < GCNMTGLOBAL(numFrames) && frames && frames[index])
         {
             if (matrix)
             {
                 RwMatrix inverse;
 
-                RwMatrixInvert(&inverse, RwFrameGetLTM(GCNMTGLOBAL(frames)[index]));
+                RwMatrixInvert(&inverse, RwFrameGetLTM(frames[index]));
                 RwMatrixMultiply(result, matrix, &inverse);
             }
             else
             {
-                RwMatrixInvert(result, RwFrameGetLTM(GCNMTGLOBAL(frames)[index]));
+                RwMatrixInvert(result, RwFrameGetLTM(frames[index]));
             }
 
             return result;
@@ -343,9 +344,8 @@ RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
         return result;
     }
 
-    switch (frame)
+    if (frame == 3)
     {
-    case 3:
         if (matrix)
         {
             RwMatrixMultiply(result, matrix, &lbl_8025E304);
@@ -353,16 +353,18 @@ RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
         }
 
         return &lbl_8025E304;
-    case 2:
+    }
+    else if (frame == 2)
+    {
         if (matrix)
         {
             return (RwMatrix*)matrix;
         }
 
         return NULL;
-    default:
-        return NULL;
     }
+
+    return NULL;
 }
 
 // Sends an effect's TEV setup to GX: colors, texture and indirect matrices, indirect stages, TEV
