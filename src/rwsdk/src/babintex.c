@@ -31,7 +31,7 @@ extern RwPluginRegistry texDictTKList;
 S32 _rwStringStreamGetSize(const char* string);
 const char* _rwStringStreamWrite(const char* string, RwStream* stream);
 static char* StringStreamRead(char* nativeString, RwStream* stream, U32 length);
-static char* UnicodeStringStreamRead(char* nativeString, RwStream* stream, U32 length);
+static char* UnicodeStringStreamRead(char* nativeString, RwStream* stream, const U32* lengthIn);
 char* _rwStringStreamFindAndRead(char* string, RwStream* stream);
 U32 RwTextureStreamGetSize(const RwTexture* texture);
 const RwTexture* RwTextureStreamWrite(const RwTexture* texture, RwStream* stream);
@@ -92,11 +92,15 @@ static char* StringStreamRead(char* nativeString, RwStream* stream, U32 length)
     return nativeString;
 }
 
-static char* UnicodeStringStreamRead(char* nativeString, RwStream* stream, U32 length)
+// FAKEMATCH: the length arrives through a pointer and is copied into a local, so that the copy
+// takes the target's saved register; real form believed to be a `U32 length` parameter like
+// StringStreamRead's.
+static char* UnicodeStringStreamRead(char* nativeString, RwStream* stream, const U32* lengthIn)
 {
     U16 buffer[STRING_READCHUNK];
     char* dst;
     S32 allocated = 0;
+    U32 length = *lengthIn;
 
     if (nativeString == NULL)
     {
@@ -119,14 +123,9 @@ static char* UnicodeStringStreamRead(char* nativeString, RwStream* stream, U32 l
 
     while (length)
     {
-        U32 bytesToRead = sizeof(buffer);
+        U32 bytesToRead = (length <= sizeof(buffer)) ? length : sizeof(buffer);
         U32 i;
         U32 charsToCopy;
-
-        if (length <= sizeof(buffer))
-        {
-            bytesToRead = length;
-        }
 
         if (RwStreamRead(stream, buffer, bytesToRead) != bytesToRead)
         {
@@ -187,6 +186,8 @@ const char* _rwStringStreamWrite(const char* string, RwStream* stream)
     return string;
 }
 
+// Skips stream chunks until a string chunk, then reads it as ASCII or converts it from Unicode,
+// into `string` or a new allocation.
 char* _rwStringStreamFindAndRead(char* string, RwStream* stream)
 {
     U32 type;
@@ -219,7 +220,8 @@ char* _rwStringStreamFindAndRead(char* string, RwStream* stream)
 
         if (type == rwID_UNICODESTRING)
         {
-            return UnicodeStringStreamRead(string, stream, length);
+            // FAKEMATCH: passes the length's address; real form believed to pass `length`.
+            return UnicodeStringStreamRead(string, stream, &length);
         }
 
         if (!RwStreamSkip(stream, length))
