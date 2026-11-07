@@ -61,6 +61,7 @@ void _rxEmbeddedPacketBetweenPipelines(RxPipeline* fromPipeline, RxPipeline* toP
 RxPipelineNode* _rxEmbeddedPacketBetweenNodes(RxPipeline* pipeline, RxPipelineNode* nodeFrom,
                                               U32 whichOutput)
 {
+    RxPacket* packet;
     U32 nodeToIndex = nodeFrom->outputs[whichOutput];
 
     if (nodeToIndex != (U32)-1)
@@ -69,29 +70,29 @@ RxPipelineNode* _rxEmbeddedPacketBetweenNodes(RxPipeline* pipeline, RxPipelineNo
 
         if (pipeline->embeddedPacketState > rxPKST_UNUSED)
         {
-            RxPacket* packet = pipeline->embeddedPacket;
             U32 outputMask = 1 << whichOutput;
+
+            packet = pipeline->embeddedPacket;
 
             if (!(packet->slotsContinue[0] & outputMask))
             {
                 U32 i = packet->numClusters;
-                RxCluster* cluster = &packet->clusters[i];
 
                 do
                 {
-                    cluster--;
-                    if (!(outputMask & packet->slotsContinue[i]) && cluster->clusterRef)
+                    if (!(outputMask & packet->slotsContinue[i]) && packet->clusters[i - 1].clusterRef)
                     {
-                        if (cluster->data && !(cluster->flags & CLUSTER_EXTERNAL))
+                        if (packet->clusters[i - 1].data &&
+                            !(packet->clusters[i - 1].flags & CLUSTER_EXTERNAL))
                         {
-                            RxHeapFree(_rxHeapGlobal, cluster->data);
+                            RxHeapFree(_rxHeapGlobal, packet->clusters[i - 1].data);
                         }
 
                         *(U32*)&packet->clusters[i - 1] = 0;
-                        cluster->data = NULL;
-                        cluster->numAlloced = 0;
-                        cluster->numUsed = 0;
-                        cluster->clusterRef = NULL;
+                        packet->clusters[i - 1].data = NULL;
+                        packet->clusters[i - 1].numAlloced = 0;
+                        packet->clusters[i - 1].numUsed = 0;
+                        packet->clusters[i - 1].clusterRef = NULL;
                     }
                 } while (--i);
             }
