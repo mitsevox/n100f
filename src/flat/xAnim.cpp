@@ -2085,14 +2085,14 @@ void xAnimPlayEval(xAnimPlay* play)
     U32 i;
     U32 bone;
     xQuat* quatresult = (xQuat*)giAnimScratch;
-    xVec3* tranresult = (xVec3*)((U8*)quatresult + 0x410);
+    xVec3* tranresult = (xVec3*)((U8*)giAnimScratch + 0x410);
 
     if (play->BoneCount > 1)
     {
         xQuat* quatblend = (xQuat*)((U8*)quatresult + 0x720);
         xVec3* tranblend = (xVec3*)((U8*)quatblend + 0x410);
 
-        SingleEval(play->Single, tranresult, (xQuat*)giAnimScratch);
+        SingleEval(play->Single, tranresult, quatresult);
 
         for (i = 1; i < play->NumSingle; i++)
         {
