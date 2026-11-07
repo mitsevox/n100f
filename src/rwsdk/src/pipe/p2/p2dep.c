@@ -68,7 +68,8 @@ static rxReqEntry* _ReqAddEntry(rxReq* req, RxClusterDefinition* clusterDef,
         return entry;
     }
 
-    entry = &req->entries[req->numEntries++];
+    entry = &req->entries[req->numEntries];
+    req->numEntries++;
     entry->clusterDef = clusterDef;
     entry->rqdOrOpt = rqdOrOpt;
     entry->numRefs = numRefs;
@@ -107,10 +108,10 @@ static U32 _IoSpecSearch4Cluster(RxIoSpec* io, RxClusterDefinition* clusterDef)
 }
 
 // How an output leaves a cluster: by the node's entry for it, or by the output's default.
-#define OUTPUTGETVALIDITY(nodeDef, outputSpec, clusterDef, valid)                                  \
+#define OUTPUTGETVALIDITY(io, outputSpec, clusterDef, valid)                                       \
     do                                                                                             \
     {                                                                                              \
-        U32 _index = _IoSpecSearch4Cluster(&(nodeDef)->io, (clusterDef));                          \
+        U32 _index = _IoSpecSearch4Cluster((io), (clusterDef));                                    \
                                                                                                    \
         (valid) = (_index == (U32)-1) ? (outputSpec)->allOtherClusters                             \
                                       : (outputSpec)->outputClusters[_index];                      \
@@ -121,16 +122,15 @@ static U32 _IoSpecSearch4Cluster(RxIoSpec* io, RxClusterDefinition* clusterDef)
 static void _PropDownElimPath(RxPipeline* pipeline, RxPipelineNode* node,
                               RxClusterDefinition* clusterDef)
 {
+    U32 i;
     rxReqEntry* entry;
-    RxNodeDefinition* nodeDef;
+    RxIoSpec* io;
 
-    nodeDef = node->nodeDef;
+    io = &node->nodeDef->io;
     entry = _ReqSearch4Cluster(node->topSortData->req, clusterDef);
 
     if (entry && --entry->numRefs == 0)
     {
-        U32 i;
-
         _ReqDeleteEntry(node->topSortData->req, entry);
 
         for (i = 0; i < node->numOutputs; i++)
@@ -141,7 +141,7 @@ static void _PropDownElimPath(RxPipeline* pipeline, RxPipelineNode* node,
                 RxClusterValid valid;
 
                 outputSpec = &node->nodeDef->io.outputs[i];
-                OUTPUTGETVALIDITY(nodeDef, outputSpec, clusterDef, valid);
+                OUTPUTGETVALIDITY(io, outputSpec, clusterDef, valid);
 
                 if (valid == rxCLVALID_NOCHANGE)
                 {
@@ -211,22 +211,21 @@ static void _ScopeTraceMerge(rxScope** scopeList, rxScope* scope0, rxScope* scop
 // feeds.
 static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
 {
-    RxPipelineNode* node;
+    RxNodeDefinition* nodeDef;
     U32 n;
+    RxPipelineNode* node;
+    U32 i;
+    U32 j;
 
     n = pipeline->numNodes;
     node = &pipeline->nodes[n - 1];
 
     do
     {
-        RxNodeDefinition* nodeDef;
-        U32 i;
-
         nodeDef = node->nodeDef;
 
         for (i = 0; i < nodeDef->io.numClustersOfInterest; i++)
         {
-            U32 j;
             RxClusterDefinition* clusterDef;
 
             clusterDef = nodeDef->io.clustersOfInterest[i].clusterDef;
@@ -243,12 +242,16 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
 
             for (j = i + 1; j < nodeDef->io.numClustersOfInterest; j++)
             {
-                if (clusterDef == nodeDef->io.clustersOfInterest[j].clusterDef)
+                RxClusterDefinition* other;
+
+                other = nodeDef->io.clustersOfInterest[j].clusterDef;
+
+                if (clusterDef == other)
                 {
                     RwError err;
 
                     err.pluginID = 1;
-                    err.errorCode = _rwerror(0x1E, node->nodeDef->name, clusterDef->name);
+                    err.errorCode = _rwerror(0x1E, node->nodeDef->name, other->name);
                     RwErrorSet(&err);
                     return 0x1E;
                 }
@@ -269,7 +272,6 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
         {
             if (node->outputs[i] != (U32)-1)
             {
-                U32 j;
                 RxPipelineNode* next;
                 RxOutputSpec* outputSpec;
 
@@ -282,7 +284,7 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
                     RxClusterValid valid;
 
                     nextEntry = REQGETENTRY(next->topSortData->req, j);
-                    OUTPUTGETVALIDITY(nodeDef, outputSpec, nextEntry->clusterDef, valid);
+                    OUTPUTGETVALIDITY(&nodeDef->io, outputSpec, nextEntry->clusterDef, valid);
 
                     if (valid == rxCLVALID_NOCHANGE)
                     {
@@ -323,14 +325,10 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
 
         for (i = 0; i < nodeDef->io.numClustersOfInterest; i++)
         {
-            RxClusterValidityReq rqdOrOpt;
-
-            rqdOrOpt = nodeDef->io.inputRequirements[i];
-
-            if (rqdOrOpt != rxCLREQ_DONTWANT)
+            if (nodeDef->io.inputRequirements[i] != rxCLREQ_DONTWANT)
             {
                 if (!_ReqAddEntry(node->topSortData->req, nodeDef->io.clustersOfInterest[i].clusterDef,
-                                  rqdOrOpt, node->topSortData->numIns, node))
+                                  nodeDef->io.inputRequirements[i], node->topSortData->numIns, node))
                 {
                     RwError err;
 
@@ -352,8 +350,8 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
 // outputs that carry its cluster on.
 static U32 _ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields(RxPipeline* pipeline)
 {
-    RxPipelineNode* node;
     U32 n;
+    RxPipelineNode* node;
 
     n = pipeline->numNodes;
     node = pipeline->nodes;
@@ -361,15 +359,15 @@ static U32 _ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields(RxPipelin
     do
     {
         U32 i;
-        RxNodeDefinition* nodeDef;
+        RxIoSpec* io;
 
-        nodeDef = node->nodeDef;
+        io = &node->nodeDef->io;
 
-        for (i = 0; i < nodeDef->io.numClustersOfInterest; i++)
+        for (i = 0; i < io->numClustersOfInterest; i++)
         {
-            if (nodeDef->io.clustersOfInterest[i].forcePresent)
+            if (io->clustersOfInterest[i].forcePresent)
             {
-                if (!_ReqAddEntry(node->topSortData->req, nodeDef->io.clustersOfInterest[i].clusterDef,
+                if (!_ReqAddEntry(node->topSortData->req, io->clustersOfInterest[i].clusterDef,
                                   rxCLREQ_DONTWANT, 1, node))
                 {
                     RwError err;
@@ -399,7 +397,7 @@ static U32 _ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields(RxPipelin
                     RxClusterValid valid;
 
                     nextEntry = REQGETENTRY(next->topSortData->req, j);
-                    OUTPUTGETVALIDITY(nodeDef, outputSpec, nextEntry->clusterDef, valid);
+                    OUTPUTGETVALIDITY(io, outputSpec, nextEntry->clusterDef, valid);
 
                     if (valid != rxCLVALID_INVALID)
                     {
@@ -445,6 +443,7 @@ static U32 _ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields(RxPipelin
 static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
 {
     U32 n;
+    U32 i;
     RxPipelineNode* node;
 
     n = pipeline->numNodes;
@@ -452,8 +451,6 @@ static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
 
     do
     {
-        U32 i;
-
         for (i = 0; i < node->topSortData->req->numEntries; i++)
         {
             rxReqEntry* entry;
@@ -472,8 +469,13 @@ static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
                     return 0x20;
                 }
 
-                entry->nextInScope = entry->scope->entries;
-                entry->scope->entries = entry;
+                {
+                    rxScope* scope;
+
+                    scope = entry->scope;
+                    entry->nextInScope = scope->entries;
+                    scope->entries = entry;
+                }
             }
         }
 
@@ -502,8 +504,11 @@ static U32 _TraceClusterScopes(RxPipeline* pipeline, rxScope** scopeList)
                         {
                             if (!nextEntry->scope)
                             {
-                                nextEntry->nextInScope = entry->scope->entries;
-                                entry->scope->entries = nextEntry;
+                                rxScope* scope;
+
+                                scope = entry->scope;
+                                nextEntry->nextInScope = scope->entries;
+                                scope->entries = nextEntry;
                                 nextEntry->scope = entry->scope;
                             }
                             else
@@ -640,18 +645,16 @@ static U32 _EnumPipelineClusters(rxScope* scopeList,
 
 static U32 _CountHeadNodeRqdsAndOpts(RxPipeline* pipeline)
 {
-    rxReq* req;
     U32 numRqdsAndOpts;
     U32 i;
 
     numRqdsAndOpts = 0;
-    req = pipeline->nodes[0].topSortData->req;
 
-    for (i = 0; i < req->numEntries; i++)
+    for (i = 0; i < pipeline->nodes[0].topSortData->req->numEntries; i++)
     {
         rxReqEntry* entry;
 
-        entry = REQGETENTRY(req, i);
+        entry = REQGETENTRY(pipeline->nodes[0].topSortData->req, i);
 
         if (entry->rqdOrOpt == rxCLREQ_REQUIRED || entry->rqdOrOpt == rxCLREQ_OPTIONAL)
         {
@@ -664,8 +667,9 @@ static U32 _CountHeadNodeRqdsAndOpts(RxPipeline* pipeline)
 
 static void _WriteHeadNodeRqdsAndOpts2PipelineRequirements(RxPipeline* pipeline, U32 numRqdsAndOpts)
 {
-    U32 numRequirements;
+    RxPipelineNode* node;
     U32 i;
+    U32 numRequirements;
 
     if (numRqdsAndOpts)
     {
@@ -674,12 +678,13 @@ static void _WriteHeadNodeRqdsAndOpts2PipelineRequirements(RxPipeline* pipeline,
     }
 
     numRequirements = 0;
+    node = pipeline->nodes;
 
-    for (i = 0; i < pipeline->nodes[0].topSortData->req->numEntries; i++)
+    for (i = 0; i < node->topSortData->req->numEntries; i++)
     {
         rxReqEntry* entry;
 
-        entry = REQGETENTRY(pipeline->nodes[0].topSortData->req, i);
+        entry = REQGETENTRY(node->topSortData->req, i);
 
         if (entry->rqdOrOpt == rxCLREQ_REQUIRED || entry->rqdOrOpt == rxCLREQ_OPTIONAL)
         {
@@ -706,6 +711,7 @@ static U32 _ForAllNodesWriteClusterAllocations(RxPipeline* pipeline, rxScope* sc
     U32 numClusters;
     U8* top;
     U8* bottom;
+    RxPipelineNode* node;
     U32 i;
 
     numRqdsAndOpts = _CountHeadNodeRqdsAndOpts(pipeline);
@@ -717,18 +723,18 @@ static U32 _ForAllNodesWriteClusterAllocations(RxPipeline* pipeline, rxScope* sc
 
     pipeline->embeddedPacket = (RxPacket*)StalacMiteAlloc(
         sizeof(RxPacket) + (pipeline->packetNumClusterSlots - 1) * sizeof(RxCluster));
-    clusters = NULL;
     pipeline->embeddedPacket->numClusters = pipeline->packetNumClusterSlots;
     pipeline->embeddedPacket->pipeline = pipeline;
     pipeline->embeddedPacketState = rxPKST_PACKETLESS;
+    clusters = NULL;
 
     _EnumPipelineClusters(scopeList, _MyEnumPipelineClustersCallBack, &clusters);
 
     for (i = 0; i < pipeline->numNodes; i++)
     {
         U32 j;
+        U32 k;
         U32 continueMask;
-        RxPipelineNode* node;
 
         node = &pipeline->nodes[i];
 
@@ -758,11 +764,10 @@ static U32 _ForAllNodesWriteClusterAllocations(RxPipeline* pipeline, rxScope* sc
         for (j = 0; j < node->topSortData->req->numEntries; j++)
         {
             rxReqEntry* entry;
-            U32 k;
             RxPipelineCluster* cluster;
 
-            entry = REQGETENTRY(node->topSortData->req, j);
             cluster = NULL;
+            entry = REQGETENTRY(node->topSortData->req, j);
 
             for (k = 0; k < numClusters; k++)
             {
@@ -782,8 +787,6 @@ static U32 _ForAllNodesWriteClusterAllocations(RxPipeline* pipeline, rxScope* sc
 
         for (j = 0; j < node->nodeDef->io.numClustersOfInterest; j++)
         {
-            U32 k;
-
             node->inputToClusterSlot[j] = (U32)-1;
 
             for (k = 0; k < pipeline->packetNumClusterSlots; k++)
