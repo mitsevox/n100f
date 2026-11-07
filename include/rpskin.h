@@ -81,7 +81,7 @@ RwStream* _rpSkinGeometryNativeRead(RwStream* stream, RpGeometry* geometry);
 #endif
 RxPipeline* _rpSkinPipelineCreate(RpSkinType type, void* instanceCB, void* reinstanceCB,
                                   void* renderCB);
-RpAtomic* fn_80145598(RpAtomic* atomic, GCNObjectData* objectData);
+void* fn_80145598(void* object, GCNObjectData* objectData);
 
 S32 RpSkinPluginAttach(void);
 RpSkin* RpSkinGeometryGetSkin(RpGeometry* geometry);
