@@ -165,12 +165,12 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
         U8 flags;
         U8 blend;
 
-        flags = config->flags;
+        flags = ((volatile GCNMTConfig*)config)->flags;
         numTevStages = config->numTevStages;
         numTexCoordGens = config->numTexCoordGens;
-        numTexMatrices = config->numTexMatrices;
-        numIndMatrices = config->numIndMatrices;
-        numIndStages = config->numIndStages;
+        numTexMatrices = ((volatile GCNMTConfig*)config)->numTexMatrices;
+        numIndMatrices = ((volatile GCNMTConfig*)config)->numIndMatrices;
+        numIndStages = ((volatile GCNMTConfig*)config)->numIndStages;
         blend = ((config->srcBlend << 4) & 0xF0) | (config->destBlend & 0xF);
 
         header.flags = flags;

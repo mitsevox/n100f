@@ -119,7 +119,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/skin2/gcn/skinstream.c` | 3 of 3 | Source-linked on rev0; cumulative native-chunk sizing and independent read locals, text-only object |
 | `rwsdk/plugin/skin2/gcn/skingcng.c` | 3 of 3 | all 3 functions; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
 | `rwsdk/plugin/matfx/gcn/multiTexGcn.c` | 1 of 1 | one function; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
-| `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 6 of 7 | `GameCubeMTEffectStreamWrite` (98.4%: the header loads' order and registers) |
+| `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 6 of 7 | `GameCubeMTEffectStreamWrite` (99.8%: the order of two header loads and the registers that follow) |
 | `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 8 of 9 | `_rpGameCubeMTEffectSend` (98.6%: register choice and one argument load); `.data`, `.sbss` and `.sdata2` (90.9%) do not match yet |
 | `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 14 of 15 | `fn_80140178` (99.4%: register choice and the argument setup order at two calls); `.bss`, `.sbss`, `.sdata` and `.sdata2` (85.7%) do not match yet; NonMatching, original linked |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 5 of 7 | `fn_8015DBA4` (96.9%) and `fn_8015E054` (97.5%) (text only) |
