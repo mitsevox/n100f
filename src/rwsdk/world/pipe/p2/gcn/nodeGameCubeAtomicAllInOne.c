@@ -307,18 +307,18 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
 {
     RpGeometry* geometry = atomic->geometry;
-    RpMeshHeader* meshHeader = geometry->mesh;
-    U32 numVertices = geometry->numVertices;
     void* owner;
+    RpMeshHeader* meshHeader = geometry->mesh;
     RwResEntry** ownerRef;
     U32 geometryFlags;
+    U32 numVertices = geometry->numVertices;
+    S32 headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
     U32 flags;
-    S32 headerSize;
     U32 dlSize;
     S32 size;
     RwResEntry* entry;
     GCNVertexArrays* arrays;
-    U8* dlMem;
+    U8* mem;
 
     if (geometry->numMorphTargets != 1)
     {
@@ -333,9 +333,8 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
 
     geometryFlags = geometry->flags | rpGEOMETRYPOSITIONS;
     flags = geometryFlags & ~objectData->privateData->clearFlags;
-    headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
     dlSize = GCNDisplayListsGetSize(meshHeader, geometry->numTexCoordSets,
-                                    numVertices >= 0xFF ? 2 : 1, geometryFlags);
+                                    numVertices < 0xFF ? 1 : 2, geometryFlags);
     size = ALLINONE_ALIGN32(sizeof(GCNVertexArrays) + headerSize) + dlSize;
     size = ALLINONE_ALIGN32(size) + fn_80159380(fn_8015D818(geometry), flags, numVertices,
                                                 geometry->numTexCoordSets);
@@ -361,15 +360,15 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     arrays = (GCNVertexArrays*)(entry + 1);
     memset(arrays, 0, sizeof(GCNVertexArrays));
     arrays->serialNum = meshHeader->serialNum;
-    arrays->indexType = numVertices >= 0xFF ? 3 : 2;
-    dlMem = (U8*)ALLINONE_ALIGN32((U32)arrays + sizeof(GCNVertexArrays) + headerSize);
+    arrays->indexType = numVertices < 0xFF ? 2 : 3;
+    mem = (U8*)ALLINONE_ALIGN32((U32)arrays + sizeof(GCNVertexArrays) + headerSize);
     arrays->syncToken = lbl_8025F890;
     arrays->flags = objectData->privateData->clearFlags;
-    GCNDisplayListsBuild((GCNDisplayList*)(arrays + 1), dlMem, meshHeader,
-                         geometry->numTexCoordSets, numVertices >= 0xFF ? 2 : 1, geometryFlags);
+    GCNDisplayListsBuild((GCNDisplayList*)(arrays + 1), mem, meshHeader,
+                         geometry->numTexCoordSets, numVertices < 0xFF ? 1 : 2, geometryFlags);
+    mem = (U8*)ALLINONE_ALIGN32((U32)mem + dlSize);
     _rwDlGeometryInstanceFast(geometry, arrays, fn_8015D818(geometry), flags,
-                              geometry->numTexCoordSets,
-                              (U8*)ALLINONE_ALIGN32((U32)dlMem + dlSize));
+                              geometry->numTexCoordSets, mem);
     DCFlushRange(objectData->repEntry + 1, objectData->repEntry->size);
     geometry->lockedSinceLastInst = 0;
 

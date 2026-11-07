@@ -6,11 +6,19 @@
 
 // The GX minification and magnification filters for each RenderWare filter mode, and the GX wrap
 // mode for each addressing mode.
-extern const GXTexFilter lbl_801DE5B8[7][2];
-extern const GXTexWrapMode lbl_801DE5F0[5];
+GXTexFilter lbl_801DE5B8[7][2] = {
+    { GX_NEAR, GX_NEAR },
+    { GX_NEAR, GX_NEAR },
+    { GX_LINEAR, GX_LINEAR },
+    { GX_NEAR_MIP_NEAR, GX_NEAR },
+    { GX_LIN_MIP_NEAR, GX_LINEAR },
+    { GX_NEAR_MIP_LIN, GX_NEAR },
+    { GX_LIN_MIP_LIN, GX_LINEAR },
+};
+GXTexWrapMode lbl_801DE5F0[5] = { GX_CLAMP, GX_REPEAT, GX_MIRROR, GX_CLAMP, GX_CLAMP };
 
-// The texture each GX texture map holds.
-extern RwTexture* lbl_801DE604[9];
+// The texture each of the eight GX texture maps holds.
+RwTexture* lbl_801DE604[GX_MAX_TEXMAP] = { NULL };
 
 // The draw sync token of the current frame.
 extern volatile U16 lbl_8025E800;
@@ -132,12 +140,11 @@ static inline void DlTextureInitObj(RwTexture* texture, U32 tlut, S32 biasClamp,
 }
 
 // Rebuilds the texture object with its current LOD settings.
-static inline void DlTextureRefresh(RwTexture* texture, U32 tlut)
+static inline void DlTextureRefresh(RwTexture* texture, RwGCTextureExt* textureExt, U32 tlut)
 {
-    RwGCTextureExt* textureExt = RWGCTEXTUREEXT(texture);
     GXAnisotropy maxAniso = GXGetTexObjMaxAniso(&textureExt->texObj);
-    GXBool edgeLOD = GXGetTexObjEdgeLOD(&textureExt->texObj);
-    GXBool biasClamp = GXGetTexObjBiasClamp(&textureExt->texObj);
+    S32 edgeLOD = GXGetTexObjEdgeLOD(&textureExt->texObj);
+    S32 biasClamp = GXGetTexObjBiasClamp(&textureExt->texObj);
     F32 lodBias = fn_8017CF40(&textureExt->texObj);
 
     DlTextureInitObj(texture, tlut, biasClamp, edgeLOD, maxAniso, lodBias);
@@ -170,14 +177,14 @@ void _rwDlTextureSet(RwTexture* texture, U32 texMap)
         }
         else if ((U16)texture->filterAddressing != (U16)textureExt->flags)
         {
-            DlTextureRefresh(texture, texMap);
+            DlTextureRefresh(texture, textureExt, texMap);
         }
         else if (texture != lbl_801DE604[texMap])
         {
             if (!(textureExt->flags & RWGCTEXTURE_PRELOADED) &&
                 texMap != GXGetTexObjTlut(&textureExt->texObj))
             {
-                DlTextureRefresh(texture, texMap);
+                DlTextureRefresh(texture, textureExt, texMap);
             }
         }
         else
@@ -196,7 +203,7 @@ void _rwDlTextureSet(RwTexture* texture, U32 texMap)
     }
     else if ((U16)texture->filterAddressing != (U16)textureExt->flags)
     {
-        DlTextureRefresh(texture, 0);
+        DlTextureRefresh(texture, textureExt, 0);
     }
     else if (texture == lbl_801DE604[texMap])
     {
