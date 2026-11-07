@@ -1,6 +1,6 @@
 static const double ifiquantlevels8align = 0;
 
-static const int ifiquantlevels8[16][64] = {
+static const int ifiquantlevels8[16][64] __attribute__((aligned(16))) = {
     {
         65536, 90901, 85627, 91511, 65536, 61146, 48768, 24862,
         124989, 173365, 192998, 160332, 147714, 98203, 67644, 42322,
@@ -992,8 +992,8 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
         t[4] = tmp10 + t[5];
 
         p0 = ((((t[0] + t[7] + 127) >> 8) & 0xFF) << 16) | (((t[1] + t[6] + 127) >> 8) & 0xFF);
-        p1 = ((((t[2] + t[5] + 127) >> 8) & 0xFF) << 16) | (((t[3] + t[4] + 127) >> 8) & 0xFF);
-        p2 = ((((t[3] - t[4] + 127) >> 8) & 0xFF) << 16) | (((t[2] - t[5] + 127) >> 8) & 0xFF);
+        p1 = ((((t[2] + t[5] + 127) >> 8) & 0xFF) << 16) | (((t[3] - t[4] + 127) >> 8) & 0xFF);
+        p2 = ((((t[3] + t[4] + 127) >> 8) & 0xFF) << 16) | (((t[2] - t[5] + 127) >> 8) & 0xFF);
         p3 = ((((t[1] - t[6] + 127) >> 8) & 0xFF) << 16) | (((t[0] - t[7] + 127) >> 8) & 0xFF);
         p0 |= p0 << 8;
         p1 |= p1 << 8;
