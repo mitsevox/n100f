@@ -13359,7 +13359,7 @@ static S32 VOUT_dogoto_widget(st_zEntVillain* vil, xBase* widge, F32 dst_offset,
 
 // Whether the wall with normal vec_fromwall is roughly across the villain's travel direction. If
 // it is, the villain picks the nearest move point it can see as its next one.
-static inline S32 VOUT_hit_isWall(st_zEntVillain* const vil, _xVec3* dir_trav, _xVec3* vec_fromwall)
+static inline S32 VOUT_hit_isWall(st_zEntVillain* vil, _xVec3* dir_trav, _xVec3* vec_fromwall)
 {
     S32 result = 0;
     S32 flg_look = 12;
