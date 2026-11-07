@@ -1,7 +1,10 @@
 #include <rwcore.h>
 
+// Clips a perspective camera's lines to the view volume: a line partly outside is cut down to
+// its visible part, one wholly outside is dropped.
 static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 {
+    S32 result;
     RxCluster* camVerts;
     RxCluster* devVerts;
     RxCluster* indices;
@@ -9,10 +12,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
     RxCluster* renderState;
     RxMeshStateVector* meshData;
     U32 stride;
-    U32 i;
     RxRenderStateVector* rsvp;
-    S32 result;
-    U32 numLines;
 
     static const RwClipVertexFunc PerspClipFuncs[] = {
         _rwGeneratePerspClippedVertexZLO, _rwGeneratePerspClippedVertexZHI,
@@ -38,25 +38,27 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
     }
 
     meshData = (RxMeshStateVector*)meshState->currentData;
-    stride = indices->stride;
+    stride = indices->stride * 2;
 
     if (meshData->ClipFlagsOr)
     {
+        U32 keep;
+        U32 numLines;
+        U32 numVerts;
+        RwImVertexIndex* line;
+        RwImVertexIndex vertIndices[16];
+        S32 start;
+        S32 end;
+        RwImVertexIndex idx0;
+        RwImVertexIndex idx1;
+        U32 i;
+        U8 clipFlagsOr;
+        U8 clipFlagsAnd;
+
         numLines = meshData->NumElements;
 
         for (i = 0; i < numLines; i++)
         {
-            RwImVertexIndex* line;
-            RwImVertexIndex vertIndices[16];
-            S32 start;
-            S32 end;
-            RwImVertexIndex idx0;
-            RwImVertexIndex idx1;
-            U32 numVerts;
-            U8 clipFlagsAnd;
-            U32 keep;
-            U8 clipFlagsOr;
-
             keep = FALSE;
 
             idx0 = ((RwImVertexIndex*)indices->currentData)[0];
@@ -77,6 +79,8 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
             {
                 if (!clipFlagsAnd)
                 {
+                    RxCamSpace3DVertex* camVert;
+                    U8 vertClipFlags;
                     S32 j;
 
                     if (camVerts->numUsed + 12 > camVerts->numAlloced)
@@ -185,9 +189,6 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 
                     do
                     {
-                        RxCamSpace3DVertex* camVert;
-                        U8 vertClipFlags;
-
                         camVert = (RxCamSpace3DVertex*)((U8*)camVerts->data
                                                         + camVerts->stride * vertIndices[j]);
                         vertClipFlags = camVert->clipFlags;
@@ -322,7 +323,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
             }
             else
             {
-                indices->currentData = (U8*)indices->currentData + stride * 2;
+                indices->currentData = (U8*)indices->currentData + stride;
             }
 
         failed:
@@ -349,8 +350,10 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
     return result;
 }
 
+// Clips a parallel camera's lines the same way, projecting new vertices without dividing by z.
 static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 {
+    S32 result;
     RxCluster* camVerts;
     RxCluster* devVerts;
     RxCluster* indices;
@@ -358,10 +361,7 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
     RxCluster* renderState;
     RxMeshStateVector* meshData;
     U32 stride;
-    U32 i;
     RxRenderStateVector* rsvp;
-    S32 result;
-    U32 numLines;
 
     static const RwClipVertexFunc ParaClipFuncs[] = {
         _rwGenerateParallelZLOClippedVertex, _rwGenerateParallelZHIClippedVertex,
@@ -387,25 +387,27 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
     }
 
     meshData = (RxMeshStateVector*)meshState->currentData;
-    stride = indices->stride;
+    stride = indices->stride * 2;
 
     if (meshData->ClipFlagsOr)
     {
+        U32 keep;
+        U32 numLines;
+        U32 numVerts;
+        RwImVertexIndex* line;
+        RwImVertexIndex vertIndices[16];
+        S32 start;
+        S32 end;
+        RwImVertexIndex idx0;
+        RwImVertexIndex idx1;
+        U32 i;
+        U8 clipFlagsOr;
+        U8 clipFlagsAnd;
+
         numLines = meshData->NumElements;
 
         for (i = 0; i < numLines; i++)
         {
-            RwImVertexIndex* line;
-            RwImVertexIndex vertIndices[16];
-            S32 start;
-            S32 end;
-            RwImVertexIndex idx0;
-            RwImVertexIndex idx1;
-            U32 numVerts;
-            U8 clipFlagsAnd;
-            U32 keep;
-            U8 clipFlagsOr;
-
             keep = FALSE;
 
             idx0 = ((RwImVertexIndex*)indices->currentData)[0];
@@ -426,6 +428,8 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
             {
                 if (!clipFlagsAnd)
                 {
+                    RxCamSpace3DVertex* camVert;
+                    U8 vertClipFlags;
                     S32 j;
 
                     if (camVerts->numUsed + 12 > camVerts->numAlloced)
@@ -534,9 +538,6 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 
                     do
                     {
-                        RxCamSpace3DVertex* camVert;
-                        U8 vertClipFlags;
-
                         camVert = (RxCamSpace3DVertex*)((U8*)camVerts->data
                                                         + camVerts->stride * vertIndices[j]);
                         vertClipFlags = camVert->clipFlags;
@@ -548,9 +549,9 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                             F32 y;
                             F32 z;
 
-                            z = camVert->cameraVertex.z;
                             x = camVert->cameraVertex.x;
                             y = camVert->cameraVertex.y;
+                            z = camVert->cameraVertex.z;
                             devVert = (RwIm2DVertex*)((U8*)devVerts->data
                                                       + devVerts->stride * vertIndices[j]);
 
@@ -671,7 +672,7 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
             }
             else
             {
-                indices->currentData = (U8*)indices->currentData + stride * 2;
+                indices->currentData = (U8*)indices->currentData + stride;
             }
 
         failed:

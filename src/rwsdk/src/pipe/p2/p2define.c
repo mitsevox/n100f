@@ -569,15 +569,15 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
     {
         if (pipeline->numNodes)
         {
-            S32 i;
-            U32 size;
             RxPipelineNode* node;
-            U32 maxSize;
-            U32 dataSize;
             U32 numUnique;
-            U32 numFailed = 0;
-            S32 failed = FALSE;
+            U32 maxSize;
             U32 numOutputs = 0;
+            U32 dataSize;
+            S32 i;
+            S32 failed = FALSE;
+            U32 size;
+            U32 numFailed = 0;
 
             if (pipeline->entryPoint >= pipeline->numNodes
                 || !pipeline->nodes[pipeline->entryPoint].nodeDef)
@@ -590,6 +590,7 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
                 return NULL;
             }
 
+            node = pipeline->nodes;
             numUnique = PipelineCalcNumUniqueClusters(pipeline);
 
             maxSize = RXPIPELINEGLOBAL(maxNodesPerPipeline) * sizeof(RxPipelineNode)
@@ -599,17 +600,15 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
             // The nodes and their outputs while they are sorted, and the space the dependency
             // chasing works in.
             size = pipeline->numNodes * sizeof(RxPipelineNode);
-            node = pipeline->nodes;
 
             for (i = 0; i < pipeline->numNodes; i++)
             {
                 size += node->numOutputs * sizeof(U32);
             }
 
-            size = size + RXPIPELINEGLOBAL(maxNodesPerPipeline) * sizeof(RxPipelineNodeTopSortData)
-                   + (pipeline->numNodes * numUnique * sizeof(rxReqEntry)
-                      + pipeline->numNodes * numUnique * sizeof(rxScope))
-                   + pipeline->numNodes * sizeof(rxReq);
+            size += RXPIPELINEGLOBAL(maxNodesPerPipeline) * sizeof(RxPipelineNodeTopSortData);
+            size += pipeline->numNodes * sizeof(rxReq) + pipeline->numNodes * numUnique * sizeof(rxReqEntry)
+                    + pipeline->numNodes * numUnique * sizeof(rxScope);
 
             // The data the unlocked pipeline keeps: its clusters, its input requirements, each
             // node's cluster references, continuity flags, private data and input slots, and the
@@ -652,8 +651,8 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
             }
 
             {
-                RxPipelineNodeTopSortData* topSortData;
                 RxPipelineNodeTopSortData* newTopSortData;
+                RxPipelineNodeTopSortData* topSortData;
                 U32* newOutputs;
                 U32* outputs;
 
@@ -689,9 +688,9 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
                         pipeline->nodes[i].outputs = newOutputs;
                     }
 
+                    outputs += NODE_MAXOUTPUTS;
                     numOutputs += pipeline->nodes[i].numOutputs;
                     newOutputs += pipeline->nodes[i].numOutputs;
-                    outputs += NODE_MAXOUTPUTS;
                 }
 
                 gMemoryLimits.tite = (U8*)topSortData;
