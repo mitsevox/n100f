@@ -669,16 +669,50 @@ void xFXanimUV2PSetTexture(RwTexture* texture)
     xFXanimUV2PTexture = texture;
 }
 
+// Rewrite an atomic's first UV layer from a saved copy as scale * (rotation * saved) +
+// translation. Inlined into its one caller; the unneeded atomic test is the helper's own.
+static void xFXanimUVApply(RpAtomic* atomic, RwTexCoords* src)
+{
+    if (atomic && src)
+    {
+        RpGeometry* geom = atomic->geometry;
+
+        if (geom)
+        {
+            RwTexCoords* dst = geom->texCoords[0];
+
+            if (dst)
+            {
+                RpGeometryLock(geom, rpGEOMETRYLOCKTEXCOORDS1);
+
+                S32 num = geom->numVertices;
+
+                for (S32 j = 0; j < num; j++)
+                {
+                    dst->u = xFXanimUVScale[0] *
+                                 (xFXanimUVRotMat0[0] * src->u + xFXanimUVRotMat0[1] * src->v) +
+                             xFXanimUVTrans[0];
+                    dst->v = xFXanimUVScale[1] *
+                                 (xFXanimUVRotMat1[0] * src->u + xFXanimUVRotMat1[1] * src->v) +
+                             xFXanimUVTrans[1];
+                    src++;
+                    dst++;
+                }
+
+                RpGeometryUnlock(geom);
+            }
+        }
+    }
+}
+
 // Animate an atomic's texture coordinates on the CPU. The first call for an atomic saves its
-// original coordinates; each call rewrites them as scale * (rotation * original) + translation.
+// original coordinates; each call then rewrites them from that copy.
 RpAtomic* xFXanimUVAtomicSetup(RpAtomic* atomic)
 {
-    S32 num;
     U32 i;
-    RwTexCoords* src;
+    S32 num;
     RpGeometry* geom;
     RwTexCoords* orig;
-    RwTexCoords* dst;
     RwTexCoords* copy;
 
     if (!atomic)
@@ -710,38 +744,7 @@ RpAtomic* xFXanimUVAtomicSetup(RpAtomic* atomic)
         }
     }
 
-    src = xFXanimUVCopyList[i].uv;
-
-    if (atomic && src)
-    {
-        RpGeometry* geom = atomic->geometry;
-
-        if (geom)
-        {
-            dst = geom->texCoords[0];
-
-            if (dst)
-            {
-                RpGeometryLock(geom, rpGEOMETRYLOCKTEXCOORDS1);
-
-                num = geom->numVertices;
-
-                for (S32 j = 0; j < num; j++)
-                {
-                    dst->u = xFXanimUVScale[0] *
-                                 (xFXanimUVRotMat0[0] * src->u + xFXanimUVRotMat0[1] * src->v) +
-                             xFXanimUVTrans[0];
-                    dst->v = xFXanimUVScale[1] *
-                                 (xFXanimUVRotMat1[0] * src->u + xFXanimUVRotMat1[1] * src->v) +
-                             xFXanimUVTrans[1];
-                    src++;
-                    dst++;
-                }
-
-                RpGeometryUnlock(geom);
-            }
-        }
-    }
+    xFXanimUVApply(atomic, xFXanimUVCopyList[i].uv);
 
     return atomic;
 }
