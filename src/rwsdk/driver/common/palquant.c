@@ -267,6 +267,19 @@ static void assignindex(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuan
     }
 }
 
+// Gives every leaf inside a box the box's palette index, walking the whole tree from the colour
+// origin.
+static inline void nAssign(PalQuantBranch* root, PalQuantBox* region, S32 index)
+{
+    RwRGBA origin;
+
+    origin.red = 0;
+    origin.green = 0;
+    origin.blue = 0;
+    origin.alpha = 0;
+    assignindex(root, &origin, PALQUANT_DEPTH, region, index);
+}
+
 // Sums the weights and colours of the leaves inside a box.
 static void addvolume(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuantBox* region,
                       PalQuantLeaf* volume)
@@ -337,7 +350,7 @@ static void addvolume(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuantB
 }
 
 // Sums the leaves inside a box into volume.
-static void nVol(PalQuantBranch* root, PalQuantBox* region, PalQuantLeaf* volume)
+static inline void nVol(PalQuantBranch* root, PalQuantBox* region, PalQuantLeaf* volume)
 {
     RwRGBA origin;
 
@@ -349,22 +362,18 @@ static void nVol(PalQuantBranch* root, PalQuantBox* region, PalQuantLeaf* volume
     addvolume(root, &origin, PALQUANT_DEPTH, region, volume);
 }
 
-// Gives every leaf inside a box the box's palette index, walking the whole tree from the colour
-// origin.
-static void nAssign(PalQuantBranch* root, PalQuantBox* region, S32 index)
-{
-    RwRGBA origin;
-
-    origin.red = 0;
-    origin.green = 0;
-    origin.blue = 0;
-    origin.alpha = 0;
-    assignindex(root, &origin, PALQUANT_DEPTH, region, index);
-}
-
 #define PALQUANT_DOT(_v)                                                                           \
     ((_v)->red * (_v)->red + (_v)->green * (_v)->green + (_v)->blue * (_v)->blue +                 \
      (_v)->alpha * (_v)->alpha)
+
+// The variance of the colours inside a box.
+static inline F32 nVar(PalQuantBranch* root, PalQuantBox* region)
+{
+    PalQuantLeaf volume;
+
+    nVol(root, region, &volume);
+    return volume.var - PALQUANT_DOT(&volume) / volume.weight;
+}
 
 // Tries every cut of a box along one channel and returns the best split's score, with the cut in
 // *cut (-1 if no cut leaves weight on both sides).
@@ -688,7 +697,6 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
     else
     {
         PalQuantLeaf mean;
-        PalQuantLeaf volume;
         S32 i;
 
         pq->boxes[0].lower.red = 0;
@@ -699,8 +707,7 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
         pq->boxes[0].upper.green = 32;
         pq->boxes[0].upper.blue = 32;
         pq->boxes[0].upper.alpha = 32;
-        nVol(pq->root, &pq->boxes[0], &volume);
-        pq->variances[0] = volume.var - PALQUANT_DOT(&volume) / volume.weight;
+        pq->variances[0] = nVar(pq->root, &pq->boxes[0]);
 
         for (i = 1; i < maxcols; i++)
         {
@@ -724,13 +731,8 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
 
             if (nCut(pq->root, &pq->boxes[next], &pq->boxes[i]))
             {
-                PalQuantLeaf lower;
-                PalQuantLeaf upper;
-
-                nVol(pq->root, &pq->boxes[next], &lower);
-                pq->variances[next] = lower.var - PALQUANT_DOT(&lower) / lower.weight;
-                nVol(pq->root, &pq->boxes[i], &upper);
-                pq->variances[i] = upper.var - PALQUANT_DOT(&upper) / upper.weight;
+                pq->variances[next] = nVar(pq->root, &pq->boxes[next]);
+                pq->variances[i] = nVar(pq->root, &pq->boxes[i]);
             }
             else
             {
