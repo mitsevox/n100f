@@ -9186,6 +9186,24 @@ static S32 VILN_BBK_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     return 1;
 }
 
+// Idle facing: plays the idle start when the villain faces the player to within tol radians,
+// otherwise the turn (move-right) idle. Returns the facing angle it tested.
+static inline F32 VILN_idle_turn(st_zEntVillain* vil, F32 tol)
+{
+    F32 angle = vil->frame->rot.angle;
+    if (fabsf(angle - vil->precalc.ang_VtoP) <= tol)
+    {
+        vil->anim_loopmult = 0.97f;
+        vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
+    }
+    else
+    {
+        vil->anim_loopmult = 0.97f;
+        vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_MOVERIGHT);
+    }
+    return angle;
+}
+
 // Update the Black Knight boss's navigation, axe attack and fade-out.
 static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
 {
@@ -9206,21 +9224,12 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         break;
     case ZVIL_GOAL_IDLE:
     {
-        F32 angle = vil->frame->rot.angle;
-        if (fabsf(angle - vil->precalc.ang_VtoP) <= 0.2f)
-        {
-            vil->anim_loopmult = 0.97f;
-            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
-        }
-        else
-        {
-            vil->anim_loopmult = 0.97f;
-            vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_MOVERIGHT);
-        }
+        F32 angle = VILN_idle_turn(vil, 0.2f);
         if (vil->tmr_list[ZVIL_TDUR_LOBRELOAD] <= 0.0f)
         {
-            if (vil->vhf->query(vil, ZVIL_Q_CANATTACK) && fabsf(angle - vil->precalc.ang_VtoP) <= 0.4f)
+            if (vil->vhf->query(vil, ZVIL_Q_CANATTACK))
             {
+                if (!(fabsf(angle - vil->precalc.ang_VtoP) <= 0.4f)) break;
                 vil->prj_reserved = VWEP_lobReservePRJ(vil);
                 if (vil->prj_reserved)
                 {
@@ -10649,16 +10658,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
     case ZVIL_GOAL_IDLE:
         if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] < 0.3f)
         {
-            if (fabsf(vil->frame->rot.angle - vil->precalc.ang_VtoP) <= 0.2f)
-            {
-                vil->anim_loopmult = 0.97f;
-                vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_START);
-            }
-            else
-            {
-                vil->anim_loopmult = 0.97f;
-                vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_MOVERIGHT);
-            }
+            VILN_idle_turn(vil, 0.2f);
         }
         if (vil->vhf->query(vil, ZVIL_Q_CANATTACK) && vil->cnt_lobSalvo > 0)
         {
