@@ -237,7 +237,8 @@ void* _rwMatrixClose(void* instance, S32 offset, S32 size)
     return instance;
 }
 
-
+// Opens the matrix module: creates the matrix free list and installs the default tolerances and
+// multiply function.
 void* _rwMatrixOpen(void* instance, S32 offset, S32 size)
 {
     matrixModule.globalsOffset = offset;
