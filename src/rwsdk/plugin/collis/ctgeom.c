@@ -126,6 +126,19 @@ static S32 GeomLeafNodeForAllSphereIntersections(S32 numTriangles, S32 triOffset
 
 // Calls back for each triangle of the geometry's base morph target the line hits, through the
 // collision tree when the geometry has one.
+// Returns 1 / value, or 0 for a zero value.
+static F32 GeomRecip(F32 value)
+{
+    F32 recip = 0.0f;
+
+    if (value != 0.0f)
+    {
+        recip = 1.0f / value;
+    }
+
+    return recip;
+}
+
 static RpGeometry* GeometryForAllLineIntersections(RpGeometry* geometry, RwLine* testLine,
                                                    GeomCallBack* cb)
 {
@@ -142,15 +155,15 @@ static RpGeometry* GeometryForAllLineIntersections(RpGeometry* geometry, RwLine*
         isData.line = testLine;
         RwV3dSubMacro(&isData.delta, &testLine->end, &testLine->start);
 
-        recip = (isData.delta.x != 0.0f) ? 1.0f / isData.delta.x : 0.0f;
+        recip = GeomRecip(isData.delta.x);
         grad.dydx = isData.delta.y * recip;
         grad.dzdx = isData.delta.z * recip;
 
-        recip = (isData.delta.y != 0.0f) ? 1.0f / isData.delta.y : 0.0f;
+        recip = GeomRecip(isData.delta.y);
         grad.dxdy = isData.delta.x * recip;
         grad.dzdy = isData.delta.z * recip;
 
-        recip = (isData.delta.z != 0.0f) ? 1.0f / isData.delta.z : 0.0f;
+        recip = GeomRecip(isData.delta.z);
         grad.dxdz = isData.delta.x * recip;
         grad.dydz = isData.delta.y * recip;
 
