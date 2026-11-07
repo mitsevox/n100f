@@ -8056,9 +8056,8 @@ static S32 VILN_gang_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
         }
         if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f && vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
         {
-            en_NPC_ANIMSTATES anim = vil->anim_playnext;
-            if (anim == ZVIL_ANIM_GANG_FIDGET || anim == ZVIL_ANIM_GANG_FIDGET1 ||
-                anim == ZVIL_ANIM_GANG_FIDGET2 || anim == ZVIL_ANIM_GANG_FIDGET3)
+            if (vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET || vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET1 ||
+                vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET2 || vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET3)
             {
                 vil->anim_loopmult = 0.97f;
                 vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_RESUME);
