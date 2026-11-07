@@ -288,7 +288,6 @@ S32 _rwGCNVtxFmtInstNrm(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* 
 S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVertexNormal* src,
                            S32 numVerts, U8 stride)
 {
-    S32 i;
     S32 count;
 
     if (!vtxFmt)
@@ -305,8 +304,9 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
     {
         F32 scale = 64.0f;
         S8* out = (S8*)dst;
+        S32 i;
 
-        for (i = numVerts; i > 0; i--)
+        for (i = 0; i < numVerts; i++)
         {
             RpVertexNormal n;
 
@@ -325,8 +325,9 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
     {
         F32 scale = 16384.0f;
         S16* out = (S16*)dst;
+        S32 i;
 
-        for (i = numVerts; i > 0; i--)
+        for (i = 0; i < numVerts; i++)
         {
             RpVertexNormal n;
 
@@ -342,15 +343,20 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
         break;
     }
     case COMP_F32:
+    {
+        S32 i;
+        F32* out = (F32*)dst;
+
         for (i = 0; i < numVerts; i++)
         {
-            ((F32*)dst)[0] = (1.0f / 128.0f) * (F32)src->x;
-            ((F32*)dst)[1] = (1.0f / 128.0f) * (F32)src->y;
-            ((F32*)dst)[2] = (1.0f / 128.0f) * (F32)src->z;
+            out[0] = (1.0f / 128.0f) * (F32)src->x;
+            out[1] = (1.0f / 128.0f) * (F32)src->y;
+            out[2] = (1.0f / 128.0f) * (F32)src->z;
             src++;
-            dst = (U8*)dst + stride;
+            out = (F32*)((U8*)out + stride);
         }
         break;
+    }
     }
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
@@ -478,13 +484,15 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
                         const RwTexCoords* src, S32 numVerts, U8 stride)
 {
     U8 compType;
+    const U8* type;
 
     if (!vtxFmt)
     {
         vtxFmt = &_RpDlVtxFmtDefault;
     }
 
-    compType = vtxFmt->compType[index + 2];
+    type = vtxFmt->compType + index + 2;
+    compType = *type;
     switch (compType)
     {
     case COMP_U8:
@@ -562,14 +570,14 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
         }
         else
         {
-            memcpy(dst, src, numVerts * lbl_801DDA48[vtxFmt->compType[index + 2]] * 2);
+            memcpy(dst, src, numVerts * lbl_801DDA48[*type] * 2);
         }
         break;
     }
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
     {
-        return lbl_801DDA48[vtxFmt->compType[index + 2]] * 2;
+        return lbl_801DDA48[*type] * 2;
     }
-    return ALIGN32(numVerts * lbl_801DDA48[vtxFmt->compType[index + 2]] * 2);
+    return ALIGN32(numVerts * lbl_801DDA48[*type] * 2);
 }
