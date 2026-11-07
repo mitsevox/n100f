@@ -340,10 +340,56 @@ static void UserDataListDestroy(UserDataList* list)
     list->numElements = 0;
 }
 
+static inline void UserDataArrayCopy(RpUserDataArray* dstArray, const RpUserDataArray* srcArray)
+{
+    char** dstStrings;
+    char** srcStrings;
+    S32 j;
+    S32 size;
+
+    dstArray->format = srcArray->format;
+    dstArray->numElements = srcArray->numElements;
+
+    if (srcArray->name)
+    {
+        UserDataStringCopy(dstArray->name, srcArray->name);
+    }
+
+    if (srcArray->data)
+    {
+        size = dstArray->numElements * RpUserDataGetFormatSize(dstArray->format);
+
+        dstArray->data = RwMalloc(size);
+
+        if (dstArray->format == rpSTRINGUSERDATA)
+        {
+            srcStrings = (char**)srcArray->data;
+            dstStrings = (char**)dstArray->data;
+
+            for (j = 0; j < dstArray->numElements; j++)
+            {
+                if (!*srcStrings)
+                {
+                    *dstStrings = NULL;
+                }
+                else
+                {
+                    UserDataStringCopy(*dstStrings, *srcStrings);
+                }
+
+                srcStrings++;
+                dstStrings++;
+            }
+        }
+        else
+        {
+            memcpy(dstArray->data, srcArray->data, size);
+        }
+    }
+}
+
 static void UserDataListCopy(UserDataList* dst, const UserDataList* src)
 {
-    const RpUserDataArray* srcArray;
-    RpUserDataArray* dstArray;
     S32 i;
 
     UserDataListDestroy(dst);
@@ -356,49 +402,7 @@ static void UserDataListCopy(UserDataList* dst, const UserDataList* src)
 
         for (i = 0; i < dst->numElements; i++)
         {
-            srcArray = &src->userData[i];
-            dstArray = &dst->userData[i];
-
-            dstArray->format = srcArray->format;
-            dstArray->numElements = srcArray->numElements;
-
-            if (srcArray->name)
-            {
-                UserDataStringCopy(dstArray->name, srcArray->name);
-            }
-
-            if (srcArray->data)
-            {
-                S32 size = dstArray->numElements * RpUserDataGetFormatSize(dstArray->format);
-
-                dstArray->data = RwMalloc(size);
-
-                if (dstArray->format == rpSTRINGUSERDATA)
-                {
-                    char** srcStrings = (char**)srcArray->data;
-                    S32 j;
-                    char** dstStrings = (char**)dstArray->data;
-
-                    for (j = 0; j < dstArray->numElements; j++)
-                    {
-                        if (!*srcStrings)
-                        {
-                            *dstStrings = NULL;
-                        }
-                        else
-                        {
-                            UserDataStringCopy(*dstStrings, *srcStrings);
-                        }
-
-                        srcStrings++;
-                        dstStrings++;
-                    }
-                }
-                else
-                {
-                    memcpy(dstArray->data, srcArray->data, size);
-                }
-            }
+            UserDataArrayCopy(&dst->userData[i], &src->userData[i]);
         }
     }
 }
