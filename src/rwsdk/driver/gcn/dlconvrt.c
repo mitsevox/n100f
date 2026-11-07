@@ -430,7 +430,6 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
         S32 i;
         S32 y;
         S32 x;
-
         RwRGBA palette[16];
 
         for (i = 0; i < 16; i++)
@@ -445,7 +444,7 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
 
             for (x = 0; x < raster->width; x += 2)
             {
-                dst[0] = palette[*src >> 4];
+                dst[0] = palette[(*src >> 4) & 0xF];
                 dst[1] = palette[*src & 0xF];
                 src++;
                 dst += 2;
@@ -458,7 +457,6 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
         S32 i;
         S32 y;
         S32 x;
-
         RwRGBA palette[256];
 
         for (i = 0; i < 256; i++)
@@ -683,7 +681,6 @@ void _rwDlRasterPalletized4SetFromImage(RwRaster* raster, RwImage* image)
     {
         S32 y;
         S32 x;
-        S32 i;
 
         for (y = 0; y < raster->height; y++)
         {
@@ -701,11 +698,11 @@ void _rwDlRasterPalletized4SetFromImage(RwRaster* raster, RwImage* image)
         if (rasterExt->lockedLevel == 0)
         {
             U16* palette = (U16*)raster->palette;
+            S32 i;
 
             for (i = 0; i < 16; i++)
             {
-                *palette = convert(&image->palette[i]);
-                palette++;
+                palette[i] = convert(&image->palette[i]);
             }
         }
 
@@ -750,10 +747,9 @@ void _rwDlRasterPalletized8SetFromImage(RwRaster* raster, RwImage* image)
     case 4:
     case 8:
     {
-        RwGCRasterExt* rasterExt;
         S32 y;
+        RwGCRasterExt* rasterExt = RWGCRASTEREXT(raster->parent);
         S32 x;
-        S32 i;
 
         for (y = 0; y < raster->height; y++)
         {
@@ -768,16 +764,14 @@ void _rwDlRasterPalletized8SetFromImage(RwRaster* raster, RwImage* image)
             }
         }
 
-        rasterExt = RWGCRASTEREXT(raster->parent);
-
         if (rasterExt->lockedLevel == 0)
         {
             U16* palette = (U16*)raster->palette;
+            S32 i;
 
             for (i = 0; i < (1 << image->depth); i++)
             {
-                *palette = convert(&image->palette[i]);
-                palette++;
+                palette[i] = convert(&image->palette[i]);
             }
         }
 
