@@ -691,10 +691,17 @@ static S32 fn_8013E954(const void* object, S32 offset, S32 size)
 }
 
 // The addressing mode a texture uses in both directions, or 0 when the two differ.
-#define MATFXTEXTUREADDRESSING(_tex)                                                               \
-    ((((_tex)->filterAddressing >> 8) & 0xF) == (((_tex)->filterAddressing >> 12) & 0xF)           \
-         ? (((_tex)->filterAddressing >> 12) & 0xF)                                                \
-         : 0)
+static U32 MatFXTextureGetAddressing(const RwTexture* texture)
+{
+    U32 addressing = 0;
+
+    if (((texture->filterAddressing >> 8) & 0xF) == ((texture->filterAddressing >> 12) & 0xF))
+    {
+        addressing = (texture->filterAddressing >> 12) & 0xF;
+    }
+
+    return addressing;
+}
 
 // Builds a bump map texture: the base texture's image (or plain white without one) masked by the
 // effect texture's image, resampled to the base size, in a raster of the base raster's mipmap
@@ -702,8 +709,8 @@ static S32 fn_8013E954(const void* object, S32 offset, S32 size)
 // there is no base) and a name interleaving the two textures' names.
 RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTexture* effectTexture)
 {
-    RwRaster* effectRaster = effectTexture->raster;
     RwRaster* baseRaster = NULL;
+    RwRaster* effectRaster = effectTexture->raster;
     S32 effectWidth = effectRaster->width;
     S32 effectHeight = effectRaster->height;
     S32 width;
@@ -767,16 +774,9 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
     RwImageFindRasterFormat(image, rwRASTERTYPETEXTURE, &rasterWidth, &rasterHeight, &rasterDepth,
                             &rasterFormat);
 
-    if (baseTexture)
-    {
-        rasterFormat |= RwRasterGetFormat(baseRaster) &
-                        (rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP);
-    }
-    else
-    {
-        rasterFormat |= RwRasterGetFormat(effectRaster) &
-                        (rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP);
-    }
+    rasterFormat |=
+        (baseTexture ? RwRasterGetFormat(baseRaster) : RwRasterGetFormat(effectRaster)) &
+        (rwRASTERFORMATMIPMAP | rwRASTERFORMATAUTOMIPMAP);
 
     raster = RwRasterCreate(rasterWidth, rasterHeight, rasterDepth, rasterFormat);
     RwRasterSetFromImage(raster, image);
@@ -784,13 +784,13 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 
     if (baseTexture)
     {
-        addressing = MATFXTEXTUREADDRESSING(baseTexture);
         filter = baseTexture->filterAddressing & rwTEXTUREFILTERMODEMASK;
+        addressing = MatFXTextureGetAddressing(baseTexture);
     }
     else
     {
-        addressing = MATFXTEXTUREADDRESSING(effectTexture);
         filter = effectTexture->filterAddressing & rwTEXTUREFILTERMODEMASK;
+        addressing = MatFXTextureGetAddressing(effectTexture);
     }
 
     RwTextureSetAddressing(texture, addressing);
@@ -800,40 +800,37 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
     RwImageDestroy(maskImage);
 
     {
+        // The name takes one character from each texture's name in turn, as long as either has
+        // characters left.
         char name[32] = "";
-        const char* baseName;
-        const char* effectName;
-        char* dst;
-        S32 i;
+        const char* names[2];
+        S32 i = 0;
+        char* dst = name;
+        S32 j;
 
-    if (baseTexture)
-    {
-        baseName = baseTexture->name;
-        effectName = effectTexture->name;
-    }
-    else
-    {
-        baseName = effectName = effectTexture->name;
-    }
-
-    dst = name;
-    i = 0;
-    while (i < 31 && (*baseName || *effectName))
-    {
-        if (*baseName)
+        if (baseTexture)
         {
-            *dst++ = *baseName++;
-            i++;
+            names[0] = baseTexture->name;
+            names[1] = effectTexture->name;
+        }
+        else
+        {
+            names[0] = names[1] = effectTexture->name;
         }
 
-        if (*effectName)
+        while (i < 31 && (*names[0] || *names[1]))
         {
-            *dst++ = *effectName++;
-            i++;
+            for (j = 0; j < 2; j++)
+            {
+                if (*names[j])
+                {
+                    *dst++ = *names[j]++;
+                    i++;
+                }
+            }
         }
-    }
 
-    RwTextureSetName(texture, name);
+        RwTextureSetName(texture, name);
     }
 
     return texture;
