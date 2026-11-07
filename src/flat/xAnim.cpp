@@ -224,16 +224,9 @@ xAnimFile* xAnimFileNewBilinear(void** rawData, char* name, U32 flags, xAnimFile
     S32 i;
     xAnimFile* afile;
 
-    if (gxAnimUseGrowAlloc)
-    {
-        afile = (xAnimFile*)xMemGrowAlloc(gActiveHeap, numX * numY * sizeof(void*) +
-                                                           sizeof(xAnimFile));
-    }
-    else
-    {
-        afile =
-            (xAnimFile*)xMemAlloc(gActiveHeap, numX * numY * sizeof(void*) + sizeof(xAnimFile));
-    }
+    afile = (xAnimFile*)(gxAnimUseGrowAlloc ?
+                             xMemGrowAlloc(gActiveHeap, numX * numY * sizeof(void*) + sizeof(xAnimFile)) :
+                             xMemAlloc(gActiveHeap, numX * numY * sizeof(void*) + sizeof(xAnimFile)));
 
     if (numX > 1 || numY > 1)
     {
@@ -266,18 +259,13 @@ xAnimFile* xAnimFileNewBilinear(void** rawData, char* name, U32 flags, xAnimFile
     afile->ID = xStrHash(name);
     afile->FileFlags = flags;
 
-    if (afile->FileFlags & 0x2000)
-    {
-        afile->Duration = 2.0f * ((afile->FileFlags & 0x8000) ?
+    afile->Duration = (afile->FileFlags & 0x2000) ?
+                          2.0f * ((afile->FileFlags & 0x8000) ?
                                       xMorphSeqDuration(*(xMorphSeqFile**)afile->RawData) :
-                                      iAnimDuration(*afile->RawData));
-    }
-    else
-    {
-        afile->Duration = (afile->FileFlags & 0x8000) ?
-                              xMorphSeqDuration(*(xMorphSeqFile**)afile->RawData) :
-                              iAnimDuration(*afile->RawData);
-    }
+                                      iAnimDuration(*afile->RawData)) :
+                          ((afile->FileFlags & 0x8000) ?
+                               xMorphSeqDuration(*(xMorphSeqFile**)afile->RawData) :
+                               iAnimDuration(*afile->RawData));
 
     afile->TimeOffset = 0.0f;
     afile->BoneCount = (flags & 0x8000) ? 0 : iAnimBoneCount(*rawData);
@@ -293,60 +281,7 @@ xAnimFile* xAnimFileNewBilinear(void** rawData, char* name, U32 flags, xAnimFile
 // Create an animation file over one raw animation.
 xAnimFile* xAnimFileNew(void* rawData, char* name, U32 flags, xAnimFile** linkedList)
 {
-    xAnimFile* afile;
-
-    if (gxAnimUseGrowAlloc)
-    {
-        afile = (xAnimFile*)xMemGrowAlloc(gActiveHeap, sizeof(void*) + sizeof(xAnimFile));
-    }
-    else
-    {
-        afile = (xAnimFile*)xMemAlloc(gActiveHeap, sizeof(void*) + sizeof(xAnimFile));
-    }
-
-    if (*(U32*)rawData == 'QSPM')
-    {
-        flags |= 0x8000;
-    }
-
-    if (linkedList)
-    {
-        afile->Next = *linkedList;
-        *linkedList = afile;
-    }
-    else
-    {
-        afile->Next = NULL;
-    }
-
-    afile->RawData = (void**)(afile + 1);
-    afile->RawData[0] = rawData;
-    afile->Name = name;
-    afile->ID = xStrHash(name);
-    afile->FileFlags = flags;
-
-    if (afile->FileFlags & 0x2000)
-    {
-        afile->Duration = 2.0f * ((afile->FileFlags & 0x8000) ?
-                                      xMorphSeqDuration(*(xMorphSeqFile**)afile->RawData) :
-                                      iAnimDuration(*afile->RawData));
-    }
-    else
-    {
-        afile->Duration = (afile->FileFlags & 0x8000) ?
-                              xMorphSeqDuration(*(xMorphSeqFile**)afile->RawData) :
-                              iAnimDuration(*afile->RawData);
-    }
-
-    afile->TimeOffset = 0.0f;
-    afile->BoneCount = (flags & 0x8000) ? 0 : iAnimBoneCount(rawData);
-    afile->NumAnims[0] = 1;
-    afile->NumAnims[1] = 1;
-    afile->Physics = NULL;
-
-    CalcPhys(afile);
-
-    return afile;
+    return xAnimFileNewBilinear(&rawData, name, flags, linkedList, 1, 1);
 }
 
 // Give a file separate root-motion data.
