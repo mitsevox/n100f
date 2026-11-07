@@ -89,7 +89,7 @@ RpWorldSector* fn_8015E7E8(RpWorldSector* sector, GCNObjectData* objectData)
 
 // The default instance callback: allocates the sector's entry, builds the display lists and
 // instances the vertex arrays.
-RpWorldSector* fn_8015E908(void* object, GCNObjectData* objectData)
+void* fn_8015E908(void* object, GCNObjectData* objectData)
 {
     S32 headerSize;
     RpWorldSector* sector = (RpWorldSector*)object;
@@ -147,7 +147,7 @@ RpWorldSector* fn_8015E908(void* object, GCNObjectData* objectData)
                                  world->numTexCoordSets, mem);
     DCFlushRange(objectData->repEntry + 1, objectData->repEntry->size);
 
-    return sector;
+    return object;
 }
 
 // The node body: instances the sector when its entry is missing or its meshes changed, then runs
