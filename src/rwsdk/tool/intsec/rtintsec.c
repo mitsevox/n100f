@@ -10,13 +10,13 @@
 #define SPHERETRIANGLE_AXISREJECT(_c)                                                              \
     do                                                                                             \
     {                                                                                              \
-        S32 signs = REALSIGN(vc[0]._c) + REALSIGN(vc[1]._c) + REALSIGN(vc[2]._c);                  \
+        S32 signs = REALSIGN(vc0._c) + REALSIGN(vc1._c) + REALSIGN(vc2._c);                        \
                                                                                                    \
         if (signs == 0)                                                                            \
         {                                                                                          \
-            F32 d0 = vc[0]._c - sphere->radius;                                                    \
-            F32 d1 = vc[1]._c - sphere->radius;                                                    \
-            F32 d2 = vc[2]._c - sphere->radius;                                                    \
+            F32 d0 = vc0._c - sphere->radius;                                                      \
+            F32 d1 = vc1._c - sphere->radius;                                                      \
+            F32 d2 = vc2._c - sphere->radius;                                                      \
                                                                                                    \
             if ((REALBITS(d0) | REALBITS(d1) | REALBITS(d2)) >= 0)                                 \
             {                                                                                      \
@@ -25,9 +25,9 @@
         }                                                                                          \
         else if (signs == -3)                                                                      \
         {                                                                                          \
-            F32 d0 = vc[0]._c + sphere->radius;                                                    \
-            F32 d1 = vc[1]._c + sphere->radius;                                                    \
-            F32 d2 = vc[2]._c + sphere->radius;                                                    \
+            F32 d0 = vc0._c + sphere->radius;                                                      \
+            F32 d1 = vc1._c + sphere->radius;                                                      \
+            F32 d2 = vc2._c + sphere->radius;                                                      \
                                                                                                    \
             if ((REALBITS(d0) & REALBITS(d1) & REALBITS(d2)) < 0)                                  \
             {                                                                                      \
@@ -46,14 +46,14 @@
         F32 t;                                                                                     \
         F32 length2;                                                                               \
                                                                                                    \
-        RwV3dSubMacro(&edge, &vc[b], &vc[a]);                                                      \
-        t = SphereTriangleDot(&edge, &vc[a]) / SphereTriangleDot(&edge, &edge);                    \
-        nearest.x = vc[a].x - edge.x * t;                                                          \
-        nearest.y = vc[a].y - edge.y * t;                                                          \
-        nearest.z = vc[a].z - edge.z * t;                                                          \
+        RwV3dSubMacro(&edge, &vc##b, &vc##a);                                                      \
+        t = SphereTriangleDot(&edge, &vc##a) / SphereTriangleDot(&edge, &edge);                    \
+        nearest.x = vc##a.x - edge.x * t;                                                          \
+        nearest.y = vc##a.y - edge.y * t;                                                          \
+        nearest.z = vc##a.z - edge.z * t;                                                          \
         length2 = SphereTriangleDot(&nearest, &nearest);                                           \
                                                                                                    \
-        if (length2 > sphereRadiusSquared && length2 < SphereTriangleDot(&nearest, &vc[c]))        \
+        if (length2 > sphereRadiusSquared && length2 < SphereTriangleDot(&nearest, &vc##c))        \
         {                                                                                          \
             return FALSE;                                                                          \
         }                                                                                          \
@@ -64,8 +64,8 @@
 #define SPHERETRIANGLE_VERTEXREJECT(a, b, c, d)                                                    \
     do                                                                                             \
     {                                                                                              \
-        if (SphereTriangleDot(&vc[a], &vc[b]) > (d) &&                                             \
-            SphereTriangleDot(&vc[a], &vc[c]) > (d))                                               \
+        if (SphereTriangleDot(&vc##a, &vc##b) > (d) &&                                             \
+            SphereTriangleDot(&vc##a, &vc##c) > (d))                                               \
         {                                                                                          \
             return FALSE;                                                                          \
         }                                                                                          \
@@ -73,8 +73,8 @@
 
 // The outcode of a point against a box: which of the six faces it lies beyond.
 #define BBOXTRIANGLE_OUTCODE(v)                                                                    \
-    ((((v)->x > bbox->sup.x) ? 1 : (((v)->x < bbox->inf.x) ? 2 : 0)) |                            \
-     (((v)->y > bbox->sup.y) ? 4 : (((v)->y < bbox->inf.y) ? 8 : 0)) |                            \
+    ((((v)->x > bbox->sup.x) ? 1 : (((v)->x < bbox->inf.x) ? 2 : 0)) |                             \
+     (((v)->y > bbox->sup.y) ? 4 : (((v)->y < bbox->inf.y) ? 8 : 0)) |                             \
      (((v)->z > bbox->sup.z) ? 0x10 : (((v)->z < bbox->inf.z) ? 0x20 : 0)))
 
 // Accepts the triangle when an edge (start offset p from the face, direction d along the face's
@@ -159,7 +159,11 @@ static F32 SphereTriangleDot(const RwV3d* a, const RwV3d* b)
 S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const RwV3d* v1,
                                  const RwV3d* v2, RwV3d* normal, F32* distance)
 {
-    RwV3d vc[3];
+    // Three locals, not an array: the target keeps v0 - centre at 0x68(r1), v1 at 0x5C and
+    // v2 at 0x50, the reverse of an array's order.
+    RwV3d vc0;
+    RwV3d vc1;
+    RwV3d vc2;
     RwV3d e1;
     RwV3d e2;
     F32 d0;
@@ -170,9 +174,9 @@ S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const 
     F32 length2;
     F32 factor;
 
-    RwV3dSubMacro(&vc[0], v0, &sphere->center);
-    RwV3dSubMacro(&vc[1], v1, &sphere->center);
-    RwV3dSubMacro(&vc[2], v2, &sphere->center);
+    RwV3dSubMacro(&vc0, v0, &sphere->center);
+    RwV3dSubMacro(&vc1, v1, &sphere->center);
+    RwV3dSubMacro(&vc2, v2, &sphere->center);
 
     SPHERETRIANGLE_AXISREJECT(x);
     SPHERETRIANGLE_AXISREJECT(y);
@@ -192,7 +196,7 @@ S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const 
     factor = _rwInvSqrt(length2);
     RwV3dScaleMacro(normal, normal, factor);
 
-    distToPlane = SphereTriangleDot(&vc[0], normal);
+    distToPlane = SphereTriangleDot(&vc0, normal);
 
     if (distToPlane < -sphere->radius || distToPlane > sphere->radius)
     {
@@ -203,21 +207,21 @@ S32 RtIntersectionSphereTriangle(const RwSphere* sphere, const RwV3d* v0, const 
 
     sphereRadiusSquared = sphere->radius * sphere->radius;
 
-    d0 = SphereTriangleDot(&vc[0], &vc[0]);
+    d0 = SphereTriangleDot(&vc0, &vc0);
 
     if (d0 <= sphereRadiusSquared)
     {
         return TRUE;
     }
 
-    d1 = SphereTriangleDot(&vc[1], &vc[1]);
+    d1 = SphereTriangleDot(&vc1, &vc1);
 
     if (d1 <= sphereRadiusSquared)
     {
         return TRUE;
     }
 
-    d2 = SphereTriangleDot(&vc[2], &vc[2]);
+    d2 = SphereTriangleDot(&vc2, &vc2);
 
     if (d2 <= sphereRadiusSquared)
     {
