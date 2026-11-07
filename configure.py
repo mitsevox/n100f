@@ -1066,7 +1066,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dlrendst.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dlsprite.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dltexdic.c"),
-            Object(NonMatching, "rwsdk/driver/gcn/dltextur.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dltextur.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dltoken.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/baim3d.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/pipe/p2/bapipe.c"),
