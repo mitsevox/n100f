@@ -13179,10 +13179,8 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
     if (stimctxt->stim == ZVIL_STIM_TRANGOAL && stimctxt->trangoal != ent->goal)
     {
         rc = 0;
-
         if (stimctxt->tranmode)
         {
-            rc = 0;
             ent->mode = stimctxt->tranmode;
         }
 
@@ -13196,6 +13194,7 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
         if (!rc)
         {
             result = 0;
+            rc = 0;
         }
 
         rc = 0;
@@ -13204,13 +13203,13 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
         if (!rc)
         {
             result = 0;
+            rc = 0;
         }
 
         rc = 0;
         VGOL_set(ent, stimctxt->trangoal);
         rc = 0;
         ent->tmr_list[ZVIL_TYMR_CURGOAL] = 0.0f;
-        rc = 0;
     }
 
     return result;
