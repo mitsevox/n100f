@@ -696,7 +696,6 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
     }
     else
     {
-        PalQuantLeaf mean;
         S32 i;
 
         pq->boxes[0].lower.red = 0;
@@ -745,6 +744,7 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq)
         {
             if (i < numcols)
             {
+                PalQuantLeaf mean;
                 F32 scale;
 
                 nAssign(pq->root, &pq->boxes[i], i);
