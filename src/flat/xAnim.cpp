@@ -1032,6 +1032,37 @@ xAnimState* xAnimTableGetStateID(xAnimTable* table, U32 ID)
     return NULL;
 }
 
+// Unlink the state's effects that use the given callback.
+static inline void EffectRemoveByCB(xAnimState* state,
+                                    U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*))
+{
+    xAnimEffect* effect = state->Effects;
+    xAnimEffect* prev = NULL;
+
+    while (effect)
+    {
+        if (effect->Callback == callback)
+        {
+            if (prev)
+            {
+                prev->Next = effect->Next;
+            }
+            else
+            {
+                state->Effects = effect->Next;
+                prev = NULL;
+            }
+
+            effect = effect->Next;
+        }
+        else
+        {
+            prev = effect;
+            effect = effect->Next;
+        }
+    }
+}
+
 // Unlink every effect, in every state, that uses the given callback.
 void xAnimTableRemoveEffectByCB(xAnimTable* table,
                                 U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*))
@@ -1040,29 +1071,7 @@ void xAnimTableRemoveEffectByCB(xAnimTable* table,
 
     for (curr = table->StateList; curr; curr = curr->Next)
     {
-        xAnimEffect* prev = NULL;
-        xAnimEffect* effect = curr->Effects;
-
-        while (effect)
-        {
-            if (effect->Callback == callback)
-            {
-                if (prev)
-                {
-                    prev->Next = effect->Next;
-                }
-                else
-                {
-                    curr->Effects = effect->Next;
-                }
-            }
-            else
-            {
-                prev = effect;
-            }
-
-            effect = effect->Next;
-        }
+        EffectRemoveByCB(curr, callback);
     }
 }
 
