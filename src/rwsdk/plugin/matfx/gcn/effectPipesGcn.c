@@ -68,7 +68,7 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 // Whether a texture's raster has alpha, from the raster plugin's flags.
 #define MATFXGCN_TEXTUREHASALPHA(_texture)                                                         \
     ((_texture) && (_texture)->raster &&                                                           \
-     (*(U32*)((U8*)(_texture)->raster + lbl_8025F870 + 0x14) & 1))
+     (*(U32*)((U8*)(_texture)->raster->parent + lbl_8025F870 + 0x14) & 1))
 
 // The display lists follow the instanced vertex arrays in the entry.
 #define MATFXGCN_DISPLAYLISTS(_entry)                                                              \
@@ -79,7 +79,7 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 // and each vertex's offset comes from the texture space of one of its triangles.
 void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMesh* mesh,
                  RwV3d* positions, RwV3d* normals, RwTexCoords* texCoords, S32 numVertices,
-                 U32 flags)
+                 S32 flags)
 {
     U8* done = (U8*)RwMalloc(numVertices);
 
@@ -88,14 +88,13 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
     if (done)
     {
         RwFrame* frame = bumpMap->frame;
-        S32 minIndex = 0x7FFFFFFF;
-        S32 maxIndex = 0x80000000;
         F32 scale = bumpMap->coef * bumpMap->invBumpWidth;
         RwV3d* at;
         RwV3d light;
+        S32 i;
+        S32 minIndex = 0x7FFFFFFF;
+        S32 maxIndex = 0x80000000;
         U16* indices;
-        U16* index;
-        U32 i;
 
         if (!frame)
         {
@@ -119,11 +118,10 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
         RwV3dNormalize(&light, &light);
 
         indices = mesh->indices;
-        index = indices;
 
         for (i = 0; i < mesh->numIndices; i++)
         {
-            U16 v0 = *index;
+            U16 v0 = indices[i];
 
             if (!done[v0])
             {
@@ -134,21 +132,24 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
                 RwTexCoords* t0;
                 RwTexCoords* t1;
                 RwTexCoords* t2;
+                RwV3d e1;
+                RwV3d e2;
                 RwV3d s;
-                F32 dv1;
-                F32 dv2;
+                RwV3d b;
+                F32 uOffset;
+                F32 vOffset;
                 F32 recip;
-                U16 v1;
-                U16 v2;
+                S32 v1;
+                S32 v2;
 
                 if (flags & rpGEOMETRYTRISTRIP)
                 {
                     S32 i1;
                     S32 i2;
 
-                    if ((S32)i < 2)
+                    if (i < 2)
                     {
-                        if ((S32)i % 2)
+                        if (i % 2)
                         {
                             i1 = i + 2;
                             i2 = i + 1;
@@ -161,7 +162,7 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
                     }
                     else
                     {
-                        if ((S32)i % 2)
+                        if (i % 2)
                         {
                             i1 = i - 1;
                             i2 = i - 2;
@@ -175,54 +176,51 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
 
                     v1 = indices[i1];
                     v2 = indices[i2];
+
+                    p0 = &positions[v0];
+                    p1 = &positions[v1];
+                    p2 = &positions[v2];
+                    n = &normals[v0];
+                    t0 = &texCoords[v0];
+                    t1 = &texCoords[v1];
+                    t2 = &texCoords[v2];
                 }
                 else
                 {
-                    S32 base = (i / 3) * 3;
+                    v1 = indices[(i + 1) % 3 + (i / 3) * 3];
+                    v2 = indices[(i + 2) % 3 + (i / 3) * 3];
 
-                    v1 = indices[(i + 1) % 3 + base];
-                    v2 = indices[(i + 2) % 3 + base];
+                    p0 = &positions[v0];
+                    p1 = &positions[v1];
+                    p2 = &positions[v2];
+                    n = &normals[v0];
+                    t0 = &texCoords[v0];
+                    t1 = &texCoords[v1];
+                    t2 = &texCoords[v2];
                 }
 
-                p0 = &positions[v0];
-                n = &normals[v0];
-                t0 = &texCoords[v0];
-                p1 = &positions[v1];
-                t1 = &texCoords[v1];
-                p2 = &positions[v2];
-                t2 = &texCoords[v2];
 
-                dv2 = t2->v - t0->v;
-                dv1 = t1->v - t0->v;
-                s.x = (p1->x - p0->x) * dv2 - (p2->x - p0->x) * dv1;
-                s.y = (p1->y - p0->y) * dv2 - (p2->y - p0->y) * dv1;
-                s.z = (p1->z - p0->z) * dv2 - (p2->z - p0->z) * dv1;
+                RwV3dSubMacro(&e1, p1, p0);
+                RwV3dSubMacro(&e2, p2, p0);
+                RwV3dScaleMacro(&e1, &e1, t2->v - t0->v);
+                RwV3dScaleMacro(&e2, &e2, t1->v - t0->v);
+                RwV3dSubMacro(&s, &e1, &e2);
 
-                recip = _rwInvSqrt(s.x * s.x + s.y * s.y + s.z * s.z);
-                s.x *= recip;
-                s.y *= recip;
-                s.z *= recip;
+                recip = _rwInvSqrt(RwV3dDotProductMacro(&s, &s));
+                RwV3dScaleMacro(&s, &s, recip);
+                RwV3dCrossProductMacro(&b, &s, n);
 
-                dst[*index].u = t0->u - (s.x * light.x + s.y * light.y + s.z * light.z) * scale;
-                dst[*index].v = t0->v - ((s.y * n->z - s.z * n->y) * light.x +
-                                         (s.z * n->x - s.x * n->z) * light.y +
-                                         (s.x * n->y - s.y * n->x) * light.z) *
-                                            scale;
+                uOffset = RwV3dDotProductMacro(&s, &light);
+                vOffset = RwV3dDotProductMacro(&b, &light);
+                dst[indices[i]].u = t0->u - uOffset * scale;
+                dst[indices[i]].v = t0->v - vOffset * scale;
 
-                if ((S32)*index < minIndex)
-                {
-                    minIndex = *index;
-                }
+                minIndex = ((S32)indices[i] < minIndex) ? indices[i] : minIndex;
+                maxIndex = ((S32)indices[i] > maxIndex) ? indices[i] : maxIndex;
 
-                if ((S32)*index > maxIndex)
-                {
-                    maxIndex = *index;
-                }
-
-                done[*index] = TRUE;
+                done[indices[i]] = TRUE;
             }
 
-            index++;
         }
 
         DCFlushRange(&dst[minIndex], (maxIndex - minIndex + 1) * sizeof(RwTexCoords));
@@ -273,6 +271,9 @@ RpAtomic* fn_8013FF48(RpAtomic* atomic, GCNObjectData* objectData)
     return (RpAtomic*)lbl_8025F694(atomic, objectData);
 }
 
+// The atomic pipeline's reinstance callback: chains to the node's own reinstance, then recomputes
+// the normal, binormal and tangent data when the geometry's polygons, vertices, normals or first
+// texture coordinates were locked or the atomic is morphing.
 RpAtomic* _rpGCMatFXAtomicReinstanceCallBack(RpAtomic* atomic, GCNObjectData* objectData)
 {
     RpGeometry* geometry = atomic->geometry;
@@ -281,15 +282,11 @@ RpAtomic* _rpGCMatFXAtomicReinstanceCallBack(RpAtomic* atomic, GCNObjectData* ob
 
     if (vtxFmt && vtxFmt->frac[1] && (geometry->flags & rpGEOMETRYNORMALS))
     {
-        U32 morphing = FALSE;
+        U32 locked = geometry->lockedSinceLastInst & 0x17;
+        U32 morphing = geometry->numMorphTargets != 1 &&
+                       (atomic->interpolator.flags & rpINTERPOLATORDIRTYINSTANCE);
 
-        if (geometry->numMorphTargets != 1 &&
-            (atomic->interpolator.flags & rpINTERPOLATORDIRTYINSTANCE))
-        {
-            morphing = TRUE;
-        }
-
-        recompute = (geometry->lockedSinceLastInst & 0x17) || morphing;
+        recompute = locked || morphing;
     }
 
     if (!lbl_8025F690(atomic, objectData))
@@ -325,14 +322,28 @@ RpWorldSector* fn_801400F8(RpWorldSector* sector, GCNObjectData* objectData)
     return sector;
 }
 
+// The alpha compare mode for a texture: 3 when its raster's parent has alpha, otherwise 1.
+static S32 MatFXGCNAlphaRef(RwTexture* texture)
+{
+    S32 ref = 1;
+
+    if (MATFXGCN_TEXTUREHASALPHA(texture))
+    {
+        ref = 3;
+    }
+
+    return ref;
+}
+
 // Loads the environment map texture matrix: the inverse of the map's frame (or lbl_8025E304),
-// after the object's matrix, scaled and offset into texture space.
+// after the object's matrix, scaled and offset into texture space. The matrix is a full 3x4 Mtx
+// of which the 2x4 load reads two rows.
 static void LoadEnvMapMatrix(RwFrame* frame, const RwMatrix* matrix)
 {
-    RwMatrix inverse;
     RwMatrix tmp;
+    RwMatrix inverse;
+    F32 mtx[3][4];
     const RwMatrix* env;
-    F32 mtx[2][4];
 
     if (frame)
     {
@@ -361,16 +372,22 @@ static void LoadEnvMapMatrix(RwFrame* frame, const RwMatrix* matrix)
     GXLoadTexMtxImm(mtx, GX_TEXMTX0, GX_MTX2x4);
 }
 
-// Sets up an environment map pass: additive blending, a material color whose alpha is the
-// coefficient, one texture coordinate from the normal through the environment matrix.
-static void SetupEnvMapPass(GXColor* color, F32 coef)
+// Sets up the lighting channels of an environment map pass: unlit, with a material color whose
+// alpha is the map's coefficient.
+static void SetupEnvMapChannels(GXColor* color, MatFXEnvMapData* envMap)
 {
-    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_CLAMP,
                   GX_AF_NONE);
-    GXSetChanCtrl(GX_COLOR1A1, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
+    GXSetChanCtrl(GX_COLOR1A1, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_CLAMP,
                   GX_AF_NONE);
-    color->a = 255.0f * coef;
+    color->a = 255.0f * envMap->coef;
     GXSetChanMatColor(GX_COLOR0A0, *color);
+}
+
+// Sets up the TEV of an environment map pass: one texture coordinate from the normal through the
+// environment matrix, modulated by the channel color.
+static void SetupEnvMapTev(void)
+{
     GXSetNumTexGens(1);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_NRM, GX_TEXMTX0, GX_FALSE, GX_PTIDENTITY);
     GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
@@ -394,6 +411,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
     S32 numVertices;
     U32 flags;
     S32 numMeshes;
+    S32 bumpSize;
 
     arrays->syncToken = lbl_8025E800;
 
@@ -423,10 +441,11 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
     numMeshes = meshHeader->numMeshes;
     mesh = (RpMesh*)(meshHeader + 1);
+    bumpSize = numVertices * sizeof(RwTexCoords);
 
     while (numMeshes--)
     {
-        RpMaterial* material = mesh->material;
+        RpMultiTexture* multiTexture;
         MatFXMaterialData* matFX;
 
         if (resetChannels)
@@ -435,10 +454,11 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
             resetChannels = FALSE;
         }
 
-        fn_80158B20(objectData, material);
+        fn_80158B20(objectData, mesh->material);
+        multiTexture = RpMaterialGetMultiTexture(mesh->material, MATFXGCN_PLATFORM);
         matFX = MATFXMATERIALGETDATA(mesh->material);
 
-        if (RpMaterialGetMultiTexture(mesh->material, MATFXGCN_PLATFORM))
+        if (multiTexture)
         {
             _rpGameCubeMTMeshRenderCallBack(displayList, mesh->material, object,
                                             objectData, matrix);
@@ -467,8 +487,9 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 GXCallDisplayList(displayList->list, displayList->size);
                 RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
                 RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
-                SetupEnvMapPass(&lbl_8025E780, envMap->coef);
+                SetupEnvMapChannels(&lbl_8025E780, envMap);
                 resetChannels = TRUE;
+                SetupEnvMapTev();
                 resetTev = TRUE;
                 _rwDlTextureSet(envMap->texture, 0);
                 LoadEnvMapMatrix(envMap->frame, matrix);
@@ -479,8 +500,8 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
             }
             case rpMATFXEFFECTDUAL:
             {
-                MatFXDualData* dual = &MATFXMATERIALGETDATA(mesh->material)->effects[0].data.dual;
                 RwTexture* texture;
+                MatFXDualData* dual = &MATFXMATERIALGETDATA(mesh->material)->effects[0].data.dual;
                 S32 srcBlend;
                 S32 destBlend;
 
@@ -488,7 +509,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 RwRenderStateGet(rwRENDERSTATEDESTBLEND, &destBlend);
                 texture = mesh->material->texture;
                 _rwDlTextureSet(texture, 0);
-                RwGameCubeSetAlphaCompare(MATFXGCN_TEXTUREHASALPHA(texture) ? 3 : 1);
+                RwGameCubeSetAlphaCompare(MatFXGCNAlphaRef(texture));
                 GXCallDisplayList(displayList->list, displayList->size);
                 RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)dual->srcBlendMode);
                 RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)dual->dstBlendMode);
@@ -500,7 +521,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
                 texture = dual->texture;
                 _rwDlTextureSet(texture, 0);
-                RwGameCubeSetAlphaCompare(MATFXGCN_TEXTUREHASALPHA(texture) ? 3 : 1);
+                RwGameCubeSetAlphaCompare(MatFXGCNAlphaRef(texture));
                 GXCallDisplayList(displayList->list, displayList->size);
 
                 if (objectData->flags & rpGEOMETRYTEXTURED2)
@@ -513,10 +534,8 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 break;
             }
             case rpMATFXEFFECTBUMPMAP:
-            case rpMATFXEFFECTBUMPENVMAP:
             {
-                MatFXMaterialData* data = MATFXMATERIALGETDATA(mesh->material);
-                MatFXBumpMapData* bumpMap = &data->effects[0].data.bumpMap;
+                MatFXBumpMapData* bumpMap = &MATFXMATERIALGETDATA(mesh->material)->effects[0].data.bumpMap;
                 S32 srcBlend;
                 S32 destBlend;
 
@@ -533,10 +552,10 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 if (!bumpEntry)
                 {
                     bumpEntry = RwResourcesAllocateResEntry(
-                        lbl_8025D958, NULL, numVertices * sizeof(RwTexCoords) + 6, fn_8013FEC0);
+                        lbl_8025D958, NULL, bumpSize + 6, fn_8013FEC0);
                     MATFXGCN_TOKEN(bumpEntry) = lbl_8025E800;
                     bumpTexCoords =
-                        (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 6 + 0x1F) & ~0x1F);
+                        (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 2 + 0x1F) & ~0x1F);
                 }
 
                 fn_8013FA64(bumpTexCoords, object, bumpMap, mesh, (RwV3d*)arrays->pos,
@@ -545,21 +564,51 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 GXSetArray(GX_VA_TEX0, bumpTexCoords, sizeof(RwTexCoords));
                 GXCallDisplayList(displayList->list, displayList->size);
                 GXSetArray(GX_VA_TEX0, arrays->tex[0], sizeof(RwTexCoords));
+                RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)srcBlend);
+                RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)destBlend);
+                break;
+            }
+            case rpMATFXEFFECTBUMPENVMAP:
+            {
+                MatFXBumpMapData* bumpMap = &MATFXMATERIALGETDATA(mesh->material)->effects[0].data.bumpMap;
+                MatFXEnvMapData* envMap = &MATFXMATERIALGETDATA(mesh->material)->effects[1].data.envMap;
+                S32 srcBlend;
+                S32 destBlend;
 
-                if (matFX->flags == rpMATFXEFFECTBUMPENVMAP)
+                RwRenderStateGet(rwRENDERSTATESRCBLEND, &srcBlend);
+                RwRenderStateGet(rwRENDERSTATEDESTBLEND, &destBlend);
+                RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDINVSRCALPHA);
+                RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDZERO);
+                _rwDlTextureSet(bumpMap->bumpTexture, 0);
+                RwGameCubeSetAlphaCompare(1);
+                GXCallDisplayList(displayList->list, displayList->size);
+                RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+                RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
+
+                if (!bumpEntry)
                 {
-                    MatFXEnvMapData* envMap = &data->effects[1].data.envMap;
-
-                    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-                    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
-                    SetupEnvMapPass(&lbl_8025E784, envMap->coef);
-                    resetChannels = TRUE;
-                    resetTev = TRUE;
-                    _rwDlTextureSet(envMap->texture, 0);
-                    LoadEnvMapMatrix(envMap->frame, matrix);
-                    GXCallDisplayList(displayList->list, displayList->size);
+                    bumpEntry = RwResourcesAllocateResEntry(
+                        lbl_8025D958, NULL, bumpSize + 6, fn_8013FEC0);
+                    MATFXGCN_TOKEN(bumpEntry) = lbl_8025E800;
+                    bumpTexCoords =
+                        (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 2 + 0x1F) & ~0x1F);
                 }
 
+                fn_8013FA64(bumpTexCoords, object, bumpMap, mesh, (RwV3d*)arrays->pos,
+                            (RwV3d*)arrays->nrm, (RwTexCoords*)arrays->tex[0], numVertices,
+                            flags);
+                GXSetArray(GX_VA_TEX0, bumpTexCoords, sizeof(RwTexCoords));
+                GXCallDisplayList(displayList->list, displayList->size);
+                GXSetArray(GX_VA_TEX0, arrays->tex[0], sizeof(RwTexCoords));
+                RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+                RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
+                SetupEnvMapChannels(&lbl_8025E784, envMap);
+                resetChannels = TRUE;
+                SetupEnvMapTev();
+                resetTev = TRUE;
+                _rwDlTextureSet(envMap->texture, 0);
+                LoadEnvMapMatrix(envMap->frame, matrix);
+                GXCallDisplayList(displayList->list, displayList->size);
                 RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)srcBlend);
                 RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)destBlend);
                 break;
@@ -569,7 +618,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 RwTexture* texture = mesh->material->texture;
 
                 _rwDlTextureSet(texture, 0);
-                RwGameCubeSetAlphaCompare(MATFXGCN_TEXTUREHASALPHA(texture) ? 3 : 1);
+                RwGameCubeSetAlphaCompare(MatFXGCNAlphaRef(texture));
                 GXCallDisplayList(displayList->list, displayList->size);
                 break;
             }
@@ -587,7 +636,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
             texture = mesh->material->texture;
             _rwDlTextureSet(texture, 0);
-            RwGameCubeSetAlphaCompare(MATFXGCN_TEXTUREHASALPHA(texture) ? 3 : 1);
+            RwGameCubeSetAlphaCompare(MatFXGCNAlphaRef(texture));
             GXCallDisplayList(displayList->list, displayList->size);
         }
 
@@ -598,28 +647,24 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
     return object;
 }
 
-// Creates the atomic and world sector pipelines, keeping the default callbacks the pipelines'
-// own ones call.
-S32 fn_80140AF4(void)
+// Builds the atomic pipeline: the GameCube all-in-one node with this plugin's instance, reinstance
+// and render callbacks, keeping the node's own instance and reinstance callbacks to chain to.
+static RxPipeline* MatFXGCNAtomicPipelineCreate(void)
 {
-    RxPipeline* pipeline;
-    RxLockedPipe* lpipe;
-    RxNodeDefinition* nodeDef;
-    RxPipelineNode* node;
-
-    lbl_8025F680 = RpGameCubeVtxFmtCreate();
-    RpGameCubeVtxFmtSetNormal(lbl_8025F680, 4, 1);
-
-    pipeline = RxPipelineCreate();
+    RxPipeline* pipeline = RxPipelineCreate();
 
     if (pipeline)
     {
+        RxLockedPipe* lpipe;
+
         pipeline->pluginId = MATFXGCN_PLUGINID;
         lpipe = RxPipelineLock(pipeline);
 
         if (lpipe)
         {
-            nodeDef = RxNodeDefinitionGetGameCubeAtomicAllInOne();
+            RxNodeDefinition* nodeDef = RxNodeDefinitionGetGameCubeAtomicAllInOne();
+            RxPipelineNode* node;
+
             RxLockedPipeUnlock(RxLockedPipeAddFragment(lpipe, NULL, nodeDef, NULL));
             node = RxPipelineFindNodeByName(pipeline, nodeDef->name, NULL, NULL);
             lbl_8025F694 = (GCNMTInstanceCB)_rxGameCubeAllInOneGetInstanceCallBack(node);
@@ -627,48 +672,57 @@ S32 fn_80140AF4(void)
             _rxGameCubeAllInOneSetInstanceCallBack(node, fn_8013FF48);
             _rxGameCubeAllInOneSetReinstanceCallBack(node, _rpGCMatFXAtomicReinstanceCallBack);
             RxGameCubeAllInOneSetRenderCallBack(node, fn_80140178);
+
+            return pipeline;
         }
-        else
-        {
-            _rxPipelineDestroy(pipeline);
-            pipeline = NULL;
-        }
-    }
-    else
-    {
-        pipeline = NULL;
+
+        _rxPipelineDestroy(pipeline);
     }
 
-    lbl_8025F684 = pipeline;
+    return NULL;
+}
 
-    pipeline = RxPipelineCreate();
+// Builds the world sector pipeline the same way, chaining only the instance callback.
+static RxPipeline* MatFXGCNWorldSectorPipelineCreate(void)
+{
+    RxPipeline* pipeline = RxPipelineCreate();
 
     if (pipeline)
     {
+        RxLockedPipe* lpipe;
+
         pipeline->pluginId = MATFXGCN_PLUGINID;
         lpipe = RxPipelineLock(pipeline);
 
         if (lpipe)
         {
-            nodeDef = RxNodeDefinitionGetGameCubeWorldSectorAllInOne();
+            RxNodeDefinition* nodeDef = RxNodeDefinitionGetGameCubeWorldSectorAllInOne();
+            RxPipelineNode* node;
+
             RxLockedPipeUnlock(RxLockedPipeAddFragment(lpipe, NULL, nodeDef, NULL));
             node = RxPipelineFindNodeByName(pipeline, nodeDef->name, NULL, NULL);
             lbl_8025F68C = (GCNMTInstanceCB)_rxGameCubeAllInOneGetInstanceCallBack(node);
             _rxGameCubeAllInOneSetInstanceCallBack(node, fn_801400F8);
             RxGameCubeAllInOneSetRenderCallBack(node, fn_80140178);
+
+            return pipeline;
         }
-        else
-        {
-            _rxPipelineDestroy(pipeline);
-            pipeline = NULL;
-        }
-    }
-    else
-    {
-        pipeline = NULL;
+
+        _rxPipelineDestroy(pipeline);
     }
 
-    lbl_8025F688 = pipeline;
+    return NULL;
+}
+
+// Creates the vertex format and the atomic and world sector pipelines; the counterpart of
+// _rpMatFXPipelinesDestroy.
+S32 fn_80140AF4(void)
+{
+    lbl_8025F680 = RpGameCubeVtxFmtCreate();
+    RpGameCubeVtxFmtSetNormal(lbl_8025F680, 4, 1);
+
+    lbl_8025F684 = MatFXGCNAtomicPipelineCreate();
+    lbl_8025F688 = MatFXGCNWorldSectorPipelineCreate();
 
     return TRUE;
 }

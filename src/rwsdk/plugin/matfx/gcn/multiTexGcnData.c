@@ -20,7 +20,7 @@ struct GCNMTStreamHeader
 {
     U8 numTexCoordGens;
     U8 numTevStages;
-    S8 flags;
+    U8 flags;
     U8 blend;
     U16 tevColors[16];
     U8 kColors[16];
@@ -126,14 +126,6 @@ struct GCNMTStreamIndStage
         (_stage)->flags = (_rec)->value[23];                                                      \
     } while (0)
 
-// The size of an effect's stream data.
-#define MTGCN_STREAMSIZE(_config)                                                                  \
-    ((_config)->numTexMatrices * (sizeof(GCNMTStreamTexMatrix) + sizeof(F32) * 12) +             \
-     sizeof(GCNMTStreamHeader) +                                                                   \
-     (_config)->numTexCoordGens * sizeof(GCNMTStreamTexCoordGen) +                                 \
-     (_config)->numIndMatrices * (sizeof(GCNMTStreamIndMatrix) + sizeof(F32) * 6) +              \
-     (_config)->numIndStages * sizeof(GCNMTStreamIndStage) +                                       \
-     (_config)->numTevStages * sizeof(GCNMTStreamTevStage))
 
 
 U32 GameCubeMTEffectStreamGetSize(RpMTEffect* effect)
@@ -157,19 +149,38 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
     GCNMTStreamHeader header;
     U32 i;
 
-    if (!_rwStreamWriteVersionedChunkHeader(stream, rwID_STRUCT, MTGCN_STREAMSIZE(config), 0x33002,
+    if (!_rwStreamWriteVersionedChunkHeader(stream, rwID_EXTENSION,
+                                            GameCubeMTEffectStreamGetSize(effect), 0x33002,
                                             0xFFFF))
     {
         return NULL;
     }
 
-    header.numTexCoordGens = config->numTexCoordGens;
-    header.numTevStages = config->numTevStages;
-    header.flags = config->flags;
-    header.numTexMatrices = config->numTexMatrices;
-    header.numIndMatrices = config->numIndMatrices;
-    header.numIndStages = config->numIndStages;
-    header.blend = (config->destBlend & 0xF) | ((config->srcBlend << 4) & 0xF0);
+    {
+        U8 numIndStages;
+        U8 numIndMatrices;
+        U8 numTexMatrices;
+        U8 numTexCoordGens;
+        U8 numTevStages;
+        U8 flags;
+        U8 blend;
+
+        flags = config->flags;
+        numTevStages = config->numTevStages;
+        numTexCoordGens = config->numTexCoordGens;
+        numTexMatrices = config->numTexMatrices;
+        numIndMatrices = config->numIndMatrices;
+        numIndStages = config->numIndStages;
+        blend = ((config->srcBlend << 4) & 0xF0) | (config->destBlend & 0xF);
+
+        header.flags = flags;
+        header.numTevStages = numTevStages;
+        header.numTexCoordGens = numTexCoordGens;
+        header.numTexMatrices = numTexMatrices;
+        header.numIndMatrices = numIndMatrices;
+        header.numIndStages = numIndStages;
+        header.blend = blend;
+    }
     memcpy(header.kColors, config->kColors, sizeof(header.kColors));
     memcpy(header.tevColors, config->tevColors, sizeof(header.tevColors));
     RwMemLittleEndian16(header.tevColors, sizeof(header.tevColors));
@@ -279,14 +290,17 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
     return (RwStream*)effect;
 }
 
+// Reads a GameCube multi-texture effect: the header (without the last three counts in streams
+// older than 0x33002), then one record per texture coordinate generator, TEV stage, texture
+// matrix, indirect matrix and indirect stage. Frees the effect and returns NULL on a short read.
 RpMTEffect* GameCubeMTEffectStreamRead(RwStream* stream, S32 platform, U32 version, U32 length)
 {
-    S32 old = version < 0x33002;
-    GCNMTStreamHeader header;
-    RpMTEffect* effect;
-    GCNMTConfig* config;
     U32 size;
     U32 i;
+    RpMTEffect* effect;
+    GCNMTConfig* config;
+    S32 old = version < 0x33002;
+    GCNMTStreamHeader header;
 
     if (old)
     {
@@ -452,22 +466,26 @@ S32 _rpGameCubeMTDataPluginAttach(void)
 // The element arrays follow the effect in the same allocation, each 4-byte aligned.
 #define MTGCN_ALIGN4(_size) (((_size) + 3) & ~3)
 
+// Creates a GameCube multi-texture effect with room for the given numbers of TEV stages, texture
+// coordinate generators, texture matrices, indirect stages and indirect matrices, all in one
+// allocation after the effect. The running size aligns each array's start before adding it.
 RpMTEffect* RpGameCubeMTEffectCreate(U32 numTevStages, U32 numTexCoordGens, U32 numTexMatrices,
                                      U32 numIndStages, U32 numIndMatrices)
 {
-    S32 texCoordGenSize = numTexCoordGens * sizeof(GCNMTTexCoordGen);
-    S32 indStageSize = numIndStages * sizeof(GCNMTIndStage);
     S32 texMatrixSize = numTexMatrices * sizeof(GCNMTTexMatrix);
+    S32 texCoordGenSize = numTexCoordGens * sizeof(GCNMTTexCoordGen);
     S32 indMatrixSize = numIndMatrices * sizeof(GCNMTIndMatrix);
+    S32 indStageSize = numIndStages * sizeof(GCNMTIndStage);
     S32 size;
     GCNMTEffect* effect;
     U8* mem;
 
-    size = MTGCN_ALIGN4(sizeof(GCNMTEffect) + texCoordGenSize);
-    size = MTGCN_ALIGN4(size + numTevStages * (S32)sizeof(GCNMTTevStage));
-    size = MTGCN_ALIGN4(size + indStageSize);
-    size = MTGCN_ALIGN4(size + texMatrixSize);
-    size = MTGCN_ALIGN4(size + indMatrixSize);
+    size = sizeof(GCNMTEffect) + texCoordGenSize;
+    size = MTGCN_ALIGN4(size) + numTevStages * (S32)sizeof(GCNMTTevStage);
+    size = MTGCN_ALIGN4(size) + indStageSize;
+    size = MTGCN_ALIGN4(size) + texMatrixSize;
+    size = MTGCN_ALIGN4(size) + indMatrixSize;
+    size = MTGCN_ALIGN4(size);
 
     effect = (GCNMTEffect*)RwMalloc(size);
 

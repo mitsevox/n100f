@@ -1,5 +1,7 @@
 #include <rwcore.h>
 
+// Clips a perspective camera's triangles to the view volume: a triangle partly outside is
+// rewritten as a fan of the clipped polygon, one wholly outside is dropped.
 static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 {
     S32 result;
@@ -11,9 +13,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
     RxCluster* interpolants;
     RxMeshStateVector* meshData;
     U32 stride;
-    U32 i;
     RxRenderStateVector* rsvp;
-    U32 numTris;
 
     static const RwClipVertexFunc PerspClipFuncs[] = {
         _rwGeneratePerspClippedVertexZLO, _rwGeneratePerspClippedVertexZHI,
@@ -51,23 +51,25 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 
     if (meshData->ClipFlagsOr)
     {
+        U32 numNewTris;
+        U32 numTris;
+        U32 numVerts;
+        RwImVertexIndex* tri;
+        RwImVertexIndex vertIndices[16];
+        S32 start;
+        S32 end;
+        RwImVertexIndex idx0;
+        RwImVertexIndex idx1;
+        RwImVertexIndex idx2;
+        U32 i;
+        U8 clipFlagsOr;
+        U8 clipFlagsAnd;
+        RwImVertexIndex firstNewVert;
+
         numTris = meshData->NumElements;
 
         for (i = 0; i < numTris; i++)
         {
-            U32 numVerts;
-            RwImVertexIndex* tri;
-            RwImVertexIndex vertIndices[16];
-            S32 start;
-            S32 end;
-            RwImVertexIndex idx0;
-            RwImVertexIndex idx1;
-            RwImVertexIndex idx2;
-            U32 numNewTris;
-            U8 clipFlagsOr;
-            U8 clipFlagsAnd;
-            RwImVertexIndex firstNewVert;
-
             numNewTris = 0;
 
             idx0 = ((RwImVertexIndex*)indices->currentData)[0];
@@ -460,6 +462,7 @@ static S32 PerspectiveClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
     return result;
 }
 
+// Clips a parallel camera's triangles the same way, projecting new vertices without dividing by z.
 static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 {
     S32 result;
@@ -471,9 +474,7 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
     RxCluster* interpolants;
     RxMeshStateVector* meshData;
     U32 stride;
-    U32 i;
     RxRenderStateVector* rsvp;
-    U32 numTris;
 
     static const RwClipVertexFunc ParaClipFuncs[] = {
         _rwGenerateParallelZLOClippedVertex, _rwGenerateParallelZHIClippedVertex,
@@ -511,23 +512,25 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
 
     if (meshData->ClipFlagsOr)
     {
+        U32 numNewTris;
+        U32 numTris;
+        U32 numVerts;
+        RwImVertexIndex* tri;
+        RwImVertexIndex vertIndices[16];
+        S32 start;
+        S32 end;
+        RwImVertexIndex idx0;
+        RwImVertexIndex idx1;
+        RwImVertexIndex idx2;
+        U32 i;
+        U8 clipFlagsOr;
+        U8 clipFlagsAnd;
+        RwImVertexIndex firstNewVert;
+
         numTris = meshData->NumElements;
 
         for (i = 0; i < numTris; i++)
         {
-            U32 numVerts;
-            RwImVertexIndex* tri;
-            RwImVertexIndex vertIndices[16];
-            S32 start;
-            S32 end;
-            RwImVertexIndex idx0;
-            RwImVertexIndex idx1;
-            RwImVertexIndex idx2;
-            U32 numNewTris;
-            U8 clipFlagsOr;
-            U8 clipFlagsAnd;
-            RwImVertexIndex firstNewVert;
-
             numNewTris = 0;
 
             idx0 = ((RwImVertexIndex*)indices->currentData)[0];
@@ -726,9 +729,9 @@ static S32 ParallelClipProcessPacket(RxPipelineNode* self, RxPacket* packet)
                             F32 y;
                             F32 z;
 
-                            z = camVert->cameraVertex.z;
                             x = camVert->cameraVertex.x;
                             y = camVert->cameraVertex.y;
+                            z = camVert->cameraVertex.z;
                             devVert = (RwIm2DVertex*)((U8*)devVerts->data
                                                       + devVerts->stride * vertIndices[j]);
 

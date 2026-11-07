@@ -31,18 +31,31 @@
             break;                                                                                 \
         case 4:                                                                                    \
             delta = (_value) - (_line).start.y;                                                    \
-            (_out).y = (_value);                                                                   \
             (_out).x = (_line).start.x + (_grad)->dxdy * delta;                                    \
+            (_out).y = (_value);                                                                   \
             (_out).z = (_line).start.z + (_grad)->dzdy * delta;                                    \
             break;                                                                                 \
         case 8:                                                                                    \
             delta = (_value) - (_line).start.z;                                                    \
-            (_out).z = (_value);                                                                   \
             (_out).x = (_line).start.x + (_grad)->dxdz * delta;                                    \
             (_out).y = (_line).start.y + (_grad)->dydz * delta;                                    \
+            (_out).z = (_value);                                                                   \
             break;                                                                                 \
         }                                                                                          \
     } while (0)
+
+// Returns numerator / denominator, or 0 for a zero denominator.
+static F32 WorldSafeDivide(F32 numerator, F32 denominator)
+{
+    F32 result = 0.0f;
+
+    if (denominator != 0.0f)
+    {
+        result = numerator / denominator;
+    }
+
+    return result;
+}
 
 typedef union IntersectionCallBack IntersectionCallBack;
 union IntersectionCallBack
@@ -122,8 +135,8 @@ static RpWorld* WorldForAllLineWorldSectorIntersections(RpWorld* world, RwLine* 
                 return world;
             }
 
-            line = lineStack[nStack];
             sector = sectorStack[nStack];
+            line = lineStack[nStack];
             nStack--;
         }
         else
@@ -156,15 +169,17 @@ static RpWorld* WorldForAllLineWorldSectorIntersections(RpWorld* world, RwLine* 
                 if (rStart.nInt < rEnd.nInt)
                 {
                     nStack++;
-                    lineStack[nStack] = line;
                     sectorStack[nStack] = plane->rightSubTree;
+                    lineStack[nStack].start = line.start;
+                    lineStack[nStack].end = line.end;
                     sector = plane->leftSubTree;
                 }
                 else
                 {
                     nStack++;
-                    lineStack[nStack] = line;
                     sectorStack[nStack] = plane->leftSubTree;
+                    lineStack[nStack].start = line.start;
+                    lineStack[nStack].end = line.end;
                     sector = plane->rightSubTree;
                 }
             }
@@ -179,17 +194,18 @@ static RpWorld* WorldForAllLineWorldSectorIntersections(RpWorld* world, RwLine* 
                 if (lStart.nInt < 0)
                 {
                     nStack++;
-                    lineStack[nStack] = line;
                     sectorStack[nStack] = plane->rightSubTree;
+                    lineStack[nStack].start = line.start;
+                    lineStack[nStack].end = line.end;
                     sector = plane->leftSubTree;
                     line.end = vSplit;
                 }
                 else
                 {
                     nStack++;
+                    sectorStack[nStack] = plane->leftSubTree;
                     lineStack[nStack].start = vSplit;
                     lineStack[nStack].end = line.end;
-                    sectorStack[nStack] = plane->leftSubTree;
                     sector = plane->rightSubTree;
                 }
             }
@@ -204,16 +220,17 @@ static RpWorld* WorldForAllLineWorldSectorIntersections(RpWorld* world, RwLine* 
                 if (rStart.nInt < 0)
                 {
                     nStack++;
+                    sectorStack[nStack] = plane->rightSubTree;
                     lineStack[nStack].start = vSplit;
                     lineStack[nStack].end = line.end;
-                    sectorStack[nStack] = plane->rightSubTree;
                     sector = plane->leftSubTree;
                 }
                 else
                 {
                     nStack++;
-                    lineStack[nStack] = line;
                     sectorStack[nStack] = plane->leftSubTree;
+                    lineStack[nStack].start = line.start;
+                    lineStack[nStack].end = line.end;
                     sector = plane->rightSubTree;
                     line.end = vSplit;
                 }
@@ -221,8 +238,8 @@ static RpWorld* WorldForAllLineWorldSectorIntersections(RpWorld* world, RwLine* 
             else
             {
                 // The line crosses both planes.
-                RwV3d vSplitRight;
                 RwV3d vSplitLeft;
+                RwV3d vSplitRight;
 
                 LINE_SPLIT(vSplitRight, line, grad, plane->type, plane->rightValue);
                 LINE_SPLIT(vSplitLeft, line, grad, plane->type, plane->leftValue);
@@ -230,18 +247,18 @@ static RpWorld* WorldForAllLineWorldSectorIntersections(RpWorld* world, RwLine* 
                 if (lStart.nInt < 0)
                 {
                     nStack++;
+                    sectorStack[nStack] = plane->rightSubTree;
                     lineStack[nStack].start = vSplitRight;
                     lineStack[nStack].end = line.end;
-                    sectorStack[nStack] = plane->rightSubTree;
                     sector = plane->leftSubTree;
                     line.end = vSplitLeft;
                 }
                 else
                 {
                     nStack++;
+                    sectorStack[nStack] = plane->leftSubTree;
                     lineStack[nStack].start = vSplitLeft;
                     lineStack[nStack].end = line.end;
-                    sectorStack[nStack] = plane->leftSubTree;
                     sector = plane->rightSubTree;
                     line.end = vSplitRight;
                 }
@@ -263,12 +280,14 @@ static RpWorldSector* OldWorldSectorForAllLinePolyIntersections(RpWorldSector* w
     {
         CallBackParam* cbParam = isData->cbParam;
         RwV3d* vertices = worldSector->vertices;
-        S32 cut = 1;
-        S32 nStack = 0;
+        S32 nStack;
+        S32 cut;
         S32 cutStack[COLLSECTOR_STACK_SIZE];
         RwLine line;
         RwLine lineStack[COLLSECTOR_STACK_SIZE];
 
+        cut = 1;
+        nStack = 0;
         line = isData->clippedLine;
 
         while (nStack >= 0)
@@ -311,8 +330,8 @@ static RpWorldSector* OldWorldSectorForAllLinePolyIntersections(RpWorldSector* w
             {
                 polyOffset = sector->start;
                 numPolygons = sector->cType;
-                line = lineStack[nStack];
                 cut = cutStack[nStack];
+                line = lineStack[nStack];
                 nStack--;
             }
 
@@ -361,8 +380,8 @@ static RpWorldSector* OldWorldSectorForAllLinePolyIntersections(RpWorldSector* w
 static S32 OldLeafNodeForAllBoxPolyIntersections(S32 numPolygons, S32 polyOffset, void* data)
 {
     PolyTestParam* isData = (PolyTestParam*)data;
-    RpWorldSector* worldSector = isData->worldSector;
     CallBackParam* cbParam = isData->cbParam;
+    RpWorldSector* worldSector = isData->worldSector;
     RwV3d* vertices = worldSector->vertices;
     RpPolygon* poly = &worldSector->polygons[polyOffset];
 
@@ -401,9 +420,9 @@ static S32 OldLeafNodeForAllBoxPolyIntersections(S32 numPolygons, S32 polyOffset
 static S32 OldLeafNodeForAllSpherePolyIntersections(S32 numPolygons, S32 polyOffset, void* data)
 {
     PolyTestParam* isData = (PolyTestParam*)data;
-    RpWorldSector* worldSector = isData->worldSector;
     TestSphere* testSphere = (TestSphere*)isData->leafTestData;
     CallBackParam* cbParam = isData->cbParam;
+    RpWorldSector* worldSector = isData->worldSector;
     RwV3d* vertices = worldSector->vertices;
     RpPolygon* poly = &worldSector->polygons[polyOffset];
 
@@ -443,8 +462,8 @@ static S32 OldLeafNodeForAllSpherePolyIntersections(S32 numPolygons, S32 polyOff
 static S32 LeafNodeForAllLinePolyIntersections(S32 numPolygons, S32 polyOffset, void* data)
 {
     PolyLineTestParam* isData = (PolyLineTestParam*)data;
-    RpWorldSector* worldSector = isData->worldSector;
     CallBackParam* cbParam = isData->cbParam;
+    RpWorldSector* worldSector = isData->worldSector;
     RwV3d* vertices = worldSector->vertices;
     RpPolygon* polygons = worldSector->polygons;
     U16* polyIndex =
@@ -490,9 +509,9 @@ static S32 LeafNodeForAllLinePolyIntersections(S32 numPolygons, S32 polyOffset, 
 static S32 LeafNodeForAllSpherePolyIntersections(S32 numPolygons, S32 polyOffset, void* data)
 {
     PolyTestParam* isData = (PolyTestParam*)data;
-    RpWorldSector* worldSector = isData->worldSector;
     CallBackParam* cbParam = isData->cbParam;
     TestSphere* testSphere = (TestSphere*)isData->leafTestData;
+    RpWorldSector* worldSector = isData->worldSector;
     RwV3d* vertices = worldSector->vertices;
     RpPolygon* polygons = worldSector->polygons;
     U16* polyIndex =
@@ -535,8 +554,8 @@ static S32 LeafNodeForAllSpherePolyIntersections(S32 numPolygons, S32 polyOffset
 static S32 LeafNodeForAllBoxPolyIntersections(S32 numPolygons, S32 polyOffset, void* data)
 {
     PolyTestParam* isData = (PolyTestParam*)data;
-    RpWorldSector* worldSector = isData->worldSector;
     CallBackParam* cbParam = isData->cbParam;
+    RpWorldSector* worldSector = isData->worldSector;
     RwV3d* vertices = worldSector->vertices;
     RpPolygon* polygons = worldSector->polygons;
     U16* polyIndex =
@@ -604,14 +623,16 @@ static RpWorldSector* WorldSectorForAllLinePolyIntersections(RpWorldSector* worl
 static inline RpWorldSector* OldWorldSectorForAllBoxedPrimitivePolyIntersections(
     RpWorldSector* worldSector, PolyTestParam* isData)
 {
-    RpCollSector* collSector = worldSector->colSectorRoot;
-
-    if (collSector)
+    if (worldSector->colSectorRoot)
     {
+        RpCollSector* collSector = worldSector->colSectorRoot;
         RwV3d* vertices = worldSector->vertices;
-        S32 cut = 1;
-        S32 nStack = 0;
+        S32 nStack;
+        S32 cut;
         S32 cutStack[COLLSECTOR_STACK_SIZE];
+
+        cut = 1;
+        nStack = 0;
 
         while (nStack >= 0)
         {
@@ -732,6 +753,8 @@ static inline RpWorld* WorldForAllBoxWorldSectorIntersections(RpWorld* world, Rw
     return world;
 }
 
+// Calls back for every world triangle the intersection touches: a line walks the sectors along
+// itself, a sphere or box walks the sectors its bounding box reaches.
 RpWorld* RpCollisionWorldForAllIntersections(RpWorld* world, RpIntersection* intersection,
                                              RpIntersectionCallBackWorldTriangle callBack,
                                              void* data)
@@ -762,15 +785,15 @@ RpWorld* RpCollisionWorldForAllIntersections(RpWorld* world, RpIntersection* int
         RwV3dSubMacro(&isData.delta, &intersection->t.line.end, &intersection->t.line.start);
         isData.cbParam = &cbParam;
 
-        recip = (isData.delta.x != 0.0f) ? 1.0f / isData.delta.x : 0.0f;
+        recip = WorldSafeDivide(1.0f, isData.delta.x);
         isData.grad.dydx = isData.delta.y * recip;
         isData.grad.dzdx = isData.delta.z * recip;
 
-        recip = (isData.delta.y != 0.0f) ? 1.0f / isData.delta.y : 0.0f;
+        recip = WorldSafeDivide(1.0f, isData.delta.y);
         isData.grad.dxdy = isData.delta.x * recip;
         isData.grad.dzdy = isData.delta.z * recip;
 
-        recip = (isData.delta.z != 0.0f) ? 1.0f / isData.delta.z : 0.0f;
+        recip = WorldSafeDivide(1.0f, isData.delta.z);
         isData.grad.dxdz = isData.delta.x * recip;
         isData.grad.dydz = isData.delta.y * recip;
 
@@ -786,18 +809,18 @@ RpWorld* RpCollisionWorldForAllIntersections(RpWorld* world, RpIntersection* int
 
         isData.bbox.sup = intersection->t.sphere.center;
         isData.bbox.inf = intersection->t.sphere.center;
-        testSphere.sphere = &intersection->t.sphere;
-        isData.leafTest = LeafNodeForAllSpherePolyIntersections;
-        isData.v303leafTest = OldLeafNodeForAllSpherePolyIntersections;
-        isData.leafTestData = &testSphere;
-        isData.cbParam = &cbParam;
-        testSphere.recipRadius = 1.0f / intersection->t.sphere.radius;
         isData.bbox.inf.x -= intersection->t.sphere.radius;
         isData.bbox.inf.y -= intersection->t.sphere.radius;
         isData.bbox.inf.z -= intersection->t.sphere.radius;
         isData.bbox.sup.x += intersection->t.sphere.radius;
         isData.bbox.sup.y += intersection->t.sphere.radius;
         isData.bbox.sup.z += intersection->t.sphere.radius;
+        testSphere.recipRadius = 1.0f / intersection->t.sphere.radius;
+        testSphere.sphere = &intersection->t.sphere;
+        isData.leafTest = LeafNodeForAllSpherePolyIntersections;
+        isData.v303leafTest = OldLeafNodeForAllSpherePolyIntersections;
+        isData.leafTestData = &testSphere;
+        isData.cbParam = &cbParam;
 
         WorldForAllBoxWorldSectorIntersections(world, &isData.bbox,
                                                WorldSectorForAllBoxedPrimitivePolyIntersections,
@@ -827,7 +850,7 @@ RpWorld* RpCollisionWorldForAllIntersections(RpWorld* world, RpIntersection* int
 
         sphere = *RpAtomicGetWorldBoundingSphere(atomic);
         isData.bbox.sup = sphere.center;
-        isData.bbox.inf = sphere.center;
+        isData.bbox.inf = isData.bbox.sup;
         testSphere.sphere = &sphere;
         testSphere.recipRadius = 1.0f / sphere.radius;
         isData.bbox.inf.x -= sphere.radius;

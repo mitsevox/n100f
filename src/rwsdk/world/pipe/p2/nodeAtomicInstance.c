@@ -4,9 +4,9 @@
 // atomic is between two) and its meshes into the packet's clusters. The GameCube build uses its
 // own all-in-one node instead; this one stays linked from the shared pipeline code.
 
-// fn_80154994, fn_80154E8C and fn_801551A8 are the node's helpers (the June 2001 prototype names
-// instanceVertPos and instanceMeshes among them); which label is which is not established, so they
-// keep their labels.
+// The helpers instanceVertPos, instanceVerts and instanceMeshes take their names from the PS2
+// January 2001 prototype symbol table, which lists three local functions of those names, in this
+// order, before AtomicInstanceNode.
 
 // The per-mesh record the instance node builds for each mesh: its indices, the vertices they use
 // and the mesh it came from (project-own names).
@@ -24,14 +24,31 @@ struct AtomicInstanceMesh
 
 #define OBJVERTEXNEXT(_vert, _stride) ((RxObjSpace3DVertex*)((U8*)(_vert) + (_stride)))
 
+// Writes the point t of the way from a to b (project-own name).
+static void BlendV3d(RwV3d* out, const RwV3d* a, const RwV3d* b, F32 t)
+{
+    F32 x = b->x - a->x;
+    F32 y = b->y - a->y;
+    F32 z = b->z - a->z;
+    x *= t;
+    y *= t;
+    z *= t;
+    x += a->x;
+    y += a->y;
+    z += a->z;
+    out->x = x;
+    out->y = y;
+    out->z = z;
+}
+
 // Writes each vertex's position and normal (zero without normals) from the atomic's current
 // morph target, or blended between its start and end targets at the interpolator's position.
-static void fn_80154994(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometry* geometry,
-                        S32 stride)
+static void instanceVertPos(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometry* geometry,
+                            S32 stride)
 {
     static const RwV3d zeroNormal = { 0.0f, 0.0f, 0.0f };
-    S16 start = atomic->interpolator.startMorphTarget;
-    S16 end = atomic->interpolator.endMorphTarget;
+    S32 start = atomic->interpolator.startMorphTarget;
+    S32 end = atomic->interpolator.endMorphTarget;
     S32 numVerts = geometry->numVertices;
 
     if (start >= geometry->numMorphTargets || end >= geometry->numMorphTargets)
@@ -88,17 +105,25 @@ static void fn_80154994(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometr
         {
             const RwV3d* startNormal = startTarget->normals;
             const RwV3d* endNormal = endTarget->normals;
+            F32 nx, ny, nz;
 
             while (numVerts--)
             {
-                objVert->x = (endPos->x - startPos->x) * scale + startPos->x;
-                objVert->y = (endPos->y - startPos->y) * scale + startPos->y;
-                objVert->z = (endPos->z - startPos->z) * scale + startPos->z;
+                BlendV3d((RwV3d*)&objVert->x, startPos, endPos, scale);
                 startPos++;
                 endPos++;
-                objVert->nx = (endNormal->x - startNormal->x) * scale + startNormal->x;
-                objVert->ny = (endNormal->y - startNormal->y) * scale + startNormal->y;
-                objVert->nz = (endNormal->z - startNormal->z) * scale + startNormal->z;
+                nx = endNormal->x - startNormal->x;
+                ny = endNormal->y - startNormal->y;
+                nz = endNormal->z - startNormal->z;
+                nx *= scale;
+                ny *= scale;
+                nz *= scale;
+                nx += startNormal->x;
+                ny += startNormal->y;
+                nz += startNormal->z;
+                objVert->nx = nx;
+                objVert->ny = ny;
+                objVert->nz = nz;
                 startNormal++;
                 endNormal++;
                 objVert = OBJVERTEXNEXT(objVert, stride);
@@ -108,9 +133,7 @@ static void fn_80154994(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometr
         {
             while (numVerts--)
             {
-                objVert->x = (endPos->x - startPos->x) * scale + startPos->x;
-                objVert->y = (endPos->y - startPos->y) * scale + startPos->y;
-                objVert->z = (endPos->z - startPos->z) * scale + startPos->z;
+                BlendV3d((RwV3d*)&objVert->x, startPos, endPos, scale);
                 startPos++;
                 endPos++;
                 objVert->nx = zeroNormal.x;
@@ -124,17 +147,23 @@ static void fn_80154994(RxObjSpace3DVertex* objVert, RpAtomic* atomic, RpGeometr
 
 // Writes each vertex's texture coordinates (when textured) and prelit color (opaque black when not
 // prelit), then its position and normal.
-static void fn_80154E8C(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeometry* geometry,
-                        S32 stride)
+static void instanceVerts(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeometry* geometry,
+                          S32 stride)
 {
     static const RwRGBA defaultColor = { 0, 0, 0, 255 };
-    U32 flags = geometry->flags;
+    RxObjSpace3DVertex* objVert;
+    U32 flags;
+    const RwTexCoords* texCoord;
+    U32 numVerts;
+    const RwRGBA* color;
+
+    flags = geometry->flags;
 
     if (flags & rpGEOMETRYTEXTURED)
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RwTexCoords* texCoord = geometry->texCoords[0];
-        S32 numVerts = geometry->numVertices;
+        objVert = objVerts;
+        texCoord = geometry->texCoords[0];
+        numVerts = geometry->numVertices;
 
         while (numVerts--)
         {
@@ -147,9 +176,9 @@ static void fn_80154E8C(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeomet
 
     if (flags & rpGEOMETRYPRELIT)
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RwRGBA* color = geometry->preLitLum;
-        S32 numVerts = geometry->numVertices;
+        objVert = objVerts;
+        color = geometry->preLitLum;
+        numVerts = geometry->numVertices;
 
         while (numVerts--)
         {
@@ -163,8 +192,8 @@ static void fn_80154E8C(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeomet
     }
     else
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        S32 numVerts = geometry->numVertices;
+        objVert = objVerts;
+        numVerts = geometry->numVertices;
 
         while (numVerts--)
         {
@@ -176,31 +205,38 @@ static void fn_80154E8C(RxObjSpace3DVertex* objVerts, RpAtomic* atomic, RpGeomet
         }
     }
 
-    fn_80154994(objVerts, atomic, geometry, stride);
+    instanceVertPos(objVerts, atomic, geometry, stride);
 }
 
 // Builds a record per mesh: its indices copied (rebased to the lowest vertex the mesh uses, with
 // strips unrolled to triangles and degenerate triangles dropped) or generated for unindexed
 // meshes, and the range of vertices they use.
-static void fn_801551A8(AtomicInstanceMesh* instMesh, RpMeshHeader* meshHeader, U16* indices,
-                        RxObjSpace3DVertex* verts, S32 stride)
+static void instanceMeshes(AtomicInstanceMesh* instMesh, RpMeshHeader* meshHeader, U16* indices,
+                           RxObjSpace3DVertex* verts, S32 stride)
 {
-    RpMesh* mesh = (RpMesh*)(meshHeader + 1);
-    U16 numMeshes = meshHeader->numMeshes;
-    U32 vertIndex = 0;
-    U32 triStrip = meshHeader->flags & rpMESHHEADERTRISTRIP;
+    U32 numIndices;
+    U32 numMeshes;
+    RpMesh* mesh;
+    S32 triStrip;
+    U32 vertIndex;
+    U16* meshIndices;
+    U32 count;
+
+    mesh = (RpMesh*)(meshHeader + 1);
+    numMeshes = meshHeader->numMeshes;
+    vertIndex = 0;
+    triStrip = meshHeader->flags & rpMESHHEADERTRISTRIP;
 
     while (numMeshes--)
     {
-        U16* meshIndices = mesh->indices;
-        U32 numIndices;
+        meshIndices = mesh->indices;
 
         instMesh->indices = indices;
         instMesh->stride = stride;
         instMesh->material = mesh->material;
         instMesh->mesh = mesh;
 
-        numIndices = mesh->numIndices;
+        count = numIndices = mesh->numIndices;
 
         if (meshHeader->flags & rpMESHHEADERUNINDEXED)
         {
@@ -209,12 +245,11 @@ static void fn_801551A8(AtomicInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
 
             if (triStrip)
             {
-                U32 numTris = numIndices - 2;
                 U16 i;
 
-                instMesh->numIndices = numTris * 3;
+                instMesh->numIndices = (numIndices - 2) * 3;
 
-                for (i = 0; i < numTris; i++)
+                for (i = 0; i < numIndices - 2; i++)
                 {
                     U32 odd = i & 1;
 
@@ -232,29 +267,25 @@ static void fn_801551A8(AtomicInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
                 {
                     U16 i;
 
-                    for (i = 0; i < numIndices; i++)
+                    for (i = 0; i < count; i++)
                     {
                         *indices++ = i;
                     }
                 }
             }
 
-            vertIndex += numIndices;
+            vertIndex += count;
         }
         else
         {
             U32 maxIndex = 0;
-            U16* index = meshIndices + numIndices;
-            U32 count = numIndices;
 
             vertIndex = 0xFFFF;
 
             while (count--)
             {
-                U32 value = *--index;
-
-                vertIndex = (vertIndex < value) ? vertIndex : value;
-                maxIndex = (maxIndex > value) ? maxIndex : value;
+                vertIndex = (vertIndex < meshIndices[count]) ? vertIndex : meshIndices[count];
+                maxIndex = (maxIndex > meshIndices[count]) ? maxIndex : meshIndices[count];
             }
 
             instMesh->verts = (RxObjSpace3DVertex*)((U8*)verts + vertIndex * stride);
@@ -288,20 +319,17 @@ static void fn_801551A8(AtomicInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
             }
             else
             {
-                U32 numTris = numIndices / 3;
+                U32 i;
 
                 instMesh->numIndices = numIndices;
 
-                if (numIndices > 2)
+                for (i = 2; i < numIndices; i += 3)
                 {
-                    while (numTris--)
-                    {
-                        indices[0] = meshIndices[0] - vertIndex;
-                        indices[1] = meshIndices[1] - vertIndex;
-                        indices[2] = meshIndices[2] - vertIndex;
-                        indices += 3;
-                        meshIndices += 3;
-                    }
+                    indices[0] = meshIndices[0] - vertIndex;
+                    indices[1] = meshIndices[1] - vertIndex;
+                    indices[2] = meshIndices[2] - vertIndex;
+                    indices += 3;
+                    meshIndices += 3;
                 }
             }
         }
@@ -326,21 +354,37 @@ struct AtomicInstanceHeader
 // with its vertices, indices, mesh state and render state.
 static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
-    RpAtomic* atomic = (RpAtomic*)params->dataParam;
-    RpGeometry* geometry = atomic->geometry;
-    S32 numVerts = geometry->numVertices;
-    RpMeshHeader* meshHeader;
-    U16 numMeshes;
-    U32 flags;
+    S32 vertSize;
+    RpGeometry* geometry;
+    RwResEntry** ownerRef;
     U32 textured;
+    RpAtomic* atomic;
     RwResEntry* repEntry;
     void* owner;
-    RwResEntry** ownerRef;
-    S32 numTris;
     AtomicInstanceHeader* header;
     RxObjSpace3DVertex* verts;
+    RpMeshHeader* meshHeader;
     U16* indices;
+    U32 numVerts;
+    U32 numMeshes;
     AtomicInstanceMesh* instMesh;
+    U32 flags;
+    S32 numTris;
+    S32 stride;
+    U32 dirty;
+    RxPacket* packet;
+    RxCluster* objVertsCl;
+    RxCluster* indicesCl;
+    RxCluster* meshStateCl;
+    RxCluster* renderStateCl;
+    RxMeshStateVector* meshState;
+    RxRenderStateVector* renderState;
+    RpMaterial* material;
+    RwTexture* texture;
+
+    atomic = (RpAtomic*)params->dataParam;
+    geometry = atomic->geometry;
+    numVerts = geometry->numVertices;
 
     if (!numVerts)
     {
@@ -370,7 +414,19 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         ownerRef = &geometry->repEntry;
     }
 
+    stride = sizeof(RxObjSpace3DVertex);
+
+    if (flags & rpGEOMETRYNORMALS)
+    {
+        stride = sizeof(RxObjSpace3DVertex);
+    }
+
     textured = flags & rpGEOMETRYTEXTURED;
+
+    if (textured)
+    {
+        stride = sizeof(RxObjSpace3DVertex);
+    }
 
     if (meshHeader->flags & rpMESHHEADERTRISTRIP)
     {
@@ -385,7 +441,7 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
     {
         header = (AtomicInstanceHeader*)(repEntry + 1);
         verts = (RxObjSpace3DVertex*)&header->meshes[numMeshes];
-        indices = (U16*)(verts + numVerts);
+        indices = (U16*)((U8*)verts + numVerts * stride);
 
         if (header->serialNum != meshHeader->serialNum)
         {
@@ -396,7 +452,7 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 
     if (!repEntry)
     {
-        S32 vertSize = numVerts * sizeof(RxObjSpace3DVertex);
+        vertSize = numVerts * stride;
 
         repEntry = RwResourcesAllocateResEntry(owner, ownerRef,
                                                sizeof(AtomicInstanceHeader) +
@@ -407,19 +463,17 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         header->serialNum = meshHeader->serialNum;
         verts = (RxObjSpace3DVertex*)&header->meshes[numMeshes];
 
-        fn_80154E8C(verts, atomic, geometry, sizeof(RxObjSpace3DVertex));
-        fn_801551A8(header->meshes, meshHeader, (U16*)((U8*)verts + vertSize), verts,
-                    sizeof(RxObjSpace3DVertex));
+        instanceVerts(verts, atomic, geometry, stride);
+        instanceMeshes(header->meshes, meshHeader, (U16*)((U8*)verts + vertSize), verts,
+                       stride);
 
         geometry->lockedSinceLastInst = 0;
     }
     else
     {
-        U32 dirty;
+        dirty = geometry->lockedSinceLastInst;
 
         RwResourcesUseResEntry(repEntry);
-
-        dirty = geometry->lockedSinceLastInst;
 
         if (atomic->interpolator.flags & rpINTERPOLATORDIRTYINSTANCE)
         {
@@ -434,11 +488,11 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         case GEOMETRY_LOCKVERTICES:
         case GEOMETRY_LOCKNORMALS:
         case GEOMETRY_LOCKVERTICES | GEOMETRY_LOCKNORMALS:
-            fn_80154994(verts, atomic, geometry, sizeof(RxObjSpace3DVertex));
+            instanceVertPos(verts, atomic, geometry, stride);
             break;
         default:
-            fn_80154E8C(verts, atomic, geometry, sizeof(RxObjSpace3DVertex));
-            fn_801551A8(header->meshes, meshHeader, indices, verts, sizeof(RxObjSpace3DVertex));
+            instanceVerts(verts, atomic, geometry, stride);
+            instanceMeshes(header->meshes, meshHeader, indices, verts, stride);
             break;
         }
 
@@ -451,14 +505,11 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
     {
         if (instMesh->numVerts && instMesh->numIndices)
         {
-            RxPacket* packet = RxPacketCreate(self);
-            RxCluster* objVertsCl = RxClusterLockWrite(packet, 0, self);
-            RxCluster* indicesCl = RxClusterLockWrite(packet, 1, self);
-            RxCluster* meshStateCl = RxClusterLockWrite(packet, 2, self);
-            RxCluster* renderStateCl = RxClusterLockWrite(packet, 3, self);
-            RxMeshStateVector* meshState;
-            RxRenderStateVector* renderState;
-            RpMaterial* material;
+            packet = RxPacketCreate(self);
+            objVertsCl = RxClusterLockWrite(packet, 0, self);
+            indicesCl = RxClusterLockWrite(packet, 1, self);
+            meshStateCl = RxClusterLockWrite(packet, 2, self);
+            renderStateCl = RxClusterLockWrite(packet, 3, self);
 
             meshStateCl = RxClusterInitializeData(meshStateCl, 1, sizeof(RxMeshStateVector));
             renderStateCl = RxClusterInitializeData(renderStateCl, 1, sizeof(RxRenderStateVector));
@@ -496,7 +547,7 @@ static S32 AtomicInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 
             if (textured)
             {
-                RwTexture* texture = meshState->Texture;
+                texture = meshState->Texture;
 
                 if (texture)
                 {

@@ -14,11 +14,11 @@ static S32 TransformNodeParallel(RxPipelineNode* self, RwCamera* camera)
     S32 textured;
     RxMeshStateVector* meshData;
     RwRGBA color;
-    U16 objStride;
-    U16 camStride;
-    U16 devStride;
     S32 clipFlagsOr;
     S32 clipFlagsAnd;
+    U32 objStride;
+    U32 camStride;
+    U32 devStride;
     U32 i;
 
     raster = camera->frameBuffer;
@@ -31,7 +31,7 @@ static S32 TransformNodeParallel(RxPipelineNode* self, RwCamera* camera)
     gClipInfo.zScale = camera->zScale;
     gClipInfo.zShift = camera->zShift;
 
-    packet = RxPacketFetch(self);
+    packet = (RxPacket*)RxPacketFetch(self);
 
     colored = FALSE;
     prelit = FALSE;
@@ -252,11 +252,11 @@ static S32 TransformNodePerspective(RxPipelineNode* self, RwCamera* camera)
     S32 textured;
     RxMeshStateVector* meshData;
     RwRGBA color;
-    U16 objStride;
-    U16 camStride;
-    U16 devStride;
     S32 clipFlagsOr;
     S32 clipFlagsAnd;
+    U32 objStride;
+    U32 camStride;
+    U32 devStride;
     U32 i;
 
     raster = camera->frameBuffer;
@@ -269,7 +269,7 @@ static S32 TransformNodePerspective(RxPipelineNode* self, RwCamera* camera)
     gClipInfo.zScale = camera->zScale;
     gClipInfo.zShift = camera->zShift;
 
-    packet = RxPacketFetch(self);
+    packet = (RxPacket*)RxPacketFetch(self);
 
     colored = FALSE;
     prelit = FALSE;
