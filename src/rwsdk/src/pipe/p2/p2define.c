@@ -607,7 +607,7 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
             }
 
             size += RXPIPELINEGLOBAL(maxNodesPerPipeline) * sizeof(RxPipelineNodeTopSortData);
-            size += pipeline->numNodes * sizeof(rxReq) + pipeline->numNodes * numUnique * sizeof(rxReqEntry)
+            size += pipeline->numNodes * sizeof(rxReq) + numUnique * pipeline->numNodes * sizeof(rxReqEntry)
                     + pipeline->numNodes * numUnique * sizeof(rxScope);
 
             // The data the unlocked pipeline keeps: its clusters, its input requirements, each
@@ -702,7 +702,9 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
                 return NULL;
             }
 
-            if (!PipelineGrowSuperBlock(pipeline, gMemoryLimits.mite - (U8*)pipeline->superBlock))
+            size = gMemoryLimits.mite - (U8*)pipeline->superBlock;
+
+            if (!PipelineGrowSuperBlock(pipeline, size))
             {
                 goto fail;
             }

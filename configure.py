@@ -955,7 +955,7 @@ config.libs: List[Dict[str, Any]] = [
     RWLib(
         "rpmatfx",
         [
-            Object(NonMatching, "rwsdk/plugin/matfx/rpmatfx.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/matfx/rpmatfx.c"),
             Object(NonMatching, "rwsdk/plugin/matfx/gcn/effectPipesGcn.c"),
             Object(NonMatching, "rwsdk/plugin/matfx/gcn/multiTexGcnData.c"),
             Object(NonMatching, "rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c"),
@@ -1061,8 +1061,8 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/driver/common/palquant.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dl2drend.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dlconvrt.c"),
-            Object(NonMatching, "rwsdk/driver/gcn/dldevice.c"),
-            Object(NonMatching, "rwsdk/driver/gcn/dlraster.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dldevice.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dlraster.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dlrendst.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dlsprite.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dltexdic.c"),
