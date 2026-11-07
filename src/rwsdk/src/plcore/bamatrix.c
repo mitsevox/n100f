@@ -32,8 +32,6 @@ struct MatrixModuleData
 
 static RwModuleInfo matrixModule;
 
-static const RwMatrixTolerance defaultTolerance = { 0.01f, 0.01f, 0.01f };
-
 static void MatrixMultiply(RwMatrix* dstMatrix, const RwMatrix* matA, const RwMatrix* matB)
 {
     dstMatrix->right.x = matA->right.x * matB->right.x + matA->right.y * matB->up.x +
@@ -61,10 +59,10 @@ static void MatrixMultiply(RwMatrix* dstMatrix, const RwMatrix* matA, const RwMa
 
 static RwMatrix* MatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMatrix)
 {
-    RwV3d pos;
-    RwV3d at;
-    RwV3d up;
     RwV3d right;
+    RwV3d up;
+    RwV3d at;
+    RwV3d pos;
     F32 recipRight;
     F32 recipUp;
     F32 recipAt;
@@ -92,15 +90,9 @@ static RwMatrix* MatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMa
             if (recipAt > 0.0f)
             {
                 // Keep the pair of axes nearest to perpendicular and rebuild the third.
-                F32 upAt = RwV3dDotProductMacro(&up, &at);
-                F32 atRight;
-                F32 rightUp;
-
-                upAt = MATRIX_ABS(upAt);
-                atRight = RwV3dDotProductMacro(&at, &right);
-                atRight = MATRIX_ABS(atRight);
-                rightUp = RwV3dDotProductMacro(&right, &up);
-                rightUp = MATRIX_ABS(rightUp);
+                F32 upAt = MATRIX_ABS(RwV3dDotProductMacro(&up, &at));
+                F32 atRight = MATRIX_ABS(RwV3dDotProductMacro(&at, &right));
+                F32 rightUp = MATRIX_ABS(RwV3dDotProductMacro(&right, &up));
 
                 if (upAt < atRight)
                 {
@@ -182,9 +174,11 @@ S32 _rwMatrixSetMultFn(MatrixMultiplyFunc multiplyFunc)
 
 F32 _rwMatrixDeterminant(const RwMatrix* matrix)
 {
-    return matrix->right.x * (matrix->up.y * matrix->at.z - matrix->up.z * matrix->at.y) +
-           matrix->right.y * (matrix->up.z * matrix->at.x - matrix->up.x * matrix->at.z) +
-           matrix->right.z * (matrix->up.x * matrix->at.y - matrix->up.y * matrix->at.x);
+    RwV3d cross;
+
+    RwV3dCrossProductMacro(&cross, &matrix->up, &matrix->at);
+
+    return RwV3dDotProductMacro(&cross, &matrix->right);
 }
 
 F32 _rwMatrixOrthogonalError(const RwMatrix* matrix)
@@ -205,6 +199,31 @@ F32 _rwMatrixNormalError(const RwMatrix* matrix)
     return right * right + up * up + at * at;
 }
 
+F32 _rwMatrixIdentityError(const RwMatrix* matrix)
+{
+    RwV3d vTmp;
+    F32 result;
+
+    vTmp.x = matrix->right.x - 1.0f;
+    vTmp.y = matrix->right.y;
+    vTmp.z = matrix->right.z;
+    result = RwV3dDotProductMacro(&vTmp, &vTmp);
+
+    vTmp.x = matrix->up.x;
+    vTmp.y = matrix->up.y - 1.0f;
+    vTmp.z = matrix->up.z;
+    result += RwV3dDotProductMacro(&vTmp, &vTmp);
+
+    vTmp.x = matrix->at.x;
+    vTmp.y = matrix->at.y;
+    vTmp.z = matrix->at.z - 1.0f;
+    result += RwV3dDotProductMacro(&vTmp, &vTmp);
+
+    result += RwV3dDotProductMacro(&matrix->pos, &matrix->pos);
+
+    return result;
+}
+
 void* _rwMatrixClose(void* instance, S32 offset, S32 size)
 {
     if (MATRIX_DATA(freeList))
@@ -218,7 +237,8 @@ void* _rwMatrixClose(void* instance, S32 offset, S32 size)
     return instance;
 }
 
-
+// Opens the matrix module: creates the matrix free list and installs the default tolerances and
+// multiply function.
 void* _rwMatrixOpen(void* instance, S32 offset, S32 size)
 {
     matrixModule.globalsOffset = offset;
@@ -230,10 +250,9 @@ void* _rwMatrixOpen(void* instance, S32 offset, S32 size)
     }
     else
     {
-        RwMatrixTolerance tolerance;
+        const RwMatrixTolerance tolerance = { 0.01f, 0.01f, 0.01f };
 
         MATRIX_DATA(optimizations) = rwMATRIXINTERNALIDENTITY;
-        tolerance = defaultTolerance;
         MATRIX_DATA(multiplyFunc) = MatrixMultiply;
         RwEngineSetMatrixTolerances(&tolerance);
         matrixModule.numInstances++;
@@ -249,11 +268,14 @@ S32 RwEngineSetMatrixTolerances(const RwMatrixTolerance* const tolerance)
     return 1;
 }
 
+// Sets the matrix's normal, orthogonal and identity flags by how far it is from each, under the
+// given tolerances or the defaults. The identity test uses the orthogonal tolerance, not the
+// identity one.
 RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
 {
+    S32 identity;
     S32 normal;
     S32 orthogonal;
-    S32 identity;
     U32 flags;
 
     if (!tolerance)
@@ -263,24 +285,7 @@ RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
 
     normal = tolerance->Normal >= _rwMatrixNormalError(matrix);
     orthogonal = tolerance->Orthogonal >= _rwMatrixOrthogonalError(matrix);
-    identity = 0;
-
-    if (normal && orthogonal)
-    {
-        F32 rightX = matrix->right.x - 1.0f;
-        F32 upY = matrix->up.y - 1.0f;
-        F32 atZ = matrix->at.z - 1.0f;
-        F32 error = rightX * rightX + matrix->right.y * matrix->right.y +
-                    matrix->right.z * matrix->right.z + matrix->up.x * matrix->up.x +
-                    upY * upY + matrix->up.z * matrix->up.z + matrix->at.x * matrix->at.x +
-                    matrix->at.y * matrix->at.y + atZ * atZ + matrix->pos.x * matrix->pos.x +
-                    matrix->pos.y * matrix->pos.y + matrix->pos.z * matrix->pos.z;
-
-        if (tolerance->Identity >= error)
-        {
-            identity = 1;
-        }
-    }
+    identity = normal && orthogonal && tolerance->Orthogonal >= _rwMatrixIdentityError(matrix);
 
     flags = matrix->flags;
     flags = normal ? (flags | rwMATRIXTYPENORMAL) : (flags & ~rwMATRIXTYPENORMAL);
@@ -327,55 +332,63 @@ RwMatrix* RwMatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMatrix)
     return MatrixOrthoNormalize(dstMatrix, srcMatrix);
 }
 
+// Builds the rotation about a unit axis from one minus the cosine and the sine of the angle, then
+// replaces the matrix with it or multiplies it in before or after, as the combine operation says.
 RwMatrix* RwMatrixRotateOneMinusCosineSine(RwMatrix* matrix, const RwV3d* unitAxis,
                                            F32 oneMinusCosine, F32 sine,
                                            RwOpCombineType combineOp)
 {
     RwMatrix rotate;
     RwMatrix result;
-    F32 x = unitAxis->x;
-    F32 y = unitAxis->y;
-    F32 z = unitAxis->z;
-    F32 xy;
-    F32 yz;
-    F32 zx;
-    F32 xSine;
-    F32 ySine;
-    F32 zSine;
+    RwV3d leading;
+    RwV3d crossed;
+    RwV3d scaled;
 
-    rotate.flags = rwMATRIXTYPEORTHONORMAL;
+    leading.x = 1.0f - unitAxis->x * unitAxis->x;
+    leading.y = 1.0f - unitAxis->y * unitAxis->y;
+    leading.z = 1.0f - unitAxis->z * unitAxis->z;
+    RwV3dScaleMacro(&leading, &leading, oneMinusCosine);
+
+    crossed.x = unitAxis->y * unitAxis->z;
+    crossed.y = unitAxis->z * unitAxis->x;
+    crossed.z = unitAxis->x * unitAxis->y;
+    RwV3dScaleMacro(&crossed, &crossed, oneMinusCosine);
+
+    RwV3dScaleMacro(&scaled, unitAxis, sine);
+
+    rotate.right.x = 1.0f - leading.x;
+    rotate.right.y = crossed.z + scaled.z;
+    rotate.right.z = crossed.y - scaled.y;
+    rotate.up.x = crossed.z - scaled.z;
+    rotate.up.y = 1.0f - leading.y;
+    rotate.up.z = crossed.x + scaled.x;
+    rotate.at.x = crossed.y + scaled.y;
+    rotate.at.y = crossed.x - scaled.x;
+    rotate.at.z = 1.0f - leading.z;
     rotate.pos.x = 0.0f;
     rotate.pos.y = 0.0f;
     rotate.pos.z = 0.0f;
-
-    yz = y * z * oneMinusCosine;
-    xSine = x * sine;
-    rotate.right.x = 1.0f - (1.0f - x * x) * oneMinusCosine;
-    zx = z * x * oneMinusCosine;
-    ySine = y * sine;
-    rotate.up.y = 1.0f - (1.0f - y * y) * oneMinusCosine;
-    rotate.at.z = 1.0f - (1.0f - z * z) * oneMinusCosine;
-    rotate.up.z = yz + xSine;
-    xy = x * y * oneMinusCosine;
-    zSine = z * sine;
-    rotate.right.z = zx - ySine;
-    rotate.at.x = zx + ySine;
-    rotate.at.y = yz - xSine;
-    rotate.right.y = xy + zSine;
-    rotate.up.x = xy - zSine;
+    rotate.flags = rwMATRIXTYPEORTHONORMAL;
+    rotate.flags &= ~rwMATRIXINTERNALIDENTITY;
 
     switch (combineOp)
     {
     case rwCOMBINEREPLACE:
+        rotate.flags = matrix->flags;
         *matrix = rotate;
+        matrix->flags &= ~rwMATRIXINTERNALIDENTITY;
         break;
     case rwCOMBINEPRECONCAT:
         RwMatrixMultiply(&result, &rotate, matrix);
+        result.flags = matrix->flags;
         *matrix = result;
+        matrix->flags &= ~rwMATRIXINTERNALIDENTITY;
         break;
     case rwCOMBINEPOSTCONCAT:
         RwMatrixMultiply(&result, matrix, &rotate);
+        result.flags = matrix->flags;
         *matrix = result;
+        matrix->flags &= ~rwMATRIXINTERNALIDENTITY;
         break;
     default:
     {
@@ -383,11 +396,10 @@ RwMatrix* RwMatrixRotateOneMinusCosineSine(RwMatrix* matrix, const RwV3d* unitAx
         err.pluginID = 1;
         err.errorCode = _rwerror(0x80000003, "Invalid combination type");
         RwErrorSet(&err);
-        return NULL;
+        matrix = NULL;
+        break;
     }
     }
-
-    matrix->flags &= ~rwMATRIXINTERNALIDENTITY;
 
     return matrix;
 }
@@ -559,6 +571,8 @@ RwMatrix* RwMatrixTransform(RwMatrix* matrix, const RwMatrix* transform, RwOpCom
 {
     RwMatrix result;
 
+    result.flags = rwMATRIXTYPENORMAL;
+
     switch (combineOp)
     {
     case rwCOMBINEREPLACE:
@@ -567,11 +581,13 @@ RwMatrix* RwMatrixTransform(RwMatrix* matrix, const RwMatrix* transform, RwOpCom
         break;
     case rwCOMBINEPRECONCAT:
         RwMatrixMultiply(&result, transform, matrix);
+        result.flags = matrix->flags;
         *matrix = result;
         matrix->flags &= ~(rwMATRIXTYPEMASK | rwMATRIXINTERNALIDENTITY);
         break;
     case rwCOMBINEPOSTCONCAT:
         RwMatrixMultiply(&result, matrix, transform);
+        result.flags = matrix->flags;
         *matrix = result;
         matrix->flags &= ~(rwMATRIXTYPEMASK | rwMATRIXINTERNALIDENTITY);
         break;

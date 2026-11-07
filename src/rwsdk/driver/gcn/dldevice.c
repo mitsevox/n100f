@@ -18,16 +18,6 @@ struct DlFrame
     void* fifoPos;
 };
 
-// The device's video modes (NTSC, PAL, MPAL and the application's own render mode) and the two
-// errors _rwDlRenderModeSelect raises. Type and member names written for this project.
-typedef struct DlVideoModes DlVideoModes;
-struct DlVideoModes
-{
-    RwVideoMode modes[4];
-    char badPixelFormat[0x18];
-    char badTvFormat[0x14];
-};
-
 // The camera being updated and the device's open parameter. Type and member names written for
 // this project.
 typedef struct DlDeviceState DlDeviceState;
@@ -71,12 +61,14 @@ extern GXFifoObj* lbl_8025F858;
 
 // The ring's read and write positions, the token ring's write and read positions, whether the
 // FIFO breakpoint is armed, whether a frame waits for its token, whether a frame waits for the
-// retrace, whether a retrace has passed since, and which half a two-half frame is on.
-extern S32 lbl_8025F810;
-extern S32 lbl_8025F814;
+// retrace, whether a retrace has passed since, and which half a two-half frame is on. The ring
+// positions and the breakpoint flag are shared between the game thread and the breakpoint
+// interrupt, so they are volatile.
+extern volatile S32 lbl_8025F810;
+extern volatile S32 lbl_8025F814;
 extern S32 lbl_8025F818;
 extern S32 lbl_8025F81C;
-extern S32 lbl_8025F820;
+extern volatile S32 lbl_8025F820;
 extern S32 lbl_8025F824;
 extern S32 lbl_8025F828;
 extern S32 lbl_8025F82C;
@@ -103,7 +95,13 @@ extern DlDeviceState lbl_8025F864;
 extern volatile U16 lbl_8025E800;
 extern volatile U16 lbl_8025F890;
 
-extern DlVideoModes lbl_801DDF90;
+// The device's video modes: NTSC, PAL, MPAL and the application's own render mode.
+RwVideoMode lbl_801DDF90[4] = {
+    {640, 480, 24, rwVIDEOMODEEXCLUSIVE},
+    {640, 528, 24, rwVIDEOMODEEXCLUSIVE},
+    {640, 480, 24, rwVIDEOMODEEXCLUSIVE},
+    {0, 0, 0, rwVIDEOMODEEXCLUSIVE},
+};
 
 // The GX projection the camera sets.
 extern F32 lbl_801DE04C[7];
@@ -140,13 +138,13 @@ S32 _rwDlCameraEndUpdate(void* out, void* camera, S32 flags);
 S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags);
 S32 _rwDlRGBToPixel(U32* pixelOut, const RwRGBA* rgba, S32 format);
 S32 _rwDlPixelToRGB(RwRGBA* rgba, const U32* pixelIn, S32 format);
-S32 _rwDlRasterSetFromImage(RwRaster* raster, RwImage* image);
-S32 _rwDlImageGetFromRaster(RwImage* image, RwRaster* raster);
+S32 _rwDlRasterSetFromImage(void* rasterIn, void* imageIn, S32 flags);
+S32 _rwDlImageGetFromRaster(void* imageIn, void* rasterIn, S32 flags);
 S32 fn_8017A4D8(void* out, RwRaster* raster, S32 flags);
 S32 fn_8017A374(void* out, RwRaster* raster, S32 flags);
 S32 fn_801771C4(void* out, void* inOut, S32 flags);
-S32 fn_80179198(void** pixelsOut, RwRaster* raster, S32 flags);
-S32 fn_80179614(void* out, RwRaster* raster, S32 flags);
+S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags);
+S32 fn_80179614(void* out, void* rasterIn, S32 flags);
 S32 fn_801797E0(void** paletteOut, RwRaster* raster, S32 flags);
 S32 fn_8017989C(void* out, RwRaster* raster, S32 flags);
 S32 _rwDlRasterClear(void* raster, void* unused, S32 pixelValue);
@@ -156,7 +154,7 @@ S32 _rwDlRasterRenderScaled(void* raster, void* rect, S32 flags);
 S32 _rwDlRasterRenderFast(void* raster, void* rect, S32 flags);
 S32 _rwDlSetRasterContext(void* out, void* raster, S32 flags);
 S32 _rwDlRasterSubRaster(RwRaster* raster, RwRaster* parent, S32 flags);
-S32 _rwDlNativeTextureGetSize(S32* size, RwTexture* texture);
+S32 _rwDlNativeTextureGetSize(void* sizeOut, void* textureIn, S32 unused);
 S32 fn_8017C9E4(RwStream* stream, RwTexture* texture);
 S32 fn_8017CCBC(RwStream* stream, RwTexture** textureRef);
 S32 fn_80179BDC(void* out, void* inOut, S32 flags);
@@ -238,9 +236,9 @@ void _rwDlVIPreRetraceCallback(u32 retraceCount)
         }
 
         VIFlush();
-        lbl_8025F82C = 1;
         lbl_8025F81C = (lbl_8025F81C + 1) % DLDEVICE_RING;
         lbl_8025F824 = 0;
+        lbl_8025F82C = 1;
     }
 }
 
@@ -298,37 +296,32 @@ S32 _rwDlNullStandard(void* out, void* inOut, S32 flags)
 // format asked for), or else the TV format's default.
 void _rwDlRenderModeSelect(GXRenderModeObj* renderMode, S32 pixelFormat)
 {
-    DlVideoModes* modes = &lbl_801DDF90;
-    S32 format;
-
     if (renderMode != NULL)
     {
-        format = pixelFormat;
+        S32 format;
+
         lbl_8025E2C8 = *renderMode;
         _RwDlRenderMode = &lbl_8025E2C8;
         lbl_8025F804 = 0x2A;
 
-        if (lbl_8025E2C8.aa)
-        {
-            format = GX_PF_RGB565_Z16;
-        }
+        format = !_RwDlRenderMode->aa ? pixelFormat : GX_PF_RGB565_Z16;
 
         lbl_8025F7FC = format;
         lbl_8025F800 = format;
-        modes->modes[3].width = lbl_8025E2C8.fbWidth;
-        modes->modes[3].height = lbl_8025E2C8.efbHeight;
+        lbl_801DDF90[3].width = _RwDlRenderMode->fbWidth;
+        lbl_801DDF90[3].height = _RwDlRenderMode->efbHeight;
 
         switch (pixelFormat)
         {
         case GX_PF_RGB8_Z24:
         case GX_PF_RGBA6_Z24:
-            modes->modes[3].depth = 24;
+            lbl_801DDF90[3].depth = 24;
             break;
         case GX_PF_RGB565_Z16:
-            modes->modes[3].depth = 16;
+            lbl_801DDF90[3].depth = 16;
             break;
         default:
-            DLDEVICE_ERROR(2, modes->badPixelFormat);
+            DLDEVICE_ERROR(2, "Invalid pixel format");
             break;
         }
     }
@@ -337,20 +330,20 @@ void _rwDlRenderModeSelect(GXRenderModeObj* renderMode, S32 pixelFormat)
         switch (VIGetTvFormat())
         {
         case VI_NTSC:
-            lbl_8025F804 = 0;
             _RwDlRenderMode = &GXNtsc480IntDf;
+            lbl_8025F804 = 0;
             break;
         case VI_PAL:
         case VI_EURGB60:
-            lbl_8025F804 = 1;
             _RwDlRenderMode = &GXPal528IntDf;
+            lbl_8025F804 = 1;
             break;
         case VI_MPAL:
-            lbl_8025F804 = 2;
             _RwDlRenderMode = &GXMpal480IntDf;
+            lbl_8025F804 = 2;
             break;
         default:
-            DLDEVICE_ERROR(2, modes->badTvFormat);
+            DLDEVICE_ERROR(2, "Invalid TV format");
             break;
         }
     }
@@ -373,17 +366,17 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             switch (lbl_8025F804)
             {
             case 0:
-                *(RwVideoMode*)out = lbl_801DDF90.modes[0];
+                *(RwVideoMode*)out = lbl_801DDF90[0];
                 break;
             case 1:
             case 5:
-                *(RwVideoMode*)out = lbl_801DDF90.modes[1];
+                *(RwVideoMode*)out = lbl_801DDF90[1];
                 break;
             case 2:
-                *(RwVideoMode*)out = lbl_801DDF90.modes[2];
+                *(RwVideoMode*)out = lbl_801DDF90[2];
                 break;
             case 0x2A:
-                *(RwVideoMode*)out = lbl_801DDF90.modes[3];
+                *(RwVideoMode*)out = lbl_801DDF90[3];
                 break;
             }
 
@@ -417,12 +410,14 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             _rwDlRenderModeSelect(NULL, lbl_8025F7FC);
         }
 
-        frameSize = ((_RwDlRenderMode->fbWidth + 15) & 0xFFF0) * _RwDlRenderMode->xfbHeight;
-        lbl_8025F80C = RwMalloc(lbl_8025E7F4 + frameSize * 4 + 0x1F);
+        // The bytes of one external frame buffer (two bytes a pixel); the FIFO and two of them
+        // share one allocation.
+        frameSize = ((_RwDlRenderMode->fbWidth + 15) & 0xFFF0) * _RwDlRenderMode->xfbHeight * 2;
+        lbl_8025F80C = RwMalloc(lbl_8025E7F4 + frameSize * 2 + 0x1F);
         lbl_8025F854 = (void*)(((U32)lbl_8025F80C + 0x1F) & ~0x1F);
         DCInvalidateRange(lbl_8025F854, lbl_8025E7F4);
         lbl_8025F850 = (U8*)lbl_8025F854 + lbl_8025E7F4;
-        lbl_8025F84C = (U8*)lbl_8025F850 + frameSize * 2;
+        lbl_8025F84C = (U8*)lbl_8025F850 + frameSize;
         lbl_8025F844 = lbl_8025F850;
         lbl_8025F848 = lbl_8025F84C;
         lbl_8025F858 = GXInit(lbl_8025F854, lbl_8025E7F4);
@@ -443,8 +438,8 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
         return TRUE;
     case 2:
     {
-        GXRenderModeObj* renderMode = _RwDlRenderMode;
         S32 pixelFormat = lbl_8025F7FC;
+        GXRenderModeObj* renderMode = _RwDlRenderMode;
 
         VIConfigure(renderMode);
         VISetBlack(TRUE);
@@ -469,8 +464,8 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
         if (renderMode->aa && renderMode->xfbHeight == renderMode->viHeight)
         {
             GXSetDispCopyYScale(1.0f);
-            lbl_8025F808 = 1;
             lbl_8025F85C = renderMode->xfbHeight / 2;
+            lbl_8025F808 = 1;
             lbl_8025E7F0 = 1;
         }
         else
@@ -518,14 +513,14 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             {20, _rwDlRasterShowRaster},
             {2, (RwStandardFunc)_rwDlRGBToPixel},
             {3, (RwStandardFunc)_rwDlPixelToRGB},
-            {7, (RwStandardFunc)_rwDlRasterSetFromImage},
-            {6, (RwStandardFunc)_rwDlImageGetFromRaster},
+            {7, _rwDlRasterSetFromImage},
+            {6, _rwDlImageGetFromRaster},
             {5, (RwStandardFunc)fn_8017A4D8},
             {4, (RwStandardFunc)fn_8017A374},
             {9, fn_801771C4},
             {8, (RwStandardFunc)_rwDlTextureSetRaster},
-            {15, (RwStandardFunc)fn_80179198},
-            {16, (RwStandardFunc)fn_80179614},
+            {15, fn_80179198},
+            {16, fn_80179614},
             {23, (RwStandardFunc)fn_801797E0},
             {24, (RwStandardFunc)fn_8017989C},
             {14, _rwDlRasterClear},
@@ -541,8 +536,8 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             {28, fn_80179BDC},
         };
         RwStandardFunc* funcs = out;
-        S32 count = sizeof(standards) / sizeof(standards[0]);
         S32 i;
+        S32 count = sizeof(standards) / sizeof(standards[0]);
 
         for (i = 0; i < numIn; i++)
         {

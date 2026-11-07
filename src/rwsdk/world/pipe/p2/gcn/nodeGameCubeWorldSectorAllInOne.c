@@ -91,17 +91,17 @@ RpWorldSector* fn_8015E7E8(RpWorldSector* sector, GCNObjectData* objectData)
 // instances the vertex arrays.
 RpWorldSector* fn_8015E908(RpWorldSector* sector, GCNObjectData* objectData)
 {
-    RpWorld* world = (RpWorld*)RWSRCGLOBAL(curWorld);
     U32 numVertices = sector->numVertices;
     RpMeshHeader* meshHeader = sector->mesh;
+    RpWorld* world = (RpWorld*)RWSRCGLOBAL(curWorld);
     U32 worldFlags = world->flags | rpGEOMETRYPOSITIONS;
-    U32 flags = worldFlags & ~objectData->privateData->clearFlags;
-    S32 headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
-    U32 dlSize = GCNDisplayListsGetSize(meshHeader, world->numTexCoordSets,
-                                        numVertices >= 0xFF ? 2 : 1, worldFlags);
-    S32 size;
     GCNVertexArrays* arrays;
-    U8* dlMem;
+    S32 headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
+    U32 flags = worldFlags & ~objectData->privateData->clearFlags;
+    U32 dlSize = GCNDisplayListsGetSize(meshHeader, world->numTexCoordSets,
+                                        numVertices < 0xFF ? 1 : 2, worldFlags);
+    S32 size;
+    U8* mem;
 
     size = ALLINONE_ALIGN32(sizeof(GCNVertexArrays) + headerSize) + dlSize;
     size = ALLINONE_ALIGN32(size) +
@@ -127,15 +127,15 @@ RpWorldSector* fn_8015E908(RpWorldSector* sector, GCNObjectData* objectData)
     arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
     memset(arrays, 0, sizeof(GCNVertexArrays));
     arrays->serialNum = meshHeader->serialNum;
-    arrays->indexType = numVertices >= 0xFF ? 3 : 2;
-    dlMem = (U8*)ALLINONE_ALIGN32((U32)arrays + sizeof(GCNVertexArrays) + headerSize);
+    arrays->indexType = numVertices < 0xFF ? 2 : 3;
+    mem = (U8*)ALLINONE_ALIGN32((U32)arrays + sizeof(GCNVertexArrays) + headerSize);
     arrays->syncToken = lbl_8025F890;
     arrays->flags = objectData->privateData->clearFlags;
-    GCNDisplayListsBuild((GCNDisplayList*)(arrays + 1), dlMem, meshHeader,
-                         world->numTexCoordSets, numVertices >= 0xFF ? 2 : 1, worldFlags);
+    GCNDisplayListsBuild((GCNDisplayList*)(arrays + 1), mem, meshHeader,
+                         world->numTexCoordSets, numVertices < 0xFF ? 1 : 2, worldFlags);
+    mem = (U8*)ALLINONE_ALIGN32((U32)mem + dlSize);
     _rwDlWorldSectorInstanceFast(sector, arrays, fn_8015D824(world), flags,
-                                 world->numTexCoordSets,
-                                 (U8*)ALLINONE_ALIGN32((U32)dlMem + dlSize));
+                                 world->numTexCoordSets, mem);
     DCFlushRange(objectData->repEntry + 1, objectData->repEntry->size);
 
     return sector;
@@ -145,12 +145,13 @@ RpWorldSector* fn_8015E908(RpWorldSector* sector, GCNObjectData* objectData)
 // the lighting and render callbacks.
 S32 _rxGCWorldSectorAllInOneNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
-    GCNAllInOnePrivateData* privateData = (GCNAllInOnePrivateData*)self->privateData;
     RpWorldSector* sector = (RpWorldSector*)params->dataParam;
-    U32 worldFlags = ((RpWorld*)RWSRCGLOBAL(curWorld))->flags;
+    GCNAllInOnePrivateData* privateData = (GCNAllInOnePrivateData*)self->privateData;
     GCNObjectData objectData;
+    U32 worldFlags;
 
     objectData.privateData = privateData;
+    worldFlags = ((RpWorld*)RWSRCGLOBAL(curWorld))->flags;
 
     if (!(worldFlags & rpWORLDNATIVE))
     {

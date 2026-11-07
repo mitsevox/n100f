@@ -31,7 +31,7 @@ static S32 TransformNodeParallel(RxPipelineNode* self, RwCamera* camera)
     gClipInfo.zScale = camera->zScale;
     gClipInfo.zShift = camera->zShift;
 
-    packet = RxPacketFetch(self);
+    packet = (RxPacket*)RxPacketFetch(self);
 
     colored = FALSE;
     prelit = FALSE;
@@ -269,7 +269,7 @@ static S32 TransformNodePerspective(RxPipelineNode* self, RwCamera* camera)
     gClipInfo.zScale = camera->zScale;
     gClipInfo.zShift = camera->zShift;
 
-    packet = RxPacketFetch(self);
+    packet = (RxPacket*)RxPacketFetch(self);
 
     colored = FALSE;
     prelit = FALSE;

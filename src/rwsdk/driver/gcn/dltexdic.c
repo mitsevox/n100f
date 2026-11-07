@@ -50,13 +50,16 @@ struct DlRasterStreamHeader
     U32 flags;
 };
 
-#define DLTEXDIC_PALETTED(_raster) (RwRasterGetFormat(_raster) & (rwRASTERFORMATPAL4 | rwRASTERFORMATPAL8))
+#define DLTEXDIC_PALETTED(_raster)                                                                 \
+    (RwRasterGetFormat(_raster) & (rwRASTERFORMATPAL4 | rwRASTERFORMATPAL8))
 #define DLTEXDIC_PALETTESIZE(_raster) ((1 << (_raster)->depth) * 2)
 
 S32 RwRasterGetNumLevels(RwRaster* raster);
 
-S32 _rwDlNativeTextureGetSize(S32* size, RwTexture* texture)
+S32 _rwDlNativeTextureGetSize(void* sizeOut, void* textureIn, S32 unused)
 {
+    S32* size = (S32*)sizeOut;
+    RwTexture* texture = (RwTexture*)textureIn;
     RwRaster* raster = texture->raster;
     S32 rasterSize;
 
@@ -73,7 +76,9 @@ S32 _rwDlNativeTextureGetSize(S32* size, RwTexture* texture)
         rasterSize += DLTEXDIC_PALETTESIZE(raster);
     }
 
-    *size = rasterSize + (S32)sizeof(S32) + fn_80179C7C(raster);
+    rasterSize += sizeof(S32);
+    rasterSize += fn_80179C7C(raster);
+    *size = rasterSize;
 
     return TRUE;
 }
@@ -81,15 +86,15 @@ S32 _rwDlNativeTextureGetSize(S32* size, RwTexture* texture)
 // Writes a native texture.
 S32 fn_8017C9E4(RwStream* stream, RwTexture* texture)
 {
+    S32 dataSize;
     S32 size;
     DlTextureStreamHeader header;
     DlRasterStreamHeader rasterHeader;
-    S32 dataSize;
     RwRaster* raster;
     RwGCRasterExt* rasterExt;
     RwGCTextureExt* textureExt;
 
-    _rwDlNativeTextureGetSize(&size, texture);
+    _rwDlNativeTextureGetSize(&size, texture, 0);
     size -= 0xC;
 
     if (!_rwStreamWriteVersionedChunkHeader(stream, DLTEXDIC_STRUCT, size, DLTEXDIC_MAXVERSION,
@@ -100,16 +105,16 @@ S32 fn_8017C9E4(RwStream* stream, RwTexture* texture)
 
     header.platform = DLTEXDIC_PLATFORMGCN;
     textureExt = RWGCTEXTUREEXT(texture);
-    header.filterAddressing = texture->filterAddressing & rwTEXTUREFILTERMODEMASK;
-    header.filterAddressing = (header.filterAddressing & ~rwTEXTUREADDRESSINGUMASK) |
-                              (texture->filterAddressing & rwTEXTUREADDRESSINGUMASK);
-    header.filterAddressing = (header.filterAddressing & ~rwTEXTUREADDRESSINGVMASK) |
-                              (texture->filterAddressing & rwTEXTUREADDRESSINGVMASK);
+    header.filterAddressing =
+        (((texture->filterAddressing & rwTEXTUREADDRESSINGUMASK) |
+          ((U8)texture->filterAddressing & ~rwTEXTUREADDRESSINGUMASK)) &
+         ~rwTEXTUREADDRESSINGVMASK) |
+        (texture->filterAddressing & rwTEXTUREADDRESSINGVMASK);
 
     if (textureExt->flags & RWGCTEXTURE_DEFAULTLOD)
     {
-        header.biasClamp = GX_TRUE;
         header.maxAniso = GX_ANISO_1;
+        header.biasClamp = GX_TRUE;
         header.edgeLOD = GX_TRUE;
         header.lodBias = 0.0f;
     }
@@ -132,7 +137,7 @@ S32 fn_8017C9E4(RwStream* stream, RwTexture* texture)
     size -= sizeof(header);
     raster = texture->raster;
     rasterExt = RWGCRASTEREXT(raster);
-    rasterHeader.format = (raster->cType & ~0xFF00) | ((raster->cFormat << 8) & 0xFF00);
+    rasterHeader.format = (raster->cFormat << 8) | raster->cType;
     rasterHeader.width = raster->width;
     rasterHeader.height = raster->height;
     rasterHeader.depth = raster->depth;
@@ -186,11 +191,11 @@ S32 fn_8017CCBC(RwStream* stream, RwTexture** textureRef)
     U32 version;
     DlTextureStreamHeader header;
     DlRasterStreamHeader rasterHeader;
+    U32 autoMipmap;
+    RwTexture* texture;
     S32 dataSize;
     RwRaster* raster;
     RwGCRasterExt* rasterExt;
-    RwTexture* texture;
-    U32 autoMipmap;
 
     if (!RwStreamFindChunk(stream, DLTEXDIC_STRUCT, &length, &version))
     {
@@ -272,16 +277,15 @@ S32 fn_8017CCBC(RwStream* stream, RwTexture** textureRef)
         return FALSE;
     }
 
-    texture->filterAddressing = (texture->filterAddressing & ~rwTEXTUREFILTERMODEMASK) |
-                                (header.filterAddressing & rwTEXTUREFILTERMODEMASK);
+    RwTextureSetFilterMode(texture, header.filterAddressing & rwTEXTUREFILTERMODEMASK);
     texture->filterAddressing = (texture->filterAddressing & ~rwTEXTUREADDRESSINGUMASK) |
                                 (header.filterAddressing & rwTEXTUREADDRESSINGUMASK);
     texture->filterAddressing = (texture->filterAddressing & ~rwTEXTUREADDRESSINGVMASK) |
                                 (header.filterAddressing & rwTEXTUREADDRESSINGVMASK);
     RwTextureSetName(texture, header.name);
     RwTextureSetMaskName(texture, header.mask);
-    RwGameCubeTextureSetLOD(texture, header.biasClamp, header.edgeLOD, header.maxAniso,
-                            header.lodBias);
+    RwGameCubeTextureSetLOD(texture, header.lodBias, header.biasClamp, header.edgeLOD,
+                            header.maxAniso);
     *textureRef = texture;
 
     return TRUE;

@@ -142,11 +142,11 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 // the instanced arrays, or copies one morph target when both are the same.
 void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* interpolator)
 {
-    S32 start = interpolator->startMorphTarget;
     S32 end = interpolator->endMorphTarget;
     S32 numVertices = geometry->numVertices;
     RwV3d* dstPos = (RwV3d*)arrays->pos;
     U8* dstNrm = (U8*)arrays->nrm;
+    S32 start = interpolator->startMorphTarget;
 
     if (start >= geometry->numMorphTargets || end >= geometry->numMorphTargets)
     {
@@ -232,13 +232,14 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
 // and the morph targets when the interpolator changed, once the GPU is done with the arrays.
 RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 {
-    RpGeometry* geometry = atomic->geometry;
+    S32 i;
+    S32 numVertices;
     GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
+    U32 locked;
+    RpGeometry* geometry = atomic->geometry;
 
     if (geometry->lockedSinceLastInst)
     {
-        U32 locked;
-        S32 numVertices;
         U32 flags;
 
         ALLINONE_WAITDONE(arrays);
@@ -273,8 +274,6 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
         if ((locked & ALLINONE_LOCKTEXCOORDS) && (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2)))
         {
-            S32 i;
-
             for (i = 0; i < geometry->numTexCoordSets; i++)
             {
                 if ((0x10 << i) & locked)
@@ -308,18 +307,18 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
 {
     RpGeometry* geometry = atomic->geometry;
-    RpMeshHeader* meshHeader = geometry->mesh;
-    U32 numVertices = geometry->numVertices;
     void* owner;
+    RpMeshHeader* meshHeader = geometry->mesh;
     RwResEntry** ownerRef;
     U32 geometryFlags;
+    U32 numVertices = geometry->numVertices;
+    S32 headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
     U32 flags;
-    S32 headerSize;
     U32 dlSize;
     S32 size;
     RwResEntry* entry;
     GCNVertexArrays* arrays;
-    U8* dlMem;
+    U8* mem;
 
     if (geometry->numMorphTargets != 1)
     {
@@ -334,9 +333,8 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
 
     geometryFlags = geometry->flags | rpGEOMETRYPOSITIONS;
     flags = geometryFlags & ~objectData->privateData->clearFlags;
-    headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
     dlSize = GCNDisplayListsGetSize(meshHeader, geometry->numTexCoordSets,
-                                    numVertices >= 0xFF ? 2 : 1, geometryFlags);
+                                    numVertices < 0xFF ? 1 : 2, geometryFlags);
     size = ALLINONE_ALIGN32(sizeof(GCNVertexArrays) + headerSize) + dlSize;
     size = ALLINONE_ALIGN32(size) + fn_80159380(fn_8015D818(geometry), flags, numVertices,
                                                 geometry->numTexCoordSets);
@@ -362,15 +360,15 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     arrays = (GCNVertexArrays*)(entry + 1);
     memset(arrays, 0, sizeof(GCNVertexArrays));
     arrays->serialNum = meshHeader->serialNum;
-    arrays->indexType = numVertices >= 0xFF ? 3 : 2;
-    dlMem = (U8*)ALLINONE_ALIGN32((U32)arrays + sizeof(GCNVertexArrays) + headerSize);
+    arrays->indexType = numVertices < 0xFF ? 2 : 3;
+    mem = (U8*)ALLINONE_ALIGN32((U32)arrays + sizeof(GCNVertexArrays) + headerSize);
     arrays->syncToken = lbl_8025F890;
     arrays->flags = objectData->privateData->clearFlags;
-    GCNDisplayListsBuild((GCNDisplayList*)(arrays + 1), dlMem, meshHeader,
-                         geometry->numTexCoordSets, numVertices >= 0xFF ? 2 : 1, geometryFlags);
+    GCNDisplayListsBuild((GCNDisplayList*)(arrays + 1), mem, meshHeader,
+                         geometry->numTexCoordSets, numVertices < 0xFF ? 1 : 2, geometryFlags);
+    mem = (U8*)ALLINONE_ALIGN32((U32)mem + dlSize);
     _rwDlGeometryInstanceFast(geometry, arrays, fn_8015D818(geometry), flags,
-                              geometry->numTexCoordSets,
-                              (U8*)ALLINONE_ALIGN32((U32)dlMem + dlSize));
+                              geometry->numTexCoordSets, mem);
     DCFlushRange(objectData->repEntry + 1, objectData->repEntry->size);
     geometry->lockedSinceLastInst = 0;
 
@@ -390,10 +388,11 @@ S32 _rxGCAtomicAllInOneNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 
     if (!(geometry->flags & rpGEOMETRYNATIVE))
     {
+        U32 numVertices = geometry->numVertices;
         RwResEntry* repEntry;
         RpMeshHeader* meshHeader;
 
-        if (!geometry->numVertices)
+        if (!numVertices)
         {
             return TRUE;
         }
