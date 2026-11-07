@@ -878,12 +878,9 @@ static void iSndUpdateStreams(F32)
     }
 }
 
-void iSndUpdate(F32 dt)
+static inline void iSndUpdateVoices()
 {
     S32 i;
-    BOOL enabled = OSDisableInterrupts();
-    iSndUpdateStreams(dt);
-
     for (i = 0; i < 58; i++)
     {
         if (voices[i].voice != NULL)
@@ -892,6 +889,13 @@ void iSndUpdate(F32 dt)
             iSndVolUpdate(vp, &voices[i]);
         }
     }
+}
+
+void iSndUpdate(F32 dt)
+{
+    BOOL enabled = OSDisableInterrupts();
+    iSndUpdateStreams(dt);
+    iSndUpdateVoices();
 
     MIXUpdateSettings();
     OSRestoreInterrupts(enabled);
