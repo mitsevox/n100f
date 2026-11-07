@@ -461,7 +461,7 @@ static inline void VOUT_dogoto_pos(st_zEntVillain* vil, const _xVec3* pos, F32 d
 static en_ZVILLAIN_HEADBUTT_RESPONSE VOUT_spikey_header(st_zEntVillain* ent);
 static S32 VOUT_apply_anchor(st_zEntVillain* vil);
 static S32 VILN_std_xtrarend(st_zEntVillain* vil);
-static void VWEP_mm_zapPlayer(st_zEntVillain* vil);
+static void VWEP_mm_zapPlayer(const st_zEntVillain* vil);
 static inline void VSUP_ang_toXZDir(F32 angle, _xVec3* dir);
 static inline F32 VSUP_dot_faceToEnt(const st_zEntVillain* vil, const _zEnt* ent);
 static void VWEP_rbs_throw(st_REDBEARD_SWORD* rbs);
@@ -12134,6 +12134,13 @@ static S32 VILN_BMM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     return 1;
 }
 
+// The goal change of the goals every villain type shares (startup, going online, death and the
+// afterlife), done by the standard villain's goal-change step.
+static inline S32 VILN_base_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
+{
+    return VILN_std_trangoal(vil, stimctxt, dt);
+}
+
 // The Mastermind's goal changes. The standard handler takes the lifeless, starting-up and dying
 // goals, and he queues his death sound when he enters the dying goal. On entering a goal he picks
 // its animation and sets it up: patrolling without a next navigation point asks for one;
@@ -12147,9 +12154,9 @@ static S32 VILN_BMM_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
 // drops the reserved flask.
 static S32 VILN_BMM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stimctxt, F32 dt)
 {
-    en_BEHAVIOUR_GOAL procgoal;
     S32 result = 1;
     en_NPC_STIMULUS stim = stimctxt->stim;
+    en_BEHAVIOUR_GOAL procgoal;
 
     if (stim == ZVIL_STIM_ENTERGOAL || stim == ZVIL_STIM_EXITGOAL)
     {
@@ -12167,7 +12174,7 @@ static S32 VILN_BMM_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
     case ZVIL_GOAL_STARTUP:
     case ZVIL_GOAL_GOONLINE:
     case ZVIL_GOAL_DIE:
-        result = VILN_std_trangoal(vil, stimctxt, dt);
+        result = VILN_base_trangoal(vil, stimctxt, dt);
         if (procgoal == ZVIL_GOAL_DIE && stim == ZVIL_STIM_ENTERGOAL)
         {
             VSND_queueSound(vil, VSND_TYP_MMDIE);
@@ -14523,7 +14530,7 @@ static S32 zVIL_chk_pitfall(st_zEntVillain* vil, S32 prev, F32 rand)
 // The Mastermind's zap hurts the player by the villain type's damage. A push along the line from
 // the villain is worked out (stronger the more squarely he faces the player, at least a fifth,
 // times the type's strength) but not passed on: the damage call gets no direction.
-static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
+static void VWEP_mm_zapPlayer(const st_zEntVillain* vil)
 {
     _xVec3 vec_push = { 0 };
     _xVec3* dir_push = &vec_push;
@@ -14551,7 +14558,7 @@ static void VWEP_mm_zapPlayer(st_zEntVillain* vil)
     vec_push.x *= fac_push * g_npcTable[vil->asset->subtype].strength;
     vec_push.y *= fac_push * g_npcTable[vil->asset->subtype].strength;
     dmg = g_npcTable[vil->asset->subtype].dmg_give;
-    zEntPlayer_Damage(vil, (dmg > 0) ? dmg : 0, NULL);
+    zEntPlayer_Damage((xBase*)vil, (dmg > 0) ? dmg : 0, NULL);
 }
 
 // Read each villain setting from the model's INI parameters, falling back to the defaults here.
