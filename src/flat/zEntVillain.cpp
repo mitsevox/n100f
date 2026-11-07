@@ -325,7 +325,7 @@ static F32 VSUP_ds2_toPos(const _zEnt* ent, _xVec3 pos);
 static inline F32 VSUP_ang_ofXZDir(_xVec3 dir);
 static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir);
 static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt);
-static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir);
+static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _zEnt* tgt, _xVec3* dir);
 static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent,
                                en_NPC_QUADRANT* qdrant);
 static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent);
@@ -2448,6 +2448,13 @@ static char* g_stz_mmftyp_name[3] = { "_PRJ_VWEP_FLASK", "_PRJ_VWEP_FLASK", "_PR
 
 // Mastermind flasks.
 static st_ZVMM_FLASK_DATA g_mmflask[10] = { 0 };
+
+
+// The entity's model position.
+static xVec3* VSUP_posEnt(const _xEnt* ent)
+{
+    return xEntGetPos(ent);
+}
 
 
 S32 zEntVillain_Startup()
@@ -13943,6 +13950,12 @@ static S32 VNAV_setup_telepoint(st_zEntVillain* vil, S32 force)
     return do_teleport;
 }
 
+// The player's entity.
+static inline _zEnt* VSUP_plyrEnt()
+{
+    return &globals.player.ent;
+}
+
 // Works out the villain's per-frame facts about itself and the player (prec). flg_needinfo picks
 // what: 0x1 the distance (squared and plain), heading, direction and offset to the player and the
 // player's move info, whose sneak bits (0xFF00) are cleared in a boss battle and while the
@@ -13987,8 +14000,8 @@ static void zVIL_precalc(st_zEntVillain* vil, S32 flg_needinfo)
 
     xVec3Copy(&pos_vil, xEntGetPos(vil));
     xVec3Copy(&ctr_vil, xBoundCenter(&vil->bound));
-    xVec3Copy(&pos_plyr, xEntGetPos(&globals.player.ent));
-    xVec3Copy(&ctr_plyr, xBoundCenter(&globals.player.ent.bound));
+    xVec3Copy(&pos_plyr, xEntGetPos(VSUP_plyrEnt()));
+    xVec3Copy(&ctr_plyr, xBoundCenter(&VSUP_plyrEnt()->bound));
 
     if (flg_needinfo & 0x1)
     {
@@ -20098,7 +20111,7 @@ static F32 VSUP_dir_inner(const _zEnt* ent, _xVec3 pos, _xVec3* dir)
     _xVec3 delta = { 0 };
     F32 ang;
 
-    xVec3Sub(&delta, &pos, &xModelGetFrame(ent->model)->pos);
+    xVec3Sub(&delta, &pos, VSUP_posEnt(ent));
     xVec3Normalize(&delta, &delta);
     ang = xAngleClamp(VSUP_ang_ofXZDir(delta));
     if (dir)
@@ -20131,12 +20144,18 @@ static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt)
 }
 
 // Heading from the entity to the centre of another entity's bound; see VSUP_dir_toPos.
-static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _xEnt* tgt, _xVec3* dir)
+static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _zEnt* tgt, _xVec3* dir)
 {
     _xVec3 ctr = { 0 };
 
     xVec3Copy(&ctr, xBoundCenter(&tgt->bound));
     return VSUP_dir_toPos(ent, ctr, dir);
+}
+
+// Heading from the entity to another entity's bound centre.
+static inline F32 VSUP_ang_toEnt(const _zEnt* ent, const _zEnt* tgt)
+{
+    return VSUP_dir_toEnt(ent, tgt, NULL);
 }
 
 // Unused.
@@ -20150,7 +20169,7 @@ static void zEntVillain_UnknownTemplate116()
 static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent)
 {
     S32 result = 0;
-    F32 ang = VSUP_dir_toEnt(vil, ent, NULL);
+    F32 ang = VSUP_ang_toEnt(vil, ent);
     F32 ang_face = vil->frame->rot.angle;
 
     if (vil->fov_detect <= 0.0f)
