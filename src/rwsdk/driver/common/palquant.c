@@ -190,44 +190,60 @@ void _rwPalQuantAddImage(PalQuant* pq, RwImage* image, F32 weight)
 static void assignindex(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuantBox* region,
                         S32 palIndex)
 {
-    if (root)
+    S32 width;
+    S32 dr;
+    S32 dg;
+    S32 db;
+    S32 da;
+    S32 dR;
+    S32 dG;
+    S32 dB;
+    S32 dA;
+
+    if (!root)
     {
-        S32 width = 1 << depth;
-        S32 dr = origin->red - region->upper.red;
-        S32 dg = origin->green - region->upper.green;
-        S32 db = origin->blue - region->upper.blue;
-        S32 da = origin->alpha - region->upper.alpha;
+        return;
+    }
 
-        if (dr < 0 && dg < 0 && db < 0 && da < 0)
+    width = 1 << depth;
+    dr = origin->red - region->upper.red;
+    dg = origin->green - region->upper.green;
+    db = origin->blue - region->upper.blue;
+    da = origin->alpha - region->upper.alpha;
+
+    if (dr >= 0 || dg >= 0 || db >= 0 || da >= 0)
+    {
+        return;
+    }
+
+    dR = region->lower.red - origin->red;
+    dG = region->lower.green - origin->green;
+    dB = region->lower.blue - origin->blue;
+    dA = region->lower.alpha - origin->alpha;
+
+    if (dR >= width || dG >= width || dB >= width || dA >= width)
+    {
+        return;
+    }
+
+    if (dr <= -width && dg <= -width && db <= -width && da <= -width && dR <= 0 && dG <= 0 &&
+        dB <= 0 && dA <= 0 && depth == 0)
+    {
+        ((PalQuantLeaf*)root)->palIndex = (U8)palIndex;
+    }
+    else
+    {
+        S32 i;
+
+        for (i = 0; i < 16; i++)
         {
-            S32 dR = region->lower.red - origin->red;
-            S32 dG = region->lower.green - origin->green;
-            S32 dB = region->lower.blue - origin->blue;
-            S32 dA = region->lower.alpha - origin->alpha;
+            RwRGBA corner;
 
-            if (dR < width && dG < width && dB < width && dA < width)
-            {
-                if (dr <= -width && dg <= -width && db <= -width && da <= -width && dR <= 0 &&
-                    dG <= 0 && dB <= 0 && dA <= 0 && depth == 0)
-                {
-                    ((PalQuantLeaf*)root)->palIndex = (U8)palIndex;
-                }
-                else
-                {
-                    S32 i;
-
-                    for (i = 0; i < 16; i++)
-                    {
-                        RwRGBA corner;
-
-                        corner.red = origin->red + (((i >> 3) & 1) << (depth - 1));
-                        corner.green = origin->green + (((i >> 2) & 1) << (depth - 1));
-                        corner.blue = origin->blue + (((i >> 1) & 1) << (depth - 1));
-                        corner.alpha = origin->alpha + ((i & 1) << (depth - 1));
-                        assignindex(root->child[i], &corner, depth - 1, region, palIndex);
-                    }
-                }
-            }
+            corner.red = origin->red + (((i >> 3) & 1) << (depth - 1));
+            corner.green = origin->green + (((i >> 2) & 1) << (depth - 1));
+            corner.blue = origin->blue + (((i >> 1) & 1) << (depth - 1));
+            corner.alpha = origin->alpha + ((i & 1) << (depth - 1));
+            assignindex(root->child[i], &corner, depth - 1, region, palIndex);
         }
     }
 }
@@ -236,51 +252,67 @@ static void assignindex(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuan
 static void addvolume(PalQuantBranch* root, RwRGBA* origin, S32 depth, PalQuantBox* region,
                       PalQuantLeaf* volume)
 {
-    if (root)
+    S32 width;
+    S32 dr;
+    S32 dg;
+    S32 db;
+    S32 da;
+    S32 dR;
+    S32 dG;
+    S32 dB;
+    S32 dA;
+
+    if (!root)
     {
-        S32 width = 1 << depth;
-        S32 dr = origin->red - region->upper.red;
-        S32 dg = origin->green - region->upper.green;
-        S32 db = origin->blue - region->upper.blue;
-        S32 da = origin->alpha - region->upper.alpha;
+        return;
+    }
 
-        if (dr < 0 && dg < 0 && db < 0 && da < 0)
+    width = 1 << depth;
+    dr = origin->red - region->upper.red;
+    dg = origin->green - region->upper.green;
+    db = origin->blue - region->upper.blue;
+    da = origin->alpha - region->upper.alpha;
+
+    if (dr >= 0 || dg >= 0 || db >= 0 || da >= 0)
+    {
+        return;
+    }
+
+    dR = region->lower.red - origin->red;
+    dG = region->lower.green - origin->green;
+    dB = region->lower.blue - origin->blue;
+    dA = region->lower.alpha - origin->alpha;
+
+    if (dR >= width || dG >= width || dB >= width || dA >= width)
+    {
+        return;
+    }
+
+    if (dr <= -width && dg <= -width && db <= -width && da <= -width && dR <= 0 && dG <= 0 &&
+        dB <= 0 && dA <= 0 && depth == 0)
+    {
+        PalQuantLeaf* leaf = (PalQuantLeaf*)root;
+
+        volume->weight += leaf->weight;
+        volume->red += leaf->red;
+        volume->green += leaf->green;
+        volume->blue += leaf->blue;
+        volume->alpha += leaf->alpha;
+        volume->var += leaf->var;
+    }
+    else
+    {
+        S32 i;
+
+        for (i = 0; i < 16; i++)
         {
-            S32 dR = region->lower.red - origin->red;
-            S32 dG = region->lower.green - origin->green;
-            S32 dB = region->lower.blue - origin->blue;
-            S32 dA = region->lower.alpha - origin->alpha;
+            RwRGBA corner;
 
-            if (dR < width && dG < width && dB < width && dA < width)
-            {
-                if (dr <= -width && dg <= -width && db <= -width && da <= -width && dR <= 0 &&
-                    dG <= 0 && dB <= 0 && dA <= 0 && depth == 0)
-                {
-                    PalQuantLeaf* leaf = (PalQuantLeaf*)root;
-
-                    volume->weight += leaf->weight;
-                    volume->red += leaf->red;
-                    volume->green += leaf->green;
-                    volume->blue += leaf->blue;
-                    volume->alpha += leaf->alpha;
-                    volume->var += leaf->var;
-                }
-                else
-                {
-                    S32 i;
-
-                    for (i = 0; i < 16; i++)
-                    {
-                        RwRGBA corner;
-
-                        corner.red = origin->red + (((i >> 3) & 1) << (depth - 1));
-                        corner.green = origin->green + (((i >> 2) & 1) << (depth - 1));
-                        corner.blue = origin->blue + (((i >> 1) & 1) << (depth - 1));
-                        corner.alpha = origin->alpha + ((i & 1) << (depth - 1));
-                        addvolume(root->child[i], &corner, depth - 1, region, volume);
-                    }
-                }
-            }
+            corner.red = origin->red + (((i >> 3) & 1) << (depth - 1));
+            corner.green = origin->green + (((i >> 2) & 1) << (depth - 1));
+            corner.blue = origin->blue + (((i >> 1) & 1) << (depth - 1));
+            corner.alpha = origin->alpha + ((i & 1) << (depth - 1));
+            addvolume(root->child[i], &corner, depth - 1, region, volume);
         }
     }
 }
@@ -556,14 +588,13 @@ static S32 nCut(PalQuantBranch* root, PalQuantBox* set1, PalQuantBox* set2)
 
 static S32 CountLeafs(PalQuantBranch* root, S32 depth)
 {
+    S32 i;
     S32 count = 0;
 
     if (root)
     {
         if (depth > 0)
         {
-            S32 i;
-
             for (i = 0; i < 16; i++)
             {
                 count += CountLeafs(root->child[i], depth - 1);
@@ -595,12 +626,7 @@ static S32 ExtractNodes(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32
         else
         {
             PalQuantLeaf* leaf = (PalQuantLeaf*)root;
-            F32 scale = 0.0f;
-
-            if (leaf->weight > 0.0f)
-            {
-                scale = PALQUANT_TOCHANNEL / leaf->weight;
-            }
+            F32 scale = (leaf->weight > 0.0f) ? PALQUANT_TOCHANNEL / leaf->weight : 0.0f;
 
             palette[palIndex].red = (U8)(leaf->red * scale);
             palette[palIndex].green = (U8)(leaf->green * scale);
