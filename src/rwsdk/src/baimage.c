@@ -342,12 +342,13 @@ RwImage* RwImageMakeMask(RwImage* image)
 // first converted to 32 bits through a temporary copy; the mask can be palettized or 32-bit.
 RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
 {
-    S32 width = image->width;
-    S32 height = image->height;
-
-    if (width != mask->width || height != mask->height)
+    if (image->width != mask->width || image->height != mask->height)
     {
-        ImageError(0x8000000A);
+        RwError err;
+
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x8000000A);
+        RwErrorSet(&err);
         return NULL;
     }
 
@@ -356,7 +357,7 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
     case 4:
     case 8:
     {
-        RwImage* tempImage = RwImageCreate(width, height, image->depth);
+        RwImage* tempImage = RwImageCreate(image->width, image->height, image->depth);
 
         if (!tempImage)
         {
@@ -386,9 +387,14 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
         // Fall through to apply the mask to the converted image.
     case 32:
     {
-        const U8* maskRow = mask->cpPixels;
-        U8* imageRow = image->cpPixels;
         S32 y;
+        U8* imageRow;
+        const U8* maskRow;
+        const RwRGBA* palette;
+
+        maskRow = mask->cpPixels;
+        palette = mask->palette;
+        imageRow = image->cpPixels;
 
         for (y = 0; y < image->height; y++)
         {
@@ -404,7 +410,7 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
 
                 for (x = 0; x < image->width; x++)
                 {
-                    pixel->alpha = mask->palette[*maskPixel++].alpha;
+                    pixel->alpha = palette[*maskPixel++].alpha;
                     pixel++;
                 }
 
@@ -430,12 +436,20 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
             maskRow += mask->stride;
         }
 
-        return image;
+        break;
     }
     default:
-        ImageError(0x80000009);
+    {
+        RwError err;
+
+        err.pluginID = 1;
+        err.errorCode = _rwerror(0x80000009);
+        RwErrorSet(&err);
         return NULL;
     }
+    }
+
+    return image;
 }
 
 // Returns the scratch buffer grown to at least size bytes, or NULL when it cannot grow.
