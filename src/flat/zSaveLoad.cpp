@@ -671,8 +671,7 @@ S32 xSGT_LoadLoadCB(void* vp, st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_READCONTE
     return compdiff == 0;
 }
 
-// Reads the saved scene ID without the length check. Nothing calls it; its zeroed buffer
-// still leaves a 32-byte initializer in .rodata (see evidence).
+// Reads the saved scene ID without the length check. Nothing calls it.
 static inline void zSaveLoad_ReadSceneID(st_XSAVEGAME_DATA* xsgdata,
                                          st_XSAVEGAME_READCONTEXT* rctxt)
 {
@@ -1243,7 +1242,7 @@ S32 zSaveLoad_GameSelect(S32 mode)
     return done;
 }
 
-// Builds the label shown for a save slot, numbering repeats of the same area name.
+// Builds the label shown for a save slot, numbering it when an earlier slot has the same label.
 void zSaveLoad_BuildName(char* name_txt, S32 idx)
 {
     char desired[64];
@@ -1410,7 +1409,7 @@ S32 zSaveLoad_CardCheckSlotEmpty(S32 cardNumber, S32 gameNumber)
     return 1;
 }
 
-// Checks the chosen slot: empty for a load, free to overwrite for a save.
+// Checks the chosen slot: for a load that it holds a game, for a save that it may be overwritten.
 S32 zSaveLoad_CardCheckGameSlot(S32 cardNumber, S32 gameNumber, S32 mode)
 {
     if (mode == 1)
@@ -1446,7 +1445,7 @@ S32 zSaveLoad_CardCheckGames(S32 cardNumber, S32 mode)
 }
 
 // Checks for room on the card, letting the player continue without saving. Returns 1 when
-// there is room, 2 when the player backed out.
+// there is room, 2 when the player backed out, or the failed check's -1, 5 or 6.
 S32 zSaveLoad_CardCheckSpace(S32 cardNumber, S32 mode, S32 checkSlots)
 {
     S32 slotsFull = 0;
@@ -1506,6 +1505,7 @@ S32 zSaveLoad_CardCheckSpace(S32 cardNumber, S32 mode, S32 checkSlots)
     return 1;
 }
 
+// Checks the card's contents: a saved game to load, or room to save.
 S32 zSaveLoad_CardCheckValid(S32 cardNumber, S32 mode, S32 checkSlots)
 {
     if (mode == 1)
@@ -1516,7 +1516,7 @@ S32 zSaveLoad_CardCheckValid(S32 cardNumber, S32 mode, S32 checkSlots)
 }
 
 // Checks the card, offering to repair or format it. Returns 1 when it can be used, 2 when the
-// player backed out, -1 when it was pulled.
+// player backed out, -1 when it was pulled, or format's result when formatting failed.
 S32 zSaveLoad_CardCheckFormatted(S32 cardNumber, S32 mode)
 {
     S32 badEncode = 0;
