@@ -390,10 +390,11 @@ S32 _rxGCAtomicAllInOneNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 
     if (!(geometry->flags & rpGEOMETRYNATIVE))
     {
+        U32 numVertices = geometry->numVertices;
         RwResEntry* repEntry;
         RpMeshHeader* meshHeader;
 
-        if (!geometry->numVertices)
+        if (!numVertices)
         {
             return TRUE;
         }

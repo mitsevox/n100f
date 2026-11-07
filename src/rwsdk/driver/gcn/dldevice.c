@@ -71,10 +71,13 @@ extern GXFifoObj* lbl_8025F858;
 
 // The ring's read and write positions, the token ring's write and read positions, whether the
 // FIFO breakpoint is armed, whether a frame waits for its token, whether a frame waits for the
-// retrace, whether a retrace has passed since, and which half a two-half frame is on.
-extern S32 lbl_8025F810;
-extern S32 lbl_8025F814;
-extern S32 lbl_8025F818;
+// retrace, whether a retrace has passed since, and which half a two-half frame is on. The ring
+// positions and the token write position are volatile: the breakpoint and retrace interrupts
+// move them, and the target reloads them after each write (_rwDlBreakPtCallback,
+// _rwDlRasterShowRaster).
+extern volatile S32 lbl_8025F810;
+extern volatile S32 lbl_8025F814;
+extern volatile S32 lbl_8025F818;
 extern S32 lbl_8025F81C;
 extern S32 lbl_8025F820;
 extern S32 lbl_8025F824;
