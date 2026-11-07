@@ -139,11 +139,11 @@ static void* MatFXMaterialDestructor(void* object, S32 offset, S32 size)
 // textures are shared (their reference counts raised), the others set through the setters.
 static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offset, S32 size)
 {
-    U8 i;
+    MatFXMaterialData* dstData;
     const RpMaterial* srcMaterial;
     MatFXMaterialData* srcData;
     RpMaterial* dstMaterial;
-    MatFXMaterialData* dstData;
+    U8 i;
     MatFXEffect* srcEffect;
 
     srcMaterial = (const RpMaterial*)srcObject;
@@ -158,7 +158,19 @@ static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offse
     dstData = MATFXMATERIALGETDATA(dstMaterial);
     if (!dstData)
     {
-        dstData = MatFXMaterialDataCreate(dstMaterial);
+        // FAKEMATCH: MatFXMaterialDataCreate written out by hand, with a redundant dstData = NULL
+        // standing in for its return NULL, so the allocation lands in dstData's register; real form
+        // believed to be dstData = MatFXMaterialDataCreate(dstMaterial).
+        dstData = (MatFXMaterialData*)RWSRCGLOBAL(memoryAlloc)(MatFXInfo.materialFreeList);
+        if (!dstData)
+        {
+            dstData = NULL;
+        }
+        else
+        {
+            memset(dstData, 0, sizeof(MatFXMaterialData));
+            MATFXMATERIALGETDATA(dstMaterial) = dstData;
+        }
     }
 
     if (!dstData)
@@ -170,9 +182,12 @@ static void* MatFXMaterialCopy(void* dstObject, const void* srcObject, S32 offse
 
     for (i = 0; i < MATFX_NUMSLOTS; i++)
     {
-        srcEffect = &srcData->effects[i];
+        RpMatFXMaterialFlags effect;
 
-        switch (srcEffect->effect)
+        srcEffect = &srcData->effects[i];
+        effect = srcEffect->effect;
+
+        switch (effect)
         {
         case rpMATFXEFFECTNULL:
             break;
