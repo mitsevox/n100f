@@ -215,8 +215,8 @@ RwCamera* CameraBuildPerspViewMatrix(RwCamera* camera)
     return camera;
 }
 
-// Builds the parallel frustum: the eight corners in camera space, the window shifted by the view
-// offset scaled down towards the far plane, moved to world space by the frame matrix, then the
+// Builds the parallel frustum: the eight corners in camera space, the window shifted at each plane
+// by the view offset times (1 - z), moved to world space by the frame matrix, then the
 // far and near planes along the camera's at vector and the four side planes, the last two facing
 // the first two.
 void CameraBuildParallelClipPlanes(RwCamera* camera)
