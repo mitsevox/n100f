@@ -38,6 +38,9 @@ extern RxClusterDefinition RxClVSteps;
         }                                                                                          \
     }
 
+// The node body: writes each lit vertex's clamped color to its screen vertex, skipping the
+// vertices that the optional step cluster passes over. Nothing is done when all the
+// vertices share a clip flag, so the mesh lies wholly off screen.
 static S32 _PostLightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
     static const F32 maxColor = 255.0f;

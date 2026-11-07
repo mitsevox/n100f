@@ -206,6 +206,8 @@ RxNodeDefinition* RxNodeDefinitionGetLight(void)
         (_vert)->col.blue += (_amount) * (_light)->color.blue;                                     \
     }
 
+// Adds an ambient light to each vertex's camera-space color: the light color scaled by 255 and
+// the surface's ambient term (the red channel alone, as grey, for a light without chroma).
 static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                  RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                  F32 invScale)
@@ -271,6 +273,9 @@ static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, const R
     }
 }
 
+// Adds a directional light: for a light with a frame, each vertex facing the light gets the light
+// color times 255, the surface's diffuse term and the Lambert term of its normal against the
+// reversed at vector, taken into object space when there is an inverse matrix.
 static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                      RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                      F32 invScale)
@@ -357,6 +362,8 @@ static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, con
         invRadius = 1.0f / light->radius;                                                          \
     }
 
+// Adds a point light: each vertex inside the radius and facing the light gets the diffuse color
+// times the Lambert term of the vertex-to-light vector and (1 / distance - 1 / radius).
 static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                F32 invScale)
@@ -434,6 +441,8 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, const RpL
     }
 }
 
+// Adds a spot light: as the point light, but only for vertices inside the cone given by the
+// light's at vector and minusCosAngle.
 static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                               RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                               F32 invScale)
@@ -538,6 +547,8 @@ static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, const RpLi
     }
 }
 
+// Adds a soft spot light: as the spot light, with the amount scaled down by the square of how far
+// the vertex lies toward the cone's edge.
 static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                   RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                   F32 invScale)
