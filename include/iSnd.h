@@ -59,12 +59,20 @@ struct iSndBank
     iSndSoundInfo sounds[1];
 };
 
-// The GC layout: the last sound looked up, with the bank file it came from.
+// A loaded bank: its open file, the file offset of its first sample and the bank asset.
+struct iSndBankFile
+{
+    tag_xFile file;
+    U32 base;
+    iSndBank* bank;
+};
+
+// The GC layout: the last sound looked up, with the bank record it came from.
 struct iSndFileInfo
 {
     iSndSoundInfo info;
     U32 ID;
-    tag_xFile file;
+    iSndBankFile bank_file;
 };
 
 void iSndInit();

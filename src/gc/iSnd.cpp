@@ -59,14 +59,6 @@ struct iSndStream
     U32 x100;
 };
 
-// Size: 0x108
-struct iSndBankFile
-{
-    tag_xFile file;
-    U32 base;
-    iSndBank* bank;
-};
-
 u32 aram_array[40];
 vinfo voices[58];
 iSndStream streams[6];
@@ -589,7 +581,7 @@ iSndFileInfo* iSndLookup(U32 id)
             if (id == sounds[j].assetID)
             {
                 memcpy(&snd, &sounds[j], sizeof(iSndSoundInfo));
-                memcpy(&snd.file, &sinfo_array[i].file, sizeof(tag_xFile));
+                memcpy(&snd.bank_file.file, &sinfo_array[i].file, sizeof(tag_xFile));
                 snd.ID = snd_id++;
                 if (snd_id >= 0x7FFA)
                 {
@@ -604,7 +596,7 @@ iSndFileInfo* iSndLookup(U32 id)
             if (id == sounds[j].assetID)
             {
                 memcpy(&snd, &sounds[j], sizeof(iSndSoundInfo));
-                memcpy(&snd.file, &sinfo_array[i].file, sizeof(tag_xFile));
+                memcpy(&snd.bank_file.file, &sinfo_array[i].file, sizeof(tag_xFile));
                 if (i > 1)
                 {
                     snd.ID = snd_id++;
@@ -1129,7 +1121,7 @@ static U32 iSndPrepStream(xSndVoiceInfo* vp)
     }
 
     memcpy(&s->info, &snd, sizeof(iSndSoundInfo));
-    memcpy(&s->fileInfo, &snd.file.ps.fileInfo, sizeof(DVDFileInfo));
+    memcpy(&s->fileInfo, &snd.bank_file.file.ps.fileInfo, sizeof(DVDFileInfo));
     s->fileInfo.cb.userData = s;
     s->x8c = (((s->info.dsp.num_adpcm_nibbles + 1) >> 1) + 0x1F) & ~0x1F;
     s->vinf.flags |= 0x1;
