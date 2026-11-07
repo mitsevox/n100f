@@ -91,15 +91,17 @@ static PalQuantLeaf* AllocateToLeaf(PalQuant* pq, PalQuantBranch* root, U32 cell
 
     if (!root->child[cellIndex & 15])
     {
-        root->child[cellIndex & 15] = CreateCube(pq->nodeFreeList);
+        PalQuantBranch* node = CreateCube(pq->nodeFreeList);
+
+        root->child[cellIndex & 15] = node;
 
         if (depth == 1)
         {
-            InitLeaf((PalQuantLeaf*)root->child[cellIndex & 15]);
+            InitLeaf((PalQuantLeaf*)node);
         }
         else
         {
-            InitBranch(root->child[cellIndex & 15]);
+            InitBranch(node);
         }
     }
 
@@ -510,15 +512,15 @@ static F32 nMaximize(PalQuantBranch* root, PalQuantBox* set, S32 dir, S32* cut,
 // Splits set1 along the channel whose best cut scores highest, putting the upper part in set2.
 static S32 nCut(PalQuantBranch* root, PalQuantBox* set1, PalQuantBox* set2)
 {
-    S32 cuta;
-    S32 cutb;
-    S32 cutg;
     S32 cutr;
-    PalQuantLeaf whole;
+    S32 cutg;
+    S32 cutb;
+    S32 cuta;
     F32 maxr;
     F32 maxg;
     F32 maxb;
     F32 maxa;
+    PalQuantLeaf whole;
 
     nVol(root, set1, &whole);
     maxr = nMaximize(root, set1, 1, &cutr, &whole);
@@ -539,48 +541,40 @@ static S32 nCut(PalQuantBranch* root, PalQuantBox* set1, PalQuantBox* set2)
         {
             if (maxr >= maxa)
             {
-                set2->lower.red = cutr;
-                set1->upper.red = cutr;
+                set1->upper.red = set2->lower.red = cutr;
             }
             else
             {
-                set2->lower.alpha = cuta;
-                set1->upper.alpha = cuta;
+                set1->upper.alpha = set2->lower.alpha = cuta;
             }
         }
         else if (maxb >= maxa)
         {
-            set2->lower.blue = cutb;
-            set1->upper.blue = cutb;
+            set1->upper.blue = set2->lower.blue = cutb;
         }
         else
         {
-            set2->lower.alpha = cuta;
-            set1->upper.alpha = cuta;
+            set1->upper.alpha = set2->lower.alpha = cuta;
         }
     }
     else if (maxg >= maxb)
     {
         if (maxg >= maxa)
         {
-            set2->lower.green = cutg;
-            set1->upper.green = cutg;
+            set1->upper.green = set2->lower.green = cutg;
         }
         else
         {
-            set2->lower.alpha = cuta;
-            set1->upper.alpha = cuta;
+            set1->upper.alpha = set2->lower.alpha = cuta;
         }
     }
     else if (maxb >= maxa)
     {
-        set2->lower.blue = cutb;
-        set1->upper.blue = cutb;
+        set1->upper.blue = set2->lower.blue = cutb;
     }
     else
     {
-        set2->lower.alpha = cuta;
-        set1->upper.alpha = cuta;
+        set1->upper.alpha = set2->lower.alpha = cuta;
     }
 
     return TRUE;
@@ -909,8 +903,8 @@ S32 _rwPalQuantInit(PalQuant* pq)
 
     for (i = 0; i < 32; i++)
     {
-        U32 value = 0;
         S32 bit;
+        U32 value = 0;
 
         for (bit = 0; bit < PALQUANT_DEPTH; bit++)
         {
