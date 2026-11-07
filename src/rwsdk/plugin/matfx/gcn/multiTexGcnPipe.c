@@ -316,8 +316,11 @@ S32 _rpGameCubeMTPipeDataQueryNBTs(GCNObjectData* objectData)
 // The matrix a texture matrix is relative to: 16 and up are the plugin's frames (the inverse of
 // the frame's LTM, after the object's matrix when there is one), 3 is lbl_8025E304 and 2 the
 // object's matrix. Returns NULL when the texture matrix is used as it is.
+// One exit through out: the lbl_8025E304 path goes through r0 (addi r0, mr r3 at 0x801420C4).
 RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
 {
+    RwMatrix* out;
+
     if (frame >= 0x10)
     {
         U32 index = frame - 0x10;
@@ -337,40 +340,47 @@ RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
                 RwMatrixInvert(result, RwFrameGetLTM(frames[index]));
             }
 
-            return result;
+            out = result;
         }
-
-        if (matrix)
+        else if (matrix)
         {
-            return (RwMatrix*)matrix;
+            out = (RwMatrix*)matrix;
         }
-
-        RwMatrixSetIdentityMacro(result);
-
-        return result;
+        else
+        {
+            RwMatrixSetIdentityMacro(result);
+            out = result;
+        }
     }
-
-    if (frame == 3)
+    else if (frame == 3)
     {
         if (matrix)
         {
             RwMatrixMultiply(result, matrix, &lbl_8025E304);
-            return result;
+            out = result;
         }
-
-        return &lbl_8025E304;
+        else
+        {
+            out = &lbl_8025E304;
+        }
     }
     else if (frame == 2)
     {
         if (matrix)
         {
-            return (RwMatrix*)matrix;
+            out = (RwMatrix*)matrix;
         }
-
-        return NULL;
+        else
+        {
+            out = NULL;
+        }
+    }
+    else
+    {
+        out = NULL;
     }
 
-    return NULL;
+    return out;
 }
 
 // Sends an effect's TEV setup to GX: colors, texture and indirect matrices, indirect stages, TEV
