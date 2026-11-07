@@ -339,7 +339,6 @@ void _rwDlImage4GetFromRaster(RwImage* image, RwRaster* raster)
 void _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster)
 {
     DlConvertFunc convert;
-    S32 i;
     S32 y;
     S32 x;
 
@@ -348,6 +347,9 @@ void _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster)
     switch (raster->depth)
     {
     case 4:
+    {
+        S32 i;
+
         for (i = 0; i < 16; i++)
         {
             convert(&image->palette[i], ((U16*)raster->palette)[i]);
@@ -367,7 +369,11 @@ void _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster)
             }
         }
         break;
+    }
     case 8:
+    {
+        S32 i;
+
         for (i = 0; i < 256; i++)
         {
             convert(&image->palette[i], ((U16*)raster->palette)[i]);
@@ -386,6 +392,7 @@ void _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster)
             }
         }
         break;
+    }
     case 16:
     case 32:
     {
@@ -413,9 +420,6 @@ void _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster)
 void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
 {
     DlConvertFunc convert;
-    S32 i;
-    S32 y;
-    S32 x;
 
     convert = DlPaletteConverter(raster);
 
@@ -423,6 +427,10 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
     {
     case 4:
     {
+        S32 i;
+        S32 y;
+        S32 x;
+
         RwRGBA palette[16];
 
         for (i = 0; i < 16; i++)
@@ -447,6 +455,10 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
     }
     case 8:
     {
+        S32 i;
+        S32 y;
+        S32 x;
+
         RwRGBA palette[256];
 
         for (i = 0; i < 256; i++)
@@ -469,6 +481,10 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
         break;
     }
     case 16:
+    {
+        S32 y;
+        S32 x;
+
         for (y = 0; y < raster->height; y++)
         {
             U16* src = (U16*)(raster->cpPixels + raster->stride * y);
@@ -482,6 +498,7 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
             }
         }
         break;
+    }
     case 24:
     {
         RwError err;
@@ -491,6 +508,10 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
         break;
     }
     case 32:
+    {
+        S32 y;
+        S32 x;
+
         for (y = 0; y < raster->height; y++)
         {
             U32* src = (U32*)(raster->cpPixels + raster->stride * y);
@@ -504,6 +525,7 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
             }
         }
         break;
+    }
     default:
     {
         RwError err;
@@ -792,8 +814,6 @@ void _rwDlRaster16SetFromImage(RwRaster* raster, RwImage* image)
     DlPixelFunc convert;
     U16 palette[256];
     S32 i;
-    S32 y;
-    S32 x;
 
     convert = DlPixelConverter(raster);
 
@@ -801,6 +821,10 @@ void _rwDlRaster16SetFromImage(RwRaster* raster, RwImage* image)
     {
     case 4:
     case 8:
+    {
+        S32 y;
+        S32 x;
+
         for (i = 0; i < (1 << image->depth); i++)
         {
             palette[i] = convert(&image->palette[i]);
@@ -819,7 +843,12 @@ void _rwDlRaster16SetFromImage(RwRaster* raster, RwImage* image)
             }
         }
         break;
+    }
     case 32:
+    {
+        S32 y;
+        S32 x;
+
         for (y = 0; y < raster->height; y++)
         {
             RwRGBA* src = (RwRGBA*)(image->cpPixels + image->stride * y);
@@ -833,6 +862,7 @@ void _rwDlRaster16SetFromImage(RwRaster* raster, RwImage* image)
             }
         }
         break;
+    }
     default:
     {
         RwError err;
@@ -851,8 +881,6 @@ void _rwDlRaster32SetFromImage(RwRaster* raster, RwImage* image)
     DlPixelFunc convert;
     U32 palette[256];
     S32 i;
-    S32 y;
-    S32 x;
 
     convert = DlPixelConverter(raster);
 
@@ -860,6 +888,10 @@ void _rwDlRaster32SetFromImage(RwRaster* raster, RwImage* image)
     {
     case 4:
     case 8:
+    {
+        S32 y;
+        S32 x;
+
         for (i = 0; i < (1 << image->depth); i++)
         {
             palette[i] = convert(&image->palette[i]);
@@ -878,7 +910,12 @@ void _rwDlRaster32SetFromImage(RwRaster* raster, RwImage* image)
             }
         }
         break;
+    }
     case 32:
+    {
+        S32 y;
+        S32 x;
+
         for (y = 0; y < raster->height; y++)
         {
             RwRGBA* src = (RwRGBA*)(image->cpPixels + image->stride * y);
@@ -892,6 +929,7 @@ void _rwDlRaster32SetFromImage(RwRaster* raster, RwImage* image)
             }
         }
         break;
+    }
     default:
     {
         RwError err;

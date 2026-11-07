@@ -272,47 +272,53 @@ S32 fn_80179064(RwRaster* raster, U8 level)
     return (size + 0x1F) & ~0x1F;
 }
 
+// The bytes of one row of a level width texels wide at this depth, rounded up to whole tiles.
+static S32 DlRasterRowBytes(S32 width, S32 depth)
+{
+    S32 stride;
+
+    switch (depth)
+    {
+    case 4:
+        stride = ((width + 7) & ~7) >> 1;
+        break;
+    case 8:
+        stride = (width + 7) & ~7;
+        break;
+    case 16:
+        stride = ((width + 3) & ~3) << 1;
+        break;
+    case 32:
+        stride = ((width + 3) & ~3) << 2;
+        break;
+    case 24:
+    default:
+        DLRASTER_ERROR((0x8000000C));
+        break;
+    }
+
+    return stride;
+}
+
 // Locks one mipmap level ((flags >> 8) & 0xFF) for reading or writing; a raw lock hands out the
 // tiled texels themselves.
 S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
 {
     U8* pixels;
-    U8 level = (flags >> 8) & 0xFF;
     RwRaster* raster = (RwRaster*)rasterIn;
+    U8 level = (flags >> 8) & 0xFF;
     RwRaster* top = raster->parent;
-    S32 stride;
     U8 l;
-    S32 offset;
+    S32 stride;
     RwGCRasterExt* ext = RWGCRASTEREXT(top);
+    S32 offset;
 
     switch (raster->cType & rwRASTERTYPEMASK)
     {
     case rwRASTERTYPENORMAL:
     case rwRASTERTYPETEXTURE:
     case rwRASTERTYPECAMERATEXTURE:
-        {
-            S32 width = DLRASTER_LEVELSIZE(top->width, level);
-
-            switch (raster->depth)
-            {
-            case 4:
-                stride = ((width + 7) & ~7) >> 1;
-                break;
-            case 8:
-                stride = (width + 7) & ~7;
-                break;
-            case 16:
-                stride = ((width + 3) & ~3) << 1;
-                break;
-            case 32:
-                stride = ((width + 3) & ~3) << 2;
-                break;
-            case 24:
-            default:
-                DLRASTER_ERROR((0x8000000C));
-                break;
-            }
-        }
+        stride = DlRasterRowBytes(DLRASTER_LEVELSIZE(top->width, level), raster->depth);
 
         offset = 0;
 
