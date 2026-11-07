@@ -637,7 +637,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
     TriStripEdge* edgeList;
     TriStripEdge* edge;
     U32 start;
-    S32 bin;
+    long bin;
     S32 backwardFree;
     U32 triIndex;
     TriStripList* strip;
