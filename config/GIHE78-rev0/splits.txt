@@ -1551,6 +1551,7 @@ bink/src/sdk/decode/ngc/ngcyuy2.c:
 bink/src/sdk/varbits.c:
 	.text       start:0x80127FC8 end:0x801281AC
 	.rodata     start:0x801A8C40 end:0x801A8DC0
+	.sdata2     start:0x80262798 end:0x802627A8
 
 bink/src/sdk/fft.c:
 	.text       start:0x801281AC end:0x8012C490
@@ -1559,6 +1560,7 @@ bink/src/sdk/fft.c:
 bink/src/sdk/dct.c:
 	.text       start:0x8012C490 end:0x8012D564
 	.rodata     start:0x801A8E20 end:0x801AD260 align:16
+	.sdata2     start:0x802627A8 end:0x802627D8
 
 bink/src/sdk/bitplane.c:
 	.text       start:0x8012D564 end:0x80130990
@@ -1811,10 +1813,12 @@ rwsdk/world/pipe/p2/nodeWorldSectorInstance.c:
 
 rwsdk/world/pipe/p2/gcn/gcpipe.c:
 	.text       start:0x8015885C end:0x80159380
+	.data       start:0x801DDA28 end:0x801DDA48
 	.sdata2     start:0x80262988 end:0x802629A0
 
 rwsdk/world/pipe/p2/gcn/instance/geominst.c:
 	.text       start:0x80159380 end:0x8015CB3C
+	.data       start:0x801DDA48 end:0x801DDA78
 	.sdata2     start:0x802629A0 end:0x802629B8
 
 rwsdk/world/pipe/p2/gcn/instance/instancegeom.c:
@@ -2003,12 +2007,14 @@ rwsdk/driver/gcn/dldevice.c:
 	.rodata     start:0x801AD2D0 end:0x801AD3A8
 	.data       start:0x801DDF90 end:0x801DE0A0
 	.bss        start:0x8025E2B0 end:0x8025E348
+	.sdata      start:0x8025E7F0 end:0x8025E800
 	.sbss       start:0x8025F7F8 end:0x8025F870
 	.sdata2     start:0x80262B50 end:0x80262B70
 
 rwsdk/driver/gcn/dlraster.c:
 	.text       start:0x80178B04 end:0x8017A658
 	.data       start:0x801DE0A0 end:0x801DE390
+	.sbss       start:0x8025F870 end:0x8025F878
 
 rwsdk/driver/gcn/dlrendst.c:
 	.text       start:0x8017A658 end:0x8017B22C
@@ -2030,10 +2036,13 @@ rwsdk/driver/gcn/dltexdic.c:
 rwsdk/driver/gcn/dltextur.c:
 	.text       start:0x8017CF40 end:0x8017DBB8
 	.data       start:0x801DE5B8 end:0x801DE628
+	.sbss       start:0x8025F888 end:0x8025F890
 	.sdata2     start:0x80262BC0 end:0x80262BD8
 
 rwsdk/driver/gcn/dltoken.c:
 	.text       start:0x8017DBB8 end:0x8017DE58
+	.sdata      start:0x8025E800 end:0x8025E808
+	.sbss       start:0x8025F890 end:0x8025F898
 
 rwsdk/src/pipe/p2/baim3d.c:
 	.text       start:0x8017DE58 end:0x8017ED24
@@ -2101,9 +2110,11 @@ rwsdk/src/pipe/p2/nodeTransform.c:
 
 rwsdk/src/pipe/p2/p2altmdl.c:
 	.text       start:0x80184918 end:0x80184C50
+	.bss        start:0x8025E388 end:0x8025E3A0
 
 rwsdk/src/pipe/p2/p2clpcom.c:
 	.text       start:0x80184C50 end:0x801869A8
+	.bss        start:0x8025E3A0 end:0x8025E3C8
 	.sdata2     start:0x80262C28 end:0x80262C48
 
 rwsdk/src/pipe/p2/p2core.c:
@@ -2121,6 +2132,9 @@ rwsdk/src/pipe/p2/p2dep.c:
 rwsdk/src/pipe/p2/p2heap.c:
 	.text       start:0x8018A644 end:0x8018B69C
 	.data       start:0x801DEF98 end:0x801DEFC0
+
+rwsdk/src/pipe/p2/p2stdcls.c:
+	.data       start:0x801DEFC0 end:0x801DF0E8
 
 rwsdk/src/pipe/p2/p2renderstate.c:
 	.text       start:0x8018B69C end:0x8018BB5C

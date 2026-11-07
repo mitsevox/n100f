@@ -1397,10 +1397,12 @@ bink/src/sdk/decode/ngc/ngcyuy2.c:
 bink/src/sdk/varbits.c:
 	.text       start:0x801282B8 end:0x8012849C
 	.rodata     start:0x801A5CC0 end:0x801A5E40
+	.sdata2     start:0x80274660 end:0x80274670
 
 bink/src/sdk/dct.c:
 	.text       start:0x8012C780 end:0x8012D854
 	.rodata     start:0x801A5EA0 end:0x801AA2E0
+	.sdata2     start:0x80274670 end:0x802746A0
 
 bink/src/sdk/bitplane.c:
 	.text       start:0x8012D854 end:0x80130C80

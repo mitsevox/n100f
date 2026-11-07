@@ -2,8 +2,8 @@
 #include <dolphin/gx/GXManage.h>
 
 // Interrupt-visible GPU state: the current allocation token and the last completion token read.
-extern volatile U16 lbl_8025E800;
-extern volatile U16 lbl_8025F890;
+volatile U16 lbl_8025E800 = 1;
+volatile U16 lbl_8025F890;
 
 // Tests whether the GPU has passed a token, accounting for token wraparound.
 S32 _rwDlTokenQueryDone(U16 token)
