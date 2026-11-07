@@ -1375,8 +1375,8 @@ void iSndLoadSounds(void* data)
             {
                 size = 0x11940;
             }
-            U32 dest = aram + done;
             SoundFlags |= 0x1;
+            U32 dest = aram + done;
             iFileSeek(file, lowest + done, IFILE_SEEK_SET);
             iFileReadAsync(file, stream_buffer, size, sndloadcb);
             while (SoundFlags != 0)
