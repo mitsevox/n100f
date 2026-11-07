@@ -21,10 +21,10 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
     const RwRGBA* pixel;
     F32 scale;
 
+    width = RESAMPLE_TOREAL * (F32)(x1 - x0);
+    pixel = (const RwRGBA*)(image->cpPixels + (y >> 16) * image->stride + (x0 >> 16) * 4);
     last = x1 >> 16;
     first = x0 >> 16;
-    width = RESAMPLE_TOREAL * (F32)(x1 - x0);
-    pixel = (const RwRGBA*)(image->cpPixels + (y >> 16) * image->stride + first * 4);
 
     if (first == last)
     {
@@ -63,10 +63,10 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
 
         for (i = x >> 16; i != last; i++)
         {
-            red = pixel->red;
             green = pixel->green;
             blue = pixel->blue;
             alpha = pixel->alpha;
+            red = pixel->red;
             pixel++;
             x += RESAMPLE_ONE;
             result->red += RESAMPLE_TOUNIT * red;
@@ -76,9 +76,9 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
         }
 
         red = pixel->red;
+        alpha = pixel->alpha;
         green = pixel->green;
         blue = pixel->blue;
-        alpha = pixel->alpha;
         result->red += RESAMPLE_TOUNIT * red * (RESAMPLE_TOREAL * (F32)(x1 - x));
         result->green += RESAMPLE_TOUNIT * green * (RESAMPLE_TOREAL * (F32)(x1 - x));
         result->blue += RESAMPLE_TOUNIT * blue * (RESAMPLE_TOREAL * (F32)(x1 - x));
