@@ -232,7 +232,7 @@ void _rwDlRasterPalletized8SetFromImage(RwRaster* raster, RwImage* image);
 typedef void (*DlConvertFunc)(RwRGBA*, U32);
 
 // The converter from the pixel format of a raster's palette to RwRGBA.
-static DlConvertFunc DlPaletteConverter(RwRaster* raster)
+static inline DlConvertFunc DlPaletteConverter(RwRaster* raster)
 {
     DlConvertFunc convert = NULL;
 
@@ -622,7 +622,7 @@ typedef U32 (*DlPixelFunc)(const RwRGBA*);
 
 // The converter from RwRGBA to a raster's pixel format, or NULL (with an error) for formats
 // it cannot write.
-static DlPixelFunc DlPixelConverter(RwRaster* raster)
+static inline DlPixelFunc DlPixelConverter(RwRaster* raster)
 {
     DlPixelFunc convert = NULL;
 

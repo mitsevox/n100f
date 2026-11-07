@@ -273,7 +273,7 @@ S32 fn_80179064(RwRaster* raster, U8 level)
 }
 
 // The bytes of one row of a level width texels wide at this depth, rounded up to whole tiles.
-static S32 DlRasterRowBytes(S32 width, S32 depth)
+static inline S32 DlRasterRowBytes(S32 width, S32 depth)
 {
     S32 stride;
 
