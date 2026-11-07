@@ -287,20 +287,32 @@ void fn_80141D20(GCNObjectData* objectData, RpGameCubeVtxFmt* vtxFmt, S32 numVer
     GXInvalidateVtxCache();
 }
 
+// Whether any mesh of an instanced object has a GameCube effect with a texture coordinate
+// generator that needs the binormals and tangents.
 S32 _rpGameCubeMTPipeDataQueryNBTs(GCNObjectData* objectData)
 {
     RpMeshHeader* meshHeader = objectData->meshHeader;
     RpMesh* mesh = (RpMesh*)(meshHeader + 1);
     S32 i;
 
-    for (i = 0; i < meshHeader->numMeshes; i++)
+    for (i = 0; i < meshHeader->numMeshes; i++, mesh++)
     {
-        if (MeshNeedsNBTs(mesh))
-        {
-            return TRUE;
-        }
+        RpMultiTexture* multiTexture = RpMaterialGetMultiTexture(mesh->material, MTGCN_PLATFORM);
 
-        mesh++;
+        if (multiTexture && multiTexture->effect &&
+            multiTexture->effect->platform == MTGCN_PLATFORM)
+        {
+            GCNMTConfig* config = RpGameCubeMTEffectGetConfig(multiTexture->effect);
+            S32 j;
+
+            for (j = 0; j < config->numTexCoordGens; j++)
+            {
+                if (MTGCN_TEXGENNEEDSNBT(&config->texCoordGens[j]))
+                {
+                    return TRUE;
+                }
+            }
+        }
     }
 
     return FALSE;
