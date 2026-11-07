@@ -413,12 +413,14 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             _rwDlRenderModeSelect(NULL, lbl_8025F7FC);
         }
 
-        frameSize = ((_RwDlRenderMode->fbWidth + 15) & 0xFFF0) * _RwDlRenderMode->xfbHeight;
-        lbl_8025F80C = RwMalloc(lbl_8025E7F4 + frameSize * 4 + 0x1F);
+        // The bytes of one external frame buffer (two bytes a pixel); the FIFO and two of them
+        // share one allocation.
+        frameSize = ((_RwDlRenderMode->fbWidth + 15) & 0xFFF0) * _RwDlRenderMode->xfbHeight * 2;
+        lbl_8025F80C = RwMalloc(lbl_8025E7F4 + frameSize * 2 + 0x1F);
         lbl_8025F854 = (void*)(((U32)lbl_8025F80C + 0x1F) & ~0x1F);
         DCInvalidateRange(lbl_8025F854, lbl_8025E7F4);
         lbl_8025F850 = (U8*)lbl_8025F854 + lbl_8025E7F4;
-        lbl_8025F84C = (U8*)lbl_8025F850 + frameSize * 2;
+        lbl_8025F84C = (U8*)lbl_8025F850 + frameSize;
         lbl_8025F844 = lbl_8025F850;
         lbl_8025F848 = lbl_8025F84C;
         lbl_8025F858 = GXInit(lbl_8025F854, lbl_8025E7F4);
@@ -439,8 +441,8 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
         return TRUE;
     case 2:
     {
-        GXRenderModeObj* renderMode = _RwDlRenderMode;
         S32 pixelFormat = lbl_8025F7FC;
+        GXRenderModeObj* renderMode = _RwDlRenderMode;
 
         VIConfigure(renderMode);
         VISetBlack(TRUE);
@@ -465,8 +467,8 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
         if (renderMode->aa && renderMode->xfbHeight == renderMode->viHeight)
         {
             GXSetDispCopyYScale(1.0f);
-            lbl_8025F808 = 1;
             lbl_8025F85C = renderMode->xfbHeight / 2;
+            lbl_8025F808 = 1;
             lbl_8025E7F0 = 1;
         }
         else
@@ -537,8 +539,8 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             {28, fn_80179BDC},
         };
         RwStandardFunc* funcs = out;
-        S32 count = sizeof(standards) / sizeof(standards[0]);
         S32 i;
+        S32 count = sizeof(standards) / sizeof(standards[0]);
 
         for (i = 0; i < numIn; i++)
         {
