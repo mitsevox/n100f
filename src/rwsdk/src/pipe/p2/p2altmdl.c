@@ -8,6 +8,42 @@ RxExecContext _rxExecCtxGlobal;
 
 void _rxPacketDestroy(RxPacket* packet);
 
+// Moves each cluster the receiving pipeline requires from one embedded packet into the slot that
+// pipeline expects in the other, and clears it in the source packet. The PS2 prototype keeps this
+// as its own LOCAL function (rxPacketCrossPipelineAlignClusters); GC inlines it into its one caller.
+static void _rxPacketCrossPipelineAlignClusters(RxPacket* fromPacket, RxPacket* toPacket,
+                                                RxPipeline* toPipeline)
+{
+    U32 i;
+
+    for (i = 0; i < toPipeline->numInputRequirements; i++)
+    {
+        RxPipelineRequiresCluster* requirement = &toPipeline->inputRequirements[i];
+        U32 j;
+
+        for (j = 0; j < fromPacket->numClusters; j++)
+        {
+            RxPipelineCluster* clusterRef = fromPacket->clusters[j].clusterRef;
+
+            if (clusterRef && clusterRef->clusterRef == requirement->clusterDef)
+            {
+                break;
+            }
+        }
+
+        if (j != fromPacket->numClusters)
+        {
+            if (fromPacket->clusters[j].data)
+            {
+                toPacket->clusters[requirement->slotIndex] = fromPacket->clusters[j];
+                toPacket->clusters[requirement->slotIndex].clusterRef =
+                    toPipeline->nodes[0].slotClusterRefs[requirement->slotIndex];
+                fromPacket->clusters[j].data = NULL;
+            }
+        }
+    }
+}
+
 // Hands the clusters the second pipeline requires from the first pipeline's embedded packet over
 // to the second's, destroys the first packet and makes the second one pending.
 void _rxEmbeddedPacketBetweenPipelines(RxPipeline* fromPipeline, RxPipeline* toPipeline)
@@ -16,36 +52,8 @@ void _rxEmbeddedPacketBetweenPipelines(RxPipeline* fromPipeline, RxPipeline* toP
     {
         RxPacket* fromPacket = fromPipeline->embeddedPacket;
         RxPacket* toPacket = toPipeline->embeddedPacket;
-        U32 i;
 
-        for (i = 0; i < toPipeline->numInputRequirements; i++)
-        {
-            RxPipelineRequiresCluster* requirement = &toPipeline->inputRequirements[i];
-            U32 j;
-            U32 numClusters = fromPacket->numClusters;
-
-            for (j = 0; j < numClusters; j++)
-            {
-                RxPipelineCluster* clusterRef = fromPacket->clusters[j].clusterRef;
-
-                if (clusterRef && clusterRef->clusterRef == requirement->clusterDef)
-                {
-                    break;
-                }
-            }
-
-            if (j != numClusters)
-            {
-                if (fromPacket->clusters[j].data)
-                {
-                    toPacket->clusters[requirement->slotIndex] = fromPacket->clusters[j];
-                    toPacket->clusters[requirement->slotIndex].clusterRef =
-                        toPipeline->nodes[0].slotClusterRefs[requirement->slotIndex];
-                    fromPacket->clusters[j].data = NULL;
-                }
-            }
-        }
-
+        _rxPacketCrossPipelineAlignClusters(fromPacket, toPacket, toPipeline);
         _rxPacketDestroy(fromPacket);
 
         toPacket->slotClusterRefs = toPipeline->nodes[0].slotClusterRefs;
