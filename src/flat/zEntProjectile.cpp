@@ -897,11 +897,11 @@ S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
     return 1;
 }
 
-// Unused. Stands in for removed code: its zeroed local leaves 264 bytes of zero initializer in
+// Unused. Stands in for removed code: its zeroed local leaves 12 bytes of zero initializer in
 // .rodata at this point of the file, as the target has.
 static void SetupUnusedData()
 {
-    xVec3 tmp[22] = {};
+    xVec3 tmp[1] = {};
 }
 
 void zEntProjectile::OrientSet(S32 orient)
@@ -942,8 +942,8 @@ void zEntProjectile::OrientToPath(_xEntFrame* frame, S32 flg_orient)
 S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
 {
     S32 rc;
-    _xCollis lcl_xcollis_plyr = {};
     _xEntCollis lcl_xentcollis = {};
+    _xCollis lcl_xcollis_plyr = {};
     st_ZPRJ_CATEGORY_FUNCS* catf;
 
     if (state == ZPRJ_STATE_STANDBY)
@@ -1058,6 +1058,13 @@ S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
     }
 
     return 1;
+}
+
+// Unused. Stands in for removed code: its zeroed local leaves 252 bytes of zero initializer in
+// .rodata after ZPRJ_update's, as the target has.
+static void UpdateUnusedData()
+{
+    xVec3 tmp[21] = {};
 }
 
 S32 zEntProjectile::DoColCheck(F32 dt)
