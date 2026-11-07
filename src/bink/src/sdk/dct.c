@@ -1,3 +1,5 @@
+static const double ifiquantlevels8align = 0;
+
 static const int ifiquantlevels8[16][64] = {
     {
         65536, 90901, 85627, 91511, 65536, 61146, 48768, 24862,
@@ -160,6 +162,8 @@ static const int ifiquantlevels8[16][64] = {
         2287290, 3172562, 3768094, 3274257, 2784527, 2695668, 1856808, 1138655,
     },
 };
+
+static const double ifquantlevels8align = 0;
 
 static const int ifquantlevels8[16][64] = {
     {
@@ -324,6 +328,8 @@ static const int ifquantlevels8[16][64] = {
     },
 };
 
+static const double ifimquantlevels8align = 0;
+
 static const int ifimquantlevels8[16][64] = {
     {
         65536, 96582, 90979, 86695, 73728, 57928, 42118, 21472,
@@ -486,6 +492,8 @@ static const int ifimquantlevels8[16][64] = {
         1392263, 1931125, 1949014, 1754066, 1491711, 1211097, 834218, 452718,
     },
 };
+
+static const double ifmquantlevels8align = 0;
 
 static const int ifmquantlevels8[16][64] = {
     {
@@ -650,6 +658,8 @@ static const int ifmquantlevels8[16][64] = {
     },
 };
 
+const double zigzagalign = 0;
+
 // The coefficient scan order of the bit-plane coder (bitplane.c), then the 16 8x8 fill
 // patterns ExpandPlane draws blocks with (expand.c).
 const unsigned char zigzag[64] = {
@@ -658,6 +668,8 @@ const unsigned char zigzag[64] = {
     34, 35, 42, 43, 48, 49, 56, 57, 50, 51, 58, 59, 18, 19, 26, 27,
     36, 37, 44, 45, 38, 39, 46, 47, 52, 53, 60, 61, 54, 55, 62, 63,
 };
+
+const double patternsalign = 0;
 
 const unsigned char patterns[16][64] = {
     {

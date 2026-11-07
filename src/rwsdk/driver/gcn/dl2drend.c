@@ -68,7 +68,7 @@ void _rw2DRenderPrimitiveInit(void)
         GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE,
                           GX_PTIDENTITY);
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-        fn_8017ABB4();
+        _rwDlTextureRasterFlush();
     }
     else
     {

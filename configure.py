@@ -983,7 +983,7 @@ config.libs: List[Dict[str, Any]] = [
         "rpworld",
         [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/babinwor.c"),
-            Object(NonMatching, "rwsdk/world/baclump.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/baclump.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/bageomet.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/balight.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/bamateri.c"),
@@ -1087,6 +1087,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/pipe/p2/p2define.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/p2dep.c"),
             Object(NonMatching, "rwsdk/src/pipe/p2/p2heap.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/p2stdcls.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/pipe/p2/p2renderstate.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/p2resort.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/pipe/p2/gcn/im3dpipe.c"),

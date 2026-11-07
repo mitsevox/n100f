@@ -1,5 +1,7 @@
 #include "bink/varbits.h"
 
+const F64 VarBitsLensalign = 0;
+
 const U32 VarBitsLens[33] = {
     0x00000000, 0x00000001, 0x00000003, 0x00000007, 0x0000000F, 0x0000001F, 0x0000003F,
     0x0000007F, 0x000000FF, 0x000001FF, 0x000003FF, 0x000007FF, 0x00000FFF, 0x00001FFF,
@@ -7,6 +9,8 @@ const U32 VarBitsLens[33] = {
     0x001FFFFF, 0x003FFFFF, 0x007FFFFF, 0x00FFFFFF, 0x01FFFFFF, 0x03FFFFFF, 0x07FFFFFF,
     0x0FFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF,
 };
+
+const F64 _bitlevelsalign = 0;
 
 const U8 _bitlevels[129] __attribute__((aligned(64))) = {
     0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
