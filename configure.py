@@ -1059,7 +1059,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/src/batextur.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/batypehf.c"),
             Object(NonMatching, "rwsdk/driver/common/palquant.c"),
-            Object(NonMatching, "rwsdk/driver/gcn/dl2drend.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dl2drend.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dlconvrt.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dldevice.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dlraster.c"),

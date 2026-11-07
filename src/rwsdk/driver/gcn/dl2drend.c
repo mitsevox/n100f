@@ -7,14 +7,21 @@
 // projection over the whole frame and the matching viewport and scissor, writes the vertices
 // straight into the GX FIFO, then puts the camera's projection, viewport and scissor back.
 
-// The GX primitive for each RenderWare primitive type.
-extern GXPrimitive lbl_801DDCC0[7];
+// The GX primitive for each RenderWare primitive type (none for rwPRIMTYPENAPRIMTYPE).
+GXPrimitive lbl_801DDCC0[7] = {
+    (GXPrimitive)0, GX_LINES, GX_LINESTRIP, GX_TRIANGLES, GX_TRIANGLESTRIP, GX_TRIANGLEFAN,
+    GX_POINTS,
+};
 
 // The position matrix 2D vertices use: identity with the Z axis flipped.
-extern Mtx lbl_801DDCDC;
+Mtx lbl_801DDCDC = {
+    {1.0f, 0.0f, 0.0f, 0.0f},
+    {0.0f, 1.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, -1.0f, 0.0f},
+};
 
 // The camera's projection, saved while 2D drawing replaces it.
-extern F32 lbl_8025E290[7];
+F32 lbl_8025E290[7];
 
 // Whether the frame is drawn in two halves, which half is being drawn, and the line where the
 // halves meet (dldevice.c).
@@ -28,7 +35,7 @@ extern RwTexture* lbl_8025F87C;
 void GXSetProjectionv(const f32* ptr);
 
 // Writes one vertex: position, color, and texture coordinates when textured.
-static inline void DlIm2DVertexTextured(const RwIm2DVertex* vert)
+static inline void DlIm2DVertexTextured(RwIm2DVertex* vert)
 {
     GXPosition3f32(vert->x, vert->y, vert->z);
     GXColor4u8(vert->emissiveColor.red, vert->emissiveColor.green, vert->emissiveColor.blue,
@@ -36,7 +43,7 @@ static inline void DlIm2DVertexTextured(const RwIm2DVertex* vert)
     GXTexCoord2f32(vert->u, vert->v);
 }
 
-static inline void DlIm2DVertexUntextured(const RwIm2DVertex* vert)
+static inline void DlIm2DVertexUntextured(RwIm2DVertex* vert)
 {
     GXPosition3f32(vert->x, vert->y, vert->z);
     GXColor4u8(vert->emissiveColor.red, vert->emissiveColor.green, vert->emissiveColor.blue,
