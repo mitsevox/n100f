@@ -1298,7 +1298,8 @@ void iSndLoadSounds(void* data)
         snd = &sounds[i];
         xSTGetAssetInfo(snd->assetID, &ainfo);
         U32 offset = ainfo.plus_offset + ((ainfo.sector - file->ps.fileInfo.startAddr) << 5);
-        U32 end = ainfo.size + offset;
+        U32 size = ainfo.size;
+        U32 end = size + offset;
         if (lowest > offset)
         {
             lowest = offset;
@@ -1307,7 +1308,7 @@ void iSndLoadSounds(void* data)
         {
             highest = end;
         }
-        total += ainfo.size;
+        total += size;
         snd->dsp.sa += offset * 2;
         snd->dsp.ea += offset * 2;
         snd->dsp.ca += offset * 2;
@@ -1325,7 +1326,8 @@ void iSndLoadSounds(void* data)
         else
         {
             U32 offset = ainfo.plus_offset + ((ainfo.sector - file->ps.fileInfo.startAddr) << 5);
-            U32 end = ainfo.size + offset;
+            U32 size = ainfo.size;
+            U32 end = size + offset;
             if (lowest > offset)
             {
                 lowest = offset;
@@ -1334,7 +1336,7 @@ void iSndLoadSounds(void* data)
             {
                 highest = end;
             }
-            total += ainfo.size;
+            total += size;
             sounds[j + bank->num_sounds].dsp.sa += offset * 2;
             sounds[j + bank->num_sounds].dsp.ea += offset * 2;
             sounds[j + bank->num_sounds].dsp.ca += offset * 2;
