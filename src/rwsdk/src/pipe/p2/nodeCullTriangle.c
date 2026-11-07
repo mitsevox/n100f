@@ -1,5 +1,8 @@
 #include <rwcore.h>
 
+// Drops the back-facing triangles of a parallel-projection packet: a triangle whose camera-space
+// area is negative is overwritten by the last triangle and the count shrinks. The packet goes to
+// output 1 when every triangle is culled, else to output 0.
 static S32 ParallelCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
 {
     RxCluster* camVerts;
