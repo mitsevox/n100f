@@ -963,6 +963,9 @@ MSL_C.PPCEABI.bare.H/alloc.c:
 	.bss        start:0x80242898 end:0x802428D0
 	.sbss       start:0x8025F230 end:0x8025F238
 
+MSL_C.PPCEABI.bare.H/errno.c:
+	.sbss       start:0x8025F238 end:0x8025F240
+
 MSL_C.PPCEABI.bare.H/ansi_files.c:
 	.text       start:0x800E7350 end:0x800E7650
 	.data       start:0x801CA268 end:0x801CA3A8
@@ -986,6 +989,10 @@ MSL_C.PPCEABI.bare.H/char_io.c:
 MSL_C.PPCEABI.bare.H/ctype.c:
 	.text       start:0x800E9A7C end:0x800E9AA0
 	.data       start:0x801CA510 end:0x801CA810
+
+MSL_C.PPCEABI.bare.H/locale.c:
+	.rodata     start:0x801A7F18 end:0x801A7F20
+	.data       start:0x801CA810 end:0x801CA848
 
 MSL_C.PPCEABI.bare.H/direct_io.c:
 	.text       start:0x800E9AA0 end:0x800EA13C
@@ -1032,6 +1039,9 @@ MSL_C.PPCEABI.bare.H/string.c:
 	.text       start:0x800EE2F0 end:0x800EE7BC
 	.rodata     start:0x801A7F70 end:0x801A8300
 	.sdata      start:0x8025E5E0 end:0x8025E5E8
+
+MSL_C.PPCEABI.bare.H/float.c:
+	.sdata      start:0x8025E5E8 end:0x8025E618
 
 MSL_C.PPCEABI.bare.H/strtold.c:
 	.text       start:0x800EE7BC end:0x800EF854
@@ -1211,6 +1221,10 @@ dolphin/ax/AXVPB.c: comment:8
 	.bss        start:0x8024A840 end:0x8025A640
 	.sbss       start:0x8025F380 end:0x8025F390
 	.sdata2     start:0x80262680 end:0x80262688
+
+dolphin/ax/DSPCode.c: comment:8
+	.data       start:0x801CAC80 end:0x801CC660
+	.sdata      start:0x8025E620 end:0x8025E628
 
 dolphin/ax/AXProf.c: comment:8
 	.text       start:0x800F8734 end:0x800F877C

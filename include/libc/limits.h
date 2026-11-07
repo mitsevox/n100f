@@ -3,6 +3,7 @@
 
 // MSL C library declarations, limited to what reconstructed units use (docs/libraries.md).
 
+#define CHAR_MAX 0x7F
 #define SHRT_MIN (-0x7FFF - 1)
 #define SHRT_MAX 0x7FFF
 #define INT_MAX 0x7FFFFFFF
