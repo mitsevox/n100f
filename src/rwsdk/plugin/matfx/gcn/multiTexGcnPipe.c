@@ -83,18 +83,20 @@ void* fn_80141954(void* instance, S32 offset, S32 size)
 // the positions, the normal and the first texture coordinates of one of its triangles.
 void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType)
 {
-    S32 i;
+    GCNMTNBT* nbt;
     RwV3d* positions = (RwV3d*)arrays->pos;
     RwTexCoords* texCoords = (RwTexCoords*)arrays->tex[0];
     GCNMTNBT* nbts = (GCNMTNBT*)arrays->nrm;
     U16* indices = mesh->indices;
     U16 a;
     U16 b;
+    S32 i;
 
     for (i = 0; i < mesh->numIndices; i++)
     {
         U16 index = indices[i];
-        GCNMTNBT* nbt = &nbts[index];
+
+        nbt = &nbts[index];
 
         if (nbt->binormal.x == MTGCN_NBTUNSET)
         {
