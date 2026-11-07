@@ -147,8 +147,7 @@ S32 zCutsceneMgrEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
 }
 
 // Nothing to finish once a cutscene has loaded on GameCube (the PS2 build steps the load here
-// and sends the start events). Only the manager pointer is set, through its address, so the
-// compiler keeps the store to the stack that the target has.
+// and sends the start events).
 void zCutsceneMgrFinishLoad(xBase* to)
 {
     _zCutsceneMgr* t;
