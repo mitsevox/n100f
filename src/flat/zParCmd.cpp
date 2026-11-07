@@ -88,7 +88,7 @@ static zCmdInfo sCmdInfo[29] = {
     { 0x19, 0x0C, xParCmdScale_Update },
     { 0x1A, 0x0C, xParCmdClipVolumes_Update },
     { 0x1B, 0x0C, xParCmdAnimalMagentism_Update },
-    { 0x1C, 0x10, xParCmdDamagePlayer_Update },
+    { 0x1C, 0x0C, xParCmdDamagePlayer_Update },
 };
 
 // Collects the scene's clip volumes, named PARTICLE_CLIP_1 upwards, stopping at the first gap.
@@ -109,6 +109,7 @@ void zParCmdFindClipVolumes()
     }
 }
 
+// Returns the command asset size, or zero for an unknown type.
 U32 zParCmdGetSize(U32 parType)
 {
     for (S32 i = 0; i < 29; i++)
@@ -122,6 +123,7 @@ U32 zParCmdGetSize(U32 parType)
     return 0;
 }
 
+// Returns the updater for a command type; some commands have no updater.
 void (*zParCmdGetUpdateFunc(U32 parType))(zParCmd*, xParGroup*, F32)
 {
     for (S32 i = 0; i < 29; i++)
@@ -135,46 +137,54 @@ void (*zParCmdGetUpdateFunc(U32 parType))(zParCmd*, xParGroup*, F32)
     return NULL;
 }
 
-// An empty function between zParCmdGetUpdateFunc and xParCmdKillDistance_Update that nothing in
-// the target references; the PS2 builds have no function here, so its name is unknown.
-extern "C" void fn_800C4AB8()
-{
-}
-
 // Kills particles farther from the camera than the limit, or nearer when kill_greater_than is
 // clear. A lifetime of -1 marks a particle dead.
 void xParCmdKillDistance_Update(zParCmd* c, xParGroup* ps, F32 dt)
 {
+    F32* camera_y;
+    F32* camera_z;
     xPar* p = ps->m_root;
     xParCmdKillDistance* cmd = (xParCmdKillDistance*)c->tasset;
     xVec3* camera_pos = &globals.camera.hi_cam.mat.pos;
 
-    if (cmd->kill_greater_than)
+    if (!cmd->kill_greater_than)
     {
+        goto prepare_near;
+    }
+
+    {
+        camera_y = &camera_pos->y;
+        camera_z = &camera_pos->z;
         for (; p != NULL; p = p->m_next)
         {
             F32 dx = p->m_pos.x - camera_pos->x;
-            F32 dy = p->m_pos.y - camera_pos->y;
-            F32 dz = p->m_pos.z - camera_pos->z;
+            F32 dy = p->m_pos.y - *camera_y;
+            F32 dz = p->m_pos.z - *camera_z;
             if (dx * dx + dy * dy + dz * dz > cmd->dSqr)
             {
                 p->m_lifetime = -1.0f;
             }
         }
+        return;
     }
-    else
+
+near_particles:
+    for (; p != NULL; p = p->m_next)
     {
-        for (; p != NULL; p = p->m_next)
+        F32 dx = p->m_pos.x - camera_pos->x;
+        F32 dy = p->m_pos.y - *camera_y;
+        F32 dz = p->m_pos.z - *camera_z;
+        if (dx * dx + dy * dy + dz * dz < cmd->dSqr)
         {
-            F32 dx = p->m_pos.x - camera_pos->x;
-            F32 dy = p->m_pos.y - camera_pos->y;
-            F32 dz = p->m_pos.z - camera_pos->z;
-            if (dx * dx + dy * dy + dz * dz < cmd->dSqr)
-            {
-                p->m_lifetime = -1.0f;
-            }
+            p->m_lifetime = -1.0f;
         }
     }
+    return;
+
+prepare_near:
+    camera_y = &camera_pos->y;
+    camera_z = &camera_pos->z;
+    goto near_particles;
 }
 
 void xParCmdKillSlow_Update(zParCmd* c, xParGroup* ps, F32 dt)
@@ -232,7 +242,9 @@ void xParCmdFollow_Update(zParCmd* c, xParGroup* ps, F32 dt)
         xVec3Sub(&d, &p->m_next->m_pos, &p->m_pos);
 
         F32 lenSqr = xVec3Length2(&d);
-        F32 force = mdt / ((lenSqr + cmd->epsilon) * xVec3LengthFast(d.x, d.y, d.z));
+        F32 force = xVec3LengthFast(d.x, d.y, d.z);
+        force *= lenSqr + cmd->epsilon;
+        force = mdt / force;
 
         p->m_vel.x += d.x * force;
         p->m_vel.y += d.y * force;
@@ -257,7 +269,9 @@ void xParCmdOrbitPoint_Update(zParCmd* c, xParGroup* ps, F32 dt)
         F32 rSqr = xVec3Length2(&d);
         if (rSqr < cmd->maxRadiusSqr)
         {
-            F32 force = mdt / (xVec3LengthFast(d.x, d.y, d.z) + (rSqr + cmd->epsilon));
+            F32 force = xVec3LengthFast(d.x, d.y, d.z);
+            force += rSqr + cmd->epsilon;
+            force = mdt / force;
 
             p->m_vel.x += d.x * force;
             p->m_vel.y += d.y * force;
@@ -268,7 +282,9 @@ void xParCmdOrbitPoint_Update(zParCmd* c, xParGroup* ps, F32 dt)
     }
 }
 
-// Pulls particles inside the radius toward the nearest point of the line through p along axis.
+// Applies attraction using the double cross product with axis, minus the offset from p.
+// For a unit axis, this points toward the plane through p perpendicular to axis.
+// maxRadiusSqr bounds the squared length of the resulting displacement.
 void xParCmdOrbitLine_Update(zParCmd* c, xParGroup* ps, F32 dt)
 {
     xPar* p = ps->m_root;
@@ -279,18 +295,19 @@ void xParCmdOrbitLine_Update(zParCmd* c, xParGroup* ps, F32 dt)
     {
         xVec3 rel;
         xVec3 perp;
-        xVec3 onLine;
+        xVec3 doubleCross;
         xVec3 d;
 
         xVec3Sub(&rel, &p->m_pos, &cmd->p);
         xVec3Cross(&perp, &rel, &cmd->axis);
-        xVec3Cross(&onLine, &cmd->axis, &perp);
-        xVec3Sub(&d, &onLine, &rel);
+        xVec3Cross(&doubleCross, &cmd->axis, &perp);
+        xVec3Sub(&d, &doubleCross, &rel);
 
         F32 rSqr = xVec3Length2(&d);
         if (rSqr < cmd->maxRadiusSqr)
         {
-            F32 force = mdt / (xVec3LengthFast(d.x, d.y, d.z) + (rSqr + cmd->epsilon));
+            F32 length = xVec3LengthFast(d.x, d.y, d.z);
+            F32 force = mdt / (length + (rSqr + cmd->epsilon));
 
             p->m_vel.x += d.x * force;
             p->m_vel.y += d.y * force;
@@ -305,15 +322,15 @@ void xParCmdAccelerate_Update(zParCmd* c, xParGroup* ps, F32 dt)
 {
     xPar* p = ps->m_root;
     xParCmdAccelerate* cmd = (xParCmdAccelerate*)c->tasset;
-    F32 ax = cmd->acc.x * dt;
-    F32 ay = cmd->acc.y * dt;
-    F32 az = cmd->acc.z * dt;
+    xVec3 a;
+    xVec3Copy(&a, &cmd->acc);
+    xVec3SMulBy(&a, dt);
 
     while (p)
     {
-        p->m_vel.x += ax;
-        p->m_vel.y += ay;
-        p->m_vel.z += az;
+        p->m_vel.x += a.x;
+        p->m_vel.y += a.y;
+        p->m_vel.z += a.z;
         p = p->m_next;
     }
 }
@@ -322,15 +339,15 @@ void xParCmdMove_Update(zParCmd* c, xParGroup* ps, F32 dt)
 {
     xPar* p = ps->m_root;
     xParCmdMove* cmd = (xParCmdMove*)c->tasset;
-    F32 dx = cmd->dir.x * dt;
-    F32 dy = cmd->dir.y * dt;
-    F32 dz = cmd->dir.z * dt;
+    xVec3 d;
+    xVec3Copy(&d, &cmd->dir);
+    xVec3SMulBy(&d, dt);
 
     while (p)
     {
-        p->m_pos.x += dx;
-        p->m_pos.y += dy;
-        p->m_pos.z += dz;
+        p->m_pos.x += d.x;
+        p->m_pos.y += d.y;
+        p->m_pos.z += d.z;
         p = p->m_next;
     }
 }
@@ -341,13 +358,12 @@ void xParCmdMoveRandom_Update(zParCmd* c, xParGroup* ps, F32 dt)
     xPar* p;
     xParCmdMove* cmd = (xParCmdMove*)c->tasset;
     xVec3 d;
-
-    d.x = cmd->dir.x * (2.0f * iurand());
-    d.y = cmd->dir.y * (2.0f * iurand());
-    d.z = cmd->dir.z * (2.0f * iurand());
-    d.x = (d.x - cmd->dir.x) * dt;
-    d.y = (d.y - cmd->dir.y) * dt;
-    d.z = (d.z - cmd->dir.z) * dt;
+    xVec3Copy(&d, &cmd->dir);
+    d.x *= 2.0f * iurand();
+    d.y *= 2.0f * iurand();
+    d.z *= 2.0f * iurand();
+    xVec3Sub(&d, &d, &cmd->dir);
+    xVec3SMulBy(&d, dt);
 
     p = ps->m_root;
     while (p)
@@ -364,7 +380,8 @@ void xParCmdMoveRandomPar_Update(zParCmd* c, xParGroup* ps, F32 dt)
 {
     xPar* p = ps->m_root;
     xParCmdMoveRandomPar* cmd = (xParCmdMoveRandomPar*)c->tasset;
-    F32 hdt = dt * 0.5f;
+    F32 hdt = dt;
+    hdt *= 0.5f;
     F32 dx = cmd->dim.x * hdt;
     F32 dz = cmd->dim.z * hdt;
 
@@ -380,8 +397,8 @@ void xParCmdMoveRandomPar_Update(zParCmd* c, xParGroup* ps, F32 dt)
 // size.
 void xParCmdScale3rdPolyReg_Update(zParCmd* c, xParGroup* ps, F32 dt)
 {
-    xPar* p = ps->m_root;
     xParCmdScale3rdPolyReg* cmd = (xParCmdScale3rdPolyReg*)c->tasset;
+    xPar* p = ps->m_root;
 
     while (p)
     {
@@ -397,8 +414,8 @@ void xParCmdScale3rdPolyReg_Update(zParCmd* c, xParGroup* ps, F32 dt)
         t = 1.0f - t;
         F32 t2 = t * t;
 
-        p->m_size =
-            (cmd->constant + cmd->a * t + cmd->a2 * t2 + cmd->a3 * (t2 * t)) * p->m_asset->size_death;
+        t = cmd->constant + cmd->a * t + cmd->a2 * t2 + cmd->a3 * (t2 * t);
+        p->m_size = t * p->m_asset->size_death;
         p->m_sizeVel = 0.0f;
         p = p->m_next;
     }
@@ -496,7 +513,8 @@ void xParCmdScale_Update(zParCmd* c, xParGroup* ps, F32 dt)
         t = 1.0f - t;
         F32 t2 = t * t;
 
-        p->m_size = (constant + a * t + a2 * t2 + a3 * (t2 * t)) * p->m_asset->size_death;
+        t = constant + a * t + a2 * t2 + a3 * (t2 * t);
+        p->m_size = t * p->m_asset->size_death;
         p->m_sizeVel = 0.0f;
         p = p->m_next;
     }
@@ -555,8 +573,9 @@ void xParCmdAlpha3rdPolyReg_Update(zParCmd* c, xParGroup* ps, F32 dt)
 // is between min and max.
 void xParCmdPlayerCollision_Update(zParCmd* c, xParGroup* ps, F32 dt)
 {
+    xPar* p;
     xParCmdPlayerCollision* cmd = (xParCmdPlayerCollision*)c->tasset;
-    xPar* p = ps->m_root;
+    p = ps->m_root;
 
     while (p)
     {
@@ -734,10 +753,10 @@ void xParCmdAnimalMagentism_Update(zParCmd* c, xParGroup* ps, F32 dt)
         }
         else if (dist < 2.0f)
         {
-            F32 damp = dist * 0.49f;
-            p->m_vel.x *= damp;
-            p->m_vel.y *= damp;
-            p->m_vel.z *= damp;
+            dist *= 0.49f;
+            p->m_vel.x *= dist;
+            p->m_vel.y *= dist;
+            p->m_vel.z *= dist;
         }
 
         p = p->m_next;
@@ -794,10 +813,10 @@ void xParCmdDamagePlayer_Update(zParCmd* c, xParGroup* ps, F32 dt)
 // distance from it grows by radius_growth a second.
 void xParCmdRotateAround_Update(zParCmd* c, xParGroup* ps, F32 dt)
 {
-    xParCmdRotateAround* cmd = (xParCmdRotateAround*)c->tasset;
-    F32 radius_growth = dt * cmd->radius_growth;
     xPar* p = ps->m_root;
+    xParCmdRotateAround* cmd = (xParCmdRotateAround*)c->tasset;
     F32 yaw = (3.14159274f * (dt * cmd->yaw)) / 180.0f;
+    F32 radius_growth = dt * cmd->radius_growth;
 
     while (p)
     {
@@ -1072,16 +1091,17 @@ void xParCmdTexAnim_Update(zParCmd* c, xParGroup* ps, F32 dt)
     }
 }
 
-// Grass: particles within two units of the player shrink toward a tenth of their size; others
-// grow back to full size.
+// Grass: particles with squared distance below 2 from the player shrink toward size 0.1;
+// others grow back to size 1.
 void xParCmdCustom_Grass_Update(zParCmd*, xParGroup* ps, F32 dt)
 {
-    xVec3* pos = (xVec3*)&globals.player.ent.model->Mat->pos;
+    xVec3 pos;
+    pos = *(xVec3*)&globals.player.ent.model->Mat->pos;
 
     for (xPar* p = ps->m_root; p != NULL; p = p->m_next)
     {
         xVec3 d;
-        xVec3Sub(&d, pos, &p->m_pos);
+        xVec3Sub(&d, &pos, &p->m_pos);
         if (xVec3Length2(&d) < 2.0f)
         {
             p->m_size -= 4.0f * dt;
@@ -1111,19 +1131,25 @@ void xParCmdCustom_Update(zParCmd* c, xParGroup* ps, F32 dt)
     {
     case 0:
     {
+        F32 dx;
+        F32 dy;
+        F32 dz;
         F32 mdt = 4.0f * dt;
-        xVec3 pos = *(xVec3*)&globals.player.ent.model->Mat->pos;
+        xVec3 pos;
+        pos = *(xVec3*)&globals.player.ent.model->Mat->pos;
         for (; p != NULL; p = p->m_next)
         {
-            xVec3 d;
-            xVec3Sub(&d, &pos, &p->m_pos);
+            dx = pos.x - p->m_pos.x;
+            dy = pos.y - p->m_pos.y;
+            dz = pos.z - p->m_pos.z;
 
-            F32 rSqr = xVec3Length2(&d);
+            F32 rSqr = dx * dx + dy * dy + dz * dz;
             if (rSqr < 16.0f)
             {
-                F32 oorSqr = mdt / xsqrt(rSqr + 0.001f);
-                F32 sx = (d.x < 0.0f) ? 1.0f : -1.0f;
-                F32 sz = (d.z < 0.0f) ? 1.0f : -1.0f;
+                F32 epsilon = 0.001f;
+                F32 oorSqr = mdt / xsqrt(rSqr + epsilon);
+                F32 sx = (dx < 0.0f) ? 1.0f : -1.0f;
+                F32 sz = (dz < 0.0f) ? 1.0f : -1.0f;
                 p->m_size = 1.0f / (10.0f * oorSqr * (sx + sz));
             }
         }

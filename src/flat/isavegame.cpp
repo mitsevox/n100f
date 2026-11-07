@@ -77,7 +77,7 @@ struct st_ISG_ICONDATA
     char footer[0x200];
 };
 
-static char cardwork[ISG_NUM_SLOTS][0xA000];
+static char cardwork[ISG_NUM_SLOTS][0xA000] ATTRIBUTE_ALIGN(32);
 
 static void iSG_cb_asyndone(s32, s32);
 
