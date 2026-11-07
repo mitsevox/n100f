@@ -140,8 +140,9 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
     RpMesh* mesh;
     S32 triStrip;
     U32 vertIndex;
-    U32 count;
+    U32 maxIndex;
     U16* meshIndices;
+    U32 count;
 
     mesh = (RpMesh*)(meshHeader + 1);
     numMeshes = meshHeader->numMeshes;
@@ -157,8 +158,7 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
         instMesh->material = mesh->material;
         instMesh->mesh = mesh;
 
-        count = mesh->numIndices;
-        numIndices = count;
+        count = numIndices = mesh->numIndices;
 
         if (meshHeader->flags & rpMESHHEADERUNINDEXED)
         {
@@ -167,12 +167,11 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
 
             if (triStrip)
             {
-                U32 numTris = numIndices - 2;
                 U16 i;
 
-                instMesh->numIndices = numTris * 3;
+                instMesh->numIndices = (numIndices - 2) * 3;
 
-                for (i = 0; i < numTris; i++)
+                for (i = 0; i < numIndices - 2; i++)
                 {
                     U32 odd = i & 1;
 
@@ -201,8 +200,7 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
         }
         else
         {
-            U32 maxIndex = 0;
-
+            maxIndex = 0;
             vertIndex = 0xFFFF;
 
             while (count--)

@@ -1000,7 +1000,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/nodeMaterialScatter.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/nodePostLight.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c"),
-            Object(NonMatching, "rwsdk/world/pipe/p2/nodeWorldSectorInstance.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/nodeWorldSectorInstance.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/gcpipe.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/instance/geominst.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/instance/instancegeom.c"),
