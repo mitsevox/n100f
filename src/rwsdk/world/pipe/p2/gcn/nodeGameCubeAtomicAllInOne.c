@@ -73,6 +73,8 @@ typedef RpAtomic* (*AllInOneAtomicCB)(RpAtomic* atomic, GCNObjectData* objectDat
 // local lights of every sector the atomic is in, once each, and clamps the summed ambient color.
 RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 {
+    U32 flags = atomic->geometry->flags;
+
     objectData->globalMask = 0;
     objectData->localMask = 0;
     objectData->ambient.red = 0.0f;
@@ -82,10 +84,10 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
     objectData->ambientUsed = FALSE;
     objectData->numLights = 0;
 
-    if ((atomic->geometry->flags & rpGEOMETRYLIGHT) && RWSRCGLOBAL(curWorld))
+    if ((flags & rpGEOMETRYLIGHT) && RWSRCGLOBAL(curWorld))
     {
-        RwLLLink* cur;
         RwLLLink* end;
+        RwLLLink* cur;
 
         _rwGCLightsGlobalEnable(rpLIGHTLIGHTATOMICS, objectData);
         RWSRCGLOBAL(lightFrame)++;
@@ -95,19 +97,20 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 
         while (cur != end)
         {
-            RpWorldSector* sector = rwLLLinkGetData(cur, WorldTie, atomicLink)->sector;
-            RwLLLink* lightCur = rwLinkListGetFirstLLLink(&sector->lightsInWorldSector);
-            RwLLLink* lightEnd = rwLinkListGetTerminator(&sector->lightsInWorldSector);
+            RwLinkList* lights =
+                &rwLLLinkGetData(cur, WorldTie, atomicLink)->sector->lightsInWorldSector;
+            RwLLLink* lightEnd = rwLinkListGetTerminator(lights);
+            RwLLLink* lightCur = rwLinkListGetFirstLLLink(lights);
 
             while (lightCur != lightEnd)
             {
-                RpLight* light = rwLLLinkGetData(lightCur, LightTie, sectorLink)->light;
+                LightTie* tie = rwLLLinkGetData(lightCur, LightTie, sectorLink);
 
-                if (light && light->lightFrame != RWSRCGLOBAL(lightFrame) &&
-                    rwObjectTestFlags(light, rpLIGHTLIGHTATOMICS))
+                if (tie->light && tie->light->lightFrame != RWSRCGLOBAL(lightFrame) &&
+                    rwObjectTestFlags(tie->light, rpLIGHTLIGHTATOMICS))
                 {
-                    light->lightFrame = RWSRCGLOBAL(lightFrame);
-                    _rwGCLightsLocalEnable(light, objectData);
+                    tie->light->lightFrame = RWSRCGLOBAL(lightFrame);
+                    _rwGCLightsLocalEnable(tie->light, objectData);
                 }
 
                 lightCur = rwLLLinkGetNext(lightCur);
