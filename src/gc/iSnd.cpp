@@ -71,7 +71,11 @@ u32 aram_array[40];
 vinfo voices[58];
 iSndStream streams[6];
 iSndBankFile sinfo_array[12];
-iSndFileInfo snd;
+struct iSndCacheStorage : iSndFileInfo
+{
+    U8 unresolved[8];
+};
+iSndCacheStorage snd;
 
 U32* ua_stream_buffer;
 U32* stream_buffer;
@@ -1027,7 +1031,7 @@ static U32 iSndPlayStream(xSndVoiceInfo* vp)
     return 0;
 }
 
-// Start a bank-loaded sound on an AX voice, setting its sample-rate conversion ratio and volume before playback.
+// Start a bank-loaded sound on an AX voice with its sample-rate ratio and mixer settings.
 static U32 iSndPlaySound(xSndVoiceInfo* const vp)
 {
     if (vp->flags & 0x200)
@@ -1260,9 +1264,9 @@ static void sndloadcb(tag_xFile*)
 // Load the bank's samples and retain its file information for sound lookup.
 void iSndLoadSounds(void* data)
 {
-    iSndSoundInfo* sounds;
-    U32 i;
     iSndSoundInfo* snd;
+    U32 i;
+    iSndSoundInfo* sounds;
     U32 j;
     U32 highest;
     tag_xFile* file;
@@ -1400,6 +1404,7 @@ void iSndLoadSounds(void* data)
             OSRestoreInterrupts(enabled);
             while (SoundFlags != 0)
                 ;
+            __cntlzw(dest);
             done += size;
         }
 
