@@ -390,7 +390,6 @@ static inline S32 DlRasterRowBytes(S32 width, S32 depth)
         stride = ((width + 3) & ~3) << 2;
         break;
     case 24:
-    default:
         DLRASTER_ERROR((0x8000000C));
         break;
     }
@@ -421,7 +420,7 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
 
         offset = 0;
 
-        for (; l--;)
+        while (l--)
         {
             offset += fn_80179064(raster, l);
         }
