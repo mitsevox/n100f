@@ -1064,7 +1064,6 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
     RpMesh* mesh;
     RpMesh** meshes;
     RpMesh* runs;
-    RpMesh* run;
     RpMeshHeader* meshHeader;
     RpBuildMeshTriangle** next;
     U16* indices;
@@ -1117,18 +1116,15 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
 
     if (buildMesh->numTriangles >= 2)
     {
-        run = &runs[1];
-
         for (i = 0; i < buildMesh->numTriangles - 1; i++)
         {
             if (sorted[i]->material != sorted[i + 1]->material)
             {
-                run->material = sorted[i + 1]->material;
+                runs[numRuns].material = sorted[i + 1]->material;
+                runs[numRuns].numIndices = i + 1;
+                runs[numRuns].indices = NULL;
+                runs[numRuns - 1].numIndices = (i + 1) - runs[numRuns - 1].numIndices;
                 numRuns++;
-                run->numIndices = i + 1;
-                run->indices = NULL;
-                run[-1].numIndices = (i + 1) - run[-1].numIndices;
-                run++;
             }
         }
     }
