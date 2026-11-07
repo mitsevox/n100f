@@ -535,57 +535,45 @@ void _rpWorldUnregisterWorld(RpWorld* world)
     }
 }
 
-static RpWorld* WorldBuildMeshAtomicSector(RpWorld* world, RpWorldSector* sector)
+// Uses the caller's temporary build mesh to create a sector's render mesh.
+static RpWorld* WorldBuildMeshAtomicSector(RpWorld* world, RpBuildMesh* buildMesh,
+                                         RpWorldSector* sector, RpMaterial** materials)
 {
-    RpMaterial** materials = world->matList.materials + sector->matListWindowBase;
+    RpMeshHeader* mesh;
+    S32 i;
 
-    if (!sector->mesh)
+    for (i = 0; i < sector->numPolygons; i++)
     {
-        RpMeshHeader* mesh;
-        RpBuildMesh* buildMesh;
-        S32 i;
+        RpPolygon* polygon = &sector->polygons[i];
 
-        buildMesh = _rpBuildMeshCreate(sector->numPolygons);
+        _rpBuildMeshAddTriangle(buildMesh, materials[polygon->matIndex],
+                                polygon->vertIndex[0], polygon->vertIndex[1],
+                                polygon->vertIndex[2]);
+    }
 
-        if (buildMesh)
-        {
-            for (i = 0; i < sector->numPolygons; i++)
-            {
-                RpPolygon* polygon = &sector->polygons[i];
+    if (world->flags & rpWORLDTRISTRIP)
+    {
+        mesh = _rpMeshOptimise(buildMesh, 1);
+    }
+    else
+    {
+        mesh = _rpMeshOptimise(buildMesh, 0);
+    }
 
-                _rpBuildMeshAddTriangle(buildMesh, materials[polygon->matIndex],
-                                        polygon->vertIndex[0], polygon->vertIndex[1],
-                                        polygon->vertIndex[2]);
-            }
-
-            if (world->flags & rpWORLDTRISTRIP)
-            {
-                mesh = _rpMeshOptimise(buildMesh, 1);
-            }
-            else
-            {
-                mesh = _rpMeshOptimise(buildMesh, 0);
-            }
-
-            if (mesh)
-            {
-                sector->mesh = mesh;
-            }
-            else
-            {
-                _rpBuildMeshDestroy(buildMesh);
-                return NULL;
-            }
-        }
-        else
-        {
-            return NULL;
-        }
+    if (mesh)
+    {
+        sector->mesh = mesh;
+    }
+    else
+    {
+        _rpBuildMeshDestroy(buildMesh);
+        return NULL;
     }
 
     return world;
 }
 
+// Builds meshes only for sectors that do not already have one.
 RpWorld* RpWorldUnlock(RpWorld* world)
 {
     RpSector* stack[SECTOR_STACK_SIZE];
@@ -596,11 +584,26 @@ RpWorld* RpWorldUnlock(RpWorld* world)
     {
         if (sector->type < 0)
         {
-            world = WorldBuildMeshAtomicSector(world, (RpWorldSector*)sector);
+            RpWorldSector* worldSector = (RpWorldSector*)sector;
+            RpMaterial** materials = world->matList.materials + worldSector->matListWindowBase;
 
-            if (!world)
+            if (!worldSector->mesh)
             {
-                return NULL;
+                RpBuildMesh* buildMesh = _rpBuildMeshCreate(worldSector->numPolygons);
+
+                if (buildMesh)
+                {
+                    world = WorldBuildMeshAtomicSector(world, buildMesh, worldSector, materials);
+
+                    if (!world)
+                    {
+                        return NULL;
+                    }
+                }
+                else
+                {
+                    return NULL;
+                }
             }
 
             sector = stack[nStack--];
@@ -778,6 +781,7 @@ RpWorld* RpWorldSetSectorRenderCallBack(RpWorld* world, RpWorldSectorCallBackRen
     return world;
 }
 
+// Creates a world with one empty sector covering the supplied bounds.
 RpWorld* RpWorldCreate(RwBBox* boundingBox)
 {
     RpWorld* world;
