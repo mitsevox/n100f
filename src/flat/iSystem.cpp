@@ -61,25 +61,28 @@ struct iSystemDeviceConfig
 };
 
 // The globals keep their dtk labels; bfbb's names are given beside them.
-extern iSystemDeviceConfig lbl_801FE3B8;          // deviceConfig
-extern RwVideoMode lbl_801FE3C4;                  // sVideoMode
-extern RwMemoryFunctions lbl_801FE3D4;            // MemoryFunctions
-extern S32 lbl_8025E3F8;                          // rwID_DOLPHINDEVICEMODULE
-extern S32 lbl_8025E96C;                          // last reset button state
-extern S32 lbl_8025E970;                          // reset button released
-extern VIRetraceCallback lbl_8025E974;            // the retrace callback this one replaced
-extern U32 lbl_8025E978;                          // last retrace count
-extern U32 lbl_8025E97C;                          // add
-extern U32 lbl_8025E980;                          // size
-extern S32 lbl_8025E984;                          // RenderWare allocates from the xMem heap
-extern S32 lbl_8025E988;                          // FSOpenFiles
+volatile U32 gVsyncCount;                         // the retrace count zGame waits on
+iSystemDeviceConfig lbl_801FE3B8;                 // deviceConfig
+RwVideoMode lbl_801FE3C4;                         // sVideoMode
+RwMemoryFunctions lbl_801FE3D4;                   // MemoryFunctions
+S32 lbl_8025E3F8 = 0x430;                         // rwID_DOLPHINDEVICEMODULE
+S32 lbl_8025E96C;                                 // last reset button state
+S32 lbl_8025E970;                                 // reset button released
+VIRetraceCallback lbl_8025E974;                   // the retrace callback this one replaced
+U32 lbl_8025E978;                                 // last retrace count
+U32 lbl_8025E97C;                                 // add
+U32 lbl_8025E980;                                 // size
+S32 lbl_8025E984;                                 // RenderWare allocates from the xMem heap
+S32 lbl_8025E988;                                 // FSOpenFiles
 extern S32 lbl_8025F870;
 extern U8 _stack_addr[];
 extern U8 _stack_end[];
 }
 
 // FSModuleInfo: the file system plugin's offset in the RenderWare globals and its open count.
-extern "C" RwModuleInfo lbl_8025E98C;
+extern "C" {
+RwModuleInfo lbl_8025E98C;
+}
 
 // An open disc file: a 0x2800-byte read buffer, the DVD handle, and the read position, the file
 // length, the position in the buffer and the access mode.
@@ -835,9 +838,10 @@ static S32 dlFexist(const char* name)
 static U32 dlFread(void* addr, U32 size, U32 count, void* fptr)
 {
     U32 buffered;
+    S32 readSize;
     S32 bytesRead = 0;
     S32 loopCount;
-    S32 readSize;
+    S32 left;
     U32 uVar1;
     S32 posTmp;
     dlFile* fp = (dlFile*)fptr;
@@ -885,10 +889,10 @@ static U32 dlFread(void* addr, U32 size, U32 count, void* fptr)
             }
             else
             {
-                numBytesToRead -= bytesRead;
+                left = (S32)numBytesToRead - bytesRead;
                 uVar1 = 0;
                 posTmp = fp->pos;
-                loopCount = (S32)numBytesToRead / DLFILE_BUF_SIZE + 1;
+                loopCount = left / DLFILE_BUF_SIZE + 1;
 
                 while (loopCount-- != 0)
                 {
@@ -907,20 +911,20 @@ static U32 dlFread(void* addr, U32 size, U32 count, void* fptr)
                         return bytesRead + uVar1;
                     }
 
-                    if ((S32)numBytesToRead >= readSize)
+                    if (left >= readSize)
                     {
                         memcpy(addr, fp->readBuffer, readSize);
-                        numBytesToRead -= readSize;
+                        left -= readSize;
                         uVar1 += readSize;
                         posTmp += readSize;
                         addr = (char*)addr + readSize;
                     }
                     else
                     {
-                        memcpy(addr, fp->readBuffer, numBytesToRead);
-                        fp->bufpos = numBytesToRead;
-                        uVar1 += numBytesToRead;
-                        posTmp += numBytesToRead;
+                        memcpy(addr, fp->readBuffer, left);
+                        fp->bufpos = left;
+                        uVar1 += left;
+                        posTmp += left;
                     }
                 }
             }
