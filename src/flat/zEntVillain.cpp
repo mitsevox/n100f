@@ -4582,7 +4582,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         if (!(vil->abl_move & 0x4000) && vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] < 0.3f)
         {
             fv = vil->frame->rot.angle;
-            if (fabsf(fv - prec->ang_VtoP) <= 0.1f)
+            if (fabsf(vil->frame->rot.angle - prec->ang_VtoP) <= 0.1f)
             {
                 vil->anim_loopmult = 0.97f;
                 vil->vhf->pickanim(vil, ZVIL_GOAL_ATTACKREADY, ZVIL_GSPOT_START);
@@ -4946,7 +4946,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         }
         break;
     case ZVIL_GOAL_DIE:
-        if (vil->asset->subtype == eEntVillainTypeWitchDoctor && sEmitWitchDying)
+        if (vil->asset->subtype == eEntVillainTypeWitch && sEmitWitchDying)
         {
             _zParEmitterCustomSettings info;
             info.custom_flags = 0x20;
@@ -19741,14 +19741,20 @@ static S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* 
     return 1;
 }
 
-// Queue a sound with the villain type's noise radius and the sound's configured delay.
+// Queue a sound with the villain type's noise radius and the sound's configured delay, played once
+// (no repeat delay, no repeat count) and not as a direct sound.
 extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
-    S32 flags = VSND_findProps(sndEvent, &sprop);
-    if (sndEvent != VSND_TYP_HOLOFADE) flags &= 0x0FFFFFFF;
-    VSND_addQueueEntry(vil, sndEvent, flags, g_npcTable[vil->asset->subtype].dst_noisy,
-                       sprop->tym_delayStart, -1.0f, 0, 0);
+    S32 flg_vsnd = 0;
+    F32 tym_repeat = -1.0f;
+    S32 cnt_repeat = 0;
+    U32 snd_direct = 0;
+
+    flg_vsnd = VSND_findProps(sndEvent, &sprop);
+    if (sndEvent != VSND_TYP_HOLOFADE) flg_vsnd &= 0x0FFFFFFF;
+    VSND_addQueueEntry(vil, sndEvent, flg_vsnd, g_npcTable[vil->asset->subtype].dst_noisy,
+                       sprop->tym_delayStart, tym_repeat, cnt_repeat, snd_direct);
 }
 
 // Fill the bonus item table: find each bonus pickup of the scene, make it droppable (parked far
