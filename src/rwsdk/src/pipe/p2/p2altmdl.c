@@ -9,8 +9,7 @@ RxExecContext _rxExecCtxGlobal;
 void _rxPacketDestroy(RxPacket* packet);
 
 // Moves each cluster the receiving pipeline requires from one embedded packet into the slot that
-// pipeline expects in the other, and clears it in the source packet. The PS2 prototype keeps this
-// as its own LOCAL function (rxPacketCrossPipelineAlignClusters); GC inlines it into its one caller.
+// pipeline expects in the other, and clears it in the source packet.
 static void _rxPacketCrossPipelineAlignClusters(RxPacket* fromPacket, RxPacket* toPacket,
                                                 RxPipeline* toPipeline)
 {

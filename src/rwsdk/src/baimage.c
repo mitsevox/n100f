@@ -452,8 +452,7 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
     return image;
 }
 
-// Returns the scratch buffer grown to at least size bytes, or NULL when it cannot grow. The name is
-// a LOCAL baimage function in the PS2 prototype symbol table; GC inlines it.
+// Returns the scratch buffer grown to at least size bytes, or NULL when it cannot grow.
 static char* ImageGetScratchMem(S32 size)
 {
     if (size > IMAGE_DATA(nameBufSize))
@@ -720,7 +719,6 @@ S32 ImageConvertDepth(RwImage* destImage, const RwImage* sourceImage)
 }
 
 // Copies an image of the same depth: the palette when both have one, then the pixels row by row.
-// The PS2 prototype keeps this as its own LOCAL function directly before RwImageCopy; GC inlines it.
 static void ImageStraightCopy(RwImage* destImage, const RwImage* sourceImage)
 {
     S32 y;
@@ -763,8 +761,7 @@ RwImage* RwImageCopy(RwImage* destImage, const RwImage* sourceImage)
     return destImage;
 }
 
-// Runs numPixels colors through the gamma table, keeping their alpha. Named in the PS2 prototype
-// symbol tables; the GC build inlines it into RwImageGammaCorrect and keeps no copy.
+// Runs numPixels colors through the gamma table, keeping their alpha.
 void _rwImageGammaCorrectArrayOfRGBA(RwRGBA* out, RwRGBA* in, S32 numPixels)
 {
     const U8* table = IMAGE_DATA(gammaLut);
@@ -880,43 +877,43 @@ const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
     }
     else
     {
-    while (path && *path)
-    {
-        const char* next;
-        S32 pathLength;
-        char* fullName;
-
-        // The target makes this call twice and keeps only the second result.
-        rwstrchr(path, ';');
-        next = rwstrchr(path, ';');
-
-        if (next)
+        while (path && *path)
         {
-            pathLength = next - path;
-            next++;
+            const char* next;
+            S32 pathLength;
+            char* fullName;
+
+            // The target makes this call twice and keeps only the second result.
+            rwstrchr(path, ';');
+            next = rwstrchr(path, ';');
+
+            if (next)
+            {
+                pathLength = next - path;
+                next++;
+            }
+            else
+            {
+                pathLength = rwstrlen(path);
+            }
+
+            fullName = ImageGetScratchMem(pathLength + (rwstrlen(imageName) + maxLength));
+
+            if (!fullName)
+            {
+                return NULL;
+            }
+
+            memcpy(fullName, path, pathLength);
+            rwstrcpy(fullName + pathLength, imageName);
+
+            if (!callBack(fullName, data))
+            {
+                return imageName;
+            }
+
+            path = next;
         }
-        else
-        {
-            pathLength = rwstrlen(path);
-        }
-
-        fullName = ImageGetScratchMem(pathLength + (rwstrlen(imageName) + maxLength));
-
-        if (!fullName)
-        {
-            return NULL;
-        }
-
-        memcpy(fullName, path, pathLength);
-        rwstrcpy(fullName + pathLength, imageName);
-
-        if (!callBack(fullName, data))
-        {
-            return imageName;
-        }
-
-        path = next;
-    }
     }
 
     return imageName;

@@ -229,7 +229,7 @@ static S32 PalettizeMipmaps(RwRGBA* palette, RwImage* keepImage, RwImage** image
             err.errorCode = _rwerror(0x8000001E, name, TEXTURE_FILENAMESIZE,                      \
                                      TEXTURE_FILENAMESIZE - 1, (name)[TEXTURE_FILENAMESIZE - 1]); \
             RwErrorSet(&err);                                                                     \
-            (buffer)[TEXTURE_FILENAMESIZE - 1] = '\0';                                       \
+            (buffer)[TEXTURE_FILENAMESIZE - 1] = '\0';                                            \
         }                                                                                         \
     } while (0)
 
@@ -1007,8 +1007,7 @@ S32 RwTextureGenerateMipmapName(char* name, char* maskName, U8 mipLevel, S32 for
     return 0;
 }
 
-// Compares two texture names ignoring the case of ASCII letters. The name is the PS2 prototype's
-// LOCAL batextur function between TextureAnnihilate and TextureFind; GC inlines it.
+// Compares two texture names ignoring the case of ASCII letters.
 static S32 StringCompare(const char* name, const char* other)
 {
     while (*name && *other)
@@ -1066,9 +1065,8 @@ RwTexture* RwTexDictionaryFindNamedTexture(RwTexDictionary* dict, const char* na
     return NULL;
 }
 
-// Returns a texture by name: from the current dictionary, or from any dictionary when there is
-// no current one, with its reference count raised; otherwise read through the read callback and
-// added to the current dictionary.
+// Looks a texture up by name in the current dictionary, or in every dictionary when there is no
+// current one. Returns NULL when no dictionary holds it.
 static RwTexture* TextureFind(const char* name)
 {
     if (TEXTURE_DATA(currentDict))
@@ -1096,6 +1094,8 @@ static RwTexture* TextureFind(const char* name)
     return NULL;
 }
 
+// Returns a texture by name with its reference count raised when a dictionary already holds it;
+// otherwise reads it through the read callback and adds it to the current dictionary.
 RwTexture* RwTextureRead(const char* name, const char* maskName)
 {
     RwTexture* texture = TextureFind(name);
