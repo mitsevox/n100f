@@ -15,28 +15,41 @@
 extern RxClusterDefinition RxClLights;
 extern RxClusterDefinition RxClVSteps;
 
-static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                  RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                  F32 invScale);
-static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                      RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                      F32 invScale);
-static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                F32 invScale);
-static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                               RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                               F32 invScale);
-static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                   RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                   F32 invScale);
 
+// Scales a value by 255, negates another and zeroes a positive Lambert term. Nothing calls it
+// (project-own name and body).
+static void LightPoolStandIn(F32* scale, F32* sign, F32* lambert)
+{
+    *scale *= LIGHT_COLORSCALE;
+    *sign *= -1.0f;
+
+    if (*lambert > 0.0f)
+    {
+        *lambert = 0.0f;
+    }
+}
+
 // Lights the mesh with every light in the lights cluster, unless the mesh is wholly clipped. A
-// mesh that is not at the world origin gets the lights moved into its object space.
+// mesh whose world matrix is not flagged as identity has the lights moved into its object space.
 static S32 _LightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
-    RxPacket* packet = RxPacketFetch(self);
-    RxCluster* meshState = RxClusterLockRead(packet, LIGHTCL_MESHSTATE);
+    RxPacket* packet;
+    RxCluster* meshState = RxClusterLockRead(packet = RxPacketFetch(self), LIGHTCL_MESHSTATE);
     RxMeshStateVector* meshData = (RxMeshStateVector*)meshState->currentData;
 
     if (!meshData->ClipFlagsAnd)
@@ -143,18 +156,17 @@ RxNodeDefinition* RxNodeDefinitionGetLight(void)
     return &nodeLightCSL;
 }
 
-// The vertex-steps cluster, when the packet has a valid one, lists how many vertices to step over
-// before each vertex to light, starting with the first; otherwise every vertex is lit.
+// The vertex-steps cluster, when the packet has a valid one, lists for each vertex to light how
+// far it lies from the previous one (the first entry counts from the start); otherwise every
+// vertex is lit.
 #define LIGHT_BEGIN(_objStride)                                                                    \
     if (vSteps && (vSteps->flags & CLUSTER_VALID))                                                 \
     {                                                                                              \
-        U8 _first;                                                                                 \
-                                                                                                   \
         step = (U8*)vSteps->data;                                                                  \
         numVerts = vSteps->numUsed;                                                                \
-        _first = *step++;                                                                          \
-        objVert = (RxObjSpace3DVertex*)((U8*)objVert + _first * (_objStride));                     \
-        camVert += _first;                                                                         \
+        objVert = (RxObjSpace3DVertex*)((U8*)objVert + *step * (_objStride));                      \
+        camVert += *step;                                                                          \
+        step++;                                                                                    \
     }                                                                                              \
     else                                                                                           \
     {                                                                                              \
@@ -194,7 +206,9 @@ RxNodeDefinition* RxNodeDefinitionGetLight(void)
         (_vert)->col.blue += (_amount) * (_light)->color.blue;                                     \
     }
 
-static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+// Adds an ambient light to each vertex's camera-space color: the light color scaled by 255 and
+// the surface's ambient term (the red channel alone, as grey, for a light without chroma).
+static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                  RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                  F32 invScale)
 {
@@ -208,7 +222,8 @@ static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight
     {
         step = (U8*)vSteps->data;
         numVerts = vSteps->numUsed;
-        camVert += *step++;
+        camVert += *step;
+        step++;
     }
     else
     {
@@ -227,7 +242,8 @@ static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight
 
             if (step)
             {
-                camVert += *step++;
+                camVert += *step;
+                step++;
             }
             else
             {
@@ -246,7 +262,8 @@ static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight
 
             if (step)
             {
-                camVert += *step++;
+                camVert += *step;
+                step++;
             }
             else
             {
@@ -256,7 +273,10 @@ static void _rwApplyAmbientLight(RxPipelineNode* self, RxPacket* packet, RpLight
     }
 }
 
-static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+// Adds a directional light: for a light with a frame, each vertex facing the light gets the light
+// color times 255, the surface's diffuse term and the Lambert term of its normal against the
+// reversed at vector, taken into object space when there is an inverse matrix.
+static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                      RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                      F32 invScale)
 {
@@ -342,7 +362,9 @@ static void _rwApplyDirectionalLight(RxPipelineNode* self, RxPacket* packet, RpL
         invRadius = 1.0f / light->radius;                                                          \
     }
 
-static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+// Adds a point light: each vertex inside the radius and facing the light gets the diffuse color
+// times the Lambert term of the vertex-to-light vector and (1 / distance - 1 / radius).
+static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                F32 invScale)
 {
@@ -357,6 +379,7 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* 
     RwV3d pos;
     F32 invRadius;
     F32 radiusSquared;
+    F32 scale;
 
     LIGHT_BEGIN(objStride);
 
@@ -366,7 +389,7 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* 
 
     if (light->object.object.privateFlags & LIGHT_PRIVATENOCHROMA)
     {
-        F32 scale = LIGHT_COLORSCALE * light->color.red * surfaceProps->diffuse;
+        scale = LIGHT_COLORSCALE * light->color.red * surfaceProps->diffuse;
 
         while (numVerts--)
         {
@@ -381,15 +404,9 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* 
             if (lambert > 0.0f && RwV3dDotProductMacro(&vec, &vec) < radiusSquared)
             {
                 F32 dist = _rwSqrt(RwV3dDotProductMacro(&vec, &vec));
-                F32 recipDist = 0.0f;
                 F32 amount;
 
-                if (dist > recipDist)
-                {
-                    recipDist = 1.0f / dist;
-                }
-
-                amount = scale * lambert * (recipDist - invRadius);
+                amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
                 LIGHT_ADDGREY(camVert, amount);
             }
 
@@ -398,7 +415,7 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* 
     }
     else
     {
-        F32 scale = LIGHT_COLORSCALE * surfaceProps->diffuse;
+        scale = LIGHT_COLORSCALE * surfaceProps->diffuse;
 
         while (numVerts--)
         {
@@ -413,15 +430,9 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* 
             if (lambert > 0.0f && RwV3dDotProductMacro(&vec, &vec) < radiusSquared)
             {
                 F32 dist = _rwSqrt(RwV3dDotProductMacro(&vec, &vec));
-                F32 recipDist = 0.0f;
                 F32 amount;
 
-                if (dist > recipDist)
-                {
-                    recipDist = 1.0f / dist;
-                }
-
-                amount = scale * lambert * (recipDist - invRadius);
+                amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
                 LIGHT_ADDCOLOR(camVert, amount, light);
             }
 
@@ -430,7 +441,9 @@ static void _rwApplyPointLight(RxPipelineNode* self, RxPacket* packet, RpLight* 
     }
 }
 
-static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+// Adds a spot light: as the point light, but only for vertices inside the cone given by the
+// light's at vector and minusCosAngle.
+static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                               RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                               F32 invScale)
 {
@@ -482,26 +495,24 @@ static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* l
             vec.z = pos.z - objVert->z;
             lambert = vec.x * objVert->nx + vec.y * objVert->ny + vec.z * objVert->nz;
 
-            if (lambert > 0.0f && RwV3dDotProductMacro(&vec, &vec) < radiusSquared)
+            // Unlike the other loops, a vertex facing away does not move the cursors on here.
+            if (lambert > 0.0f)
             {
-                F32 dist = _rwSqrt(RwV3dDotProductMacro(&vec, &vec));
-
-                if (RwV3dDotProductMacro(&vec, &at) < dist * light->minusCosAngle)
+                if (RwV3dDotProductMacro(&vec, &vec) < radiusSquared)
                 {
-                    F32 recipDist = 0.0f;
-                    F32 amount;
+                    F32 dist = _rwSqrt(RwV3dDotProductMacro(&vec, &vec));
 
-                    if (dist > recipDist)
+                    if (RwV3dDotProductMacro(&vec, &at) < dist * light->minusCosAngle)
                     {
-                        recipDist = 1.0f / dist;
+                        F32 amount;
+
+                        amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
+                        LIGHT_ADDGREY(camVert, amount);
                     }
-
-                    amount = scale * lambert * (recipDist - invRadius);
-                    LIGHT_ADDGREY(camVert, amount);
                 }
-            }
 
-            LIGHT_NEXT(objStride);
+                LIGHT_NEXT(objStride);
+            }
         }
     }
     else
@@ -524,15 +535,9 @@ static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* l
 
                 if (RwV3dDotProductMacro(&vec, &at) < dist * light->minusCosAngle)
                 {
-                    F32 recipDist = 0.0f;
                     F32 amount;
 
-                    if (dist > recipDist)
-                    {
-                        recipDist = 1.0f / dist;
-                    }
-
-                    amount = scale * lambert * (recipDist - invRadius);
+                    amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
                     LIGHT_ADDCOLOR(camVert, amount, light);
                 }
             }
@@ -542,7 +547,9 @@ static void _rwApplySpotLight(RxPipelineNode* self, RxPacket* packet, RpLight* l
     }
 }
 
-static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, RpLight* light,
+// Adds a soft spot light: as the spot light, with the amount scaled down by the square of how far
+// the vertex lies toward the cone's edge.
+static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, const RpLight* light,
                                   RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                   F32 invScale)
 {
@@ -602,23 +609,18 @@ static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, RpLigh
 
                 if (alongAt < cone)
                 {
-                    F32 recipDist = 0.0f;
                     F32 amount;
                     F32 edge;
 
-                    if (dist > recipDist)
-                    {
-                        recipDist = 1.0f / dist;
-                    }
-
+                    amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
                     edge = dist + cone;
-                    amount = scale * lambert * (recipDist - invRadius);
 
                     if (edge > 0.0f)
                     {
                         F32 falloff = (dist + alongAt) / edge;
 
-                        amount *= 1.0f - falloff * falloff;
+                        falloff *= falloff;
+                        amount *= 1.0f - falloff;
                     }
 
                     LIGHT_ADDGREY(camVert, amount);
@@ -650,23 +652,18 @@ static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, RpLigh
 
                 if (alongAt < cone)
                 {
-                    F32 recipDist = 0.0f;
                     F32 amount;
                     F32 edge;
 
-                    if (dist > recipDist)
-                    {
-                        recipDist = 1.0f / dist;
-                    }
-
+                    amount = scale * lambert * (((dist > 0.0f) ? (1.0f / dist) : 0.0f) - invRadius);
                     edge = dist + cone;
-                    amount = scale * lambert * (recipDist - invRadius);
 
                     if (edge > 0.0f)
                     {
                         F32 falloff = (dist + alongAt) / edge;
 
-                        amount *= 1.0f - falloff * falloff;
+                        falloff *= falloff;
+                        amount *= 1.0f - falloff;
                     }
 
                     LIGHT_ADDCOLOR(camVert, amount, light);

@@ -1,7 +1,8 @@
 #include <rpworld.h>
 
-// The post-light node: clamps the lit camera-space colors to 0-255, modulates them by the
-// material color where the mesh asks for it, and stores them as the screen vertices' colors.
+// The post-light node: scales the lit camera-space colors by the material color where the mesh
+// asks for it, clamps them to 0-255 (alpha only when scaled) and stores them as the screen
+// vertices' colors.
 
 // The node's cluster slots.
 #define POSTLIGHTCL_MESHSTATE 0
@@ -20,11 +21,12 @@ extern RxClusterDefinition RxClVSteps;
 #define POSTLIGHT_CLAMP(_channel)                                                                  \
     if (((RwSplitBits*)&(_channel))->nUInt > *(const U32*)&maxColor)                                 \
     {                                                                                              \
-        ((RwSplitBits*)&(_channel))->nUInt =                                                        \
-            *(const U32*)&maxColor & ~(((RwSplitBits*)&(_channel))->nInt >> 31);                       \
+        U32 _bits = *(const U32*)&maxColor & ~(((RwSplitBits*)&(_channel))->nInt >> 31);           \
+                                                                                                   \
+        ((RwSplitBits*)&(_channel))->nUInt = _bits;                                                \
     }
 
-// Moves both cursors over the next run of unlit vertices.
+// Moves both cursors on by count vertices.
 #define POSTLIGHT_SKIP(_count)                                                                     \
     {                                                                                              \
         U32 _n;                                                                                    \
@@ -36,12 +38,15 @@ extern RxClusterDefinition RxClVSteps;
         }                                                                                          \
     }
 
+// The node body: writes each lit vertex's clamped color to its screen vertex, skipping the
+// vertices that the optional step cluster passes over. No color is written when all the
+// vertices share a clip flag (the mesh lies wholly off screen); the packet is still passed on.
 static S32 _PostLightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
     static const F32 maxColor = 255.0f;
 
-    RxPacket* packet = RxPacketFetch(self);
-    RxCluster* meshState = RxClusterLockRead(packet, POSTLIGHTCL_MESHSTATE);
+    RxPacket* packet;
+    RxCluster* meshState = RxClusterLockRead(packet = RxPacketFetch(self), POSTLIGHTCL_MESHSTATE);
     RxMeshStateVector* meshData = (RxMeshStateVector*)meshState->currentData;
 
     if (!meshData->ClipFlagsAnd)
@@ -77,8 +82,8 @@ static S32 _PostLightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
             {
                 RxCamSpace3DVertex* camVert = (RxCamSpace3DVertex*)camVerts->currentData;
                 RwIm2DVertex* devVert = (RwIm2DVertex*)devVerts->currentData;
-                RwRGBAReal* color = &camVert->col;
                 RwRGBA* outputColor = &devVert->emissiveColor;
+                RwRGBAReal* color = &camVert->col;
 
                 POSTLIGHT_CLAMP(color->red);
                 POSTLIGHT_CLAMP(color->green);

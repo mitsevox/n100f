@@ -4,8 +4,8 @@
 // clusters. The GameCube build uses its own all-in-one node instead; this one stays linked from
 // the shared pipeline code.
 
-// fn_80157A3C and fn_80157FB8 are the node's helpers (the June 2001 prototype names
-// instanceVerts and instanceMeshes among them); they keep their labels.
+// The helpers instanceVerts and instanceMeshes take their names from the PS2 prototype symbol
+// tables, which list them in this order before WorldSectorInstanceNodeFn.
 
 // The per-mesh record the instance node builds, as in nodeAtomicInstance.c (project-own names).
 typedef struct SectorInstanceMesh SectorInstanceMesh;
@@ -35,17 +35,25 @@ struct SectorInstanceHeader
 
 // Writes each vertex's texture coordinates (when the world is textured), prelit color (opaque
 // black when not prelit), unpacked normal (when the world has normals) and position.
-static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSector* sector,
-                        S32 stride)
+static void instanceVerts(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSector* sector,
+                          S32 stride)
 {
     static const RwRGBA defaultColor = { 0, 0, 0, 255 };
-    U32 flags = ((RpWorld*)RWSRCGLOBAL(curWorld))->flags;
+    RxObjSpace3DVertex* objVert;
+    U32 flags;
+    const RwTexCoords* texCoord;
+    U32 numVerts;
+    const RwRGBA* color;
+    const RpVertexNormal* normal;
+    const RwV3d* pos;
+
+    flags = ((RpWorld*)RWSRCGLOBAL(curWorld))->flags;
 
     if (flags & (rpWORLDTEXTURED | rpWORLDTEXTURED2))
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RwTexCoords* texCoord = sector->texCoords[0];
-        U32 numVerts = sector->numVertices;
+        objVert = objVerts;
+        texCoord = sector->texCoords[0];
+        numVerts = sector->numVertices;
 
         while (numVerts--)
         {
@@ -58,9 +66,9 @@ static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSec
 
     if (flags & rpWORLDPRELIT)
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RwRGBA* color = sector->preLitLum;
-        U32 numVerts = sector->numVertices;
+        objVert = objVerts;
+        color = sector->preLitLum;
+        numVerts = sector->numVertices;
 
         while (numVerts--)
         {
@@ -74,8 +82,8 @@ static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSec
     }
     else
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        U32 numVerts = sector->numVertices;
+        objVert = objVerts;
+        numVerts = sector->numVertices;
 
         while (numVerts--)
         {
@@ -89,58 +97,68 @@ static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSec
 
     if (flags & rpWORLDNORMALS)
     {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RpVertexNormal* normal = sector->normals;
-        U32 numVerts = sector->numVertices;
+        objVert = objVerts;
+        normal = sector->normals;
+        numVerts = sector->numVertices;
 
         while (numVerts--)
         {
-            objVert->nx = SECTOR_NORMALSCALE * normal->x;
-            objVert->ny = SECTOR_NORMALSCALE * normal->y;
-            objVert->nz = SECTOR_NORMALSCALE * normal->z;
+            F32 x = SECTOR_NORMALSCALE * normal->x;
+            F32 y = SECTOR_NORMALSCALE * normal->y;
+            F32 z = SECTOR_NORMALSCALE * normal->z;
+
+            objVert->nx = x;
+            objVert->ny = y;
+            objVert->nz = z;
             normal++;
             objVert = OBJVERTEXNEXT(objVert, stride);
         }
     }
 
-    {
-        RxObjSpace3DVertex* objVert = objVerts;
-        const RwV3d* pos = sector->vertices;
-        U32 numVerts = sector->numVertices;
+    objVert = objVerts;
+    pos = sector->vertices;
+    numVerts = sector->numVertices;
 
-        while (numVerts--)
-        {
-            objVert->x = pos->x;
-            objVert->y = pos->y;
-            objVert->z = pos->z;
-            pos++;
-            objVert = OBJVERTEXNEXT(objVert, stride);
-        }
+    while (numVerts--)
+    {
+        objVert->x = pos->x;
+        objVert->y = pos->y;
+        objVert->z = pos->z;
+        pos++;
+        objVert = OBJVERTEXNEXT(objVert, stride);
     }
 }
 
 // Builds a record per mesh: its indices copied (rebased to the lowest vertex the mesh uses, with
 // strips unrolled to triangles and degenerate triangles dropped) or generated for unindexed
 // meshes, and the range of vertices they use.
-static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, U16* indices,
-                        RxObjSpace3DVertex* verts, S32 stride)
+static void instanceMeshes(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, U16* indices,
+                           RxObjSpace3DVertex* verts, S32 stride)
 {
-    RpMesh* mesh = (RpMesh*)(meshHeader + 1);
-    U16 numMeshes = meshHeader->numMeshes;
-    U32 vertIndex = 0;
-    U32 triStrip = meshHeader->flags & rpMESHHEADERTRISTRIP;
+    U32 numIndices;
+    U32 numMeshes;
+    RpMesh* mesh;
+    S32 triStrip;
+    U32 vertIndex;
+    U32 maxIndex;
+    U16* meshIndices;
+    U32 count;
+
+    mesh = (RpMesh*)(meshHeader + 1);
+    numMeshes = meshHeader->numMeshes;
+    vertIndex = 0;
+    triStrip = meshHeader->flags & rpMESHHEADERTRISTRIP;
 
     while (numMeshes--)
     {
-        U16* meshIndices = mesh->indices;
-        U32 numIndices;
+        meshIndices = mesh->indices;
 
         instMesh->indices = indices;
         instMesh->stride = stride;
         instMesh->material = mesh->material;
         instMesh->mesh = mesh;
 
-        numIndices = mesh->numIndices;
+        count = numIndices = mesh->numIndices;
 
         if (meshHeader->flags & rpMESHHEADERUNINDEXED)
         {
@@ -149,12 +167,11 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
 
             if (triStrip)
             {
-                U32 numTris = numIndices - 2;
                 U16 i;
 
-                instMesh->numIndices = numTris * 3;
+                instMesh->numIndices = (numIndices - 2) * 3;
 
-                for (i = 0; i < numTris; i++)
+                for (i = 0; i < numIndices - 2; i++)
                 {
                     U32 odd = i & 1;
 
@@ -172,33 +189,25 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
                 {
                     U16 i;
 
-                    for (i = 0; i < numIndices; i++)
+                    for (i = 0; i < count; i++)
                     {
                         *indices++ = i;
                     }
                 }
             }
 
-            vertIndex += numIndices;
+            vertIndex += count;
         }
         else
         {
-            U32 maxIndex = 0;
-            U16* index = meshIndices + numIndices;
-            U32 count = numIndices;
-
+            maxIndex = 0;
             vertIndex = 0xFFFF;
 
             while (count--)
             {
-                U32 value = *--index;
-
-                vertIndex = (vertIndex < value) ? vertIndex : value;
-                maxIndex = (maxIndex > value) ? maxIndex : value;
+                vertIndex = (vertIndex < meshIndices[count]) ? vertIndex : meshIndices[count];
+                maxIndex = (maxIndex > meshIndices[count]) ? maxIndex : meshIndices[count];
             }
-
-            instMesh->verts = (RxObjSpace3DVertex*)((U8*)verts + vertIndex * stride);
-            instMesh->numVerts = maxIndex - vertIndex + 1;
 
             if (triStrip)
             {
@@ -228,22 +237,22 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
             }
             else
             {
-                U32 numTris = numIndices / 3;
+                U32 i;
 
                 instMesh->numIndices = numIndices;
 
-                if (numIndices > 2)
+                for (i = 2; i < numIndices; i += 3)
                 {
-                    while (numTris--)
-                    {
-                        indices[0] = meshIndices[0] - vertIndex;
-                        indices[1] = meshIndices[1] - vertIndex;
-                        indices[2] = meshIndices[2] - vertIndex;
-                        indices += 3;
-                        meshIndices += 3;
-                    }
+                    indices[0] = meshIndices[0] - vertIndex;
+                    indices[1] = meshIndices[1] - vertIndex;
+                    indices[2] = meshIndices[2] - vertIndex;
+                    indices += 3;
+                    meshIndices += 3;
                 }
             }
+
+            instMesh->verts = (RxObjSpace3DVertex*)((U8*)verts + vertIndex * stride);
+            instMesh->numVerts = maxIndex - vertIndex + 1;
         }
 
         instMesh++;
@@ -256,17 +265,32 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
 // matrix) and render state.
 static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
-    RpWorldSector* sector = (RpWorldSector*)params->dataParam;
-    RpWorld* world = (RpWorld*)RWSRCGLOBAL(curWorld);
-    U32 numVerts = sector->numVertices;
-    RpMeshHeader* meshHeader;
-    U16 numMeshes;
-    U32 flags;
-    U32 textured;
-    RwResEntry* repEntry;
-    S32 numTris;
+    RpWorldSector* sector;
+    RpWorld* world;
     SectorInstanceHeader* header;
+    RpMeshHeader* meshHeader;
+    U32 textured;
+    U32 numMeshes;
+    U32 numVerts;
     SectorInstanceMesh* instMesh;
+    U32 flags;
+    S32 stride;
+    RxObjSpace3DVertex* verts;
+    S32 numTris;
+    RwResEntry* repEntry;
+    RxPacket* packet;
+    RxCluster* objVertsCl;
+    RxCluster* indicesCl;
+    RxCluster* meshStateCl;
+    RxCluster* renderStateCl;
+    RxMeshStateVector* meshState;
+    RxRenderStateVector* renderState;
+    RpMaterial* material;
+    RwTexture* texture;
+
+    sector = (RpWorldSector*)params->dataParam;
+    world = (RpWorld*)RWSRCGLOBAL(curWorld);
+    numVerts = sector->numVertices;
 
     if (!numVerts)
     {
@@ -284,7 +308,19 @@ static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* 
     flags = world->flags;
     repEntry = sector->repEntry;
 
+    stride = sizeof(RxObjSpace3DVertex);
+
+    if (flags & rpWORLDNORMALS)
+    {
+        stride = sizeof(RxObjSpace3DVertex);
+    }
+
     textured = flags & (rpWORLDTEXTURED | rpWORLDTEXTURED2);
+
+    if (textured)
+    {
+        stride = sizeof(RxObjSpace3DVertex);
+    }
 
     if (meshHeader->flags & rpMESHHEADERTRISTRIP)
     {
@@ -308,21 +344,18 @@ static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* 
 
     if (!repEntry)
     {
-        S32 vertSize = numVerts * sizeof(RxObjSpace3DVertex);
-        RxObjSpace3DVertex* verts;
-
         repEntry = RwResourcesAllocateResEntry(sector, &sector->repEntry,
                                                sizeof(SectorInstanceHeader) +
                                                    (numMeshes - 1) * sizeof(SectorInstanceMesh) +
-                                                   numTris * 3 * sizeof(U16) + vertSize,
+                                                   numTris * 3 * sizeof(U16) + numVerts * stride,
                                                NULL);
         header = (SectorInstanceHeader*)(repEntry + 1);
         header->serialNum = meshHeader->serialNum;
         verts = (RxObjSpace3DVertex*)&header->meshes[numMeshes];
 
-        fn_80157A3C(verts, world, sector, sizeof(RxObjSpace3DVertex));
-        fn_80157FB8(header->meshes, meshHeader, (U16*)((U8*)verts + vertSize), verts,
-                    sizeof(RxObjSpace3DVertex));
+        instanceVerts(verts, world, sector, stride);
+        instanceMeshes(header->meshes, meshHeader, (U16*)((U8*)verts + numVerts * stride), verts,
+                       stride);
     }
     else
     {
@@ -335,14 +368,11 @@ static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* 
     {
         if (instMesh->numVerts && instMesh->numIndices)
         {
-            RxPacket* packet = RxPacketCreate(self);
-            RxCluster* objVertsCl = RxClusterLockWrite(packet, 0, self);
-            RxCluster* indicesCl = RxClusterLockWrite(packet, 1, self);
-            RxCluster* meshStateCl = RxClusterLockWrite(packet, 2, self);
-            RxCluster* renderStateCl = RxClusterLockWrite(packet, 3, self);
-            RxMeshStateVector* meshState;
-            RxRenderStateVector* renderState;
-            RpMaterial* material;
+            packet = RxPacketCreate(self);
+            objVertsCl = RxClusterLockWrite(packet, 0, self);
+            indicesCl = RxClusterLockWrite(packet, 1, self);
+            meshStateCl = RxClusterLockWrite(packet, 2, self);
+            renderStateCl = RxClusterLockWrite(packet, 3, self);
 
             meshStateCl = RxClusterInitializeData(meshStateCl, 1, sizeof(RxMeshStateVector));
             renderStateCl = RxClusterInitializeData(renderStateCl, 1, sizeof(RxRenderStateVector));
@@ -378,7 +408,7 @@ static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* 
 
             if (textured)
             {
-                RwTexture* texture = meshState->Texture;
+                texture = meshState->Texture;
 
                 if (texture)
                 {

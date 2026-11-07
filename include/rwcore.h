@@ -1413,12 +1413,14 @@ inline RxPacket* RxPacketFetch(RxPipelineNode* node)
 
 // The packet's cluster for a node cluster index, with its cursor at the start of its data, or NULL
 // where the packet has no such cluster.
-#define RxClusterLockRead(_packet, _index)                                                         \
-    ((S32)(_packet)->inputToClusterSlot[_index] == -1                                              \
-         ? NULL                                                                                    \
-         : ((_packet)->clusters[(_packet)->inputToClusterSlot[_index]].currentData =               \
-                (_packet)->clusters[(_packet)->inputToClusterSlot[_index]].data,                   \
-            &(_packet)->clusters[(_packet)->inputToClusterSlot[_index]]))
+inline RxCluster* RxClusterLockRead(RxPacket* packet, U32 index)
+{
+    return (S32)packet->inputToClusterSlot[index] == -1
+               ? NULL
+               : (packet->clusters[packet->inputToClusterSlot[index]].currentData =
+                      packet->clusters[packet->inputToClusterSlot[index]].data,
+                  &packet->clusters[packet->inputToClusterSlot[index]]);
+}
 
 // Passes the packet on through one of the node's outputs, then destroys the embedded packet if no
 // later node took it.
