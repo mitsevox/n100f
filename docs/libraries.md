@@ -44,7 +44,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/basync.c` | 7 of 7 | (Matching; starts at `SyncObject`, `0x8016E9E4`) |
 | `rwsdk/src/pipe/p2/baim3d.c` | 9 of 9 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/bapipe.c` | 4 of 4 | (Matching) |
-| `rwsdk/src/pipe/p2/p2core.c` | 12 of 13 | `RxClusterInitializeData` (99.268295%: the target restores the saved registers before the link register); data ownership remains unpromoted |
+| `rwsdk/src/pipe/p2/p2core.c` | 13 of 13 | (Matching on GIHE78-rev0) |
 | `rwsdk/src/pipe/p2/p2define.c` | 11 of 13 | `RxPipelineLock` (99.7%: the inlined block grow's offset and the node definition take each other's registers) and `RxLockedPipeUnlock` (97.6%: the size sums add the outputs' total at another point and the copy of the sort data to the top of the block subtracts its entry size from the size first, so their values take other registers); `.sdata` `gMemoryLimits` is in the split |
 | `rwsdk/src/pipe/p2/p2dep.c` | 5 of 11 | `_PropDownElimPath` (98.1%), `_AssignClusterSlots` (97.7%), `_ForAllNodesWriteClusterAllocations` (96.8%), `_PropagateDependenciesAndKillDeadPaths` (95.6%), `_TraceClusterScopes` (94.7%) and `_ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields` (90.5%): the inlined entry helpers' values take other registers and some of their stores and constants are scheduled differently |
 | `rwsdk/src/pipe/p2/p2heap.c` | 7 of 8 | `RxHeapRealloc` (99.6%: the rounded size and the inlined shrink path's size difference take each other's registers); its message string is not split |
@@ -102,7 +102,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/gcn/instance/ibuffer.c` | 1 of 2 | `GCNDisplayListsBuild` (95.4%: count copy, redundant halfword narrowing and register allocation; remains `NonMatching`) |
 | `rwsdk/world/pipe/p2/gcn/gclights.c` | 1 of 2 | `_rwGCLightsGlobalEnable` (99.9375%: seven stack offsets exchanging the working color and its argument copy); `.data`, `.bss` and `.sdata2` are split |
 | `rwsdk/world/pipe/p2/gcn/native.c` | 3 of 8 | `_rpNativeRead` (92.4%), `_rpNativeWrite` (90.2%), `_rpGeometryNativeSize` (86.4%), `_rpWorldSectorNativeSize` (90.8%) and `_rpWorldSectorNativeWrite` (90.0%): the target associates the instance size and alignment arithmetic differently, and register choice (text only) |
-| `rwsdk/world/pipe/p2/gcn/gcpipe.c` | 10 of 10 | Matching on GIHE78-rev0: the token waits, the instance and draw callbacks, and the `RxClLights` cluster and its name in `.data` |
+| `rwsdk/world/pipe/p2/gcn/gcpipe.c` | 10 of 10 | (Matching on GIHE78-rev0, with the `RxClLights` cluster and its name in `.data`) |
 | `rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c` | 4 of 4 | (Matching on GIHE78-rev0 and GIHE78-rev1; `.data` 98.5%: the four bytes of padding at its end) |
 | `rwsdk/world/pipe/p2/nodeMaterialScatter.c` | 2 of 2 | (Matching on GIHE78-rev0; `.data` 98.8%, as `nodeAtomicEnumerateLights.c`) |
 | `rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c` | 3 of 3 | all 3 functions; .data 136 bytes and .sdata 8 bytes; Matching on GIHE78-rev0 and GIHE78-rev1 |
@@ -110,7 +110,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/nodeWorldSectorInstance.c` | 1 of 4 | `WorldSectorInstanceNodeFn` (96.0%), `fn_80157A3C` (79.7%) and `fn_80157FB8` (79.5%), register choice and scheduling; `.data` and `.sdata` in the split, `.sdata2` not |
 | `rwsdk/world/pipe/p2/gcn/vtxfmt.c` | 14 of 14 | (Matching on GIHE78-rev0, with its `.bss` and `.sbss`; the start edge stays open) |
 | `rwsdk/plugin/hanim/stdkey.c` | 8 of 8 | Source-linked on rev0, including the 104-byte `.sdata2` pool; ordered slerp threshold and scratch lifetimes recovered |
-| `rwsdk/plugin/hanim/rphanim.c` | 13 of 14 | Create 94.270836%: initial allocation-result/zero coalescing and scheduling. Data ownership and registration original name unresolved; NonMatching, original linked |
+| `rwsdk/plugin/hanim/rphanim.c` | 14 of 14 | (Matching on GIHE78-rev0) |
 | `rwsdk/plugin/matfx/rpmatfx.c` | 41 of 48 | `MatFXMaterialCopy` (98.6%), `fn_8013E188` (98.2%), `fn_8013E5CC` (98.0%), `fn_8013DEC4` (97.7%), `_rpMatFXTextureMaskCreate` (85.2%), `fn_8013E76C` and `fn_8013E894` (78.4%), register choice and scheduling; data open (`.sdata2` and `MatFXInfo` not split) |
 | `rwsdk/plugin/matfx/multiTex.c` | 17 of 17 | Matching on GIHE78-rev0 and GIHE78-rev1, with all 2,520 code bytes, `.bss` RegEntries and `.sdata` _rpMultiTextureModule (152 data bytes) |
 | `rwsdk/plugin/matfx/multiTexEffect.c` | 13 of 14 (rev0) | `RpMTEffectFind` remains 98.35366%; NonMatching. Rev1 has 13 of 15 exact functions in its 2,852-byte mapped range; it remains NonMatching |
