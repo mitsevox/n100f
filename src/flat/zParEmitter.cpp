@@ -85,18 +85,22 @@ S32 zParEmitterEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
     return 1;
 }
 
-// Turn the particle's velocity by a random angle of up to half the asset's variation per axis.
+// Turn the particle's velocity by a random angle of up to half the asset's variation per axis,
+// when the asset has any variation.
 static void zParEmitterAngleVariation(xPar* p, zParEmitterAsset* a)
 {
-    xMat3x3 mat_rot = {};
-    F32 ang[3] = {};
-    F32 ang_debrisCone = a->vel_angle_variation;
+    if (a->vel_angle_variation != 0.0f)
+    {
+        xMat3x3 mat_rot = {};
+        F32 ang[3] = {};
+        F32 ang_debrisCone = a->vel_angle_variation;
 
-    ang[0] = ang_debrisCone * (iurand() - 0.5f);
-    ang[1] = ang_debrisCone * (iurand() - 0.5f);
-    ang[2] = ang_debrisCone * (iurand() - 0.5f);
-    xMat3x3Euler(&mat_rot, ang[0], ang[1], ang[2]);
-    xMat3x3LMulVec(&p->m_vel, &mat_rot, &p->m_vel);
+        ang[0] = ang_debrisCone * (iurand() - 0.5f);
+        ang[1] = ang_debrisCone * (iurand() - 0.5f);
+        ang[2] = ang_debrisCone * (iurand() - 0.5f);
+        xMat3x3Euler(&mat_rot, ang[0], ang[1], ang[2]);
+        xMat3x3LMulVec(&p->m_vel, &mat_rot, &p->m_vel);
+    }
 }
 
 // Place the particle on the edge of the emitter's XZ circle, optionally pushing it outward.
@@ -108,7 +112,6 @@ static void zParEmitterEmitCircleEdge(xPar* p, zParEmitterAsset* a, F32 dt)
     F32 rot_amount = 360.0f * iurand();
     F32 ct = cos(rot_amount);
     F32 st = sin(rot_amount);
-    xVec2 vec2 = { 0.0f, 1.0f };
     xMat2x2 rot_mat = { 1.0f, 0.0f, 0.0f, 1.0f };
 
     rot_mat.right.x = ct;
@@ -116,23 +119,22 @@ static void zParEmitterEmitCircleEdge(xPar* p, zParEmitterAsset* a, F32 dt)
     rot_mat.up.x = -st;
     rot_mat.up.y = ct;
 
-    F32 x = rot_mat.right.x * vec2.x + rot_mat.right.y * vec2.y;
-    F32 z = rot_mat.up.x * vec2.x + rot_mat.up.y * vec2.y;
-    x *= a->e_circle.radius;
-    z *= a->e_circle.radius;
-    p->m_pos.x += x;
-    p->m_pos.z += z;
+    xVec2 vec2 = { 0.0f, 1.0f };
+    xVec2 off;
+    off.x = rot_mat.right.x * vec2.x + rot_mat.right.y * vec2.y;
+    off.x *= a->e_circle.radius;
+    off.y = rot_mat.up.x * vec2.x + rot_mat.up.y * vec2.y;
+    off.y *= a->e_circle.radius;
+    p->m_pos.x += off.x;
+    p->m_pos.z += off.y;
 
-    if (a->vel_angle_variation != 0.0f)
-    {
-        zParEmitterAngleVariation(p, a);
-    }
+    zParEmitterAngleVariation(p, a);
 
     if (a->e_circle.deflection != 0.0f)
     {
         F32 dt_radius = a->e_circle.deflection * (a->e_circle.radius * dt);
-        p->m_vel.x += x * dt_radius;
-        p->m_vel.z += z * dt_radius;
+        p->m_vel.x += off.x * dt_radius;
+        p->m_vel.z += off.y * dt_radius;
     }
 }
 
@@ -142,10 +144,10 @@ static void zParEmitterEmitCircle(xPar* p, zParEmitterAsset* a, F32 dt)
     xVec3Copy(&p->m_vel, &a->vel);
     xVec3SMulBy(&p->m_vel, dt);
 
+    F32 ct, st;
     F32 rot_amount = 360.0f * iurand();
-    F32 ct = cos(rot_amount);
-    F32 st = sin(rot_amount);
-    xVec2 vec2 = { 0.0f, 1.0f };
+    ct = cos(rot_amount);
+    st = sin(rot_amount);
     xMat2x2 rot_mat = { 1.0f, 0.0f, 0.0f, 1.0f };
 
     rot_mat.right.x = ct;
@@ -153,17 +155,16 @@ static void zParEmitterEmitCircle(xPar* p, zParEmitterAsset* a, F32 dt)
     rot_mat.up.x = -st;
     rot_mat.up.y = ct;
 
+    xVec2 vec2 = { 0.0f, 1.0f };
     vec2.y = a->e_circle.radius * iurand();
 
-    F32 x = rot_mat.right.x * vec2.x + rot_mat.right.y * vec2.y;
-    F32 z = rot_mat.up.x * vec2.x + rot_mat.up.y * vec2.y;
+    F32 z, x;
+    x = rot_mat.right.x * vec2.x + rot_mat.right.y * vec2.y;
+    z = rot_mat.up.x * vec2.x + rot_mat.up.y * vec2.y;
     p->m_pos.x += x;
     p->m_pos.z += z;
 
-    if (a->vel_angle_variation != 0.0f)
-    {
-        zParEmitterAngleVariation(p, a);
-    }
+    zParEmitterAngleVariation(p, a);
 
     if (a->e_circle.deflection != 0.0f)
     {
@@ -171,6 +172,86 @@ static void zParEmitterEmitCircle(xPar* p, zParEmitterAsset* a, F32 dt)
         p->m_vel.x += x * dt_radius;
         p->m_vel.z += z * dt_radius;
     }
+}
+
+// The emit-type helpers below (point, rect, line, volume, offset point) and zParEmitterCull are
+// this project's names; the SLUS-20349 build has no out-of-line copy.
+
+// Emit from the emitter's own position.
+static void zParEmitterEmitPoint(xPar* p, zParEmitterAsset* a, F32 dt)
+{
+    xVec3Copy(&p->m_vel, &a->vel);
+    xVec3SMulBy(&p->m_vel, dt);
+
+    zParEmitterAngleVariation(p, a);
+}
+
+// Place the particle at a random point of the emitter's XZ rectangle.
+static void zParEmitterEmitRect(xPar* p, zParEmitterAsset* a, F32 dt)
+{
+    xVec3Copy(&p->m_vel, &a->vel);
+    xVec3SMulBy(&p->m_vel, dt);
+    p->m_pos.x += 2.0f * (a->e_rect.x_len * iurand()) - a->e_rect.x_len;
+    p->m_pos.z += 2.0f * (a->e_rect.z_len * iurand()) - a->e_rect.z_len;
+
+    zParEmitterAngleVariation(p, a);
+}
+
+// Place the particle at a random point of the segment from pos1 to pos2.
+static void zParEmitterEmitLine(xPar* p, zParEmitterAsset* a, F32 dt)
+{
+    xVec3Copy(&p->m_vel, &a->vel);
+    xVec3SMulBy(&p->m_vel, dt);
+
+    xVec3 dir;
+    xVec3Sub(&dir, &a->e_line.pos2, &a->e_line.pos1);
+    F32 len = xVec3Normalize(&dir, &dir);
+    F32 along = len * iurand();
+    p->m_pos.x = dir.x * along + a->e_line.pos1.x;
+    p->m_pos.y = dir.y * along + a->e_line.pos1.y;
+    p->m_pos.z = dir.z * along + a->e_line.pos1.z;
+
+    zParEmitterAngleVariation(p, a);
+}
+
+// Place the particle at a random point of the emit volume's box.
+static void zParEmitterEmitVolume(_zParEmitter* pe, xPar* p, zParEmitterAsset* a, F32 dt)
+{
+    _zVolume* vol = (_zVolume*)pe->emit_volume;
+
+    xVec3Copy(&p->m_vel, &a->vel);
+    xVec3SMulBy(&p->m_vel, dt);
+
+    if (vol)
+    {
+        zVolumeAsset* va = vol->asset;
+
+        if (va->bound.type == 2)
+        {
+            const _xBox* box = &va->bound.box.box;
+            F32 z, y, x;
+            x = box->upper.x - box->lower.x;
+            y = box->upper.y - box->lower.y;
+            z = box->upper.z - box->lower.z;
+            x *= iurand();
+            y *= iurand();
+            z *= iurand();
+            p->m_pos.x = x + box->lower.x;
+            p->m_pos.y = y + box->lower.y;
+            p->m_pos.z = z + box->lower.z;
+        }
+    }
+
+    zParEmitterAngleVariation(p, a);
+}
+
+// Emit from a model tag on the entity the emitter is attached to.
+static void zParEmitterEmitOffsetPoint(_zParEmitter* pe, xPar* p, zParEmitterAsset* a)
+{
+    _xEnt* ent = (_xEnt*)pe->attachTo;
+    iModelTagEval(ent->model->Data, &pe->tag, ent->model->Mat, &p->m_pos);
+
+    zParEmitterAngleVariation(p, a);
 }
 
 // Place the particle at a random distance inside the emitter's sphere. The helper's name is this
@@ -194,10 +275,7 @@ static void zParEmitterEmitSphere(xPar* p, zParEmitterAsset* a, F32 dt)
     xVec3SMul(&offset, &dirvec, a->e_sphere.radius * iurand());
     xVec3Add(&p->m_pos, &p->m_pos, &offset);
 
-    if (a->vel_angle_variation != 0.0f)
-    {
-        zParEmitterAngleVariation(p, a);
-    }
+    zParEmitterAngleVariation(p, a);
 }
 
 // Place particles on a sphere and point their velocity along the selected direction.
@@ -225,10 +303,28 @@ static void zParEmitterEmitSphereEdge(xPar* p, zParEmitterAsset* a, F32 dt, S32 
     xVec3SMul(&p->m_vel, &dirvec, sqrtf(xVec3Length2(&p->m_vel)));
     xVec3SMul(&offset, &dirvec, a->e_sphere.radius);
     xVec3Add(&p->m_pos, &p->m_pos, &offset);
-    if (a->vel_angle_variation != 0.0f)
+    zParEmitterAngleVariation(p, a);
+}
+
+// Report whether the particle is on the culled side of the asset's camera distance.
+static S32 zParEmitterCull(_zParEmitter* pe, xPar* p)
+{
+    if (pe->tasset->emit_flags & 2)
     {
-        zParEmitterAngleVariation(p, a);
+        F32 dx = globals.camera.hi_cam.mat.pos.x - p->m_pos.x;
+        F32 dy = globals.camera.hi_cam.mat.pos.y - p->m_pos.y;
+        F32 dz = globals.camera.hi_cam.mat.pos.z - p->m_pos.z;
+        F32 d2 = dx * dx + dy * dy + dz * dz;
+
+        if (pe->tasset->cull_mode == 3)
+        {
+            return d2 > pe->tasset->cull_dist_sqr;
+        }
+
+        return d2 < pe->tasset->cull_dist_sqr;
     }
+
+    return 0;
 }
 
 static _zParEmitterCustomSettings sSaveEmmiterSettings;
@@ -330,23 +426,23 @@ xPar* zParEmitterEmitCustom(_zParEmitter* p, F32 dt, _zParEmitterCustomSettings*
 // An emitter attached to a group emits from each member in turn, or from a random one.
 xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
 {
-    xPar* last_p;
     zParEmitterAsset* a;
-    zParSys* ps;
-    xPar* p;
-    F32 life;
-    F32 size_birth;
-    U32 count;
-    S32 sanity;
-    xBase* attachObject;
-    S32 attachGroupIndex;
-    S32 attachGroupTotal;
     S32 emitAgain;
-    xBase* emitObj;
-    S32 marker;
-    _zGroup* g;
+    S32 sanity;
+    zParSys* ps;
+    xPar* last_p;
+    U32 count;
+    F32 life;
     U32 get_rnd_group_idx;
+    xPar* p;
+    _zGroup* g;
+    xBase* attachObject;
+    xBase* emitObj;
+    S32 attachGroupIndex;
+    S32 marker;
     S32 i;
+    S32 attachGroupTotal;
+    F32 size_birth;
 
     a = pe->tasset;
     last_p = NULL;
@@ -442,7 +538,7 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
                         }
 
                         attachGroupIndex++;
-                        emitAgain = attachGroupIndex < attachGroupTotal;
+                        emitAgain = (attachGroupIndex < attachGroupTotal) ? 1 : 0;
                     }
                 }
                 else
@@ -532,13 +628,7 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
                 switch (a->emit_type)
                 {
                 case 0:
-                    xVec3Copy(&p->m_vel, &a->vel);
-                    xVec3SMulBy(&p->m_vel, dt);
-
-                    if (a->vel_angle_variation != 0.0f)
-                    {
-                        zParEmitterAngleVariation(p, a);
-                    }
+                    zParEmitterEmitPoint(p, a, dt);
                     break;
                 case 1:
                     zParEmitterEmitCircleEdge(p, a, dt);
@@ -547,34 +637,11 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
                     zParEmitterEmitCircle(p, a, dt);
                     break;
                 case 4:
-                    xVec3Copy(&p->m_vel, &a->vel);
-                    xVec3SMulBy(&p->m_vel, dt);
-                    p->m_pos.x += 2.0f * (a->e_rect.x_len * iurand()) - a->e_rect.x_len;
-                    p->m_pos.z += 2.0f * (a->e_rect.z_len * iurand()) - a->e_rect.z_len;
-
-                    if (a->vel_angle_variation != 0.0f)
-                    {
-                        zParEmitterAngleVariation(p, a);
-                    }
+                    zParEmitterEmitRect(p, a, dt);
                     break;
                 case 5:
-                {
-                    xVec3Copy(&p->m_vel, &a->vel);
-                    xVec3SMulBy(&p->m_vel, dt);
-
-                    xVec3 dir;
-                    xVec3Sub(&dir, &a->e_line.pos2, &a->e_line.pos1);
-                    F32 along = xVec3Normalize(&dir, &dir) * iurand();
-                    p->m_pos.x = dir.x * along + a->e_line.pos1.x;
-                    p->m_pos.y = dir.y * along + a->e_line.pos1.y;
-                    p->m_pos.z = dir.z * along + a->e_line.pos1.z;
-
-                    if (a->vel_angle_variation != 0.0f)
-                    {
-                        zParEmitterAngleVariation(p, a);
-                    }
+                    zParEmitterEmitLine(p, a, dt);
                     break;
-                }
                 case 7:
                     zParEmitterEmitSphereEdge(p, a, dt, 7);
                     break;
@@ -588,74 +655,14 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
                     zParEmitterEmitSphere(p, a, dt);
                     break;
                 case 6:
-                {
-                    _zVolume* vol = (_zVolume*)pe->emit_volume;
-
-                    xVec3Copy(&p->m_vel, &a->vel);
-                    xVec3SMulBy(&p->m_vel, dt);
-
-                    if (vol)
-                    {
-                        zVolumeAsset* va = vol->asset;
-
-                        if (va->bound.type == 2)
-                        {
-                            const _xBox* box = &va->bound.box.box;
-                            F32 x = box->upper.x - box->lower.x;
-                            F32 y = box->upper.y - box->lower.y;
-                            F32 z = box->upper.z - box->lower.z;
-                            x *= iurand();
-                            y *= iurand();
-                            z *= iurand();
-                            p->m_pos.x = x + box->lower.x;
-                            p->m_pos.y = y + box->lower.y;
-                            p->m_pos.z = z + box->lower.z;
-                        }
-                    }
-
-                    if (a->vel_angle_variation != 0.0f)
-                    {
-                        zParEmitterAngleVariation(p, a);
-                    }
+                    zParEmitterEmitVolume(pe, p, a, dt);
                     break;
-                }
                 case 9:
-                {
-                    _xEnt* ent = (_xEnt*)pe->attachTo;
-                    iModelTagEval(ent->model->Data, &pe->tag, ent->model->Mat, &p->m_pos);
-
-                    if (a->vel_angle_variation != 0.0f)
-                    {
-                        zParEmitterAngleVariation(p, a);
-                    }
+                    zParEmitterEmitOffsetPoint(pe, p, a);
                     break;
                 }
-                }
 
-                S32 cull;
-
-                if (pe->tasset->emit_flags & 2)
-                {
-                    F32 dx = globals.camera.hi_cam.mat.pos.x - p->m_pos.x;
-                    F32 dy = globals.camera.hi_cam.mat.pos.y - p->m_pos.y;
-                    F32 dz = globals.camera.hi_cam.mat.pos.z - p->m_pos.z;
-                    F32 d2 = dx * dx + dy * dy + dz * dz;
-
-                    if (pe->tasset->cull_mode == 3)
-                    {
-                        cull = d2 > pe->tasset->cull_dist_sqr;
-                    }
-                    else
-                    {
-                        cull = d2 < pe->tasset->cull_dist_sqr;
-                    }
-                }
-                else
-                {
-                    cull = 0;
-                }
-
-                if (cull)
+                if (zParEmitterCull(pe, p))
                 {
                     xParGroupKillPar(ps->group, p);
                 }
