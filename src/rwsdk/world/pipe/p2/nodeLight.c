@@ -31,8 +31,8 @@ static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, const 
                                   RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                   F32 invScale);
 
-// Unused: stands in for a function the target no longer contains (project-own name; body
-// inferred).
+// Scales a value by 255, negates another and zeroes a positive Lambert term. Nothing calls it
+// (project-own name and body).
 static void LightPoolStandIn(F32* scale, F32* sign, F32* lambert)
 {
     *scale *= LIGHT_COLORSCALE;
@@ -156,8 +156,9 @@ RxNodeDefinition* RxNodeDefinitionGetLight(void)
     return &nodeLightCSL;
 }
 
-// The vertex-steps cluster, when the packet has a valid one, lists how many vertices to step over
-// before each vertex to light, starting with the first; otherwise every vertex is lit.
+// The vertex-steps cluster, when the packet has a valid one, lists for each vertex to light how
+// far it lies from the previous one (the first entry counts from the start); otherwise every
+// vertex is lit.
 #define LIGHT_BEGIN(_objStride)                                                                    \
     if (vSteps && (vSteps->flags & CLUSTER_VALID))                                                 \
     {                                                                                              \
