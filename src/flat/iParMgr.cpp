@@ -66,16 +66,18 @@ void iParMgrRenderParSys_Sprite(void* data, xParGroup* ps)
     RxObjSpace3DVertex* v3d;
     xParCmdTex* tex;
     xPar* p;
+    U8 r;
+    U8 g;
+    U8 b;
+    U8 a;
+    xVec3 right;
+    xVec3 up;
+    xVec3 position;
+    xVec3 vertexpos0;
+    xVec3 vertexpos1;
+    xVec3 vertexpos2;
+    xVec3 vertexpos3;
     F32 size;
-    F32 px;
-    F32 py;
-    F32 pz;
-    F32 rx;
-    F32 ry;
-    F32 rz;
-    F32 ux;
-    F32 uy;
-    F32 uz;
     F32 u1;
     F32 u2;
     F32 v1;
@@ -105,25 +107,42 @@ void iParMgrRenderParSys_Sprite(void* data, xParGroup* ps)
         p = idx;
         idx = idx->m_next;
         size = 0.5f * p->m_size;
-        rx = size * gRenderBuffer.m_camViewR.x;
-        ry = size * gRenderBuffer.m_camViewR.y;
-        rz = size * gRenderBuffer.m_camViewR.z;
-        ux = size * gRenderBuffer.m_camViewU.x;
-        uy = size * gRenderBuffer.m_camViewU.y;
-        uz = size * gRenderBuffer.m_camViewU.z;
-        px = p->m_pos.x;
-        py = p->m_pos.y;
-        pz = p->m_pos.z;
+        right.x = size * gRenderBuffer.m_camViewR.x;
+        right.y = size * gRenderBuffer.m_camViewR.y;
+        right.z = size * gRenderBuffer.m_camViewR.z;
+        up.x = size * gRenderBuffer.m_camViewU.x;
+        up.y = size * gRenderBuffer.m_camViewU.y;
+        up.z = size * gRenderBuffer.m_camViewU.z;
 
-        RwIm3DVertexSetRGBA(&v3d[0], p->m_c[0], p->m_c[1], p->m_c[2], p->m_c[3]);
-        RwIm3DVertexSetRGBA(&v3d[1], p->m_c[0], p->m_c[1], p->m_c[2], p->m_c[3]);
-        RwIm3DVertexSetRGBA(&v3d[2], p->m_c[0], p->m_c[1], p->m_c[2], p->m_c[3]);
-        RwIm3DVertexSetRGBA(&v3d[3], p->m_c[0], p->m_c[1], p->m_c[2], p->m_c[3]);
+        r = p->m_c[0];
+        g = p->m_c[1];
+        b = p->m_c[2];
+        a = p->m_c[3];
 
-        RwIm3DVertexSetPos(&v3d[0], px - rx - ux, py - ry - uy, pz - rz - uz);
-        RwIm3DVertexSetPos(&v3d[1], px + rx + ux, py + ry + uy, pz + rz + uz);
-        RwIm3DVertexSetPos(&v3d[2], px + rx - ux, py + ry - uy, pz + rz - uz);
-        RwIm3DVertexSetPos(&v3d[3], px - rx + ux, py - ry + uy, pz - rz + uz);
+        position.x = p->m_pos.x;
+        position.y = p->m_pos.y;
+        position.z = p->m_pos.z;
+        RwIm3DVertexSetRGBA(&v3d[0], r, g, b, a);
+        RwIm3DVertexSetRGBA(&v3d[1], r, g, b, a);
+        RwIm3DVertexSetRGBA(&v3d[2], r, g, b, a);
+        RwIm3DVertexSetRGBA(&v3d[3], r, g, b, a);
+
+        vertexpos0.x = position.x - right.x - up.x;
+        vertexpos0.y = position.y - right.y - up.y;
+        vertexpos0.z = position.z - right.z - up.z;
+        RwIm3DVertexSetPos(&v3d[0], vertexpos0.x, vertexpos0.y, vertexpos0.z);
+        vertexpos1.x = position.x + right.x + up.x;
+        vertexpos1.y = position.y + right.y + up.y;
+        vertexpos1.z = position.z + right.z + up.z;
+        RwIm3DVertexSetPos(&v3d[1], vertexpos1.x, vertexpos1.y, vertexpos1.z);
+        vertexpos2.x = position.x + right.x - up.x;
+        vertexpos2.y = position.y + right.y - up.y;
+        vertexpos2.z = position.z + right.z - up.z;
+        RwIm3DVertexSetPos(&v3d[2], vertexpos2.x, vertexpos2.y, vertexpos2.z);
+        vertexpos3.x = position.x - right.x + up.x;
+        vertexpos3.y = position.y - right.y + up.y;
+        vertexpos3.z = position.z - right.z + up.z;
+        RwIm3DVertexSetPos(&v3d[3], vertexpos3.x, vertexpos3.y, vertexpos3.z);
 
         if (tex)
         {
@@ -167,10 +186,10 @@ void iParMgrRenderParSys_Sprite(void* data, xParGroup* ps)
         {
             gRenderBuffer.m_indexCount = indexCount;
             gRenderBuffer.m_vertexCount = vertexCount;
-            iRenderFlush();
             i3d = gRenderBuffer.m_index;
-            indexCount = 0;
             v3d = gRenderBuffer.m_vertex;
+            iRenderFlush();
+            indexCount = 0;
             vertexCount = 0;
         }
     }
@@ -189,15 +208,22 @@ void iRenderPushQuadStreak(xPar* p, xParCmdTex* tex)
 
     void* vertices;
     U16* indices;
-    F32 px;
-    F32 py;
-    F32 pz;
+    U8 r;
+    U8 g;
+    U8 b;
+    U8 a;
+    F32 size;
+    RwV3d right;
     F32 tx;
     F32 ty;
     F32 tz;
-    F32 rx;
-    F32 ry;
-    F32 rz;
+    F32 tx2;
+    F32 ty2;
+    F32 tz2;
+    F32 px;
+    F32 py;
+    F32 pz;
+    RwV3d head;
     F32 u1;
     F32 u2;
     F32 v1;
@@ -222,19 +248,41 @@ void iRenderPushQuadStreak(xPar* p, xParCmdTex* tex)
     tx = px - 5.0f * p->m_vel.x;
     ty = py - 5.0f * p->m_vel.y;
     tz = pz - 5.0f * p->m_vel.z;
-    rx = p->m_size * gRenderBuffer.m_camViewR.x;
-    ry = p->m_size * gRenderBuffer.m_camViewR.y;
-    rz = p->m_size * gRenderBuffer.m_camViewR.z;
+    size = p->m_size;
+    right.x = size * gRenderBuffer.m_camViewR.x;
+    right.y = size * gRenderBuffer.m_camViewR.y;
+    right.z = size * gRenderBuffer.m_camViewR.z;
 
-    RwIm3DVertexSetRGBA(&v3d[0], p->m_c[0], p->m_c[1], p->m_c[2], p->m_c[3]);
-    RwIm3DVertexSetRGBA(&v3d[1], p->m_c[0], p->m_c[1], p->m_c[2], p->m_c[3]);
-    RwIm3DVertexSetRGBA(&v3d[2], p->m_c[0], p->m_c[1], p->m_c[2], p->m_c[3]);
-    RwIm3DVertexSetRGBA(&v3d[3], p->m_c[0], p->m_c[1], p->m_c[2], p->m_c[3]);
+    tx2 = tx;
+    ty2 = ty;
+    tz2 = tz;
+    head.x = px;
+    head.y = py;
+    head.z = pz;
+    head.x -= right.x;
+    head.y -= right.y;
+    head.z -= right.z;
 
-    RwIm3DVertexSetPos(&v3d[0], px - rx, py - ry, pz - rz);
-    RwIm3DVertexSetPos(&v3d[1], tx - rx, ty - ry, tz - rz);
-    RwIm3DVertexSetPos(&v3d[2], tx + rx, ty + ry, tz + rz);
-    RwIm3DVertexSetPos(&v3d[3], px + rx, py + ry, pz + rz);
+    tx -= right.x;
+    ty -= right.y;
+    tz -= right.z;
+    tx2 += right.x;
+    ty2 += right.y;
+    tz2 += right.z;
+
+    r = p->m_c[0];
+    g = p->m_c[1];
+    b = p->m_c[2];
+    a = p->m_c[3];
+    RwIm3DVertexSetRGBA(&v3d[0], r, g, b, a);
+    RwIm3DVertexSetRGBA(&v3d[1], r, g, b, a);
+    RwIm3DVertexSetRGBA(&v3d[2], r, g, b, a);
+    RwIm3DVertexSetRGBA(&v3d[3], r, g, b, a);
+
+    RwIm3DVertexSetPos(&v3d[0], head.x, head.y, head.z);
+    RwIm3DVertexSetPos(&v3d[1], tx, ty, tz);
+    RwIm3DVertexSetPos(&v3d[2], tx2, ty2, tz2);
+    RwIm3DVertexSetPos(&v3d[3], px + right.x, py + right.y, pz + right.z);
 
     if (tex)
     {
@@ -259,16 +307,18 @@ void iRenderPushQuadStreak(xPar* p, xParCmdTex* tex)
         RwIm3DVertexSetV(&v3d[1], 0.0f);
         RwIm3DVertexSetU(&v3d[2], 1.0f);
         RwIm3DVertexSetV(&v3d[2], 0.0f);
-        RwIm3DVertexSetU(&v3d[3], 1.0f);
-        RwIm3DVertexSetV(&v3d[3], 1.0f);
+        // The textureless path leaves vertex 3's V unchanged.
+        RwIm3DVertexSetU(&v3d[3], 0.0f);
+        RwIm3DVertexSetV(&v3d[2], 1.0f);
     }
 
     {
         U16* dst = &gRenderBuffer.m_index[gRenderBuffer.m_indexCount];
 
+        U16* cursor = indices;
         for (S32 i = 0; i < 6; i++)
         {
-            *dst++ = gRenderBuffer.m_vertexCount + indices[i];
+            *dst++ = gRenderBuffer.m_vertexCount + *cursor++;
         }
     }
 
@@ -293,13 +343,11 @@ static void iRenderPushFlat(xPar* p, xParCmdTex* tex)
     F32 size;
     xMat3x3 groundmat;
     F32 yaw;
-    F32 px;
-    F32 py;
-    F32 pz;
-    F32 rx;
-    F32 rz;
-    F32 ax;
-    F32 az;
+    RwV2d at;
+    RwV2d basis;
+    xVec3 position;
+    RwV2d left;
+    RwV2d right;
     F32 u1;
     F32 u2;
     F32 v1;
@@ -331,23 +379,36 @@ static void iRenderPushFlat(xPar* p, xParCmdTex* tex)
     }
 
     xMat3x3Euler(&groundmat, yaw, 0.0f, 0.0f);
-    rx = groundmat.right.x * size;
-    rz = groundmat.right.z * size;
-    ax = groundmat.at.x * size;
-    az = groundmat.at.z * size;
-    px = p->m_pos.x;
-    py = p->m_pos.y;
-    pz = p->m_pos.z;
+    // Work in the X/Z plane; position.y supplies the height.
+    at.x = groundmat.at.x * size;
+    at.y = groundmat.at.z * size;
+    basis.x = groundmat.right.x * size;
+    basis.y = groundmat.right.z * size;
+    position.x = p->m_pos.x;
+    position.y = p->m_pos.y;
+    position.z = p->m_pos.z;
+
+    left.x = position.x - basis.x;
+    left.y = position.z - basis.y;
+    right.x = position.x + basis.x;
+    right.y = position.z + basis.y;
+
+    left.x -= at.x;
+    left.y -= at.y;
+    right.x -= at.x;
+    right.y -= at.y;
 
     RwIm3DVertexSetRGBA(&v3d[0], r, g, b, a);
     RwIm3DVertexSetRGBA(&v3d[1], r, g, b, a);
     RwIm3DVertexSetRGBA(&v3d[2], r, g, b, a);
     RwIm3DVertexSetRGBA(&v3d[3], r, g, b, a);
 
-    RwIm3DVertexSetPos(&v3d[0], px - rx - ax, py, pz - rz - az);
-    RwIm3DVertexSetPos(&v3d[1], px + rx - ax, py, pz + rz - az);
-    RwIm3DVertexSetPos(&v3d[2], px + rx + ax, py, pz + rz + az);
-    RwIm3DVertexSetPos(&v3d[3], px - rx + ax, py, pz - rz + az);
+    RwIm3DVertexSetPos(&v3d[0], left.x, position.y, left.y);
+    RwIm3DVertexSetPos(&v3d[1], right.x, position.y, right.y);
+    RwIm3DVertexSetPos(&v3d[2], at.x + (position.x + basis.x), position.y,
+                       at.y + (position.z + basis.y));
+    RwIm3DVertexSetPos(&v3d[3], at.x + (position.x - basis.x), position.y,
+                       at.y + (position.z - basis.y));
 
     if (tex)
     {
@@ -379,9 +440,10 @@ static void iRenderPushFlat(xPar* p, xParCmdTex* tex)
     {
         U16* dst = &gRenderBuffer.m_index[gRenderBuffer.m_indexCount];
 
+        U16* cursor = indices;
         for (S32 i = 0; i < 6; i++)
         {
-            *dst++ = gRenderBuffer.m_vertexCount + indices[i];
+            *dst++ = gRenderBuffer.m_vertexCount + *cursor++;
         }
     }
 
@@ -398,6 +460,17 @@ void iParMgrRenderParSys_Streak(void* data, xParGroup* ps)
     RwTexture* texture;
     RwRaster* raster;
     RxObjSpace3DVertex* v3d;
+    F32 px;
+    F32 py;
+    F32 pz;
+    F32 size;
+    RwV3d opposite;
+    RwV3d right;
+    RwV3d tail;
+    U8 r;
+    U8 g;
+    U8 b;
+    U8 a;
 
     iRenderSetCameraViewMatrix(NULL);
     texture = (RwTexture*)xSTFindAsset(((zParSys*)data)->tasset->textureID, NULL);
@@ -420,22 +493,36 @@ void iParMgrRenderParSys_Streak(void* data, xParGroup* ps)
 
     for (; idx != NULL; idx = idx->m_next)
     {
-        F32 px = idx->m_pos.x;
-        F32 py = idx->m_pos.y;
-        F32 pz = idx->m_pos.z;
-        F32 tx = px - 5.0f * idx->m_vel.x;
-        F32 ty = py - 5.0f * idx->m_vel.y;
-        F32 tz = pz - 5.0f * idx->m_vel.z;
-        F32 rx = idx->m_size * gRenderBuffer.m_camViewR.x;
-        F32 ry = idx->m_size * gRenderBuffer.m_camViewR.y;
-        F32 rz = idx->m_size * gRenderBuffer.m_camViewR.z;
+        px = idx->m_pos.x;
+        py = idx->m_pos.y;
+        pz = idx->m_pos.z;
+        size = idx->m_size;
+        right.x = size * gRenderBuffer.m_camViewR.x;
+        right.y = size * gRenderBuffer.m_camViewR.y;
+        right.z = size * gRenderBuffer.m_camViewR.z;
+        tail.x = px - 5.0f * idx->m_vel.x;
+        tail.y = py - 5.0f * idx->m_vel.y;
+        tail.z = pz - 5.0f * idx->m_vel.z;
+        opposite.x = tail.x;
+        opposite.y = tail.y;
+        opposite.z = tail.z;
 
-        RwIm3DVertexSetPos(&v3d[0], tx + rx, ty + ry, tz + rz);
-        RwIm3DVertexSetPos(&v3d[1], tx - rx, ty - ry, tz - rz);
+        tail.x -= right.x;
+        tail.y -= right.y;
+        tail.z -= right.z;
+        opposite.x += right.x;
+        opposite.y += right.y;
+        opposite.z += right.z;
+        RwIm3DVertexSetPos(&v3d[0], opposite.x, opposite.y, opposite.z);
+        RwIm3DVertexSetPos(&v3d[1], tail.x, tail.y, tail.z);
         RwIm3DVertexSetPos(&v3d[2], px, py, pz);
-        RwIm3DVertexSetRGBA(&v3d[0], idx->m_c[0], idx->m_c[1], idx->m_c[2], idx->m_c[3]);
-        RwIm3DVertexSetRGBA(&v3d[1], idx->m_c[0], idx->m_c[1], idx->m_c[2], idx->m_c[3]);
-        RwIm3DVertexSetRGBA(&v3d[2], idx->m_c[0], idx->m_c[1], idx->m_c[2], idx->m_c[3]);
+        r = idx->m_c[0];
+        g = idx->m_c[1];
+        b = idx->m_c[2];
+        a = idx->m_c[3];
+        RwIm3DVertexSetRGBA(&v3d[0], r, g, b, a);
+        RwIm3DVertexSetRGBA(&v3d[1], r, g, b, a);
+        RwIm3DVertexSetRGBA(&v3d[2], r, g, b, a);
         RwIm3DVertexSetU(&v3d[2], 0.5f);
         RwIm3DVertexSetV(&v3d[2], 1.0f);
         RwIm3DVertexSetU(&v3d[1], 0.0f);
@@ -463,6 +550,17 @@ void iParMgrRenderParSys_InvStreak(void* data, xParGroup* ps)
     RwTexture* texture;
     RwRaster* raster;
     RxObjSpace3DVertex* v3d;
+    F32 px;
+    F32 py;
+    F32 pz;
+    F32 size;
+    RwV3d opposite;
+    RwV3d right;
+    RwV3d tail;
+    U8 r;
+    U8 g;
+    U8 b;
+    U8 a;
 
     iRenderSetCameraViewMatrix(NULL);
     texture = (RwTexture*)xSTFindAsset(((zParSys*)data)->tasset->textureID, NULL);
@@ -485,22 +583,36 @@ void iParMgrRenderParSys_InvStreak(void* data, xParGroup* ps)
 
     for (; idx != NULL; idx = idx->m_next)
     {
-        F32 px = idx->m_pos.x;
-        F32 py = idx->m_pos.y;
-        F32 pz = idx->m_pos.z;
-        F32 tx = px - 5.0f * idx->m_vel.x;
-        F32 ty = py - 5.0f * idx->m_vel.y;
-        F32 tz = pz - 5.0f * idx->m_vel.z;
-        F32 rx = idx->m_size * gRenderBuffer.m_camViewR.x;
-        F32 ry = idx->m_size * gRenderBuffer.m_camViewR.y;
-        F32 rz = idx->m_size * gRenderBuffer.m_camViewR.z;
+        px = idx->m_pos.x;
+        py = idx->m_pos.y;
+        pz = idx->m_pos.z;
+        size = idx->m_size;
+        right.x = size * gRenderBuffer.m_camViewR.x;
+        right.y = size * gRenderBuffer.m_camViewR.y;
+        right.z = size * gRenderBuffer.m_camViewR.z;
+        tail.x = px - 5.0f * idx->m_vel.x;
+        opposite.x = tail.x;
+        tail.y = py - 5.0f * idx->m_vel.y;
+        opposite.y = tail.y;
+        tail.z = pz - 5.0f * idx->m_vel.z;
+        opposite.z = tail.z;
 
-        RwIm3DVertexSetPos(&v3d[0], tx + rx, ty + ry, tz + rz);
-        RwIm3DVertexSetPos(&v3d[1], tx - rx, ty - ry, tz - rz);
+        tail.x -= right.x;
+        tail.y -= right.y;
+        tail.z -= right.z;
+        opposite.x += right.x;
+        opposite.y += right.y;
+        opposite.z += right.z;
+        RwIm3DVertexSetPos(&v3d[0], opposite.x, opposite.y, opposite.z);
+        RwIm3DVertexSetPos(&v3d[1], tail.x, tail.y, tail.z);
         RwIm3DVertexSetPos(&v3d[2], px, py, pz);
-        RwIm3DVertexSetRGBA(&v3d[0], idx->m_c[0], idx->m_c[1], idx->m_c[2], idx->m_c[3]);
-        RwIm3DVertexSetRGBA(&v3d[1], idx->m_c[0], idx->m_c[1], idx->m_c[2], idx->m_c[3]);
-        RwIm3DVertexSetRGBA(&v3d[2], idx->m_c[0], idx->m_c[1], idx->m_c[2], idx->m_c[3]);
+        r = idx->m_c[0];
+        g = idx->m_c[1];
+        b = idx->m_c[2];
+        a = idx->m_c[3];
+        RwIm3DVertexSetRGBA(&v3d[0], r, g, b, a);
+        RwIm3DVertexSetRGBA(&v3d[1], r, g, b, a);
+        RwIm3DVertexSetRGBA(&v3d[2], r, g, b, a);
         RwIm3DVertexSetU(&v3d[2], 0.5f);
         RwIm3DVertexSetV(&v3d[2], 1.0f);
         RwIm3DVertexSetU(&v3d[1], 0.0f);
@@ -567,6 +679,7 @@ void iParMgrRenderParSys_Ground(void* data, xParGroup* ps)
     RwRaster* raster;
     xParCmdTex* tex;
     void* vertices;
+    U16* indices;
     F32 size;
     U8 r;
     U8 g;
@@ -576,15 +689,14 @@ void iParMgrRenderParSys_Ground(void* data, xParGroup* ps)
     F32 angx;
     F32 angy;
     F32 angz;
-    F32 px;
-    F32 py;
-    F32 pz;
-    F32 rx;
-    F32 ry;
-    F32 rz;
-    F32 ax;
-    F32 ay;
-    F32 az;
+    F32 oldX;
+    F32 oldY;
+    F32 oldZ;
+    xVec3 at;
+    xVec3 basis;
+    xVec3 center;
+    xVec3 left;
+    xVec3 right;
     F32 u1;
     F32 u2;
     F32 v1;
@@ -605,6 +717,8 @@ void iParMgrRenderParSys_Ground(void* data, xParGroup* ps)
 
     for (; idx != NULL; idx = idx->m_next)
     {
+        vertices = v3d;
+        indices = i3d;
         tex = ps->m_cmdTex;
 
         if (gRenderBuffer.m_indexCount + 6 > 960 || gRenderBuffer.m_vertexCount + 4 > 480)
@@ -612,11 +726,9 @@ void iParMgrRenderParSys_Ground(void* data, xParGroup* ps)
             iRenderFlush();
         }
 
-        angx = 0.0f;
-        angy = 0.0f;
-        angz = 0.0f;
-        r = idx->m_c[0];
         size = 0.5f * idx->m_size;
+        angx = angy = angz = 0.0f;
+        r = idx->m_c[0];
         g = idx->m_c[1];
         b = idx->m_c[2];
         a = idx->m_c[3];
@@ -638,25 +750,42 @@ void iParMgrRenderParSys_Ground(void* data, xParGroup* ps)
         }
 
         xMat3x3Euler(&groundmat, angx, angy, angz);
-        rx = groundmat.right.x * size;
-        ry = groundmat.right.y * size;
-        rz = groundmat.right.z * size;
-        ax = groundmat.at.x * size;
-        ay = groundmat.at.y * size;
-        az = groundmat.at.z * size;
-        px = idx->m_pos.x;
-        py = idx->m_pos.y;
-        pz = idx->m_pos.z;
+        at.x = groundmat.at.x * size;
+        at.y = groundmat.at.y * size;
+        at.z = groundmat.at.z * size;
+        basis.x = groundmat.right.x * size;
+        basis.y = groundmat.right.y * size;
+        basis.z = groundmat.right.z * size;
+        center.x = idx->m_pos.x;
+        center.y = idx->m_pos.y;
+        center.z = idx->m_pos.z;
+
+        oldX = center.x - basis.x;
+        left.x = oldX;
+        oldY = center.y - basis.y;
+        left.y = oldY;
+        oldZ = center.z - basis.z;
+        left.z = oldZ;
+        right.x = center.x + basis.x;
+        right.y = center.y + basis.y;
+        right.z = center.z + basis.z;
+
+        left.x -= at.x;
+        left.y -= at.y;
+        left.z -= at.z;
+        right.x = at.x + right.x;
+        right.y = at.y + right.y;
+        right.z = at.z + right.z;
 
         RwIm3DVertexSetRGBA(&v3d[0], r, g, b, a);
         RwIm3DVertexSetRGBA(&v3d[1], r, g, b, a);
         RwIm3DVertexSetRGBA(&v3d[2], r, g, b, a);
         RwIm3DVertexSetRGBA(&v3d[3], r, g, b, a);
 
-        RwIm3DVertexSetPos(&v3d[0], px - rx - ax, py - ry - ay, pz - rz - az);
-        RwIm3DVertexSetPos(&v3d[1], px + rx + ax, py + ry + ay, pz + rz + az);
-        RwIm3DVertexSetPos(&v3d[2], px + rx - ax, py + ry - ay, pz + rz - az);
-        RwIm3DVertexSetPos(&v3d[3], px - rx + ax, py - ry + ay, pz - rz + az);
+        RwIm3DVertexSetPos(&v3d[0], left.x, left.y, left.z);
+        RwIm3DVertexSetPos(&v3d[1], right.x, right.y, right.z);
+        RwIm3DVertexSetPos(&v3d[2], (center.x + basis.x) - at.x, (center.y + basis.y) - at.y, (center.z + basis.z) - at.z);
+        RwIm3DVertexSetPos(&v3d[3], at.x + oldX, at.y + oldY, at.z + oldZ);
 
         // A texture command picks one cell of a texture sheet; without one the whole texture.
         if (tex)
@@ -689,13 +818,13 @@ void iParMgrRenderParSys_Ground(void* data, xParGroup* ps)
         {
             U16* dst = &gRenderBuffer.m_index[gRenderBuffer.m_indexCount];
 
+            U16* cursor = indices;
             for (S32 i = 0; i < 6; i++)
             {
-                *dst++ = gRenderBuffer.m_vertexCount + i3d[i];
+                *dst++ = gRenderBuffer.m_vertexCount + *cursor++;
             }
         }
 
-        vertices = v3d;
         memcpy((U8*)gRenderBuffer.m_vertex + gRenderBuffer.m_vertexTypeSize * gRenderBuffer.m_vertexCount,
                vertices, gRenderBuffer.m_vertexTypeSize * 4);
         gRenderBuffer.m_indexCount += 6;
@@ -743,8 +872,8 @@ void iRenderFlush()
                                   gRenderBuffer.m_index, gRenderBuffer.m_indexCount);
     }
 
-    gRenderBuffer.m_indexCount = 0;
     gRenderBuffer.m_vertexCount = 0;
+    gRenderBuffer.m_indexCount = 0;
 }
 
 void iRenderTrianglesImmediate(S32 vertType, S32 vertTypeSize, void* data, S32 dataSize, U16* index,

@@ -7,8 +7,8 @@
 // hands out a linear copy (untiled on a read lock), and unlocking tiles it back.
 
 // The draw sync token to issue next, and the last token the GPU has passed.
-extern U16 lbl_8025E800;
-extern U16 lbl_8025F890;
+extern volatile U16 lbl_8025E800;
+extern volatile U16 lbl_8025F890;
 
 // The texture that stands in for no texture.
 extern RwTexture* lbl_8025F87C;

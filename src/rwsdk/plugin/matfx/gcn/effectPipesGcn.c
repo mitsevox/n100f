@@ -9,7 +9,7 @@
 // dual texture), and whose instance callbacks compute the NBT multitexture effects need.
 
 // The draw sync token to issue next.
-extern U16 lbl_8025E800;
+extern volatile U16 lbl_8025E800;
 
 // The raster plugin's offset in a raster.
 extern S32 lbl_8025F870;
