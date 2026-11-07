@@ -98,6 +98,12 @@ char* fn_800389FC(S32 lang, S32 card, S32 which);
 // the pad and disc message (sTrcFontBox in the SLUS-20349 DWARF) and the flag that makes that
 // message draw a frame of its own.
 TRCCardMessage lbl_801B6610[2] = {};
+}
+
+// The disc state and whether the disc was identified (iSnd and iTime read it).
+_tagTRCState gTrcDisk[2];
+
+extern "C" {
 U32 lbl_8025EBE0;
 xFontBox* lbl_8025EBE4;
 U32 lbl_8025EBE8;
