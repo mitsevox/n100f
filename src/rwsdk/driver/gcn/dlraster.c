@@ -419,13 +419,17 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
     case rwRASTERTYPENORMAL:
     case rwRASTERTYPETEXTURE:
     case rwRASTERTYPECAMERATEXTURE:
+        // FAKEMATCH: the countdown's copy of level placed here, ahead of the row size, and a
+        // separate copy of level for the shifts; real form believed to be `for (l = level; l--;)`
+        // at the loop and shifts by level.
         l = level;
         shift = level;
 
         // The bytes of one row of the level, rounded up to whole tiles.
-        // FAKEMATCH: written out here so stride is a named local; real form believed to be an
-        // inlined row-bytes helper returning the stride.
+        // FAKEMATCH: this statement and the switch below are a row-bytes helper written out so
+        // stride is a named local; real form believed to be that helper inlined.
         rowWidth = DLRASTER_LEVELSIZE(top->width, shift);
+        // FAKEMATCH: (continued) the written-out row-bytes helper.
         switch (raster->depth)
         {
         case 4:
@@ -441,6 +445,7 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
             stride = ((rowWidth + 3) & ~3) << 2;
             break;
         case 24:
+            // FAKEMATCH: the error moved into a helper; real form believed to be inline here.
             DlRasterDepthError();
             break;
         }
@@ -452,10 +457,13 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
             offset += fn_80179064(raster, l);
         }
 
+        // FAKEMATCH: helper call; real form believed to be `(U8*)ext->pixels + offset`.
         pixels = DlRasterLevelPixels(ext, offset);
 
         if (ext->format != GX_TF_CMPR && !(flags & rwRASTERLOCKRAW))
         {
+            // FAKEMATCH: DlRasterShift twice; real form believed to be
+            // DLRASTER_LEVELSIZE(top->height, level).
             ext->lockBuffer = RwMalloc(
                 stride * (DlRasterShift(top->height, shift) ? DlRasterShift(top->height, shift) : 1));
 
@@ -992,8 +1000,7 @@ S32 fn_80179FA0(RwRaster* raster)
     return TRUE;
 }
 
-// The message for a texture whose raster cannot be created. Defined here, after the functions
-// whose switch tables come before it in .data.
+// The message for a texture whose raster cannot be created.
 char lbl_801DE368[] = "Failed to create surface for texture";
 
 // Creates a raster: sets its format and, for a texture with a size, allocates its texels.
