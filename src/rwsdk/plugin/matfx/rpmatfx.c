@@ -598,7 +598,7 @@ static void* fn_8013E72C(void* dstObject, const void* srcObject, S32 offset, S32
 static RwStream* fn_8013E76C(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
                              S32 size)
 {
-    if (!RwStreamWrite(stream, (const S32*)((const U8*)object + MatFXAtomicDataOffset), sizeof(S32)))
+    if (RwStreamWrite(stream, (const S32*)((const U8*)object + MatFXAtomicDataOffset), sizeof(S32)) == NULL)
     {
         return NULL;
     }
@@ -658,7 +658,7 @@ static void* fn_8013E854(void* dstObject, const void* srcObject, S32 offset, S32
 static RwStream* fn_8013E894(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
                              S32 size)
 {
-    if (!RwStreamWrite(stream, (const S32*)((const U8*)object + MatFXWorldSectorDataOffset), sizeof(S32)))
+    if (RwStreamWrite(stream, (const S32*)((const U8*)object + MatFXWorldSectorDataOffset), sizeof(S32)) == NULL)
     {
         return NULL;
     }
