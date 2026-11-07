@@ -351,16 +351,16 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
 static U32 _ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields(RxPipeline* pipeline)
 {
     U32 n;
+    U32 i;
+    U32 j;
     RxPipelineNode* node;
+    RxIoSpec* io;
 
     n = pipeline->numNodes;
     node = pipeline->nodes;
 
     do
     {
-        U32 i;
-        RxIoSpec* io;
-
         io = &node->nodeDef->io;
 
         for (i = 0; i < io->numClustersOfInterest; i++)
@@ -384,7 +384,6 @@ static U32 _ForAllNodeReqsAddOutputClustersAndBuildContinuityBitfields(RxPipelin
         {
             if (node->outputs[i] != (U32)-1)
             {
-                U32 j;
                 RxPipelineNode* next;
                 RxOutputSpec* outputSpec;
 
