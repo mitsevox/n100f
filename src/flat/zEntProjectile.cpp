@@ -1940,10 +1940,13 @@ static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd
 }
 
 // Unused. Stands in for removed code: its zeroed local leaves 24 bytes of zero initializer in
-// .rodata at this point of the file, as the target has.
-static void SolvUnusedData()
+// .rodata at this point of the file, as the target has, and the 0.5f it stores pools ahead of
+// ZPRJ_solv_velvec's literals in .sdata2, also as the target has.
+static void SolvUnusedData(F32* scale)
 {
     xVec3 tmp[2] = {};
+
+    *scale = 0.5f;
 }
 
 void zEntProjectile::DoEffects(en_PROJECTILE_EVENT event, F32 dt)
