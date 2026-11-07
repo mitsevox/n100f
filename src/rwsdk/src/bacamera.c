@@ -227,6 +227,7 @@ RwCamera* CameraBuildPerspViewMatrix(RwCamera* camera)
 // the first two.
 void CameraBuildParallelClipPlanes(RwCamera* camera)
 {
+    RwV2d* window = &camera->viewWindow;
     RwV2d lowerLeft;
     RwV3d* corners = camera->frustumCorners;
     RwMatrix* camMatrix = &RwCameraGetFrame(camera)->ltm;
@@ -245,9 +246,9 @@ void CameraBuildParallelClipPlanes(RwCamera* camera)
     F32 top;
 
     right = camera->viewWindow.x;
-    lowerLeft.x = -camera->viewWindow.x;
-    top = camera->viewWindow.y;
-    lowerLeft.y = -camera->viewWindow.y;
+    lowerLeft.x = -window->x;
+    top = window->y;
+    lowerLeft.y = -window->y;
 
     nearZ = camera->nearPlane;
     farZ = camera->farPlane;

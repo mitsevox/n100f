@@ -38,7 +38,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/plcore/batkreg.c` | 10 of 10 | (Matching on GIHE78-rev0, with its `.sbss`) |
 | `rwsdk/src/badevice.c` | 14 of 14 | (Matching on GIHE78-rev0, with `engineTKList` in `.data`, `staticGlobals` in `.bss` and `engineInstancesOpened` and `RwEngineInstance` in `.sbss`) |
 | `rwsdk/src/baframe.c` | 21 of 21 | (Matching on GIHE78-rev0, including `.data`, `.sbss` and `.sdata2`) |
-| `rwsdk/src/bacamera.c` | 20 of 22 | two of the camera builders `CameraSync` calls: `CameraBuildParallelClipPlanes` (99.85%) and `CameraBuildPerspClipPlanes` (98.1%), float register choice |
+| `rwsdk/src/bacamera.c` | 21 of 22 | one of the camera builders `CameraSync` calls: `CameraBuildPerspClipPlanes` (98.1%), float register choice |
 | `rwsdk/src/baraster.c` | 11 of 11 | (Matching; ends at `_rwRasterOpen`, `0x8016DD04`) |
 | `rwsdk/src/baimras.c` | 3 of 3 | (Matching) |
 | `rwsdk/src/basync.c` | 7 of 7 | (Matching; starts at `SyncObject`, `0x8016E9E4`) |
