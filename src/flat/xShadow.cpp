@@ -703,7 +703,7 @@ static inline void xShadowCameraUpdate(xModelInstance* model, xVec3* center, F32
     ShadowCameraUpdate(ShadowCamera, model);
 }
 
-// Render ent's model into the shadow raster from the light, then cast it onto the world.
+// Projects the entity's shadow onto world triangles and nearby receiving models.
 // Two scenes tighten the entity/world distance that still counts as one surface near a spot.
 void xShadowRender(_xEnt* ent)
 {
