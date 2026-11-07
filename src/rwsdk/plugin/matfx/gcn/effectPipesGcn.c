@@ -600,26 +600,24 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
 // Creates the atomic and world sector pipelines, keeping the default callbacks the pipelines'
 // own ones call.
-S32 fn_80140AF4(void)
+// Builds the atomic pipeline: the GameCube all-in-one node with this plugin's instance, reinstance
+// and render callbacks, keeping the node's own instance and reinstance callbacks to chain to.
+static RxPipeline* MatFXGCNAtomicPipelineCreate(void)
 {
-    RxPipeline* pipeline;
-    RxLockedPipe* lpipe;
-    RxNodeDefinition* nodeDef;
-    RxPipelineNode* node;
-
-    lbl_8025F680 = RpGameCubeVtxFmtCreate();
-    RpGameCubeVtxFmtSetNormal(lbl_8025F680, 4, 1);
-
-    pipeline = RxPipelineCreate();
+    RxPipeline* pipeline = RxPipelineCreate();
 
     if (pipeline)
     {
+        RxLockedPipe* lpipe;
+
         pipeline->pluginId = MATFXGCN_PLUGINID;
         lpipe = RxPipelineLock(pipeline);
 
         if (lpipe)
         {
-            nodeDef = RxNodeDefinitionGetGameCubeAtomicAllInOne();
+            RxNodeDefinition* nodeDef = RxNodeDefinitionGetGameCubeAtomicAllInOne();
+            RxPipelineNode* node;
+
             RxLockedPipeUnlock(RxLockedPipeAddFragment(lpipe, NULL, nodeDef, NULL));
             node = RxPipelineFindNodeByName(pipeline, nodeDef->name, NULL, NULL);
             lbl_8025F694 = (GCNMTInstanceCB)_rxGameCubeAllInOneGetInstanceCallBack(node);
@@ -627,48 +625,55 @@ S32 fn_80140AF4(void)
             _rxGameCubeAllInOneSetInstanceCallBack(node, fn_8013FF48);
             _rxGameCubeAllInOneSetReinstanceCallBack(node, _rpGCMatFXAtomicReinstanceCallBack);
             RxGameCubeAllInOneSetRenderCallBack(node, fn_80140178);
+
+            return pipeline;
         }
-        else
-        {
-            _rxPipelineDestroy(pipeline);
-            pipeline = NULL;
-        }
-    }
-    else
-    {
-        pipeline = NULL;
+
+        _rxPipelineDestroy(pipeline);
     }
 
-    lbl_8025F684 = pipeline;
+    return NULL;
+}
 
-    pipeline = RxPipelineCreate();
+// Builds the world sector pipeline the same way, chaining only the instance callback.
+static RxPipeline* MatFXGCNWorldSectorPipelineCreate(void)
+{
+    RxPipeline* pipeline = RxPipelineCreate();
 
     if (pipeline)
     {
+        RxLockedPipe* lpipe;
+
         pipeline->pluginId = MATFXGCN_PLUGINID;
         lpipe = RxPipelineLock(pipeline);
 
         if (lpipe)
         {
-            nodeDef = RxNodeDefinitionGetGameCubeWorldSectorAllInOne();
+            RxNodeDefinition* nodeDef = RxNodeDefinitionGetGameCubeWorldSectorAllInOne();
+            RxPipelineNode* node;
+
             RxLockedPipeUnlock(RxLockedPipeAddFragment(lpipe, NULL, nodeDef, NULL));
             node = RxPipelineFindNodeByName(pipeline, nodeDef->name, NULL, NULL);
             lbl_8025F68C = (GCNMTInstanceCB)_rxGameCubeAllInOneGetInstanceCallBack(node);
             _rxGameCubeAllInOneSetInstanceCallBack(node, fn_801400F8);
             RxGameCubeAllInOneSetRenderCallBack(node, fn_80140178);
+
+            return pipeline;
         }
-        else
-        {
-            _rxPipelineDestroy(pipeline);
-            pipeline = NULL;
-        }
-    }
-    else
-    {
-        pipeline = NULL;
+
+        _rxPipelineDestroy(pipeline);
     }
 
-    lbl_8025F688 = pipeline;
+    return NULL;
+}
+
+S32 fn_80140AF4(void)
+{
+    lbl_8025F680 = RpGameCubeVtxFmtCreate();
+    RpGameCubeVtxFmtSetNormal(lbl_8025F680, 4, 1);
+
+    lbl_8025F684 = MatFXGCNAtomicPipelineCreate();
+    lbl_8025F688 = MatFXGCNWorldSectorPipelineCreate();
 
     return TRUE;
 }
