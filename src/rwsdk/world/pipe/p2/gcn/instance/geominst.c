@@ -383,8 +383,11 @@ S32 _rwGCNVtxFmtInstClr(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwRGBA*
 
         for (i = 0; i < numVerts; i++)
         {
-            *out = ((src->red << 8) & 0xF800) | ((src->green << 3) & 0x7E0) |
-                         ((src->blue >> 3) & 0x1F);
+            U8 red = src->red;
+            U8 green = src->green;
+            U8 blue = src->blue;
+
+            *out = ((red << 8) & 0xF800) | ((green << 3) & 0x7E0) | ((blue >> 3) & 0x1F);
             src++;
             out = (U16*)((U8*)out + stride);
         }
@@ -412,8 +415,12 @@ S32 _rwGCNVtxFmtInstClr(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwRGBA*
 
         for (i = 0; i < numVerts; i++)
         {
-            *out = ((src->red << 8) & 0xF000) | ((src->green << 4) & 0xF00) |
-                         (src->blue & 0xF0) | ((src->alpha >> 4) & 0xF);
+            U8 red = src->red;
+            U8 green = src->green;
+            U8 blue = src->blue;
+
+            *out = ((red << 8) & 0xF000) | ((green << 4) & 0xF00) | (blue & 0xF0) |
+                   ((src->alpha >> 4) & 0xF);
             src++;
             out = (U16*)((U8*)out + stride);
         }
