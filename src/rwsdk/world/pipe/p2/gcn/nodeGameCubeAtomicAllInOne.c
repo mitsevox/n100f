@@ -235,6 +235,8 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
 }
 
 // Re-instances each texture coordinate set whose lock bit (0x10 << set) is in locked.
+// FAKEMATCH: the loop is moved into an inline helper; real form believed to be the loop written
+// inline in fn_8015E054.
 static inline void AllInOneReinstanceTexCoords(RpGeometry* geometry, GCNVertexArrays* arrays, U32 locked)
 {
     S32 i;
