@@ -95,8 +95,8 @@ void DlRasterTile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stride
                        row + (x >> 1), 4);
             }
         }
-    }
         break;
+    }
     case 8:
     {
         S32 tilesW;
@@ -120,8 +120,8 @@ void DlRasterTile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stride
                        row + x, 8);
             }
         }
-    }
         break;
+    }
     case 16:
     {
         S32 tilesW;
@@ -145,8 +145,8 @@ void DlRasterTile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stride
                        row + (x << 1), 8);
             }
         }
-    }
         break;
+    }
     case 32:
     {
         S32 tilesW;
@@ -179,12 +179,12 @@ void DlRasterTile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stride
 
                 texel = texelRow + (x & 3);
                 offset = (tile << 2) + (texel << 1);
-                *(U16*)(dst + offset) = ((U16*)row)[x << 1];
-                *(U16*)(dst + (offset + 0x20)) = ((U16*)row)[(x << 1) + 1];
+                *(U16*)&dst[offset] = ((U16*)row)[x << 1];
+                *(U16*)&dst[offset + 0x20] = ((U16*)row)[(x << 1) + 1];
             }
         }
-    }
         break;
+    }
     case 24:
     default:
         DLRASTER_ERROR((0x8000000C));
@@ -220,8 +220,8 @@ void DlRasterUntile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stri
                        src + ((U32)(((tileRow + (x >> 3)) << 6) + texelRow) >> 1), 4);
             }
         }
-    }
         break;
+    }
     case 8:
     {
         S32 tilesW;
@@ -245,8 +245,8 @@ void DlRasterUntile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stri
                        src + (((tileRow + (x >> 3)) << 5) + texelRow), 8);
             }
         }
-    }
         break;
+    }
     case 16:
     {
         S32 tilesW;
@@ -270,8 +270,8 @@ void DlRasterUntile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stri
                        src + ((((tileRow + (x >> 2)) << 4) + texelRow) << 1), 8);
             }
         }
-    }
         break;
+    }
     case 32:
     {
         S32 tilesW;
@@ -304,12 +304,12 @@ void DlRasterUntile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stri
 
                 texel = texelRow + (x & 3);
                 offset = (tile << 2) + (texel << 1);
-                ((U16*)row)[x << 1] = *(U16*)(src + offset);
-                ((U16*)row)[(x << 1) + 1] = *(U16*)(src + (offset + 0x20));
+                ((U16*)row)[x << 1] = *(U16*)&src[offset];
+                ((U16*)row)[(x << 1) + 1] = *(U16*)&src[offset + 0x20];
             }
         }
-    }
         break;
+    }
     case 24:
     default:
         DLRASTER_ERROR((0x8000000C));
