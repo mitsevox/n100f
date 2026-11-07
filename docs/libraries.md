@@ -80,7 +80,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/p2altmdl.c` | 3 of 3 | (Matching on GIHE78-rev0, with its `.bss` _rxExecCtxGlobal) |
 | `rwsdk/tool/slerp/rtslerp.c` | 0 of 1 | `RtQuatSetupSlerpCache` (99.3%: operand and register order in the inlined arc cosine's products; text only) |
 | `rwsdk/src/babintex.c` | 7 of 9 (rev0) | `_rwStringStreamFindAndRead` (99.0%) and `RwTextureStreamRead` (99.2%): the inlined string readers keep their pointers in different saved registers in the target; NonMatching, with its `.sdata2` |
-| `rwsdk/src/baimage.c` | 16 of 18 | `RwImageApplyMask` (98.5%) and `ImagePathForAllFullNames` (98.3%), register choice |
+| `rwsdk/src/baimage.c` | 16 of 18 | `RwImageApplyMask` (98.5%) and `ImagePathForAllFullNames` (98.8%), register choice |
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/src/plcore/bacolor.c` | 2 of 2 | (Matching, with `colorModule` in `.sbss`) |
