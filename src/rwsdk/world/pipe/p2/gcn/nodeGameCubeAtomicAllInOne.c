@@ -319,6 +319,7 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     RwResEntry** ownerRef;
     RpMeshHeader* meshHeader;
     U32 numVertices;
+    U32 numMeshes;
     U32 geometryFlags;
     U32 flags;
     S32 size;
@@ -329,7 +330,7 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     geometry = atomic->geometry;
     meshHeader = geometry->mesh;
     numVertices = geometry->numVertices;
-    headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
+    numMeshes = meshHeader->numMeshes;
 
     if (geometry->numMorphTargets != 1)
     {
@@ -345,6 +346,7 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     geometryFlags = geometry->flags | rpGEOMETRYPOSITIONS;
     privateData = objectData->privateData;
     flags = geometryFlags & ~privateData->clearFlags;
+    headerSize = numMeshes * sizeof(GCNDisplayList);
     dlSize = GCNDisplayListsGetSize(meshHeader, geometry->numTexCoordSets,
                                     numVertices < 0xFF ? 1 : 2, geometryFlags);
 
