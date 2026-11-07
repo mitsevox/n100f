@@ -805,15 +805,16 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
 
             case 3: {
                 const U8* sp;
+                U32 value;
                 S32 i;
 
-                VARBITSGET(vb, t, 4);
-                sp = patterns[t];
+                VARBITSGET(vb, value, 4);
+                sp = patterns[value];
                 mask[x >> 1] = 1;
                 i = 0;
                 do {
-                    U32 run, b;
-                    if (VARBITSGET1(vb, b)) {
+                    U32 run;
+                    if (VARBITSGET1(vb, value)) {
                         U8 c = *colors.cur++;
                         run = *runs.cur++ + 1;
                         while (run--)
@@ -831,7 +832,29 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                     U8* d1 = dest + pitch;
                     U8* s = (U8*)tmp;
                     if (!((U32)dest & 7)) {
-                        ROWS8C(ROWFC, d0, d1, pitch, s);
+                        F64 row_value;
+                        row_value = tmp[0];
+                        *(F64*)d0 = row_value;
+                        d0 = d1 + pitch;
+                        row_value = tmp[1];
+                        *(F64*)d1 = row_value;
+                        d1 = d0 + pitch;
+                        row_value = tmp[2];
+                        *(F64*)d0 = row_value;
+                        d0 = d1 + pitch;
+                        row_value = tmp[3];
+                        *(F64*)d1 = row_value;
+                        d1 = d0 + pitch;
+                        row_value = tmp[4];
+                        *(F64*)d0 = row_value;
+                        d0 = d1 + pitch;
+                        row_value = tmp[5];
+                        *(F64*)d1 = row_value;
+                        d1 = d0 + pitch;
+                        row_value = tmp[6];
+                        *(F64*)d0 = row_value;
+                        row_value = tmp[7];
+                        *(F64*)d1 = row_value;
                     } else {
                         ROWS8C(ROWWC, d0, d1, pitch, s);
                     }
@@ -1012,50 +1035,51 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
 
                     case 3: {
                         const U8* sp;
+                        U32 value;
                         S32 i;
                         U8* d0;
                         U8* d1;
                         U16* sr;
+                        U32 work;
 
-                        VARBITSGET(vb, t, 4);
-                        sp = patterns[t];
+                        VARBITSGET(vb, value, 4);
+                        sp = patterns[value];
                         i = 0;
                         do {
-                            U32 run, b;
-                            if (VARBITSGET1(vb, b)) {
-                                U8 c = *colors.cur++;
-                                run = *runs.cur++ + 1;
-                                while (run--)
-                                    ((U8*)tmp)[sp[i++]] = c;
+                            if (VARBITSGET1(vb, value)) {
+                                value = *colors.cur++;
+                                work = *runs.cur++ + 1;
+                                while (work--)
+                                    ((U8*)tmp)[sp[i++]] = value;
                             } else {
-                                run = *runs.cur++ + 1;
-                                while (run--)
+                                work = *runs.cur++ + 1;
+                                while (work--)
                                     ((U8*)tmp)[sp[i++]] = *colors.cur++;
                             }
                         } while (i < 63);
                         if (i == 63)
                             ((U8*)tmp)[sp[63]] = *colors.cur++;
+                        /* Repeat pixels across two columns and two rows. */
                         d0 = dest;
                         d1 = dest + pitch;
                         sr = (U16*)tmp;
                         for (i = 0; i < 8; i++) {
-                            U32 v;
-                            v = sr[0];
-                            v = ((v << 8) | (v & 0xFF)) | ((v << 16) & 0xFF000000);
-                            ((U32*)d0)[0] = v;
-                            ((U32*)d1)[0] = v;
-                            v = sr[1];
-                            v = ((v << 8) | (v & 0xFF)) | ((v << 16) & 0xFF000000);
-                            ((U32*)d0)[1] = v;
-                            ((U32*)d1)[1] = v;
-                            v = sr[2];
-                            v = ((v << 8) | (v & 0xFF)) | ((v << 16) & 0xFF000000);
-                            ((U32*)d0)[2] = v;
-                            ((U32*)d1)[2] = v;
-                            v = sr[3];
-                            v = ((v << 8) | (v & 0xFF)) | ((v << 16) & 0xFF000000);
-                            ((U32*)d0)[3] = v;
-                            ((U32*)d1)[3] = v;
+                            work = sr[0];
+                            work = ((work << 8) | (work & 0xFF)) | ((work << 16) & 0xFF000000);
+                            ((U32*)d0)[0] = work;
+                            ((U32*)d1)[0] = work;
+                            work = sr[1];
+                            work = ((work << 8) | (work & 0xFF)) | ((work << 16) & 0xFF000000);
+                            ((U32*)d0)[1] = work;
+                            ((U32*)d1)[1] = work;
+                            work = sr[2];
+                            work = ((work << 8) | (work & 0xFF)) | ((work << 16) & 0xFF000000);
+                            ((U32*)d0)[2] = work;
+                            ((U32*)d1)[2] = work;
+                            work = sr[3];
+                            work = ((work << 8) | (work & 0xFF)) | ((work << 16) & 0xFF000000);
+                            ((U32*)d0)[3] = work;
+                            ((U32*)d1)[3] = work;
                             sr += 4;
                             d0 = d1 + pitch;
                             d1 = d0 + pitch;
