@@ -1262,6 +1262,7 @@ S32 zEntProjectile_gen_attach(zEntProjectile* prj)
     return 1;
 }
 
+// Generic projectile update: dies past its lifetime or once it travels past its range from home.
 S32 zEntProjectile_gen_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame)
 {
     xVec3 vec_home = {};
@@ -1299,6 +1300,8 @@ static S32 ZPRJ_arrow_attach(zEntProjectile* prj)
     return 1;
 }
 
+// Arrow update: sends the at-rest or in-flight event, self-destructs past its lifetime, and on a hit
+// sticks to the player or a surface, rests on the floor, or detonates.
 static S32 ZPRJ_arrow_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
 {
     st_ZPRJ_CAT_ARROW* arrow = &prj->cat_data.arrow;
@@ -1331,11 +1334,16 @@ static S32 ZPRJ_arrow_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
             if (!arrow->amStuck)
             {
                 arrow->amStuck = 1;
-                arrow->ent_stuck = &globals.player.ent;
-                xVec3Sub(&arrow->pos_stuck, (xVec3*)&arrow->ent_stuck->model->Mat->pos,
+                _xEnt* ent = &globals.player.ent;
+                arrow->ent_stuck = ent;
+                xVec3Sub(&arrow->pos_stuck, (xVec3*)&ent->model->Mat->pos,
                          (xVec3*)&prj->model->Mat->pos);
-                xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-                xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+                prj->frame->dvel.x = 0.0f;
+                prj->frame->dvel.y = 0.0f;
+                prj->frame->dvel.z = 0.0f;
+                prj->frame->vel.x = 0.0f;
+                prj->frame->vel.y = 0.0f;
+                prj->frame->vel.z = 0.0f;
                 prj->frame->mode |= 0xC;
                 prj->OrientSet(0x10000000);
             }
@@ -1382,8 +1390,12 @@ static S32 ZPRJ_arrow_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         {
             arrow->amStuck = 1;
             prj->pflags |= 0x4;
-            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->dvel.x = 0.0f;
+            prj->frame->dvel.y = 0.0f;
+            prj->frame->dvel.z = 0.0f;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.y = 0.0f;
+            prj->frame->vel.z = 0.0f;
             prj->frame->mode |= 0xC;
             prj->OrientSet(0);
         }
@@ -1404,6 +1416,8 @@ static S32 ZPRJ_grav_attach(zEntProjectile* prj)
     return 1;
 }
 
+// Gravity ball update: self-destructs past its lifetime, hurts the player on contact if set to, and
+// detonates on any collision.
 static S32 ZPRJ_grav_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
 {
     prj->SendEvent(ZPRJ_EVNT_INFLIGHT, dt);
@@ -1465,6 +1479,8 @@ static S32 ZPRJ_bounce_attach(zEntProjectile* prj)
     return 1;
 }
 
+// Bounce ball update: counts down its rest time, then on a hit bounces off the surface until it runs out
+// of bounces, comes to rest, or detonates.
 static S32 ZPRJ_bounce_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame)
 {
     F32 elastic;
