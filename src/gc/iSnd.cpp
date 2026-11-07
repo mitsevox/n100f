@@ -1028,7 +1028,7 @@ static U32 iSndPlayStream(xSndVoiceInfo* vp)
 }
 
 // Start a bank-loaded sound on an AX voice, applying its pitch and volume before playback.
-static U32 iSndPlaySound(xSndVoiceInfo* vp)
+static U32 iSndPlaySound(xSndVoiceInfo* const vp)
 {
     if (vp->flags & 0x200)
     {
@@ -1073,9 +1073,8 @@ static U32 iSndPlaySound(xSndVoiceInfo* vp)
             vp->flags |= 0x400;
         }
 
-        F32* xc = &voices[idx].xc;
-        *xc = 1000.0f * snd.info.dsp.num_samples;
-        *xc /= snd.info.dsp.sample_rate;
+        voices[idx].xc = 1000.0f * snd.info.dsp.num_samples;
+        voices[idx].xc /= snd.info.dsp.sample_rate;
 
         AXPBADDR addr;
         memcpy(&addr, &snd.info.dsp.loop_flag, sizeof(AXPBADDR));
@@ -1258,6 +1257,7 @@ static void sndloadcb(tag_xFile*)
     SoundFlags = 0;
 }
 
+// Load the bank's samples and retain its file information for sound lookup.
 void iSndLoadSounds(void* data)
 {
     iSndSoundInfo* sounds;
