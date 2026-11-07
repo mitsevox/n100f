@@ -7,14 +7,21 @@
 // projection over the whole frame and the matching viewport and scissor, writes the vertices
 // straight into the GX FIFO, then puts the camera's projection, viewport and scissor back.
 
-// The GX primitive for each RenderWare primitive type.
-extern GXPrimitive lbl_801DDCC0[7];
+// The GX primitive for each RenderWare primitive type (none for rwPRIMTYPENAPRIMTYPE).
+GXPrimitive DlIm2DPrimTypeMap[7] = {
+    (GXPrimitive)0, GX_LINES, GX_LINESTRIP, GX_TRIANGLES, GX_TRIANGLESTRIP, GX_TRIANGLEFAN,
+    GX_POINTS,
+};
 
 // The position matrix 2D vertices use: identity with the Z axis flipped.
-extern Mtx lbl_801DDCDC;
+Mtx DlIm2DViewMatrix = {
+    {1.0f, 0.0f, 0.0f, 0.0f},
+    {0.0f, 1.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, -1.0f, 0.0f},
+};
 
 // The camera's projection, saved while 2D drawing replaces it.
-extern F32 lbl_8025E290[7];
+F32 DlIm2DSavedProjection[7];
 
 // Whether the frame is drawn in two halves, which half is being drawn, and the line where the
 // halves meet (dldevice.c).
@@ -22,13 +29,13 @@ extern S32 lbl_8025F808;
 extern S32 lbl_8025E7F0;
 extern S32 lbl_8025F85C;
 
-// The texture set for drawing; it has no raster when drawing is untextured (dltextur.c).
+// The texture set for drawing; it has no raster when drawing is untextured (dlrendst.c).
 extern RwTexture* lbl_8025F87C;
 
 void GXSetProjectionv(const f32* ptr);
 
 // Writes one vertex: position, color, and texture coordinates when textured.
-static inline void DlIm2DVertexTextured(const RwIm2DVertex* vert)
+static inline void DlIm2DVertexTextured(RwIm2DVertex* vert)
 {
     GXPosition3f32(vert->x, vert->y, vert->z);
     GXColor4u8(vert->emissiveColor.red, vert->emissiveColor.green, vert->emissiveColor.blue,
@@ -36,7 +43,7 @@ static inline void DlIm2DVertexTextured(const RwIm2DVertex* vert)
     GXTexCoord2f32(vert->u, vert->v);
 }
 
-static inline void DlIm2DVertexUntextured(const RwIm2DVertex* vert)
+static inline void DlIm2DVertexUntextured(RwIm2DVertex* vert)
 {
     GXPosition3f32(vert->x, vert->y, vert->z);
     GXColor4u8(vert->emissiveColor.red, vert->emissiveColor.green, vert->emissiveColor.blue,
@@ -106,14 +113,14 @@ void _rw2DRenderPrimitiveInit(void)
 
     C_MTXOrtho(projection, 0.0f, _RwDlRenderMode->xfbHeight - 1, 0.0f,
                _RwDlRenderMode->fbWidth - 1, 0.0f, 1.0f);
-    GXGetProjectionv(lbl_8025E290);
+    GXGetProjectionv(DlIm2DSavedProjection);
     GXSetProjection(projection, GX_ORTHOGRAPHIC);
-    GXLoadPosMtxImm(lbl_801DDCDC, GX_PNMTX0);
+    GXLoadPosMtxImm(DlIm2DViewMatrix, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
 }
 
-// Puts back the camera's projection, and its viewport and scissor when it draws to the frame
-// buffer (a raster that is its own parent keeps the full-frame settings).
+// Puts back the camera's projection, and its viewport and scissor when the camera raster is a
+// sub-raster (a raster that is its own parent keeps the full-frame settings).
 void _rw2DRenderPrimativeTerm(void)
 {
     RwRaster* raster = RwCameraGetCurrentCamera()->frameBuffer;
@@ -190,7 +197,7 @@ void _rw2DRenderPrimativeTerm(void)
         }
     }
 
-    GXSetProjectionv(lbl_8025E290);
+    GXSetProjectionv(DlIm2DSavedProjection);
 }
 
 S32 _rwDlIm2DRenderTriangle(RwIm2DVertex* vertices, S32 numVertices, S32 vert1, S32 vert2,
@@ -259,7 +266,7 @@ S32 _rwDlIm2DRenderPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices, S
     S32 count;
 
     _rw2DRenderPrimitiveInit();
-    GXBegin(lbl_801DDCC0[primType], GX_VTXFMT0, numVertices);
+    GXBegin(DlIm2DPrimTypeMap[primType], GX_VTXFMT0, numVertices);
 
     switch (primType)
     {
@@ -350,7 +357,7 @@ S32 _rwDlIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vert
     S32 count;
 
     _rw2DRenderPrimitiveInit();
-    GXBegin(lbl_801DDCC0[primType], GX_VTXFMT0, numIndices);
+    GXBegin(DlIm2DPrimTypeMap[primType], GX_VTXFMT0, numIndices);
 
     switch (primType)
     {
