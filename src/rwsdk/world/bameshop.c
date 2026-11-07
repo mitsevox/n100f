@@ -1066,11 +1066,8 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
     RpMesh* runs;
     RpMeshHeader* meshHeader;
     RpBuildMeshTriangle** next;
-    U16* indices;
     TriStripList* stripList;
     U32 numRuns;
-    U32 size;
-    U32 totalIndices;
     U32 i;
 
     numMeshes = 0;
@@ -1184,36 +1181,43 @@ static RpMeshHeader* TriStripMeshGenerate(RpBuildMesh* buildMesh, S32 tryAllEdge
     RwFreeListDestroy(MESHGLOBAL(triStripListEntryFreeList));
     MESHGLOBAL(triStripListEntryFreeList) = NULL;
 
-    size = sizeof(RpMeshHeader);
-    totalIndices = 0;
-
-    for (i = 0; i < numMeshes; i++)
+    // The header comes first, then the meshes, then all their indices.
     {
-        size += sizeof(RpMesh) + meshes[i]->numIndices * sizeof(U16);
-        totalIndices += meshes[i]->numIndices;
-    }
+        U32 size;
+        U16* indices;
+        U32 totalIndices;
 
-    meshHeader = _rpMeshHeaderCreate(size);
-    meshHeader->flags = rpMESHHEADERTRISTRIP;
-    meshHeader->numMeshes = numMeshes;
-    meshHeader->serialNum = MESHGLOBAL(nextSerialNum);
-    meshHeader->firstMeshOffset = 0;
-    meshHeader->totalIndicesInMesh = totalIndices;
-    MESHGLOBAL(nextSerialNum)++;
+        size = sizeof(RpMeshHeader);
+        totalIndices = 0;
 
-    mesh = (RpMesh*)(meshHeader + 1);
-    indices = (U16*)(mesh + numMeshes);
+        for (i = 0; i < numMeshes; i++)
+        {
+            size += sizeof(RpMesh) + meshes[i]->numIndices * sizeof(U16);
+            totalIndices += meshes[i]->numIndices;
+        }
 
-    for (i = 0; i < numMeshes; i++)
-    {
-        mesh->indices = indices;
-        mesh->numIndices = meshes[i]->numIndices;
-        mesh->material = meshes[i]->material;
-        memcpy(indices, meshes[i]->indices, meshes[i]->numIndices * sizeof(U16));
-        indices += mesh->numIndices;
-        mesh++;
-        RwFree(meshes[i]);
-        meshes[i] = NULL;
+        meshHeader = _rpMeshHeaderCreate(size);
+        meshHeader->flags = rpMESHHEADERTRISTRIP;
+        meshHeader->numMeshes = numMeshes;
+        meshHeader->serialNum = MESHGLOBAL(nextSerialNum);
+        meshHeader->firstMeshOffset = 0;
+        meshHeader->totalIndicesInMesh = totalIndices;
+        MESHGLOBAL(nextSerialNum)++;
+
+        mesh = (RpMesh*)(meshHeader + 1);
+        indices = (U16*)(mesh + numMeshes);
+
+        for (i = 0; i < numMeshes; i++)
+        {
+            mesh->indices = indices;
+            mesh->numIndices = meshes[i]->numIndices;
+            mesh->material = meshes[i]->material;
+            memcpy(indices, meshes[i]->indices, meshes[i]->numIndices * sizeof(U16));
+            indices += mesh->numIndices;
+            mesh++;
+            RwFree(meshes[i]);
+            meshes[i] = NULL;
+        }
     }
 
     RwFree(sorted);
