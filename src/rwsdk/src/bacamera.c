@@ -188,8 +188,8 @@ RwCamera* CameraBuildPerspViewMatrix(RwCamera* camera)
     F32 offset;
 
     scale = -0.5f * camera->recipViewWindow.x;
-    offset = 0.5f - scale * camera->viewOffset.x;
     RwV3dScaleMacro(&column, &camMatrix->right, scale);
+    offset = 0.5f - scale * camera->viewOffset.x;
     RwV3dIncrementScaledMacro(&column, &camMatrix->at, offset);
     viewMatrix->right.x = column.x;
     viewMatrix->up.x = column.y;
@@ -197,8 +197,8 @@ RwCamera* CameraBuildPerspViewMatrix(RwCamera* camera)
     viewMatrix->pos.x = 0.5f - (offset + RwV3dDotProductMacro(&camMatrix->pos, &column));
 
     scale = -0.5f * camera->recipViewWindow.y;
-    offset = 0.5f + scale * camera->viewOffset.y;
     RwV3dScaleMacro(&column, &camMatrix->up, scale);
+    offset = 0.5f + scale * camera->viewOffset.y;
     RwV3dIncrementScaledMacro(&column, &camMatrix->at, offset);
     viewMatrix->right.y = column.x;
     viewMatrix->up.y = column.y;
@@ -226,28 +226,54 @@ void CameraBuildParallelClipPlanes(RwCamera* camera)
     RwFrustumPlane* plane;
     RwV3d vector;
     RwV3d edge;
+    F32 nearZ;
+    F32 farZ;
     F32 nearX;
     F32 nearY;
     F32 farX;
     F32 farY;
+    F32 nearRight;
+    F32 nearLeft;
+    F32 farRight;
+    F32 farLeft;
+    F32 nearTop;
+    F32 nearBottom;
+    F32 farTop;
+    F32 farBottom;
 
-    nearX = (1.0f - camera->nearPlane) * -camera->viewOffset.x;
-    nearY = (1.0f - camera->nearPlane) * camera->viewOffset.y;
-    farX = (1.0f - camera->farPlane) * -camera->viewOffset.x;
-    farY = (1.0f - camera->farPlane) * camera->viewOffset.y;
+    nearRight = camera->viewWindow.x;
+    nearLeft = -camera->viewWindow.x;
+    nearTop = camera->viewWindow.y;
+    nearBottom = -camera->viewWindow.y;
 
-    corners[0].z = corners[1].z = corners[2].z = corners[3].z = camera->nearPlane;
-    corners[4].z = corners[5].z = corners[6].z = corners[7].z = camera->farPlane;
+    nearZ = camera->nearPlane;
+    farZ = camera->farPlane;
+    nearX = (1.0f - nearZ) * -camera->viewOffset.x;
+    nearY = (1.0f - nearZ) * camera->viewOffset.y;
+    farX = (1.0f - farZ) * -camera->viewOffset.x;
+    farY = (1.0f - farZ) * camera->viewOffset.y;
 
-    corners[0].x = corners[3].x = camera->viewWindow.x + nearX;
-    corners[1].x = corners[2].x = -camera->viewWindow.x + nearX;
-    corners[4].x = corners[7].x = camera->viewWindow.x + farX;
-    corners[5].x = corners[6].x = -camera->viewWindow.x + farX;
+    farRight = nearRight + farX;
+    farLeft = nearLeft + farX;
+    farTop = nearTop + farY;
+    farBottom = nearBottom + farY;
+    nearRight += nearX;
+    nearLeft += nearX;
+    nearTop += nearY;
+    nearBottom += nearY;
 
-    corners[0].y = corners[1].y = camera->viewWindow.y + nearY;
-    corners[2].y = corners[3].y = -camera->viewWindow.y + nearY;
-    corners[4].y = corners[5].y = camera->viewWindow.y + farY;
-    corners[6].y = corners[7].y = -camera->viewWindow.y + farY;
+    corners[0].z = corners[1].z = corners[2].z = corners[3].z = nearZ;
+    corners[4].z = corners[5].z = corners[6].z = corners[7].z = farZ;
+
+    corners[0].x = corners[3].x = nearRight;
+    corners[1].x = corners[2].x = nearLeft;
+    corners[4].x = corners[7].x = farRight;
+    corners[5].x = corners[6].x = farLeft;
+
+    corners[0].y = corners[1].y = nearTop;
+    corners[2].y = corners[3].y = nearBottom;
+    corners[4].y = corners[5].y = farTop;
+    corners[6].y = corners[7].y = farBottom;
 
     RwV3dTransformPoints(corners, corners, 8, camMatrix);
 
@@ -305,8 +331,8 @@ RwCamera* CameraBuildParallelViewMatrix(RwCamera* camera)
     F32 offset;
 
     scale = -0.5f * camera->recipViewWindow.x;
-    offset = -(scale * camera->viewOffset.x);
     RwV3dScaleMacro(&column, &camMatrix->right, scale);
+    offset = -(scale * camera->viewOffset.x);
     RwV3dIncrementScaledMacro(&column, &camMatrix->at, offset);
     viewMatrix->right.x = column.x;
     viewMatrix->up.x = column.y;
@@ -314,13 +340,13 @@ RwCamera* CameraBuildParallelViewMatrix(RwCamera* camera)
     viewMatrix->pos.x = 0.5f - (offset + RwV3dDotProductMacro(&camMatrix->pos, &column));
 
     scale = -0.5f * camera->recipViewWindow.y;
-    offset = scale * camera->viewOffset.y;
     RwV3dScaleMacro(&column, &camMatrix->up, scale);
-    RwV3dIncrementScaledMacro(&column, &camMatrix->at, offset);
+    scale *= camera->viewOffset.y;
+    RwV3dIncrementScaledMacro(&column, &camMatrix->at, scale);
     viewMatrix->right.y = column.x;
     viewMatrix->up.y = column.y;
     viewMatrix->at.y = column.z;
-    viewMatrix->pos.y = 0.5f - (offset + RwV3dDotProductMacro(&camMatrix->pos, &column));
+    viewMatrix->pos.y = 0.5f - (scale + RwV3dDotProductMacro(&camMatrix->pos, &column));
 
     viewMatrix->right.z = camMatrix->at.x;
     viewMatrix->up.z = camMatrix->at.y;
