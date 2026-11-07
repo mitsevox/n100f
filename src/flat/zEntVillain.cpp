@@ -19742,6 +19742,7 @@ extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 // away) and mark its kind (food, soap ammo or gum ammo).
 static inline void VBON_setup_bonusTable()
 {
+    st_NPC_BONUS* bon;
     U32 aid_pick;
     S32 i;
     _xVec3 farfar = { 867.0f, -5309.0f, 2469.0f };
@@ -19749,29 +19750,30 @@ static inline void VBON_setup_bonusTable()
     memset(g_npcBonus, 0, sizeof(g_npcBonus));
     for (i = 0; i < 11; i++)
     {
+        bon = &g_npcBonus[i];
         aid_pick = xStrHash(g_strz_npcBonus[i]);
-        g_npcBonus[i].pickup = (_zEntPickup*)zSceneFindObject(aid_pick);
-        if (g_npcBonus[i].pickup)
+        bon->pickup = (_zEntPickup*)zSceneFindObject(aid_pick);
+        if (bon->pickup)
         {
-            zEntPickup_MakeDroppable(g_npcBonus[i].pickup, &farfar, NULL);
+            zEntPickup_MakeDroppable(bon->pickup, &farfar, NULL);
             switch (i)
             {
             case 8:
             case 9:
             case 10:
-                g_npcBonus[i].flg_info |= 0x10000;
+                bon->flg_info |= 0x10000;
                 break;
             case 5:
             case 6:
             case 7:
-                g_npcBonus[i].flg_info |= 0x20000;
+                bon->flg_info |= 0x20000;
                 break;
             case 0:
             case 1:
             case 2:
             case 3:
             case 4:
-                g_npcBonus[i].flg_info |= 0x40000;
+                bon->flg_info |= 0x40000;
                 break;
             }
         }
