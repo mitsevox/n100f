@@ -37,12 +37,6 @@ RpWorldSector* _rpWorldSectorNativeRead(RwStream* stream, RpWorldSector* sector)
 #define NATIVE_DATASIZE(_entry, _numMeshes)                                                        \
     ((_entry)->size - (NATIVE_DATA(_entry, _numMeshes) - (U8*)NATIVE_ARRAYS(_entry)))
 
-// The bytes an instance entry takes in a stream: the chunk header, the platform and the two sizes,
-// the vertex arrays header and display list records and the data.
-#define NATIVE_STREAMSIZE(_entry, _numMeshes)                                                      \
-    (NATIVE_DATASIZE(_entry, _numMeshes) + (_numMeshes) * sizeof(GCNDisplayList) +                 \
-     (NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3 + sizeof(GCNVertexArrays)))
-
 static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef, U32 numMeshes,
                            S32 numVerts)
 {
@@ -272,11 +266,29 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
     return stream;
 }
 
+// The bytes of an instance entry's data (see NATIVE_DATASIZE).
+static inline S32 NativeDataSize(RwResEntry* entry, U32 numMeshes)
+{
+    return NATIVE_DATASIZE(entry, numMeshes);
+}
+
+// The bytes of a native chunk before the data: the chunk header, the platform and the two sizes,
+// the vertex arrays header and the display list records.
+static inline S32 NativeHeaderSize(U32 numMeshes)
+{
+    return numMeshes * sizeof(GCNDisplayList) +
+           (NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3 + sizeof(GCNVertexArrays));
+}
+
 S32 _rpGeometryNativeSize(const RpGeometry* geometry)
 {
     if ((geometry->flags & rpGEOMETRYNATIVE) && geometry->repEntry)
     {
-        return NATIVE_STREAMSIZE(geometry->repEntry, geometry->mesh->numMeshes);
+        S32 size;
+
+        size = NativeHeaderSize(geometry->mesh->numMeshes);
+        size += NativeDataSize(geometry->repEntry, geometry->mesh->numMeshes);
+        return size;
     }
 
     return 0;
@@ -303,7 +315,11 @@ S32 _rpWorldSectorNativeSize(const RpWorldSector* sector)
 {
     if ((RpWorldSectorGetWorld(sector)->flags & rpWORLDNATIVE) && sector->repEntry)
     {
-        return NATIVE_STREAMSIZE(sector->repEntry, sector->mesh->numMeshes);
+        S32 size;
+
+        size = NativeHeaderSize(sector->mesh->numMeshes);
+        size += NativeDataSize(sector->repEntry, sector->mesh->numMeshes);
+        return size;
     }
 
     return 0;
