@@ -84,7 +84,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/batypehf.c` | 2 of 2 | (Matching) |
 | `rwsdk/src/plcore/babinary.c` | 14 of 14 | (Matching) |
 | `rwsdk/src/plcore/bacolor.c` | 2 of 2 | (Matching, with `colorModule` in `.sbss`) |
-| `rwsdk/src/baresamp.c` | 1 of 4 | `ImageResampleGetSpan` (98.0%: the shift order of y, x0 and x1, register choice and the order of the conversion stack slots), `RwImageResample` (98.9%) and `RwImageCreateResample` (97.4%), register choice |
+| `rwsdk/src/baresamp.c` | 1 of 4 | `ImageResampleGetSpan` (98.3%: the shift order of y, x0 and x1, the loop's floating-point registers and the last pixel's conversion stack slots), `RwImageResample` (98.9%) and `RwImageCreateResample` (97.4%), register choice |
 | `rwsdk/world/basector.c` | 6 of 6 | (Matching on GIHE78-rev0, with `sectorTKList` and `sectorModule`) |
 | `rwsdk/world/bamateri.c` | 8 of 8 | (starts at `0x8014D044` now that `_rpLightOpen` is in `balight.c`; Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |
 | `rwsdk/world/balight.c` | 13 of 13 | (Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |
