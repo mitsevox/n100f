@@ -326,8 +326,8 @@ section	left_unit	right_unit	left_end	right_start	class	crossing_refs
 .sbss	xserializer.cpp	xShadow.cpp	0x8025EB90	0x8025EB90	single aligned candidate	0
 .sbss	xShadow.cpp	xstransvc.cpp	0x8025EBC0	0x8025EBC0	single aligned candidate	0
 .sbss	xstransvc.cpp	xSurface.cpp	0x8025EBD0	0x8025EBD0	single aligned candidate	0
-.sbss	xSurface.cpp	xTRC.cpp	0x8025EBD8	0x8025EBE0	open: 1 items loaded by unassigned functions	0
-.sbss	xTRC.cpp	xutil.cpp	0x8025EBF8	0x8025EBF8	single aligned candidate	0
+.sbss	xSurface.cpp	xTRC.cpp	0x8025EBD8	0x8025EBD8	single aligned candidate	0
+.sbss	xTRC.cpp	xutil.cpp	0x8025EBF8	0x8025EBF8	single aligned candidate; 2 in-range loads by functions outside the written units	2
 .sbss	xutil.cpp	zActionLine.cpp	0x8025EC00	0x8025EC00	single aligned candidate	0
 .sbss	zActionLine.cpp	zAnimList.cpp	0x8025EC08	0x8025EC08	single aligned candidate	0
 .sbss	zAnimList.cpp	zCutsceneMgr.cpp	0x8025EC18	0x8025EC18	single aligned candidate	0

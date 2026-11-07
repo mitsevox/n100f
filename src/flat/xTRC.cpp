@@ -98,6 +98,12 @@ char* fn_800389FC(S32 lang, S32 card, S32 which);
 // the pad and disc message (sTrcFontBox in the SLUS-20349 DWARF) and the flag that makes that
 // message draw a frame of its own.
 TRCCardMessage lbl_801B6610[2] = {};
+}
+
+// The disc state and whether the disc was identified (iSnd and iTime read it).
+_tagTRCState gTrcDisk[2];
+
+extern "C" {
 U32 lbl_8025EBE0;
 xFontBox* lbl_8025EBE4;
 U32 lbl_8025EBE8;
@@ -614,12 +620,62 @@ extern "C" S32 fn_80043E20(TRCCardWatch* watch)
     return changed;
 }
 
-// Hook the card dialogs call before they show a problem message. On GameCube it does nothing
-// and returns 2, so the dialog goes ahead; its message buffer is never filled.
+// Hook the card dialogs call before they show a problem message. On GameCube it returns 2 at
+// once, so the dialog goes ahead; the card checks after the return never run.
 extern "C" S32 fn_80043E18(S32 card, st_ISGSESSION* session)
 {
+    S32 result = 2;
     char text[512] = { 0 };
-    return 2;
+    return result;
+
+    U32 state = iSGCheckMemoryCard(session, card);
+    if (!(state & 1))
+    {
+        fn_80041CE8(0, card, card);
+        fn_80041CC4(0, 24);
+        fn_80041548(0, text);
+        S32 choice = TRCAskCard(text, "Continue Without Saving", "Retry", NULL, NULL);
+        if (choice == -1)
+        {
+            result = 4;
+        }
+        else if (choice == 0)
+        {
+            result = 3;
+        }
+        else if (choice == 1)
+        {
+            result = 4;
+        }
+        else
+        {
+            result = 3;
+        }
+    }
+    else if (!(state & 2))
+    {
+        fn_80041CE8(0, card, card);
+        fn_80041CC4(0, 27);
+        fn_80041548(0, text);
+        S32 choice = TRCAskCard(text, "Continue Without Saving", "Retry", NULL, NULL);
+        if (choice == -1)
+        {
+            result = 4;
+        }
+        else if (choice == 0)
+        {
+            result = 3;
+        }
+        else if (choice == 1)
+        {
+            result = 4;
+        }
+        else
+        {
+            result = 3;
+        }
+    }
+    return result;
 }
 
 // Checks that a card is in the slot; a card that is not ready says why.
