@@ -7,10 +7,6 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
     RxCluster* meshState;
     RxCluster* indices;
     RxMeshStateVector* meshData;
-    RwImVertexIndex* src;
-    U32 numIndices;
-    U32 numTris;
-    void* data;
 
     packet = RxPacketFetch(self);
 
@@ -23,6 +19,7 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
     {
         RwImVertexIndex* index;
         U32 i;
+        U32 numIndices;
 
         indices = RxClusterLockWrite(packet, 1, self);
 
@@ -83,6 +80,9 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
     }
     else
     {
+        U32 numIndices;
+        U32 numTris;
+
         switch (meshData->PrimType)
         {
         case rwPRIMTYPETRILIST:
@@ -90,6 +90,8 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
         case rwPRIMTYPETRIFAN:
         {
             RwImVertexIndex first;
+            RwImVertexIndex* src;
+            void* data;
 
             numTris = indices->numUsed - 2;
             first = *(RwImVertexIndex*)indices->currentData;
@@ -120,6 +122,8 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
         case rwPRIMTYPETRISTRIP:
         {
             U32 odd;
+            RwImVertexIndex* src;
+            void* data;
 
             src = (RwImVertexIndex*)((U8*)indices->data + indices->stride * (indices->numUsed - 3));
             numTris = indices->numUsed - 2;
@@ -136,9 +140,13 @@ static S32 _ImmMangleTriangleIndicesNode(RxPipelineNode* self, RxPipelineNodePar
 
                 for (; i < numTris; i++)
                 {
-                    RwImVertexIndex i1 = src[odd];
-                    RwImVertexIndex i0 = src[odd ^ 1];
-                    RwImVertexIndex i2 = src[2];
+                    RwImVertexIndex i0;
+                    RwImVertexIndex i1;
+                    RwImVertexIndex i2;
+
+                    i1 = src[odd];
+                    i0 = src[odd ^ 1];
+                    i2 = src[2];
 
                     index[2] = i2;
                     index[1] = i1;
