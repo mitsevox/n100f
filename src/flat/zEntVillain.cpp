@@ -10637,6 +10637,23 @@ static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     return 1;
 }
 
+// Runs Redbeard's thrown sword for a frame: ages it (flagging it once it is older than 2.5
+// seconds), flies it, keeps its flight sound playing and checks it for hits.
+static void VWEP_rbs_update(F32 dt)
+{
+    st_REDBEARD_SWORD* rbs = &g_rbsword[0];
+    rbs->tym_age += dt;
+    if (rbs->tym_age > 2.5f) rbs->flg_stat |= 8;
+    else rbs->flg_stat &= ~8;
+    VWEP_rbs_flight(rbs, dt);
+    if (!iSndIsPlaying(0, (U32)rbs))
+    {
+        U32 snd = VSND_select_sound(rbs->rbvil, VSND_TYP_PRJ_FLIGHT);
+        if (snd) xSndPlay3D(snd, 0.5f, 0.0f, 128, 0x202, (_xEnt*)rbs, 25.0f);
+    }
+    VWEP_rbs_chkCollide(rbs, dt);
+}
+
 // Update Redbeard's navigation, sword movement and fade-out.
 static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
 {
@@ -10718,17 +10735,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         break;
     case ZVIL_GOAL_SPELLCAST:
     {
-        st_REDBEARD_SWORD* sword = &g_rbsword[0];
-        sword->tym_age += dt;
-        if (sword->tym_age > 2.5f) sword->flg_stat |= 8;
-        else sword->flg_stat &= ~8;
-        VWEP_rbs_flight(sword, dt);
-        if (!iSndIsPlaying(0, (U32)sword))
-        {
-            U32 snd = VSND_select_sound(sword->rbvil, VSND_TYP_PRJ_FLIGHT);
-            if (snd) xSndPlay3D(snd, 0.5f, 0.0f, 128, 0x202, (_xEnt*)sword, 25.0f);
-        }
-        VWEP_rbs_chkCollide(sword, dt);
+        VWEP_rbs_update(dt);
         if (vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
         {
             if (vil->tmr_list[ZVIL_TTIL_RECOVERY] <= 0.0f)
