@@ -221,8 +221,8 @@ static void fcb()
     S32 need_update = FALSE;
     for (i = 0; i < 6; i++)
     {
-        xSndVoiceInfo* gsnd_voice = &gSnd.voice[i];
         U32 orig_flags = streams[i].vinf.flags;
+        xSndVoiceInfo* gsnd_voice = &gSnd.voice[i];
         if (streams[i].vinf.voice == NULL)
         {
             continue;
@@ -249,7 +249,7 @@ static void fcb()
             continue;
         }
 
-        u32 addr = addrHi << 16;
+        u32 addr = (u32)addrHi << 16;
         addr += addrLo;
         if (addr < streams[i].dest_b * 2 && (orig_flags & 0x4000) == 0 && (orig_flags & 0x8) == 0)
         {
@@ -277,7 +277,8 @@ static void fcb()
         if ((orig_flags & 0x20) && (orig_flags & 0x4000))
         {
             streams[i].vinf.flags &= ~0x20;
-            U32 end = streams[i].dest_a * 2;
+            U32 end = streams[i].dest_a;
+            end *= 2;
             end += streams[i].info.dsp.num_adpcm_nibbles % 0xBB80;
             AXSetVoiceLoopAddr(streams[i].vinf.voice, zero_point);
             AXSetVoiceEndAddr(streams[i].vinf.voice, end - 1);
@@ -832,10 +833,12 @@ static void iSndVolUpdate(xSndVoiceInfo* vp, vinfo* info)
 
 static void iSndUpdateStreams(F32)
 {
+    S32 i;
     U8 ided = gTrcDisk[1] == TRC_DiskIdentified;
-    U32 suspend = fn_800443F8() | !ided;
+    U32 suspend = fn_800443F8();
+    suspend |= !ided;
 
-    for (S32 i = 0; i < 6; i++)
+    for (i = 0; i < 6; i++)
     {
         if (streams[i].vinf.voice == NULL)
         {
@@ -869,7 +872,8 @@ static void iSndUpdateStreams(F32)
         }
         else
         {
-            iSndVolUpdate(&gSnd.voice[i], &streams[i].vinf);
+            xSndVoiceInfo* vp = &gSnd.voice[i];
+            iSndVolUpdate(vp, &streams[i].vinf);
         }
     }
 }
@@ -983,10 +987,10 @@ static U32 iSndPlayStream(xSndVoiceInfo* vp)
 
         AXPBADDR addr;
         memcpy(&addr, &s->info.dsp.loop_flag, sizeof(AXPBADDR));
-        addr.format = 0;
-        addr.loopFlag = 1;
         U32 start = s->dest_a * 2 + 2;
         U32 end = s->dest_a * 2 + 0xBB7F;
+        addr.loopFlag = 1;
+        addr.format = 0;
         addr.loopAddressHi = start >> 16;
         addr.loopAddressLo = start;
         addr.currentAddressHi = start >> 16;
@@ -1043,8 +1047,8 @@ static U32 iSndPlaySound(xSndVoiceInfo* vp)
         sound_stream = 0;
     }
 
-    U32 priority = vp->priority;
     S32 i = vp - gSnd.voice;
+    U32 priority = vp->priority;
     if (priority >= 0xff)
     {
         priority = 0xff;
@@ -1059,8 +1063,9 @@ static U32 iSndPlaySound(xSndVoiceInfo* vp)
             vp->flags |= 0x400;
         }
 
-        voices[idx].xc = 1000.0f * snd.info.dsp.num_samples;
-        voices[idx].xc /= snd.info.dsp.sample_rate;
+        F32* xc = &voices[idx].xc;
+        *xc = 1000.0f * snd.info.dsp.num_samples;
+        *xc /= snd.info.dsp.sample_rate;
 
         AXPBADDR addr;
         memcpy(&addr, &snd.info.dsp.loop_flag, sizeof(AXPBADDR));
@@ -1245,10 +1250,19 @@ static void sndloadcb(tag_xFile*)
 
 void iSndLoadSounds(void* data)
 {
-    iSndBank* bank = (iSndBank*)data;
-    U32 total = 0;
-    U32 lowest = 0xFFFFFFFF;
-    U32 highest = 0;
+    iSndSoundInfo* sounds;
+    U32 i;
+    U32 highest;
+    tag_xFile* file;
+    U32 total;
+    U32 lowest;
+    char* name;
+    iSndBank* bank;
+
+    bank = (iSndBank*)data;
+    total = 0;
+    lowest = 0xFFFFFFFF;
+    highest = 0;
 
     if (bank->num_sounds == 0 && bank->num_streams == 0)
     {
@@ -1260,14 +1274,13 @@ void iSndLoadSounds(void* data)
         exit(-1);
     }
 
-    iSndSoundInfo* sounds = bank->sounds;
+    sounds = bank->sounds;
     sinfo_array[sinfo_array_max].bank = bank;
-    char* name = xST_xAssetID_HIPFullPath(bank->sounds[0].assetID);
-    tag_xFile* file = &sinfo_array[sinfo_array_max].file;
+    name = xST_xAssetID_HIPFullPath(bank->sounds[0].assetID);
+    file = &sinfo_array[sinfo_array_max].file;
     iFileOpen(name, 0, file);
     iFileSeek(file, 0, IFILE_SEEK_SET);
 
-    U32 i;
     for (i = 0; i < bank->num_sounds; i++)
     {
         st_xST_XASSETINFO ainfo;
