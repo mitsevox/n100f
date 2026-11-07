@@ -267,17 +267,32 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
 // matrix) and render state.
 static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
-    RpWorldSector* sector = (RpWorldSector*)params->dataParam;
-    RpWorld* world = (RpWorld*)RWSRCGLOBAL(curWorld);
-    U32 numVerts = sector->numVertices;
+    RpWorldSector* sector;
+    RpWorld* world;
+    SectorInstanceHeader* header;
     RpMeshHeader* meshHeader;
-    U16 numMeshes;
+    S32 stride;
+    U32 numMeshes;
+    U32 numVerts;
     U32 flags;
     U32 textured;
-    RwResEntry* repEntry;
+    RxObjSpace3DVertex* verts;
     S32 numTris;
-    SectorInstanceHeader* header;
     SectorInstanceMesh* instMesh;
+    RwResEntry* repEntry;
+    RxPacket* packet;
+    RxCluster* objVertsCl;
+    RxCluster* indicesCl;
+    RxCluster* meshStateCl;
+    RxCluster* renderStateCl;
+    RxMeshStateVector* meshState;
+    RxRenderStateVector* renderState;
+    RpMaterial* material;
+    RwTexture* texture;
+
+    sector = (RpWorldSector*)params->dataParam;
+    world = (RpWorld*)RWSRCGLOBAL(curWorld);
+    numVerts = sector->numVertices;
 
     if (!numVerts)
     {
@@ -295,7 +310,19 @@ static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* 
     flags = world->flags;
     repEntry = sector->repEntry;
 
+    stride = sizeof(RxObjSpace3DVertex);
+
+    if (flags & rpWORLDNORMALS)
+    {
+        stride = sizeof(RxObjSpace3DVertex);
+    }
+
     textured = flags & (rpWORLDTEXTURED | rpWORLDTEXTURED2);
+
+    if (textured)
+    {
+        stride = sizeof(RxObjSpace3DVertex);
+    }
 
     if (meshHeader->flags & rpMESHHEADERTRISTRIP)
     {
@@ -319,21 +346,18 @@ static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* 
 
     if (!repEntry)
     {
-        S32 vertSize = numVerts * sizeof(RxObjSpace3DVertex);
-        RxObjSpace3DVertex* verts;
-
         repEntry = RwResourcesAllocateResEntry(sector, &sector->repEntry,
                                                sizeof(SectorInstanceHeader) +
                                                    (numMeshes - 1) * sizeof(SectorInstanceMesh) +
-                                                   numTris * 3 * sizeof(U16) + vertSize,
+                                                   numTris * 3 * sizeof(U16) + numVerts * stride,
                                                NULL);
         header = (SectorInstanceHeader*)(repEntry + 1);
         header->serialNum = meshHeader->serialNum;
         verts = (RxObjSpace3DVertex*)&header->meshes[numMeshes];
 
-        fn_80157A3C(verts, world, sector, sizeof(RxObjSpace3DVertex));
-        fn_80157FB8(header->meshes, meshHeader, (U16*)((U8*)verts + vertSize), verts,
-                    sizeof(RxObjSpace3DVertex));
+        fn_80157A3C(verts, world, sector, stride);
+        fn_80157FB8(header->meshes, meshHeader, (U16*)((U8*)verts + numVerts * stride), verts,
+                    stride);
     }
     else
     {
@@ -346,14 +370,11 @@ static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* 
     {
         if (instMesh->numVerts && instMesh->numIndices)
         {
-            RxPacket* packet = RxPacketCreate(self);
-            RxCluster* objVertsCl = RxClusterLockWrite(packet, 0, self);
-            RxCluster* indicesCl = RxClusterLockWrite(packet, 1, self);
-            RxCluster* meshStateCl = RxClusterLockWrite(packet, 2, self);
-            RxCluster* renderStateCl = RxClusterLockWrite(packet, 3, self);
-            RxMeshStateVector* meshState;
-            RxRenderStateVector* renderState;
-            RpMaterial* material;
+            packet = RxPacketCreate(self);
+            objVertsCl = RxClusterLockWrite(packet, 0, self);
+            indicesCl = RxClusterLockWrite(packet, 1, self);
+            meshStateCl = RxClusterLockWrite(packet, 2, self);
+            renderStateCl = RxClusterLockWrite(packet, 3, self);
 
             meshStateCl = RxClusterInitializeData(meshStateCl, 1, sizeof(RxMeshStateVector));
             renderStateCl = RxClusterInitializeData(renderStateCl, 1, sizeof(RxRenderStateVector));
@@ -389,7 +410,7 @@ static S32 WorldSectorInstanceNodeFn(RxPipelineNode* self, RxPipelineNodeParam* 
 
             if (textured)
             {
-                RwTexture* texture = meshState->Texture;
+                texture = meshState->Texture;
 
                 if (texture)
                 {

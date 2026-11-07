@@ -388,7 +388,12 @@ static S32 TriStripEdgeIsDeadEnd(TriStripEdge* edge, S32 pass)
             deadEnd = FALSE;
         }
 
-        return deadEnd;
+        if (!deadEnd)
+        {
+            return FALSE;
+        }
+
+        return TRUE;
     }
     else
     {
@@ -399,7 +404,12 @@ static S32 TriStripEdgeIsDeadEnd(TriStripEdge* edge, S32 pass)
             deadEnd = FALSE;
         }
 
-        return deadEnd;
+        if (!deadEnd)
+        {
+            return FALSE;
+        }
+
+        return TRUE;
     }
 }
 
@@ -415,7 +425,12 @@ static S32 TriStripEdgeHasFreeTri(TriStripEdge* edge, S32 pass)
             hasFree = TRUE;
         }
 
-        return hasFree;
+        if (hasFree)
+        {
+            return TRUE;
+        }
+
+        return FALSE;
     }
     else
     {
@@ -426,8 +441,37 @@ static S32 TriStripEdgeHasFreeTri(TriStripEdge* edge, S32 pass)
             hasFree = TRUE;
         }
 
-        return hasFree;
+        if (hasFree)
+        {
+            return TRUE;
+        }
+
+        return FALSE;
     }
+}
+
+// The edge of a triangle that joins two vertices, or NULL (project-own name; inlined).
+static TriStripEdge* TriStripNextEdge(TriStripBinEntry* tri, U16 vert0, U16 vert1)
+{
+    if ((tri->edge[0]->vert[0] == vert0 && tri->edge[0]->vert[1] == vert1) ||
+        (tri->edge[0]->vert[0] == vert1 && tri->edge[0]->vert[1] == vert0))
+    {
+        return tri->edge[0];
+    }
+
+    if ((tri->edge[1]->vert[0] == vert0 && tri->edge[1]->vert[1] == vert1) ||
+        (tri->edge[1]->vert[0] == vert1 && tri->edge[1]->vert[1] == vert0))
+    {
+        return tri->edge[1];
+    }
+
+    if ((tri->edge[2]->vert[0] == vert0 && tri->edge[2]->vert[1] == vert1) ||
+        (tri->edge[2]->vert[0] == vert1 && tri->edge[2]->vert[1] == vert0))
+    {
+        return tri->edge[2];
+    }
+
+    return NULL;
 }
 
 // Extends a strip across edge for as long as a free triangle lies beyond it, swapping to the
@@ -435,18 +479,23 @@ static S32 TriStripEdgeHasFreeTri(TriStripEdge* edge, S32 pass)
 static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEntry** bins,
                           RpBuildMeshTriangle* triangles, S32 pass)
 {
-    U32 numAdded = 0;
-    TriStripEdge* swapEdge = NULL;
+    U16 newVert;
+    TriStripEdge* swapEdge;
+    U16 lastVert;
+    TriStripEdge* inEdge;
+    U16 vertA;
+    U16 vertB;
+    TriStripBinEntry* tri;
+    U32 numAdded;
+    U16* vertIndex;
+
+    numAdded = 0;
+    swapEdge = NULL;
 
     while (edge)
     {
-        TriStripBinEntry* tri = NULL;
-        TriStripEdge* inEdge;
-        U16 newVert = 0;
-        U16 vertA;
-        U16 vertB;
-        U16 lastVert;
-        U16* vertIndex;
+        tri = NULL;
+        newVert = 0;
 
         if (strip->numIndices & 1)
         {
@@ -484,7 +533,7 @@ static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEn
 
         if (!tri)
         {
-            break;
+            return numAdded;
         }
 
         numAdded++;
@@ -510,25 +559,7 @@ static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEn
         inEdge = edge;
         lastVert = strip->indices[strip->numIndices - 1];
 
-        if ((tri->edge[0]->vert[0] == lastVert && tri->edge[0]->vert[1] == newVert) ||
-            (tri->edge[0]->vert[0] == newVert && tri->edge[0]->vert[1] == lastVert))
-        {
-            edge = tri->edge[0];
-        }
-        else if ((tri->edge[1]->vert[0] == lastVert && tri->edge[1]->vert[1] == newVert) ||
-                 (tri->edge[1]->vert[0] == newVert && tri->edge[1]->vert[1] == lastVert))
-        {
-            edge = tri->edge[1];
-        }
-        else if ((tri->edge[2]->vert[0] == lastVert && tri->edge[2]->vert[1] == newVert) ||
-                 (tri->edge[2]->vert[0] == newVert && tri->edge[2]->vert[1] == lastVert))
-        {
-            edge = tri->edge[2];
-        }
-        else
-        {
-            edge = NULL;
-        }
+        edge = TriStripNextEdge(tri, lastVert, newVert);
 
         if (TriStripEdgeIsDeadEnd(edge, pass))
         {
