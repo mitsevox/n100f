@@ -1197,13 +1197,15 @@ S32 zEntProjectile::ZPRJ_render()
     return rc;
 }
 
+// When no ceiling or floor hit was recorded, takes the steepest static or environment collision facing
+// down (ceiling) or up (floor) as that hit. Returns whether either is set.
 S32 zEntProjectile::LookForFloorRoof(_xScene*, F32)
 {
     S32 i;
     _xCollis* best = NULL;
     _xCollis* ceil = &collis->colls[0];
     _xCollis* flor = &collis->colls[1];
-    _xCollis* cur_rec;
+    _xCollis* cur_rec = NULL;
 
     if (!(ceil->flags & 1))
     {
