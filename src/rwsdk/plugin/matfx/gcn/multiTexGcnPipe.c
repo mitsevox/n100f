@@ -138,9 +138,7 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
 
                     if (a == b)
                     {
-                        U16 next = indices[i + 1];
-
-                        if (index == next)
+                        if (index == indices[i + 1])
                         {
                             i++;
                             a = indices[i + 1];
@@ -156,7 +154,7 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
                         else
                         {
                             a = b;
-                            b = next;
+                            b = indices[i + 1];
                         }
                     }
 
