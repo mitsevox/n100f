@@ -938,7 +938,9 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
     U32 i;
     U32 j;
 
-    if (!*stripList)
+    rest = *stripList;
+
+    if (!rest)
     {
         return FALSE;
     }
@@ -954,7 +956,8 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
 
     joined->indices = (U16*)RwMalloc(joined->space * sizeof(U32));
 
-    strip = *stripList;
+    rest = *stripList;
+    strip = rest;
 
     for (i = 0; i < strip->numIndices; i++)
     {
@@ -964,8 +967,12 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
 
     RwFree(strip->indices);
     strip->indices = NULL;
-    rest = strip->next;
-    RWSRCGLOBAL(memoryFree)(MESHGLOBAL(triStripListEntryFreeList), strip);
+    {
+        TriStripList* next = strip->next;
+
+        RWSRCGLOBAL(memoryFree)(MESHGLOBAL(triStripListEntryFreeList), strip);
+        rest = next;
+    }
 
     while (rest)
     {
