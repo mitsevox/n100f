@@ -409,6 +409,7 @@ static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 fl
 static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 static inline void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt);
+static void VEFX_holo_begin(st_zEntVillain* vil);
 static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan);
 static inline F32 VANM_entTime(const _zEnt* ent);
 static inline F32 VCFG_tymref(st_zEntVillain* vil, S32 which);
@@ -6954,6 +6955,16 @@ static S32 VILN_kp_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
     return result;
 }
 
+// Starts a dying villain's hologram fade: adds the hologram, queues the fade sound and runs the
+// decay timer from its configured time, holding the generic timer so this happens once.
+static void VEFX_holo_begin(st_zEntVillain* vil)
+{
+    zHologramAdd(vil);
+    VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
+    vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
+    vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+}
+
 // Update a killer plant's goal: it waits ready to attack, then swipes, lobs or casts its spell at
 // the player, and fades out as a hologram when it dies.
 static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
@@ -7123,10 +7134,7 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -7630,10 +7638,7 @@ static S32 VILN_shagM_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_C
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -8145,10 +8150,7 @@ static S32 VILN_gang_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VSND_queueSound(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -8753,10 +8755,7 @@ static S32 VILN_sham_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -9347,10 +9346,7 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -9976,10 +9972,7 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
                 if (vil->cnt_lobSalvo > 0 && !vil->prj_reserved)
                 {
                     vil->prj_reserved = VWEP_lobReservePRJ(vil);
-                    zEntProjectile* prj = vil->prj_reserved;
-                    if (prj)
-                        VWEP_lobActivatePRJ(prj, vil, xBoundCenter(&globals.player.ent.bound), NULL,
-                                            &vil->vec_lobSpin, vil->fac_lobarc, vil->fac_lobheavy);
+                    if (vil->prj_reserved) VWEP_lobAtPlayer(vil->prj_reserved, vil);
                 }
             }
         }
@@ -10031,10 +10024,7 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
@@ -10787,10 +10777,7 @@ static S32 VILN_BRB_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         {
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
-                zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
-                vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
-                vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
+                VEFX_holo_begin(vil);
             }
             VPAR_emit_deathfx(vil, dt);
             if (vil->tmr_list[ZVIL_TDUR_DECAY] <= 0.0f)
