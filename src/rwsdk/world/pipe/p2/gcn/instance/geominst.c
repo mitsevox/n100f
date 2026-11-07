@@ -221,14 +221,15 @@ S32 _rwGCNVtxFmtInstNrm(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* 
         break;
     case COMP_S8:
     {
+        F32 scale = 64.0f;
         S8* out = (S8*)dst;
         S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
-            out[0] = src->x * 64.0f;
-            out[1] = src->y * 64.0f;
-            out[2] = src->z * 64.0f;
+            out[0] = src->x * scale;
+            out[1] = src->y * scale;
+            out[2] = src->z * scale;
             src++;
             out += stride;
         }
@@ -236,14 +237,15 @@ S32 _rwGCNVtxFmtInstNrm(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* 
     }
     case COMP_S16:
     {
+        F32 scale = 16384.0f;
         S16* out = (S16*)dst;
         S32 i;
 
         for (i = 0; i < numVerts; i++)
         {
-            out[0] = src->x * 16384.0f;
-            out[1] = src->y * 16384.0f;
-            out[2] = src->z * 16384.0f;
+            out[0] = src->x * scale;
+            out[1] = src->y * scale;
+            out[2] = src->z * scale;
             src++;
             out = (S16*)((U8*)out + stride);
         }
@@ -301,6 +303,7 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
         break;
     case COMP_S8:
     {
+        F32 scale = 64.0f;
         S8* out = (S8*)dst;
 
         for (i = numVerts; i > 0; i--)
@@ -310,9 +313,9 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
             n.x = (1.0f / 128.0f) * (F32)src->x;
             n.y = (1.0f / 128.0f) * (F32)src->y;
             n.z = (1.0f / 128.0f) * (F32)src->z;
-            out[0] = n.x * 64.0f;
-            out[1] = n.y * 64.0f;
-            out[2] = n.z * 64.0f;
+            out[0] = n.x * scale;
+            out[1] = n.y * scale;
+            out[2] = n.z * scale;
             src++;
             out += stride;
         }
@@ -320,6 +323,7 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
     }
     case COMP_S16:
     {
+        F32 scale = 16384.0f;
         S16* out = (S16*)dst;
 
         for (i = numVerts; i > 0; i--)
@@ -329,9 +333,9 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
             n.x = (1.0f / 128.0f) * (F32)src->x;
             n.y = (1.0f / 128.0f) * (F32)src->y;
             n.z = (1.0f / 128.0f) * (F32)src->z;
-            out[0] = n.x * 16384.0f;
-            out[1] = n.y * 16384.0f;
-            out[2] = n.z * 16384.0f;
+            out[0] = n.x * scale;
+            out[1] = n.y * scale;
+            out[2] = n.z * scale;
             src++;
             out = (S16*)((U8*)out + stride);
         }
