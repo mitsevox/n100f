@@ -16,7 +16,7 @@ extern RxNodeDefinition lbl_801DF114;
 extern RxNodeDefinition lbl_801DF168;
 
 void _rwDlTransformSetup(const RwMatrix* matrix, S32 normals);
-void fn_8017ABB4(void);
+void _rwDlTextureRasterFlush(void);
 
 // The pool flag for textured vertices. Written for this project.
 #define DLSUBMIT_VERTEXUV 0x01
@@ -87,7 +87,7 @@ static void DlSubmitSetup(_rwIm3DPoolStash* stash)
         GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE,
                           GX_PTIDENTITY);
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-        fn_8017ABB4();
+        _rwDlTextureRasterFlush();
     }
     else
     {

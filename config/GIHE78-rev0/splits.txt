@@ -1675,6 +1675,9 @@ rwsdk/world/babinwor.c:
 
 rwsdk/world/baclump.c:
 	.text       start:0x801484D4 end:0x8014AFC4
+	.data       start:0x801DD498 end:0x801DD4C8
+	.sbss       start:0x8025F708 end:0x8025F720
+	.sdata2     start:0x802628D0 end:0x802628D8
 
 rwsdk/world/bageomet.c:
 	.text       start:0x8014AFC4 end:0x8014C7DC
@@ -1861,6 +1864,7 @@ rwsdk/src/babinfrm.c:
 
 rwsdk/src/babintex.c:
 	.text       start:0x80166F2C end:0x801683DC
+	.sdata2     start:0x80262A98 end:0x80262AA0
 
 rwsdk/src/bacamera.c:
 	.text       start:0x801683DC end:0x80169E98
@@ -1917,6 +1921,10 @@ rwsdk/driver/gcn/dlraster.c:
 
 rwsdk/driver/gcn/dlrendst.c:
 	.text       start:0x8017A658 end:0x8017B22C
+	.data       start:0x801DE390 end:0x801DE478
+	.bss        start:0x8025E348 end:0x8025E388
+	.sbss       start:0x8025F878 end:0x8025F880
+	.sdata2     start:0x80262B70 end:0x80262B80
 
 rwsdk/driver/gcn/dlsprite.c:
 	.text       start:0x8017B22C end:0x8017C95C

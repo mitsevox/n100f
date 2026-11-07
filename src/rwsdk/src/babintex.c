@@ -23,6 +23,8 @@ struct TexDictionaryStreamData
     S32 numTextures;
 };
 
+static const char nullString = '\0';
+
 extern RwPluginRegistry textureTKList;
 extern RwPluginRegistry texDictTKList;
 
@@ -154,7 +156,7 @@ S32 _rwStringStreamGetSize(const char* string)
 {
     if (!string)
     {
-        string = "";
+        string = &nullString;
     }
 
     return (rwstrlen(string) + 1 + 3) & ~3;
@@ -166,7 +168,7 @@ const char* _rwStringStreamWrite(const char* string, RwStream* stream)
 
     if (!string)
     {
-        string = "";
+        string = &nullString;
     }
 
     size = _rwStringStreamGetSize(string);
@@ -212,12 +214,14 @@ char* _rwStringStreamFindAndRead(char* string, RwStream* stream)
 
         if (type == rwID_STRING)
         {
-            return StringStreamRead(string, stream, length);
+            string = StringStreamRead(string, stream, length);
+            return string;
         }
 
         if (type == rwID_UNICODESTRING)
         {
-            return UnicodeStringStreamRead(string, stream, length);
+            string = UnicodeStringStreamRead(string, stream, length);
+            return string;
         }
 
         if (!RwStreamSkip(stream, length))
@@ -306,7 +310,8 @@ RwTexture* RwTextureStreamRead(RwStream* stream)
     U32 size;
     U32 version;
     U32 data;
-    U8 filterMode;
+    RwTextureFilterMode filterMode;
+    U32 addressingU;
     U8 flags;
     S32 mipmapping;
     S32 autoMipmapping;
@@ -330,12 +335,14 @@ RwTexture* RwTextureStreamRead(RwStream* stream)
 
         RwMemNative32(&data, sizeof(data));
 
+        filterMode = data & 0xFF;
+        addressingU = (data >> 8) & 0xF;
+
         if (!((data >> 12) & 0xF))
         {
-            data |= (((data >> 8) & 0xF) << 12) & rwTEXTUREADDRESSINGVMASK;
+            data |= (addressingU << 12) & rwTEXTUREADDRESSINGVMASK;
         }
 
-        filterMode = data & 0xFF;
         flags = (data >> 16) & 0xFF;
 
         mipmapping = RwTextureGetMipmapping();

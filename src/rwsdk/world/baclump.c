@@ -17,9 +17,6 @@ struct ClumpObjectExt
 static RwPluginRegistry atomicTKList = { sizeof(RpAtomic), sizeof(RpAtomic) };
 static RwPluginRegistry clumpTKList = { sizeof(RpClump), sizeof(RpClump) };
 
-static S32 _rpClumpCameraExtOffset;
-static S32 _rpClumpLightExtOffset;
-
 // The clump module's globals: the free lists that atomics and clumps come from.
 typedef struct ClumpModuleData ClumpModuleData;
 struct ClumpModuleData
@@ -77,21 +74,22 @@ struct ClumpStreamData
 };
 
 // Releases the geometries a clump chunk carried once its atomics hold their own references.
-#define GEOMETRYLIST_DEINITIALIZE(geomList)                                                        \
-    do                                                                                             \
-    {                                                                                              \
-        if ((geomList).numGeoms)                                                                   \
-        {                                                                                          \
-            S32 _i;                                                                                \
-                                                                                                   \
-            for (_i = 0; _i < (geomList).numGeoms; _i++)                                           \
-            {                                                                                      \
-                RpGeometryDestroy((geomList).geometries[_i]);                                      \
-            }                                                                                      \
-                                                                                                   \
-            RwFree((geomList).geometries);                                                         \
-        }                                                                                          \
-    } while (0)
+static GeometryList* GeometryListDeinitialize(GeometryList* geomList)
+{
+    if (geomList->numGeoms)
+    {
+        S32 i;
+
+        for (i = 0; i < geomList->numGeoms; i++)
+        {
+            RpGeometryDestroy(geomList->geometries[i]);
+        }
+
+        RwFree(geomList->geometries);
+    }
+
+    return geomList;
+}
 
 // The larger of two axis lengths, the first on a tie.
 #define SCALEMAX(a, b) ((a) >= (b) ? (a) : (b))
@@ -99,6 +97,8 @@ struct ClumpStreamData
 static RwModuleInfo clumpModule;
 static U32 lastSeenRightsPluginId;
 static U32 lastSeenExtraData;
+static S32 _rpClumpLightExtOffset;
+static S32 _rpClumpCameraExtOffset;
 
 void _rpAtomicResyncInterpolatedSphere(RpAtomic* atomic);
 
@@ -191,6 +191,7 @@ RpAtomic* AtomicDefaultRenderCallBack(RpAtomic* atomic)
     return NULL;
 }
 
+// Read the geometry objects referenced by a streamed clump.
 static GeometryList* GeometryListStreamRead(RwStream* stream, GeometryList* geomList)
 {
     S32 i;
@@ -253,8 +254,6 @@ static GeometryList* GeometryListStreamRead(RwStream* stream, GeometryList* geom
                 return NULL;
             }
         }
-
-        return geomList;
     }
     else
     {
@@ -266,6 +265,8 @@ static GeometryList* GeometryListStreamRead(RwStream* stream, GeometryList* geom
 
         return NULL;
     }
+
+    return geomList;
 }
 
 static void* ClumpInitCameraExt(void* object, S32 offset, S32 size)
@@ -305,6 +306,7 @@ static RpClump* ClumpCallBack(RpClump* clump, void* data)
     return clump;
 }
 
+// Read one atomic and resolve its frame and geometry references.
 static RpAtomic* ClumpAtomicStreamRead(RwStream* stream, rwFrameList* frameList,
                                        GeometryList* geomList)
 {
@@ -313,6 +315,8 @@ static RpAtomic* ClumpAtomicStreamRead(RwStream* stream, rwFrameList* frameList,
     RpAtomic* atomic;
     RpGeometry* geometry;
     S32 status;
+    AtomicStreamDataOld oldData;
+    AtomicStreamData data;
 
     if (!RwStreamFindChunk(stream, rwID_STRUCT, &size, &version))
     {
@@ -329,8 +333,6 @@ static RpAtomic* ClumpAtomicStreamRead(RwStream* stream, rwFrameList* frameList,
     {
         if (version >= ATOMIC_GEOMINDEXVERSION)
         {
-            AtomicStreamData data;
-
             memset(&data, 0, sizeof(data));
 
             status = (RwStreamRead(stream, &data, size) == size);
@@ -399,9 +401,6 @@ static RpAtomic* ClumpAtomicStreamRead(RwStream* stream, rwFrameList* frameList,
 
                         return NULL;
                     }
-
-                    RpAtomicSetGeometry(atomic, geometry, 0);
-                    RpGeometryDestroy(geometry);
                 }
                 else
                 {
@@ -416,15 +415,16 @@ static RpAtomic* ClumpAtomicStreamRead(RwStream* stream, rwFrameList* frameList,
 
                     return NULL;
                 }
+
+                RpAtomicSetGeometry(atomic, geometry, 0);
+                RpGeometryDestroy(geometry);
             }
         }
         else
         {
-            AtomicStreamDataOld data;
+            memset(&oldData, 0, sizeof(oldData));
 
-            memset(&data, 0, sizeof(data));
-
-            status = (RwStreamRead(stream, &data, size) == size);
+            status = (RwStreamRead(stream, &oldData, size) == size);
 
             if (!status)
             {
@@ -437,7 +437,7 @@ static RpAtomic* ClumpAtomicStreamRead(RwStream* stream, rwFrameList* frameList,
                 return NULL;
             }
 
-            RwMemNative32(&data, sizeof(data));
+            RwMemNative32(&oldData, sizeof(oldData));
 
             atomic = RpAtomicCreate();
 
@@ -446,11 +446,11 @@ static RpAtomic* ClumpAtomicStreamRead(RwStream* stream, rwFrameList* frameList,
                 return NULL;
             }
 
-            rwObjectSetFlags(atomic, data.flags);
+            rwObjectSetFlags(atomic, oldData.flags);
 
             if (frameList->numFrames)
             {
-                RpAtomicSetFrame(atomic, frameList->frames[data.frameIndex]);
+                RpAtomicSetFrame(atomic, frameList->frames[oldData.frameIndex]);
             }
 
             if (!RwStreamFindChunk(stream, rwID_GEOMETRY, NULL, &version))
@@ -484,9 +484,6 @@ static RpAtomic* ClumpAtomicStreamRead(RwStream* stream, rwFrameList* frameList,
 
                     return NULL;
                 }
-
-                RpAtomicSetGeometry(atomic, geometry, 0);
-                RpGeometryDestroy(geometry);
             }
             else
             {
@@ -501,6 +498,9 @@ static RpAtomic* ClumpAtomicStreamRead(RwStream* stream, rwFrameList* frameList,
 
                 return NULL;
             }
+
+            RpAtomicSetGeometry(atomic, geometry, 0);
+            RpGeometryDestroy(geometry);
         }
 
         lastSeenRightsPluginId = 0;
@@ -900,7 +900,7 @@ RpClump* RpClumpCreate(void)
 
     if (!clump)
     {
-        return NULL;
+        return clump;
     }
 
     rwObjectInitialize(clump, CLUMP_OBJECTTYPE, 0);
@@ -966,15 +966,16 @@ RpClump* RpClumpRemoveCamera(RpClump* clump, RwCamera* camera)
     return clump;
 }
 
+// Load a clump and its frames, geometry, atomics, lights and cameras.
 RpClump* RpClumpStreamRead(RwStream* stream)
 {
     U32 size;
     U32 version;
+    U32 chunkVersion;
     ClumpStreamData data;
     RpClump* clump;
-    rwFrameList frameList;
-    GeometryList geomList;
     S32 status;
+    RpAtomic* atomic;
     S32 i;
 
     if (!RwStreamFindChunk(stream, rwID_STRUCT, &size, &version))
@@ -990,6 +991,9 @@ RpClump* RpClumpStreamRead(RwStream* stream)
 
     if (version >= rwLIBRARYBASEVERSION && version <= rwLIBRARYCURRENTVERSION)
     {
+        rwFrameList frameList;
+        GeometryList geomList;
+
         if (version <= CLUMP_ATOMICSONLYVERSION)
         {
             S32 numAtomics;
@@ -1009,8 +1013,8 @@ RpClump* RpClumpStreamRead(RwStream* stream)
 
             RwMemNative32(&numAtomics, sizeof(numAtomics));
 
-            data.numLights = 0;
             data.numAtomics = numAtomics;
+            data.numLights = 0;
             data.numCameras = 0;
         }
         else
@@ -1038,7 +1042,7 @@ RpClump* RpClumpStreamRead(RwStream* stream)
             return NULL;
         }
 
-        if (!RwStreamFindChunk(stream, rwID_FRAMELIST, NULL, &version))
+        if (!RwStreamFindChunk(stream, rwID_FRAMELIST, NULL, &chunkVersion))
         {
             RpClumpDestroy(clump);
             {
@@ -1068,7 +1072,7 @@ RpClump* RpClumpStreamRead(RwStream* stream)
             return NULL;
         }
 
-        if (!RwStreamFindChunk(stream, rwID_GEOMETRYLIST, NULL, &version))
+        if (!RwStreamFindChunk(stream, rwID_GEOMETRYLIST, NULL, &chunkVersion))
         {
             RwError err;
 
@@ -1100,8 +1104,6 @@ RpClump* RpClumpStreamRead(RwStream* stream)
 
         for (i = 0; i < data.numAtomics; i++)
         {
-            RpAtomic* atomic;
-
             status = RwStreamFindChunk(stream, rwID_ATOMIC, NULL, &version);
 
             if (status)
@@ -1112,7 +1114,7 @@ RpClump* RpClumpStreamRead(RwStream* stream)
 
             if (!status)
             {
-                GEOMETRYLIST_DEINITIALIZE(geomList);
+                GeometryListDeinitialize(&geomList);
                 _rwFrameListDeinitialize(&frameList);
                 RpClumpDestroy(clump);
                 {
@@ -1151,7 +1153,7 @@ RpClump* RpClumpStreamRead(RwStream* stream)
 
             if (!status)
             {
-                GEOMETRYLIST_DEINITIALIZE(geomList);
+                GeometryListDeinitialize(&geomList);
                 _rwFrameListDeinitialize(&frameList);
                 RpClumpDestroy(clump);
                 {
@@ -1194,7 +1196,7 @@ RpClump* RpClumpStreamRead(RwStream* stream)
 
             if (!status)
             {
-                GEOMETRYLIST_DEINITIALIZE(geomList);
+                GeometryListDeinitialize(&geomList);
                 _rwFrameListDeinitialize(&frameList);
                 RpClumpDestroy(clump);
                 {
@@ -1215,7 +1217,7 @@ RpClump* RpClumpStreamRead(RwStream* stream)
             ext->clump = clump;
         }
 
-        GEOMETRYLIST_DEINITIALIZE(geomList);
+        GeometryListDeinitialize(&geomList);
         _rwFrameListDeinitialize(&frameList);
 
         status = (_rwPluginRegistryReadDataChunks(&clumpTKList, stream, clump) != NULL);
