@@ -59,14 +59,6 @@ struct iSndStream
     U32 x100;
 };
 
-// Size: 0x108
-struct iSndBankFile
-{
-    tag_xFile file;
-    U32 base;
-    iSndBank* bank;
-};
-
 u32 aram_array[40];
 vinfo voices[58];
 iSndStream streams[6];
@@ -589,7 +581,7 @@ iSndFileInfo* iSndLookup(U32 id)
             if (id == sounds[j].assetID)
             {
                 memcpy(&snd, &sounds[j], sizeof(iSndSoundInfo));
-                memcpy(&snd.file, &sinfo_array[i].file, sizeof(tag_xFile));
+                memcpy(&snd.bank_file.file, &sinfo_array[i].file, sizeof(tag_xFile));
                 snd.ID = snd_id++;
                 if (snd_id >= 0x7FFA)
                 {
@@ -604,7 +596,7 @@ iSndFileInfo* iSndLookup(U32 id)
             if (id == sounds[j].assetID)
             {
                 memcpy(&snd, &sounds[j], sizeof(iSndSoundInfo));
-                memcpy(&snd.file, &sinfo_array[i].file, sizeof(tag_xFile));
+                memcpy(&snd.bank_file.file, &sinfo_array[i].file, sizeof(tag_xFile));
                 if (i > 1)
                 {
                     snd.ID = snd_id++;
@@ -1129,7 +1121,7 @@ static U32 iSndPrepStream(xSndVoiceInfo* vp)
     }
 
     memcpy(&s->info, &snd, sizeof(iSndSoundInfo));
-    memcpy(&s->fileInfo, &snd.file.ps.fileInfo, sizeof(DVDFileInfo));
+    memcpy(&s->fileInfo, &snd.bank_file.file.ps.fileInfo, sizeof(DVDFileInfo));
     s->fileInfo.cb.userData = s;
     s->x8c = (((s->info.dsp.num_adpcm_nibbles + 1) >> 1) + 0x1F) & ~0x1F;
     s->vinf.flags |= 0x1;
@@ -1260,16 +1252,18 @@ static void sndloadcb(tag_xFile*)
 // Load the bank's samples and retain its file information for sound lookup.
 void iSndLoadSounds(void* data)
 {
-    iSndSoundInfo* sounds;
-    U32 i;
-    iSndSoundInfo* snd;
     U32 j;
+    U32 done;
     U32 highest;
-    tag_xFile* file;
-    U32 total;
-    U32 lowest;
     char* name;
     iSndBank* bank;
+    BOOL enabled;
+    tag_xFile* file;
+    iSndSoundInfo* snd;
+    U32 i;
+    iSndSoundInfo* sounds;
+    U32 total;
+    U32 lowest;
 
     bank = (iSndBank*)data;
     total = 0;
@@ -1370,14 +1364,17 @@ void iSndLoadSounds(void* data)
         }
 
         sinfo_array[sinfo_array_max].base = lowest;
-        for (U32 done = 0; done < total;)
+        for (done = 0; done < total;)
         {
-            U32 size = 0x11940;
+            U32 size;
             if (done + 0x11940 >= total)
             {
                 size = total - done;
             }
-
+            else
+            {
+                size = 0x11940;
+            }
             SoundFlags |= 0x1;
             U32 dest = aram + done;
             iFileSeek(file, lowest + done, IFILE_SEEK_SET);
@@ -1392,7 +1389,7 @@ void iSndLoadSounds(void* data)
                 }
             }
 
-            BOOL enabled = OSDisableInterrupts();
+            enabled = OSDisableInterrupts();
             DCStoreRange(stream_buffer, size);
             ARQRequest request;
             ARQPostRequest(&request, 0, 0, 1, (u32)stream_buffer, dest, size, arq_callback);
