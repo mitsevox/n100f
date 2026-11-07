@@ -1064,7 +1064,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(NonMatching, "rwsdk/driver/gcn/dldevice.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dlraster.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dlrendst.c"),
-            Object(NonMatching, "rwsdk/driver/gcn/dlsprite.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dlsprite.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dltexdic.c"),
             Object(NonMatching, "rwsdk/driver/gcn/dltextur.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/driver/gcn/dltoken.c"),
