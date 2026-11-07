@@ -24,6 +24,7 @@ struct zSFX;
 
 static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd_limit, F32 dst_range,
                             xVec3* vec_vel);
+static S32 ZPRJ_autocalc(st_ZPRJ_AUTOCALC_INFO* autinf);
 static S32 ZPRJ_bounce_calcmove(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame);
 static S32 ZPRJ_bounce_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame);
 static S32 ZPRJ_bounce_attach(zEntProjectile* prj);
@@ -66,6 +67,7 @@ static zSFX* g_sounds[1] = {};
 static char* g_sfxnames[1] = {};
 static S32 g_prj_init;
 
+// Registers the callback table and the collision properties of the four projectile categories.
 void zEntProjectile_Startup()
 {
     st_ZPRJ_CATEGORY_FUNCS fmap_gen = {
@@ -89,16 +91,17 @@ void zEntProjectile_Startup()
     st_ZPRJ_CATEGORY_PROPS prop_grav = { 0xB0000021, 0x03, 0x3F, 0x7E, 0, 0 };
     st_ZPRJ_CATEGORY_PROPS prop_bounce = { 0xB0000021, 0x03, 0x3F, 0x7E, 0, 0x02000000 };
 
-    zEntProjectile_addCat(ZPRJ_CAT_UNKNOWN, &fmap_gen);
+    en_ZPRJ_CATEGORY cat = ZPRJ_CAT_UNKNOWN;
+    zEntProjectile_addCat(cat, &fmap_gen);
     zEntProjectile_addProps(ZPRJ_CAT_UNKNOWN, &prop_gen);
-
-    zEntProjectile_addCat(ZPRJ_CAT_ARROW, &fmap_arrow);
+    cat = ZPRJ_CAT_ARROW;
+    zEntProjectile_addCat(cat, &fmap_arrow);
     zEntProjectile_addProps(ZPRJ_CAT_ARROW, &prop_arrow);
-
-    zEntProjectile_addCat(ZPRJ_CAT_GRAVBALL, &fmap_grav);
+    cat = ZPRJ_CAT_GRAVBALL;
+    zEntProjectile_addCat(cat, &fmap_grav);
     zEntProjectile_addProps(ZPRJ_CAT_GRAVBALL, &prop_grav);
-
-    zEntProjectile_addCat(ZPRJ_CAT_BOUNCEBALL, &fmap_bounce);
+    cat = ZPRJ_CAT_BOUNCEBALL;
+    zEntProjectile_addCat(cat, &fmap_bounce);
     zEntProjectile_addProps(ZPRJ_CAT_BOUNCEBALL, &prop_bounce);
 }
 
@@ -168,6 +171,7 @@ void zEntProjectile_scenePrepare()
     }
 }
 
+// Recycles every projectile still in use, returning all of them to the free pool.
 void zEntProjectile_sceneReset()
 {
     st_PROJECTILE_DEPOT* depot = &g_prjdepot;
@@ -176,7 +180,8 @@ void zEntProjectile_sceneReset()
     while (depot->prjinuse.head->next != NULL)
     {
         link = (st_ZPRJ_LINKNODE*)RemHead(&depot->prjinuse);
-        link->backref->Recycle();
+        zEntProjectile* prj = link->backref;
+        prj->Recycle();
     }
 }
 
@@ -193,17 +198,32 @@ void zEntProjectile_sceneFinish()
     }
 }
 
+// Clears a pool entry and adds it to the free list.
+static inline void ZPRJ_poolAdd(zEntProjectile* prj)
+{
+    memset(prj, 0, sizeof(zEntProjectile));
+    prj->linknode.backref = prj;
+    AddTail(&g_prjdepot.prjpool, &prj->linknode.node);
+}
+
+// Allocates cnt entries of size bytes from the active heap and fills them with val.
+static inline void* ZPRJ_heapFill(S32 cnt, U32 size, S32 val)
+{
+    void* mem = xMemAlloc(gActiveHeap, cnt * size);
+    memset(mem, val, cnt * (S32)size);
+    return mem;
+}
+
+// Builds the projectile system for a scene: allocates the type table and the
+// 100-entry projectile pool, links every pool entry into the free list and
+// looks up the projectile sound and particle emitters by name.
 void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
 {
-    S32 i;
+    st_PROJECTILE_DEPOT* pooldepot;
     st_PROJECTILE_DEPOT* depot = &g_prjdepot;
+    S32 i;
 
-    if (depot->typetable != NULL)
-    {
-        return;
-    }
-
-    if (depot->rawpool != NULL)
+    if (depot->typetable != NULL || depot->rawpool != NULL)
     {
         return;
     }
@@ -211,9 +231,7 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
     if (num_ptype != 0)
     {
         depot->typetable =
-            (num_ptype < 1) ? NULL
-                            : (st_ZPRJ_TYPERECORD*)memset(xMemAlloc(gActiveHeap, num_ptype * sizeof(st_ZPRJ_TYPERECORD)),
-                                                          0, num_ptype * sizeof(st_ZPRJ_TYPERECORD));
+            (num_ptype < 1) ? NULL : (st_ZPRJ_TYPERECORD*)ZPRJ_heapFill(num_ptype, sizeof(st_ZPRJ_TYPERECORD), 0);
         if (depot->typetable != NULL)
         {
             depot->typecnt = num_ptype;
@@ -222,8 +240,7 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
 
     if (depot->typetable != NULL)
     {
-        depot->rawpool = (zEntProjectile*)memset(xMemAlloc(gActiveHeap, 100 * sizeof(zEntProjectile)), 0x33,
-                                                 100 * sizeof(zEntProjectile));
+        depot->rawpool = (zEntProjectile*)ZPRJ_heapFill(100, sizeof(zEntProjectile), 0x33);
         if (depot->rawpool != NULL)
         {
             depot->rawcnt = 100;
@@ -231,20 +248,22 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
         }
     }
 
+    pooldepot = &g_prjdepot;
     for (i = 0; i < depot->rawcnt; i++)
     {
-        memset(&depot->rawpool[i], 0, sizeof(zEntProjectile));
-        depot->rawpool[i].linknode.backref = &depot->rawpool[i];
-        AddTail(&depot->prjpool, &depot->rawpool[i].linknode.node);
+        ZPRJ_poolAdd(&pooldepot->rawpool[i]);
     }
 
-    if (g_sfxnames[0] == NULL)
+    for (i = 0; i < 1; i++)
     {
-        g_sounds[0] = NULL;
-    }
-    else
-    {
-        g_sounds[0] = (zSFX*)zSceneFindObject(xStrHash(g_sfxnames[0]));
+        if (g_sfxnames[i] == NULL)
+        {
+            g_sounds[i] = NULL;
+        }
+        else
+        {
+            g_sounds[i] = (zSFX*)zSceneFindObject(xStrHash(g_sfxnames[i]));
+        }
     }
 
     for (i = 0; i < 32; i++)
@@ -260,15 +279,17 @@ void zEntProjectile_prepSystem(S32 num_ptype, zScene*)
     }
 }
 
+// Updates every projectile in use, then returns the ones flagged for removal to the free pool.
 S32 zEntProjectile_poolUpdate(en_ZPRJ_CATEGORY, zScene* scn, F32 dt)
 {
-    st_ELIST holdlist;
-    S32 cnt = 0;
-    zEntProjectile* tmpprj;
-    st_ZPRJ_LINKNODE* tmplink;
     st_PROJECTILE_DEPOT* depot = &g_prjdepot;
+    st_ELIST* inuse = &depot->prjinuse;
+    st_ZPRJ_LINKNODE* tmplink;
+    zEntProjectile* tmpprj;
+    S32 cnt = 0;
+    st_ELIST holdlist;
 
-    for (tmplink = (st_ZPRJ_LINKNODE*)depot->prjinuse.head; tmplink->node.next != NULL;
+    for (tmplink = (st_ZPRJ_LINKNODE*)inuse->head; tmplink->node.next != NULL;
          tmplink = (st_ZPRJ_LINKNODE*)tmplink->node.next)
     {
         tmplink->backref->ZPRJ_update(scn, dt);
@@ -289,7 +310,7 @@ S32 zEntProjectile_poolUpdate(en_ZPRJ_CATEGORY, zScene* scn, F32 dt)
         }
         else
         {
-            AddTail(&depot->prjinuse, &tmpprj->linknode.node);
+            AddTail(inuse, &tmpprj->linknode.node);
         }
     }
 
@@ -298,8 +319,8 @@ S32 zEntProjectile_poolUpdate(en_ZPRJ_CATEGORY, zScene* scn, F32 dt)
 
 void zEntProjectile_poolRender(en_ZPRJ_CATEGORY cat)
 {
-    zEntProjectile* tmpprj;
     st_ZPRJ_LINKNODE* tmplink;
+    zEntProjectile* tmpprj;
 
     for (tmplink = (st_ZPRJ_LINKNODE*)g_prjdepot.prjinuse.head; tmplink->node.next != NULL;
          tmplink = (st_ZPRJ_LINKNODE*)tmplink->node.next)
@@ -325,31 +346,34 @@ static void ZPRJ_insertType(zProjectileTypeAsset* ptype)
     if (depot->typeidx < depot->typecnt)
     {
         idx = depot->typeidx++;
-        depot->typetable[idx].src_ptype = ptype;
-        depot->typetable[idx].aid_ptype = ptype->id;
-        depot->typetable[idx].mdlFile[ZPRJ_MDLIDX_STD] = (RpAtomic*)xSTFindAsset(ptype->modelID, NULL);
+        st_ZPRJ_TYPERECORD* rec = &depot->typetable[idx];
+        rec->src_ptype = ptype;
+        rec->aid_ptype = ptype->id;
+        rec->mdlFile[ZPRJ_MDLIDX_STD] = (RpAtomic*)xSTFindAsset(ptype->modelID, NULL);
         if (ptype->atRestModelID != 0)
         {
-            depot->typetable[idx].mdlFile[ZPRJ_MDLIDX_POSTHIT] = (RpAtomic*)xSTFindAsset(ptype->atRestModelID, NULL);
+            rec->mdlFile[ZPRJ_MDLIDX_POSTHIT] = (RpAtomic*)xSTFindAsset(ptype->atRestModelID, NULL);
         }
         else
         {
-            depot->typetable[idx].mdlFile[ZPRJ_MDLIDX_POSTHIT] = NULL;
+            rec->mdlFile[ZPRJ_MDLIDX_POSTHIT] = NULL;
         }
     }
 }
 
 static st_ZPRJ_TYPERECORD* ZPRJ_findType(U32 aid)
 {
+    st_ZPRJ_TYPERECORD* rec;
     st_ZPRJ_TYPERECORD* da_type = NULL;
     S32 i;
     st_PROJECTILE_DEPOT* depot = &g_prjdepot;
 
     for (i = 0; i < depot->typeidx; i++)
     {
-        if (depot->typetable[i].aid_ptype == aid)
+        rec = &g_prjdepot.typetable[i];
+        if (rec->aid_ptype == aid)
         {
-            da_type = &depot->typetable[i];
+            da_type = rec;
             break;
         }
     }
@@ -357,6 +381,7 @@ static st_ZPRJ_TYPERECORD* ZPRJ_findType(U32 aid)
     return da_type;
 }
 
+// Returns the category registered for a projectile type, or prefer when the type is unknown or has none.
 en_ZPRJ_CATEGORY zEntProjectile_catFromPrjType(U32 ptypeID, en_ZPRJ_CATEGORY prefer)
 {
     st_ZPRJ_TYPERECORD* ptype = ZPRJ_findType(ptypeID);
@@ -374,6 +399,8 @@ en_ZPRJ_CATEGORY zEntProjectile_catFromPrjType(U32 ptypeID, en_ZPRJ_CATEGORY pre
     return prefer;
 }
 
+// Takes a projectile from the free pool, puts it in use and initializes it; returns NULL if the pool
+// is empty, or if Init fails, in which case the projectile is marked dead for the next update.
 zEntProjectile* zEntProjectile_acquire(en_ZPRJ_CATEGORY cat, U32 ptypeID)
 {
     zEntProjectile* prj;
@@ -409,11 +436,13 @@ zEntProjectile* zEntProjectile_acquire(en_ZPRJ_CATEGORY cat, U32 ptypeID)
 
 en_ZPRJ_STATES zEntProjectile::StateSet(en_ZPRJ_STATES state)
 {
-    en_ZPRJ_STATES oldstate;
+    en_ZPRJ_STATES oldstate = this->state;
+    en_ZPRJ_STATES newstate = state;
+    F32 dt = globals.update_dt;
 
-    if (this->state == state)
+    if (oldstate == state)
     {
-        return this->state;
+        return oldstate;
     }
 
     switch (this->state)
@@ -430,18 +459,22 @@ en_ZPRJ_STATES zEntProjectile::StateSet(en_ZPRJ_STATES state)
     }
 
     oldstate = this->state;
-    this->state = state;
+    this->state = newstate;
     tmr_curstate = 0.0f;
 
     switch (this->state)
     {
     case ZPRJ_STATE_ACTIVE:
+    {
         tmr_alive = 0.0f;
         tmr_emit = 0.0f;
-        xVec3Copy(&pos_home, (xVec3*)&model->Mat->pos);
+        xModelInstance* mdl = model;
+        xVec3* pos = (xVec3*)&mdl->Mat->pos;
+        xVec3Copy(&pos_home, pos);
         flg_stat |= 0x20000;
-        SendEvent(ZPRJ_EVNT_ACTIVE, globals.update_dt, NULL, NULL);
+        SendEvent(ZPRJ_EVNT_ACTIVE, dt, NULL, NULL);
         break;
+    }
     case ZPRJ_STATE_DEAD:
         flg_stat |= 0x80000000;
         this->state = ZPRJ_STATE_DEAD;
@@ -454,7 +487,7 @@ en_ZPRJ_STATES zEntProjectile::StateSet(en_ZPRJ_STATES state)
 
     if (oldstate != state)
     {
-        SendEvent(ZPRJ_EVNT_TRANSTATE, globals.update_dt, (void*)oldstate, NULL);
+        SendEvent(ZPRJ_EVNT_TRANSTATE, dt, (void*)oldstate, NULL);
     }
 
     return this->state;
@@ -515,7 +548,7 @@ void zEntProjectile::SyncFrame(S32 applyToModel)
             }
         }
 
-        ent->frame->mode = 0;
+        frame->mode = 0;
     }
 }
 
@@ -637,16 +670,14 @@ zEntProjectile* ZPRJ_getNextAvail()
         {
             warned = 1;
         }
-        prj = NULL;
+        return NULL;
     }
-    else
-    {
-        warned = 0;
-        link = (st_ZPRJ_LINKNODE*)RemHead(&depot->prjpool);
-        prj = link->backref;
-        memset(prj, 0, sizeof(zEntProjectile));
-        prj->linknode.backref = prj;
-    }
+
+    warned = 0;
+    link = (st_ZPRJ_LINKNODE*)RemHead(&depot->prjpool);
+    prj = link->backref;
+    memset(prj, 0, sizeof(zEntProjectile));
+    prj->linknode.backref = prj;
 
     return prj;
 }
@@ -677,11 +708,17 @@ void zEntProjectile::Recycle()
     AddTail(&g_prjdepot.prjpool, &linknode.node);
 }
 
+// Sets a pooled projectile up as the given type: category flags, the type record, the entity, the
+// motion frame and collision settings, then runs the category's attach. Returns 0 when the type is
+// unknown or a step fails.
 S32 zEntProjectile::Init(en_ZPRJ_CATEGORY cat, U32 ptypeID)
 {
-    S32 rc;
-    S32 status = 1;
     st_ZPRJ_CATEGORY_FUNCS* catf = NULL;
+    S32 status = 1;
+    S32 rc;
+
+    flg_stat |= 0x10000;
+    state = ZPRJ_STATE_STANDBY;
 
     rc = SetupPrelim(cat, ptypeID);
     if (!rc)
@@ -762,8 +799,6 @@ S32 zEntProjectile::SetupPrelim(en_ZPRJ_CATEGORY cat, U32 ptaid)
     st_ZPRJ_TYPERECORD* ptype;
     S32 isok = 1;
 
-    flg_stat |= 0x10000;
-    state = ZPRJ_STATE_STANDBY;
     cat_proj = cat;
 
     prop = &g_iniProps[cat_proj];
@@ -774,22 +809,26 @@ S32 zEntProjectile::SetupPrelim(en_ZPRJ_CATEGORY cat, U32 ptaid)
 
     if (ptaid == 0)
     {
-        return 0;
+        isok = 0;
     }
-
-    ptype = ZPRJ_findType(ptaid);
-    if (ptype == NULL)
+    else
     {
-        return 0;
-    }
+        ptype = ZPRJ_findType(ptaid);
+        if (ptype == NULL)
+        {
+            isok = 0;
+        }
+        else
+        {
+            this->ptype = ptype;
+            tym_maxlife = this->ptype->src_ptype->destructTime;
+            ds2_maxlife = this->ptype->src_ptype->destructDist * this->ptype->src_ptype->destructDist;
 
-    this->ptype = ptype;
-    tym_maxlife = this->ptype->src_ptype->destructTime;
-    ds2_maxlife = this->ptype->src_ptype->destructDist * this->ptype->src_ptype->destructDist;
-
-    if (this->ptype->src_ptype->oriented)
-    {
-        OrientSet(0x30000000);
+            if (this->ptype->src_ptype->oriented)
+            {
+                OrientSet(0x30000000);
+            }
+        }
     }
 
     return isok;
@@ -797,6 +836,8 @@ S32 zEntProjectile::SetupPrelim(en_ZPRJ_CATEGORY cat, U32 ptaid)
 
 S32 zEntProjectile::Setup_xEnt()
 {
+    S32 result = 1;
+
     id = 0;
     baseType = 0x19;
     baseFlags = 5;
@@ -830,14 +871,14 @@ S32 zEntProjectile::Setup_xEnt()
         xFFXAddEffect(this, zGustUpdateEnt, &raw_gust);
     }
 
-    return 1;
+    return result;
 }
 
 S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
 {
-    xMat4x3 initmat = {};
-    xVec3 vel_dflt = { 0.0f, 0.0f, 0.0f };
     xVec3 pos_dflt = { 0.0f, 0.0f, 0.0f };
+    xVec3 vel_dflt = { 0.0f, 0.0f, 0.0f };
+    xMat4x3 initmat = {};
 
     if (pos == NULL)
     {
@@ -850,9 +891,9 @@ S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
     }
 
     xMat3x3Euler((xMat3x3*)&initmat, 0.0f, 0.0f, 0.0f);
-    xVec3SMul(&initmat.right, &initmat.right, 1.0f);
-    xVec3SMul(&initmat.up, &initmat.up, 1.0f);
-    xVec3SMul(&initmat.at, &initmat.at, 1.0f);
+    xVec3SMulBy(&initmat.right, 1.0f);
+    xVec3SMulBy(&initmat.up, 1.0f);
+    xVec3SMulBy(&initmat.at, 1.0f);
     initmat.flags = 0;
     xVec3Copy(&initmat.pos, pos);
     xVec3Copy(&frame->oldpos, pos);
@@ -864,11 +905,17 @@ S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
 
     xVec3Copy(&frame->rot.axis, &g_Y3);
     frame->rot.angle = 0.0f;
-    frame->oldrot = frame->rot;
+    xRotCopy(&frame->oldrot, &frame->rot);
     xVec3Copy(&frame->vel, veloc);
     xVec3Copy(&frame->oldvel, veloc);
 
     return 1;
+}
+
+// Unused.
+static void SetupUnusedData()
+{
+    xVec3 tmp = {};
 }
 
 void zEntProjectile::OrientSet(S32 orient)
@@ -877,6 +924,8 @@ void zEntProjectile::OrientSet(S32 orient)
     flg_prop |= orient;
 }
 
+// Lines the model up with its flight path, with the player or with the camera. A zero
+// flg_orient falls back to the projectile's own orient flags (ZPRJ_update passes 0).
 void zEntProjectile::OrientToPath(_xEntFrame* frame, S32 flg_orient)
 {
     xVec3* camera_pos;
@@ -884,6 +933,10 @@ void zEntProjectile::OrientToPath(_xEntFrame* frame, S32 flg_orient)
     xVec3 vec_tmp = {};
 
     opt_orient = flg_orient & 0x70000000;
+    if (opt_orient == 0)
+    {
+        opt_orient = flg_prop & 0x70000000;
+    }
 
     switch (opt_orient)
     {
@@ -892,7 +945,7 @@ void zEntProjectile::OrientToPath(_xEntFrame* frame, S32 flg_orient)
         xMat3x3LookVec((xMat3x3*)&frame->mat, &vec_tmp);
         break;
     case 0x10000000:
-        xVec3Sub(&vec_tmp, &frame->mat.pos, xBoundCenter(&globals.player.ent.bound));
+        xVec3Sub(&vec_tmp, &frame->mat.pos, xEntGetCenter(&globals.player.ent));
         xMat3x3LookVec((xMat3x3*)&frame->mat, &vec_tmp);
         break;
     case 0x20000000:
@@ -906,11 +959,13 @@ void zEntProjectile::OrientToPath(_xEntFrame* frame, S32 flg_orient)
     }
 }
 
+// Per-frame projectile update: collides with the world and the player, runs the category's logic and
+// movement, turns the model along its path, and self-destructs once it outlives its lifetime.
 S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
 {
     S32 rc;
-    _xCollis lcl_xcollis_plyr = {};
     _xEntCollis lcl_xentcollis = {};
+    _xCollis lcl_xcollis_plyr = {};
     st_ZPRJ_CATEGORY_FUNCS* catf;
 
     if (state == ZPRJ_STATE_STANDBY)
@@ -928,9 +983,9 @@ S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
         return 0;
     }
 
+    catf = &g_catFuncs[cat_proj];
     plyr_colrec = &lcl_xcollis_plyr;
     collis = &lcl_xentcollis;
-    catf = &g_catFuncs[cat_proj];
     collis->chk = flg_chk;
     collis->pen = flg_pen;
 
@@ -949,14 +1004,18 @@ S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
     xEntBeginUpdate(this, scn, dt);
     xEntBeginCollide(this, scn, dt);
 
-    memset(plyr_colrec, 0, sizeof(_xCollis));
-    plyr_colrec->optr = &globals.player.ent;
-    plyr_colrec->oid = globals.player.ent.id;
-    plyr_colrec->flags = 0x1F00;
-
-    if (collis->chk & 0x10)
     {
-        xBoundHitsBound(&bound, &globals.player.ent.bound, plyr_colrec);
+        _xCollis* coll = plyr_colrec;
+
+        memset(coll, 0, sizeof(_xCollis));
+        coll->optr = &globals.player.ent;
+        coll->oid = globals.player.ent.id;
+        coll->flags = 0x1F00;
+
+        if (collis->chk & 0x10)
+        {
+            xBoundHitsBound(&bound, &globals.player.ent.bound, coll);
+        }
     }
 
     if (DoColCheck(dt))
@@ -990,7 +1049,7 @@ S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
         SyncFrame(0);
     }
 
-    OrientToPath(frame, flg_prop);
+    OrientToPath(frame, 0);
 
     if (pflags & 0x2)
     {
@@ -1025,6 +1084,12 @@ S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
     }
 
     return 1;
+}
+
+// Unused.
+static void UpdateUnusedData()
+{
+    xVec3 tmp[21] = {};
 }
 
 S32 zEntProjectile::DoColCheck(F32 dt)
@@ -1094,60 +1159,72 @@ void ZPRJ_wrap_bupdate(_xEnt* prjent, xVec3* pos)
     xBoundUpdate(&prj->bound);
 }
 
+// Draws an active projectile through its category's render callback, then its shadow:
+// a full shadow when close to the camera or the player, a projected blob otherwise.
 S32 zEntProjectile::ZPRJ_render()
 {
+    S32 rc = 1;
+    zEntProjectile* prj = this;
     xVec3 vec_tmp = {};
-    F32 dst;
-    F32 dst_plyr;
+    F32 dst = 0.0f;
+    F32 dst_plyr = 0.0f;
 
-    if (!(flg_stat & 0x20000))
+    if (!(prj->flg_stat & 0x20000))
     {
-        return 1;
+        return rc;
     }
 
-    if (state <= ZPRJ_STATE_STANDBY)
+    if (prj->state <= ZPRJ_STATE_STANDBY)
     {
-        return 1;
+        return rc;
     }
 
-    ZPRJ_catFuncs(this)->render(this);
+    st_ZPRJ_CATEGORY_FUNCS* funcs = ZPRJ_catFuncs(prj);
+    funcs->render(prj);
 
-    if (flg_prop & 0x8)
+    if (prj->flg_prop & 0x8)
     {
-        xShadowRender(this);
+        xShadowRender(prj);
     }
-    else if (xEntIsVisible(this) && (flg_prop & 0x4))
+    else
     {
-        xVec3Sub(&vec_tmp, &globals.camera.hi_cam.mat.pos, (xVec3*)&model->Mat->pos);
-        dst = xVec3Length2(&vec_tmp);
-        xVec3Sub(&vec_tmp, (xVec3*)&globals.player.ent.model->Mat->pos, (xVec3*)&model->Mat->pos);
-        dst_plyr = xVec3Length2(&vec_tmp);
-        dst = (dst < dst_plyr) ? dst : dst_plyr;
-
-        xVec3Copy(&ent_shadow->pos, &bound.sph.center);
-        ent_shadow->pos.y += 2.0f * bound.sph.r;
-
-        if (dst < 100.0f)
+        U32 vis = xEntIsVisible(prj);
+        if (vis && (prj->flg_prop & 0x4))
         {
-            xShadowRender(this);
-        }
-        else
-        {
-            iShadowCollide(&ishadow, this, 0.75f, 1.0f);
-            iShadowAdd(&ishadow, 0x50);
+            xVec3Sub(&vec_tmp, &globals.camera.hi_cam.mat.pos, (xVec3*)&prj->model->Mat->pos);
+            dst = xVec3Length2(&vec_tmp);
+            xVec3Sub(&vec_tmp, (xVec3*)&globals.player.ent.model->Mat->pos, (xVec3*)&prj->model->Mat->pos);
+            dst_plyr = xVec3Length2(&vec_tmp);
+            dst = (dst < dst_plyr) ? dst : dst_plyr;
+
+            xVec3* center = &prj->bound.sph.center;
+            xVec3Copy(&prj->ent_shadow->pos, center);
+            prj->ent_shadow->pos.y += 2.0f * prj->bound.sph.r;
+
+            if (dst < 100.0f)
+            {
+                xShadowRender(prj);
+            }
+            else
+            {
+                iShadowCollide(&prj->ishadow, prj, 0.75f, 1.0f);
+                iShadowAdd(&prj->ishadow, 0x50);
+            }
         }
     }
 
-    return 1;
+    return rc;
 }
 
+// When no ceiling or floor hit was recorded, takes the steepest static or environment collision facing
+// down (ceiling) or up (floor) as that hit. Returns whether either is set.
 S32 zEntProjectile::LookForFloorRoof(_xScene*, F32)
 {
     S32 i;
     _xCollis* best = NULL;
     _xCollis* ceil = &collis->colls[0];
     _xCollis* flor = &collis->colls[1];
-    _xCollis* cur_rec;
+    _xCollis* cur_rec = NULL;
 
     if (!(ceil->flags & 1))
     {
@@ -1256,6 +1333,7 @@ S32 zEntProjectile_gen_attach(zEntProjectile* prj)
     return 1;
 }
 
+// Generic projectile update: dies past its lifetime or once it travels past its range from home.
 S32 zEntProjectile_gen_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame)
 {
     xVec3 vec_home = {};
@@ -1293,6 +1371,8 @@ static S32 ZPRJ_arrow_attach(zEntProjectile* prj)
     return 1;
 }
 
+// Arrow update: sends the at-rest or in-flight event, self-destructs past its lifetime, and on a hit
+// sticks to the player or a surface, rests on the floor, or detonates.
 static S32 ZPRJ_arrow_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
 {
     st_ZPRJ_CAT_ARROW* arrow = &prj->cat_data.arrow;
@@ -1325,11 +1405,16 @@ static S32 ZPRJ_arrow_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
             if (!arrow->amStuck)
             {
                 arrow->amStuck = 1;
-                arrow->ent_stuck = &globals.player.ent;
-                xVec3Sub(&arrow->pos_stuck, (xVec3*)&arrow->ent_stuck->model->Mat->pos,
+                _xEnt* ent = &globals.player.ent;
+                arrow->ent_stuck = ent;
+                xVec3Sub(&arrow->pos_stuck, (xVec3*)&ent->model->Mat->pos,
                          (xVec3*)&prj->model->Mat->pos);
-                xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-                xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+                prj->frame->dvel.x = 0.0f;
+                prj->frame->dvel.y = 0.0f;
+                prj->frame->dvel.z = 0.0f;
+                prj->frame->vel.x = 0.0f;
+                prj->frame->vel.y = 0.0f;
+                prj->frame->vel.z = 0.0f;
                 prj->frame->mode |= 0xC;
                 prj->OrientSet(0x10000000);
             }
@@ -1376,8 +1461,12 @@ static S32 ZPRJ_arrow_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
         {
             arrow->amStuck = 1;
             prj->pflags |= 0x4;
-            xVec3Init(&prj->frame->dvel, 0.0f, 0.0f, 0.0f);
-            xVec3Init(&prj->frame->vel, 0.0f, 0.0f, 0.0f);
+            prj->frame->dvel.x = 0.0f;
+            prj->frame->dvel.y = 0.0f;
+            prj->frame->dvel.z = 0.0f;
+            prj->frame->vel.x = 0.0f;
+            prj->frame->vel.y = 0.0f;
+            prj->frame->vel.z = 0.0f;
             prj->frame->mode |= 0xC;
             prj->OrientSet(0);
         }
@@ -1398,6 +1487,8 @@ static S32 ZPRJ_grav_attach(zEntProjectile* prj)
     return 1;
 }
 
+// Gravity ball update: self-destructs past its lifetime, hurts the player on contact if set to, and
+// detonates on any collision.
 static S32 ZPRJ_grav_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
 {
     prj->SendEvent(ZPRJ_EVNT_INFLIGHT, dt);
@@ -1459,6 +1550,8 @@ static S32 ZPRJ_bounce_attach(zEntProjectile* prj)
     return 1;
 }
 
+// Bounce ball update: counts down its rest time, then on a hit bounces off the surface until it runs out
+// of bounces, comes to rest, or detonates.
 static S32 ZPRJ_bounce_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* frame)
 {
     F32 elastic;
@@ -1723,6 +1816,8 @@ void zEntProjectile_softReflect(xVec3* dir_new, xVec3* dir_cur, xVec3* oppose, F
     }
 }
 
+// Aims a projectile: an arrow flies straight at its target, a gravity ball gets a lobbed launch
+// velocity from the autocalc solver. With apply set, it also places and launches the projectile.
 S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 apply)
 {
     st_ZPRJ_SOLV_METHOD_A* metha;
@@ -1753,7 +1848,6 @@ S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 appl
 
         grav = &info->grav;
         metha = &autinf.metha;
-        didit = 0;
 
         xVec3Sub(&info->dir_base, &grav->pos_tgt, &grav->pos_src);
         metha->spd_muzzle = info->spd_base;
@@ -1764,25 +1858,7 @@ S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 appl
         metha->acc_gravity = grav->acc_gravity;
         xVec3SMul(&metha->vel_launch, &metha->dir_launch, metha->spd_muzzle);
 
-        switch (autinf.method)
-        {
-        case ZPRJ_ATGTSOLV_METHA:
-        {
-            xVec3 vec_tgt = {};
-
-            xVec3Sub(&vec_tgt, &metha->pos_target, &metha->pos_launch);
-            didit = ZPRJ_solv_velvec(vec_tgt, metha->acc_gravity, metha->fac_arcness, metha->spd_muzzle,
-                                     metha->dst_range, &metha->vel_launch) +
-                    1;
-            break;
-        }
-        case ZPRJ_ATGTSOLV_METHB:
-            didit = 0;
-            break;
-        case ZPRJ_ATGTSOLV_METHC:
-            didit = 0;
-            break;
-        }
+        didit = ZPRJ_autocalc(&autinf);
 
         if (didit)
         {
@@ -1808,6 +1884,39 @@ S32 zEntProjectile_gen_aimer(zEntProjectile* prj, ST_CAT_AIMDATA* info, S32 appl
     return didit;
 }
 
+// Runs an aimer's autocalc request through its solver method and returns nonzero when it found a
+// launch velocity; only method A has a solver.
+static inline S32 ZPRJ_autocalc(st_ZPRJ_AUTOCALC_INFO* autinf)
+{
+    S32 rc = 0;
+    st_ZPRJ_SOLV_METHOD_A* metha;
+
+    switch (autinf->method)
+    {
+    case ZPRJ_ATGTSOLV_METHA:
+    {
+        xVec3 vec_tgt = {};
+
+        metha = &autinf->metha;
+        xVec3Sub(&vec_tgt, &metha->pos_target, &metha->pos_launch);
+        rc = ZPRJ_solv_velvec(vec_tgt, metha->acc_gravity, metha->fac_arcness, metha->spd_muzzle, metha->dst_range,
+                              &metha->vel_launch) +
+             1;
+        break;
+    }
+    case ZPRJ_ATGTSOLV_METHB:
+        rc = 0;
+        break;
+    case ZPRJ_ATGTSOLV_METHC:
+        rc = 0;
+        break;
+    }
+
+    return rc;
+}
+
+// Solves the launch velocity that lands a lobbed projectile on a target offset under gravity, limited
+// by range and speed. Returns how many limits it hit.
 static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd_limit, F32 dst_range,
                             xVec3* vec_vel)
 {
@@ -1843,9 +1952,10 @@ static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd
     c = -0.5f * grav;
     b = sqrtf(2.0f * grav * (1.5f * arc_factor));
 
+    dst_tgt = -vec_tgt.y;
     xVec3Init(vec_vel, 0.0f, 0.0f, 0.0f);
 
-    solcnt = xMathSolveQuadratic(c, b, -vec_tgt.y, &sol[0], &sol[1]);
+    solcnt = xMathSolveQuadratic(c, b, dst_tgt, &sol[0], &sol[1]);
     if (solcnt == 2)
     {
         tym_ariv = MAX(sol[0], sol[1]);
@@ -1888,6 +1998,14 @@ static S32 ZPRJ_solv_velvec(xVec3 vec_tgtOrig, F32 grav, F32 arc_factor, F32 spd
     xVec3Copy(vec_vel, &vec_tmp);
 
     return limit_tally;
+}
+
+// Unused.
+static void SolvUnusedData(F32* scale)
+{
+    xVec3 tmp[2] = {};
+
+    *scale = 0.5f;
 }
 
 void zEntProjectile::DoEffects(en_PROJECTILE_EVENT event, F32 dt)
