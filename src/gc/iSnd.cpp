@@ -230,7 +230,9 @@ static void fcb()
 
         u16 addrHi = streams[i].vinf.voice->pb.addr.currentAddressHi;
         u16 addrLo = streams[i].vinf.voice->pb.addr.currentAddressLo;
-        if ((addrHi << 16) + addrLo >= zero_end - 0x5DC0 && (addrHi << 16) + addrLo < zero_end)
+        u32 cur = addrHi << 16;
+        cur += addrLo;
+        if (cur >= zero_end - 0x5DC0 && cur < zero_end)
         {
             DVDCancelAsync(&streams[i].fileInfo.cb, NULL);
             ARQRemoveRequest(&streams[i].request);
@@ -412,8 +414,9 @@ static void fcb()
             continue;
         }
 
-        U32 addr = (voices[i].voice->pb.addr.currentAddressHi << 16) +
-                   voices[i].voice->pb.addr.currentAddressLo;
+        U32 addr = voices[i].voice->pb.addr.currentAddressHi;
+        addr <<= 16;
+        addr += voices[i].voice->pb.addr.currentAddressLo;
         if ((voices[i].flags & 0x4) && !voices[i].voice->pb.addr.loopFlag && addr >= zero_point &&
             addr < zero_end)
         {
