@@ -60,13 +60,17 @@ static void CalcPhysFromKeys(xAnimFile* af, F32* rootStart, F32* rootEnd, F32* p
 
     if (af->FileFlags & 0x1000)
     {
-        F32* temp = rootStart;
-        rootStart = rootEnd;
-        rootEnd = temp;
+        {
+            F32* temp = rootStart;
+            rootStart = rootEnd;
+            rootEnd = temp;
+        }
 
-        temp = physStart;
-        physStart = physEnd;
-        physEnd = temp;
+        {
+            F32* temp = physStart;
+            physStart = physEnd;
+            physEnd = temp;
+        }
     }
 
     if (af->FileFlags & 0x2000)
@@ -396,12 +400,7 @@ void xAnimFileSetPoses(xAnimFile* data, void* startPose, F32 startTime, void* en
     F32 physEnd[4];
     xQuat tempQ;
 
-    if (data->Physics)
-    {
-        return;
-    }
-
-    if (data->FileFlags & 0x8000)
+    if (data->Physics || (data->FileFlags & 0x8000))
     {
         return;
     }
@@ -1032,6 +1031,37 @@ xAnimState* xAnimTableGetStateID(xAnimTable* table, U32 ID)
     return NULL;
 }
 
+// Unlink the state's effects that use the given callback.
+static inline void EffectRemoveByCB(xAnimState* state,
+                                    U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*))
+{
+    xAnimEffect* effect = state->Effects;
+    xAnimEffect* prev = NULL;
+
+    while (effect)
+    {
+        if (effect->Callback == callback)
+        {
+            if (prev)
+            {
+                prev->Next = effect->Next;
+            }
+            else
+            {
+                state->Effects = effect->Next;
+                prev = NULL;
+            }
+
+            effect = effect->Next;
+        }
+        else
+        {
+            prev = effect;
+            effect = effect->Next;
+        }
+    }
+}
+
 // Unlink every effect, in every state, that uses the given callback.
 void xAnimTableRemoveEffectByCB(xAnimTable* table,
                                 U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*))
@@ -1040,29 +1070,7 @@ void xAnimTableRemoveEffectByCB(xAnimTable* table,
 
     for (curr = table->StateList; curr; curr = curr->Next)
     {
-        xAnimEffect* prev = NULL;
-        xAnimEffect* effect = curr->Effects;
-
-        while (effect)
-        {
-            if (effect->Callback == callback)
-            {
-                if (prev)
-                {
-                    prev->Next = effect->Next;
-                }
-                else
-                {
-                    curr->Effects = effect->Next;
-                }
-            }
-            else
-            {
-                prev = effect;
-            }
-
-            effect = effect->Next;
-        }
+        EffectRemoveByCB(curr, callback);
     }
 }
 
