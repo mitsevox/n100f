@@ -521,8 +521,8 @@ void* fn_80145598(void* object, GCNObjectData* objectData)
 {
     RpAtomic* atomic = (RpAtomic*)object;
     RpGeometry* geometry = atomic->geometry;
-    RpSkin* skin = SKINGEOMETRYGETDATA(geometry);
     GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
+    RpSkin* skin = SKINGEOMETRYGETDATA(geometry);
     RpGameCubeVtxFmt* vtxFmt;
     S32 numVertices;
 
