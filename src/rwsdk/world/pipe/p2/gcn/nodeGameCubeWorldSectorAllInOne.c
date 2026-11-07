@@ -89,19 +89,28 @@ RpWorldSector* fn_8015E7E8(RpWorldSector* sector, GCNObjectData* objectData)
 
 // The default instance callback: allocates the sector's entry, builds the display lists and
 // instances the vertex arrays.
-RpWorldSector* fn_8015E908(RpWorldSector* sector, GCNObjectData* objectData)
+void* fn_8015E908(void* object, GCNObjectData* objectData)
 {
-    U32 numVertices = sector->numVertices;
-    RpMeshHeader* meshHeader = sector->mesh;
-    RpWorld* world = (RpWorld*)RWSRCGLOBAL(curWorld);
-    U32 worldFlags = world->flags | rpGEOMETRYPOSITIONS;
-    GCNVertexArrays* arrays;
-    S32 headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
-    U32 flags = worldFlags & ~objectData->privateData->clearFlags;
-    U32 dlSize = GCNDisplayListsGetSize(meshHeader, world->numTexCoordSets,
-                                        numVertices < 0xFF ? 1 : 2, worldFlags);
+    S32 headerSize;
+    RpWorldSector* sector = (RpWorldSector*)object;
+    RpWorld* world;
+    RpMeshHeader* meshHeader;
     S32 size;
     U8* mem;
+    GCNVertexArrays* arrays;
+    U32 numVertices;
+    U32 dlSize;
+    U32 worldFlags;
+    U32 flags;
+
+    world = (RpWorld*)RWSRCGLOBAL(curWorld);
+    worldFlags = world->flags | rpGEOMETRYPOSITIONS;
+    flags = worldFlags & ~objectData->privateData->clearFlags;
+    numVertices = sector->numVertices;
+    meshHeader = sector->mesh;
+    headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
+    dlSize = GCNDisplayListsGetSize(meshHeader, world->numTexCoordSets,
+                                    numVertices < 0xFF ? 1 : 2, worldFlags);
 
     size = ALLINONE_ALIGN32(sizeof(GCNVertexArrays) + headerSize) + dlSize;
     size = ALLINONE_ALIGN32(size) +
@@ -138,7 +147,7 @@ RpWorldSector* fn_8015E908(RpWorldSector* sector, GCNObjectData* objectData)
                                  world->numTexCoordSets, mem);
     DCFlushRange(objectData->repEntry + 1, objectData->repEntry->size);
 
-    return sector;
+    return object;
 }
 
 // The node body: instances the sector when its entry is missing or its meshes changed, then runs

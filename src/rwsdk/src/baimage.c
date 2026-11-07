@@ -357,7 +357,32 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
     case 4:
     case 8:
     {
-        RwImage* tempImage = RwImageCreate(image->width, image->height, image->depth);
+        // FAKEMATCH: RwImageCreate written out by hand, with its parameters as reversed locals and
+        // a redundant NULL store on the failure path, so that tempImage takes the target's saved
+        // register; real form believed to be
+        // `RwImage* tempImage = RwImageCreate(image->width, image->height, image->depth);`.
+        S32 depth = image->depth;
+        S32 height = image->height;
+        S32 width = image->width;
+        RwImage* tempImage;
+
+        tempImage = (RwImage*)RWSRCGLOBAL(memoryAlloc)(IMAGE_DATA(freeList));
+
+        if (!tempImage)
+        {
+            tempImage = NULL;
+        }
+        else
+        {
+            tempImage->width = width;
+            tempImage->height = height;
+            tempImage->depth = depth;
+            tempImage->cpPixels = NULL;
+            tempImage->palette = NULL;
+            tempImage->flags = 0;
+
+            _rwPluginRegistryInitObject(&imageTKList, tempImage);
+        }
 
         if (!tempImage)
         {
@@ -388,9 +413,10 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
     case 32:
     {
         S32 y;
-        U8* imageRow;
+        S32 x;
         const U8* maskRow;
         const RwRGBA* palette;
+        U8* imageRow;
 
         maskRow = mask->cpPixels;
         palette = mask->palette;
@@ -406,11 +432,11 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
             case 8:
             {
                 const U8* maskPixel = maskRow;
-                S32 x;
 
                 for (x = 0; x < image->width; x++)
                 {
-                    pixel->alpha = palette[*maskPixel++].alpha;
+                    pixel->alpha = palette[*maskPixel].alpha;
+                    maskPixel++;
                     pixel++;
                 }
 
@@ -419,7 +445,6 @@ RwImage* RwImageApplyMask(RwImage* image, const RwImage* mask)
             case 32:
             {
                 const RwRGBA* maskPixel = (const RwRGBA*)maskRow;
-                S32 x;
 
                 for (x = 0; x < image->width; x++)
                 {
@@ -483,6 +508,76 @@ static char* ImageGetScratchMem(S32 size)
     }
 
     return IMAGE_DATA(nameBuf);
+}
+
+// Calls callBack with the image name as it is when it is absolute or there is no image path, or
+// else with the name behind each entry of the semicolon-separated path until callBack returns
+// NULL. maxLength is the room to leave after the name. Returns NULL when the scratch buffer cannot
+// grow, or else the image name.
+const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
+                                     ImagePathCallBack callBack, void* data)
+{
+    S32 size;
+    const char* path = IMAGE_DATA(searchPath);
+
+    if (_rwpathisabsolute(imageName) || !path || !*path)
+    {
+        char* fullName;
+
+        size = rwstrlen(imageName) + maxLength;
+        fullName = ImageGetScratchMem(size);
+
+        if (!fullName)
+        {
+            return NULL;
+        }
+
+        rwstrcpy(fullName, imageName);
+        callBack(fullName, data);
+    }
+    else
+    {
+        while (path && *path)
+        {
+            const char* next;
+            S32 pathLength;
+            char* fullName;
+
+            // The target makes this call twice and keeps only the second result.
+            rwstrchr(path, ';');
+            next = rwstrchr(path, ';');
+
+            if (next)
+            {
+                pathLength = next - path;
+                next++;
+            }
+            else
+            {
+                pathLength = rwstrlen(path);
+            }
+
+            size = pathLength + rwstrlen(imageName) + maxLength;
+            fullName = ImageGetScratchMem(size);
+
+            if (!fullName)
+            {
+                return NULL;
+            }
+
+            memcpy(fullName, path, pathLength);
+            rwstrcpy(fullName + pathLength, imageName);
+
+            if (!callBack(fullName, data))
+            {
+                return imageName;
+            }
+
+            path = next;
+        }
+    }
+
+    return imageName;
 }
 
 const char* ImageAttempRead(const char* fullName, void* data)
@@ -849,73 +944,3 @@ S32 RwImageSetGamma(F32 gammaValue)
 
     return TRUE;
 }
-// Calls callBack with the image name as it is when it is absolute or there is no image path, or
-// else with the name behind each entry of the semicolon-separated path until callBack returns
-// NULL. maxLength is the room to leave after the name. Returns NULL when the scratch buffer cannot
-// grow, or else the image name.
-//
-// The target places this function before ImageAttempRead, but defined there the compiler inlines
-// it into RwImageFindFileType and RwImageRead, which the target does not. It stays at the end of
-// the file until the cause is found; the unit is not linked, so only its order in the object
-// differs.
-const char* ImagePathForAllFullNames(const char* imageName, S32 maxLength,
-                                     ImagePathCallBack callBack, void* data)
-{
-    const char* path = IMAGE_DATA(searchPath);
-
-    if (_rwpathisabsolute(imageName) || !path || !*path)
-    {
-        char* fullName = ImageGetScratchMem(rwstrlen(imageName) + maxLength);
-
-        if (!fullName)
-        {
-            return NULL;
-        }
-
-        rwstrcpy(fullName, imageName);
-        callBack(fullName, data);
-    }
-    else
-    {
-        while (path && *path)
-        {
-            const char* next;
-            S32 pathLength;
-            char* fullName;
-
-            // The target makes this call twice and keeps only the second result.
-            rwstrchr(path, ';');
-            next = rwstrchr(path, ';');
-
-            if (next)
-            {
-                pathLength = next - path;
-                next++;
-            }
-            else
-            {
-                pathLength = rwstrlen(path);
-            }
-
-            fullName = ImageGetScratchMem(pathLength + (rwstrlen(imageName) + maxLength));
-
-            if (!fullName)
-            {
-                return NULL;
-            }
-
-            memcpy(fullName, path, pathLength);
-            rwstrcpy(fullName + pathLength, imageName);
-
-            if (!callBack(fullName, data))
-            {
-                return imageName;
-            }
-
-            path = next;
-        }
-    }
-
-    return imageName;
-}
-

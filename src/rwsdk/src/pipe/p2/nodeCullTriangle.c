@@ -71,6 +71,9 @@ static S32 ParallelCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
     return TRUE;
 }
 
+// Drops the back-facing triangles of a perspective packet the same way, by screen area. In a packet
+// that needs clipping, a triangle wholly outside one clip plane is dropped, and one partly outside
+// is tested by the sign of its camera-space normal against its first vertex.
 static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
 {
     RxCluster* camVerts;
@@ -81,6 +84,9 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
     RwImVertexIndex* src;
     U16 stride;
     U32 i;
+    RwV3d a;
+    RwV3d b;
+    RwV3d n;
 
     camVerts = RxClusterLockRead(packet, 0);
     devVerts = RxClusterLockRead(packet, 1);
@@ -106,7 +112,12 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
             v1 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[1]);
             v2 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[2]);
 
-            area.nReal = (v0->x - v1->x) * (v2->y - v1->y) - (v0->y - v1->y) * (v2->x - v1->x);
+            a.x = v0->x - v1->x;
+            a.y = v0->y - v1->y;
+            b.x = v2->x - v1->x;
+            b.y = v2->y - v1->y;
+
+            area.nReal = a.x * b.y - a.y * b.x;
 
             if (area.nInt <= 0)
             {
@@ -143,9 +154,6 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
             {
                 if (v0->clipFlags | v1->clipFlags | v2->clipFlags)
                 {
-                    RwV3d a;
-                    RwV3d b;
-                    RwV3d n;
                     RwSplitBits dot;
 
                     RwV3dSubMacro(&a, &v0->cameraVertex, &v1->cameraVertex);
@@ -177,7 +185,12 @@ static S32 PerspectiveCullProcessPacket(RxPipelineNode* self, RxPacket* packet)
                     d1 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[1]);
                     d2 = (RwIm2DVertex*)((U8*)devVerts->data + devVerts->stride * index[2]);
 
-                    area.nReal = (d0->x - d1->x) * (d2->y - d1->y) - (d0->y - d1->y) * (d2->x - d1->x);
+                    a.x = d0->x - d1->x;
+                    a.y = d0->y - d1->y;
+                    b.x = d2->x - d1->x;
+                    b.y = d2->y - d1->y;
+
+                    area.nReal = a.x * b.y - a.y * b.x;
 
                     if (area.nInt <= 0)
                     {

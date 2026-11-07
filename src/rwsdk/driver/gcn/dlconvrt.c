@@ -70,7 +70,7 @@ static U32 _rwDlConv8888ToDl8888(const RwRGBA* rgba)
 
 S32 _rwDlRGBToPixel(U32* pixelOut, const RwRGBA* rgba, S32 format)
 {
-    U32 pixel;
+    volatile U32 pixel;
 
     switch (format & rwRASTERFORMATPIXELFORMATMASK)
     {
@@ -185,8 +185,13 @@ S32 _rwDlPixelToRGB(RwRGBA* rgba, const U32* pixelIn, S32 format)
     switch (format & rwRASTERFORMATPIXELFORMATMASK)
     {
     case rwRASTERFORMATDEFAULT:
-        _rwDlConv565To8888(rgba, pixel);
+    {
+        // FAKEMATCH: converter pointer keeps the call out of line; real form believed to be a plain _rwDlConv565To8888(rgba, pixel) call
+        void (*convert)(RwRGBA*, U32) = _rwDlConv565To8888;
+
+        convert(rgba, pixel);
         break;
+    }
     case rwRASTERFORMATLUM8:
     {
         RwError err;

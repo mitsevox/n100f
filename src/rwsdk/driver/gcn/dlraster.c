@@ -13,8 +13,8 @@ extern volatile U16 lbl_8025F890;
 // The texture that stands in for no texture.
 extern RwTexture* lbl_8025F87C;
 
-// "Failed to create surface for texture".
-extern char lbl_801DE368[];
+// The offset of the driver's extension in each raster, from registering the raster plugin.
+S32 lbl_8025F870;
 
 S32 _rwDlTokenQueryDone(U16 token);
 S32 RwTextureRasterGenerateMipmaps(RwRaster* raster, RwImage* image);
@@ -70,72 +70,121 @@ S32 _rwDlRasterPluginAttach(void)
 // green and blue.
 void DlRasterTile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stride)
 {
-    S32 x;
-    S32 y;
-    S32 tilesW;
-
     switch (depth)
     {
     case 4:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 7) & ~7) >> 3;
 
         for (y = 0; y < height; y++)
         {
+            row = src + y * stride;
+            tileRow = tilesW * (y >> 3);
+            texelRow = (y & 7) << 3;
+
             for (x = 0; x < width; x += 8)
             {
-                memcpy(dst + ((U32)(((tilesW * (y >> 3) + (x >> 3)) << 6) + ((y & 7) << 3)) >> 1),
-                       src + y * stride + (x >> 1), 4);
+                memcpy(dst + ((U32)(((tileRow + (x >> 3)) << 6) + texelRow) >> 1),
+                       row + (x >> 1), 4);
             }
         }
         break;
+    }
     case 8:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 7) & ~7) >> 3;
 
         for (y = 0; y < height; y++)
         {
+            row = src + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 3;
+
             for (x = 0; x < width; x += 8)
             {
-                memcpy(dst + (((tilesW * (y >> 2) + (x >> 3)) << 5) + ((y & 3) << 3)),
-                       src + y * stride + x, 8);
+                memcpy(dst + (((tileRow + (x >> 3)) << 5) + texelRow),
+                       row + x, 8);
             }
         }
         break;
+    }
     case 16:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 3) & ~3) >> 2;
 
         for (y = 0; y < height; y++)
         {
+            row = src + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 2;
+
             for (x = 0; x < width; x += 4)
             {
-                memcpy(dst + ((((tilesW * (y >> 2) + (x >> 2)) << 4) + ((y & 3) << 2)) << 1),
-                       src + y * stride + (x << 1), 8);
+                memcpy(dst + ((((tileRow + (x >> 2)) << 4) + texelRow) << 1),
+                       row + (x << 1), 8);
             }
         }
         break;
+    }
     case 32:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 3) & ~3) >> 2;
 
         for (y = 0; y < height; y++)
         {
-            U8* row = src + y * stride;
-            S32 tile = 0;
+            S32 tile;
+
+            row = src + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 2;
+            tile = 0;
 
             for (x = 0; x < width; x++)
             {
                 S32 texel;
-                U8* pixel = row + (x << 2);
+                S32 offset;
 
                 if (!(x & 3))
                 {
-                    tile = (tilesW * (y >> 2) + (x >> 2)) << 4;
+                    tile = (tileRow + (x >> 2)) << 4;
                 }
 
-                texel = ((y & 3) << 2) + (x & 3);
-                *(U16*)(dst + (tile << 2) + (texel << 1)) = *(U16*)pixel;
-                *(U16*)(dst + (tile << 2) + (texel << 1) + 0x20) = *(U16*)(pixel + 2);
+                texel = texelRow + (x & 3);
+                offset = (tile << 2) + (texel << 1);
+                *(U16*)&dst[offset] = ((U16*)row)[x << 1];
+                *(U16*)&dst[offset + 0x20] = ((U16*)row)[(x << 1) + 1];
             }
         }
         break;
+    }
     case 24:
     default:
         DLRASTER_ERROR((0x8000000C));
@@ -146,72 +195,121 @@ void DlRasterTile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stride
 // The reverse of DlRasterTile.
 void DlRasterUntile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stride)
 {
-    S32 x;
-    S32 y;
-    S32 tilesW;
-
     switch (depth)
     {
     case 4:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 7) & ~7) >> 3;
 
         for (y = 0; y < height; y++)
         {
+            row = dst + y * stride;
+            tileRow = tilesW * (y >> 3);
+            texelRow = (y & 7) << 3;
+
             for (x = 0; x < width; x += 8)
             {
-                memcpy(dst + y * stride + (x >> 1),
-                       src + ((U32)(((tilesW * (y >> 3) + (x >> 3)) << 6) + ((y & 7) << 3)) >> 1), 4);
+                memcpy(row + (x >> 1),
+                       src + ((U32)(((tileRow + (x >> 3)) << 6) + texelRow) >> 1), 4);
             }
         }
         break;
+    }
     case 8:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 7) & ~7) >> 3;
 
         for (y = 0; y < height; y++)
         {
+            row = dst + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 3;
+
             for (x = 0; x < width; x += 8)
             {
-                memcpy(dst + y * stride + x,
-                       src + (((tilesW * (y >> 2) + (x >> 3)) << 5) + ((y & 3) << 3)), 8);
+                memcpy(row + x,
+                       src + (((tileRow + (x >> 3)) << 5) + texelRow), 8);
             }
         }
         break;
+    }
     case 16:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 3) & ~3) >> 2;
 
         for (y = 0; y < height; y++)
         {
+            row = dst + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 2;
+
             for (x = 0; x < width; x += 4)
             {
-                memcpy(dst + y * stride + (x << 1),
-                       src + ((((tilesW * (y >> 2) + (x >> 2)) << 4) + ((y & 3) << 2)) << 1), 8);
+                memcpy(row + (x << 1),
+                       src + ((((tileRow + (x >> 2)) << 4) + texelRow) << 1), 8);
             }
         }
         break;
+    }
     case 32:
+    {
+        S32 tilesW;
+        S32 y;
+        U8* row;
+        S32 tileRow;
+        S32 texelRow;
+        S32 x;
+
         tilesW = ((width + 3) & ~3) >> 2;
 
         for (y = 0; y < height; y++)
         {
-            U8* row = dst + y * stride;
-            S32 tile = 0;
+            S32 tile;
+
+            row = dst + y * stride;
+            tileRow = tilesW * (y >> 2);
+            texelRow = (y & 3) << 2;
+            tile = 0;
 
             for (x = 0; x < width; x++)
             {
                 S32 texel;
-                U8* pixel = row + (x << 2);
+                S32 offset;
 
                 if (!(x & 3))
                 {
-                    tile = (tilesW * (y >> 2) + (x >> 2)) << 4;
+                    tile = (tileRow + (x >> 2)) << 4;
                 }
 
-                texel = ((y & 3) << 2) + (x & 3);
-                *(U16*)pixel = *(U16*)(src + (tile << 2) + (texel << 1));
-                *(U16*)(pixel + 2) = *(U16*)(src + (tile << 2) + (texel << 1) + 0x20);
+                texel = texelRow + (x & 3);
+                offset = (tile << 2) + (texel << 1);
+                ((U16*)row)[x << 1] = *(U16*)&src[offset];
+                ((U16*)row)[(x << 1) + 1] = *(U16*)&src[offset + 0x20];
             }
         }
         break;
+    }
     case 24:
     default:
         DLRASTER_ERROR((0x8000000C));
@@ -272,66 +370,107 @@ S32 fn_80179064(RwRaster* raster, U8 level)
     return (size + 0x1F) & ~0x1F;
 }
 
-// The bytes of one row of a level width texels wide at this depth, rounded up to whole tiles.
-static inline S32 DlRasterRowBytes(S32 width, S32 depth)
+// FAKEMATCH: helper exists only to order fn_80179198's temporaries; real form believed to be a
+// plain `size >> level` inside DLRASTER_LEVELSIZE.
+static inline S32 DlRasterShift(S32 size, U8 shift)
 {
-    S32 stride;
+    return size >> shift;
+}
 
-    switch (depth)
-    {
-    case 4:
-        stride = ((width + 7) & ~7) >> 1;
-        break;
-    case 8:
-        stride = (width + 7) & ~7;
-        break;
-    case 16:
-        stride = ((width + 3) & ~3) << 1;
-        break;
-    case 32:
-        stride = ((width + 3) & ~3) << 2;
-        break;
-    case 24:
-    default:
-        DLRASTER_ERROR((0x8000000C));
-        break;
-    }
+// FAKEMATCH: helper exists only to order fn_80179198's temporaries; real form believed to be
+// `(U8*)ext->pixels + offset` written in place.
+static inline U8* DlRasterLevelPixels(RwGCRasterExt* ext, S32 offset)
+{
+    return (U8*)ext->pixels + offset;
+}
 
-    return stride;
+// FAKEMATCH: helper exists only to put this error's stack slot after the function's own; real
+// form believed to be the error inside an inlined row-bytes helper (see fn_80179198).
+static inline void DlRasterDepthError(void)
+{
+    DLRASTER_ERROR((0x8000000C));
 }
 
 // Locks one mipmap level ((flags >> 8) & 0xFF) for reading or writing; a raw lock hands out the
 // tiled texels themselves.
 S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
 {
-    U8* pixels;
-    RwRaster* raster = (RwRaster*)rasterIn;
-    U8 level = (flags >> 8) & 0xFF;
-    RwRaster* top = raster->parent;
-    U8 l;
+    // FAKEMATCH: declaration order, the separate `shift` copy of level and the split
+    // initializers set the saved-register order; real form believed to be initialized
+    // declarations shifting by level directly.
+    RwRaster* top;
+    S32 shift;
+    RwRaster* raster;
+    RwGCRasterExt* ext;
     S32 stride;
-    RwGCRasterExt* ext = RWGCRASTEREXT(top);
+    U8 level;
+    U8 l;
     S32 offset;
+    U8* pixels;
+    S32 rowWidth;
+
+    // FAKEMATCH: (continued) the initializers split from the declarations above; real form
+    // believed to initialize these locals at their declarations.
+    raster = (RwRaster*)rasterIn;
+    level = (flags >> 8) & 0xFF;
+    top = raster->parent;
+    ext = RWGCRASTEREXT(top);
 
     switch (raster->cType & rwRASTERTYPEMASK)
     {
     case rwRASTERTYPENORMAL:
     case rwRASTERTYPETEXTURE:
     case rwRASTERTYPECAMERATEXTURE:
-        stride = DlRasterRowBytes(DLRASTER_LEVELSIZE(top->width, level), raster->depth);
+        // FAKEMATCH: the countdown's copy of level placed here, ahead of the row size, and a
+        // separate copy of level for the shifts; real form believed to be `for (l = level; l--;)`
+        // at the loop and shifts by level.
+        l = level;
+        shift = level;
+
+        // The bytes of one row of the level, rounded up to whole tiles.
+        // FAKEMATCH: this statement and the switch below are a row-bytes helper written out so
+        // stride is a named local; real form believed to be that helper inlined. It also shifts
+        // by the shift copy of level (real form believed to shift by level).
+        rowWidth = DLRASTER_LEVELSIZE(top->width, shift);
+        // FAKEMATCH: (continued) the written-out row-bytes helper; real form believed to be that
+        // helper inlined.
+        switch (raster->depth)
+        {
+        case 4:
+            stride = ((rowWidth + 7) & ~7) >> 1;
+            break;
+        case 8:
+            stride = (rowWidth + 7) & ~7;
+            break;
+        case 16:
+            stride = ((rowWidth + 3) & ~3) << 1;
+            break;
+        case 32:
+            stride = ((rowWidth + 3) & ~3) << 2;
+            break;
+        case 24:
+            // FAKEMATCH: the error moved into a helper; real form believed to be inline here.
+            DlRasterDepthError();
+            break;
+        }
 
         offset = 0;
 
-        for (l = level; l--;)
+        // FAKEMATCH: (continued) the countdown, with its copy of level set above.
+        while (l--)
         {
             offset += fn_80179064(raster, l);
         }
 
-        pixels = (U8*)ext->pixels + offset;
+        // FAKEMATCH: helper call; real form believed to be `(U8*)ext->pixels + offset`.
+        pixels = DlRasterLevelPixels(ext, offset);
 
         if (ext->format != GX_TF_CMPR && !(flags & rwRASTERLOCKRAW))
         {
-            ext->lockBuffer = RwMalloc(stride * DLRASTER_LEVELSIZE(top->height, level));
+            // FAKEMATCH: DlRasterShift twice, taking the shift copy of level; real form believed to be
+            // DLRASTER_LEVELSIZE(top->height, level).
+            ext->lockBuffer = RwMalloc(
+                stride * (DlRasterShift(top->height, shift) ? DlRasterShift(top->height, shift) : 1));
 
             if (!ext->lockBuffer)
             {
@@ -341,8 +480,10 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
 
         if (top == raster)
         {
-            S32 width = raster->width >> level;
-            S32 height = raster->height >> level;
+            // FAKEMATCH: the shift copy of level; real form believed to shift by level.
+            S32 width = raster->width >> shift;
+            // FAKEMATCH: the shift copy of level; real form believed to shift by level.
+            S32 height = raster->height >> shift;
 
             width = width ? width : 1;
             height = height ? height : 1;
@@ -865,6 +1006,9 @@ S32 fn_80179FA0(RwRaster* raster)
 
     return TRUE;
 }
+
+// The message for a texture whose raster cannot be created.
+char lbl_801DE368[] = "Failed to create surface for texture";
 
 // Creates a raster: sets its format and, for a texture with a size, allocates its texels.
 S32 fn_8017A374(void* out, RwRaster* raster, S32 flags)

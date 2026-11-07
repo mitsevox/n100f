@@ -15,11 +15,16 @@
 // pixel weighted by how much of it the span covers.
 static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, RwRGBAReal* result)
 {
-    S32 last = x1 >> 16;
-    S32 first = x0 >> 16;
-    F32 width = RESAMPLE_TOREAL * (F32)(x1 - x0);
-    const RwRGBA* pixel = (const RwRGBA*)(image->cpPixels + (y >> 16) * image->stride + first * 4);
+    S32 first;
+    S32 last;
+    F32 width;
+    const RwRGBA* pixel;
     F32 scale;
+
+    width = RESAMPLE_TOREAL * (F32)(x1 - x0);
+    pixel = (const RwRGBA*)(image->cpPixels + (y >> 16) * image->stride + (x0 >> 16) * 4);
+    last = x1 >> 16;
+    first = x0 >> 16;
 
     if (first == last)
     {
@@ -35,33 +40,33 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
     }
     else
     {
-        S32 x = (S32)(RESAMPLE_TOFIXED * (F32)(first + 1));
+        F32 alpha;
+        F32 blue;
+        F32 green;
+        F32 red;
         S32 i;
-        F32 part;
-        U8 red;
-        U8 green;
-        U8 blue;
-        U8 alpha;
+        S32 x;
+
+        x = (S32)(RESAMPLE_TOFIXED * (F32)(first + 1));
 
         result->red = RESAMPLE_TOUNIT * pixel->red;
         result->green = RESAMPLE_TOUNIT * pixel->green;
         result->blue = RESAMPLE_TOUNIT * pixel->blue;
         result->alpha = RESAMPLE_TOUNIT * pixel->alpha;
 
-        part = RESAMPLE_TOREAL * (F32)(x - x0);
-        result->red *= part;
-        result->green *= part;
-        result->blue *= part;
-        result->alpha *= part;
+        result->red *= RESAMPLE_TOREAL * (F32)(x - x0);
+        result->green *= RESAMPLE_TOREAL * (F32)(x - x0);
+        result->blue *= RESAMPLE_TOREAL * (F32)(x - x0);
+        result->alpha *= RESAMPLE_TOREAL * (F32)(x - x0);
 
         pixel++;
 
         for (i = x >> 16; i != last; i++)
         {
-            red = pixel->red;
             green = pixel->green;
             blue = pixel->blue;
             alpha = pixel->alpha;
+            red = pixel->red;
             pixel++;
             x += RESAMPLE_ONE;
             result->red += RESAMPLE_TOUNIT * red;
@@ -71,14 +76,13 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
         }
 
         red = pixel->red;
+        alpha = pixel->alpha;
         green = pixel->green;
         blue = pixel->blue;
-        alpha = pixel->alpha;
-        part = RESAMPLE_TOREAL * (F32)(x1 - x);
-        result->red += RESAMPLE_TOUNIT * red * part;
-        result->green += RESAMPLE_TOUNIT * green * part;
-        result->blue += RESAMPLE_TOUNIT * blue * part;
-        result->alpha += RESAMPLE_TOUNIT * alpha * part;
+        result->red += RESAMPLE_TOUNIT * red * (RESAMPLE_TOREAL * (F32)(x1 - x));
+        result->green += RESAMPLE_TOUNIT * green * (RESAMPLE_TOREAL * (F32)(x1 - x));
+        result->blue += RESAMPLE_TOUNIT * blue * (RESAMPLE_TOREAL * (F32)(x1 - x));
+        result->alpha += RESAMPLE_TOUNIT * alpha * (RESAMPLE_TOREAL * (F32)(x1 - x));
     }
 
     scale = 1.0f / width;
@@ -153,29 +157,39 @@ static void ImageResampleGetAvgPixel(const RwImage* image, S32 x0, S32 x1, S32 y
 
 RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage)
 {
-    S32 width = dstImage->width;
-    S32 height = dstImage->height;
-    S32 srcY = 0;
-    S32 xStep;
-    S32 yStep;
+    S32 srcX;
+    S32 lastY;
+    S32 x;
     S32 y;
+    S32 xStep;
+    RwRGBA* pixel;
+    S32 srcY;
+    S32 yStep;
+    S32 width;
+    S32 height;
+    S32 srcHeight;
+    RwRGBAReal colour;
+
+    width = dstImage->width;
+    height = dstImage->height;
+    srcY = 0;
 
     xStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcImage->width / (F32)width));
-    yStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcImage->height / (F32)height));
+    srcHeight = srcImage->height;
 
     dstImage->flags |= srcImage->flags & IMAGE_GAMMACORRECTED;
 
+    yStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcHeight / (F32)height));
+
     for (y = 0; y < height; y++)
     {
-        S32 srcX = 0;
-        S32 x;
-        RwRGBA* pixel = (RwRGBA*)(dstImage->cpPixels + dstImage->stride * y);
+        srcX = 0;
+        lastY = srcY + yStep - 1;
+        pixel = (RwRGBA*)(dstImage->cpPixels + dstImage->stride * y);
 
         for (x = 0; x < width; x++)
         {
-            RwRGBAReal colour;
-
-            ImageResampleGetAvgPixel(srcImage, srcX, srcX + xStep - 1, srcY, srcY + yStep - 1,
+            ImageResampleGetAvgPixel(srcImage, srcX, srcX + xStep - 1, srcY, lastY,
                                      &colour);
             srcX += xStep;
 

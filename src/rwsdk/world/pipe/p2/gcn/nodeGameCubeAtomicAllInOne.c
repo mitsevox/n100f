@@ -147,11 +147,11 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 // the instanced arrays, or copies one morph target when both are the same.
 void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* interpolator)
 {
+    S32 start = interpolator->startMorphTarget;
     S32 end = interpolator->endMorphTarget;
     S32 numVertices = geometry->numVertices;
     RwV3d* dstPos = (RwV3d*)arrays->pos;
     U8* dstNrm = (U8*)arrays->nrm;
-    S32 start = interpolator->startMorphTarget;
 
     if (start >= geometry->numMorphTargets || end >= geometry->numMorphTargets)
     {
@@ -190,15 +190,16 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
     }
     else
     {
-        RpMorphTarget* morphTargets = geometry->morphTarget;
+        RpMorphTarget* startTarget = &geometry->morphTarget[start];
+        RpMorphTarget* endTarget = &geometry->morphTarget[end];
         F32 scale = interpolator->recipTime * interpolator->position;
-        RwV3d* startPos = morphTargets[start].verts;
-        RwV3d* endPos = morphTargets[end].verts;
+        RwV3d* startPos = startTarget->verts;
+        RwV3d* endPos = endTarget->verts;
 
         if (geometry->flags & rpGEOMETRYNORMALS)
         {
-            RwV3d* startNrm = morphTargets[start].normals;
-            RwV3d* endNrm = morphTargets[end].normals;
+            RwV3d* startNrm = startTarget->normals;
+            RwV3d* endNrm = endTarget->normals;
 
             while (numVertices--)
             {
@@ -233,63 +234,83 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
     GXInvalidateVtxCache();
 }
 
+// Flushes a freshly instanced vertex array from the data cache.
+// FAKEMATCH: the flushes go through this inline wrapper; real form believed to be direct DCFlushRange calls.
+static inline void AllInOneFlush(void* p, U32 size)
+{
+    DCFlushRange(p, size);
+}
+
+// Re-instances each texture coordinate set whose lock bit (0x10 << set) is in locked.
+// FAKEMATCH: the loop is moved into an inline helper; real form believed to be the loop written
+// inline in fn_8015E054.
+static inline void AllInOneReinstanceTexCoords(RpGeometry* geometry, GCNVertexArrays* arrays, U32 locked)
+{
+    S32 i;
+
+    for (i = 0; i < geometry->numTexCoordSets; i++)
+    {
+        if ((0x10 << i) & locked)
+        {
+            // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
+            AllInOneFlush(arrays->tex[i],
+                          _rwGCNVtxFmtInstTex(fn_8015D818(geometry), i, arrays->tex[i],
+                                              geometry->texCoords[i],
+                                              geometry->numVertices,
+                                              arrays->texStride[i]));
+        }
+    }
+}
+
 // The default reinstance callback: re-instances the attributes locked since the last instance,
 // and the morph targets when the interpolator changed, once the GPU is done with the arrays.
 RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 {
-    S32 i;
     S32 numVertices;
-    GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
+    U32 flags;
     U32 locked;
     RpGeometry* geometry = atomic->geometry;
+    GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
 
     if (geometry->lockedSinceLastInst)
     {
-        U32 flags;
-
         ALLINONE_WAITDONE(arrays);
 
+        flags = (geometry->flags | rpGEOMETRYPOSITIONS) & ~objectData->privateData->clearFlags;
         locked = geometry->lockedSinceLastInst;
         numVertices = geometry->numVertices;
-        flags = (geometry->flags | rpGEOMETRYPOSITIONS) & ~objectData->privateData->clearFlags;
 
         if ((locked & ALLINONE_LOCKVERTICES) && (flags & rpGEOMETRYPOSITIONS))
         {
-            DCFlushRange(arrays->pos,
-                         _rwGCNVtxFmtInstPos3D(fn_8015D818(geometry), arrays->pos,
-                                               geometry->morphTarget->verts, numVertices,
-                                               arrays->posStride));
+            // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
+            AllInOneFlush(arrays->pos,
+                          _rwGCNVtxFmtInstPos3D(fn_8015D818(geometry), arrays->pos,
+                                                geometry->morphTarget->verts, numVertices,
+                                                arrays->posStride));
         }
 
         if ((locked & ALLINONE_LOCKNORMALS) && (flags & rpGEOMETRYNORMALS))
         {
-            DCFlushRange(arrays->nrm,
-                         _rwGCNVtxFmtInstNrm(fn_8015D818(geometry), arrays->nrm,
-                                             geometry->morphTarget->normals,
-                                             geometry->numVertices, arrays->nrmStride));
+            // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
+            AllInOneFlush(arrays->nrm,
+                          _rwGCNVtxFmtInstNrm(fn_8015D818(geometry), arrays->nrm,
+                                              geometry->morphTarget->normals,
+                                              geometry->numVertices, arrays->nrmStride));
         }
 
         if ((locked & ALLINONE_LOCKPRELIGHT) && (flags & rpGEOMETRYPRELIT))
         {
-            DCFlushRange(arrays->clr,
-                         _rwGCNVtxFmtInstClr(fn_8015D818(geometry), arrays->clr,
-                                             geometry->preLitLum, geometry->numVertices,
-                                             arrays->clrStride));
+            // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
+            AllInOneFlush(arrays->clr,
+                          _rwGCNVtxFmtInstClr(fn_8015D818(geometry), arrays->clr,
+                                              geometry->preLitLum, geometry->numVertices,
+                                              arrays->clrStride));
         }
 
         if ((locked & ALLINONE_LOCKTEXCOORDS) && (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2)))
         {
-            for (i = 0; i < geometry->numTexCoordSets; i++)
-            {
-                if ((0x10 << i) & locked)
-                {
-                    DCFlushRange(arrays->tex[i],
-                                 _rwGCNVtxFmtInstTex(fn_8015D818(geometry), i, arrays->tex[i],
-                                                     geometry->texCoords[i],
-                                                     geometry->numVertices,
-                                                     arrays->texStride[i]));
-                }
-            }
+            // FAKEMATCH: the texture coordinate loop called as a helper; real form believed to be inline.
+            AllInOneReinstanceTexCoords(geometry, arrays, locked);
         }
 
         GXInvalidateVtxCache();
@@ -309,8 +330,9 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
 // The default instance callback: allocates the entry (owned by the atomic when the geometry
 // morphs, else by the geometry), builds the display lists and instances the vertex arrays.
-RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
+void* fn_8015E2E8(void* object, GCNObjectData* objectData)
 {
+    RpAtomic* atomic = (RpAtomic*)object;
     GCNAllInOnePrivateData* privateData;
     U32 dlSize;
     S32 headerSize;
@@ -319,6 +341,7 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     RwResEntry** ownerRef;
     RpMeshHeader* meshHeader;
     U32 numVertices;
+    U32 numMeshes;
     U32 geometryFlags;
     U32 flags;
     S32 size;
@@ -329,7 +352,7 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     geometry = atomic->geometry;
     meshHeader = geometry->mesh;
     numVertices = geometry->numVertices;
-    headerSize = meshHeader->numMeshes * sizeof(GCNDisplayList);
+    numMeshes = meshHeader->numMeshes;
 
     if (geometry->numMorphTargets != 1)
     {
@@ -345,6 +368,7 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     geometryFlags = geometry->flags | rpGEOMETRYPOSITIONS;
     privateData = objectData->privateData;
     flags = geometryFlags & ~privateData->clearFlags;
+    headerSize = numMeshes * sizeof(GCNDisplayList);
     dlSize = GCNDisplayListsGetSize(meshHeader, geometry->numTexCoordSets,
                                     numVertices < 0xFF ? 1 : 2, geometryFlags);
 
@@ -385,7 +409,7 @@ RpAtomic* fn_8015E2E8(RpAtomic* atomic, GCNObjectData* objectData)
     DCFlushRange(objectData->repEntry + 1, objectData->repEntry->size);
     geometry->lockedSinceLastInst = 0;
 
-    return atomic;
+    return object;
 }
 
 // The node body: instances the atomic when its entry is missing or its meshes changed (else

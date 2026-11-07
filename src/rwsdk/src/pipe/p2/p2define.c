@@ -477,6 +477,7 @@ static inline RxPipeline* PipelineUnlockTopSort(RxPipeline* pipeline)
     PipelineTopSortState state;
     RxPipelineNode* node;
     U32 i;
+    U32 k;
 
     state.pipeline = pipeline;
     state.numSorted = 0;
@@ -530,9 +531,9 @@ static inline RxPipeline* PipelineUnlockTopSort(RxPipeline* pipeline)
         return NULL;
     }
 
-    for (i = 0; i < pipeline->numNodes; i++)
+    for (k = 0; k < pipeline->numNodes; k++)
     {
-        if (i != pipeline->entryPoint && pipeline->nodes[i].topSortData->numIns == 0)
+        if (k != pipeline->entryPoint && pipeline->nodes[k].topSortData->numIns == 0)
         {
             RwError err;
 
@@ -563,21 +564,42 @@ static inline RxPipeline* PipelineUnlockTopSort(RxPipeline* pipeline)
     return pipeline;
 }
 
+static inline U32 PipelineNodesSize(RxPipeline* pipeline, RxPipelineNode* node)
+{
+    U32 size;
+    S32 i;
+
+    size = pipeline->numNodes * sizeof(RxPipelineNode);
+
+    for (i = 0; i < pipeline->numNodes; i++)
+    {
+        size += node->numOutputs * sizeof(U32);
+    }
+
+    return size;
+}
+
 RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
 {
     if (pipeline && pipeline->locked)
     {
         if (pipeline->numNodes)
         {
-            S32 i;
-            U32 size;
             RxPipelineNode* node;
+            U32 numUnique;
             U32 maxSize;
             U32 dataSize;
-            U32 numUnique;
-            U32 numFailed = 0;
-            S32 failed = FALSE;
+            S32 i;
+            U32 size;
+            RxPipelineNodeTopSortData* newTopSortData;
+            RxPipelineNodeTopSortData* topSortData;
             U32 numOutputs = 0;
+            S32 failed = FALSE;
+            U32 numFailed = 0;
+            U32 blockSize;
+            U32* newOutputs;
+            U32* outputs;
+            S32 last;
 
             if (pipeline->entryPoint >= pipeline->numNodes
                 || !pipeline->nodes[pipeline->entryPoint].nodeDef)
@@ -590,6 +612,7 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
                 return NULL;
             }
 
+            node = pipeline->nodes;
             numUnique = PipelineCalcNumUniqueClusters(pipeline);
 
             maxSize = RXPIPELINEGLOBAL(maxNodesPerPipeline) * sizeof(RxPipelineNode)
@@ -598,18 +621,10 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
 
             // The nodes and their outputs while they are sorted, and the space the dependency
             // chasing works in.
-            size = pipeline->numNodes * sizeof(RxPipelineNode);
-            node = pipeline->nodes;
-
-            for (i = 0; i < pipeline->numNodes; i++)
-            {
-                size += node->numOutputs * sizeof(U32);
-            }
-
-            size = size + RXPIPELINEGLOBAL(maxNodesPerPipeline) * sizeof(RxPipelineNodeTopSortData)
-                   + (pipeline->numNodes * numUnique * sizeof(rxReqEntry)
-                      + pipeline->numNodes * numUnique * sizeof(rxScope))
-                   + pipeline->numNodes * sizeof(rxReq);
+            size = RXPIPELINEGLOBAL(maxNodesPerPipeline) * sizeof(RxPipelineNodeTopSortData)
+                   + PipelineNodesSize(pipeline, node);
+            size += pipeline->numNodes * sizeof(rxReq) + pipeline->numNodes * numUnique * sizeof(rxReqEntry)
+                    + pipeline->numNodes * numUnique * sizeof(rxScope);
 
             // The data the unlocked pipeline keeps: its clusters, its input requirements, each
             // node's cluster references, continuity flags, private data and input slots, and the
@@ -631,17 +646,22 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
 
             dataSize += sizeof(RxPacket) + (numUnique - 1) * sizeof(RxCluster);
             size += dataSize;
-            size = (size > maxSize) ? size : maxSize;
+            blockSize = maxSize;
 
-            if (size > pipeline->superBlockSize)
+            if (size > maxSize)
             {
-                if (!PipelineGrowSuperBlock(pipeline, size))
+                blockSize = size;
+            }
+
+            if (blockSize > pipeline->superBlockSize)
+            {
+                if (!PipelineGrowSuperBlock(pipeline, blockSize))
                 {
                     return NULL;
                 }
             }
 
-            gMemoryLimits.tite = (U8*)pipeline->superBlock + size;
+            gMemoryLimits.tite = (U8*)pipeline->superBlock + blockSize;
             gMemoryLimits.mite = NULL;
 
             pipeline = PipelineUnlockTopSort(pipeline);
@@ -652,22 +672,18 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
             }
 
             {
-                RxPipelineNodeTopSortData* topSortData;
-                RxPipelineNodeTopSortData* newTopSortData;
-                U32* newOutputs;
-                U32* outputs;
-
                 // Move the sort data to the top of the block, then pack the outputs in after
                 // the nodes.
                 outputs = (U32*)&pipeline->nodes[RXPIPELINEGLOBAL(maxNodesPerPipeline)];
                 topSortData = (RxPipelineNodeTopSortData*)(outputs
                                                            + RXPIPELINEGLOBAL(maxNodesPerPipeline)
                                                                  * NODE_MAXOUTPUTS);
-                topSortData += pipeline->numNodes - 1;
-                newTopSortData = (RxPipelineNodeTopSortData*)((U8*)pipeline->superBlock + size
-                                                              - sizeof(RxPipelineNodeTopSortData));
+                last = pipeline->numNodes - 1;
+                topSortData += last;
+                newTopSortData = (RxPipelineNodeTopSortData*)((U8*)pipeline->superBlock + blockSize);
+                newTopSortData--;
 
-                for (i = pipeline->numNodes - 1; i >= 0; i--)
+                for (i = last; i >= 0; i--)
                 {
                     memcpy(newTopSortData, topSortData, sizeof(RxPipelineNodeTopSortData));
                     pipeline->nodes[i].topSortData = newTopSortData;
@@ -689,9 +705,9 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
                         pipeline->nodes[i].outputs = newOutputs;
                     }
 
+                    outputs += NODE_MAXOUTPUTS;
                     numOutputs += pipeline->nodes[i].numOutputs;
                     newOutputs += pipeline->nodes[i].numOutputs;
-                    outputs += NODE_MAXOUTPUTS;
                 }
 
                 gMemoryLimits.tite = (U8*)topSortData;
@@ -703,7 +719,9 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
                 return NULL;
             }
 
-            if (!PipelineGrowSuperBlock(pipeline, gMemoryLimits.mite - (U8*)pipeline->superBlock))
+            size = gMemoryLimits.mite - (U8*)pipeline->superBlock;
+
+            if (!PipelineGrowSuperBlock(pipeline, size))
             {
                 goto fail;
             }
