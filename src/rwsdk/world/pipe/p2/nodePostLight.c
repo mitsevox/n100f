@@ -1,7 +1,8 @@
 #include <rpworld.h>
 
-// The post-light node: clamps the lit camera-space colors to 0-255, modulates them by the
-// material color where the mesh asks for it, and stores them as the screen vertices' colors.
+// The post-light node: clamps the lit camera-space colors to 0-255 (RGB, and alpha too when
+// modulating), modulates them by the material color where the mesh asks for it, and stores them
+// as the screen vertices' colors.
 
 // The node's cluster slots.
 #define POSTLIGHTCL_MESHSTATE 0

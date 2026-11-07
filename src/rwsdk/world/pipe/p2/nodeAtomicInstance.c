@@ -24,7 +24,7 @@ struct AtomicInstanceMesh
 
 #define OBJVERTEXNEXT(_vert, _stride) ((RxObjSpace3DVertex*)((U8*)(_vert) + (_stride)))
 
-// Writes the point t of the way from a to b (project-own name; inlined into its caller).
+// Writes the point t of the way from a to b (project-own name).
 static void BlendV3d(RwV3d* out, const RwV3d* a, const RwV3d* b, F32 t)
 {
     F32 x = b->x - a->x;

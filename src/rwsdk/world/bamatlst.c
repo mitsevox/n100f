@@ -59,7 +59,7 @@ S32 _rpMaterialListFindMaterialIndex(const RpMaterialList* matList, const RpMate
 
 RpMaterial* RpMaterialStreamRead(RwStream* stream);
 
-// Reports a failed allocation of size bytes (project-own name; inlined).
+// Reports a failed allocation of size bytes (project-own name).
 static void MaterialListNoMemory(U32 size)
 {
     RwError err;
@@ -103,7 +103,6 @@ static RpMaterialList* MaterialListAlloc(RpMaterialList* matList, S32 space)
 
 // Reads a material list chunk: the count, the index array, then each new material. An index
 // below zero means a material follows in the stream; any other index shares an earlier one.
-// The append is written out in the loop, and status also holds the index array's byte count.
 RpMaterialList* _rpMaterialListStreamRead(RwStream* stream, RpMaterialList* matList)
 {
     S32 len;

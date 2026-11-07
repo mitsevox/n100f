@@ -31,9 +31,9 @@ static void _rwApplySpotSoftLight(RxPipelineNode* self, RxPacket* packet, const 
                                   RwMatrix* inverseMat, RwSurfaceProperties* surfaceProps,
                                   F32 invScale);
 
-// Stand-in for lost code. The target pools 255.0f, -1.0f and 0.0f ahead of the 1.0f that
-// _LightFn loads, so a function compiled before _LightFn used them first. Nothing calls this one,
-// and the linker strips it as it stripped the original.
+// Stand-in for a function the target no longer contains (inferred). The target's constants put
+// 255.0f, -1.0f and 0.0f ahead of the 1.0f that _LightFn loads, which suggests a function before
+// _LightFn used them first. Nothing calls this one.
 static void LightPoolStandIn(F32* scale, F32* sign, F32* lambert)
 {
     *scale *= LIGHT_COLORSCALE;
@@ -46,7 +46,7 @@ static void LightPoolStandIn(F32* scale, F32* sign, F32* lambert)
 }
 
 // Lights the mesh with every light in the lights cluster, unless the mesh is wholly clipped. A
-// mesh that is not at the world origin gets the lights moved into its object space.
+// mesh whose object-to-world matrix is not identity gets the lights moved into its object space.
 static S32 _LightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
     RxPacket* packet;

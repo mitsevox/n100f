@@ -278,7 +278,9 @@ static RpMesh* SortPolygonsInTriListMesh(RpMesh* mesh, RpMeshHeader* meshHeader,
     return mesh;
 }
 
-// Finds the edge from vert0 to vert1 among the edges so far, or adds it.
+// Gives the triangle an edge from vert0 to vert1: an earlier edge stored the other way round
+// (vert1 to vert0) with no second triangle yet takes this one as its second; otherwise a new edge
+// is added.
 static TriStripEdge* rpTriStripAddEdge(RwFreeList* edgeFreeList, TriStripEdge** edgeList,
                                      TriStripBinEntry** entry, U16 vert0, U16 vert1)
 {
@@ -377,7 +379,7 @@ static void TriStripMarkTriUsed(TriStripBinEntry* entry, TriStripBinEntry** bins
 }
 
 // Whether no triangle on an edge is free in a trial pass, so a strip crossing it ends
-// (project-own name; inlined).
+// (project-own name).
 static S32 TriStripEdgeIsDeadEndTrial(TriStripEdge* edge)
 {
     S32 deadEnd;
@@ -398,7 +400,7 @@ static S32 TriStripEdgeIsDeadEndTrial(TriStripEdge* edge)
     return result;
 }
 
-// The same for the final pass, which looks at the used flags (project-own name; inlined).
+// The same for the final pass, which looks at the used flags (project-own name).
 static S32 TriStripEdgeIsDeadEndUsed(TriStripEdge* edge)
 {
     S32 deadEnd;
@@ -458,7 +460,7 @@ static S32 TriStripEdgeHasFreeTri(TriStripEdge* edge, S32 pass)
     }
 }
 
-// The edge of a triangle that joins two vertices, or NULL (project-own name; inlined).
+// The edge of a triangle that joins two vertices, or NULL (project-own name).
 static TriStripEdge* TriStripNextEdge(TriStripBinEntry* tri, U16 vert0, U16 vert1)
 {
     if ((tri->edge[0]->vert[0] == vert0 && tri->edge[0]->vert[1] == vert1) ||
@@ -482,8 +484,10 @@ static TriStripEdge* TriStripNextEdge(TriStripBinEntry* tri, U16 vert0, U16 vert
     return NULL;
 }
 
-// Extends a strip across edge for as long as a free triangle lies beyond it, swapping to the
-// third edge of a triangle when the strip would end there. Returns the triangles it adds.
+// Extends a strip across edge for as long as a free triangle lies beyond it. When the next edge
+// is a dead end but the triangle's third edge still has a free triangle, a strip with an even
+// number of indices repeats a vertex and turns onto that edge; with an odd number it appends the
+// new vertex and stops. Returns the triangles it adds.
 static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEntry** bins,
                           RpBuildMeshTriangle* triangles, S32 pass)
 {
@@ -575,7 +579,6 @@ static U32 TriStripFollow(TriStripList* strip, TriStripEdge* edge, TriStripBinEn
 
         if (deadEnd)
         {
-
             if (tri->edge[0] != inEdge && tri->edge[0] != edge)
             {
                 swapEdge = tri->edge[0];

@@ -65,8 +65,8 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/src/pipe/p2/nodeImmMangleLineIndices.c` | 2 of 2 | (Matching on GIHE78-rev0 and GIHE78-rev1; .data 148 bytes plus 4 normal alignment bytes, .sdata 16 bytes) |
 | `rwsdk/src/pipe/p2/nodeImmMangleTriangleIndices.c` | 2 of 2 | (Matching on GIHE78-rev0; .data 152 bytes, .sdata 16 bytes) |
 | `rwsdk/world/pipe/p2/bapipew.c` | 5 of 5 | (Matching on GIHE78-rev0) |
-| `rwsdk/world/pipe/p2/nodeLight.c` | 1 of 7 | `_LightFn` (99.2%) and the five `_rwApply*Light` functions (95.3-99.1%): register choice and the order of a few loads |
-| `rwsdk/world/pipe/p2/nodePostLight.c` | 1 of 2 | `_PostLightFn` (94.6%: the target reloads each color channel after its clamp test; also on GIHE78-rev1) |
+| `rwsdk/world/pipe/p2/nodeLight.c` | 7 of 7 | (Matching on GIHE78-rev0) |
+| `rwsdk/world/pipe/p2/nodePostLight.c` | 2 of 2 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/pipe/p2/gcn/wrldpipe.c` | 7 of 7 | (Matching on GIHE78-rev0; starts at `_rxWorldDevicePluginAttach`, `0x8015D830`) |
 | `rwsdk/src/batextur.c` | 29 of 29 | (Matching on GIHE78-rev0; `.rodata` and `.data` exact, `.sdata`, `.sbss` and `.sdata2` exact up to alignment padding) |
 | `rwsdk/src/plcore/batkbin.c` | 8 of 8 | (Matching on GIHE78-rev0) |
@@ -92,9 +92,9 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/bageomet.c` | 12 of 12 | Rev0 source-selected with exact registry/module/literal data ranges. Staged format flags, a separate morph-loop index and related PS2 `GeometryAnnihilate` cleanup factoring close the three functions; the normal linker removes the unused helper body. Historical source spelling/factoring is inferred; rev1 has no mapped unit. |
 | `rwsdk/world/baworld.c` | 25 of 25 | Rev0 source-selected. Original PS2 caller-owned allocation/materials and four-argument mesh-builder context close Unlock/Create; related render/Lock helpers close rendering/destruction. Private complete-game source/data replacement is byte-identical. The 48-byte data payload occupies a 56-byte mapped span through normal alignment; no C filler or symbol shrink. GC factoring remains inferred; rev1 keeps its existing map/original linkage. |
 | `rwsdk/world/baworobj.c` | 48 of 48 | (Matching; starts at `WorldObjectOpen`, `0x8015275C`) |
-| `rwsdk/world/bamatlst.c` | 4 of 5 (rev0) | `_rpMaterialListStreamRead` is 97.77188% (unresolved); NonMatching. Rev1 has 4 of 6 exact functions in its 1,844-byte mapped range; it remains NonMatching |
+| `rwsdk/world/bamatlst.c` | 5 of 5 (rev0) | (Matching on GIHE78-rev0). Rev1 has 4 of 6 exact functions in its 1,844-byte mapped range; it remains NonMatching |
 | `rwsdk/world/bamesh.c` | 11 of 11 | (Matching on GIHE78-rev0, with `meshModule` and `MeshStatic`) |
-| `rwsdk/world/bameshop.c` | 5 of 11 | `SortPolygonsInTriListMesh` (97.0%) and `TriStripMeshGenerate` (98.4%), register choice; `TriStripBinEntryArrayCreate` (88.1%: the target reloads the entry pointer inside the three inlined edge searches), `TriStripFollow` (90.0%) and `TriStripStripTris` (93.4%), where the target evaluates the edge tests into temporaries, and `TriStripJoin` (89.3%: the target reloads the joined strip's count and pointer per index); data open (`.data` and `.sdata2` not split) |
+| `rwsdk/world/bameshop.c` | 11 of 11 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/babinwor.c` | 11 of 11 | Rev0 source-selected. The related original two-argument `Polygon4byteTo8ByteConvert` context and ordinary base/walker order close the sector reader; surface-property pointer and size sequencing close world reading. All 24 module/rights bytes and the four-byte literal payload agree; normal alignment supplies the remaining four mapped bytes. Private complete-game replacement is byte-identical. No filler, symbol shrink or compiler override; rev1 keeps original linkage. |
 | `rwsdk/world/pipe/p2/gcn/instance/geominst.c` | 1 of 6 | `fn_80159380`, the vertex data sizer (97.6%: the unrolled texture coordinate address form), `_rwGCNVtxFmtInstNrm` (99.0%: only the scaling fmuls operand order), `_rwGCNVtxFmtInstClr` (96.2%: the 565 and 4444 pointer chains), `_rwGCNVtxFmtInstNrmCmp` (97.8%: one fmuls operand order and a pointer step) and `_rwGCNVtxFmtInstTex` (94.6%: where the set's component type address is kept); its `.data` holds the vertex component size tables |
 | `rwsdk/world/pipe/p2/gcn/instance/instancegeom.c` | 0 of 1 | `_rwDlGeometryInstanceFast` (98.48605%: nonvolatile register allocation); related vertex-count and texture-coordinate API inline context is reconstructed, with its exact GC spelling/placement inferred; text only, NonMatching |
@@ -106,8 +106,8 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c` | 4 of 4 | (Matching on GIHE78-rev0 and GIHE78-rev1; `.data` 98.5%: the four bytes of padding at its end) |
 | `rwsdk/world/pipe/p2/nodeMaterialScatter.c` | 2 of 2 | (Matching on GIHE78-rev0; `.data` 98.8%, as `nodeAtomicEnumerateLights.c`) |
 | `rwsdk/world/pipe/p2/nodeWorldSectorEnumerateLights.c` | 3 of 3 | all 3 functions; .data 136 bytes and .sdata 8 bytes; Matching on GIHE78-rev0 and GIHE78-rev1 |
-| `rwsdk/world/pipe/p2/nodeAtomicInstance.c` | 1 of 5 | `fn_80154E8C` (98.1%), `AtomicInstanceNode` (92.4%), `fn_801551A8` (83.8%) and `fn_80154994` (73.8%), register choice and scheduling; `.data` in the split (with the body's jump table) |
-| `rwsdk/world/pipe/p2/nodeWorldSectorInstance.c` | 1 of 4 | `WorldSectorInstanceNodeFn` (96.0%), `fn_80157A3C` (79.7%) and `fn_80157FB8` (79.5%), register choice and scheduling; `.data` and `.sdata` in the split, `.sdata2` not |
+| `rwsdk/world/pipe/p2/nodeAtomicInstance.c` | 5 of 5 | (Matching on GIHE78-rev0, with `.data` and the body's jump table) |
+| `rwsdk/world/pipe/p2/nodeWorldSectorInstance.c` | 4 of 4 | (Matching on GIHE78-rev0) |
 | `rwsdk/world/pipe/p2/gcn/vtxfmt.c` | 14 of 14 | (Matching on GIHE78-rev0, with its `.bss` and `.sbss`; the start edge stays open) |
 | `rwsdk/plugin/hanim/stdkey.c` | 8 of 8 | Source-linked on rev0, including the 104-byte `.sdata2` pool; ordered slerp threshold and scratch lifetimes recovered |
 | `rwsdk/plugin/hanim/rphanim.c` | 14 of 14 | (Matching on GIHE78-rev0) |
