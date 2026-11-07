@@ -125,22 +125,30 @@ static void fn_80157A3C(RxObjSpace3DVertex* objVerts, RpWorld* world, RpWorldSec
 static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, U16* indices,
                         RxObjSpace3DVertex* verts, S32 stride)
 {
-    RpMesh* mesh = (RpMesh*)(meshHeader + 1);
-    U16 numMeshes = meshHeader->numMeshes;
-    U32 vertIndex = 0;
-    U32 triStrip = meshHeader->flags & rpMESHHEADERTRISTRIP;
+    U32 numIndices;
+    U32 numMeshes;
+    RpMesh* mesh;
+    S32 triStrip;
+    U32 vertIndex;
+    U32 count;
+    U16* meshIndices;
+
+    mesh = (RpMesh*)(meshHeader + 1);
+    numMeshes = meshHeader->numMeshes;
+    vertIndex = 0;
+    triStrip = meshHeader->flags & rpMESHHEADERTRISTRIP;
 
     while (numMeshes--)
     {
-        U16* meshIndices = mesh->indices;
-        U32 numIndices;
+        meshIndices = mesh->indices;
 
         instMesh->indices = indices;
         instMesh->stride = stride;
         instMesh->material = mesh->material;
         instMesh->mesh = mesh;
 
-        numIndices = mesh->numIndices;
+        count = mesh->numIndices;
+        numIndices = count;
 
         if (meshHeader->flags & rpMESHHEADERUNINDEXED)
         {
@@ -172,33 +180,26 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
                 {
                     U16 i;
 
-                    for (i = 0; i < numIndices; i++)
+                    for (i = 0; i < count; i++)
                     {
                         *indices++ = i;
                     }
                 }
             }
 
-            vertIndex += numIndices;
+            vertIndex += count;
         }
         else
         {
             U32 maxIndex = 0;
-            U16* index = meshIndices + numIndices;
-            U32 count = numIndices;
 
             vertIndex = 0xFFFF;
 
             while (count--)
             {
-                U32 value = *--index;
-
-                vertIndex = (vertIndex < value) ? vertIndex : value;
-                maxIndex = (maxIndex > value) ? maxIndex : value;
+                vertIndex = (vertIndex < meshIndices[count]) ? vertIndex : meshIndices[count];
+                maxIndex = (maxIndex > meshIndices[count]) ? maxIndex : meshIndices[count];
             }
-
-            instMesh->verts = (RxObjSpace3DVertex*)((U8*)verts + vertIndex * stride);
-            instMesh->numVerts = maxIndex - vertIndex + 1;
 
             if (triStrip)
             {
@@ -228,22 +229,22 @@ static void fn_80157FB8(SectorInstanceMesh* instMesh, RpMeshHeader* meshHeader, 
             }
             else
             {
-                U32 numTris = numIndices / 3;
+                U32 i;
 
                 instMesh->numIndices = numIndices;
 
-                if (numIndices > 2)
+                for (i = 2; i < numIndices; i += 3)
                 {
-                    while (numTris--)
-                    {
-                        indices[0] = meshIndices[0] - vertIndex;
-                        indices[1] = meshIndices[1] - vertIndex;
-                        indices[2] = meshIndices[2] - vertIndex;
-                        indices += 3;
-                        meshIndices += 3;
-                    }
+                    indices[0] = meshIndices[0] - vertIndex;
+                    indices[1] = meshIndices[1] - vertIndex;
+                    indices[2] = meshIndices[2] - vertIndex;
+                    indices += 3;
+                    meshIndices += 3;
                 }
             }
+
+            instMesh->verts = (RxObjSpace3DVertex*)((U8*)verts + vertIndex * stride);
+            instMesh->numVerts = maxIndex - vertIndex + 1;
         }
 
         instMesh++;

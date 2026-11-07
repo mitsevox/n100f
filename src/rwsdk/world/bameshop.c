@@ -195,12 +195,22 @@ static S32 SortPolygons(const void* pA, const void* pB)
 // first free triangle each time.
 static RpMesh* SortPolygonsInTriListMesh(RpMesh* mesh, RpMeshHeader* meshHeader, void* pData)
 {
-    U16* indices = mesh->indices;
-    U32 numTris = mesh->numIndices / 3;
-    U32 maxIndex = 0;
-    U32 i;
     U32 size;
     U32* usedVerts;
+    U32 numTris;
+    U32 maxIndex;
+    U16* indices;
+    U32 i;
+    U32 copySize;
+    U16* copy;
+    U8* bytes;
+    U16* tri;
+    U32 numPlaced;
+    U32 j;
+
+    indices = mesh->indices;
+    numTris = mesh->numIndices / 3;
+    maxIndex = 0;
 
     for (i = 0; i < mesh->numIndices; i++)
     {
@@ -212,27 +222,26 @@ static RpMesh* SortPolygonsInTriListMesh(RpMesh* mesh, RpMeshHeader* meshHeader,
 
     if (usedVerts)
     {
-        U32 copySize = mesh->numIndices * sizeof(U16);
-        U16* copy = (U16*)RwMalloc(copySize);
+        copySize = mesh->numIndices * sizeof(U16);
+        copy = (U16*)RwMalloc(copySize);
 
         if (copy)
         {
-            U32 numPlaced;
-
             memcpy(copy, indices, copySize);
 
             numPlaced = 0;
 
             while (numPlaced < numTris)
             {
-                U8* bytes = (U8*)usedVerts;
-                U16* tri = copy;
-                U32 j = size;
+                bytes = (U8*)usedVerts;
+                j = size;
 
                 while (j--)
                 {
                     *bytes++ = 0;
                 }
+
+                tri = copy;
 
                 for (j = 0; j < numTris; j++, tri += 3)
                 {
@@ -270,8 +279,8 @@ static RpMesh* SortPolygonsInTriListMesh(RpMesh* mesh, RpMeshHeader* meshHeader,
 }
 
 // Finds the edge from vert0 to vert1 among the edges so far, or adds it.
-static TriStripEdge* rpTriStripAddEdge(TriStripFreeLists* freeLists, TriStripEdge** edgeList,
-                                     TriStripBinEntry* entry, U16 vert0, U16 vert1)
+static TriStripEdge* rpTriStripAddEdge(RwFreeList* edgeFreeList, TriStripEdge** edgeList,
+                                     TriStripBinEntry** entry, U16 vert0, U16 vert1)
 {
     TriStripEdge* edge;
 
@@ -280,17 +289,17 @@ static TriStripEdge* rpTriStripAddEdge(TriStripFreeLists* freeLists, TriStripEdg
         if (vert0 == edge->vert[1] && vert1 == edge->vert[0] && !edge->tri[1])
         {
             edge->tri[0]->numNeighbours++;
-            entry->numNeighbours++;
-            edge->tri[1] = entry;
+            (*entry)->numNeighbours++;
+            edge->tri[1] = *entry;
 
             return edge;
         }
     }
 
-    edge = (TriStripEdge*)RWSRCGLOBAL(memoryAlloc)(freeLists->edgeFreeList);
+    edge = (TriStripEdge*)RWSRCGLOBAL(memoryAlloc)(edgeFreeList);
     edge->vert[0] = vert0;
     edge->vert[1] = vert1;
-    edge->tri[0] = entry;
+    edge->tri[0] = *entry;
     edge->tri[1] = NULL;
     edge->next = *edgeList;
     *edgeList = edge;
@@ -309,7 +318,7 @@ static TriStripBinEntry** TriStripBinEntryArrayCreate(U32 numTris, TriStripFreeL
     freeLists->binEntryFreeList = RwFreeListCreate(sizeof(TriStripBinEntry), numTris, 0);
     freeLists->edgeFreeList = RwFreeListCreate(sizeof(TriStripEdge), numTris / 2 + 1, 0);
 
-    for (i = 0; i < numTris; i++, triangles++)
+    for (i = 0; i < numTris; i++)
     {
         entries[i] = (TriStripBinEntry*)RWSRCGLOBAL(memoryAlloc)(freeLists->binEntryFreeList);
         entries[i]->numNeighbours = 0;
@@ -318,12 +327,12 @@ static TriStripBinEntry** TriStripBinEntryArrayCreate(U32 numTris, TriStripFreeL
         entries[i]->next = NULL;
         entries[i]->used = FALSE;
 
-        entries[i]->edge[0] = rpTriStripAddEdge(freeLists, edgeList, entries[i],
-                                              triangles->vertIndex[0], triangles->vertIndex[1]);
-        entries[i]->edge[1] = rpTriStripAddEdge(freeLists, edgeList, entries[i],
-                                              triangles->vertIndex[1], triangles->vertIndex[2]);
-        entries[i]->edge[2] = rpTriStripAddEdge(freeLists, edgeList, entries[i],
-                                              triangles->vertIndex[2], triangles->vertIndex[0]);
+        entries[i]->edge[0] = rpTriStripAddEdge(freeLists->edgeFreeList, edgeList, &entries[i],
+                                              triangles[i].vertIndex[0], triangles[i].vertIndex[1]);
+        entries[i]->edge[1] = rpTriStripAddEdge(freeLists->edgeFreeList, edgeList, &entries[i],
+                                              triangles[i].vertIndex[1], triangles[i].vertIndex[2]);
+        entries[i]->edge[2] = rpTriStripAddEdge(freeLists->edgeFreeList, edgeList, &entries[i],
+                                              triangles[i].vertIndex[2], triangles[i].vertIndex[0]);
     }
 
     return entries;
@@ -912,7 +921,8 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
 
     for (i = 0; i < strip->numIndices; i++)
     {
-        joined->indices[joined->numIndices++] = strip->indices[i];
+        joined->indices[joined->numIndices] = strip->indices[i];
+        joined->numIndices++;
     }
 
     RwFree(strip->indices);
@@ -967,19 +977,17 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
 
         if (!strip)
         {
-            U16* end = &joined->indices[joined->numIndices];
-
             strip = rest;
 
             if (!(joined->numIndices & 1) || !keepWinding)
             {
-                end[0] = end[-1];
+                joined->indices[joined->numIndices] = joined->indices[joined->numIndices - 1];
                 joined->indices[joined->numIndices + 1] = strip->indices[0];
                 joined->numIndices += 2;
             }
             else
             {
-                end[0] = end[-1];
+                joined->indices[joined->numIndices] = joined->indices[joined->numIndices - 1];
                 joined->indices[joined->numIndices + 1] = strip->indices[0];
                 joined->indices[joined->numIndices + 2] = strip->indices[0];
                 joined->numIndices += 3;
@@ -988,7 +996,8 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
 
         for (i = 0; i < strip->numIndices; i++)
         {
-            joined->indices[joined->numIndices++] = strip->indices[i];
+            joined->indices[joined->numIndices] = strip->indices[i];
+            joined->numIndices++;
         }
 
         RwFree(strip->indices);
