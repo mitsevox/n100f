@@ -21,10 +21,10 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
     const RwRGBA* pixel;
     F32 scale;
 
+    width = RESAMPLE_TOREAL * (F32)(x1 - x0);
+    pixel = (const RwRGBA*)(image->cpPixels + (y >> 16) * image->stride + (x0 >> 16) * 4);
     last = x1 >> 16;
     first = x0 >> 16;
-    width = RESAMPLE_TOREAL * (F32)(x1 - x0);
-    pixel = (const RwRGBA*)(image->cpPixels + (y >> 16) * image->stride + first * 4);
 
     if (first == last)
     {
