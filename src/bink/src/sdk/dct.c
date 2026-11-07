@@ -886,11 +886,14 @@ static void fastidct8x8(unsigned char* out, int stride, short* in, const int* q)
     }
 }
 
-static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q)
+static void fastidct8x8d(unsigned char* out, int stride, short* input, const int* quant)
 {
+    // FAKEMATCH: quantizer pointer alias steers allocation; real form believed to advance the quantizer parameter directly.
+    const int* q = quant;
+    // FAKEMATCH: input pointer alias steers allocation; real form believed to advance the input parameter directly.
+    short* in = input;
     int t[8];
     int ws[64];
-    int* w;
     unsigned char* o;
     unsigned char* o2;
     unsigned int p0, p1, p2, p3;
@@ -902,7 +905,10 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
 
     o2 = out + stride;
     s2 = stride + stride;
-    w = ws;
+    // FAKEMATCH: phase-local workspace cursor steers allocation; real form believed to share one w across both phases.
+    {
+    // FAKEMATCH: phase-specific cursor declaration; real form believed to declare one shared w at function scope.
+    int* w = ws;
     for (ctr = 8; ctr > 0; ctr--)
     {
         if ((in[8] | in[16] | in[24] | in[32] | in[40] | in[48] | in[56]) == 0)
@@ -965,7 +971,11 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
         w++;
     }
 
-    w = ws;
+    }
+    // FAKEMATCH: separate row workspace cursor steers allocation; real form believed to reset the shared w to ws.
+    {
+    // FAKEMATCH: phase-specific cursor declaration; real form believed to declare one shared w at function scope.
+    int* w = ws;
     o = out;
     for (ctr = 8; ctr > 0; ctr--)
     {
@@ -991,14 +1001,56 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
         t[5] = tmp11 - t[6];
         t[4] = tmp10 + t[5];
 
-        p0 = ((((t[0] + t[7] + 127) >> 8) & 0xFF) << 16) | (((t[1] + t[6] + 127) >> 8) & 0xFF);
-        p1 = ((((t[2] + t[5] + 127) >> 8) & 0xFF) << 16) | (((t[3] - t[4] + 127) >> 8) & 0xFF);
-        p2 = ((((t[3] + t[4] + 127) >> 8) & 0xFF) << 16) | (((t[2] - t[5] + 127) >> 8) & 0xFF);
-        p3 = ((((t[1] - t[6] + 127) >> 8) & 0xFF) << 16) | (((t[0] - t[7] + 127) >> 8) & 0xFF);
+        // FAKEMATCH: explicit byte-field staging block steers scheduling; real form believed to combine fields directly in packed-word expressions.
+        {
+        // FAKEMATCH: byte-field temporary steers allocation; real form believed to inline this exact signed biased-shift expression in its byte mask and packed word.
+        int v0 = ((t[0] + t[7] + 127) >> 8);
+        // FAKEMATCH: byte-field temporary steers allocation; real form believed to inline this exact signed biased-shift expression in its byte mask and packed word.
+        int v7 = ((t[0] - t[7] + 127) >> 8);
+        // FAKEMATCH: byte-field temporary steers allocation; real form believed to inline this exact signed biased-shift expression in its byte mask and packed word.
+        int v1 = ((t[1] + t[6] + 127) >> 8);
+        // FAKEMATCH: byte-field temporary steers allocation; real form believed to inline this exact signed biased-shift expression in its byte mask and packed word.
+        int v6 = ((t[1] - t[6] + 127) >> 8);
+        // FAKEMATCH: byte-field temporary steers allocation; real form believed to inline this exact signed biased-shift expression in its byte mask and packed word.
+        int v2 = ((t[2] + t[5] + 127) >> 8);
+        // FAKEMATCH: byte-field temporary steers allocation; real form believed to inline this exact signed biased-shift expression in its byte mask and packed word.
+        int v5 = ((t[2] - t[5] + 127) >> 8);
+        // FAKEMATCH: byte-field temporary steers allocation; real form believed to inline this exact signed biased-shift expression in its byte mask and packed word.
+        int v4 = ((t[3] + t[4] + 127) >> 8);
+        // FAKEMATCH: byte-field temporary steers allocation; real form believed to inline this exact signed biased-shift expression in its byte mask and packed word.
+        int v3 = ((t[3] - t[4] + 127) >> 8);
+        // FAKEMATCH: explicit byte mask and high-field staging steers scheduling; real form believed to inline this same mask and optional shift in the packed word.
+        v6 = ((v6 & 0xFF) << 16);
+        // FAKEMATCH: explicit byte mask and high-field staging steers scheduling; real form believed to inline this same mask and optional shift in the packed word.
+        v3 &= 0xFF;
+        // FAKEMATCH: explicit byte mask and high-field staging steers scheduling; real form believed to inline this same mask and optional shift in the packed word.
+        v0 = ((v0 & 0xFF) << 16);
+        // FAKEMATCH: explicit byte mask and high-field staging steers scheduling; real form believed to inline this same mask and optional shift in the packed word.
+        v7 &= 0xFF;
+        // FAKEMATCH: explicit byte mask and high-field staging steers scheduling; real form believed to inline this same mask and optional shift in the packed word.
+        v1 &= 0xFF;
+        // FAKEMATCH: explicit byte mask and high-field staging steers scheduling; real form believed to inline this same mask and optional shift in the packed word.
+        v2 = ((v2 & 0xFF) << 16);
+        // FAKEMATCH: explicit byte mask and high-field staging steers scheduling; real form believed to inline this same mask and optional shift in the packed word.
+        v5 &= 0xFF;
+        // FAKEMATCH: explicit byte mask and high-field staging steers scheduling; real form believed to inline this same mask and optional shift in the packed word.
+        v4 = ((v4 & 0xFF) << 16);
+        // FAKEMATCH: packed-word definition and OR operand order steer allocation; real form believed to use p0,p1,p2,p3 with high halves first.
+        p0 = v0 | v1;
+        // FAKEMATCH: packed-word definition and OR operand order steer allocation; real form believed to use p0,p1,p2,p3 with high halves first.
+        p2 = v5 | v4;
+        // FAKEMATCH: packed-word definition and OR operand order steer allocation; real form believed to use p0,p1,p2,p3 with high halves first.
+        p3 = v7 | v6;
+        // FAKEMATCH: packed-word definition and OR operand order steer allocation; real form believed to use p0,p1,p2,p3 with high halves first.
+        p1 = v2 | v3;
+        // FAKEMATCH: duplication update order steers scheduling; real form believed to use p0,p1,p2,p3.
         p0 |= p0 << 8;
-        p1 |= p1 << 8;
-        p2 |= p2 << 8;
+        // FAKEMATCH: duplication update order steers scheduling; real form believed to use p0,p1,p2,p3.
         p3 |= p3 << 8;
+        // FAKEMATCH: duplication update order steers scheduling; real form believed to use p0,p1,p2,p3.
+        p2 |= p2 << 8;
+        // FAKEMATCH: duplication update order steers scheduling; real form believed to use p0,p1,p2,p3.
+        p1 |= p1 << 8;
         ((unsigned int*)o)[0] = p0;
         ((unsigned int*)o)[1] = p1;
         ((unsigned int*)o)[2] = p2;
@@ -1007,9 +1059,11 @@ static void fastidct8x8d(unsigned char* out, int stride, short* in, const int* q
         ((unsigned int*)o2)[1] = p1;
         ((unsigned int*)o2)[2] = p2;
         ((unsigned int*)o2)[3] = p3;
+        }
         w += 8;
         o += s2;
         o2 += s2;
+    }
     }
 }
 
