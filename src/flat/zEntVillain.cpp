@@ -326,7 +326,7 @@ static inline F32 VSUP_ang_ofXZDir(_xVec3 dir);
 static F32 VSUP_dir_toPos(const _zEnt* ent, _xVec3 pos, _xVec3* dir);
 static inline F32 VSUP_ds2_toEnt(const _zEnt* ent, const _xEnt* tgt);
 static inline F32 VSUP_dir_toEnt(const _zEnt* ent, const _zEnt* tgt, _xVec3* dir);
-static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent,
+static F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent,
                                en_NPC_QUADRANT* qdrant);
 static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent);
 static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand);
@@ -13797,30 +13797,6 @@ static inline _zEnt* VSUP_plyrEnt()
     return &globals.player.ent;
 }
 
-// Squared flat distance from the villain to the player.
-static inline F32 VSUP_ds2_toPlyr(const _zEnt* ent)
-{
-    return VSUP_ds2_toEnt(ent, &globals.player.ent);
-}
-
-// Heading from the villain to the player's bound centre; see VSUP_dir_toEnt.
-static inline F32 VSUP_dir_toPlyr(const _zEnt* ent, _xVec3* dir)
-{
-    return VSUP_dir_toEnt(ent, &globals.player.ent, dir);
-}
-
-// Whether the player is in the villain's field of view.
-static inline S32 VSUP_plyr_inFOV(const st_zEntVillain* vil)
-{
-    return VSUP_ent_inFOV(vil, &globals.player.ent);
-}
-
-// Line of sight from the villain to the player; see VSUP_ent_inLOS.
-static inline S32 VSUP_plyr_inLOS(const st_zEntVillain* vil, S32 prev, F32 rand)
-{
-    return VSUP_ent_inLOS(vil, &globals.player.ent, prev, rand);
-}
-
 // Apply the asset configuration to the villain and its subtype's collision bounds.
 static void zVIL_apply_vilcfg(st_zEntVillain* ent, st_ZVIL_CONFIG_REFERENCE* cfg)
 {
@@ -13983,6 +13959,30 @@ static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
         VTMR_countDown(&ent->tmr_list[ZVIL_TDUR_DECAY], dt);
         break;
     }
+}
+
+// Squared flat distance from the villain to the player.
+static inline F32 VSUP_ds2_toPlyr(const _zEnt* ent)
+{
+    return VSUP_ds2_toEnt(ent, &globals.player.ent);
+}
+
+// Heading from the villain to the player's bound centre; see VSUP_dir_toEnt.
+static inline F32 VSUP_dir_toPlyr(const _zEnt* ent, _xVec3* dir)
+{
+    return VSUP_dir_toEnt(ent, &globals.player.ent, dir);
+}
+
+// Whether the player is in the villain's field of view.
+static inline S32 VSUP_plyr_inFOV(const st_zEntVillain* vil)
+{
+    return VSUP_ent_inFOV(vil, &globals.player.ent);
+}
+
+// Line of sight from the villain to the player; see VSUP_ent_inLOS.
+static inline S32 VSUP_plyr_inLOS(const st_zEntVillain* vil, S32 prev, F32 rand)
+{
+    return VSUP_ent_inLOS(vil, &globals.player.ent, prev, rand);
 }
 
 // Works out the villain's per-frame facts about itself and the player (prec). flg_needinfo picks
@@ -16911,8 +16911,13 @@ static void VEFX_plop_gum(st_zEntVillain* ent)
     }
 }
 
-// Copies the red, green and blue bytes of a particle color.
-#define VPAR_COPY_RGB(dst, src) ((dst)[0] = (src)[0], (dst)[1] = (src)[1], (dst)[2] = (src)[2])
+// Copies a particle color's red, green and blue from col into dst.
+static inline void VPAR_copyColor(U8* dst, const U8* col)
+{
+    dst[0] = col[0];
+    dst[1] = col[1];
+    dst[2] = col[2];
+}
 
 // Emit hologram particles and flicker the villain while its hologram flag is set.
 static void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt)
@@ -16926,9 +16931,9 @@ static void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt)
     if (fade)
     {
         col = gVillainPoofColorBirth[vil->asset->subtype];
-        VPAR_COPY_RGB(info.color_birth, col);
+        VPAR_copyColor(info.color_birth, col);
         col = gVillainPoofColorDeath[vil->asset->subtype];
-        VPAR_COPY_RGB(info.color_death, col);
+        VPAR_copyColor(info.color_death, col);
         info.custom_flags = 0x5A0;
         info.pos = *xBoundCenter(&vil->bound);
         info.size_death = 5.0f * vil->bound.sph.r;
@@ -16937,10 +16942,10 @@ static void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt)
         zParEmitterEmitCustom(sEmitHoloPoof, dt, &info);
 
         col = gVillainDotsColorBirth[vil->asset->subtype];
-        VPAR_COPY_RGB(info.color_birth, col);
+        VPAR_copyColor(info.color_birth, col);
         info.color_birth[3] = 255;
         col = gVillainDotsColorDeath[vil->asset->subtype];
-        VPAR_COPY_RGB(info.color_death, col);
+        VPAR_copyColor(info.color_death, col);
         info.color_death[3] = 0;
         info.custom_flags = 0x201A0;
         info.xzcircle_radius = vil->bound.sph.r;
@@ -20072,56 +20077,6 @@ static st_NPC_BONUS* VBON_choose_bonusItem(en_zEntVillainSubTypeID vtyp)
     return &g_npcBonus[choice];
 }
 
-static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
-{
-    S32 idx = 0;
-    F32 dlta = 1.0f / cnt;
-    F32 pt = iurand();
-    F32 lo;
-    F32 hi = 0.0f;
-
-    for (S32 i = 0; i < cnt; i++)
-    {
-        lo = hi;
-        if (wts)
-        {
-            hi += wts[i];
-        }
-        else
-        {
-            hi += dlta;
-        }
-        if (pt >= lo && pt <= hi)
-        {
-            idx = i;
-            break;
-        }
-    }
-
-    return list[idx];
-}
-
-static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
-{
-    F32 sum = 0.0f;
-    S32 i;
-
-    for (i = 0; i < cnt; i++)
-    {
-        if (wts[i] < 0.0f)
-        {
-            wts[i] = -wts[i];
-        }
-        sum += wts[i];
-    }
-
-    F32 fac = arbref / sum;
-    for (i = 0; i < cnt; i++)
-    {
-        wts[i] *= fac;
-    }
-}
-
 // Heading (around the y axis) of a direction, from its x and z.
 static inline F32 VSUP_ang_ofXZDir(_xVec3 dir)
 {
@@ -20217,38 +20172,23 @@ static S32 VSUP_ent_inFOV(const st_zEntVillain* vil, const _zEnt* ent)
     return result;
 }
 
-// Heading from the villain's facing to the entity, clamped. If qdrant is given, it gets the
-// entity's quadrant: front within 45 degrees either side of the facing, then right, back and
-// left. The left test repeats the front range's bounds, so left is never given and qdrant stays
-// as it was for an angle there.
-static inline F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent, en_NPC_QUADRANT* qdrant)
+// Puts the world position of one of the villain's model vertices in pos and returns 1, or returns 0
+// when that vertex is not set up.
+static inline S32 VSUP_vertPos(const st_zEntVillain* vil, en_ZVIL_MODEL_VERTEX vert, _xVec3* pos)
 {
-    F32 ang_diff = VSUP_dir_toEnt(vil, ent, NULL) - vil->frame->rot.angle;
-    F32 ang_aoi;
-
-    if (qdrant)
+    if (!(vil->flg_vert & (1 << vert)))
     {
-        ang_aoi = ang_diff;
-        ang_aoi += PI / 4;
-        ang_aoi = xAngleClamp(ang_aoi);
-        if (ang_aoi > 0.0f && ang_aoi <= PI / 2)
-        {
-            *qdrant = ZVIL_QUAD_FRONT;
-        }
-        else if (ang_aoi > PI / 2 && ang_aoi <= PI)
-        {
-            *qdrant = ZVIL_QUAD_RIGHT;
-        }
-        else if (ang_aoi > PI && ang_aoi < 3 * PI / 2)
-        {
-            *qdrant = ZVIL_QUAD_BACK;
-        }
-        else if (ang_aoi > 0.0f && ang_aoi < PI / 2)
-        {
-            *qdrant = ZVIL_QUAD_LEFT;
-        }
+        return 0;
     }
-    return xAngleClamp(ang_diff);
+
+    iModelTagEval(vil->model->Data, (iModelTag*)&vil->tag_vert[vert], vil->model->Mat, pos);
+    return 1;
+}
+
+// Line of sight from the villain to the entity; see VSUP_ent_inLOS_timz.
+static S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
+{
+    return VSUP_ent_inLOS_timz(vil, ent, prev, rand);
 }
 
 // Whether nothing in the scene blocks a ray from the villain's bound centre toward the entity's,
@@ -20278,42 +20218,100 @@ static S32 VSUP_ent_inLOS_timz(const st_zEntVillain* vil, const _zEnt* ent, S32 
     return result;
 }
 
-// Puts the world position of one of the villain's model vertices in pos and returns 1, or returns 0
-// when that vertex is not set up.
-static inline S32 VSUP_vertPos(const st_zEntVillain* vil, en_ZVIL_MODEL_VERTEX vert, _xVec3* pos)
+// Unused.
+static void zEntVillain_UnknownConstA(F32* a)
 {
-    if (!(vil->flg_vert & (1 << vert)))
+    *a = 0.1f;
+}
+
+// Heading from the villain's facing to the entity, clamped. If qdrant is given, it gets the
+// entity's quadrant: front within 45 degrees either side of the facing, then right, back and
+// left. The left test repeats the front range's bounds, so left is never given and qdrant stays
+// as it was for an angle there.
+static F32 VSUP_ent_AOI(const st_zEntVillain* vil, const _zEnt* ent, en_NPC_QUADRANT* qdrant)
+{
+    F32 ang_diff = VSUP_dir_toEnt(vil, ent, NULL) - vil->frame->rot.angle;
+    F32 ang_aoi;
+
+    if (qdrant)
     {
-        return 0;
+        ang_aoi = ang_diff;
+        ang_aoi += PI / 4;
+        ang_aoi = xAngleClamp(ang_aoi);
+        if (ang_aoi > 0.0f && ang_aoi <= PI / 2)
+        {
+            *qdrant = ZVIL_QUAD_FRONT;
+        }
+        else if (ang_aoi > PI / 2 && ang_aoi <= PI)
+        {
+            *qdrant = ZVIL_QUAD_RIGHT;
+        }
+        else if (ang_aoi > PI && ang_aoi < 3 * PI / 2)
+        {
+            *qdrant = ZVIL_QUAD_BACK;
+        }
+        else if (ang_aoi > 0.0f && ang_aoi < PI / 2)
+        {
+            *qdrant = ZVIL_QUAD_LEFT;
+        }
+    }
+    return xAngleClamp(ang_diff);
+}
+
+// Unused.
+static void zEntVillain_UnknownConstB(F32* a)
+{
+    *a = 9.0f;
+}
+
+static S32 VSUP_choose(S32* list, F32* wts, S32 cnt)
+{
+    S32 idx = 0;
+    F32 dlta = 1.0f / cnt;
+    F32 pt = iurand();
+    F32 lo;
+    F32 hi = 0.0f;
+
+    for (S32 i = 0; i < cnt; i++)
+    {
+        lo = hi;
+        if (wts)
+        {
+            hi += wts[i];
+        }
+        else
+        {
+            hi += dlta;
+        }
+        if (pt >= lo && pt <= hi)
+        {
+            idx = i;
+            break;
+        }
     }
 
-    iModelTagEval(vil->model->Data, (iModelTag*)&vil->tag_vert[vert], vil->model->Mat, pos);
-    return 1;
+    return list[idx];
 }
 
-// Line of sight from the villain to the entity; see VSUP_ent_inLOS_timz.
-static S32 VSUP_ent_inLOS(const st_zEntVillain* vil, const _zEnt* ent, S32 prev, F32 rand)
+static void VSUP_wtadjust(F32* wts, S32 cnt, F32 arbref)
 {
-    return VSUP_ent_inLOS_timz(vil, ent, prev, rand);
-}
+    F32 sum = 0.0f;
+    S32 i;
 
-// Flips each component of out that points against the matching component of alter.
-static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
-{
-    if (alter->x < 0.0f && out->x > 0.0f)
-        out->x *= -1.0f;
-    else if (alter->x > 0.0f && out->x < 0.0f)
-        out->x *= -1.0f;
+    for (i = 0; i < cnt; i++)
+    {
+        if (wts[i] < 0.0f)
+        {
+            wts[i] = -wts[i];
+        }
+        sum += wts[i];
+    }
 
-    if (alter->y < 0.0f && out->y > 0.0f)
-        out->y *= -1.0f;
-    else if (alter->y > 0.0f && out->y < 0.0f)
-        out->y *= -1.0f;
-
-    if (alter->z < 0.0f && out->z > 0.0f)
-        out->z *= -1.0f;
-    else if (alter->z > 0.0f && out->z < 0.0f)
-        out->z *= -1.0f;
+    F32 fac = arbref / sum;
+    for (i = 0; i < cnt; i++)
+    {
+        wts[i] *= fac;
+    }
 }
 
 // The flat (x and z) unit direction of a heading.
@@ -20392,10 +20390,31 @@ static S32 VSUP_accum_collide(st_zEntVillain* vil, _xVec3* vec_accum)
     return hit_something;
 }
 
+// Flips each component of out that points against the matching component of alter.
+static void VSUP_cheap_reflect(_xVec3* out, _xVec3* alter)
+{
+    if (alter->x < 0.0f && out->x > 0.0f)
+        out->x *= -1.0f;
+    else if (alter->x > 0.0f && out->x < 0.0f)
+        out->x *= -1.0f;
+
+    if (alter->y < 0.0f && out->y > 0.0f)
+        out->y *= -1.0f;
+    else if (alter->y > 0.0f && out->y < 0.0f)
+        out->y *= -1.0f;
+
+    if (alter->z < 0.0f && out->z > 0.0f)
+        out->z *= -1.0f;
+    else if (alter->z > 0.0f && out->z < 0.0f)
+        out->z *= -1.0f;
+}
+
 // Unused.
-static void zEntVillain_UnknownTemplate12c()
+static void zEntVillain_UnknownTemplate12c(_xVec3* out)
 {
     _xVec3 lost = { 0 };
+    lost.y = 1.0f;
+    *out = lost;
 }
 
 // Places a gum blob model at pos, unrotated and scaled by scale.
