@@ -46,9 +46,6 @@ U32 lbl_8025E7F4 = 0x40000;
 // Set to blank the screen until the first frame is shown.
 S32 lbl_8025E7F8 = 1;
 
-// The small zero-initialised variables follow. The compiler lays these out in reverse order of
-// definition, so they are defined here from the last address to the first.
-
 // The camera being updated and the device's open parameter.
 DlDeviceState lbl_8025F864;
 
@@ -117,8 +114,7 @@ RwVideoMode lbl_801DDF90[4] = {
     {0, 0, 0, rwVIDEOMODEEXCLUSIVE},
 };
 
-// The GX projection the camera sets and the device this driver registers (defined after
-// _rwDlSystem, which the device points to).
+// The GX projection the camera sets and the device this driver registers.
 extern F32 lbl_801DE04C[7];
 extern RwDevice lbl_801DE068;
 
@@ -386,6 +382,7 @@ static inline void DlFillStandards(RwStandardFunc* funcs, S32 numIn)
 static inline void DlInstallStandards(RwStandardFunc* funcs, DlStandard* standards, S32 count,
                                       S32 numIn)
 {
+    // FAKEMATCH: the clearing loop goes through DlFillStandards to set register order; real form believed to be the loop written here
     DlFillStandards(funcs, numIn);
 
     while (count--)
@@ -600,7 +597,6 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
 // The GX projection the camera sets.
 F32 lbl_801DE04C[7] = {0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f};
 
-S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn);
 S32 _rwDlIm2DRenderLine(RwIm2DVertex* vertices, S32 numVertices, S32 vert1, S32 vert2);
 S32 _rwDlIm2DRenderTriangle(RwIm2DVertex* vertices, S32 numVertices, S32 vert1, S32 vert2,
                             S32 vert3);
