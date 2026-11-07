@@ -7,6 +7,9 @@
 void (*sDebugModeCallbackFunc[46])();
 char* sDebugModeName[46];
 
+// Frames since boot; zGame, zMenu and zSaveLoad count it up and zSurface animates UVs from it.
+U32 gFrameCount;
+
 static char dm_names[14][16] = {
     "",       "dm_collision", "dm_anim", "dm_ent",    "dm_shadow", "dm_snd",  "dm_graph",
     "dm_gui", "dm_par",       "dm_fade", "dm_render", "dm_mem",    "dm_vram", "dm_pad",

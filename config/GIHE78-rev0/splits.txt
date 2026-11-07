@@ -187,6 +187,9 @@ flat/xCollideFast.cpp:
 	.text       start:0x80021620 end:0x80021B10
 	.sdata2     start:0x8025FCD8 end:0x8025FCF0
 
+flat/xColor.cpp:
+	.sdata2     start:0x8025FCF0 end:0x8025FD08
+
 flat/xCutscene.cpp:
 	.text       start:0x80021B10 end:0x80021B1C
 
@@ -194,6 +197,7 @@ flat/xDebug.cpp:
 	.text       start:0x80021B1C end:0x80021CB0
 	.data       start:0x801AE778 end:0x801AE858
 	.bss        start:0x801FE448 end:0x801FE5B8
+	.sbss       start:0x8025E9F8 end:0x8025EA00
 
 flat/xDraw.cpp:
 	.text       start:0x80021CB0 end:0x80021E70
@@ -238,6 +242,7 @@ flat/xFont.cpp:
 	.data       start:0x801AE8A0 end:0x801AE8B0
 	.bss        start:0x801FF270 end:0x801FFA40
 	.sdata      start:0x8025E430 end:0x8025E438
+	.sbss       start:0x8025EA78 end:0x8025EA80
 	.sdata2     start:0x8025FF20 end:0x8025FF58
 
 flat/xFX.cpp:
@@ -295,7 +300,7 @@ flat/xordarray.cpp:
 
 flat/xPad.cpp:
 	.text       start:0x80031AC8 end:0x800323D4
-	.bss        start:0x801FFE08 end:0x80200008
+	.bss        start:0x801FFE08 end:0x802001A8
 	.sbss       start:0x8025EAD0 end:0x8025EAD8
 	.sdata2     start:0x80260100 end:0x80260110
 
@@ -339,6 +344,7 @@ flat/xsavegame.cpp:
 
 flat/xScene.cpp:
 	.text       start:0x80038D48 end:0x800394B4
+	.sbss       start:0x8025EB78 end:0x8025EB80
 	.sdata2     start:0x80260148 end:0x80260150
 
 flat/xScrFx.cpp:
@@ -563,6 +569,7 @@ flat/zFog.cpp:
 
 flat/zFX.cpp:
 	.text       start:0x800AC010 end:0x800AC0BC
+	.sbss       start:0x8025EED0 end:0x8025EED8
 	.sdata2     start:0x80261228 end:0x80261238
 
 flat/zGame.cpp:
@@ -956,6 +963,9 @@ MSL_C.PPCEABI.bare.H/alloc.c:
 	.bss        start:0x80242898 end:0x802428D0
 	.sbss       start:0x8025F230 end:0x8025F238
 
+MSL_C.PPCEABI.bare.H/errno.c:
+	.sbss       start:0x8025F238 end:0x8025F240
+
 MSL_C.PPCEABI.bare.H/ansi_files.c:
 	.text       start:0x800E7350 end:0x800E7650
 	.data       start:0x801CA268 end:0x801CA3A8
@@ -979,6 +989,10 @@ MSL_C.PPCEABI.bare.H/char_io.c:
 MSL_C.PPCEABI.bare.H/ctype.c:
 	.text       start:0x800E9A7C end:0x800E9AA0
 	.data       start:0x801CA510 end:0x801CA810
+
+MSL_C.PPCEABI.bare.H/locale.c:
+	.rodata     start:0x801A7F18 end:0x801A7F20
+	.data       start:0x801CA810 end:0x801CA848
 
 MSL_C.PPCEABI.bare.H/direct_io.c:
 	.text       start:0x800E9AA0 end:0x800EA13C
@@ -1025,6 +1039,9 @@ MSL_C.PPCEABI.bare.H/string.c:
 	.text       start:0x800EE2F0 end:0x800EE7BC
 	.rodata     start:0x801A7F70 end:0x801A8300
 	.sdata      start:0x8025E5E0 end:0x8025E5E8
+
+MSL_C.PPCEABI.bare.H/float.c:
+	.sdata      start:0x8025E5E8 end:0x8025E618
 
 MSL_C.PPCEABI.bare.H/strtold.c:
 	.text       start:0x800EE7BC end:0x800EF854
@@ -1204,6 +1221,10 @@ dolphin/ax/AXVPB.c: comment:8
 	.bss        start:0x8024A840 end:0x8025A640
 	.sbss       start:0x8025F380 end:0x8025F390
 	.sdata2     start:0x80262680 end:0x80262688
+
+dolphin/ax/DSPCode.c: comment:8
+	.data       start:0x801CAC80 end:0x801CC660
+	.sdata      start:0x8025E620 end:0x8025E628
 
 dolphin/ax/AXProf.c: comment:8
 	.text       start:0x800F8734 end:0x800F877C
@@ -1444,7 +1465,7 @@ dolphin/pad/Pad.c: comment:8
 
 dolphin/dvd/dvdlow.c: comment:8
 	.text       start:0x8010DA44 end:0x8010E898
-	.bss        start:0x8025C038 end:0x8025C108
+	.bss        start:0x8025C038 end:0x8025C120
 	.sdata      start:0x8025E6D0 end:0x8025E6D8
 	.sbss       start:0x8025F560 end:0x8025F5A8
 
@@ -1504,7 +1525,7 @@ bink/src/sdk/decode/yuv.cpp:
 
 bink/src/sdk/decode/binkacd.c:
 	.text       start:0x8011F78C end:0x80120470
-	.rodata     start:0x801A8730 end:0x801A8790
+	.rodata     start:0x801A8730 end:0x801A87A0
 	.data       start:0x801DC240 end:0x801DC380
 
 bink/shared/time/radcb.c:
@@ -1512,7 +1533,7 @@ bink/shared/time/radcb.c:
 
 bink/src/sdk/decode/expand.c:
 	.text       start:0x80120B54 end:0x801241E0
-	.rodata     start:0x801A87A0 end:0x801A8C20
+	.rodata     start:0x801A87A0 end:0x801A8C40 align:32
 	.data       start:0x801DC380 end:0x801DC3C0
 	.sdata2     start:0x80262780 end:0x80262798
 
@@ -1533,11 +1554,11 @@ bink/src/sdk/varbits.c:
 
 bink/src/sdk/fft.c:
 	.text       start:0x801281AC end:0x8012C490
-	.rodata     start:0x801A8DC0 end:0x801A8E18
+	.rodata     start:0x801A8DC0 end:0x801A8E20
 
 bink/src/sdk/dct.c:
 	.text       start:0x8012C490 end:0x8012D564
-	.rodata     start:0x801A8E20 end:0x801ACE20
+	.rodata     start:0x801A8E20 end:0x801AD260 align:16
 
 bink/src/sdk/bitplane.c:
 	.text       start:0x8012D564 end:0x80130990
@@ -1614,6 +1635,7 @@ rwsdk/plugin/collis/ctgeom.c:
 
 rwsdk/plugin/collis/ctworld.c:
 	.text       start:0x80138904 end:0x8013AA64
+	.sdata2     start:0x802627E8 end:0x802627F8
 
 rwsdk/plugin/collis/ctbsp.c:
 	.text       start:0x8013AA64 end:0x8013B850
@@ -1628,18 +1650,32 @@ rwsdk/plugin/hanim/stdkey.c:
 
 rwsdk/plugin/hanim/rphanim.c:
 	.text       start:0x8013CD48 end:0x8013D90C
+	.bss        start:0x8025D6C8 end:0x8025D958
+	.sbss       start:0x8025F668 end:0x8025F670
+	.sdata2     start:0x80262860 end:0x80262868
 
 rwsdk/plugin/matfx/rpmatfx.c:
 	.text       start:0x8013D90C end:0x8013FA64
+	.rodata     start:0x801AD260 end:0x801AD280
+	.data       start:0x801DD3F0 end:0x801DD400
+	.sbss       start:0x8025F670 end:0x8025F680
+	.sdata2     start:0x80262868 end:0x80262888
 
 rwsdk/plugin/matfx/gcn/effectPipesGcn.c:
 	.text       start:0x8013FA64 end:0x80140D40
+	.bss        start:0x8025D958 end:0x8025D9C8
+	.sdata      start:0x8025E780 end:0x8025E788
+	.sbss       start:0x8025F680 end:0x8025F698
+	.sdata2     start:0x80262888 end:0x80262898
 
 rwsdk/plugin/matfx/gcn/multiTexGcnData.c:
 	.text       start:0x80140D40 end:0x80141910
 
 rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c:
 	.text       start:0x80141910 end:0x80142C2C
+	.data       start:0x801DD400 end:0x801DD460
+	.sbss       start:0x8025F698 end:0x8025F6A0
+	.sdata2     start:0x80262898 end:0x802628B0
 
 rwsdk/plugin/matfx/gcn/multiTexGcn.c:
 	.text       start:0x80142C2C end:0x80142C94
@@ -1656,9 +1692,13 @@ rwsdk/plugin/matfx/multiTexEffect.c:
 
 rwsdk/plugin/skin2/rpskin.c:
 	.text       start:0x80144154 end:0x80144D5C
+	.data       start:0x801DD460 end:0x801DD498
 
 rwsdk/plugin/skin2/gcn/skingcn.c:
 	.text       start:0x80144D5C end:0x80145A48
+	.rodata     start:0x801AD280 end:0x801AD298
+	.sbss       start:0x8025F6A8 end:0x8025F6B0
+	.sdata2     start:0x802628B0 end:0x802628C8
 
 rwsdk/plugin/skin2/gcn/skinstream.c:
 	.text       start:0x80145A48 end:0x80145E08
@@ -1706,6 +1746,8 @@ rwsdk/world/bamesh.c:
 
 rwsdk/world/bameshop.c:
 	.text       start:0x8014E7A4 end:0x80150F5C
+	.data       start:0x801DD520 end:0x801DD538
+	.sdata2     start:0x80262938 end:0x80262940
 
 rwsdk/world/basector.c:
 	.text       start:0x80150F5C end:0x80151038
@@ -1733,7 +1775,9 @@ rwsdk/world/pipe/p2/nodeAtomicEnumerateLights.c:
 
 rwsdk/world/pipe/p2/nodeAtomicInstance.c:
 	.text       start:0x80154994 end:0x80155B68
+	.rodata     start:0x801AD298 end:0x801AD2A8
 	.data       start:0x801DD5F0 end:0x801DD6D0
+	.sdata2     start:0x80262948 end:0x80262950
 
 rwsdk/world/pipe/p2/nodeLight.c:
 	.text       start:0x80155B68 end:0x80157088
@@ -1760,12 +1804,15 @@ rwsdk/world/pipe/p2/nodeWorldSectorInstance.c:
 	.text       start:0x80157A3C end:0x8015885C
 	.data       start:0x801DD970 end:0x801DDA28
 	.sdata      start:0x8025E7B8 end:0x8025E7C0
+	.sdata2     start:0x80262970 end:0x80262988
 
 rwsdk/world/pipe/p2/gcn/gcpipe.c:
 	.text       start:0x8015885C end:0x80159380
+	.sdata2     start:0x80262988 end:0x802629A0
 
 rwsdk/world/pipe/p2/gcn/instance/geominst.c:
 	.text       start:0x80159380 end:0x8015CB3C
+	.sdata2     start:0x802629A0 end:0x802629B8
 
 rwsdk/world/pipe/p2/gcn/instance/instancegeom.c:
 	.text       start:0x8015CB3C end:0x8015CF28
@@ -1783,9 +1830,13 @@ rwsdk/world/pipe/p2/gcn/wrldpipe.c:
 
 rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c:
 	.text       start:0x8015DA50 end:0x8015E7E8
+	.data       start:0x801DDA78 end:0x801DDAD8
+	.sdata2     start:0x802629B8 end:0x802629C0
 
 rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c:
 	.text       start:0x8015E7E8 end:0x8015ED40
+	.data       start:0x801DDAD8 end:0x801DDB40
+	.sdata2     start:0x802629C0 end:0x802629C8
 
 rwsdk/world/pipe/p2/gcn/instance/ibuffer.c:
 	.text       start:0x8015ED40 end:0x8015F0A4
@@ -1798,6 +1849,7 @@ rwsdk/world/pipe/p2/gcn/gclights.c:
 
 rwsdk/world/pipe/p2/gcn/native.c:
 	.text       start:0x8015F51C end:0x8015FEA4
+	.sdata      start:0x8025E7C0 end:0x8025E7C8
 
 rwsdk/tool/slerp/rtslerp.c:
 	.text       start:0x8015FEA4 end:0x80160340
@@ -1824,6 +1876,10 @@ rwsdk/src/plcore/baimmedi.c:
 
 rwsdk/src/plcore/bamatrix.c:
 	.text       start:0x801612EC end:0x8016351C
+	.rodata     start:0x801AD2A8 end:0x801AD2B8
+	.data       start:0x801DDBCC end:0x801DDBF0
+	.sbss       start:0x8025F788 end:0x8025F790
+	.sdata2     start:0x80262A50 end:0x80262A60
 
 rwsdk/src/plcore/bamemory.c:
 	.text       start:0x8016351C end:0x80163B14
@@ -1831,6 +1887,7 @@ rwsdk/src/plcore/bamemory.c:
 
 rwsdk/src/plcore/baresour.c:
 	.text       start:0x80163B14 end:0x80164374
+	.sbss       start:0x8025F798 end:0x8025F7A0
 
 rwsdk/src/plcore/bastream.c:
 	.text       start:0x80164374 end:0x80164D48
@@ -1873,6 +1930,9 @@ rwsdk/src/babintex.c:
 
 rwsdk/src/bacamera.c:
 	.text       start:0x801683DC end:0x80169E98
+	.data       start:0x801DDBF0 end:0x801DDC30
+	.sbss       start:0x8025F7C0 end:0x8025F7C8
+	.sdata2     start:0x80262AA0 end:0x80262AC8
 
 rwsdk/src/badevice.c:
 	.text       start:0x80169E98 end:0x8016A9D8
@@ -1888,6 +1948,9 @@ rwsdk/src/baframe.c:
 
 rwsdk/src/baimage.c:
 	.text       start:0x8016B6C4 end:0x8016D610
+	.data       start:0x801DDC60 end:0x801DDC78
+	.sbss       start:0x8025F7D8 end:0x8025F7E0
+	.sdata2     start:0x80262AD0 end:0x80262AE8
 
 rwsdk/src/baimras.c:
 	.text       start:0x8016D610 end:0x8016D794
@@ -1899,42 +1962,67 @@ rwsdk/src/baraster.c:
 
 rwsdk/src/baresamp.c:
 	.text       start:0x8016DD04 end:0x8016E9E4
+	.sdata2     start:0x80262AE8 end:0x80262B10
 
 rwsdk/src/basync.c:
 	.text       start:0x8016E9E4 end:0x8016F3EC
 
 rwsdk/src/batextur.c:
 	.text       start:0x8016F3EC end:0x80171450
+	.rodata     start:0x801AD2B8 end:0x801AD2D0
+	.data       start:0x801DDC90 end:0x801DDCC0
+	.sdata      start:0x8025E7DC end:0x8025E7F0
+	.sbss       start:0x8025F7E8 end:0x8025F7F8
+	.sdata2     start:0x80262B10 end:0x80262B18
 
 rwsdk/src/batypehf.c:
 	.text       start:0x80171450 end:0x801714EC
 
 rwsdk/driver/common/palquant.c:
 	.text       start:0x801714EC end:0x80173D28
+	.bss        start:0x8025DE90 end:0x8025E290
+	.sdata2     start:0x80262B18 end:0x80262B30
 
 rwsdk/driver/gcn/dl2drend.c:
 	.text       start:0x80173D28 end:0x801753BC
+	.data       start:0x801DDCC0 end:0x801DDD10
+	.bss        start:0x8025E290 end:0x8025E2B0
+	.sdata2     start:0x80262B30 end:0x80262B48
 
 rwsdk/driver/gcn/dlconvrt.c:
 	.text       start:0x801753BC end:0x80177334
+	.data       start:0x801DDD10 end:0x801DDF90
+	.sdata2     start:0x80262B48 end:0x80262B50
 
 rwsdk/driver/gcn/dldevice.c:
 	.text       start:0x80177334 end:0x80178B04
+	.rodata     start:0x801AD2D0 end:0x801AD3A8
+	.data       start:0x801DDF90 end:0x801DE0A0
+	.bss        start:0x8025E2B0 end:0x8025E348
+	.sbss       start:0x8025F7F8 end:0x8025F870
+	.sdata2     start:0x80262B50 end:0x80262B70
 
 rwsdk/driver/gcn/dlraster.c:
 	.text       start:0x80178B04 end:0x8017A658
+	.data       start:0x801DE0A0 end:0x801DE390
 
 rwsdk/driver/gcn/dlrendst.c:
 	.text       start:0x8017A658 end:0x8017B22C
 
 rwsdk/driver/gcn/dlsprite.c:
 	.text       start:0x8017B22C end:0x8017C95C
+	.data       start:0x801DE478 end:0x801DE5B8
+	.sbss       start:0x8025F880 end:0x8025F888
+	.sdata2     start:0x80262B80 end:0x80262BB8
 
 rwsdk/driver/gcn/dltexdic.c:
 	.text       start:0x8017C95C end:0x8017CF40
+	.sdata2     start:0x80262BB8 end:0x80262BC0
 
 rwsdk/driver/gcn/dltextur.c:
 	.text       start:0x8017CF40 end:0x8017DBB8
+	.data       start:0x801DE5B8 end:0x801DE628
+	.sdata2     start:0x80262BC0 end:0x80262BD8
 
 rwsdk/driver/gcn/dltoken.c:
 	.text       start:0x8017DBB8 end:0x8017DE58
@@ -2008,9 +2096,12 @@ rwsdk/src/pipe/p2/p2altmdl.c:
 
 rwsdk/src/pipe/p2/p2clpcom.c:
 	.text       start:0x80184C50 end:0x801869A8
+	.sdata2     start:0x80262C28 end:0x80262C48
 
 rwsdk/src/pipe/p2/p2core.c:
 	.text       start:0x801869A8 end:0x80187438
+	.sdata      start:0x8025E850 end:0x8025E858
+	.sbss       start:0x8025F8B0 end:0x8025F8B8
 
 rwsdk/src/pipe/p2/p2define.c:
 	.text       start:0x80187438 end:0x80189020
@@ -2035,6 +2126,9 @@ rwsdk/src/pipe/p2/gcn/im3dpipe.c:
 
 rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c:
 	.text       start:0x8018C260 end:0x8018CE90
+	.data       start:0x801DF0E8 end:0x801DF1A8
+	.sbss       start:0x8025F8B8 end:0x8025F8BC
 
 rwsdk/tool/intsec/rtintsec.c:
 	.text       start:0x8018CE90 end:0x8018E5B0
+	.sdata2     start:0x80262C50 end:0x80262C54

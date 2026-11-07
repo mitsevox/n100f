@@ -5,6 +5,8 @@
 #define MATFX_PLUGIN_ID 0x120
 #define TOON_PLUGIN_ID 0x12E
 
+SkinGlobals _rpSkinGlobals = { 0 };
+
 
 static RpSkin* SkinCreate(U32 numBones, U32 numVertices)
 {

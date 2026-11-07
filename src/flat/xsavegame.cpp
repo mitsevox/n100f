@@ -41,6 +41,8 @@ S32 xSGShutdown()
     return g_xsginit;
 }
 
+// Starts a save or load session on the memory card and registers the leader
+// client, which writes or reads each slot's summary (label, thumbnail, time).
 st_XSAVEGAME_DATA* xSGInit(en_SAVEGAME_MODE mode)
 {
     st_XSAVEGAME_DATA* xsgdata = &g_xsgdata;
@@ -123,19 +125,19 @@ S32 xSGTgtPhysSlotIdx(st_XSAVEGAME_DATA* xsgdata, S32 tidx)
     return iSGTgtPhysSlotIdx(xsgdata->isgsess, tidx);
 }
 
-// Picks the message text for a memory card failure: the card in slot tidx is named in it.
+// Names the memory card in slot tidx in the wording the failure message needs.
 extern "C" char* fn_800389FC(st_XSAVEGAME_DATA* xsgdata, S32 tidx, en_XSG_WHYFAIL whyFail)
 {
     switch (whyFail)
     {
-    case XSG_WHYERR_NOCARD:
-        return iSGTgtSlotName(NULL, tidx, 3);
     case XSG_WHYERR_NOROOM:
         return iSGTgtSlotName(NULL, tidx, 7);
     case XSG_WHYERR_DAMAGE:
         return iSGTgtSlotName(NULL, tidx, 6);
     case XSG_WHYERR_CARDYANKED:
         return iSGTgtSlotName(NULL, tidx, 5);
+    case XSG_WHYERR_NOCARD:
+        return iSGTgtSlotName(NULL, tidx, 3);
     default:
         return iSGTgtSlotName(xsgdata->isgsess, tidx, 2);
     }
@@ -181,36 +183,6 @@ S32 xSGTgtSelect(st_XSAVEGAME_DATA* xsgdata, S32 tidx)
     return result;
 }
 
-// Reads the leader block of every saved game in the game directory into g_leaders.
-static S32 xSG_grab_leaders(st_XSAVEGAME_DATA* xsgdata)
-{
-    S32 num_found = 0;
-    char readbuf[256] = {};
-
-    memset(&g_leaders, 0, sizeof(g_leaders));
-
-    if (!xSG_chdir_gamedir(xsgdata))
-    {
-        return 0;
-    }
-
-    for (S32 i = 0; i < 8; i++)
-    {
-        if (!xSGGameIsEmpty(xsgdata, i))
-        {
-            char* slotname = xSG_cm_slotname(xsgdata, i);
-            S32 rc = iSGReadLeader(xsgdata->isgsess, slotname, readbuf, sizeof(readbuf), 0);
-            if (rc != 0)
-            {
-                num_found++;
-                memcpy(&g_leaders[i], readbuf + 0x1c, sizeof(st_XSAVEGAME_LEADER));
-            }
-        }
-    }
-
-    return num_found;
-}
-
 S32 xSG_chdir_gamedir(st_XSAVEGAME_DATA* xsgdata)
 {
     S32 rc = 1;
@@ -220,25 +192,6 @@ S32 xSG_chdir_gamedir(st_XSAVEGAME_DATA* xsgdata)
         rc = 0;
     }
     return rc;
-}
-
-char* xSG_cm_slotname(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
-{
-    static char slotname[32] = {};
-    slotname[0] = '\0';
-
-    // Slot 0x9A5 names the settings file rather than a game.
-    char* tmp;
-    if (gidx == 0x9A5)
-    {
-        tmp = iSGMakeName(ISG_NGTYP_CONFIG, NULL, 0);
-    }
-    else
-    {
-        tmp = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, gidx);
-    }
-    strcpy(slotname, tmp);
-    return slotname;
 }
 
 S32 xSGGameSize(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
@@ -286,7 +239,7 @@ void xSGGameSet(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
 
 S32 xSGGameIsEmpty(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
 {
-    return xSGGameSize(xsgdata, gidx) <= 0;
+    return !(xSGGameSize(xsgdata, gidx) > 0);
 }
 
 // The save slot's last write time as text.
@@ -299,6 +252,26 @@ char* xSGGameModDate(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
         strcpy(da_date, iSGFileModDate(xsgdata->isgsess, xSG_cm_slotname(xsgdata, gidx)));
     }
     return da_date;
+}
+
+// The card file name for a save slot.
+char* xSG_cm_slotname(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
+{
+    static char slotname[32] = {};
+    slotname[0] = '\0';
+
+    // Slot 0x9A5 names the settings file rather than a game.
+    char* tmp;
+    if (gidx == 0x9A5)
+    {
+        tmp = iSGMakeName(ISG_NGTYP_CONFIG, NULL, 0);
+    }
+    else
+    {
+        tmp = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, gidx);
+    }
+    strcpy(slotname, tmp);
+    return slotname;
 }
 
 // The save slot's label, from the leader blocks read when the card was selected.
@@ -317,32 +290,41 @@ S32 xSGGameThumIndex(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
     S32 idx_thum = -1;
     if (xSG_chdir_gamedir(xsgdata))
     {
-        idx_thum = g_leaders[gidx].thumIconIndex;
+        st_XSAVEGAME_LEADER* lead = &g_leaders[gidx];
+        idx_thum = lead->thumIconIndex;
     }
     return idx_thum;
 }
 
+// Registers a client (a game system) whose data goes into the save file.
 S32 xSGAddSaveClient(st_XSAVEGAME_DATA* xsgdata, U32 clttag, void* cltdata,
                      S32 (*infofunc)(void*, st_XSAVEGAME_DATA*, S32*, S32*),
                      S32 (*procfunc)(void*, st_XSAVEGAME_DATA*, st_XSAVEGAME_WRITECONTEXT*))
 {
     S32 result = 1;
-    if (xsgdata->stage & 0x40000000)
+    st_XSAVEGAME_CLIENT* clt = NULL;
+    S32 stage = xsgdata->stage;
+
+    if (stage & 0x40000000)
     {
         result = 0;
+        clt = NULL;
     }
-    else if (!(xsgdata->stage & 1))
+    else if (!(stage & 1))
     {
         result = 0;
+        clt = NULL;
     }
 
-    if (xsgdata->stkcnt + 1 >= 128)
+    S32 cnt = xsgdata->stkcnt + 1;
+    if (cnt >= 128)
     {
         xUtil_idtag2string(clttag, 0);
         result = 0;
+        clt = NULL;
     }
 
-    st_XSAVEGAME_CLIENT* clt = &xsgdata->cltstk[xsgdata->stkcnt++];
+    clt = &xsgdata->cltstk[xsgdata->stkcnt++];
     clt->idtag = clttag;
     clt->cltinfo = infofunc;
     clt->cltproc = procfunc;
@@ -351,11 +333,16 @@ S32 xSGAddSaveClient(st_XSAVEGAME_DATA* xsgdata, U32 clttag, void* cltdata,
     clt->realamt = 0;
     clt->buf_sizepos = NULL;
 
-    xsgdata->stage |= 4;
+    stage = xsgdata->stage | 4;
+    xsgdata->stage = stage;
     if (result == 0)
     {
         xsgdata->stage |= 0x40000000;
+        clt = NULL;
     }
+
+    clt = NULL;
+    cnt = 0;
     return result;
 }
 
@@ -419,6 +406,69 @@ S32 xSGAddLoadClient(st_XSAVEGAME_DATA* xsgdata, U32 clttag, void* cltdata,
 S32 xSGSetup(st_XSAVEGAME_DATA* xsgdata)
 {
     return xSGSetup(xsgdata, 0, "nothing", -1, 0);
+}
+
+S32 xSG_sv_flipinfo(st_XSAVEGAME_DATA* xsgdata);
+static S32 xSG_sv_prepdest(st_XSAVEGAME_DATA* xsgdata);
+
+// Saving: records the slot, label, play time and icon, sizes every client and gets the buffer.
+// Loading: reads the file size and gets a buffer to load into.
+S32 xSGSetup(st_XSAVEGAME_DATA* xsgdata, S32 gidx, char* label, S32 thumIdx, iTime playtime)
+{
+    S32 result = 1;
+    if (xsgdata->stage & 0x40000000)
+    {
+        result = 0;
+    }
+    else if (!(xsgdata->stage & 1))
+    {
+        result = 0;
+    }
+
+    if (xsgdata->mode == XSG_MODE_SAVE)
+    {
+        xsgdata->gslot = gidx;
+        strncpy(xsgdata->label, label, 63);
+        xsgdata->label[63] = '\0';
+        xsgdata->playtime = playtime;
+        xsgdata->thumIndex = thumIdx;
+        if (result != 0 && xSG_sv_flipinfo(xsgdata) == 0)
+        {
+            result = 0;
+        }
+        if (result != 0 && xSG_sv_prepdest(xsgdata) == 0)
+        {
+            result = 0;
+        }
+    }
+    else
+    {
+        // Loading: a buffer the size of the save file on the card.
+        S32 rc = 1;
+        xsgdata->loadsize =
+            iSGFileSize(xsgdata->isgsess, iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, xsgdata->gslot));
+        if (xsgdata->loadsize < 1)
+        {
+            rc = 0;
+        }
+        else
+        {
+            xsgdata->loadbuf = (char*)xMemPushTemp(xsgdata->loadsize);
+            memset(xsgdata->loadbuf, 0, xsgdata->loadsize);
+        }
+
+        if (rc == 0)
+        {
+            result = 0;
+        }
+    }
+
+    xsgdata->stage |= 8;
+    if (result == 0)
+    {
+        xsgdata->stage |= 0x40000000;
+    }
+    return result;
 }
 
 static S32 xSG_smem_blkopen(st_XSAVEGAME_DATA* xsgdata);
@@ -601,6 +651,7 @@ en_XSGASYNC_STATUS xSGAsyncStatus(st_XSAVEGAME_DATA* xsgdata, S32 block, en_XSG_
         case ISG_OPERR_DAMAGE:
             con = XSG_WHYERR_NOROOM;
             break;
+        case ISG_OPERR_SVWRITE:
         default:
             con = XSG_WHYERR_CARDYANKED;
             break;
@@ -650,8 +701,10 @@ static S32 xSG_cb_leader_load(void*, st_XSAVEGAME_DATA* original_xsgdata,
 S32 xSGWriteData(st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_WRITECONTEXT* wctxt, char* data,
                  S32 elesiz, S32 n)
 {
-    S32 cnt;
+    S32 cnt = 0;
+    st_XSAVEGAME_CLIENT* clt = NULL;
     S32 is_ok = 1;
+    void* mcprc = NULL;
 
     if (xsgdata->stage & 0x40000000)
     {
@@ -674,7 +727,6 @@ S32 xSGWriteData(st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_WRITECONTEXT* wctxt, c
         return 0;
     }
 
-    void* mcprc;
     mcprc = memcpy(xsgdata->buf_curpos, data, cnt);
     if (mcprc == NULL)
     {
@@ -691,7 +743,7 @@ S32 xSGWriteData(st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_WRITECONTEXT* wctxt, c
         xsgdata->totamt += cnt;
         if (wctxt != NULL)
         {
-            st_XSAVEGAME_CLIENT* clt = (st_XSAVEGAME_CLIENT*)wctxt;
+            clt = (st_XSAVEGAME_CLIENT*)wctxt;
             clt->realamt += cnt;
         }
     }
@@ -802,24 +854,60 @@ S32 xSGReadData(st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_READCONTEXT* rctxt, F32
     return xSGReadData(xsgdata, rctxt, (char*)buff, sizeof(F32), n);
 }
 
+// Reads the leader block of every saved game in the game directory into g_leaders.
+static S32 xSG_grab_leaders(st_XSAVEGAME_DATA* xsgdata)
+{
+    S32 num_found = 0;
+    S32 rc;
+    char readbuf[256] = {};
+
+    memset(&g_leaders, 0, sizeof(g_leaders));
+
+    if (!xSG_chdir_gamedir(xsgdata))
+    {
+        return 0;
+    }
+
+    for (S32 i = 0; i < 8; i++)
+    {
+        if (!xSGGameIsEmpty(xsgdata, i))
+        {
+            st_XSAVEGAME_LEADER* lead = &g_leaders[i];
+            rc = iSGReadLeader(xsgdata->isgsess, xSG_cm_slotname(xsgdata, i), readbuf, sizeof(readbuf), 0);
+            if (rc != 0)
+            {
+                num_found++;
+                memcpy(lead, readbuf + 0x1c, sizeof(st_XSAVEGAME_LEADER));
+            }
+        }
+    }
+
+    return num_found;
+}
+
 S32 xSG_sv_flipinfo(st_XSAVEGAME_DATA* xsgdata)
 {
     S32 result = 1;
+    S32 i = 0;
+    S32 rc = 0;
+    st_XSAVEGAME_CLIENT* clt = NULL;
     S32 cltamt = 0;
     S32 cltmax = 0;
 
     // Ask each save client for the space it needs; every client block carries a 12-byte header.
-    for (S32 i = 0; i < xsgdata->stkcnt; i++)
+    for (i = 0; i < xsgdata->stkcnt; i++)
     {
-        st_XSAVEGAME_CLIENT* clt = &xsgdata->cltstk[i];
+        clt = &xsgdata->cltstk[i];
         cltamt = 0;
         cltmax = 0;
+        rc = 0;
 
-        S32 rc = clt->cltinfo(clt->cltdata, xsgdata, &cltamt, &cltmax);
+        rc = clt->cltinfo(clt->cltdata, xsgdata, &cltamt, &cltmax);
         if (rc == 0)
         {
             xUtil_idtag2string(clt->idtag, 0);
             result = 0;
+            rc = 0;
         }
         else
         {
@@ -836,24 +924,38 @@ S32 xSG_sv_flipinfo(st_XSAVEGAME_DATA* xsgdata)
             break;
         }
     }
+
+    rc = 0;
+    clt = NULL;
     return result;
 }
 
-// Writes the client's block header: its tag, then room for its reserved and written sizes.
-static S32 xSG_smem_cltopen(st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_CLIENT* clt)
+// Gets the save buffer: room for every client's maximum, their block headers and 16 bytes more.
+static S32 xSG_sv_prepdest(st_XSAVEGAME_DATA* xsgdata)
 {
-    S32 i = '3333';
-    S32 j = 0;
+    S32 result = 1;
 
-    xUtil_idtag2string(clt->idtag, 0);
-    j = clt->idtag;
-    xSGWriteData(xsgdata, NULL, (char*)&j, 4, 1);
-    clt->buf_maxpos = xsgdata->buf_curpos;
-    xSGWriteData(xsgdata, NULL, (char*)&i, 4, 1);
-    clt->buf_sizepos = xsgdata->buf_curpos;
-    xSGWriteData(xsgdata, NULL, (char*)&i, 4, 1);
-    xUtil_idtag2string(clt->idtag, 0);
-    return 1;
+    if (xsgdata->cltneed < 1)
+    {
+        result = 0;
+    }
+    else
+    {
+        xsgdata->memsize = xsgdata->cltmax + xsgdata->chdrneed + 0x10;
+        xsgdata->membuf = (char*)xMemPushTemp(xsgdata->memsize);
+
+        if (xsgdata->membuf == NULL)
+        {
+            result = 0;
+        }
+        else
+        {
+            xUtil_idtag2string('XSGS', 0);
+            memset(xsgdata->membuf, 0, xsgdata->memsize);
+            xsgdata->buf_curpos = xsgdata->membuf;
+        }
+    }
+    return result;
 }
 
 static S32 xSG_smem_cltclose(st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_CLIENT* clt);
@@ -869,22 +971,34 @@ S32 xSG_sv_flipproc(st_XSAVEGAME_DATA* xsgdata)
     {
         st_XSAVEGAME_CLIENT* clt = &xsgdata->cltstk[i];
 
-        rc = xSG_smem_cltopen(xsgdata, clt);
-        if (rc != 0)
+        // Block header: the client's tag, then room for its reserved and written sizes.
         {
-            rc = clt->cltproc(clt->cltdata, xsgdata, (st_XSAVEGAME_WRITECONTEXT*)clt);
-            if (rc == 0)
-            {
-                xUtil_idtag2string(clt->idtag, 0);
-                result = 0;
-            }
+            S32 tag;
+            S32 fill = '3333';
+            tag = 0;
 
-            S32 needfill = clt->maxamt - clt->realamt;
             xUtil_idtag2string(clt->idtag, 0);
-            while (needfill-- > 0)
-            {
-                xSGWriteData(xsgdata, NULL, &bfill, 1, 1);
-            }
+            tag = clt->idtag;
+            xSGWriteData(xsgdata, NULL, (char*)&tag, 4, 1);
+            clt->buf_maxpos = xsgdata->buf_curpos;
+            xSGWriteData(xsgdata, NULL, (char*)&fill, 4, 1);
+            clt->buf_sizepos = xsgdata->buf_curpos;
+            xSGWriteData(xsgdata, NULL, (char*)&fill, 4, 1);
+            xUtil_idtag2string(clt->idtag, 0);
+        }
+
+        rc = clt->cltproc(clt->cltdata, xsgdata, (st_XSAVEGAME_WRITECONTEXT*)clt);
+        if (rc == 0)
+        {
+            xUtil_idtag2string(clt->idtag, 0);
+            result = 0;
+        }
+
+        S32 needfill = clt->maxamt - clt->realamt;
+        xUtil_idtag2string(clt->idtag, 0);
+        while (needfill-- > 0)
+        {
+            xSGWriteData(xsgdata, NULL, &bfill, 1, 1);
         }
 
         if (rc != 0 && xSG_smem_cltclose(xsgdata, clt) == 0)
@@ -1076,6 +1190,7 @@ S32 xSG_ld_findcltblk(st_XSAVEGAME_DATA* xsgdata)
     U32 tag = 0;
     S32 maxamt = 0;
     S32 actamt = 0;
+    S32 found;
     st_XSAVEGAME_CLIENT* dfltclt = &xsgdata->dfltloadclt;
 
     xsgdata->walkpos = xsgdata->loadbuf;
@@ -1088,7 +1203,7 @@ S32 xSG_ld_findcltblk(st_XSAVEGAME_DATA* xsgdata)
     while (xsgdata->walkremain > 0)
     {
         tag = 0;
-        S32 found = 0;
+        found = 0;
         maxamt = 0;
         actamt = 0;
 
