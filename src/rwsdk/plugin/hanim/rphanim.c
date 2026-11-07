@@ -140,11 +140,12 @@ static void* HAnimDestructor(void* object, S32 offset, S32 size)
     return object;
 }
 
+// Copies the frame ID and clones a root hierarchy for the destination frame.
 static void* HAnimCopy(void* dstObject, const void* srcObject, S32 offset, S32 size)
 {
+    RpHAnimHierarchy* srcHierarchy;
     HAnimFrameData* srcFrameExt = HANIM_FRAMEDATA(srcObject);
     HAnimFrameData* dstFrameExt = HANIM_FRAMEDATA(dstObject);
-    RpHAnimHierarchy* srcHierarchy;
 
     dstFrameExt->id = srcFrameExt->id;
     srcHierarchy = srcFrameExt->hierarchy;
@@ -172,11 +173,14 @@ static void* HAnimCopy(void* dstObject, const void* srcObject, S32 offset, S32 s
     return dstObject;
 }
 
+// Writes the frame ID and its optional hierarchy node records.
 static RwStream* HAnimWrite(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
                             S32 size)
 {
     S32 version = HANIM_STREAM_VERSION;
     HAnimFrameData* frameExt;
+    S32 i;
+    RpHAnimNodeInfo* nodeInfo;
     RpHAnimHierarchy* hierarchy;
 
     if (!RwStreamWriteInt32(stream, &version, sizeof(S32)))
@@ -195,9 +199,6 @@ static RwStream* HAnimWrite(RwStream* stream, S32 binaryLength, const void* obje
 
     if (hierarchy && !(hierarchy->flags & rpHANIMHIERARCHYSUBHIERARCHY))
     {
-        RpHAnimNodeInfo* nodeInfo;
-        S32 i;
-
         if (!RwStreamWriteInt32(stream, &hierarchy->numNodes, sizeof(S32)))
         {
             return NULL;
@@ -248,11 +249,12 @@ static RwStream* HAnimWrite(RwStream* stream, S32 binaryLength, const void* obje
     return stream;
 }
 
+// Reads the frame ID and optional hierarchy data from the stream.
 static RwStream* HAnimRead(RwStream* stream, S32 binaryLength, void* object, S32 offset, S32 size)
 {
     HAnimFrameData* frameExt = HANIM_FRAMEDATA(object);
-    S32 version;
     S32 numNodes;
+    S32 version;
     S32 flags;
     S32 maxKeyFrameSize;
 
@@ -279,8 +281,8 @@ static RwStream* HAnimRead(RwStream* stream, S32 binaryLength, void* object, S32
     if (numNodes > 0)
     {
         RpHAnimHierarchy* hierarchy;
-        RpHAnimNodeInfo* nodeInfo;
         S32 i;
+        RpHAnimNodeInfo* nodeInfo;
 
         if (!RwStreamReadInt32(stream, &flags, sizeof(S32)))
         {
