@@ -1,10 +1,10 @@
 #include <rpworld.h>
 
+static RwModuleInfo binWorldModule;
 static U32 lastSeenWorldRightsPluginId;
 static S32 lastSeenWorldExtraData;
 static U32 lastSeenSectRightsPluginId;
 static S32 lastSeenSectExtraData;
-static RwModuleInfo binWorldModule;
 
 RwStream* _rpReadWorldRights(RwStream* stream, S32 length, void* object, S32 offset, S32 size)
 {
@@ -376,20 +376,28 @@ RpWorldSector* WorldSectorStreamRead(RwStream* stream, U8** memory, RpWorld* wor
 
             if (version < BINWORLD_U16POLYGONVERSION)
             {
-                S32 numPolygons = sector->numPolygons;
-                S32 oldSize = numPolygons * sizeof(OldPolygon);
-                RpPolygon* polygons = sector->polygons;
-                OldPolygon* oldPolygons = (OldPolygon*)RwMalloc(oldSize);
                 S32 i;
+                OldPolygon* oldPolygon;
+                OldPolygon* oldPolygons;
+                RpPolygon* polygons;
+                S32 oldSize;
+                S32 numPolygons;
+
+                numPolygons = sector->numPolygons;
+                oldSize = numPolygons * sizeof(OldPolygon);
+                polygons = sector->polygons;
+                oldPolygons = (OldPolygon*)RwMalloc(oldSize);
+                oldPolygon = oldPolygons;
 
                 memcpy(oldPolygons, polygons, oldSize);
 
                 for (i = 0; i < numPolygons; i++)
                 {
-                    polygons[i].matIndex = oldPolygons[i].matIndex;
-                    polygons[i].vertIndex[0] = oldPolygons[i].vertIndex[0];
-                    polygons[i].vertIndex[1] = oldPolygons[i].vertIndex[1];
-                    polygons[i].vertIndex[2] = oldPolygons[i].vertIndex[2];
+                    polygons[i].matIndex = oldPolygon->matIndex;
+                    polygons[i].vertIndex[0] = oldPolygon->vertIndex[0];
+                    polygons[i].vertIndex[1] = oldPolygon->vertIndex[1];
+                    polygons[i].vertIndex[2] = oldPolygon->vertIndex[2];
+                    oldPolygon++;
                 }
 
                 RwFree(oldPolygons);
@@ -625,16 +633,17 @@ RpPlaneSector* PlaneSectorStreamRead(RwStream* stream, U8** memory, RpWorld* wor
 // reference, reads the plugin data and unlocks the world to build its meshes.
 RpWorld* RpWorldStreamRead(RwStream* stream)
 {
+    U8* memory;
     U32 size;
     U32 version;
+    U32 numTexCoordSets;
+    RwSurfaceProperties* surfaceProps;
     WorldStreamHeader header;
-    U8* memory;
     RpWorld* world;
     RpSector* rootSector;
-    U32 numTexCoordSets;
+    U32 worldSize;
     S32 texCoordSets;
     S32 format;
-    U32 worldSize;
     S32 i;
 
     if (!RwStreamFindChunk(stream, rwID_STRUCT, &size, &version))
@@ -660,14 +669,16 @@ RpWorld* RpWorldStreamRead(RwStream* stream)
 
     RwMemNative32(&header, sizeof(header));
     RwMemFloat32ToReal(&header.negOrigin, sizeof(header.negOrigin));
-    RwMemFloat32ToReal(&header.surfaceProps, sizeof(header.surfaceProps));
+    surfaceProps = &header.surfaceProps;
+    RwMemFloat32ToReal(surfaceProps, sizeof(header.surfaceProps));
 
     format = header.flags;
 
-    worldSize = worldTKList.sizeOfStruct + header.planeCount * sizeof(RpPlaneSector) +
-                header.sectorCount * sectorTKList.sizeOfStruct;
+    worldSize = worldTKList.sizeOfStruct;
+    worldSize += header.planeCount * sizeof(RpPlaneSector);
+    worldSize += header.sectorCount * sectorTKList.sizeOfStruct;
 
-    texCoordSets = format & BINWORLD_TEXCOORDSETSMASK;
+    texCoordSets = header.flags & BINWORLD_TEXCOORDSETSMASK;
 
     if (texCoordSets)
     {
@@ -727,7 +738,7 @@ RpWorld* RpWorldStreamRead(RwStream* stream)
 
     world->flags = format;
     world->renderOrder = rpWORLDRENDERBACK2FRONT;
-    _rpWorldSetSurfaceProperties(world, &header.surfaceProps);
+    _rpWorldSetSurfaceProperties(world, surfaceProps);
 
     RwV3dScaleMacro(&world->worldOrigin, &header.negOrigin, -1.0f);
 

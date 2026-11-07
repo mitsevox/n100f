@@ -73,56 +73,63 @@ static RpWorldSector* WorldFindSector(RpWorldSector* worldSector, void* data)
     return worldSector;
 }
 
+// Render each atomic at most once during the current engine frame.
+static void WorldSectorRenderAtomics(RpWorldSector* worldSector)
+{
+    RwLLLink* cur;
+    RwLLLink* end;
+
+    cur = rwLinkListGetFirstLLLink(&worldSector->collAtomicsInWorldSector);
+    end = rwLinkListGetTerminator(&worldSector->collAtomicsInWorldSector);
+
+    while (cur != end)
+    {
+        RpAtomic* atomic = ((WorldTie*)cur)->atomic;
+
+        if (rwObjectTestFlags(atomic, rpATOMICRENDER) &&
+            atomic->renderFrame != RWSRCGLOBAL(renderFrame))
+        {
+            if (RwCameraFrustumTestSphere((RwCamera*)RWSRCGLOBAL(curCamera),
+                                          RpAtomicGetWorldBoundingSphere(atomic)))
+            {
+                atomic->renderCallBack(atomic);
+            }
+
+            atomic->renderFrame = RWSRCGLOBAL(renderFrame);
+        }
+
+        cur = rwLLLinkGetNext(cur);
+    }
+
+    cur = rwLinkListGetFirstLLLink(&worldSector->noCollAtomicsInWorldSector);
+    end = rwLinkListGetTerminator(&worldSector->noCollAtomicsInWorldSector);
+
+    while (cur != end)
+    {
+        RpAtomic* atomic = ((WorldTie*)cur)->atomic;
+
+        if (rwObjectTestFlags(atomic, rpATOMICRENDER) &&
+            atomic->renderFrame != RWSRCGLOBAL(renderFrame))
+        {
+            if (RwCameraFrustumTestSphere((RwCamera*)RWSRCGLOBAL(curCamera),
+                                          RpAtomicGetWorldBoundingSphere(atomic)))
+            {
+                atomic->renderCallBack(atomic);
+            }
+
+            atomic->renderFrame = RWSRCGLOBAL(renderFrame);
+        }
+
+        cur = rwLLLinkGetNext(cur);
+    }
+}
+
+// Render visible atomics once this frame when sector rendering succeeds.
 static RpWorldSector* WorldSectorRender(RpWorldSector* worldSector, void* data)
 {
     if (RpWorldSectorRender(worldSector))
     {
-        RwLLLink* end;
-        RwLLLink* cur;
-
-        cur = rwLinkListGetFirstLLLink(&worldSector->collAtomicsInWorldSector);
-        end = rwLinkListGetTerminator(&worldSector->collAtomicsInWorldSector);
-
-        while (cur != end)
-        {
-            RpAtomic* atomic = ((WorldTie*)cur)->atomic;
-
-            if (rwObjectTestFlags(atomic, rpATOMICRENDER) &&
-                atomic->renderFrame != RWSRCGLOBAL(renderFrame))
-            {
-                if (RwCameraFrustumTestSphere((RwCamera*)RWSRCGLOBAL(curCamera),
-                                              RpAtomicGetWorldBoundingSphere(atomic)))
-                {
-                    atomic->renderCallBack(atomic);
-                }
-
-                atomic->renderFrame = RWSRCGLOBAL(renderFrame);
-            }
-
-            cur = rwLLLinkGetNext(cur);
-        }
-
-        cur = rwLinkListGetFirstLLLink(&worldSector->noCollAtomicsInWorldSector);
-        end = rwLinkListGetTerminator(&worldSector->noCollAtomicsInWorldSector);
-
-        while (cur != end)
-        {
-            RpAtomic* atomic = ((WorldTie*)cur)->atomic;
-
-            if (rwObjectTestFlags(atomic, rpATOMICRENDER) &&
-                atomic->renderFrame != RWSRCGLOBAL(renderFrame))
-            {
-                if (RwCameraFrustumTestSphere((RwCamera*)RWSRCGLOBAL(curCamera),
-                                              RpAtomicGetWorldBoundingSphere(atomic)))
-                {
-                    atomic->renderCallBack(atomic);
-                }
-
-                atomic->renderFrame = RWSRCGLOBAL(renderFrame);
-            }
-
-            cur = rwLLLinkGetNext(cur);
-        }
+        WorldSectorRenderAtomics(worldSector);
     }
 
     return worldSector;
@@ -824,9 +831,7 @@ RpWorld* RpWorldCreate(RwBBox* boundingBox)
 
     world->rootSector = (RpSector*)sector;
     world->numTexCoordSets = 0;
-    world->worldOrigin.x = 0.0f;
-    world->worldOrigin.y = 0.0f;
-    world->worldOrigin.z = 0.0f;
+    world->worldOrigin.x = world->worldOrigin.y = world->worldOrigin.z = 0.0f;
     world->boundingBox.inf = boundingBox->inf;
     world->boundingBox.sup = boundingBox->sup;
     rwLinkListInitialize(&world->clumpList);
