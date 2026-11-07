@@ -5110,7 +5110,7 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 resp->trangoal = ZVIL_GOAL_SOAPED;
                 resp->tranmode = ZVIL_MODE_ALERT;
                 resp->stim = ZVIL_STIM_TRANGOAL;
-                g_stattally[vil->asset->subtype].cnt_hitsoap++;
+                g_stattally[vil->asset->subtype].cnt_hitsoap = g_stattally[vil->asset->subtype].cnt_hitsoap + 1;
                 g_stattally[eEntVillainType_NoMore].cnt_hitsoap++;
             }
             else
@@ -5650,7 +5650,7 @@ static S32 VILN_std_stimulus(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
                 resp->trangoal = ZVIL_GOAL_SOAPED;
                 resp->tranmode = ZVIL_MODE_NOCHANGE;
                 resp->stim = ZVIL_STIM_TRANGOAL;
-                g_stattally[vil->asset->subtype].cnt_hitsoap++;
+                g_stattally[vil->asset->subtype].cnt_hitsoap = g_stattally[vil->asset->subtype].cnt_hitsoap + 1;
                 g_stattally[eEntVillainType_NoMore].cnt_hitsoap++;
             }
             break;
@@ -6292,7 +6292,8 @@ static S32 VILN_std_trangoal(st_zEntVillain* vil, st_STIMULUS_CONTEXT_DATA* stim
             vil->tmr_list[ZVIL_TDUR_DAZED] = VCFG_tymref(vil, ZVIL_TDUR_DAZED) + 0.25f * (iurand() - 0.5f) * VCFG_tymref(vil, ZVIL_TDUR_DAZED);
             if (stimctxt->amt_stun > 0.0f)
             {
-                tmp_fv = vil->tmr_list[ZVIL_TDUR_DAZED] * stimctxt->amt_stun;
+                tmp_fv = vil->tmr_list[ZVIL_TDUR_DAZED];
+                tmp_fv *= stimctxt->amt_stun;
                 vil->tmr_list[ZVIL_TDUR_DAZED] = MAX(1.5f, tmp_fv);
             }
             vil->tmr_list[ZVIL_TTIL_RECOVERY] = vil->tmr_list[ZVIL_TDUR_DAZED];
@@ -8056,9 +8057,8 @@ static S32 VILN_gang_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CO
         }
         if (vil->tmr_list[ZVIL_TTIL_FIDGET] <= 0.0f && vil->tmr_list[ZVIL_TYMR_MINANIMPLAY] <= 0.0f)
         {
-            en_NPC_ANIMSTATES anim = vil->anim_playnext;
-            if (anim == ZVIL_ANIM_GANG_FIDGET || anim == ZVIL_ANIM_GANG_FIDGET1 ||
-                anim == ZVIL_ANIM_GANG_FIDGET2 || anim == ZVIL_ANIM_GANG_FIDGET3)
+            if (vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET || vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET1 ||
+                vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET2 || vil->anim_playnext == ZVIL_ANIM_GANG_FIDGET3)
             {
                 vil->anim_loopmult = 0.97f;
                 vil->vhf->pickanim(vil, ZVIL_GOAL_IDLE, ZVIL_GSPOT_RESUME);
@@ -13154,6 +13154,17 @@ static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
     }
 }
 
+// Empties the villain's sound queue: every entry gets the bogus sound and no direct sound.
+static inline void VSND_clearQueue(st_zEntVillain* vil)
+{
+    S32 i;
+    for (i = 0; i < 4; i++)
+    {
+        vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
+        vil->snd_queue[i].sndDirect = 0;
+    }
+}
+
 // Changes the villain's goal when asked to: clears its sound queue, lets its type leave the old
 // goal and enter the new one, then sets the goal and restarts the goal timer. Returns 0 if
 // either step failed.
@@ -13161,22 +13172,21 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
 {
     S32 rc = 0;
     S32 result = 1;
-    S32 i = 0;
     static S32 trangoal_safety_nest = 0;
     st_STIMULUS_CONTEXT_DATA tranctxt = { ZVIL_STIM_NONE };
 
     if (stimctxt->stim == ZVIL_STIM_TRANGOAL && stimctxt->trangoal != ent->goal)
     {
+        rc = 0;
+
         if (stimctxt->tranmode)
         {
+            rc = 0;
             ent->mode = stimctxt->tranmode;
         }
 
-        for (i = 0; i < 4; i++)
-        {
-            ent->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
-            ent->snd_queue[i].sndDirect = 0;
-        }
+        rc = 0;
+        VSND_clearQueue(ent);
 
         rc = 0;
         tranctxt.stim = ZVIL_STIM_EXITGOAL;
@@ -13195,8 +13205,11 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
             result = 0;
         }
 
+        rc = 0;
         VGOL_set(ent, stimctxt->trangoal);
+        rc = 0;
         ent->tmr_list[ZVIL_TYMR_CURGOAL] = 0.0f;
+        rc = 0;
     }
 
     return result;
@@ -14515,206 +14528,204 @@ static void VCFG_readParms(st_ZVIL_CONFIG_REFERENCE* cfgdata)
     _xVec3 vec_res = { 0 };
     F32 fv;
 
-    if (cfgdata->asset->modelInfoID &&
-        (pmdata = zEntGetModelParams(cfgdata->asset->modelInfoID, &pmsize)))
-    {
-        if (!pmsize) return;
+    if (!cfgdata->asset->modelInfoID) return;
+    pmdata = zEntGetModelParams(cfgdata->asset->modelInfoID, &pmsize);
+    if (!pmdata || !pmsize) return;
 
-        for (i = 0; i < ZVIL_PARM_NOMORE; i++)
+    for (i = 0; i < ZVIL_PARM_NOMORE; i++)
+    {
+        switch (i)
         {
-            switch (i)
-            {
-            case ZVIL_PARM_MDLSCL_BASE:
-                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
-                    cfgdata->misc_flags |= 8;
-                else
-                    cfgdata->misc_flags &= ~8;
-                cfgdata->scl_modelBase = vec_res;
-                break;
-            case ZVIL_PARM_SANIM_IDLE:
-                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
-                    cfgdata->misc_flags |= 1;
-                else
-                    cfgdata->misc_flags &= ~1;
-                cfgdata->sanim_idle = vec_res;
-                break;
-            case ZVIL_PARM_SANIM_MOVE:
-                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
-                    cfgdata->misc_flags |= 2;
-                else
-                    cfgdata->misc_flags &= ~2;
-                cfgdata->sanim_move = vec_res;
-                break;
-            case ZVIL_PARM_SANIM_CHASE:
-                if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res))
-                    cfgdata->misc_flags |= 4;
-                else
-                    cfgdata->misc_flags &= ~4;
-                cfgdata->sanim_chase = vec_res;
-                break;
-            case ZVIL_PARM_WANDER_ARC:
-                cfgdata->ang_wander = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
-                break;
-            case ZVIL_PARM_HIT_POINTS:
-                cfgdata->hitpts = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
-                break;
-            // The bubbled and gummed times land in each other's timer; the asset values do not
-            // (VCFG_readAsset).
-            case ZVIL_PARM_BUBBLED_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_GUM] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
-                break;
-            case ZVIL_PARM_GUMMED_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_SOAP] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
-                break;
-            case ZVIL_PARM_DAZED_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_DAZED] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
-                break;
-            case ZVIL_PARM_EXTEND_RANGE:
-                cfgdata->dst_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            case ZVIL_PARM_EXTEND_RATE:
-                cfgdata->spd_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            case ZVIL_PARM_EXTEND_WIDTH:
-                cfgdata->wid_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            case ZVIL_PARM_EXTEND_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_EXTEND] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 2.0f);
-                break;
-            case ZVIL_PARM_FOV_ANGLE:
-                cfgdata->fov_detect = PI * zParamGetFloat(pmdata, pmsize, g_parmname[i], 50.0f) / 180.0f;
-                break;
-            case ZVIL_PARM_GLOAT_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_TAUNT] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 3.0f);
-                break;
-            case ZVIL_PARM_LOB_RANGE:
-                cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
-                break;
-            case ZVIL_PARM_LOB_SPEED:
-                cfgdata->spd_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], 2.0f);
-                break;
-            case ZVIL_PARM_LOB_SALVO:
-                cfgdata->cnt_lobSalvo = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
-                break;
-            case ZVIL_PARM_LOB_RELOAD_TIME:
-                cfgdata->tymref_list[ZVIL_TDUR_LOBRELOAD] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            // The lob arc and heaviness parameters both overwrite the lob range; their asset values
-            // still reach fac_lobarc and fac_lobheavy.
-            case ZVIL_PARM_LOB_ARC:
-                cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
-                break;
-            case ZVIL_PARM_LOB_HEAVY:
-                cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
-                break;
-            case ZVIL_PARM_DETECT_RADIUS:
-            {
-                fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
-                cfgdata->ds2_detect = SQR(fv);
-                break;
-            }
-            case ZVIL_PARM_DETECT_HEIGHT:
-                cfgdata->hyt_detect = zParamGetFloat(pmdata, pmsize, g_parmname[i], 6.0f);
-                break;
-            case ZVIL_PARM_DETECT_HYTOFF:
-                cfgdata->hyt_dtctoff = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.0f);
-                break;
-            case ZVIL_PARM_PURSUE_RADIUS:
-            {
-                fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
-                cfgdata->ds2_pursue = SQR(fv);
-                break;
-            }
-            case ZVIL_PARM_MOVE_RATE:
-                cfgdata->spd_move = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            case ZVIL_PARM_CHASE_RATE:
-                cfgdata->spd_chase = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
-                break;
-            case ZVIL_PARM_TURN_RATE:
-                cfgdata->spd_turn = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.235988f);
-                break;
-            case ZVIL_PARM_VERT_GUM_LFOOT:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_LFOOT] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_GUM_RFOOT:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_RFOOT] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_GUM_ELBOW:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_ELBOW] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_GUM_CUSTA:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_CUSTA] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_GUM_CUSTB:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_GUM_CUSTB] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_WEAPON:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_WEAPON] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_ATTACK:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_ATTACK] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_ATTACKALT:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_ATTACKALT] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_DMG_BOUNCE:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_DMG_BOUNCE] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_LOSEYEBALL:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_LOSEYEBALL] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_RBSWORDHANDLE:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_SWORDHANDLE] = vec_res;
-                break;
-            case ZVIL_PARM_VERT_RBSWORDPIVOT:
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
-                cfgdata->pos_verts[ZVIL_MDLVERT_SWORDPIVOT] = vec_res;
-                break;
-            case ZVIL_PARM_BND_SPH_CENTER:
-                vec_tmp.x = 0.0f;
-                vec_tmp.y = 0.7f;
-                vec_tmp.z = 0.0f;
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_tmp, &vec_res);
-                cfgdata->vec_bndoffset = vec_res;
-                break;
-            case ZVIL_PARM_BND_SPH_RADIUS:
-                cfgdata->rad_bound = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.7f);
-                break;
-            case ZVIL_PARM_BND2_SPH_CENTER:
-                vec_tmp.x = 0.0f;
-                vec_tmp.y = 2.1f;
-                vec_tmp.z = 0.0f;
-                zParamGetVector(pmdata, pmsize, g_parmname[i], vec_tmp, &vec_res);
-                cfgdata->vec_bnd2offset = vec_res;
-                break;
-            case ZVIL_PARM_BND2_SPH_RADIUS:
-                cfgdata->rad_bound2 = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.0f);
-                break;
-            case ZVIL_PARM_SPAWNMASK:
-                cfgdata->msk_condspawn = zParamGetInt(pmdata, pmsize, g_parmname[i], 0);
-                break;
-            case ZVIL_PARM_MINDIFFICULTY:
-                cfgdata->minDifficulty = zParamGetInt(pmdata, pmsize, g_parmname[i], 0);
-                break;
-            case ZVIL_PARM_DMG_BEGTIME:
-                cfgdata->tym_attack_begin = zParamGetInt(pmdata, pmsize, g_parmname[i], -1) / 30.0f;
-                break;
-            case ZVIL_PARM_DMG_ENDTIME:
-                cfgdata->tym_attack_end = zParamGetInt(pmdata, pmsize, g_parmname[i], 1000) / 30.0f;
-                break;
-            }
+        case ZVIL_PARM_MDLSCL_BASE:
+            if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
+                cfgdata->misc_flags |= 8;
+            else
+                cfgdata->misc_flags &= ~8;
+            cfgdata->scl_modelBase = vec_res;
+            break;
+        case ZVIL_PARM_SANIM_IDLE:
+            if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
+                cfgdata->misc_flags |= 1;
+            else
+                cfgdata->misc_flags &= ~1;
+            cfgdata->sanim_idle = vec_res;
+            break;
+        case ZVIL_PARM_SANIM_MOVE:
+            if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res) > 2)
+                cfgdata->misc_flags |= 2;
+            else
+                cfgdata->misc_flags &= ~2;
+            cfgdata->sanim_move = vec_res;
+            break;
+        case ZVIL_PARM_SANIM_CHASE:
+            if (zParamGetVector(pmdata, pmsize, g_parmname[i], scl_dflt, &vec_res))
+                cfgdata->misc_flags |= 4;
+            else
+                cfgdata->misc_flags &= ~4;
+            cfgdata->sanim_chase = vec_res;
+            break;
+        case ZVIL_PARM_WANDER_ARC:
+            cfgdata->ang_wander = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+            break;
+        case ZVIL_PARM_HIT_POINTS:
+            cfgdata->hitpts = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
+            break;
+        // The bubbled and gummed times land in each other's timer; the asset values do not
+        // (VCFG_readAsset).
+        case ZVIL_PARM_BUBBLED_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_GUM] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
+            break;
+        case ZVIL_PARM_GUMMED_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_SOAP] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 10.0f);
+            break;
+        case ZVIL_PARM_DAZED_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_DAZED] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+            break;
+        case ZVIL_PARM_EXTEND_RANGE:
+            cfgdata->dst_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        case ZVIL_PARM_EXTEND_RATE:
+            cfgdata->spd_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        case ZVIL_PARM_EXTEND_WIDTH:
+            cfgdata->wid_extend = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        case ZVIL_PARM_EXTEND_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_EXTEND] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 2.0f);
+            break;
+        case ZVIL_PARM_FOV_ANGLE:
+            cfgdata->fov_detect = PI * zParamGetFloat(pmdata, pmsize, g_parmname[i], 50.0f) / 180.0f;
+            break;
+        case ZVIL_PARM_GLOAT_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_TAUNT] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 3.0f);
+            break;
+        case ZVIL_PARM_LOB_RANGE:
+            cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+            break;
+        case ZVIL_PARM_LOB_SPEED:
+            cfgdata->spd_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], 2.0f);
+            break;
+        case ZVIL_PARM_LOB_SALVO:
+            cfgdata->cnt_lobSalvo = zParamGetInt(pmdata, pmsize, g_parmname[i], 1);
+            break;
+        case ZVIL_PARM_LOB_RELOAD_TIME:
+            cfgdata->tymref_list[ZVIL_TDUR_LOBRELOAD] = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        // The lob arc and heaviness parameters both overwrite the lob range; their asset values
+        // still reach fac_lobarc and fac_lobheavy.
+        case ZVIL_PARM_LOB_ARC:
+            cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
+            break;
+        case ZVIL_PARM_LOB_HEAVY:
+            cfgdata->dst_lob = zParamGetFloat(pmdata, pmsize, g_parmname[i], -1.0f);
+            break;
+        case ZVIL_PARM_DETECT_RADIUS:
+        {
+            fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+            cfgdata->ds2_detect = SQR(fv);
+            break;
+        }
+        case ZVIL_PARM_DETECT_HEIGHT:
+            cfgdata->hyt_detect = zParamGetFloat(pmdata, pmsize, g_parmname[i], 6.0f);
+            break;
+        case ZVIL_PARM_DETECT_HYTOFF:
+            cfgdata->hyt_dtctoff = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.0f);
+            break;
+        case ZVIL_PARM_PURSUE_RADIUS:
+        {
+            fv = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.0f);
+            cfgdata->ds2_pursue = SQR(fv);
+            break;
+        }
+        case ZVIL_PARM_MOVE_RATE:
+            cfgdata->spd_move = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        case ZVIL_PARM_CHASE_RATE:
+            cfgdata->spd_chase = zParamGetFloat(pmdata, pmsize, g_parmname[i], 1.0f);
+            break;
+        case ZVIL_PARM_TURN_RATE:
+            cfgdata->spd_turn = zParamGetFloat(pmdata, pmsize, g_parmname[i], 5.235988f);
+            break;
+        case ZVIL_PARM_VERT_GUM_LFOOT:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_GUM_LFOOT] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_GUM_RFOOT:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_GUM_RFOOT] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_GUM_ELBOW:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_GUM_ELBOW] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_GUM_CUSTA:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_GUM_CUSTA] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_GUM_CUSTB:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_GUM_CUSTB] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_WEAPON:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_WEAPON] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_ATTACK:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_ATTACK] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_ATTACKALT:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_ATTACKALT] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_DMG_BOUNCE:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_DMG_BOUNCE] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_LOSEYEBALL:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_LOSEYEBALL] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_RBSWORDHANDLE:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_SWORDHANDLE] = vec_res;
+            break;
+        case ZVIL_PARM_VERT_RBSWORDPIVOT:
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_zero, &vec_res);
+            cfgdata->pos_verts[ZVIL_MDLVERT_SWORDPIVOT] = vec_res;
+            break;
+        case ZVIL_PARM_BND_SPH_CENTER:
+            vec_tmp.x = 0.0f;
+            vec_tmp.y = 0.7f;
+            vec_tmp.z = 0.0f;
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_tmp, &vec_res);
+            cfgdata->vec_bndoffset = vec_res;
+            break;
+        case ZVIL_PARM_BND_SPH_RADIUS:
+            cfgdata->rad_bound = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.7f);
+            break;
+        case ZVIL_PARM_BND2_SPH_CENTER:
+            vec_tmp.x = 0.0f;
+            vec_tmp.y = 2.1f;
+            vec_tmp.z = 0.0f;
+            zParamGetVector(pmdata, pmsize, g_parmname[i], vec_tmp, &vec_res);
+            cfgdata->vec_bnd2offset = vec_res;
+            break;
+        case ZVIL_PARM_BND2_SPH_RADIUS:
+            cfgdata->rad_bound2 = zParamGetFloat(pmdata, pmsize, g_parmname[i], 0.0f);
+            break;
+        case ZVIL_PARM_SPAWNMASK:
+            cfgdata->msk_condspawn = zParamGetInt(pmdata, pmsize, g_parmname[i], 0);
+            break;
+        case ZVIL_PARM_MINDIFFICULTY:
+            cfgdata->minDifficulty = zParamGetInt(pmdata, pmsize, g_parmname[i], 0);
+            break;
+        case ZVIL_PARM_DMG_BEGTIME:
+            cfgdata->tym_attack_begin = zParamGetInt(pmdata, pmsize, g_parmname[i], -1) / 30.0f;
+            break;
+        case ZVIL_PARM_DMG_ENDTIME:
+            cfgdata->tym_attack_end = zParamGetInt(pmdata, pmsize, g_parmname[i], 1000) / 30.0f;
+            break;
         }
     }
 }
@@ -17134,8 +17145,8 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             pecust.custom_flags = 0x20;
             if (vpar->emitterID == xStrHash("ParEmit_Vil_Bored"))
             {
-                pecust.color_birth[3] = 0;
                 pecust.custom_flags |= 0x180;
+                pecust.color_birth[3] = 0;
                 pecust.color_death[3] = 0;
             }
             do_emit = 1;
@@ -17145,8 +17156,8 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             if (g_scene_is_a_boss_battle) break;
         case VPAR_EMIT_BUTTBOUNCE:
         case VPAR_EMIT_STUN:
-            pecust.pos = vilhed;
             pecust.custom_flags = 0x20;
+            pecust.pos = vilhed;
             do_emit = 1;
             break;
         case VPAR_EMIT_WALLPRINT:
@@ -17181,13 +17192,12 @@ static inline S32 VPAR_emit_headbutt(st_zEntVillain* ent, F32 dt, st_zEntVillain
 {
     _xVec3 angles = { 0 };
     _xEnt* player_ent = &globals.player.ent;
-    xMat4x3* playerframe = (xMat4x3*)player_ent->model->Mat;
     pecust->custom_flags = 0x20;
-    pecust->pos.x = playerframe->pos.x + playerframe->at.x;
-    pecust->pos.y = playerframe->pos.y + 1.1f;
-    pecust->pos.z = playerframe->pos.z + playerframe->at.z;
+    pecust->pos.x = ((xMat4x3*)player_ent->model->Mat)->pos.x + ((xMat4x3*)player_ent->model->Mat)->at.x;
+    pecust->pos.y = ((xMat4x3*)player_ent->model->Mat)->pos.y + 1.1f;
+    pecust->pos.z = ((xMat4x3*)player_ent->model->Mat)->pos.z + ((xMat4x3*)player_ent->model->Mat)->at.z;
     pecust->custom_flags |= 0x10000;
-    xMat3x3GetEuler((xMat3x3*)playerframe, &angles);
+    xMat3x3GetEuler((xMat3x3*)player_ent->model->Mat, &angles);
     pecust->rot[1] = 0x40;
     pecust->rot[0] = (U8)(S32)(255.0f * (angles.x / (2.0f * PI)));
     pecust->rot[2] = (U8)(S32)(255.0f * (angles.z / (2.0f * PI)));
@@ -19684,18 +19694,13 @@ static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
     S32 flags;
-    S32 i;
 
     xSndStopChildren((U32)vil + 2);
     vil->sfx_curTalk = sfx;
     if (sfx && sfx->asset && sfx->asset->id)
     {
         flags = VSND_findProps(VSND_TYP_ZSFXTALK, &sprop);
-        for (i = 0; i < 4; i++)
-        {
-            vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
-            vil->snd_queue[i].sndDirect = 0;
-        }
+        VSND_clearQueue(vil);
         VSND_addQueueEntry(vil, (en_NPC_SOUND)0x8000, flags, g_npcTable[vil->asset->subtype].dst_noisy,
                            sprop->tym_delayStart, -1.0f, 0, sfx->asset->soundAssetID);
     }
@@ -19744,6 +19749,7 @@ extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 // away) and mark its kind (food, soap ammo or gum ammo).
 static inline void VBON_setup_bonusTable()
 {
+    st_NPC_BONUS* bon;
     U32 aid_pick;
     S32 i;
     _xVec3 farfar = { 867.0f, -5309.0f, 2469.0f };
@@ -19751,29 +19757,30 @@ static inline void VBON_setup_bonusTable()
     memset(g_npcBonus, 0, sizeof(g_npcBonus));
     for (i = 0; i < 11; i++)
     {
+        bon = &g_npcBonus[i];
         aid_pick = xStrHash(g_strz_npcBonus[i]);
-        g_npcBonus[i].pickup = (_zEntPickup*)zSceneFindObject(aid_pick);
-        if (g_npcBonus[i].pickup)
+        bon->pickup = (_zEntPickup*)zSceneFindObject(aid_pick);
+        if (bon->pickup)
         {
-            zEntPickup_MakeDroppable(g_npcBonus[i].pickup, &farfar, NULL);
+            zEntPickup_MakeDroppable(bon->pickup, &farfar, NULL);
             switch (i)
             {
             case 8:
             case 9:
             case 10:
-                g_npcBonus[i].flg_info |= 0x10000;
+                bon->flg_info |= 0x10000;
                 break;
             case 5:
             case 6:
             case 7:
-                g_npcBonus[i].flg_info |= 0x20000;
+                bon->flg_info |= 0x20000;
                 break;
             case 0:
             case 1:
             case 2:
             case 3:
             case 4:
-                g_npcBonus[i].flg_info |= 0x40000;
+                bon->flg_info |= 0x40000;
                 break;
             }
         }
