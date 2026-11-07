@@ -916,6 +916,8 @@ void zEntProjectile::OrientSet(S32 orient)
     flg_prop |= orient;
 }
 
+// Lines the model up with its flight path, with the player or with the camera. A zero
+// flg_orient falls back to the projectile's own orient flags (ZPRJ_update passes 0).
 void zEntProjectile::OrientToPath(_xEntFrame* frame, S32 flg_orient)
 {
     xVec3* camera_pos;
@@ -923,6 +925,10 @@ void zEntProjectile::OrientToPath(_xEntFrame* frame, S32 flg_orient)
     xVec3 vec_tmp = {};
 
     opt_orient = flg_orient & 0x70000000;
+    if (opt_orient == 0)
+    {
+        opt_orient = flg_prop & 0x70000000;
+    }
 
     switch (opt_orient)
     {
@@ -945,6 +951,8 @@ void zEntProjectile::OrientToPath(_xEntFrame* frame, S32 flg_orient)
     }
 }
 
+// Per-frame projectile update: collides with the world and the player, runs the category's logic and
+// movement, turns the model along its path, and self-destructs once it outlives its lifetime.
 S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
 {
     S32 rc;
@@ -967,9 +975,9 @@ S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
         return 0;
     }
 
+    catf = &g_catFuncs[cat_proj];
     plyr_colrec = &lcl_xcollis_plyr;
     collis = &lcl_xentcollis;
-    catf = &g_catFuncs[cat_proj];
     collis->chk = flg_chk;
     collis->pen = flg_pen;
 
@@ -1033,7 +1041,7 @@ S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
         SyncFrame(0);
     }
 
-    OrientToPath(frame, flg_prop);
+    OrientToPath(frame, 0);
 
     if (pflags & 0x2)
     {
