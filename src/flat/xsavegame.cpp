@@ -41,6 +41,8 @@ S32 xSGShutdown()
     return g_xsginit;
 }
 
+// Starts a save or load session on the memory card and registers the leader
+// client, which writes or reads each slot's summary (label, thumbnail, time).
 st_XSAVEGAME_DATA* xSGInit(en_SAVEGAME_MODE mode)
 {
     st_XSAVEGAME_DATA* xsgdata = &g_xsgdata;
@@ -192,25 +194,6 @@ S32 xSG_chdir_gamedir(st_XSAVEGAME_DATA* xsgdata)
     return rc;
 }
 
-char* xSG_cm_slotname(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
-{
-    static char slotname[32] = {};
-    slotname[0] = '\0';
-
-    // Slot 0x9A5 names the settings file rather than a game.
-    char* tmp;
-    if (gidx == 0x9A5)
-    {
-        tmp = iSGMakeName(ISG_NGTYP_CONFIG, NULL, 0);
-    }
-    else
-    {
-        tmp = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, gidx);
-    }
-    strcpy(slotname, tmp);
-    return slotname;
-}
-
 S32 xSGGameSize(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
 {
     S32 size = 0;
@@ -271,6 +254,26 @@ char* xSGGameModDate(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
     return da_date;
 }
 
+// The card file name for a save slot.
+char* xSG_cm_slotname(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
+{
+    static char slotname[32] = {};
+    slotname[0] = '\0';
+
+    // Slot 0x9A5 names the settings file rather than a game.
+    char* tmp;
+    if (gidx == 0x9A5)
+    {
+        tmp = iSGMakeName(ISG_NGTYP_CONFIG, NULL, 0);
+    }
+    else
+    {
+        tmp = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, gidx);
+    }
+    strcpy(slotname, tmp);
+    return slotname;
+}
+
 // The save slot's label, from the leader blocks read when the card was selected.
 char* xSGGameLabel(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
 {
@@ -293,27 +296,35 @@ S32 xSGGameThumIndex(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
     return idx_thum;
 }
 
+// Registers a client (a game system) whose data goes into the save file.
 S32 xSGAddSaveClient(st_XSAVEGAME_DATA* xsgdata, U32 clttag, void* cltdata,
                      S32 (*infofunc)(void*, st_XSAVEGAME_DATA*, S32*, S32*),
                      S32 (*procfunc)(void*, st_XSAVEGAME_DATA*, st_XSAVEGAME_WRITECONTEXT*))
 {
     S32 result = 1;
-    if (xsgdata->stage & 0x40000000)
+    st_XSAVEGAME_CLIENT* clt = NULL;
+    S32 stage = xsgdata->stage;
+
+    if (stage & 0x40000000)
     {
         result = 0;
+        clt = NULL;
     }
-    else if (!(xsgdata->stage & 1))
+    else if (!(stage & 1))
     {
         result = 0;
+        clt = NULL;
     }
 
-    if (xsgdata->stkcnt + 1 >= 128)
+    S32 cnt = xsgdata->stkcnt + 1;
+    if (cnt >= 128)
     {
         xUtil_idtag2string(clttag, 0);
         result = 0;
+        clt = NULL;
     }
 
-    st_XSAVEGAME_CLIENT* clt = &xsgdata->cltstk[xsgdata->stkcnt++];
+    clt = &xsgdata->cltstk[xsgdata->stkcnt++];
     clt->idtag = clttag;
     clt->cltinfo = infofunc;
     clt->cltproc = procfunc;
@@ -322,11 +333,16 @@ S32 xSGAddSaveClient(st_XSAVEGAME_DATA* xsgdata, U32 clttag, void* cltdata,
     clt->realamt = 0;
     clt->buf_sizepos = NULL;
 
-    xsgdata->stage |= 4;
+    stage = xsgdata->stage | 4;
+    xsgdata->stage = stage;
     if (result == 0)
     {
         xsgdata->stage |= 0x40000000;
+        clt = NULL;
     }
+
+    clt = NULL;
+    cnt = 0;
     return result;
 }
 
