@@ -13155,6 +13155,17 @@ static void zVIL_upd_timers(st_zEntVillain* ent, F32 dt)
     }
 }
 
+// Empties the villain's sound queue: every entry gets the bogus sound and no direct sound.
+static inline void VSND_clearQueue(st_zEntVillain* vil)
+{
+    S32 i;
+    for (i = 0; i < 4; i++)
+    {
+        vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
+        vil->snd_queue[i].sndDirect = 0;
+    }
+}
+
 // Changes the villain's goal when asked to: clears its sound queue, lets its type leave the old
 // goal and enter the new one, then sets the goal and restarts the goal timer. Returns 0 if
 // either step failed.
@@ -13162,22 +13173,21 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
 {
     S32 rc = 0;
     S32 result = 1;
-    S32 i = 0;
     static S32 trangoal_safety_nest = 0;
     st_STIMULUS_CONTEXT_DATA tranctxt = { ZVIL_STIM_NONE };
 
     if (stimctxt->stim == ZVIL_STIM_TRANGOAL && stimctxt->trangoal != ent->goal)
     {
+        rc = 0;
+
         if (stimctxt->tranmode)
         {
+            rc = 0;
             ent->mode = stimctxt->tranmode;
         }
 
-        for (i = 0; i < 4; i++)
-        {
-            ent->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
-            ent->snd_queue[i].sndDirect = 0;
-        }
+        rc = 0;
+        VSND_clearQueue(ent);
 
         rc = 0;
         tranctxt.stim = ZVIL_STIM_EXITGOAL;
@@ -13196,8 +13206,11 @@ static S32 zVIL_trangoal(st_zEntVillain* ent, st_STIMULUS_CONTEXT_DATA* stimctxt
             result = 0;
         }
 
+        rc = 0;
         VGOL_set(ent, stimctxt->trangoal);
+        rc = 0;
         ent->tmr_list[ZVIL_TYMR_CURGOAL] = 0.0f;
+        rc = 0;
     }
 
     return result;
@@ -19682,18 +19695,13 @@ static void VSND_playFromSFX(st_zEntVillain* vil, zSFX* sfx)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
     S32 flags;
-    S32 i;
 
     xSndStopChildren((U32)vil + 2);
     vil->sfx_curTalk = sfx;
     if (sfx && sfx->asset && sfx->asset->id)
     {
         flags = VSND_findProps(VSND_TYP_ZSFXTALK, &sprop);
-        for (i = 0; i < 4; i++)
-        {
-            vil->snd_queue[i].sndEvent = VSND_TYP_BOGUS;
-            vil->snd_queue[i].sndDirect = 0;
-        }
+        VSND_clearQueue(vil);
         VSND_addQueueEntry(vil, (en_NPC_SOUND)0x8000, flags, g_npcTable[vil->asset->subtype].dst_noisy,
                            sprop->tym_delayStart, -1.0f, 0, sfx->asset->soundAssetID);
     }
