@@ -803,6 +803,8 @@ S32 zEntProjectile::SetupPrelim(en_ZPRJ_CATEGORY cat, U32 ptaid)
 
 S32 zEntProjectile::Setup_xEnt()
 {
+    S32 result = 1;
+
     id = 0;
     baseType = 0x19;
     baseFlags = 5;
@@ -836,7 +838,7 @@ S32 zEntProjectile::Setup_xEnt()
         xFFXAddEffect(this, zGustUpdateEnt, &raw_gust);
     }
 
-    return 1;
+    return result;
 }
 
 S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
