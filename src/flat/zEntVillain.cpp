@@ -16073,8 +16073,10 @@ static S32 VPRJ_BGG_shockwave(zEntProjectile* prj, F32 dt)
 
     fb = xVec3Length2(&delta);
     if (fb > SQR(outer + br)) return 1;
-    if (pos_plyr.y - br > pos_prj.y + 0.5f * quake->hyt_shock) return 1;
-    if (pos_plyr.y + br < pos_prj.y - 0.5f * quake->hyt_shock) return 1;
+    outer = pos_prj.y + 0.5f * quake->hyt_shock;
+    if (pos_plyr.y - br > outer) return 1;
+    outer = pos_prj.y - 0.5f * quake->hyt_shock;
+    if (pos_plyr.y + br < outer) return 1;
     if (inner > br && fb < SQR(inner - br)) return 1;
     return 0;
 }
