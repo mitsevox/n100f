@@ -272,8 +272,8 @@ RpAtomic* fn_8013FF48(RpAtomic* atomic, GCNObjectData* objectData)
 }
 
 // The atomic pipeline's reinstance callback: chains to the node's own reinstance, then recomputes
-// the normal, binormal and tangent data when the geometry's vertices or normals were locked or the
-// atomic is morphing.
+// the normal, binormal and tangent data when the geometry's polygons, vertices, normals or first
+// texture coordinates were locked or the atomic is morphing.
 RpAtomic* _rpGCMatFXAtomicReinstanceCallBack(RpAtomic* atomic, GCNObjectData* objectData)
 {
     RpGeometry* geometry = atomic->geometry;
@@ -647,8 +647,6 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
     return object;
 }
 
-// Creates the atomic and world sector pipelines, keeping the default callbacks the pipelines'
-// own ones call.
 // Builds the atomic pipeline: the GameCube all-in-one node with this plugin's instance, reinstance
 // and render callbacks, keeping the node's own instance and reinstance callbacks to chain to.
 static RxPipeline* MatFXGCNAtomicPipelineCreate(void)
