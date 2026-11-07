@@ -551,7 +551,8 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
 
         while (count--)
         {
-            if (standards[count].index < numIn && standards[count].index >= 0)
+            // The leading standard gates installation of the whole table.
+            if (standards[0].index < numIn && standards[0].index >= 0)
             {
                 funcs[standards[count].index] = standards[count].func;
             }
