@@ -931,7 +931,7 @@ void zEntProjectile::OrientToPath(_xEntFrame* frame, S32 flg_orient)
         xMat3x3LookVec((xMat3x3*)&frame->mat, &vec_tmp);
         break;
     case 0x10000000:
-        xVec3Sub(&vec_tmp, &frame->mat.pos, xBoundCenter(&globals.player.ent.bound));
+        xVec3Sub(&vec_tmp, &frame->mat.pos, xEntGetCenter(&globals.player.ent));
         xMat3x3LookVec((xMat3x3*)&frame->mat, &vec_tmp);
         break;
     case 0x20000000:
@@ -988,14 +988,18 @@ S32 zEntProjectile::ZPRJ_update(zScene* scn, F32 dt)
     xEntBeginUpdate(this, scn, dt);
     xEntBeginCollide(this, scn, dt);
 
-    memset(plyr_colrec, 0, sizeof(_xCollis));
-    plyr_colrec->optr = &globals.player.ent;
-    plyr_colrec->oid = globals.player.ent.id;
-    plyr_colrec->flags = 0x1F00;
-
-    if (collis->chk & 0x10)
     {
-        xBoundHitsBound(&bound, &globals.player.ent.bound, plyr_colrec);
+        _xCollis* coll = plyr_colrec;
+
+        memset(coll, 0, sizeof(_xCollis));
+        coll->optr = &globals.player.ent;
+        coll->oid = globals.player.ent.id;
+        coll->flags = 0x1F00;
+
+        if (collis->chk & 0x10)
+        {
+            xBoundHitsBound(&bound, &globals.player.ent.bound, coll);
+        }
     }
 
     if (DoColCheck(dt))
