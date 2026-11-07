@@ -13,6 +13,9 @@
 // The vertex indices of a polygon being clipped wrap round a ring of this many entries.
 #define CLIPRING_MASK 0xF
 
+// The current camera's projection values, shared by the transform and clip nodes.
+ClipInfo gClipInfo;
+
 // What the clipper records about each new vertex in the interpolants cluster: the new vertex,
 // the edge's inside and outside vertices, and how far along the edge the new one lies.
 typedef struct ClipInterpolant ClipInterpolant;
@@ -73,15 +76,25 @@ S32 _rwForAllEdgesWithRxInterpolant(RxCluster* camVerts, RxCluster* devVerts,
                                     RxCluster* interpolants, RwImVertexIndex* vertIndices,
                                     S32* start, S32* end, U32 clipFlag, RwClipVertexFunc clipFunc)
 {
-    S32 newEnd = *end;
-    S32 current = *start;
-    RwImVertexIndex prevIndex = vertIndices[(newEnd - 1) & CLIPRING_MASK];
-    RwImVertexIndex curIndex = vertIndices[current];
-    S32 stop = newEnd;
-    RxCamSpace3DVertex* prevCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, prevIndex);
-    RwIm2DVertex* prevDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, prevIndex);
-    RxCamSpace3DVertex* curCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, curIndex);
-    RwIm2DVertex* curDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, curIndex);
+    S32 current;
+    S32 newEnd;
+    RxCamSpace3DVertex* curCam;
+    RwIm2DVertex* curDev;
+    RwImVertexIndex prevIndex;
+    RwImVertexIndex curIndex;
+    S32 stop;
+    RxCamSpace3DVertex* prevCam;
+    RwIm2DVertex* prevDev;
+
+    newEnd = *end;
+    current = *start;
+    prevIndex = vertIndices[(newEnd - 1) & CLIPRING_MASK];
+    curIndex = vertIndices[current];
+    stop = newEnd;
+    prevCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, prevIndex);
+    prevDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, prevIndex);
+    curCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, curIndex);
+    curDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, curIndex);
 
     do
     {
@@ -93,18 +106,24 @@ S32 _rwForAllEdgesWithRxInterpolant(RxCluster* camVerts, RxCluster* devVerts,
 
         if (clipFlag & (prevCam->clipFlags ^ curCam->clipFlags))
         {
-            RwImVertexIndex newIndex = camVerts->numUsed++;
-            ClipInterpolant* interp = (ClipInterpolant*)interpolants->currentData;
+            RwImVertexIndex newIndex;
+            ClipInterpolant* interp;
+            RxCamSpace3DVertex* newCam;
+            RwIm2DVertex* newDev;
 
+            interp = (ClipInterpolant*)interpolants->currentData;
+            newIndex = camVerts->numUsed++;
+            devVerts->numUsed++;
             vertIndices[newEnd] = newIndex;
             newEnd = (newEnd + 1) & CLIPRING_MASK;
-            devVerts->numUsed++;
+            newCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, newIndex);
+            newDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, newIndex);
 
             if (prevCam->clipFlags & clipFlag)
             {
-                interp->param = clipFunc(CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, newIndex),
+                interp->param = clipFunc(newCam,
                                          prevCam, curCam,
-                                         CLUSTER_VERTEX(RwIm2DVertex, devVerts, newIndex),
+                                         newDev,
                                          prevDev, curDev);
                 interp->newVert = newIndex;
                 interp->vert0 = prevIndex;
@@ -112,9 +131,9 @@ S32 _rwForAllEdgesWithRxInterpolant(RxCluster* camVerts, RxCluster* devVerts,
             }
             else
             {
-                interp->param = clipFunc(CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, newIndex),
+                interp->param = clipFunc(newCam,
                                          curCam, prevCam,
-                                         CLUSTER_VERTEX(RwIm2DVertex, devVerts, newIndex),
+                                         newDev,
                                          curDev, prevDev);
                 interp->newVert = newIndex;
                 interp->vert0 = curIndex;
@@ -126,8 +145,8 @@ S32 _rwForAllEdgesWithRxInterpolant(RxCluster* camVerts, RxCluster* devVerts,
         }
 
         prevIndex = curIndex;
-        curIndex = vertIndices[(current + 1) & CLIPRING_MASK];
         current = (current + 1) & CLIPRING_MASK;
+        curIndex = vertIndices[current];
         prevCam = curCam;
         prevDev = curDev;
         curCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, curIndex);
@@ -145,15 +164,26 @@ S32 _rwForAllEdgesWithoutRxInterpolant(RxCluster* camVerts, RxCluster* devVerts,
                                        S32* start, S32* end, U32 clipFlag,
                                        RwClipVertexFunc clipFunc)
 {
-    S32 newEnd = *end;
-    S32 current = *start;
-    RwImVertexIndex prevIndex = vertIndices[(newEnd - 1) & CLIPRING_MASK];
-    RwImVertexIndex curIndex = vertIndices[current];
-    S32 stop = newEnd;
-    RxCamSpace3DVertex* prevCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, prevIndex);
-    RwIm2DVertex* prevDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, prevIndex);
-    RxCamSpace3DVertex* curCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, curIndex);
-    RwIm2DVertex* curDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, curIndex);
+    S32 current;
+    S32 newEnd;
+    RxCamSpace3DVertex* curCam;
+    RwImVertexIndex newIndex;
+    RwIm2DVertex* curDev;
+    RwImVertexIndex curIndex;
+    RwImVertexIndex prevIndex;
+    S32 stop;
+    RxCamSpace3DVertex* prevCam;
+    RwIm2DVertex* prevDev;
+
+    newEnd = *end;
+    current = *start;
+    prevIndex = vertIndices[(newEnd - 1) & CLIPRING_MASK];
+    curIndex = vertIndices[current];
+    stop = newEnd;
+    prevCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, prevIndex);
+    prevDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, prevIndex);
+    curCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, curIndex);
+    curDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, curIndex);
 
     do
     {
@@ -165,29 +195,31 @@ S32 _rwForAllEdgesWithoutRxInterpolant(RxCluster* camVerts, RxCluster* devVerts,
 
         if (clipFlag & (prevCam->clipFlags ^ curCam->clipFlags))
         {
-            RwImVertexIndex newIndex = camVerts->numUsed++;
+            RxCamSpace3DVertex* newCam;
+            RwIm2DVertex* newDev;
 
+            newIndex = camVerts->numUsed++;
+            devVerts->numUsed++;
             vertIndices[newEnd] = newIndex;
             newEnd = (newEnd + 1) & CLIPRING_MASK;
-            devVerts->numUsed++;
+            newCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, newIndex);
+            newDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, newIndex);
 
             if (prevCam->clipFlags & clipFlag)
             {
-                clipFunc(CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, newIndex), prevCam, curCam,
-                         CLUSTER_VERTEX(RwIm2DVertex, devVerts, newIndex), prevDev, curDev);
+                clipFunc(newCam, prevCam, curCam, newDev, prevDev, curDev);
             }
             else
             {
-                clipFunc(CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, newIndex), curCam, prevCam,
-                         CLUSTER_VERTEX(RwIm2DVertex, devVerts, newIndex), curDev, prevDev);
+                clipFunc(newCam, curCam, prevCam, newDev, curDev, prevDev);
             }
         }
 
         prevIndex = curIndex;
-        curIndex = vertIndices[(current + 1) & CLIPRING_MASK];
-        current = (current + 1) & CLIPRING_MASK;
-        prevCam = curCam;
         prevDev = curDev;
+        current = (current + 1) & CLIPRING_MASK;
+        curIndex = vertIndices[current];
+        prevCam = curCam;
         curCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, curIndex);
         curDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, curIndex);
     } while (current != stop);
@@ -211,15 +243,25 @@ S32 _rwForAllEdges(RxCluster* camVerts, RxCluster* devVerts, RxCluster* interpol
 S32 _rwForOneEdge(RxCluster* camVerts, RxCluster* devVerts, RwImVertexIndex* vertIndices, S32* start,
                   S32* end, U32 clipFlag, RwClipVertexFunc clipFunc)
 {
-    S32 current = *start;
-    S32 newEnd = *end;
-    RwImVertexIndex nextIndex = vertIndices[(current + 1) & CLIPRING_MASK];
-    S32 oldEnd = newEnd;
-    RwImVertexIndex curIndex = vertIndices[current];
-    RxCamSpace3DVertex* nextCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, nextIndex);
-    RwIm2DVertex* nextDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, nextIndex);
-    RxCamSpace3DVertex* curCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, curIndex);
-    RwIm2DVertex* curDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, curIndex);
+    S32 newEnd;
+    RxCamSpace3DVertex* curCam;
+    RwImVertexIndex curIndex;
+    S32 oldEnd;
+    S32 current;
+    RxCamSpace3DVertex* nextCam;
+    RwIm2DVertex* nextDev;
+    RwIm2DVertex* curDev;
+    RwImVertexIndex nextIndex;
+
+    current = *start;
+    newEnd = *end;
+    nextIndex = vertIndices[(current + 1) & CLIPRING_MASK];
+    oldEnd = newEnd;
+    curIndex = vertIndices[current];
+    nextCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, nextIndex);
+    nextDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, nextIndex);
+    curCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, curIndex);
+    curDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, curIndex);
 
     if (!(nextCam->clipFlags & clipFlag))
     {
@@ -229,21 +271,24 @@ S32 _rwForOneEdge(RxCluster* camVerts, RxCluster* devVerts, RwImVertexIndex* ver
 
     if (clipFlag & (nextCam->clipFlags ^ curCam->clipFlags))
     {
-        RwImVertexIndex newIndex = camVerts->numUsed++;
+        RwImVertexIndex newIndex;
+        RxCamSpace3DVertex* newCam;
+        RwIm2DVertex* newDev;
 
+        newIndex = camVerts->numUsed++;
+        devVerts->numUsed++;
         vertIndices[newEnd] = newIndex;
         newEnd = (newEnd + 1) & CLIPRING_MASK;
-        devVerts->numUsed++;
+        newCam = CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, newIndex);
+        newDev = CLUSTER_VERTEX(RwIm2DVertex, devVerts, newIndex);
 
         if (nextCam->clipFlags & clipFlag)
         {
-            clipFunc(CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, newIndex), nextCam, curCam,
-                     CLUSTER_VERTEX(RwIm2DVertex, devVerts, newIndex), nextDev, curDev);
+            clipFunc(newCam, nextCam, curCam, newDev, nextDev, curDev);
         }
         else
         {
-            clipFunc(CLUSTER_VERTEX(RxCamSpace3DVertex, camVerts, newIndex), curCam, nextCam,
-                     CLUSTER_VERTEX(RwIm2DVertex, devVerts, newIndex), curDev, nextDev);
+            clipFunc(newCam, curCam, nextCam, newDev, curDev, nextDev);
         }
     }
 

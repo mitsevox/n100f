@@ -30,7 +30,7 @@ RpWorldSector* _rpWorldSectorNativeRead(RwStream* stream, RpWorldSector* sector)
 // The vertex arrays header of an instance entry, and the start of its data for numMeshes meshes.
 #define NATIVE_ARRAYS(_entry) ((GCNVertexArrays*)((_entry) + 1))
 #define NATIVE_DATA(_entry, _numMeshes)                                                            \
-    ((U8*)NATIVE_ALIGN32((U32)NATIVE_ARRAYS(_entry) + sizeof(GCNVertexArrays) +                     \
+    ((U8*)NATIVE_ALIGN32((U32)(_entry) + sizeof(RwResEntry) + sizeof(GCNVertexArrays) +           \
                          (_numMeshes) * sizeof(GCNDisplayList)))
 
 // The bytes an instance entry takes in a stream: the chunk header, the platform and the two sizes,

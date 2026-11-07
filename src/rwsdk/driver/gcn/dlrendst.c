@@ -254,10 +254,13 @@ void RwGameCubeSetAlphaCompare(S32 mode)
     }
 }
 
-// Sets the fog with the current camera's planes and the cached color.
-#define DLRENDST_SETFOG(_type, _camera)                                                            \
-    GXSetFog((_type), (_camera)->fogPlane, (_camera)->farPlane, (_camera)->nearPlane,              \
-             (_camera)->farPlane, lbl_8025E348.gxFogColor)
+// Sets the fog with the current camera's planes and the cached color. Name written for this
+// project.
+static inline void DlRenderStateSetFog(GXFogType type, RwCamera* camera)
+{
+    GXSetFog(type, camera->fogPlane, camera->farPlane, camera->nearPlane, camera->farPlane,
+             lbl_8025E348.gxFogColor);
+}
 
 S32 _rwDlSetRenderState(RwRenderState state, void* param)
 {
@@ -277,7 +280,7 @@ S32 _rwDlSetRenderState(RwRenderState state, void* param)
             lbl_8025E348.gxFogColor.r = ((U32)param >> 16) & 0xFF;
             lbl_8025E348.gxFogColor.g = ((U32)param >> 8) & 0xFF;
             lbl_8025E348.gxFogColor.b = (U32)param & 0xFF;
-            DLRENDST_SETFOG(lbl_801DE390[lbl_8025E348.fogType], camera);
+            DlRenderStateSetFog(lbl_801DE390[lbl_8025E348.fogType], camera);
             lbl_8025E348.fogColor = (S32)param;
         }
 
@@ -298,7 +301,7 @@ S32 _rwDlSetRenderState(RwRenderState state, void* param)
             }
 
             camera = RwCameraGetCurrentCamera();
-            DLRENDST_SETFOG(lbl_801DE390[(S32)param], camera);
+            DlRenderStateSetFog(lbl_801DE390[(S32)param], camera);
             lbl_8025E348.fogType = (S32)param;
         }
 
@@ -497,7 +500,7 @@ destblendDone:
         result = (S32)param;
         break;
     case 19:
-        result = (param == NULL);
+        result = !param;
         break;
     case rwRENDERSTATECULLMODE:
         if ((S32)param != lbl_8025E348.cullMode)

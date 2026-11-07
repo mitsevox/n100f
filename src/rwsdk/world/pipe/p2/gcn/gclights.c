@@ -22,6 +22,18 @@ GXLightID GCLightIDTable[8] = {
 // How far away a directional light is placed, in view space. Written for this project.
 #define GCLIGHTS_DIRECTIONALDIST -1048576.0f
 
+// A light's color as a GX color with zero alpha. Name written for this project.
+static inline GXColor GCLightsColor(RpLight* light)
+{
+    GXColor color;
+
+    color.r = (U8)(255.0f * light->color.red);
+    color.g = (U8)(255.0f * light->color.green);
+    color.b = (U8)(255.0f * light->color.blue);
+    color.a = 0;
+    return color;
+}
+
 void _rwGCLightsGlobalEnable(U8 flags, GCNObjectData* data)
 {
     RpWorld* world = (RpWorld*)RWSRCGLOBAL(curWorld);
@@ -30,7 +42,6 @@ void _rwGCLightsGlobalEnable(U8 flags, GCNObjectData* data)
     RwLLLink* end = rwLinkListGetTerminator(&world->directionalLightList);
     GXLightObj* obj;
     RwV3d dir;
-    GXColor color;
 
     while (cur != end)
     {
@@ -50,11 +61,7 @@ void _rwGCLightsGlobalEnable(U8 flags, GCNObjectData* data)
                                GCLIGHTS_DIRECTIONALDIST * dir.y,
                                GCLIGHTS_DIRECTIONALDIST * -dir.z);
 
-                color.r = (U8)(255.0f * light->color.red);
-                color.g = (U8)(255.0f * light->color.green);
-                color.b = (U8)(255.0f * light->color.blue);
-                color.a = 0;
-                GXInitLightColor(obj, color);
+                GXInitLightColor(obj, GCLightsColor(light));
                 GXLoadLightObjImm(obj, GCLightIDTable[index]);
 
                 data->globalMask |= GCLightIDTable[data->numLights];

@@ -47,25 +47,37 @@ U32 GCNDisplayListsGetSize(const RpMeshHeader* header, S32 numTexCoords, S32 ind
     return total;
 }
 
+// Write one 8-bit or 16-bit vertex index to the write gather pipe. Names written for this
+// project.
+static inline void GCNDisplayListIndex8(const U8 index)
+{
+    GXWGFifo.u8 = index;
+}
+
+static inline void GCNDisplayListIndex16(const U16 index)
+{
+    GXWGFifo.u16 = index;
+}
+
 // Builds one indexed display list per mesh of header in dlMem, each vertex sending its index
 // once for every attribute in flags, and records each list in lists.
 void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* header, S32 numTexCoords,
                           S32 indexSize, U32 flags)
 {
-    GXPrimitive primType = GX_TRIANGLES;
-    GXAttrType attrType;
-    U8 numAttrs;
-    S32 i;
-    const RpMesh* mesh;
-    U32 numMeshes;
-    U32 normals;
-    U32 prelit;
-    const U16* index;
-    U32 numIndices;
-    U32 count;
-    U32 size;
-    U32 dlSize;
     GCNDisplayList* list;
+    U32 normals;
+    U32 count;
+    U32 prelit;
+    U32 dlSize;
+    const U16* index;
+    S32 i;
+    U32 numMeshes;
+    const RpMesh* mesh;
+    U32 numIndices;
+    GXPrimitive primType = GX_TRIANGLES;
+    U8 numAttrs;
+    U32 size;
+    GXAttrType attrType;
 
     if (header->flags & rpMESHHEADERTRISTRIP)
     {
@@ -108,19 +120,19 @@ void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* 
     {
         index = mesh->indices;
         numIndices = mesh->numIndices;
-        count = numIndices;
+        count = mesh->numIndices;
 
         if (normals)
         {
-            count += numIndices;
+            count += mesh->numIndices;
         }
         if (prelit)
         {
-            count += numIndices;
+            count += mesh->numIndices;
         }
         if (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
         {
-            count += numIndices * numTexCoords;
+            count += mesh->numIndices * numTexCoords;
         }
 
         size = indexSize * count + 3;
@@ -144,7 +156,7 @@ void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* 
 
                 for (n = 0; n < numAttrs; n++)
                 {
-                    GXWGFifo.u8 = vertex;
+                    GCNDisplayListIndex8(vertex);
                 }
                 index++;
             }
@@ -158,7 +170,7 @@ void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* 
 
                 for (n = 0; n < numAttrs; n++)
                 {
-                    GXWGFifo.u16 = vertex;
+                    GCNDisplayListIndex16(vertex);
                 }
                 index++;
             }

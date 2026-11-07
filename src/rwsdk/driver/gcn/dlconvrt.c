@@ -1162,10 +1162,14 @@ S32 _rwDlImageFindFormat(RwImage* image)
 
                         if (depth == 4)
                         {
-                            return format | rwRASTERFORMATPAL4;
+                            format |= rwRASTERFORMATPAL4;
+                        }
+                        else
+                        {
+                            format |= rwRASTERFORMATPAL8;
                         }
 
-                        return format | rwRASTERFORMATPAL8;
+                        return format;
                     }
                 }
 
@@ -1206,12 +1210,7 @@ S32 _rwDlImageFindFormat(RwImage* image)
         }
     }
 
-    format = rwRASTERFORMAT565;
-
-    if (hasAlpha)
-    {
-        format = rwRASTERFORMAT1555;
-    }
+    format = hasAlpha ? rwRASTERFORMAT1555 : rwRASTERFORMAT565;
 
     if (depth == 4)
     {

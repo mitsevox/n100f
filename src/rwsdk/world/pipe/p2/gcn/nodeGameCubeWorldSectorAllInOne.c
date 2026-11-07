@@ -145,12 +145,13 @@ RpWorldSector* fn_8015E908(RpWorldSector* sector, GCNObjectData* objectData)
 // the lighting and render callbacks.
 S32 _rxGCWorldSectorAllInOneNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
-    GCNAllInOnePrivateData* privateData = (GCNAllInOnePrivateData*)self->privateData;
     RpWorldSector* sector = (RpWorldSector*)params->dataParam;
-    U32 worldFlags = ((RpWorld*)RWSRCGLOBAL(curWorld))->flags;
+    GCNAllInOnePrivateData* privateData = (GCNAllInOnePrivateData*)self->privateData;
     GCNObjectData objectData;
+    U32 worldFlags;
 
     objectData.privateData = privateData;
+    worldFlags = ((RpWorld*)RWSRCGLOBAL(curWorld))->flags;
 
     if (!(worldFlags & rpWORLDNATIVE))
     {

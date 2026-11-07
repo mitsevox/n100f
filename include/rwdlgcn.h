@@ -101,8 +101,8 @@ S32 _rwDlSetRenderState(RwRenderState state, void* param);
 S32 _rwDlRenderStateFogEnable(S32 enable);
 void _rwDlTextureRasterFlush(void);
 void RwGameCubeSetAlphaCompare(S32 mode);
-void RwGameCubeTextureSetLOD(RwTexture* texture, S32 biasClamp, S32 edgeLOD,
-                             GXAnisotropy maxAniso, F32 lodBias);
+void RwGameCubeTextureSetLOD(RwTexture* texture, F32 lodBias, S32 biasClamp, S32 edgeLOD,
+                             GXAnisotropy maxAniso);
 
 #ifdef __cplusplus
 }
