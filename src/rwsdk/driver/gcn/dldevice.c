@@ -28,68 +28,82 @@ struct DlDeviceState
 };
 
 // The ring of finished frames.
-extern DlFrame lbl_8025E2B0[3];
+DlFrame lbl_8025E2B0[3];
 
 // The application's render mode, copied by _rwDlRenderModeSelect.
-extern GXRenderModeObj lbl_8025E2C8;
+GXRenderModeObj lbl_8025E2C8;
 
 // The camera's view matrix: the inverse of its frame, offset by the view offset
 // (_rwDlCameraBeginUpdate).
-extern RwMatrix lbl_8025E304;
+RwMatrix lbl_8025E304;
 
-// Whether the next display copy clears the frame.
-extern S32 lbl_8025F7F8;
+// Which half of a two-half frame is being drawn.
+S32 lbl_8025E7F0 = 1;
 
-// The pixel format the frame uses, and the one GX is set to.
-extern S32 lbl_8025F7FC;
-extern S32 lbl_8025F800;
-
-// Which video mode is in use: 0 NTSC, 1 PAL, 2 MPAL, 0x2A the application's own.
-extern S32 lbl_8025F804;
-
-// Whether the frame is drawn in two halves, which half is being drawn, and the line where the
-// halves meet.
-extern S32 lbl_8025F808;
-extern S32 lbl_8025E7F0;
-extern S32 lbl_8025F85C;
-
-// The FIFO and frame buffer allocation, the FIFO size and the 32-byte aligned FIFO.
-extern void* lbl_8025F80C;
-extern U32 lbl_8025E7F4;
-extern void* lbl_8025F854;
-extern GXFifoObj* lbl_8025F858;
-
-// The ring's read and write positions, the token ring's write and read positions, whether the
-// FIFO breakpoint is armed, whether a frame waits for its token, whether a frame waits for the
-// retrace, whether a retrace has passed since, and which half a two-half frame is on. The frame
-// ring's positions and the breakpoint flag are shared between the game thread and the breakpoint
-// interrupt; they, the token ring's positions and the token wait flag are volatile.
-extern volatile S32 lbl_8025F810;
-extern volatile S32 lbl_8025F814;
-extern volatile S32 lbl_8025F818;
-extern volatile S32 lbl_8025F81C;
-extern volatile S32 lbl_8025F820;
-extern volatile S32 lbl_8025F824;
-extern S32 lbl_8025F828;
-extern S32 lbl_8025F82C;
-extern S32 lbl_8025F830;
-
-// The threads waiting for a free frame.
-extern OSThreadQueue lbl_8025F834;
-
-// The draw sync token of each frame in the ring.
-extern U16 lbl_8025F83C[3];
-
-// The frame buffer on screen, the one being drawn, and the two frame buffers.
-extern void* lbl_8025F844;
-extern void* lbl_8025F848;
-extern void* lbl_8025F84C;
-extern void* lbl_8025F850;
+// The FIFO size.
+U32 lbl_8025E7F4 = 0x40000;
 
 // Set to blank the screen until the first frame is shown.
-extern S32 lbl_8025E7F8;
+S32 lbl_8025E7F8 = 1;
 
-extern DlDeviceState lbl_8025F864;
+// The small zero-initialised variables follow. The compiler lays these out in reverse order of
+// definition, so they are defined here from the last address to the first.
+
+// The camera being updated and the device's open parameter.
+DlDeviceState lbl_8025F864;
+
+// The render mode in use.
+GXRenderModeObj* _RwDlRenderMode;
+
+// The line where the halves of a two-half frame meet.
+S32 lbl_8025F85C;
+
+// The FIFO object and the 32-byte aligned FIFO.
+GXFifoObj* lbl_8025F858;
+void* lbl_8025F854;
+
+// The two frame buffers, the one being drawn, and the one on screen.
+void* lbl_8025F850;
+void* lbl_8025F84C;
+void* lbl_8025F848;
+void* lbl_8025F844;
+
+// The draw sync token of each frame in the ring.
+U16 lbl_8025F83C[3];
+
+// The threads waiting for a free frame.
+OSThreadQueue lbl_8025F834;
+
+// Which half a two-half frame is on, whether a retrace has passed since, whether a frame waits
+// for the retrace, whether a frame waits for its token, whether the FIFO breakpoint is armed, the
+// token ring's read and write positions, and the ring's write and read positions. The frame
+// ring's positions and the breakpoint flag are shared between the game thread and the breakpoint
+// interrupt; they, the token ring's positions and the token wait flag are volatile.
+S32 lbl_8025F830;
+S32 lbl_8025F82C;
+S32 lbl_8025F828;
+volatile S32 lbl_8025F824;
+volatile S32 lbl_8025F820;
+volatile S32 lbl_8025F81C;
+volatile S32 lbl_8025F818;
+volatile S32 lbl_8025F814;
+volatile S32 lbl_8025F810;
+
+// The FIFO and frame buffer allocation.
+void* lbl_8025F80C;
+
+// Whether the frame is drawn in two halves.
+S32 lbl_8025F808;
+
+// Which video mode is in use: 0 NTSC, 1 PAL, 2 MPAL, 0x2A the application's own.
+S32 lbl_8025F804;
+
+// The pixel format GX is set to, and the one the frame uses.
+S32 lbl_8025F800;
+S32 lbl_8025F7FC;
+
+// Whether the next display copy clears the frame.
+S32 lbl_8025F7F8;
 
 // The draw sync token to issue next, and the last token the GPU has passed.
 extern volatile U16 lbl_8025E800;
@@ -103,10 +117,9 @@ RwVideoMode lbl_801DDF90[4] = {
     {0, 0, 0, rwVIDEOMODEEXCLUSIVE},
 };
 
-// The GX projection the camera sets.
+// The GX projection the camera sets and the device this driver registers (defined after
+// _rwDlSystem, which the device points to).
 extern F32 lbl_801DE04C[7];
-
-// The device this driver registers.
 extern RwDevice lbl_801DE068;
 
 // The driver's standard functions, by RenderWare standard function index (one table entry).
@@ -356,6 +369,35 @@ void _rwDlRenderModeSelect(GXRenderModeObj* renderMode, S32 pixelFormat)
     }
 }
 
+// Points every standard slot at the null standard.
+// FAKEMATCH: helper exists only to set register order in _rwDlSystem; real form believed to be an inline loop
+static inline void DlFillStandards(RwStandardFunc* funcs, S32 numIn)
+{
+    S32 i;
+
+    for (i = 0; i < numIn; i++)
+    {
+        funcs[i] = _rwDlNullStandard;
+    }
+}
+
+// Clears the standard slots, then installs the driver's standards.
+// FAKEMATCH: helper exists only to set register order in _rwDlSystem; real form believed to be inline loops
+static inline void DlInstallStandards(RwStandardFunc* funcs, DlStandard* standards, S32 count,
+                                      S32 numIn)
+{
+    DlFillStandards(funcs, numIn);
+
+    while (count--)
+    {
+        // The leading standard gates installation of the whole table.
+        if (standards[0].index < numIn && standards[0].index >= 0)
+        {
+            funcs[standards[count].index] = standards[count].func;
+        }
+    }
+}
+
 // The driver's system function: RenderWare's device requests (open, close, start, stop, the
 // video mode queries, the standard function table, and so on), by request number.
 S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
@@ -542,23 +584,8 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             {26, (RwStandardFunc)fn_8017CCBC},
             {28, fn_80179BDC},
         };
-        RwStandardFunc* funcs = out;
-        S32 i;
-        S32 count = sizeof(standards) / sizeof(standards[0]);
-
-        for (i = 0; i < numIn; i++)
-        {
-            funcs[i] = _rwDlNullStandard;
-        }
-
-        while (count--)
-        {
-            // The leading standard gates installation of the whole table.
-            if (standards[0].index < numIn && standards[0].index >= 0)
-            {
-                funcs[standards[count].index] = standards[count].func;
-            }
-        }
+        // FAKEMATCH: DlInstallStandards wraps the table loops to set register order; real form believed to be both loops written inline here
+        DlInstallStandards(out, standards, sizeof(standards) / sizeof(standards[0]), numIn);
 
         return TRUE;
     }
@@ -569,6 +596,32 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
 
     return FALSE;
 }
+
+// The GX projection the camera sets.
+F32 lbl_801DE04C[7] = {0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f};
+
+S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn);
+S32 _rwDlIm2DRenderLine(RwIm2DVertex* vertices, S32 numVertices, S32 vert1, S32 vert2);
+S32 _rwDlIm2DRenderTriangle(RwIm2DVertex* vertices, S32 numVertices, S32 vert1, S32 vert2,
+                            S32 vert3);
+S32 _rwDlIm2DRenderPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices, S32 numVertices);
+S32 _rwDlIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices,
+                                    S32 numVertices, RwImVertexIndex* indices, S32 numIndices);
+
+// The device this driver registers: gamma 1, the system function, the depth buffer's near and far
+// values, the render state and Im2D functions.
+RwDevice lbl_801DE068 = {
+    1.0f,
+    _rwDlSystem,
+    0.0f,
+    0.99999994f,
+    _rwDlSetRenderState,
+    _rwDlGetRenderState,
+    _rwDlIm2DRenderLine,
+    _rwDlIm2DRenderTriangle,
+    _rwDlIm2DRenderPrimitive,
+    _rwDlIm2DRenderIndexedPrimitive,
+};
 
 // Clears the camera: by drawing a quad over its frame buffer's area (twice the height when the
 // frame is drawn in halves), or, when the next display copy clears the frame, by setting that
