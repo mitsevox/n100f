@@ -70,7 +70,7 @@ static MeshOpStatic MeshOp = { { 0, 0, 0, 0, 0 }, RpBuildMeshGenerateDefaultTriS
 
 // The number of triangles on an edge that a pass has not used yet.
 #define TRISTRIPEDGEFREE(_edge, _flag)                                                             \
-    (((_edge)->tri[1] && !(_edge)->tri[1]->_flag) + ((_edge)->tri[0] && !(_edge)->tri[0]->_flag))
+    (((_edge)->tri[0] && !(_edge)->tri[0]->_flag) + ((_edge)->tri[1] && !(_edge)->tri[1]->_flag))
 
 // Takes a triangle out of its bin.
 #define TRISTRIPBINREMOVE(_bins, _entry)                                                           \
@@ -620,12 +620,12 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
     TriStripEdge* forwardEdge;
     TriStripBinEntry* bins[4];
     TriStripFreeLists freeLists;
-    TriStripBinEntry** entries;
     TriStripList* forward;
     TriStripList* backward;
     U32 numUsed;
     TriStripEdge* edgeList;
     TriStripEdge* backwardEdge;
+    TriStripBinEntry** entries;
     TriStripEdge* edge;
     U32 i;
 
@@ -750,7 +750,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
             startUsed = numUsed;
             bestEdge = start;
 
-            do
+            for (;;)
             {
                 U32 edgeIndex;
                 U16* vertIndex;
@@ -800,8 +800,8 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
                 forward->numIndices = 3;
 
                 TriStripMarkTriUsed(bins[bin], bins, pass);
-                numUsed =
-                    startUsed + 1 + TriStripFollow(forward, forwardEdge, bins, triangles, pass);
+                numUsed = startUsed + 1;
+                numUsed += TriStripFollow(forward, forwardEdge, bins, triangles, pass);
 
                 if (pass < TRISTRIPNUMPASSES)
                 {
@@ -856,6 +856,7 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
                         memcpy(&strip->indices[strip->numIndices], forward->indices,
                                forward->numIndices * sizeof(U32));
                         strip->numIndices = strip->space;
+                        break;
                     }
                 }
                 else
@@ -877,9 +878,10 @@ static S32 TriStripStripTris(RpBuildMeshTriangle* triangles, U32 numTris, TriStr
                         strip->numIndices = forward->numIndices;
                         strip->indices = (U16*)RwMalloc(forward->numIndices * sizeof(U32));
                         memcpy(strip->indices, forward->indices, forward->numIndices * sizeof(U32));
+                        break;
                     }
                 }
-            } while (pass < TRISTRIPNUMPASSES);
+            }
         }
     }
 
@@ -924,6 +926,7 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
     TriStripList* strip;
     TriStripList* rest;
     U32 i;
+    U32 j;
 
     if (!*stripList)
     {
@@ -1014,9 +1017,9 @@ static S32 TriStripJoin(TriStripList** stripList, S32 keepWinding)
             }
         }
 
-        for (i = 0; i < strip->numIndices; i++)
+        for (j = 0; j < strip->numIndices; j++)
         {
-            joined->indices[joined->numIndices] = strip->indices[i];
+            joined->indices[joined->numIndices] = strip->indices[j];
             joined->numIndices++;
         }
 
