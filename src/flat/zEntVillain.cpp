@@ -17099,6 +17099,17 @@ static void VPAR_readyize_emitters()
 static inline S32 VPAR_emit_headbutt(st_zEntVillain* ent, F32 dt, st_zEntVillain_ParEmitRecord* vpar,
                                      S32 idx, _xVec3* pos, _zParEmitterCustomSettings* pecust);
 
+// Emits a gummy burst at each of the five gum vertices the villain's model has.
+static inline S32 VPAR_emit_gummy(st_zEntVillain* ent, F32 dt, st_zEntVillain_ParEmitRecord* vpar,
+                                  S32 idx, _xVec3* pos, _zParEmitterCustomSettings* pecust)
+{
+    pecust->custom_flags = 0x20;
+    for (idx = 0; idx <= 4; idx++)
+        if (VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)idx, &pecust->pos))
+            zParEmitterEmitCustom(vpar->emitctxt, dt, pecust);
+    return 0;
+}
+
 // Emit a villain particle role at its bound, head, or marked model vertices.
 static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F32 dt)
 {
@@ -17131,11 +17142,7 @@ static void VPAR_emit_partype(st_zEntVillain* ent, en_VPAR_EMITTER_ROLE role, F3
             do_emit = 0;
             break;
         case VPAR_EMIT_GUMMY:
-            pecust.custom_flags = 0x20;
-            for (idx = 0; idx <= 4; idx++)
-                if (VSUP_vertPos(ent, (en_ZVIL_MODEL_VERTEX)idx, &pecust.pos))
-                    zParEmitterEmitCustom(vpar->emitctxt, dt, &pecust);
-            do_emit = 0;
+            do_emit = VPAR_emit_gummy(ent, dt, vpar, idx, &vilctr, &pecust);
             break;
         case VPAR_EMIT_HEADBUTT:
             do_emit = VPAR_emit_headbutt(ent, dt, vpar, idx, &vilctr, &pecust);
