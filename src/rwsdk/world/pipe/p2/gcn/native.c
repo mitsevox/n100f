@@ -43,14 +43,14 @@ RpWorldSector* _rpWorldSectorNativeRead(RwStream* stream, RpWorldSector* sector)
 static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef, U16 numMeshes,
                            S32 numVerts)
 {
-    U32 size;
+    U8* data;
     U32 version;
+    U32 size;
     S32 platform;
     S32 dataSize;
     S32 headerSize;
     GCNVertexArrays* arrays;
     GCNDisplayList* lists;
-    U8* data;
     S32 i;
 
     if (!RwStreamFindChunk(stream, rwID_STRUCT, &size, &version))
@@ -149,9 +149,9 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
 {
     GCNVertexArrays* arrays = NATIVE_ARRAYS(entry);
     GCNDisplayList* lists = (GCNDisplayList*)(arrays + 1);
-    S32 headerSize = sizeof(GCNVertexArrays) + numMeshes * sizeof(GCNDisplayList);
     U8* data = (U8*)NATIVE_ALIGN32((U32)lists + numMeshes * sizeof(GCNDisplayList));
     S32 chunkSize = NATIVE_STREAMSIZE(entry, numMeshes) - NATIVE_CHUNKHEADERSIZE;
+    S32 headerSize = sizeof(GCNVertexArrays) + numMeshes * sizeof(GCNDisplayList);
     S32 dataSize;
     GCNDisplayList* list;
     S32 i;

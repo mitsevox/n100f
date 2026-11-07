@@ -229,14 +229,13 @@ S32 _rwDlPixelToRGB(RwRGBA* rgba, const U32* pixelIn, S32 format)
 void _rwDlRasterPalletized4SetFromImage(RwRaster* raster, RwImage* image);
 void _rwDlRasterPalletized8SetFromImage(RwRaster* raster, RwImage* image);
 
-// Reads a 4-bit palettized raster into a 4-bit image: converts the raster's 16 palette entries
-// and unpacks its two pixels a byte. Deeper rasters cannot be read into a 4-bit image.
-void _rwDlImage4GetFromRaster(RwImage* image, RwRaster* raster)
+typedef void (*DlConvertFunc)(RwRGBA*, U32);
+
+// The converter from a raster's pixel format (its pixels' or its palette entries') to RwRGBA, or
+// NULL (with an error) for formats it cannot read.
+static inline DlConvertFunc DlRGBAConverter(RwRaster* raster)
 {
-    void (*convert)(RwRGBA*, U32) = NULL;
-    S32 i;
-    S32 y;
-    S32 x;
+    DlConvertFunc convert = NULL;
 
     switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
     {
@@ -275,6 +274,20 @@ void _rwDlImage4GetFromRaster(RwImage* image, RwRaster* raster)
         break;
     }
     }
+
+    return convert;
+}
+
+// Reads a 4-bit palettized raster into a 4-bit image: converts the raster's 16 palette entries
+// and unpacks its two pixels a byte. Deeper rasters cannot be read into a 4-bit image.
+void _rwDlImage4GetFromRaster(RwImage* image, RwRaster* raster)
+{
+    DlConvertFunc convert;
+    S32 i;
+    S32 y;
+    S32 x;
+
+    convert = DlRGBAConverter(raster);
 
     switch (raster->depth)
     {
@@ -326,52 +339,18 @@ void _rwDlImage4GetFromRaster(RwImage* image, RwRaster* raster)
 // 8-bit image.
 void _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster)
 {
-    void (*convert)(RwRGBA*, U32) = NULL;
-    S32 i;
+    DlConvertFunc convert;
     S32 y;
     S32 x;
 
-    switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
-    {
-    case rwRASTERFORMATLUM8:
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(2, "rwRASTERFORMATLUM8 not yet supported");
-        RwErrorSet(&err);
-        break;
-    }
-    case rwRASTERFORMAT555:
-        convert = _rwDlConv555To8888;
-        break;
-    case rwRASTERFORMAT565:
-        convert = _rwDlConv565To8888;
-        break;
-    case rwRASTERFORMAT1555:
-        convert = _rwDlConv1555To8888;
-        break;
-    case rwRASTERFORMAT4444:
-        convert = _rwDlConv4444To8888;
-        break;
-    case rwRASTERFORMAT8888:
-        convert = _rwDlConvDl8888To8888;
-        break;
-    case rwRASTERFORMAT888:
-        convert = _rwDlConvDl888To8888;
-        break;
-    default:
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(0x8000000D);
-        RwErrorSet(&err);
-        break;
-    }
-    }
+    convert = DlRGBAConverter(raster);
 
     switch (raster->depth)
     {
     case 4:
+    {
+        S32 i;
+
         for (i = 0; i < 16; i++)
         {
             convert(&image->palette[i], ((U16*)raster->palette)[i]);
@@ -391,7 +370,11 @@ void _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster)
             }
         }
         break;
+    }
     case 8:
+    {
+        S32 i;
+
         for (i = 0; i < 256; i++)
         {
             convert(&image->palette[i], ((U16*)raster->palette)[i]);
@@ -410,6 +393,7 @@ void _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster)
             }
         }
         break;
+    }
     case 16:
     case 32:
     {
@@ -436,53 +420,17 @@ void _rwDlImage8GetFromRaster(RwImage* image, RwRaster* raster)
 // 32-bit rasters pixel by pixel. 24-bit rasters are not supported.
 void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
 {
-    void (*convert)(RwRGBA*, U32) = NULL;
-    S32 i;
-    S32 y;
-    S32 x;
+    DlConvertFunc convert;
 
-    switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
-    {
-    case rwRASTERFORMATLUM8:
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(2, "rwRASTERFORMATLUM8 not yet supported");
-        RwErrorSet(&err);
-        break;
-    }
-    case rwRASTERFORMAT555:
-        convert = _rwDlConv555To8888;
-        break;
-    case rwRASTERFORMAT565:
-        convert = _rwDlConv565To8888;
-        break;
-    case rwRASTERFORMAT1555:
-        convert = _rwDlConv1555To8888;
-        break;
-    case rwRASTERFORMAT4444:
-        convert = _rwDlConv4444To8888;
-        break;
-    case rwRASTERFORMAT8888:
-        convert = _rwDlConvDl8888To8888;
-        break;
-    case rwRASTERFORMAT888:
-        convert = _rwDlConvDl888To8888;
-        break;
-    default:
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(0x8000000D);
-        RwErrorSet(&err);
-        break;
-    }
-    }
+    convert = DlRGBAConverter(raster);
 
     switch (raster->depth)
     {
     case 4:
     {
+        S32 i;
+        S32 y;
+        S32 x;
         RwRGBA palette[16];
 
         for (i = 0; i < 16; i++)
@@ -497,7 +445,7 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
 
             for (x = 0; x < raster->width; x += 2)
             {
-                dst[0] = palette[*src >> 4];
+                dst[0] = palette[(*src >> 4) & 0xF];
                 dst[1] = palette[*src & 0xF];
                 src++;
                 dst += 2;
@@ -507,6 +455,9 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
     }
     case 8:
     {
+        S32 i;
+        S32 y;
+        S32 x;
         RwRGBA palette[256];
 
         for (i = 0; i < 256; i++)
@@ -529,6 +480,10 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
         break;
     }
     case 16:
+    {
+        S32 y;
+        S32 x;
+
         for (y = 0; y < raster->height; y++)
         {
             U16* src = (U16*)(raster->cpPixels + raster->stride * y);
@@ -542,6 +497,7 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
             }
         }
         break;
+    }
     case 24:
     {
         RwError err;
@@ -551,6 +507,10 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
         break;
     }
     case 32:
+    {
+        S32 y;
+        S32 x;
+
         for (y = 0; y < raster->height; y++)
         {
             U32* src = (U32*)(raster->cpPixels + raster->stride * y);
@@ -564,6 +524,7 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
             }
         }
         break;
+    }
     default:
     {
         RwError err;
@@ -577,8 +538,10 @@ void _rwDlImage32GetFromRaster(RwImage* image, RwRaster* raster)
 
 // Reads a raster into an image of the image's depth, locking the raster's pixels and palette for
 // reading if they are not locked already.
-S32 _rwDlImageGetFromRaster(RwImage* image, RwRaster* raster)
+S32 _rwDlImageGetFromRaster(void* imageIn, void* rasterIn, S32 flags)
 {
+    RwImage* image = (RwImage*)imageIn;
+    RwRaster* raster = (RwRaster*)rasterIn;
     S32 pixelsLocked = FALSE;
     S32 paletteLocked = FALSE;
 
@@ -656,13 +619,13 @@ static RwImage* ImagePalettize(RwImage* image, S32 depth)
     return palImage;
 }
 
-// Writes an image into a 4-bit palettized raster: a 4-bit image's pixels are packed two to a
-// byte and its palette converted to the raster's format (unless a mipmap level is locked); a
-// deeper image is palettized first.
-void _rwDlRasterPalletized4SetFromImage(RwRaster* raster, RwImage* image)
+typedef U32 (*DlPixelFunc)(const RwRGBA*);
+
+// The converter from RwRGBA to a raster's pixel format, or NULL (with an error) for formats
+// it cannot write.
+static inline DlPixelFunc DlPixelConverter(RwRaster* raster)
 {
-    U32 (*convert)(const RwRGBA*) = NULL;
-    RwGCRasterExt* rasterExt = RWGCRASTEREXT(raster->parent);
+    DlPixelFunc convert = NULL;
 
     switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
     {
@@ -700,13 +663,25 @@ void _rwDlRasterPalletized4SetFromImage(RwRaster* raster, RwImage* image)
     }
     }
 
+    return convert;
+}
+
+// Writes an image into a 4-bit palettized raster: a 4-bit image's pixels are packed two to a
+// byte and its palette converted to the raster's format (unless a mipmap level is locked); a
+// deeper image is palettized first.
+void _rwDlRasterPalletized4SetFromImage(RwRaster* raster, RwImage* image)
+{
+    DlPixelFunc convert;
+    RwGCRasterExt* rasterExt = RWGCRASTEREXT(raster->parent);
+
+    convert = DlPixelConverter(raster);
+
     switch (image->depth)
     {
     case 4:
     {
         S32 y;
         S32 x;
-        S32 i;
 
         for (y = 0; y < raster->height; y++)
         {
@@ -724,11 +699,11 @@ void _rwDlRasterPalletized4SetFromImage(RwRaster* raster, RwImage* image)
         if (rasterExt->lockedLevel == 0)
         {
             U16* palette = (U16*)raster->palette;
+            S32 i;
 
             for (i = 0; i < 16; i++)
             {
-                *palette = convert(&image->palette[i]);
-                palette++;
+                palette[i] = convert(&image->palette[i]);
             }
         }
 
@@ -764,53 +739,18 @@ void _rwDlRasterPalletized4SetFromImage(RwRaster* raster, RwImage* image)
 // is palettized first.
 void _rwDlRasterPalletized8SetFromImage(RwRaster* raster, RwImage* image)
 {
-    U32 (*convert)(const RwRGBA*) = NULL;
+    DlPixelFunc convert;
 
-    switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
-    {
-    case rwRASTERFORMATLUM8:
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(2, "rwRASTERFORMATLUM8 not yet supported");
-        RwErrorSet(&err);
-        break;
-    }
-    case rwRASTERFORMAT555:
-        convert = _rwDlConv8888To555;
-        break;
-    case rwRASTERFORMAT565:
-        convert = _rwDlConv8888To565;
-        break;
-    case rwRASTERFORMAT1555:
-    case rwRASTERFORMAT4444:
-        convert = _rwDlConv8888To555or3444;
-        break;
-    case rwRASTERFORMAT888:
-        convert = _rwDlConv8888ToDl888;
-        break;
-    case rwRASTERFORMAT8888:
-        convert = _rwDlConv8888ToDl8888;
-        break;
-    default:
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(0x8000000D);
-        RwErrorSet(&err);
-        break;
-    }
-    }
+    convert = DlPixelConverter(raster);
 
     switch (image->depth)
     {
     case 4:
     case 8:
     {
-        RwGCRasterExt* rasterExt;
         S32 y;
+        RwGCRasterExt* rasterExt = RWGCRASTEREXT(raster->parent);
         S32 x;
-        S32 i;
 
         for (y = 0; y < raster->height; y++)
         {
@@ -825,16 +765,14 @@ void _rwDlRasterPalletized8SetFromImage(RwRaster* raster, RwImage* image)
             }
         }
 
-        rasterExt = RWGCRASTEREXT(raster->parent);
-
         if (rasterExt->lockedLevel == 0)
         {
             U16* palette = (U16*)raster->palette;
+            S32 i;
 
             for (i = 0; i < (1 << image->depth); i++)
             {
-                *palette = convert(&image->palette[i]);
-                palette++;
+                palette[i] = convert(&image->palette[i]);
             }
         }
 
@@ -868,52 +806,20 @@ void _rwDlRasterPalletized8SetFromImage(RwRaster* raster, RwImage* image)
 // pixel format.
 void _rwDlRaster16SetFromImage(RwRaster* raster, RwImage* image)
 {
-    U32 (*convert)(const RwRGBA*) = NULL;
+    DlPixelFunc convert;
     U16 palette[256];
     S32 i;
-    S32 y;
-    S32 x;
 
-    switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
-    {
-    case rwRASTERFORMATLUM8:
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(2, "rwRASTERFORMATLUM8 not yet supported");
-        RwErrorSet(&err);
-        break;
-    }
-    case rwRASTERFORMAT555:
-        convert = _rwDlConv8888To555;
-        break;
-    case rwRASTERFORMAT565:
-        convert = _rwDlConv8888To565;
-        break;
-    case rwRASTERFORMAT1555:
-    case rwRASTERFORMAT4444:
-        convert = _rwDlConv8888To555or3444;
-        break;
-    case rwRASTERFORMAT888:
-        convert = _rwDlConv8888ToDl888;
-        break;
-    case rwRASTERFORMAT8888:
-        convert = _rwDlConv8888ToDl8888;
-        break;
-    default:
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(0x8000000D);
-        RwErrorSet(&err);
-        break;
-    }
-    }
+    convert = DlPixelConverter(raster);
 
     switch (image->depth)
     {
     case 4:
     case 8:
+    {
+        S32 y;
+        S32 x;
+
         for (i = 0; i < (1 << image->depth); i++)
         {
             palette[i] = convert(&image->palette[i]);
@@ -932,7 +838,12 @@ void _rwDlRaster16SetFromImage(RwRaster* raster, RwImage* image)
             }
         }
         break;
+    }
     case 32:
+    {
+        S32 y;
+        S32 x;
+
         for (y = 0; y < raster->height; y++)
         {
             RwRGBA* src = (RwRGBA*)(image->cpPixels + image->stride * y);
@@ -946,6 +857,7 @@ void _rwDlRaster16SetFromImage(RwRaster* raster, RwImage* image)
             }
         }
         break;
+    }
     default:
     {
         RwError err;
@@ -961,52 +873,20 @@ void _rwDlRaster16SetFromImage(RwRaster* raster, RwImage* image)
 // pixel format.
 void _rwDlRaster32SetFromImage(RwRaster* raster, RwImage* image)
 {
-    U32 (*convert)(const RwRGBA*) = NULL;
+    DlPixelFunc convert;
     U32 palette[256];
     S32 i;
-    S32 y;
-    S32 x;
 
-    switch (RwRasterGetFormat(raster) & rwRASTERFORMATPIXELFORMATMASK)
-    {
-    case rwRASTERFORMATLUM8:
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(2, "rwRASTERFORMATLUM8 not yet supported");
-        RwErrorSet(&err);
-        break;
-    }
-    case rwRASTERFORMAT555:
-        convert = _rwDlConv8888To555;
-        break;
-    case rwRASTERFORMAT565:
-        convert = _rwDlConv8888To565;
-        break;
-    case rwRASTERFORMAT1555:
-    case rwRASTERFORMAT4444:
-        convert = _rwDlConv8888To555or3444;
-        break;
-    case rwRASTERFORMAT888:
-        convert = _rwDlConv8888ToDl888;
-        break;
-    case rwRASTERFORMAT8888:
-        convert = _rwDlConv8888ToDl8888;
-        break;
-    default:
-    {
-        RwError err;
-        err.pluginID = 1;
-        err.errorCode = _rwerror(0x8000000D);
-        RwErrorSet(&err);
-        break;
-    }
-    }
+    convert = DlPixelConverter(raster);
 
     switch (image->depth)
     {
     case 4:
     case 8:
+    {
+        S32 y;
+        S32 x;
+
         for (i = 0; i < (1 << image->depth); i++)
         {
             palette[i] = convert(&image->palette[i]);
@@ -1025,7 +905,12 @@ void _rwDlRaster32SetFromImage(RwRaster* raster, RwImage* image)
             }
         }
         break;
+    }
     case 32:
+    {
+        S32 y;
+        S32 x;
+
         for (y = 0; y < raster->height; y++)
         {
             RwRGBA* src = (RwRGBA*)(image->cpPixels + image->stride * y);
@@ -1039,6 +924,7 @@ void _rwDlRaster32SetFromImage(RwRaster* raster, RwImage* image)
             }
         }
         break;
+    }
     default:
     {
         RwError err;
@@ -1052,10 +938,12 @@ void _rwDlRaster32SetFromImage(RwRaster* raster, RwImage* image)
 
 // Writes an image into a raster of the raster's depth, locking the raster's pixels and palette for
 // writing if they are not locked already.
-S32 _rwDlRasterSetFromImage(RwRaster* raster, RwImage* image)
+S32 _rwDlRasterSetFromImage(void* rasterIn, void* imageIn, S32 flags)
 {
-    S32 paletteLocked = FALSE;
+    RwRaster* raster = (RwRaster*)rasterIn;
+    RwImage* image = (RwImage*)imageIn;
     S32 pixelsLocked = FALSE;
+    S32 paletteLocked = FALSE;
     S32 format = RwRasterGetFormat(raster);
 
     if (raster->privateFlags & rwRASTERPIXELLOCKEDWRITE)
@@ -1134,13 +1022,13 @@ S32 _rwDlImageFindFormat(RwImage* image)
     S32 depth = image->depth;
     S32 hasAlpha = FALSE;
     S32 format;
-    S32 x;
-    S32 y;
 
     if (depth == 4 || depth == 8)
     {
         S32 width = image->width;
         S32 height = image->height;
+        S32 x;
+        S32 y;
         U8* row = image->cpPixels;
         RwRGBA* palette = image->palette;
 
@@ -1183,6 +1071,8 @@ S32 _rwDlImageFindFormat(RwImage* image)
     {
         S32 width = image->width;
         S32 height = image->height;
+        S32 x;
+        S32 y;
         U8* row = image->cpPixels;
 
         for (y = 0; y < height; y++)

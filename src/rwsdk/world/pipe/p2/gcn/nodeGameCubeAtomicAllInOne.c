@@ -142,11 +142,11 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 // the instanced arrays, or copies one morph target when both are the same.
 void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* interpolator)
 {
-    S32 start = interpolator->startMorphTarget;
     S32 end = interpolator->endMorphTarget;
     S32 numVertices = geometry->numVertices;
     RwV3d* dstPos = (RwV3d*)arrays->pos;
     U8* dstNrm = (U8*)arrays->nrm;
+    S32 start = interpolator->startMorphTarget;
 
     if (start >= geometry->numMorphTargets || end >= geometry->numMorphTargets)
     {
