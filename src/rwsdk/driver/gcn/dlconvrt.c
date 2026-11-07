@@ -1134,13 +1134,13 @@ S32 _rwDlImageFindFormat(RwImage* image)
     S32 depth = image->depth;
     S32 hasAlpha = FALSE;
     S32 format;
-    S32 x;
-    S32 y;
 
     if (depth == 4 || depth == 8)
     {
         S32 width = image->width;
         S32 height = image->height;
+        S32 x;
+        S32 y;
         U8* row = image->cpPixels;
         RwRGBA* palette = image->palette;
 
@@ -1183,6 +1183,8 @@ S32 _rwDlImageFindFormat(RwImage* image)
     {
         S32 width = image->width;
         S32 height = image->height;
+        S32 x;
+        S32 y;
         U8* row = image->cpPixels;
 
         for (y = 0; y < height; y++)

@@ -276,13 +276,13 @@ S32 fn_80179064(RwRaster* raster, U8 level)
 // tiled texels themselves.
 S32 fn_80179198(void** pixelsOut, RwRaster* raster, S32 flags)
 {
-    U8 level = (flags >> 8) & 0xFF;
     RwRaster* top = raster->parent;
-    RwGCRasterExt* ext = RWGCRASTEREXT(top);
-    S32 stride;
-    S32 offset;
-    U8 l;
     U8* pixels;
+    U8 level = (flags >> 8) & 0xFF;
+    RwGCRasterExt* ext = RWGCRASTEREXT(top);
+    U8 l;
+    S32 offset;
+    S32 stride;
 
     switch (raster->cType & rwRASTERTYPEMASK)
     {
