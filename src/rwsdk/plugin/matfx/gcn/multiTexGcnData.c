@@ -156,13 +156,33 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
         return NULL;
     }
 
-    header.blend = ((config->srcBlend << 4) & 0xF0) | (config->destBlend & 0xF);
-    header.numTexCoordGens = config->numTexCoordGens;
-    header.numTevStages = config->numTevStages;
-    header.flags = config->flags;
-    header.numTexMatrices = config->numTexMatrices;
-    header.numIndMatrices = config->numIndMatrices;
-    header.numIndStages = config->numIndStages;
+    // The target reads every header value before the first store (lwz flags, then lbz each count),
+    // so they go through locals. flags still lands in r0 here and in r11 in the target.
+    {
+        U8 numIndStages;
+        U8 numIndMatrices;
+        U8 numTexMatrices;
+        U8 numTexCoordGens;
+        U8 numTevStages;
+        U8 flags;
+        U8 blend;
+
+        flags = config->flags;
+        numTevStages = config->numTevStages;
+        numTexCoordGens = config->numTexCoordGens;
+        numTexMatrices = config->numTexMatrices;
+        numIndMatrices = config->numIndMatrices;
+        numIndStages = config->numIndStages;
+        blend = ((config->srcBlend << 4) & 0xF0) | (config->destBlend & 0xF);
+
+        header.flags = flags;
+        header.numTevStages = numTevStages;
+        header.numTexCoordGens = numTexCoordGens;
+        header.numTexMatrices = numTexMatrices;
+        header.numIndMatrices = numIndMatrices;
+        header.numIndStages = numIndStages;
+        header.blend = blend;
+    }
     memcpy(header.kColors, config->kColors, sizeof(header.kColors));
     memcpy(header.tevColors, config->tevColors, sizeof(header.tevColors));
     RwMemLittleEndian16(header.tevColors, sizeof(header.tevColors));
