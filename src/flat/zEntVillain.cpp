@@ -443,6 +443,7 @@ static inline _tagLightning* VEFX_zapper_type_B(_xVec3* from, _xVec3* to, F32 du
 static void SuperVillainGumDraw(_xVec3* from, _xVec3* to, F32 top_radius, F32 bot_radius);
 static void VWEP_rbs_chkCollide(st_REDBEARD_SWORD* rbs, F32 dt);
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* sword, st_zEntVillain* vil);
+static inline void VWEP_rbs_place(st_REDBEARD_SWORD* rbs, _xVec3* pos);
 static void VWEP_rbs_bupdate(_xEnt* ent_rbs, _xVec3* pos);
 static inline en_ZVMM_FLASK_TYPE VPRJ_BMM_select_flasktype(st_zEntVillain* vil);
 static inline void VPRJ_BMM_redflask(zEntProjectile* prj, F32 dt);
@@ -16640,27 +16641,6 @@ static inline xModelInstance* VWEP_rbs_animmodel(st_zEntVillain* vil)
     return da_minst;
 }
 
-// Puts a Redbeard sword's model, unrotated and unscaled, and its collision
-// sphere (radius 0.75) at pos when one is given.
-static inline void VWEP_rbs_place(st_REDBEARD_SWORD* rbs, _xVec3* pos)
-{
-    _xMat4x3 mat = { 0 };
-    xMat3x3Euler((xMat3x3*)&mat, 0.0f, 0.0f, 0.0f);
-    xVec3SMulBy(&mat.right, 1.0f);
-    xVec3SMulBy(&mat.up, 1.0f);
-    xVec3SMulBy(&mat.at, 1.0f);
-    mat.flags = 0;
-    if (pos)
-    {
-        mat.pos = *pos;
-        rbs->bound.type = 1;
-        rbs->bound.sph.r = 0.75f;
-        rbs->bound.sph.center = *pos;
-        xBoundUpdate(&rbs->bound);
-    }
-    memcpy(rbs->model->Mat, &mat, sizeof(mat));
-}
-
 // Prepare a Redbeard sword entity and its collision targets.
 static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
 {
@@ -16696,6 +16676,27 @@ static void VWEP_rbs_setup(st_REDBEARD_SWORD* rbs, st_zEntVillain* rbvil)
             rbs->ent_colchk[i] = NULL;
     }
     rbs->flg_stat |= 2;
+}
+
+// Puts a Redbeard sword's model, unrotated and unscaled, and its collision
+// sphere (radius 0.75) at pos when one is given.
+static inline void VWEP_rbs_place(st_REDBEARD_SWORD* rbs, _xVec3* pos)
+{
+    _xMat4x3 mat = { 0 };
+    xMat3x3Euler((xMat3x3*)&mat, 0.0f, 0.0f, 0.0f);
+    xVec3SMulBy(&mat.right, 1.0f);
+    xVec3SMulBy(&mat.up, 1.0f);
+    xVec3SMulBy(&mat.at, 1.0f);
+    mat.flags = 0;
+    if (pos)
+    {
+        mat.pos = *pos;
+        rbs->bound.type = 1;
+        rbs->bound.sph.r = 0.75f;
+        rbs->bound.sph.center = *pos;
+        xBoundUpdate(&rbs->bound);
+    }
+    memcpy(rbs->model->Mat, &mat, sizeof(mat));
 }
 
 // Keeps a Redbeard sword's collision sphere (radius 0.75) on its position.
