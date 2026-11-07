@@ -914,7 +914,7 @@ S32 zEntProjectile::SetupFrame(xVec3* pos, xVec3* veloc)
 // .rodata at this point of the file, as the target has.
 static void SetupUnusedData()
 {
-    xVec3 tmp[1] = {};
+    xVec3 tmp = {};
 }
 
 void zEntProjectile::OrientSet(S32 orient)
