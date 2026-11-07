@@ -218,9 +218,10 @@ void _rwDlBreakPtCallback(void)
     }
 }
 
-// Moves a ring position (the frame ring's or the token ring's, read or write) on by one, wrapping
-// at the ring size. The positions the interrupts share are volatile, so it takes a volatile one.
-static void DlRingAdvance(volatile S32* pos)
+// Moves a ring position (the frame ring's write position, or the token ring's read or write
+// position) on by one, wrapping at the ring size. The frame ring's positions are volatile, since
+// the interrupts share them, so it takes a volatile one.
+static inline void DlRingAdvance(volatile S32* pos)
 {
     *pos = (*pos + 1) % DLDEVICE_RING;
 }
