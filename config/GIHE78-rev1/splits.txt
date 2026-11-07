@@ -179,6 +179,7 @@ flat/xDebug.cpp:
 	.text       start:0x80021C58 end:0x80021DEC
 	.data       start:0x801BD138 end:0x801BD218
 	.bss        start:0x8020ECE8 end:0x8020EE58
+	.sbss       start:0x80270890 end:0x80270898
 
 flat/xDraw.cpp:
 	.text       start:0x80021DEC end:0x80021FF8
@@ -273,7 +274,7 @@ flat/xordarray.cpp:
 
 flat/xPad.cpp:
 	.text       start:0x80031BE0 end:0x800324EC
-	.bss        start:0x802104B8 end:0x802106B8
+	.bss        start:0x802104B8 end:0x80210858
 	.sbss       start:0x80270968 end:0x80270970
 	.sdata2     start:0x80271FB8 end:0x80271FC8
 
@@ -317,6 +318,7 @@ flat/xsavegame.cpp:
 
 flat/xScene.cpp:
 	.text       start:0x80038D64 end:0x800394D0
+	.sbss       start:0x80270A10 end:0x80270A18
 	.sdata2     start:0x80272000 end:0x80272008
 
 flat/xScrFx.cpp:
@@ -530,6 +532,7 @@ flat/zFog.cpp:
 
 flat/zFX.cpp:
 	.text       start:0x800ABE18 end:0x800ABEC4
+	.sbss       start:0x80270D68 end:0x80270D70
 	.sdata2     start:0x802730E8 end:0x802730F8
 
 flat/zGame.cpp:

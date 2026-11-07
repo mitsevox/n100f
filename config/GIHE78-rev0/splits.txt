@@ -187,6 +187,9 @@ flat/xCollideFast.cpp:
 	.text       start:0x80021620 end:0x80021B10
 	.sdata2     start:0x8025FCD8 end:0x8025FCF0
 
+flat/xColor.cpp:
+	.sdata2     start:0x8025FCF0 end:0x8025FD08
+
 flat/xCutscene.cpp:
 	.text       start:0x80021B10 end:0x80021B1C
 
@@ -194,6 +197,7 @@ flat/xDebug.cpp:
 	.text       start:0x80021B1C end:0x80021CB0
 	.data       start:0x801AE778 end:0x801AE858
 	.bss        start:0x801FE448 end:0x801FE5B8
+	.sbss       start:0x8025E9F8 end:0x8025EA00
 
 flat/xDraw.cpp:
 	.text       start:0x80021CB0 end:0x80021E70
@@ -238,6 +242,7 @@ flat/xFont.cpp:
 	.data       start:0x801AE8A0 end:0x801AE8B0
 	.bss        start:0x801FF270 end:0x801FFA40
 	.sdata      start:0x8025E430 end:0x8025E438
+	.sbss       start:0x8025EA78 end:0x8025EA80
 	.sdata2     start:0x8025FF20 end:0x8025FF58
 
 flat/xFX.cpp:
@@ -295,7 +300,7 @@ flat/xordarray.cpp:
 
 flat/xPad.cpp:
 	.text       start:0x80031AC8 end:0x800323D4
-	.bss        start:0x801FFE08 end:0x80200008
+	.bss        start:0x801FFE08 end:0x802001A8
 	.sbss       start:0x8025EAD0 end:0x8025EAD8
 	.sdata2     start:0x80260100 end:0x80260110
 
@@ -339,6 +344,7 @@ flat/xsavegame.cpp:
 
 flat/xScene.cpp:
 	.text       start:0x80038D48 end:0x800394B4
+	.sbss       start:0x8025EB78 end:0x8025EB80
 	.sdata2     start:0x80260148 end:0x80260150
 
 flat/xScrFx.cpp:
@@ -563,6 +569,7 @@ flat/zFog.cpp:
 
 flat/zFX.cpp:
 	.text       start:0x800AC010 end:0x800AC0BC
+	.sbss       start:0x8025EED0 end:0x8025EED8
 	.sdata2     start:0x80261228 end:0x80261238
 
 flat/zGame.cpp:
@@ -956,6 +963,9 @@ MSL_C.PPCEABI.bare.H/alloc.c:
 	.bss        start:0x80242898 end:0x802428D0
 	.sbss       start:0x8025F230 end:0x8025F238
 
+MSL_C.PPCEABI.bare.H/errno.c:
+	.sbss       start:0x8025F238 end:0x8025F240
+
 MSL_C.PPCEABI.bare.H/ansi_files.c:
 	.text       start:0x800E7350 end:0x800E7650
 	.data       start:0x801CA268 end:0x801CA3A8
@@ -979,6 +989,10 @@ MSL_C.PPCEABI.bare.H/char_io.c:
 MSL_C.PPCEABI.bare.H/ctype.c:
 	.text       start:0x800E9A7C end:0x800E9AA0
 	.data       start:0x801CA510 end:0x801CA810
+
+MSL_C.PPCEABI.bare.H/locale.c:
+	.rodata     start:0x801A7F18 end:0x801A7F20
+	.data       start:0x801CA810 end:0x801CA848
 
 MSL_C.PPCEABI.bare.H/direct_io.c:
 	.text       start:0x800E9AA0 end:0x800EA13C
@@ -1025,6 +1039,9 @@ MSL_C.PPCEABI.bare.H/string.c:
 	.text       start:0x800EE2F0 end:0x800EE7BC
 	.rodata     start:0x801A7F70 end:0x801A8300
 	.sdata      start:0x8025E5E0 end:0x8025E5E8
+
+MSL_C.PPCEABI.bare.H/float.c:
+	.sdata      start:0x8025E5E8 end:0x8025E618
 
 MSL_C.PPCEABI.bare.H/strtold.c:
 	.text       start:0x800EE7BC end:0x800EF854
@@ -1204,6 +1221,10 @@ dolphin/ax/AXVPB.c: comment:8
 	.bss        start:0x8024A840 end:0x8025A640
 	.sbss       start:0x8025F380 end:0x8025F390
 	.sdata2     start:0x80262680 end:0x80262688
+
+dolphin/ax/DSPCode.c: comment:8
+	.data       start:0x801CAC80 end:0x801CC660
+	.sdata      start:0x8025E620 end:0x8025E628
 
 dolphin/ax/AXProf.c: comment:8
 	.text       start:0x800F8734 end:0x800F877C
@@ -1444,7 +1465,7 @@ dolphin/pad/Pad.c: comment:8
 
 dolphin/dvd/dvdlow.c: comment:8
 	.text       start:0x8010DA44 end:0x8010E898
-	.bss        start:0x8025C038 end:0x8025C108
+	.bss        start:0x8025C038 end:0x8025C120
 	.sdata      start:0x8025E6D0 end:0x8025E6D8
 	.sbss       start:0x8025F560 end:0x8025F5A8
 
@@ -1504,7 +1525,7 @@ bink/src/sdk/decode/yuv.cpp:
 
 bink/src/sdk/decode/binkacd.c:
 	.text       start:0x8011F78C end:0x80120470
-	.rodata     start:0x801A8730 end:0x801A8790
+	.rodata     start:0x801A8730 end:0x801A87A0
 	.data       start:0x801DC240 end:0x801DC380
 
 bink/shared/time/radcb.c:
@@ -1512,7 +1533,7 @@ bink/shared/time/radcb.c:
 
 bink/src/sdk/decode/expand.c:
 	.text       start:0x80120B54 end:0x801241E0
-	.rodata     start:0x801A87A0 end:0x801A8C20
+	.rodata     start:0x801A87A0 end:0x801A8C40 align:32
 	.data       start:0x801DC380 end:0x801DC3C0
 	.sdata2     start:0x80262780 end:0x80262798
 
@@ -1533,11 +1554,11 @@ bink/src/sdk/varbits.c:
 
 bink/src/sdk/fft.c:
 	.text       start:0x801281AC end:0x8012C490
-	.rodata     start:0x801A8DC0 end:0x801A8E18
+	.rodata     start:0x801A8DC0 end:0x801A8E20
 
 bink/src/sdk/dct.c:
 	.text       start:0x8012C490 end:0x8012D564
-	.rodata     start:0x801A8E20 end:0x801ACE20
+	.rodata     start:0x801A8E20 end:0x801ACE20 align:16
 
 bink/src/sdk/bitplane.c:
 	.text       start:0x8012D564 end:0x80130990

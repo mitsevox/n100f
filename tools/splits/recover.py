@@ -457,14 +457,19 @@ def data_only_units(variables_tsv, function_units, prefix_dir='E:\\SD2\\Game\\fl
     return dict(out)
 
 
-def carve_data_only(data_claims, data_only, data, final, order):
+def carve_data_only(data_claims, data_only, data, final, order, gaps=None):
     """Section ranges for the data-only units (data_only_units) that `data` rows claim, and a
     message for each refused claim.  The run gives a data-only unit's items to a neighbour, so a
     claim carves them off the end of the range of the unit linked right before it (link order
-    is case-insensitive by name): `final` is changed in place.  A claim is refused when it does
-    not end where that range ends, when it takes the whole range, or when it holds an item whose
-    name the PS2 DWARF does not list as a global of the claiming unit.  Returns
-    ({host unit: [(unit, section, start, end)]}, messages)."""
+    is case-insensitive by name): `final` is changed in place.  A claim may instead lie wholly
+    in the gap after that range, where no unit's range in the section reaches (xColor.cpp's
+    colors, which only other units load, so the run places them nowhere); `final` then stays as
+    it is.  A gap claim must start where that range ends and leave no item before the next
+    range, and a host takes one claim per section.  A claim is refused when an item crosses
+    either of its edges, when it is neither such a tail nor such a gap, when it takes the
+    whole range, or when it holds an item whose name the PS2 DWARF does not list as a global of
+    the claiming unit.  Each claim taken from a gap is added to `gaps`, when given, as
+    (unit, section).  Returns ({host unit: [(unit, section, start, end)]}, messages)."""
     hosted, refused = collections.defaultdict(list), []
     for (u, sec), (lo, hi) in sorted(data_claims, key=lambda c: (c[0][1], c[1], c[0][0])):
         why = None
@@ -472,10 +477,27 @@ def carve_data_only(data_claims, data_only, data, final, order):
         host = before[-1] if before else None
         r = final.get((host, sec)) if host else None
         items = [d for d, item in enumerate(data) if item[2] == sec and lo <= item[0] < hi]
+        # A gap claim starts where the host's range ends, reaches no range (none in the section
+        # may end after the host's range and start before the claim's end) and leaves no item
+        # between its end and the next range, so it fills the gap; a host takes one claim per
+        # section, so claims cannot overlap or run against link order.
+        nxt = min([a for (_, s), (a, b) in final.items() if s == sec and a >= hi], default=None)
+        gap = bool(r) and r[1] == lo and not any(
+            s == sec and a < hi and r[1] < b for (_, s), (a, b) in final.items())
+        straddle = [d for d, item in enumerate(data) if item[2] == sec and any(
+            item[0] < e < item[0] + item[1] for e in (lo, hi))]
+        left = [d for d, item in enumerate(data)
+                if item[2] == sec and hi <= item[0] and (nxt is None or item[0] < nxt)]
         if not r:
             why = f'no unit linked before it has a {sec} range'
-        elif r[1] != hi or not r[0] < lo:
-            why = f'it is not a tail of {host} {sec} 0x{r[0]:08X}-0x{r[1]:08X}'
+        elif any(h[1] == sec for h in hosted.get(host, [])):
+            why = f'{host} {sec} already hosts a data-only claim'
+        elif not gap and (r[1] != hi or not r[0] < lo):
+            why = f'it is neither a tail of {host} {sec} 0x{r[0]:08X}-0x{r[1]:08X} nor in a gap no range reaches'
+        elif gap and left:
+            why = f'it leaves 0x{data[left[0]][0]:08X} {data[left[0]][3]} between it and the next range'
+        elif straddle:
+            why = f'0x{data[straddle[0]][0]:08X} {data[straddle[0]][3]} crosses its edge'
         elif not items:
             why = 'it holds no item'
         else:
@@ -485,9 +507,35 @@ def carve_data_only(data_claims, data_only, data, final, order):
         if why:
             refused.append(f'check: data claim {u} {sec} 0x{lo:08X}-0x{hi:08X} refused: {why}')
             continue
-        final[(host, sec)] = (r[0], lo)
+        if not gap:
+            final[(host, sec)] = (r[0], lo)
+        elif gaps is not None:
+            gaps.add((u, sec))
         hosted[host].append((u, sec, lo, hi))
     return dict(hosted), refused
+
+
+def data_edge_rows(sec, u, v, a, b, cls, conflicts, hosted_u, gap_claims):
+    """The split_edges.tsv rows for the data edge from u to v in `sec`: (section, left unit,
+    right unit, left end, right start, class, crossing refs).  `a` and `b` are u's and v's
+    ranges (None when unsplit).  A data-only unit carved off u's range, or claimed in the gap
+    after it (`gap_claims`), sits between u and v.  A gap claim takes every item between the
+    two ranges (carve_data_only refuses one that does not), so the edge's base class gives way
+    to "data-only unit claim fills the gap"; its notes and its crossing count, which can hold
+    loads across the cut that the claim does not remove, are kept."""
+    rows = []
+    for w, wsec, lo, hi in hosted_u:
+        if wsec != sec:
+            continue
+        rows.append((sec, u, w, '0x%08X' % a[1] if a else '-', f'0x{lo:08X}',
+                     'data-only unit claimed by a data row in evidence.tsv', 0))
+        if (w, sec) in gap_claims:
+            base, sep, notes = cls.partition('; ')
+            cls = 'data-only unit claim fills the gap' + sep + notes
+        u, a = w, (lo, hi)
+    rows.append((sec, u, v, '0x%08X' % a[1] if a else '-', '0x%08X' % b[0] if b else '-',
+                 cls if a and b else cls + '; a side left unsplit', conflicts))
+    return rows
 
 
 class Dsu:
@@ -1210,9 +1258,12 @@ def main():
     for msg in refused + claim_warnings(claimed, data, users, emitted_units, free_extra):
         print(msg, file=sys.stderr)
     extra, conflicts, dclass, stray, placed, final = settle(claimed)
-    # Data-only units take their claimed ranges off the end of the unit linked before them.
+    # Data-only units take their claimed ranges off the end of the unit linked before them,
+    # or from the gap after it.
+    gap_claims = set()
     hosted, refused = carve_data_only([c for c in data_claims if c[0][0] in data_only],
-                                      data_only, data, final, [u for u in order if status(u) != 'weak'])
+                                      data_only, data, final, [u for u in order if status(u) != 'weak'],
+                                      gap_claims)
     for msg in refused:
         print(msg, file=sys.stderr)
     # A claim the link-order run then leaves out (its unit is out of order there) is reported.
@@ -1246,8 +1297,10 @@ def main():
             tclass[key], tconf[key] = tclass[key] + note, tconf[key] + n
 
     # Target-only checks on the result.  MW pools .sdata2 literals per unit, so
-    # no function may load a literal inside another unit's .sdata2 range (a global
-    # const in .sdata2 would break this; none has turned up).  As advice only, a
+    # no function may load a literal inside another unit's .sdata2 range.  A global
+    # const in .sdata2 would break this: xColor.cpp's colors are such consts, and they
+    # pass only because a data-only unit's claimed range is not in sd_owner (it holds
+    # no functions, and other units load its colors).  As advice only, a
     # unit range holding the same float twice is reported: pooled literals are
     # merged, but a named static const is not merged with a literal.
     emitted = [u for u in order if status(u) != 'weak']
@@ -1304,14 +1357,10 @@ def main():
         for (u, v, sec), (cls, conflicts) in sorted(dclass.items(), key=lambda kv: (kv[0][2], order.index(kv[0][0]))):
             a = final.get((u, sec)) if status(u) != 'weak' else None
             b = final.get((v, sec)) if status(v) != 'weak' else None
-            # A data-only unit carved off u's range sits between u and v.
-            for w, wsec, lo, hi in hosted.get(u, []):
-                if wsec == sec:
-                    out.write(f'{sec}\t{u}\t{w}\t0x{lo:08X}\t0x{lo:08X}\t'
-                              'data-only unit claimed by a data row in evidence.tsv\t0\n')
-                    u, a = w, (lo, hi)
-            out.write(f'{sec}\t{u}\t{v}\t{"0x%08X" % a[1] if a else "-"}\t{"0x%08X" % b[0] if b else "-"}\t'
-                      f'{cls if a and b else cls + "; a side left unsplit"}\t{conflicts}\n')
+            # A data-only unit carved off u's range, or claimed in the gap after it, sits
+            # between u and v.
+            for row in data_edge_rows(sec, u, v, a, b, cls, conflicts, hosted.get(u, []), gap_claims):
+                out.write('\t'.join(map(str, row)) + '\n')
     def anchor_kind(g, i):
         if i in named:
             return 'name'
