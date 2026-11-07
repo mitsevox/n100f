@@ -45,7 +45,7 @@ static void LightPoolStandIn(F32* scale, F32* sign, F32* lambert)
 }
 
 // Lights the mesh with every light in the lights cluster, unless the mesh is wholly clipped. A
-// mesh whose object-to-world matrix is not identity gets the lights moved into its object space.
+// mesh whose world matrix is not flagged as identity has the lights moved into its object space.
 static S32 _LightFn(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
     RxPacket* packet;
