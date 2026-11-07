@@ -68,7 +68,7 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 // Whether a texture's raster has alpha, from the raster plugin's flags.
 #define MATFXGCN_TEXTUREHASALPHA(_texture)                                                         \
     ((_texture) && (_texture)->raster &&                                                           \
-     (*(U32*)((U8*)(_texture)->raster + lbl_8025F870 + 0x14) & 1))
+     (*(U32*)((U8*)(_texture)->raster->parent + lbl_8025F870 + 0x14) & 1))
 
 // The display lists follow the instanced vertex arrays in the entry.
 #define MATFXGCN_DISPLAYLISTS(_entry)                                                              \
@@ -325,14 +325,29 @@ RpWorldSector* fn_801400F8(RpWorldSector* sector, GCNObjectData* objectData)
     return sector;
 }
 
+// The alpha compare mode for a texture: 3 when its raster's parent has alpha, otherwise 1. The
+// mode starts at 1 (li r3, 1 before the first test in each caller).
+static S32 MatFXGCNAlphaRef(RwTexture* texture)
+{
+    S32 ref = 1;
+
+    if (MATFXGCN_TEXTUREHASALPHA(texture))
+    {
+        ref = 3;
+    }
+
+    return ref;
+}
+
 // Loads the environment map texture matrix: the inverse of the map's frame (or lbl_8025E304),
-// after the object's matrix, scaled and offset into texture space.
+// after the object's matrix, scaled and offset into texture space. The matrix is a full 3x4 Mtx
+// of which the 2x4 load reads two rows (each inlined copy reserves 0x30 bytes).
 static void LoadEnvMapMatrix(RwFrame* frame, const RwMatrix* matrix)
 {
-    RwMatrix inverse;
     RwMatrix tmp;
+    RwMatrix inverse;
+    F32 mtx[3][4];
     const RwMatrix* env;
-    F32 mtx[2][4];
 
     if (frame)
     {
@@ -361,16 +376,22 @@ static void LoadEnvMapMatrix(RwFrame* frame, const RwMatrix* matrix)
     GXLoadTexMtxImm(mtx, GX_TEXMTX0, GX_MTX2x4);
 }
 
-// Sets up an environment map pass: additive blending, a material color whose alpha is the
-// coefficient, one texture coordinate from the normal through the environment matrix.
-static void SetupEnvMapPass(GXColor* color, F32 coef)
+// Sets up the lighting channels of an environment map pass: unlit, with a material color whose
+// alpha is the map's coefficient. The coefficient is read after the channel setup.
+static void SetupEnvMapChannels(GXColor* color, MatFXEnvMapData* envMap)
 {
-    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_CLAMP,
                   GX_AF_NONE);
-    GXSetChanCtrl(GX_COLOR1A1, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
+    GXSetChanCtrl(GX_COLOR1A1, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_CLAMP,
                   GX_AF_NONE);
-    color->a = 255.0f * coef;
+    color->a = 255.0f * envMap->coef;
     GXSetChanMatColor(GX_COLOR0A0, *color);
+}
+
+// Sets up the TEV of an environment map pass: one texture coordinate from the normal through the
+// environment matrix, modulated by the channel color.
+static void SetupEnvMapTev(void)
+{
     GXSetNumTexGens(1);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_NRM, GX_TEXMTX0, GX_FALSE, GX_PTIDENTITY);
     GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
@@ -426,7 +447,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
     while (numMeshes--)
     {
-        RpMaterial* material = mesh->material;
+        RpMultiTexture* multiTexture;
         MatFXMaterialData* matFX;
 
         if (resetChannels)
@@ -435,10 +456,11 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
             resetChannels = FALSE;
         }
 
-        fn_80158B20(objectData, material);
+        fn_80158B20(objectData, mesh->material);
+        multiTexture = RpMaterialGetMultiTexture(mesh->material, MATFXGCN_PLATFORM);
         matFX = MATFXMATERIALGETDATA(mesh->material);
 
-        if (RpMaterialGetMultiTexture(mesh->material, MATFXGCN_PLATFORM))
+        if (multiTexture)
         {
             _rpGameCubeMTMeshRenderCallBack(displayList, mesh->material, object,
                                             objectData, matrix);
@@ -467,8 +489,9 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 GXCallDisplayList(displayList->list, displayList->size);
                 RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
                 RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
-                SetupEnvMapPass(&lbl_8025E780, envMap->coef);
+                SetupEnvMapChannels(&lbl_8025E780, envMap);
                 resetChannels = TRUE;
+                SetupEnvMapTev();
                 resetTev = TRUE;
                 _rwDlTextureSet(envMap->texture, 0);
                 LoadEnvMapMatrix(envMap->frame, matrix);
@@ -488,7 +511,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 RwRenderStateGet(rwRENDERSTATEDESTBLEND, &destBlend);
                 texture = mesh->material->texture;
                 _rwDlTextureSet(texture, 0);
-                RwGameCubeSetAlphaCompare(MATFXGCN_TEXTUREHASALPHA(texture) ? 3 : 1);
+                RwGameCubeSetAlphaCompare(MatFXGCNAlphaRef(texture));
                 GXCallDisplayList(displayList->list, displayList->size);
                 RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)dual->srcBlendMode);
                 RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)dual->dstBlendMode);
@@ -500,7 +523,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
                 texture = dual->texture;
                 _rwDlTextureSet(texture, 0);
-                RwGameCubeSetAlphaCompare(MATFXGCN_TEXTUREHASALPHA(texture) ? 3 : 1);
+                RwGameCubeSetAlphaCompare(MatFXGCNAlphaRef(texture));
                 GXCallDisplayList(displayList->list, displayList->size);
 
                 if (objectData->flags & rpGEOMETRYTEXTURED2)
@@ -513,10 +536,8 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 break;
             }
             case rpMATFXEFFECTBUMPMAP:
-            case rpMATFXEFFECTBUMPENVMAP:
             {
-                MatFXMaterialData* data = MATFXMATERIALGETDATA(mesh->material);
-                MatFXBumpMapData* bumpMap = &data->effects[0].data.bumpMap;
+                MatFXBumpMapData* bumpMap = &MATFXMATERIALGETDATA(mesh->material)->effects[0].data.bumpMap;
                 S32 srcBlend;
                 S32 destBlend;
 
@@ -536,7 +557,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                         lbl_8025D958, NULL, numVertices * sizeof(RwTexCoords) + 6, fn_8013FEC0);
                     MATFXGCN_TOKEN(bumpEntry) = lbl_8025E800;
                     bumpTexCoords =
-                        (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 6 + 0x1F) & ~0x1F);
+                        (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 2 + 0x1F) & ~0x1F);
                 }
 
                 fn_8013FA64(bumpTexCoords, object, bumpMap, mesh, (RwV3d*)arrays->pos,
@@ -545,21 +566,52 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 GXSetArray(GX_VA_TEX0, bumpTexCoords, sizeof(RwTexCoords));
                 GXCallDisplayList(displayList->list, displayList->size);
                 GXSetArray(GX_VA_TEX0, arrays->tex[0], sizeof(RwTexCoords));
+                RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)srcBlend);
+                RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)destBlend);
+                break;
+            }
+            case rpMATFXEFFECTBUMPENVMAP:
+            {
+                MatFXMaterialData* data = MATFXMATERIALGETDATA(mesh->material);
+                MatFXBumpMapData* bumpMap = &data->effects[0].data.bumpMap;
+                MatFXEnvMapData* envMap = &data->effects[1].data.envMap;
+                S32 srcBlend;
+                S32 destBlend;
 
-                if (matFX->flags == rpMATFXEFFECTBUMPENVMAP)
+                RwRenderStateGet(rwRENDERSTATESRCBLEND, &srcBlend);
+                RwRenderStateGet(rwRENDERSTATEDESTBLEND, &destBlend);
+                RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDINVSRCALPHA);
+                RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDZERO);
+                _rwDlTextureSet(bumpMap->bumpTexture, 0);
+                RwGameCubeSetAlphaCompare(1);
+                GXCallDisplayList(displayList->list, displayList->size);
+                RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+                RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
+
+                if (!bumpEntry)
                 {
-                    MatFXEnvMapData* envMap = &data->effects[1].data.envMap;
-
-                    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-                    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
-                    SetupEnvMapPass(&lbl_8025E784, envMap->coef);
-                    resetChannels = TRUE;
-                    resetTev = TRUE;
-                    _rwDlTextureSet(envMap->texture, 0);
-                    LoadEnvMapMatrix(envMap->frame, matrix);
-                    GXCallDisplayList(displayList->list, displayList->size);
+                    bumpEntry = RwResourcesAllocateResEntry(
+                        lbl_8025D958, NULL, numVertices * sizeof(RwTexCoords) + 6, fn_8013FEC0);
+                    MATFXGCN_TOKEN(bumpEntry) = lbl_8025E800;
+                    bumpTexCoords =
+                        (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 2 + 0x1F) & ~0x1F);
                 }
 
+                fn_8013FA64(bumpTexCoords, object, bumpMap, mesh, (RwV3d*)arrays->pos,
+                            (RwV3d*)arrays->nrm, (RwTexCoords*)arrays->tex[0], numVertices,
+                            flags);
+                GXSetArray(GX_VA_TEX0, bumpTexCoords, sizeof(RwTexCoords));
+                GXCallDisplayList(displayList->list, displayList->size);
+                GXSetArray(GX_VA_TEX0, arrays->tex[0], sizeof(RwTexCoords));
+                RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+                RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
+                SetupEnvMapChannels(&lbl_8025E784, envMap);
+                resetChannels = TRUE;
+                SetupEnvMapTev();
+                resetTev = TRUE;
+                _rwDlTextureSet(envMap->texture, 0);
+                LoadEnvMapMatrix(envMap->frame, matrix);
+                GXCallDisplayList(displayList->list, displayList->size);
                 RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)srcBlend);
                 RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)destBlend);
                 break;
@@ -569,7 +621,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 RwTexture* texture = mesh->material->texture;
 
                 _rwDlTextureSet(texture, 0);
-                RwGameCubeSetAlphaCompare(MATFXGCN_TEXTUREHASALPHA(texture) ? 3 : 1);
+                RwGameCubeSetAlphaCompare(MatFXGCNAlphaRef(texture));
                 GXCallDisplayList(displayList->list, displayList->size);
                 break;
             }
@@ -587,7 +639,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
             texture = mesh->material->texture;
             _rwDlTextureSet(texture, 0);
-            RwGameCubeSetAlphaCompare(MATFXGCN_TEXTUREHASALPHA(texture) ? 3 : 1);
+            RwGameCubeSetAlphaCompare(MatFXGCNAlphaRef(texture));
             GXCallDisplayList(displayList->list, displayList->size);
         }
 
