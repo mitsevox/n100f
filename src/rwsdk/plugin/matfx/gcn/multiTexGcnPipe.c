@@ -84,13 +84,18 @@ void* fn_80141954(void* instance, S32 offset, S32 size)
 void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType)
 {
     GCNMTNBT* nbt;
-    RwV3d* positions = (RwV3d*)arrays->pos;
-    RwTexCoords* texCoords = (RwTexCoords*)arrays->tex[0];
-    GCNMTNBT* nbts = (GCNMTNBT*)arrays->nrm;
-    U16* indices = mesh->indices;
+    RwV3d* positions;
+    RwTexCoords* texCoords;
+    GCNMTNBT* nbts;
+    U16* indices;
     U16 a;
     U16 b;
     S32 i;
+
+    positions = (RwV3d*)arrays->pos;
+    nbts = (GCNMTNBT*)arrays->nrm;
+    texCoords = (RwTexCoords*)arrays->tex[0];
+    indices = mesh->indices;
 
     for (i = 0; i < mesh->numIndices; i++)
     {
