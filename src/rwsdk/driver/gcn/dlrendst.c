@@ -7,10 +7,10 @@
 // the current texture raster.
 
 // The GX fog type for each RenderWare fog type, and the GX blend factor for each blend mode.
-const GXFogType lbl_801DE390[4] = {
+GXFogType lbl_801DE390[4] = {
     GX_FOG_NONE, GX_FOG_LIN, GX_FOG_EXP, GX_FOG_EXP2
 };
-const GXBlendFactor lbl_801DE3A0[12] = {
+GXBlendFactor lbl_801DE3A0[12] = {
     GX_BL_ZERO, GX_BL_ZERO, GX_BL_ONE, GX_BL_SRCCLR,
     GX_BL_INVSRCCLR, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_BL_DSTALPHA,
     GX_BL_INVDSTALPHA, GX_BL_SRCCLR, GX_BL_INVSRCCLR, GX_BL_ZERO
