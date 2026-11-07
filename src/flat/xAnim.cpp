@@ -60,13 +60,17 @@ static void CalcPhysFromKeys(xAnimFile* af, F32* rootStart, F32* rootEnd, F32* p
 
     if (af->FileFlags & 0x1000)
     {
-        F32* temp = rootStart;
-        rootStart = rootEnd;
-        rootEnd = temp;
+        {
+            F32* temp = rootStart;
+            rootStart = rootEnd;
+            rootEnd = temp;
+        }
 
-        temp = physStart;
-        physStart = physEnd;
-        physEnd = temp;
+        {
+            F32* temp = physStart;
+            physStart = physEnd;
+            physEnd = temp;
+        }
     }
 
     if (af->FileFlags & 0x2000)
@@ -220,16 +224,9 @@ xAnimFile* xAnimFileNewBilinear(void** rawData, char* name, U32 flags, xAnimFile
     S32 i;
     xAnimFile* afile;
 
-    if (gxAnimUseGrowAlloc)
-    {
-        afile = (xAnimFile*)xMemGrowAlloc(gActiveHeap, numX * numY * sizeof(void*) +
-                                                           sizeof(xAnimFile));
-    }
-    else
-    {
-        afile =
-            (xAnimFile*)xMemAlloc(gActiveHeap, numX * numY * sizeof(void*) + sizeof(xAnimFile));
-    }
+    afile = (xAnimFile*)(gxAnimUseGrowAlloc ?
+                             xMemGrowAlloc(gActiveHeap, numX * numY * sizeof(void*) + sizeof(xAnimFile)) :
+                             xMemAlloc(gActiveHeap, numX * numY * sizeof(void*) + sizeof(xAnimFile)));
 
     if (numX > 1 || numY > 1)
     {
@@ -262,18 +259,13 @@ xAnimFile* xAnimFileNewBilinear(void** rawData, char* name, U32 flags, xAnimFile
     afile->ID = xStrHash(name);
     afile->FileFlags = flags;
 
-    if (afile->FileFlags & 0x2000)
-    {
-        afile->Duration = 2.0f * ((afile->FileFlags & 0x8000) ?
+    afile->Duration = (afile->FileFlags & 0x2000) ?
+                          2.0f * ((afile->FileFlags & 0x8000) ?
                                       xMorphSeqDuration(*(xMorphSeqFile**)afile->RawData) :
-                                      iAnimDuration(*afile->RawData));
-    }
-    else
-    {
-        afile->Duration = (afile->FileFlags & 0x8000) ?
-                              xMorphSeqDuration(*(xMorphSeqFile**)afile->RawData) :
-                              iAnimDuration(*afile->RawData);
-    }
+                                      iAnimDuration(*afile->RawData)) :
+                          ((afile->FileFlags & 0x8000) ?
+                               xMorphSeqDuration(*(xMorphSeqFile**)afile->RawData) :
+                               iAnimDuration(*afile->RawData));
 
     afile->TimeOffset = 0.0f;
     afile->BoneCount = (flags & 0x8000) ? 0 : iAnimBoneCount(*rawData);
@@ -289,60 +281,7 @@ xAnimFile* xAnimFileNewBilinear(void** rawData, char* name, U32 flags, xAnimFile
 // Create an animation file over one raw animation.
 xAnimFile* xAnimFileNew(void* rawData, char* name, U32 flags, xAnimFile** linkedList)
 {
-    xAnimFile* afile;
-
-    if (gxAnimUseGrowAlloc)
-    {
-        afile = (xAnimFile*)xMemGrowAlloc(gActiveHeap, sizeof(void*) + sizeof(xAnimFile));
-    }
-    else
-    {
-        afile = (xAnimFile*)xMemAlloc(gActiveHeap, sizeof(void*) + sizeof(xAnimFile));
-    }
-
-    if (*(U32*)rawData == 'QSPM')
-    {
-        flags |= 0x8000;
-    }
-
-    if (linkedList)
-    {
-        afile->Next = *linkedList;
-        *linkedList = afile;
-    }
-    else
-    {
-        afile->Next = NULL;
-    }
-
-    afile->RawData = (void**)(afile + 1);
-    afile->RawData[0] = rawData;
-    afile->Name = name;
-    afile->ID = xStrHash(name);
-    afile->FileFlags = flags;
-
-    if (afile->FileFlags & 0x2000)
-    {
-        afile->Duration = 2.0f * ((afile->FileFlags & 0x8000) ?
-                                      xMorphSeqDuration(*(xMorphSeqFile**)afile->RawData) :
-                                      iAnimDuration(*afile->RawData));
-    }
-    else
-    {
-        afile->Duration = (afile->FileFlags & 0x8000) ?
-                              xMorphSeqDuration(*(xMorphSeqFile**)afile->RawData) :
-                              iAnimDuration(*afile->RawData);
-    }
-
-    afile->TimeOffset = 0.0f;
-    afile->BoneCount = (flags & 0x8000) ? 0 : iAnimBoneCount(rawData);
-    afile->NumAnims[0] = 1;
-    afile->NumAnims[1] = 1;
-    afile->Physics = NULL;
-
-    CalcPhys(afile);
-
-    return afile;
+    return xAnimFileNewBilinear(&rawData, name, flags, linkedList, 1, 1);
 }
 
 // Give a file separate root-motion data.
@@ -396,12 +335,7 @@ void xAnimFileSetPoses(xAnimFile* data, void* startPose, F32 startTime, void* en
     F32 physEnd[4];
     xQuat tempQ;
 
-    if (data->Physics)
-    {
-        return;
-    }
-
-    if (data->FileFlags & 0x8000)
+    if (data->Physics || (data->FileFlags & 0x8000))
     {
         return;
     }
@@ -450,6 +384,7 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
     U32 biindex[2];
     U32 biplus[2];
     F32 tmpf;
+    F32* fptr;
     xQuat* q0;
     xVec3* t0;
     xQuat* q1;
@@ -458,7 +393,7 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
 
     fileflags = data->FileFlags;
 
-    time = (time < 0.0f) ? 0.0f : ((time < data->Duration) ? time : data->Duration);
+    time = CLAMP(time, 0.0f, data->Duration);
     rawTime = xAnimFileRawTime(data, time);
 
     if (fileflags & 0x8000)
@@ -467,8 +402,8 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
         {
             if (data->Physics)
             {
-                iAnimEval(data->Physics, rawTime, 0, tran, quat);
-                *yaw = CalcYaw(quat);
+                iAnimEval(data->Physics, rawTime, 1, tran, quat);
+                tmpyaw = CalcYaw(quat);
             }
             else
             {
@@ -515,8 +450,7 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
     {
         for (i = 0; i < 2; i++)
         {
-            tmpf = bilinear[i];
-            tmpf = (tmpf < 0.0f) ? 0.0f : ((tmpf < data->NumAnims[i] - 1) ? tmpf : data->NumAnims[i] - 1);
+            tmpf = CLAMP(bilinear[i], 0.0f, data->NumAnims[i] - 1);
             F32 t = floor(tmpf);
             bilerp[i] = tmpf - t;
             biindex[i] = t;
@@ -575,24 +509,26 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
     {
         if (data->Physics)
         {
-            iAnimEval(data->Physics, rawTime, 0, tran - 1, quat - 1);
+            iAnimEval(data->Physics, rawTime, 1, tran - 1, quat - 1);
             tmpyaw = CalcYaw(quat - 1);
         }
         else
         {
+            fptr = (F32*)(tran - 1);
+
             for (i = 0; i < 3; i++)
             {
                 if (fileflags & (0x10 << i))
                 {
-                    (&tran[-1].x)[i] = data->PhysBase[i];
+                    fptr[i] = data->PhysBase[i];
                 }
                 else if (fileflags & (0x100 << i))
                 {
-                    (&tran[-1].x)[i] = time * data->PhysDelta[i] + data->PhysBase[i];
+                    fptr[i] = time * data->PhysDelta[i] + data->PhysBase[i];
                 }
                 else
                 {
-                    (&tran[-1].x)[i] = time * data->PhysDelta[i] + data->PhysBase[i] + (&tran->x)[i];
+                    fptr[i] = time * data->PhysDelta[i] + data->PhysBase[i] + fptr[i + sizeof(xVec3) / sizeof(F32)];
                 }
             }
 
@@ -606,7 +542,7 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
             }
             else
             {
-                tmpyaw = time * data->PhysDelta[3] + data->PhysBase[3] + CalcYaw(quat);
+                tmpyaw = time * data->PhysBase[3] + data->PhysBase[3] + CalcYaw(quat);
             }
 
             quat[-1].v.x = 0.0f;
@@ -632,8 +568,8 @@ void xAnimFileEval(xAnimFile* data, F32 time, F32* bilinear, U32 flags, xVec3* t
     }
 }
 
-// The reciprocal of the longest blend in a blend-offset table (pairs of start time in ms and
-// 1024ths of a second, ending with 0xFFFF).
+// The reciprocal of the longest blend in a blend-offset table (pairs of start time and blend
+// length, both in 1024ths of a second, ending with 0xFFFF).
 static F32 CalcRecipBlendMax(U16* offset)
 {
     F32 max = 0.0f;
@@ -648,10 +584,10 @@ static F32 CalcRecipBlendMax(U16* offset)
         }
         else
         {
-            blend = 1.0f / (offset[1] * (1.0f / 1024.0f));
+            blend = 1.0f / (offset[1] / 1024.0f);
         }
 
-        blend = offset[0] * 0.001f + blend;
+        blend = offset[0] / 1024.0f + blend;
 
         if (blend > max)
         {
@@ -845,13 +781,15 @@ void xAnimTableAddTransition(xAnimTable* table, xAnimTransition* tran, char* sou
     U8* buffer = giAnimScratch;
     xAnimState** stateList = (xAnimState**)(giAnimScratch + 0x400);
     U32 i;
-    U32 stateCount = 0;
-    U32 allocCount = 0;
+    U32 allocCount;
+    U32 stateCount;
     U32 flags = tran->Flags;
     char* stateName;
     xAnimTransitionList* tlist;
     xAnimTransitionList* curr;
 
+    stateCount = 0;
+    allocCount = 0;
     stateName = xStrTokBuffer(source, " ,\t\n\r", buffer);
 
     while (stateName)
@@ -881,16 +819,11 @@ void xAnimTableAddTransition(xAnimTable* table, xAnimTransition* tran, char* sou
 
     if (stateCount)
     {
-        if (gxAnimUseGrowAlloc)
-        {
-            tlist = (xAnimTransitionList*)xMemGrowAlloc(gActiveHeap,
-                                                         stateCount * sizeof(xAnimTransitionList));
-        }
-        else
-        {
-            tlist = (xAnimTransitionList*)xMemAlloc(gActiveHeap,
-                                                     stateCount * sizeof(xAnimTransitionList));
-        }
+        tlist = (xAnimTransitionList*)(gxAnimUseGrowAlloc
+                                           ? xMemGrowAlloc(gActiveHeap,
+                                                           stateCount * sizeof(xAnimTransitionList))
+                                           : xMemAlloc(gActiveHeap,
+                                                       stateCount * sizeof(xAnimTransitionList)));
     }
 
     if (flags & 0x10)
@@ -1032,6 +965,37 @@ xAnimState* xAnimTableGetStateID(xAnimTable* table, U32 ID)
     return NULL;
 }
 
+// Unlink the state's effects that use the given callback.
+static inline void EffectRemoveByCB(xAnimState* state,
+                                    U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*))
+{
+    xAnimEffect* effect = state->Effects;
+    xAnimEffect* prev = NULL;
+
+    while (effect)
+    {
+        if (effect->Callback == callback)
+        {
+            if (prev)
+            {
+                prev->Next = effect->Next;
+            }
+            else
+            {
+                state->Effects = effect->Next;
+                prev = NULL;
+            }
+
+            effect = effect->Next;
+        }
+        else
+        {
+            prev = effect;
+            effect = effect->Next;
+        }
+    }
+}
+
 // Unlink every effect, in every state, that uses the given callback.
 void xAnimTableRemoveEffectByCB(xAnimTable* table,
                                 U32 (*callback)(U32, xAnimActiveEffect*, xAnimSingle*, void*))
@@ -1040,29 +1004,7 @@ void xAnimTableRemoveEffectByCB(xAnimTable* table,
 
     for (curr = table->StateList; curr; curr = curr->Next)
     {
-        xAnimEffect* prev = NULL;
-        xAnimEffect* effect = curr->Effects;
-
-        while (effect)
-        {
-            if (effect->Callback == callback)
-            {
-                if (prev)
-                {
-                    prev->Next = effect->Next;
-                }
-                else
-                {
-                    curr->Effects = effect->Next;
-                }
-            }
-            else
-            {
-                prev = effect;
-            }
-
-            effect = effect->Next;
-        }
+        EffectRemoveByCB(curr, callback);
     }
 }
 
@@ -1262,16 +1204,17 @@ static void EffectSingleLoop(xAnimSingle* single)
     U32 index = 0;
     U32 count = single->ActiveCount;
 
-    while (index < count && alist[index].Effect)
+    while (index < count && alist->Effect)
     {
-        if (!(alist[index].Effect->Flags & 0x20))
+        if (!(alist->Effect->Flags & 0x20))
         {
-            alist[index].Effect->Callback(3, &alist[index], single, single->Play->Object);
+            alist->Effect->Callback(3, alist, single, single->Play->Object);
 
-            EffectActiveRemove(&alist[index], index, count);
+            EffectActiveRemove(alist, index, count);
         }
         else
         {
+            alist++;
             index++;
         }
     }
@@ -1378,9 +1321,11 @@ static inline void TransitionTimeInit(xAnimSingle* single, xAnimTransition* tran
 {
     if (tran->Flags & 0x20)
     {
-        if ((tran->Dest->Data->FileFlags ^ single->State->Data->FileFlags) & 0x1000)
+        xAnimFile* dest = tran->Dest->Data;
+        xAnimFile* src = single->State->Data;
+        if ((src->FileFlags ^ dest->FileFlags) & 0x1000)
         {
-            single->Time = tran->Dest->Data->Duration - single->Time;
+            single->Time = dest->Duration - single->Time;
         }
     }
     else
@@ -2085,14 +2030,14 @@ void xAnimPlayEval(xAnimPlay* play)
     U32 i;
     U32 bone;
     xQuat* quatresult = (xQuat*)giAnimScratch;
-    xVec3* tranresult = (xVec3*)((U8*)quatresult + 0x410);
+    xVec3* tranresult = (xVec3*)((U8*)giAnimScratch + 0x410);
 
     if (play->BoneCount > 1)
     {
         xQuat* quatblend = (xQuat*)((U8*)quatresult + 0x720);
         xVec3* tranblend = (xVec3*)((U8*)quatblend + 0x410);
 
-        SingleEval(play->Single, tranresult, (xQuat*)giAnimScratch);
+        SingleEval(play->Single, tranresult, quatresult);
 
         for (i = 1; i < play->NumSingle; i++)
         {

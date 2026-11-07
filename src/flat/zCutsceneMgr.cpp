@@ -146,10 +146,12 @@ S32 zCutsceneMgrEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
     return 1;
 }
 
-// Nothing to finish once a cutscene has loaded.
+// Nothing to finish once a cutscene has loaded on GameCube (the PS2 build steps the load here
+// and sends the start events).
 void zCutsceneMgrFinishLoad(xBase* to)
 {
-    _zCutsceneMgr* t = (_zCutsceneMgr*)to;
+    _zCutsceneMgr* t;
+    *(xBase**)&t = to;
 }
 
 // Start a requested cutscene, finish a played one, and once it has stopped hand control back
