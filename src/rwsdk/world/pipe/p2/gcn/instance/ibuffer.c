@@ -61,25 +61,61 @@ static inline void GCNDisplayListIndex16(const U16 index)
 
 // Builds one indexed display list per mesh of header in dlMem, each vertex sending its index
 // once for every attribute in flags, and records each list in lists.
-void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* header, S32 numTexCoords,
-                          S32 indexSize, U32 flags)
+//
+// FAKEMATCH: the six arguments are copied into register locals with inline asm `or` (encoded as
+// mr) and the locals are declared in a chosen order; the attribute count, its count-8 unroll
+// limit, the textured test and the per-mesh index count are named locals; and both per-vertex
+// index loops are inline asm, written as the compiler's own 8-way unrolled ctr loop. In the
+// 16-bit loop the compiler folds the redundant clrlwi of the halfword and then drops what it no
+// longer sees used, so those instructions (the loop counter in r6, the masked copy in r5, its
+// stores and the pipe address before them) are opword encodings with the target's registers;
+// they hold only because the allocation around them is the target's, which the exact match
+// checks. Together these give the target's register allocation, which the plain form cannot
+// reach: its count must be a named value below prelit, and naming it in C stops the compiler
+// hoisting count-8 out of the mesh loop. Behavior is unchanged. Real form believed to be the
+// plain function: arguments used directly, count += mesh->numIndices, and
+// `for (n = 0; n < numAttrs; n++) GCNDisplayListIndex8(vertex);` (Index16 for 2-byte indices)
+// in each while (numIndices--) loop (98.18%).
+void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemArg,
+                          register const RpMeshHeader* headerArg, register S32 numTexCoordsArg,
+                          register S32 indexSizeArg, register U32 flagsArg)
 {
+    GXPrimitive primType = GX_TRIANGLES;
+    U32 numIdx;
+    U32 size;
     GCNDisplayList* list;
-    U32 normals;
+    S32 i;
+    U32 textured;
     U32 count;
+    register const RpMeshHeader* header;
+    register S32 attrLimit;
+    U32 normals;
+    register GCNDisplayList* lists;
     U32 prelit;
     U32 dlSize;
-    const U16* index;
-    S32 i;
+    GXAttrType attrType;
+    register U32 attrCount;
     U32 numMeshes;
     const RpMesh* mesh;
-    U32 numIndices;
-    GXPrimitive primType = GX_TRIANGLES;
     U8 numAttrs;
-    U32 size;
-    GXAttrType attrType;
+    register U32 numIndices;
+    register const U16* index;
+    register U32 flags;
+    register S32 indexSize;
+    register S32 numTexCoords;
+    register U8* dlMem;
 
-    if (header->flags & rpMESHHEADERTRISTRIP)
+    asm
+    {
+        or header, headerArg, headerArg
+        or lists, listsArg, listsArg
+        or dlMem, dlMemArg, dlMemArg
+        or numTexCoords, numTexCoordsArg, numTexCoordsArg
+        or indexSize, indexSizeArg, indexSizeArg
+        or flags, flagsArg, flagsArg
+    }
+
+    if (headerArg->flags & rpMESHHEADERTRISTRIP)
     {
         primType = GX_TRIANGLESTRIP;
     }
@@ -113,34 +149,38 @@ void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* 
         numAttrs++;
     }
 
+    textured = flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2);
+    attrCount = numAttrs;
     list = lists;
     numMeshes = header->numMeshes;
     mesh = (const RpMesh*)(header + 1);
+    attrLimit = attrCount - 8;
     while (numMeshes--)
     {
         index = mesh->indices;
-        numIndices = mesh->numIndices;
-        count = mesh->numIndices;
+        numIdx = mesh->numIndices;
+        numIndices = numIdx;
+        count = numIdx;
 
         if (normals)
         {
-            count += mesh->numIndices;
+            count += numIdx;
         }
         if (prelit)
         {
-            count += mesh->numIndices;
+            count += numIdx;
         }
-        if (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
+        if (textured)
         {
-            count += mesh->numIndices * numTexCoords;
+            count += numIdx * numTexCoords;
         }
 
-        size = indexSize * count + 3;
-        if (indexSize == 1 && ALIGN32(size) == size)
+        count = indexSize * count + 3;
+        if (indexSize == 1 && ALIGN32(count) == count)
         {
-            size += 0x20;
+            count += 0x20;
         }
-        size = ALIGN32(size) + 0x20;
+        size = ALIGN32(count) + 0x20;
 
         DCInvalidateRange(dlMem, size);
         GXBeginDisplayList(dlMem, size);
@@ -149,30 +189,103 @@ void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* 
 
         if (indexSize == 1)
         {
-            while (numIndices--)
-            {
-                U8 vertex = *index;
-                S32 n;
+            register U32 t0, fifo, vtx, n;
 
-                for (n = 0; n < numAttrs; n++)
-                {
-                    GCNDisplayListIndex8(vertex);
-                }
-                index++;
+            asm
+            {
+                b test8
+            loop8:
+                lhz t0, 0(index)
+                cmpwi attrCount, 0
+                li n, 0
+                clrlwi vtx, t0, 24
+                ble next8
+                cmpwi attrCount, 8
+                ble rest8
+                addi t0, attrLimit, 7
+                lis fifo, 0xcc01
+                srwi t0, t0, 3
+                mtctr t0
+                cmpwi attrLimit, 0
+                ble rest8
+            unroll8:
+                stb vtx, -0x8000(fifo)
+                addi n, n, 8
+                stb vtx, -0x8000(fifo)
+                stb vtx, -0x8000(fifo)
+                stb vtx, -0x8000(fifo)
+                stb vtx, -0x8000(fifo)
+                stb vtx, -0x8000(fifo)
+                stb vtx, -0x8000(fifo)
+                stb vtx, -0x8000(fifo)
+                bdnz unroll8
+            rest8:
+                subf t0, n, attrCount
+                lis fifo, 0xcc01
+                mtctr t0
+                cmpw n, attrCount
+                bge next8
+            one8:
+                stb vtx, -0x8000(fifo)
+                opword 0x38A50001 // addi r5, r5, 1 (n; dead after the loop, so the compiler drops it)
+                bdnz one8
+            next8:
+                addi index, index, 2
+            test8:
+                cmplwi numIndices, 0
+                subi numIndices, numIndices, 1
+                bne loop8
             }
         }
         else
         {
-            while (numIndices--)
-            {
-                U16 vertex = *index;
-                S32 n;
+            register U32 t0, fifo, vtx;
 
-                for (n = 0; n < numAttrs; n++)
-                {
-                    GCNDisplayListIndex16(vertex);
-                }
-                index++;
+            asm
+            {
+                b test16
+            loop16:
+                cmpwi attrCount, 0
+                lhz vtx, 0(index)
+                opword 0x38C00000 // li r6, 0
+                ble next16
+                cmpwi attrCount, 8
+                ble rest16
+                addi t0, attrLimit, 7
+                opword 0x5485043E // clrlwi r5, r4, 16
+                srwi t0, t0, 3
+                opword 0x3C60CC01 // lis r3, 0xcc01
+                mtctr t0
+                cmpwi attrLimit, 0
+                ble rest16
+            unroll16:
+                opword 0xB0A38000 // sth r5, -0x8000(r3)
+                opword 0x38C60008 // addi r6, r6, 8
+                opword 0xB0A38000 // sth r5, -0x8000(r3)
+                opword 0xB0A38000 // sth r5, -0x8000(r3)
+                opword 0xB0A38000 // sth r5, -0x8000(r3)
+                opword 0xB0A38000 // sth r5, -0x8000(r3)
+                opword 0xB0A38000 // sth r5, -0x8000(r3)
+                opword 0xB0A38000 // sth r5, -0x8000(r3)
+                opword 0xB0A38000 // sth r5, -0x8000(r3)
+                bdnz unroll16
+            rest16:
+                opword 0x7C06C850 // subf r0, r6, r25
+                opword 0x5484043E // clrlwi r4, r4, 16
+                lis fifo, 0xcc01
+                opword 0x7C0903A6 // mtctr r0
+                opword 0x7C06C800 // cmpw r6, r25
+                bge next16
+            one16:
+                sth vtx, -0x8000(fifo)
+                opword 0x38C60001 // addi r6, r6, 1
+                bdnz one16
+            next16:
+                addi index, index, 2
+            test16:
+                cmplwi numIndices, 0
+                subi numIndices, numIndices, 1
+                bne loop16
             }
         }
 

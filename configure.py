@@ -1009,7 +1009,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/wrldpipe.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c"),
             Object(NonMatching, "rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c"),
-            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/instance/ibuffer.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/instance/ibuffer.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/gclights.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/native.c"),
         ],
