@@ -584,8 +584,8 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
             }
 
             ADVANCE(32, bx * 2)
-            x += 32;
             mrow += 2;
+            x += 32;
         }
 
         if (x + 15 <= lastx)
@@ -598,6 +598,7 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
             if (bits)
             {
                 YUVSTATE save = S;
+                S32 i;
 
                 MASKBLOCK(4, yskip16, uvskip16, skip16)
                 S = save;
