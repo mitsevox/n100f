@@ -6,7 +6,6 @@
 // display list records and the arrays and lists they point into) streamed as one chunk, with its
 // pointers stored as offsets from the start of the data.
 
-extern S32 lbl_8025E7C0;
 extern volatile U16 lbl_8025E800;
 
 void _rxGCResEntryWaitDone(RwResEntry* resEntry);
@@ -21,6 +20,9 @@ RpWorldSector* _rpWorldSectorNativeRead(RwStream* stream, RpWorldSector* sector)
 
 // The platform a native chunk was written for.
 #define NATIVE_PLATFORMGCN 6
+
+// The platform word _rpNativeWrite writes after the chunk header.
+S32 lbl_8025E7C0 = NATIVE_PLATFORMGCN;
 
 // A stream chunk header: its type, size and version words.
 #define NATIVE_CHUNKHEADERSIZE (sizeof(U32) * 3)
@@ -39,9 +41,11 @@ RpWorldSector* _rpWorldSectorNativeRead(RwStream* stream, RpWorldSector* sector)
 
 // The bytes an instance entry takes in a stream: the chunk header, the platform and the two sizes,
 // the vertex arrays header and display list records and the data.
+// FAKEMATCH: built from the inline helpers NativeStreamSize and NativeDataSize to get the target's
+// instruction and register order; real form believed to be one expression of NATIVE_DATASIZE.
 #define NATIVE_STREAMSIZE(_entry, _numMeshes)                                                      \
-    (NATIVE_DATASIZE(_entry, _numMeshes) + (_numMeshes) * sizeof(GCNDisplayList) +                 \
-     (NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3 + sizeof(GCNVertexArrays)))
+    NativeStreamSize(sizeof(GCNVertexArrays) + (_numMeshes) * sizeof(GCNDisplayList),             \
+                     NativeDataSize(_entry, _numMeshes))
 
 static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef, U32 numMeshes,
                            S32 numVerts)
@@ -169,6 +173,21 @@ static inline S32 NativeStreamSize(S32 size, S32 dataSize)
     size += NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3;
     size += dataSize;
     return size;
+}
+
+// NATIVE_DATASIZE for the size functions.
+// FAKEMATCH: the aligned data address is built in d over three statements, the last a no-op cast
+// that keeps the alignment as its own instruction before the arrays pointer is formed; real form
+// believed to be NATIVE_DATASIZE.
+static inline S32 NativeDataSize(RwResEntry* entry, U16 numMeshes)
+{
+    U32 d;
+
+    d = (U32)entry + sizeof(RwResEntry) + sizeof(GCNVertexArrays) +
+        numMeshes * sizeof(GCNDisplayList) + 0x1F;
+    d &= ~0x1F;
+    d = (U32)(U8*)d;
+    return entry->size - (d - (U32)NATIVE_ARRAYS(entry));
 }
 
 static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeVtxFmt* vtxFmt,
