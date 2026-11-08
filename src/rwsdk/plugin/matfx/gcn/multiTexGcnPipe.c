@@ -21,7 +21,7 @@ struct GCNMTGlobals
 };
 
 // The plugin's offset in the engine instance.
-extern S32 lbl_8025F698;
+S32 lbl_8025F698;
 
 #define GCNMTGLOBAL(var) (((GCNMTGlobals*)((U8*)RwEngineInstance + lbl_8025F698))->var)
 
@@ -30,8 +30,8 @@ extern RwMatrix lbl_8025E304;
 
 // When the lit color takes the first two TEV stages, these replace the color and alpha inputs
 // of a stage that reads the rasterized color with the previous stage's output.
-extern const S32 lbl_801DD400[16];
-extern const S32 lbl_801DD440[8];
+S32 lbl_801DD400[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 6, 7, 12, 13, 14, 15 };
+S32 lbl_801DD440[8] = { 0, 1, 2, 3, 4, 3, 6, 7 };
 
 // The pre- and post-render callbacks of a multitexture, and their data. Written for this project.
 typedef void (*GCNMTRenderCB)(RpMaterial* material, void* object, GCNObjectData* objectData,
@@ -372,19 +372,86 @@ RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
     return out;
 }
 
+// Sends one enabled TEV stage, numbered after the lighting stages: its indirect or direct mode,
+// its color and alpha inputs (lit color channels swap in the lighting tables), its order with
+// the channel it reads, its constant selections and its color and alpha operations.
+static void SendTevStage(GCNMTTevStage* tevStage, S32 firstStage, S32 i, S32 lighting)
+{
+    S32 stage = firstStage + i;
+    S32 channel;
+
+    if (tevStage->indirect)
+    {
+        GCNMTTevInd tevInd;
+
+        RpGameCubeTevIndUnpack(&tevInd, &tevStage->indirect);
+        GXSetTevIndirect(stage, tevInd.indStage, tevInd.format, tevInd.bias,
+                         tevInd.matrix, tevInd.wrapS, tevInd.wrapT, (GXBool)tevInd.addPrev,
+                         tevInd.utcLod, tevInd.alpha);
+    }
+    else
+    {
+        GXSetTevDirect(stage);
+    }
+
+    if (tevStage->channel <= GX_COLOR1A1 && lighting == 3)
+    {
+        GXSetTevColorIn(stage, lbl_801DD400[tevStage->colorIn[0]],
+                        lbl_801DD400[tevStage->colorIn[1]],
+                        lbl_801DD400[tevStage->colorIn[2]],
+                        lbl_801DD400[tevStage->colorIn[3]]);
+        GXSetTevAlphaIn(stage, lbl_801DD440[tevStage->alphaIn[0]],
+                        lbl_801DD440[tevStage->alphaIn[1]],
+                        lbl_801DD440[tevStage->alphaIn[2]],
+                        lbl_801DD440[tevStage->alphaIn[3]]);
+        channel = GX_COLOR_NULL;
+    }
+    else
+    {
+        GXSetTevColorIn(stage, tevStage->colorIn[0], tevStage->colorIn[1],
+                        tevStage->colorIn[2], tevStage->colorIn[3]);
+        GXSetTevAlphaIn(stage, tevStage->alphaIn[0], tevStage->alphaIn[1],
+                        tevStage->alphaIn[2], tevStage->alphaIn[3]);
+        channel = tevStage->channel;
+
+        if (channel <= GX_COLOR1A1 && lighting == 2)
+        {
+            channel = GX_COLOR0A0;
+        }
+    }
+
+    GXSetTevOrder(stage, tevStage->texCoord, tevStage->texMap, channel);
+    GXSetTevKColorSel(stage, tevStage->kColorSel);
+    GXSetTevKAlphaSel(stage, tevStage->kAlphaSel);
+    GXSetTevColorOp(stage, tevStage->colorOp, tevStage->colorBias,
+                    tevStage->colorScale, tevStage->colorClamp, tevStage->colorOut);
+    GXSetTevAlphaOp(stage, tevStage->alphaOp, tevStage->alphaBias,
+                    tevStage->alphaScale, tevStage->alphaClamp, tevStage->alphaOut);
+}
+
 // Sends an effect's TEV setup to GX: colors, texture and indirect matrices, indirect stages, TEV
 // stages and texture coordinate generators, then the alpha compare and blend modes. With
 // lighting, one or two stages first add the lit color channels.
 RpMTEffect* _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 numTextures,
                                     const U8* coords, const RwMatrix* matrix)
 {
-    GCNMTConfig* config = RpGameCubeMTEffectGetConfig(effect);
+    register GCNMTConfig* config;
+    register GCNMTConfig* data;
+    U32 flags;
     S8 texMapOfCoord[8];
     S32 firstStage;
     S32 lighting;
     S32 i;
 
-    if (config->flags & GCNMT_TEVCOLORS)
+    data = RpGameCubeMTEffectGetConfig(effect);
+    flags = data->flags;
+    // FAKEMATCH: inline asm `or` (mr) copies the config pointer into its register local after the
+    // first flags load, so the config keeps a named local's register number (r31 in the target)
+    // instead of being merged into the call result by copy propagation. Real form believed to be
+    // GCNMTConfig* config = RpGameCubeMTEffectGetConfig(effect); with config->flags tested here.
+    asm { or config, data, data }
+
+    if (flags & GCNMT_TEVCOLORS)
     {
         GXSetTevColorS10(GX_TEVREG0, ((GXColorS10*)config->tevColors)[0]);
         GXSetTevColorS10(GX_TEVREG1, ((GXColorS10*)config->tevColors)[1]);
@@ -567,56 +634,7 @@ RpMTEffect* _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 num
 
             if (!(tevStage->flags & GCNMTTEV_DISABLED))
             {
-                S32 stage = firstStage + i;
-                S32 channel;
-
-                if (tevStage->indirect)
-                {
-                    GCNMTTevInd tevInd;
-
-                    RpGameCubeTevIndUnpack(&tevInd, &tevStage->indirect);
-                    GXSetTevIndirect(stage, tevInd.indStage, tevInd.format, tevInd.bias,
-                                     tevInd.matrix, tevInd.wrapS, tevInd.wrapT, tevInd.addPrev,
-                                     tevInd.utcLod, tevInd.alpha);
-                }
-                else
-                {
-                    GXSetTevDirect(stage);
-                }
-
-                if (tevStage->channel <= GX_COLOR1A1 && lighting == 3)
-                {
-                    GXSetTevColorIn(stage, lbl_801DD400[tevStage->colorIn[0]],
-                                    lbl_801DD400[tevStage->colorIn[1]],
-                                    lbl_801DD400[tevStage->colorIn[2]],
-                                    lbl_801DD400[tevStage->colorIn[3]]);
-                    GXSetTevAlphaIn(stage, lbl_801DD440[tevStage->alphaIn[0]],
-                                    lbl_801DD440[tevStage->alphaIn[1]],
-                                    lbl_801DD440[tevStage->alphaIn[2]],
-                                    lbl_801DD440[tevStage->alphaIn[3]]);
-                    channel = GX_COLOR_NULL;
-                }
-                else
-                {
-                    GXSetTevColorIn(stage, tevStage->colorIn[0], tevStage->colorIn[1],
-                                    tevStage->colorIn[2], tevStage->colorIn[3]);
-                    GXSetTevAlphaIn(stage, tevStage->alphaIn[0], tevStage->alphaIn[1],
-                                    tevStage->alphaIn[2], tevStage->alphaIn[3]);
-                    channel = tevStage->channel;
-
-                    if (channel <= GX_COLOR1A1 && lighting == 2)
-                    {
-                        channel = GX_COLOR0A0;
-                    }
-                }
-
-                GXSetTevOrder(stage, tevStage->texCoord, tevStage->texMap, channel);
-                GXSetTevKColorSel(stage, tevStage->kColorSel);
-                GXSetTevKAlphaSel(stage, tevStage->kAlphaSel);
-                GXSetTevColorOp(stage, tevStage->colorOp, tevStage->colorBias,
-                                tevStage->colorScale, tevStage->colorClamp, tevStage->colorOut);
-                GXSetTevAlphaOp(stage, tevStage->alphaOp, tevStage->alphaBias,
-                                tevStage->alphaScale, tevStage->alphaClamp, tevStage->alphaOut);
+                SendTevStage(tevStage, firstStage, i, lighting);
                 texMapOfCoord[tevStage->texCoord] = tevStage->texMap;
             }
         }
