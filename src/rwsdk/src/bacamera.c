@@ -108,12 +108,14 @@ void CameraBuildPerspClipPlanes(RwCamera* camera)
     RwV3d* nearCorner;
     RwV3d* farCorner;
     S32 i;
+    F32 rightOffset;
 
     up = &camMatrix->up;
-    RwV3dScaleMacro(&offset, &camMatrix->right, -camera->viewOffset.x);
+    rightOffset = -camera->viewOffset.x;
+    RwV3dScaleMacro(&offset, &camMatrix->right, rightOffset);
     RwV3dIncrementScaledMacro(&offset, up, camera->viewOffset.y);
-    RwV3dScaleMacro(&xWindow, &camMatrix->right, camera->viewWindow.x);
     RwV3dScaleMacro(&yWindow, &camMatrix->up, camera->viewWindow.y);
+    RwV3dScaleMacro(&xWindow, &camMatrix->right, camera->viewWindow.x);
     RwV3dScaleMacro(&xWindow2, &xWindow, 2.0f);
 
     RwV3dAddMacro(&vector, &camMatrix->at, &xWindow);
