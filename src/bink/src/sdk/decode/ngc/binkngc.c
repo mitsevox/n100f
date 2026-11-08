@@ -50,6 +50,8 @@ inline void ReadTimeBase(U64* t)
         __asm__ volatile("mftbu %0" : "=r"(hi));
         __asm__ volatile("mftb %0" : "=r"(lo));
         __asm__ volatile("mftbu %0" : "=r"(hi2));
+        // FAKEMATCH: lo++; lo--; is a no-op that adds references to lo so ProDG gives lo priority over hi in register allocation; real form believed to be the loop without it.
+        lo++; lo--;
     } while (hi != hi2);
 
     ((U32*)t)[1] = lo;
@@ -87,17 +89,17 @@ U32 RADTimerRead(void)
 {
     static U64 starttime = 0;
     U64 t = OSGetTime();
-    U32 hi, lo, q;
+    U32 q, h, l;
 
     if (starttime == 0)
         starttime = t;
 
     t -= starttime;
-    q = (U32)(t >> 32) * 106048;
+    q = (U64)(U32)(t >> 32) * 106048;
     t -= (U64)q * 40500;
-    hi = (U32)(t >> 32);
-    lo = (U32)t;
-    return q + ((hi * 0xCF2049A1 + (U32)(((U64)lo * 0xCF2049A1) >> 32)) >> 15);
+    h = (U32)(t >> 32) * 0xCF2049A1;
+    l = (U32)(((U64)(U32)t * 0xCF2049A1) >> 32);
+    return q + ((h + l) >> 15);
 }
 
 void RADCycleTimerStartAddr(U32* addr)
