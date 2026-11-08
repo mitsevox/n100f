@@ -10,8 +10,22 @@
 // The last draw sync token the GPU has passed.
 extern volatile U16 lbl_8025F890;
 
-// The node definition.
-extern RxNodeDefinition lbl_801DDAFC;
+S32 _rxGCWorldSectorAllInOneNode(RxPipelineNode* self, register RxPipelineNodeParam* params);
+S32 _rxGCWorldSectorAllInOnePipelineInit(RxPipelineNode* node);
+
+// The node definition: the node body and the pipeline-node init that fills the private data's
+// callbacks, no clusters or outputs, and private data for the callbacks.
+char lbl_801DDAD8[] = "GamerCubeWorldSectorAllInOne.csl";
+
+RxNodeDefinition lbl_801DDAFC = {
+    lbl_801DDAD8,
+    { _rxGCWorldSectorAllInOneNode, NULL, NULL, _rxGCWorldSectorAllInOnePipelineInit, NULL, NULL,
+      NULL },
+    { 0, NULL, NULL, 0, NULL },
+    sizeof(GCNAllInOnePrivateData),
+    rxNODEDEFCONST,
+    0,
+};
 
 void _rxGCResEntryWaitDone(RwResEntry* resEntry);
 S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numTexCoords);
