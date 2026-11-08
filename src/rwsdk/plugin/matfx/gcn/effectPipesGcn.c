@@ -551,8 +551,10 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
                 if (!bumpEntry)
                 {
-                    bumpEntry = RwResourcesAllocateResEntry(
-                        lbl_8025D958, NULL, bumpSize + 6, fn_8013FEC0);
+                    S32 size = 6;
+
+                    size += bumpSize;
+                    bumpEntry = RwResourcesAllocateResEntry(lbl_8025D958, NULL, size, fn_8013FEC0);
                     MATFXGCN_TOKEN(bumpEntry) = lbl_8025E800;
                     bumpTexCoords =
                         (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 2 + 0x1F) & ~0x1F);
@@ -587,8 +589,10 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
                 if (!bumpEntry)
                 {
-                    bumpEntry = RwResourcesAllocateResEntry(
-                        lbl_8025D958, NULL, bumpSize + 6, fn_8013FEC0);
+                    S32 size = 6;
+
+                    size += bumpSize;
+                    bumpEntry = RwResourcesAllocateResEntry(lbl_8025D958, NULL, size, fn_8013FEC0);
                     MATFXGCN_TOKEN(bumpEntry) = lbl_8025E800;
                     bumpTexCoords =
                         (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 2 + 0x1F) & ~0x1F);
