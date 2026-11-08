@@ -215,6 +215,8 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
     U32 n;
     RxPipelineNode* node;
     U32 i;
+    U32 off;
+    U32 count;
     U32 j;
 
     n = pipeline->numNodes;
@@ -224,11 +226,15 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
     {
         nodeDef = node->nodeDef;
 
-        for (i = 0; i < nodeDef->io.numClustersOfInterest; i++)
+        count = nodeDef->io.numClustersOfInterest;
+
+        // FAKEMATCH: the byte offset off and the count copy are named locals to order the
+        // registers; real form believed to be clustersOfInterest[i] and numClustersOfInterest.
+        for (i = 0, off = 0; i < count; i++)
         {
             RxClusterDefinition* clusterDef;
 
-            clusterDef = nodeDef->io.clustersOfInterest[i].clusterDef;
+            clusterDef = ((RxClusterRef*)((U8*)nodeDef->io.clustersOfInterest + off))->clusterDef;
 
             if (!clusterDef)
             {
@@ -240,7 +246,7 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
                 return 0x1F;
             }
 
-            for (j = i + 1; j < nodeDef->io.numClustersOfInterest; j++)
+            for (j = i + 1; j < count; j++)
             {
                 RxClusterDefinition* other;
 
@@ -256,6 +262,8 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
                     return 0x1E;
                 }
             }
+
+            off += sizeof(RxClusterRef);
         }
 
         if (!(node->topSortData->req = _ReqCreate(node, PipelineCalcNumUniqueClusters(pipeline))))
