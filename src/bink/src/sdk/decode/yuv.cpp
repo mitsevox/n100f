@@ -481,12 +481,13 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     unsigned long yskip16, yskip32, uvskip16;
     S32 x, y, lastx;
     S32 i;
+    U8* mrow;
 
     if ((flags & 0x70000000) == 0x60000000)
     {
         pitch *= 2;
-        srch >>= 1;
         srcy >>= 1;
+        srch >>= 1;
         height >>= 1;
         width *= 2;
         mrow2 = mpitch;
@@ -507,28 +508,26 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     setevenodd(flags, &pitch, 32, srch, b, &skip32);
 
     if ((flags & 0x70000000) == 0x30000000 || (flags & 0x70000000) == 0x50000000 ||
-        (flags & 0x70000000) == 0x40000000)
+        (flags & 0x70000000) == 0x30000000 || (flags & 0x70000000) == 0x40000000)
         xs = 2;
     else
         xs = 1;
 
     bx = (b->bpp * xs) << 4;
-    uvw = width >> 1;
-    S.y0 = (U8*)src + srcx + srcy * width;
-    S.y1 = S.y0 + width;
     S.a0 = (U8*)alpha + srcx + srcy * width;
-    S.a1 = S.a0 + width;
-    S.dst1 = S.dst0 + pitch;
-
-    yskip16 = width - 16;
-    yskip32 = width - 32;
-    uvskip16 = uvw - 8;
-    uvskip32 = uvw - 16;
     tmp = width - srcw;
+    S.y0 = (U8*)src + srcx + srcy * width;
+    S.dst1 = S.dst0 + pitch;
+    yskip16 = width - 16;
+    uvw = width >> 1;
+    S.a1 = S.a0 + width;
+    uvbandskip = uvw - (srcw >> 1) + ((srcw & 15) >> 1);
+    uvskip32 = uvw - 16;
     ybandskip = tmp + (srcw & 15) + width * 14;
-    uvbandskip = uvw - (srcw >> 1) + ((srcw & 15) >> 1) + uvw * 7;
     dbandskip = pitch - srcw * (bx / 16) + (srcw & 15) * (bx / 16) + pitch * 14;
-
+    uvskip16 = uvw - 8;
+    S.y1 = S.y0 + width;
+    uvbandskip += uvw * 7;
     if (flags & 0x10000)
     {
         S.u = (U8*)src + width * height;
@@ -539,23 +538,25 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
         S.v = (U8*)src + width * height;
         S.u = S.v + uvw * (height >> 1);
     }
-    S.u = S.u + (srcx >> 1) + (srcy >> 1) * uvw;
-    S.v = S.v + (srcx >> 1) + (srcy >> 1) * uvw;
+    S.u = S.u + (srcx >> 1) + (srcy >> 1) * (width >> 1);
+    x = srcx;
+    y = srcy;
+    lasty = srch + y - 1;
+    S.v = S.v + (srcx >> 1) + (srcy >> 1) * (width >> 1);
+    lastx = srcw + x - 1;
+    yskip32 = width - 32;
+    mrow = mask + mpitch * (srcy >> 4) + x / 16;
 
-    lasty = srch + srcy - 1;
-    lastx = srcw + srcx - 1;
-    mask += mpitch * (srcy >> 4) + (S32)srcx / 16;
-
-    for (y = srcy; y + 15 <= lasty; y += 16)
+    for (; y + 15 <= lasty; y += 16)
     {
         x = srcx;
         while (x + 31 <= lastx)
         {
-            U32 bits = (mask[0] ? 1 : 0) + (mask[1] ? 2 : 0);
+            S32 bits = (mrow[1] ? 2 : 0) + (mrow[0] ? 1 : 0);
             YUVSTATE save;
 
             if (mrow2)
-                bits |= (mask[mrow2] ? 1 : 0) + (mask[mrow2 + 1] ? 2 : 0);
+                bits |= (mrow[mrow2 + 1] ? 2 : 0) + (mrow[mrow2] ? 1 : 0);
 
             switch (bits)
             {
@@ -580,20 +581,21 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
             }
 
             ADVANCE(32, bx * 2)
+            mrow += 2;
             x += 32;
-            mask += 2;
         }
 
         if (x + 15 <= lastx)
         {
-            U32 bits = mask[0];
+            U32 bits = mrow[0];
 
             if (mrow2)
-                bits |= mask[mrow2];
-            mask++;
+                bits |= mrow[mrow2];
+            mrow++;
             if (bits)
             {
                 YUVSTATE save = S;
+                S32 i;
 
                 MASKBLOCK(4, yskip16, uvskip16, skip16)
                 S = save;
@@ -609,11 +611,11 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
         S.v += uvbandskip;
         S.dst0 = S.dst1 + dbandskip;
         S.dst1 = S.dst0 + pitch;
-        mask += mskip;
+        mrow += mskip;
     }
 
     if (srcw & 15)
-        YUV_blit(dest, destx + (srcw & ~15) * xs, desty, opitch, src, srcw & ~15, 0, srcw - (srcw & ~15),
+        YUV_blit(dest, (srcw & ~15) * xs + destx, desty, opitch, src, srcw & ~15, 0, srcw - (srcw & ~15),
                  osrch, owidth, oheight, flags, alpha, b);
 
     if (srch & 15)
@@ -621,7 +623,7 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
         unsigned long olast = osrch - 1;
         unsigned long sy = mult64anddiv(srch & ~15, osrch, srch);
 
-        YUV_blit(dest, destx, desty + mult64anddiv(sy, pitch * owidth, opitch * width), opitch, src, 0,
+        YUV_blit(dest, destx, mult64anddiv(sy, pitch * owidth, opitch * width) + desty, opitch, src, 0,
                  sy, srcw, olast - sy + 1, owidth, oheight, flags, alpha, b);
     }
 }
@@ -663,11 +665,7 @@ void YUV_init(S32 layout)
         S32 rshift;
         S32 gshift;
         S32 bshift;
-        S32 rr;
-        S32 gr;
-        S32 br;
         U32 white;
-        U32 white2;
         U32 rmax;
         U32 gmax;
         U32 bmax;
@@ -721,16 +719,6 @@ void YUV_init(S32 layout)
         RGBshift[5][0] = 8 - bbits;
         RGBshift[5][1] = 0;
 
-        rr = 8 - rbits;
-        gr = 8 - gbits;
-        br = 8 - bbits;
-
-        white = (0xff >> rr) | ((0xff >> gr) << gshift) | ((0xff >> br) << bshift);
-        white2 = white | (white << 16);
-        rmax = (1 << rbits) - 1;
-        gmax = ((1 << gbits) - 1) << gshift;
-        bmax = ((1 << bbits) - 1) << bshift;
-
         for (i = 0; i < 256; i++)
         {
             if (i <= 16)
@@ -741,51 +729,52 @@ void YUV_init(S32 layout)
             }
             else if (i > 234)
             {
+                white = (0xff >> (8 - rbits)) | ((0xff >> (8 - gbits)) << gshift) | ((0xff >> (8 - bbits)) << bshift);
                 mono16[i] = white;
-                mono16x2[i] = white2;
+                mono16x2[i] = white | (white << 16);
                 mono32[i] = 0xffffff;
             }
             else
             {
                 U32 y = ((i - 16) * 255) / 219;
-                U32 m = (y >> rr) | ((y >> gr) << gshift) | ((y >> br) << bshift);
+                U32 m = (y >> (8 - rbits)) | ((y >> (8 - gbits)) << gshift) | ((y >> (8 - bbits)) << bshift);
 
                 mono16x2[i] = m | (m << 16);
                 mono32[i] = (y << 16) | (y << 8) | y;
                 mono16[i] = m;
             }
 
+            rmax = (1 << rbits) - 1;
+            gmax = ((1 << gbits) - 1) << gshift;
+            bmax = ((1 << bbits) - 1) << bshift;
             clamp_r[i] = 0;
             clamp_g[i] = 0;
             clamp_b[i] = 0;
-            clamp_r[i + 256] = i >> rr;
-            clamp_g[i + 256] = (i >> gr) << gshift;
-            clamp_b[i + 256] = (i >> br) << bshift;
+            clamp_r[i + 256] = i >> (8 - rbits);
+            clamp_g[i + 256] = (i >> (8 - gbits)) << gshift;
+            clamp_b[i + 256] = (i >> (8 - bbits)) << bshift;
             clamp_r[i + 512] = rmax;
             clamp_g[i + 512] = gmax;
             clamp_b[i + 512] = bmax;
-
-            clamp_rh[i] = clamp_r[i] << 16;
-            clamp_gh[i] = clamp_g[i] << 16;
-            clamp_bh[i] = clamp_b[i] << 16;
-            clamp_rh[i + 256] = clamp_r[i + 256] << 16;
-            clamp_gh[i + 256] = clamp_g[i + 256] << 16;
-            clamp_bh[i + 256] = clamp_b[i + 256] << 16;
-            clamp_rh[i + 512] = rmax << 16;
-            clamp_gh[i + 512] = gmax << 16;
-            clamp_bh[i + 512] = bmax << 16;
-
+            clamp_a4[i] = (i >> 5) << 12;
             clamp_rr[i] = 0;
             clamp_gg[i] = 0;
+            clamp_rr[i + 256] = ((i >> (8 - rbits)) << 16) + (i >> (8 - rbits));
+            clamp_gg[i + 256] = (((i >> (8 - gbits)) << gshift) << 16) + ((i >> (8 - gbits)) << gshift);
+            clamp_rr[i + 512] = (rmax << 16) + rmax;
+            clamp_gg[i + 512] = (gmax << 16) + gmax;
             clamp_bb[i] = 0;
-            clamp_rr[i + 256] = (i >> rr) + ((i >> rr) << 16);
-            clamp_gg[i + 256] = ((i >> gr) << gshift) + (((i >> gr) << gshift) << 16);
-            clamp_bb[i + 256] = ((i >> br) << bshift) + (((i >> br) << bshift) << 16);
-            clamp_rr[i + 512] = rmax + (rmax << 16);
-            clamp_gg[i + 512] = gmax + (gmax << 16);
-            clamp_bb[i + 512] = bmax + (bmax << 16);
-
-            clamp_a4[i] = (i >> 5) << 12;
+            clamp_bb[i + 256] = (((i >> (8 - bbits)) << bshift) << 16) + ((i >> (8 - bbits)) << bshift);
+            clamp_bb[i + 512] = (bmax << 16) + bmax;
+            clamp_rh[i] = clamp_r[i] << 16;
+            clamp_rh[i + 256] = clamp_r[i + 256] << 16;
+            clamp_rh[i + 512] = rmax << 16;
+            clamp_gh[i] = clamp_g[i] << 16;
+            clamp_gh[i + 256] = clamp_g[i + 256] << 16;
+            clamp_gh[i + 512] = gmax << 16;
+            clamp_bh[i] = clamp_b[i] << 16;
+            clamp_bh[i + 256] = clamp_b[i + 256] << 16;
+            clamp_bh[i + 512] = bmax << 16;
         }
     }
 }
