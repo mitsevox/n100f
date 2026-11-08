@@ -63,26 +63,31 @@ static void ImageResampleGetSpan(const RwImage* image, S32 x0, S32 x1, S32 y, Rw
 
         for (i = x >> 16; i != last; i++)
         {
-            green = pixel->green;
-            blue = pixel->blue;
-            alpha = pixel->alpha;
+            green = RESAMPLE_TOUNIT * pixel->green;
+            blue = RESAMPLE_TOUNIT * pixel->blue;
+            alpha = RESAMPLE_TOUNIT * pixel->alpha;
             red = pixel->red;
             pixel++;
             x += RESAMPLE_ONE;
             result->red += RESAMPLE_TOUNIT * red;
-            result->green += RESAMPLE_TOUNIT * green;
-            result->blue += RESAMPLE_TOUNIT * blue;
-            result->alpha += RESAMPLE_TOUNIT * alpha;
+            result->green += green;
+            result->blue += blue;
+            result->alpha += alpha;
         }
 
-        red = pixel->red;
-        alpha = pixel->alpha;
-        green = pixel->green;
-        blue = pixel->blue;
-        result->red += RESAMPLE_TOUNIT * red * (RESAMPLE_TOREAL * (F32)(x1 - x));
-        result->green += RESAMPLE_TOUNIT * green * (RESAMPLE_TOREAL * (F32)(x1 - x));
-        result->blue += RESAMPLE_TOUNIT * blue * (RESAMPLE_TOREAL * (F32)(x1 - x));
-        result->alpha += RESAMPLE_TOUNIT * alpha * (RESAMPLE_TOREAL * (F32)(x1 - x));
+        red = RESAMPLE_TOUNIT * pixel->red;
+        green = RESAMPLE_TOUNIT * pixel->green;
+        blue = RESAMPLE_TOUNIT * pixel->blue;
+        alpha = RESAMPLE_TOUNIT * pixel->alpha;
+        scale = RESAMPLE_TOREAL * (F32)(x1 - x);
+        red *= scale;
+        green *= scale;
+        blue *= scale;
+        alpha *= scale;
+        result->red += red;
+        result->green += green;
+        result->blue += blue;
+        result->alpha += alpha;
     }
 
     scale = 1.0f / width;
