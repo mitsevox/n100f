@@ -16,8 +16,8 @@
 #define CLR_RGBA8  5
 
 // Bytes per component, by component type, and bytes per color, by color format.
-extern S32 lbl_801DDA48[5];
-extern S32 lbl_801DDA5C[7];
+S32 lbl_801DDA48[5] = { 1, 1, 2, 2, 4 };
+S32 lbl_801DDA5C[7] = { 2, 3, 4, 2, 3, 4, 0 };
 
 #define ALIGN32(_size) (((_size) + 0x1F) & ~0x1F)
 
@@ -483,16 +483,19 @@ S32 _rwGCNVtxFmtInstClr(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwRGBA*
 S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
                         const RwTexCoords* src, S32 numVerts, U8 stride)
 {
-    U8 compType;
-    const U8* type;
+    register U8 compType;
+    register const U8* type;
 
     if (!vtxFmt)
     {
         vtxFmt = &_RpDlVtxFmtDefault;
     }
 
-    type = vtxFmt->compType + index + 2;
-    compType = *type;
+    type = vtxFmt->compType + index;
+    // FAKEMATCH: inline asm loads the set's component type with the update form (lbzu), leaving type
+    // at compType[index + 2]; real form believed to be type = vtxFmt->compType + index + 2;
+    // compType = *type;, whose +2 GC/1.3.2's add propagation folds into the later loads
+    asm { lbzu compType, 2(type) }
     switch (compType)
     {
     case COMP_U8:
@@ -570,7 +573,7 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
         }
         else
         {
-            memcpy(dst, src, numVerts * lbl_801DDA48[*type] * 2);
+            memcpy(dst, src, numVerts * lbl_801DDA48[compType] * 2);
         }
         break;
     }
