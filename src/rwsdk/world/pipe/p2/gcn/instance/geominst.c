@@ -53,11 +53,11 @@ S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numT
 
         if (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
         {
-            S32 i;
+            U32 i;
 
-            for (i = 0; i < numTexCoords; i++)
+            for (i = 0; (S32)i < numTexCoords; i++)
             {
-                stride += lbl_801DDA48[vtxFmt->compType[i + 2]] * 2;
+                stride += lbl_801DDA48[(vtxFmt->compType + 2)[i]] * 2;
             }
         }
 
@@ -82,11 +82,11 @@ S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numT
 
         if (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
         {
-            S32 i;
+            U32 i;
 
-            for (i = 0; i < numTexCoords; i++)
+            for (i = 0; (S32)i < numTexCoords; i++)
             {
-                size += ALIGN32(numVerts * (lbl_801DDA48[vtxFmt->compType[i + 2]] * 2));
+                size += ALIGN32(numVerts * (lbl_801DDA48[(vtxFmt->compType + 2)[i]] * 2));
             }
         }
     }
