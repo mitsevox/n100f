@@ -172,6 +172,7 @@ RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage)
     S32 yStep;
     S32 width;
     S32 height;
+    S32 srcWidth;
     S32 srcHeight;
     RwRGBAReal colour;
 
@@ -179,11 +180,12 @@ RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage)
     height = dstImage->height;
     srcY = 0;
 
-    xStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcImage->width / (F32)width));
+    srcWidth = srcImage->width;
     srcHeight = srcImage->height;
 
     dstImage->flags |= srcImage->flags & IMAGE_GAMMACORRECTED;
 
+    xStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcWidth / (F32)width));
     yStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcHeight / (F32)height));
 
     for (y = 0; y < height; y++)
