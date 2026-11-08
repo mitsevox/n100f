@@ -161,17 +161,21 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
         U8 numIndMatrices;
         U8 numTexMatrices;
         U8 numTexCoordGens;
-        U8 numTevStages;
-        U8 flags;
+        U32 numTevStages;
+        U32 flags;
         U8 blend;
 
-        flags = config->flags;
-        numTevStages = config->numTevStages;
+        // FAKEMATCH: the flags, TEV stage count and source blend are read through a volatile
+        // view of the config, in this order, and the first two are held as U32; that pins the
+        // target's load order (the scheduler otherwise issues the source blend load first) and
+        // its volatile registers. Real form believed to be plain config reads into U8 locals.
+        flags = ((volatile GCNMTConfig*)config)->flags;
+        numTevStages = ((volatile GCNMTConfig*)config)->numTevStages;
+        blend = ((((volatile GCNMTConfig*)config)->srcBlend << 4) & 0xF0) | (config->destBlend & 0xF);
         numTexCoordGens = config->numTexCoordGens;
         numTexMatrices = config->numTexMatrices;
         numIndMatrices = config->numIndMatrices;
         numIndStages = config->numIndStages;
-        blend = ((config->srcBlend << 4) & 0xF0) | (config->destBlend & 0xF);
 
         header.flags = flags;
         header.numTevStages = numTevStages;
