@@ -132,7 +132,7 @@ U32 RADCycleTimerDeltaAddr(U32* addr)
     // FAKEMATCH: the time base read loop is written out here instead of calling ReadTimeBase, so this caller gets its own register ranking; real form believed to be ReadTimeBase(&t); return *addr = (U32)t - *addr;
     do
     {
-        // FAKEMATCH: unused "r"(p) and "r"(addr) inputs rank addr above lo and hi as the target does; real form believed to be the reads with no inputs
+        // FAKEMATCH: unused "r"(p) and "r"(addr) inputs, with "r"(addr) passed twice on this first read, rank addr above lo and hi as the target does; real form believed to be the reads with no inputs
         __asm__ volatile("mftbu %0" : "=r"(hi) : "r"(p), "r"(addr), "r"(addr));
         __asm__ volatile("mftb %0" : "=r"(lo) : "r"(p), "r"(addr));
         __asm__ volatile("mftbu %0" : "=r"(hi2) : "r"(addr));
@@ -173,6 +173,7 @@ void RADCycleTimerDeltaAddr64(U64* addr)
     // FAKEMATCH: volatile stores keep t's reload below; real form believed to be plain stores
     ((volatile U32*)p)[0] = hi;
     ((volatile U32*)p)[1] = lo;
+    // FAKEMATCH: *addr is read into the local old (kept live by the "r"(old) input); real form believed to be *addr = t - *addr;
     old = *addr;
     *addr = t - old;
 }
