@@ -103,15 +103,41 @@ U32 RADTimerRead(void)
 void RADCycleTimerStartAddr(U32* addr)
 {
     U64 t;
-    ReadTimeBase(&t);
-    *addr = (U32)t;
+    U32* p = (U32*)&t;
+    U32 hi, lo, hi2;
+
+    // FAKEMATCH: the time base read loop is written out here instead of calling ReadTimeBase, with "=b" outputs, unused "r"(p) and "r"(hi2) inputs, lo++; lo--; and volatile stores, so ProDG keeps hi2 out of r0 and ranks the registers as the target does; real form believed to be ReadTimeBase(&t); *addr = (U32)t;
+    do
+    {
+        __asm__ volatile("mftbu %0" : "=b"(hi) : "r"(p), "r"(hi2));
+        __asm__ volatile("mftb %0" : "=b"(lo) : "r"(p), "r"(hi2));
+        __asm__ volatile("mftbu %0" : "=b"(hi2) : "r"(p));
+        lo++; lo--;
+    } while (hi != hi2);
+
+    ((volatile U32*)p)[0] = hi;
+    ((volatile U32*)p)[1] = lo;
+    *addr = p[1];
 }
 
-void RADCycleTimerDeltaAddr(U32* addr)
+U32 RADCycleTimerDeltaAddr(U32* addr)
 {
     U64 t;
-    ReadTimeBase(&t);
-    *addr = (U32)t - *addr;
+    U32* p = (U32*)&t;
+    U32 hi, lo, hi2;
+
+    // FAKEMATCH: the time base read loop is written out here instead of calling ReadTimeBase, with unused "r"(p) and "r"(addr) inputs, lo++; lo--;, volatile stores and a volatile read of *addr, so ProDG ranks the registers and orders the loads as the target does; real form believed to be ReadTimeBase(&t); return *addr = (U32)t - *addr;
+    do
+    {
+        __asm__ volatile("mftbu %0" : "=r"(hi) : "r"(p), "r"(addr), "r"(addr));
+        __asm__ volatile("mftb %0" : "=r"(lo) : "r"(p), "r"(addr));
+        __asm__ volatile("mftbu %0" : "=r"(hi2) : "r"(addr));
+        lo++; lo--;
+    } while (hi != hi2);
+
+    ((volatile U32*)p)[0] = hi;
+    ((volatile U32*)p)[1] = lo;
+    return *addr = p[1] - *(volatile U32*)addr;
 }
 
 void RADCycleTimerStartAddr64(U64* addr)
