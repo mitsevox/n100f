@@ -183,9 +183,13 @@ F32 _rwMatrixDeterminant(const RwMatrix* matrix)
 
 F32 _rwMatrixOrthogonalError(const RwMatrix* matrix)
 {
-    F32 upAt = RwV3dDotProductMacro(&matrix->up, &matrix->at);
-    F32 atRight = RwV3dDotProductMacro(&matrix->at, &matrix->right);
-    F32 rightUp = RwV3dDotProductMacro(&matrix->right, &matrix->up);
+    F32 atRight;
+    F32 upAt;
+    F32 rightUp;
+
+    upAt = RwV3dDotProductMacro(&matrix->up, &matrix->at);
+    atRight = RwV3dDotProductMacro(&matrix->at, &matrix->right);
+    rightUp = RwV3dDotProductMacro(&matrix->right, &matrix->up);
 
     return upAt * upAt + atRight * atRight + rightUp * rightUp;
 }
@@ -203,24 +207,28 @@ F32 _rwMatrixIdentityError(const RwMatrix* matrix)
 {
     const RwV3d* right = &matrix->right;
     RwV3d vTmp;
-    F32 result;
+    F32 rightError, sum, atError, posError, result;
 
+    // The at and pos terms are held in their own locals so each is added in front of the running
+    // sum (the target's operand order), and the first sum is its own value.
     vTmp.x = right->x - 1.0f;
     vTmp.y = right->y;
     vTmp.z = right->z;
-    result = RwV3dDotProductMacro(&vTmp, &vTmp);
+    rightError = RwV3dDotProductMacro(&vTmp, &vTmp);
 
     vTmp.x = matrix->up.x;
     vTmp.y = matrix->up.y - 1.0f;
     vTmp.z = matrix->up.z;
-    result += RwV3dDotProductMacro(&vTmp, &vTmp);
+    sum = rightError + RwV3dDotProductMacro(&vTmp, &vTmp);
 
     vTmp.x = matrix->at.x;
     vTmp.y = matrix->at.y;
     vTmp.z = matrix->at.z - 1.0f;
-    result += RwV3dDotProductMacro(&vTmp, &vTmp);
+    atError = RwV3dDotProductMacro(&vTmp, &vTmp);
+    sum = atError + sum;
 
-    result += RwV3dDotProductMacro(&matrix->pos, &matrix->pos);
+    posError = RwV3dDotProductMacro(&matrix->pos, &matrix->pos);
+    result = posError + sum;
 
     return result;
 }
