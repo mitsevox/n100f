@@ -84,6 +84,30 @@
     ROW(d0, s0);                            \
     ROW(d1, s1)
 
+// FAKEMATCH: COPY8(ROWW) whose first row stores its second word through tmp instead of d0 (same address); real form believed to be COPY8(ROWW, d0, dp, s0, sp, d1, s1)
+#define COPY8WT(d0, dp, s0, sp, d1, s1)                 \
+    ((U32*)(d0))[0] = ((U32*)(s0))[0];                  \
+    ((U32*)tmp)[1] = ((U32*)(s0))[1];                   \
+    d0 = d1 + (dp);                                     \
+    s0 = s1 + (sp);                                     \
+    ROWW(d1, s1);                                       \
+    d1 = d0 + (dp);                                     \
+    s1 = s0 + (sp);                                     \
+    ROWW(d0, s0);                                       \
+    d0 = d1 + (dp);                                     \
+    s0 = s1 + (sp);                                     \
+    ROWW(d1, s1);                                       \
+    d1 = d0 + (dp);                                     \
+    s1 = s0 + (sp);                                     \
+    ROWW(d0, s0);                                       \
+    d0 = d1 + (dp);                                     \
+    s0 = s1 + (sp);                                     \
+    ROWW(d1, s1);                                       \
+    d1 = d0 + (dp);                                     \
+    s1 = s0 + (sp);                                     \
+    ROWW(d0, s0);                                       \
+    ROWW(d1, s1)
+
 #define ROWFC(d, s, k) *(F64*)(d) = ((F64*)(s))[k]
 #define ROWWC(d, s, k)                         \
     ((U32*)(d))[0] = ((U32*)(s))[(k) * 2];     \
@@ -726,9 +750,12 @@ void ExpandBundleSizes(void** bundles, U32 width)
     bundles[8] = (void*)getbunsize(512, width, 4, 48);
 }
 
-void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* data, U32 key, U8* mask, U32 scale,
+void* ExpandPlane(U8* destp, U8* prevp, U32 width, U32 height, U32 pitch, void* data, U32 key, U8* maskp, U32 scale,
                   void** bundles, U32 flags)
 {
+    U8* dest = destp;
+    U8* mask = maskp;
+    U8* prev = prevp;
     BUNDLE types;
     BUNDLE stypes;
     BUNDLE colors;
@@ -827,14 +854,15 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                 } while (i < 63);
                 if (i == 63)
                     ((U8*)tmp)[sp[63]] = *colors.cur++;
+                // FAKEMATCH: empty asm reading tmp's address keeps the target's unused tmp address register (addi r30,r1,960); real form believed to be a copy-out pointer to tmp whose loads reload rewrites as frame offsets
+                __asm__ volatile("" : : "r"(tmp));
                 {
                     U8* d0 = dest;
                     U8* d1 = dest + pitch;
-                    U8* s = (U8*)tmp;
                     if (!((U32)dest & 7)) {
-                        ROWS8C(ROWFC, d0, d1, pitch, s);
+                        ROWS8C(ROWFC, d0, d1, pitch, tmp);
                     } else {
-                        ROWS8C(ROWWC, d0, d1, pitch, s);
+                        ROWS8C(ROWWC, d0, d1, pitch, tmp);
                     }
                 }
                 break;
@@ -863,7 +891,8 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                     COPY8(ROWF, d0, 8, s0, pitch, d1, s1);
                 } else {
                     d1 = d0 + 8;
-                    COPY8(ROWW, d0, 8, s0, pitch, d1, s1);
+                    // FAKEMATCH: COPY8WT stores the first row's second word through tmp; real form believed to be COPY8(ROWW, d0, 8, s0, pitch, d1, s1)
+                    COPY8WT(d0, 8, s0, pitch, d1, s1);
                 }
                 VARBITSGET(vb, t, 7);
                 ReadBPLossyWithMotion(dest, pitch, &vb, t, (U8*)tmp);
@@ -884,7 +913,8 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                     COPY8(ROWF, d0, 8, s0, pitch, d1, s1);
                 } else {
                     d1 = d0 + 8;
-                    COPY8(ROWW, d0, 8, s0, pitch, d1, s1);
+                    // FAKEMATCH: COPY8WT stores the first row's second word through tmp; real form believed to be COPY8(ROWW, d0, 8, s0, pitch, d1, s1)
+                    COPY8WT(d0, 8, s0, pitch, d1, s1);
                 }
                 coefs[0] = *(U16*)interdc.cur;
                 interdc.cur += 2;
@@ -971,10 +1001,10 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                         d1 = dest + pitch;
                         FILLROW16(d0);
                         for (i = 0; i < 7; i++) {
-                            FILLROW16(d1);
                             d0 = d1 + pitch;
-                            FILLROW16(d0);
+                            FILLROW16(d1);
                             d1 = d0 + pitch;
+                            FILLROW16(d0);
                         }
                         FILLROW16(d1);
                         break;
@@ -1063,6 +1093,8 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                             sr += 4;
                             d0 = d1 + pitch;
                             d1 = d0 + pitch;
+                            // FAKEMATCH: empty asm clobbering r8 keeps d1 out of r8 (the target has r5); real form believed to be this loop without the asm, with a still unknown difference elsewhere in the function steering global allocation
+                            __asm__("" : : : "r8");
                         }
                         break;
                     }
@@ -1078,28 +1110,31 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                     case 9: {
                         U32 i;
                         U8* d;
+                        U8* d1;
                         d = dest;
+                        d1 = dest + pitch;
                         for (i = 0; i < 8; i++) {
                             U16* sr = (U16*)colors.cur;
                             U32 v;
                             v = sr[0];
                             v = ((v << 8) | (v & 0xFF)) | ((v << 16) & 0xFF000000);
                             ((U32*)d)[0] = v;
-                            ((U32*)(d + pitch))[0] = v;
+                            ((U32*)d1)[0] = v;
                             v = sr[1];
                             v = ((v << 8) | (v & 0xFF)) | ((v << 16) & 0xFF000000);
                             ((U32*)d)[1] = v;
-                            ((U32*)(d + pitch))[1] = v;
+                            ((U32*)d1)[1] = v;
                             v = sr[2];
                             v = ((v << 8) | (v & 0xFF)) | ((v << 16) & 0xFF000000);
                             ((U32*)d)[2] = v;
-                            ((U32*)(d + pitch))[2] = v;
+                            ((U32*)d1)[2] = v;
                             v = sr[3];
                             v = ((v << 8) | (v & 0xFF)) | ((v << 16) & 0xFF000000);
                             ((U32*)d)[3] = v;
-                            ((U32*)(d + pitch))[3] = v;
+                            ((U32*)d1)[3] = v;
                             colors.cur += 8;
                             d += pitch * 2;
+                            d1 += pitch * 2;
                         }
                         break;
                     }
