@@ -106,15 +106,18 @@ void RADCycleTimerStartAddr(U32* addr)
     U32* p = (U32*)&t;
     U32 hi, lo, hi2;
 
-    // FAKEMATCH: the time base read loop is written out here instead of calling ReadTimeBase, with "=b" outputs, unused "r"(p) and "r"(hi2) inputs, lo++; lo--; and volatile stores, so ProDG keeps hi2 out of r0 and ranks the registers as the target does; real form believed to be ReadTimeBase(&t); *addr = (U32)t;
+    // FAKEMATCH: the time base read loop is written out here instead of calling ReadTimeBase, so this caller gets its own register ranking; real form believed to be ReadTimeBase(&t); *addr = (U32)t;
     do
     {
+        // FAKEMATCH: "=b" outputs and unused "r"(p) and "r"(hi2) inputs keep hi2 out of r0 and rank the registers as the target does; real form believed to be "=r" outputs with no inputs
         __asm__ volatile("mftbu %0" : "=b"(hi) : "r"(p), "r"(hi2));
         __asm__ volatile("mftb %0" : "=b"(lo) : "r"(p), "r"(hi2));
         __asm__ volatile("mftbu %0" : "=b"(hi2) : "r"(p));
+        // FAKEMATCH: lo++; lo--; is a no-op that adds references to lo; real form believed to be the loop without it
         lo++; lo--;
     } while (hi != hi2);
 
+    // FAKEMATCH: volatile stores keep the reload of p[1] below; real form believed to be plain stores
     ((volatile U32*)p)[0] = hi;
     ((volatile U32*)p)[1] = lo;
     *addr = p[1];
@@ -126,17 +129,21 @@ U32 RADCycleTimerDeltaAddr(U32* addr)
     U32* p = (U32*)&t;
     U32 hi, lo, hi2;
 
-    // FAKEMATCH: the time base read loop is written out here instead of calling ReadTimeBase, with unused "r"(p) and "r"(addr) inputs, lo++; lo--;, volatile stores and a volatile read of *addr, so ProDG ranks the registers and orders the loads as the target does; real form believed to be ReadTimeBase(&t); return *addr = (U32)t - *addr;
+    // FAKEMATCH: the time base read loop is written out here instead of calling ReadTimeBase, so this caller gets its own register ranking; real form believed to be ReadTimeBase(&t); return *addr = (U32)t - *addr;
     do
     {
+        // FAKEMATCH: unused "r"(p) and "r"(addr) inputs rank addr above lo and hi as the target does; real form believed to be the reads with no inputs
         __asm__ volatile("mftbu %0" : "=r"(hi) : "r"(p), "r"(addr), "r"(addr));
         __asm__ volatile("mftb %0" : "=r"(lo) : "r"(p), "r"(addr));
         __asm__ volatile("mftbu %0" : "=r"(hi2) : "r"(addr));
+        // FAKEMATCH: lo++; lo--; is a no-op that adds references to lo; real form believed to be the loop without it
         lo++; lo--;
     } while (hi != hi2);
 
+    // FAKEMATCH: volatile stores keep the reload of p[1] below; real form believed to be plain stores
     ((volatile U32*)p)[0] = hi;
     ((volatile U32*)p)[1] = lo;
+    // FAKEMATCH: the volatile read keeps the *addr load after the p[1] load; real form believed to be a plain *addr
     return *addr = p[1] - *(volatile U32*)addr;
 }
 
@@ -152,15 +159,18 @@ void RADCycleTimerDeltaAddr64(U64* addr)
     U32* p = (U32*)&t;
     U32 hi, lo, hi2;
 
-    // FAKEMATCH: the time base read loop is written out here instead of calling ReadTimeBase, with unused "r"(p) inputs, an unused "r"(old) input that keeps old live through the loop, lo++; lo--; and volatile stores, so ProDG allocates old after the subtract's registers as the target does; real form believed to be ReadTimeBase(&t); *addr = t - *addr;
+    // FAKEMATCH: the time base read loop is written out here instead of calling ReadTimeBase, and *addr is read into old, so this caller gets its own register ranking; real form believed to be ReadTimeBase(&t); *addr = t - *addr;
     do
     {
+        // FAKEMATCH: unused "r"(p) inputs, and an unused "r"(old) input that keeps old live through the loop so it is allocated after the subtract's registers; real form believed to be the reads with no inputs
         __asm__ volatile("mftbu %0" : "=r"(hi) : "r"(p));
         __asm__ volatile("mftb %0" : "=r"(lo) : "r"(p));
         __asm__ volatile("mftbu %0" : "=r"(hi2) : "r"(p), "r"(old));
+        // FAKEMATCH: lo++; lo--; is a no-op that adds references to lo; real form believed to be the loop without it
         lo++; lo--;
     } while (hi != hi2);
 
+    // FAKEMATCH: volatile stores keep t's reload below; real form believed to be plain stores
     ((volatile U32*)p)[0] = hi;
     ((volatile U32*)p)[1] = lo;
     old = *addr;
