@@ -213,6 +213,69 @@ RwImage* RwImageResample(RwImage* dstImage, const RwImage* srcImage)
     return dstImage;
 }
 
+// FAKEMATCH: ImageResampleRowP and ImageResampleP are a copy of RwImageResample used only by
+// RwImageCreateResample, so that its two inlined copies number their registers like the target:
+// the row loop sits in its own helper and its x and srcX counters are the caller's locals, reached
+// through pointers. Real form believed to be RwImageCreateResample calling RwImageResample
+// directly; no plain form found gives both the standalone function and the inlined copies.
+// Fills one row of a 32-bit image with box-averaged source pixels.
+static void ImageResampleRowP(RwRGBA* pixel, S32 lastY, const RwImage* srcImage, S32 width,
+                              S32 xStep, S32 srcY, S32* x, S32* srcX)
+{
+    RwRGBAReal colour;
+
+    *srcX = 0;
+
+    for (*x = 0; *x < width; (*x)++)
+    {
+        ImageResampleGetAvgPixel(srcImage, *srcX, *srcX + xStep - 1, srcY, lastY,
+                                 &colour);
+        *srcX += xStep;
+
+        pixel->red = (U8)(0.5f + 255.0f * colour.red);
+        pixel->green = (U8)(0.5f + 255.0f * colour.green);
+        pixel->blue = (U8)(0.5f + 255.0f * colour.blue);
+        pixel->alpha = (U8)(0.5f + 255.0f * colour.alpha);
+        pixel++;
+    }
+}
+
+// FAKEMATCH copy of RwImageResample (see ImageResampleRowP).
+static RwImage* ImageResampleP(RwImage* dstImage, const RwImage* srcImage)
+{
+    S32 x;
+    S32 y;
+    S32 srcX;
+    S32 xStep;
+    S32 srcY;
+    S32 yStep;
+    S32 width;
+    S32 height;
+    S32 srcWidth;
+    S32 srcHeight;
+
+    width = dstImage->width;
+    height = dstImage->height;
+    srcY = 0;
+
+    srcWidth = srcImage->width;
+    srcHeight = srcImage->height;
+
+    dstImage->flags |= srcImage->flags & IMAGE_GAMMACORRECTED;
+
+    xStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcWidth / (F32)width));
+    yStep = (S32)(RESAMPLE_TOFIXED * ((F32)srcHeight / (F32)height));
+
+    for (y = 0; y < height; y++)
+    {
+        ImageResampleRowP((RwRGBA*)(dstImage->cpPixels + dstImage->stride * y),
+                          srcY + yStep - 1, srcImage, width, xStep, srcY, &x, &srcX);
+        srcY += yStep;
+    }
+
+    return dstImage;
+}
+
 RwImage* RwImageCreateResample(const RwImage* srcImage, S32 width, S32 height)
 {
     RwImage* dstImage = RwImageCreate(width, height, 32);
@@ -249,7 +312,7 @@ RwImage* RwImageCreateResample(const RwImage* srcImage, S32 width, S32 height)
 
         RwImageCopy(tmpImage, srcImage);
 
-        if (!RwImageResample(dstImage, tmpImage))
+        if (!ImageResampleP(dstImage, tmpImage))
         {
             RwImageFreePixels(tmpImage);
             RwImageDestroy(tmpImage);
@@ -261,7 +324,7 @@ RwImage* RwImageCreateResample(const RwImage* srcImage, S32 width, S32 height)
         RwImageFreePixels(tmpImage);
         RwImageDestroy(tmpImage);
     }
-    else if (!RwImageResample(dstImage, srcImage))
+    else if (!ImageResampleP(dstImage, srcImage))
     {
         RwImageFreePixels(dstImage);
         RwImageDestroy(dstImage);
