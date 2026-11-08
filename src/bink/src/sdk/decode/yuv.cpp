@@ -545,10 +545,10 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     S.v = S.v + (srcx >> 1) + (srcy >> 1) * (width >> 1);
 
     y = srcy;
-    x = srcx;
     lasty = srch + y - 1;
-    mrow = mask + mpitch * (srcy >> 4) + x / 16;
+    x = srcx;
     lastx = srcw + x - 1;
+    mrow = mask + mpitch * (srcy >> 4) + x / 16;
 
     for (; y + 15 <= lasty; y += 16)
     {
@@ -617,7 +617,7 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     }
 
     if (srcw & 15)
-        YUV_blit(dest, destx + (srcw & ~15) * xs, desty, opitch, src, srcw & ~15, 0, srcw - (srcw & ~15),
+        YUV_blit(dest, (srcw & ~15) * xs + destx, desty, opitch, src, srcw & ~15, 0, srcw - (srcw & ~15),
                  osrch, owidth, oheight, flags, alpha, b);
 
     if (srch & 15)
@@ -625,7 +625,7 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
         unsigned long olast = osrch - 1;
         unsigned long sy = mult64anddiv(srch & ~15, osrch, srch);
 
-        YUV_blit(dest, destx, desty + mult64anddiv(sy, pitch * owidth, opitch * width), opitch, src, 0,
+        YUV_blit(dest, destx, mult64anddiv(sy, pitch * owidth, opitch * width) + desty, opitch, src, 0,
                  sy, srcw, olast - sy + 1, owidth, oheight, flags, alpha, b);
     }
 }
