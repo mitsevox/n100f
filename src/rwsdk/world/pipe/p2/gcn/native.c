@@ -161,11 +161,28 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
     return object;
 }
 
+// The stream size of the header part (size plus the chunk header and the three ints) and the data.
+// FAKEMATCH: this helper adds into its size parameter so the sum keeps its two steps and the add's
+// operand order; real form believed to be the sum written in _rpNativeWrite.
+static inline S32 NativeStreamSize(S32 size, S32 dataSize)
+{
+    size += NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3;
+    size += dataSize;
+    return size;
+}
+
 static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeVtxFmt* vtxFmt,
                                 U32 numMeshes, S32 numVerts)
 {
     GCNDisplayList* list;
     U32 count;
+    // FAKEMATCH: the first display list walk keeps its pointer, its count and the end of the
+    // display lists in one-member structs (compiler temps), and the pointer is set twice, to give
+    // the target's register and instruction order; real form believed to use list, count and a
+    // plain NATIVE_ALIGN32 expression for data.
+    struct { GCNDisplayList* p; } l;
+    struct { U32 e; } x;
+    struct { U32 n; } c;
     S32 size;
     U8* data;
     S32 chunkSize;
@@ -174,15 +191,24 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
     S32 headerSize;
     S32 dataSize;
     S32 i;
+    // FAKEMATCH: both texture loops walk word pointers over the arrays header (tex[9] is
+    // arrays->tex[0]), each with its own pointer and value locals; real form believed to index
+    // arrays->tex[i].
+    void** tex2;
+    void* t2;
+    void** tex;
+    void* t;
 
     arrays = NATIVE_ARRAYS(entry);
     lists = (GCNDisplayList*)(arrays + 1);
-    list = lists;
-    count = numMeshes;
-    data = (U8*)NATIVE_ALIGN32((U32)lists + numMeshes * sizeof(GCNDisplayList));
+    l.p = lists;
+    c.n = numMeshes;
+    l.p = lists;
+    x.e = (U32)lists + numMeshes * sizeof(GCNDisplayList);
+    x.e += 0x1F;
+    data = (U8*)(x.e & ~0x1F);
     size = sizeof(GCNVertexArrays) + numMeshes * sizeof(GCNDisplayList);
-    chunkSize = size + (NATIVE_CHUNKHEADERSIZE + sizeof(S32) * 3) +
-                NATIVE_DATASIZE(entry, numMeshes) - NATIVE_CHUNKHEADERSIZE;
+    chunkSize = NativeStreamSize(size, NATIVE_DATASIZE(entry, numMeshes)) - NATIVE_CHUNKHEADERSIZE;
 
     if (!vtxFmt)
     {
@@ -204,15 +230,17 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
         arrays->clr = (void*)((U8*)arrays->clr - data);
     }
 
-    for (i = 0; arrays->tex[i] && i < 8 && !(arrays->flags & GCNARRAYS_EXTERNALTEX); i++)
+    tex = (void**)arrays;
+    for (i = 0; (t = tex[9]) != NULL && i < 8 && !(arrays->flags & GCNARRAYS_EXTERNALTEX); i++)
     {
-        arrays->tex[i] = (void*)((U8*)arrays->tex[i] - data);
+        tex[9] = (void*)((U8*)t - data);
+        tex++;
     }
 
-    for (; count; count--)
+    for (; c.n; c.n--)
     {
-        list->list = (void*)((U8*)list->list - data);
-        list++;
+        l.p->list = (void*)((U8*)l.p->list - data);
+        l.p++;
     }
 
     if (!_rwStreamWriteVersionedChunkHeader(stream, rwID_STRUCT, chunkSize, rwLIBRARYCURRENTVERSION,
@@ -248,6 +276,11 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
         return NULL;
     }
 
+    // FAKEMATCH: count and list are set before the arrays are restored; real form believed to set
+    // them just before the display list loop.
+    count = numMeshes;
+    list = lists;
+
     if (arrays->pos && !(arrays->flags & GCNARRAYS_EXTERNALPOS))
     {
         arrays->pos = data + (U32)arrays->pos;
@@ -263,13 +296,14 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
         arrays->clr = data + (U32)arrays->clr;
     }
 
-    for (i = 0; arrays->tex[i] && i < 8 && !(arrays->flags & GCNARRAYS_EXTERNALTEX); i++)
+    tex2 = (void**)arrays;
+    for (i = 0; (t2 = tex2[9]) != NULL && i < 8 && !(arrays->flags & GCNARRAYS_EXTERNALTEX); i++)
     {
-        arrays->tex[i] = data + (U32)arrays->tex[i];
+        tex2[9] = data + (U32)t2;
+        tex2++;
     }
 
-    list = lists;
-    for (count = numMeshes; count; count--)
+    for (; count; count--)
     {
         list->list = data + (U32)list->list;
         list++;
