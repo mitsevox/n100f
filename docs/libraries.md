@@ -121,7 +121,7 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/matfx/gcn/multiTexGcn.c` | 1 of 1 | one function; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
 | `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 6 of 7 | `GameCubeMTEffectStreamWrite` (98.4%: the header loads' order and registers) |
 | `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 8 of 9 | `_rpGameCubeMTEffectSend` (98.6%: register choice and one argument load); `.data`, `.sbss` and `.sdata2` (90.9%) do not match yet |
-| `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 15 of 15 | `.bss`, `.sbss`, `.sdata` and `.sdata2` (85.7%) do not match yet; NonMatching, original linked |
+| `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 15 of 15 (rev0) | (Matching on GIHE78-rev0, with its `.bss`, `.sdata`, `.sbss` and `.sdata2`) |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 6 of 7 | `fn_8015DBA4` (98.3%) (text only; `fn_8015E054` is a tagged FAKEMATCH) |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c` | 4 of 5 | `_rxGCWorldSectorAllInOneNode` (97.9%) (text only) |
 | `rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c` | 4 of 4 (rev0) | (Matching on GIHE78-rev0, with its `.data` and `.sbss`; vertices go through the GX vertex functions) |

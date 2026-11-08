@@ -18,22 +18,22 @@ extern S32 lbl_8025F870;
 extern RwMatrix lbl_8025E304;
 
 // The owner of the bump map texture coordinates' resource entries.
-extern U8 lbl_8025D958[0x70];
+U8 lbl_8025D958[0x70];
 
 // The material colors of the environment map passes; their alpha is set from the coefficient.
-extern GXColor lbl_8025E780;
-extern GXColor lbl_8025E784;
+GXColor lbl_8025E780 = { 255, 255, 255, 255 };
+GXColor lbl_8025E784 = { 255, 255, 255, 255 };
 
 // The vertex format given to geometries that need the NBT and have none, the two pipelines, and
 // the all-in-one nodes' callbacks the pipelines' own ones call.
 typedef void* (*GCNMTInstanceCB)(void* object, GCNObjectData* objectData);
 
-extern RpGameCubeVtxFmt* lbl_8025F680;
-extern RxPipeline* lbl_8025F684;
-extern RxPipeline* lbl_8025F688;
-extern GCNMTInstanceCB lbl_8025F68C;
-extern GCNMTInstanceCB lbl_8025F690;
-extern GCNMTInstanceCB lbl_8025F694;
+GCNMTInstanceCB lbl_8025F694;
+GCNMTInstanceCB lbl_8025F690;
+GCNMTInstanceCB lbl_8025F68C;
+RxPipeline* lbl_8025F688;
+RxPipeline* lbl_8025F684;
+RpGameCubeVtxFmt* lbl_8025F680;
 
 S32 _rwDlTokenQueryDone(U16 token);
 RpGameCubeVtxFmt* RpGameCubeVtxFmtCreate(void);
