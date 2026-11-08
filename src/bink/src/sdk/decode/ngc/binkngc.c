@@ -148,8 +148,23 @@ void RADCycleTimerStartAddr64(U64* addr)
 void RADCycleTimerDeltaAddr64(U64* addr)
 {
     U64 t;
-    ReadTimeBase(&t);
-    *addr = t - *addr;
+    U64 old;
+    U32* p = (U32*)&t;
+    U32 hi, lo, hi2;
+
+    // FAKEMATCH: the time base read loop is written out here instead of calling ReadTimeBase, with unused "r"(p) inputs, an unused "r"(old) input that keeps old live through the loop, lo++; lo--; and volatile stores, so ProDG allocates old after the subtract's registers as the target does; real form believed to be ReadTimeBase(&t); *addr = t - *addr;
+    do
+    {
+        __asm__ volatile("mftbu %0" : "=r"(hi) : "r"(p));
+        __asm__ volatile("mftb %0" : "=r"(lo) : "r"(p));
+        __asm__ volatile("mftbu %0" : "=r"(hi2) : "r"(p), "r"(old));
+        lo++; lo--;
+    } while (hi != hi2);
+
+    ((volatile U32*)p)[0] = hi;
+    ((volatile U32*)p)[1] = lo;
+    old = *addr;
+    *addr = t - old;
 }
 
 static RADMEMALLOC usermalloc = 0;
