@@ -481,6 +481,7 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     unsigned long yskip16, yskip32, uvskip16;
     S32 x, y, lastx;
     S32 i;
+    U8* mrow;
 
     if ((flags & 0x70000000) == 0x60000000)
     {
@@ -546,7 +547,7 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     y = srcy;
     x = srcx;
     lasty = srch + y - 1;
-    mask += mpitch * (srcy >> 4) + x / 16;
+    mrow = mask + mpitch * (srcy >> 4) + x / 16;
     lastx = srcw + x - 1;
 
     for (; y + 15 <= lasty; y += 16)
@@ -554,11 +555,11 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
         x = srcx;
         while (x + 31 <= lastx)
         {
-            S32 bits = (mask[1] ? 2 : 0) + (mask[0] ? 1 : 0);
+            S32 bits = (mrow[1] ? 2 : 0) + (mrow[0] ? 1 : 0);
             YUVSTATE save;
 
             if (mrow2)
-                bits |= (mask[mrow2 + 1] ? 2 : 0) + (mask[mrow2] ? 1 : 0);
+                bits |= (mrow[mrow2 + 1] ? 2 : 0) + (mrow[mrow2] ? 1 : 0);
 
             switch (bits)
             {
@@ -584,16 +585,16 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
 
             ADVANCE(32, bx * 2)
             x += 32;
-            mask += 2;
+            mrow += 2;
         }
 
         if (x + 15 <= lastx)
         {
-            U32 bits = mask[0];
+            U32 bits = mrow[0];
 
             if (mrow2)
-                bits |= mask[mrow2];
-            mask++;
+                bits |= mrow[mrow2];
+            mrow++;
             if (bits)
             {
                 YUVSTATE save = S;
@@ -612,7 +613,7 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
         S.v += uvbandskip;
         S.dst0 = S.dst1 + dbandskip;
         S.dst1 = S.dst0 + pitch;
-        mask += mskip;
+        mrow += mskip;
     }
 
     if (srcw & 15)
