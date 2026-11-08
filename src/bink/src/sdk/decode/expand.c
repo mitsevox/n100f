@@ -858,10 +858,11 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                 s0 = prev + pitch * (S8)*yoffs.cur++ + (S8)*xoffs.cur++;
                 d0 = (U8*)tmp;
                 s1 = s0 + pitch;
-                d1 = d0 + 8;
                 if (!((U32)s0 & 7)) {
+                    d1 = d0 + 8;
                     COPY8(ROWF, d0, 8, s0, pitch, d1, s1);
                 } else {
+                    d1 = d0 + 8;
                     COPY8(ROWW, d0, 8, s0, pitch, d1, s1);
                 }
                 VARBITSGET(vb, t, 7);
@@ -878,10 +879,11 @@ void* ExpandPlane(U8* dest, U8* prev, U32 width, U32 height, U32 pitch, void* da
                 s0 = prev + pitch * (S8)*yoffs.cur++ + (S8)*xoffs.cur++;
                 d0 = (U8*)tmp;
                 s1 = s0 + pitch;
-                d1 = d0 + 8;
                 if (!((U32)s0 & 7)) {
+                    d1 = d0 + 8;
                     COPY8(ROWF, d0, 8, s0, pitch, d1, s1);
                 } else {
+                    d1 = d0 + 8;
                     COPY8(ROWW, d0, 8, s0, pitch, d1, s1);
                 }
                 coefs[0] = *(U16*)interdc.cur;
