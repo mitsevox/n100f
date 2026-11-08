@@ -773,12 +773,16 @@ const unsigned char patterns[16][64] = {
 #define MUL(x, c) (((x) * (c)) >> 11)
 #define DEQ(i) ((in[(i) * 8] * q[(i) * 8]) >> 11)
 
-static void fastidct8x8(unsigned char* out, int stride, short* in, const int* q)
+static void fastidct8x8(unsigned char* out, int stride, short* input, const int* quant)
 {
+    // FAKEMATCH: quantizer pointer alias steers allocation; real form believed to advance the quantizer parameter directly.
+    const int* q = quant;
+    // FAKEMATCH: input pointer alias steers allocation; real form believed to advance the input parameter directly.
+    short* in = input;
     int t[8];
     int ws[64];
     int* w;
-    unsigned char* o;
+    unsigned char* o = out;
     int ctr;
     int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
     int tmp10, tmp11, tmp12, tmp13;
@@ -1088,7 +1092,7 @@ void FastmIDCT8x8WithMotion(unsigned char* out, int stride, short* in, int qidx,
     int t[8];
     int ws[64];
     int* w;
-    unsigned char* o;
+    unsigned char* o = out;
     int ctr;
     int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
     int tmp10, tmp11, tmp12, tmp13;

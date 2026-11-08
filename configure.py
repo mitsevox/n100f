@@ -911,7 +911,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "bink/src/sdk/decode/ngc/ngcyuy2.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "bink/src/sdk/varbits.c"),
             Object(MatchingFor("GIHE78-rev0"), "bink/src/sdk/fft.c"),
-            Object(NonMatching, "bink/src/sdk/dct.c"),
+            Object(MatchingFor("GIHE78-rev0"), "bink/src/sdk/dct.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "bink/src/sdk/bitplane.c"),
         ],
     ),
