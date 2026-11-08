@@ -513,21 +513,24 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     else
         xs = 1;
 
+    uvw = width / 2;
     bx = (b->bpp * xs) << 4;
-    S.a0 = (U8*)alpha + srcx + srcy * width;
-    tmp = width - srcw;
-    S.y0 = (U8*)src + srcx + srcy * width;
-    S.dst1 = S.dst0 + pitch;
     yskip16 = width - 16;
-    uvw = width >> 1;
-    S.a1 = S.a0 + width;
-    uvbandskip = uvw - (srcw >> 1) + ((srcw & 15) >> 1);
     uvskip32 = uvw - 16;
-    ybandskip = tmp + (srcw & 15) + width * 14;
-    dbandskip = pitch - srcw * (bx / 16) + (srcw & 15) * (bx / 16) + pitch * 14;
+    S.y0 = srcx + (U8*)src + srcy * width;
+    S.a0 = (U8*)alpha + srcx + srcy * width;
+    S.dst1 = pitch + S.dst0;
+    tmp = width - srcw;
     uvskip16 = uvw - 8;
+    uvbandskip = uvw - (srcw / 2) + ((srcw & 15) >> 1);
+    yskip32 = width - 32;
     S.y1 = S.y0 + width;
-    uvbandskip += uvw * 7;
+    ybandskip = tmp + (srcw & 15);
+    dbandskip = pitch - srcw * (bx / 16) + (srcw & 15) * (bx / 16);
+    S.a1 = S.a0 + width;
+    ybandskip += 14 * width;
+    uvbandskip += 7 * uvw;
+    dbandskip += 14 * pitch;
     if (flags & 0x10000)
     {
         S.u = (U8*)src + width * height;
@@ -544,7 +547,6 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     lasty = srch + y - 1;
     S.v = S.v + (srcx >> 1) + (srcy >> 1) * (width >> 1);
     lastx = srcw + x - 1;
-    yskip32 = width - 32;
     mrow = mask + mpitch * (srcy >> 4) + x / 16;
 
     for (; y + 15 <= lasty; y += 16)
