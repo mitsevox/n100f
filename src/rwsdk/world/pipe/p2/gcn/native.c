@@ -56,7 +56,14 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
     GCNDisplayList* lists;
     S32 i;
     GCNDisplayList* list;
-    U32 count;
+    // FAKEMATCH: the display list count lives in a one-member struct so it becomes a compiler temp
+    // and the unroller's count copy coalesces into it; real form believed to be a plain U32 count.
+    struct { U32 n; } c;
+    // FAKEMATCH: the texture pointers are walked through tex, a word pointer over the arrays header
+    // (tex[9] is arrays->tex[0]), with t holding the loaded pointer; real form believed to index
+    // arrays->tex[i] directly.
+    void** tex;
+    void* t;
 
     if (!RwStreamFindChunk(stream, rwID_STRUCT, &size, &version))
     {
@@ -108,7 +115,7 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
         return NULL;
     }
 
-    count = numMeshes;
+    c.n = numMeshes;
     list = lists;
 
     (*entryRef)->link.next = NULL;
@@ -135,12 +142,14 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
         arrays->clr = data + (U32)arrays->clr;
     }
 
-    for (i = 0; arrays->tex[i] && i < 8 && !(arrays->flags & GCNARRAYS_EXTERNALTEX); i++)
+    tex = (void**)arrays;
+    for (i = 0; (t = tex[9]) != NULL && i < 8 && !(arrays->flags & GCNARRAYS_EXTERNALTEX); i++)
     {
-        arrays->tex[i] = data + (U32)arrays->tex[i];
+        tex[9] = data + (U32)t;
+        tex++;
     }
 
-    for (; count; count--)
+    for (; c.n; c.n--)
     {
         list->list = data + (U32)list->list;
         list++;
