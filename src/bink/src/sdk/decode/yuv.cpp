@@ -719,7 +719,6 @@ void YUV_init(S32 layout)
         RGBshift[5][0] = 8 - bbits;
         RGBshift[5][1] = 0;
 
-
         for (i = 0; i < 256; i++)
         {
             if (i <= 16)
