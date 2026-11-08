@@ -152,15 +152,23 @@ void* fn_8015E908(void* object, GCNObjectData* objectData)
 
 // The node body: instances the sector when its entry is missing or its meshes changed, then runs
 // the lighting and render callbacks.
-S32 _rxGCWorldSectorAllInOneNode(RxPipelineNode* self, RxPipelineNodeParam* params)
+S32 _rxGCWorldSectorAllInOneNode(RxPipelineNode* self, register RxPipelineNodeParam* params)
 {
-    RpWorldSector* sector = (RpWorldSector*)params->dataParam;
-    GCNAllInOnePrivateData* privateData = (GCNAllInOnePrivateData*)self->privateData;
+    register RpWorldSector* sector;
+    GCNAllInOnePrivateData* privateData;
     GCNObjectData objectData;
     U32 worldFlags;
+    register RwGlobals* globals;
 
+    // FAKEMATCH: the engine-globals load and the sector load are inline asm, so they stay on
+    // either side of the private-data store as in the target; in C the scheduler issues the
+    // current-world load before the sector load. Real form believed to be
+    // sector = params->dataParam at the declaration and RWSRCGLOBAL(curWorld) inline.
+    privateData = (GCNAllInOnePrivateData*)self->privateData;
+    asm volatile { lwz globals, RwEngineInstance }
     objectData.privateData = privateData;
-    worldFlags = ((RpWorld*)RWSRCGLOBAL(curWorld))->flags;
+    asm volatile { lwz sector, 0(params) }
+    worldFlags = ((RpWorld*)globals->curWorld)->flags;
 
     if (!(worldFlags & rpWORLDNATIVE))
     {
