@@ -903,24 +903,23 @@ S32 BinkDoFrame(Bink* bink)
                 RADCB_suspend_callback(cb_bink_sound, &bink->snd_cb);
             }
             while (left) {
-                U32 count;
                 room = bink->tracks[j].buf_size - bink->tracks[j].buffered;
                 BinkAudioDecompress(bink->tracks[j].decomp, &out, &outlen, src, (void**)&src);
                 if (outlen > left)
                     outlen = left;
                 left -= outlen;
-                count = outlen;
 
                 if (outlen > room) {
-                    room = count - room;
+                    room = outlen - room;
                     bink->tracks[j].read_ptr += room;
                     bink->tracks[j].buffered -= room;
                     if (bink->tracks[j].read_ptr > bink->tracks[j].buf_end)
                         bink->tracks[j].read_ptr -= bink->tracks[j].buf_size;
-                    count = outlen;
+                    // FAKEMATCH: dead store, room is reassigned below before any read; real form believed to be an outlen read here that makes GCC 2.95 keep a copy of the clamped length (mr r11,r0)
+                    room = outlen;
                 }
 
-                bink->tracks[j].buffered += count;
+                bink->tracks[j].buffered += outlen;
 
                 room = bink->tracks[j].buf_end - bink->tracks[j].write_ptr;
                 if (room < outlen) {
