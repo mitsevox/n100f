@@ -719,9 +719,6 @@ void YUV_init(S32 layout)
         RGBshift[5][0] = 8 - bbits;
         RGBshift[5][1] = 0;
 
-        rmax = (1 << rbits) - 1;
-        gmax = ((1 << gbits) - 1) << gshift;
-        bmax = ((1 << bbits) - 1) << bshift;
 
         for (i = 0; i < 256; i++)
         {
@@ -749,29 +746,32 @@ void YUV_init(S32 layout)
             }
 
             clamp_gg[i] = 0;
+            rmax = (1 << rbits) - 1;
+            gmax = ((1 << gbits) - 1) << gshift;
+            bmax = ((1 << bbits) - 1) << bshift;
             clamp_r[i] = 0;
+            clamp_g[i] = 0;
             clamp_r[i + 256] = i >> (8 - rbits);
             clamp_r[i + 512] = rmax;
-            clamp_g[i] = 0;
             clamp_g[i + 256] = (i >> (8 - gbits)) << gshift;
-            clamp_g[i + 512] = gmax;
             clamp_b[i] = 0;
+            clamp_b[i + 256] = (i >> (8 - bbits)) << bshift;
+            clamp_g[i + 512] = gmax;
             clamp_rr[i] = 0;
             clamp_rr[i + 256] = (i >> (8 - rbits)) + ((i >> (8 - rbits)) << 16);
-            clamp_gg[i + 256] = ((i >> (8 - gbits)) << gshift) + (((i >> (8 - gbits)) << gshift) << 16);
-            clamp_rr[i + 512] = rmax + (rmax << 16);
-            clamp_b[i + 256] = (i >> (8 - bbits)) << bshift;
+            clamp_b[i + 512] = bmax;
             clamp_gh[i] = clamp_g[i] << 16;
             clamp_bb[i] = 0;
-            clamp_bb[i + 256] = ((i >> (8 - bbits)) << bshift) + (((i >> (8 - bbits)) << bshift) << 16);
-            clamp_bb[i + 512] = bmax + (bmax << 16);
             clamp_rh[i] = clamp_r[i] << 16;
+            clamp_gg[i + 256] = ((i >> (8 - gbits)) << gshift) + (((i >> (8 - gbits)) << gshift) << 16);
+            clamp_rr[i + 512] = rmax + (rmax << 16);
             clamp_rh[i + 256] = clamp_r[i + 256] << 16;
-            clamp_gh[i + 256] = clamp_g[i + 256] << 16;
+            clamp_bb[i + 256] = ((i >> (8 - bbits)) << bshift) + (((i >> (8 - bbits)) << bshift) << 16);
             clamp_gg[i + 512] = gmax + (gmax << 16);
-            clamp_rh[i + 512] = rmax << 16;
-            clamp_b[i + 512] = bmax;
+            clamp_bb[i + 512] = bmax + (bmax << 16);
             clamp_bh[i] = clamp_b[i] << 16;
+            clamp_rh[i + 512] = rmax << 16;
+            clamp_gh[i + 256] = clamp_g[i + 256] << 16;
             clamp_gh[i + 512] = gmax << 16;
             clamp_bh[i + 256] = clamp_b[i + 256] << 16;
             clamp_bh[i + 512] = bmax << 16;
