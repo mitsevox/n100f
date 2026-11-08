@@ -485,8 +485,8 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
     if ((flags & 0x70000000) == 0x60000000)
     {
         pitch *= 2;
-        srch >>= 1;
         srcy >>= 1;
+        srch >>= 1;
         height >>= 1;
         width *= 2;
         mrow2 = mpitch;
@@ -540,14 +540,14 @@ static void YUV_blit_mask(void* dest, unsigned long destx, unsigned long desty,
         S.v = (U8*)src + width * height;
         S.u = S.v + uvw * (height >> 1);
     }
-    S.u = S.u + (srcx >> 1) + (srcy >> 1) * uvw;
-    S.v = S.v + (srcx >> 1) + (srcy >> 1) * uvw;
+    S.u = S.u + (srcx >> 1) + (srcy >> 1) * (width >> 1);
+    S.v = S.v + (srcx >> 1) + (srcy >> 1) * (width >> 1);
 
     y = srcy;
     x = srcx;
     lasty = srch + y - 1;
-    lastx = srcw + x - 1;
     mask += mpitch * (srcy >> 4) + x / 16;
+    lastx = srcw + x - 1;
 
     for (; y + 15 <= lasty; y += 16)
     {
