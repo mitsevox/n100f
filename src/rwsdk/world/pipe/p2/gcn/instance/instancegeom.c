@@ -58,28 +58,52 @@ static inline void VtxDescInitFast(GCNVertexArrays* arrays, const RpGameCubeVtxF
     }
 }
 
-static inline S32 RpGeometryGetNumVertices(const RpGeometry* geom)
-{
-    return geom->numVertices;
-}
-
 static inline RwTexCoords* RpGeometryGetVertexTexCoords(const RpGeometry* geom, S32 texCoordSet)
 {
     return geom->texCoords[texCoordSet - 1];
 }
 
+// FAKEMATCH: the body sits in an inline that copies its arguments with inline asm `or` (mr)
+// into register locals, and the default format is stored the same way; the texture loop keeps
+// its own count and array cursor. That numbers the saved values in the target's order (the
+// flag tests below the arguments, the loop index below its temporaries). Real form believed
+// to be one plain function: numVerts = RpGeometryGetNumVertices(geom), vtxFmt defaulted in C,
+// and arrays->tex[i] = dst in a loop to numTexCoords.
+#pragma push
+#pragma inline_max_size(10000)
+
 // Instances a geometry's first morph target into dst in the format's types, one array per
 // attribute in flags (or one interleaved array), and records where each starts.
-void _rwDlGeometryInstanceFast(RpGeometry* geom, GCNVertexArrays* arrays,
-                               const RpGameCubeVtxFmt* vtxFmt, U32 flags, U8 numTexCoords,
-                               U8* dst)
+static inline void GeometryInstanceFast(register RpGeometry* geomArg,
+                                        register GCNVertexArrays* arraysArg,
+                                        register const RpGameCubeVtxFmt* vtxFmtArg, U32 flags,
+                                        register U8 numTexCoordsArg, register U8* dstArg)
 {
-    S32 numVerts = RpGeometryGetNumVertices(geom);
+    register RpGeometry* geom;
+    register GCNVertexArrays* arrays;
+    register const RpGameCubeVtxFmt* vtxFmt;
+    register U8 numTexCoords;
+    register U8* dst;
+    S32 numVerts;
     S32 i;
+    S32 count;
+    GCNVertexArrays* texp;
+
+    asm
+    {
+        or geom, geomArg, geomArg
+        or arrays, arraysArg, arraysArg
+        or vtxFmt, vtxFmtArg, vtxFmtArg
+        or numTexCoords, numTexCoordsArg, numTexCoordsArg
+        or dst, dstArg, dstArg
+    }
+    numVerts = geomArg->numVertices;
 
     if (!vtxFmt)
     {
-        vtxFmt = &_RpDlVtxFmtDefault;
+        register const RpGameCubeVtxFmt* def = &_RpDlVtxFmtDefault;
+
+        asm { or vtxFmt, def, def }
     }
 
     VtxDescInitFast(arrays, vtxFmt, flags, numTexCoords);
@@ -109,12 +133,24 @@ void _rwDlGeometryInstanceFast(RpGeometry* geom, GCNVertexArrays* arrays,
 
     if (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
     {
-        for (i = 0; i < numTexCoords; i++)
+        texp = arrays;
+        count = numTexCoords;
+        for (i = 0; i < count; i++)
         {
             S32 size = _rwGCNVtxFmtInstTex(vtxFmt, i, dst, RpGeometryGetVertexTexCoords(geom, i + 1), numVerts,
                                            arrays->texStride[i]);
-            arrays->tex[i] = dst;
+            texp->tex[0] = dst;
             dst += size;
+            texp = (GCNVertexArrays*)((U8*)texp + 4);
         }
     }
 }
+
+void _rwDlGeometryInstanceFast(RpGeometry* geom, GCNVertexArrays* arrays,
+                               const RpGameCubeVtxFmt* vtxFmt, U32 flags, U8 numTexCoords,
+                               U8* dst)
+{
+    GeometryInstanceFast(geom, arrays, vtxFmt, flags, numTexCoords, dst);
+}
+
+#pragma pop
