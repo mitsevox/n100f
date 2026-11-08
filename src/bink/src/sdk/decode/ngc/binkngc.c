@@ -89,17 +89,15 @@ U32 RADTimerRead(void)
 {
     static U64 starttime = 0;
     U64 t = OSGetTime();
-    U32 q, h, l;
+    U32 q;
 
     if (starttime == 0)
         starttime = t;
 
     t -= starttime;
-    q = (U64)(U32)(t >> 32) * 106048;
+    q = (U32)((t >> 32) * 106048);
     t -= (U64)q * 40500;
-    h = (U32)(t >> 32) * 0xCF2049A1;
-    l = (U32)(((U64)(U32)t * 0xCF2049A1) >> 32);
-    return q + ((h + l) >> 15);
+    return q + (U32)((t * 0xCF2049A1) >> 47);
 }
 
 void RADCycleTimerStartAddr(U32* addr)
