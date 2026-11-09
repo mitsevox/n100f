@@ -651,7 +651,7 @@ static S32 CountLeafs(PalQuantBranch* root, S32 depth)
 }
 
 // Writes each leaf's mean colour to the palette, numbering the leaves in tree order. _name recurses
-// into _next; _redIndex is the palette index the red channel is stored at (project-own macro).
+// into _next; _redIndex is the palette index the red channel is stored at.
 #define PALQUANT_EXTRACT_NODES(_name, _next, _redIndex)                                            \
     static S32 _name(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32 depth)               \
     {                                                                                              \
@@ -687,9 +687,10 @@ static S32 ExtractNodes(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32
 static S32 ExtractNodesChild(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32 depth);
 static S32 ExtractNodesGrandchild(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32 depth);
 
-// The two inner copies are what ExtractNodes inlines for the next two tree levels; nothing else
-// calls them, so the link drops their own bodies (project-own names).
-// FAKEMATCH: ExtractNodes is spelled as three copies so only the out-of-line copy stores red at the redundant (S32)palIndex; real form believed to be one recursive ExtractNodes storing palette[palIndex].red
+// FAKEMATCH: ExtractNodes is spelled as three copies (project-own names; the two inner copies are
+// inlined for the next two tree levels and their own bodies dropped) so only the out-of-line copy
+// stores red at the redundant (S32)palIndex; real form believed to be one recursive ExtractNodes
+// storing palette[palIndex].red.
 PALQUANT_EXTRACT_NODES(ExtractNodesGrandchild, ExtractNodes, palIndex)
 PALQUANT_EXTRACT_NODES(ExtractNodesChild, ExtractNodesGrandchild, palIndex)
 PALQUANT_EXTRACT_NODES(ExtractNodes, ExtractNodesChild, (S32)palIndex)
