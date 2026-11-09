@@ -9,7 +9,7 @@ S32 _rpSkinPipelinesCreate(U32 pipes)
 
     if (pipes & (1 << (rpSKINTYPEGENERIC - 1)))
     {
-        globals->pipeline = _rpSkinPipelineCreate(rpSKINTYPEGENERIC, NULL, fn_80145598, NULL);
+        globals->pipeline = _rpSkinPipelineCreate(rpSKINTYPEGENERIC, NULL, _rpSkinAtomicReinstanceCallBack, NULL);
     }
 
     return TRUE;

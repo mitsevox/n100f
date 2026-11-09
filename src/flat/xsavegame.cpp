@@ -126,7 +126,7 @@ S32 xSGTgtPhysSlotIdx(st_XSAVEGAME_DATA* xsgdata, S32 tidx)
 }
 
 // Names the memory card in slot tidx in the wording the failure message needs.
-extern "C" char* fn_800389FC(st_XSAVEGAME_DATA* xsgdata, S32 tidx, en_XSG_WHYFAIL whyFail)
+char* xSGTgtCardName(st_XSAVEGAME_DATA* xsgdata, S32 tidx, en_XSG_WHYFAIL whyFail)
 {
     switch (whyFail)
     {
@@ -168,7 +168,7 @@ S32 xSGTgtFormatTgt(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* canRecover)
 }
 
 // Passes the card's sector size and free file entries through from the card layer.
-extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree)
+void xSGTgtSectorInfo(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree)
 {
     iSGTgtFreeSpace(xsgdata->isgsess, tidx, sectorSize, filesFree);
 }

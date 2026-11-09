@@ -25,12 +25,12 @@ F32 DlIm2DSavedProjection[7];
 
 // Whether the frame is drawn in two halves, which half is being drawn, and the line where the
 // halves meet (dldevice.c).
-extern S32 lbl_8025F808;
-extern S32 lbl_8025E7F0;
-extern S32 lbl_8025F85C;
+extern S32 _RwDlFSAA;
+extern S32 _RwDlFSAATop;
+extern S32 _RwDlHalfHeight;
 
 // The texture set for drawing; it has no raster when drawing is untextured (dlrendst.c).
-extern RwTexture* lbl_8025F87C;
+extern RwTexture* _RwDlTexture;
 
 void GXSetProjectionv(const f32* ptr);
 
@@ -66,7 +66,7 @@ void _rw2DRenderPrimitiveInit(void)
     GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_VTX, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_NONE,
                   GX_AF_NONE);
 
-    if (lbl_8025F87C->raster)
+    if (_RwDlTexture->raster)
     {
         GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
@@ -96,19 +96,19 @@ void _rw2DRenderPrimitiveInit(void)
         GXSetViewport(0.0f, 0.0f, mode->fbWidth, mode->xfbHeight, 0.0f, 1.0f);
     }
 
-    if (lbl_8025F808 == 0)
+    if (_RwDlFSAA == 0)
     {
         GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, _RwDlRenderMode->xfbHeight);
     }
-    else if (lbl_8025E7F0 != 0)
+    else if (_RwDlFSAATop != 0)
     {
-        GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, lbl_8025F85C + 2);
+        GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, _RwDlHalfHeight + 2);
         GXSetScissorBoxOffset(0, 0);
     }
     else
     {
-        GXSetScissor(0, lbl_8025F85C - 2, _RwDlRenderMode->fbWidth, lbl_8025F85C + 2);
-        GXSetScissorBoxOffset(0, lbl_8025F85C - 2);
+        GXSetScissor(0, _RwDlHalfHeight - 2, _RwDlRenderMode->fbWidth, _RwDlHalfHeight + 2);
+        GXSetScissorBoxOffset(0, _RwDlHalfHeight - 2);
     }
 
     C_MTXOrtho(projection, 0.0f, _RwDlRenderMode->xfbHeight - 1, 0.0f,
@@ -127,7 +127,7 @@ void _rw2DRenderPrimativeTerm(void)
 
     if (raster != raster->parent)
     {
-        if (lbl_8025F808 == 0)
+        if (_RwDlFSAA == 0)
         {
             if (_RwDlRenderMode->field_rendering)
             {
@@ -155,44 +155,44 @@ void _rw2DRenderPrimativeTerm(void)
                               raster->height * 2, 0.0f, 1.0f);
             }
 
-            if (lbl_8025E7F0 != 0)
+            if (_RwDlFSAATop != 0)
             {
-                if ((raster->nOffsetY + raster->height) * 2 <= lbl_8025F85C + 2)
+                if ((raster->nOffsetY + raster->height) * 2 <= _RwDlHalfHeight + 2)
                 {
                     GXSetScissor(raster->nOffsetX, raster->nOffsetY * 2, _RwDlRenderMode->fbWidth,
                                  raster->height * 2);
                 }
-                else if (raster->nOffsetY * 2 > lbl_8025F85C + 2)
+                else if (raster->nOffsetY * 2 > _RwDlHalfHeight + 2)
                 {
-                    GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, lbl_8025F85C + 2);
+                    GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, _RwDlHalfHeight + 2);
                 }
                 else
                 {
                     GXSetScissor(raster->nOffsetX, raster->nOffsetY * 2, _RwDlRenderMode->fbWidth,
-                                 lbl_8025F85C + 2);
+                                 _RwDlHalfHeight + 2);
                 }
 
                 GXSetScissorBoxOffset(0, 0);
             }
             else
             {
-                if (raster->nOffsetY * 2 >= lbl_8025F85C - 2)
+                if (raster->nOffsetY * 2 >= _RwDlHalfHeight - 2)
                 {
                     GXSetScissor(raster->nOffsetX, raster->nOffsetY * 2, _RwDlRenderMode->fbWidth,
                                  raster->height * 2);
                 }
-                else if ((raster->nOffsetY + raster->height) * 2 < lbl_8025F85C + 2)
+                else if ((raster->nOffsetY + raster->height) * 2 < _RwDlHalfHeight + 2)
                 {
-                    GXSetScissor(0, lbl_8025F85C - 2, _RwDlRenderMode->fbWidth,
-                                 lbl_8025F85C + 2);
+                    GXSetScissor(0, _RwDlHalfHeight - 2, _RwDlRenderMode->fbWidth,
+                                 _RwDlHalfHeight + 2);
                 }
                 else
                 {
-                    GXSetScissor(raster->nOffsetX, lbl_8025F85C - 2, _RwDlRenderMode->fbWidth,
+                    GXSetScissor(raster->nOffsetX, _RwDlHalfHeight - 2, _RwDlRenderMode->fbWidth,
                                  raster->height * 2);
                 }
 
-                GXSetScissorBoxOffset(0, lbl_8025F85C - 2);
+                GXSetScissorBoxOffset(0, _RwDlHalfHeight - 2);
             }
         }
     }
@@ -210,7 +210,7 @@ S32 _rwDlIm2DRenderTriangle(RwIm2DVertex* vertices, S32 numVertices, S32 vert1, 
     _rw2DRenderPrimitiveInit();
     GXBegin(GX_TRIANGLES, GX_VTXFMT0, 3);
 
-    if (lbl_8025F87C->raster)
+    if (_RwDlTexture->raster)
     {
         DlIm2DVertexTextured(v1);
         DlIm2DVertexTextured(v2);
@@ -236,7 +236,7 @@ S32 _rwDlIm2DRenderLine(RwIm2DVertex* vertices, S32 numVertices, S32 vert1, S32 
     _rw2DRenderPrimitiveInit();
     GXBegin(GX_LINES, GX_VTXFMT0, 2);
 
-    if (lbl_8025F87C->raster)
+    if (_RwDlTexture->raster)
     {
         DlIm2DVertexTextured(v1);
         DlIm2DVertexTextured(v2);
@@ -275,7 +275,7 @@ S32 _rwDlIm2DRenderPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices, S
     case rwPRIMTYPETRIFAN:
         count = numVertices;
 
-        if (lbl_8025F87C->raster)
+        if (_RwDlTexture->raster)
         {
             while (count--)
             {
@@ -296,7 +296,7 @@ S32 _rwDlIm2DRenderPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices, S
     case rwPRIMTYPELINELIST:
         count = numVertices >> 1;
 
-        if (lbl_8025F87C->raster)
+        if (_RwDlTexture->raster)
         {
             while (count--)
             {
@@ -319,7 +319,7 @@ S32 _rwDlIm2DRenderPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices, S
     case rwPRIMTYPETRILIST:
         count = numVertices / 3;
 
-        if (lbl_8025F87C->raster)
+        if (_RwDlTexture->raster)
         {
             while (count--)
             {
@@ -366,7 +366,7 @@ S32 _rwDlIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vert
     case rwPRIMTYPETRIFAN:
         count = numIndices;
 
-        if (lbl_8025F87C->raster)
+        if (_RwDlTexture->raster)
         {
             while (count--)
             {
@@ -387,7 +387,7 @@ S32 _rwDlIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vert
     case rwPRIMTYPELINELIST:
         count = numIndices >> 1;
 
-        if (lbl_8025F87C->raster)
+        if (_RwDlTexture->raster)
         {
             while (count--)
             {
@@ -410,7 +410,7 @@ S32 _rwDlIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vert
     case rwPRIMTYPETRILIST:
         count = numIndices / 3;
 
-        if (lbl_8025F87C->raster)
+        if (_RwDlTexture->raster)
         {
             while (count--)
             {

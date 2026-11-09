@@ -2,18 +2,18 @@
 #include <dolphin/gx/GXManage.h>
 
 // Interrupt-visible GPU state: the current allocation token and the last completion token read.
-volatile U16 lbl_8025E800 = 1;
-volatile U16 lbl_8025F890;
+volatile U16 _RwDlTokenCurrent = 1;
+volatile U16 _RwDlTokenLastSeen;
 
 // Tests whether the GPU has passed a token, accounting for token wraparound.
 S32 _rwDlTokenQueryDone(U16 token)
 {
     S32 done;
 
-    if (lbl_8025E800 >= (lbl_8025F890 = GXReadDrawSync()))
+    if (_RwDlTokenCurrent >= (_RwDlTokenLastSeen = GXReadDrawSync()))
     {
         done = FALSE;
-        if (token <= lbl_8025F890 || token > lbl_8025E800)
+        if (token <= _RwDlTokenLastSeen || token > _RwDlTokenCurrent)
         {
             done = TRUE;
         }
@@ -21,7 +21,7 @@ S32 _rwDlTokenQueryDone(U16 token)
     else
     {
         done = FALSE;
-        if (token > lbl_8025E800 && token <= lbl_8025F890)
+        if (token > _RwDlTokenCurrent && token <= _RwDlTokenLastSeen)
         {
             done = TRUE;
         }

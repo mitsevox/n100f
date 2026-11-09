@@ -35,7 +35,7 @@ extern S32 xSGStartup();
 extern void zEntProjectile_Startup();
 extern void zLobMaster_Startup();
 extern S32 zEntVillain_Startup();
-extern "C" void fn_80043E78();
+void xTRCCardCheckStartup();
 extern void xFontBoxSetInset(xFontBox*, F32, F32, F32, F32);
 extern S32 zEntVillain_Shutdown();
 extern void zLobMaster_Shutdown();
@@ -51,7 +51,6 @@ S32 xMemGetBase();
 S32 xSTPreLoadScene(U32, void*);
 S32 xSTQueueSceneAssets(U32);
 void iSystemPollResetAndDisc();
-extern "C" void fn_800443AC();
 void zEntPlayer_InitCutsceneModelHack();
 static S32 sShowMenuOnBoot = 1;
 
@@ -94,7 +93,7 @@ extern "C" void main()
     zEntProjectile_Startup();
     zLobMaster_Startup();
     zEntVillain_Startup();
-    fn_80043E78();
+    xTRCCardCheckStartup();
 
     zMainFirstScreen(1);
     printf("----ENTERING MAIN LOOP\n");
@@ -233,7 +232,7 @@ void zMainLoop()
     while (xSTLoadStep('BOOT') < 1.0f)
     {
         iSystemPollResetAndDisc();
-        fn_800443AC();
+        xTRCRenderFrame();
     }
     xUtil_idtag2string('BOOT', 0);
     iShadowInit();
@@ -247,7 +246,7 @@ void zMainLoop()
     while (xSTLoadStep('MNU4') < 1.0f)
     {
         iSystemPollResetAndDisc();
-        fn_800443AC();
+        xTRCRenderFrame();
     }
     xUtil_idtag2string('MNU4', 0);
 

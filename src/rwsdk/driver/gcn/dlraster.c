@@ -7,14 +7,14 @@
 // hands out a linear copy (untiled on a read lock), and unlocking tiles it back.
 
 // The draw sync token to issue next, and the last token the GPU has passed.
-extern volatile U16 lbl_8025E800;
-extern volatile U16 lbl_8025F890;
+extern volatile U16 _RwDlTokenCurrent;
+extern volatile U16 _RwDlTokenLastSeen;
 
 // The texture that stands in for no texture.
-extern RwTexture* lbl_8025F87C;
+extern RwTexture* _RwDlTexture;
 
 // The offset of the driver's extension in each raster, from registering the raster plugin.
-S32 lbl_8025F870;
+S32 _RwGameCubeRasterExtOffset;
 
 S32 _rwDlTokenQueryDone(U16 token);
 S32 RwTextureRasterGenerateMipmaps(RwRaster* raster, RwImage* image);
@@ -39,10 +39,10 @@ S32 RwTextureRasterGenerateMipmaps(RwRaster* raster, RwImage* image);
 #define DLRASTER_WAITDONE(_ext)                                                                    \
     do                                                                                             \
     {                                                                                              \
-        if ((_ext)->syncToken == lbl_8025E800)                                                     \
+        if ((_ext)->syncToken == _RwDlTokenCurrent)                                                     \
         {                                                                                          \
-            GXSetDrawSync(lbl_8025E800);                                                           \
-            lbl_8025E800 = (lbl_8025E800 + 1) % DLRASTER_TOKENWRAP;                                \
+            GXSetDrawSync(_RwDlTokenCurrent);                                                           \
+            _RwDlTokenCurrent = (_RwDlTokenCurrent + 1) % DLRASTER_TOKENWRAP;                                \
         }                                                                                          \
         while (!_rwDlTokenQueryDone((_ext)->syncToken))                                            \
         {                                                                                          \
@@ -60,9 +60,9 @@ S32 RwTextureRasterGenerateMipmaps(RwRaster* raster, RwImage* image);
 
 S32 _rwDlRasterPluginAttach(void)
 {
-    lbl_8025F870 = RwRasterRegisterPlugin(sizeof(RwGCRasterExt), 0x40C, NULL, NULL, NULL);
+    _RwGameCubeRasterExtOffset = RwRasterRegisterPlugin(sizeof(RwGCRasterExt), 0x40C, NULL, NULL, NULL);
 
-    return lbl_8025F870;
+    return _RwGameCubeRasterExtOffset;
 }
 
 // Copies linear texels into GX tiles: 8x8 texels per 32-byte tile at 4 bits, 8x4 at 8 bits and
@@ -319,7 +319,7 @@ void DlRasterUntile(U8* dst, U8* src, S32 width, S32 height, S32 depth, S32 stri
 
 // The size of one mipmap level of the raster's texels, in GX tiles, rounded to 32 bytes. A
 // locked raster keeps its full size.
-S32 fn_80179064(RwRaster* raster, U8 level)
+S32 DlRasterGetMipLevelSize(RwRaster* raster, U8 level)
 {
     RwRaster* top = raster->parent;
     S32 width;
@@ -370,14 +370,14 @@ S32 fn_80179064(RwRaster* raster, U8 level)
     return (size + 0x1F) & ~0x1F;
 }
 
-// FAKEMATCH: helper exists only to order fn_80179198's temporaries; real form believed to be a
+// FAKEMATCH: helper exists only to order _rwDlRasterLock's temporaries; real form believed to be a
 // plain `size >> level` inside DLRASTER_LEVELSIZE.
 static inline S32 DlRasterShift(S32 size, U8 shift)
 {
     return size >> shift;
 }
 
-// FAKEMATCH: helper exists only to order fn_80179198's temporaries; real form believed to be
+// FAKEMATCH: helper exists only to order _rwDlRasterLock's temporaries; real form believed to be
 // `(U8*)ext->pixels + offset` written in place.
 static inline U8* DlRasterLevelPixels(RwGCRasterExt* ext, S32 offset)
 {
@@ -385,7 +385,7 @@ static inline U8* DlRasterLevelPixels(RwGCRasterExt* ext, S32 offset)
 }
 
 // FAKEMATCH: helper exists only to put this error's stack slot after the function's own; real
-// form believed to be the error inside an inlined row-bytes helper (see fn_80179198).
+// form believed to be the error inside an inlined row-bytes helper (see _rwDlRasterLock).
 static inline void DlRasterDepthError(void)
 {
     DLRASTER_ERROR((0x8000000C));
@@ -393,7 +393,7 @@ static inline void DlRasterDepthError(void)
 
 // Locks one mipmap level ((flags >> 8) & 0xFF) for reading or writing; a raw lock hands out the
 // tiled texels themselves.
-S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
+S32 _rwDlRasterLock(void* pixelsOut, void* rasterIn, S32 flags)
 {
     // FAKEMATCH: declaration order, the separate `shift` copy of level and the split
     // initializers set the saved-register order; real form believed to be initialized
@@ -459,7 +459,7 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
         // FAKEMATCH: (continued) the countdown, with its copy of level set above.
         while (l--)
         {
-            offset += fn_80179064(raster, l);
+            offset += DlRasterGetMipLevelSize(raster, l);
         }
 
         // FAKEMATCH: helper call; real form believed to be `(U8*)ext->pixels + offset`.
@@ -541,7 +541,7 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
         {
             if ((raster->cType & rwRASTERTYPEMASK) == rwRASTERTYPECAMERATEXTURE)
             {
-                DCFlushRange(ext->lockPixels, fn_80179064(raster, level));
+                DCFlushRange(ext->lockPixels, DlRasterGetMipLevelSize(raster, level));
             }
 
             raster->privateFlags |= rwRASTERPIXELLOCKEDREAD;
@@ -582,7 +582,7 @@ S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags)
 
 // Unlocks the raster: tiles back what was written, frees the linear copy and, after a write to
 // the top level of an automipmapped raster, rebuilds the other levels.
-S32 fn_80179614(void* out, void* rasterIn, S32 flags)
+S32 _rwDlRasterUnlock(void* out, void* rasterIn, S32 flags)
 {
     RwRaster* raster = (RwRaster*)rasterIn;
     RwRaster* top = raster->parent;
@@ -602,7 +602,7 @@ S32 fn_80179614(void* out, void* rasterIn, S32 flags)
                              raster->stride);
             }
 
-            DCFlushRange(ext->lockPixels, fn_80179064(raster, ext->lockedLevel));
+            DCFlushRange(ext->lockPixels, DlRasterGetMipLevelSize(raster, ext->lockedLevel));
             GXInvalidateTexAll();
         }
 
@@ -648,7 +648,7 @@ S32 fn_80179614(void* out, void* rasterIn, S32 flags)
 }
 
 // Locks the palette of a top-level palettized raster; the palette is stored after the texels.
-S32 fn_801797E0(void** paletteOut, RwRaster* raster, S32 flags)
+S32 _rwDlRasterLockPalette(void** paletteOut, RwRaster* raster, S32 flags)
 {
     switch (raster->cType & rwRASTERTYPEMASK)
     {
@@ -688,7 +688,7 @@ S32 fn_801797E0(void** paletteOut, RwRaster* raster, S32 flags)
     return FALSE;
 }
 
-S32 fn_8017989C(void* out, RwRaster* raster, S32 flags)
+S32 _rwDlRasterUnlockPalette(void* out, RwRaster* raster, S32 flags)
 {
     switch (raster->cType & rwRASTERTYPEMASK)
     {
@@ -720,7 +720,7 @@ S32 fn_8017989C(void* out, RwRaster* raster, S32 flags)
 
 // Sets the raster's type and format from the create flags, choosing the depth (and, with no
 // pixel format given, the format) the driver uses for it.
-S32 fn_8017995C(RwRaster* raster, S32 flags)
+S32 DlGetRasterFormat(RwRaster* raster, S32 flags)
 {
     U32 format = flags & rwRASTERFORMATMASK;
 
@@ -832,7 +832,7 @@ S32 fn_8017995C(RwRaster* raster, S32 flags)
 
 // The number of mipmap levels: the stored count, or every level down to 1x1 for a mipmapped
 // raster.
-S32 fn_80179BDC(void* out, void* inOut, S32 flags)
+S32 _rwDlRasterGetNumMipLevels(void* out, void* inOut, S32 flags)
 {
     RwRaster* raster = (RwRaster*)inOut;
     U8 maxLevel = RWGCRASTEREXT(raster)->maxLevel;
@@ -850,16 +850,16 @@ S32 fn_80179BDC(void* out, void* inOut, S32 flags)
 }
 
 // The size of all the raster's mipmap levels.
-S32 fn_80179C7C(RwRaster* raster)
+S32 _rwDlRasterGetSize(RwRaster* raster)
 {
     S32 size = 0;
     S32 numLevels;
 
-    fn_80179BDC(&numLevels, raster, 0);
+    _rwDlRasterGetNumMipLevels(&numLevels, raster, 0);
 
     while (numLevels--)
     {
-        size += fn_80179064(raster, numLevels);
+        size += DlRasterGetMipLevelSize(raster, numLevels);
     }
 
     return size;
@@ -867,7 +867,7 @@ S32 fn_80179C7C(RwRaster* raster)
 
 // Allocates the raster's texels (and palette) for the given GX texel and palette formats and
 // number of mipmap levels.
-S32 fn_80179D54(RwRaster* raster, S32 format, S32 tlutFormat, S32 flags, U8 depth, S32 numLevels)
+S32 _rwDlTextureRasterCreate(RwRaster* raster, S32 format, S32 tlutFormat, S32 flags, U8 depth, S32 numLevels)
 {
     RwGCRasterExt* ext;
     S32 size;
@@ -882,7 +882,7 @@ S32 fn_80179D54(RwRaster* raster, S32 format, S32 tlutFormat, S32 flags, U8 dept
 
     ext->maxLevel = numLevels - 1;
     ext->format = format;
-    size = fn_80179C7C(raster);
+    size = _rwDlRasterGetSize(raster);
 
     if (RwRasterGetFormat(raster) & (rwRASTERFORMATPAL4 | rwRASTERFORMATPAL8))
     {
@@ -936,7 +936,7 @@ static S32 DlRasterIndexFormat(U32 format)
 }
 
 // Picks the GX texel and palette formats for the raster's format and allocates its texels.
-S32 fn_80179FA0(RwRaster* raster)
+S32 DlRasterAllocate(RwRaster* raster)
 {
     U32 format = RwRasterGetFormat(raster);
     S32 texFormat = 0;
@@ -1002,16 +1002,13 @@ S32 fn_80179FA0(RwRaster* raster)
 
     numLevels = DLRASTER_NUMLEVELS(raster);
 
-    fn_80179D54(raster, texFormat, tlutFormat, alpha, raster->depth, numLevels);
+    _rwDlTextureRasterCreate(raster, texFormat, tlutFormat, alpha, raster->depth, numLevels);
 
     return TRUE;
 }
 
-// The message for a texture whose raster cannot be created.
-char lbl_801DE368[] = "Failed to create surface for texture";
-
 // Creates a raster: sets its format and, for a texture with a size, allocates its texels.
-S32 fn_8017A374(void* out, RwRaster* raster, S32 flags)
+S32 _rwDlRasterCreate(void* out, RwRaster* raster, S32 flags)
 {
     RwGCRasterExt* ext = RWGCRASTEREXT(raster);
 
@@ -1025,11 +1022,11 @@ S32 fn_8017A374(void* out, RwRaster* raster, S32 flags)
     ext->lockPixels = NULL;
     ext->lockBuffer = NULL;
     ext->region = NULL;
-    ext->syncToken = lbl_8025F890;
+    ext->syncToken = _RwDlTokenLastSeen;
     ext->maxLevel = 0xFF;
     ext->lockedLevel = 0xFF;
 
-    if (!fn_8017995C(raster, flags))
+    if (!DlGetRasterFormat(raster, flags))
     {
         return FALSE;
     }
@@ -1041,9 +1038,9 @@ S32 fn_8017A374(void* out, RwRaster* raster, S32 flags)
         case rwRASTERTYPENORMAL:
         case rwRASTERTYPETEXTURE:
         case rwRASTERTYPECAMERATEXTURE:
-            if (!(raster->cFlags & rwRASTERDONTALLOCATE) && !fn_80179FA0(raster))
+            if (!(raster->cFlags & rwRASTERDONTALLOCATE) && !DlRasterAllocate(raster))
             {
-                DLRASTER_ERROR((2, lbl_801DE368));
+                DLRASTER_ERROR((2, "Failed to create surface for texture"));
                 return FALSE;
             }
             break;
@@ -1066,7 +1063,7 @@ S32 fn_8017A374(void* out, RwRaster* raster, S32 flags)
 }
 
 // Destroys a raster: once the GPU is done with it, frees its texels.
-S32 fn_8017A4D8(void* out, RwRaster* raster, S32 flags)
+S32 _rwDlRasterDestroy(void* out, RwRaster* raster, S32 flags)
 {
     if (raster->parent == raster && !(raster->cFlags & rwRASTERDONTALLOCATE))
     {
@@ -1080,9 +1077,9 @@ S32 fn_8017A4D8(void* out, RwRaster* raster, S32 flags)
 
             DLRASTER_WAITDONE(ext);
 
-            if (raster == lbl_8025F87C->raster)
+            if (raster == _RwDlTexture->raster)
             {
-                _rwDlTextureSetRaster(lbl_8025F87C, NULL, 0);
+                _rwDlTextureSetRaster(_RwDlTexture, NULL, 0);
             }
 
             RwFree(ext->unaligned);

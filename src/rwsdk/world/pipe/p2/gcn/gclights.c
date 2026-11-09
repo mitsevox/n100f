@@ -8,7 +8,7 @@
 // lights are loaded with their position, falloff and cone.
 
 // The camera's view matrix, kept by the device driver.
-extern RwMatrix lbl_8025E304;
+extern RwMatrix _RwDlInvCamLTM;
 
 // The eight hardware light objects.
 static GXLightObj _RwGCLightObjs[8];
@@ -54,7 +54,7 @@ void _rwGCLightsGlobalEnable(U8 flags, GCNObjectData* data)
                 index = data->numLights;
 
                 RwV3dTransformVectors(&dir, &RwFrameGetLTM(RpLightGetFrame(light))->at, 1,
-                                      &lbl_8025E304);
+                                      &_RwDlInvCamLTM);
 
                 obj = &_RwGCLightObjs[index];
                 GXInitLightPos(obj, GCLIGHTS_DIRECTIONALDIST * -dir.x,
@@ -94,7 +94,7 @@ void _rwGCLightsLocalEnable(RpLight* light, GCNObjectData* data)
     GXInitLightColor(&_RwGCLightObjs[data->numLights], color);
 
     ltm = RwFrameGetLTM(RpLightGetFrame(light));
-    RwV3dTransformPoints(&pos, &ltm->pos, 1, &lbl_8025E304);
+    RwV3dTransformPoints(&pos, &ltm->pos, 1, &_RwDlInvCamLTM);
     GXInitLightPos(&_RwGCLightObjs[data->numLights], -pos.x, pos.y, -pos.z);
     GXInitLightDistAttn(&_RwGCLightObjs[data->numLights], 0.5f * light->radius, 0.5f,
                         GX_DA_MEDIUM);
@@ -105,13 +105,13 @@ void _rwGCLightsLocalEnable(RpLight* light, GCNObjectData* data)
         GXInitLightAttnA(&_RwGCLightObjs[data->numLights], 1.0f, 0.0f, 0.0f);
         break;
     case rpLIGHTSPOT:
-        RwV3dTransformVectors(&dir, &ltm->at, 1, &lbl_8025E304);
+        RwV3dTransformVectors(&dir, &ltm->at, 1, &_RwDlInvCamLTM);
         GXInitLightDir(&_RwGCLightObjs[data->numLights], -dir.x, dir.y, -dir.z);
         GXInitLightSpot(&_RwGCLightObjs[data->numLights], 57.29578f * RpLightGetConeAngle(light),
                         GX_SP_FLAT);
         break;
     case rpLIGHTSPOTSOFT:
-        RwV3dTransformVectors(&dir, &ltm->at, 1, &lbl_8025E304);
+        RwV3dTransformVectors(&dir, &ltm->at, 1, &_RwDlInvCamLTM);
         GXInitLightDir(&_RwGCLightObjs[data->numLights], -dir.x, dir.y, -dir.z);
         GXInitLightSpot(&_RwGCLightObjs[data->numLights], 57.29578f * RpLightGetConeAngle(light),
                         GX_SP_COS);

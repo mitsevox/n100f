@@ -18,6 +18,7 @@
 #include "xPad.h"
 #include "xScrFx.h"
 #include "xString.h"
+#include "xTRC.h"
 #include "zFMV.h"
 #include <dolphin/os.h>
 #include <dolphin/vi.h>
@@ -26,7 +27,6 @@ void setupPlayer();
 void zEntEvent(xBase* to, U32 toEvent);
 void zEntEventAll(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam);
 void xFontRender();
-extern "C" U32 fn_800443F8();
 void iSystemPollResetAndDisc();
 void xTRCRenderMessage();
 void xSndUpdate(F32 dt);
@@ -146,14 +146,14 @@ U32 zMenuLoop()
 
         if (zGameModeGet() == eGameMode_Title)
         {
-            if (!fn_800443F8())
+            if (!xTRCDiskHalted())
             {
                 sAttractMode_timer -= time_elapsed;
             }
 
             if (sAttractMode_timer < 0.0f)
             {
-                if (fn_800443F8())
+                if (xTRCDiskHalted())
                 {
                     sAttractMode_timer = 30.0f;
                 }

@@ -27,6 +27,8 @@ extern _tagTRCState gTrcDisk[2];
 
 void xTRCInit();
 void xTRCDisk(_tagTRCState state);
+U32 xTRCDiskHalted();
+void xTRCRenderFrame();
 
 struct _tagTRCPadInfo
 {

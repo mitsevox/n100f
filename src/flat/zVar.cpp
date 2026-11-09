@@ -18,10 +18,10 @@
 #include "zSaveLoad.h"
 #include "zScene.h"
 
-extern "C" S32 fn_800C9698(char* dst);
-extern "C" S32 fn_800C96C0(char* dst);
-extern "C" S32 fn_800C96E8(char* dst);
-extern "C" S32 fn_800C9710(char* dst);
+S32 zSaveLoad_CardAltText(char* dst);
+S32 zSaveLoad_CardActionText(char* dst);
+S32 zSaveLoad_CardCancelText(char* dst);
+S32 zSaveLoad_CardMessageText(char* dst);
 
 // Callbacks the variable tables below refer to.
 void zVarMagicProcessText(char* src, char* dst);
@@ -889,7 +889,7 @@ char* zVMCB_CurrentTime(char* dst)
 // Memory-card messages and button labels, filled in by the save/load code.
 char* zVMCB_NoCardMessage(char* dst)
 {
-    return dst + fn_800C9710(dst);
+    return dst + zSaveLoad_CardMessageText(dst);
 }
 
 char* zVMCB_SpaceAvailable(char* dst)
@@ -899,37 +899,37 @@ char* zVMCB_SpaceAvailable(char* dst)
 
 char* zVMCB_SpaceNeeded(char* dst)
 {
-    return dst + fn_800C9710(dst);
+    return dst + zSaveLoad_CardMessageText(dst);
 }
 
 char* zVMCB_FormatPromptMessage(char* dst)
 {
-    return dst + fn_800C9710(dst);
+    return dst + zSaveLoad_CardMessageText(dst);
 }
 
 char* zVMCB_MCActionMessage(char* dst)
 {
-    return dst + fn_800C9710(dst);
+    return dst + zSaveLoad_CardMessageText(dst);
 }
 
 char* zVMCB_MCACtionFailMessage(char* dst)
 {
-    return dst + fn_800C9710(dst);
+    return dst + zSaveLoad_CardMessageText(dst);
 }
 
 char* zVMCB_CancelButtonLabel(char* dst)
 {
-    return dst + fn_800C96E8(dst);
+    return dst + zSaveLoad_CardCancelText(dst);
 }
 
 char* zVMCB_ActionButtonLabel(char* dst)
 {
-    return dst + fn_800C96C0(dst);
+    return dst + zSaveLoad_CardActionText(dst);
 }
 
 char* zVMCB_AltButtonLabel(char* dst)
 {
-    return dst + fn_800C9698(dst);
+    return dst + zSaveLoad_CardAltText(dst);
 }
 
 // The current scene letter's place in the alphabet (A is 1).

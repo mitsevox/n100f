@@ -212,13 +212,13 @@ void RpGameCubeGeometrySetVtxFmt(RpGeometry* geometry, RpGameCubeVtxFmt* vtxFmt)
 }
 
 // The vertex format a geometry carries in its plugin slot.
-RpGameCubeVtxFmt* fn_8015D818(const RpGeometry* geometry)
+RpGameCubeVtxFmt* RpGameCubeGeometryGetVtxFmt(const RpGeometry* geometry)
 {
     return *(RpGameCubeVtxFmt**)((U8*)geometry + _rpDlGeomVtxFmtOffset);
 }
 
 // The vertex format a world carries in its plugin slot, used for all its sectors.
-RpGameCubeVtxFmt* fn_8015D824(const RpWorld* world)
+RpGameCubeVtxFmt* RpGameCubeWorldGetVtxFmt(const RpWorld* world)
 {
     return *(RpGameCubeVtxFmt**)((U8*)world + _rpDlWorldVtxFmtOffset);
 }

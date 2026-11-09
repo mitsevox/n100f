@@ -6,7 +6,7 @@
 
 // The GX minification and magnification filters for each RenderWare filter mode, and the GX wrap
 // mode for each addressing mode.
-GXTexFilter lbl_801DE5B8[7][2] = {
+GXTexFilter _RwDlFilterModeConvTable[7][2] = {
     { GX_NEAR, GX_NEAR },
     { GX_NEAR, GX_NEAR },
     { GX_LINEAR, GX_LINEAR },
@@ -15,20 +15,20 @@ GXTexFilter lbl_801DE5B8[7][2] = {
     { GX_NEAR_MIP_LIN, GX_NEAR },
     { GX_LIN_MIP_LIN, GX_LINEAR },
 };
-GXTexWrapMode lbl_801DE5F0[5] = { GX_CLAMP, GX_REPEAT, GX_MIRROR, GX_CLAMP, GX_CLAMP };
+GXTexWrapMode _RwDlAddressConvTable[5] = { GX_CLAMP, GX_REPEAT, GX_MIRROR, GX_CLAMP, GX_CLAMP };
 
 // The texture each of the eight GX texture maps holds.
-RwTexture* lbl_801DE604[GX_MAX_TEXMAP] = { NULL };
+RwTexture* _RwDlTextureCache[GX_MAX_TEXMAP] = { NULL };
 
 // The offset of the plugin's extension in each texture.
-S32 lbl_8025F888;
+S32 _RwGameCubeTextureExtOffset;
 
 // The draw sync token of the current frame.
-extern volatile U16 lbl_8025E800;
+extern volatile U16 _RwDlTokenCurrent;
 
 // The texture and raster that stand in for no texture.
-extern RwRaster* lbl_8025F878;
-extern RwTexture* lbl_8025F87C;
+extern RwRaster* _RwDlRasterWhite;
+extern RwTexture* _RwDlTexture;
 
 
 #define DLTEXTUR_PALETTED(_raster)                                                                 \
@@ -45,7 +45,7 @@ static void DlLODBiasPoolStandIn(F32* offset, F32* scale, F32* step)
 
 // The texture's LOD bias as GX reports it, rescaled: (4096 + bias) / -1024 when negative,
 // bias / 1024 otherwise.
-F32 fn_8017CF40(const GXTexObj* texObj)
+F32 DlTextureGetLODBias(const GXTexObj* texObj)
 {
     F32 bias = GXGetTexObjLODBias(texObj);
 
@@ -72,9 +72,9 @@ void* _rwDlTextureDest(void* object, S32 offset, S32 size)
 
     for (i = 0; i < 8; i++)
     {
-        if (object == lbl_801DE604[i])
+        if (object == _RwDlTextureCache[i])
         {
-            lbl_801DE604[i] = NULL;
+            _RwDlTextureCache[i] = NULL;
         }
     }
 
@@ -83,10 +83,10 @@ void* _rwDlTextureDest(void* object, S32 offset, S32 size)
 
 S32 _rwDlTexturePluginAttach(void)
 {
-    lbl_8025F888 = RwTextureRegisterPlugin(sizeof(RwGCTextureExt), 0x40C, _rwDlTextureConst,
+    _RwGameCubeTextureExtOffset = RwTextureRegisterPlugin(sizeof(RwGCTextureExt), 0x40C, _rwDlTextureConst,
                                            _rwDlTextureDest, NULL);
 
-    return lbl_8025F888;
+    return _RwGameCubeTextureExtOffset;
 }
 
 // Rebuilds the texture's GX texture object for its raster, filter and addressing modes and the
@@ -115,32 +115,32 @@ S32 _rwDlTexturePluginAttach(void)
                                                                                                     \
         GXInitTexObjCI(&textureExt->texObj, rasterExt->pixels, raster->width, raster->height,       \
                        rasterExt->format,                                                           \
-                       lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGUMASK) >> 8],   \
-                       lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGVMASK) >> 12],  \
+                       _RwDlAddressConvTable[(texture->filterAddressing & rwTEXTUREADDRESSINGUMASK) >> 8],   \
+                       _RwDlAddressConvTable[(texture->filterAddressing & rwTEXTUREADDRESSINGVMASK) >> 12],  \
                        (format & rwRASTERFORMATMIPMAP) != 0, tlutName);                             \
                                                                                                     \
         filter = texture->filterAddressing & rwTEXTUREFILTERMODEMASK;                               \
                                                                                                     \
         if (filter == rwFILTERLINEARMIPLINEAR || filter == rwFILTERLINEARMIPNEAREST)                \
         {                                                                                           \
-            minFilter = lbl_801DE5B8[rwFILTERLINEARMIPNEAREST - 1][0];                              \
-            magFilter = lbl_801DE5B8[rwFILTERLINEARMIPNEAREST - 1][1];                              \
+            minFilter = _RwDlFilterModeConvTable[rwFILTERLINEARMIPNEAREST - 1][0];                              \
+            magFilter = _RwDlFilterModeConvTable[rwFILTERLINEARMIPNEAREST - 1][1];                              \
         }                                                                                           \
         else                                                                                        \
         {                                                                                           \
-            minFilter = lbl_801DE5B8[filter][0];                                                    \
-            magFilter = lbl_801DE5B8[filter][1];                                                    \
+            minFilter = _RwDlFilterModeConvTable[filter][0];                                                    \
+            magFilter = _RwDlFilterModeConvTable[filter][1];                                                    \
         }                                                                                           \
     }                                                                                               \
     else                                                                                            \
     {                                                                                               \
         GXInitTexObj(&textureExt->texObj, rasterExt->pixels, raster->width, raster->height,         \
                      rasterExt->format,                                                             \
-                     lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGUMASK) >> 8],     \
-                     lbl_801DE5F0[(texture->filterAddressing & rwTEXTUREADDRESSINGVMASK) >> 12],    \
+                     _RwDlAddressConvTable[(texture->filterAddressing & rwTEXTUREADDRESSINGUMASK) >> 8],     \
+                     _RwDlAddressConvTable[(texture->filterAddressing & rwTEXTUREADDRESSINGVMASK) >> 12],    \
                      (format & rwRASTERFORMATMIPMAP) ? GX_TRUE : GX_FALSE);                         \
-        minFilter = lbl_801DE5B8[texture->filterAddressing & rwTEXTUREFILTERMODEMASK][0];           \
-        magFilter = lbl_801DE5B8[texture->filterAddressing & rwTEXTUREFILTERMODEMASK][1];           \
+        minFilter = _RwDlFilterModeConvTable[texture->filterAddressing & rwTEXTUREFILTERMODEMASK][0];           \
+        magFilter = _RwDlFilterModeConvTable[texture->filterAddressing & rwTEXTUREFILTERMODEMASK][1];           \
     }                                                                                               \
                                                                                                     \
     GXInitTexObjLOD(&textureExt->texObj, minFilter, magFilter, 0.0f, rasterExt->maxLevel, lodBias,  \
@@ -161,7 +161,7 @@ static inline void DlTextureRefresh(RwTexture* texture, RwGCTextureExt* current,
     GXAnisotropy maxAniso = GXGetTexObjMaxAniso(&current->texObj);
     S32 edgeLOD = GXGetTexObjEdgeLOD(&current->texObj);
     S32 biasClamp = GXGetTexObjBiasClamp(&current->texObj);
-    F32 lodBias = fn_8017CF40(&current->texObj);
+    F32 lodBias = DlTextureGetLODBias(&current->texObj);
     DLTEXTUR_REBUILD(texture, tlut, biasClamp, edgeLOD, maxAniso, lodBias)
 }
 
@@ -175,14 +175,14 @@ void _rwDlTextureSet(RwTexture* texture, U32 texMap)
 
     if (!texture)
     {
-        texture = lbl_8025F87C;
-        _rwDlTextureSetRaster(lbl_8025F87C, lbl_8025F878, 0);
+        texture = _RwDlTexture;
+        _rwDlTextureSetRaster(_RwDlTexture, _RwDlRasterWhite, 0);
     }
 
     raster = texture->raster;
     textureExt = RWGCTEXTUREEXT(texture);
     rasterExt = RWGCRASTEREXT(raster->parent);
-    rasterExt->syncToken = lbl_8025E800;
+    rasterExt->syncToken = _RwDlTokenCurrent;
 
     if (DLTEXTUR_PALETTED(raster))
     {
@@ -194,7 +194,7 @@ void _rwDlTextureSet(RwTexture* texture, U32 texMap)
         {
             DlTextureRefresh(texture, textureExt, texMap);
         }
-        else if (texture != lbl_801DE604[texMap])
+        else if (texture != _RwDlTextureCache[texMap])
         {
             if (!(textureExt->flags & RWGCTEXTURE_PRELOADED) &&
                 texMap != GXGetTexObjTlut(&textureExt->texObj))
@@ -220,7 +220,7 @@ void _rwDlTextureSet(RwTexture* texture, U32 texMap)
     {
         DlTextureRefresh(texture, textureExt, 0);
     }
-    else if (texture == lbl_801DE604[texMap])
+    else if (texture == _RwDlTextureCache[texMap])
     {
         return;
     }
@@ -234,7 +234,7 @@ void _rwDlTextureSet(RwTexture* texture, U32 texMap)
         GXLoadTexObjPreLoaded(&textureExt->texObj, rasterExt->region, texMap);
     }
 
-    lbl_801DE604[texMap] = texture;
+    _RwDlTextureCache[texMap] = texture;
 }
 
 void RwGameCubeTextureSetLOD(RwTexture* texture, F32 lodBias, S32 biasClamp, S32 edgeLOD,

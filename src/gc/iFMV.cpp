@@ -4,6 +4,7 @@
 #include "xPad.h"
 #include "xMath.h"
 #include "xSnd.h"
+#include "xTRC.h"
 #include "zGlobals.h"
 
 #include <bink.h>
@@ -25,11 +26,9 @@
 
 extern "C" {
 extern GXRenderModeObj* _RwDlRenderMode;
-
-S32 fn_800443F8();
-void fn_800443AC();
-void fn_80021CB0(F32, F32, F32, F32);
 }
+
+void xDrawLine2D_LocaliFMVVersion(F32, F32, F32, F32);
 
 void iSystemPollResetAndDisc();
 void iSystemFillResArena();
@@ -147,7 +146,7 @@ static void Show_frame()
     x = Movie->width * (X_offset * Width_scale) + (640.0f - Width_scale * Movie->width) / 2;
     y = Movie->height * (Y_offset * Height_scale) + (480.0f - Height_scale * Movie->height) / 2;
 
-    fn_80021CB0(0.0f, 0.0f, 0.0f, 0.0f);
+    xDrawLine2D_LocaliFMVVersion(0.0f, 0.0f, 0.0f, 0.0f);
     RwResourcesUseResEntry(repEntry);
     DrawFrame(x, y, Width_scale, Height_scale);
 
@@ -312,10 +311,10 @@ static void PlayFMV(char* fname, U32 buttons, F32 time)
             DVDCancelAsync(&file.ps.fileInfo.cb, NULL);
         }
 
-        err = fn_800443F8();
+        err = xTRCDiskHalted();
         if (err)
         {
-            fn_800443AC();
+            xTRCRenderFrame();
         }
         oof = err;
         if (Movie != NULL)
@@ -353,10 +352,10 @@ static void PlayFMV(char* fname, U32 buttons, F32 time)
             do
             {
                 iSystemPollResetAndDisc();
-                err = fn_800443F8();
+                err = xTRCDiskHalted();
                 if (err)
                 {
-                    fn_800443AC();
+                    xTRCRenderFrame();
                 }
                 if (err)
                 {

@@ -8,27 +8,13 @@
 // reinstanced.
 
 // The last draw sync token the GPU has passed.
-extern volatile U16 lbl_8025F890;
+extern volatile U16 _RwDlTokenLastSeen;
 
 S32 _rxGCWorldSectorAllInOneNode(RxPipelineNode* self, register RxPipelineNodeParam* params);
 S32 _rxGCWorldSectorAllInOnePipelineInit(RxPipelineNode* node);
 
-// The node definition: the node body and the pipeline-node init that fills the private data's
-// callbacks, no clusters or outputs, and private data for the callbacks.
-char lbl_801DDAD8[] = "GamerCubeWorldSectorAllInOne.csl";
-
-RxNodeDefinition lbl_801DDAFC = {
-    lbl_801DDAD8,
-    { _rxGCWorldSectorAllInOneNode, NULL, NULL, _rxGCWorldSectorAllInOnePipelineInit, NULL, NULL,
-      NULL },
-    { 0, NULL, NULL, 0, NULL },
-    sizeof(GCNAllInOnePrivateData),
-    rxNODEDEFCONST,
-    0,
-};
-
 void _rxGCResEntryWaitDone(RwResEntry* resEntry);
-S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numTexCoords);
+S32 rwGCNVertexGetSize(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numTexCoords);
 U32 GCNDisplayListsGetSize(const RpMeshHeader* header, S32 numTexCoords, S32 indexSize, U32 flags);
 void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* header,
                           S32 numTexCoords, S32 indexSize, U32 flags);
@@ -45,7 +31,7 @@ typedef RpWorldSector* (*AllInOneSectorCB)(RpWorldSector* sector, GCNObjectData*
 
 // The default lighting callback: clears the lighting data, then loads the global lights and the
 // sector's local lights, and clamps the summed ambient color.
-RpWorldSector* fn_8015E7E8(RpWorldSector* sector, GCNObjectData* objectData)
+RpWorldSector* _rxGCWorldSectorDefaultLightingCallback(RpWorldSector* sector, GCNObjectData* objectData)
 {
     objectData->globalMask = 0;
     objectData->localMask = 0;
@@ -103,7 +89,7 @@ RpWorldSector* fn_8015E7E8(RpWorldSector* sector, GCNObjectData* objectData)
 
 // The default instance callback: allocates the sector's entry, builds the display lists and
 // instances the vertex arrays.
-void* fn_8015E908(void* object, GCNObjectData* objectData)
+void* _rxGCWorldSectorDefaultInstanceCallback(void* object, GCNObjectData* objectData)
 {
     S32 headerSize;
     RpWorldSector* sector = (RpWorldSector*)object;
@@ -128,7 +114,7 @@ void* fn_8015E908(void* object, GCNObjectData* objectData)
 
     size = ALLINONE_ALIGN32(sizeof(GCNVertexArrays) + headerSize) + dlSize;
     size = ALLINONE_ALIGN32(size) +
-           fn_80159380(fn_8015D824(world), flags, numVertices, world->numTexCoordSets);
+           rwGCNVertexGetSize(RpGameCubeWorldGetVtxFmt(world), flags, numVertices, world->numTexCoordSets);
 
     if (world->flags & ALLINONE_WORLDOWNENTRY)
     {
@@ -152,12 +138,12 @@ void* fn_8015E908(void* object, GCNObjectData* objectData)
     arrays->serialNum = meshHeader->serialNum;
     arrays->indexType = numVertices < 0xFF ? 2 : 3;
     mem = (U8*)ALLINONE_ALIGN32((U32)arrays + sizeof(GCNVertexArrays) + headerSize);
-    arrays->syncToken = lbl_8025F890;
+    arrays->syncToken = _RwDlTokenLastSeen;
     arrays->flags = objectData->privateData->clearFlags;
     GCNDisplayListsBuild((GCNDisplayList*)(arrays + 1), mem, meshHeader,
                          world->numTexCoordSets, numVertices < 0xFF ? 1 : 2, worldFlags);
     mem = (U8*)ALLINONE_ALIGN32((U32)mem + dlSize);
-    _rwDlWorldSectorInstanceFast(sector, arrays, fn_8015D824(world), flags,
+    _rwDlWorldSectorInstanceFast(sector, arrays, RpGameCubeWorldGetVtxFmt(world), flags,
                                  world->numTexCoordSets, mem);
     DCFlushRange(objectData->repEntry + 1, objectData->repEntry->size);
 
@@ -248,10 +234,10 @@ S32 _rxGCWorldSectorAllInOnePipelineInit(RxPipelineNode* node)
 {
     GCNAllInOnePrivateData* privateData = (GCNAllInOnePrivateData*)node->privateData;
 
-    privateData->instanceCB = fn_8015E908;
+    privateData->instanceCB = _rxGCWorldSectorDefaultInstanceCallback;
     privateData->reinstanceCB = NULL;
-    privateData->lightingCB = fn_8015E7E8;
-    privateData->renderCB = fn_80158FB0;
+    privateData->lightingCB = _rxGCWorldSectorDefaultLightingCallback;
+    privateData->renderCB = _rxGCDefaultRenderCallback;
     privateData->clearFlags = 0;
 
     return TRUE;
@@ -259,5 +245,17 @@ S32 _rxGCWorldSectorAllInOnePipelineInit(RxPipelineNode* node)
 
 RxNodeDefinition* RxNodeDefinitionGetGameCubeWorldSectorAllInOne(void)
 {
-    return &lbl_801DDAFC;
+    // The node definition: the node body and the pipeline-node init that fills the private data's
+    // callbacks, no clusters or outputs, and private data for the callbacks.
+    static RxNodeDefinition nodeGameCubeWorldSectorAllInOneCSL = {
+        "GamerCubeWorldSectorAllInOne.csl",
+        { _rxGCWorldSectorAllInOneNode, NULL, NULL, _rxGCWorldSectorAllInOnePipelineInit, NULL,
+          NULL, NULL },
+        { 0, NULL, NULL, 0, NULL },
+        sizeof(GCNAllInOnePrivateData),
+        rxNODEDEFCONST,
+        0,
+    };
+
+    return &nodeGameCubeWorldSectorAllInOneCSL;
 }

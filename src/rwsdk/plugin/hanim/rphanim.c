@@ -54,7 +54,7 @@ RpHAnimAtomicGlobalVars RpHAnimAtomicGlobals;
 RpHAnimInterpolatorInfo RpHAnimInterpolatorInfoBlock[HANIM_MAX_INTERPOLATORS];
 S32 RpHAnimInterpolatorInfoBlockNumEntries;
 
-static S32 fn_8013D4B8(RpHAnimInterpolatorInfo* interpolatorInfo);
+static S32 HAnimInterpolatorInfoAdd(RpHAnimInterpolatorInfo* interpolatorInfo);
 
 static void* HAnimOpen(void* instance, S32 offset, S32 size)
 {
@@ -78,7 +78,7 @@ static void* HAnimOpen(void* instance, S32 offset, S32 size)
     interpolatorInfo.keyFrameStreamReadCB = RpHAnimStdKeyFrameStreamRead;
     interpolatorInfo.keyFrameStreamWriteCB = RpHAnimStdKeyFrameStreamWrite;
     interpolatorInfo.keyFrameStreamGetSizeCB = RpHAnimStdKeyFrameStreamGetSize;
-    fn_8013D4B8(&interpolatorInfo);
+    HAnimInterpolatorInfoAdd(&interpolatorInfo);
 
     return instance;
 }
@@ -367,7 +367,7 @@ static S32 HAnimSize(const void* object, S32 offset, S32 size)
 }
 
 // Adds a keyframe scheme to the table; a type already there, or a full table, is an error.
-static S32 fn_8013D4B8(RpHAnimInterpolatorInfo* interpolatorInfo)
+static S32 HAnimInterpolatorInfoAdd(RpHAnimInterpolatorInfo* interpolatorInfo)
 {
     if (RpHAnimInterpolatorInfoBlockNumEntries < HANIM_MAX_INTERPOLATORS)
     {

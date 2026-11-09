@@ -6,7 +6,7 @@
 // memory is reused, and the callbacks the all-in-one nodes run to instance and draw objects.
 
 // The draw sync token to issue next.
-extern volatile U16 lbl_8025E800;
+extern volatile U16 _RwDlTokenCurrent;
 
 S32 _rwDlTokenQueryDone(U16 token);
 void _rwDlVtxFmtSetup(RpGameCubeVtxFmt* vtxFmt, GCNObjectData* objectData);
@@ -28,10 +28,10 @@ void _rxGCResEntryWaitDone(RwResEntry* resEntry)
 {
     GCNVertexArrays* arrays = (GCNVertexArrays*)(resEntry + 1);
 
-    if (arrays->syncToken == lbl_8025E800)
+    if (arrays->syncToken == _RwDlTokenCurrent)
     {
-        GXSetDrawSync(lbl_8025E800);
-        lbl_8025E800 = (lbl_8025E800 + 1) % GCPIPE_TOKENWRAP;
+        GXSetDrawSync(_RwDlTokenCurrent);
+        _RwDlTokenCurrent = (_RwDlTokenCurrent + 1) % GCPIPE_TOKENWRAP;
     }
 
     while (!_rwDlTokenQueryDone(arrays->syncToken))
@@ -52,7 +52,7 @@ static const GXColor gcpipeClear = { 0x00, 0x00, 0x00, 0x00 };
 // channel 1 takes the local lights with spot attenuation; the ambient comes from the prelight
 // colors when the object is prelit. Without lights the channels pass the prelight or material
 // color straight through.
-void fn_801588E8(GCNObjectData* objectData)
+void _rxGCChannelSetup(GCNObjectData* objectData)
 {
     U32 flags = objectData->flags;
 
@@ -135,7 +135,7 @@ void fn_801588E8(GCNObjectData* objectData)
 // scaled by the material's ambient) and the material register (its color, when it modulates).
 // Without lights the channel passes the material register through, so the ambient is folded
 // into it.
-void fn_80158B20(GCNObjectData* objectData, RpMaterial* material)
+void _rxGCChannelMaterialSetup(GCNObjectData* objectData, RpMaterial* material)
 {
     GXColor color;
 
@@ -208,7 +208,7 @@ void fn_80158B20(GCNObjectData* objectData, RpMaterial* material)
 
 // Sets up the texture environment: one stage per lighting channel in use, the first modulating
 // the texture (or passing the lit color when untextured) and the second adding channel 1.
-void fn_80158DC4(GCNObjectData* objectData)
+void _rxGCTevSetup(GCNObjectData* objectData)
 {
     U32 numStages = (objectData->globalMask && objectData->localMask) ? 2 : 1;
 
@@ -260,7 +260,7 @@ void fn_80158DC4(GCNObjectData* objectData)
 // up the vertex format, transform, lighting channels and texture environment, then calls each
 // mesh's display list, setting its texture and alpha compare when textured and its colors when
 // they reach the channels.
-void* fn_80158FB0(void* object, GCNObjectData* objectData)
+void* _rxGCDefaultRenderCallback(void* object, GCNObjectData* objectData)
 {
     RwResEntry* repEntry = objectData->repEntry;
     GCNDisplayList* displayList = (GCNDisplayList*)((U8*)(repEntry + 1) + sizeof(GCNVertexArrays));
@@ -270,22 +270,22 @@ void* fn_80158FB0(void* object, GCNObjectData* objectData)
     RpMeshHeader* meshHeader;
     const RwMatrix* matrix;
 
-    ((GCNVertexArrays*)(repEntry + 1))->syncToken = lbl_8025E800;
+    ((GCNVertexArrays*)(repEntry + 1))->syncToken = _RwDlTokenCurrent;
 
     if (((RwObject*)object)->type == GCPIPE_ATOMIC)
     {
         matrix = RwFrameGetLTM(RpAtomicGetFrame((RpAtomic*)object));
-        _rwDlVtxFmtSetup(fn_8015D818(((RpAtomic*)object)->geometry), objectData);
+        _rwDlVtxFmtSetup(RpGameCubeGeometryGetVtxFmt(((RpAtomic*)object)->geometry), objectData);
     }
     else
     {
         matrix = NULL;
-        _rwDlVtxFmtSetup(fn_8015D824((RpWorld*)RWSRCGLOBAL(curWorld)), objectData);
+        _rwDlVtxFmtSetup(RpGameCubeWorldGetVtxFmt((RpWorld*)RWSRCGLOBAL(curWorld)), objectData);
     }
 
     _rwDlTransformSetup(matrix, (objectData->flags >> 4) & 1);
-    fn_801588E8(objectData);
-    fn_80158DC4(objectData);
+    _rxGCChannelSetup(objectData);
+    _rxGCTevSetup(objectData);
 
     matColors = (objectData->flags & rpGEOMETRYMODULATEMATERIALCOLOR) ||
                 (objectData->ambientUsed && !(objectData->flags & rpGEOMETRYPRELIT));
@@ -313,7 +313,7 @@ void* fn_80158FB0(void* object, GCNObjectData* objectData)
 
             if (matColors)
             {
-                fn_80158B20(objectData, mesh->material);
+                _rxGCChannelMaterialSetup(objectData, mesh->material);
             }
 
             GXCallDisplayList(displayList->list, displayList->size);
@@ -325,7 +325,7 @@ void* fn_80158FB0(void* object, GCNObjectData* objectData)
     {
         while (numMeshes--)
         {
-            fn_80158B20(objectData, mesh->material);
+            _rxGCChannelMaterialSetup(objectData, mesh->material);
             GXCallDisplayList(displayList->list, displayList->size);
             mesh++;
             displayList++;

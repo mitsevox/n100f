@@ -38,15 +38,8 @@
 #include <math.h>
 #include <string.h>
 
-// Functions that have no name yet keep their address labels, which differ between the targets:
-// two villain functions with no name in any related build. xDraw's colour setter is named on
-// rev0 and keeps its rev1 label until the rev1 names catch up.
-#if VERSION_GIHE78_REV0
-#define VIL_QUEUE_PROPSOUND fn_8007BD98
-#define VIL_RESET fn_800A8CB8
-#elif VERSION_GIHE78_REV1
-#define VIL_QUEUE_PROPSOUND fn_8007BBA0
-#define VIL_RESET fn_800A8AC0
+// xDraw's colour setter is named on rev0 and keeps its rev1 label until the rev1 names catch up.
+#if VERSION_GIHE78_REV1
 extern "C" void fn_80021FA0(U32* color);
 #endif
 
@@ -408,7 +401,7 @@ static S32 VSND_findProps(en_NPC_SOUND sndEvent, st_NPC_SOUND_PROPERTIES** sprop
 static S32 VSND_addQueueEntry(st_zEntVillain* vil, en_NPC_SOUND sndEvent, S32 flg_vsnd, F32 radius,
                               F32 delay, F32 repeatDelay, S32 repeatCount, U32 useThisSound);
 static inline S32 VSND_queueSound(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
-extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
+void VSND_queueFromProps(st_zEntVillain* vil, en_NPC_SOUND sndEvent);
 static void VPAR_emit_deathfx(st_zEntVillain* vil, F32 dt);
 static void VEFX_holo_begin(st_zEntVillain* vil);
 static inline S32 VSND_chanIsBusy(st_zEntVillain* vil, S32 flg_chan);
@@ -2743,7 +2736,7 @@ void zEntVillain_InitDep(st_zEntVillain* ent, zScene*)
 }
 
 // Reset the villain's state and rebuild its scene-dependent configuration.
-extern "C" void VIL_RESET(st_zEntVillain* ent, zScene* sc)
+void zEntVillain_Reset(st_zEntVillain* ent, zScene* sc)
 {
     xEntReset(ent);
     memset(&ent->vhf, 0, sizeof(st_zEntVillain) - sizeof(_zEnt));
@@ -4087,7 +4080,7 @@ static S32 VILN_std_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
             zEntBubble_Pop(vil->bubble);
         }
         vil->bubble = NULL;
-        VIL_RESET(vil, globals.sceneCur);
+        zEntVillain_Reset(vil, globals.sceneCur);
         break;
     case 234:
         resp->stim = ZVIL_STIM_DOACTION;
@@ -4320,7 +4313,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         else
         {
             if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV) && VNAV_get_nav(vil))
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_CLANKING);
+                VSND_queueFromProps(vil, VSND_TYP_CLANKING);
             if (!vil->vhf->query(vil, ZVIL_Q_HAVENAV))
             {
                 if (vil->vhf->query(vil, ZVIL_Q_CANGUARD))
@@ -4912,7 +4905,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         {
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, ZVIL_GOAL_SOAPED, ZVIL_GSPOT_BUBBREAKFREE);
-            VIL_QUEUE_PROPSOUND(vil, VSND_TYP_SOAPSTOP);
+            VSND_queueFromProps(vil, VSND_TYP_SOAPSTOP);
             vil->tmr_list[ZVIL_TTIL_RECOVERY] = 32000000.0f;
             vil->tmr_list[ZVIL_TTIL_FIDGET] = 32000000.0f;
         }
@@ -4940,7 +4933,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
         {
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, ZVIL_GOAL_GUMMED, ZVIL_GSPOT_BUBBREAKFREE);
-            VIL_QUEUE_PROPSOUND(vil, VSND_TYP_GUMMED);
+            VSND_queueFromProps(vil, VSND_TYP_GUMMED);
             vil->tmr_list[ZVIL_TTIL_RECOVERY] = 32000000.0f;
             vil->tmr_list[ZVIL_TTIL_FIDGET] = 32000000.0f;
         }
@@ -4972,7 +4965,7 @@ static S32 VILN_std_aware(st_zEntVillain* vil, _xScene* scn, F32 dt, st_STIMULUS
             if ((vil->ability & 8) && vil->tmr_list[ZVIL_TYMR_GENERIC] <= 0.0f)
             {
                 zHologramAdd(vil);
-                VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
+                VSND_queueFromProps(vil, VSND_TYP_HOLOFADE);
                 vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
                 vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
             }
@@ -6977,7 +6970,7 @@ static S32 VILN_kp_query(st_zEntVillain* vil, en_ZVIL_QUERY query)
 static void VEFX_holo_begin(st_zEntVillain* vil)
 {
     zHologramAdd(vil);
-    VIL_QUEUE_PROPSOUND(vil, VSND_TYP_HOLOFADE);
+    VSND_queueFromProps(vil, VSND_TYP_HOLOFADE);
     vil->tmr_list[ZVIL_TDUR_DECAY] = vil->vilcfg.tymref_list[ZVIL_TDUR_DECAY];
     vil->tmr_list[ZVIL_TYMR_GENERIC] = 32000000.0f;
 }
@@ -19798,7 +19791,7 @@ static S32 VSND_playFromSimilar(st_zEntVillain* vil, zAnimFxSound* afxsnd, U32* 
 
 // Queue a sound with the villain type's noise radius and the sound's configured delay, played once
 // (no repeat delay, no repeat count) and not as a direct sound.
-extern "C" void VIL_QUEUE_PROPSOUND(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
+void VSND_queueFromProps(st_zEntVillain* vil, en_NPC_SOUND sndEvent)
 {
     st_NPC_SOUND_PROPERTIES* sprop = NULL;
     S32 flg_vsnd = 0;

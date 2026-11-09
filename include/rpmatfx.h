@@ -91,9 +91,9 @@ extern S32 MatFXWorldSectorDataOffset;
 
 RpAtomic* _rpMatFXPipelineAtomicSetup(RpAtomic* atomic);
 RpWorldSector* _rpMatFXPipelineWorldSectorSetup(RpWorldSector* worldSector);
-void fn_80140D0C(RpMaterial* material);
-void fn_80140D10(RpMaterial* material);
-void fn_80140D14(RpMaterial* material);
+void MatFXGCNSetupEnvMap(RpMaterial* material);
+void MatFXGCNSetupBumpMap(RpMaterial* material);
+void MatFXGCNSetupDual(RpMaterial* material);
 S32 _rpMatFXSetupDualRenderState(MatFXDualData* dualData, RwRenderState renderState);
 RwTexture* _rpMatFXSetupBumpMapTexture(const RwTexture* baseTexture,
                                        const RwTexture* effectTexture);

@@ -634,11 +634,11 @@ void _rwGCLightsGlobalEnable(U8 flags, GCNObjectData* data);
 typedef void* (*GCNAllInOneCallBack)(void* object, GCNObjectData* objectData);
 
 // The default render callback, shared by the atomic and world sector nodes.
-void* fn_80158FB0(void* object, GCNObjectData* objectData);
+void* _rxGCDefaultRenderCallback(void* object, GCNObjectData* objectData);
 
 // The vertex format of a geometry and of a world.
-RpGameCubeVtxFmt* fn_8015D818(const RpGeometry* geometry);
-RpGameCubeVtxFmt* fn_8015D824(const RpWorld* world);
+RpGameCubeVtxFmt* RpGameCubeGeometryGetVtxFmt(const RpGeometry* geometry);
+RpGameCubeVtxFmt* RpGameCubeWorldGetVtxFmt(const RpWorld* world);
 
 void RxGameCubeAllInOneSetRenderCallBack(RxPipelineNode* node, void* callback);
 void _rxGameCubeAllInOneSetInstanceCallBack(RxPipelineNode* node, void* callback);

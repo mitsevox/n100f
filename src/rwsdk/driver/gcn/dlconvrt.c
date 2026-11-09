@@ -19,7 +19,7 @@ S32 _rwPalQuantResolvePalette(RwRGBA* palette, S32 maxcols, PalQuant* pq);
 void _rwPalQuantMatchImage(U8* dstPixels, S32 dstStride, S32 dstDepth, S32 dstPacked,
                            PalQuant* pq, RwImage* img);
 
-S32 fn_8017995C(RwRaster* raster, S32 flags);
+S32 DlGetRasterFormat(RwRaster* raster, S32 flags);
 
 // The largest raster side GX textures allow. Written for this project.
 #define DLCONVRT_MAXSIZE 1024
@@ -1124,7 +1124,7 @@ S32 _rwDlImageFindFormat(RwImage* image)
 // converts to. Texture and normal rasters are clamped to 1024 texels a side, rounded down to
 // powers of two when mipmapped, and take the format _rwDlImageFindFormat chooses with the
 // requested mipmap flags; camera and Z-buffer rasters take the size only.
-S32 fn_801771C4(void* rasterIn, void* imageIn, S32 flags)
+S32 _rwDlImageFindRasterFormat(void* rasterIn, void* imageIn, S32 flags)
 {
     RwRaster* raster = (RwRaster*)rasterIn;
     RwImage* image = (RwImage*)imageIn;
@@ -1133,7 +1133,7 @@ S32 fn_801771C4(void* rasterIn, void* imageIn, S32 flags)
     raster->height = image->height;
     raster->depth = 0;
 
-    if (!fn_8017995C(raster, flags))
+    if (!DlGetRasterFormat(raster, flags))
     {
         return FALSE;
     }

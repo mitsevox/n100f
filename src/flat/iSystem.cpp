@@ -44,7 +44,7 @@ S32 RwEngineClose();
 S32 RwEngineTerm();
 
 // The DOL entry point: fills the stack, then jumps to __start. GC only, no name in any reference.
-void fn_80016898();
+void iSystemEntry();
 
 void __start();
 void mem_null(U32 addr, U32 size);
@@ -60,29 +60,30 @@ struct iSystemDeviceConfig
     S32 unk8;
 };
 
-// gVsyncCount has its SLUS-20349 DWARF name; the other globals keep their dtk labels, with bfbb's
-// names or their roles beside them.
-volatile U32 gVsyncCount;                         // the retrace count zGame waits on
-iSystemDeviceConfig lbl_801FE3B8;                 // deviceConfig
-RwVideoMode lbl_801FE3C4;                         // sVideoMode
-RwMemoryFunctions lbl_801FE3D4;                   // MemoryFunctions
-S32 lbl_8025E3F8 = 0x430;                         // rwID_DOLPHINDEVICEMODULE
-S32 lbl_8025E96C;                                 // last reset button state
-S32 lbl_8025E970;                                 // reset button released
-VIRetraceCallback lbl_8025E974;                   // the retrace callback this one replaced
-U32 lbl_8025E978;                                 // last retrace count
-U32 lbl_8025E97C;                                 // add
-U32 lbl_8025E980;                                 // size
-S32 lbl_8025E984;                                 // RenderWare allocates from the xMem heap
-S32 lbl_8025E988;                                 // FSOpenFiles
-extern S32 lbl_8025F870;
+// gVsyncCount has its SLUS-20349 DWARF name. The others have bfbb's names where it has them
+// (deviceConfig, sVideoMode, MemoryFunctions, rwID_DOLPHINDEVICEMODULE, add, size, FSOpenFiles)
+// and this project's own names otherwise.
+volatile U32 gVsyncCount;                // the retrace count zGame waits on
+iSystemDeviceConfig deviceConfig;        // the display settings handed to RwEngineOpen
+RwVideoMode sVideoMode;                  // the current video mode's info
+RwMemoryFunctions MemoryFunctions;       // RenderWare's memory functions
+S32 rwID_DOLPHINDEVICEMODULE = 0x430;    // the disc file system plugin's id
+S32 sLastResetState;                     // last reset button state
+S32 sResetReleased;                      // reset button released
+VIRetraceCallback sOldPreRetraceCB;      // the retrace callback this one replaced
+U32 sLastRetraceCount;                   // last retrace count
+U32 add;                                 // the last block mem_null was given
+U32 size;                                // and its size
+S32 gRWHeapUseXMem;                      // RenderWare allocates from the xMem heap
+S32 FSOpenFiles;                         // open disc files
+extern S32 _RwGameCubeRasterExtOffset;
 extern U8 _stack_addr[];
 extern U8 _stack_end[];
 }
 
 // FSModuleInfo: the file system plugin's offset in the RenderWare globals and its open count.
 extern "C" {
-RwModuleInfo lbl_8025E98C;
+RwModuleInfo FSModuleInfo;
 }
 
 // An open disc file: a 0x2800-byte read buffer, the DVD handle, and the read position, the file
@@ -106,7 +107,7 @@ struct dlFSGlobals
     RwFreeList* fileFreeList;
 };
 
-#define FSGLOBALS() ((dlFSGlobals*)((U8*)RwEngineInstance + lbl_8025E98C.globalsOffset))
+#define FSGLOBALS() ((dlFSGlobals*)((U8*)RwEngineInstance + FSModuleInfo.globalsOffset))
 
 // Month and weekday names for the formatted date, each followed by a space.
 char* months[12] = { "January ", "February ", "March ", "April ", "May ", "June ",
@@ -129,12 +130,12 @@ U32 iTRCDiskIdentified();
 // RenderWare's memory functions (see DolphinInitMemorySystem).
 RwMemoryFunctions* psGetMemoryFunctions()
 {
-    return &lbl_801FE3D4;
+    return &MemoryFunctions;
 }
 
 // GC only: the DOL's entry point fills the stack with 0xDEADBEEF, so its high-water mark can be
 // read later, and then starts the runtime.
-extern "C" void fn_80016898()
+extern "C" void iSystemEntry()
 {
     for (U32* p = (U32*)_stack_end; p < (U32*)_stack_addr; p++)
     {
@@ -174,12 +175,12 @@ void iSystemFillResArena()
 // then runs the callback it replaced.
 void iSystemPreRetraceCB(u32 retraceCount)
 {
-    lbl_8025E978 = retraceCount;
+    sLastRetraceCount = retraceCount;
     iSystemPollResetButton();
 
-    if (lbl_8025E974)
+    if (sOldPreRetraceCB)
     {
-        lbl_8025E974(retraceCount);
+        sOldPreRetraceCB(retraceCount);
     }
 }
 
@@ -188,20 +189,20 @@ void iSystemPollResetButton()
 {
     S32 state = OSGetResetButtonState();
 
-    if (lbl_8025E96C == 1 && state == 0)
+    if (sLastResetState == 1 && state == 0)
     {
-        lbl_8025E970 = 1;
+        sResetReleased = 1;
     }
 
-    lbl_8025E96C = state;
+    sLastResetState = state;
 }
 
 // GC only: resets the console once the reset button has been released.
 void iSystemCheckReset()
 {
-    if (lbl_8025E970)
+    if (sResetReleased)
     {
-        lbl_8025E970 = 0;
+        sResetReleased = 0;
         iSystemReset(0);
     }
 }
@@ -398,16 +399,16 @@ void iFuncProfileParse(char* elfPath, S32 profile)
 // RenderWare and the math tables, and hooks the retrace counter.
 void iSystemInit()
 {
-    lbl_801FE3B8.renderMode = &GXNtsc480IntDf;
-    lbl_801FE3B8.unk4 = 0;
-    lbl_801FE3B8.unk8 = 0x40000;
+    deviceConfig.renderMode = &GXNtsc480IntDf;
+    deviceConfig.unk4 = 0;
+    deviceConfig.unk8 = 0x40000;
 
     GXSetMisc(GX_MT_XF_FLUSH, 8);
     OSInit();
     DVDInit();
     VIInit();
 
-    if (!DolphinInitMemorySystem(&lbl_801FE3D4))
+    if (!DolphinInitMemorySystem(&MemoryFunctions))
     {
         OSPanic("iSystem.cpp", 0x216, "Unable to initialize memory system.\n");
     }
@@ -420,7 +421,7 @@ void iSystemInit()
     xSndInit();
     RenderWareInit();
     xMathInit();
-    lbl_8025E974 = VISetPreRetraceCallback(iSystemPreRetraceCB);
+    sOldPreRetraceCB = VISetPreRetraceCallback(iSystemPreRetraceCB);
 }
 
 void iSystemExit()
@@ -489,7 +490,7 @@ static U32 RenderWareInit()
         return 1;
     }
 
-    params.displayID = &lbl_801FE3B8;
+    params.displayID = &deviceConfig;
 
     if (!RwEngineOpen(&params))
     {
@@ -497,7 +498,7 @@ static U32 RenderWareInit()
         return 1;
     }
 
-    RwEngineGetVideoModeInfo(&lbl_801FE3C4, RwEngineGetCurrentVideoMode());
+    RwEngineGetVideoModeInfo(&sVideoMode, RwEngineGetCurrentVideoMode());
 
     if (!RwEngineStart())
     {
@@ -535,7 +536,7 @@ static RwTexture* TextureRead(const char* name, const char* maskName)
 
     if (tex && tex->raster && tex->raster->depth < 8)
     {
-        ext = (U8*)tex->raster + lbl_8025F870;
+        ext = (U8*)tex->raster + _RwGameCubeRasterExtOffset;
 
         if (!ext || *(U32*)(ext + 0xC) != 14)
         {
@@ -572,8 +573,8 @@ extern "C" int printf(const char* format, ...)
 // Records a block RenderWare tried to free or grow that belongs to the xMem heap.
 extern "C" void mem_null(U32 addr, U32 size)
 {
-    lbl_8025E97C = addr;
-    lbl_8025E980 = size;
+    ::add = addr;
+    ::size = size;
 }
 
 extern "C" void* malloc(U32 size)
@@ -619,7 +620,7 @@ static void* _rwDolphinHeapAlloc(u32 size)
     U32* block;
     void* result;
 
-    if (lbl_8025E984)
+    if (gRWHeapUseXMem)
     {
         block = (U32*)xMemAlloc(gActiveHeap, size + 0x20);
     }
@@ -634,7 +635,7 @@ static void* _rwDolphinHeapAlloc(u32 size)
     {
         block[0] = size;
 
-        if (lbl_8025E984)
+        if (gRWHeapUseXMem)
         {
             result = block + 8;
             block[1] = 0x1EE7D00D;
@@ -803,7 +804,7 @@ static void* dlFopen(const char* name, const char* access)
     fp->length = fp->fileInfo.length;
     fp->pos = 0;
     fp->bufpos = DLFILE_BUF_SIZE;
-    lbl_8025E988++;
+    FSOpenFiles++;
     return fp;
 }
 
@@ -811,10 +812,10 @@ static S32 dlFclose(void* fptr)
 {
     dlFile* fp = (dlFile*)fptr;
 
-    if (fp != NULL && lbl_8025E988 != 0 && DVDClose(&fp->fileInfo) != 0)
+    if (fp != NULL && FSOpenFiles != 0 && DVDClose(&fp->fileInfo) != 0)
     {
         RWSRCGLOBAL(memoryFree)(FSGLOBALS()->fileFreeList, fp);
-        lbl_8025E988--;
+        FSOpenFiles--;
         return 0;
     }
 
@@ -1099,7 +1100,7 @@ static S32 dlFtell(void* fptr)
 // own file functions and installs the disc ones.
 static void* _rwDolphinFSOpen(void* instance, S32 offset, S32 size)
 {
-    lbl_8025E98C.globalsOffset = offset;
+    FSModuleInfo.globalsOffset = offset;
     FSGLOBALS()->fileFreeList = RwFreeListCreate(sizeof(dlFile), 5, 0x20);
 
     if (FSGLOBALS()->fileFreeList == NULL)
@@ -1122,7 +1123,7 @@ static void* _rwDolphinFSOpen(void* instance, S32 offset, S32 size)
     funcs->rwfflush = dlFflush;
     funcs->rwftell = dlFtell;
 
-    lbl_8025E98C.numInstances++;
+    FSModuleInfo.numInstances++;
     return instance;
 }
 
@@ -1130,14 +1131,14 @@ static void* _rwDolphinFSClose(void* instance, S32 offset, S32 size)
 {
     *RwOsGetFileInterface() = FSGLOBALS()->oldFuncs;
     RwFreeListDestroy(FSGLOBALS()->fileFreeList);
-    lbl_8025E98C.numInstances--;
+    FSModuleInfo.numInstances--;
     return instance;
 }
 
 static S32 DolphinInstallFileSystem()
 {
     DVDInit();
-    U32 plugin = RwEngineRegisterPlugin(sizeof(dlFSGlobals), lbl_8025E3F8, _rwDolphinFSOpen,
+    U32 plugin = RwEngineRegisterPlugin(sizeof(dlFSGlobals), rwID_DOLPHINDEVICEMODULE, _rwDolphinFSOpen,
                                         _rwDolphinFSClose);
     return plugin >> 31 ^ 1;
 }

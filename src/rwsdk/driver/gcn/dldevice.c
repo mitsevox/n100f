@@ -28,95 +28,91 @@ struct DlDeviceState
 };
 
 // The ring of finished frames.
-DlFrame lbl_8025E2B0[3];
+DlFrame _RwGCFrameQueue[3];
 
 // The application's render mode, copied by _rwDlRenderModeSelect.
-GXRenderModeObj lbl_8025E2C8;
+GXRenderModeObj _RwGameCubeRenderModeObj;
 
 // The camera's view matrix: the inverse of its frame, offset by the view offset
 // (_rwDlCameraBeginUpdate).
-RwMatrix lbl_8025E304;
+RwMatrix _RwDlInvCamLTM;
 
 // Which half of a two-half frame is being drawn.
-S32 lbl_8025E7F0 = 1;
+S32 _RwDlFSAATop = 1;
 
 // The FIFO size.
-U32 lbl_8025E7F4 = 0x40000;
+U32 _RwDlFifoSize = 0x40000;
 
 // Set to blank the screen until the first frame is shown.
-S32 lbl_8025E7F8 = 1;
+S32 _RwDlFirstFrame = 1;
 
 // The camera being updated and the device's open parameter.
-DlDeviceState lbl_8025F864;
+DlDeviceState dgGGlobals;
 
 // The render mode in use.
 GXRenderModeObj* _RwDlRenderMode;
 
 // The line where the halves of a two-half frame meet.
-S32 lbl_8025F85C;
+S32 _RwDlHalfHeight;
 
 // The FIFO object and the 32-byte aligned FIFO.
-GXFifoObj* lbl_8025F858;
-void* lbl_8025F854;
+GXFifoObj* _RwDlDefaultFifoObj;
+void* _RwDlDefaultFifo;
 
 // The two frame buffers, the one being drawn, and the one on screen.
-void* lbl_8025F850;
-void* lbl_8025F84C;
-void* lbl_8025F848;
-void* lbl_8025F844;
+void* _RwGCXFB1;
+void* _RwGCXFB2;
+void* _RwGCXFBCopy;
+void* _RwGCXFBDisp;
 
 // The draw sync token of each frame in the ring.
-U16 lbl_8025F83C[3];
+U16 _RwDlFrameSwap[3];
 
 // The threads waiting for a free frame.
-OSThreadQueue lbl_8025F834;
+OSThreadQueue _RwDlWaitingDoneRender;
 
 // Which half a two-half frame is on, whether a retrace has passed since, whether a frame waits
 // for the retrace, whether a frame waits for its token, whether the FIFO breakpoint is armed, the
 // token ring's read and write positions, and the ring's write and read positions. The frame
 // ring's positions and the breakpoint flag are shared between the game thread and the breakpoint
 // interrupt; they, the token ring's positions and the token wait flag are volatile.
-S32 lbl_8025F830;
-S32 lbl_8025F82C;
-S32 lbl_8025F828;
-volatile S32 lbl_8025F824;
-volatile S32 lbl_8025F820;
-volatile S32 lbl_8025F81C;
-volatile S32 lbl_8025F818;
-volatile S32 lbl_8025F814;
-volatile S32 lbl_8025F810;
+S32 DlFSAAHalf;
+S32 _RwDlFrameGo;
+S32 _RwDlFrameWait;
+volatile S32 _RwDlFrameReadyOnToken;
+volatile S32 _RwDlBreakPointEnabled;
+volatile S32 _RwDlFrameTokenCurrent;
+volatile S32 _RwDlFrameTokenNew;
+volatile S32 _RwDlFrameNew;
+volatile S32 _RwDlFrameCurrent;
 
 // The FIFO and frame buffer allocation.
-void* lbl_8025F80C;
+void* _RwDl_FIFO_XFB;
 
 // Whether the frame is drawn in two halves.
-S32 lbl_8025F808;
+S32 _RwDlFSAA;
 
 // Which video mode is in use: 0 NTSC, 1 PAL, 2 MPAL, 0x2A the application's own.
-S32 lbl_8025F804;
+S32 _RwGameCubeVideoMode;
 
 // The pixel format GX is set to, and the one the frame uses.
-S32 lbl_8025F800;
-S32 lbl_8025F7FC;
+S32 _RwDlCurPixelFormat;
+S32 _RwDlPixelFormat;
 
 // Whether the next display copy clears the frame.
-S32 lbl_8025F7F8;
+S32 _RwDlCopyClear;
 
 // The draw sync token to issue next, and the last token the GPU has passed.
-extern volatile U16 lbl_8025E800;
-extern volatile U16 lbl_8025F890;
+extern volatile U16 _RwDlTokenCurrent;
+extern volatile U16 _RwDlTokenLastSeen;
 
 // The device's video modes: NTSC, PAL, MPAL and the application's own render mode.
-RwVideoMode lbl_801DDF90[4] = {
+RwVideoMode _RwDlVideoModes[4] = {
     {640, 480, 24, rwVIDEOMODEEXCLUSIVE},
     {640, 528, 24, rwVIDEOMODEEXCLUSIVE},
     {640, 480, 24, rwVIDEOMODEEXCLUSIVE},
     {0, 0, 0, rwVIDEOMODEEXCLUSIVE},
 };
-
-// The GX projection the camera sets and the device this driver registers.
-extern F32 lbl_801DE04C[7];
-extern RwDevice lbl_801DE068;
 
 // The driver's standard functions, by RenderWare standard function index (one table entry).
 typedef struct DlStandard DlStandard;
@@ -149,13 +145,13 @@ S32 _rwDlRGBToPixel(U32* pixelOut, const RwRGBA* rgba, S32 format);
 S32 _rwDlPixelToRGB(RwRGBA* rgba, const U32* pixelIn, S32 format);
 S32 _rwDlRasterSetFromImage(void* rasterIn, void* imageIn, S32 flags);
 S32 _rwDlImageGetFromRaster(void* imageIn, void* rasterIn, S32 flags);
-S32 fn_8017A4D8(void* out, RwRaster* raster, S32 flags);
-S32 fn_8017A374(void* out, RwRaster* raster, S32 flags);
-S32 fn_801771C4(void* out, void* inOut, S32 flags);
-S32 fn_80179198(void* pixelsOut, void* rasterIn, S32 flags);
-S32 fn_80179614(void* out, void* rasterIn, S32 flags);
-S32 fn_801797E0(void** paletteOut, RwRaster* raster, S32 flags);
-S32 fn_8017989C(void* out, RwRaster* raster, S32 flags);
+S32 _rwDlRasterDestroy(void* out, RwRaster* raster, S32 flags);
+S32 _rwDlRasterCreate(void* out, RwRaster* raster, S32 flags);
+S32 _rwDlImageFindRasterFormat(void* out, void* inOut, S32 flags);
+S32 _rwDlRasterLock(void* pixelsOut, void* rasterIn, S32 flags);
+S32 _rwDlRasterUnlock(void* out, void* rasterIn, S32 flags);
+S32 _rwDlRasterLockPalette(void** paletteOut, RwRaster* raster, S32 flags);
+S32 _rwDlRasterUnlockPalette(void* out, RwRaster* raster, S32 flags);
 S32 _rwDlRasterClear(void* raster, void* unused, S32 pixelValue);
 S32 _rwDlRasterClearRect(void* raster, void* rect, S32 pixelValue);
 S32 _rwDlRasterRender(void* raster, void* rect, S32 flags);
@@ -164,9 +160,9 @@ S32 _rwDlRasterRenderFast(void* raster, void* rect, S32 flags);
 S32 _rwDlSetRasterContext(void* out, void* raster, S32 flags);
 S32 _rwDlRasterSubRaster(RwRaster* raster, RwRaster* parent, S32 flags);
 S32 _rwDlNativeTextureGetSize(void* sizeOut, void* textureIn, S32 unused);
-S32 fn_8017C9E4(RwStream* stream, RwTexture* texture);
-S32 fn_8017CCBC(RwStream* stream, RwTexture** textureRef);
-S32 fn_80179BDC(void* out, void* inOut, S32 flags);
+S32 _rwDlNativeTextureWrite(RwStream* stream, RwTexture* texture);
+S32 _rwDlNativeTextureRead(RwStream* stream, RwTexture** textureRef);
+S32 _rwDlRasterGetNumMipLevels(void* out, void* inOut, S32 flags);
 
 #define DLDEVICE_RING 3
 
@@ -190,40 +186,40 @@ void _rwDlBreakPtCallback(void)
 {
     U32 next;
 
-    if (lbl_8025E2B0[lbl_8025F810].frameBuffer != lbl_8025F844)
+    if (_RwGCFrameQueue[_RwDlFrameCurrent].frameBuffer != _RwGCXFBDisp)
     {
-        next = (lbl_8025F810 + 1) % DLDEVICE_RING;
+        next = (_RwDlFrameCurrent + 1) % DLDEVICE_RING;
 
-        if (next == lbl_8025F814)
+        if (next == _RwDlFrameNew)
         {
             GXDisableBreakPt();
-            lbl_8025F820 = 0;
+            _RwDlBreakPointEnabled = 0;
         }
         else
         {
-            GXEnableBreakPt(lbl_8025E2B0[next].fifoPos);
+            GXEnableBreakPt(_RwGCFrameQueue[next].fifoPos);
         }
 
-        lbl_8025F810 = next;
-        OSWakeupThread(&lbl_8025F834);
+        _RwDlFrameCurrent = next;
+        OSWakeupThread(&_RwDlWaitingDoneRender);
 
-        if (lbl_8025F808 == 0)
+        if (_RwDlFSAA == 0)
         {
-            lbl_8025F824 = 1;
+            _RwDlFrameReadyOnToken = 1;
         }
-        else if (lbl_8025F830 == 1)
+        else if (DlFSAAHalf == 1)
         {
-            lbl_8025F824 = 1;
-            lbl_8025F830 = 0;
+            _RwDlFrameReadyOnToken = 1;
+            DlFSAAHalf = 0;
         }
         else
         {
-            lbl_8025F830 = 1;
+            DlFSAAHalf = 1;
         }
     }
     else
     {
-        lbl_8025F828 = 1;
+        _RwDlFrameWait = 1;
     }
 }
 
@@ -231,23 +227,23 @@ void _rwDlBreakPtCallback(void)
 // (unblanking the screen after the first frame).
 void _rwDlVIPreRetraceCallback(u32 retraceCount)
 {
-    S16 token = lbl_8025F83C[lbl_8025F81C];
+    S16 token = _RwDlFrameSwap[_RwDlFrameTokenCurrent];
 
-    if (lbl_8025F824 == 1 && _rwDlTokenQueryDone(token))
+    if (_RwDlFrameReadyOnToken == 1 && _rwDlTokenQueryDone(token))
     {
-        lbl_8025F844 = (lbl_8025F844 == lbl_8025F850) ? lbl_8025F84C : lbl_8025F850;
-        VISetNextFrameBuffer(lbl_8025F844);
+        _RwGCXFBDisp = (_RwGCXFBDisp == _RwGCXFB1) ? _RwGCXFB2 : _RwGCXFB1;
+        VISetNextFrameBuffer(_RwGCXFBDisp);
 
-        if (lbl_8025E7F8 != 0)
+        if (_RwDlFirstFrame != 0)
         {
             VISetBlack(FALSE);
-            lbl_8025E7F8 = 0;
+            _RwDlFirstFrame = 0;
         }
 
         VIFlush();
-        lbl_8025F81C = (lbl_8025F81C + 1) % DLDEVICE_RING;
-        lbl_8025F824 = 0;
-        lbl_8025F82C = 1;
+        _RwDlFrameTokenCurrent = (_RwDlFrameTokenCurrent + 1) % DLDEVICE_RING;
+        _RwDlFrameReadyOnToken = 0;
+        _RwDlFrameGo = 1;
     }
 }
 
@@ -257,41 +253,41 @@ void _rwDlVIPostRetraceCallback(u32 retraceCount)
 {
     U32 next;
 
-    if (lbl_8025F828 != 0 && lbl_8025F82C != 0)
+    if (_RwDlFrameWait != 0 && _RwDlFrameGo != 0)
     {
-        next = (lbl_8025F810 + 1) % DLDEVICE_RING;
+        next = (_RwDlFrameCurrent + 1) % DLDEVICE_RING;
 
-        if (next == lbl_8025F814)
+        if (next == _RwDlFrameNew)
         {
             GXDisableBreakPt();
-            lbl_8025F820 = 0;
+            _RwDlBreakPointEnabled = 0;
         }
         else
         {
-            GXEnableBreakPt(lbl_8025E2B0[next].fifoPos);
+            GXEnableBreakPt(_RwGCFrameQueue[next].fifoPos);
         }
 
-        lbl_8025F810 = next;
-        OSWakeupThread(&lbl_8025F834);
+        _RwDlFrameCurrent = next;
+        OSWakeupThread(&_RwDlWaitingDoneRender);
 
-        if (lbl_8025F808 == 0)
+        if (_RwDlFSAA == 0)
         {
-            lbl_8025F824 = 1;
+            _RwDlFrameReadyOnToken = 1;
         }
-        else if (lbl_8025F830 == 1)
+        else if (DlFSAAHalf == 1)
         {
-            lbl_8025F824 = 1;
-            lbl_8025F830 = 0;
+            _RwDlFrameReadyOnToken = 1;
+            DlFSAAHalf = 0;
         }
         else
         {
-            lbl_8025F830 = 1;
+            DlFSAAHalf = 1;
         }
 
-        lbl_8025F828 = 0;
+        _RwDlFrameWait = 0;
     }
 
-    lbl_8025F82C = 0;
+    _RwDlFrameGo = 0;
 }
 
 // The standard function the driver does not provide.
@@ -309,9 +305,9 @@ void _rwDlRenderModeSelect(GXRenderModeObj* renderMode, S32 pixelFormat)
     {
         GXPixelFmt format;
 
-        lbl_8025E2C8 = *renderMode;
-        _RwDlRenderMode = &lbl_8025E2C8;
-        lbl_8025F804 = 0x2A;
+        _RwGameCubeRenderModeObj = *renderMode;
+        _RwDlRenderMode = &_RwGameCubeRenderModeObj;
+        _RwGameCubeVideoMode = 0x2A;
 
         if (_RwDlRenderMode->aa)
         {
@@ -322,19 +318,19 @@ void _rwDlRenderModeSelect(GXRenderModeObj* renderMode, S32 pixelFormat)
             format = pixelFormat;
         }
 
-        lbl_8025F7FC = format;
-        lbl_8025F800 = format;
-        lbl_801DDF90[3].width = _RwDlRenderMode->fbWidth;
-        lbl_801DDF90[3].height = _RwDlRenderMode->efbHeight;
+        _RwDlPixelFormat = format;
+        _RwDlCurPixelFormat = format;
+        _RwDlVideoModes[3].width = _RwDlRenderMode->fbWidth;
+        _RwDlVideoModes[3].height = _RwDlRenderMode->efbHeight;
 
         switch (pixelFormat)
         {
         case GX_PF_RGB8_Z24:
         case GX_PF_RGBA6_Z24:
-            lbl_801DDF90[3].depth = 24;
+            _RwDlVideoModes[3].depth = 24;
             break;
         case GX_PF_RGB565_Z16:
-            lbl_801DDF90[3].depth = 16;
+            _RwDlVideoModes[3].depth = 16;
             break;
         default:
             DLDEVICE_ERROR(2, "Invalid pixel format");
@@ -347,16 +343,16 @@ void _rwDlRenderModeSelect(GXRenderModeObj* renderMode, S32 pixelFormat)
         {
         case VI_NTSC:
             _RwDlRenderMode = &GXNtsc480IntDf;
-            lbl_8025F804 = 0;
+            _RwGameCubeVideoMode = 0;
             break;
         case VI_PAL:
         case VI_EURGB60:
             _RwDlRenderMode = &GXPal528IntDf;
-            lbl_8025F804 = 1;
+            _RwGameCubeVideoMode = 1;
             break;
         case VI_MPAL:
             _RwDlRenderMode = &GXMpal480IntDf;
-            lbl_8025F804 = 2;
+            _RwGameCubeVideoMode = 2;
             break;
         default:
             DLDEVICE_ERROR(2, "Invalid TV format");
@@ -409,20 +405,20 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
     case 6:
         if (numIn < 1)
         {
-            switch (lbl_8025F804)
+            switch (_RwGameCubeVideoMode)
             {
             case 0:
-                *(RwVideoMode*)out = lbl_801DDF90[0];
+                *(RwVideoMode*)out = _RwDlVideoModes[0];
                 break;
             case 1:
             case 5:
-                *(RwVideoMode*)out = lbl_801DDF90[1];
+                *(RwVideoMode*)out = _RwDlVideoModes[1];
                 break;
             case 2:
-                *(RwVideoMode*)out = lbl_801DDF90[2];
+                *(RwVideoMode*)out = _RwDlVideoModes[2];
                 break;
             case 0x2A:
-                *(RwVideoMode*)out = lbl_801DDF90[3];
+                *(RwVideoMode*)out = _RwDlVideoModes[3];
                 break;
             }
 
@@ -437,7 +433,7 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
         return TRUE;
     case 4:
         *(RwDevice*)out = *_rwDeviceGetHandle();
-        lbl_8025F864.openParam = inOut;
+        dgGGlobals.openParam = inOut;
         _rwDlRasterPluginAttach();
         _rwDlTexturePluginAttach();
         return TRUE;
@@ -449,42 +445,42 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
         if (params != NULL)
         {
             _rwDlRenderModeSelect(params[0], (S32)params[1]);
-            lbl_8025E7F4 = (U32)params[2];
+            _RwDlFifoSize = (U32)params[2];
         }
         else
         {
-            _rwDlRenderModeSelect(NULL, lbl_8025F7FC);
+            _rwDlRenderModeSelect(NULL, _RwDlPixelFormat);
         }
 
         // The bytes of one external frame buffer (two bytes a pixel); the FIFO and two of them
         // share one allocation.
         frameSize = ((_RwDlRenderMode->fbWidth + 15) & 0xFFF0) * _RwDlRenderMode->xfbHeight * 2;
-        lbl_8025F80C = RwMalloc(lbl_8025E7F4 + frameSize * 2 + 0x1F);
-        lbl_8025F854 = (void*)(((U32)lbl_8025F80C + 0x1F) & ~0x1F);
-        DCInvalidateRange(lbl_8025F854, lbl_8025E7F4);
-        lbl_8025F850 = (U8*)lbl_8025F854 + lbl_8025E7F4;
-        lbl_8025F84C = (U8*)lbl_8025F850 + frameSize;
-        lbl_8025F844 = lbl_8025F850;
-        lbl_8025F848 = lbl_8025F84C;
-        lbl_8025F858 = GXInit(lbl_8025F854, lbl_8025E7F4);
+        _RwDl_FIFO_XFB = RwMalloc(_RwDlFifoSize + frameSize * 2 + 0x1F);
+        _RwDlDefaultFifo = (void*)(((U32)_RwDl_FIFO_XFB + 0x1F) & ~0x1F);
+        DCInvalidateRange(_RwDlDefaultFifo, _RwDlFifoSize);
+        _RwGCXFB1 = (U8*)_RwDlDefaultFifo + _RwDlFifoSize;
+        _RwGCXFB2 = (U8*)_RwGCXFB1 + frameSize;
+        _RwGCXFBDisp = _RwGCXFB1;
+        _RwGCXFBCopy = _RwGCXFB2;
+        _RwDlDefaultFifoObj = GXInit(_RwDlDefaultFifo, _RwDlFifoSize);
 
-        while ((U16)GXReadDrawSync() != lbl_8025F890)
+        while ((U16)GXReadDrawSync() != _RwDlTokenLastSeen)
         {
-            GXSetDrawSync(lbl_8025F890);
+            GXSetDrawSync(_RwDlTokenLastSeen);
         }
 
         return TRUE;
     }
     case 1:
-        RwFree(lbl_8025F80C);
-        lbl_8025F84C = NULL;
-        lbl_8025F850 = NULL;
-        lbl_8025F854 = NULL;
-        lbl_8025F80C = NULL;
+        RwFree(_RwDl_FIFO_XFB);
+        _RwGCXFB2 = NULL;
+        _RwGCXFB1 = NULL;
+        _RwDlDefaultFifo = NULL;
+        _RwDl_FIFO_XFB = NULL;
         return TRUE;
     case 2:
     {
-        S32 pixelFormat = lbl_8025F7FC;
+        S32 pixelFormat = _RwDlPixelFormat;
         GXRenderModeObj* renderMode;
 
         VIConfigure(renderMode = _RwDlRenderMode);
@@ -510,20 +506,20 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
         if (renderMode->aa && renderMode->xfbHeight == renderMode->viHeight)
         {
             GXSetDispCopyYScale(1.0f);
-            lbl_8025F85C = renderMode->xfbHeight / 2;
-            lbl_8025F808 = 1;
-            lbl_8025E7F0 = 1;
+            _RwDlHalfHeight = renderMode->xfbHeight / 2;
+            _RwDlFSAA = 1;
+            _RwDlFSAATop = 1;
         }
         else
         {
             GXSetDispCopyYScale((F32)renderMode->xfbHeight / (F32)renderMode->efbHeight);
-            lbl_8025F808 = 0;
+            _RwDlFSAA = 0;
         }
 
         GXSetFieldMode(renderMode->field_rendering,
                        renderMode->xfbHeight < renderMode->viHeight);
         GXSetPixelFmt(pixelFormat, GX_ZC_LINEAR);
-        lbl_8025E7F8 = 1;
+        _RwDlFirstFrame = 1;
         VIWaitForRetrace();
 
         if (_RwDlRenderMode->viTVmode & 1)
@@ -535,7 +531,7 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
         VISetPreRetraceCallback(_rwDlVIPreRetraceCallback);
         VISetPostRetraceCallback(_rwDlVIPostRetraceCallback);
         GXSetBreakPtCallback(_rwDlBreakPtCallback);
-        OSInitThreadQueue(&lbl_8025F834);
+        OSInitThreadQueue(&_RwDlWaitingDoneRender);
         return TRUE;
     }
     case 17:
@@ -561,14 +557,14 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             {3, (RwStandardFunc)_rwDlPixelToRGB},
             {7, _rwDlRasterSetFromImage},
             {6, _rwDlImageGetFromRaster},
-            {5, (RwStandardFunc)fn_8017A4D8},
-            {4, (RwStandardFunc)fn_8017A374},
-            {9, fn_801771C4},
+            {5, (RwStandardFunc)_rwDlRasterDestroy},
+            {4, (RwStandardFunc)_rwDlRasterCreate},
+            {9, _rwDlImageFindRasterFormat},
             {8, (RwStandardFunc)_rwDlTextureSetRaster},
-            {15, fn_80179198},
-            {16, fn_80179614},
-            {23, (RwStandardFunc)fn_801797E0},
-            {24, (RwStandardFunc)fn_8017989C},
+            {15, _rwDlRasterLock},
+            {16, _rwDlRasterUnlock},
+            {23, (RwStandardFunc)_rwDlRasterLockPalette},
+            {24, (RwStandardFunc)_rwDlRasterUnlockPalette},
             {14, _rwDlRasterClear},
             {13, _rwDlRasterClearRect},
             {17, _rwDlRasterRender},
@@ -577,9 +573,9 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
             {11, _rwDlSetRasterContext},
             {12, (RwStandardFunc)_rwDlRasterSubRaster},
             {25, (RwStandardFunc)_rwDlNativeTextureGetSize},
-            {27, (RwStandardFunc)fn_8017C9E4},
-            {26, (RwStandardFunc)fn_8017CCBC},
-            {28, fn_80179BDC},
+            {27, (RwStandardFunc)_rwDlNativeTextureWrite},
+            {26, (RwStandardFunc)_rwDlNativeTextureRead},
+            {28, _rwDlRasterGetNumMipLevels},
         };
         // FAKEMATCH: DlInstallStandards wraps the table loops to set register order; real form believed to be both loops written inline here
         DlInstallStandards(out, standards, sizeof(standards) / sizeof(standards[0]), numIn);
@@ -594,30 +590,12 @@ S32 _rwDlSystem(S32 request, void* out, void* inOut, S32 numIn)
     return FALSE;
 }
 
-// The GX projection the camera sets.
-F32 lbl_801DE04C[7] = {0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f};
-
 S32 _rwDlIm2DRenderLine(RwIm2DVertex* vertices, S32 numVertices, S32 vert1, S32 vert2);
 S32 _rwDlIm2DRenderTriangle(RwIm2DVertex* vertices, S32 numVertices, S32 vert1, S32 vert2,
                             S32 vert3);
 S32 _rwDlIm2DRenderPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices, S32 numVertices);
 S32 _rwDlIm2DRenderIndexedPrimitive(RwPrimitiveType primType, RwIm2DVertex* vertices,
                                     S32 numVertices, RwImVertexIndex* indices, S32 numIndices);
-
-// The device this driver registers: gamma 1, the system function, the depth buffer's near and far
-// values, the render state and Im2D functions.
-RwDevice lbl_801DE068 = {
-    1.0f,
-    _rwDlSystem,
-    0.0f,
-    0.99999994f,
-    _rwDlSetRenderState,
-    _rwDlGetRenderState,
-    _rwDlIm2DRenderLine,
-    _rwDlIm2DRenderTriangle,
-    _rwDlIm2DRenderPrimitive,
-    _rwDlIm2DRenderIndexedPrimitive,
-};
 
 // Clears the camera: by drawing a quad over its frame buffer's area (twice the height when the
 // frame is drawn in halves), or, when the next display copy clears the frame, by setting that
@@ -627,11 +605,11 @@ S32 _rwDlCameraClear(void* camera, void* color, S32 flags)
     RwRect rect;
     RwRaster* raster;
 
-    if (lbl_8025F7F8 == 0)
+    if (_RwDlCopyClear == 0)
     {
         raster = ((RwCamera*)camera)->frameBuffer;
 
-        if (lbl_8025F808 == 0)
+        if (_RwDlFSAA == 0)
         {
             rect.x = raster->nOffsetX;
             rect.y = raster->nOffsetY;
@@ -661,12 +639,15 @@ S32 _rwDlCameraClear(void* camera, void* color, S32 flags)
 // buffer, or to the half of the frame being drawn.
 S32 _rwDlCameraBeginUpdate(void* out, void* object, S32 flags)
 {
+    // The GX projection the camera sets.
+    static F32 projVector[7] = {0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f};
+
     RwCamera* camera = object;
     RwMatrix offset;
     RwRaster* raster;
 
     GXSetCurrentGXThread();
-    lbl_8025F864.camera = camera;
+    dgGGlobals.camera = camera;
 
     offset.flags = 0;
     offset.right.x = 1.0f;
@@ -682,43 +663,43 @@ S32 _rwDlCameraBeginUpdate(void* out, void* object, S32 flags)
     offset.pos.y = -camera->viewOffset.y;
     offset.pos.z = 0.0f;
 
-    lbl_8025E304.flags = 0x20003;
-    RwMatrixInvert(&lbl_8025E304, RwFrameGetLTM(RwCameraGetFrame(camera)));
-    RwMatrixTransform(&lbl_8025E304, &offset, rwCOMBINEPOSTCONCAT);
+    _RwDlInvCamLTM.flags = 0x20003;
+    RwMatrixInvert(&_RwDlInvCamLTM, RwFrameGetLTM(RwCameraGetFrame(camera)));
+    RwMatrixTransform(&_RwDlInvCamLTM, &offset, rwCOMBINEPOSTCONCAT);
 
-    lbl_801DE04C[1] = camera->recipViewWindow.x;
-    lbl_801DE04C[3] = camera->recipViewWindow.y;
+    projVector[1] = camera->recipViewWindow.x;
+    projVector[3] = camera->recipViewWindow.y;
 
     if (camera->projectionType == rwPARALLEL)
     {
-        lbl_801DE04C[0] = 1.0f;
-        lbl_801DE04C[5] = -1.0f / (camera->farPlane - camera->nearPlane);
-        lbl_801DE04C[6] = camera->farPlane * lbl_801DE04C[5];
+        projVector[0] = 1.0f;
+        projVector[5] = -1.0f / (camera->farPlane - camera->nearPlane);
+        projVector[6] = camera->farPlane * projVector[5];
     }
     else
     {
-        lbl_801DE04C[0] = 0.0f;
-        lbl_801DE04C[5] = -camera->nearPlane / (camera->farPlane - camera->nearPlane);
-        lbl_801DE04C[6] = camera->farPlane * lbl_801DE04C[5];
+        projVector[0] = 0.0f;
+        projVector[5] = -camera->nearPlane / (camera->farPlane - camera->nearPlane);
+        projVector[6] = camera->farPlane * projVector[5];
     }
 
-    GXSetProjectionv(lbl_801DE04C);
+    GXSetProjectionv(projVector);
     raster = camera->frameBuffer;
 
     if (raster->cType & (rwRASTERTYPEZBUFFER | rwRASTERTYPETEXTURE))
     {
         if (RWGCRASTEREXT(raster)->flags & RWGCRASTER_ALPHA)
         {
-            if (lbl_8025F800 != GX_PF_RGBA6_Z24)
+            if (_RwDlCurPixelFormat != GX_PF_RGBA6_Z24)
             {
                 GXSetPixelFmt(GX_PF_RGBA6_Z24, GX_ZC_LINEAR);
-                lbl_8025F800 = GX_PF_RGBA6_Z24;
+                _RwDlCurPixelFormat = GX_PF_RGBA6_Z24;
             }
         }
-        else if (lbl_8025F800 != GX_PF_RGB8_Z24)
+        else if (_RwDlCurPixelFormat != GX_PF_RGB8_Z24)
         {
             GXSetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
-            lbl_8025F800 = GX_PF_RGB8_Z24;
+            _RwDlCurPixelFormat = GX_PF_RGB8_Z24;
         }
 
         GXSetViewport(raster->nOffsetX, raster->nOffsetY, raster->width, raster->height, 0.0f,
@@ -728,13 +709,13 @@ S32 _rwDlCameraBeginUpdate(void* out, void* object, S32 flags)
     }
     else
     {
-        if (lbl_8025F800 != lbl_8025F7FC)
+        if (_RwDlCurPixelFormat != _RwDlPixelFormat)
         {
-            GXSetPixelFmt(lbl_8025F7FC, GX_ZC_LINEAR);
-            lbl_8025F800 = lbl_8025F7FC;
+            GXSetPixelFmt(_RwDlPixelFormat, GX_ZC_LINEAR);
+            _RwDlCurPixelFormat = _RwDlPixelFormat;
         }
 
-        if (lbl_8025F808 == 0)
+        if (_RwDlFSAA == 0)
         {
             if (_RwDlRenderMode->field_rendering)
             {
@@ -762,44 +743,44 @@ S32 _rwDlCameraBeginUpdate(void* out, void* object, S32 flags)
                               raster->height * 2, 0.0f, 1.0f);
             }
 
-            if (lbl_8025E7F0 != 0)
+            if (_RwDlFSAATop != 0)
             {
-                if ((raster->nOffsetY + raster->height) * 2 <= lbl_8025F85C + 2)
+                if ((raster->nOffsetY + raster->height) * 2 <= _RwDlHalfHeight + 2)
                 {
                     GXSetScissor(raster->nOffsetX, raster->nOffsetY * 2, _RwDlRenderMode->fbWidth,
                                  raster->height * 2);
                 }
-                else if (raster->nOffsetY * 2 > lbl_8025F85C + 2)
+                else if (raster->nOffsetY * 2 > _RwDlHalfHeight + 2)
                 {
-                    GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, lbl_8025F85C + 2);
+                    GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, _RwDlHalfHeight + 2);
                 }
                 else
                 {
                     GXSetScissor(raster->nOffsetX, raster->nOffsetY * 2, _RwDlRenderMode->fbWidth,
-                                 lbl_8025F85C + 2);
+                                 _RwDlHalfHeight + 2);
                 }
 
                 GXSetScissorBoxOffset(0, 0);
             }
             else
             {
-                if (raster->nOffsetY * 2 >= lbl_8025F85C - 2)
+                if (raster->nOffsetY * 2 >= _RwDlHalfHeight - 2)
                 {
                     GXSetScissor(raster->nOffsetX, raster->nOffsetY * 2, _RwDlRenderMode->fbWidth,
                                  raster->height * 2);
                 }
-                else if ((raster->nOffsetY + raster->height) * 2 < lbl_8025F85C + 2)
+                else if ((raster->nOffsetY + raster->height) * 2 < _RwDlHalfHeight + 2)
                 {
-                    GXSetScissor(0, lbl_8025F85C - 2, _RwDlRenderMode->fbWidth,
-                                 lbl_8025F85C + 2);
+                    GXSetScissor(0, _RwDlHalfHeight - 2, _RwDlRenderMode->fbWidth,
+                                 _RwDlHalfHeight + 2);
                 }
                 else
                 {
-                    GXSetScissor(raster->nOffsetX, lbl_8025F85C - 2, _RwDlRenderMode->fbWidth,
+                    GXSetScissor(raster->nOffsetX, _RwDlHalfHeight - 2, _RwDlRenderMode->fbWidth,
                                  raster->height * 2);
                 }
 
-                GXSetScissorBoxOffset(0, lbl_8025F85C - 2);
+                GXSetScissorBoxOffset(0, _RwDlHalfHeight - 2);
             }
         }
     }
@@ -809,7 +790,7 @@ S32 _rwDlCameraBeginUpdate(void* out, void* object, S32 flags)
 
 S32 _rwDlCameraEndUpdate(void* out, void* camera, S32 flags)
 {
-    lbl_8025F864.camera = NULL;
+    dgGGlobals.camera = NULL;
 
     return TRUE;
 }
@@ -827,100 +808,115 @@ S32 _rwDlRasterShowRaster(void* raster, void* inOut, S32 flags)
     U32 stride;
 
     enabled = OSDisableInterrupts();
-    full = (lbl_8025F814 - lbl_8025F810 == -1 || lbl_8025F814 - lbl_8025F810 == 2) ? 1 : 0;
+    full = (_RwDlFrameNew - _RwDlFrameCurrent == -1 || _RwDlFrameNew - _RwDlFrameCurrent == 2) ? 1 : 0;
     OSRestoreInterrupts(enabled);
 
     if (full == 1)
     {
-        OSSleepThread(&lbl_8025F834);
+        OSSleepThread(&_RwDlWaitingDoneRender);
     }
 
-    if (lbl_8025F808 == 0)
+    if (_RwDlFSAA == 0)
     {
         GXFlush();
         GXGetFifoPtrs(GXGetCPUFifo(), &readPtr, &writePtr);
         enabled = OSDisableInterrupts();
-        lbl_8025E2B0[lbl_8025F814].fifoPos = writePtr;
-        lbl_8025E2B0[lbl_8025F814].frameBuffer = lbl_8025F848;
-        lbl_8025F83C[lbl_8025F818] = lbl_8025E800;
-        lbl_8025F814 = (lbl_8025F814 + 1) % DLDEVICE_RING;
-        lbl_8025F818 = (lbl_8025F818 + 1) % DLDEVICE_RING;
+        _RwGCFrameQueue[_RwDlFrameNew].fifoPos = writePtr;
+        _RwGCFrameQueue[_RwDlFrameNew].frameBuffer = _RwGCXFBCopy;
+        _RwDlFrameSwap[_RwDlFrameTokenNew] = _RwDlTokenCurrent;
+        _RwDlFrameNew = (_RwDlFrameNew + 1) % DLDEVICE_RING;
+        _RwDlFrameTokenNew = (_RwDlFrameTokenNew + 1) % DLDEVICE_RING;
         OSRestoreInterrupts(enabled);
 
-        if (lbl_8025F820 == 0)
+        if (_RwDlBreakPointEnabled == 0)
         {
-            lbl_8025F820 = 1;
+            _RwDlBreakPointEnabled = 1;
             GXEnableBreakPt(writePtr);
         }
 
-        GXCopyDisp(lbl_8025F848, lbl_8025F7F8);
-        GXSetDrawSync(lbl_8025E800);
-        lbl_8025E800 = DLDEVICE_NEXTTOKEN(lbl_8025E800);
+        GXCopyDisp(_RwGCXFBCopy, _RwDlCopyClear);
+        GXSetDrawSync(_RwDlTokenCurrent);
+        _RwDlTokenCurrent = DLDEVICE_NEXTTOKEN(_RwDlTokenCurrent);
         GXFlush();
 
-        lbl_8025F848 = (lbl_8025F848 == lbl_8025F850) ? lbl_8025F84C : lbl_8025F850;
+        _RwGCXFBCopy = (_RwGCXFBCopy == _RwGCXFB1) ? _RwGCXFB2 : _RwGCXFB1;
     }
-    else if (lbl_8025E7F0 != 0)
+    else if (_RwDlFSAATop != 0)
     {
         GXFlush();
         GXGetFifoPtrs(GXGetCPUFifo(), &readPtr, &writePtr);
         enabled = OSDisableInterrupts();
-        lbl_8025E2B0[lbl_8025F814].fifoPos = writePtr;
-        lbl_8025E2B0[lbl_8025F814].frameBuffer = lbl_8025F848;
-        lbl_8025F814 = (lbl_8025F814 + 1) % DLDEVICE_RING;
+        _RwGCFrameQueue[_RwDlFrameNew].fifoPos = writePtr;
+        _RwGCFrameQueue[_RwDlFrameNew].frameBuffer = _RwGCXFBCopy;
+        _RwDlFrameNew = (_RwDlFrameNew + 1) % DLDEVICE_RING;
         OSRestoreInterrupts(enabled);
 
-        if (lbl_8025F820 == 0)
+        if (_RwDlBreakPointEnabled == 0)
         {
-            lbl_8025F820 = 1;
+            _RwDlBreakPointEnabled = 1;
             GXEnableBreakPt(writePtr);
         }
 
-        GXCopyDisp(lbl_8025F848, lbl_8025F7F8);
-        GXSetDrawSync(lbl_8025E800);
-        lbl_8025E800 = DLDEVICE_NEXTTOKEN(lbl_8025E800);
+        GXCopyDisp(_RwGCXFBCopy, _RwDlCopyClear);
+        GXSetDrawSync(_RwDlTokenCurrent);
+        _RwDlTokenCurrent = DLDEVICE_NEXTTOKEN(_RwDlTokenCurrent);
         GXFlush();
-        lbl_8025E7F0 = 0;
+        _RwDlFSAATop = 0;
     }
     else
     {
         GXFlush();
         GXGetFifoPtrs(GXGetCPUFifo(), &readPtr, &writePtr);
         enabled = OSDisableInterrupts();
-        lbl_8025E2B0[lbl_8025F814].fifoPos = writePtr;
-        lbl_8025E2B0[lbl_8025F814].frameBuffer = lbl_8025F848;
-        lbl_8025F83C[lbl_8025F818] = lbl_8025E800;
-        lbl_8025F814 = (lbl_8025F814 + 1) % DLDEVICE_RING;
-        lbl_8025F818 = (lbl_8025F818 + 1) % DLDEVICE_RING;
+        _RwGCFrameQueue[_RwDlFrameNew].fifoPos = writePtr;
+        _RwGCFrameQueue[_RwDlFrameNew].frameBuffer = _RwGCXFBCopy;
+        _RwDlFrameSwap[_RwDlFrameTokenNew] = _RwDlTokenCurrent;
+        _RwDlFrameNew = (_RwDlFrameNew + 1) % DLDEVICE_RING;
+        _RwDlFrameTokenNew = (_RwDlFrameTokenNew + 1) % DLDEVICE_RING;
         OSRestoreInterrupts(enabled);
 
-        if (lbl_8025F820 == 0)
+        if (_RwDlBreakPointEnabled == 0)
         {
-            lbl_8025F820 = 1;
+            _RwDlBreakPointEnabled = 1;
             GXEnableBreakPt(writePtr);
         }
 
         GXSetCopyClamp(GX_CLAMP_BOTTOM);
         GXSetDispCopySrc(0, 2, _RwDlRenderMode->fbWidth, _RwDlRenderMode->efbHeight - 2);
         stride = (_RwDlRenderMode->fbWidth + 15) & 0xFFF0;
-        GXCopyDisp((U8*)lbl_8025F848 + stride * (_RwDlRenderMode->efbHeight - 2) * 2,
-                   lbl_8025F7F8);
-        GXSetDrawSync(lbl_8025E800);
-        lbl_8025E800 = DLDEVICE_NEXTTOKEN(lbl_8025E800);
+        GXCopyDisp((U8*)_RwGCXFBCopy + stride * (_RwDlRenderMode->efbHeight - 2) * 2,
+                   _RwDlCopyClear);
+        GXSetDrawSync(_RwDlTokenCurrent);
+        _RwDlTokenCurrent = DLDEVICE_NEXTTOKEN(_RwDlTokenCurrent);
         GXSetCopyClamp(GX_CLAMP_TOP | GX_CLAMP_BOTTOM);
         GXSetDispCopySrc(0, 0, _RwDlRenderMode->fbWidth, _RwDlRenderMode->efbHeight);
         GXFlush();
 
-        lbl_8025F848 = (lbl_8025F848 == lbl_8025F850) ? lbl_8025F84C : lbl_8025F850;
-        lbl_8025E7F0 = 1;
+        _RwGCXFBCopy = (_RwGCXFBCopy == _RwGCXFB1) ? _RwGCXFB2 : _RwGCXFB1;
+        _RwDlFSAATop = 1;
     }
 
     return TRUE;
 }
 
+// Returns the device this driver registers: gamma 1, the system function, the depth buffer's near
+// and far values, the render state and Im2D functions.
 RwDevice* _rwDeviceGetHandle(void)
 {
-    return &lbl_801DE068;
+    static RwDevice rwDlDriverDevice = {
+        1.0f,
+        _rwDlSystem,
+        0.0f,
+        0.99999994f,
+        _rwDlSetRenderState,
+        _rwDlGetRenderState,
+        _rwDlIm2DRenderLine,
+        _rwDlIm2DRenderTriangle,
+        _rwDlIm2DRenderPrimitive,
+        _rwDlIm2DRenderIndexedPrimitive,
+    };
+
+    return &rwDlDriverDevice;
 }
 
 // Loads the object's transform (the matrix, or none, times the camera's view matrix) as GX's
@@ -935,12 +931,12 @@ void _rwDlTransformSetup(RwMatrix* matrix, S32 normals)
     if (matrix != NULL)
     {
         combined.flags = 0x20003;
-        RwMatrixMultiply(&combined, matrix, &lbl_8025E304);
+        RwMatrixMultiply(&combined, matrix, &_RwDlInvCamLTM);
         view = &combined;
     }
     else
     {
-        view = &lbl_8025E304;
+        view = &_RwDlInvCamLTM;
     }
 
     mtx[0][0] = -view->right.x;
@@ -968,14 +964,14 @@ void _rwDlTransformSetup(RwMatrix* matrix, S32 normals)
 
 // Copies the frame to the raster's texels (an unfiltered texture copy of its size from the top
 // left), then restores the render mode's copy filter and drops the texture cache.
-void fn_80178A3C(RwRaster* raster)
+void RwGameCubeCameraTextureFlush(RwRaster* raster)
 {
     RwGCRasterExt* ext = RWGCRASTEREXT(raster);
 
     GXSetCopyFilter(GX_FALSE, NULL, GX_FALSE, NULL);
     GXSetTexCopySrc(0, 0, raster->width, raster->height);
     GXSetTexCopyDst(raster->width, raster->height, ext->format, GX_FALSE);
-    GXCopyTex(ext->pixels, lbl_8025F7F8);
+    GXCopyTex(ext->pixels, _RwDlCopyClear);
     GXPixModeSync();
     GXSetCopyFilter(_RwDlRenderMode->aa, _RwDlRenderMode->sample_pattern, GX_TRUE,
                     _RwDlRenderMode->vfilter);
