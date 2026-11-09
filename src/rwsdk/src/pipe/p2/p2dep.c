@@ -215,6 +215,8 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
     U32 n;
     RxPipelineNode* node;
     U32 i;
+    // FAKEMATCH: off and count are added locals (the byte offset and the cluster count copy);
+    // real form believed to have neither.
     U32 off;
     U32 count;
     U32 j;

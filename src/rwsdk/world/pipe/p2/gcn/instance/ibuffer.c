@@ -115,6 +115,8 @@ void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemA
         or flags, flagsArg, flagsArg
     }
 
+    // FAKEMATCH: the strip flag is read from the argument, not its register copy; real form
+    // believed to use one header parameter throughout.
     if (headerArg->flags & rpMESHHEADERTRISTRIP)
     {
         primType = GX_TRIANGLESTRIP;
@@ -181,6 +183,8 @@ void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemA
             count += numIdx * numTexCoords;
         }
 
+        // FAKEMATCH: the index count variable is reused for the list size; real form believed to
+        // compute the size into its own local.
         count = indexSize * count + 3;
         if (indexSize == 1 && ALIGN32(count) == count)
         {
@@ -252,7 +256,8 @@ void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemA
             register U32 t0, fifo, vtx;
 
             // FAKEMATCH: the 16-bit index loop is inline asm in the compiler's 8-way unrolled ctr
-            // form, with opword encodings for the instructions the compiler would fold away; real
+            // form, with opword encodings (counter, masked copy, stores, pipe address, ctr setup)
+            // for instructions the compiler would otherwise fold or drop; real
             // form believed to be a C loop writing each index once per attribute.
             asm
             {

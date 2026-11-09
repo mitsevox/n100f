@@ -99,6 +99,8 @@ static inline void GeometryInstanceFast(register RpGeometry* geomArg,
         or numTexCoords, numTexCoordsArg, numTexCoordsArg
         or dst, dstArg, dstArg
     }
+    // FAKEMATCH: the vertex count is read from the argument, not its register copy; real form
+    // believed to be numVerts = RpGeometryGetNumVertices(geom).
     numVerts = geomArg->numVertices;
 
     if (!vtxFmt)

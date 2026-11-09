@@ -231,6 +231,8 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
     x.e += 0x1F;
     data = (U8*)(x.e & ~0x1F);
     size = sizeof(GCNVertexArrays) + numMeshes * sizeof(GCNDisplayList);
+    // FAKEMATCH: the chunk size goes through the NativeStreamSize helper; real form believed to
+    // be the sum written out here.
     chunkSize = NativeStreamSize(size, NATIVE_DATASIZE(entry, numMeshes)) - NATIVE_CHUNKHEADERSIZE;
 
     if (!vtxFmt)
