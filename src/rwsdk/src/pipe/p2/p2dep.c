@@ -226,14 +226,18 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
     {
         nodeDef = node->nodeDef;
 
+        // FAKEMATCH: the cluster count is held in a named copy; real form believed to read
+        // nodeDef->io.numClustersOfInterest in each loop test.
         count = nodeDef->io.numClustersOfInterest;
 
-        // FAKEMATCH: the byte offset off and the count copy are named locals to order the
-        // registers; real form believed to be clustersOfInterest[i] and numClustersOfInterest.
+        // FAKEMATCH: the byte offset off is a named local stepped by hand; real form believed to
+        // index clustersOfInterest[i].
         for (i = 0, off = 0; i < count; i++)
         {
             RxClusterDefinition* clusterDef;
 
+            // FAKEMATCH: the entry is reached through the byte offset; real form believed to be
+            // nodeDef->io.clustersOfInterest[i].clusterDef.
             clusterDef = ((RxClusterRef*)((U8*)nodeDef->io.clustersOfInterest + off))->clusterDef;
 
             if (!clusterDef)

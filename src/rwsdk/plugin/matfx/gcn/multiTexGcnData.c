@@ -161,6 +161,7 @@ RwStream* GameCubeMTEffectStreamWrite(RpMTEffect* effect, RwStream* stream)
         U8 numIndMatrices;
         U8 numTexMatrices;
         U8 numTexCoordGens;
+        // FAKEMATCH: these two counts are held as U32; real form believed to be U8 locals.
         U32 numTevStages;
         U32 flags;
         U8 blend;

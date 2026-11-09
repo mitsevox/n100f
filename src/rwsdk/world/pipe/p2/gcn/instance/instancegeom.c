@@ -63,12 +63,6 @@ static inline RwTexCoords* RpGeometryGetVertexTexCoords(const RpGeometry* geom, 
     return geom->texCoords[texCoordSet - 1];
 }
 
-// FAKEMATCH: the body sits in an inline that copies its arguments with inline asm `or` (mr)
-// into register locals, and the default format is stored the same way; the texture loop keeps
-// its own count and array cursor. That numbers the saved values in the target's order (the
-// flag tests below the arguments, the loop index below its temporaries). Real form believed
-// to be one plain function: numVerts = RpGeometryGetNumVertices(geom), vtxFmt defaulted in C,
-// and arrays->tex[i] = dst in a loop to numTexCoords.
 #pragma push
 // FAKEMATCH: the inline size limit is raised so the large GeometryInstanceFast inline is expanded;
 // real form believed to be one plain function with no pragma.
@@ -76,6 +70,10 @@ static inline RwTexCoords* RpGeometryGetVertexTexCoords(const RpGeometry* geom, 
 
 // Instances a geometry's first morph target into dst in the format's types, one array per
 // attribute in flags (or one interleaved array), and records where each starts.
+// FAKEMATCH: the body sits in an inline whose arguments are copied into register locals (each
+// copy tagged below). Real form believed to be one plain function: numVerts =
+// RpGeometryGetNumVertices(geom), vtxFmt defaulted in C, and arrays->tex[i] = dst in a loop to
+// numTexCoords.
 static inline void GeometryInstanceFast(register RpGeometry* geomArg,
                                         register GCNVertexArrays* arraysArg,
                                         register const RpGameCubeVtxFmt* vtxFmtArg, U32 flags,
@@ -149,6 +147,8 @@ static inline void GeometryInstanceFast(register RpGeometry* geomArg,
                                            arrays->texStride[i]);
             texp->tex[0] = dst;
             dst += size;
+            // FAKEMATCH: the array cursor steps by one pointer; real form believed to be the
+            // loop's i.
             texp = (GCNVertexArrays*)((U8*)texp + 4);
         }
     }

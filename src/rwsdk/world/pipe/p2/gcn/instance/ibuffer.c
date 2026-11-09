@@ -70,12 +70,10 @@ static inline void GCNDisplayListIndex16(const U16 index)
 // longer sees used, so those instructions (the loop counter in r6, the masked copy in r5, its
 // stores and the pipe address before them) are opword encodings with the target's registers;
 // they hold only because the allocation around them is the target's, which the exact match
-// checks. Together these give the target's register allocation, which the plain form cannot
-// reach: its count must be a named value below prelit, and naming it in C stops the compiler
-// hoisting count-8 out of the mesh loop. Behavior is unchanged. Real form believed to be the
-// plain function: arguments used directly, count += mesh->numIndices, and
+// checks. Behavior is unchanged. Real form believed to be the plain function: arguments used
+// directly, count += mesh->numIndices, and
 // `for (n = 0; n < numAttrs; n++) GCNDisplayListIndex8(vertex);` (Index16 for 2-byte indices)
-// in each while (numIndices--) loop (98.18%).
+// in each while (numIndices--) loop.
 void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemArg,
                           register const RpMeshHeader* headerArg, register S32 numTexCoordsArg,
                           register S32 indexSizeArg, register U32 flagsArg)
@@ -151,15 +149,21 @@ void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemA
         numAttrs++;
     }
 
+    // FAKEMATCH: the textured test and the attribute count are named locals; real form believed
+    // to test flags and use numAttrs directly.
     textured = flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2);
     attrCount = numAttrs;
     list = lists;
     numMeshes = header->numMeshes;
     mesh = (const RpMesh*)(header + 1);
+    // FAKEMATCH: the count-8 unroll limit is a named local; real form believed to leave it to
+    // the compiler's unroller.
     attrLimit = attrCount - 8;
     while (numMeshes--)
     {
         index = mesh->indices;
+        // FAKEMATCH: the per-mesh index count is a named copy; real form believed to read
+        // mesh->numIndices.
         numIdx = mesh->numIndices;
         numIndices = numIdx;
         count = numIdx;
@@ -194,7 +198,9 @@ void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemA
             register U32 t0, fifo, vtx, n;
 
             // FAKEMATCH: the 8-bit index loop is inline asm in the compiler's 8-way unrolled ctr
-            // form; real form believed to be a C loop writing each index once per attribute.
+            // form, with one opword (the dead per-vertex counter step, addi r5, r5, 1) that the
+            // compiler would drop; real form believed to be a C loop writing each index once per
+            // attribute.
             asm
             {
                 b test8
@@ -231,7 +237,7 @@ void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemA
                 bge next8
             one8:
                 stb vtx, -0x8000(fifo)
-                opword 0x38A50001 // addi r5, r5, 1 (n; dead after the loop, so the compiler drops it)
+                opword 0x38A50001 // addi r5, r5, 1
                 bdnz one8
             next8:
                 addi index, index, 2

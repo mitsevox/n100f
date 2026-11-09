@@ -146,6 +146,8 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
         arrays->clr = data + (U32)arrays->clr;
     }
 
+    // FAKEMATCH: the texture pointers are read through a word pointer over the arrays header
+    // (tex[9] is arrays->tex[0]); real form believed to loop over arrays->tex[i].
     tex = (void**)arrays;
     for (i = 0; (t = tex[9]) != NULL && i < 8 && !(arrays->flags & GCNARRAYS_EXTERNALTEX); i++)
     {
@@ -251,6 +253,8 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
         arrays->clr = (void*)((U8*)arrays->clr - data);
     }
 
+    // FAKEMATCH: the texture pointers are read through a word pointer over the arrays header
+    // (tex[9] is arrays->tex[0]); real form believed to loop over arrays->tex[i].
     tex = (void**)arrays;
     for (i = 0; (t = tex[9]) != NULL && i < 8 && !(arrays->flags & GCNARRAYS_EXTERNALTEX); i++)
     {
@@ -317,6 +321,8 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
         arrays->clr = data + (U32)arrays->clr;
     }
 
+    // FAKEMATCH: the texture pointers are read through a word pointer over the arrays header
+    // (tex[9] is arrays->tex[0]); real form believed to loop over arrays->tex[i].
     tex2 = (void**)arrays;
     for (i = 0; (t2 = tex2[9]) != NULL && i < 8 && !(arrays->flags & GCNARRAYS_EXTERNALTEX); i++)
     {
