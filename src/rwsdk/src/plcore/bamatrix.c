@@ -217,9 +217,11 @@ F32 _rwMatrixNormalError(const RwMatrix* matrix)
     return right * right + up * up + at * at;
 }
 
-// How far the matrix is from the identity: the believed real form of the error that
-// MatrixIdentityTest computes in asm. The target has no copy of it, so it is static inline and
-// unreferenced, and CW strips it.
+// How far the matrix is from the identity: the summed squared distance of each axis from its unit
+// vector plus the squared length of pos. RwMatrixOptimize's identity test is its only user.
+// FAKEMATCH: static inline, so that no out-of-line copy is emitted now that nothing calls it; real
+// form believed to be the global F32 _rwMatrixIdentityError(const RwMatrix*) (GLOBAL in the PS2
+// prototype symbol table; the target has no copy of it).
 static inline F32 _rwMatrixIdentityError(const RwMatrix* matrix)
 {
     const RwV3d* right = &matrix->right;
@@ -296,8 +298,8 @@ S32 RwEngineSetMatrixTolerances(const RwMatrixTolerance* const tolerance)
 
 // FAKEMATCH: RwMatrixOptimize's identity test, 1 when the matrix is normal and orthogonal and its
 // _rwMatrixIdentityError is within the tolerance. The error sum is one-instruction inline asm and
-// the declaration order of its locals is chosen for the register colors. The real form is believed
-// to be `identity = normal && orthogonal && tolerance->Orthogonal >= _rwMatrixIdentityError(matrix);`
+// the declaration order of its locals is chosen for the register colors. Real form believed to be
+// `identity = normal && orthogonal && tolerance->Orthogonal >= _rwMatrixIdentityError(matrix);`
 // in RwMatrixOptimize's body. Called from an inline function, `identity` is a compiler temporary,
 // which CW's late CSE pass needs to turn the && test's second `li 0` into the target's `mr`.
 // ux to az are the up and at values RwMatrixOptimize already loaded.
@@ -391,10 +393,11 @@ static inline S32 MatrixIdentityTest(register RwMatrix* matrix, F32 tolerance, S
 // identity one.
 // FAKEMATCH: the normal and orthogonal errors are one-instruction inline asm in the target's
 // schedule (C keeps the compares and flags), and the F32 declaration order is chosen for the
-// register colors. The real form is believed to be
+// register colors. Real form believed to be
 // `normal = tolerance->Normal >= _rwMatrixNormalError(matrix);` and
 // `orthogonal = tolerance->Orthogonal >= _rwMatrixOrthogonalError(matrix);` with both inlined;
-// that C matches the instruction order but not the identity block's colors.
+// that C matches the instruction order but not the identity block's colors. matrix and
+// tolerance are register-qualified so that the asm can address them.
 RwMatrix* RwMatrixOptimize(register RwMatrix* matrix, register const RwMatrixTolerance* tolerance)
 {
     U32 flags;
