@@ -90,44 +90,118 @@ static void rwCameraUpdateZShiftScale(RwCamera* camera)
         RwV3dScaleMacro(&(_plane)->plane.normal, &(_plane)->plane.normal, recip);                  \
     } while (0)
 
+// The 2.0f that doubles the window vectors, loaded by name from the inline asm below (FAKEMATCH).
+static const F32 cameraTwo = 2.0f;
+
 // Builds the perspective frustum: the eight corners (near then far, each starting top right in
 // the window's terms and going round) in world space, then the far and near planes along the
 // camera's at vector and the four side planes through the corners, with normals pointing out.
-void CameraBuildPerspClipPlanes(RwCamera* camera)
+void CameraBuildPerspClipPlanes(register RwCamera* camera)
 {
-    RwMatrix* camMatrix = &RwCameraGetFrame(camera)->ltm;
+    register RwFrame* frame = RwCameraGetFrame(camera);
+    RwMatrix* camMatrix = &frame->ltm;
     RwV3d* corners = camera->frustumCorners;
     RwFrustumPlane* plane;
     RwV3d vector;
     RwV3d* up;
-    RwV3d xWindow;
-    RwV3d yWindow;
-    RwV3d xWindow2;
     RwV3d offset;
     RwV3d edge;
     RwV3d* nearCorner;
     RwV3d* farCorner;
     S32 i;
-    F32 rightOffset;
+    register F32 xwy;
+    register F32 xwz;
+    register F32 wy;
+    register F32 uzvoy;
+    register F32 uz;
+    register F32 ay;
+    register F32 vox;
+    register F32 uyvoy;
+    register F32 offy;
+    register F32 ax;
+    register F32 uy;
+    register F32 ux;
+    register F32 ywx;
+    register F32 v0x;
+    register F32 offz;
+    register F32 ywy;
+    register F32 voy;
+    register F32 ywz;
+    register F32 x2x;
+    register F32 wx;
+    register F32 y2y;
+    register F32 rx;
+    register F32 ry;
+    register F32 x2y;
+    register F32 two;
+    register F32 x2z;
+    register F32 xwx;
+    register F32 rz;
+    register F32 y2x;
+    register F32 rightOffset;
 
+    // FAKEMATCH: the view terms, window vectors and first corner terms are computed by one-
+    // instruction inline asm into register locals, declared in this order, so that each value
+    // keeps a named local's register number and the floating-point registers come out as the
+    // target's; the instructions are the target's own and the compiler still schedules them.
+    // Real form believed to be the plain RwV3dScale / RwV3dIncrementScaled / RwV3dAdd macro
+    // sequence with the negated x view offset in a local (99.49 in that form).
     up = &camMatrix->up;
-    rightOffset = -camera->viewOffset.x;
-    RwV3dScaleMacro(&offset, &camMatrix->right, rightOffset);
-    RwV3dIncrementScaledMacro(&offset, up, camera->viewOffset.y);
-    RwV3dScaleMacro(&yWindow, &camMatrix->up, camera->viewWindow.y);
-    RwV3dScaleMacro(&xWindow, &camMatrix->right, camera->viewWindow.x);
-    RwV3dScaleMacro(&xWindow2, &xWindow, 2.0f);
+    asm { lfs vox, 0x78(camera) }
+    asm { fneg rightOffset, vox }
+    asm { lfs rx, 0x50(frame) }
+    asm { lfs ry, 0x54(frame) }
+    asm { lfs rz, 0x58(frame) }
+    asm { lfs voy, 0x7c(camera) }
+    asm { lfs wx, 0x68(camera) }
+    asm { lfs ax, 0x70(frame) }
+    asm { lfs ay, 0x74(frame) }
+    asm { lfs two, cameraTwo }
+    asm { lfs ux, 0x60(frame) }
+    asm { lfs uy, 0x64(frame) }
+    asm { lfs uz, 0x68(frame) }
+    asm { lfs wy, 0x6c(camera) }
+    offset.x = rx * rightOffset;
+    asm { fmuls offy, ry, rightOffset }
+    asm { fmuls offz, rz, rightOffset }
+    offset.x += ux * voy;
+    uyvoy = uy * voy;
+    asm { fadds offy, offy, uyvoy }
+    asm { fmuls uzvoy, uz, voy }
+    asm { fadds offz, offz, uzvoy }
+    offset.y = offy;
+    offset.z = offz;
+    asm { fmuls ywx, ux, wy }
+    asm { fmuls ywy, uy, wy }
+    asm { fmuls ywz, uz, wy }
+    asm { fmuls xwx, rx, wx }
+    xwy = ry * wx;
+    xwz = rz * wx;
+    asm { fmuls x2x, two, xwx }
+    asm { fmuls x2y, two, xwy }
+    asm { fmuls x2z, two, xwz }
 
-    RwV3dAddMacro(&vector, &camMatrix->at, &xWindow);
-    RwV3dAddMacro(&vector, &vector, &yWindow);
+    asm { fadds v0x, ax, xwx }
+    vector.x = v0x;
+    vector.y = ay + xwy;
+    vector.z = camMatrix->at.z + xwz;
+    vector.x += ywx;
+    vector.y += ywy;
+    vector.z += ywz;
     corners[0] = vector;
-    RwV3dSubMacro(&vector, &vector, &xWindow2);
+    vector.x -= x2x;
+    vector.y -= x2y;
+    vector.z -= x2z;
     corners[1] = vector;
-    vector.x -= 2.0f * yWindow.x;
-    vector.y -= 2.0f * yWindow.y;
-    vector.z -= 2.0f * yWindow.z;
+    asm { fmuls y2x, two, ywx }
+    asm { fmuls y2y, two, ywy }
+    vector.x -= y2x;
+    vector.y -= y2y;
+    vector.z -= two * ywz;
     corners[2] = vector;
-    RwV3dAddMacro(&vector, &vector, &xWindow2);
+    vector.x += x2x;
+    vector.y += x2y;
+    vector.z += x2z;
     corners[3] = vector;
 
     nearCorner = corners;
