@@ -1047,7 +1047,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/src/babbox.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/babincam.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/babinfrm.c"),
-            Object(NonMatching, "rwsdk/src/babintex.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/babintex.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/bacamera.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/badevice.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/src/baframe.c"),

@@ -307,6 +307,272 @@ const RwTexture* RwTextureStreamWrite(const RwTexture* texture, RwStream* stream
     return texture;
 }
 
+// FAKEMATCH: extracts the name reader's subtraction into a written formal; real form believed to be inline `length -= bytesToRead`.
+static U32 TextureConsumeChunk(U32 remaining, U32 count)
+{
+    remaining -= count;
+    return remaining;
+}
+
+// FAKEMATCH: private name-reader copy uses the consume helper; real form believed to call StringStreamRead.
+static char* TextureAsciiConsumeRead(char* nativeString, RwStream* stream, U32 length)
+{
+    char buffer[STRING_READCHUNK];
+    char* dst;
+
+    if (nativeString == NULL)
+    {
+        nativeString = (char*)RwMalloc(length);
+
+        if (!nativeString)
+        {
+            RwError err;
+
+            err.pluginID = 1;
+            err.errorCode = _rwerror(0x80000013, length);
+            RwErrorSet(&err);
+            return NULL;
+        }
+    }
+
+    dst = nativeString;
+
+    while (length)
+    {
+        U32 bytesToRead = STRING_READCHUNK;
+        U32 i;
+
+        if (length <= STRING_READCHUNK)
+        {
+            bytesToRead = length;
+        }
+
+        if (RwStreamRead(stream, buffer, bytesToRead) != bytesToRead)
+        {
+            return NULL;
+        }
+
+        length = TextureConsumeChunk(length, bytesToRead);
+
+        for (i = 0; i < bytesToRead; i++)
+        {
+            dst[i] = buffer[i];
+        }
+
+        dst += bytesToRead;
+    }
+
+    return nativeString;
+}
+
+// FAKEMATCH: the mask reader uses a written bound formal; real form believed to be the original inline minimum.
+static U32 TextureMaskChunkBound(U32 amount)
+{
+    U32 remaining = amount;
+    amount = STRING_READCHUNK;
+    if (remaining <= STRING_READCHUNK)
+    {
+        amount = remaining;
+    }
+    return amount;
+}
+
+// FAKEMATCH: the error helper controls inline RwError object order; real form believed to use a local error body.
+static char* TextureAllocationError(U32 length)
+{
+    RwError err;
+    err.pluginID = 1;
+    err.errorCode = _rwerror(0x80000013, length);
+    RwErrorSet(&err);
+    return NULL;
+}
+
+// FAKEMATCH: mask ASCII clone retains direct subtraction; real form believed to share StringStreamRead with the name reader.
+static char* TextureMaskAsciiRead(char* nativeString, RwStream* stream, U32 length)
+{
+    char buffer[STRING_READCHUNK];
+    char* dst;
+
+    if (nativeString == NULL)
+    {
+        nativeString = (char*)RwMalloc(length);
+
+        if (!nativeString)
+        {
+            // FAKEMATCH: nests the mask allocation error at the Unicode error's inline depth; real form believed to be an ordinary local RwError.
+            return TextureAllocationError(length);
+        }
+    }
+
+    dst = nativeString;
+
+    while (length)
+    {
+        U32 bytesToRead = TextureMaskChunkBound(length);
+        U32 i;
+
+        if (RwStreamRead(stream, buffer, bytesToRead) != bytesToRead)
+        {
+            return NULL;
+        }
+
+        length -= bytesToRead;
+
+        for (i = 0; i < bytesToRead; i++)
+        {
+            dst[i] = buffer[i];
+        }
+
+        dst += bytesToRead;
+    }
+
+    return nativeString;
+}
+
+// FAKEMATCH: native storage stays Find-owned through an output pointer while the flag is copy-local; real form believed to call UnicodeStringStreamRead.
+static char* TextureUnicodeCopy(char** nativeStringOut, RwStream* stream, U32 length)
+{
+    U16 buffer[STRING_READCHUNK];
+    char* dst;
+    // FAKEMATCH: flag storage belongs to the copy helper while native pointer storage remains Find-owned; real form believed to be the original Unicode reader.
+    S32 allocated = 0;
+
+    if (*nativeStringOut == NULL)
+    {
+        *nativeStringOut = (char*)RwMalloc(length);
+        if (!*nativeStringOut)
+        {
+            return TextureAllocationError(length);
+        }
+        allocated = 1;
+    }
+
+    dst = *nativeStringOut;
+
+    while (length)
+    {
+        U32 bytesToRead = (length <= sizeof(buffer)) ? length : sizeof(buffer);
+        U32 i;
+        U32 charsToCopy;
+
+        if (RwStreamRead(stream, buffer, bytesToRead) != bytesToRead)
+        {
+            if (allocated)
+            {
+                RwFree(*nativeStringOut);
+            }
+
+            return NULL;
+        }
+
+        charsToCopy = bytesToRead >> 1;
+        length -= bytesToRead;
+
+        for (i = 0; i < charsToCopy; i++)
+        {
+            dst[i] = (char)buffer[i];
+        }
+
+        dst += charsToCopy;
+    }
+
+    return *nativeStringOut;
+}
+
+// FAKEMATCH: private Find copy retains native storage while splitting the Unicode allocation/copy body; real form believed to call _rwStringStreamFindAndRead.
+static char* TextureFindOwned(char* string, RwStream* stream)
+{
+    U32 type;
+    U32 length;
+    U32 version;
+
+    while (_rwStreamReadChunkHeader(stream, &type, &length, &version, NULL))
+    {
+        S32 versionOk = 0;
+
+        if (version >= rwLIBRARYBASEVERSION && version <= rwLIBRARYCURRENTVERSION)
+        {
+            versionOk = 1;
+        }
+
+        if (!versionOk)
+        {
+            RwError err;
+
+            err.pluginID = 1;
+            err.errorCode = _rwerror(0x80000004);
+            RwErrorSet(&err);
+            return NULL;
+        }
+
+        if (type == rwID_STRING)
+        {
+            return TextureAsciiConsumeRead(string, stream, length);
+        }
+
+        if (type == rwID_UNICODESTRING)
+        {
+            char* nativeString = string;
+
+            return TextureUnicodeCopy(&nativeString, stream, length);
+        }
+
+        if (!RwStreamSkip(stream, length))
+        {
+            return NULL;
+        }
+    }
+
+    return NULL;
+}
+
+// FAKEMATCH: mask-specific context isolates the written bound; real form believed to share _rwStringStreamFindAndRead with the name reader.
+static char* TextureFindMaskOwned(char* string, RwStream* stream)
+{
+    U32 type;
+    U32 length;
+    U32 version;
+
+    while (_rwStreamReadChunkHeader(stream, &type, &length, &version, NULL))
+    {
+        S32 versionOk = 0;
+
+        if (version >= rwLIBRARYBASEVERSION && version <= rwLIBRARYCURRENTVERSION)
+        {
+            versionOk = 1;
+        }
+
+        if (!versionOk)
+        {
+            RwError err;
+
+            err.pluginID = 1;
+            err.errorCode = _rwerror(0x80000004);
+            RwErrorSet(&err);
+            return NULL;
+        }
+
+        if (type == rwID_STRING)
+        {
+            return TextureMaskAsciiRead(string, stream, length);
+        }
+
+        if (type == rwID_UNICODESTRING)
+        {
+            char* nativeString = string;
+
+            return TextureUnicodeCopy(&nativeString, stream, length);
+        }
+
+        if (!RwStreamSkip(stream, length))
+        {
+            return NULL;
+        }
+    }
+
+    return NULL;
+}
+
 RwTexture* RwTextureStreamRead(RwStream* stream)
 {
     U32 size;
@@ -314,7 +580,8 @@ RwTexture* RwTextureStreamRead(RwStream* stream)
     U32 data;
     RwTextureFilterMode filterMode;
     U32 addressingU;
-    U8 flags;
+    // FAKEMATCH: widened temporary controls register allocation; real form believed to use U8 flags.
+    U32 flags;
     S32 mipmapping;
     S32 autoMipmapping;
     RwTexture* texture;
@@ -370,14 +637,16 @@ RwTexture* RwTextureStreamRead(RwStream* stream)
             RwTextureSetAutoMipmapping(FALSE);
         }
 
-        if (!_rwStringStreamFindAndRead(textureName, stream))
+        // FAKEMATCH: uses the split name-reader context; real form believed to call _rwStringStreamFindAndRead.
+        if (!TextureFindOwned(textureName, stream))
         {
             RwTextureSetMipmapping(mipmapping);
             RwTextureSetAutoMipmapping(autoMipmapping);
             return NULL;
         }
 
-        if (!_rwStringStreamFindAndRead(maskName, stream))
+        // FAKEMATCH: mask-specific context retains the bound helper; real form believed to call _rwStringStreamFindAndRead.
+        if (!TextureFindMaskOwned(maskName, stream))
         {
             RwTextureSetMipmapping(mipmapping);
             RwTextureSetAutoMipmapping(autoMipmapping);
