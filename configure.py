@@ -1003,7 +1003,7 @@ config.libs: List[Dict[str, Any]] = [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/nodeWorldSectorInstance.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/gcpipe.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/instance/geominst.c"),
-            Object(NonMatching, "rwsdk/world/pipe/p2/gcn/instance/instancegeom.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/instance/instancegeom.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/instance/instanceworld.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/vtxfmt.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/world/pipe/p2/gcn/wrldpipe.c"),
