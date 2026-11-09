@@ -9,31 +9,31 @@
 // dual texture), and whose instance callbacks compute the NBT multitexture effects need.
 
 // The draw sync token to issue next.
-extern volatile U16 lbl_8025E800;
+extern volatile U16 _RwDlTokenCurrent;
 
 // The raster plugin's offset in a raster.
-extern S32 lbl_8025F870;
+extern S32 _RwGameCubeRasterExtOffset;
 
 // A matrix the environment map is relative to when it has no frame.
-extern RwMatrix lbl_8025E304;
+extern RwMatrix _RwDlInvCamLTM;
 
 // The owner of the bump map texture coordinates' resource entries.
-U8 lbl_8025D958[0x70];
+U8 MatFXGCNBumpMapResOwner[0x70];
 
 // The material colors of the environment map passes; their alpha is set from the coefficient.
-GXColor lbl_8025E780 = { 255, 255, 255, 255 };
-GXColor lbl_8025E784 = { 255, 255, 255, 255 };
+GXColor MatFXGCNEnvMapColor = { 255, 255, 255, 255 };
+GXColor MatFXGCNBumpEnvMapColor = { 255, 255, 255, 255 };
 
 // The vertex format given to geometries that need the NBT and have none, the two pipelines, and
 // the all-in-one nodes' callbacks the pipelines' own ones call.
 typedef void* (*GCNMTInstanceCB)(void* object, GCNObjectData* objectData);
 
-GCNMTInstanceCB lbl_8025F694;
-GCNMTInstanceCB lbl_8025F690;
-GCNMTInstanceCB lbl_8025F68C;
-RxPipeline* lbl_8025F688;
-RxPipeline* lbl_8025F684;
-RpGameCubeVtxFmt* lbl_8025F680;
+GCNMTInstanceCB DefaultAtomicInstanceCallBack;
+GCNMTInstanceCB DefaultAtomicReinstanceCallBack;
+GCNMTInstanceCB DefaultSectorInstanceCallBack;
+RxPipeline* _RpMatFXWorldSectorPipe;
+RxPipeline* _RpMatFXAtomicPipe;
+RpGameCubeVtxFmt* _rpGCMatFXVtxFmtNBT;
 
 S32 _rwDlTokenQueryDone(U16 token);
 RpGameCubeVtxFmt* RpGameCubeVtxFmtCreate(void);
@@ -48,10 +48,10 @@ void RwGameCubeSetAlphaCompare(S32 mode);
 void _rpGameCubeMTMeshRenderCallBack(GCNDisplayList* displayList, RpMaterial* material,
                                      void* object, GCNObjectData* objectData,
                                      const RwMatrix* matrix);
-void fn_80141D20(GCNObjectData* objectData, RpGameCubeVtxFmt* vtxFmt, S32 numVertices);
-void fn_801588E8(GCNObjectData* objectData);
-void fn_80158B20(GCNObjectData* objectData, RpMaterial* material);
-void fn_80158DC4(GCNObjectData* objectData);
+void _rpGameCubeMTPipeDataCalcNBTs(GCNObjectData* objectData, RpGameCubeVtxFmt* vtxFmt, S32 numVertices);
+void _rxGCChannelSetup(GCNObjectData* objectData);
+void _rxGCChannelMaterialSetup(GCNObjectData* objectData, RpMaterial* material);
+void _rxGCTevSetup(GCNObjectData* objectData);
 RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTexture* effectTexture);
 
 // The material effects plugin id, the multitexture platform, an atomic's object type, and the
@@ -68,7 +68,7 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 // Whether a texture's raster has alpha, from the raster plugin's flags.
 #define MATFXGCN_TEXTUREHASALPHA(_texture)                                                         \
     ((_texture) && (_texture)->raster &&                                                           \
-     (*(U32*)((U8*)(_texture)->raster->parent + lbl_8025F870 + 0x14) & 1))
+     (*(U32*)((U8*)(_texture)->raster->parent + _RwGameCubeRasterExtOffset + 0x14) & 1))
 
 // The display lists follow the instanced vertex arrays in the entry.
 #define MATFXGCN_DISPLAYLISTS(_entry)                                                              \
@@ -77,7 +77,7 @@ RwTexture* _rpMatFXTextureMaskCreate(const RwTexture* baseTexture, const RwTextu
 // Offsets each vertex's base texture coordinates along the bump map light direction, into dst:
 // the light (the bump map frame's at axis, or the camera's) is taken into the object's space,
 // and each vertex's offset comes from the texture space of one of its triangles.
-void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMesh* mesh,
+void MatFXGCNBumpMapTexCoords(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMesh* mesh,
                  RwV3d* positions, RwV3d* normals, RwTexCoords* texCoords, S32 numVertices,
                  S32 flags)
 {
@@ -231,12 +231,12 @@ void fn_8013FA64(RwTexCoords* dst, void* object, MatFXBumpMapData* bumpMap, RpMe
 }
 
 // The destroy notify of the bump map coordinates' entry: wait until the GPU has passed its token.
-void fn_8013FEC0(RwResEntry* resEntry)
+void MatFXGCNBumpMapResEntryDestroy(RwResEntry* resEntry)
 {
-    if (MATFXGCN_TOKEN(resEntry) == lbl_8025E800)
+    if (MATFXGCN_TOKEN(resEntry) == _RwDlTokenCurrent)
     {
-        GXSetDrawSync(lbl_8025E800);
-        lbl_8025E800 = (lbl_8025E800 + 1) % MATFXGCN_TOKENWRAP;
+        GXSetDrawSync(_RwDlTokenCurrent);
+        _RwDlTokenCurrent = (_RwDlTokenCurrent + 1) % MATFXGCN_TOKENWRAP;
     }
 
     while (!_rwDlTokenQueryDone(MATFXGCN_TOKEN(resEntry)))
@@ -246,29 +246,29 @@ void fn_8013FEC0(RwResEntry* resEntry)
 
 // The atomic pipeline's instance callback: instance as usual, then compute the NBT when a
 // multitexture effect needs them (giving the geometry a vertex format with NBT when it has none).
-RpAtomic* fn_8013FF48(RpAtomic* atomic, GCNObjectData* objectData)
+RpAtomic* _rpGCMatFXAtomicInstanceCallBack(RpAtomic* atomic, GCNObjectData* objectData)
 {
     if (_rpGameCubeMTPipeDataQueryNBTs(objectData))
     {
         RpGeometry* geometry = atomic->geometry;
-        RpGameCubeVtxFmt* vtxFmt = fn_8015D818(geometry);
+        RpGameCubeVtxFmt* vtxFmt = RpGameCubeGeometryGetVtxFmt(geometry);
 
         if (!vtxFmt)
         {
-            RpGameCubeGeometrySetVtxFmt(geometry, lbl_8025F680);
-            vtxFmt = lbl_8025F680;
+            RpGameCubeGeometrySetVtxFmt(geometry, _rpGCMatFXVtxFmtNBT);
+            vtxFmt = _rpGCMatFXVtxFmtNBT;
         }
 
-        if (!lbl_8025F694(atomic, objectData))
+        if (!DefaultAtomicInstanceCallBack(atomic, objectData))
         {
             return NULL;
         }
 
-        fn_80141D20(objectData, vtxFmt, geometry->numVertices);
+        _rpGameCubeMTPipeDataCalcNBTs(objectData, vtxFmt, geometry->numVertices);
         return atomic;
     }
 
-    return (RpAtomic*)lbl_8025F694(atomic, objectData);
+    return (RpAtomic*)DefaultAtomicInstanceCallBack(atomic, objectData);
 }
 
 // The atomic pipeline's reinstance callback: chains to the node's own reinstance, then recomputes
@@ -277,7 +277,7 @@ RpAtomic* fn_8013FF48(RpAtomic* atomic, GCNObjectData* objectData)
 RpAtomic* _rpGCMatFXAtomicReinstanceCallBack(RpAtomic* atomic, GCNObjectData* objectData)
 {
     RpGeometry* geometry = atomic->geometry;
-    RpGameCubeVtxFmt* vtxFmt = fn_8015D818(geometry);
+    RpGameCubeVtxFmt* vtxFmt = RpGameCubeGeometryGetVtxFmt(geometry);
     S32 recompute = FALSE;
 
     if (vtxFmt && vtxFmt->frac[1] && (geometry->flags & rpGEOMETRYNORMALS))
@@ -289,34 +289,34 @@ RpAtomic* _rpGCMatFXAtomicReinstanceCallBack(RpAtomic* atomic, GCNObjectData* ob
         recompute = locked || morphing;
     }
 
-    if (!lbl_8025F690(atomic, objectData))
+    if (!DefaultAtomicReinstanceCallBack(atomic, objectData))
     {
         return NULL;
     }
 
     if (recompute)
     {
-        fn_80141D20(objectData, vtxFmt, geometry->numVertices);
+        _rpGameCubeMTPipeDataCalcNBTs(objectData, vtxFmt, geometry->numVertices);
     }
 
     return atomic;
 }
 
 // The world sector pipeline's instance callback.
-RpWorldSector* fn_801400F8(RpWorldSector* sector, GCNObjectData* objectData)
+RpWorldSector* _rpGCMatFXSectorInstanceCallBack(RpWorldSector* sector, GCNObjectData* objectData)
 {
     RpGameCubeVtxFmt* vtxFmt;
 
-    if (!lbl_8025F68C(sector, objectData))
+    if (!DefaultSectorInstanceCallBack(sector, objectData))
     {
         return NULL;
     }
 
-    vtxFmt = fn_8015D824((RpWorld*)RWSRCGLOBAL(curWorld));
+    vtxFmt = RpGameCubeWorldGetVtxFmt((RpWorld*)RWSRCGLOBAL(curWorld));
 
     if (vtxFmt && vtxFmt->frac[1])
     {
-        fn_80141D20(objectData, vtxFmt, sector->numVertices);
+        _rpGameCubeMTPipeDataCalcNBTs(objectData, vtxFmt, sector->numVertices);
     }
 
     return sector;
@@ -335,7 +335,7 @@ static S32 MatFXGCNAlphaRef(RwTexture* texture)
     return ref;
 }
 
-// Loads the environment map texture matrix: the inverse of the map's frame (or lbl_8025E304),
+// Loads the environment map texture matrix: the inverse of the map's frame (or _RwDlInvCamLTM),
 // after the object's matrix, scaled and offset into texture space. The matrix is a full 3x4 Mtx
 // of which the 2x4 load reads two rows.
 static void LoadEnvMapMatrix(RwFrame* frame, const RwMatrix* matrix)
@@ -352,7 +352,7 @@ static void LoadEnvMapMatrix(RwFrame* frame, const RwMatrix* matrix)
     }
     else
     {
-        env = &lbl_8025E304;
+        env = &_RwDlInvCamLTM;
     }
 
     if (matrix)
@@ -396,7 +396,7 @@ static void SetupEnvMapTev(void)
 
 // The render callback of both pipelines: draws each mesh with its multitexture, or with its
 // material effect's passes, or plainly.
-void* fn_80140178(void* object, GCNObjectData* objectData)
+void* _rpGCMatFXRenderCallback(void* object, GCNObjectData* objectData)
 {
     RwResEntry* entry = objectData->repEntry;
     GCNVertexArrays* arrays = (GCNVertexArrays*)(entry + 1);
@@ -413,7 +413,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
     S32 numMeshes;
     S32 bumpSize;
 
-    arrays->syncToken = lbl_8025E800;
+    arrays->syncToken = _RwDlTokenCurrent;
 
     if (((RwObject*)object)->type == MATFXGCN_ATOMIC)
     {
@@ -423,7 +423,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
         flags = geometry->flags;
         meshHeader = geometry->mesh;
         matrix = RwFrameGetLTM(RpAtomicGetFrame((RpAtomic*)object));
-        _rwDlVtxFmtSetup(fn_8015D818(((RpAtomic*)object)->geometry), objectData);
+        _rwDlVtxFmtSetup(RpGameCubeGeometryGetVtxFmt(((RpAtomic*)object)->geometry), objectData);
     }
     else
     {
@@ -434,7 +434,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
         matrix = NULL;
         world = (RpWorld*)RWSRCGLOBAL(curWorld);
         flags = world->flags;
-        _rwDlVtxFmtSetup(fn_8015D824(world), objectData);
+        _rwDlVtxFmtSetup(RpGameCubeWorldGetVtxFmt(world), objectData);
     }
 
     _rwDlTransformSetup(matrix, (objectData->flags >> 4) & 1);
@@ -450,11 +450,11 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
         if (resetChannels)
         {
-            fn_801588E8(objectData);
+            _rxGCChannelSetup(objectData);
             resetChannels = FALSE;
         }
 
-        fn_80158B20(objectData, mesh->material);
+        _rxGCChannelMaterialSetup(objectData, mesh->material);
         multiTexture = RpMaterialGetMultiTexture(mesh->material, MATFXGCN_PLATFORM);
         matFX = MATFXMATERIALGETDATA(mesh->material);
 
@@ -468,7 +468,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
         {
             if (resetTev)
             {
-                fn_80158DC4(objectData);
+                _rxGCTevSetup(objectData);
                 resetTev = FALSE;
             }
 
@@ -487,7 +487,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 GXCallDisplayList(displayList->list, displayList->size);
                 RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
                 RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
-                SetupEnvMapChannels(&lbl_8025E780, envMap);
+                SetupEnvMapChannels(&MatFXGCNEnvMapColor, envMap);
                 resetChannels = TRUE;
                 SetupEnvMapTev();
                 resetTev = TRUE;
@@ -556,13 +556,13 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                     S32 size = 6;
 
                     size += bumpSize;
-                    bumpEntry = RwResourcesAllocateResEntry(lbl_8025D958, NULL, size, fn_8013FEC0);
-                    MATFXGCN_TOKEN(bumpEntry) = lbl_8025E800;
+                    bumpEntry = RwResourcesAllocateResEntry(MatFXGCNBumpMapResOwner, NULL, size, MatFXGCNBumpMapResEntryDestroy);
+                    MATFXGCN_TOKEN(bumpEntry) = _RwDlTokenCurrent;
                     bumpTexCoords =
                         (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 2 + 0x1F) & ~0x1F);
                 }
 
-                fn_8013FA64(bumpTexCoords, object, bumpMap, mesh, (RwV3d*)arrays->pos,
+                MatFXGCNBumpMapTexCoords(bumpTexCoords, object, bumpMap, mesh, (RwV3d*)arrays->pos,
                             (RwV3d*)arrays->nrm, (RwTexCoords*)arrays->tex[0], numVertices,
                             flags);
                 GXSetArray(GX_VA_TEX0, bumpTexCoords, sizeof(RwTexCoords));
@@ -596,13 +596,13 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                     S32 size = 6;
 
                     size += bumpSize;
-                    bumpEntry = RwResourcesAllocateResEntry(lbl_8025D958, NULL, size, fn_8013FEC0);
-                    MATFXGCN_TOKEN(bumpEntry) = lbl_8025E800;
+                    bumpEntry = RwResourcesAllocateResEntry(MatFXGCNBumpMapResOwner, NULL, size, MatFXGCNBumpMapResEntryDestroy);
+                    MATFXGCN_TOKEN(bumpEntry) = _RwDlTokenCurrent;
                     bumpTexCoords =
                         (RwTexCoords*)(((U32)bumpEntry + sizeof(RwResEntry) + 2 + 0x1F) & ~0x1F);
                 }
 
-                fn_8013FA64(bumpTexCoords, object, bumpMap, mesh, (RwV3d*)arrays->pos,
+                MatFXGCNBumpMapTexCoords(bumpTexCoords, object, bumpMap, mesh, (RwV3d*)arrays->pos,
                             (RwV3d*)arrays->nrm, (RwTexCoords*)arrays->tex[0], numVertices,
                             flags);
                 GXSetArray(GX_VA_TEX0, bumpTexCoords, sizeof(RwTexCoords));
@@ -610,7 +610,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
                 GXSetArray(GX_VA_TEX0, arrays->tex[0], sizeof(RwTexCoords));
                 RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
                 RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
-                SetupEnvMapChannels(&lbl_8025E784, envMap);
+                SetupEnvMapChannels(&MatFXGCNBumpEnvMapColor, envMap);
                 resetChannels = TRUE;
                 SetupEnvMapTev();
                 resetTev = TRUE;
@@ -638,7 +638,7 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
             if (resetTev)
             {
-                fn_80158DC4(objectData);
+                _rxGCTevSetup(objectData);
                 resetTev = FALSE;
             }
 
@@ -675,11 +675,11 @@ static RxPipeline* MatFXGCNAtomicPipelineCreate(void)
 
             RxLockedPipeUnlock(RxLockedPipeAddFragment(lpipe, NULL, nodeDef, NULL));
             node = RxPipelineFindNodeByName(pipeline, nodeDef->name, NULL, NULL);
-            lbl_8025F694 = (GCNMTInstanceCB)_rxGameCubeAllInOneGetInstanceCallBack(node);
-            lbl_8025F690 = (GCNMTInstanceCB)_rxGameCubeAllInOneGetReinstanceCallBack(node);
-            _rxGameCubeAllInOneSetInstanceCallBack(node, fn_8013FF48);
+            DefaultAtomicInstanceCallBack = (GCNMTInstanceCB)_rxGameCubeAllInOneGetInstanceCallBack(node);
+            DefaultAtomicReinstanceCallBack = (GCNMTInstanceCB)_rxGameCubeAllInOneGetReinstanceCallBack(node);
+            _rxGameCubeAllInOneSetInstanceCallBack(node, _rpGCMatFXAtomicInstanceCallBack);
             _rxGameCubeAllInOneSetReinstanceCallBack(node, _rpGCMatFXAtomicReinstanceCallBack);
-            RxGameCubeAllInOneSetRenderCallBack(node, fn_80140178);
+            RxGameCubeAllInOneSetRenderCallBack(node, _rpGCMatFXRenderCallback);
 
             return pipeline;
         }
@@ -709,9 +709,9 @@ static RxPipeline* MatFXGCNWorldSectorPipelineCreate(void)
 
             RxLockedPipeUnlock(RxLockedPipeAddFragment(lpipe, NULL, nodeDef, NULL));
             node = RxPipelineFindNodeByName(pipeline, nodeDef->name, NULL, NULL);
-            lbl_8025F68C = (GCNMTInstanceCB)_rxGameCubeAllInOneGetInstanceCallBack(node);
-            _rxGameCubeAllInOneSetInstanceCallBack(node, fn_801400F8);
-            RxGameCubeAllInOneSetRenderCallBack(node, fn_80140178);
+            DefaultSectorInstanceCallBack = (GCNMTInstanceCB)_rxGameCubeAllInOneGetInstanceCallBack(node);
+            _rxGameCubeAllInOneSetInstanceCallBack(node, _rpGCMatFXSectorInstanceCallBack);
+            RxGameCubeAllInOneSetRenderCallBack(node, _rpGCMatFXRenderCallback);
 
             return pipeline;
         }
@@ -724,35 +724,35 @@ static RxPipeline* MatFXGCNWorldSectorPipelineCreate(void)
 
 // Creates the vertex format and the atomic and world sector pipelines; the counterpart of
 // _rpMatFXPipelinesDestroy.
-S32 fn_80140AF4(void)
+S32 _rpMatFXPipelinesCreate(void)
 {
-    lbl_8025F680 = RpGameCubeVtxFmtCreate();
-    RpGameCubeVtxFmtSetNormal(lbl_8025F680, 4, 1);
+    _rpGCMatFXVtxFmtNBT = RpGameCubeVtxFmtCreate();
+    RpGameCubeVtxFmtSetNormal(_rpGCMatFXVtxFmtNBT, 4, 1);
 
-    lbl_8025F684 = MatFXGCNAtomicPipelineCreate();
-    lbl_8025F688 = MatFXGCNWorldSectorPipelineCreate();
+    _RpMatFXAtomicPipe = MatFXGCNAtomicPipelineCreate();
+    _RpMatFXWorldSectorPipe = MatFXGCNWorldSectorPipelineCreate();
 
     return TRUE;
 }
 
 S32 _rpMatFXPipelinesDestroy(void)
 {
-    if (lbl_8025F680)
+    if (_rpGCMatFXVtxFmtNBT)
     {
-        RpGameCubeVtxFmtDestroy(lbl_8025F680);
-        lbl_8025F680 = NULL;
+        RpGameCubeVtxFmtDestroy(_rpGCMatFXVtxFmtNBT);
+        _rpGCMatFXVtxFmtNBT = NULL;
     }
 
-    if (lbl_8025F684)
+    if (_RpMatFXAtomicPipe)
     {
-        _rxPipelineDestroy(lbl_8025F684);
-        lbl_8025F684 = NULL;
+        _rxPipelineDestroy(_RpMatFXAtomicPipe);
+        _RpMatFXAtomicPipe = NULL;
     }
 
-    if (lbl_8025F688)
+    if (_RpMatFXWorldSectorPipe)
     {
-        _rxPipelineDestroy(lbl_8025F688);
-        lbl_8025F688 = NULL;
+        _rxPipelineDestroy(_RpMatFXWorldSectorPipe);
+        _RpMatFXWorldSectorPipe = NULL;
     }
 
     return TRUE;
@@ -760,28 +760,28 @@ S32 _rpMatFXPipelinesDestroy(void)
 
 RpAtomic* _rpMatFXPipelineAtomicSetup(RpAtomic* atomic)
 {
-    atomic->pipeline = lbl_8025F684;
+    atomic->pipeline = _RpMatFXAtomicPipe;
 
     return atomic;
 }
 
 RpWorldSector* _rpMatFXPipelineWorldSectorSetup(RpWorldSector* worldSector)
 {
-    worldSector->pipeline = lbl_8025F688;
+    worldSector->pipeline = _RpMatFXWorldSectorPipe;
 
     return worldSector;
 }
 
 // The per-effect material setup hooks: nothing to do on this platform.
-void fn_80140D0C(RpMaterial* material)
+void MatFXGCNSetupEnvMap(RpMaterial* material)
 {
 }
 
-void fn_80140D10(RpMaterial* material)
+void MatFXGCNSetupBumpMap(RpMaterial* material)
 {
 }
 
-void fn_80140D14(RpMaterial* material)
+void MatFXGCNSetupDual(RpMaterial* material)
 {
 }
 

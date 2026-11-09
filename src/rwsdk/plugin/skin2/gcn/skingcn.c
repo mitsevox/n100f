@@ -8,10 +8,10 @@
 // all-in-one node then draws in place of the instanced arrays.
 
 // The draw sync token to issue next.
-extern volatile U16 lbl_8025E800;
+extern volatile U16 _RwDlTokenCurrent;
 
 // The all-in-one node's reinstance callback before the skin pipeline replaced it.
-GCNAllInOneCallBack lbl_8025F6A8;
+GCNAllInOneCallBack _RwDlDefaultReinstanceCallBack;
 
 S32 _rwDlTokenQueryDone(U16 token);
 
@@ -31,7 +31,7 @@ S32 _rwDlTokenQueryDone(U16 token);
 
 // Blends numVertices positions and normals by up to four bone matrices each, with paired-single
 // quantized loads and stores (GQR6 for positions, GQR7 for normals).
-asm void fn_80144D5C(const RwMatrixWeights* weights, const void* srcPos, const void* srcNrm,
+asm void _rpSkinBlendBody(const RwMatrixWeights* weights, const void* srcPos, const void* srcNrm,
                      void* dstPos, void* dstNrm, const RwMatrix* matrices, const U32* indices,
                      S32 numVertices, U32 posSize, U32 nrmSize, S32 nbtSize)
 {
@@ -260,15 +260,15 @@ asm void fn_80144D5C(const RwMatrixWeights* weights, const void* srcPos, const v
 
 // The destroy notify of a skinned atomic's instanced entry: wait for the GPU, free the skinned
 // arrays' entry and hand the original arrays back to the instanced entry.
-void fn_801450A8(RwResEntry* resEntry)
+void _rpSkinMainResEntryCB(RwResEntry* resEntry)
 {
     GCNVertexArrays* arrays = (GCNVertexArrays*)(resEntry + 1);
     RpSkin* skin;
 
-    if (arrays->syncToken == lbl_8025E800)
+    if (arrays->syncToken == _RwDlTokenCurrent)
     {
-        GXSetDrawSync(lbl_8025E800);
-        lbl_8025E800 = (lbl_8025E800 + 1) % SKINGCN_TOKENWRAP;
+        GXSetDrawSync(_RwDlTokenCurrent);
+        _RwDlTokenCurrent = (_RwDlTokenCurrent + 1) % SKINGCN_TOKENWRAP;
     }
 
     while (!_rwDlTokenQueryDone(arrays->syncToken))
@@ -300,10 +300,10 @@ void fn_801450A8(RwResEntry* resEntry)
 // The destroy notify of the skinned arrays' entry: wait until the GPU has passed its token.
 void _rpSkinResEntryWaitDone(RwResEntry* resEntry)
 {
-    if (SKINGCN_TOKEN(resEntry) == lbl_8025E800)
+    if (SKINGCN_TOKEN(resEntry) == _RwDlTokenCurrent)
     {
-        GXSetDrawSync(lbl_8025E800);
-        lbl_8025E800 = (lbl_8025E800 + 1) % SKINGCN_TOKENWRAP;
+        GXSetDrawSync(_RwDlTokenCurrent);
+        _RwDlTokenCurrent = (_RwDlTokenCurrent + 1) % SKINGCN_TOKENWRAP;
     }
 
     while (!_rwDlTokenQueryDone(SKINGCN_TOKEN(resEntry)))
@@ -315,7 +315,7 @@ void _rpSkinResEntryWaitDone(RwResEntry* resEntry)
 
 // Makes sure the skinned arrays' entry exists and is not in use by the GPU, allocating a new one
 // sized for the geometry's vertex format when needed.
-S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEntry** entryRef)
+S32 _rpSkinVertexBuffersUpdate(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEntry** entryRef)
 {
     RpGeometry* geometry = atomic->geometry;
     RpGameCubeVtxFmt* vtxFmt;
@@ -325,7 +325,7 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
     S32 nrmSize;
 
     RwResourcesUseResEntry(*entryRef);
-    (*entryRef)->destroyNotify = fn_801450A8;
+    (*entryRef)->destroyNotify = _rpSkinMainResEntryCB;
 
     if (!skin->savedPos)
     {
@@ -351,7 +351,7 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
 
     if (!arrays->pos)
     {
-        vtxFmt = fn_8015D818(geometry);
+        vtxFmt = RpGameCubeGeometryGetVtxFmt(geometry);
 
         if (vtxFmt)
         {
@@ -415,7 +415,7 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
         RwResourcesUseResEntry(SKINGCN_ENTRY(arrays));
     }
 
-    SKINGCN_TOKEN(SKINGCN_ENTRY(arrays)) = lbl_8025E800;
+    SKINGCN_TOKEN(SKINGCN_ENTRY(arrays)) = _RwDlTokenCurrent;
 
     return TRUE;
 }
@@ -463,7 +463,7 @@ static inline void SkinBlendArrays(void* dstPos, void* dstNrm, const void* srcPo
         mtspr 919, gqr7
     }
 
-    fn_80144D5C(weights, srcPos, dstNrm ? srcNrm : srcPos, dstPos, dstNrm, matrices, indices,
+    _rpSkinBlendBody(weights, srcPos, dstNrm ? srcNrm : srcPos, dstPos, dstNrm, matrices, indices,
                 numVertices, posSize, nrmSize, nbtSize);
 
     DCFlushRange(((RwResEntry**)dstPos)[-1] + 1, ((RwResEntry**)dstPos)[-1]->size);
@@ -518,7 +518,7 @@ static inline void SkinBuildMatrices(RwMatrix* matrix, const RwMatrix* skinToBon
 
 // The skin pipeline's reinstance callback: reinstance the original arrays when needed, build the
 // bone matrices for this frame and blend the skinned arrays from them.
-void* fn_80145598(void* object, GCNObjectData* objectData)
+void* _rpSkinAtomicReinstanceCallBack(void* object, GCNObjectData* objectData)
 {
     GCNVertexArrays* arrays;
     RpAtomic* atomic;
@@ -534,7 +534,7 @@ void* fn_80145598(void* object, GCNObjectData* objectData)
     {
         if (!(geometry->flags & rpGEOMETRYNATIVE))
         {
-            lbl_8025F6A8(atomic, objectData);
+            _RwDlDefaultReinstanceCallBack(atomic, objectData);
         }
 
         skin->savedPos = arrays->pos;
@@ -549,12 +549,12 @@ void* fn_80145598(void* object, GCNObjectData* objectData)
 
         arrays->pos = skin->savedPos;
         arrays->nrm = skin->savedNrm;
-        lbl_8025F6A8(atomic, objectData);
+        _RwDlDefaultReinstanceCallBack(atomic, objectData);
         arrays->pos = pos;
         arrays->nrm = nrm;
     }
 
-    if (!fn_80145228(skin, atomic, arrays, &objectData->repEntry))
+    if (!_rpSkinVertexBuffersUpdate(skin, atomic, arrays, &objectData->repEntry))
     {
         return NULL;
     }
@@ -564,7 +564,7 @@ void* fn_80145598(void* object, GCNObjectData* objectData)
 
     SkinBlendArrays(arrays->pos, arrays->nrm, skin->savedPos, skin->savedNrm,
                     skin->vertexBoneIndices, skin->vertexBoneWeights, _rpSkinGlobals.matrixCache,
-                    fn_8015D818(geometry), geometry->numVertices);
+                    RpGameCubeGeometryGetVtxFmt(geometry), geometry->numVertices);
 
     return object;
 }
@@ -612,7 +612,7 @@ static inline void SkinBlendArrays(void* dstPos, void* dstNrm, const RwMatrixWei
         mtspr 919, gqr7
     }
 
-    fn_80144D5C(weights, srcPos, dstNrm ? srcNrm : srcPos, dstPos, dstNrm, matrices, indices,
+    _rpSkinBlendBody(weights, srcPos, dstNrm ? srcNrm : srcPos, dstPos, dstNrm, matrices, indices,
                 numVertices, posSize, nrmSize, nbtSize);
 
     DCFlushRange(((RwResEntry**)dstPos)[-1] + 1, ((RwResEntry**)dstPos)[-1]->size);
@@ -675,7 +675,7 @@ static inline void SkinBuildMatrices(RpAtomic* atomic, RpSkin* skin)
 
 // The skin pipeline's reinstance callback: reinstance the original arrays when needed, build the
 // bone matrices for this frame and blend the skinned arrays from them.
-void* fn_80145598(void* object, GCNObjectData* objectData)
+void* _rpSkinAtomicReinstanceCallBack(void* object, GCNObjectData* objectData)
 {
     RpAtomic* atomic = (RpAtomic*)object;
     RpGeometry* geometry = atomic->geometry;
@@ -688,7 +688,7 @@ void* fn_80145598(void* object, GCNObjectData* objectData)
     {
         if (!(geometry->flags & rpGEOMETRYNATIVE))
         {
-            lbl_8025F6A8(atomic, objectData);
+            _RwDlDefaultReinstanceCallBack(atomic, objectData);
         }
 
         skin->savedPos = arrays->pos;
@@ -703,12 +703,12 @@ void* fn_80145598(void* object, GCNObjectData* objectData)
 
         arrays->pos = skin->savedPos;
         arrays->nrm = skin->savedNrm;
-        lbl_8025F6A8(atomic, objectData);
+        _RwDlDefaultReinstanceCallBack(atomic, objectData);
         arrays->pos = pos;
         arrays->nrm = nrm;
     }
 
-    if (!fn_80145228(skin, atomic, arrays, &objectData->repEntry))
+    if (!_rpSkinVertexBuffersUpdate(skin, atomic, arrays, &objectData->repEntry))
     {
         return NULL;
     }
@@ -716,7 +716,7 @@ void* fn_80145598(void* object, GCNObjectData* objectData)
     SkinBuildMatrices(atomic, skin);
 
     numVertices = geometry->numVertices;
-    vtxFmt = fn_8015D818(geometry);
+    vtxFmt = RpGameCubeGeometryGetVtxFmt(geometry);
 
     SkinBlendArrays(arrays->pos, arrays->nrm, skin->vertexBoneWeights, skin->savedPos,
                     skin->savedNrm, skin->vertexBoneIndices, _rpSkinGlobals.matrixCache,
@@ -791,7 +791,7 @@ RxPipeline* _rpSkinPipelineCreate(RpSkinType type, void* instanceCB, void* reins
 
     if (reinstanceCB)
     {
-        lbl_8025F6A8 = (GCNAllInOneCallBack)_rxGameCubeAllInOneGetReinstanceCallBack(node);
+        _RwDlDefaultReinstanceCallBack = (GCNAllInOneCallBack)_rxGameCubeAllInOneGetReinstanceCallBack(node);
         _rxGameCubeAllInOneSetReinstanceCallBack(node, reinstanceCB);
     }
 

@@ -12,36 +12,12 @@ void _rwDlTextureRasterFlush(void);
 
 // The GX primitive for each RenderWare primitive type (none, line list, polyline, triangle
 // list, triangle strip, triangle fan, point list).
-GXPrimitive lbl_801DF0E8[7] = {
+GXPrimitive _rwDlPrimConvTbl[7] = {
     0, GX_LINES, GX_LINESTRIP, GX_TRIANGLES, GX_TRIANGLESTRIP, GX_TRIANGLEFAN, GX_POINTS,
 };
 
-// The node definitions: each names its node and points at its node body; neither has clusters,
-// outputs or private data.
-char lbl_801DF104[] = "ImmInstance.csl";
-
-RxNodeDefinition lbl_801DF114 = {
-    lbl_801DF104,
-    { _rwDlImmInstanceNode, NULL, NULL, NULL, NULL, NULL, NULL },
-    { 0, NULL, NULL, 0, NULL },
-    0,
-    rxNODEDEFCONST,
-    0,
-};
-
-char lbl_801DF154[] = "SubmitNoLight.csl";
-
-RxNodeDefinition lbl_801DF168 = {
-    lbl_801DF154,
-    { DlSubmitNode, NULL, NULL, NULL, NULL, NULL, NULL },
-    { 0, NULL, NULL, 0, NULL },
-    0,
-    rxNODEDEFCONST,
-    0,
-};
-
 // The vertex pool the instance node passed on.
-rwIm3DPool* lbl_8025F8B8;
+rwIm3DPool* _rwDlImmPool;
 
 // The pool flag for textured vertices. Written for this project.
 #define DLSUBMIT_VERTEXUV 0x01
@@ -69,14 +45,26 @@ rwIm3DPool* lbl_8025F8B8;
 
 S32 _rwDlImmInstanceNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
-    lbl_8025F8B8 = (rwIm3DPool*)params->dataParam;
+    _rwDlImmPool = (rwIm3DPool*)params->dataParam;
 
     return TRUE;
 }
 
+// The node definition: names the node and points at its node body; it has no clusters, outputs or
+// private data.
 RxNodeDefinition* RxNodeDefinitionGetGameCubeImmInstance(void)
 {
-    return &lbl_801DF114;
+    static char _ImmInstance_csl[] = "ImmInstance.csl";
+    static RxNodeDefinition nodeImmInstanceCSL = {
+        _ImmInstance_csl,
+        { _rwDlImmInstanceNode, NULL, NULL, NULL, NULL, NULL, NULL },
+        { 0, NULL, NULL, 0, NULL },
+        0,
+        rxNODEDEFCONST,
+        0,
+    };
+
+    return &nodeImmInstanceCSL;
 }
 
 // Sets up GX for unlit position and color vertices, with one texture stage when textured.
@@ -115,7 +103,7 @@ static void DlSubmitSetup(_rwIm3DPoolStash* stash)
 // Sends the pool's vertices, through its indices when it has them, as its primitive.
 S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
 {
-    rwIm3DPool* pool = lbl_8025F8B8;
+    rwIm3DPool* pool = _rwDlImmPool;
     _rwIm3DPoolStash* stash = &pool->stash;
     RwIm3DVertex* verts = pool->elements;
 
@@ -124,7 +112,7 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         RwImVertexIndex* index = stash->indices;
 
         DlSubmitSetup(stash);
-        GXBegin(lbl_801DF0E8[stash->primType], GX_VTXFMT0, stash->numIndices);
+        GXBegin(_rwDlPrimConvTbl[stash->primType], GX_VTXFMT0, stash->numIndices);
 
         switch (stash->primType)
         {
@@ -218,7 +206,7 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
     else
     {
         DlSubmitSetup(stash);
-        GXBegin(lbl_801DF0E8[stash->primType], GX_VTXFMT0, lbl_8025F8B8->numElements);
+        GXBegin(_rwDlPrimConvTbl[stash->primType], GX_VTXFMT0, _rwDlImmPool->numElements);
 
         switch (stash->primType)
         {
@@ -226,7 +214,7 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         case rwPRIMTYPETRISTRIP:
         case rwPRIMTYPETRIFAN:
         {
-            U16 n = lbl_8025F8B8->numElements;
+            U16 n = _rwDlImmPool->numElements;
 
             if (stash->flags & DLSUBMIT_VERTEXUV)
             {
@@ -249,7 +237,7 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         }
         case rwPRIMTYPETRILIST:
         {
-            U16 n = lbl_8025F8B8->numElements / 3;
+            U16 n = _rwDlImmPool->numElements / 3;
 
             if (stash->flags & DLSUBMIT_VERTEXUV)
             {
@@ -276,7 +264,7 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
         }
         case rwPRIMTYPELINELIST:
         {
-            U16 n = lbl_8025F8B8->numElements >> 1;
+            U16 n = _rwDlImmPool->numElements >> 1;
 
             if (stash->flags & DLSUBMIT_VERTEXUV)
             {
@@ -313,7 +301,19 @@ S32 DlSubmitNode(RxPipelineNode* self, RxPipelineNodeParam* params)
     return TRUE;
 }
 
+// The node definition: names the node and points at its node body; it has no clusters, outputs or
+// private data.
 RxNodeDefinition* RxNodeDefinitionGetGameCubeSubmitNoLight(void)
 {
-    return &lbl_801DF168;
+    static char _SubmitNoLight_csl[] = "SubmitNoLight.csl";
+    static RxNodeDefinition nodeDlSubmitNoLightCSL = {
+        _SubmitNoLight_csl,
+        { DlSubmitNode, NULL, NULL, NULL, NULL, NULL, NULL },
+        { 0, NULL, NULL, 0, NULL },
+        0,
+        rxNODEDEFCONST,
+        0,
+    };
+
+    return &nodeDlSubmitNoLightCSL;
 }

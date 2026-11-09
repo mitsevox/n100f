@@ -19,13 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if VERSION_GIHE78_REV0
-extern "C" S32 lbl_8025E984;
-#define BSP_LOADING_H003 lbl_8025E984
-#elif VERSION_GIHE78_REV1
-extern "C" S32 lbl_8027081C;
-#define BSP_LOADING_H003 lbl_8027081C
-#endif
+extern "C" S32 gRWHeapUseXMem;
 
 struct xAnimAssetTable
 {
@@ -258,14 +252,14 @@ static void* BSP_Read(void*, U32 aid, void* indata, U32 insize, U32* outsize)
 
     if (globals.sceneCur->sceneID == zSceneIDFromName("H003"))
     {
-        BSP_LOADING_H003 = 1;
+        gRWHeapUseXMem = 1;
     }
 
     RpWorld* bsp = RpWorldStreamRead(stream);
 
-    if (BSP_LOADING_H003)
+    if (gRWHeapUseXMem)
     {
-        BSP_LOADING_H003 = 0;
+        gRWHeapUseXMem = 0;
     }
 
     if (bsp == NULL)

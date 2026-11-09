@@ -1,7 +1,7 @@
 #include <rpworld.h>
 
-extern S32 lbl_801DDA48[5];
-extern S32 lbl_801DDA5C[7];
+extern S32 rwGCNCompTypeSize[5];
+extern S32 rwGCNClrFormatSize[7];
 
 // Sets the stride of each attribute in flags: its own size, or, when the format interleaves
 // the attributes, the size of one whole vertex for all of them.
@@ -17,19 +17,19 @@ static inline void VtxDescInitFast(GCNVertexArrays* arrays, const RpGameCubeVtxF
 
     if (flags & rpGEOMETRYPOSITIONS)
     {
-        arrays->posStride = lbl_801DDA48[vtxFmt->compType[0]] * 3;
+        arrays->posStride = rwGCNCompTypeSize[vtxFmt->compType[0]] * 3;
         stride = arrays->posStride;
     }
 
     if (flags & rpGEOMETRYNORMALS)
     {
-        arrays->nrmStride = lbl_801DDA48[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
+        arrays->nrmStride = rwGCNCompTypeSize[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
         stride += arrays->nrmStride;
     }
 
     if (flags & rpGEOMETRYPRELIT)
     {
-        arrays->clrStride = lbl_801DDA5C[vtxFmt->compType[10]];
+        arrays->clrStride = rwGCNClrFormatSize[vtxFmt->compType[10]];
         stride += arrays->clrStride;
     }
 
@@ -39,7 +39,7 @@ static inline void VtxDescInitFast(GCNVertexArrays* arrays, const RpGameCubeVtxF
 
         for (i = 0; i < numTexCoords; i++)
         {
-            arrays->texStride[i] = (lbl_801DDA48[(vtxFmt->compType + 2)[i]] * 2) & 0xFE;
+            arrays->texStride[i] = (rwGCNCompTypeSize[(vtxFmt->compType + 2)[i]] * 2) & 0xFE;
             stride += arrays->texStride[i];
         }
     }

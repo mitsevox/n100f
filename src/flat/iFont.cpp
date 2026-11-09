@@ -27,7 +27,7 @@ static RwIm2DVertex ourGlobals[120];
 
 static RxRenderStateVector rsv;
 
-static RwIm2DVertex lbl_801E1428[4];
+static RwIm2DVertex sGlyphVerts[4];
 
 static RwIm2DVertex* im2d_vert;
 
@@ -35,12 +35,7 @@ static S32 im2d_vert_ct;
 
 extern "C" {
 // How far characters bob while they wiggle (0 for no wiggle), and the wiggle clock.
-#if VERSION_GIHE78_REV0
-#define FONT_WIGGLE lbl_8025E8C0
-#elif VERSION_GIHE78_REV1
-#define FONT_WIGGLE lbl_80270758
-#endif
-F32 FONT_WIGGLE;
+F32 gFontWiggle;
 F32 gFontWiggleTime;
 }
 
@@ -65,7 +60,7 @@ RwImage* RwImageSetFromRaster(RwImage* image, RwRaster* raster);
 #endif
 
 // The texture cell of each controller-button glyph, as (u, v).
-static F32 lbl_801AD420[4][2] = {
+static F32 sButtonGlyphUV[4][2] = {
     { 0.5f, 0.0f },
     { 0.5f, 0.5f },
     { 0.0f, 0.0f },
@@ -165,7 +160,7 @@ void iFontDrawBackdrop(xFontBox* box)
 #if VERSION_GIHE78_REV0
 void iFontDrawButton(S32 c, F32 x, F32 y, F32 w, F32 h)
 {
-    RwIm2DVertex* vert = lbl_801E1428;
+    RwIm2DVertex* vert = sGlyphVerts;
     x += 0.5f * w;
     y += 0.5f * h;
     x -= 0.5f * h;
@@ -183,8 +178,8 @@ void iFontDrawButton(S32 c, F32 x, F32 y, F32 w, F32 h)
         }
     }
 
-    F32 bu = lbl_801AD420[c - 'T'][0];
-    F32 bv = lbl_801AD420[c - 'T'][1];
+    F32 bu = sButtonGlyphUV[c - 'T'][0];
+    F32 bv = sButtonGlyphUV[c - 'T'][1];
     RwRenderStateSet(rwRENDERSTATETEXTURERASTER, sButtonRaster);
 
     F32 du = 0.499999911f;
@@ -217,13 +212,13 @@ void iFontDrawButton(S32 c, F32 x, F32 y, F32 w, F32 h)
     vert[3].v = bv;
     RwIm2DVertexSetIntRGBA(&vert[3], 0xFF, 0xFF, 0xFF, 0xFF);
 
-    RwIm2DRenderPrimitive(rwPRIMTYPETRISTRIP, lbl_801E1428, 4);
+    RwIm2DRenderPrimitive(rwPRIMTYPETRISTRIP, sGlyphVerts, 4);
     RwRenderStateSet(rwRENDERSTATETEXTURERASTER, sRaster);
 }
 #elif VERSION_GIHE78_REV1
 void iFontDrawButton(S32 c, F32 x, F32 y, F32 w, F32 h)
 {
-    RwIm2DVertex* vert = lbl_801E1428;
+    RwIm2DVertex* vert = sGlyphVerts;
     x += 0.5f * w;
     y += 0.5f * h;
     x -= 0.5f * h;
@@ -241,8 +236,8 @@ void iFontDrawButton(S32 c, F32 x, F32 y, F32 w, F32 h)
         }
     }
 
-    F32 bu = lbl_801AD420[c - 'b'][0];
-    F32 bv = lbl_801AD420[c - 'b'][1];
+    F32 bu = sButtonGlyphUV[c - 'b'][0];
+    F32 bv = sButtonGlyphUV[c - 'b'][1];
     RwRenderStateSet(rwRENDERSTATETEXTURERASTER, sButtonRaster);
 
     F32 du = 0.499999911f;
@@ -275,7 +270,7 @@ void iFontDrawButton(S32 c, F32 x, F32 y, F32 w, F32 h)
     vert[3].v = bv;
     RwIm2DVertexSetIntRGBA(&vert[3], 0xFF, 0xFF, 0xFF, 0xFF);
 
-    RwIm2DRenderPrimitive(rwPRIMTYPETRISTRIP, lbl_801E1428, 4);
+    RwIm2DRenderPrimitive(rwPRIMTYPETRISTRIP, sGlyphVerts, 4);
     RwRenderStateSet(rwRENDERSTATETEXTURERASTER, sRaster);
 }
 #endif
@@ -342,10 +337,10 @@ void iFontDrawChar(char c, F32 depth, iColor_tag color, xFontBox* box)
         du = (F32)font->pspc[c].dx * font->oo_tex_width;
     }
 
-    if (0.0f != FONT_WIGGLE)
+    if (0.0f != gFontWiggle)
     {
         F32 wave = (F32)cos(10.0f * gFontWiggleTime + (x + y) / 10.0f);
-        y += FONT_WIGGLE * wave;
+        y += gFontWiggle * wave;
     }
 
     F32 sx = font->oo_tex_width * (font->oo_tex_width * box->draw_width);
@@ -506,10 +501,10 @@ void iFontDrawChar(U8 c, F32 depth, iColor_tag color, xFontBox* box)
         du = (F32)font->pspc[c].dx * font->oo_tex_width;
     }
 
-    if (0.0f != FONT_WIGGLE)
+    if (0.0f != gFontWiggle)
     {
         F32 wave = (F32)cos(10.0f * gFontWiggleTime + (x + y) / 10.0f);
-        y += FONT_WIGGLE * wave;
+        y += gFontWiggle * wave;
     }
 
     F32 sx = font->oo_tex_width * (font->oo_tex_width * box->draw_width);

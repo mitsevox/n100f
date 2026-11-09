@@ -21,10 +21,8 @@
 
 void iSystemPollResetAndDisc();
 
-extern "C" {
-void fn_800443AC();
-U32 fn_800443F8();
-}
+void xTRCRenderFrame();
+U32 xTRCDiskHalted();
 
 void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba);
 
@@ -642,7 +640,7 @@ void iSndPause(U32 snd, U32 pause)
                 AXSetVoiceState(streams[i].vinf.voice, 0);
                 streams[i].vinf.flags |= 0x2;
             }
-            else if (!fn_800443F8() && (U32)gTrcDisk[1] == TRC_DiskIdentified)
+            else if (!xTRCDiskHalted() && (U32)gTrcDisk[1] == TRC_DiskIdentified)
             {
                 AXSetVoiceState(streams[i].vinf.voice, 1);
                 streams[i].vinf.flags &= ~0x2;
@@ -832,7 +830,7 @@ static void iSndUpdateStreams(F32)
 {
     S32 i;
     U8 ided = gTrcDisk[1] == TRC_DiskIdentified;
-    U32 suspend = fn_800443F8();
+    U32 suspend = xTRCDiskHalted();
     suspend |= !ided;
 
     for (i = 0; i < 6; i++)
@@ -1382,7 +1380,7 @@ void iSndLoadSounds(void* data)
             while (SoundFlags != 0)
             {
                 iSystemPollResetAndDisc();
-                fn_800443AC();
+                xTRCRenderFrame();
                 if ((fc & 0xF) == 0)
                 {
                     zGameScreenTransitionUpdate(0.5f, NULL, NULL);

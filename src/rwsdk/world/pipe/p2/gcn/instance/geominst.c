@@ -16,14 +16,14 @@
 #define CLR_RGBA8  5
 
 // Bytes per component, by component type, and bytes per color, by color format.
-S32 lbl_801DDA48[5] = { 1, 1, 2, 2, 4 };
-S32 lbl_801DDA5C[7] = { 2, 3, 4, 2, 3, 4, 0 };
+S32 rwGCNCompTypeSize[5] = { 1, 1, 2, 2, 4 };
+S32 rwGCNClrFormatSize[7] = { 2, 3, 4, 2, 3, 4, 0 };
 
 #define ALIGN32(_size) (((_size) + 0x1F) & ~0x1F)
 
 // The vertex data size for the attributes in flags (rpGEOMETRY* flags) of numVerts vertices:
 // one 32-byte aligned stream per attribute, or one interleaved stream.
-S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numTexCoords)
+S32 rwGCNVertexGetSize(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numTexCoords)
 {
     S32 size = 0;
 
@@ -38,17 +38,17 @@ S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numT
 
         if (flags & rpGEOMETRYPOSITIONS)
         {
-            stride = lbl_801DDA48[vtxFmt->compType[0]] * 3;
+            stride = rwGCNCompTypeSize[vtxFmt->compType[0]] * 3;
         }
 
         if (flags & rpGEOMETRYNORMALS)
         {
-            stride += lbl_801DDA48[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
+            stride += rwGCNCompTypeSize[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
         }
 
         if (flags & rpGEOMETRYPRELIT)
         {
-            stride += lbl_801DDA5C[vtxFmt->compType[10]];
+            stride += rwGCNClrFormatSize[vtxFmt->compType[10]];
         }
 
         if (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
@@ -60,7 +60,7 @@ S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numT
 
             for (i = 0; (S32)i < numTexCoords; i++)
             {
-                stride += lbl_801DDA48[(vtxFmt->compType + 2)[i]] * 2;
+                stride += rwGCNCompTypeSize[(vtxFmt->compType + 2)[i]] * 2;
             }
         }
 
@@ -70,17 +70,17 @@ S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numT
     {
         if (flags & rpGEOMETRYPOSITIONS)
         {
-            size = ALIGN32(numVerts * (lbl_801DDA48[vtxFmt->compType[0]] * 3));
+            size = ALIGN32(numVerts * (rwGCNCompTypeSize[vtxFmt->compType[0]] * 3));
         }
 
         if (flags & rpGEOMETRYNORMALS)
         {
-            size += ALIGN32(numVerts * (lbl_801DDA48[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3)));
+            size += ALIGN32(numVerts * (rwGCNCompTypeSize[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3)));
         }
 
         if (flags & rpGEOMETRYPRELIT)
         {
-            size += ALIGN32(numVerts * lbl_801DDA5C[vtxFmt->compType[10]]);
+            size += ALIGN32(numVerts * rwGCNClrFormatSize[vtxFmt->compType[10]]);
         }
 
         if (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
@@ -92,7 +92,7 @@ S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numT
 
             for (i = 0; (S32)i < numTexCoords; i++)
             {
-                size += ALIGN32(numVerts * (lbl_801DDA48[(vtxFmt->compType + 2)[i]] * 2));
+                size += ALIGN32(numVerts * (rwGCNCompTypeSize[(vtxFmt->compType + 2)[i]] * 2));
             }
         }
     }
@@ -194,16 +194,16 @@ S32 _rwGCNVtxFmtInstPos3D(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d
         }
         else
         {
-            memcpy(dst, src, numVerts * lbl_801DDA48[vtxFmt->compType[0]] * 3);
+            memcpy(dst, src, numVerts * rwGCNCompTypeSize[vtxFmt->compType[0]] * 3);
         }
         break;
     }
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
     {
-        return lbl_801DDA48[vtxFmt->compType[0]] * 3;
+        return rwGCNCompTypeSize[vtxFmt->compType[0]] * 3;
     }
-    return ALIGN32(numVerts * lbl_801DDA48[vtxFmt->compType[0]] * 3);
+    return ALIGN32(numVerts * rwGCNCompTypeSize[vtxFmt->compType[0]] * 3);
 }
 
 // Writes numVerts normals: signed bytes scaled by 64, signed shorts scaled by 16384, or floats
@@ -272,14 +272,14 @@ S32 _rwGCNVtxFmtInstNrm(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* 
         }
         else
         {
-            memcpy(dst, src, numVerts * lbl_801DDA48[vtxFmt->compType[1]] * 3);
+            memcpy(dst, src, numVerts * rwGCNCompTypeSize[vtxFmt->compType[1]] * 3);
         }
         break;
     }
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
     {
-        return lbl_801DDA48[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
+        return rwGCNCompTypeSize[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
     }
 
     count = 3;
@@ -287,7 +287,7 @@ S32 _rwGCNVtxFmtInstNrm(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwV3d* 
     {
         count = 9;
     }
-    return ALIGN32(count * (numVerts * lbl_801DDA48[vtxFmt->compType[1]]));
+    return ALIGN32(count * (numVerts * rwGCNCompTypeSize[vtxFmt->compType[1]]));
 }
 
 // The same from compressed normals (bytes scaled by 128).
@@ -367,7 +367,7 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
     {
-        return lbl_801DDA48[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
+        return rwGCNCompTypeSize[vtxFmt->compType[1]] * (vtxFmt->frac[1] ? 9 : 3);
     }
 
     count = 3;
@@ -375,7 +375,7 @@ S32 _rwGCNVtxFmtInstNrmCmp(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RpVe
     {
         count = 9;
     }
-    return ALIGN32(count * (numVerts * lbl_801DDA48[vtxFmt->compType[1]]));
+    return ALIGN32(count * (numVerts * rwGCNCompTypeSize[vtxFmt->compType[1]]));
 }
 
 // Writes numVerts prelight colors in the format's color format.
@@ -473,16 +473,16 @@ S32 _rwGCNVtxFmtInstClr(const RpGameCubeVtxFmt* vtxFmt, void* dst, const RwRGBA*
         }
         else
         {
-            memcpy(dst, src, numVerts * lbl_801DDA5C[vtxFmt->compType[10]]);
+            memcpy(dst, src, numVerts * rwGCNClrFormatSize[vtxFmt->compType[10]]);
         }
         break;
     }
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
     {
-        return lbl_801DDA5C[vtxFmt->compType[10]];
+        return rwGCNClrFormatSize[vtxFmt->compType[10]];
     }
-    return ALIGN32(numVerts * lbl_801DDA5C[vtxFmt->compType[10]]);
+    return ALIGN32(numVerts * rwGCNClrFormatSize[vtxFmt->compType[10]]);
 }
 
 // Writes numVerts coordinates of texture coordinate set index.
@@ -579,14 +579,14 @@ S32 _rwGCNVtxFmtInstTex(const RpGameCubeVtxFmt* vtxFmt, S32 index, void* dst,
         }
         else
         {
-            memcpy(dst, src, numVerts * lbl_801DDA48[compType] * 2);
+            memcpy(dst, src, numVerts * rwGCNCompTypeSize[compType] * 2);
         }
         break;
     }
 
     if (vtxFmt->flags & VTXFMT_INTERLEAVED)
     {
-        return lbl_801DDA48[*type] * 2;
+        return rwGCNCompTypeSize[*type] * 2;
     }
-    return ALIGN32(numVerts * lbl_801DDA48[*type] * 2);
+    return ALIGN32(numVerts * rwGCNCompTypeSize[*type] * 2);
 }

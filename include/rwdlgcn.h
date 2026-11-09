@@ -73,28 +73,28 @@ struct RwGcnRenderStateCache
     U8 alphaRef1;
 };
 
-#define RWGCRASTEREXT(_raster) ((RwGCRasterExt*)((U8*)(_raster) + lbl_8025F870))
-#define RWGCTEXTUREEXT(_texture) ((RwGCTextureExt*)((U8*)(_texture) + lbl_8025F888))
+#define RWGCRASTEREXT(_raster) ((RwGCRasterExt*)((U8*)(_raster) + _RwGameCubeRasterExtOffset))
+#define RWGCTEXTUREEXT(_texture) ((RwGCTextureExt*)((U8*)(_texture) + _RwGameCubeTextureExtOffset))
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // The raster and texture plugin offsets.
-extern S32 lbl_8025F870;
-extern S32 lbl_8025F888;
+extern S32 _RwGameCubeRasterExtOffset;
+extern S32 _RwGameCubeTextureExtOffset;
 
 // The render mode the device was opened with (dldevice.c).
 extern GXRenderModeObj* _RwDlRenderMode;
 
 // The render states the driver last set (dlrendst.c).
-extern RwGcnRenderStateCache lbl_8025E348;
+extern RwGcnRenderStateCache _RwDlStateCache;
 
 S32 _rwDlFindMSB(S32 num);
-S32 fn_80179064(RwRaster* raster, U8 level);
-S32 fn_80179C7C(RwRaster* raster);
-S32 fn_80179D54(RwRaster* raster, S32 format, S32 tlutFormat, S32 flags, U8 depth, S32 numLevels);
-F32 fn_8017CF40(const GXTexObj* texObj);
+S32 DlRasterGetMipLevelSize(RwRaster* raster, U8 level);
+S32 _rwDlRasterGetSize(RwRaster* raster);
+S32 _rwDlTextureRasterCreate(RwRaster* raster, S32 format, S32 tlutFormat, S32 flags, U8 depth, S32 numLevels);
+F32 DlTextureGetLODBias(const GXTexObj* texObj);
 S32 _rwDlTextureSetRaster(RwTexture* texture, RwRaster* raster, S32 flags);
 S32 _rwDlGetRenderState(RwRenderState state, void* param);
 S32 _rwDlSetRenderState(RwRenderState state, void* param);

@@ -12,13 +12,13 @@ RwRaster* DlSpriteRasterContext;
 
 // Whether the frame is drawn in two halves, which half is being drawn, and the line where the
 // halves meet (dldevice.c).
-extern S32 lbl_8025F808;
-extern S32 lbl_8025E7F0;
-extern S32 lbl_8025F85C;
+extern S32 _RwDlFSAA;
+extern S32 _RwDlFSAATop;
+extern S32 _RwDlHalfHeight;
 
 // The pixel format the frame uses, and the one GX is set to (dldevice.c).
-extern S32 lbl_8025F7FC;
-extern S32 lbl_8025F800;
+extern S32 _RwDlPixelFormat;
+extern S32 _RwDlCurPixelFormat;
 
 RwRGBA* RwRGBASetFromPixel(RwRGBA* rgbOut, U32 pixelValue, S32 rasterFormat);
 
@@ -30,10 +30,10 @@ RwRGBA* RwRGBASetFromPixel(RwRGBA* rgbOut, U32 pixelValue, S32 rasterFormat);
 #define DLSPRITE_RESTORESTATES()                                                                   \
     do                                                                                             \
     {                                                                                              \
-        GXSetZMode(GX_TRUE, (GXCompare)lbl_8025E348.zFunc, (GXBool)lbl_8025E348.zWriteEnable);    \
-        GXSetBlendMode(GX_BM_BLEND, (GXBlendFactor)lbl_8025E348.gxSrcBlend,                        \
-                       (GXBlendFactor)lbl_8025E348.gxDestBlend, GX_LO_CLEAR);                      \
-        GXSetCullMode((GXCullMode)(lbl_8025E348.cullMode - 1));                                    \
+        GXSetZMode(GX_TRUE, (GXCompare)_RwDlStateCache.zFunc, (GXBool)_RwDlStateCache.zWriteEnable);    \
+        GXSetBlendMode(GX_BM_BLEND, (GXBlendFactor)_RwDlStateCache.gxSrcBlend,                        \
+                       (GXBlendFactor)_RwDlStateCache.gxDestBlend, GX_LO_CLEAR);                      \
+        GXSetCullMode((GXCullMode)(_RwDlStateCache.cullMode - 1));                                    \
     } while (0)
 
 #define DLSPRITE_ERROR(_code)                                                                      \
@@ -85,27 +85,27 @@ void _rwDlRasterRenderQuadInit(RwRect* rect)
         GXSetViewport(0.0f, 0.0f, renderMode->fbWidth, renderMode->xfbHeight, 0.0f, 1.0f);
     }
 
-    if (!lbl_8025F808)
+    if (!_RwDlFSAA)
     {
         GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x,
                      DlSpriteRasterContext->nOffsetY + rect->y, rect->w, rect->h);
     }
-    else if (lbl_8025E7F0)
+    else if (_RwDlFSAATop)
     {
         S32 y = (DlSpriteRasterContext->nOffsetY << 1) + rect->y;
 
-        if (rect->h + y <= (lbl_8025F85C + 2))
+        if (rect->h + y <= (_RwDlHalfHeight + 2))
         {
             GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x, y, rect->w, rect->h);
         }
-        else if (y > lbl_8025F85C + 2)
+        else if (y > _RwDlHalfHeight + 2)
         {
-            GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, lbl_8025F85C + 2);
+            GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, _RwDlHalfHeight + 2);
         }
         else
         {
             GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x, y, rect->w,
-                         (lbl_8025F85C + 2) - y);
+                         (_RwDlHalfHeight + 2) - y);
         }
 
         GXSetScissorBoxOffset(0, 0);
@@ -114,21 +114,21 @@ void _rwDlRasterRenderQuadInit(RwRect* rect)
     {
         S32 y = (DlSpriteRasterContext->nOffsetY << 1) + rect->y;
 
-        if (y >= lbl_8025F85C - 2)
+        if (y >= _RwDlHalfHeight - 2)
         {
             GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x, y, rect->w, rect->h);
         }
-        else if (rect->h + y < lbl_8025F85C - 2)
+        else if (rect->h + y < _RwDlHalfHeight - 2)
         {
-            GXSetScissor(0, lbl_8025F85C - 2, _RwDlRenderMode->fbWidth, lbl_8025F85C + 2);
+            GXSetScissor(0, _RwDlHalfHeight - 2, _RwDlRenderMode->fbWidth, _RwDlHalfHeight + 2);
         }
         else
         {
-            GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x, lbl_8025F85C - 2, rect->w,
-                         rect->h + y - (lbl_8025F85C - 2));
+            GXSetScissor(DlSpriteRasterContext->nOffsetX + rect->x, _RwDlHalfHeight - 2, rect->w,
+                         rect->h + y - (_RwDlHalfHeight - 2));
         }
 
-        GXSetScissorBoxOffset(0, lbl_8025F85C - 2);
+        GXSetScissorBoxOffset(0, _RwDlHalfHeight - 2);
     }
 
     DlSpriteBlitProjection[1] = 2.0f / (F32)(_RwDlRenderMode->fbWidth - 1);
@@ -342,16 +342,16 @@ void _rwDlRasterCamera_ZClearRectInit(RwRaster* raster, RwRect* rect)
     {
         if (RWGCRASTEREXT(raster)->flags & RWGCRASTER_ALPHA)
         {
-            if (lbl_8025F7FC != GX_PF_RGBA6_Z24)
+            if (_RwDlPixelFormat != GX_PF_RGBA6_Z24)
             {
                 GXSetPixelFmt(GX_PF_RGBA6_Z24, GX_ZC_LINEAR);
-                lbl_8025F800 = GX_PF_RGBA6_Z24;
+                _RwDlCurPixelFormat = GX_PF_RGBA6_Z24;
             }
         }
-        else if (lbl_8025F7FC != GX_PF_RGB8_Z24)
+        else if (_RwDlPixelFormat != GX_PF_RGB8_Z24)
         {
             GXSetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
-            lbl_8025F800 = GX_PF_RGB8_Z24;
+            _RwDlCurPixelFormat = GX_PF_RGB8_Z24;
         }
 
         GXSetViewport(0.0f, 0.0f, 640.0f, 528.0f, 0.0f, 1.0f);
@@ -363,10 +363,10 @@ void _rwDlRasterCamera_ZClearRectInit(RwRaster* raster, RwRect* rect)
     {
         GXRenderModeObj* renderMode;
 
-        if (lbl_8025F800 != lbl_8025F7FC)
+        if (_RwDlCurPixelFormat != _RwDlPixelFormat)
         {
-            GXSetPixelFmt((GXPixelFmt)lbl_8025F7FC, GX_ZC_LINEAR);
-            lbl_8025F800 = lbl_8025F7FC;
+            GXSetPixelFmt((GXPixelFmt)_RwDlPixelFormat, GX_ZC_LINEAR);
+            _RwDlCurPixelFormat = _RwDlPixelFormat;
         }
 
         renderMode = _RwDlRenderMode;
@@ -381,19 +381,19 @@ void _rwDlRasterCamera_ZClearRectInit(RwRaster* raster, RwRect* rect)
             GXSetViewport(0.0f, 0.0f, renderMode->fbWidth, renderMode->xfbHeight, 0.0f, 1.0f);
         }
 
-        if (!lbl_8025F808)
+        if (!_RwDlFSAA)
         {
             GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, _RwDlRenderMode->xfbHeight);
         }
-        else if (lbl_8025E7F0)
+        else if (_RwDlFSAATop)
         {
-            GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, lbl_8025F85C + 2);
+            GXSetScissor(0, 0, _RwDlRenderMode->fbWidth, _RwDlHalfHeight + 2);
             GXSetScissorBoxOffset(0, 0);
         }
         else
         {
-            GXSetScissor(0, lbl_8025F85C - 2, _RwDlRenderMode->fbWidth, lbl_8025F85C + 2);
-            GXSetScissorBoxOffset(0, lbl_8025F85C - 2);
+            GXSetScissor(0, _RwDlHalfHeight - 2, _RwDlRenderMode->fbWidth, _RwDlHalfHeight + 2);
+            GXSetScissorBoxOffset(0, _RwDlHalfHeight - 2);
         }
 
         DlSpriteClearProjection[1] = 2.0f / (F32)(_RwDlRenderMode->fbWidth - 1);
@@ -445,17 +445,17 @@ void _rwDlRasterCamera_ZClearRect(RwRaster* raster, RwRect* rect, RwRGBA* color,
     GXSetChanMatColor(GX_COLOR0A0, matColor);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
     GXSetCullMode(GX_CULL_NONE);
-    GXSetAlphaCompare(GX_ALWAYS, lbl_8025E348.alphaRef0, GX_AOP_AND, GX_ALWAYS,
-                      lbl_8025E348.alphaRef1);
+    GXSetAlphaCompare(GX_ALWAYS, _RwDlStateCache.alphaRef0, GX_AOP_AND, GX_ALWAYS,
+                      _RwDlStateCache.alphaRef1);
     GXSetZCompLoc(GX_TRUE);
 
-    if (lbl_8025E348.fogEnable)
+    if (_RwDlStateCache.fogEnable)
     {
         _rwDlRenderStateFogEnable(FALSE);
         fogWasEnabled = TRUE;
     }
 
-    lbl_8025E348.alphaTest = 1;
+    _RwDlStateCache.alphaTest = 1;
     _rwDlRasterCamera_ZClearRectInit(raster, rect);
 
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);

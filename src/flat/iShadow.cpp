@@ -21,13 +21,8 @@ struct RwGcnRenderStateCache
     U8 unk3E[2];
 };
 
-// The RenderWare GameCube driver's render-state block (address label per target).
-#if VERSION_GIHE78_REV0
-#define RW_GCN_RENDER_STATE lbl_8025E348
-#elif VERSION_GIHE78_REV1
-#define RW_GCN_RENDER_STATE lbl_802701E8
-#endif
-extern "C" RwGcnRenderStateCache RW_GCN_RENDER_STATE;
+// The RenderWare GameCube driver's render-state block.
+extern "C" RwGcnRenderStateCache _RwDlStateCache;
 extern "C" void RwGameCubeSetAlphaCompare(S32);
 
 // Blob shadows: each entity's shadow is a quad laid on the ground under it. The quads of a
@@ -231,8 +226,8 @@ void iShadowRender()
         RwRenderStateSet(rwRENDERSTATETEXTURERASTER, (void*)sShadowRaster);
         RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEGOURAUD);
         RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
-        RW_GCN_RENDER_STATE.alphaRef0 = 0;
-        RW_GCN_RENDER_STATE.alphaRef1 = 0;
+        _RwDlStateCache.alphaRef0 = 0;
+        _RwDlStateCache.alphaRef1 = 0;
         RwGameCubeSetAlphaCompare(1);
         RwIm3DTransform(sShadowVert, sShadowVertCount, NULL,
                         rwIM3D_VERTEXRGBA | rwIM3D_VERTEXXYZ | rwIM3D_VERTEXUV);

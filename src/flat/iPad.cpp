@@ -9,17 +9,9 @@
 #define PAD_ERR_NOT_READY -2
 #define PAD_ERR_TRANSFER -3
 
-// The GC-only xTRC.cpp pad and disc helpers (see their rows in evidence.tsv), under each
-// target's address labels.
-#if VERSION_GIHE78_REV0
-#define TRC_DISK_HALTED fn_800443F8
-#define TRC_PAD_REPORT fn_80044458
-#elif VERSION_GIHE78_REV1
-#define TRC_DISK_HALTED fn_8004421C
-#define TRC_PAD_REPORT fn_8004427C
-#endif
-extern "C" U32 TRC_DISK_HALTED();
-extern "C" void TRC_PAD_REPORT(S32 pad_id, S32 state);
+// The GC-only xTRC.cpp pad and disc helpers (see their rows in evidence.tsv).
+U32 xTRCDiskHalted();
+void xTRCPad(S32 pad_id, _tagTRCState state);
 
 PADStatus sPadData[4] = {};
 
@@ -80,7 +72,7 @@ S32 iPadUpdate(_tagxPad* pad, U32* on)
     S32 temp;
     U32 temp_on;
 
-    if (TRC_DISK_HALTED())
+    if (xTRCDiskHalted())
     {
         return 0;
     }
@@ -94,7 +86,7 @@ S32 iPadUpdate(_tagxPad* pad, U32* on)
     switch (sPadData[pad->port].err)
     {
     case PAD_ERR_NO_CONTROLLER:
-        TRC_PAD_REPORT(pad->port, TRC_PadMissing);
+        xTRCPad(pad->port, TRC_PadMissing);
         PADReset(0x80000000 >> pad->port);
         goto fail;
     case PAD_ERR_NOT_READY:
@@ -155,7 +147,7 @@ S32 iPadUpdate(_tagxPad* pad, U32* on)
 
     if (gTrcPad[pad->port].state != TRC_PadInserted)
     {
-        TRC_PAD_REPORT(pad->port, TRC_PadInserted);
+        xTRCPad(pad->port, TRC_PadInserted);
     }
 
     return 1;

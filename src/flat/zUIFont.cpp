@@ -14,13 +14,8 @@ U32 zSaveLoad_slotIsEmpty(U32 i);
 #define UI_EVENT zUIEventCB
 #define UI_INIT zUI_Init
 
-#if VERSION_GIHE78_REV0
-#define FONT_WIGGLE lbl_8025E8C0
-#elif VERSION_GIHE78_REV1
-#define FONT_WIGGLE lbl_80270758
-#endif
 
-extern "C" F32 FONT_WIGGLE;
+extern "C" F32 gFontWiggle;
 void xFontBoxSetInset(xFontBox*, F32, F32, F32, F32);
 void xFontBoxSetBackdrop(xFontBox*, iColor_tag);
 void zUI_Init(_zUI*, p2EntAsset*);
@@ -256,11 +251,11 @@ void zUIFont_Render(_xEnt* e)
         xFontBoxSetText(b, processedText);
         if (((ent->uiFontHackFlags & 1) && (ent->uiFlags & 2)) ||
             (ent->uiFontHackFlags & 2) || ((ent->uiFontFlags & 0x200) && (ent->uiFlags & 2)))
-            FONT_WIGGLE = 1.0f;
+            gFontWiggle = 1.0f;
         else
-            FONT_WIGGLE = 0.0f;
+            gFontWiggle = 0.0f;
         xFontBoxRender(b);
-        FONT_WIGGLE = 0.0f;
+        gFontWiggle = 0.0f;
     }
     xFontBoxDestroy(b);
 }

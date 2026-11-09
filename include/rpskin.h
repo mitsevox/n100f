@@ -77,11 +77,11 @@ S32 _rpSkinGeometryNativeSize(const RpGeometry* geometry);
 RwStream* _rpSkinGeometryNativeWrite(RwStream* stream, const RpGeometry* geometry);
 RwStream* _rpSkinGeometryNativeRead(RwStream* stream, RpGeometry* geometry);
 #if VERSION_GIHE78_REV1
-#define fn_80145598 fn_8014595C
+#define _rpSkinAtomicReinstanceCallBack fn_8014595C
 #endif
 RxPipeline* _rpSkinPipelineCreate(RpSkinType type, void* instanceCB, void* reinstanceCB,
                                   void* renderCB);
-void* fn_80145598(void* object, GCNObjectData* objectData);
+void* _rpSkinAtomicReinstanceCallBack(void* object, GCNObjectData* objectData);
 
 S32 RpSkinPluginAttach(void);
 RpSkin* RpSkinGeometryGetSkin(RpGeometry* geometry);

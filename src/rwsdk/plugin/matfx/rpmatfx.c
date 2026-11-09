@@ -41,7 +41,7 @@ static MatFXMaterialData* MatFXMaterialDataCreate(RpMaterial* material)
     return data;
 }
 
-S32 fn_80140AF4(void);
+S32 _rpMatFXPipelinesCreate(void);
 
 // The last engine instance to close destroys the effect pipelines and the material data list.
 static void* MatFXClose(void* instance, S32 offset, S32 size)
@@ -72,7 +72,7 @@ static void* MatFXOpen(void* instance, S32 offset, S32 size)
             return NULL;
         }
 
-        if (!fn_80140AF4())
+        if (!_rpMatFXPipelinesCreate())
         {
             return NULL;
         }
@@ -312,15 +312,16 @@ S32 _rpMatFXStreamSizeTexture(const RwTexture* texture)
     return size;
 }
 
-// fn_8013DEC4, fn_8013E188 and fn_8013E5CC are the material's plugin stream callbacks (write, read
-// and size), and fn_8013E70C to fn_8013E954 the atomic's and the world sector's plugin callbacks
-// (constructor, destructor, copy, stream write, stream read, stream size), in bfbb's sequence for
-// this file; their names are not established, so they keep their labels.
+// MatFXMaterialStreamWrite, MatFXMaterialStreamRead and MatFXMaterialStreamGetSize are the
+// material's plugin stream callbacks (write, read and size), and MatFXAtomicConstructor to
+// MatFXWorldSectorStreamGetSize the atomic's and the world sector's plugin callbacks
+// (constructor, destructor, copy, stream write, stream read, stream size), in bfbb's sequence
+// for this file. The names are bfbb's (their name rows in evidence.tsv).
 
 // Writes the material's effect flags and, for each effect slot, the effect and its settings: a
 // bump map's coefficient (negated) and textures, an environment map's frame buffer alpha flag,
 // coefficient and texture, a dual pass's blend modes and texture.
-static RwStream* fn_8013DEC4(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
+static RwStream* MatFXMaterialStreamWrite(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
                              S32 size)
 {
     MatFXMaterialData* data = MATFXMATERIALGETDATA(object);
@@ -399,8 +400,8 @@ static RwStream* fn_8013DEC4(RwStream* stream, S32 binaryLength, const void* obj
     return stream;
 }
 
-// Reads what fn_8013DEC4 writes and sets the effects up through the material setters.
-static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S32 offset,
+// Reads what MatFXMaterialStreamWrite writes and sets the effects up through the material setters.
+static RwStream* MatFXMaterialStreamRead(RwStream* stream, S32 binaryLength, void* object, S32 offset,
                              S32 size)
 {
     MatFXMaterialData* data;
@@ -573,8 +574,8 @@ static RwStream* fn_8013E188(RwStream* stream, S32 binaryLength, void* object, S
     return stream;
 }
 
-// The bytes fn_8013DEC4 writes for the material: 0 when it has no effects.
-static S32 fn_8013E5CC(const void* object, S32 offset, S32 size)
+// The bytes MatFXMaterialStreamWrite writes for the material: 0 when it has no effects.
+static S32 MatFXMaterialStreamGetSize(const void* object, S32 offset, S32 size)
 {
     MatFXEffect* effect;
     MatFXMaterialData* data = MATFXMATERIALGETDATA(object);
@@ -615,21 +616,21 @@ static S32 fn_8013E5CC(const void* object, S32 offset, S32 size)
     return total;
 }
 
-static void* fn_8013E70C(void* object, S32 offset, S32 size)
+static void* MatFXAtomicConstructor(void* object, S32 offset, S32 size)
 {
     MATFXATOMICGETDATA(object) = 0;
 
     return object;
 }
 
-static void* fn_8013E71C(void* object, S32 offset, S32 size)
+static void* MatFXAtomicDestructor(void* object, S32 offset, S32 size)
 {
     MATFXATOMICGETDATA(object) = 0;
 
     return object;
 }
 
-static void* fn_8013E72C(void* dstObject, const void* srcObject, S32 offset, S32 size)
+static void* MatFXAtomicCopy(void* dstObject, const void* srcObject, S32 offset, S32 size)
 {
     if (MATFXATOMICGETDATA(srcObject))
     {
@@ -640,7 +641,7 @@ static void* fn_8013E72C(void* dstObject, const void* srcObject, S32 offset, S32
 }
 
 // Writes the atomic's effects-enabled flag.
-static RwStream* fn_8013E76C(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
+static RwStream* MatFXAtomicStreamWrite(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
                              S32 size)
 {
     if (RwStreamWrite(stream, (const S32*)((const U8*)object + MatFXAtomicDataOffset), sizeof(S32)) == NULL)
@@ -651,7 +652,7 @@ static RwStream* fn_8013E76C(RwStream* stream, S32 binaryLength, const void* obj
     return stream;
 }
 
-static RwStream* fn_8013E7B8(RwStream* stream, S32 binaryLength, void* object, S32 offset,
+static RwStream* MatFXAtomicStreamRead(RwStream* stream, S32 binaryLength, void* object, S32 offset,
                              S32 size)
 {
     S32 enabled;
@@ -671,26 +672,26 @@ static RwStream* fn_8013E7B8(RwStream* stream, S32 binaryLength, void* object, S
     return stream;
 }
 
-static S32 fn_8013E82C(const void* object, S32 offset, S32 size)
+static S32 MatFXAtomicStreamGetSize(const void* object, S32 offset, S32 size)
 {
     return sizeof(S32);
 }
 
-static void* fn_8013E834(void* object, S32 offset, S32 size)
+static void* MatFXWorldSectorConstructor(void* object, S32 offset, S32 size)
 {
     MATFXWORLDSECTORGETDATA(object) = 0;
 
     return object;
 }
 
-static void* fn_8013E844(void* object, S32 offset, S32 size)
+static void* MatFXWorldSectorDestructor(void* object, S32 offset, S32 size)
 {
     MATFXWORLDSECTORGETDATA(object) = 0;
 
     return object;
 }
 
-static void* fn_8013E854(void* dstObject, const void* srcObject, S32 offset, S32 size)
+static void* MatFXWorldSectorCopy(void* dstObject, const void* srcObject, S32 offset, S32 size)
 {
     if (MATFXWORLDSECTORGETDATA(srcObject))
     {
@@ -701,7 +702,7 @@ static void* fn_8013E854(void* dstObject, const void* srcObject, S32 offset, S32
 }
 
 // Writes the world sector's effects-enabled flag.
-static RwStream* fn_8013E894(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
+static RwStream* MatFXWorldSectorStreamWrite(RwStream* stream, S32 binaryLength, const void* object, S32 offset,
                              S32 size)
 {
     if (RwStreamWrite(stream, (const S32*)((const U8*)object + MatFXWorldSectorDataOffset), sizeof(S32)) == NULL)
@@ -712,7 +713,7 @@ static RwStream* fn_8013E894(RwStream* stream, S32 binaryLength, const void* obj
     return stream;
 }
 
-static RwStream* fn_8013E8E0(RwStream* stream, S32 binaryLength, void* object, S32 offset,
+static RwStream* MatFXWorldSectorStreamRead(RwStream* stream, S32 binaryLength, void* object, S32 offset,
                              S32 size)
 {
     S32 enabled;
@@ -732,7 +733,7 @@ static RwStream* fn_8013E8E0(RwStream* stream, S32 binaryLength, void* object, S
     return stream;
 }
 
-static S32 fn_8013E954(const void* object, S32 offset, S32 size)
+static S32 MatFXWorldSectorStreamGetSize(const void* object, S32 offset, S32 size)
 {
     return sizeof(S32);
 }
@@ -903,32 +904,32 @@ S32 RpMatFXPluginAttach(void)
         return FALSE;
     }
 
-    if (RpMaterialRegisterPluginStream(MATFX_PLUGIN_ID, fn_8013E188, fn_8013DEC4, fn_8013E5CC) < 0)
+    if (RpMaterialRegisterPluginStream(MATFX_PLUGIN_ID, MatFXMaterialStreamRead, MatFXMaterialStreamWrite, MatFXMaterialStreamGetSize) < 0)
     {
         return FALSE;
     }
 
-    MatFXAtomicDataOffset = RpAtomicRegisterPlugin(sizeof(S32), MATFX_PLUGIN_ID, fn_8013E70C,
-                                                   fn_8013E71C, fn_8013E72C);
+    MatFXAtomicDataOffset = RpAtomicRegisterPlugin(sizeof(S32), MATFX_PLUGIN_ID, MatFXAtomicConstructor,
+                                                   MatFXAtomicDestructor, MatFXAtomicCopy);
     if (MatFXAtomicDataOffset < 0)
     {
         return FALSE;
     }
 
-    if (RpAtomicRegisterPluginStream(MATFX_PLUGIN_ID, fn_8013E7B8, fn_8013E76C, fn_8013E82C) < 0)
+    if (RpAtomicRegisterPluginStream(MATFX_PLUGIN_ID, MatFXAtomicStreamRead, MatFXAtomicStreamWrite, MatFXAtomicStreamGetSize) < 0)
     {
         return FALSE;
     }
 
     MatFXWorldSectorDataOffset = RpWorldSectorRegisterPlugin(
-        sizeof(S32), MATFX_PLUGIN_ID, fn_8013E834, fn_8013E844, fn_8013E854);
+        sizeof(S32), MATFX_PLUGIN_ID, MatFXWorldSectorConstructor, MatFXWorldSectorDestructor, MatFXWorldSectorCopy);
     if (MatFXWorldSectorDataOffset < 0)
     {
         return FALSE;
     }
 
-    if (RpWorldSectorRegisterPluginStream(MATFX_PLUGIN_ID, fn_8013E8E0, fn_8013E894,
-                                          fn_8013E954) < 0)
+    if (RpWorldSectorRegisterPluginStream(MATFX_PLUGIN_ID, MatFXWorldSectorStreamRead, MatFXWorldSectorStreamWrite,
+                                          MatFXWorldSectorStreamGetSize) < 0)
     {
         return FALSE;
     }
@@ -1036,21 +1037,21 @@ RpMaterial* RpMatFXMaterialSetEffects(RpMaterial* material, RpMatFXMaterialFlags
         break;
     case rpMATFXEFFECTBUMPMAP:
         data->effects[0].effect = rpMATFXEFFECTBUMPMAP;
-        fn_80140D10(material);
+        MatFXGCNSetupBumpMap(material);
         break;
     case rpMATFXEFFECTENVMAP:
         data->effects[0].effect = rpMATFXEFFECTENVMAP;
-        fn_80140D0C(material);
+        MatFXGCNSetupEnvMap(material);
         break;
     case rpMATFXEFFECTBUMPENVMAP:
         data->effects[0].effect = rpMATFXEFFECTBUMPMAP;
         data->effects[1].effect = rpMATFXEFFECTENVMAP;
-        fn_80140D10(material);
-        fn_80140D0C(material);
+        MatFXGCNSetupBumpMap(material);
+        MatFXGCNSetupEnvMap(material);
         break;
     case rpMATFXEFFECTDUAL:
         data->effects[0].effect = rpMATFXEFFECTDUAL;
-        fn_80140D14(material);
+        MatFXGCNSetupDual(material);
         RpMatFXMaterialSetDualBlendModes(material, rwBLENDSRCALPHA, rwBLENDINVSRCALPHA);
         break;
     }

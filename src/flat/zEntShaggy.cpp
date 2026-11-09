@@ -1774,7 +1774,7 @@ static inline void NearestPointTrigger2D(xVec3* near, xVec3* vec, zEntTrigger* t
     }
 }
 
-static inline void fn_80074C1C(xVec3* near, xVec3* vec, _xBound* b)
+static inline void NearestPointBound2D(xVec3* near, xVec3* vec, _xBound* b)
 {
     switch (b->type)
     {
@@ -1860,7 +1860,7 @@ void Shaggy1_ChooseThrowTarget(_zEnt* ent)
                                   (zEntTrigger*)globals.player.Shaggy1.ThrowTgt);
             break;
         case 0x1D:
-            fn_80074C1C(&nearpt, &((xMat4x3*)ent->model->Mat)->pos,
+            NearestPointBound2D(&nearpt, &((xMat4x3*)ent->model->Mat)->pos,
                         &((_zVolume*)globals.player.Shaggy1.ThrowTgt)->asset->bound);
             break;
         case 0xD:

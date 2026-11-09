@@ -77,14 +77,14 @@ S32 _rwDlNativeTextureGetSize(void* sizeOut, void* textureIn, S32 unused)
     }
 
     rasterSize += sizeof(S32);
-    rasterSize += fn_80179C7C(raster);
+    rasterSize += _rwDlRasterGetSize(raster);
     *size = rasterSize;
 
     return TRUE;
 }
 
 // Writes a native texture.
-S32 fn_8017C9E4(RwStream* stream, RwTexture* texture)
+S32 _rwDlNativeTextureWrite(RwStream* stream, RwTexture* texture)
 {
     S32 dataSize;
     S32 size;
@@ -123,7 +123,7 @@ S32 fn_8017C9E4(RwStream* stream, RwTexture* texture)
         header.maxAniso = GXGetTexObjMaxAniso(&textureExt->texObj);
         header.biasClamp = GXGetTexObjBiasClamp(&textureExt->texObj);
         header.edgeLOD = GXGetTexObjEdgeLOD(&textureExt->texObj);
-        header.lodBias = fn_8017CF40(&textureExt->texObj);
+        header.lodBias = DlTextureGetLODBias(&textureExt->texObj);
     }
 
     memcpy(header.name, texture->name, sizeof(header.name));
@@ -165,7 +165,7 @@ S32 fn_8017C9E4(RwStream* stream, RwTexture* texture)
         size -= paletteSize;
     }
 
-    dataSize = fn_80179C7C(raster);
+    dataSize = _rwDlRasterGetSize(raster);
 
     if (!RwStreamWrite(stream, &dataSize, sizeof(dataSize)))
     {
@@ -185,7 +185,7 @@ S32 fn_8017C9E4(RwStream* stream, RwTexture* texture)
 }
 
 // Reads a native texture.
-S32 fn_8017CCBC(RwStream* stream, RwTexture** textureRef)
+S32 _rwDlNativeTextureRead(RwStream* stream, RwTexture** textureRef)
 {
     U32 length;
     U32 version;
@@ -230,7 +230,7 @@ S32 fn_8017CCBC(RwStream* stream, RwTexture** textureRef)
         return FALSE;
     }
 
-    if (!fn_80179D54(raster, rasterHeader.texFormat, rasterHeader.tlutFormat, rasterHeader.flags,
+    if (!_rwDlTextureRasterCreate(raster, rasterHeader.texFormat, rasterHeader.tlutFormat, rasterHeader.flags,
                      rasterHeader.depth, rasterHeader.numLevels))
     {
         RwRasterDestroy(raster);

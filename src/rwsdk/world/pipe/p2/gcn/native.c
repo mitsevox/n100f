@@ -6,7 +6,7 @@
 // display list records and the arrays and lists they point into) streamed as one chunk, with its
 // pointers stored as offsets from the start of the data.
 
-extern volatile U16 lbl_8025E800;
+extern volatile U16 _RwDlTokenCurrent;
 
 void _rxGCResEntryWaitDone(RwResEntry* resEntry);
 RpGameCubeVtxFmt* _rpGameCubeVtxFmtGetDefault(void);
@@ -22,7 +22,7 @@ RpWorldSector* _rpWorldSectorNativeRead(RwStream* stream, RpWorldSector* sector)
 #define NATIVE_PLATFORMGCN 6
 
 // The platform word _rpNativeWrite writes after the chunk header.
-S32 lbl_8025E7C0 = NATIVE_PLATFORMGCN;
+S32 _rpNativePlatform = NATIVE_PLATFORMGCN;
 
 // A stream chunk header: its type, size and version words.
 #define NATIVE_CHUNKHEADERSIZE (sizeof(U32) * 3)
@@ -129,7 +129,7 @@ static void* _rpNativeRead(RwStream* stream, void* object, RwResEntry** entryRef
     (*entryRef)->ownerRef = entryRef;
     (*entryRef)->destroyNotify = _rxGCResEntryWaitDone;
 
-    arrays->syncToken = lbl_8025E800;
+    arrays->syncToken = _RwDlTokenCurrent;
 
     if (arrays->pos && !(arrays->flags & GCNARRAYS_EXTERNALPOS))
     {
@@ -276,7 +276,7 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
         return NULL;
     }
 
-    if (!RwStreamWriteInt32(stream, &lbl_8025E7C0, sizeof(S32)))
+    if (!RwStreamWriteInt32(stream, &_rpNativePlatform, sizeof(S32)))
     {
         return NULL;
     }
@@ -358,7 +358,7 @@ RwStream* _rpGeometryNativeWrite(RwStream* stream, const RpGeometry* geometry)
 {
     if (geometry->flags & rpGEOMETRYNATIVE)
     {
-        _rpNativeWrite(stream, geometry->repEntry, fn_8015D818(geometry),
+        _rpNativeWrite(stream, geometry->repEntry, RpGameCubeGeometryGetVtxFmt(geometry),
                        geometry->mesh->numMeshes, geometry->numVertices);
     }
 
@@ -388,7 +388,7 @@ RwStream* _rpWorldSectorNativeWrite(RwStream* stream, const RpWorldSector* secto
 
     if (world->flags & rpWORLDNATIVE)
     {
-        _rpNativeWrite(stream, sector->repEntry, fn_8015D824(world), sector->mesh->numMeshes,
+        _rpNativeWrite(stream, sector->repEntry, RpGameCubeWorldGetVtxFmt(world), sector->mesh->numMeshes,
                        RpWorldSectorGetNumVertices(sector));
     }
 

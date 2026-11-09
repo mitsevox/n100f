@@ -53,7 +53,7 @@ void xDrawLine(const xVec3* a, const xVec3* b)
 // GC only: a screen-space line from (x1, y1) to (x2, y2) in the current colour, at the near
 // screen depth.
 #if VERSION_GIHE78_REV0
-extern "C" void fn_80021CB0(F32 x1, F32 y1, F32 x2, F32 y2)
+void xDrawLine2D_LocaliFMVVersion(F32 x1, F32 y1, F32 x2, F32 y2)
 {
     RwIm2DVertex verts[2];
     F32 z = RwIm2DGetNearScreenZ();

@@ -61,7 +61,7 @@
 #include <string.h>
 
 extern S32 gGameState;
-extern "C" U32 lbl_8025EBE0;
+extern "C" U32 sTrcCardCheckActive;
 
 void xSerialTraverse(S32 (*func)(U32 clientID, xSerial* xser));
 U32 zVarEntryCB_eVareVarDefeatedMM();
@@ -355,7 +355,7 @@ static const U32 sRefID_FFF2B7AA = 0xFFF2B7AA;
 
 // GC-only; the PS2 build has no counterpart. The float column holds a distance or, for mode 2,
 // the id of the entity whose distance is used.
-static zSceneRenderDist lbl_801C82A0[66] = {
+static zSceneRenderDist sSceneRenderDist[66] = {
     { zSceneIDFromName("b004"), 0x3A93B8D5, 1, 1000.0f, 0.0f },
     { zSceneIDFromName("f001"), 0x2AA813E6, 1, 10000.0f, 0.0f },
     { zSceneIDFromName("f004"), 0x22E5FF9E, 1, 10000.0f, 0.0f },
@@ -431,14 +431,14 @@ static S32 nidbps = -1;
 static S32 roomCnt;
 static S32 bytesNeeded;
 static S32 availOnDisk;
-static S32 lbl_8025F0AC;
-static S32 lbl_8025F0B0;
-static S32 lbl_8025F0B4;
-static F32 lbl_8025F0B8;
-static F32 lbl_8025F0BC;
-static S32 lbl_8025F0C0;
-static F32 lbl_8025F0C4;
-static F32 lbl_8025F0C8;
+static S32 sBlockSize;
+static S32 neededFiles;
+static S32 sAvailFiles;
+static F32 offsetx;
+static F32 offsety;
+static S32 enableScreenAdj;
+static F32 oldOffsetx;
+static F32 oldOffsety;
 _zEnv* gCurEnv;
 U32 gTransitionSceneID;
 F32 gSceneUpdateTime;
@@ -1675,7 +1675,7 @@ void zSceneSetup()
     xSerialTraverse(zSceneSetup_serialTraverseCB);
     xQuickCullInit(xEntGetAllEntsBox());
 
-    lbl_8025F0C0 = 0;
+    enableScreenAdj = 0;
 
     iColor_tag black = { 0, 0, 0, 255 };
     iColor_tag clear = { 0, 0, 0, 0 };
@@ -2147,9 +2147,9 @@ void zSceneRender()
 
             for (U32 j = 0; j < 66; j++)
             {
-                if (globals.sceneCur->sceneID == lbl_801C82A0[j].sceneID && ent->id == lbl_801C82A0[j].entID)
+                if (globals.sceneCur->sceneID == sSceneRenderDist[j].sceneID && ent->id == sSceneRenderDist[j].entID)
                 {
-                    zSceneRenderApplyDistance(distance, entities, &lbl_801C82A0[j], i, sorted_entities, camera_pos);
+                    zSceneRenderApplyDistance(distance, entities, &sSceneRenderDist[j], i, sorted_entities, camera_pos);
 
                     break;
                 }
@@ -2290,18 +2290,18 @@ void zSceneRender()
                 available = 0;
             }
 
-            const char* availBlocks = available / lbl_8025F0AC == 1 ? "$C is" : "s$C are";
-            const char* availFiles = lbl_8025F0B4 == 1 ? "" : "s";
-            const char* neededBlocks = bytesNeeded / lbl_8025F0AC == 1 ? "$C is" : "s$C are";
-            const char* neededFiles = lbl_8025F0B0 == 1 ? "" : "s";
+            const char* availBlocks = available / sBlockSize == 1 ? "$C is" : "s$C are";
+            const char* availFilesSuffix = sAvailFiles == 1 ? "" : "s";
+            const char* neededBlocks = bytesNeeded / sBlockSize == 1 ? "$C is" : "s$C are";
+            const char* neededFilesSuffix = neededFiles == 1 ? "" : "s";
 
             sprintf(str,
                     "Insufficient space on the Nintendo GameCube_ Memory Card in Slot %s.\n"
                     "At least $A000210068%d file%s and %d block%s needed to save game data.\n"
                     "($A220020026%d file%s and %d block%s available.)\n\nDo you want to start?",
-                    zMenuGetBadCard() == 1 ? "A" : "B", lbl_8025F0B0, neededFiles,
-                    bytesNeeded / lbl_8025F0AC, neededBlocks, lbl_8025F0B4, availFiles,
-                    available / lbl_8025F0AC, availBlocks);
+                    zMenuGetBadCard() == 1 ? "A" : "B", neededFiles, neededFilesSuffix,
+                    bytesNeeded / sBlockSize, neededBlocks, sAvailFiles, availFilesSuffix,
+                    available / sBlockSize, availBlocks);
 
             xFontBoxSetText(sTrcFullCardFontBox, str);
             xFontBoxSetDrawSize(sTrcFullCardFontBox, 18.0f, 24.0f);
@@ -2779,20 +2779,20 @@ void zSceneStats_Clear()
 // Sets the flag that disables stick-as-d-pad menu navigation.
 extern "C" void zSceneSetMenuStickDisabled(S32 on)
 {
-    lbl_8025F0C0 = on;
+    enableScreenAdj = on;
 }
 
 // Copies the two scene-local float values into their saved pair.
 extern "C" void zSceneSnapshotLocalFloats()
 {
-    lbl_8025F0C4 = lbl_8025F0B8;
-    lbl_8025F0C8 = lbl_8025F0BC;
+    oldOffsetx = offsetx;
+    oldOffsety = offsety;
 }
 
 // Returns the flag that suppresses stick-as-d-pad menu navigation.
 extern "C" U32 zSceneGetMenuStickDisabled()
 {
-    return lbl_8025F0C0;
+    return enableScreenAdj;
 }
 
 // Keeps controller input and button glyphs on the same menu ordering.
@@ -2814,7 +2814,7 @@ extern "C" S32 zSceneShouldSwapMenuButtons()
         return 1;
     }
 
-    if (lbl_8025EBE0)
+    if (sTrcCardCheckActive)
     {
         return 1;
     }

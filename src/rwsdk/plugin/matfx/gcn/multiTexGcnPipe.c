@@ -21,17 +21,17 @@ struct GCNMTGlobals
 };
 
 // The plugin's offset in the engine instance.
-S32 lbl_8025F698;
+S32 _rpGameCubeMTEngineOffset;
 
-#define GCNMTGLOBAL(var) (((GCNMTGlobals*)((U8*)RwEngineInstance + lbl_8025F698))->var)
+#define GCNMTGLOBAL(var) (((GCNMTGlobals*)((U8*)RwEngineInstance + _rpGameCubeMTEngineOffset))->var)
 
 // A matrix the effects can be relative to (frame 3).
-extern RwMatrix lbl_8025E304;
+extern RwMatrix _RwDlInvCamLTM;
 
 // When the lit color takes the first two TEV stages, these replace the color and alpha inputs
 // of a stage that reads the rasterized color with the previous stage's output.
-S32 lbl_801DD400[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 6, 7, 12, 13, 14, 15 };
-S32 lbl_801DD440[8] = { 0, 1, 2, 3, 4, 3, 6, 7 };
+S32 GameCubeMTColorArgRemap[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 6, 7, 12, 13, 14, 15 };
+S32 GameCubeMTAlphaArgRemap[8] = { 0, 1, 2, 3, 4, 3, 6, 7 };
 
 // The pre- and post-render callbacks of a multitexture, and their data. Written for this project.
 typedef void (*GCNMTRenderCB)(RpMaterial* material, void* object, GCNObjectData* objectData,
@@ -69,19 +69,19 @@ struct GCNMTNBT
 
 void* GameCubeMTOpen(void* instance, S32 offset, S32 size)
 {
-    memset((U8*)RwEngineInstance + lbl_8025F698, 0, sizeof(GCNMTGlobals));
+    memset((U8*)RwEngineInstance + _rpGameCubeMTEngineOffset, 0, sizeof(GCNMTGlobals));
 
     return instance;
 }
 
-void* fn_80141954(void* instance, S32 offset, S32 size)
+void* GameCubeMTClose(void* instance, S32 offset, S32 size)
 {
     return instance;
 }
 
 // Computes the binormal and tangent of every vertex of a mesh that does not have them yet, from
 // the positions, the normal and the first texture coordinates of one of its triangles.
-void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType)
+void CalcMeshNBTs(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType)
 {
     GCNMTNBT* nbt;
     RwV3d* positions;
@@ -229,7 +229,7 @@ void fn_80141958(RpMesh* mesh, GCNVertexArrays* arrays, RwPrimitiveType primType
 }
 
 // Recomputes the binormals and tangents of an instanced object for the meshes that need them.
-void fn_80141D20(GCNObjectData* objectData, RpGameCubeVtxFmt* vtxFmt, S32 numVertices)
+void _rpGameCubeMTPipeDataCalcNBTs(GCNObjectData* objectData, RpGameCubeVtxFmt* vtxFmt, S32 numVertices)
 {
     S32 i;
     GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
@@ -261,7 +261,7 @@ void fn_80141D20(GCNObjectData* objectData, RpGameCubeVtxFmt* vtxFmt, S32 numVer
             {
                 if (MTGCN_TEXGENNEEDSNBT(&config->texCoordGens[j]))
                 {
-                    fn_80141958(mesh, arrays, primType);
+                    CalcMeshNBTs(mesh, arrays, primType);
                     break;
                 }
             }
@@ -304,7 +304,7 @@ S32 _rpGameCubeMTPipeDataQueryNBTs(GCNObjectData* objectData)
 }
 
 // The matrix a texture matrix is relative to: 16 and up are the plugin's frames (the inverse of
-// the frame's LTM, after the object's matrix when there is one), 3 is lbl_8025E304 and 2 the
+// the frame's LTM, after the object's matrix when there is one), 3 is _RwDlInvCamLTM and 2 the
 // object's matrix. Returns NULL when the texture matrix is used as it is.
 RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
 {
@@ -345,12 +345,12 @@ RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
     {
         if (matrix)
         {
-            RwMatrixMultiply(result, matrix, &lbl_8025E304);
+            RwMatrixMultiply(result, matrix, &_RwDlInvCamLTM);
             out = result;
         }
         else
         {
-            out = &lbl_8025E304;
+            out = &_RwDlInvCamLTM;
         }
     }
     else if (frame == 2)
@@ -399,14 +399,14 @@ static void SendTevStage(GCNMTTevStage* tevStage, S32 firstStage, S32 i, S32 lig
 
     if (tevStage->channel <= GX_COLOR1A1 && lighting == 3)
     {
-        GXSetTevColorIn(stage, lbl_801DD400[tevStage->colorIn[0]],
-                        lbl_801DD400[tevStage->colorIn[1]],
-                        lbl_801DD400[tevStage->colorIn[2]],
-                        lbl_801DD400[tevStage->colorIn[3]]);
-        GXSetTevAlphaIn(stage, lbl_801DD440[tevStage->alphaIn[0]],
-                        lbl_801DD440[tevStage->alphaIn[1]],
-                        lbl_801DD440[tevStage->alphaIn[2]],
-                        lbl_801DD440[tevStage->alphaIn[3]]);
+        GXSetTevColorIn(stage, GameCubeMTColorArgRemap[tevStage->colorIn[0]],
+                        GameCubeMTColorArgRemap[tevStage->colorIn[1]],
+                        GameCubeMTColorArgRemap[tevStage->colorIn[2]],
+                        GameCubeMTColorArgRemap[tevStage->colorIn[3]]);
+        GXSetTevAlphaIn(stage, GameCubeMTAlphaArgRemap[tevStage->alphaIn[0]],
+                        GameCubeMTAlphaArgRemap[tevStage->alphaIn[1]],
+                        GameCubeMTAlphaArgRemap[tevStage->alphaIn[2]],
+                        GameCubeMTAlphaArgRemap[tevStage->alphaIn[3]]);
         channel = GX_COLOR_NULL;
     }
     else
@@ -478,11 +478,11 @@ RpMTEffect* _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 num
 
         if (matrix)
         {
-            env = RwMatrixMultiply(&tmp, matrix, &lbl_8025E304);
+            env = RwMatrixMultiply(&tmp, matrix, &_RwDlInvCamLTM);
         }
         else
         {
-            env = &lbl_8025E304;
+            env = &_RwDlInvCamLTM;
         }
 
         mtx[0][0] = -0.5f * env->right.x;
@@ -777,8 +777,8 @@ void _rpGameCubeMTMeshRenderCallBack(GCNDisplayList* displayList, RpMaterial* ma
 
 S32 _rpGameCubeMTPipePluginAttach(void)
 {
-    lbl_8025F698 = RwEngineRegisterPlugin(sizeof(GCNMTGlobals), MTGCN_PIPEPLUGINID,
-                                          GameCubeMTOpen, fn_80141954);
+    _rpGameCubeMTEngineOffset = RwEngineRegisterPlugin(sizeof(GCNMTGlobals), MTGCN_PIPEPLUGINID,
+                                          GameCubeMTOpen, GameCubeMTClose);
 
-    return lbl_8025F698 >= 0;
+    return _rpGameCubeMTEngineOffset >= 0;
 }

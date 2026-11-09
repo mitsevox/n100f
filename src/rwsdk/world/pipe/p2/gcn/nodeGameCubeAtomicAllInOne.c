@@ -9,12 +9,12 @@
 // the node's private data.
 
 // The draw sync token to issue next, and the last token the GPU has passed.
-extern volatile U16 lbl_8025E800;
-extern volatile U16 lbl_8025F890;
+extern volatile U16 _RwDlTokenCurrent;
+extern volatile U16 _RwDlTokenLastSeen;
 
 S32 _rwDlTokenQueryDone(U16 token);
 void _rxGCResEntryWaitDone(RwResEntry* resEntry);
-S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numTexCoords);
+S32 rwGCNVertexGetSize(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numTexCoords);
 U32 GCNDisplayListsGetSize(const RpMeshHeader* header, S32 numTexCoords, S32 indexSize, U32 flags);
 void GCNDisplayListsBuild(GCNDisplayList* lists, U8* dlMem, const RpMeshHeader* header,
                           S32 numTexCoords, S32 indexSize, U32 flags);
@@ -55,10 +55,10 @@ typedef RpAtomic* (*AllInOneAtomicCB)(RpAtomic* atomic, GCNObjectData* objectDat
 #define ALLINONE_WAITDONE(_arrays)                                                                 \
     do                                                                                             \
     {                                                                                              \
-        if ((_arrays)->syncToken == lbl_8025E800)                                                  \
+        if ((_arrays)->syncToken == _RwDlTokenCurrent)                                                  \
         {                                                                                          \
-            GXSetDrawSync(lbl_8025E800);                                                           \
-            lbl_8025E800 = (lbl_8025E800 + 1) % ALLINONE_TOKENWRAP;                                \
+            GXSetDrawSync(_RwDlTokenCurrent);                                                           \
+            _RwDlTokenCurrent = (_RwDlTokenCurrent + 1) % ALLINONE_TOKENWRAP;                                \
         }                                                                                          \
                                                                                                    \
         while (!_rwDlTokenQueryDone((_arrays)->syncToken))                                         \
@@ -68,7 +68,7 @@ typedef RpAtomic* (*AllInOneAtomicCB)(RpAtomic* atomic, GCNObjectData* objectDat
 
 // The default lighting callback: clears the lighting data, then loads the global lights and the
 // local lights of every sector the atomic is in, once each, and clamps the summed ambient color.
-RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
+RpAtomic* _rxGCAtomicDefaultLightingCallback(RpAtomic* atomic, GCNObjectData* objectData)
 {
     U32 flags = atomic->geometry->flags;
 
@@ -142,7 +142,7 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 
 // Writes the interpolated positions (and normals) of the interpolator's two morph targets into
 // the instanced arrays, or copies one morph target when both are the same.
-void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* interpolator)
+void _rxGCDefaultReinstance(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* interpolator)
 {
     // FAKEMATCH: targets and numMorphTargets are named locals, and numVertices is assigned again
     // before the copy-with-normals loop, to order the registers and drop the loop's count copy;
@@ -258,7 +258,7 @@ static inline void AllInOneFlush(void* p, U32 size)
 
 // Re-instances each texture coordinate set whose lock bit (0x10 << set) is in locked.
 // FAKEMATCH: the loop is moved into an inline helper; real form believed to be the loop written
-// inline in fn_8015E054.
+// inline in _rxGCAtomicDefaultReinstanceCallback.
 static inline void AllInOneReinstanceTexCoords(RpGeometry* geometry, GCNVertexArrays* arrays, U32 locked)
 {
     S32 i;
@@ -269,7 +269,7 @@ static inline void AllInOneReinstanceTexCoords(RpGeometry* geometry, GCNVertexAr
         {
             // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
             AllInOneFlush(arrays->tex[i],
-                          _rwGCNVtxFmtInstTex(fn_8015D818(geometry), i, arrays->tex[i],
+                          _rwGCNVtxFmtInstTex(RpGameCubeGeometryGetVtxFmt(geometry), i, arrays->tex[i],
                                               geometry->texCoords[i],
                                               geometry->numVertices,
                                               arrays->texStride[i]));
@@ -279,7 +279,7 @@ static inline void AllInOneReinstanceTexCoords(RpGeometry* geometry, GCNVertexAr
 
 // The default reinstance callback: re-instances the attributes locked since the last instance,
 // and the morph targets when the interpolator changed, once the GPU is done with the arrays.
-RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
+RpAtomic* _rxGCAtomicDefaultReinstanceCallback(RpAtomic* atomic, GCNObjectData* objectData)
 {
     S32 numVertices;
     U32 flags;
@@ -299,7 +299,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
         {
             // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
             AllInOneFlush(arrays->pos,
-                          _rwGCNVtxFmtInstPos3D(fn_8015D818(geometry), arrays->pos,
+                          _rwGCNVtxFmtInstPos3D(RpGameCubeGeometryGetVtxFmt(geometry), arrays->pos,
                                                 geometry->morphTarget->verts, numVertices,
                                                 arrays->posStride));
         }
@@ -308,7 +308,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
         {
             // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
             AllInOneFlush(arrays->nrm,
-                          _rwGCNVtxFmtInstNrm(fn_8015D818(geometry), arrays->nrm,
+                          _rwGCNVtxFmtInstNrm(RpGameCubeGeometryGetVtxFmt(geometry), arrays->nrm,
                                               geometry->morphTarget->normals,
                                               geometry->numVertices, arrays->nrmStride));
         }
@@ -317,7 +317,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
         {
             // FAKEMATCH: flush through AllInOneFlush; real form believed to be DCFlushRange.
             AllInOneFlush(arrays->clr,
-                          _rwGCNVtxFmtInstClr(fn_8015D818(geometry), arrays->clr,
+                          _rwGCNVtxFmtInstClr(RpGameCubeGeometryGetVtxFmt(geometry), arrays->clr,
                                               geometry->preLitLum, geometry->numVertices,
                                               arrays->clrStride));
         }
@@ -336,7 +336,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
         (atomic->interpolator.flags & rpINTERPOLATORDIRTYINSTANCE))
     {
         ALLINONE_WAITDONE(arrays);
-        fn_8015DBA4(geometry, arrays, &atomic->interpolator);
+        _rxGCDefaultReinstance(geometry, arrays, &atomic->interpolator);
         atomic->interpolator.flags &= ~rpINTERPOLATORDIRTYINSTANCE;
     }
 
@@ -345,7 +345,7 @@ RpAtomic* fn_8015E054(RpAtomic* atomic, GCNObjectData* objectData)
 
 // The default instance callback: allocates the entry (owned by the atomic when the geometry
 // morphs, else by the geometry), builds the display lists and instances the vertex arrays.
-void* fn_8015E2E8(void* object, GCNObjectData* objectData)
+void* _rxGCAtomicDefaultInstanceCallback(void* object, GCNObjectData* objectData)
 {
     RpAtomic* atomic = (RpAtomic*)object;
     GCNAllInOnePrivateData* privateData;
@@ -388,7 +388,7 @@ void* fn_8015E2E8(void* object, GCNObjectData* objectData)
                                     numVertices < 0xFF ? 1 : 2, geometryFlags);
 
     size = ALLINONE_ALIGN32(sizeof(GCNVertexArrays) + headerSize) + dlSize;
-    size = ALLINONE_ALIGN32(size) + fn_80159380(fn_8015D818(geometry), flags, numVertices,
+    size = ALLINONE_ALIGN32(size) + rwGCNVertexGetSize(RpGameCubeGeometryGetVtxFmt(geometry), flags, numVertices,
                                                 geometry->numTexCoordSets);
 
     if (geometry->flags & ALLINONE_GEOMETRYOWNENTRY)
@@ -414,12 +414,12 @@ void* fn_8015E2E8(void* object, GCNObjectData* objectData)
     arrays->serialNum = meshHeader->serialNum;
     arrays->indexType = numVertices < 0xFF ? 2 : 3;
     mem = (U8*)ALLINONE_ALIGN32((U32)arrays + sizeof(GCNVertexArrays) + headerSize);
-    arrays->syncToken = lbl_8025F890;
+    arrays->syncToken = _RwDlTokenLastSeen;
     arrays->flags = objectData->privateData->clearFlags;
     GCNDisplayListsBuild((GCNDisplayList*)(arrays + 1), mem, meshHeader,
                          geometry->numTexCoordSets, numVertices < 0xFF ? 1 : 2, geometryFlags);
     mem = (U8*)ALLINONE_ALIGN32((U32)mem + dlSize);
-    _rwDlGeometryInstanceFast(geometry, arrays, fn_8015D818(geometry), flags,
+    _rwDlGeometryInstanceFast(geometry, arrays, RpGameCubeGeometryGetVtxFmt(geometry), flags,
                               geometry->numTexCoordSets, mem);
     DCFlushRange(objectData->repEntry + 1, objectData->repEntry->size);
     geometry->lockedSinceLastInst = 0;
@@ -532,10 +532,10 @@ S32 _rxGCAtomicAllInOnePipelineInit(RxPipelineNode* node)
 {
     GCNAllInOnePrivateData* privateData = (GCNAllInOnePrivateData*)node->privateData;
 
-    privateData->instanceCB = fn_8015E2E8;
-    privateData->reinstanceCB = fn_8015E054;
-    privateData->lightingCB = fn_8015DA50;
-    privateData->renderCB = fn_80158FB0;
+    privateData->instanceCB = _rxGCAtomicDefaultInstanceCallback;
+    privateData->reinstanceCB = _rxGCAtomicDefaultReinstanceCallback;
+    privateData->lightingCB = _rxGCAtomicDefaultLightingCallback;
+    privateData->renderCB = _rxGCDefaultRenderCallback;
     privateData->clearFlags = 0;
 
     return TRUE;
@@ -543,18 +543,16 @@ S32 _rxGCAtomicAllInOnePipelineInit(RxPipelineNode* node)
 
 // The node definition: names the node and points at its node body and pipeline init; it has no
 // clusters or outputs, and its private data is the callback block.
-char lbl_801DDA78[] = "GameCubeAtomicAllInOne.csl";
-
-RxNodeDefinition lbl_801DDA94 = {
-    lbl_801DDA78,
-    { _rxGCAtomicAllInOneNode, NULL, NULL, _rxGCAtomicAllInOnePipelineInit, NULL, NULL, NULL },
-    { 0, NULL, NULL, 0, NULL },
-    sizeof(GCNAllInOnePrivateData),
-    rxNODEDEFCONST,
-    0,
-};
-
 RxNodeDefinition* RxNodeDefinitionGetGameCubeAtomicAllInOne(void)
 {
-    return &lbl_801DDA94;
+    static RxNodeDefinition nodeGameCubeAtomicAllInOneCSL = {
+        "GameCubeAtomicAllInOne.csl",
+        { _rxGCAtomicAllInOneNode, NULL, NULL, _rxGCAtomicAllInOnePipelineInit, NULL, NULL, NULL },
+        { 0, NULL, NULL, 0, NULL },
+        sizeof(GCNAllInOnePrivateData),
+        rxNODEDEFCONST,
+        0,
+    };
+
+    return &nodeGameCubeAtomicAllInOneCSL;
 }

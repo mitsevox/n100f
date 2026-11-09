@@ -14,7 +14,7 @@ struct RwGcnRenderStateCache
     U8 unk3E[2];
 };
 
-extern "C" RwGcnRenderStateCache lbl_8025E348;
+extern "C" RwGcnRenderStateCache _RwDlStateCache;
 extern "C" void RwGameCubeSetAlphaCompare(S32 mode);
 
 static U32 sFXBlendEnabled = 1;
@@ -166,15 +166,15 @@ void iEnvRenderFXBlend(iEnv*)
         }
         else
         {
-            lbl_8025E348.alphaRef0 = 0;
-            lbl_8025E348.alphaRef1 = sFXBlendAlphaRef;
+            _RwDlStateCache.alphaRef0 = 0;
+            _RwDlStateCache.alphaRef1 = sFXBlendAlphaRef;
             RwGameCubeSetAlphaCompare(3);
         }
 
         RpWorldRender(env->fx);
 
-        lbl_8025E348.alphaRef0 = 0;
-        lbl_8025E348.alphaRef1 = 0;
+        _RwDlStateCache.alphaRef0 = 0;
+        _RwDlStateCache.alphaRef1 = 0;
         RwGameCubeSetAlphaCompare(1);
 
         RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);

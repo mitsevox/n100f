@@ -40,7 +40,7 @@ extern "C" RwMatrix* RwMatrixInvert(RwMatrix* matrixOut, const RwMatrix* matrixI
 extern "C" RwMatrix* RwMatrixTranslate(RwMatrix* matrix, const RwV3d* translation,
                                        RwOpCombineType combineOp);
 extern "C" F32 RwV3dLength(const RwV3d* in);
-extern "C" void fn_80178A3C(RwRaster* raster);
+extern "C" void RwGameCubeCameraTextureFlush(RwRaster* raster);
 
 static S32 ShadowRender(RwCamera* shadowCamera, RwRaster* shadowRaster, RpWorld* world,
                         RpIntersection* shadowZone, F32 shadowFactor, F32 fadeDist);
@@ -634,7 +634,7 @@ static inline RwCamera* ShadowCameraSetCenter(RwCamera* camera, xVec3* center)
 
 static inline void GCSaveFrameBuffer()
 {
-    fn_80178A3C(gc_saveraster);
+    RwGameCubeCameraTextureFlush(gc_saveraster);
 }
 
 static void GCRestoreFrameBuffer();
@@ -664,7 +664,7 @@ static inline RwCamera* ShadowCameraUpdate(RwCamera* shadowCamera, xModelInstanc
         xModelRender(model);
         InvertRaster(shadowCamera);
         RwCameraEndUpdate(shadowCamera);
-        fn_80178A3C(shadowCamera->frameBuffer);
+        RwGameCubeCameraTextureFlush(shadowCamera->frameBuffer);
     }
     if (camera)
     {

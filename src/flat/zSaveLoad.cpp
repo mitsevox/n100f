@@ -40,23 +40,23 @@ S32 xSerial_svgame_register(st_XSAVEGAME_DATA* sgctxt, en_SAVEGAME_MODE mode);
 
 // The memory-card layer: its message text and button labels, the card and slot the messages
 // name, and its card-repair and reset handling.
-extern "C" S32 fn_80041548(S32 mode, char* dst);
-extern "C" S32 fn_80041ADC(S32 mode, char* dst);
-extern "C" S32 fn_80041B10(S32 mode, char* dst);
-extern "C" S32 fn_80041BC8(S32 mode, char* dst);
-extern "C" void fn_80041C4C(S32 mode, S32 value);
-extern "C" void fn_80041C78(S32 mode, S32 available, S32 needed, S32 files, S32 filesNeeded,
+S32 xTRCCardMessageText(S32 mode, char* dst);
+S32 xTRCCardMessageButtonY(S32 mode, char* dst);
+S32 xTRCCardMessageButtonX(S32 mode, char* dst);
+S32 xTRCCardMessageButtonB(S32 mode, char* dst);
+void xTRCCardMessageSetFile(S32 mode, S32 value);
+void xTRCCardMessageSetSpace(S32 mode, S32 available, S32 needed, S32 files, S32 filesNeeded,
                             S32 needFile);
-extern "C" void fn_80041CC4(S32 mode, S32 message);
-extern "C" void fn_80041CE8(S32 mode, S32 card, S32 slot);
-extern "C" void fn_80041D58(S32 mode);
-extern "C" S32 fn_80041310(S32 card, S32 mode);
-extern "C" S32 fn_800411A8(S32 card, S32 repair, S32* files, S32* repaired);
-extern "C" S32 fn_80040FCC(S32 card, S32 game);
+void xTRCCardMessageSet(S32 mode, S32 message);
+void xTRCCardMessageSetCard(S32 mode, S32 card, S32 slot);
+void xTRCCardMessageClear(S32 mode);
+S32 xTRCCardCheckSlot(S32 card, S32 mode);
+S32 xTRCCardCheckCorrupt(S32 card, S32 repair, S32* files, S32* repaired);
+S32 xTRCCardCheckGame(S32 card, S32 game);
 void iSystemPollResetAndDisc();
 void iSystemReset(S32 toMenu);
 // The memory card's file counts, from the save-game layer.
-extern "C" void fn_80038948(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree);
+void xSGTgtSectorInfo(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree);
 // The per-frame helpers the front-end loops share.
 void xTRCRenderMessage();
 
@@ -600,27 +600,27 @@ U8 zSaveLoad_poll(S32 i)
 }
 
 // The memory-card layer's alternate button label.
-extern "C" S32 fn_800C9698(char* dst)
+S32 zSaveLoad_CardAltText(char* dst)
 {
-    return fn_80041ADC(1, dst);
+    return xTRCCardMessageButtonY(1, dst);
 }
 
 // The memory-card layer's action button label.
-extern "C" S32 fn_800C96C0(char* dst)
+S32 zSaveLoad_CardActionText(char* dst)
 {
-    return fn_80041B10(1, dst);
+    return xTRCCardMessageButtonX(1, dst);
 }
 
 // The memory-card layer's cancel button label.
-extern "C" S32 fn_800C96E8(char* dst)
+S32 zSaveLoad_CardCancelText(char* dst)
 {
-    return fn_80041BC8(1, dst);
+    return xTRCCardMessageButtonB(1, dst);
 }
 
 // The memory-card layer's current message.
-extern "C" S32 fn_800C9710(char* dst)
+S32 zSaveLoad_CardMessageText(char* dst)
 {
-    return fn_80041548(1, dst);
+    return xTRCCardMessageText(1, dst);
 }
 
 U32 zSaveLoad_slotIsEmpty(U32 i)
@@ -795,8 +795,8 @@ U32 zSaveLoad_SaveLoop()
                 state = 10;
                 break;
             case -1:
-                fn_80041CE8(1, currentCard, currentCard);
-                fn_80041CC4(1, 3);
+                xTRCCardMessageSetCard(1, currentCard, currentCard);
+                xTRCCardMessageSet(1, 3);
                 zSaveLoad_MessagePrompt(0, 1, NULL, 0);
                 state = 1;
                 break;
@@ -811,8 +811,8 @@ U32 zSaveLoad_SaveLoop()
             state = 6;
             break;
         case 10:
-            fn_80041CE8(1, currentCard, currentCard);
-            fn_80041CC4(1, 1);
+            xTRCCardMessageSetCard(1, currentCard, currentCard);
+            xTRCCardMessageSet(1, 1);
             if (zSaveLoad_SaveGame() == 1)
             {
                 zGameModeSwitch((eGameMode)11);
@@ -858,8 +858,8 @@ U32 zSaveLoad_LoadLoop()
                 state = 8;
                 break;
             case -1:
-                fn_80041CE8(1, currentCard, currentCard);
-                fn_80041CC4(1, 7);
+                xTRCCardMessageSetCard(1, currentCard, currentCard);
+                xTRCCardMessageSet(1, 7);
                 state = 0;
                 break;
             case 0:
@@ -883,8 +883,8 @@ U32 zSaveLoad_LoadLoop()
                 state = 9;
                 break;
             case -1:
-                fn_80041CE8(1, currentCard, currentCard);
-                fn_80041CC4(1, 7);
+                xTRCCardMessageSetCard(1, currentCard, currentCard);
+                xTRCCardMessageSet(1, 7);
                 zSaveLoad_MessagePrompt(1, 1, NULL, 0);
                 state = 1;
                 break;
@@ -898,8 +898,8 @@ U32 zSaveLoad_LoadLoop()
             state = 6;
             break;
         case 9:
-            fn_80041CE8(1, currentCard, currentCard);
-            fn_80041CC4(1, 5);
+            xTRCCardMessageSetCard(1, currentCard, currentCard);
+            xTRCCardMessageSet(1, 5);
             if (zSaveLoad_LoadGame() == 1)
             {
                 zGameModeSwitch((eGameMode)11);
@@ -908,8 +908,8 @@ U32 zSaveLoad_LoadLoop()
             }
             else
             {
-                fn_80041CE8(1, currentCard, currentCard);
-                fn_80041CC4(1, 7);
+                xTRCCardMessageSetCard(1, currentCard, currentCard);
+                xTRCCardMessageSet(1, 7);
                 zSaveLoad_MessagePrompt(1, 1, NULL, 0);
                 state = 1;
             }
@@ -1077,24 +1077,24 @@ S32 zSaveLoad_SaveGame()
         return 1;
     }
 
-    fn_80041CE8(1, currentCard, currentCard);
-    S32 err = whyFail == XSG_WHYERR_NOROOM ? fn_80040FCC(currentCard, currentGame) : -1;
+    xTRCCardMessageSetCard(1, currentCard, currentCard);
+    S32 err = whyFail == XSG_WHYERR_NOROOM ? xTRCCardCheckGame(currentCard, currentGame) : -1;
     if (err > 0)
     {
-        fn_80041CC4(1, 3);
+        xTRCCardMessageSet(1, 3);
         zSaveLoad_MessagePrompt(0, 1, NULL, 0);
     }
     else if (err < 0)
     {
-        fn_80041CC4(1, 3);
+        xTRCCardMessageSet(1, 3);
         zSaveLoad_MessagePrompt(0, 1, NULL, 0);
     }
     else
     {
-        fn_80041CC4(1, 4);
+        xTRCCardMessageSet(1, 4);
         if (zSaveLoad_MessagePrompt(0, 4, (S32(*)(S32))zSaveLoad_poll, 0) == 2)
         {
-            fn_80041CC4(1, 23);
+            xTRCCardMessageSet(1, 23);
             if (zSaveLoad_MessagePrompt(0, 3, (S32(*)(S32))zSaveLoad_poll, 0) == 3)
             {
                 iSystemReset(1);
@@ -1486,8 +1486,8 @@ S32 zSaveLoad_CardCheckSpace(S32 cardNumber, S32 mode, S32 checkSlots)
         sSkipAllowed = 0;
         if (sel == 2)
         {
-            fn_80041CE8(1, cardNumber, cardNumber);
-            fn_80041CC4(1, 23);
+            xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+            xTRCCardMessageSet(1, 23);
             if (zSaveLoad_MessagePrompt(mode, 3, (S32(*)(S32))zSaveLoad_poll, 0) == 3)
             {
                 iSystemReset(1);
@@ -1546,8 +1546,8 @@ S32 zSaveLoad_CardCheckFormatted(S32 cardNumber, S32 mode)
         {
             message = 14;
         }
-        fn_80041CE8(1, cardNumber, cardNumber);
-        fn_80041CC4(1, message);
+        xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+        xTRCCardMessageSet(1, message);
 
         zSaveLoad_UIEvent(zSaveLoad_ModeUI(mode, 0, 21), eEventUIFocusOff_Unselect);
         zSaveLoad_UIEvent(zSaveLoad_ModeUI(mode, 1, 22), eEventUIFocusOff_Unselect);
@@ -1564,16 +1564,16 @@ S32 zSaveLoad_CardCheckFormatted(S32 cardNumber, S32 mode)
             return 2;
         }
 
-        fn_80041CE8(1, cardNumber, cardNumber);
-        fn_80041CC4(1, 18);
+        xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+        xTRCCardMessageSet(1, 18);
         S32 rc = zSaveLoad_MessagePrompt(mode, 3, (S32(*)(S32))zSaveLoad_poll, 0);
         if (rc == 5 || rc == 2 || rc == 4)
         {
             return 2;
         }
 
-        fn_80041CE8(1, cardNumber, cardNumber);
-        fn_80041CC4(1, 19);
+        xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+        xTRCCardMessageSet(1, 19);
         zSaveLoad_UIEvent(40, eEventUIFocusOn);
         zSaveLoad_Tick();
         rc = format(cardNumber, mode);
@@ -1583,66 +1583,66 @@ S32 zSaveLoad_CardCheckFormatted(S32 cardNumber, S32 mode)
             return rc;
         }
 
-        fn_80041CE8(1, cardNumber, cardNumber);
-        fn_80041CC4(1, 20);
+        xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+        xTRCCardMessageSet(1, 20);
         zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
     }
 
-    fn_80041D58(1);
+    xTRCCardMessageClear(1);
     iSystemPollResetAndDisc();
 
     S32 files = -1;
     S32 repaired = 0;
-    S32 rc = fn_800411A8(cardNumber, 0, &files, NULL);
+    S32 rc = xTRCCardCheckCorrupt(cardNumber, 0, &files, NULL);
     if (rc <= 0)
     {
         if (rc < 0)
         {
             return 2;
         }
-        fn_80041CE8(1, cardNumber, cardNumber);
-        fn_80041CC4(1, 9);
-        fn_80041C4C(1, files);
+        xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+        xTRCCardMessageSet(1, 9);
+        xTRCCardMessageSetFile(1, files);
         rc = zSaveLoad_MessagePrompt(mode, 3, (S32(*)(S32))zSaveLoad_poll, 0);
         if (rc == 5 || rc == 2 || rc == 4)
         {
             return 2;
         }
-        fn_80041CE8(1, cardNumber, cardNumber);
-        fn_80041CC4(1, 10);
+        xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+        xTRCCardMessageSet(1, 10);
         rc = zSaveLoad_MessagePrompt(mode, 3, (S32(*)(S32))zSaveLoad_poll, 0);
         if (rc == 5 || rc == 2 || rc == 4)
         {
             return 2;
         }
-        fn_80041CE8(1, cardNumber, cardNumber);
-        fn_80041CC4(1, 13);
+        xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+        xTRCCardMessageSet(1, 13);
         zSaveLoad_UIEvent(40, eEventUIFocusOn);
         zSaveLoad_Tick();
-        S32 result = fn_800411A8(cardNumber, 1, NULL, &repaired);
+        S32 result = xTRCCardCheckCorrupt(cardNumber, 1, NULL, &repaired);
         zSaveLoad_UIEvent(40, eEventUIFocusOff);
         if (result > 0)
         {
-            fn_80041CE8(1, cardNumber, cardNumber);
-            fn_80041CC4(1, 11);
+            xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+            xTRCCardMessageSet(1, 11);
             zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
         }
         else if (result == 0 && repaired)
         {
-            fn_80041CE8(1, cardNumber, cardNumber);
-            fn_80041CC4(1, 11);
+            xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+            xTRCCardMessageSet(1, 11);
             zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
             return 2;
         }
         else
         {
-            fn_80041CE8(1, cardNumber, cardNumber);
-            fn_80041CC4(1, 12);
+            xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+            xTRCCardMessageSet(1, 12);
             zSaveLoad_MessagePrompt(mode, 0, NULL, 0);
             return 2;
         }
     }
-    fn_80041D58(1);
+    xTRCCardMessageClear(1);
     iSystemPollResetAndDisc();
     return 1;
 }
@@ -1655,14 +1655,14 @@ S32 zSaveLoad_CardCheck(S32 cardNumber, S32 mode)
 
     do
     {
-        if (fn_80041310(cardNumber, 1))
+        if (xTRCCardCheckSlot(cardNumber, 1))
         {
             prompted = 0;
         }
         else
         {
-            fn_80041CE8(1, cardNumber, cardNumber);
-            fn_80041CC4(1, 27);
+            xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+            xTRCCardMessageSet(1, 27);
             S32 rc = zSaveLoad_CardPrompt(mode);
             if (rc == 2 || rc == 4)
             {
@@ -1676,8 +1676,8 @@ S32 zSaveLoad_CardCheck(S32 cardNumber, S32 mode)
             while (zSaveLoad_CardCheckSingle(cardNumber) == 0)
             {
                 badCard = 1;
-                fn_80041CE8(1, cardNumber, cardNumber);
-                fn_80041CC4(1, 24);
+                xTRCCardMessageSetCard(1, cardNumber, cardNumber);
+                xTRCCardMessageSet(1, 24);
                 S32 rc = zSaveLoad_CardPrompt(mode);
                 if (rc == 2 || rc == 4)
                 {
@@ -1689,7 +1689,7 @@ S32 zSaveLoad_CardCheck(S32 cardNumber, S32 mode)
 
             if (prompted == 0)
             {
-                if (fn_80041310(cardNumber, 0))
+                if (xTRCCardCheckSlot(cardNumber, 0))
                 {
                     prompted = 0;
                 }
@@ -1733,7 +1733,7 @@ S32 zSaveLoad_CardCheckSpaceSingle_doCheck(st_XSAVEGAME_DATA* xsgdata, S32 cardN
         return 6;
     }
     S32 hasDir = xSGTgtHasGameDir(xsgdata, cardNumber);
-    fn_80038948(xsgdata, cardNumber, &files, &filesNeeded);
+    xSGTgtSectorInfo(xsgdata, cardNumber, &files, &filesNeeded);
     if (hasDir == 1)
     {
         rc = xSGTgtHaveRoom(xsgdata, cardNumber, 0x6000, -1, &bytesNeeded, &availOnDisk,
@@ -1746,9 +1746,9 @@ S32 zSaveLoad_CardCheckSpaceSingle_doCheck(st_XSAVEGAME_DATA* xsgdata, S32 cardN
     }
     if (rc == 0)
     {
-        fn_80041CE8(1, cardNumber, xSGTgtPhysSlotIdx(xsgdata, cardNumber));
-        fn_80041CC4(1, 32);
-        fn_80041C78(1, availOnDisk, bytesNeeded, files, filesNeeded, needFile);
+        xTRCCardMessageSetCard(1, cardNumber, xSGTgtPhysSlotIdx(xsgdata, cardNumber));
+        xTRCCardMessageSet(1, 32);
+        xTRCCardMessageSetSpace(1, availOnDisk, bytesNeeded, files, filesNeeded, needFile);
     }
 
     if (rc == 0)
@@ -1769,9 +1769,9 @@ S32 zSaveLoad_CardCheckSpaceSingle_doCheck(st_XSAVEGAME_DATA* xsgdata, S32 cardN
                 }
                 else
                 {
-                    fn_80041CE8(1, cardNumber, xSGTgtPhysSlotIdx(xsgdata, cardNumber));
-                    fn_80041CC4(1, 33);
-                    fn_80041C78(1, availOnDisk, bytesNeeded, files, filesNeeded, needFile);
+                    xTRCCardMessageSetCard(1, cardNumber, xSGTgtPhysSlotIdx(xsgdata, cardNumber));
+                    xTRCCardMessageSet(1, 33);
+                    xTRCCardMessageSetSpace(1, availOnDisk, bytesNeeded, files, filesNeeded, needFile);
                     rc = 0;
                     if (slotsFull != NULL)
                     {
@@ -1868,11 +1868,11 @@ S32 format(S32 num, S32 mode)
         {
             if (canRecover)
             {
-                fn_80041CC4(1, 21);
+                xTRCCardMessageSet(1, 21);
             }
             else
             {
-                fn_80041CC4(1, 22);
+                xTRCCardMessageSet(1, 22);
             }
             S32 i = mode == 1 ? 43 : 44;
             zSaveLoad_UIEvent(i, eEventUIFocusOn_Select);
@@ -1912,11 +1912,11 @@ S32 format(S32 num, S32 mode)
             {
                 if (canRecover)
                 {
-                    fn_80041CC4(1, 21);
+                    xTRCCardMessageSet(1, 21);
                 }
                 else
                 {
-                    fn_80041CC4(1, 22);
+                    xTRCCardMessageSet(1, 22);
                 }
                 S32 i = mode == 1 ? 43 : 44;
                 zSaveLoad_UIEvent(i, eEventUIFocusOn_Select);
