@@ -11,7 +11,7 @@
 extern volatile U16 lbl_8025E800;
 
 // The all-in-one node's reinstance callback before the skin pipeline replaced it.
-extern GCNAllInOneCallBack lbl_8025F6A8;
+GCNAllInOneCallBack lbl_8025F6A8;
 
 S32 _rwDlTokenQueryDone(U16 token);
 
@@ -423,61 +423,38 @@ S32 fn_80145228(RpSkin* skin, RpAtomic* atomic, GCNVertexArrays* arrays, RwResEn
 #if VERSION_GIHE78_REV0
 // Sets the quantization registers for the vertex format, blends the arrays and flushes them out
 // of the data cache for the GPU.
-// FAKEMATCH: names the five-byte native pool type; real form believed to be three local initialized U8 arrays.
-typedef struct SkinCopyPool { U8 bytes[5]; } SkinCopyPool;
-// FAKEMATCH: names the unchanged five meaningful initializer bytes for a native copy; real form believed to be an automatic array constant pool.
-static const SkinCopyPool SkinCopyTypes = { { 4, 6, 5, 7, 0 } };
-// FAKEMATCH: names the unchanged five meaningful initializer bytes for a native copy; real form believed to be an automatic array constant pool.
-static const SkinCopyPool SkinCopySizes = { { 1, 1, 2, 2, 4 } };
-// FAKEMATCH: names the unchanged five meaningful initializer bytes for a native copy; real form believed to be an automatic array constant pool.
-static const SkinCopyPool SkinCopyScales = { { 0, 6, 0, 14, 0 } };
-
-static inline void SkinBlendArrays(void* dstPos, void* dstNrm, const RwMatrixWeights* weights,
-                                   const void* srcPos, const void* srcNrm, const U32* indices,
-                                   const RwMatrix* matrices, S32 numVertices,
-                                   const RpGameCubeVtxFmt* vtxFmt)
+static inline void SkinBlendArrays(void* dstPos, void* dstNrm, const void* srcPos,
+                                   const void* srcNrm, const U32* indices,
+                                   const RwMatrixWeights* weights, const RwMatrix* matrices,
+                                   const RpGameCubeVtxFmt* vtxFmt, S32 numVertices)
 {
-    // FAKEMATCH: places native-copy operands before size outputs to retain their creation order; real form believed to leave these copy values unnamed.
-    register U32 scaleWord;
-    register U32 scaleByte;
-    // FAKEMATCH: declares size outputs in reverse allocation order; real form believed to declare NBT, normal size, then position size.
+    register U32 gqr6;
+    register U32 gqr7;
     U32 posSize;
     U32 nrmSize;
     S32 nbtSize;
-    register U32 gqr6;
-    register U32 gqr7;
 
-    nbtSize = 0;
     gqr6 = 0;
     gqr7 = 0;
     posSize = sizeof(F32);
     nrmSize = sizeof(F32);
+    nbtSize = 0;
 
     if (vtxFmt)
     {
         // Per component type (u8, s8, u16, s16, f32): the GQR load type, the size of one
         // component and the GQR scale for normals.
-        // FAKEMATCH: native five-byte aggregate copy preserves the pool; real form believed to be initialized types[5].
-        SkinCopyPool types = SkinCopyTypes;
-        // FAKEMATCH: native five-byte aggregate copy preserves the pool; real form believed to be initialized sizes[5].
-        SkinCopyPool sizes = SkinCopySizes;
-        U8 scales[5];
-        // FAKEMATCH: four named-operand instructions retain the native initializer-copy roots; real form believed to be scales[5] initialization.
-        asm
-        {
-            lwz scaleWord, SkinCopyScales
-            lbz scaleByte, SkinCopyScales+4
-            stw scaleWord, scales
-            stb scaleByte, scales+4
-        }
+        U8 types[5] = { 4, 6, 5, 7, 0 };
+        U8 sizes[5] = { 1, 1, 2, 2, 4 };
+        U8 scales[5] = { 0, 6, 0, 14, 0 };
 
-        posSize = sizes.bytes[vtxFmt->compType[0]];
-        nrmSize = sizes.bytes[vtxFmt->compType[1]];
-        nbtSize = vtxFmt->frac[1] ? nrmSize * 6 : 0;
-        gqr6 = types.bytes[vtxFmt->compType[0]] | (vtxFmt->frac[0] << 8);
-        gqr7 = types.bytes[vtxFmt->compType[1]] | (scales[vtxFmt->compType[1]] << 8);
+        gqr6 = (vtxFmt->frac[0] << 8) | types[vtxFmt->compType[0]];
         gqr6 |= gqr6 << 16;
+        posSize = sizes[vtxFmt->compType[0]];
+        nrmSize = sizes[vtxFmt->compType[1]];
+        gqr7 = (scales[vtxFmt->compType[1]] << 8) | types[vtxFmt->compType[1]];
         gqr7 |= gqr7 << 16;
+        nbtSize = vtxFmt->frac[1] ? nrmSize * 6 : 0;
     }
 
     asm
@@ -493,22 +470,9 @@ static inline void SkinBlendArrays(void* dstPos, void* dstNrm, const RwMatrixWei
 }
 
 // Builds the bone matrices for this frame in the matrix cache.
-static inline SkinGlobals* SkinBuildMatrices(RpAtomic* atomic, RpSkin* skin)
+static inline void SkinBuildMatrices(RwMatrix* matrix, const RwMatrix* skinToBone, const RwMatrix* ltm,
+                                     RpHAnimHierarchy* hierarchy)
 {
-    RpHAnimHierarchy* hierarchy;
-    RwMatrix* ltm;
-    register SkinGlobals* globals;
-    register SkinGlobals* high;
-    const RwMatrix* skinToBone;
-    RwMatrix* matrix;
-
-    hierarchy = SKINATOMICGETDATA(atomic);
-    ltm = RwFrameGetLTM(RpAtomicGetFrame(atomic));
-    skinToBone = RpSkinGetSkinToBoneMatrices(skin);
-    // FAKEMATCH: globals address comes from inline asm; real form believed to be a C address.
-    asm { lis high, _rpSkinGlobals@ha; addi globals, high, _rpSkinGlobals@l }
-    matrix = globals->matrixCache;
-
     if (hierarchy)
     {
         if (hierarchy->flags & rpHANIMHIERARCHYNOMATRICES)
@@ -521,7 +485,8 @@ static inline SkinGlobals* SkinBuildMatrices(RpAtomic* atomic, RpSkin* skin)
 
             for (i = 0; i < hierarchy->numNodes; i++)
             {
-                RwMatrixMultiply(&tmp, &skinToBone[i], RwFrameGetLTM(hierarchy->pNodeInfo[i].pFrame));
+                const RwMatrix* nodeLtm = RwFrameGetLTM(hierarchy->pNodeInfo[i].pFrame);
+                RwMatrixMultiply(&tmp, &skinToBone[i], nodeLtm);
                 RwMatrixMultiply(&matrix[i], &tmp, &inverse);
             }
         }
@@ -549,21 +514,21 @@ static inline SkinGlobals* SkinBuildMatrices(RpAtomic* atomic, RpSkin* skin)
             }
         }
     }
-
-    return globals;
 }
 
 // The skin pipeline's reinstance callback: reinstance the original arrays when needed, build the
 // bone matrices for this frame and blend the skinned arrays from them.
 void* fn_80145598(void* object, GCNObjectData* objectData)
 {
-    RpAtomic* atomic = (RpAtomic*)object;
-    RpGeometry* geometry = atomic->geometry;
-    GCNVertexArrays* arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
-    RpSkin* skin = SKINGEOMETRYGETDATA(geometry);
-    RpGameCubeVtxFmt* vtxFmt;
-    S32 numVertices;
-    register SkinGlobals* globals;
+    GCNVertexArrays* arrays;
+    RpAtomic* atomic;
+    RpGeometry* geometry;
+    RpSkin* skin;
+
+    atomic = (RpAtomic*)object;
+    geometry = atomic->geometry;
+    arrays = (GCNVertexArrays*)(objectData->repEntry + 1);
+    skin = SKINGEOMETRYGETDATA(geometry);
 
     if (!skin->savedPos)
     {
@@ -594,14 +559,12 @@ void* fn_80145598(void* object, GCNObjectData* objectData)
         return NULL;
     }
 
-    globals = SkinBuildMatrices(atomic, skin);
+    SkinBuildMatrices(_rpSkinGlobals.matrixCache, RpSkinGetSkinToBoneMatrices(skin),
+                      RwFrameGetLTM(RpAtomicGetFrame(atomic)), SKINATOMICGETDATA(atomic));
 
-    numVertices = geometry->numVertices;
-    vtxFmt = fn_8015D818(geometry);
-
-    SkinBlendArrays(arrays->pos, arrays->nrm, skin->vertexBoneWeights, skin->savedPos,
-                    skin->savedNrm, skin->vertexBoneIndices, globals->matrixCache,
-                    numVertices, vtxFmt);
+    SkinBlendArrays(arrays->pos, arrays->nrm, skin->savedPos, skin->savedNrm,
+                    skin->vertexBoneIndices, skin->vertexBoneWeights, _rpSkinGlobals.matrixCache,
+                    fn_8015D818(geometry), geometry->numVertices);
 
     return object;
 }

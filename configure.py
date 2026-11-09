@@ -968,7 +968,7 @@ config.libs: List[Dict[str, Any]] = [
         "rpskin",
         [
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/skin2/rpskin.c"),
-            Object(NonMatching, "rwsdk/plugin/skin2/gcn/skingcn.c"),
+            Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/skin2/gcn/skingcn.c"),
             Object(MatchingFor("GIHE78-rev0"), "rwsdk/plugin/skin2/gcn/skinstream.c"),
             Object(MatchingFor("GIHE78-rev0", "GIHE78-rev1"), "rwsdk/plugin/skin2/gcn/skingcng.c"),
         ],
