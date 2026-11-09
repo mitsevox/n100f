@@ -10,7 +10,6 @@
 #define PAD_ERR_TRANSFER -3
 
 // The GC-only xTRC.cpp pad and disc helpers (see their rows in evidence.tsv).
-U32 xTRCDiskHalted();
 void xTRCPad(S32 pad_id, _tagTRCState state);
 
 PADStatus sPadData[4] = {};

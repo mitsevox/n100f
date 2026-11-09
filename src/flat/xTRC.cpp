@@ -61,15 +61,16 @@ U32 zGameNickCamActive();
 char* xSGTgtCardName(st_XSAVEGAME_DATA* xsgdata, S32 tidx, en_XSG_WHYFAIL whyFail);
 
 extern "C" {
-// The two message records, the start-up check's busy flag (zScene reads it), the font box of
-// the pad and disc message (sTrcFontBox in the SLUS-20349 DWARF) and the flag that makes that
-// message draw a frame of its own.
+// The two message records.
 TRCCardMessage sTrcCardMessage[2] = {};
 }
 
 // The disc state and whether the disc was identified (iSnd and iTime read it).
 _tagTRCState gTrcDisk[2];
 
+// The start-up check's busy flag (zScene reads it), the font box of the pad and disc message
+// (sTrcFontBox in the SLUS-20349 DWARF) and the flag that makes that message draw a frame of its
+// own.
 extern "C" {
 U32 sTrcCardCheckActive;
 xFontBox* sTrcFontBox;
@@ -81,8 +82,6 @@ _tagTRCPadInfo gTrcPad[4];
 
 S32 xTRCRenderState(_tagTRCState state);
 void xTRCPad(S32 pad_id, _tagTRCState state);
-S32 xTRCDiskHalted();
-void xTRCRenderFrame();
 void xTRCCardCheckStartup();
 S32 xTRCCardWatchChanged(TRCCardWatch* watch);
 S32 xTRCCardDialogHook(S32 card, st_ISGSESSION* session);
@@ -264,7 +263,7 @@ void xTRCDisk(_tagTRCState state)
 
 // Whether the disc is in an error state that stops the game (cover open, no disc, wrong
 // disc, read error, fatal error).
-S32 xTRCDiskHalted()
+U32 xTRCDiskHalted()
 {
     switch (gTrcDisk[0])
     {
@@ -1246,7 +1245,8 @@ S32 xTRCCardCheckSpace(S32 card)
     return result;
 }
 
-// Checks that one of the three save files exists or can be created.
+// When some but not all of the three save files exist, checks there is room to create the
+// missing ones; with none or all three present it passes.
 S32 xTRCCardCheckFiles(S32 card)
 {
     S32 result = 1;
@@ -1370,7 +1370,7 @@ S32 xTRCCardCheckFiles(S32 card)
     return result;
 }
 
-// Waits the given number of frames, keeping the pads updated.
+// Waits the given number of frames, polling the reset button and the disc.
 static void TRCWaitFrames(S32 frames)
 {
     while (frames-- > 0)
@@ -1921,8 +1921,9 @@ S32 xTRCCardCheckSlot(S32 card, S32 mode)
     return result;
 }
 
-// Checks the card for corrupt files, or deletes them (repair). Returns 0 on success, -1
-// when the card is missing or cannot be selected, else 1.
+// Checks the card for corrupt files, or deletes them (repair). Returns 1 when the card has no
+// corrupt file (or the repair cleared them), 0 when one is found or remains, -1 when the card is
+// missing or cannot be selected.
 S32 xTRCCardCheckCorrupt(S32 card, S32 repair, S32* files, S32* repaired)
 {
     S32 count;

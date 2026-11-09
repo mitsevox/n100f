@@ -51,7 +51,6 @@ S32 xMemGetBase();
 S32 xSTPreLoadScene(U32, void*);
 S32 xSTQueueSceneAssets(U32);
 void iSystemPollResetAndDisc();
-void xTRCRenderFrame();
 void zEntPlayer_InitCutsceneModelHack();
 static S32 sShowMenuOnBoot = 1;
 

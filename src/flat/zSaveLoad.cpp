@@ -45,7 +45,7 @@ S32 xTRCCardMessageButtonY(S32 mode, char* dst);
 S32 xTRCCardMessageButtonX(S32 mode, char* dst);
 S32 xTRCCardMessageButtonB(S32 mode, char* dst);
 void xTRCCardMessageSetFile(S32 mode, S32 value);
-void xTRCCardMessageSetSpace(S32 mode, S32 available, S32 needed, S32 files, S32 filesNeeded,
+void xTRCCardMessageSetSpace(S32 mode, S32 available, S32 needed, S32 blockSize, S32 freeFiles,
                             S32 needFile);
 void xTRCCardMessageSet(S32 mode, S32 message);
 void xTRCCardMessageSetCard(S32 mode, S32 card, S32 slot);
@@ -55,7 +55,7 @@ S32 xTRCCardCheckCorrupt(S32 card, S32 repair, S32* files, S32* repaired);
 S32 xTRCCardCheckGame(S32 card, S32 game);
 void iSystemPollResetAndDisc();
 void iSystemReset(S32 toMenu);
-// The memory card's file counts, from the save-game layer.
+// The memory card's sector size and free file entries, from the save-game layer.
 void xSGTgtSectorInfo(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* sectorSize, S32* filesFree);
 // The per-frame helpers the front-end loops share.
 void xTRCRenderMessage();
@@ -1716,10 +1716,10 @@ S32 zSaveLoad_CardCheckSpaceSingle_doCheck(st_XSAVEGAME_DATA* xsgdata, S32 cardN
 {
     S32 badEncode = 0;
     S32 availOnDisk = 0;
-    S32 filesNeeded = 0;
+    S32 filesFree = 0;
     S32 bytesNeeded = 0;
     S32 needFile = 0;
-    S32 files = 0;
+    S32 sectorSize = 0;
     S32 rc;
 
     if (slotsFull != NULL)
@@ -1733,7 +1733,7 @@ S32 zSaveLoad_CardCheckSpaceSingle_doCheck(st_XSAVEGAME_DATA* xsgdata, S32 cardN
         return 6;
     }
     S32 hasDir = xSGTgtHasGameDir(xsgdata, cardNumber);
-    xSGTgtSectorInfo(xsgdata, cardNumber, &files, &filesNeeded);
+    xSGTgtSectorInfo(xsgdata, cardNumber, &sectorSize, &filesFree);
     if (hasDir == 1)
     {
         rc = xSGTgtHaveRoom(xsgdata, cardNumber, 0x6000, -1, &bytesNeeded, &availOnDisk,
@@ -1748,7 +1748,7 @@ S32 zSaveLoad_CardCheckSpaceSingle_doCheck(st_XSAVEGAME_DATA* xsgdata, S32 cardN
     {
         xTRCCardMessageSetCard(1, cardNumber, xSGTgtPhysSlotIdx(xsgdata, cardNumber));
         xTRCCardMessageSet(1, 32);
-        xTRCCardMessageSetSpace(1, availOnDisk, bytesNeeded, files, filesNeeded, needFile);
+        xTRCCardMessageSetSpace(1, availOnDisk, bytesNeeded, sectorSize, filesFree, needFile);
     }
 
     if (rc == 0)
@@ -1771,7 +1771,7 @@ S32 zSaveLoad_CardCheckSpaceSingle_doCheck(st_XSAVEGAME_DATA* xsgdata, S32 cardN
                 {
                     xTRCCardMessageSetCard(1, cardNumber, xSGTgtPhysSlotIdx(xsgdata, cardNumber));
                     xTRCCardMessageSet(1, 33);
-                    xTRCCardMessageSetSpace(1, availOnDisk, bytesNeeded, files, filesNeeded, needFile);
+                    xTRCCardMessageSetSpace(1, availOnDisk, bytesNeeded, sectorSize, filesFree, needFile);
                     rc = 0;
                     if (slotsFull != NULL)
                     {

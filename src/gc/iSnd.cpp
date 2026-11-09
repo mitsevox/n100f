@@ -21,8 +21,6 @@
 
 void iSystemPollResetAndDisc();
 
-void xTRCRenderFrame();
-U32 xTRCDiskHalted();
 
 void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba);
 

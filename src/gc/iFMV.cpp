@@ -4,6 +4,7 @@
 #include "xPad.h"
 #include "xMath.h"
 #include "xSnd.h"
+#include "xTRC.h"
 #include "zGlobals.h"
 
 #include <bink.h>
@@ -27,8 +28,6 @@ extern "C" {
 extern GXRenderModeObj* _RwDlRenderMode;
 }
 
-S32 xTRCDiskHalted();
-void xTRCRenderFrame();
 void xDrawLine2D_LocaliFMVVersion(F32, F32, F32, F32);
 
 void iSystemPollResetAndDisc();

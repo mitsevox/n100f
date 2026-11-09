@@ -28,8 +28,9 @@ S32 _rpGameCubeMTEngineOffset;
 // A matrix the effects can be relative to (frame 3).
 extern RwMatrix _RwDlInvCamLTM;
 
-// When the lit color takes the first two TEV stages, these replace the color and alpha inputs
-// of a stage that reads the rasterized color with the previous stage's output.
+// When the lit color takes the first two TEV stages, these replace a stage's rasterized color
+// and alpha inputs (RASC, RASA) with TEV register 2 (C2, A2), where those two stages write their
+// sum.
 S32 GameCubeMTColorArgRemap[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 6, 7, 12, 13, 14, 15 };
 S32 GameCubeMTAlphaArgRemap[8] = { 0, 1, 2, 3, 4, 3, 6, 7 };
 

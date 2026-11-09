@@ -6,7 +6,6 @@
 
 void iSystemPollResetAndDisc();
 
-void xTRCRenderFrame();
 
 struct file_queue_entry
 {

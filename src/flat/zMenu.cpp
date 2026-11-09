@@ -18,6 +18,7 @@
 #include "xPad.h"
 #include "xScrFx.h"
 #include "xString.h"
+#include "xTRC.h"
 #include "zFMV.h"
 #include <dolphin/os.h>
 #include <dolphin/vi.h>
@@ -26,7 +27,6 @@ void setupPlayer();
 void zEntEvent(xBase* to, U32 toEvent);
 void zEntEventAll(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam);
 void xFontRender();
-U32 xTRCDiskHalted();
 void iSystemPollResetAndDisc();
 void xTRCRenderMessage();
 void xSndUpdate(F32 dt);
