@@ -153,6 +153,7 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
     S32 numVertices = geometry->numVertices;
     RwV3d* dstPos = (RwV3d*)arrays->pos;
     U8* dstNrm = (U8*)arrays->nrm;
+    // FAKEMATCH: numMorphTargets is a named copy; real form believed to read the field directly.
     S32 numMorphTargets = geometry->numMorphTargets;
 
     if (start >= numMorphTargets || end >= numMorphTargets)
@@ -170,6 +171,8 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
         {
             RwV3d* srcNrm = morphTarget->normals;
 
+            // FAKEMATCH: numVertices is assigned again to drop the loop's count copy; real form
+            // believed to have no second assignment.
             numVertices = geometry->numVertices;
 
             while (numVertices--)
@@ -200,6 +203,7 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
         RwV3d* startPos;
         RwV3d* endPos;
 
+        // FAKEMATCH: targets is a named copy; real form believed to index geometry->morphTarget.
         targets = geometry->morphTarget;
         startTarget = &targets[start];
         endTarget = &targets[end];

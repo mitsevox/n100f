@@ -263,6 +263,7 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
                 }
             }
 
+            // FAKEMATCH: the byte offset is stepped by hand; real form believed to be the loop's i.
             off += sizeof(RxClusterRef);
         }
 

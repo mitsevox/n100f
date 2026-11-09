@@ -105,6 +105,8 @@ void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemA
     register S32 numTexCoords;
     register U8* dlMem;
 
+    // FAKEMATCH: the six arguments are copied into register locals with asm `or` (mr); real form
+    // believed to use the parameters directly.
     asm
     {
         or header, headerArg, headerArg
@@ -191,6 +193,8 @@ void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemA
         {
             register U32 t0, fifo, vtx, n;
 
+            // FAKEMATCH: the 8-bit index loop is inline asm in the compiler's 8-way unrolled ctr
+            // form; real form believed to be a C loop writing each index once per attribute.
             asm
             {
                 b test8
@@ -241,6 +245,9 @@ void GCNDisplayListsBuild(register GCNDisplayList* listsArg, register U8* dlMemA
         {
             register U32 t0, fifo, vtx;
 
+            // FAKEMATCH: the 16-bit index loop is inline asm in the compiler's 8-way unrolled ctr
+            // form, with opword encodings for the instructions the compiler would fold away; real
+            // form believed to be a C loop writing each index once per attribute.
             asm
             {
                 b test16

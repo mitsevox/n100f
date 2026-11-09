@@ -70,6 +70,8 @@ static inline RwTexCoords* RpGeometryGetVertexTexCoords(const RpGeometry* geom, 
 // to be one plain function: numVerts = RpGeometryGetNumVertices(geom), vtxFmt defaulted in C,
 // and arrays->tex[i] = dst in a loop to numTexCoords.
 #pragma push
+// FAKEMATCH: the inline size limit is raised so the large GeometryInstanceFast inline is expanded;
+// real form believed to be one plain function with no pragma.
 #pragma inline_max_size(10000)
 
 // Instances a geometry's first morph target into dst in the format's types, one array per
@@ -89,6 +91,8 @@ static inline void GeometryInstanceFast(register RpGeometry* geomArg,
     S32 count;
     GCNVertexArrays* texp;
 
+    // FAKEMATCH: the arguments are copied into register locals with asm `or` (mr); real form
+    // believed to use the parameters directly.
     asm
     {
         or geom, geomArg, geomArg
@@ -103,6 +107,8 @@ static inline void GeometryInstanceFast(register RpGeometry* geomArg,
     {
         register const RpGameCubeVtxFmt* def = &_RpDlVtxFmtDefault;
 
+        // FAKEMATCH: the default format is copied with asm `or` (mr); real form believed to be
+        // vtxFmt = &_RpDlVtxFmtDefault.
         asm { or vtxFmt, def, def }
     }
 
@@ -133,6 +139,8 @@ static inline void GeometryInstanceFast(register RpGeometry* geomArg,
 
     if (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
     {
+        // FAKEMATCH: the loop keeps its own count and array cursor; real form believed to be
+        // arrays->tex[i] = dst in a loop to numTexCoords.
         texp = arrays;
         count = numTexCoords;
         for (i = 0; i < count; i++)

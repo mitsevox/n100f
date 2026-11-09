@@ -222,6 +222,8 @@ static RwStream* _rpNativeWrite(RwStream* stream, RwResEntry* entry, RpGameCubeV
     lists = (GCNDisplayList*)(arrays + 1);
     l.p = lists;
     c.n = numMeshes;
+    // FAKEMATCH: the pointer is set a second time and the display lists' end is built in x; real
+    // form believed to set list once and use a plain NATIVE_ALIGN32 expression for data.
     l.p = lists;
     x.e = (U32)lists + numMeshes * sizeof(GCNDisplayList);
     x.e += 0x1F;

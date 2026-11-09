@@ -209,8 +209,6 @@ F32 _rwMatrixIdentityError(const RwMatrix* matrix)
     RwV3d vTmp;
     F32 rightError, sum, atError, posError, result;
 
-    // The at and pos terms are held in their own locals so each is added in front of the running
-    // sum (the target's operand order), and the first sum is its own value.
     vTmp.x = right->x - 1.0f;
     vTmp.y = right->y;
     vTmp.z = right->z;
