@@ -215,6 +215,10 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
     U32 n;
     RxPipelineNode* node;
     U32 i;
+    // FAKEMATCH: off and count are added locals (the byte offset and the cluster count copy);
+    // real form believed to have neither.
+    U32 off;
+    U32 count;
     U32 j;
 
     n = pipeline->numNodes;
@@ -224,11 +228,19 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
     {
         nodeDef = node->nodeDef;
 
-        for (i = 0; i < nodeDef->io.numClustersOfInterest; i++)
+        // FAKEMATCH: the cluster count is held in a named copy; real form believed to read
+        // nodeDef->io.numClustersOfInterest in each loop test.
+        count = nodeDef->io.numClustersOfInterest;
+
+        // FAKEMATCH: the byte offset off is a named local stepped by hand; real form believed to
+        // index clustersOfInterest[i].
+        for (i = 0, off = 0; i < count; i++)
         {
             RxClusterDefinition* clusterDef;
 
-            clusterDef = nodeDef->io.clustersOfInterest[i].clusterDef;
+            // FAKEMATCH: the entry is reached through the byte offset; real form believed to be
+            // nodeDef->io.clustersOfInterest[i].clusterDef.
+            clusterDef = ((RxClusterRef*)((U8*)nodeDef->io.clustersOfInterest + off))->clusterDef;
 
             if (!clusterDef)
             {
@@ -240,7 +252,7 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
                 return 0x1F;
             }
 
-            for (j = i + 1; j < nodeDef->io.numClustersOfInterest; j++)
+            for (j = i + 1; j < count; j++)
             {
                 RxClusterDefinition* other;
 
@@ -256,6 +268,9 @@ static U32 _PropagateDependenciesAndKillDeadPaths(RxPipeline* pipeline)
                     return 0x1E;
                 }
             }
+
+            // FAKEMATCH: the byte offset is stepped by hand; real form believed to be the loop's i.
+            off += sizeof(RxClusterRef);
         }
 
         if (!(node->topSortData->req = _ReqCreate(node, PipelineCalcNumUniqueClusters(pipeline))))

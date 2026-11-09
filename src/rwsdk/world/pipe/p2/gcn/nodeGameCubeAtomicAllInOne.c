@@ -12,9 +12,6 @@
 extern volatile U16 lbl_8025E800;
 extern volatile U16 lbl_8025F890;
 
-// The node definition.
-extern RxNodeDefinition lbl_801DDA94;
-
 S32 _rwDlTokenQueryDone(U16 token);
 void _rxGCResEntryWaitDone(RwResEntry* resEntry);
 S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numTexCoords);
@@ -147,13 +144,19 @@ RpAtomic* fn_8015DA50(RpAtomic* atomic, GCNObjectData* objectData)
 // the instanced arrays, or copies one morph target when both are the same.
 void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* interpolator)
 {
+    // FAKEMATCH: targets and numMorphTargets are named locals, and numVertices is assigned again
+    // before the copy-with-normals loop, to order the registers and drop the loop's count copy;
+    // real form believed to read geometry->morphTarget and geometry->numMorphTargets directly.
+    RpMorphTarget* targets;
     S32 start = interpolator->startMorphTarget;
     S32 end = interpolator->endMorphTarget;
     S32 numVertices = geometry->numVertices;
     RwV3d* dstPos = (RwV3d*)arrays->pos;
     U8* dstNrm = (U8*)arrays->nrm;
+    // FAKEMATCH: numMorphTargets is a named copy; real form believed to read the field directly.
+    S32 numMorphTargets = geometry->numMorphTargets;
 
-    if (start >= geometry->numMorphTargets || end >= geometry->numMorphTargets)
+    if (start >= numMorphTargets || end >= numMorphTargets)
     {
         end = 0;
         start = 0;
@@ -167,6 +170,10 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
         if (geometry->flags & rpGEOMETRYNORMALS)
         {
             RwV3d* srcNrm = morphTarget->normals;
+
+            // FAKEMATCH: numVertices is assigned again to drop the loop's count copy; real form
+            // believed to have no second assignment.
+            numVertices = geometry->numVertices;
 
             while (numVertices--)
             {
@@ -190,11 +197,19 @@ void fn_8015DBA4(RpGeometry* geometry, GCNVertexArrays* arrays, RpInterpolator* 
     }
     else
     {
-        RpMorphTarget* startTarget = &geometry->morphTarget[start];
-        RpMorphTarget* endTarget = &geometry->morphTarget[end];
-        F32 scale = interpolator->recipTime * interpolator->position;
-        RwV3d* startPos = startTarget->verts;
-        RwV3d* endPos = endTarget->verts;
+        RpMorphTarget* startTarget;
+        RpMorphTarget* endTarget;
+        F32 scale;
+        RwV3d* startPos;
+        RwV3d* endPos;
+
+        // FAKEMATCH: targets is a named copy; real form believed to index geometry->morphTarget.
+        targets = geometry->morphTarget;
+        startTarget = &targets[start];
+        endTarget = &targets[end];
+        scale = interpolator->recipTime * interpolator->position;
+        startPos = startTarget->verts;
+        endPos = endTarget->verts;
 
         if (geometry->flags & rpGEOMETRYNORMALS)
         {
@@ -525,6 +540,19 @@ S32 _rxGCAtomicAllInOnePipelineInit(RxPipelineNode* node)
 
     return TRUE;
 }
+
+// The node definition: names the node and points at its node body and pipeline init; it has no
+// clusters or outputs, and its private data is the callback block.
+char lbl_801DDA78[] = "GameCubeAtomicAllInOne.csl";
+
+RxNodeDefinition lbl_801DDA94 = {
+    lbl_801DDA78,
+    { _rxGCAtomicAllInOneNode, NULL, NULL, _rxGCAtomicAllInOnePipelineInit, NULL, NULL, NULL },
+    { 0, NULL, NULL, 0, NULL },
+    sizeof(GCNAllInOnePrivateData),
+    rxNODEDEFCONST,
+    0,
+};
 
 RxNodeDefinition* RxNodeDefinitionGetGameCubeAtomicAllInOne(void)
 {

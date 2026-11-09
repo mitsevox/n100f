@@ -48,8 +48,9 @@ struct PalQuant
     RwFreeList* nodeFreeList;
 };
 
-// Spreads the five bits of a channel's top five bits over the five levels of the tree.
-static U32 splice[32];
+// Spreads the five bits of a channel's top five bits over the five levels of the tree. Only the
+// first 32 entries are filled and read.
+static U32 splice[256];
 
 #define PALQUANT_INDEX(_col)                                                                       \
     ((splice[(_col)->red >> 3] << 3) | (splice[(_col)->green >> 3] << 2) |                        \
@@ -649,36 +650,50 @@ static S32 CountLeafs(PalQuantBranch* root, S32 depth)
     return count;
 }
 
-// Writes each leaf's mean colour to the palette, numbering the leaves in tree order.
-static S32 ExtractNodes(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32 depth)
-{
-    if (root)
-    {
-        if (depth > 0)
-        {
-            S32 i;
-
-            for (i = 0; i < 16; i++)
-            {
-                palIndex = ExtractNodes(root->child[i], palette, palIndex, depth - 1);
-            }
-        }
-        else
-        {
-            PalQuantLeaf* leaf = (PalQuantLeaf*)root;
-            F32 scale = (leaf->weight > 0.0f) ? PALQUANT_TOCHANNEL / leaf->weight : 0.0f;
-
-            palette[palIndex].red = (U8)(leaf->red * scale);
-            palette[palIndex].green = (U8)(leaf->green * scale);
-            palette[palIndex].blue = (U8)(leaf->blue * scale);
-            palette[palIndex].alpha = (U8)(leaf->alpha * scale);
-            leaf->palIndex = (U8)palIndex;
-            palIndex++;
-        }
+// Writes each leaf's mean colour to the palette, numbering the leaves in tree order. _name recurses
+// into _next; _redIndex is the palette index the red channel is stored at.
+#define PALQUANT_EXTRACT_NODES(_name, _next, _redIndex)                                            \
+    static S32 _name(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32 depth)               \
+    {                                                                                              \
+        if (root)                                                                                  \
+        {                                                                                          \
+            if (depth > 0)                                                                         \
+            {                                                                                      \
+                S32 i;                                                                             \
+                                                                                                   \
+                for (i = 0; i < 16; i++)                                                           \
+                {                                                                                  \
+                    palIndex = _next(root->child[i], palette, palIndex, depth - 1);                \
+                }                                                                                  \
+            }                                                                                      \
+            else                                                                                   \
+            {                                                                                      \
+                PalQuantLeaf* leaf = (PalQuantLeaf*)root;                                          \
+                F32 scale = (leaf->weight > 0.0f) ? PALQUANT_TOCHANNEL / leaf->weight : 0.0f;      \
+                                                                                                   \
+                palette[_redIndex].red = (U8)(leaf->red * scale);                                  \
+                palette[palIndex].green = (U8)(leaf->green * scale);                               \
+                palette[palIndex].blue = (U8)(leaf->blue * scale);                                 \
+                palette[palIndex].alpha = (U8)(leaf->alpha * scale);                               \
+                leaf->palIndex = (U8)palIndex;                                                     \
+                palIndex++;                                                                        \
+            }                                                                                      \
+        }                                                                                          \
+                                                                                                   \
+        return palIndex;                                                                           \
     }
 
-    return palIndex;
-}
+static S32 ExtractNodes(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32 depth);
+static S32 ExtractNodesChild(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32 depth);
+static S32 ExtractNodesGrandchild(PalQuantBranch* root, RwRGBA* palette, S32 palIndex, S32 depth);
+
+// FAKEMATCH: ExtractNodes is spelled as three copies (project-own names; the two inner copies are
+// inlined for the next two tree levels and their own bodies dropped) so only the out-of-line copy
+// stores red at the redundant (S32)palIndex; real form believed to be one recursive ExtractNodes
+// storing palette[palIndex].red.
+PALQUANT_EXTRACT_NODES(ExtractNodesGrandchild, ExtractNodes, palIndex)
+PALQUANT_EXTRACT_NODES(ExtractNodesChild, ExtractNodesGrandchild, palIndex)
+PALQUANT_EXTRACT_NODES(ExtractNodes, ExtractNodesChild, (S32)palIndex)
 
 // Chooses up to maxcols palette entries for the colours added so far; every leaf then knows its
 // entry. Returns the leaf count when the colours fit, else maxcols.

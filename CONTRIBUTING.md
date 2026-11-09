@@ -52,6 +52,7 @@ The project owner authorized one standing exception on 2026-11-07: RenderWare (`
 - Every fake construct carries a comment on the line directly above it, `// FAKEMATCH: <what is fake>; real form believed to be <...>`, so `grep -rn FAKEMATCH src/rwsdk src/bink` lists everything left to heal.
 - The unit's evidence row says FAKEMATCH and quotes the deciding construct.
 - It ships only when it makes a function or a unit exact. When it only raises a percentage, the plain form stays.
+- Inline assembly is allowed inside such a fake (owner approval 2026-11-08 07:22, widened to larger blocks at 22:52, refined 2026-11-09 01:43): each asm block, and any embedded instruction word, is a tagged FAKEMATCH, and it ships only when the function becomes exact. A function written entirely in assembly, or mostly in assembly (more than half of its instructions hand-written), is not allowed.
 - The Hostile review checks that every fake construct is tagged and that each tag accurately describes it. It does not judge whether the form is plausible.
 
 Outside RenderWare and Bink, or without the tag and evidence row, the paragraph above still applies.

@@ -90,9 +90,23 @@ static RwMatrix* MatrixOrthoNormalize(RwMatrix* dstMatrix, const RwMatrix* srcMa
             if (recipAt > 0.0f)
             {
                 // Keep the pair of axes nearest to perpendicular and rebuild the third.
-                F32 upAt = MATRIX_ABS(RwV3dDotProductMacro(&up, &at));
-                F32 atRight = MATRIX_ABS(RwV3dDotProductMacro(&at, &right));
-                F32 rightUp = MATRIX_ABS(RwV3dDotProductMacro(&right, &up));
+                F32 upAt;
+                F32 atRight;
+                F32 rightUp;
+
+                // FAKEMATCH: the absolute value of upAt is an if with an inline-asm branch over the
+                // negate. As MATRIX_ABS (the believed real form, like the two below) its value
+                // takes a later register than the target's; as a plain if, the compiler drops the
+                // branch the target keeps on the non-negative path.
+                upAt = RwV3dDotProductMacro(&up, &at);
+                if (upAt >= 0.0f)
+                {
+                    asm { b upAtDone }
+                }
+                upAt = -upAt;
+upAtDone:
+                atRight = MATRIX_ABS(RwV3dDotProductMacro(&at, &right));
+                rightUp = MATRIX_ABS(RwV3dDotProductMacro(&right, &up));
 
                 if (upAt < atRight)
                 {
@@ -183,9 +197,13 @@ F32 _rwMatrixDeterminant(const RwMatrix* matrix)
 
 F32 _rwMatrixOrthogonalError(const RwMatrix* matrix)
 {
-    F32 upAt = RwV3dDotProductMacro(&matrix->up, &matrix->at);
-    F32 atRight = RwV3dDotProductMacro(&matrix->at, &matrix->right);
-    F32 rightUp = RwV3dDotProductMacro(&matrix->right, &matrix->up);
+    F32 atRight;
+    F32 upAt;
+    F32 rightUp;
+
+    upAt = RwV3dDotProductMacro(&matrix->up, &matrix->at);
+    atRight = RwV3dDotProductMacro(&matrix->at, &matrix->right);
+    rightUp = RwV3dDotProductMacro(&matrix->right, &matrix->up);
 
     return upAt * upAt + atRight * atRight + rightUp * rightUp;
 }

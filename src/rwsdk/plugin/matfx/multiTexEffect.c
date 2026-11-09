@@ -322,21 +322,48 @@ static RpMTEffect* MTEffectStreamRead(RwStream* stream)
     return effect;
 }
 
+// FAKEMATCH: RpMTEffectFind reaches MTEffectDictFindNamedEffect through MTEffectCurrentDictFindNamedEffect
+// (a one-line wrapper) for the current dictionary and through MTEffectDictFindNamedEffectAt (the same
+// search with its cursor in the caller's findCur and no effect local) in the dictionary loop; real form
+// believed to be MTEffectDictFindNamedEffect called directly in both places.
+static RpMTEffect* MTEffectCurrentDictFindNamedEffect(RpMTEffectDict* dict, const char* name)
+{
+    return MTEffectDictFindNamedEffect(dict, name);
+}
+
+static RpMTEffect* MTEffectDictFindNamedEffectAt(RpMTEffectDict* dict, const char* name, RwLLLink** cur)
+{
+    *cur = rwLinkListGetFirstLLLink(&dict->effectList);
+
+    while (*cur != rwLinkListGetTerminator(&dict->effectList))
+    {
+        if (!rwstrcmp(rwLLLinkGetData(*cur, RpMTEffect, inDictLink)->name, name))
+        {
+            return rwLLLinkGetData(*cur, RpMTEffect, inDictLink);
+        }
+
+        *cur = rwLLLinkGetNext(*cur);
+    }
+
+    return NULL;
+}
+
 RpMTEffect* RpMTEffectFind(const char* name)
 {
+    RwLLLink* cur;
+    RwLLLink* findCur;
     MTEffectGlobals* globals;
     RwStream* stream;
     char* fullPath;
-    RwLLLink* cur;
-    RpMTEffectDict* dict;
     RpMTEffect* effect;
+    RpMTEffectDict* dict;
 
     globals = MTEFFECTGLOBALS();
     effect = NULL;
 
     if (globals->currentDict)
     {
-        effect = MTEffectDictFindNamedEffect(globals->currentDict, name);
+        effect = MTEffectCurrentDictFindNamedEffect(globals->currentDict, name);
     }
     else
     {
@@ -346,7 +373,7 @@ RpMTEffect* RpMTEffectFind(const char* name)
         {
             dict = rwLLLinkGetData(cur, RpMTEffectDict, inGlobalsLink);
 
-            effect = MTEffectDictFindNamedEffect(dict, name);
+            effect = MTEffectDictFindNamedEffectAt(dict, name, &findCur);
 
             if (effect)
             {
