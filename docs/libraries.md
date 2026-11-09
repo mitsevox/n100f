@@ -120,8 +120,8 @@ This applies to `src/rwsdk/` and to the RenderWare headers in `include/` (`rwcor
 | `rwsdk/plugin/skin2/gcn/skingcng.c` | 3 of 3 | all 3 functions; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
 | `rwsdk/plugin/matfx/gcn/multiTexGcn.c` | 1 of 1 | one function; text only; Matching on GIHE78-rev0 and GIHE78-rev1 |
 | `rwsdk/plugin/matfx/gcn/multiTexGcnData.c` | 7 of 7 (rev0) | (Matching on GIHE78-rev0; `GameCubeMTEffectStreamWrite` is a tagged FAKEMATCH) |
-| `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 9 of 9 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`) |
-| `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 15 of 15 (rev0) | (Matching on GIHE78-rev0, with its `.bss`, `.sdata`, `.sbss` and `.sdata2`) |
+| `rwsdk/plugin/matfx/gcn/multiTexGcnPipe.c` | 9 of 9 (rev0) | (Matching on GIHE78-rev0, with its `.data`, `.sbss` and `.sdata2`; `_rpGameCubeMTEffectSend` is a tagged FAKEMATCH) |
+| `rwsdk/plugin/matfx/gcn/effectPipesGcn.c` | 15 of 15 (rev0) | (Matching on GIHE78-rev0, with its `.bss`, `.sdata`, `.sbss` and `.sdata2`; `fn_80140178` is a tagged FAKEMATCH) |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeAtomicAllInOne.c` | 7 of 7 (rev0) | (Matching on GIHE78-rev0, with its `.data` node definition; `fn_8015DBA4` and `fn_8015E054` are tagged FAKEMATCHes) |
 | `rwsdk/world/pipe/p2/gcn/nodeGameCubeWorldSectorAllInOne.c` | 5 of 5 | (Matching on GIHE78-rev0, with its `.data` and `.sdata2`; `_rxGCWorldSectorAllInOneNode` is a tagged FAKEMATCH: inline-asm loads around the private-data store) |
 | `rwsdk/src/pipe/p2/gcn/nodeDolphinSubmitNoLight.c` | 4 of 4 (rev0) | (Matching on GIHE78-rev0, with its `.data` and `.sbss`; vertices go through the GX vertex functions) |
