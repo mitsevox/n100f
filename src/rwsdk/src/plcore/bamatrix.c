@@ -217,6 +217,50 @@ F32 _rwMatrixNormalError(const RwMatrix* matrix)
     return right * right + up * up + at * at;
 }
 
+// FAKEMATCH: subtraction helper controls temporary creation; real form believed to be the same plain C subtraction.
+static inline F32 MatrixSubtractOne(F32 a)
+{
+    return a - 1.0f;
+}
+
+// FAKEMATCH: binds independent norm values before creating the two carry expressions; real form believed to be the same original identity-error arithmetic.
+static inline F32 MatrixIdentityCombine(F32 position, F32 right, F32 up, F32 at)
+{
+    return ((right + up) + at) + position;
+}
+
+// FAKEMATCH: extracted identity-error output context; real form believed to be the original identity-error C.
+static inline void MatrixIdentityErrorTo(F32* out, F32* atNormOut, const RwMatrix* matrix)
+{
+    const RwV3d* right = &matrix->right;
+    RwV3d vTmp;
+    F32 upNorm;
+
+    vTmp.x = right->x - 1.0f;
+    vTmp.y = right->y;
+    vTmp.z = right->z;
+    *out = RwV3dDotProductMacro(&vTmp, &vTmp);
+
+    vTmp.x = matrix->up.x;
+    // FAKEMATCH: subtraction is inlined through a helper; real form believed to be the same plain C subtraction.
+    vTmp.y = MatrixSubtractOne(matrix->up.y);
+    vTmp.z = matrix->up.z;
+    upNorm = RwV3dDotProductMacro(&vTmp, &vTmp);
+
+    vTmp.x = matrix->at.x;
+    vTmp.y = matrix->at.y;
+    // FAKEMATCH: subtraction is inlined through a helper; real form believed to be the same plain C subtraction.
+    vTmp.z = MatrixSubtractOne(matrix->at.z);
+    *atNormOut = RwV3dDotProductMacro(&vTmp, &vTmp);
+
+    // FAKEMATCH: reusing the scratch vector retains the previous norm snapshot; real form believed to use the same position dot product.
+    vTmp.x = matrix->pos.x;
+    vTmp.y = matrix->pos.y;
+    vTmp.z = matrix->pos.z;
+    // FAKEMATCH: evaluates the position norm before the inlined carry body; real form believed to be the same grouped sum.
+    *out = MatrixIdentityCombine(RwV3dDotProductMacro(&vTmp, &vTmp), *out, upNorm, *atNormOut);
+}
+
 F32 _rwMatrixIdentityError(const RwMatrix* matrix)
 {
     const RwV3d* right = &matrix->right;
@@ -296,6 +340,10 @@ RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
     S32 identity;
     S32 normal;
     S32 orthogonal;
+    // FAKEMATCH: caller-owned error receives the inline output helper; real form believed to be the original identity-error return value.
+    F32 error;
+    // FAKEMATCH: caller-owned at norm controls materialization; real form believed to be the same identity-error arithmetic in its original context.
+    F32 atNorm;
 
     if (!tolerance)
     {
@@ -304,7 +352,8 @@ RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
 
     normal = tolerance->Normal >= _rwMatrixNormalError(matrix);
     orthogonal = tolerance->Orthogonal >= _rwMatrixOrthogonalError(matrix);
-    identity = normal && orthogonal && tolerance->Orthogonal >= _rwMatrixIdentityError(matrix);
+    // FAKEMATCH: inline output helper retains norm temporaries; real form believed to be the original identity-error call.
+    identity = normal && orthogonal && tolerance->Orthogonal >= (MatrixIdentityErrorTo(&error, &atNorm, matrix), error);
 
     flags = matrix->flags;
     flags = normal ? (flags | rwMATRIXTYPENORMAL) : (flags & ~rwMATRIXTYPENORMAL);

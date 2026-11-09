@@ -579,6 +579,33 @@ static inline U32 PipelineNodesSize(RxPipeline* pipeline, RxPipelineNode* node)
     return size;
 }
 
+// FAKEMATCH: extracts data sizing into an inline helper; real form believed to be the same C inside RxLockedPipeUnlock.
+static inline U32 PipelineUnlockedDataSize(RxPipeline* pipeline, U32 numUnique)
+{
+    RxPipelineNode* node;
+    U32 dataSize;
+    S32 i;
+
+    node = pipeline->nodes;
+    dataSize = numUnique * sizeof(RxPipelineCluster)
+               + numUnique * sizeof(RxPipelineRequiresCluster);
+    dataSize += pipeline->numNodes * numUnique * sizeof(RxPipelineCluster*);
+    dataSize += pipeline->numNodes * (numUnique + 1) * sizeof(U32);
+
+    for (i = 0; i < pipeline->numNodes; i++, node++)
+    {
+        if (node->nodeDef->pipelineNodePrivateDataSize)
+        {
+            dataSize += node->nodeDef->pipelineNodePrivateDataSize;
+        }
+
+        dataSize += node->nodeDef->io.numClustersOfInterest * sizeof(U32);
+    }
+
+    dataSize += sizeof(RxPacket) + (numUnique - 1) * sizeof(RxCluster);
+    return dataSize;
+}
+
 RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
 {
     if (pipeline && pipeline->locked)
@@ -612,7 +639,6 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
                 return NULL;
             }
 
-            node = pipeline->nodes;
             numUnique = PipelineCalcNumUniqueClusters(pipeline);
 
             maxSize = RXPIPELINEGLOBAL(maxNodesPerPipeline) * sizeof(RxPipelineNode)
@@ -622,29 +648,15 @@ RxPipeline* RxLockedPipeUnlock(RxLockedPipe* pipeline)
             // The nodes and their outputs while they are sorted, and the space the dependency
             // chasing works in.
             size = RXPIPELINEGLOBAL(maxNodesPerPipeline) * sizeof(RxPipelineNodeTopSortData)
-                   + PipelineNodesSize(pipeline, node);
+                   + PipelineNodesSize(pipeline, pipeline->nodes);
             size += pipeline->numNodes * sizeof(rxReq) + pipeline->numNodes * numUnique * sizeof(rxReqEntry)
                     + pipeline->numNodes * numUnique * sizeof(rxScope);
 
             // The data the unlocked pipeline keeps: its clusters, its input requirements, each
             // node's cluster references, continuity flags, private data and input slots, and the
             // packet it executes with.
-            dataSize = numUnique * sizeof(RxPipelineCluster)
-                       + numUnique * sizeof(RxPipelineRequiresCluster);
-            dataSize += pipeline->numNodes * numUnique * sizeof(RxPipelineCluster*);
-            dataSize += pipeline->numNodes * (numUnique + 1) * sizeof(U32);
-
-            for (i = 0; i < pipeline->numNodes; i++, node++)
-            {
-                if (node->nodeDef->pipelineNodePrivateDataSize)
-                {
-                    dataSize += node->nodeDef->pipelineNodePrivateDataSize;
-                }
-
-                dataSize += node->nodeDef->io.numClustersOfInterest * sizeof(U32);
-            }
-
-            dataSize += sizeof(RxPacket) + (numUnique - 1) * sizeof(RxCluster);
+            // FAKEMATCH: calls the extracted sizing helper; real form believed to be the sizing C directly in this function.
+            dataSize = PipelineUnlockedDataSize(pipeline, numUnique);
             size += dataSize;
             blockSize = maxSize;
 
