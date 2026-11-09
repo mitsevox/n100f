@@ -90,7 +90,8 @@ static void rwCameraUpdateZShiftScale(RwCamera* camera)
         RwV3dScaleMacro(&(_plane)->plane.normal, &(_plane)->plane.normal, recip);                  \
     } while (0)
 
-// The 2.0f that doubles the window vectors, loaded by name from the inline asm below (FAKEMATCH).
+// FAKEMATCH: the 2.0f that doubles the window vectors is a named file-local constant so the inline
+// asm can load it; real form believed to be the literal 2.0f in the RwV3dScale calls.
 static const F32 cameraTwo = 2.0f;
 
 // Builds the perspective frustum: the eight corners (near then far, each starting top right in
@@ -145,7 +146,7 @@ void CameraBuildPerspClipPlanes(register RwCamera* camera)
     // keeps a named local's register number and the floating-point registers come out as the
     // target's; the instructions are the target's own and the compiler still schedules them.
     // Real form believed to be the plain RwV3dScale / RwV3dIncrementScaled / RwV3dAdd macro
-    // sequence with the negated x view offset in a local (99.49 in that form).
+    // sequence with the negated x view offset in a local.
     up = &camMatrix->up;
     asm { lfs vox, 0x78(camera) }
     asm { fneg rightOffset, vox }

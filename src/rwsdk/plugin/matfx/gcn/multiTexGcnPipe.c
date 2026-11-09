@@ -375,6 +375,8 @@ RwMatrix* GetTexFrameMatrix(S32 frame, const RwMatrix* matrix, RwMatrix* result)
 // Sends one enabled TEV stage, numbered after the lighting stages: its indirect or direct mode,
 // its color and alpha inputs (lit color channels swap in the lighting tables), its order with
 // the channel it reads, its constant selections and its color and alpha operations.
+// FAKEMATCH: the per-stage TEV setup is a separate static helper (an out-of-line copy stays in the
+// object); real form believed to be the same code inline in the stage loop of _rpGameCubeMTEffectSend.
 static void SendTevStage(GCNMTTevStage* tevStage, S32 firstStage, S32 i, S32 lighting)
 {
     S32 stage = firstStage + i;
@@ -385,6 +387,7 @@ static void SendTevStage(GCNMTTevStage* tevStage, S32 firstStage, S32 i, S32 lig
         GCNMTTevInd tevInd;
 
         RpGameCubeTevIndUnpack(&tevInd, &tevStage->indirect);
+        // FAKEMATCH: addPrev is cast to GXBool; real form believed to pass tevInd.addPrev with no cast.
         GXSetTevIndirect(stage, tevInd.indStage, tevInd.format, tevInd.bias,
                          tevInd.matrix, tevInd.wrapS, tevInd.wrapT, (GXBool)tevInd.addPrev,
                          tevInd.utcLod, tevInd.alpha);
@@ -634,6 +637,8 @@ RpMTEffect* _rpGameCubeMTEffectSend(RpMTEffect* effect, U32 numChannels, U32 num
 
             if (!(tevStage->flags & GCNMTTEV_DISABLED))
             {
+                // FAKEMATCH: the stage setup is a call to the SendTevStage helper; real form
+                // believed to be its body inline here.
                 SendTevStage(tevStage, firstStage, i, lighting);
                 texMapOfCoord[tevStage->texCoord] = tevStage->texMap;
             }

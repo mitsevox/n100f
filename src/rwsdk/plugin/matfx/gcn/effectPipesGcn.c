@@ -551,6 +551,8 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
                 if (!bumpEntry)
                 {
+                    // FAKEMATCH: the entry size is set to 6 and bumpSize added in a second statement; real form believed
+                    // to be one expression, bumpSize + 6, passed straight to RwResourcesAllocateResEntry.
                     S32 size = 6;
 
                     size += bumpSize;
@@ -589,6 +591,8 @@ void* fn_80140178(void* object, GCNObjectData* objectData)
 
                 if (!bumpEntry)
                 {
+                    // FAKEMATCH: the entry size is set to 6 and bumpSize added in a second statement; real form believed
+                    // to be one expression, bumpSize + 6, passed straight to RwResourcesAllocateResEntry.
                     S32 size = 6;
 
                     size += bumpSize;

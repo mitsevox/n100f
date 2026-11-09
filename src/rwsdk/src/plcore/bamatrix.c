@@ -217,37 +217,28 @@ F32 _rwMatrixNormalError(const RwMatrix* matrix)
     return right * right + up * up + at * at;
 }
 
-// How far the matrix is from the identity: the summed squared distance of each axis from its unit
-// vector plus the squared length of pos. RwMatrixOptimize's identity test is its only user.
-// FAKEMATCH: static inline, so that no out-of-line copy is emitted now that nothing calls it; real
-// form believed to be the global F32 _rwMatrixIdentityError(const RwMatrix*) (GLOBAL in the PS2
-// prototype symbol table; the target has no copy of it).
-static inline F32 _rwMatrixIdentityError(const RwMatrix* matrix)
+F32 _rwMatrixIdentityError(const RwMatrix* matrix)
 {
     const RwV3d* right = &matrix->right;
     RwV3d vTmp;
-    F32 rightError, sum, atError, posError, result;
+    F32 result;
 
-    // The at and pos terms are held in their own locals so each is added in front of the running
-    // sum (the target's operand order), and the first sum is its own value.
     vTmp.x = right->x - 1.0f;
     vTmp.y = right->y;
     vTmp.z = right->z;
-    rightError = RwV3dDotProductMacro(&vTmp, &vTmp);
+    result = RwV3dDotProductMacro(&vTmp, &vTmp);
 
     vTmp.x = matrix->up.x;
     vTmp.y = matrix->up.y - 1.0f;
     vTmp.z = matrix->up.z;
-    sum = rightError + RwV3dDotProductMacro(&vTmp, &vTmp);
+    result += RwV3dDotProductMacro(&vTmp, &vTmp);
 
     vTmp.x = matrix->at.x;
     vTmp.y = matrix->at.y;
     vTmp.z = matrix->at.z - 1.0f;
-    atError = RwV3dDotProductMacro(&vTmp, &vTmp);
-    sum = atError + sum;
+    result += RwV3dDotProductMacro(&vTmp, &vTmp);
 
-    posError = RwV3dDotProductMacro(&matrix->pos, &matrix->pos);
-    result = posError + sum;
+    result += RwV3dDotProductMacro(&matrix->pos, &matrix->pos);
 
     return result;
 }
@@ -296,233 +287,24 @@ S32 RwEngineSetMatrixTolerances(const RwMatrixTolerance* const tolerance)
     return 1;
 }
 
-// FAKEMATCH: RwMatrixOptimize's identity test, 1 when the matrix is normal and orthogonal and its
-// _rwMatrixIdentityError is within the tolerance. The error sum is one-instruction inline asm and
-// the declaration order of its locals is chosen for the register colors. Real form believed to be
-// `identity = normal && orthogonal && tolerance->Orthogonal >= _rwMatrixIdentityError(matrix);`
-// in RwMatrixOptimize's body. Called from an inline function, `identity` is a compiler temporary,
-// which CW's late CSE pass needs to turn the && test's second `li 0` into the target's `mr`.
-// ux to az are the up and at values RwMatrixOptimize already loaded.
-static inline S32 MatrixIdentityTest(register RwMatrix* matrix, F32 tolerance, S32 normal,
-                                     S32 orthogonal, register F32 ux, register F32 uy,
-                                     register F32 uz, register F32 ax, register F32 ay,
-                                     register F32 az)
-{
-    S32 identity;
-    register F32 iry;
-    register F32 px;
-    register F32 irz;
-    register F32 atError;
-    register F32 py;
-    register F32 irxx;
-    register F32 pzz;
-    register F32 rightError;
-    register F32 ps1;
-    register F32 irxm;
-    register F32 sum;
-    register F32 iryy;
-    register F32 iuyy;
-    register F32 iazm;
-    register F32 upE;
-    register F32 iuym;
-    register F32 irzz;
-    register F32 irx;
-    register F32 ir1;
-    register F32 iuxx;
-    register F32 pz;
-    register F32 iazz;
-    register F32 posError;
-    register F32 iuzz;
-    register F32 iu1;
-    register F32 iaxx;
-    register F32 pxx;
-    register F32 errI;
-    register F32 sum2;
-    register F32 iayy;
-    register F32 one2;
-    register F32 pyy;
-    register F32 ia1;
-
-    identity = 0;
-    if ((normal && orthogonal) != 0)
-    {
-        one2 = 1.0f;
-        asm { fmuls iuxx, ux, ux }
-        asm { lfs irx, 0(matrix) }
-        asm { fmuls iuzz, uz, uz }
-        asm { fsubs iuym, uy, one2 }
-        asm { lfs iry, 4(matrix) }
-        asm { fsubs irxm, irx, one2 }
-        asm { lfs irz, 8(matrix) }
-        asm { fsubs iazm, az, one2 }
-        asm { fmuls iuyy, iuym, iuym }
-        asm { fmuls irxx, irxm, irxm }
-        asm { lfs px, 0x30(matrix) }
-        asm { fmuls iryy, iry, iry }
-        asm { lfs py, 0x34(matrix) }
-        asm { fadds iu1, iuxx, iuyy }
-        asm { fmuls irzz, irz, irz }
-        asm { fadds ir1, irxx, iryy }
-        asm { lfs pz, 0x38(matrix) }
-        asm { fmuls iaxx, ax, ax }
-        asm { fmuls iayy, ay, ay }
-        asm { fadds rightError, irzz, ir1 }
-        asm { fadds upE, iuzz, iu1 }
-        asm { fmuls iazz, iazm, iazm }
-        asm { fadds ia1, iaxx, iayy }
-        asm { fmuls pxx, px, px }
-        asm { fmuls pyy, py, py }
-        asm { fadds atError, iazz, ia1 }
-        asm { fadds sum, rightError, upE }
-        asm { fmuls pzz, pz, pz }
-        asm { fadds ps1, pxx, pyy }
-        asm { fadds sum2, atError, sum }
-        asm { fadds posError, pzz, ps1 }
-        asm { fadds errI, posError, sum2 }
-        if (tolerance >= errI)
-        {
-            identity = 1;
-        }
-    }
-
-    return identity;
-}
-
 // Sets the matrix's normal, orthogonal and identity flags by how far it is from each, under the
 // given tolerances or the defaults. The identity test uses the orthogonal tolerance, not the
 // identity one.
-// FAKEMATCH: the normal and orthogonal errors are one-instruction inline asm in the target's
-// schedule (C keeps the compares and flags), and the F32 declaration order is chosen for the
-// register colors. Real form believed to be
-// `normal = tolerance->Normal >= _rwMatrixNormalError(matrix);` and
-// `orthogonal = tolerance->Orthogonal >= _rwMatrixOrthogonalError(matrix);` with both inlined;
-// that C matches the instruction order but not the identity block's colors. matrix and
-// tolerance are register-qualified so that the asm can address them.
-RwMatrix* RwMatrixOptimize(register RwMatrix* matrix, register const RwMatrixTolerance* tolerance)
+RwMatrix* RwMatrixOptimize(RwMatrix* matrix, const RwMatrixTolerance* tolerance)
 {
     U32 flags;
     S32 identity;
     S32 normal;
     S32 orthogonal;
-    register F32 ary;
-    register F32 as1;
-    register F32 errN;
-    register F32 ruy;
-    register F32 arx;
-    register F32 errO;
-    register F32 arz;
-    register F32 ayy;
-    register F32 uee;
-    register F32 axx;
-    register F32 ree;
-    register F32 q2;
-    register F32 tolN;
-    register F32 ua1;
-    register F32 as;
-    register F32 qs1;
-    register F32 azz;
-    register F32 us1;
-    register F32 ar1;
-    register F32 uzz;
-    register F32 uyy;
-    register F32 ue;
-    register F32 ryy;
-    register F32 uay;
-    register F32 rxx;
-    register F32 q1;
-    register F32 uaz;
-    register F32 one;
-    register F32 s1;
-    register F32 uxx;
-    register F32 ru1;
-    register F32 ry;
-    register F32 rux;
-    register F32 rightUp;
-    register F32 rx;
-    register F32 rz;
-    register F32 us;
-    register F32 uy;
-    register F32 ux;
-    register F32 re;
-    register F32 ae;
-    register F32 aee;
-    register F32 uz;
-    register F32 ay;
-    register F32 ax;
-    register F32 upAt;
-    register F32 rs;
-    register F32 az;
-    register F32 uax;
-    register F32 rs1;
-    register F32 ruz;
-    register F32 rzz;
-    register F32 atRight;
-    register F32 tolO;
-    register F32 q3;
 
     if (!tolerance)
     {
         tolerance = &MATRIX_DATA(tolerance);
     }
 
-    asm { lfs rx, 0(matrix) }
-    asm { lfs ry, 4(matrix) }
-    asm { lfs ux, 0x10(matrix) }
-    asm { fmuls rxx, rx, rx }
-    asm { lfs uy, 0x14(matrix) }
-    asm { fmuls ryy, ry, ry }
-    asm { lfs rz, 8(matrix) }
-    asm { fmuls uxx, ux, ux }
-    asm { fmuls uyy, uy, uy }
-    asm { lfs uz, 0x18(matrix) }
-    asm { fmuls rzz, rz, rz }
-    asm { lfs ax, 0x20(matrix) }
-    asm { fadds rs1, rxx, ryy }
-    asm { lfs ay, 0x24(matrix) }
-    asm { lfs az, 0x28(matrix) }
-    asm { fmuls uzz, uz, uz }
-    asm { fadds us1, uxx, uyy }
-    one = 1.0f;
-    asm { fadds rs, rzz, rs1 }
-    asm { lfs tolN, 0(tolerance) }
-    asm { fmuls axx, ax, ax }
-    asm { fmuls ayy, ay, ay }
-    asm { fadds us, uzz, us1 }
-    asm { fsubs re, rs, one }
-    asm { fmuls azz, az, az }
-    asm { fadds as1, axx, ayy }
-    asm { fsubs ue, us, one }
-    asm { fmuls ree, re, re }
-    asm { fadds as, azz, as1 }
-    asm { fmuls uee, ue, ue }
-    asm { fsubs ae, as, one }
-    asm { fadds s1, ree, uee }
-    asm { fmuls aee, ae, ae }
-    asm { fadds errN, aee, s1 }
-    normal = tolN >= errN;
-    asm { fmuls uax, ux, ax }
-    asm { fmuls uay, uy, ay }
-    asm { lfs tolO, 4(tolerance) }
-    asm { fmuls arx, ax, rx }
-    asm { fmuls ary, ay, ry }
-    asm { fmuls uaz, uz, az }
-    asm { fadds ua1, uax, uay }
-    asm { fmuls arz, az, rz }
-    asm { fadds ar1, arx, ary }
-    asm { fadds upAt, uaz, ua1 }
-    asm { fmuls rux, rx, ux }
-    asm { fmuls ruy, ry, uy }
-    asm { fadds atRight, arz, ar1 }
-    asm { fmuls ruz, rz, uz }
-    asm { fadds ru1, rux, ruy }
-    asm { fmuls q1, upAt, upAt }
-    asm { fmuls q2, atRight, atRight }
-    asm { fadds rightUp, ruz, ru1 }
-    asm { fadds qs1, q1, q2 }
-    asm { fmuls q3, rightUp, rightUp }
-    asm { fadds errO, q3, qs1 }
-    orthogonal = tolO >= errO;
-    identity = MatrixIdentityTest(matrix, tolO, normal, orthogonal, ux, uy, uz, ax, ay, az);
+    normal = tolerance->Normal >= _rwMatrixNormalError(matrix);
+    orthogonal = tolerance->Orthogonal >= _rwMatrixOrthogonalError(matrix);
+    identity = normal && orthogonal && tolerance->Orthogonal >= _rwMatrixIdentityError(matrix);
 
     flags = matrix->flags;
     flags = normal ? (flags | rwMATRIXTYPENORMAL) : (flags & ~rwMATRIXTYPENORMAL);

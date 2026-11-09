@@ -53,6 +53,8 @@ S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numT
 
         if (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
         {
+            // FAKEMATCH: the texture-coordinate counter is unsigned and cast back to S32 in the test; real form
+            // believed to be S32 i compared with numTexCoords directly.
             U32 i;
 
             for (i = 0; (S32)i < numTexCoords; i++)
@@ -82,6 +84,8 @@ S32 fn_80159380(const RpGameCubeVtxFmt* vtxFmt, U32 flags, S32 numVerts, U8 numT
 
         if (flags & (rpGEOMETRYTEXTURED | rpGEOMETRYTEXTURED2))
         {
+            // FAKEMATCH: the texture-coordinate counter is unsigned and cast back to S32 in the test; real form
+            // believed to be S32 i compared with numTexCoords directly.
             U32 i;
 
             for (i = 0; (S32)i < numTexCoords; i++)
