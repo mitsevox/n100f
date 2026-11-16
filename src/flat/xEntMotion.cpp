@@ -1377,7 +1377,8 @@ void xEntMotionDebugDraw(const _xEntMotion* xem)
                 }
                 for (U16 jdx = 0; jdx < xMovePointGetNumPoints(omp); jdx++)
                 {
-                    xDrawLine(xMovePointGetPos(omp), xMovePointGetPos(xMovePointGetPoint(omp, jdx)));
+                    xDrawLine(xMovePointGetPos(omp),
+                              xMovePointGetPos(xMovePointGetPoint(omp, jdx)));
                 }
             }
         }
