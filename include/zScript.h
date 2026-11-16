@@ -31,7 +31,7 @@ struct _zScript : xBase
 struct xSerial;
 struct _xScene;
 
-void zScriptInit(void* data, void* asset);
+void zScriptInit(void* b, void* tasset);
 void zScriptSave(_zScript* ent, xSerial* s);
 void zScriptLoad(_zScript* ent, xSerial* s);
 void zScriptUpdate(xBase* to, _xScene* sc, F32 dt);

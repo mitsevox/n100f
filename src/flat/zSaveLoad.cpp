@@ -695,8 +695,8 @@ S32 xSGT_SaveProcPrefsCB(void* vp, st_XSAVEGAME_DATA* xsgdata,
                          st_XSAVEGAME_WRITECONTEXT* wctxt)
 {
     // Refresh the sound mode before writing the saved preferences.
-    S32 sum = 0;
     S32 amy;
+    S32 sum = 0;
     gSnd.stereo = iSndGetStereo();
     amy = xSGWriteData(xsgdata, wctxt, &gSnd.stereo, 1);
     sum += amy;
@@ -725,8 +725,8 @@ S32 xSGT_SaveInfoPrefsCB(void* vp, st_XSAVEGAME_DATA* xsgdata, S32* need, S32* m
 S32 xSGT_SaveProcCB(void* vp, st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_WRITECONTEXT* wctxt)
 {
     // Save the current scene as its four-character ID string.
-    S32 sum = 0;
     S32 amy;
+    S32 sum = 0;
     strcpy(currSceneStr, xUtil_idtag2string(globals.sceneCur->sceneID, 0));
     amy = xSGWriteData(xsgdata, wctxt, currSceneStr, 1, strlen(currSceneStr));
     sum += amy;

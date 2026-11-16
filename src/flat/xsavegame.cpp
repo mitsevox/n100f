@@ -187,14 +187,14 @@ S32 xSGTgtSelect(st_XSAVEGAME_DATA* xsgdata, S32 tidx)
 
 S32 xSG_chdir_gamedir(st_XSAVEGAME_DATA* xsgdata)
 {
-    S32 rc = 1;
+    S32 result = 1;
     char* namestr = iSGMakeName(ISG_NGTYP_GAMEDIR, NULL, 0);
-    S32 result = iSGSelectGameDir(xsgdata->isgsess, namestr);
-    if (!result)
+    S32 rc = iSGSelectGameDir(xsgdata->isgsess, namestr);
+    if (!rc)
     {
-        rc = 0;
+        result = 0;
     }
-    return rc;
+    return result;
 }
 
 S32 xSGGameSize(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
