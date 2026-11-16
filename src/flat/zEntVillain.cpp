@@ -7092,8 +7092,7 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
         {
             vil->anim_loopmult = 0.97f;
             vil->vhf->pickanim(vil, ZVIL_GOAL_LOBBING, ZVIL_GSPOT_KICKATTACK);
-            F32 tym = VANM_entTime(vil);
-            if (VCFG_inDamageWindow(vil, tym) && vil->prj_reserved && vil->cnt_lobSalvo > 0)
+            if (VCFG_inDamageWindow(vil, VANM_entTime(vil)) && vil->prj_reserved && vil->cnt_lobSalvo > 0)
             {
                 _xVec3 vec_off = { 0 };
                 vec_off.x = 0.5f - iurand();
@@ -7115,8 +7114,7 @@ static S32 VILN_kp_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONT
         }
         break;
     case ZVIL_GOAL_SPELLCAST:
-        F32 tym = VANM_entTime(vil);
-        if (VCFG_inDamageWindow(vil, tym))
+        if (VCFG_inDamageWindow(vil, VANM_entTime(vil)))
             vil->goodattack |= VWEP_extend_particles(vil, dt, &vil->pos_exttgt);
         if (vil->goodattack)
             VWEP_mm_zapPlayer(vil);
@@ -15206,8 +15204,7 @@ static S32 VWEP_lobActivatePRJ(zEntProjectile* prj, st_zEntVillain* vil, _xVec3*
     S32 result = 0;
     if (!prj) return 0;
 
-    zEntProjectile* reserved = vil->prj_reserved;
-    switch (reserved->cat_proj)
+    switch (vil->prj_reserved->cat_proj)
     {
     case ZPRJ_CAT_ARROW:
         result = VWEP_lobInitArrow(vil, pos_tgt, vec_off, vec_spin, arcness, heavy);
