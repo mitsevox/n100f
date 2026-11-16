@@ -52,6 +52,16 @@ The project owner is **[mitsevox](https://github.com/mitsevox)**, the sole merge
 | `tools/`, `tests/` | The kit tools, dtk-template's tools and the project's own, with their tests |
 | `docs/`, `references/` | Durable project knowledge and regenerable reference material |
 
-## Credits and licenses
+## License
+
+The contributors' own work in this repository is dedicated to the public domain under [CC0 1.0 Universal](LICENSE). Use it however you like.
+
+CC0 covers only what the contributors have the right to give away:
+
+- **The game is not included or licensed.** Night of 100 Frights, its executables, disc images and assets belong to their owners. You need your own copy of the game to build.
+- **Third-party libraries are not ours to license.** The reconstructed RenderWare (Criterion Software/EA), Bink (RAD Game Tools), Dolphin SDK (Nintendo), Metrowerks runtime and MSL, and MetroTRK code reproduces other companies' software; CC0 makes no claim over it.
+- **Imported code keeps its own license.** Source taken from other projects keeps its original terms, such as MIT, fdlibm or IJG, as listed file by file in [CREDITS.md](CREDITS.md), with the notices under `licenses/` and beside the files.
+
+## Credits
 
 Imported source is credited in [CREDITS.md](CREDITS.md); licenses are under `licenses/`.
