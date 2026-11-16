@@ -3986,8 +3986,7 @@ void zEntShaggy_SceneStart(zScene* sc)
                 if (i != j && sc->ents[j]->baseType == 6)
                 {
                     p2EntAsset* candidateAsset = sc->ents[j]->asset;
-                    p2EntAsset* currentAsset = sc->ents[i]->asset;
-                    if (xVec3Dist(&candidateAsset->pos, &currentAsset->pos) < 0.1f)
+                    if (xVec3Dist(&candidateAsset->pos, &sc->ents[i]->asset->pos) < 0.1f)
                     {
                         gShaggy[gNumShaggy].chimneyPlat = (_zPlatform*)sc->ents[j];
                         sc->ents[j]->flags &= 0xFE;
