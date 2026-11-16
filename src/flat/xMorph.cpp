@@ -11,7 +11,6 @@ xMorphSeqFile* xMorphSeqSetup(void* data, xMorphFindAssetCallback FindAssetCB)
     RpAtomic* model;
     xMorphTargetFile* mphtgt;
     xMorphSeqFile* header;
-    F32* timelist;
     xMorphFrame* framelist;
     U32* assetlist;
     char* namelist;
@@ -19,8 +18,7 @@ xMorphSeqFile* xMorphSeqSetup(void* data, xMorphFindAssetCallback FindAssetCB)
     U32 skipsize;
 
     header = (xMorphSeqFile*)data;
-    timelist = (F32*)(header + 1);
-    framelist = (xMorphFrame*)(timelist + header->TimeCount);
+    framelist = (xMorphFrame*)((F32*)(header + 1) + header->TimeCount);
     assetlist = (U32*)(framelist + header->TimeCount);
     namelist = (char*)(assetlist + header->ModelCount * 2);
 

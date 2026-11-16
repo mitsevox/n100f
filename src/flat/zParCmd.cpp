@@ -380,10 +380,9 @@ void xParCmdMoveRandomPar_Update(zParCmd* c, xParGroup* ps, F32 dt)
 {
     xPar* p = ps->m_root;
     xParCmdMoveRandomPar* cmd = (xParCmdMoveRandomPar*)c->tasset;
-    F32 hdt = dt;
-    hdt *= 0.5f;
-    F32 dx = cmd->dim.x * hdt;
-    F32 dz = cmd->dim.z * hdt;
+    dt *= 0.5f;
+    F32 dx = cmd->dim.x * dt;
+    F32 dz = cmd->dim.z * dt;
 
     while (p)
     {
@@ -629,7 +628,8 @@ void xParCmdRandomVelocityPar_Update(zParCmd* c, xParGroup* ps, F32 dt)
         F32 z = 2.0f * (rz * iurand()) - rz;
 
         xMat3x3Euler(&mat, x, y, z);
-        xMat3x3LMulVec(&p->m_vel, &mat, &p->m_vel);
+        _xVec3* velvec = &p->m_vel;
+        xMat3x3LMulVec(velvec, &mat, velvec);
 
         p = p->m_next;
     }
@@ -642,9 +642,8 @@ void xParCmdApplyWind_Update(zParCmd* c, xParGroup* ps, F32 dt)
     xVec3 wind_vec;
 
     xClimateGetRealWindDir(&gClimate, &wind_vec);
-    F32 strength = cmd->strength * dt;
-    wind_vec.x *= strength;
-    wind_vec.z *= strength;
+    wind_vec.x *= cmd->strength * dt;
+    wind_vec.z *= cmd->strength * dt;
 
     for (xPar* p = ps->m_root; p != NULL; p = p->m_next)
     {

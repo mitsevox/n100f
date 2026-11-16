@@ -34,13 +34,15 @@ static inline void xClimateVecFromAngle(F32 angleDegrees, xVec3* vec)
 
 void xClimateInitAsset(_tagClimate* climate, p2EnvAsset* easset)
 {
+    _tagWind* w = &climate->wind;
+
     sClimate = climate;
-    climate->wind.strength = 0.0f;
-    xClimateVecFromAngle(climate->wind.angle, &climate->wind.dir);
+    w->strength = 0.0f;
+    xClimateVecFromAngle(w->angle, &w->dir);
 
     if (easset->climateFlags == 0)
     {
-        climate->wind.strength = 0.0f;
+        w->strength = 0.0f;
         climate->rain.strength = 0.0f;
         return;
     }

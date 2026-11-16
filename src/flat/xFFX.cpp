@@ -53,13 +53,10 @@ void xFFXTurnOff(xFFX* f)
 // Puts the effect at the head of the entity's list and returns its index.
 S16 xFFXAddEffect(_xEnt* ent, xFFX* f)
 {
-    U8 numFFX;
     f->next = ent->ffx;
     f->flags = f->flags | 1;
     ent->ffx = f;
-    numFFX = ent->num_ffx;
-    ent->num_ffx = numFFX + 1;
-    return numFFX;
+    return ent->num_ffx++;
 }
 
 S16 xFFXAddEffect(_xEnt* ent, void (*dof)(_xEnt*, _xScene*, F32, void*), void* fd)
@@ -151,7 +148,7 @@ void xFFXShakePoolInit(U32 num)
     shake_psize = num;
     shake_pool = (xFFXShakeState*)xMemAlloc(gActiveHeap, num * sizeof(xFFXShakeState));
     shake_pool->next = NULL;
-    for (S32 i = 1; i < shake_psize; i++)
+    for (U32 i = 1; i < shake_psize; i++)
     {
         shake_pool[i].next = &shake_pool[i - 1];
     }

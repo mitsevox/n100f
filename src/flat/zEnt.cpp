@@ -6,6 +6,7 @@
 #include "xString.h"
 #include "xstransvc.h"
 #include "zAnimList.h"
+#include "zEntVillain.h"
 #include "zGlobals.h"
 #include "zScene.h"
 
@@ -277,10 +278,9 @@ void zEntEventAllOfType(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam, U
 
     for (U16 i = 0; i < s->num_base; i++)
     {
-        xBase* base = s->base[i];
-        if (type == base->baseType)
+        if (type == s->base[i]->baseType)
         {
-            zEntEvent(from, fromEvent, base, toEvent, toParam, NULL, 0);
+            zEntEvent(from, fromEvent, s->base[i], toEvent, toParam, NULL, 0);
         }
     }
 }
@@ -680,6 +680,7 @@ S32 zParamGetVector(zAssetModelParam* param, U32 size, const char* tok, xVec3 de
 void zEntGetShadowParams(_xEnt* ent, xVec3* center, F32* radius)
 {
     _ShadowParams* sp;
+    st_zEntVillain* zp;
     xVec3* at;
     U32 i;
     F32 rad;
@@ -691,10 +692,11 @@ void zEntGetShadowParams(_xEnt* ent, xVec3* center, F32* radius)
 
     if (ent->baseType == 2)
     {
+        zp = (st_zEntVillain*)ent;
         sp = gShadowParams;
         for (i = 0; i < 27; i++)
         {
-            if (ent->subType == sp->type)
+            if (zp->subType == sp->type)
             {
                 rad *= sp->rad;
                 xVec3AddScaled(&c, at, sp->at);

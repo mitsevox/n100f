@@ -282,9 +282,10 @@ static void BSP_Unload(void*, U32)
 // Keep the first texture of a dictionary.
 static RwTexture* TexCB(RwTexture* texture, void* data)
 {
-    if (*(RwTexture**)data == NULL)
+    RwTexture** texFound = (RwTexture**)data;
+    if (*texFound == NULL)
     {
-        *(RwTexture**)data = texture;
+        *texFound = texture;
     }
     return texture;
 }
@@ -340,10 +341,11 @@ static void* RWTX_Read(void*, U32, void* indata, U32 insize, U32* outsize)
 // Destroy a texture read by RWTX_Read, whatever its reference count.
 static void TextureRW3_Unload(void* userdata, U32)
 {
-    if (userdata != NULL)
+    RwTexture* tex = (RwTexture*)userdata;
+    if (tex != NULL)
     {
-        ((RwTexture*)userdata)->refCount = 1;
-        RwTextureDestroy((RwTexture*)userdata);
+        tex->refCount = 1;
+        RwTextureDestroy(tex);
     }
 }
 
@@ -425,7 +427,8 @@ static void* ATBL_Read(void*, U32 aid, void* indata, U32, U32* outsize)
     xAnimState* astate;
     xAnimTransition* atran;
 
-    xAnimAssetTable* zaTbl = (xAnimAssetTable*)indata;
+    U8* zaBytes = (U8*)indata;
+    xAnimAssetTable* zaTbl = (xAnimAssetTable*)zaBytes;
     void** zaRaw = (void**)(zaTbl + 1);
     xAnimAssetFile* zaFile = (xAnimAssetFile*)(zaRaw + zaTbl->NumRaw);
     xAnimAssetState* zaState = (xAnimAssetState*)(zaFile + zaTbl->NumFiles);

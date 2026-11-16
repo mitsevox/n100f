@@ -1867,6 +1867,7 @@ void xAnimPlayChooseTransition(xAnimPlay* play)
     xAnimTransition** list = (xAnimTransition**)giAnimScratch;
     xAnimTransition** found;
     xAnimTransitionList* curr;
+    U32 index;
 
     memset(list, 0, play->NumSingle * sizeof(xAnimTransition*));
 
@@ -1880,7 +1881,8 @@ void xAnimPlayChooseTransition(xAnimPlay* play)
             {
                 if (curr->T->Conditional(curr->T, &play->Single[i], object))
                 {
-                    found = &list[curr->T->Dest->Flags & 0xF];
+                    index = curr->T->Dest->Flags & 0xF;
+                    found = &list[index];
 
                     if (!*found || curr->T->Priority > (*found)->Priority)
                     {

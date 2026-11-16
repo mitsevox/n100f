@@ -206,7 +206,8 @@ S32 PKRShutdown()
 
 S32 PKRLoadStep(S32)
 {
-    return PKR_LoadStep_Async();
+    S32 more_todo = PKR_LoadStep_Async();
+    return more_todo;
 }
 
 // Opens a package: takes a free reader slot (one bit of g_loadlock each), opens the file
@@ -900,7 +901,7 @@ static U32 PKR_GetAssetSize(st_PACKER_READ_DATA* pr, U32 aid)
 
 static S32 PKR_AssetCount(st_PACKER_READ_DATA* pr, U32 type)
 {
-    S32 count = 0;
+    S32 cnt = 0;
     if (type == 0)
     {
         return pr->asstoc.cnt;
@@ -911,10 +912,10 @@ static S32 PKR_AssetCount(st_PACKER_READ_DATA* pr, U32 type)
         if (idx >= 0)
         {
             st_XORDEREDARRAY* tmplist = &pr->typelist[idx];
-            count = tmplist->cnt;
+            cnt = tmplist->cnt;
         }
     }
-    return count;
+    return cnt;
 }
 
 static void* PKR_AssetByType(st_PACKER_READ_DATA* pr, U32 type, S32 idx, U32* size)
@@ -935,13 +936,13 @@ static void* PKR_AssetByType(st_PACKER_READ_DATA* pr, U32 type, S32 idx, U32* si
         return 0;
     }
 
-    st_XORDEREDARRAY* tmplist = &pr->typelist[typeidx];
-    if (idx >= tmplist->cnt)
+    st_XORDEREDARRAY* typlist = &pr->typelist[typeidx];
+    if (idx >= typlist->cnt)
     {
         return 0;
     }
 
-    st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)tmplist->list[idx];
+    st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)typlist->list[idx];
     if (size != NULL)
     {
         *size = assnode->d_size;
@@ -951,22 +952,21 @@ static void* PKR_AssetByType(st_PACKER_READ_DATA* pr, U32 type, S32 idx, U32* si
 
 static S32 PKR_IsAssetReady(st_PACKER_READ_DATA* pr, U32 aid)
 {
-    S32 ready = false;
+    S32 is_ok = false;
     S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
     if (idx >= 0)
     {
-        st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)pr->asstoc.list[idx];
-        if (assnode->loadflag & 0x80000)
+        if (((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->loadflag & 0x80000)
         {
-            ready = true;
+            is_ok = true;
         }
         else
         {
-            ready = false;
+            is_ok = false;
         }
     }
 
-    return ready;
+    return is_ok;
 }
 
 static U32 PKR_getPackTimestamp(st_PACKER_READ_DATA* pr)
@@ -976,15 +976,15 @@ static U32 PKR_getPackTimestamp(st_PACKER_READ_DATA* pr)
 
 static char* PKR_AssetName(st_PACKER_READ_DATA* pr, U32 aid)
 {
-    char* name = NULL;
+    char* da_name = NULL;
     S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
 
     if (idx >= 0)
     {
-        name = ((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->name;
+        da_name = ((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->name;
     }
 
-    return name;
+    return da_name;
 }
 
 static U32 PKR_GetBaseSector(st_PACKER_READ_DATA* pr)
@@ -1023,13 +1023,13 @@ static S32 PKR_GetAssetInfoByType(st_PACKER_READ_DATA* pr, U32 type, S32 idx,
         return 0;
     }
 
-    st_XORDEREDARRAY* tmplist = &pr->typelist[typeidx];
-    if (idx >= tmplist->cnt)
+    st_XORDEREDARRAY* typlist = &pr->typelist[typeidx];
+    if (idx >= typlist->cnt)
     {
         return 0;
     }
 
-    st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)tmplist->list[idx];
+    st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)typlist->list[idx];
     tocainfo->aid = assnode->aid;
     tocainfo->sector = pr->base_sector + assnode->d_off / pkr_sector_size;
     tocainfo->plus_offset = assnode->d_off % pkr_sector_size;
@@ -1048,12 +1048,11 @@ static S32 PKR_PkgHasAsset(st_PACKER_READ_DATA* pr, U32 aid)
     }
 
     S32 rc = 1;
-    st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)pr->asstoc.list[idx];
-    if (assnode->loadflag & 0x100000)
+    if (((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->loadflag & 0x100000)
     {
         rc = 0;
     }
-    else if (assnode->loadflag & 0x200000)
+    else if (((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->loadflag & 0x200000)
     {
         rc = 0;
     }
@@ -1202,11 +1201,12 @@ static inline void PKR_oldlaynode(st_PACKER_LTOC_NODE* laynode)
 static S32 OrdTest_R_AssetID(const void* vkey, void* vitem)
 {
     S32 rc;
-    if ((U32)vkey < *(U32*)vitem)
+    U32 key = (U32)vkey;
+    if (key < *(U32*)vitem)
     {
         rc = -1;
     }
-    else if ((U32)vkey > *(U32*)vitem)
+    else if (key > *(U32*)vitem)
     {
         rc = 1;
     }

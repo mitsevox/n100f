@@ -482,26 +482,26 @@ U32 zVarEntryCB_SndMode()
 // A volume as the 0-10 menu setting: the average of the left and right levels, rounded.
 U32 zVarEntryCB_SndMasterVol()
 {
-    F64 vol = (gSnd.mastervol.volL + gSnd.mastervol.volR) / 2.0f;
-    vol *= 10.0;
+    F64 floatVol = (gSnd.mastervol.volL + gSnd.mastervol.volR) / 2.0f;
+    floatVol *= 10.0;
 
-    return (U32)(0.5 + vol);
+    return (U32)(0.5 + floatVol);
 }
 
 U32 zVarEntryCB_SndMusicVol()
 {
-    F64 vol = (gSnd.streamvol.volL + gSnd.streamvol.volR) / 2.0f;
-    vol *= 10.0;
+    F64 floatVol = (gSnd.streamvol.volL + gSnd.streamvol.volR) / 2.0f;
+    floatVol *= 10.0;
 
-    return (U32)(0.5 + vol);
+    return (U32)(0.5 + floatVol);
 }
 
 U32 zVarEntryCB_SndFXVol()
 {
-    F64 vol = (gSnd.fxvol.volL + gSnd.fxvol.volR) / 2.0f;
-    vol *= 10.0;
+    F64 floatVol = (gSnd.fxvol.volL + gSnd.fxvol.volR) / 2.0f;
+    floatVol *= 10.0;
 
-    return (U32)(0.5 + vol);
+    return (U32)(0.5 + floatVol);
 }
 
 // One bit per special power-up collected.
@@ -709,79 +709,133 @@ void zVarDefeatMasterMind()
 
 char* zVMCB_PlayerScoobySnackCount_Int(char* dst)
 {
-    return dst + sprintf(dst, "%d", globals.player.Inv_ScoobySnacks);
+    S32 count;
+
+    count = sprintf(dst, "%d", globals.player.Inv_ScoobySnacks);
+
+    return dst + count;
 }
 
 char* zVMCB_PlayerChancesCount(char* dst)
 {
-    return dst + sprintf(dst, "%d", globals.player.Inv_Chances);
+    S32 count;
+
+    count = sprintf(dst, "%d", globals.player.Inv_Chances);
+
+    return dst + count;
 }
 
 char* zVMCB_SoundMusicVolume(char* dst)
 {
+    S32 count;
     F64 vol = (gSnd.streamvol.volL + gSnd.streamvol.volR) / 2.0f;
     vol *= 10.0;
 
-    return dst + sprintf(dst, "%d", (U32)(0.5 + vol));
+    count = sprintf(dst, "%d", (U32)(0.5 + vol));
+
+    return dst + count;
 }
 
 char* zVMCB_SoundFXVolume(char* dst)
 {
+    S32 count;
     F64 vol = (gSnd.fxvol.volL + gSnd.fxvol.volR) / 2.0f;
     vol *= 10.0;
 
-    return dst + sprintf(dst, "%d", (U32)(0.5 + vol));
+    count = sprintf(dst, "%d", (U32)(0.5 + vol));
+
+    return dst + count;
 }
 
 char* zVMCB_Scene(char* dst)
 {
-    return dst + sprintf(dst, "%s", xUtil_idtag2string(globals.sceneCur->sceneID, 0));
+    S32 count;
+
+    count = sprintf(dst, "%s", xUtil_idtag2string(globals.sceneCur->sceneID, 0));
+
+    return dst + count;
 }
 
 // The text for each save slot; only slots 0 to 2 have entries in zSaveLoadGameTable.
 char* zVMCB_GameSlot0(char* dst)
 {
-    return dst + sprintf(dst, "%s", zVarGameSlotInfo(0));
+    S32 count;
+
+    count = sprintf(dst, "%s", zVarGameSlotInfo(0));
+
+    return dst + count;
 }
 
 char* zVMCB_GameSlot1(char* dst)
 {
-    return dst + sprintf(dst, "%s", zVarGameSlotInfo(1));
+    S32 count;
+
+    count = sprintf(dst, "%s", zVarGameSlotInfo(1));
+
+    return dst + count;
 }
 
 char* zVMCB_GameSlot2(char* dst)
 {
-    return dst + sprintf(dst, "%s", zVarGameSlotInfo(2));
+    S32 count;
+
+    count = sprintf(dst, "%s", zVarGameSlotInfo(2));
+
+    return dst + count;
 }
 
 char* zVMCB_GameSlot3(char* dst)
 {
-    return dst + sprintf(dst, "%s", zVarGameSlotInfo(3));
+    S32 count;
+
+    count = sprintf(dst, "%s", zVarGameSlotInfo(3));
+
+    return dst + count;
 }
 
 char* zVMCB_GameSlot4(char* dst)
 {
-    return dst + sprintf(dst, "%s", zVarGameSlotInfo(4));
+    S32 count;
+
+    count = sprintf(dst, "%s", zVarGameSlotInfo(4));
+
+    return dst + count;
 }
 
 char* zVMCB_GameSlot5(char* dst)
 {
-    return dst + sprintf(dst, "%s", zVarGameSlotInfo(5));
+    S32 count;
+
+    count = sprintf(dst, "%s", zVarGameSlotInfo(5));
+
+    return dst + count;
 }
 
 char* zVMCB_GameSlot6(char* dst)
 {
-    return dst + sprintf(dst, "%s", zVarGameSlotInfo(6));
+    S32 count;
+
+    count = sprintf(dst, "%s", zVarGameSlotInfo(6));
+
+    return dst + count;
 }
 
 char* zVMCB_GameSlot7(char* dst)
 {
-    return dst + sprintf(dst, "%s", zVarGameSlotInfo(7));
+    S32 count;
+
+    count = sprintf(dst, "%s", zVarGameSlotInfo(7));
+
+    return dst + count;
 }
 
 char* zVMCB_MCSelectedGame(char* dst)
 {
-    return dst + sprintf(dst, "%d", zSaveLoad_getgame() + 1);
+    S32 count;
+
+    count = sprintf(dst, "%d", zSaveLoad_getgame() + 1);
+
+    return dst + count;
 }
 
 char* zVMCB_MCSelectedCard(char* dst)
@@ -803,9 +857,13 @@ char* zVMCB_MCSelectedCard(char* dst)
 
 char* zVMCB_CurrentPosition(char* dst)
 {
-    xVec3* pos = &globals.player.ent.frame->mat.pos;
+    S32 count;
 
-    return dst + sprintf(dst, "%d,%d,%d", (S32)(0.5f + pos->x), (S32)(0.5f + pos->y), (S32)(0.5f + pos->z));
+    count = sprintf(dst, "%d,%d,%d", (S32)(0.5f + globals.player.ent.frame->mat.pos.x),
+                    (S32)(0.5f + globals.player.ent.frame->mat.pos.y),
+                    (S32)(0.5f + globals.player.ent.frame->mat.pos.z));
+
+    return dst + count;
 }
 
 // Stats lines that print nothing.
@@ -841,49 +899,77 @@ char* zVMCB_TokenWorldStats(char* dst)
 
 char* zVMCB_CurrentArea(char* dst)
 {
-    return dst + sprintf(dst, "%s", zSceneGetAreaname(globals.sceneCur->sceneID));
+    S32 count;
+
+    count = sprintf(dst, "%s", zSceneGetAreaname(globals.sceneCur->sceneID));
+
+    return dst + count;
 }
 
 char* zVMCB_AreaStatsSnacks(char* dst)
 {
+    S32 count;
+
     // The hub has no area totals.
     if (selSceneID == 'H003')
     {
         return dst;
     }
 
-    return dst + sprintf(dst, "%d/%d", zSceneGetAreaSnacksCollected(selSceneID), zSceneGetAreaTotalSnacks(selSceneID));
+    count = sprintf(dst, "%d/%d", zSceneGetAreaSnacksCollected(selSceneID), zSceneGetAreaTotalSnacks(selSceneID));
+
+    return dst + count;
 }
 
 char* zVMCB_AreaStatsTokens(char* dst)
 {
+    S32 count;
+
     // The hub has no area totals.
     if (selSceneID == 'H003')
     {
         return dst;
     }
 
-    return dst + sprintf(dst, "%d/%d", zSceneGetAreaTokensCollected(selSceneID), zSceneGetAreaTotalTokens(selSceneID));
+    count = sprintf(dst, "%d/%d", zSceneGetAreaTokensCollected(selSceneID), zSceneGetAreaTotalTokens(selSceneID));
+
+    return dst + count;
 }
 
 char* zVMCB_SelectedArea(char* dst)
 {
-    return dst + sprintf(dst, "%s", zSceneGetAreaname(selSceneID));
+    S32 count;
+
+    count = sprintf(dst, "%s", zSceneGetAreaname(selSceneID));
+
+    return dst + count;
 }
 
 char* zVMCB_SnackGateValue(char* dst)
 {
-    return dst + sprintf(dst, "%d", sSnackGateValue);
+    S32 count;
+
+    count = sprintf(dst, "%d", sSnackGateValue);
+
+    return dst + count;
 }
 
 char* zVMCB_CurrentDate(char* dst)
 {
-    return dst + iGetCurrFormattedDate(dst);
+    S32 count;
+
+    count = iGetCurrFormattedDate(dst);
+
+    return dst + count;
 }
 
 char* zVMCB_CurrentTime(char* dst)
 {
-    return dst + iGetCurrFormattedTime(dst);
+    S32 count;
+
+    count = iGetCurrFormattedTime(dst);
+
+    return dst + count;
 }
 
 // Memory-card messages and button labels, filled in by the save/load code.
@@ -894,12 +980,20 @@ char* zVMCB_NoCardMessage(char* dst)
 
 char* zVMCB_SpaceAvailable(char* dst)
 {
-    return dst + sprintf(dst, " ");
+    S32 count;
+
+    count = sprintf(dst, " ");
+
+    return dst + count;
 }
 
 char* zVMCB_SpaceNeeded(char* dst)
 {
-    return dst + zSaveLoad_CardMessageText(dst);
+    S32 count;
+
+    count = zSaveLoad_CardMessageText(dst);
+
+    return dst + count;
 }
 
 char* zVMCB_FormatPromptMessage(char* dst)
@@ -935,24 +1029,17 @@ char* zVMCB_AltButtonLabel(char* dst)
 // The current scene letter's place in the alphabet (A is 1).
 U32 zVarEntryCB_CurrentSceneLetter()
 {
-    char buf[16];
+    char s[16];
 
-    sprintf(buf, "%s", xUtil_idtag2string(globals.sceneCur->sceneID, 0));
+    sprintf(s, "%s", xUtil_idtag2string(globals.sceneCur->sceneID, 0));
 
-    return zVarToUpper(buf[0]) - '@';
+    return zVarToUpper(s[0]) - '@';
 }
 
 U32 zVarEntryCB_IsSneaking()
 {
-    bool sneaking = false;
-
-    if (globals.player.Sneak &&
-        (globals.player.ent.model->Anim->Single->State->UserFlags & 0x1E) == 2)
-    {
-        sneaking = true;
-    }
-
-    return sneaking;
+    return globals.player.Sneak &&
+           (globals.player.ent.model->Anim->Single->State->UserFlags & 0x1E) == 2;
 }
 
 U32 zVarEntryCB_MapItem()
@@ -1130,12 +1217,12 @@ U32 zVarEntryCB_PuzzlePieceH()
 // scene's two-digit number (H003 is 803).
 U32 zVarEntryCB_CurrentRoom()
 {
-    char buf[16];
+    char s[16];
 
-    sprintf(buf, "%s", xUtil_idtag2string(globals.sceneCur->sceneID, 0));
-    S32 room = (buf[2] - '0') * 10 + (buf[3] - '0');
+    sprintf(s, "%s", xUtil_idtag2string(globals.sceneCur->sceneID, 0));
+    S32 room = (s[2] - '0') * 10 + (s[3] - '0');
 
-    return room + (zVarToUpper(buf[0]) - '@') * 100;
+    return room + (zVarToUpper(s[0]) - '@') * 100;
 }
 
 // One bit per monster token collected.
@@ -1383,17 +1470,17 @@ U32 zVarEntryCB_eVareVarDefeatedMM()
 // The number of areas whose snack total has been reached.
 U32 zVarEntryCB_eVarAllSnacksFound()
 {
-    U32 count = 0;
+    U32 cnt = 0;
 
     for (S32 i = 0; i < 30; i++)
     {
         if (globals.areaStats[i].snacks_tot >= zSceneGetAreaTotalSnacks((_tagSceneAreas)i))
         {
-            count++;
+            cnt++;
         }
     }
 
-    return count;
+    return cnt;
 }
 
 // A cutscene counts as unlocked once all movies are unlocked or once the cutscene table marks it seen.

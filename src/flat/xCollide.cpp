@@ -86,16 +86,14 @@ void xCollideInit(_xScene* sc)
 // from a's centre to the contact and depen pushes a back out.
 U32 xSphereHitsSphere(const xSphere* a, const xSphere* b, _xCollis* coll)
 {
-    U32 uVar1;
-
     xIsect isx;
 
     iSphereIsectSphere(b, a, &isx);
 
     if (!(isx.penned <= 0.0f))
     {
-        uVar1 = 0;
         coll->flags &= 0xfffffffe;
+        return 0;
     }
     else
     {
@@ -112,7 +110,8 @@ U32 xSphereHitsSphere(const xSphere* a, const xSphere* b, _xCollis* coll)
             }
             else
             {
-                xVec3SMul(&coll->tohit, &isx.norm, -coll->dist / isx.dist);
+                F32 scale = -coll->dist / isx.dist;
+                xVec3SMul(&coll->tohit, &isx.norm, scale);
             }
         }
         if ((coll->flags & 0x800) != 0)
@@ -123,7 +122,8 @@ U32 xSphereHitsSphere(const xSphere* a, const xSphere* b, _xCollis* coll)
             }
             else
             {
-                xVec3SMul(&coll->depen, &isx.norm, -isx.penned / isx.dist);
+                F32 scale = -isx.penned / isx.dist;
+                xVec3SMul(&coll->depen, &isx.norm, scale);
             }
         }
         if ((coll->flags & 0x1200) != 0)
@@ -134,25 +134,22 @@ U32 xSphereHitsSphere(const xSphere* a, const xSphere* b, _xCollis* coll)
         {
             xVec3Inv(&coll->norm, &coll->hdng);
         }
-        uVar1 = 1;
         coll->flags |= 1;
+        return 1;
     }
-    return uVar1;
 }
 
 // Sphere against an axis-aligned box.
 U32 xSphereHitsBox(const xSphere* a, const _xBox* b, _xCollis* coll)
 {
-    U32 uVar1;
-
     xIsect isx;
 
     iBoxIsectSphere(b, a, &isx);
 
     if (!(isx.penned <= 0.0f))
     {
-        uVar1 = 0;
         coll->flags &= 0xfffffffe;
+        return 0;
     }
     else
     {
@@ -173,7 +170,8 @@ U32 xSphereHitsBox(const xSphere* a, const _xBox* b, _xCollis* coll)
             }
             else
             {
-                xVec3SMul(&coll->depen, &isx.norm, isx.penned / isx.dist);
+                F32 scale = isx.penned / isx.dist;
+                xVec3SMul(&coll->depen, &isx.norm, scale);
             }
         }
         if ((coll->flags & 0x1200) != 0)
@@ -184,10 +182,9 @@ U32 xSphereHitsBox(const xSphere* a, const _xBox* b, _xCollis* coll)
         {
             xVec3Inv(&coll->norm, &coll->hdng);
         }
-        uVar1 = 1;
         coll->flags |= 1;
+        return 1;
     }
-    return uVar1;
 }
 
 // Sphere against a box with a transform: the sphere is brought into the box's space (its

@@ -10,18 +10,18 @@ void zEntReset(_zEnt* ent);
 // Set up the trigger's update and event handlers and its links.
 void zEntTriggerInit(void* ent, void* asset)
 {
-    zEntTrigger* trig = (zEntTrigger*)ent;
-    zEntInit(trig, (p2EntAsset*)asset, 'TRIG');
-    trig->move = NULL;
-    trig->update = (void (*)(_xEnt*, _xScene*, F32))zEntTriggerUpdate;
-    trig->eventFunc = zEntTriggerEventCB;
-    if (trig->linkCount)
+    zEntInit((zEntTrigger*)ent, (p2EntAsset*)asset, 'TRIG');
+    ((zEntTrigger*)ent)->move = NULL;
+    ((zEntTrigger*)ent)->update = (void (*)(_xEnt*, _xScene*, F32))zEntTriggerUpdate;
+    ((zEntTrigger*)ent)->eventFunc = zEntTriggerEventCB;
+    if (((zEntTrigger*)ent)->linkCount)
     {
-        trig->link = (p2LinkAsset*)((p2EntTriggerAsset*)(trig->asset + 1) + 1);
+        ((zEntTrigger*)ent)->link =
+            (p2LinkAsset*)((p2EntTriggerAsset*)(((zEntTrigger*)ent)->asset + 1) + 1);
     }
     else
     {
-        trig->link = NULL;
+        ((zEntTrigger*)ent)->link = NULL;
     }
 }
 
@@ -42,14 +42,14 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
             continue;
 
         S32 collide = 0;
-        _xEnt* checked;
-        if (link->chkAssetID && (checked = (_xEnt*)zSceneFindObject(link->chkAssetID)) != NULL)
+        _xEnt* chkEnt;
+        if (link->chkAssetID && (chkEnt = (_xEnt*)zSceneFindObject(link->chkAssetID)) != NULL)
         {
-            xVec3* pos;
-            if (checked->bound.type == 1)
-                pos = &checked->bound.sph.center;
+            xVec3* chkPos;
+            if (chkEnt->bound.type == 1)
+                chkPos = &chkEnt->bound.sph.center;
             else
-                pos = (xVec3*)&checked->model->Mat->pos;
+                chkPos = (xVec3*)&chkEnt->model->Mat->pos;
 
             switch (trig->subType)
             {
@@ -59,7 +59,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 box.upper = tasset->p[1];
                 box.lower = tasset->p[0];
                 _xIsect isect;
-                iBoxIsectVec(&box, pos, &isect);
+                iBoxIsectVec(&box, chkPos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }
@@ -69,7 +69,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 sphere.center = tasset->p[0];
                 sphere.r = tasset->p[1].x;
                 _xIsect isect;
-                iSphereIsectVec(&sphere, pos, &isect);
+                iSphereIsectVec(&sphere, chkPos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }
@@ -80,7 +80,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 cylinder.r = tasset->p[1].x;
                 cylinder.h = tasset->p[1].y;
                 _xIsect isect;
-                iCylinderIsectVec(&cylinder, pos, &isect);
+                iCylinderIsectVec(&cylinder, chkPos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }
@@ -90,7 +90,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 sphere.center = tasset->p[0];
                 sphere.r = tasset->p[1].x;
                 _xIsect isect;
-                iSphereIsectVec(&sphere, pos, &isect);
+                iSphereIsectVec(&sphere, chkPos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }
@@ -129,10 +129,12 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
 // Reset the trigger when it receives a reset event.
 S32 zEntTriggerEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
 {
+    zEntTrigger* trig = (zEntTrigger*)to;
+
     switch (toEvent)
     {
     case eEventReset:
-        zEntReset((zEntTrigger*)to);
+        zEntReset(trig);
         break;
     }
     return 1;

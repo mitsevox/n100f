@@ -98,8 +98,9 @@ U32 xRayHitsEnvFast(const _xRay3* r, const _xEnv* env)
 // model; NPCs count on their bound alone.
 U32 xRayHitsSceneFast(const _xRay3* r, const _xScene* sc)
 {
-    xQCData qcr;
     S32 i;
+    U32 hit;
+    xQCData qcr;
 
     xQuickCullForRay(&qcr, r);
 
@@ -153,5 +154,7 @@ U32 xRayHitsSceneFast(const _xRay3* r, const _xScene* sc)
         }
     }
 
-    return iRayHitsEnvSpecialFast(r, sc->env);
+    hit = iRayHitsEnvSpecialFast(r, sc->env);
+
+    return hit;
 }

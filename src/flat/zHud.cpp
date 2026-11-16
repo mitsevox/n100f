@@ -3102,24 +3102,36 @@ void zHud_DrawText(F32 x, F32 y, F32 w, F32 h, char* s, S32 just, F32 size, U8 a
 void zHud_UIRender(char* asset, F32 xPos, F32 yPos, F32 w, F32 h, U8 alpha)
 {
     RwTexture* texture;
+    RwRaster* raster;
+    U8 r;
+    U8 g;
+    U8 b;
     F32 x2;
     F32 y2;
     F32 z;
 
     texture = (RwTexture*)xSTFindAsset(xStrHash(asset), NULL);
-    if (texture && texture->raster)
+    if (texture)
     {
-        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, texture->raster);
+        raster = texture->raster;
+        if (raster)
+        {
+            RwRenderStateSet(rwRENDERSTATETEXTURERASTER, raster);
+        }
     }
 
     x2 = xPos + w;
     y2 = yPos + h;
     z = RwIm2DGetNearScreenZ();
 
-    RwIm2DVertexSetIntRGBA(&Vert[0], 255, 255, 255, 255);
-    RwIm2DVertexSetIntRGBA(&Vert[1], 255, 255, 255, 255);
-    RwIm2DVertexSetIntRGBA(&Vert[2], 255, 255, 255, 255);
-    RwIm2DVertexSetIntRGBA(&Vert[3], 255, 255, 255, 255);
+    r = 255;
+    g = 255;
+    b = 255;
+
+    RwIm2DVertexSetIntRGBA(&Vert[0], r, g, b, 255);
+    RwIm2DVertexSetIntRGBA(&Vert[1], r, g, b, 255);
+    RwIm2DVertexSetIntRGBA(&Vert[2], r, g, b, 255);
+    RwIm2DVertexSetIntRGBA(&Vert[3], r, g, b, 255);
 
     RwIm2DVertexSetScreenX(&Vert[0], xPos);
     RwIm2DVertexSetScreenY(&Vert[0], yPos);
@@ -3145,10 +3157,10 @@ void zHud_UIRender(char* asset, F32 xPos, F32 yPos, F32 w, F32 h, U8 alpha)
     Vert[3].u = 1.0f;
     Vert[3].v = 0.0f;
 
-    RwIm2DVertexSetIntRGBA(&Vert[0], 255, 255, 255, alpha);
-    RwIm2DVertexSetIntRGBA(&Vert[1], 255, 255, 255, alpha);
-    RwIm2DVertexSetIntRGBA(&Vert[2], 255, 255, 255, alpha);
-    RwIm2DVertexSetIntRGBA(&Vert[3], 255, 255, 255, alpha);
+    RwIm2DVertexSetIntRGBA(&Vert[0], r, g, b, alpha);
+    RwIm2DVertexSetIntRGBA(&Vert[1], r, g, b, alpha);
+    RwIm2DVertexSetIntRGBA(&Vert[2], r, g, b, alpha);
+    RwIm2DVertexSetIntRGBA(&Vert[3], r, g, b, alpha);
 
     zRenderState(SDRS_Default);
     RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);

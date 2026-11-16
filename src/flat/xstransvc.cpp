@@ -291,7 +291,8 @@ void xSTUnLoadScene(U32 sid)
 // once nothing is left to read, else 0.
 F32 xSTLoadStep(U32)
 {
-    F32 pct = PKRLoadStep(0) != 0 ? 0.0f : 1.00001f;
+    S32 rc = PKRLoadStep(0);
+    F32 pct = rc != 0 ? 0.0f : 1.00001f;
     iSystemPollResetAndDisc();
     return pct;
 }
@@ -316,7 +317,8 @@ S32 xSTSwitchScene(U32 sid, void* userdata, S32 (*progmon)(void*, F32))
         {
             progmon(userdata, 0.0f);
         }
-        if (g_pkrf->SetActive(sdata->spkg, PKR_LTYPE_ALL) == 0)
+        S32 rc = g_pkrf->SetActive(sdata->spkg, PKR_LTYPE_ALL);
+        if (rc == 0)
         {
             result = 0;
         }
@@ -356,10 +358,12 @@ void* xSTFindAsset(U32 aid, U32* size)
     for (S32 i = 0; i < cnt; i++)
     {
         st_STRAN_SCENE* sdata = XST_nth_locked(i);
-        if (g_pkrf->PkgHasAsset(sdata->spkg, aid))
+        S32 rc = g_pkrf->PkgHasAsset(sdata->spkg, aid);
+        if (rc)
         {
             memloc = g_pkrf->LoadAsset(sdata->spkg, aid, NULL, NULL);
-            if (!g_pkrf->IsAssetReady(sdata->spkg, aid))
+            S32 ready = g_pkrf->IsAssetReady(sdata->spkg, aid);
+            if (!ready)
             {
                 memloc = NULL;
                 if (size != NULL)
@@ -384,8 +388,7 @@ S32 xSTAssetCountByType(U32 type)
     S32 cnt = XST_cnt_locked();
     for (S32 i = 0; i < cnt; i++)
     {
-        st_STRAN_SCENE* sdata = XST_nth_locked(i);
-        sum += g_pkrf->AssetCount(sdata->spkg, type);
+        sum += g_pkrf->AssetCount(XST_nth_locked(i)->spkg, type);
     }
     return sum;
 }
@@ -422,7 +425,8 @@ S32 xSTGetAssetInfo(U32 aid, st_xST_XASSETINFO* ainfo)
     for (S32 i = 0; i < cnt; i++)
     {
         st_STRAN_SCENE* sdata = XST_nth_locked(i);
-        if (g_pkrf->PkgHasAsset(sdata->spkg, aid))
+        S32 rc = g_pkrf->PkgHasAsset(sdata->spkg, aid);
+        if (rc)
         {
             g_pkrf->GetBaseSector(sdata->spkg);
             if (g_pkrf->GetAssetInfo(sdata->spkg, aid, &tocinfo))
@@ -484,7 +488,8 @@ static inline char* xST_xAssetID_HIPFullPath(U32 aid, U32* sceneID)
     for (S32 i = 0; i < cnt; i++)
     {
         st_STRAN_SCENE* sdata = XST_nth_locked(i);
-        if (g_pkrf->PkgHasAsset(sdata->spkg, aid))
+        S32 rc = g_pkrf->PkgHasAsset(sdata->spkg, aid);
+        if (rc)
         {
             da_hipname = sdata->fnam;
             if (sceneID != NULL)

@@ -35,14 +35,12 @@ void AddTail(st_ELIST* list, st_ENODE* node)
 st_ENODE* RemHead(st_ELIST* list)
 {
     st_ENODE* node = list->head;
-    st_ENODE* succ = node->next;
-
-    if (succ == NULL)
+    if (node->next == NULL)
     {
         return NULL;
     }
 
-    succ->prev = node->prev;
+    node->next->prev = node->prev;
     node->prev->next = node->next;
     return node;
 }

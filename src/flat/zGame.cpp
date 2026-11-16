@@ -368,23 +368,23 @@ static void zGameUpdateMode()
     }
     else if (gGameState == 5)
     {
-        zPortalAsset* portal = globals.sceneCur->pendingPortal->passet;
-        S8* sceneName = (S8*)&portal->sceneID;
-        U32 sceneID = ((U32)sceneName[0] << 24) | ((U32)sceneName[1] << 16) |
-                      ((U32)sceneName[2] << 8) | (U32)sceneName[3];
-        if (portal->sceneID != globals.sceneCur->sceneID)
+        zPortalAsset* passet = globals.sceneCur->pendingPortal->passet;
+        char* id = (char*)&passet->sceneID;
+        U32 nextSceneID = ((U32)id[0] << 24) | ((U32)id[1] << 16) |
+                      ((U32)id[2] << 8) | (U32)id[3];
+        if (passet->sceneID != globals.sceneCur->sceneID)
         {
-            sPlayerMarkerStartID = portal->assetMarkerID;
-            sPlayerMarkerStartCamID = portal->assetCameraID;
-            sPlayerStartAngle = portal->ang;
+            sPlayerMarkerStartID = passet->assetMarkerID;
+            sPlayerMarkerStartCamID = passet->assetCameraID;
+            sPlayerStartAngle = passet->ang;
             sPortalling = 1;
             zGameExit();
-            S32 delay = 30;
-            if (sceneID == 'S006')
-                delay = 120;
-            while (delay-- > 0)
+            S32 vbl = 30;
+            if (nextSceneID == 'S006')
+                vbl = 120;
+            while (vbl-- > 0)
                 iVSync();
-            zGameInit(sceneID);
+            zGameInit(nextSceneID);
             zGameSetup();
             if (globals.cmgr)
                 zCutsceneMgrFinishLoad(globals.cmgr);
@@ -392,23 +392,23 @@ static void zGameUpdateMode()
         else if (sPlayerMarkerStartID)
         {
             U32 size;
-            xVec3* pos = (xVec3*)xSTFindAsset(sPlayerMarkerStartID, &size);
-            if (pos)
-                globals.player.ent.frame->mat.pos = *pos;
+            p2MarkerAsset* m = (p2MarkerAsset*)xSTFindAsset(sPlayerMarkerStartID, &size);
+            if (m)
+                globals.player.ent.frame->mat.pos = m->pos;
             sPlayerMarkerStartID = 0;
         }
-        xBase* camera = zSceneFindObject(sPlayerMarkerStartCamID);
-        if (!camera)
+        _tagxCam* cam = (_tagxCam*)zSceneFindObject(sPlayerMarkerStartCamID);
+        if (!cam)
         {
-            xBase* fallback = zSceneGetObject(7, 0);
-            sPlayerMarkerStartCamID = fallback->id;
-            for (S32 i = 0; i < 50; ++i) {}
-            for (S32 i = 0; i < 50; ++i) {}
-            xSTAssetName(fallback->id);
+            _tagxCam* cam = (_tagxCam*)zSceneGetObject(7, 0);
+            sPlayerMarkerStartCamID = cam->id;
+            for (S32 qwerty = 0; qwerty < 50; ++qwerty) {}
+            for (S32 qwerty = 0; qwerty < 50; ++qwerty) {}
+            xSTAssetName(cam->id);
         }
-        if (camera)
+        if (cam)
         {
-            xCameraPickInitial(&globals.camera, (_tagxCam*)camera);
+            xCameraPickInitial(&globals.camera, cam);
             globals.player.cp.initCamID = sPlayerMarkerStartCamID;
             zEntPlayer_StoreCheckPoint(NULL);
         }
@@ -453,10 +453,10 @@ void zGameScreenTransitionBegin()
         DirectionalLight = RpLightCreate(rpLIGHTDIRECTIONAL);
         if (DirectionalLight)
         {
-            RwRGBAReal color;
-            color.red = color.green = color.blue = 1.0f;
-            color.alpha = 0.0f;
-            RpLightSetColor(DirectionalLight, &color);
+            RwRGBAReal col;
+            col.red = col.green = col.blue = 1.0f;
+            col.alpha = 0.0f;
+            RpLightSetColor(DirectionalLight, &col);
             RwFrame* frame = RwFrameCreate();
             _rwObjectHasFrameSetFrame(DirectionalLight, frame);
             RwBBox box;
@@ -536,8 +536,8 @@ void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba)
             }
             else
             {
-                S32 part = zSceneGetRoominArea(globals.sceneCur->sceneID);
-                sprintf(str, "%s\n\nPart %d", zSceneGetAreaname(globals.sceneCur->sceneID), part + 1);
+                sprintf(str, "%s\n\nPart %d", zSceneGetAreaname(globals.sceneCur->sceneID),
+                        zSceneGetRoominArea(globals.sceneCur->sceneID) + 1);
                 zHud_DrawText(32.0f, 80.0f, 385.0f, 400.0f, str, 64, 1.2f, 200, DROPSHADOW_NORMAL);
             }
         }
@@ -560,8 +560,12 @@ void zGameScreenTransition_UIRender(F32 x1, F32 y1, F32 x2, F32 y2, S32 tex)
     if (tex)
     {
         RwTexture* texture = (RwTexture*)xSTFindAsset(xStrHash("loading screen bg"), NULL);
-        if (texture && texture->raster)
-            RwRenderStateSet(rwRENDERSTATETEXTURERASTER, texture->raster);
+        if (texture)
+        {
+            RwRaster* raster = texture->raster;
+            if (raster)
+                RwRenderStateSet(rwRENDERSTATETEXTURERASTER, raster);
+        }
     }
     else
         RwRenderStateSet(rwRENDERSTATETEXTURERASTER, NULL);

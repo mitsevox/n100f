@@ -1239,59 +1239,58 @@ lean:
 static S32 GetHeadcollAnimState()
 {
     xAnimState* state = globals.player.ent.model->Anim->Single->State;
-    U32 type = state->UserFlags & 0x1E;
 
-    if (type == 0xC)
+    if ((state->UserFlags & 0x1E) == 0xC)
     {
         return 1;
     }
-    if (type == 0x4)
+    if ((state->UserFlags & 0x1E) == 0x4)
     {
         return 2;
     }
-    if (type == 0x6 && type != 0x20)
+    if ((state->UserFlags & 0x1E) == 0x6 && (state->UserFlags & 0x1E) != 0x20)
     {
         return 3;
     }
 
-    static U32 jumpNormal = xStrHash("Jump_normal");
-    static U32 jumpDouble = xStrHash("Jump_double");
-    static U32 jumpWalk = xStrHash("Jump_walk");
-    static U32 jumpRun = xStrHash("Jump_run");
-    static U32 jumpSpringboard = xStrHash("Jump_springboard");
-    static U32 fallNormal = xStrHash("Fall_normal");
-    static U32 fallWalk = xStrHash("Fall_walk");
-    static U32 fallRun = xStrHash("Fall_run");
+    static U32 JNORMAL_ID = xStrHash("Jump_normal");
+    static U32 JDOUBLE_ID = xStrHash("Jump_double");
+    static U32 JWALK_ID = xStrHash("Jump_walk");
+    static U32 JRUN_ID = xStrHash("Jump_run");
+    static U32 JSB_ID = xStrHash("Jump_springboard");
+    static U32 FNORMAL_ID = xStrHash("Fall_normal");
+    static U32 FWALK_ID = xStrHash("Fall_walk");
+    static U32 FRUN_ID = xStrHash("Fall_run");
 
-    if (state->ID == jumpNormal)
+    if (state->ID == JNORMAL_ID)
     {
         return globals.player.ent.frame->vel.y <= 0.0f ? 9 : 4;
     }
-    if (state->ID == jumpDouble)
+    if (state->ID == JDOUBLE_ID)
     {
         return globals.player.ent.frame->vel.y <= 0.0f ? 9 : 5;
     }
-    if (state->ID == jumpWalk)
+    if (state->ID == JWALK_ID)
     {
         return globals.player.ent.frame->vel.y <= 0.0f ? 10 : 6;
     }
-    if (state->ID == jumpRun)
+    if (state->ID == JRUN_ID)
     {
         return globals.player.ent.frame->vel.y <= 0.0f ? 11 : 7;
     }
-    if (state->ID == jumpSpringboard)
+    if (state->ID == JSB_ID)
     {
         return globals.player.ent.frame->vel.y <= 0.0f ? 9 : 8;
     }
-    if (state->ID == fallNormal)
+    if (state->ID == FNORMAL_ID)
     {
         return 9;
     }
-    if (state->ID == fallWalk)
+    if (state->ID == FWALK_ID)
     {
         return 10;
     }
-    return state->ID == fallRun ? 11 : 0;
+    return state->ID == FRUN_ID ? 11 : 0;
 }
 
 static U32 cchkButtbounce;
@@ -1604,16 +1603,16 @@ static U32 ScareCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 
 static U32 ScareKnockbackCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 {
-    xVec3 knockback;
+    xVec3 vel;
 
-    knockback.x = ((xMat4x3*)globals.player.ent.model->Mat)->at.x;
-    knockback.y = 0.0f;
-    knockback.z = ((xMat4x3*)globals.player.ent.model->Mat)->at.z;
-    xVec3Normalize(&knockback, &knockback);
-    knockback.x *= -4.0f;
-    knockback.y = 15.0f;
-    knockback.z *= -4.0f;
-    globals.player.ent.frame->vel = knockback;
+    vel.x = ((xMat4x3*)globals.player.ent.model->Mat)->at.x;
+    vel.y = 0.0f;
+    vel.z = ((xMat4x3*)globals.player.ent.model->Mat)->at.z;
+    xVec3Normalize(&vel, &vel);
+    vel.x *= -4.0f;
+    vel.y = 15.0f;
+    vel.z *= -4.0f;
+    globals.player.ent.frame->vel = vel;
     ScareCB(tran, anim, param_3);
     return 0;
 }
@@ -3833,18 +3832,17 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         S32 bounceResponse;
         en_ZVILLAIN_BUMPED_RESPONSE bumpedResponse;
         S32 took_damage;
-        U32 type;
 
         coll = &ent->collis->colls[ent->collis->npc_sidx];
         endcoll = &ent->collis->colls[ent->collis->npc_eidx];
-        type = ent->model->Anim->Single->State->UserFlags & 0x1E;
-        if (type == 0xC)
+        if ((ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xC)
         {
             HeadbuttTest(coll, endcoll, 0.7071f, VillHBCallback);
         }
         else if (globals.player.Health &&
-                 (type == 0xE ||
-                  (type == 0xA && ent->frame->mat.pos.y < ent->frame->oldpos.y &&
+                 ((ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xE ||
+                  ((ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xA &&
+                   ent->frame->mat.pos.y < ent->frame->oldpos.y &&
                    (((_xEnt*)coll->optr)->subType == 0x16 || ((_xEnt*)coll->optr)->subType == 0x18 ||
                     ((_xEnt*)coll->optr)->subType == 0 || ((_xEnt*)coll->optr)->subType == 0x15 ||
                     ((_xEnt*)coll->optr)->subType == 0x24))))
@@ -5088,8 +5086,8 @@ void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
             }
             if (sft < 0.4f)
             {
-                sft = 0.4f - sft;
-                s = sft / (sft + dt);
+                F32 gft = 0.4f - sft;
+                s = gft / (gft + dt);
                 v->x *= s;
                 v->z *= s;
             }
@@ -5104,8 +5102,8 @@ void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
         {
             if (sft < 2.15f)
             {
-                sft = 2.15f - sft;
-                s = sft / (sft + dt);
+                F32 aft = 2.15f - sft;
+                s = aft / (aft + dt);
                 v->x *= s;
                 v->z *= s;
             }
@@ -7391,7 +7389,6 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
     F32 d1;
     F32 d2;
     xVec3 center;
-    F32 dist2;
 
     globals.player.HangFound = NULL;
     if (globals.player.HangEnt)
@@ -7410,11 +7407,10 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
             dx = ent->bound.sph.center.x - hangme->endpos.x;
             dy = ent->bound.sph.center.y - hangme->endpos.y;
             dz = ent->bound.sph.center.z - hangme->endpos.z;
-            dist2 = dx * dx + dy * dy + dz * dz;
-            if (dist2 < closedist)
+            if ((dx * dx + dy * dy + dz * dz) < closedist)
             {
                 hangclose = hangme;
-                closedist = dist2;
+                closedist = dx * dx + dy * dy + dz * dz;
                 center = ent->bound.sph.center;
             }
         }
@@ -7613,7 +7609,8 @@ static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata
                     rang = MIN(1.0f, rang);
                     if (fdecl >= rms->max_decl)
                     {
-                        rang = MIN(rang, (rms->max_decl - edecl) / (fdecl - edecl));
+                        F32 s = (rms->max_decl - edecl) / (fdecl - edecl);
+                        rang = MIN(rang, s);
                     }
                     if (rang)
                     {

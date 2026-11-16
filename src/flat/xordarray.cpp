@@ -5,16 +5,13 @@
 // The warning level sits at 95% of capacity, one below it when that rounds to full.
 void XOrdInit(st_XORDEREDARRAY* array, S32 max)
 {
-    S32 cnt;
-
     array->list = (void**)xMemAlloc(gActiveHeap, max << 2);
     array->cnt = 0;
     array->max = max;
     array->warnlvl = 0.95f * max;
     if (array->warnlvl == array->max)
     {
-        cnt = array->max - 1;
-        array->warnlvl = MAX(0, cnt);
+        array->warnlvl = MAX(0, array->max - 1);
     }
 }
 

@@ -3,6 +3,13 @@
 
 #include <math.h>
 
+// A line segment from p1 to p2 (SLUS-20349 DWARF type _xLine3).
+struct xLine3
+{
+    xVec3 p1;
+    xVec3 p2;
+};
+
 // The world box is cut into 30 blocks per axis plus one open cell on each side, 32 in all. A
 // cull record holds one bit per cell on each axis; two records can touch only where the masks
 // share a bit.
@@ -101,8 +108,7 @@ void xQuickCullForBound(xQCData* q, const _xBound* b)
 
 void xQuickCullForRay(xQCData* q, const xRay3* r)
 {
-    xVec3 p1;
-    xVec3 p2;
+    xLine3 ln;
 
     if (r->flags & 0x400)
     {
@@ -111,15 +117,15 @@ void xQuickCullForRay(xQCData* q, const xRay3* r)
         delta.x = r->dir.x * t;
         delta.y = r->dir.y * t;
         delta.z = r->dir.z * t;
-        p1.x = r->origin.x + delta.x;
-        p1.y = r->origin.y + delta.y;
-        p1.z = r->origin.z + delta.z;
+        ln.p1.x = r->origin.x + delta.x;
+        ln.p1.y = r->origin.y + delta.y;
+        ln.p1.z = r->origin.z + delta.z;
     }
     else
     {
-        p1.x = r->origin.x;
-        p1.y = r->origin.y;
-        p1.z = r->origin.z;
+        ln.p1.x = r->origin.x;
+        ln.p1.y = r->origin.y;
+        ln.p1.z = r->origin.z;
     }
 
     if (r->flags & 0x800)
@@ -133,26 +139,26 @@ void xQuickCullForRay(xQCData* q, const xRay3* r)
         {
             len = r->max_t;
         }
-        p2.x = r->dir.x * len;
-        p2.y = r->dir.y * len;
-        p2.z = r->dir.z * len;
+        ln.p2.x = r->dir.x * len;
+        ln.p2.y = r->dir.y * len;
+        ln.p2.z = r->dir.z * len;
     }
     else
     {
-        p2.x = r->dir.x;
-        p2.y = r->dir.y;
-        p2.z = r->dir.z;
+        ln.p2.x = r->dir.x;
+        ln.p2.y = r->dir.y;
+        ln.p2.z = r->dir.z;
     }
 
-    p2.x = p1.x + p2.x;
-    p2.y = p1.y + p2.y;
-    p2.z = p1.z + p2.z;
+    ln.p2.x = ln.p1.x + ln.p2.x;
+    ln.p2.y = ln.p1.y + ln.p2.y;
+    ln.p2.z = ln.p1.z + ln.p2.z;
 
     xQCData a;
-    xQuickCullCellForVec(&a, &p1);
+    xQuickCullCellForVec(&a, &ln.p1);
 
     xQCData b;
-    xQuickCullCellForVec(&b, &p2);
+    xQuickCullCellForVec(&b, &ln.p2);
 
     xQuickCullCellMerge(q, &a, &b);
 }
