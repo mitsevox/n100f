@@ -1239,17 +1239,16 @@ lean:
 static S32 GetHeadcollAnimState()
 {
     xAnimState* state = globals.player.ent.model->Anim->Single->State;
-    U32 type = state->UserFlags & 0x1E;
 
-    if (type == 0xC)
+    if ((state->UserFlags & 0x1E) == 0xC)
     {
         return 1;
     }
-    if (type == 0x4)
+    if ((state->UserFlags & 0x1E) == 0x4)
     {
         return 2;
     }
-    if (type == 0x6 && type != 0x20)
+    if ((state->UserFlags & 0x1E) == 0x6 && (state->UserFlags & 0x1E) != 0x20)
     {
         return 3;
     }
@@ -3833,18 +3832,17 @@ void zEntPlayer_Update(_xEnt* ent, _xScene* sc, F32 dt)
         S32 bounceResponse;
         en_ZVILLAIN_BUMPED_RESPONSE bumpedResponse;
         S32 took_damage;
-        U32 type;
 
         coll = &ent->collis->colls[ent->collis->npc_sidx];
         endcoll = &ent->collis->colls[ent->collis->npc_eidx];
-        type = ent->model->Anim->Single->State->UserFlags & 0x1E;
-        if (type == 0xC)
+        if ((ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xC)
         {
             HeadbuttTest(coll, endcoll, 0.7071f, VillHBCallback);
         }
         else if (globals.player.Health &&
-                 (type == 0xE ||
-                  (type == 0xA && ent->frame->mat.pos.y < ent->frame->oldpos.y &&
+                 ((ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xE ||
+                  ((ent->model->Anim->Single->State->UserFlags & 0x1E) == 0xA &&
+                   ent->frame->mat.pos.y < ent->frame->oldpos.y &&
                    (((_xEnt*)coll->optr)->subType == 0x16 || ((_xEnt*)coll->optr)->subType == 0x18 ||
                     ((_xEnt*)coll->optr)->subType == 0 || ((_xEnt*)coll->optr)->subType == 0x15 ||
                     ((_xEnt*)coll->optr)->subType == 0x24))))
@@ -7391,7 +7389,6 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
     F32 d1;
     F32 d2;
     xVec3 center;
-    F32 dist2;
 
     globals.player.HangFound = NULL;
     if (globals.player.HangEnt)
@@ -7410,11 +7407,10 @@ static void PlayerHangCheck(_xEnt* ent, _xScene* sc)
             dx = ent->bound.sph.center.x - hangme->endpos.x;
             dy = ent->bound.sph.center.y - hangme->endpos.y;
             dz = ent->bound.sph.center.z - hangme->endpos.z;
-            dist2 = dx * dx + dy * dy + dz * dz;
-            if (dist2 < closedist)
+            if ((dx * dx + dy * dy + dz * dz) < closedist)
             {
                 hangclose = hangme;
-                closedist = dist2;
+                closedist = dx * dx + dy * dy + dz * dz;
                 center = ent->bound.sph.center;
             }
         }

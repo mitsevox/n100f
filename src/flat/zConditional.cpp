@@ -6,15 +6,13 @@
 // Set up the base, its event handler, and the variable table.
 void zConditionalInit(void* b, void* asset)
 {
-    _zConditional* t = (_zConditional*)b;
-    zCondAsset* a = (zCondAsset*)asset;
-    xBaseInit(t, a);
-    t->eventFunc = zConditionalEventCB;
-    t->asset = a;
-    if (t->linkCount)
-        t->link = (p2LinkAsset*)(t->asset + 1);
+    xBaseInit((_zConditional*)b, (zCondAsset*)asset);
+    ((_zConditional*)b)->eventFunc = zConditionalEventCB;
+    ((_zConditional*)b)->asset = (zCondAsset*)asset;
+    if (((_zConditional*)b)->linkCount)
+        ((_zConditional*)b)->link = (p2LinkAsset*)(((_zConditional*)b)->asset + 1);
     else
-        t->link = NULL;
+        ((_zConditional*)b)->link = NULL;
     zVarInit(zVarEntryTable);
 }
 

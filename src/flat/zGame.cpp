@@ -536,8 +536,8 @@ void zGameScreenTransitionUpdate(F32 percentComplete, char* msg, U8* rgba)
             }
             else
             {
-                S32 part = zSceneGetRoominArea(globals.sceneCur->sceneID);
-                sprintf(str, "%s\n\nPart %d", zSceneGetAreaname(globals.sceneCur->sceneID), part + 1);
+                sprintf(str, "%s\n\nPart %d", zSceneGetAreaname(globals.sceneCur->sceneID),
+                        zSceneGetRoominArea(globals.sceneCur->sceneID) + 1);
                 zHud_DrawText(32.0f, 80.0f, 385.0f, 400.0f, str, 64, 1.2f, 200, DROPSHADOW_NORMAL);
             }
         }

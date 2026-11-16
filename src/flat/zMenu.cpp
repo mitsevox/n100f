@@ -90,7 +90,7 @@ void zMenuSetup()
 
 U32 zMenuLoop()
 {
-    U32 s;
+    S32 ss;
 
     if (sFirstBoot)
     {
@@ -159,9 +159,9 @@ U32 zMenuLoop()
                 }
                 else
                 {
-                    xBase* title1 = zSceneFindObject(xStrHash("MNU3 PRESS START BUTTON MGR"));
-                    xBase* title2 = zSceneFindObject(xStrHash("MNU3 START NEWGAME"));
-                    if ((title1->baseFlags & 1) || xEntIsVisible((_xEnt*)title2))
+                    xBase* title = zSceneFindObject(xStrHash("MNU3 PRESS START BUTTON MGR"));
+                    _xEnt* menu = (_xEnt*)zSceneFindObject(xStrHash("MNU3 START NEWGAME"));
+                    if ((title->baseFlags & 1) || xEntIsVisible(menu))
                     {
                         zGameStateSwitch(1);
                     }
@@ -228,14 +228,14 @@ U32 zMenuLoop()
 
         xCameraShowRaster(&globals.camera);
 
-        s = 0;
+        ss = 0;
         if (gGameMode == eGameMode_Load)
         {
             F32 elapsed = (F32)iTimeGet() - time_last;
-            s = zSaveLoad_LoadLoop();
-            if (s == '0000')
+            ss = zSaveLoad_LoadLoop();
+            if (ss == '0000')
             {
-                s = 0;
+                ss = 0;
             }
             time_last = elapsed + (F32)iTimeGet();
         }
@@ -252,7 +252,7 @@ U32 zMenuLoop()
         }
     } while (gGameMode != eGameMode_Game);
 
-    return s;
+    return ss;
 }
 
 U32 zMenuGetBadCard()
