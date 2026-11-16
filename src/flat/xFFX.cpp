@@ -151,7 +151,7 @@ void xFFXShakePoolInit(U32 num)
     shake_psize = num;
     shake_pool = (xFFXShakeState*)xMemAlloc(gActiveHeap, num * sizeof(xFFXShakeState));
     shake_pool->next = NULL;
-    for (S32 i = 1; i < shake_psize; i++)
+    for (U32 i = 1; i < shake_psize; i++)
     {
         shake_pool[i].next = &shake_pool[i - 1];
     }
