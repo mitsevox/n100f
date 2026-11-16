@@ -117,7 +117,8 @@ S32 xSGDone(st_XSAVEGAME_DATA* xsgdata)
 
 S32 xSGTgtCount(st_XSAVEGAME_DATA* xsgdata, S32* max)
 {
-    return iSGTgtCount(xsgdata->isgsess, max);
+    S32 cnt = iSGTgtCount(xsgdata->isgsess, max);
+    return cnt;
 }
 
 S32 xSGTgtPhysSlotIdx(st_XSAVEGAME_DATA* xsgdata, S32 tidx)
@@ -164,7 +165,8 @@ S32 xSGTgtIsFormat(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* badEncode)
 
 S32 xSGTgtFormatTgt(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* canRecover)
 {
-    return iSGTgtFormat(xsgdata->isgsess, tidx, 0, canRecover);
+    S32 result = iSGTgtFormat(xsgdata->isgsess, tidx, 0, canRecover);
+    return result;
 }
 
 // Passes the card's sector size and free file entries through from the card layer.
@@ -187,7 +189,8 @@ S32 xSG_chdir_gamedir(st_XSAVEGAME_DATA* xsgdata)
 {
     S32 rc = 1;
     char* namestr = iSGMakeName(ISG_NGTYP_GAMEDIR, NULL, 0);
-    if (!iSGSelectGameDir(xsgdata->isgsess, namestr))
+    S32 result = iSGSelectGameDir(xsgdata->isgsess, namestr);
+    if (!result)
     {
         rc = 0;
     }
@@ -218,18 +221,21 @@ S32 xSGTgtHasGameDir(st_XSAVEGAME_DATA* xsgdata, S32 tidx)
 S32 xSGTgtHaveRoom(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32 fsize, S32 slotidx, S32* bytesNeeded,
                    S32* availOnDisk, S32* needFile)
 {
+    S32 isroom;
     char fname[256] = {};
 
     // A negative slot asks only whether a new game directory would fit.
     if (slotidx < 0)
     {
-        return iSGTgtHaveRoom(xsgdata->isgsess, tidx, fsize, NULL, NULL, bytesNeeded, availOnDisk,
-                              needFile);
+        isroom = iSGTgtHaveRoom(xsgdata->isgsess, tidx, fsize, NULL, NULL, bytesNeeded, availOnDisk,
+                                needFile);
+        return isroom;
     }
 
     strcpy(fname, iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, slotidx));
-    return iSGTgtHaveRoom(xsgdata->isgsess, tidx, fsize, NULL, fname, bytesNeeded, availOnDisk,
-                          needFile);
+    isroom = iSGTgtHaveRoom(xsgdata->isgsess, tidx, fsize, NULL, fname, bytesNeeded, availOnDisk,
+                            needFile);
+    return isroom;
 }
 
 void xSGGameSet(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
@@ -278,9 +284,13 @@ char* xSG_cm_slotname(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
 char* xSGGameLabel(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
 {
     char* da_name = NULL;
-    if (xSG_chdir_gamedir(xsgdata) && g_leaders[gidx].gameLabel != NULL)
+    if (xSG_chdir_gamedir(xsgdata))
     {
-        da_name = g_leaders[gidx].gameLabel;
+        st_XSAVEGAME_LEADER* lead = &g_leaders[gidx];
+        if (lead->gameLabel != NULL)
+        {
+            da_name = lead->gameLabel;
+        }
     }
     return da_name;
 }
@@ -481,6 +491,7 @@ static S32 xSG_ld_readgame(st_XSAVEGAME_DATA* xsgdata);
 S32 xSGProcess(st_XSAVEGAME_DATA* xsgdata)
 {
     S32 result = 1;
+    S32 rc;
     if (xsgdata->stage & 0x40000000)
     {
         result = 0;
@@ -496,21 +507,34 @@ S32 xSGProcess(st_XSAVEGAME_DATA* xsgdata)
 
     if (result != 0 && xsgdata->mode == XSG_MODE_SAVE)
     {
-        if (xSG_smem_blkopen(xsgdata) == 0)
+        rc = xSG_smem_blkopen(xsgdata);
+        if (rc == 0)
         {
             result = 0;
         }
-        if (result != 0 && xSG_sv_flipproc(xsgdata) == 0)
+        if (result != 0)
         {
-            result = 0;
+            rc = xSG_sv_flipproc(xsgdata);
+            if (rc == 0)
+            {
+                result = 0;
+            }
         }
-        if (result != 0 && xSG_sv_bldchksum(xsgdata) == 0)
+        if (result != 0)
         {
-            result = 0;
+            rc = xSG_sv_bldchksum(xsgdata);
+            if (rc == 0)
+            {
+                result = 0;
+            }
         }
-        if (result != 0 && xSG_smem_blkclose(xsgdata) == 0)
+        if (result != 0)
         {
-            result = 0;
+            rc = xSG_smem_blkclose(xsgdata);
+            if (rc == 0)
+            {
+                result = 0;
+            }
         }
         if (result != 0)
         {
@@ -519,7 +543,8 @@ S32 xSGProcess(st_XSAVEGAME_DATA* xsgdata)
     }
     else if (result != 0 && xsgdata->mode == XSG_MODE_LOAD)
     {
-        if (xSG_ld_readgame(xsgdata) == 0)
+        rc = xSG_ld_readgame(xsgdata);
+        if (rc == 0)
         {
             result = 0;
         }
@@ -1089,10 +1114,12 @@ static void xSG_areaComposeLabel(char* label, char*)
 static S32 xSG_sv_commit(st_XSAVEGAME_DATA* xsgdata)
 {
     S32 result = 1;
+    S32 rc;
     char browselabel[64] = {};
 
     char* name = iSGMakeName(ISG_NGTYP_GAMEDIR, NULL, 0);
-    if (!iSGSetupGameDir(xsgdata->isgsess, name, 1))
+    rc = iSGSetupGameDir(xsgdata->isgsess, name, 1);
+    if (!rc)
     {
         result = 0;
     }
@@ -1100,8 +1127,9 @@ static S32 xSG_sv_commit(st_XSAVEGAME_DATA* xsgdata)
     {
         xSG_areaComposeLabel(browselabel, xsgdata->label);
 
-        if (!iSGSaveFile(xsgdata->isgsess, iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, xsgdata->gslot),
-                         xsgdata->membuf, xsgdata->memsize, 1, browselabel))
+        rc = iSGSaveFile(xsgdata->isgsess, iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, xsgdata->gslot),
+                         xsgdata->membuf, xsgdata->memsize, 1, browselabel);
+        if (!rc)
         {
             result = 0;
         }

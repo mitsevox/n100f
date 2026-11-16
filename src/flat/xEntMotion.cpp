@@ -102,52 +102,54 @@ void xEntMotionInit(_xEntMotion* motion, _xEnt* owner, p2EntMotionAsset* asset)
     }
     else if (motion->type == XENTMOTION_TYPE_MECH)
     {
-        if (asset->mech.sld_tm < 0.0f)
+        p2EntMotionMechData* mkasst = &asset->mech;
+
+        if (mkasst->sld_tm < 0.0f)
         {
-            asset->mech.sld_tm = 0.0f;
+            mkasst->sld_tm = 0.0f;
         }
 
-        if (asset->mech.sld_acc_tm < 0.0f)
+        if (mkasst->sld_acc_tm < 0.0f)
         {
-            asset->mech.sld_acc_tm = 0.0f;
+            mkasst->sld_acc_tm = 0.0f;
         }
 
-        if (asset->mech.sld_dec_tm < 0.0f)
+        if (mkasst->sld_dec_tm < 0.0f)
         {
-            asset->mech.sld_dec_tm = 0.0f;
+            mkasst->sld_dec_tm = 0.0f;
         }
 
-        if (asset->mech.sld_acc_tm + asset->mech.sld_dec_tm > asset->mech.sld_tm)
+        if (mkasst->sld_acc_tm + mkasst->sld_dec_tm > mkasst->sld_tm)
         {
-            asset->mech.sld_dec_tm = asset->mech.sld_acc_tm = 0.5f * asset->mech.sld_tm;
+            mkasst->sld_dec_tm = mkasst->sld_acc_tm = 0.5f * mkasst->sld_tm;
         }
 
-        if (asset->mech.rot_tm < 0.0f)
+        if (mkasst->rot_tm < 0.0f)
         {
-            asset->mech.rot_tm = 0.0f;
+            mkasst->rot_tm = 0.0f;
         }
 
-        if (asset->mech.rot_acc_tm < 0.0f)
+        if (mkasst->rot_acc_tm < 0.0f)
         {
-            asset->mech.rot_acc_tm = 0.0f;
+            mkasst->rot_acc_tm = 0.0f;
         }
 
-        if (asset->mech.rot_dec_tm < 0.0f)
+        if (mkasst->rot_dec_tm < 0.0f)
         {
-            asset->mech.rot_dec_tm = 0.0f;
+            mkasst->rot_dec_tm = 0.0f;
         }
 
-        if (asset->mech.type == 2)
+        if (mkasst->type == 2)
         {
-            if (asset->mech.rot_tm != asset->mech.sld_tm)
+            if (mkasst->rot_tm != mkasst->sld_tm)
             {
-                asset->mech.rot_tm = asset->mech.sld_tm;
+                mkasst->rot_tm = mkasst->sld_tm;
             }
         }
 
-        if (asset->mech.rot_acc_tm + asset->mech.rot_dec_tm > asset->mech.rot_tm)
+        if (mkasst->rot_acc_tm + mkasst->rot_dec_tm > mkasst->rot_tm)
         {
-            asset->mech.rot_dec_tm = asset->mech.rot_acc_tm = 0.5f * asset->mech.rot_tm;
+            mkasst->rot_dec_tm = mkasst->rot_acc_tm = 0.5f * mkasst->rot_tm;
         }
     }
 
@@ -413,7 +415,8 @@ static void xEntOrbitMove(_xEntMotion* motion, _xScene* sc, F32 dt, _xEntFrame* 
 {
     F32 rem = dt * 0.5f;
     F32 u = motion->orb.w * (motion->t + rem);
-    F32 th = isin(motion->orb.w * rem);
+    F32 th = motion->orb.w * rem;
+    F32 s = isin(th);
     F32 newt = motion->t - motion->orb.p;
 
     if (newt > 0.0f)
@@ -427,9 +430,9 @@ static void xEntOrbitMove(_xEntMotion* motion, _xScene* sc, F32 dt, _xEntFrame* 
     }
     else
     {
-        frame->dpos.x = (2.0f * th) * motion->orb.a * isin(u);
+        frame->dpos.x = (2.0f * s) * motion->orb.a * isin(u);
         frame->dpos.y = 0.0f;
-        frame->dpos.z = (-2.0f * th) * motion->orb.b * icos(u);
+        frame->dpos.z = (-2.0f * s) * motion->orb.b * icos(u);
     }
 
     frame->mode = 2;

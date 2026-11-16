@@ -116,18 +116,18 @@ static S32 xSER_xsgclt_svproc_fill(void*, st_XSAVEGAME_DATA* xsg, st_XSAVEGAME_W
 static S32 xSER_xsgclt_svinfo_fill(void*, st_XSAVEGAME_DATA*, S32* cur_space, S32* max_fullgame)
 {
     st_XSERIAL_DATA_PRIV* xsd = &g_xserdata;
-    S32 used = 0;
+    S32 tally = 0;
 
     for (S32 i = 0; i < xsd->cltlist.cnt; i++)
     {
-        used += ((st_SERIAL_CLIENTINFO*)xsd->cltlist.list[i])->actsize;
+        tally += ((st_SERIAL_CLIENTINFO*)xsd->cltlist.list[i])->actsize;
     }
 
-    S32 space = xsd->buf_bytcnt;
-    space -= used;
-    space += 8;
-    *cur_space = space;
-    *max_fullgame = space;
+    S32 size = xsd->buf_bytcnt;
+    size -= tally;
+    size += 8;
+    *cur_space = size;
+    *max_fullgame = size;
     return 1;
 }
 
@@ -202,8 +202,9 @@ S32 xSerial_svgame_register(st_XSAVEGAME_DATA* sgctxt, en_SAVEGAME_MODE mode)
 
         for (S32 i = 0; i < xsd->cltlist.cnt; i++)
         {
-            xSGAddSaveClient(sgctxt, *(U32*)xsd->cltlist.list[i], xsd->cltlist.list[i],
-                             xSER_xsgclt_svinfo_clt, xSER_xsgclt_svproc_clt);
+            st_SERIAL_CLIENTINFO* clt = (st_SERIAL_CLIENTINFO*)xsd->cltlist.list[i];
+            xSGAddSaveClient(sgctxt, clt->idtag, clt, xSER_xsgclt_svinfo_clt,
+                             xSER_xsgclt_svproc_clt);
         }
         xSGAddSaveClient(sgctxt, 'SFIL', &g_xserdata, xSER_xsgclt_svinfo_fill,
                          xSER_xsgclt_svproc_fill);
@@ -221,12 +222,13 @@ S32 xSerial_svgame_register(st_XSAVEGAME_DATA* sgctxt, en_SAVEGAME_MODE mode)
 static S32 xSER_ord_test(const void* key, void* elt)
 {
     S32 rc;
+    U32 idtag = *(U32*)elt;
 
-    if ((U32)key < *(U32*)elt)
+    if ((U32)key < idtag)
     {
         rc = -1;
     }
-    else if ((U32)key > *(U32*)elt)
+    else if ((U32)key > idtag)
     {
         rc = 1;
     }
@@ -588,7 +590,8 @@ void xSerialTraverse(S32 (*func)(U32, xSerial*))
     {
         st_SERIAL_CLIENTINFO* clt = (st_SERIAL_CLIENTINFO*)xsd->cltlist.list[i];
         xser.setClient(clt->idtag);
-        if (func(clt->idtag, &xser) == 0)
+        S32 rc = func(clt->idtag, &xser);
+        if (rc == 0)
         {
             break;
         }

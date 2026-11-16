@@ -223,13 +223,15 @@ void zMainMemLvlChkCB()
 // Load the boot and menu packages, then alternate between the menu and game scenes.
 void zMainLoop()
 {
+    F32 pdone;
+
     xMemPushBase();
     xUtil_idtag2string('BOOT', 0);
     xSTPreLoadScene('BOOT', NULL);
     xUtil_idtag2string('BOOT', 0);
     xSTQueueSceneAssets('BOOT');
     xUtil_idtag2string('BOOT', 0);
-    while (xSTLoadStep('BOOT') < 1.0f)
+    while ((pdone = xSTLoadStep('BOOT')) < 1.0f)
     {
         iSystemPollResetAndDisc();
         xTRCRenderFrame();
@@ -243,7 +245,7 @@ void zMainLoop()
     xUtil_idtag2string('MNU4', 0);
     xSTQueueSceneAssets('MNU4');
     xUtil_idtag2string('MNU4', 0);
-    while (xSTLoadStep('MNU4') < 1.0f)
+    while ((pdone = xSTLoadStep('MNU4')) < 1.0f)
     {
         iSystemPollResetAndDisc();
         xTRCRenderFrame();

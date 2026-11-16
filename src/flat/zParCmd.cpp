@@ -629,7 +629,8 @@ void xParCmdRandomVelocityPar_Update(zParCmd* c, xParGroup* ps, F32 dt)
         F32 z = 2.0f * (rz * iurand()) - rz;
 
         xMat3x3Euler(&mat, x, y, z);
-        xMat3x3LMulVec(&p->m_vel, &mat, &p->m_vel);
+        _xVec3* velvec = &p->m_vel;
+        xMat3x3LMulVec(velvec, &mat, velvec);
 
         p = p->m_next;
     }

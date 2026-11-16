@@ -252,8 +252,12 @@ void zUI_Render(_xEnt* e)
         if (ui->sasset->textureID)
         {
             RwTexture* texture = static_cast<RwTexture*>(xSTFindAsset(ui->sasset->textureID, 0));
-            if (texture && texture->raster)
-                RwRenderStateSet(rwRENDERSTATETEXTURERASTER, texture->raster);
+            if (texture)
+            {
+                RwRaster* raster = texture->raster;
+                if (raster)
+                    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, raster);
+            }
             zUIAsset* asset = ui->sasset;
             F32 u1 = asset->uva[0];
             F32 v1 = asset->uva[1];
@@ -263,36 +267,36 @@ void zUI_Render(_xEnt* e)
             F32 v3 = asset->uvc[1];
             F32 u4 = asset->uvd[0];
             F32 v4 = asset->uvd[1];
-            F32 left = (640.0f * asset->pos.x) / 640.0f;
-            F32 top = (480.0f * asset->pos.y) / 480.0f;
-            F32 right = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
-            F32 bottom = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
+            F32 x1 = (640.0f * asset->pos.x) / 640.0f;
+            F32 y1 = (480.0f * asset->pos.y) / 480.0f;
+            F32 x2 = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
+            F32 y2 = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
 
-            static U32 mapID = xStrHash("paws_map");
-            static U32 cornerID = xStrHash("paws_corner");
-            static U32 tagID = xStrHash("sd_tag_map");
-            if (ui->sasset->textureID == mapID || ui->sasset->textureID == cornerID ||
-                ui->sasset->textureID == tagID)
+            static U32 hack_pulse1 = xStrHash("paws_map");
+            static U32 hack_pulse2 = xStrHash("paws_corner");
+            static U32 hack_pulse3 = xStrHash("sd_tag_map");
+            if (ui->sasset->textureID == hack_pulse1 || ui->sasset->textureID == hack_pulse2 ||
+                ui->sasset->textureID == hack_pulse3)
             {
                 F32 wave = (F32)sin(15.0f * gFontWiggleTime);
                 F32 pulse = 1.0f + wave;
-                F32 dx = pulse * (0.05f * (right - left));
-                F32 dy = pulse * (0.05f * (bottom - top));
-                left -= dx;
-                right += dx;
-                top -= dy;
-                bottom += dy;
+                F32 pulse_w = pulse * (0.05f * (x2 - x1));
+                F32 pulse_h = pulse * (0.05f * (y2 - y1));
+                x1 -= pulse_w;
+                x2 += pulse_w;
+                y1 -= pulse_h;
+                y2 += pulse_h;
             }
 
-            static U32 warpTokenID = xStrHash("warp token ui");
-            static U32 warpSnackID = xStrHash("warp snack ui");
-            if (ui->id == warpTokenID || ui->id == warpSnackID)
+            static U32 hack_token1 = xStrHash("warp token ui");
+            static U32 hack_token2 = xStrHash("warp snack ui");
+            if (ui->id == hack_token1 || ui->id == hack_token2)
             {
-                F32 wave = (F32)sin(5.0f * gFontWiggleTime + left);
-                F32 dx = (0.5f * wave) * (right - left);
+                F32 wave = (F32)sin(5.0f * gFontWiggleTime + x1);
+                F32 pulse_w = (0.5f * wave) * (x2 - x1);
                 F32 center = (640.0f * ui->sasset->pos.x) / 640.0f;
-                left = center - dx;
-                right = center + dx;
+                x1 = center - pulse_w;
+                x2 = center + pulse_w;
             }
 
             F32 z = RwIm2DGetNearScreenZ();
@@ -300,20 +304,20 @@ void zUI_Render(_xEnt* e)
             RwIm2DVertexSetIntRGBA(&Vertex[1], 255, 255, 255, 255);
             RwIm2DVertexSetIntRGBA(&Vertex[2], 255, 255, 255, 255);
             RwIm2DVertexSetIntRGBA(&Vertex[3], 255, 255, 255, 255);
-            RwIm2DVertexSetScreenX(&Vertex[0], left);
-            RwIm2DVertexSetScreenY(&Vertex[0], top);
+            RwIm2DVertexSetScreenX(&Vertex[0], x1);
+            RwIm2DVertexSetScreenY(&Vertex[0], y1);
             RwIm2DVertexSetScreenZ(&Vertex[0], z);
             Vertex[0].u = u1; Vertex[0].v = v1;
-            RwIm2DVertexSetScreenX(&Vertex[1], left);
-            RwIm2DVertexSetScreenY(&Vertex[1], bottom);
+            RwIm2DVertexSetScreenX(&Vertex[1], x1);
+            RwIm2DVertexSetScreenY(&Vertex[1], y2);
             RwIm2DVertexSetScreenZ(&Vertex[1], z);
             Vertex[1].u = u4; Vertex[1].v = v4;
-            RwIm2DVertexSetScreenX(&Vertex[2], right);
-            RwIm2DVertexSetScreenY(&Vertex[2], bottom);
+            RwIm2DVertexSetScreenX(&Vertex[2], x2);
+            RwIm2DVertexSetScreenY(&Vertex[2], y2);
             RwIm2DVertexSetScreenZ(&Vertex[2], z);
             Vertex[2].u = u3; Vertex[2].v = v3;
-            RwIm2DVertexSetScreenX(&Vertex[3], right);
-            RwIm2DVertexSetScreenY(&Vertex[3], top);
+            RwIm2DVertexSetScreenX(&Vertex[3], x2);
+            RwIm2DVertexSetScreenY(&Vertex[3], y1);
             RwIm2DVertexSetScreenZ(&Vertex[3], z);
             Vertex[3].u = u2; Vertex[3].v = v2;
             RwIm2DVertexSetIntRGBA(&Vertex[0], 255, 255, 255, 255);

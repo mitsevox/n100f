@@ -252,7 +252,8 @@ void* xMemAlloc(U32 heapID, U32 size)
 
 void* xMemPushTemp(U32 size)
 {
-    return malloc(size);
+    void* addr = malloc(size);
+    return addr;
 }
 
 void xMemPopTemp(void* addr)

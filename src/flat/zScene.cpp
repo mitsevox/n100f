@@ -1081,8 +1081,8 @@ void zSceneSwitch(_zPortal* p)
         }
     }
 
-    const char* sceneName = (const char*)&passet->sceneID;
-    U32 sid = (sceneName[0] << 24) | (sceneName[1] << 16) | (sceneName[2] << 8) | sceneName[3];
+    char* id = (char*)&passet->sceneID;
+    U32 sid = (id[0] << 24) | (id[1] << 16) | (id[2] << 8) | id[3];
 
     if (sid == globals.sceneCur->sceneID)
     {
@@ -2250,7 +2250,8 @@ void zSceneRender()
         }
     }
 
-    switch (zGameModeGet())
+    eGameMode mode = (eGameMode)zGameModeGet();
+    switch (mode)
     {
     case eGameMode_Load:
     case eGameMode_WorldMap:
