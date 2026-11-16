@@ -54,7 +54,7 @@ The project owner is **[mitsevox](https://github.com/mitsevox)**, the sole merge
 
 ## License
 
-The contributors' own work in this repository is dedicated to the public domain under [CC0 1.0 Universal](LICENSE), as in the other Heavy Iron decompilations. Use it however you like.
+The contributors' own work in this repository is dedicated to the public domain under [CC0 1.0 Universal](LICENSE). Use it however you like.
 
 CC0 covers only what the contributors have the right to give away:
 
