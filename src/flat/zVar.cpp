@@ -858,9 +858,10 @@ char* zVMCB_MCSelectedCard(char* dst)
 char* zVMCB_CurrentPosition(char* dst)
 {
     S32 count;
-    xVec3* pos = &globals.player.ent.frame->mat.pos;
 
-    count = sprintf(dst, "%d,%d,%d", (S32)(0.5f + pos->x), (S32)(0.5f + pos->y), (S32)(0.5f + pos->z));
+    count = sprintf(dst, "%d,%d,%d", (S32)(0.5f + globals.player.ent.frame->mat.pos.x),
+                    (S32)(0.5f + globals.player.ent.frame->mat.pos.y),
+                    (S32)(0.5f + globals.player.ent.frame->mat.pos.z));
 
     return dst + count;
 }
@@ -1037,15 +1038,8 @@ U32 zVarEntryCB_CurrentSceneLetter()
 
 U32 zVarEntryCB_IsSneaking()
 {
-    bool sneaking = false;
-
-    if (globals.player.Sneak &&
-        (globals.player.ent.model->Anim->Single->State->UserFlags & 0x1E) == 2)
-    {
-        sneaking = true;
-    }
-
-    return sneaking;
+    return globals.player.Sneak &&
+           (globals.player.ent.model->Anim->Single->State->UserFlags & 0x1E) == 2;
 }
 
 U32 zVarEntryCB_MapItem()

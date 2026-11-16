@@ -53,13 +53,10 @@ void xFFXTurnOff(xFFX* f)
 // Puts the effect at the head of the entity's list and returns its index.
 S16 xFFXAddEffect(_xEnt* ent, xFFX* f)
 {
-    U8 numFFX;
     f->next = ent->ffx;
     f->flags = f->flags | 1;
     ent->ffx = f;
-    numFFX = ent->num_ffx;
-    ent->num_ffx = numFFX + 1;
-    return numFFX;
+    return ent->num_ffx++;
 }
 
 S16 xFFXAddEffect(_xEnt* ent, void (*dof)(_xEnt*, _xScene*, F32, void*), void* fd)

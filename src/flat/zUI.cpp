@@ -195,11 +195,9 @@ xBase* zUIRenderIteratorInsert(xBase* b, zScene*, void*)
 // Draw UI elements with larger asset depth first.
 S32 iRenderQSort_Face(const void* a, const void* b)
 {
-    const _zUI* left = *static_cast<_zUI* const*>(a);
-    const _zUI* right = *static_cast<_zUI* const*>(b);
-    if (left->sasset->pos.z < right->sasset->pos.z)
+    if ((*static_cast<_zUI* const*>(a))->sasset->pos.z < (*static_cast<_zUI* const*>(b))->sasset->pos.z)
         return 1;
-    if (left->sasset->pos.z > right->sasset->pos.z)
+    if ((*static_cast<_zUI* const*>(a))->sasset->pos.z > (*static_cast<_zUI* const*>(b))->sasset->pos.z)
         return -1;
     return 0;
 }
@@ -258,19 +256,18 @@ void zUI_Render(_xEnt* e)
                 if (raster)
                     RwRenderStateSet(rwRENDERSTATETEXTURERASTER, raster);
             }
-            zUIAsset* asset = ui->sasset;
-            F32 u1 = asset->uva[0];
-            F32 v1 = asset->uva[1];
-            F32 u2 = asset->uvb[0];
-            F32 v2 = asset->uvb[1];
-            F32 u3 = asset->uvc[0];
-            F32 v3 = asset->uvc[1];
-            F32 u4 = asset->uvd[0];
-            F32 v4 = asset->uvd[1];
-            F32 x1 = (640.0f * asset->pos.x) / 640.0f;
-            F32 y1 = (480.0f * asset->pos.y) / 480.0f;
-            F32 x2 = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
-            F32 y2 = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
+            F32 u1 = ui->sasset->uva[0];
+            F32 v1 = ui->sasset->uva[1];
+            F32 u2 = ui->sasset->uvb[0];
+            F32 v2 = ui->sasset->uvb[1];
+            F32 u3 = ui->sasset->uvc[0];
+            F32 v3 = ui->sasset->uvc[1];
+            F32 u4 = ui->sasset->uvd[0];
+            F32 v4 = ui->sasset->uvd[1];
+            F32 x1 = (640.0f * ui->sasset->pos.x) / 640.0f;
+            F32 y1 = (480.0f * ui->sasset->pos.y) / 480.0f;
+            F32 x2 = (640.0f * (ui->sasset->pos.x + ui->sasset->dim[0])) / 640.0f;
+            F32 y2 = (480.0f * (ui->sasset->pos.y + ui->sasset->dim[1])) / 480.0f;
 
             static U32 hack_pulse1 = xStrHash("paws_map");
             static U32 hack_pulse2 = xStrHash("paws_corner");
@@ -279,9 +276,8 @@ void zUI_Render(_xEnt* e)
                 ui->sasset->textureID == hack_pulse3)
             {
                 F32 wave = (F32)sin(15.0f * gFontWiggleTime);
-                F32 pulse = 1.0f + wave;
-                F32 pulse_w = pulse * (0.05f * (x2 - x1));
-                F32 pulse_h = pulse * (0.05f * (y2 - y1));
+                F32 pulse_w = (1.0f + wave) * (0.05f * (x2 - x1));
+                F32 pulse_h = (1.0f + wave) * (0.05f * (y2 - y1));
                 x1 -= pulse_w;
                 x2 += pulse_w;
                 y1 -= pulse_h;
@@ -294,9 +290,8 @@ void zUI_Render(_xEnt* e)
             {
                 F32 wave = (F32)sin(5.0f * gFontWiggleTime + x1);
                 F32 pulse_w = (0.5f * wave) * (x2 - x1);
-                F32 center = (640.0f * ui->sasset->pos.x) / 640.0f;
-                x1 = center - pulse_w;
-                x2 = center + pulse_w;
+                x1 = (640.0f * ui->sasset->pos.x) / 640.0f - pulse_w;
+                x2 = (640.0f * ui->sasset->pos.x) / 640.0f + pulse_w;
             }
 
             F32 z = RwIm2DGetNearScreenZ();
@@ -336,17 +331,16 @@ void zUI_Render(_xEnt* e)
         }
         else if (ui->model)
         {
-            zUIAsset* asset = ui->sasset;
             xVec3 relfrom = { 0.0f, 1.0f, 5.0f };
             xVec3 relto = { 0.0f, 0.0f, 0.0f };
             xVec3 from;
             xVec3 to;
             xVec3* pos = (xVec3*)&ui->model->Mat->pos;
             _xRect win1 = { 0.0f, 0.0f, 0.0f, 0.0f };
-            win1.x = (640.0f * asset->pos.x) / 640.0f;
-            win1.y = (480.0f * asset->pos.y) / 480.0f;
-            win1.w = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
-            win1.h = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
+            win1.x = (640.0f * ui->sasset->pos.x) / 640.0f;
+            win1.y = (480.0f * ui->sasset->pos.y) / 480.0f;
+            win1.w = (640.0f * (ui->sasset->pos.x + ui->sasset->dim[0])) / 640.0f;
+            win1.h = (480.0f * (ui->sasset->pos.y + ui->sasset->dim[1])) / 480.0f;
             xVec3Add(&from, &relfrom, pos);
             xVec3Add(&to, &relto, pos);
             xModelRender2D(ui->model, &win1, &from, &to, 1.5707964f);
@@ -388,9 +382,8 @@ S32 zUIEventCB(xBase*, xBase* to, U32 event, F32*, xBase*)
                     char scene[5] = { 0 };
                     strncpy(scene, uiName, 4);
                     scene[1] = '0';
-                    U32 sceneID = (U32(scene[0]) << 24) | (U32(scene[1]) << 16) |
-                                  (U32(scene[2]) << 8) | U32(scene[3]);
-                    zVarSetArea(sceneID);
+                    zVarSetArea((U32(scene[0]) << 24) | (U32(scene[1]) << 16) |
+                                (U32(scene[2]) << 8) | U32(scene[3]));
                 }
             }
         }

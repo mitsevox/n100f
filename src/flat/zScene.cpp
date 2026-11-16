@@ -2291,18 +2291,14 @@ void zSceneRender()
                 available = 0;
             }
 
-            const char* availBlocks = available / sBlockSize == 1 ? "$C is" : "s$C are";
-            const char* availFilesSuffix = sAvailFiles == 1 ? "" : "s";
-            const char* neededBlocks = bytesNeeded / sBlockSize == 1 ? "$C is" : "s$C are";
-            const char* neededFilesSuffix = neededFiles == 1 ? "" : "s";
-
             sprintf(str,
                     "Insufficient space on the Nintendo GameCube_ Memory Card in Slot %s.\n"
                     "At least $A000210068%d file%s and %d block%s needed to save game data.\n"
                     "($A220020026%d file%s and %d block%s available.)\n\nDo you want to start?",
-                    zMenuGetBadCard() == 1 ? "A" : "B", neededFiles, neededFilesSuffix,
-                    bytesNeeded / sBlockSize, neededBlocks, sAvailFiles, availFilesSuffix,
-                    available / sBlockSize, availBlocks);
+                    zMenuGetBadCard() == 1 ? "A" : "B", neededFiles, neededFiles == 1 ? "" : "s",
+                    bytesNeeded / sBlockSize, bytesNeeded / sBlockSize == 1 ? "$C is" : "s$C are",
+                    sAvailFiles, sAvailFiles == 1 ? "" : "s",
+                    available / sBlockSize, available / sBlockSize == 1 ? "$C is" : "s$C are");
 
             xFontBoxSetText(sTrcFullCardFontBox, str);
             xFontBoxSetDrawSize(sTrcFullCardFontBox, 18.0f, 24.0f);

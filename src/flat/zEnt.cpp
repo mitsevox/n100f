@@ -278,10 +278,9 @@ void zEntEventAllOfType(xBase* from, U32 fromEvent, U32 toEvent, F32* toParam, U
 
     for (U16 i = 0; i < s->num_base; i++)
     {
-        xBase* base = s->base[i];
-        if (type == base->baseType)
+        if (type == s->base[i]->baseType)
         {
-            zEntEvent(from, fromEvent, base, toEvent, toParam, NULL, 0);
+            zEntEvent(from, fromEvent, s->base[i], toEvent, toParam, NULL, 0);
         }
     }
 }

@@ -55,18 +55,15 @@ xIniFile* xIniParse(char* buf, S32 len)
         ccr = clf;
     }
 
-    S32 sectionAlloc = copen;
-    S32 valueAlloc = ccr;
-
-    xIniFile* ini = (xIniFile*)malloc(sizeof(xIniFile) + (valueAlloc * sizeof(xIniValue)) +
-                                      (sectionAlloc * sizeof(xIniSection)) + (len - lastCRLF));
+    xIniFile* ini = (xIniFile*)malloc(sizeof(xIniFile) + (ccr * sizeof(xIniValue)) +
+                                      (copen * sizeof(xIniSection)) + (len - lastCRLF));
     ini->mem = NULL;
     ini->NumValues = 0;
     ini->NumSections = 0;
     ini->Values = (xIniValue*)(ini + 1);
-    ini->Sections = (xIniSection*)(ini->Values + valueAlloc);
+    ini->Sections = (xIniSection*)(ini->Values + ccr);
 
-    char* lastLine = (char*)(ini->Sections + sectionAlloc);
+    char* lastLine = (char*)(ini->Sections + copen);
     strncpy(lastLine, buf + (lastCRLF + 1), len - (lastCRLF + 1));
     lastLine[len - (lastCRLF + 1)] = '\0';
 

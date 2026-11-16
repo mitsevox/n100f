@@ -11,16 +11,14 @@ static inline void zPortalReset(_zPortal* portal)
 
 void zPortalInit(void* portal, void* passet)
 {
-    _zPortal* p = (_zPortal*)portal;
+    xBaseInit((_zPortal*)portal, (zPortalAsset*)passet);
 
-    xBaseInit(p, (zPortalAsset*)passet);
+    ((_zPortal*)portal)->passet = (zPortalAsset*)passet;
+    ((_zPortal*)portal)->eventFunc = zPortalEventCB;
 
-    p->passet = (zPortalAsset*)passet;
-    p->eventFunc = zPortalEventCB;
-
-    if (p->linkCount != 0)
+    if (((_zPortal*)portal)->linkCount != 0)
     {
-        p->link = (p2LinkAsset*)(p->passet + 1);
+        ((_zPortal*)portal)->link = (p2LinkAsset*)(((_zPortal*)portal)->passet + 1);
     }
 }
 
