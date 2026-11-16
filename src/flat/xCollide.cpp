@@ -112,7 +112,8 @@ U32 xSphereHitsSphere(const xSphere* a, const xSphere* b, _xCollis* coll)
             }
             else
             {
-                xVec3SMul(&coll->tohit, &isx.norm, -coll->dist / isx.dist);
+                F32 scale = -coll->dist / isx.dist;
+                xVec3SMul(&coll->tohit, &isx.norm, scale);
             }
         }
         if ((coll->flags & 0x800) != 0)
@@ -123,7 +124,8 @@ U32 xSphereHitsSphere(const xSphere* a, const xSphere* b, _xCollis* coll)
             }
             else
             {
-                xVec3SMul(&coll->depen, &isx.norm, -isx.penned / isx.dist);
+                F32 scale = -isx.penned / isx.dist;
+                xVec3SMul(&coll->depen, &isx.norm, scale);
             }
         }
         if ((coll->flags & 0x1200) != 0)
@@ -173,7 +175,8 @@ U32 xSphereHitsBox(const xSphere* a, const _xBox* b, _xCollis* coll)
             }
             else
             {
-                xVec3SMul(&coll->depen, &isx.norm, isx.penned / isx.dist);
+                F32 scale = isx.penned / isx.dist;
+                xVec3SMul(&coll->depen, &isx.norm, scale);
             }
         }
         if ((coll->flags & 0x1200) != 0)
