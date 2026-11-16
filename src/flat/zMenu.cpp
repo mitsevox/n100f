@@ -159,9 +159,9 @@ U32 zMenuLoop()
                 }
                 else
                 {
-                    xBase* title1 = zSceneFindObject(xStrHash("MNU3 PRESS START BUTTON MGR"));
-                    xBase* title2 = zSceneFindObject(xStrHash("MNU3 START NEWGAME"));
-                    if ((title1->baseFlags & 1) || xEntIsVisible((_xEnt*)title2))
+                    xBase* title = zSceneFindObject(xStrHash("MNU3 PRESS START BUTTON MGR"));
+                    _xEnt* menu = (_xEnt*)zSceneFindObject(xStrHash("MNU3 START NEWGAME"));
+                    if ((title->baseFlags & 1) || xEntIsVisible(menu))
                     {
                         zGameStateSwitch(1);
                     }
