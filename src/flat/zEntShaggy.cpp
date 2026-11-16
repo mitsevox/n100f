@@ -906,9 +906,7 @@ void Shaggy0_PlayerTransitions(xAnimTable* table)
 
 void Shaggy1_SetHangable(_zEnt* ent, _zEntHangable* hang)
 {
-    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
-
-    guts->hangme = hang;
+    zEntShaggy_FindGuts(ent)->hangme = hang;
 }
 
 static void Shaggy1_BonusAnims(_zEnt* ent)
@@ -2365,31 +2363,29 @@ static void Shaggy2_Render(_xEnt* ent)
 
 static U32 Shaggy3_Move(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
 {
-    _xEntFrame* frame = ent->frame;
-
-    if (frame == NULL)
+    if (ent->frame == NULL)
     {
         return 0;
     }
-    return (frame->mode & 0x2) && frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
-                                          frame->dpos.z * frame->dpos.z >=
-                                      0.0005f;
+    return (ent->frame->mode & 0x2) &&
+           ent->frame->dpos.x * ent->frame->dpos.x + ent->frame->dpos.y * ent->frame->dpos.y +
+                   ent->frame->dpos.z * ent->frame->dpos.z >=
+               0.0005f;
 }
 
 static U32 Shaggy3_MoveDead(xAnimTransition* tran, xAnimSingle* anim, _zPlatform* ent)
 {
-    _xEntFrame* frame = ent->frame;
-
-    if (frame == NULL)
+    if (ent->frame == NULL)
     {
         return 0;
     }
     U8 retval = 0;
-    U8 moving = !globals.player.Health && (frame->mode & 0x2);
+    U8 moving = !globals.player.Health && (ent->frame->mode & 0x2);
 
-    if (moving && frame->dpos.x * frame->dpos.x + frame->dpos.y * frame->dpos.y +
-                          frame->dpos.z * frame->dpos.z >=
-                      0.0005f)
+    if (moving &&
+        ent->frame->dpos.x * ent->frame->dpos.x + ent->frame->dpos.y * ent->frame->dpos.y +
+                ent->frame->dpos.z * ent->frame->dpos.z >=
+            0.0005f)
     {
         retval = 1;
     }
@@ -2635,19 +2631,18 @@ static S32 Shaggy3_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam,
 static U32 Shaggy5_MoveTran(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
 {
     ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
-    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
 
-    return (goal == ZVIL_GOAL_PATROL || goal == ZVIL_GOAL_FOLLOW) &&
+    return (((st_zEntVillain*)ent)->goal == ZVIL_GOAL_PATROL ||
+            ((st_zEntVillain*)ent)->goal == ZVIL_GOAL_FOLLOW) &&
            guts->prefMove == tran->UserFlags;
 }
 
 static U32 Shaggy5_IdleTran(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
 {
     ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
-    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
 
-    return goal != ZVIL_GOAL_PATROL && goal != ZVIL_GOAL_FOLLOW &&
-           guts->prefIdle == tran->UserFlags;
+    return ((st_zEntVillain*)ent)->goal != ZVIL_GOAL_PATROL &&
+           ((st_zEntVillain*)ent)->goal != ZVIL_GOAL_FOLLOW && guts->prefIdle == tran->UserFlags;
 }
 
 static U32 Shaggy5_WitchAttached(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
@@ -2685,9 +2680,9 @@ static U32 Shaggy5_EatMoveCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* en
 static U32 Shaggy5_EatStop(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
 {
     ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
-    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
 
-    return goal != ZVIL_GOAL_PATROL && goal != ZVIL_GOAL_FOLLOW && guts->eatTimer > 0.0f;
+    return ((st_zEntVillain*)ent)->goal != ZVIL_GOAL_PATROL &&
+           ((st_zEntVillain*)ent)->goal != ZVIL_GOAL_FOLLOW && guts->eatTimer > 0.0f;
 }
 
 static U32 Shaggy5_EatStopCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
@@ -2723,18 +2718,15 @@ static U32 Witch_HasShaggy(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
 
 static U32 Witch_DropShaggyMove(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
 {
-    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
-
-    return (goal == ZVIL_GOAL_PATROL || goal == ZVIL_GOAL_FOLLOW) &&
+    return (((st_zEntVillain*)ent)->goal == ZVIL_GOAL_PATROL ||
+            ((st_zEntVillain*)ent)->goal == ZVIL_GOAL_FOLLOW) &&
            !Witch_HasShaggy(tran, anim, ent);
 }
 
 static U32 Witch_DropShaggyIdle(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
 {
-    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
-
-    return goal != ZVIL_GOAL_PATROL && goal != ZVIL_GOAL_FOLLOW &&
-           !Witch_HasShaggy(tran, anim, ent);
+    return ((st_zEntVillain*)ent)->goal != ZVIL_GOAL_PATROL &&
+           ((st_zEntVillain*)ent)->goal != ZVIL_GOAL_FOLLOW && !Witch_HasShaggy(tran, anim, ent);
 }
 
 static U32 Witch_GrabShaggyCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
@@ -3317,9 +3309,8 @@ static U32 Shaggy8_FlipBackCB(xAnimTransition* tran, xAnimSingle* anim, _zEnt* e
 
 static U32 Shaggy8_Stopped(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
 {
-    en_BEHAVIOUR_GOAL goal = ((st_zEntVillain*)ent)->goal;
-
-    return goal != ZVIL_GOAL_PATROL && goal != ZVIL_GOAL_FOLLOW;
+    return ((st_zEntVillain*)ent)->goal != ZVIL_GOAL_PATROL &&
+           ((st_zEntVillain*)ent)->goal != ZVIL_GOAL_FOLLOW;
 }
 
 static U32 Shaggy8_Crash(xAnimTransition* tran, xAnimSingle* anim, _zEnt* ent)
@@ -3995,8 +3986,7 @@ void zEntShaggy_SceneStart(zScene* sc)
                 if (i != j && sc->ents[j]->baseType == 6)
                 {
                     p2EntAsset* candidateAsset = sc->ents[j]->asset;
-                    p2EntAsset* currentAsset = sc->ents[i]->asset;
-                    if (xVec3Dist(&candidateAsset->pos, &currentAsset->pos) < 0.1f)
+                    if (xVec3Dist(&candidateAsset->pos, &sc->ents[i]->asset->pos) < 0.1f)
                     {
                         gShaggy[gNumShaggy].chimneyPlat = (_zPlatform*)sc->ents[j];
                         sc->ents[j]->flags &= 0xFE;

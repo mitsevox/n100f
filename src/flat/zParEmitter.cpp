@@ -471,11 +471,10 @@ xPar* zParEmitterEmit(_zParEmitter* pe, F32 dt)
         life = a->life;
         size_birth = a->size_birth;
         count = a->count;
-        U8 variation = pe->tasset->count_variation;
 
-        if (variation)
+        if (pe->tasset->count_variation)
         {
-            S32 delta = irand() % (variation * 2) - variation;
+            S32 delta = irand() % (pe->tasset->count_variation * 2) - pe->tasset->count_variation;
             count = a->count + ((0 > delta) ? 0 : delta);
         }
 

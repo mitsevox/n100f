@@ -97,8 +97,6 @@ U32 xMathSolveCubic(F32 a, F32 b, F32 c, F32 d, F32* x1, F32* x2, F32* x3)
     F32 fDiscr;
     F32 fHalfB;
     F32 fTemp;
-    F32 u;
-    F32 v;
     F32 fDist;
     F32 fAngle;
     F32 fCos;
@@ -131,24 +129,22 @@ U32 xMathSolveCubic(F32 a, F32 b, F32 c, F32 d, F32* x1, F32* x2, F32* x3)
     if (fDiscr > 0.0f)
     {
         fTemp = xsqrt(fDiscr);
-        u = -fHalfB + fTemp;
-        if (u >= 0.0f)
+        if (-fHalfB + fTemp >= 0.0f)
         {
-            *x1 = xpow(u, 0.33333334f);
+            *x1 = xpow(-fHalfB + fTemp, 0.33333334f);
         }
         else
         {
-            *x1 = -xpow(-u, 0.33333334f);
+            *x1 = -xpow(-(-fHalfB + fTemp), 0.33333334f);
         }
 
-        v = -fHalfB - fTemp;
-        if (v >= 0.0f)
+        if (-fHalfB - fTemp >= 0.0f)
         {
-            *x1 += xpow(v, 0.33333334f);
+            *x1 += xpow(-fHalfB - fTemp, 0.33333334f);
         }
         else
         {
-            *x1 -= xpow(-v, 0.33333334f);
+            *x1 -= xpow(-(-fHalfB - fTemp), 0.33333334f);
         }
 
         *x1 -= fOffset;

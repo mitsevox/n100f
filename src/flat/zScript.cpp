@@ -31,28 +31,25 @@ static inline void zScriptExecuteEvents(_zScript* t, F32 start, F32 end)
     }
 }
 
-void zScriptInit(void* data, void* asset)
+void zScriptInit(void* b, void* tasset)
 {
-    _zScript* script = (_zScript*)data;
-    zScriptAsset* tasset = (zScriptAsset*)asset;
-
-    xBaseInit(script, tasset);
-    script->eventFunc = &zScriptEventCB;
-    script->tasset = tasset;
+    xBaseInit((_zScript*)b, (zScriptAsset*)tasset);
+    ((_zScript*)b)->eventFunc = &zScriptEventCB;
+    ((_zScript*)b)->tasset = (zScriptAsset*)tasset;
 
     // The asset's timed events come first; the links follow them.
-    if (script->linkCount != 0)
+    if (((_zScript*)b)->linkCount != 0)
     {
-        script->link = (p2LinkAsset*)(script->tasset + 1);
-        script->link += tasset->eventCount;
+        ((_zScript*)b)->link = (p2LinkAsset*)(((_zScript*)b)->tasset + 1);
+        ((_zScript*)b)->link += ((zScriptAsset*)tasset)->eventCount;
     }
     else
     {
-        script->link = NULL;
+        ((_zScript*)b)->link = NULL;
     }
 
-    script->time = script->tasset->scriptStartTime;
-    script->more = 1;
+    ((_zScript*)b)->time = ((_zScript*)b)->tasset->scriptStartTime;
+    ((_zScript*)b)->more = 1;
 }
 
 void zScriptSave(_zScript* ent, xSerial* s)
