@@ -1131,7 +1131,6 @@ static void xEntMotionDebugIPad(_xEntMotion* xem)
 // Debug text: the motion's type, state and owner, then the settings of its motion type.
 void xEntMotionDebugWrite(const _xEntMotion* xem)
 {
-    const char* owner;
     const char* gps;
 
     switch (xem->type)
@@ -1162,16 +1161,8 @@ void xEntMotionDebugWrite(const _xEntMotion* xem)
     xprintf("type:             %s\n", gps);
     xprintf("stopped:          %s\n", xbtoa(xem->flags & k_XENTMOTION_STOPPED));
 
-    if (xem->owner != NULL)
-    {
-        owner = xSceneID2Name(g_xSceneCur, xem->owner->id);
-    }
-    else
-    {
-        owner = "null";
-    }
-
-    xprintf("owner:            %s\n", owner);
+    xprintf("owner:            %s\n",
+            xem->owner != NULL ? xSceneID2Name(g_xSceneCur, xem->owner->id) : "null");
     xprintf("t:  %.3f   d: %.3f   tmr: %.3f\n", xem->t, xem->d, xem->tmr);
 
     switch (xem->type)
@@ -1386,8 +1377,7 @@ void xEntMotionDebugDraw(const _xEntMotion* xem)
                 }
                 for (U16 jdx = 0; jdx < xMovePointGetNumPoints(omp); jdx++)
                 {
-                    xMovePoint* pmp = xMovePointGetPoint(omp, jdx);
-                    xDrawLine(xMovePointGetPos(omp), xMovePointGetPos(pmp));
+                    xDrawLine(xMovePointGetPos(omp), xMovePointGetPos(xMovePointGetPoint(omp, jdx)));
                 }
             }
         }

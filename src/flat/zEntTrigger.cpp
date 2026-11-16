@@ -10,18 +10,18 @@ void zEntReset(_zEnt* ent);
 // Set up the trigger's update and event handlers and its links.
 void zEntTriggerInit(void* ent, void* asset)
 {
-    zEntTrigger* trig = (zEntTrigger*)ent;
-    zEntInit(trig, (p2EntAsset*)asset, 'TRIG');
-    trig->move = NULL;
-    trig->update = (void (*)(_xEnt*, _xScene*, F32))zEntTriggerUpdate;
-    trig->eventFunc = zEntTriggerEventCB;
-    if (trig->linkCount)
+    zEntInit((zEntTrigger*)ent, (p2EntAsset*)asset, 'TRIG');
+    ((zEntTrigger*)ent)->move = NULL;
+    ((zEntTrigger*)ent)->update = (void (*)(_xEnt*, _xScene*, F32))zEntTriggerUpdate;
+    ((zEntTrigger*)ent)->eventFunc = zEntTriggerEventCB;
+    if (((zEntTrigger*)ent)->linkCount)
     {
-        trig->link = (p2LinkAsset*)((p2EntTriggerAsset*)(trig->asset + 1) + 1);
+        ((zEntTrigger*)ent)->link =
+            (p2LinkAsset*)((p2EntTriggerAsset*)(((zEntTrigger*)ent)->asset + 1) + 1);
     }
     else
     {
-        trig->link = NULL;
+        ((zEntTrigger*)ent)->link = NULL;
     }
 }
 
