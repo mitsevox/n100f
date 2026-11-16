@@ -9224,6 +9224,8 @@ static inline F32 VILN_idle_turn(st_zEntVillain* vil, F32 tol)
 // Update the Black Knight boss's navigation, axe attack and fade-out.
 static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
 {
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+
     switch (vil->goal)
     {
     case ZVIL_GOAL_AFTERLIFE:
@@ -9246,7 +9248,7 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         {
             if (vil->vhf->query(vil, ZVIL_Q_CANATTACK))
             {
-                if (!(fabsf(angle - vil->precalc.ang_VtoP) <= 0.4f)) break;
+                if (!(fabsf(angle - prec->ang_VtoP) <= 0.4f)) break;
                 vil->prj_reserved = VWEP_lobReservePRJ(vil);
                 if (vil->prj_reserved)
                 {
@@ -9297,10 +9299,10 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
         if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
         {
-            _xVec3 delta = { 0 };
-            xVec3Copy(&delta, zMovePointGetPos(vil->nav_next));
-            xVec3Sub(&delta, &delta, (_xVec3*)&vil->model->Mat->pos);
-            if (delta.x > 0.0f)
+            _xVec3 vec_dir = { 0 };
+            xVec3Copy(&vec_dir, zMovePointGetPos(vil->nav_next));
+            xVec3Sub(&vec_dir, &vec_dir, (_xVec3*)&vil->model->Mat->pos);
+            if (vec_dir.x > 0.0f)
             {
                 vil->anim_loopmult = 0.97f;
                 vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, ZVIL_GSPOT_MOVELEFT);
@@ -9322,13 +9324,13 @@ static S32 VILN_BBK_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
         if (vil->anim_playing && vil->anim_playnext == ZVIL_ANIM_BK_ATTACK &&
             VCFG_inDamageWindow(vil, VANM_entTime(vil)) && vil->cnt_lobSalvo > 0)
         {
-            _xVec3 offset = { 0 };
-            offset.x = 2.0f * (iurand() - 0.5f);
-            offset.y = -iurand();
-            offset.z = -0.1f;
-            xVec3Normalize(&offset, &offset);
-            xVec3SMul(&offset, &offset, 5.0f * (vil->cnt_lobSalvo - 1));
-            VWEP_lobActivatePRJ(vil->prj_reserved, vil, xBoundCenter(&globals.player.ent.bound), &offset,
+            _xVec3 vec_off = { 0 };
+            vec_off.x = 2.0f * (iurand() - 0.5f);
+            vec_off.y = -iurand();
+            vec_off.z = -0.1f;
+            xVec3Normalize(&vec_off, &vec_off);
+            xVec3SMul(&vec_off, &vec_off, 5.0f * (vil->cnt_lobSalvo - 1));
+            VWEP_lobActivatePRJ(vil->prj_reserved, vil, xBoundCenter(&globals.player.ent.bound), &vec_off,
                                 &vil->vec_lobSpin, vil->fac_lobarc, vil->fac_lobheavy);
             vil->cnt_lobSalvo--;
             if (vil->cnt_lobSalvo > 0 && !vil->prj_reserved) vil->prj_reserved = VWEP_lobReservePRJ(vil);
@@ -9877,6 +9879,8 @@ static S32 VILN_BGG_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
 // Update the Green Ghost boss's navigation, projectile attack and fade-out.
 static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CONTEXT_DATA* resp)
 {
+    st_ZVIL_PRECALC* prec = &vil->precalc;
+
     switch (vil->goal)
     {
     case ZVIL_GOAL_AFTERLIFE:
@@ -9944,10 +9948,10 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             if (vil->vhf->query(vil, ZVIL_Q_NEEDNAV)) VNAV_get_nav(vil);
             if (vil->vhf->query(vil, ZVIL_Q_HAVENAV))
             {
-                _xVec3 delta = { 0 };
-                xVec3Copy(&delta, zMovePointGetPos(vil->nav_next));
-                xVec3Sub(&delta, &delta, (_xVec3*)&vil->model->Mat->pos);
-                if (delta.x > 0.0f)
+                _xVec3 vec_dir = { 0 };
+                xVec3Copy(&vec_dir, zMovePointGetPos(vil->nav_next));
+                xVec3Sub(&vec_dir, &vec_dir, (_xVec3*)&vil->model->Mat->pos);
+                if (vec_dir.x > 0.0f)
                 {
                     vil->anim_loopmult = 0.97f;
                     vil->vhf->pickanim(vil, ZVIL_GOAL_PATROL, ZVIL_GSPOT_MOVELEFT);
@@ -9980,17 +9984,17 @@ static S32 VILN_BGG_aware(st_zEntVillain* vil, _xScene*, F32 dt, st_STIMULUS_CON
             else if (vil->anim_playing && vil->anim_playnext == ZVIL_ANIM_GG_ATTACK &&
                      VCFG_inDamageWindow(vil, VANM_entTime(vil)) && vil->prj_reserved && vil->cnt_lobSalvo > 0)
             {
-                _xVec3 offset = { 0.0f, 0.0f, 0.0f };
+                _xVec3 vec_tmp = { 0.0f, 0.0f, 0.0f };
                 if (!(vil->cnt_lobSalvo & 1))
                 {
-                    xVec3Copy(&offset, &vil->precalc.vec_VtoP);
-                    offset.x *= 0.6f;
-                    offset.y = 0.0f;
-                    offset.z *= 0.6f;
+                    xVec3Copy(&vec_tmp, &prec->vec_VtoP);
+                    vec_tmp.x *= 0.6f;
+                    vec_tmp.y = 0.0f;
+                    vec_tmp.z *= 0.6f;
                 }
-                xVec3Add(&offset, &offset, xBoundCenter(&globals.player.ent.bound));
+                xVec3Add(&vec_tmp, &vec_tmp, xBoundCenter(&globals.player.ent.bound));
                 st_BGG_QUAKEBALL* quake = (st_BGG_QUAKEBALL*)vil->prj_reserved->xtradata;
-                quake->pos_tgt = offset;
+                quake->pos_tgt = vec_tmp;
                 quake->phase = BGG_PHAZ_FLY;
                 quake->flg_stat |= 2;
                 vil->prj_reserved = NULL;
@@ -10577,9 +10581,11 @@ static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     static _xVec3 pos_hardwired = { -0.5f, 0.0f, 0.0f };
     xModelInstance* minst = vil->model;
     S32 idx = 0;
+    S32 goal;
     if (sEmitRBFlames)
     {
-        if ((U32)(vil->goal - ZVIL_GOAL_NONE) <= ZVIL_GOAL_IDLE - ZVIL_GOAL_NONE || vil->goal == ZVIL_GOAL_DIE)
+        goal = vil->goal;
+        if ((U32)(goal - ZVIL_GOAL_NONE) <= ZVIL_GOAL_IDLE - ZVIL_GOAL_NONE || goal == ZVIL_GOAL_DIE)
         {
             zEntEvent(zSceneFindObject(xStrHash("FIREBALL_LOOP_SFX")), eEventStop);
             sEmitRBFlames->emit_flags &= (U8)~1;
