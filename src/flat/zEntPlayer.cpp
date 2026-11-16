@@ -5088,8 +5088,8 @@ void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
             }
             if (sft < 0.4f)
             {
-                sft = 0.4f - sft;
-                s = sft / (sft + dt);
+                F32 gft = 0.4f - sft;
+                s = gft / (gft + dt);
                 v->x *= s;
                 v->z *= s;
             }
@@ -5104,8 +5104,8 @@ void zEntPlayerVelUpdate(_xEnt* ent, _xScene* sc, F32 dt)
         {
             if (sft < 2.15f)
             {
-                sft = 2.15f - sft;
-                s = sft / (sft + dt);
+                F32 aft = 2.15f - sft;
+                s = aft / (aft + dt);
                 v->x *= s;
                 v->z *= s;
             }
@@ -7613,7 +7613,8 @@ static void PlayerRotMatchUpdateEnt(_xEnt* ent, _xScene* sc, F32 dt, void* fdata
                     rang = MIN(1.0f, rang);
                     if (fdecl >= rms->max_decl)
                     {
-                        rang = MIN(rang, (rms->max_decl - edecl) / (fdecl - edecl));
+                        F32 s = (rms->max_decl - edecl) / (fdecl - edecl);
+                        rang = MIN(rang, s);
                     }
                     if (rang)
                     {
