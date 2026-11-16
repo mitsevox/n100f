@@ -368,6 +368,7 @@ static en_BIO_ASYNC_ERRCODES BFD_AsyncReadStatus(st_FILELOADINFO* fli)
 {
     en_BIO_ASYNC_ERRCODES status;
     st_BINIO_XTRADATA* xtra = (st_BINIO_XTRADATA*)fli->xtradata;
+    IFILE_READSECTOR_STATUS xrdstat;
 
     if (!g_async_context)
     {
@@ -383,7 +384,8 @@ static en_BIO_ASYNC_ERRCODES BFD_AsyncReadStatus(st_FILELOADINFO* fli)
         {
             S32 amtsofar = 0;
 
-            switch (iFileReadAsyncStatus(xtra->gcaskey, &amtsofar))
+            xrdstat = iFileReadAsyncStatus(xtra->gcaskey, &amtsofar);
+            switch (xrdstat)
             {
             case IFILE_RDSTAT_QUEUED:
             case IFILE_RDSTAT_INPROG:
