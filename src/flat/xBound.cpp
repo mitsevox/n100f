@@ -130,11 +130,10 @@ void xRayHitsBound(const _xRay3* r, const _xBound* b, _xCollis* c)
         _xRay3 lr;
         xMat3x3 mn;
         const xMat3x3* dmp;
-        F32 len2 = xVec3Length2(&b->mat->right);
 
-        if ((F32)iabs(len2 - 1.0f) >= 0.001f)
+        if ((F32)iabs(xVec3Length2(&b->mat->right) - 1.0f) >= 0.001f)
         {
-            F32 one_ms = 1.0f / xsqrt(len2);
+            F32 one_ms = 1.0f / xsqrt(xVec3Length2(&b->mat->right));
             lr.max_t = r->max_t * one_ms;
             lr.min_t = r->min_t * one_ms;
             xMat3x3Normalize(&mn, (const xMat3x3*)b->mat);

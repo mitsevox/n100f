@@ -171,11 +171,10 @@ void zEntBubble_DisableCollision()
 
 void zEntBubble_Launch(F32 wait)
 {
-    zScene* sc = globals.sceneCur;
 
-    if (sc->num_bubbles < 20)
+    if (globals.sceneCur->num_bubbles < 20)
     {
-        _zEntBubble* bub = (_zEntBubble*)sc->bubbles[sc->num_bubbles++];
+        _zEntBubble* bub = (_zEntBubble*)globals.sceneCur->bubbles[globals.sceneCur->num_bubbles++];
 
         bub->subType = globals.player.LastProjectile;
         bub->fx_timer = 0.0f;

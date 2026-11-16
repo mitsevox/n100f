@@ -161,12 +161,10 @@ void zEnvLoad(_zEnv* ent, xSerial* s)
 // Environment events: reset, the screen warble effects and the weather.
 S32 zEnvEventCB(xBase*, xBase* to, U32 toEvent, F32* toParam, xBase*)
 {
-    _zEnv* t = (_zEnv*)to;
-
     switch (toEvent)
     {
     case 10:
-        xBaseReset(t, t->easset);
+        xBaseReset((_zEnv*)to, ((_zEnv*)to)->easset);
         break;
     case 0x10A:
         iFXWarbSetParams(1, toParam);

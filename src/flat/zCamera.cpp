@@ -29,14 +29,13 @@ void zCameraLoad(_tagxCam* ent, xSerial* s)
 // Reset restores the base flags; event 38 switches the active camera to this one.
 S32 zCameraEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
 {
-    _tagxCam* t = (_tagxCam*)to;
     switch (toEvent)
     {
     case eEventReset:
-        xBaseReset(t, (p2BaseAsset*)t->asset);
+        xBaseReset((_tagxCam*)to, (p2BaseAsset*)((_tagxCam*)to)->asset);
         break;
     case 38:
-        xCameraNext(&globals.camera, t);
+        xCameraNext(&globals.camera, (_tagxCam*)to);
         break;
     }
     return 1;

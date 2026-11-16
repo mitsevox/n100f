@@ -1239,17 +1239,16 @@ lean:
 static S32 GetHeadcollAnimState()
 {
     xAnimState* state = globals.player.ent.model->Anim->Single->State;
-    U32 type = state->UserFlags & 0x1E;
 
-    if (type == 0xC)
+    if ((state->UserFlags & 0x1E) == 0xC)
     {
         return 1;
     }
-    if (type == 0x4)
+    if ((state->UserFlags & 0x1E) == 0x4)
     {
         return 2;
     }
-    if (type == 0x6 && type != 0x20)
+    if ((state->UserFlags & 0x1E) == 0x6 && (state->UserFlags & 0x1E) != 0x20)
     {
         return 3;
     }
