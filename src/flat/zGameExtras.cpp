@@ -539,11 +539,10 @@ static void UpdateFireworks(F32 dt)
 
     if (sFog && sFogIntensity != sFogPrevIntensity)
     {
-        F32 t = (4.5f - sFogIntensity) / 4.5f;
-
         fog.type = rwFOGTYPELINEAR;
         fog.start = sFog->tasset->fogStart;
-        fog.stop = sFog->tasset->fogStop - 0.4f * sFog->tasset->fogStop * t;
+        fog.stop = sFog->tasset->fogStop -
+                   0.4f * sFog->tasset->fogStop * ((4.5f - sFogIntensity) / 4.5f);
         fog.density = sFog->tasset->fogDensity;
         fog.fogcolor.red = ClampColor(sFog->tasset->fogColor[0] * sFogIntensity);
         fog.fogcolor.green = ClampColor(sFog->tasset->fogColor[1] * sFogIntensity);

@@ -41,20 +41,19 @@ U32 zFMVPlay(char* filename, U32 buttons, F32 time);
 // Set up the base, the event handler and the links after the asset.
 void zCutsceneMgrInit(void* b, void* tasset)
 {
-    _zCutsceneMgr* t = (_zCutsceneMgr*)b;
+    xBaseInit((_zCutsceneMgr*)b, (p2BaseAsset*)tasset);
+    ((_zCutsceneMgr*)b)->eventFunc = zCutsceneMgrEventCB;
+    ((_zCutsceneMgr*)b)->tasset = (zCutsceneMgrAsset*)tasset;
+    ((_zCutsceneMgr*)b)->csn = NULL;
 
-    xBaseInit(t, (p2BaseAsset*)tasset);
-    t->eventFunc = zCutsceneMgrEventCB;
-    t->tasset = (zCutsceneMgrAsset*)tasset;
-    t->csn = NULL;
-
-    if (t->linkCount != 0)
+    if (((_zCutsceneMgr*)b)->linkCount != 0)
     {
-        t->link = (p2LinkAsset*)((U8*)t->tasset + sizeof(zCutsceneMgrAsset));
+        ((_zCutsceneMgr*)b)->link =
+            (p2LinkAsset*)((U8*)((_zCutsceneMgr*)b)->tasset + sizeof(zCutsceneMgrAsset));
     }
     else
     {
-        t->link = NULL;
+        ((_zCutsceneMgr*)b)->link = NULL;
     }
 }
 

@@ -339,8 +339,7 @@ void zSurfaceSetup(xSurface* s)
 // uvfx_flags and texanim_flags: bit 0 enables the first effect, bit 1 the second.
 void zSurfaceUpdate(xBase* to, _xScene*, F32 dt)
 {
-    xSurface* t = (xSurface*)to;
-    zSurfaceProps* moprops = (zSurfaceProps*)t->moprops;
+    zSurfaceProps* moprops = (zSurfaceProps*)((xSurface*)to)->moprops;
     S32 j;
 
     for (j = 0; j < 2; j++)

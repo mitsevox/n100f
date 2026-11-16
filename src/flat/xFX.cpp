@@ -211,11 +211,9 @@ void xFX_SceneEnter(RpWorld* world)
 
         if (ent->baseType == 4)
         {
-            zAssetPickup* p = ((_zEntPickup*)ent)->p;
-
-            if (p->pickupType == 1)
+            if (((_zEntPickup*)ent)->p->pickupType == 1)
             {
-                switch (p->pickupIndex)
+                switch (((_zEntPickup*)ent)->p->pickupIndex)
                 {
                 case 5:
                 case 6:
@@ -225,11 +223,11 @@ void xFX_SceneEnter(RpWorld* world)
                     break;
                 }
             }
-            else if (p->pickupType == 2)
+            else if (((_zEntPickup*)ent)->p->pickupType == 2)
             {
                 xFXAtomicEnvMapSetup(ent->model->Data, 0xBBBC909C, 0.5f);
             }
-            else if (p->pickupType == 4)
+            else if (((_zEntPickup*)ent)->p->pickupType == 4)
             {
                 xFXAtomicEnvMapSetup(ent->model->Data, 0xE891750E, 2.0f);
             }

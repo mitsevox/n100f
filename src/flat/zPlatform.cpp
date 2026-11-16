@@ -343,8 +343,7 @@ void zPlatform_Update(_xEnt* entplat, _xScene* sc, F32 dt)
 // Move the platform according to its configured motion.
 void zPlatform_Move(_xEnt* entplat, _xScene* sc, F32 dt, _xEntFrame* frame)
 {
-    _zPlatform* plat = (_zPlatform*)entplat;
-    xEntMotionMove(&plat->motion, sc, dt, frame);
+    xEntMotionMove(&((_zPlatform*)entplat)->motion, sc, dt, frame);
 }
 
 // Add a vertical shake to the platform.
