@@ -388,8 +388,7 @@ S32 xSTAssetCountByType(U32 type)
     S32 cnt = XST_cnt_locked();
     for (S32 i = 0; i < cnt; i++)
     {
-        st_STRAN_SCENE* sdata = XST_nth_locked(i);
-        sum += g_pkrf->AssetCount(sdata->spkg, type);
+        sum += g_pkrf->AssetCount(XST_nth_locked(i)->spkg, type);
     }
     return sum;
 }
