@@ -110,7 +110,8 @@ S32 zMovePointEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
 
 F32 zMovePointGetNext(const _zMovePoint* current, const _zMovePoint* prev, _zMovePoint** next, xVec3* hdng)
 {
-    return xMovePointGetNext(current, prev, (xMovePoint**)next, hdng);
+    F32 dist = xMovePointGetNext(current, prev, (xMovePoint**)next, hdng);
+    return dist;
 }
 
 xVec3* zMovePointGetPos(const _zMovePoint* m)
@@ -253,7 +254,8 @@ _zMovePoint* zMovePointFindNearest(S32 flg_opts, xVec3* yourpos, F32 okdist, F32
         if (check_los)
         {
             suspend = 1;
-            if (!losfunc(yourdata, yourpos, da_mvpt))
+            S32 rc = losfunc(yourdata, yourpos, da_mvpt);
+            if (!rc)
             {
                 continue;
             }

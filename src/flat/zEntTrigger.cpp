@@ -129,10 +129,12 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
 // Reset the trigger when it receives a reset event.
 S32 zEntTriggerEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
 {
+    zEntTrigger* trig = (zEntTrigger*)to;
+
     switch (toEvent)
     {
     case eEventReset:
-        zEntReset((zEntTrigger*)to);
+        zEntReset(trig);
         break;
     }
     return 1;

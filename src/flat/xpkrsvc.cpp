@@ -206,7 +206,8 @@ S32 PKRShutdown()
 
 S32 PKRLoadStep(S32)
 {
-    return PKR_LoadStep_Async();
+    S32 more_todo = PKR_LoadStep_Async();
+    return more_todo;
 }
 
 // Opens a package: takes a free reader slot (one bit of g_loadlock each), opens the file
@@ -900,7 +901,7 @@ static U32 PKR_GetAssetSize(st_PACKER_READ_DATA* pr, U32 aid)
 
 static S32 PKR_AssetCount(st_PACKER_READ_DATA* pr, U32 type)
 {
-    S32 count = 0;
+    S32 cnt = 0;
     if (type == 0)
     {
         return pr->asstoc.cnt;
@@ -911,10 +912,10 @@ static S32 PKR_AssetCount(st_PACKER_READ_DATA* pr, U32 type)
         if (idx >= 0)
         {
             st_XORDEREDARRAY* tmplist = &pr->typelist[idx];
-            count = tmplist->cnt;
+            cnt = tmplist->cnt;
         }
     }
-    return count;
+    return cnt;
 }
 
 static void* PKR_AssetByType(st_PACKER_READ_DATA* pr, U32 type, S32 idx, U32* size)
@@ -1202,11 +1203,12 @@ static inline void PKR_oldlaynode(st_PACKER_LTOC_NODE* laynode)
 static S32 OrdTest_R_AssetID(const void* vkey, void* vitem)
 {
     S32 rc;
-    if ((U32)vkey < *(U32*)vitem)
+    U32 key = (U32)vkey;
+    if (key < *(U32*)vitem)
     {
         rc = -1;
     }
-    else if ((U32)vkey > *(U32*)vitem)
+    else if (key > *(U32*)vitem)
     {
         rc = 1;
     }
