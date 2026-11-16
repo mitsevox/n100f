@@ -485,11 +485,9 @@ void zEntHangable_FollowUpdate(_zEntHangable* ent)
         return;
     }
 
-    p2EntHangableAsset* hang = (p2EntHangableAsset*)(&ent->asset[1]);
-
     center = (xVec3*)(&ent->follow->model->Mat->pos);
     pivot.x = center->x;
-    pivot.y = center->y + hang->pivotOffset;
+    pivot.y = center->y + ((p2EntHangableAsset*)(&ent->asset[1]))->pivotOffset;
     pivot.z = center->z;
 
     delta.x = pivot.x - ent->pivot.x;

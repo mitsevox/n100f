@@ -956,8 +956,7 @@ static S32 PKR_IsAssetReady(st_PACKER_READ_DATA* pr, U32 aid)
     S32 idx = XOrdLookup(&pr->asstoc, (void*)aid, OrdTest_R_AssetID);
     if (idx >= 0)
     {
-        st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)pr->asstoc.list[idx];
-        if (assnode->loadflag & 0x80000)
+        if (((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->loadflag & 0x80000)
         {
             is_ok = true;
         }
@@ -1049,12 +1048,11 @@ static S32 PKR_PkgHasAsset(st_PACKER_READ_DATA* pr, U32 aid)
     }
 
     S32 rc = 1;
-    st_PACKER_ATOC_NODE* assnode = (st_PACKER_ATOC_NODE*)pr->asstoc.list[idx];
-    if (assnode->loadflag & 0x100000)
+    if (((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->loadflag & 0x100000)
     {
         rc = 0;
     }
-    else if (assnode->loadflag & 0x200000)
+    else if (((st_PACKER_ATOC_NODE*)pr->asstoc.list[idx])->loadflag & 0x200000)
     {
         rc = 0;
     }
