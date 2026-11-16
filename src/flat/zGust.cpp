@@ -217,8 +217,9 @@ void zGustUpdateEnt(_xEnt* ent, _xScene*, F32 dt, void* gdata)
         {
             data->gust_on = 1;
 
+            xVec3* gvel = &data->g[i]->asset->vel;
             xVec3 dpos;
-            xVec3SMul(&dpos, &data->g[i]->asset->vel, dt * xabs(data->lerp[i]));
+            xVec3SMul(&dpos, gvel, dt * xabs(data->lerp[i]));
             xVec3AddTo(&ent->frame->mat.pos, &dpos);
         }
     }
@@ -236,19 +237,21 @@ void zGustLoad(_zGust* ent, xSerial* s)
 
 S32 zGustEventCB(xBase*, xBase* to, U32 toEvent, F32*, xBase*)
 {
+    _zGust* g = (_zGust*)to;
+
     switch (toEvent)
     {
     case eEventOn:
-        zGustTurnOn((_zGust*)to);
+        zGustTurnOn(g);
         break;
     case eEventOff:
-        zGustTurnOff((_zGust*)to);
+        zGustTurnOff(g);
         break;
     case eEventToggle:
-        zGustToggleOn((_zGust*)to);
+        zGustToggleOn(g);
         break;
     case eEventReset:
-        zGustReset((_zGust*)to);
+        zGustReset(g);
         break;
     }
 

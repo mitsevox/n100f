@@ -195,9 +195,11 @@ static inline void zSaveLoadInit()
 static inline S32 zSaveLoad_CardCheckSingle(S32 cardNumber)
 {
     st_XSAVEGAME_DATA* ldinst = xSGInit(XSG_MODE_LOAD);
+    S32 tgtcnt;
     S32 tgtmax;
 
-    switch (xSGTgtCount(ldinst, &tgtmax))
+    tgtcnt = xSGTgtCount(ldinst, &tgtmax);
+    switch (tgtcnt)
     {
     case 2:
         xSGDone(ldinst);
@@ -248,9 +250,11 @@ static inline void zSaveLoad_PromptWait(S32 i)
 static inline S32 CardtoTgt(S32 card)
 {
     st_XSAVEGAME_DATA* ldinst = xSGInit(XSG_MODE_LOAD);
+    S32 tgtcnt;
     S32 tgtmax;
 
-    switch (xSGTgtCount(ldinst, &tgtmax))
+    tgtcnt = xSGTgtCount(ldinst, &tgtmax);
+    switch (tgtcnt)
     {
     case 2:
         xSGDone(ldinst);
@@ -305,10 +309,12 @@ static inline S32 zSaveLoad_CardPrompt(S32 mode)
 static inline S32 zSaveLoad_CardCheckSpaceSingle(S32 cardNumber, S32 checkSlots, S32* slotsFull)
 {
     st_XSAVEGAME_DATA* ldinst = xSGInit(XSG_MODE_SAVE);
+    S32 tgtcnt;
     S32 tgtmax;
     S32 rc = 0;
 
-    switch (xSGTgtCount(ldinst, &tgtmax))
+    tgtcnt = xSGTgtCount(ldinst, &tgtmax);
+    switch (tgtcnt)
     {
     case 2:
         rc = zSaveLoad_CardCheckSpaceSingle_doCheck(ldinst, cardNumber, checkSlots, slotsFull);
@@ -371,10 +377,12 @@ static inline S32 zSaveLoad_CardCheckGamesSingle_doCheck(st_XSAVEGAME_DATA* xsgd
 static inline S32 zSaveLoad_CardCheckGamesSingle(S32 cardNumber)
 {
     st_XSAVEGAME_DATA* ldinst = xSGInit(XSG_MODE_LOAD);
+    S32 tgtcnt;
     S32 tgtmax;
     S32 rc = 0;
 
-    switch (xSGTgtCount(ldinst, &tgtmax))
+    tgtcnt = xSGTgtCount(ldinst, &tgtmax);
+    switch (tgtcnt)
     {
     case 2:
         rc = zSaveLoad_CardCheckGamesSingle_doCheck(ldinst, cardNumber);
@@ -431,10 +439,12 @@ static inline S32 zSaveLoad_CardCheckSlotEmpty_hasGame_doCheck(st_XSAVEGAME_DATA
 static inline S32 zSaveLoad_CardCheckSlotEmpty_hasGame(S32 cardNumber, S32 gameNumber)
 {
     st_XSAVEGAME_DATA* ldinst = xSGInit(XSG_MODE_LOAD);
+    S32 tgtcnt;
     S32 tgtmax;
     S32 rc = 0;
 
-    switch (xSGTgtCount(ldinst, &tgtmax))
+    tgtcnt = xSGTgtCount(ldinst, &tgtmax);
+    switch (tgtcnt)
     {
     case 2:
         rc = zSaveLoad_CardCheckSlotEmpty_hasGame_doCheck(ldinst, cardNumber, gameNumber);
@@ -685,13 +695,21 @@ S32 xSGT_SaveProcPrefsCB(void* vp, st_XSAVEGAME_DATA* xsgdata,
                          st_XSAVEGAME_WRITECONTEXT* wctxt)
 {
     // Refresh the sound mode before writing the saved preferences.
+    S32 sum = 0;
+    S32 amy;
     gSnd.stereo = iSndGetStereo();
-    S32 sum = xSGWriteData(xsgdata, wctxt, &gSnd.stereo, 1);
-    sum += xSGWriteData(xsgdata, wctxt, &gSnd.streamvol.volL, 1);
-    sum += xSGWriteData(xsgdata, wctxt, &gSnd.streamvol.volR, 1);
-    sum += xSGWriteData(xsgdata, wctxt, &gSnd.fxvol.volL, 1);
-    sum += xSGWriteData(xsgdata, wctxt, &gSnd.fxvol.volR, 1);
-    sum += xSGWriteData(xsgdata, wctxt, &globals.option_vibration, 1);
+    amy = xSGWriteData(xsgdata, wctxt, &gSnd.stereo, 1);
+    sum += amy;
+    amy = xSGWriteData(xsgdata, wctxt, &gSnd.streamvol.volL, 1);
+    sum += amy;
+    amy = xSGWriteData(xsgdata, wctxt, &gSnd.streamvol.volR, 1);
+    sum += amy;
+    amy = xSGWriteData(xsgdata, wctxt, &gSnd.fxvol.volL, 1);
+    sum += amy;
+    amy = xSGWriteData(xsgdata, wctxt, &gSnd.fxvol.volR, 1);
+    sum += amy;
+    amy = xSGWriteData(xsgdata, wctxt, &globals.option_vibration, 1);
+    sum += amy;
     return sum + 1;
 }
 
@@ -707,14 +725,19 @@ S32 xSGT_SaveInfoPrefsCB(void* vp, st_XSAVEGAME_DATA* xsgdata, S32* need, S32* m
 S32 xSGT_SaveProcCB(void* vp, st_XSAVEGAME_DATA* xsgdata, st_XSAVEGAME_WRITECONTEXT* wctxt)
 {
     // Save the current scene as its four-character ID string.
+    S32 sum = 0;
+    S32 amy;
     strcpy(currSceneStr, xUtil_idtag2string(globals.sceneCur->sceneID, 0));
-    return xSGWriteData(xsgdata, wctxt, currSceneStr, 1, strlen(currSceneStr)) + 1;
+    amy = xSGWriteData(xsgdata, wctxt, currSceneStr, 1, strlen(currSceneStr));
+    sum += amy;
+    return sum + 1;
 }
 
 // Reports the bytes the scene record needs: the scene ID string, at most twice that.
 S32 xSGT_SaveInfoCB(void* vp, st_XSAVEGAME_DATA* xsgdata, S32* need, S32* most)
 {
-    *need = xSGWriteStrLen(currSceneStr);
+    S32 slen = xSGWriteStrLen(currSceneStr);
+    *need = slen;
     *most = *need << 1;
     return 1;
 }
@@ -847,7 +870,9 @@ U32 zSaveLoad_LoadLoop()
             state = 1;
             break;
         case 1:
-            switch (zSaveLoad_CardPick(1))
+        {
+            S32 tmp = zSaveLoad_CardPick(1);
+            switch (tmp)
             {
             case 2:
                 break;
@@ -868,6 +893,7 @@ U32 zSaveLoad_LoadLoop()
                 break;
             }
             break;
+        }
         case 2:
             switch (zSaveLoad_GameSelect(1))
             {
@@ -1449,21 +1475,21 @@ S32 zSaveLoad_CardCheckGames(S32 cardNumber, S32 mode)
 S32 zSaveLoad_CardCheckSpace(S32 cardNumber, S32 mode, S32 checkSlots)
 {
     S32 slotsFull = 0;
-    S32 result = zSaveLoad_CardCheckSpaceSingle(cardNumber, checkSlots, &slotsFull);
-    while (result != 1)
+    S32 tmp = zSaveLoad_CardCheckSpaceSingle(cardNumber, checkSlots, &slotsFull);
+    while (tmp != 1)
     {
         badCard = 1;
-        if (result == -1)
+        if (tmp == -1)
         {
-            return result;
+            return tmp;
         }
-        if (result == 6)
+        if (tmp == 6)
         {
-            return result;
+            return tmp;
         }
-        if (result == 5)
+        if (tmp == 5)
         {
-            return result;
+            return tmp;
         }
 
         sSkipAllowed = 1;
@@ -1500,7 +1526,7 @@ S32 zSaveLoad_CardCheckSpace(S32 cardNumber, S32 mode, S32 checkSlots)
             return 2;
         }
 
-        result = zSaveLoad_CardCheckSpaceSingle(cardNumber, checkSlots, &slotsFull);
+        tmp = zSaveLoad_CardCheckSpaceSingle(cardNumber, checkSlots, &slotsFull);
     }
     return 1;
 }
@@ -1790,6 +1816,7 @@ S32 zSaveLoad_CardCheckFormattedSingle(S32 cardNumber, S32* badEncode)
 {
     S32 rc;
     st_XSAVEGAME_DATA* ldinst = xSGInit(XSG_MODE_LOAD);
+    S32 tgtcnt;
     S32 tgtmax;
 
     rc = 0;
@@ -1798,7 +1825,8 @@ S32 zSaveLoad_CardCheckFormattedSingle(S32 cardNumber, S32* badEncode)
         *badEncode = 0;
     }
 
-    switch (xSGTgtCount(ldinst, &tgtmax))
+    tgtcnt = xSGTgtCount(ldinst, &tgtmax);
+    switch (tgtcnt)
     {
     case 2:
         rc = xSGTgtIsFormat(ldinst, cardNumber, badEncode);
@@ -1854,10 +1882,12 @@ static inline st_XSAVEGAME_DATA* zSaveLoad_BusyInit(en_SAVEGAME_MODE mode)
 S32 format(S32 num, S32 mode)
 {
     st_XSAVEGAME_DATA* data = zSaveLoad_BusyInit(XSG_MODE_LOAD);
+    S32 tgtcnt;
     S32 tgtmax;
     S32 canRecover = 0;
     S32 rc = 0;
-    switch (xSGTgtCount(data, &tgtmax))
+    tgtcnt = xSGTgtCount(data, &tgtmax);
+    switch (tgtcnt)
     {
     case 2:
         xSGTgtSelect(data, num);
