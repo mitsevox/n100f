@@ -233,6 +233,9 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     RpIntersection shadowZone;
     xSphere zone;
     RwMatrix* camMatrix = &((RwFrame*)ShadowCamera->object.object.parent)->modelling;
+    xVec3* at = (xVec3*)&camMatrix->at;
+    xVec3* up = (xVec3*)&camMatrix->up;
+    xVec3* rt = (xVec3*)&camMatrix->right;
     xRay3 R[3];
     _xCollis crec[3];
     F32 sf[3][2] = { { 0.0f, 0.0f }, { 0.0f, 0.5f }, { 0.0f, -0.5f } };
@@ -254,14 +257,14 @@ void xShadowRenderWorld(xVec3* center, F32 radius)
     hit_ent = 0;
     for (i = 0; i < 3; i++)
     {
-        R[i].dir = *(xVec3*)&camMatrix->at;
+        R[i].dir = *at;
         R[i].origin = *center;
-        R[i].origin.x += camMatrix->right.x * sf[i][0];
-        R[i].origin.y += camMatrix->right.y * sf[i][0];
-        R[i].origin.z += camMatrix->right.z * sf[i][0];
-        R[i].origin.x += camMatrix->up.x * sf[i][1];
-        R[i].origin.y += camMatrix->up.y * sf[i][1];
-        R[i].origin.z += camMatrix->up.z * sf[i][1];
+        R[i].origin.x += rt->x * sf[i][0];
+        R[i].origin.y += rt->y * sf[i][0];
+        R[i].origin.z += rt->z * sf[i][0];
+        R[i].origin.x += up->x * sf[i][1];
+        R[i].origin.y += up->y * sf[i][1];
+        R[i].origin.z += up->z * sf[i][1];
         R[i].min_t = 0.0f;
         R[i].max_t = 10.0f;
         R[i].flags = 0xC00;
