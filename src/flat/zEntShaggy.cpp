@@ -2565,7 +2565,8 @@ static void Shaggy3_Update(_zEnt* ent, _xScene* sc, F32 dt)
 static S32 Shaggy3_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam,
                            xBase* toParamWidget)
 {
-    xAnimState* astate = ((_zEnt*)to)->model->Anim->Single->State;
+    _zPlatform* t = (_zPlatform*)to;
+    xAnimState* astate = t->model->Anim->Single->State;
     ShaggyGuts* guts = zEntShaggy_FindGuts((_zEnt*)to);
 
     switch (toEvent)
@@ -3215,6 +3216,7 @@ static void ShaggySwap(_zEnt* src, _zEnt* dest)
 static S32 Shaggy5_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget)
 {
     S32 retval = 0;
+    _zEnt* ent;
     ShaggyGuts* guts = zEntShaggy_FindGuts((_zEnt*)to);
 
     switch (toEvent)
@@ -3228,10 +3230,11 @@ static S32 Shaggy5_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
     case 0xCF:
         if (toParamWidget && toParamWidget->baseType == 2)
         {
+            ent = (_zEnt*)to;
             guts->witchFollow = (_zEnt*)toParamWidget;
-            ((_zEnt*)to)->collis->chk = 0;
-            ((_zEnt*)to)->chkby = 0;
-            ((_zEnt*)to)->frame->vel.y = 0.0f;
+            ent->collis->chk = 0;
+            ent->chkby = 0;
+            ent->frame->vel.y = 0.0f;
         }
         retval = 1;
         break;
@@ -3240,13 +3243,14 @@ static S32 Shaggy5_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
         {
             guts->witchFollow = NULL;
             guts->witchDrop = (_zEnt*)toParamWidget;
-            ((_zEnt*)to)->frame->vel.y = 0.0f;
+            ent = (_zEnt*)to;
+            ent->frame->vel.y = 0.0f;
             guts->dropDiff.x = ((xMat4x3*)guts->witchDrop->model->Mat)->pos.x -
-                               ((xMat4x3*)((_zEnt*)to)->model->Mat)->pos.x;
+                               ((xMat4x3*)ent->model->Mat)->pos.x;
             guts->dropDiff.y = ((xMat4x3*)guts->witchDrop->model->Mat)->pos.y -
-                               ((xMat4x3*)((_zEnt*)to)->model->Mat)->pos.y;
+                               ((xMat4x3*)ent->model->Mat)->pos.y;
             guts->dropDiff.z = ((xMat4x3*)guts->witchDrop->model->Mat)->pos.z -
-                               ((xMat4x3*)((_zEnt*)to)->model->Mat)->pos.z;
+                               ((xMat4x3*)ent->model->Mat)->pos.z;
         }
         retval = 1;
         break;
@@ -3550,7 +3554,8 @@ static void Shaggy8_Update(_zEnt* ent, _xScene* sc, F32 dt)
 static S32 Shaggy8_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xBase* toParamWidget)
 {
     S32 retval = 0;
-    ShaggyGuts* guts = zEntShaggy_FindGuts((_zEnt*)to);
+    _zEnt* ent = (_zEnt*)to;
+    ShaggyGuts* guts = zEntShaggy_FindGuts(ent);
 
     switch (toEvent)
     {
@@ -3558,12 +3563,12 @@ static S32 Shaggy8_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
     case eEventInvisible:
     case eEventCollision_Visible_On:
     case eEventCollision_Visible_Off:
-        ShaggyVil_HandleVisible((_zEnt*)to, toEvent);
+        ShaggyVil_HandleVisible(ent, toEvent);
         break;
     case eEventShaggySwap:
         if (toParamWidget && toParamWidget->baseType == 2)
         {
-            ShaggySwap((_zEnt*)to, (_zEnt*)toParamWidget);
+            ShaggySwap(ent, (_zEnt*)toParamWidget);
         }
         break;
     case 0xD2:
@@ -3582,7 +3587,7 @@ static S32 Shaggy8_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
         }
         break;
     case 0xDE:
-        globals.player.Shaggy8Call = (_zEnt*)to;
+        globals.player.Shaggy8Call = ent;
         globals.player.Shaggy8CallTimer = toParam[0];
         break;
     case 0xDF:
@@ -3595,7 +3600,7 @@ static S32 Shaggy8_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
 
             for (magnum = 0; magnum < sMagnetCount; magnum++)
             {
-                if (sMagnetList[magnum].shaggy == (_zEnt*)to &&
+                if (sMagnetList[magnum].shaggy == ent &&
                     sMagnetList[magnum].target == toParamWidget)
                 {
                     sMagnetList[magnum].radius = toParam[0];
@@ -3604,7 +3609,7 @@ static S32 Shaggy8_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
             }
             if (magnum == sMagnetCount)
             {
-                sMagnetList[sMagnetCount].shaggy = (_zEnt*)to;
+                sMagnetList[sMagnetCount].shaggy = ent;
                 sMagnetList[sMagnetCount].target = toParamWidget;
                 sMagnetList[sMagnetCount].radius = toParam[0];
                 sMagnetCount++;
@@ -3616,7 +3621,7 @@ static S32 Shaggy8_EventCB(xBase* from, xBase* to, U32 toEvent, F32* toParam, xB
         {
             for (S32 magnum = 0; magnum < sMagnetCount; magnum++)
             {
-                if (sMagnetList[magnum].shaggy == (_zEnt*)to &&
+                if (sMagnetList[magnum].shaggy == ent &&
                     sMagnetList[magnum].target == toParamWidget)
                 {
                     sMagnetList[magnum] = sMagnetList[sMagnetCount - 1];
