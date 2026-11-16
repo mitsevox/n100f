@@ -91,19 +91,18 @@ U32 xMathSolveQuadratic(F32 a, F32 b, F32 c, F32* x1, F32* x2)
 U32 xMathSolveCubic(F32 a, F32 b, F32 c, F32 d, F32* x1, F32* x2, F32* x3)
 {
     F32 arecip;
-    F32 p;
-    F32 q;
-    F32 offset;
-    F32 discr;
-    F32 halfq;
-    F32 sq;
+    F32 fA;
+    F32 fB;
+    F32 fOffset;
+    F32 fDiscr;
+    F32 fHalfB;
+    F32 fTemp;
     F32 u;
     F32 v;
-    F32 r;
-    F32 angle;
-    F32 cs;
-    F32 sn;
-    F32 cr;
+    F32 fDist;
+    F32 fAngle;
+    F32 fCos;
+    F32 fSin;
 
     if (a == 0.0f)
     {
@@ -118,21 +117,21 @@ U32 xMathSolveCubic(F32 a, F32 b, F32 c, F32 d, F32* x1, F32* x2, F32* x3)
         d *= arecip;
     }
 
-    p = 0.33333334f * ((3.0f * c) - b * b);
-    q = 0.037037037f * ((27.0f * d) + ((2.0f * (b * b * b)) - (9.0f * b * c)));
-    offset = 0.33333334f * b;
-    discr = (0.25f * (q * q)) + (0.037037037f * (p * (p * p)));
-    halfq = 0.5f * q;
+    fA = 0.33333334f * ((3.0f * c) - b * b);
+    fB = 0.037037037f * ((27.0f * d) + ((2.0f * (b * b * b)) - (9.0f * b * c)));
+    fOffset = 0.33333334f * b;
+    fDiscr = (0.25f * (fB * fB)) + (0.037037037f * (fA * (fA * fA)));
+    fHalfB = 0.5f * fB;
 
-    if (fabsf(discr) < 0.000001f)
+    if (fabsf(fDiscr) < 0.000001f)
     {
-        discr = 0.0f;
+        fDiscr = 0.0f;
     }
 
-    if (discr > 0.0f)
+    if (fDiscr > 0.0f)
     {
-        sq = xsqrt(discr);
-        u = -halfq + sq;
+        fTemp = xsqrt(fDiscr);
+        u = -fHalfB + fTemp;
         if (u >= 0.0f)
         {
             *x1 = xpow(u, 0.33333334f);
@@ -142,7 +141,7 @@ U32 xMathSolveCubic(F32 a, F32 b, F32 c, F32 d, F32* x1, F32* x2, F32* x3)
             *x1 = -xpow(-u, 0.33333334f);
         }
 
-        v = -halfq - sq;
+        v = -fHalfB - fTemp;
         if (v >= 0.0f)
         {
             *x1 += xpow(v, 0.33333334f);
@@ -152,56 +151,56 @@ U32 xMathSolveCubic(F32 a, F32 b, F32 c, F32 d, F32* x1, F32* x2, F32* x3)
             *x1 -= xpow(-v, 0.33333334f);
         }
 
-        *x1 -= offset;
+        *x1 -= fOffset;
         return 1;
     }
 
-    if (discr < 0.0f)
+    if (fDiscr < 0.0f)
     {
-        r = xsqrt(-0.33333334f * p);
-        sq = xsqrt(-discr);
-        angle = 0.33333334f * xAngleClamp(xatan2(sq, -halfq));
-        cs = icos(angle);
-        sn = isin(angle);
-        *x1 = (2.0f * r * cs) - offset;
-        *x2 = (-r * (cs + 1.7320508f * sn)) - offset;
-        *x3 = (-r * (cs - 1.7320508f * sn)) - offset;
+        fDist = xsqrt(-0.33333334f * fA);
+        fTemp = xsqrt(-fDiscr);
+        fAngle = 0.33333334f * xAngleClamp(xatan2(fTemp, -fHalfB));
+        fCos = icos(fAngle);
+        fSin = isin(fAngle);
+        *x1 = (2.0f * fDist * fCos) - fOffset;
+        *x2 = (-fDist * (fCos + 1.7320508f * fSin)) - fOffset;
+        *x3 = (-fDist * (fCos - 1.7320508f * fSin)) - fOffset;
         return 3;
     }
 
-    cr = (halfq >= 0.0f) ? -xpow(halfq, 0.33333334f) : xpow(-halfq, 0.33333334f);
+    fTemp = (fHalfB >= 0.0f) ? -xpow(fHalfB, 0.33333334f) : xpow(-fHalfB, 0.33333334f);
 
-    *x1 = (2.0f * cr) - offset;
-    *x2 = -cr - offset;
+    *x1 = (2.0f * fTemp) - fOffset;
+    *x2 = -fTemp - fOffset;
     return 2;
 }
 
 // Wraps an angle into [0, 2pi).
 F32 xAngleClamp(F32 a)
 {
-    F32 rem = fmod(a, 2 * PI);
+    F32 b = fmod(a, 2 * PI);
 
-    if (rem < 0.0f)
+    if (b < 0.0f)
     {
-        rem += 2 * PI;
+        b += 2 * PI;
     }
 
-    return rem;
+    return b;
 }
 
 // Wraps an angle difference into [-pi, pi).
 F32 xDangleClamp(F32 a)
 {
-    F32 rem = fmod(a, 2 * PI);
+    F32 b = fmod(a, 2 * PI);
 
-    if (rem >= PI)
+    if (b >= PI)
     {
-        rem -= 2 * PI;
+        b -= 2 * PI;
     }
-    else if (rem < -PI)
+    else if (b < -PI)
     {
-        rem += 2 * PI;
+        b += 2 * PI;
     }
 
-    return rem;
+    return b;
 }

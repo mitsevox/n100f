@@ -127,30 +127,30 @@ void xRayHitsBound(const _xRay3* r, const _xBound* b, _xCollis* c)
     }
     else if (b->type == 4)
     {
-        _xRay3 xfr;
-        xMat3x3 mnormal;
-        const xMat3x3* m;
+        _xRay3 lr;
+        xMat3x3 mn;
+        const xMat3x3* dmp;
         F32 len2 = xVec3Length2(&b->mat->right);
 
         if ((F32)iabs(len2 - 1.0f) >= 0.001f)
         {
             F32 len_inv = 1.0f / xsqrt(len2);
-            xfr.max_t = r->max_t * len_inv;
-            xfr.min_t = r->min_t * len_inv;
-            xMat3x3Normalize(&mnormal, (const xMat3x3*)b->mat);
-            m = &mnormal;
+            lr.max_t = r->max_t * len_inv;
+            lr.min_t = r->min_t * len_inv;
+            xMat3x3Normalize(&mn, (const xMat3x3*)b->mat);
+            dmp = &mn;
         }
         else
         {
-            xfr.max_t = r->max_t;
-            xfr.min_t = r->min_t;
-            m = (const xMat3x3*)b->mat;
+            lr.max_t = r->max_t;
+            lr.min_t = r->min_t;
+            dmp = (const xMat3x3*)b->mat;
         }
 
-        xMat4x3Tolocal(&xfr.origin, b->mat, &r->origin);
-        xMat3x3Tolocal(&xfr.dir, m, &r->dir);
-        xfr.flags = r->flags;
-        iBoxIsectRay(&b->box.box, &xfr, &isect);
+        xMat4x3Tolocal(&lr.origin, b->mat, &r->origin);
+        xMat3x3Tolocal(&lr.dir, dmp, &r->dir);
+        lr.flags = r->flags;
+        iBoxIsectRay(&b->box.box, &lr, &isect);
     }
     else if (b->type == 2)
     {

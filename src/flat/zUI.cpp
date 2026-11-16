@@ -238,23 +238,23 @@ void zUIRenderAll()
 // Draw UI images and model previews, including map pulses and warp-item motion.
 void zUI_Render(_xEnt* e)
 {
-    _zUI* ent = static_cast<_zUI*>(e);
+    _zUI* ui = static_cast<_zUI*>(e);
     if (xScrFxIsLetterbox() &&
-        (ent->id == cKeyUIid1off || ent->id == cKeyUIid2off ||
-         ent->id == cKeyUIid3off || ent->id == cKeyUIid4off ||
-         ent->id == cKeyUIid1on || ent->id == cKeyUIid2on ||
-         ent->id == cKeyUIid3on || ent->id == cKeyUIid4on))
+        (ui->id == cKeyUIid1off || ui->id == cKeyUIid2off ||
+         ui->id == cKeyUIid3off || ui->id == cKeyUIid4off ||
+         ui->id == cKeyUIid1on || ui->id == cKeyUIid2on ||
+         ui->id == cKeyUIid3on || ui->id == cKeyUIid4on))
         return;
 
-    if (ent->uiFlags & 4)
+    if (ui->uiFlags & 4)
     {
-        if (!xEntIsVisible(ent)) return;
-        if (ent->sasset->textureID)
+        if (!xEntIsVisible(ui)) return;
+        if (ui->sasset->textureID)
         {
-            RwTexture* texture = static_cast<RwTexture*>(xSTFindAsset(ent->sasset->textureID, 0));
+            RwTexture* texture = static_cast<RwTexture*>(xSTFindAsset(ui->sasset->textureID, 0));
             if (texture && texture->raster)
                 RwRenderStateSet(rwRENDERSTATETEXTURERASTER, texture->raster);
-            zUIAsset* asset = ent->sasset;
+            zUIAsset* asset = ui->sasset;
             F32 u1 = asset->uva[0];
             F32 v1 = asset->uva[1];
             F32 u2 = asset->uvb[0];
@@ -271,8 +271,8 @@ void zUI_Render(_xEnt* e)
             static U32 mapID = xStrHash("paws_map");
             static U32 cornerID = xStrHash("paws_corner");
             static U32 tagID = xStrHash("sd_tag_map");
-            if (ent->sasset->textureID == mapID || ent->sasset->textureID == cornerID ||
-                ent->sasset->textureID == tagID)
+            if (ui->sasset->textureID == mapID || ui->sasset->textureID == cornerID ||
+                ui->sasset->textureID == tagID)
             {
                 F32 wave = (F32)sin(15.0f * gFontWiggleTime);
                 F32 pulse = 1.0f + wave;
@@ -286,11 +286,11 @@ void zUI_Render(_xEnt* e)
 
             static U32 warpTokenID = xStrHash("warp token ui");
             static U32 warpSnackID = xStrHash("warp snack ui");
-            if (ent->id == warpTokenID || ent->id == warpSnackID)
+            if (ui->id == warpTokenID || ui->id == warpSnackID)
             {
                 F32 wave = (F32)sin(5.0f * gFontWiggleTime + left);
                 F32 dx = (0.5f * wave) * (right - left);
-                F32 center = (640.0f * ent->sasset->pos.x) / 640.0f;
+                F32 center = (640.0f * ui->sasset->pos.x) / 640.0f;
                 left = center - dx;
                 right = center + dx;
             }
@@ -330,22 +330,22 @@ void zUI_Render(_xEnt* e)
             RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)0);
             RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vertex, 4, Index, 6);
         }
-        else if (ent->model)
+        else if (ui->model)
         {
-            zUIAsset* asset = ent->sasset;
+            zUIAsset* asset = ui->sasset;
             xVec3 relfrom = { 0.0f, 1.0f, 5.0f };
             xVec3 relto = { 0.0f, 0.0f, 0.0f };
             xVec3 from;
             xVec3 to;
-            xVec3* pos = (xVec3*)&ent->model->Mat->pos;
-            _xRect rect = { 0.0f, 0.0f, 0.0f, 0.0f };
-            rect.x = (640.0f * asset->pos.x) / 640.0f;
-            rect.y = (480.0f * asset->pos.y) / 480.0f;
-            rect.w = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
-            rect.h = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
+            xVec3* pos = (xVec3*)&ui->model->Mat->pos;
+            _xRect win1 = { 0.0f, 0.0f, 0.0f, 0.0f };
+            win1.x = (640.0f * asset->pos.x) / 640.0f;
+            win1.y = (480.0f * asset->pos.y) / 480.0f;
+            win1.w = (640.0f * (asset->pos.x + asset->dim[0])) / 640.0f;
+            win1.h = (480.0f * (asset->pos.y + asset->dim[1])) / 480.0f;
             xVec3Add(&from, &relfrom, pos);
             xVec3Add(&to, &relto, pos);
-            xModelRender2D(ent->model, &rect, &from, &to, 1.5707964f);
+            xModelRender2D(ui->model, &win1, &from, &to, 1.5707964f);
         }
     }
     else
@@ -357,20 +357,20 @@ void zUI_Render(_xEnt* e)
 // Handle visibility and focus changes for a UI element.
 S32 zUIEventCB(xBase*, xBase* to, U32 event, F32*, xBase*)
 {
-    _zUI* ent = static_cast<_zUI*>(to);
+    _zUI* s = static_cast<_zUI*>(to);
     switch (event)
     {
     case eEventVisible:
-        ent->flags |= 1;
+        s->flags |= 1;
         break;
     case eEventInvisible:
-        ent->flags &= ~1;
+        s->flags &= ~1;
         break;
     case eEventReset:
-        zUI_Reset(ent);
+        zUI_Reset(s);
         break;
     case 0x4F:
-        ent->uiFlags |= 2;
+        s->uiFlags |= 2;
         for (S32 i = 0; i < 13; ++i)
         {
             char level = sLevelTable2[i].name;
@@ -378,9 +378,9 @@ S32 zUIEventCB(xBase*, xBase* to, U32 event, F32*, xBase*)
             {
                 char uiName[256];
                 sprintf(uiName, "%c %02d SELECTED", level, j);
-                if (ent->id == xStrHash(uiName))
+                if (s->id == xStrHash(uiName))
                 {
-                    zEntEvent(ent, ent, eEventVisible);
+                    zEntEvent(s, s, eEventVisible);
                     char scene[5] = { 0 };
                     strncpy(scene, uiName, 4);
                     scene[1] = '0';
@@ -392,7 +392,7 @@ S32 zUIEventCB(xBase*, xBase* to, U32 event, F32*, xBase*)
         }
         break;
     case 0x50:
-        if (ent->uiFlags & 2) ent->uiFlags ^= 2;
+        if (s->uiFlags & 2) s->uiFlags ^= 2;
         for (S32 i = 0; i < 13; ++i)
         {
             char level = sLevelTable2[i].name;
@@ -400,26 +400,26 @@ S32 zUIEventCB(xBase*, xBase* to, U32 event, F32*, xBase*)
             {
                 char uiName[256];
                 sprintf(uiName, "%c %02d SELECTED", level, j);
-                if (ent->id == xStrHash(uiName))
-                    zEntEvent(ent, ent, eEventInvisible);
+                if (s->id == xStrHash(uiName))
+                    zEntEvent(s, s, eEventInvisible);
             }
         }
         break;
     case eEventUIFocusOn:
-        ent->uiFlags |= 8;
-        if (ent->uiFlags & 0x10) zEntEvent(ent, ent, eEventVisible);
+        s->uiFlags |= 8;
+        if (s->uiFlags & 0x10) zEntEvent(s, s, eEventVisible);
         break;
     case eEventUIFocusOff:
-        if (ent->uiFlags & 8) ent->uiFlags ^= 8;
-        if (ent->uiFlags & 0x20) zEntEvent(ent, ent, eEventInvisible);
+        if (s->uiFlags & 8) s->uiFlags ^= 8;
+        if (s->uiFlags & 0x20) zEntEvent(s, s, eEventInvisible);
         break;
     case 0x5E:
-        zEntEvent(ent, ent, eEventUIFocusOn);
-        zEntEvent(ent, ent, 0x4F);
+        zEntEvent(s, s, eEventUIFocusOn);
+        zEntEvent(s, s, 0x4F);
         break;
     case 0x5F:
-        zEntEvent(ent, ent, eEventUIFocusOff);
-        zEntEvent(ent, ent, 0x50);
+        zEntEvent(s, s, eEventUIFocusOff);
+        zEntEvent(s, s, 0x50);
         break;
     }
     return 1;

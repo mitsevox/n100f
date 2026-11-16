@@ -204,9 +204,9 @@ static inline S32 zSaveLoad_CardCheckSingle(S32 cardNumber)
         return 1;
     case 1:
     {
-        S32 idx = xSGTgtPhysSlotIdx(ldinst, 0);
+        S32 tgtslot = xSGTgtPhysSlotIdx(ldinst, 0);
         xSGDone(ldinst);
-        if (idx == cardNumber)
+        if (tgtslot == cardNumber)
         {
             return 1;
         }
@@ -319,12 +319,12 @@ static inline S32 zSaveLoad_CardCheckSpaceSingle(S32 cardNumber, S32 checkSlots,
         break;
     case 1:
     {
-        S32 idx = xSGTgtPhysSlotIdx(ldinst, 0);
-        if (idx != cardNumber)
+        S32 tgtslot = xSGTgtPhysSlotIdx(ldinst, 0);
+        if (tgtslot != cardNumber)
         {
             rc = 5;
         }
-        if (!(idx ^ cardNumber))
+        if (!(tgtslot ^ cardNumber))
         {
             rc = zSaveLoad_CardCheckSpaceSingle_doCheck(ldinst, 0, checkSlots, slotsFull);
         }
@@ -385,12 +385,12 @@ static inline S32 zSaveLoad_CardCheckGamesSingle(S32 cardNumber)
         break;
     case 1:
     {
-        S32 idx = xSGTgtPhysSlotIdx(ldinst, 0);
-        if (idx != cardNumber)
+        S32 tgtslot = xSGTgtPhysSlotIdx(ldinst, 0);
+        if (tgtslot != cardNumber)
         {
             rc = 5;
         }
-        if (!(idx ^ cardNumber))
+        if (!(tgtslot ^ cardNumber))
         {
             rc = zSaveLoad_CardCheckGamesSingle_doCheck(ldinst, 0);
         }
@@ -445,12 +445,12 @@ static inline S32 zSaveLoad_CardCheckSlotEmpty_hasGame(S32 cardNumber, S32 gameN
         break;
     case 1:
     {
-        S32 idx = xSGTgtPhysSlotIdx(ldinst, 0);
-        if (idx != cardNumber)
+        S32 tgtslot = xSGTgtPhysSlotIdx(ldinst, 0);
+        if (tgtslot != cardNumber)
         {
             rc = -1;
         }
-        if (!(idx ^ cardNumber))
+        if (!(tgtslot ^ cardNumber))
         {
             rc = zSaveLoad_CardCheckSlotEmpty_hasGame_doCheck(ldinst, 0, gameNumber);
         }
@@ -765,12 +765,12 @@ U32 zSaveLoad_SaveLoop()
             break;
         case 1:
         {
-            S32 rc = zSaveLoad_CardPick(0);
-            if (rc == 1)
+            S32 tmp = zSaveLoad_CardPick(0);
+            if (tmp == 1)
             {
                 state = 2;
             }
-            else if (rc == 4)
+            else if (tmp == 4)
             {
                 state = 11;
             }
@@ -1115,7 +1115,7 @@ S32 zSaveLoad_GameSelect(S32 mode)
     {
         currentGame = -1;
         promptSel = -1;
-        S32 tgt = CardtoTgt(currentCard);
+        S32 use_tgt = CardtoTgt(currentCard);
 
         if (mode == 1)
         {
@@ -1123,12 +1123,12 @@ S32 zSaveLoad_GameSelect(S32 mode)
             zSaveLoad_UIEvent(0, eEventUIFocusOn);
         }
 
-        st_XSAVEGAME_DATA* ldinst;
+        st_XSAVEGAME_DATA* svinst;
         for (S32 i = 0; i < 3; i++)
         {
-            ldinst = xSGInit(XSG_MODE_LOAD);
-            xSGTgtSelect(ldinst, tgt);
-            if (xSGGameIsEmpty(ldinst, i))
+            svinst = xSGInit(XSG_MODE_LOAD);
+            xSGTgtSelect(svinst, use_tgt);
+            if (xSGGameIsEmpty(svinst, i))
             {
                 if (mode == 1)
                 {
@@ -1140,11 +1140,11 @@ S32 zSaveLoad_GameSelect(S32 mode)
             }
             else
             {
-                strcpy(zSaveLoadGameTable[i].label, xSGGameLabel(ldinst, i));
-                strcpy(zSaveLoadGameTable[i].date, xSGGameModDate(ldinst, i));
-                zSaveLoadGameTable[i].progress = xSGGameThumIndex(ldinst, i);
+                strcpy(zSaveLoadGameTable[i].label, xSGGameLabel(svinst, i));
+                strcpy(zSaveLoadGameTable[i].date, xSGGameModDate(svinst, i));
+                zSaveLoadGameTable[i].progress = xSGGameThumIndex(svinst, i);
             }
-            xSGDone(ldinst);
+            xSGDone(svinst);
         }
 
         if (mode == 1)
@@ -1425,10 +1425,10 @@ S32 zSaveLoad_CardCheckGames(S32 cardNumber, S32 mode)
     while (zSaveLoad_CardCheckGamesSingle(cardNumber) != 1)
     {
         badCard = 1;
-        S32 result = zSaveLoad_CardCheckGamesSingle(cardNumber);
-        if (result == -1 || result == 6 || result == 5)
+        S32 tmp = zSaveLoad_CardCheckGamesSingle(cardNumber);
+        if (tmp == -1 || tmp == 6 || tmp == 5)
         {
-            return result;
+            return tmp;
         }
 
         zSaveLoad_UIEvent(zSaveLoad_ModeUI(mode, 0, 21), eEventUIFocusOff_Unselect);
@@ -1813,12 +1813,12 @@ S32 zSaveLoad_CardCheckFormattedSingle(S32 cardNumber, S32* badEncode)
         break;
     case 1:
     {
-        S32 idx = xSGTgtPhysSlotIdx(ldinst, 0);
-        if (idx != cardNumber)
+        S32 tgtslot = xSGTgtPhysSlotIdx(ldinst, 0);
+        if (tgtslot != cardNumber)
         {
             rc = -1;
         }
-        else if (!(idx ^ cardNumber))
+        else if (!(tgtslot ^ cardNumber))
         {
             rc = xSGTgtIsFormat(ldinst, 0, badEncode);
             if (rc == 0)
@@ -1890,14 +1890,14 @@ S32 format(S32 num, S32 mode)
         break;
     case 1:
     {
-        S32 idx = xSGTgtPhysSlotIdx(data, 0);
-        if (idx != num)
+        S32 tgtslot = xSGTgtPhysSlotIdx(data, 0);
+        if (tgtslot != num)
         {
             zSaveLoad_UIEvent(40, eEventUIFocusOff);
             xSGDone(data);
             rc = 5;
         }
-        else if (idx ^ num)
+        else if (tgtslot ^ num)
         {
             zSaveLoad_UIEvent(40, eEventUIFocusOff);
             xSGDone(data);

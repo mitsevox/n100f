@@ -147,15 +147,15 @@ char* xSGTgtCardName(st_XSAVEGAME_DATA* xsgdata, S32 tidx, en_XSG_WHYFAIL whyFai
 S32 xSGTgtIsFormat(st_XSAVEGAME_DATA* xsgdata, S32 tidx, S32* badEncode)
 {
     S32 result = 0;
-    U32 state = iSGTgtState(xsgdata->isgsess, tidx, NULL);
-    if (state & 0x4000000)
+    U32 rc = iSGTgtState(xsgdata->isgsess, tidx, NULL);
+    if (rc & 0x4000000)
     {
         if (badEncode != NULL)
         {
             *badEncode = 1;
         }
     }
-    else if (state & 2)
+    else if (rc & 2)
     {
         result = 1;
     }
@@ -186,8 +186,8 @@ S32 xSGTgtSelect(st_XSAVEGAME_DATA* xsgdata, S32 tidx)
 S32 xSG_chdir_gamedir(st_XSAVEGAME_DATA* xsgdata)
 {
     S32 rc = 1;
-    char* name = iSGMakeName(ISG_NGTYP_GAMEDIR, NULL, 0);
-    if (!iSGSelectGameDir(xsgdata->isgsess, name))
+    char* namestr = iSGMakeName(ISG_NGTYP_GAMEDIR, NULL, 0);
+    if (!iSGSelectGameDir(xsgdata->isgsess, namestr))
     {
         rc = 0;
     }
@@ -261,16 +261,16 @@ char* xSG_cm_slotname(st_XSAVEGAME_DATA* xsgdata, S32 gidx)
     slotname[0] = '\0';
 
     // Slot 0x9A5 names the settings file rather than a game.
-    char* tmp;
+    char* sptr;
     if (gidx == 0x9A5)
     {
-        tmp = iSGMakeName(ISG_NGTYP_CONFIG, NULL, 0);
+        sptr = iSGMakeName(ISG_NGTYP_CONFIG, NULL, 0);
     }
     else
     {
-        tmp = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, gidx);
+        sptr = iSGMakeName(ISG_NGTYP_GAMEFILE, NULL, gidx);
     }
-    strcpy(slotname, tmp);
+    strcpy(slotname, sptr);
     return slotname;
 }
 

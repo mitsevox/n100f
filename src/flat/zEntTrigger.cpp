@@ -42,14 +42,14 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
             continue;
 
         S32 collide = 0;
-        _xEnt* checked;
-        if (link->chkAssetID && (checked = (_xEnt*)zSceneFindObject(link->chkAssetID)) != NULL)
+        _xEnt* chkEnt;
+        if (link->chkAssetID && (chkEnt = (_xEnt*)zSceneFindObject(link->chkAssetID)) != NULL)
         {
-            xVec3* pos;
-            if (checked->bound.type == 1)
-                pos = &checked->bound.sph.center;
+            xVec3* chkPos;
+            if (chkEnt->bound.type == 1)
+                chkPos = &chkEnt->bound.sph.center;
             else
-                pos = (xVec3*)&checked->model->Mat->pos;
+                chkPos = (xVec3*)&chkEnt->model->Mat->pos;
 
             switch (trig->subType)
             {
@@ -59,7 +59,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 box.upper = tasset->p[1];
                 box.lower = tasset->p[0];
                 _xIsect isect;
-                iBoxIsectVec(&box, pos, &isect);
+                iBoxIsectVec(&box, chkPos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }
@@ -69,7 +69,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 sphere.center = tasset->p[0];
                 sphere.r = tasset->p[1].x;
                 _xIsect isect;
-                iSphereIsectVec(&sphere, pos, &isect);
+                iSphereIsectVec(&sphere, chkPos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }
@@ -80,7 +80,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 cylinder.r = tasset->p[1].x;
                 cylinder.h = tasset->p[1].y;
                 _xIsect isect;
-                iCylinderIsectVec(&cylinder, pos, &isect);
+                iCylinderIsectVec(&cylinder, chkPos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }
@@ -90,7 +90,7 @@ void zEntTriggerUpdate(zEntTrigger* trig, _xScene*, F32)
                 sphere.center = tasset->p[0];
                 sphere.r = tasset->p[1].x;
                 _xIsect isect;
-                iSphereIsectVec(&sphere, pos, &isect);
+                iSphereIsectVec(&sphere, chkPos, &isect);
                 collide = isect.penned <= 0.0f;
                 break;
             }

@@ -482,26 +482,26 @@ U32 zVarEntryCB_SndMode()
 // A volume as the 0-10 menu setting: the average of the left and right levels, rounded.
 U32 zVarEntryCB_SndMasterVol()
 {
-    F64 vol = (gSnd.mastervol.volL + gSnd.mastervol.volR) / 2.0f;
-    vol *= 10.0;
+    F64 floatVol = (gSnd.mastervol.volL + gSnd.mastervol.volR) / 2.0f;
+    floatVol *= 10.0;
 
-    return (U32)(0.5 + vol);
+    return (U32)(0.5 + floatVol);
 }
 
 U32 zVarEntryCB_SndMusicVol()
 {
-    F64 vol = (gSnd.streamvol.volL + gSnd.streamvol.volR) / 2.0f;
-    vol *= 10.0;
+    F64 floatVol = (gSnd.streamvol.volL + gSnd.streamvol.volR) / 2.0f;
+    floatVol *= 10.0;
 
-    return (U32)(0.5 + vol);
+    return (U32)(0.5 + floatVol);
 }
 
 U32 zVarEntryCB_SndFXVol()
 {
-    F64 vol = (gSnd.fxvol.volL + gSnd.fxvol.volR) / 2.0f;
-    vol *= 10.0;
+    F64 floatVol = (gSnd.fxvol.volL + gSnd.fxvol.volR) / 2.0f;
+    floatVol *= 10.0;
 
-    return (U32)(0.5 + vol);
+    return (U32)(0.5 + floatVol);
 }
 
 // One bit per special power-up collected.
@@ -935,11 +935,11 @@ char* zVMCB_AltButtonLabel(char* dst)
 // The current scene letter's place in the alphabet (A is 1).
 U32 zVarEntryCB_CurrentSceneLetter()
 {
-    char buf[16];
+    char s[16];
 
-    sprintf(buf, "%s", xUtil_idtag2string(globals.sceneCur->sceneID, 0));
+    sprintf(s, "%s", xUtil_idtag2string(globals.sceneCur->sceneID, 0));
 
-    return zVarToUpper(buf[0]) - '@';
+    return zVarToUpper(s[0]) - '@';
 }
 
 U32 zVarEntryCB_IsSneaking()
@@ -1130,12 +1130,12 @@ U32 zVarEntryCB_PuzzlePieceH()
 // scene's two-digit number (H003 is 803).
 U32 zVarEntryCB_CurrentRoom()
 {
-    char buf[16];
+    char s[16];
 
-    sprintf(buf, "%s", xUtil_idtag2string(globals.sceneCur->sceneID, 0));
-    S32 room = (buf[2] - '0') * 10 + (buf[3] - '0');
+    sprintf(s, "%s", xUtil_idtag2string(globals.sceneCur->sceneID, 0));
+    S32 room = (s[2] - '0') * 10 + (s[3] - '0');
 
-    return room + (zVarToUpper(buf[0]) - '@') * 100;
+    return room + (zVarToUpper(s[0]) - '@') * 100;
 }
 
 // One bit per monster token collected.
@@ -1383,17 +1383,17 @@ U32 zVarEntryCB_eVareVarDefeatedMM()
 // The number of areas whose snack total has been reached.
 U32 zVarEntryCB_eVarAllSnacksFound()
 {
-    U32 count = 0;
+    U32 cnt = 0;
 
     for (S32 i = 0; i < 30; i++)
     {
         if (globals.areaStats[i].snacks_tot >= zSceneGetAreaTotalSnacks((_tagSceneAreas)i))
         {
-            count++;
+            cnt++;
         }
     }
 
-    return count;
+    return cnt;
 }
 
 // A cutscene counts as unlocked once all movies are unlocked or once the cutscene table marks it seen.

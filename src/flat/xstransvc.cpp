@@ -418,8 +418,8 @@ S32 xSTGetAssetInfo(U32 aid, st_xST_XASSETINFO* ainfo)
     st_PKR_ASSET_TOCINFO tocinfo = { 0, 0, 0, 0, NULL };
     memset(ainfo, 0, sizeof(st_xST_XASSETINFO));
 
-    S32 cnt = XST_cnt_locked();
-    for (S32 i = 0; i < cnt; i++)
+    S32 rc = XST_cnt_locked();
+    for (S32 i = 0; i < rc; i++)
     {
         st_STRAN_SCENE* sdata = XST_nth_locked(i);
         if (g_pkrf->PkgHasAsset(sdata->spkg, aid))
@@ -480,8 +480,8 @@ S32 xSTGetAssetInfoByType(U32 type, S32 idx, st_xST_XASSETINFO* ainfo)
 static inline char* xST_xAssetID_HIPFullPath(U32 aid, U32* sceneID)
 {
     char* da_hipname = NULL;
-    S32 cnt = XST_cnt_locked();
-    for (S32 i = 0; i < cnt; i++)
+    S32 rc = XST_cnt_locked();
+    for (S32 i = 0; i < rc; i++)
     {
         st_STRAN_SCENE* sdata = XST_nth_locked(i);
         if (g_pkrf->PkgHasAsset(sdata->spkg, aid))

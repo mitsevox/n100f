@@ -2858,12 +2858,12 @@ en_ZVILLAIN_HEADBUTT_RESPONSE zEntVillain_Headbutt(st_zEntVillain* ent, _xVec3* 
     stimctxt.res_headbutt = ZVIL_HEADBUTT_NONE;
     if (dir)
     {
-        F32 magnitude = xVec3Normalize(&stimctxt.dir_headbutt, dir);
-        _xVec3 towardVil = { 0.0f, 0.0f, 0.0f };
-        xVec3SMul(&towardVil, &ent->precalc.dir_VtoP, -1.0f);
-        F32 facing = xVec3Dot(&towardVil, (_xVec3*)&globals.player.ent.model->Mat->at);
+        F32 mag = xVec3Normalize(&stimctxt.dir_headbutt, dir);
+        _xVec3 dir_PtoV = { 0.0f, 0.0f, 0.0f };
+        xVec3SMul(&dir_PtoV, &ent->precalc.dir_VtoP, -1.0f);
+        F32 facing = xVec3Dot(&dir_PtoV, (_xVec3*)&globals.player.ent.model->Mat->at);
         facing = MAX(0.0f, MIN(facing, 1.0f));
-        stimctxt.mag_headbutt = MAX(0.0f, facing * magnitude);
+        stimctxt.mag_headbutt = MAX(0.0f, facing * mag);
     }
     zVIL_input_stim(ent, ZVIL_STIM_HEADBUTT, &stimctxt);
     if (stimctxt.res_headbutt != ZVIL_HEADBUTT_NONE &&
@@ -7965,43 +7965,43 @@ static S32 VILN_gang_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32
 static S32 VILN_gang_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note,
                             st_STIMULUS_CONTEXT_DATA*)
 {
-    xModelInstance* model = vil->model;
-    S32 index = 0;
+    xModelInstance* minst = vil->model;
+    S32 idx = 0;
     if (note == ZVIL_NOTE_PREPARE)
     {
         vil->vilcfg.tymref_list[ZVIL_TTIL_FIDGET] = 2.0f;
     }
     if (note == ZVIL_NOTE_PREPARE && vil->asset->subtype == eEntVillainTypeFred)
     {
-        xAnimState* state = xAnimTableGetStateID(vil->model->Anim->Table,
+        xAnimState* astate = xAnimTableGetStateID(vil->model->Anim->Table,
                                                   g_anamhash[ZVIL_ANIM_GANG_BOSSACTION]);
-        if (state)
+        if (astate)
         {
-            state->Flags &= ~0x30;
-            state->Flags |= 0x10;
+            astate->Flags &= ~0x30;
+            astate->Flags |= 0x10;
         }
     }
     if (note == ZVIL_NOTE_PREPARE && vil->asset->subtype == eEntVillainTypeFred)
     {
-        while (model)
+        while (minst)
         {
-            switch (index)
+            switch (idx)
             {
             case 0:
                 xSceneID2Name(globals.sceneCur, vil->id);
-                model->Flags |= 0x2;
-                model->Flags |= 0x1;
+                minst->Flags |= 0x2;
+                minst->Flags |= 0x1;
                 break;
             case 1:
                 xSceneID2Name(globals.sceneCur, vil->id);
-                model->Flags &= ~0x1;
+                minst->Flags &= ~0x1;
                 break;
             default:
                 xSceneID2Name(globals.sceneCur, vil->id);
                 break;
             }
-            model = model->Next;
-            index++;
+            minst = minst->Next;
+            idx++;
         }
     }
     switch (note)
@@ -9156,7 +9156,7 @@ static S32 VILN_BBK_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
 // Prepare the Black Knight boss and refresh its spatial data during normal operation.
 static S32 VILN_BBK_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS_CONTEXT_DATA*)
 {
-    xModelInstance* model = vil->model;
+    xModelInstance* minst = vil->model;
     S32 idx = 0;
     if (note == ZVIL_NOTE_PREPARE)
     {
@@ -9170,18 +9170,18 @@ static S32 VILN_BBK_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
     }
     if (note == ZVIL_NOTE_PREPARE)
     {
-        while (model)
+        while (minst)
         {
             switch (idx)
             {
             case 0:
-                model->Flags |= 1;
-                model->Flags |= 2;
+                minst->Flags |= 1;
+                minst->Flags |= 2;
                 break;
             case 1:
                 break;
             }
-            model = model->Next;
+            minst = minst->Next;
             idx++;
         }
     }
@@ -10567,8 +10567,8 @@ static S32 VILN_BRB_sysevent(st_zEntVillain* vil, xBase* from, U32 toEvent, F32*
 static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS_CONTEXT_DATA*)
 {
     static F32 flame_timer = 0.0f;
-    static _xVec3 pos_arena = { -0.5f, 0.0f, 0.0f };
-    xModelInstance* model = vil->model;
+    static _xVec3 pos_hardwired = { -0.5f, 0.0f, 0.0f };
+    xModelInstance* minst = vil->model;
     S32 idx = 0;
     if (sEmitRBFlames)
     {
@@ -10580,8 +10580,8 @@ static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
         else
         {
             _xVec3* pos = (_xVec3*)&globals.player.ent.model->Mat->pos;
-            F32 dx = -0.5f - pos->x;
-            if (dx * dx + pos->z * pos->z < 30.0f)
+            F32 vx = -0.5f - pos->x;
+            if (vx * vx + pos->z * pos->z < 30.0f)
             {
                 if (!(sEmitRBFlames->emit_flags & 1))
                 {
@@ -10609,29 +10609,29 @@ static S32 VILN_BRB_notice(st_zEntVillain* vil, en_ZVIL_NOTICE note, st_STIMULUS
         vil->mode = ZVIL_MODE_BATTLE;
         vil->vec_lobSpin.y = 6.2831855f;
         vil->vilcfg.tymref_list[ZVIL_TDUR_HURT] = -1.0f;
-        xVec3Copy((_xVec3*)&vil->model->Mat->pos, &pos_arena);
+        xVec3Copy((_xVec3*)&vil->model->Mat->pos, &pos_hardwired);
     }
     if (note == ZVIL_NOTE_PREPARE) VWEP_rbs_setup(&g_rbsword[0], vil);
     if (note == ZVIL_NOTE_PREPARE)
     {
-        while (model)
+        while (minst)
         {
             switch (idx)
             {
             case 0:
-                model->Flags |= 1;
-                model->Flags |= 2;
-                model->Flags |= 4;
+                minst->Flags |= 1;
+                minst->Flags |= 2;
+                minst->Flags |= 4;
                 break;
             case 1:
-                model->Flags &= (U16)~0x20;
-                model->Flags |= 8;
-                model->Flags |= 1;
-                model->Flags |= 2;
-                model->Flags |= 4;
+                minst->Flags &= (U16)~0x20;
+                minst->Flags |= 8;
+                minst->Flags |= 1;
+                minst->Flags |= 2;
+                minst->Flags |= 4;
                 break;
             }
-            model = model->Next;
+            minst = minst->Next;
             idx++;
         }
     }
@@ -14854,19 +14854,19 @@ static S32 VCFG_getParm(st_ZVIL_CONFIG_REFERENCE* cfgdata, en_NPC_INI_PARAMETERS
     case ZVIL_PARM_LOB_SALVO: *(S32*)vv = cfgdata->cnt_lobSalvo; break;
     case ZVIL_PARM_LOB_PRJTYPE:
     {
-        U32 type;
+        U32 aid_ptyp;
         switch (cfgdata->asset->subtype)
         {
-        case eEntVillainTypeGargoyle: type = xStrHash("_PRJ_VWEP_GARGOYLE"); break;
-        case eEntVillainTypeTarMonster: type = xStrHash("_PRJ_VWEP_TARMONSTER"); break;
-        case eEntVillainTypeWitchDoctor: type = xStrHash("_PRJ_VWEP_WITCHDOCTOR"); break;
-        case eEntVillainBossBlackKnight: type = xStrHash("_PRJ_VWEP_BLACKKNIGHT"); break;
-        case eEntVillainBossGreenGhost: type = xStrHash("_PRJ_VWEP_GREENGHOST"); break;
-        case eEntVillainBossRedbeard: type = xStrHash("_PRJ_VWEP_REDBEARD"); break;
-        case eEntVillainBossMastermind: type = xStrHash("_PRJ_VWEP_MASTERMIND"); break;
-        default: type = 0; break;
+        case eEntVillainTypeGargoyle: aid_ptyp = xStrHash("_PRJ_VWEP_GARGOYLE"); break;
+        case eEntVillainTypeTarMonster: aid_ptyp = xStrHash("_PRJ_VWEP_TARMONSTER"); break;
+        case eEntVillainTypeWitchDoctor: aid_ptyp = xStrHash("_PRJ_VWEP_WITCHDOCTOR"); break;
+        case eEntVillainBossBlackKnight: aid_ptyp = xStrHash("_PRJ_VWEP_BLACKKNIGHT"); break;
+        case eEntVillainBossGreenGhost: aid_ptyp = xStrHash("_PRJ_VWEP_GREENGHOST"); break;
+        case eEntVillainBossRedbeard: aid_ptyp = xStrHash("_PRJ_VWEP_REDBEARD"); break;
+        case eEntVillainBossMastermind: aid_ptyp = xStrHash("_PRJ_VWEP_MASTERMIND"); break;
+        default: aid_ptyp = 0; break;
         }
-        *(U32*)vv = type;
+        *(U32*)vv = aid_ptyp;
         break;
     }
     case ZVIL_PARM_LOB_ARC: *(F32*)vv = cfgdata->fac_lobarc; break;
@@ -15792,24 +15792,24 @@ static S32 VPRJ_BBK_prjmove(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame* fr
 static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*)
 {
     st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
-    U32 sound;
+    U32 aid_snd;
     switch (event)
     {
     case ZPRJ_EVNT_LAUNCH:
-        sound = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
-        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
+        if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         break;
     case ZPRJ_EVNT_INFLIGHT:
         if (!iSndIsPlaying(0, (U32)prj))
         {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
         break;
     case ZPRJ_EVNT_STARTRESTING:
         xSndStopChildren((U32)prj);
-        sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
-        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
+        if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 25.0f);
         // Fall through to retry if the first sound did not start.
     case ZPRJ_EVNT_ATREST:
@@ -15819,8 +15819,8 @@ static S32 VPRJ_BBK_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
     case ZPRJ_EVNT_HITPLYR:
     {
         zVIL_send_stim(vil, ZVIL_STIM_DOTAUNT);
-        sound = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
-        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
+        if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         break;
     }
     case ZPRJ_EVNT_TRANSTATE:
@@ -16039,7 +16039,7 @@ static S32 VPRJ_BGG_logix(zEntProjectile* prj, F32 dt, zScene*, _xEntFrame*)
 static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*)
 {
     st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
-    U32 sound;
+    U32 aid_snd;
     switch (event)
     {
     case ZPRJ_EVNT_HITPLYR:
@@ -16048,28 +16048,28 @@ static S32 VPRJ_BGG_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*
         break;
     }
     case ZPRJ_EVNT_LAUNCH:
-        sound = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
-        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
+        if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         break;
     case ZPRJ_EVNT_INFLIGHT:
         if (!iSndIsPlaying(0, (U32)prj))
         {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
         break;
     case ZPRJ_EVNT_DETONATE:
         if (!iSndIsPlaying(0, (U32)prj))
         {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
         break;
     case ZPRJ_EVNT_VIL_AFTERMATH:
         if (!iSndIsPlaying(0, (U32)prj))
         {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
         break;
     case ZPRJ_EVNT_TRANSTATE:
@@ -16483,34 +16483,34 @@ static void zEntVillain_UnknownTemplate12b()
 static S32 VPRJ_BMM_notify(zEntProjectile* prj, en_PROJECTILE_EVENT event, void*)
 {
     st_zEntVillain* vil = (st_zEntVillain*)prj->owner;
-    U32 sound;
+    U32 aid_snd;
     switch (event)
     {
     case ZPRJ_EVNT_LAUNCH:
-        sound = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
-        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_LAUNCH);
+        if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         break;
     case ZPRJ_EVNT_INFLIGHT:
         if (!iSndIsPlaying(0, (U32)prj))
         {
-            sound = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
-            if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_FLIGHT);
+            if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         }
         break;
     case ZPRJ_EVNT_DETONATE:
         xSndStopChildren((U32)prj);
-        sound = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
-        if (sound)
+        aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_SPLAT);
+        if (aid_snd)
         {
-            xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+            xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
             xSndPlay3D(xStrHash("bk_shock"), 1.0f, 0.0f, 128, 0x202, prj, 40.0f);
         }
         break;
     case ZPRJ_EVNT_HITPLYR:
     {
         zVIL_send_stim(vil, ZVIL_STIM_DOTAUNT);
-        sound = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
-        if (sound) xSndPlay3D(sound, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
+        aid_snd = VSND_select_sound(vil, VSND_TYP_PRJ_EXPLODE);
+        if (aid_snd) xSndPlay3D(aid_snd, 0.5f, 0.0f, 128, 0x202, prj, 25.0f);
         break;
     }
     case ZPRJ_EVNT_TRANSTATE:

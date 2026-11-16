@@ -47,22 +47,22 @@ void zFeetGetIDs();
 // Resolve the surface sounds, footprint emitters and skid-mark texture.
 void zFeetGetIDs()
 {
-    char surface[128];
-    char sound[128];
+    char type_name[128];
+    char name[128];
     for (S32 i = 0; i < 23; i++)
     {
-        zSurfaceGetName(i, surface);
-        strcpy(sound, "SNDFX_STEP_");
-        strcat(sound, surface);
-        sSurfaceSoundIDStep[i] = xStrHash(sound);
+        zSurfaceGetName(i, type_name);
+        strcpy(name, "SNDFX_STEP_");
+        strcat(name, type_name);
+        sSurfaceSoundIDStep[i] = xStrHash(name);
     }
 
     paremit_sd_pawprint = zSceneFindObject(xStrHash("PAREMIT_SD_PAWPRINT"));
     paremit_vil_footprint = zSceneFindObject(xStrHash("PAREMIT_VIL_FOOTPRINT"));
-    void* texture = xSTFindAsset(xStrHash("SKIDMARKTEX"), 0);
-    if (texture)
+    void* tex = xSTFindAsset(xStrHash("SKIDMARKTEX"), 0);
+    if (tex)
     {
-        sSkidMarkRaster = *(RwRaster**)texture;
+        sSkidMarkRaster = *(RwRaster**)tex;
     }
     xDebugModeAdd("Feet", zFeetDebugCB);
 }

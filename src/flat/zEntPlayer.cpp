@@ -1254,44 +1254,44 @@ static S32 GetHeadcollAnimState()
         return 3;
     }
 
-    static U32 jumpNormal = xStrHash("Jump_normal");
-    static U32 jumpDouble = xStrHash("Jump_double");
-    static U32 jumpWalk = xStrHash("Jump_walk");
-    static U32 jumpRun = xStrHash("Jump_run");
-    static U32 jumpSpringboard = xStrHash("Jump_springboard");
-    static U32 fallNormal = xStrHash("Fall_normal");
-    static U32 fallWalk = xStrHash("Fall_walk");
-    static U32 fallRun = xStrHash("Fall_run");
+    static U32 JNORMAL_ID = xStrHash("Jump_normal");
+    static U32 JDOUBLE_ID = xStrHash("Jump_double");
+    static U32 JWALK_ID = xStrHash("Jump_walk");
+    static U32 JRUN_ID = xStrHash("Jump_run");
+    static U32 JSB_ID = xStrHash("Jump_springboard");
+    static U32 FNORMAL_ID = xStrHash("Fall_normal");
+    static U32 FWALK_ID = xStrHash("Fall_walk");
+    static U32 FRUN_ID = xStrHash("Fall_run");
 
-    if (state->ID == jumpNormal)
+    if (state->ID == JNORMAL_ID)
     {
         return globals.player.ent.frame->vel.y <= 0.0f ? 9 : 4;
     }
-    if (state->ID == jumpDouble)
+    if (state->ID == JDOUBLE_ID)
     {
         return globals.player.ent.frame->vel.y <= 0.0f ? 9 : 5;
     }
-    if (state->ID == jumpWalk)
+    if (state->ID == JWALK_ID)
     {
         return globals.player.ent.frame->vel.y <= 0.0f ? 10 : 6;
     }
-    if (state->ID == jumpRun)
+    if (state->ID == JRUN_ID)
     {
         return globals.player.ent.frame->vel.y <= 0.0f ? 11 : 7;
     }
-    if (state->ID == jumpSpringboard)
+    if (state->ID == JSB_ID)
     {
         return globals.player.ent.frame->vel.y <= 0.0f ? 9 : 8;
     }
-    if (state->ID == fallNormal)
+    if (state->ID == FNORMAL_ID)
     {
         return 9;
     }
-    if (state->ID == fallWalk)
+    if (state->ID == FWALK_ID)
     {
         return 10;
     }
-    return state->ID == fallRun ? 11 : 0;
+    return state->ID == FRUN_ID ? 11 : 0;
 }
 
 static U32 cchkButtbounce;
@@ -1604,16 +1604,16 @@ static U32 ScareCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 
 static U32 ScareKnockbackCB(xAnimTransition* tran, xAnimSingle* anim, void* param_3)
 {
-    xVec3 knockback;
+    xVec3 vel;
 
-    knockback.x = ((xMat4x3*)globals.player.ent.model->Mat)->at.x;
-    knockback.y = 0.0f;
-    knockback.z = ((xMat4x3*)globals.player.ent.model->Mat)->at.z;
-    xVec3Normalize(&knockback, &knockback);
-    knockback.x *= -4.0f;
-    knockback.y = 15.0f;
-    knockback.z *= -4.0f;
-    globals.player.ent.frame->vel = knockback;
+    vel.x = ((xMat4x3*)globals.player.ent.model->Mat)->at.x;
+    vel.y = 0.0f;
+    vel.z = ((xMat4x3*)globals.player.ent.model->Mat)->at.z;
+    xVec3Normalize(&vel, &vel);
+    vel.x *= -4.0f;
+    vel.y = 15.0f;
+    vel.z *= -4.0f;
+    globals.player.ent.frame->vel = vel;
     ScareCB(tran, anim, param_3);
     return 0;
 }

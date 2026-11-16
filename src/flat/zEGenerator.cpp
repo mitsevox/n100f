@@ -83,13 +83,13 @@ void zEGenerator_Setup(zEGenerator* egen, _xScene*)
     egen->num_dsts = 0;
     for (S32 i = 0; i < egen->linkCount; i++)
     {
-        p2LinkAsset* link = &egen->link[i];
-        xBase* dst = zSceneFindObject(link->dstAssetID);
-        if (dst && link->dstEvent == 0xC0)
+        p2LinkAsset* la = &egen->link[i];
+        xBase* b = zSceneFindObject(la->dstAssetID);
+        if (b && la->dstEvent == 0xC0)
         {
-            if (dst->baseType == 0xD)
+            if (b->baseType == 0xD)
                 egen->num_dsts++;
-            else if (dst->baseType == 6)
+            else if (b->baseType == 6)
                 egen->num_dsts++;
         }
     }

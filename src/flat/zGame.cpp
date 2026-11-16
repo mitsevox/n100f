@@ -368,23 +368,23 @@ static void zGameUpdateMode()
     }
     else if (gGameState == 5)
     {
-        zPortalAsset* portal = globals.sceneCur->pendingPortal->passet;
-        S8* sceneName = (S8*)&portal->sceneID;
-        U32 sceneID = ((U32)sceneName[0] << 24) | ((U32)sceneName[1] << 16) |
+        zPortalAsset* passet = globals.sceneCur->pendingPortal->passet;
+        S8* sceneName = (S8*)&passet->sceneID;
+        U32 nextSceneID = ((U32)sceneName[0] << 24) | ((U32)sceneName[1] << 16) |
                       ((U32)sceneName[2] << 8) | (U32)sceneName[3];
-        if (portal->sceneID != globals.sceneCur->sceneID)
+        if (passet->sceneID != globals.sceneCur->sceneID)
         {
-            sPlayerMarkerStartID = portal->assetMarkerID;
-            sPlayerMarkerStartCamID = portal->assetCameraID;
-            sPlayerStartAngle = portal->ang;
+            sPlayerMarkerStartID = passet->assetMarkerID;
+            sPlayerMarkerStartCamID = passet->assetCameraID;
+            sPlayerStartAngle = passet->ang;
             sPortalling = 1;
             zGameExit();
             S32 delay = 30;
-            if (sceneID == 'S006')
+            if (nextSceneID == 'S006')
                 delay = 120;
             while (delay-- > 0)
                 iVSync();
-            zGameInit(sceneID);
+            zGameInit(nextSceneID);
             zGameSetup();
             if (globals.cmgr)
                 zCutsceneMgrFinishLoad(globals.cmgr);
@@ -453,10 +453,10 @@ void zGameScreenTransitionBegin()
         DirectionalLight = RpLightCreate(rpLIGHTDIRECTIONAL);
         if (DirectionalLight)
         {
-            RwRGBAReal color;
-            color.red = color.green = color.blue = 1.0f;
-            color.alpha = 0.0f;
-            RpLightSetColor(DirectionalLight, &color);
+            RwRGBAReal col;
+            col.red = col.green = col.blue = 1.0f;
+            col.alpha = 0.0f;
+            RpLightSetColor(DirectionalLight, &col);
             RwFrame* frame = RwFrameCreate();
             _rwObjectHasFrameSetFrame(DirectionalLight, frame);
             RwBBox box;
